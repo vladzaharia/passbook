@@ -2600,6 +2600,34 @@
     "VERSION_CONFLICT",
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
+  "operations get /": [
+    "FORBIDDEN",
+    "INVALID_CURSOR",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
+  "operations get /{id}": [
+    "FORBIDDEN",
+    "OPERATION_NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
+  "operations post /{id}/cancel": [
+    "FORBIDDEN",
+    "OPERATION_NOT_CANCELABLE",
+    "OPERATION_NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
+  "operations post /{id}/retry": [
+    "FORBIDDEN",
+    "IDEMPOTENCY_KEY_INVALID",
+    "OPERATION_NOT_FOUND",
+    "OPERATION_NOT_RETRYABLE",
+    "OPERATION_RUNNING",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
   "org-lifecycle get /closed-orgs": [],
   "org-lifecycle get /{exportId}/download": [
     "EXPORT_NOT_FOUND"

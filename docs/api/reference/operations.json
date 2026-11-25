@@ -1,0 +1,214 @@
+{
+  "operations.getOperationsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-24146ede9f5a",
+      "kind": "bulk.run",
+      "status": "succeeded",
+      "title": "Delete sandbox",
+      "text": "Removing Test passes · 4 of 12",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "target": {
+        "type": "generic",
+        "id": "0193a1b2-7c00-7000-8000-307570ace8d4"
+      },
+      "step": "mapping",
+      "steps": [
+        {
+          "key": "tier",
+          "label": "Remove Test passes",
+          "state": "done",
+          "done": 39,
+          "total": 128,
+          "detail": "Waiting for Apple",
+          "until": 1795572600000,
+          "waitingReason": "due",
+          "group": "Access",
+          "startedAt": 1794362400000,
+          "finishedAt": 1795570500000
+        }
+      ],
+      "attempt": 1,
+      "cancelable": true,
+      "cancelRequested": true,
+      "startedBy": {
+        "type": "user",
+        "id": "0193a1b2-7c00-7000-8000-000000000011"
+      },
+      "createdAt": 1794362400000,
+      "startedAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000,
+      "error": null,
+      "result": {
+        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+        "ids": {
+          "tier": "Day pass"
+        }
+      },
+      "revision": 3,
+      "pollAfterMs": 1471
+    }
+  },
+  "operations.getOperations": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-45bb476bbc45",
+          "kind": "bulk.run",
+          "status": "succeeded",
+          "title": "Sync connection",
+          "text": "Removing Test passes · 4 of 12",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "target": {
+            "type": "generic",
+            "id": "0193a1b2-7c00-7000-8000-549e0bd20560"
+          },
+          "step": "mapping",
+          "steps": [
+            {
+              "key": "tier",
+              "label": "Revoke keys",
+              "state": "done",
+              "done": 39,
+              "total": 128,
+              "detail": "Waiting for Apple",
+              "until": 1795572600000,
+              "waitingReason": "due",
+              "group": "Access",
+              "startedAt": 1794362400000,
+              "finishedAt": 1795570500000
+            }
+          ],
+          "attempt": 1,
+          "cancelable": true,
+          "cancelRequested": true,
+          "startedBy": {
+            "type": "user",
+            "id": "0193a1b2-7c00-7000-8000-000000000011"
+          },
+          "createdAt": 1794362400000,
+          "startedAt": 1794362400000,
+          "updatedAt": 1795399200000,
+          "finishedAt": 1795570500000,
+          "error": null,
+          "result": {
+            "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+            "ids": {
+              "tier": "Day pass"
+            }
+          },
+          "revision": 3,
+          "pollAfterMs": 1471
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "operations.postOperationsByIdCancel": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-cb8398d01ce2",
+      "kind": "bulk.run",
+      "status": "succeeded",
+      "title": "Delete sandbox",
+      "text": "Removing Test passes · 4 of 12",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "target": {
+        "type": "generic",
+        "id": "0193a1b2-7c00-7000-8000-696c742e8471"
+      },
+      "step": "mapping",
+      "steps": [
+        {
+          "key": "tier",
+          "label": "Remove Test passes",
+          "state": "done",
+          "done": 39,
+          "total": 128,
+          "detail": "Waiting for Apple",
+          "until": 1795572600000,
+          "waitingReason": "due",
+          "group": "Access",
+          "startedAt": 1794362400000,
+          "finishedAt": 1795570500000
+        }
+      ],
+      "attempt": 1,
+      "cancelable": true,
+      "cancelRequested": true,
+      "startedBy": {
+        "type": "user",
+        "id": "0193a1b2-7c00-7000-8000-000000000011"
+      },
+      "createdAt": 1794362400000,
+      "startedAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000,
+      "error": null,
+      "result": {
+        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+        "ids": {
+          "tier": "Day pass"
+        }
+      },
+      "revision": 3,
+      "pollAfterMs": 1471
+    }
+  },
+  "operations.postOperationsByIdRetry": {
+    "request": {
+      "attempt": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-b0ad56dbc5b4",
+      "kind": "bulk.run",
+      "status": "succeeded",
+      "title": "Delete sandbox",
+      "text": "Removing Test passes · 4 of 12",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "target": {
+        "type": "generic",
+        "id": "0193a1b2-7c00-7000-8000-4ec68f100a84"
+      },
+      "step": "mapping",
+      "steps": [
+        {
+          "key": "tier",
+          "label": "Remove Test passes",
+          "state": "done",
+          "done": 39,
+          "total": 128,
+          "detail": "Waiting for Apple",
+          "until": 1795572600000,
+          "waitingReason": "due",
+          "group": "Access",
+          "startedAt": 1794362400000,
+          "finishedAt": 1795570500000
+        }
+      ],
+      "attempt": 1,
+      "cancelable": true,
+      "cancelRequested": true,
+      "startedBy": {
+        "type": "user",
+        "id": "0193a1b2-7c00-7000-8000-000000000011"
+      },
+      "createdAt": 1794362400000,
+      "startedAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000,
+      "error": null,
+      "result": {
+        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+        "ids": {
+          "tier": "Day pass"
+        }
+      },
+      "revision": 3,
+      "pollAfterMs": 1471
+    }
+  }
+}

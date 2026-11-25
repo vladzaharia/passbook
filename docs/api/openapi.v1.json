@@ -1532,6 +1532,9 @@
           },
           "signInUrl": {
             "type": "string"
+          },
+          "operationId": {
+            "type": "string"
           }
         },
         "required": [
@@ -34275,6 +34278,1248 @@
           "createdAt",
           "candidateId",
           "approvalId"
+        ]
+      },
+      "OperationsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "live",
+              "test",
+              null
+            ]
+          },
+          "target": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "step": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "waiting",
+                    "done",
+                    "failed",
+                    "skipped"
+                  ]
+                },
+                "done": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "total": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "detail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "until": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "waitingReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "blocked",
+                    "due",
+                    null
+                  ]
+                },
+                "group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "finishedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "state",
+                "done",
+                "total",
+                "detail",
+                "until",
+                "waitingReason",
+                "group",
+                "startedAt",
+                "finishedAt"
+              ]
+            }
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "cancelable": {
+            "type": "boolean"
+          },
+          "cancelRequested": {
+            "type": "boolean"
+          },
+          "startedBy": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "api_key",
+                  "system"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "startedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "finishedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "step": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "step",
+              "retryable"
+            ]
+          },
+          "result": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 300
+              },
+              "ids": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 80
+                }
+              }
+            },
+            "required": [
+              "href",
+              "ids"
+            ]
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "pollAfterMs": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "title",
+          "text",
+          "orgId",
+          "mode",
+          "target",
+          "step",
+          "steps",
+          "attempt",
+          "cancelable",
+          "cancelRequested",
+          "startedBy",
+          "createdAt",
+          "startedAt",
+          "updatedAt",
+          "finishedAt",
+          "error",
+          "result",
+          "revision",
+          "pollAfterMs"
+        ]
+      },
+      "OperationsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "queued",
+                    "running",
+                    "waiting",
+                    "succeeded",
+                    "failed",
+                    "cancelled"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "orgId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "mode": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "live",
+                    "test",
+                    null
+                  ]
+                },
+                "target": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "id"
+                  ]
+                },
+                "step": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "pending",
+                          "running",
+                          "waiting",
+                          "done",
+                          "failed",
+                          "skipped"
+                        ]
+                      },
+                      "done": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "total": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "detail": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "until": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0
+                      },
+                      "waitingReason": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "blocked",
+                          "due",
+                          null
+                        ]
+                      },
+                      "group": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "startedAt": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0
+                      },
+                      "finishedAt": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "state",
+                      "done",
+                      "total",
+                      "detail",
+                      "until",
+                      "waitingReason",
+                      "group",
+                      "startedAt",
+                      "finishedAt"
+                    ]
+                  }
+                },
+                "attempt": {
+                  "type": "integer"
+                },
+                "cancelable": {
+                  "type": "boolean"
+                },
+                "cancelRequested": {
+                  "type": "boolean"
+                },
+                "startedBy": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "user",
+                        "api_key",
+                        "system"
+                      ]
+                    },
+                    "id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "id"
+                  ]
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "startedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "finishedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "error": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "step",
+                    "retryable"
+                  ]
+                },
+                "result": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "href": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 300
+                    },
+                    "ids": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "maxLength": 80
+                      }
+                    }
+                  },
+                  "required": [
+                    "href",
+                    "ids"
+                  ]
+                },
+                "revision": {
+                  "type": "integer"
+                },
+                "pollAfterMs": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "status",
+                "title",
+                "text",
+                "orgId",
+                "mode",
+                "target",
+                "step",
+                "steps",
+                "attempt",
+                "cancelable",
+                "cancelRequested",
+                "startedBy",
+                "createdAt",
+                "startedAt",
+                "updatedAt",
+                "finishedAt",
+                "error",
+                "result",
+                "revision",
+                "pollAfterMs"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "OperationsCancelResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "live",
+              "test",
+              null
+            ]
+          },
+          "target": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "step": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "waiting",
+                    "done",
+                    "failed",
+                    "skipped"
+                  ]
+                },
+                "done": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "total": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "detail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "until": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "waitingReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "blocked",
+                    "due",
+                    null
+                  ]
+                },
+                "group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "finishedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "state",
+                "done",
+                "total",
+                "detail",
+                "until",
+                "waitingReason",
+                "group",
+                "startedAt",
+                "finishedAt"
+              ]
+            }
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "cancelable": {
+            "type": "boolean"
+          },
+          "cancelRequested": {
+            "type": "boolean"
+          },
+          "startedBy": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "api_key",
+                  "system"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "startedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "finishedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "step": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "step",
+              "retryable"
+            ]
+          },
+          "result": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 300
+              },
+              "ids": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 80
+                }
+              }
+            },
+            "required": [
+              "href",
+              "ids"
+            ]
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "pollAfterMs": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "title",
+          "text",
+          "orgId",
+          "mode",
+          "target",
+          "step",
+          "steps",
+          "attempt",
+          "cancelable",
+          "cancelRequested",
+          "startedBy",
+          "createdAt",
+          "startedAt",
+          "updatedAt",
+          "finishedAt",
+          "error",
+          "result",
+          "revision",
+          "pollAfterMs"
+        ]
+      },
+      "OperationsRetryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "live",
+              "test",
+              null
+            ]
+          },
+          "target": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "step": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "waiting",
+                    "done",
+                    "failed",
+                    "skipped"
+                  ]
+                },
+                "done": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "total": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "detail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "until": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "waitingReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "blocked",
+                    "due",
+                    null
+                  ]
+                },
+                "group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "finishedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "state",
+                "done",
+                "total",
+                "detail",
+                "until",
+                "waitingReason",
+                "group",
+                "startedAt",
+                "finishedAt"
+              ]
+            }
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "cancelable": {
+            "type": "boolean"
+          },
+          "cancelRequested": {
+            "type": "boolean"
+          },
+          "startedBy": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "api_key",
+                  "system"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "startedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "finishedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "step": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "step",
+              "retryable"
+            ]
+          },
+          "result": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 300
+              },
+              "ids": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 80
+                }
+              }
+            },
+            "required": [
+              "href",
+              "ids"
+            ]
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "pollAfterMs": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "title",
+          "text",
+          "orgId",
+          "mode",
+          "target",
+          "step",
+          "steps",
+          "attempt",
+          "cancelable",
+          "cancelRequested",
+          "startedBy",
+          "createdAt",
+          "startedAt",
+          "updatedAt",
+          "finishedAt",
+          "error",
+          "result",
+          "revision",
+          "pollAfterMs"
         ]
       },
       "PassesCreateParams": {
@@ -97611,6 +98856,869 @@
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/operations/{id}": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "scans:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "apiKey": [
+              "messages:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "scan-setup:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "nfc:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "wallet:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "org:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "members:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "audit:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "brand:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Read an operation. An unchanged revision answers 304 when If-None-Match carries its ETag",
+        "tags": [
+          "operations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsRetrieveResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-24146ede9f5a",
+                  "kind": "bulk.run",
+                  "status": "succeeded",
+                  "title": "MISSING",
+                  "text": "MISSING",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "live",
+                  "target": {
+                    "type": "generic",
+                    "id": "0193a1b2-7c00-7000-8000-307570ace8d4"
+                  },
+                  "step": "mapping",
+                  "steps": [
+                    {
+                      "key": "tier",
+                      "label": "MISSING",
+                      "state": "done",
+                      "done": 39,
+                      "total": 128,
+                      "detail": "MISSING",
+                      "until": 1795572600000,
+                      "group": "Access",
+                      "startedAt": 1794362400000,
+                      "finishedAt": 1795570500000
+                    }
+                  ],
+                  "attempt": 1,
+                  "cancelable": true,
+                  "cancelRequested": true,
+                  "startedBy": {
+                    "type": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011"
+                  },
+                  "createdAt": 1794362400000,
+                  "startedAt": 1794362400000,
+                  "updatedAt": 1795399200000,
+                  "finishedAt": 1795570500000,
+                  "error": null,
+                  "result": {
+                    "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                    "ids": {
+                      "tier": "Day pass"
+                    }
+                  },
+                  "revision": 3,
+                  "pollAfterMs": 1471
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "operations.getOperationsById",
+        "x-sdk": {
+          "resource": "operations",
+          "method": "retrieve"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/operations": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "scans:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "apiKey": [
+              "messages:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "scan-setup:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "nfc:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "wallet:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "org:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "members:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "audit:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "brand:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "List operations: started by you, in an organization you read, or platform-wide for admins",
+        "tags": [
+          "operations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "active",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "mine",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "required": false,
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 160,
+              "pattern": "^[^:]+:.+$"
+            },
+            "required": false,
+            "name": "target",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-45bb476bbc45",
+                      "kind": "bulk.run",
+                      "status": "succeeded",
+                      "title": "MISSING",
+                      "text": "MISSING",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "mode": "live",
+                      "target": {
+                        "type": "generic",
+                        "id": "0193a1b2-7c00-7000-8000-549e0bd20560"
+                      },
+                      "step": "mapping",
+                      "steps": [
+                        {
+                          "key": "tier",
+                          "label": "MISSING",
+                          "state": "done",
+                          "done": 39,
+                          "total": 128,
+                          "detail": "MISSING",
+                          "until": 1795572600000,
+                          "group": "Access",
+                          "startedAt": 1794362400000,
+                          "finishedAt": 1795570500000
+                        }
+                      ],
+                      "attempt": 1,
+                      "cancelable": true,
+                      "cancelRequested": true,
+                      "startedBy": {
+                        "type": "user",
+                        "id": "0193a1b2-7c00-7000-8000-000000000011"
+                      },
+                      "createdAt": 1794362400000,
+                      "startedAt": 1794362400000,
+                      "updatedAt": 1795399200000,
+                      "finishedAt": 1795570500000,
+                      "error": null,
+                      "result": {
+                        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                        "ids": {
+                          "tier": "Day pass"
+                        }
+                      },
+                      "revision": 3,
+                      "pollAfterMs": 1471
+                    }
+                  ],
+                  "nextCursor": "c1.4812"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "operations.getOperations",
+        "x-sdk": {
+          "resource": "operations",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/operations/{id}/cancel": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "holders:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:review"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:publish"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "scan-setup:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "apiKey": [
+              "nfc:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "wallet:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "api-keys:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "org:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "brand:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Stop an operation: a queued one at once, a running one at its next safe point",
+        "tags": [
+          "operations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsCancelResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-cb8398d01ce2",
+                  "kind": "bulk.run",
+                  "status": "succeeded",
+                  "title": "MISSING",
+                  "text": "MISSING",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "live",
+                  "target": {
+                    "type": "generic",
+                    "id": "0193a1b2-7c00-7000-8000-696c742e8471"
+                  },
+                  "step": "mapping",
+                  "steps": [
+                    {
+                      "key": "tier",
+                      "label": "MISSING",
+                      "state": "done",
+                      "done": 39,
+                      "total": 128,
+                      "detail": "MISSING",
+                      "until": 1795572600000,
+                      "group": "Access",
+                      "startedAt": 1794362400000,
+                      "finishedAt": 1795570500000
+                    }
+                  ],
+                  "attempt": 1,
+                  "cancelable": true,
+                  "cancelRequested": true,
+                  "startedBy": {
+                    "type": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011"
+                  },
+                  "createdAt": 1794362400000,
+                  "startedAt": 1794362400000,
+                  "updatedAt": 1795399200000,
+                  "finishedAt": 1795570500000,
+                  "error": null,
+                  "result": {
+                    "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                    "ids": {
+                      "tier": "Day pass"
+                    }
+                  },
+                  "revision": 3,
+                  "pollAfterMs": 1471
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "operations.postOperationsByIdCancel",
+        "x-sdk": {
+          "resource": "operations",
+          "method": "cancel"
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "OPERATION_NOT_CANCELABLE",
+          "OPERATION_NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/operations/{id}/retry": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "holders:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:review"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:publish"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "scan-setup:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "apiKey": [
+              "nfc:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "wallet:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "api-keys:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "org:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "brand:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Retry a failed operation under the same id with the next attempt",
+        "tags": [
+          "operations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsRetryResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-b0ad56dbc5b4",
+                  "kind": "bulk.run",
+                  "status": "succeeded",
+                  "title": "MISSING",
+                  "text": "MISSING",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "live",
+                  "target": {
+                    "type": "generic",
+                    "id": "0193a1b2-7c00-7000-8000-4ec68f100a84"
+                  },
+                  "step": "mapping",
+                  "steps": [
+                    {
+                      "key": "tier",
+                      "label": "MISSING",
+                      "state": "done",
+                      "done": 39,
+                      "total": 128,
+                      "detail": "MISSING",
+                      "until": 1795572600000,
+                      "group": "Access",
+                      "startedAt": 1794362400000,
+                      "finishedAt": 1795570500000
+                    }
+                  ],
+                  "attempt": 1,
+                  "cancelable": true,
+                  "cancelRequested": true,
+                  "startedBy": {
+                    "type": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011"
+                  },
+                  "createdAt": 1794362400000,
+                  "startedAt": 1794362400000,
+                  "updatedAt": 1795399200000,
+                  "finishedAt": 1795570500000,
+                  "error": null,
+                  "result": {
+                    "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                    "ids": {
+                      "tier": "Day pass"
+                    }
+                  },
+                  "revision": 3,
+                  "pollAfterMs": 1471
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "operations.postOperationsByIdRetry",
+        "x-sdk": {
+          "resource": "operations",
+          "method": "retry"
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
+          "OPERATION_NOT_RETRYABLE",
+          "OPERATION_RUNNING",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

@@ -868,6 +868,49 @@ class NfcResource:
         self.tag_types = NfcTagTypesResource(core)
 
 
+class OperationsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def cancel(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OperationsCancelResult:
+        """Stop an operation: a queued one at once, a running one at its next safe point `POST /api/v1/operations/{id}/cancel`"""
+        return self._core.request("POST", f"/api/v1/operations/{_p(id)}/cancel", result=m.OperationsCancelResult, **opts)
+
+    def list(
+        self,
+        *,
+        active: _Literal["true", "false"] | None = None,
+        mine: _Literal["true", "false"] | None = None,
+        kind: str | None = None,
+        target: str | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.OperationsListItem]:
+        """List operations: started by you, in an organization you read, or platform-wide for admins `GET /api/v1/operations`"""
+        return self._core.paginate("GET", "/api/v1/operations", query={"active": active, "mine": mine, "kind": kind, "target": target, "cursor": cursor, "limit": limit}, result=m.OperationsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OperationsRetrieveResult:
+        """Read an operation. An unchanged revision answers 304 when If-None-Match carries its ETag `GET /api/v1/operations/{id}`"""
+        return self._core.request("GET", f"/api/v1/operations/{_p(id)}", result=m.OperationsRetrieveResult, **opts)
+
+    def retry(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OperationsRetryResult:
+        """Retry a failed operation under the same id with the next attempt `POST /api/v1/operations/{id}/retry`"""
+        return self._core.request("POST", f"/api/v1/operations/{_p(id)}/retry", idempotent=True, result=m.OperationsRetryResult, **opts)
+
+
 class OrgsEntitlementsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2611,6 +2654,7 @@ class Resources:
         self.holders = HoldersResource(core)
         self.message_rules = MessageRulesResource(core)
         self.nfc = NfcResource(core)
+        self.operations = OperationsResource(core)
         self.orgs = OrgsResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
