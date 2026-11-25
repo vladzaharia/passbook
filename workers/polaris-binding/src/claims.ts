@@ -33,6 +33,7 @@ const RESERVED = new Set([
 const NAMESPACE = /^passbook_[a-z0-9_]{1,48}$/;
 const LISTED = /^[A-Za-z][A-Za-z0-9_.:-]{0,63}$/;
 const MAX_VALUE = 2048;
+const bytes = (v: string): number => new TextEncoder().encode(v).length;
 const MAX_KEYS = 20;
 const MAX_BYTES = 8192;
 const MAX_DEPTH = 5;
@@ -79,14 +80,16 @@ export function encode(v: ClaimValue): string {
       out = JSON.stringify(v.value);
       break;
     case 'json':
-      if (!v.value || typeof v.value !== 'object' || depth(v.value) > MAX_DEPTH)
-        return refuse('Invalid claim value.');
+      if (!v.value || typeof v.value !== 'object') return refuse('Invalid claim value.');
       out = JSON.stringify(v.value);
+      // Size first: depth() walks the whole value.
+      if (bytes(out) > MAX_VALUE) return refuse('Claim value is empty or too long.');
+      if (depth(v.value) > MAX_DEPTH) return refuse('Invalid claim value.');
       break;
     default:
       return refuse('Invalid claim type.');
   }
-  if (out.length === 0 || out.length > MAX_VALUE)
+  if (out.length === 0 || bytes(out) > MAX_VALUE)
     return refuse('Claim value is empty or too long.');
   return out;
 }
@@ -150,7 +153,7 @@ export function merge(
   const removed: string[] = [];
   const done = new Set<string>();
   for (const c of current) {
-    if (!(c.key in changes)) {
+    if (!Object.hasOwn(changes, c.key)) {
       next.push(c);
       continue;
     }
@@ -168,8 +171,8 @@ export function merge(
       set.push(key);
     }
   const managed = next.filter((c) => keyKind(c.key, claimKeys));
-  const bytes = managed.reduce((n, c) => n + c.key.length + c.value.length, 0);
-  if (managed.length > MAX_KEYS || bytes > MAX_BYTES) refuse('Too many claims for one owner.');
+  const total = managed.reduce((n, c) => n + bytes(c.key) + bytes(c.value), 0);
+  if (managed.length > MAX_KEYS || total > MAX_BYTES) refuse('Too many claims for one owner.');
   return { next, set, removed };
 }
 

@@ -83,7 +83,7 @@ describe.each(['v2', 'admin'] as const)('custom groups (%s layout)', (layout) =>
   it('names a taken name a conflict and records no group', async () => {
     const { api, pocket } = setup(layout);
     pocket.s.override = (m, p) =>
-      m === 'GET' && p.includes('/user-groups?search=')
+      m === 'GET' && p.includes('/user-groups?search=passbook_g_taken')
         ? { data: [{ id: 'g-x', name: 'passbook_g_taken' }], pagination: {} }
         : undefined;
     await expect(api.createGroup('taken', 'Taken', ctx())).rejects.toThrow(/^IDP_CONFLICT/);
@@ -235,7 +235,7 @@ describe('adopted groups', () => {
     s.pocket.s.groupNames['g-other'] = 'owner_renamed';
     s.clock.now += 11 * 60_000;
     await expect(s.api.apply('u1', { remove: ['g:staff'] }, ctx({ ref: 'r2' }))).rejects.toThrow(
-      /^IDP_UNSAFE_CONFIG/,
+      /^IDP_REFUSED/,
     );
   });
 

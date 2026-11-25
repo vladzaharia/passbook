@@ -10,7 +10,7 @@ import {
   grantsOfRole,
   liveGrantSubjects,
   noteExternal,
-} from './store.ts';
+} from './store-grants.ts';
 import {
   type Bucket,
   IdpError,

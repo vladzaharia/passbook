@@ -48,7 +48,7 @@ export function signupApi(s: Shared): SignupApi {
           ),
         );
       const { registry } = await gate.requireWrite(mm);
-      const groupIds = await call.guard(mm, () => mappedIds(targets, registry));
+      const groupIds = await call.guard(mm, () => mappedIds(targets, registry, true));
       return call.ledgered(c.dryRun ? 'preview' : 'createSignup', mm, async (req) => {
         if (s.dry(c.dryRun)) {
           await noteCall(db, 'dry_run', mm, deps.now(), 'dry_run');

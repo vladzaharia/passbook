@@ -48,7 +48,9 @@ CREATE TABLE idp_health (
   groups TEXT NOT NULL,
   key_subject TEXT,
   key_expires_at INTEGER,
-  layout_suspect INTEGER NOT NULL
+  layout_suspect INTEGER NOT NULL,
+  -- Custom or adopted groups that are renamed, gone or refused: writes to those targets stop, others go on.
+  blocked TEXT NOT NULL DEFAULT '[]'
 ) STRICT;
 
 -- Append-only ledger. A call writes `start` rows (the budget reservations) and then `end`; a refused,
@@ -119,14 +121,16 @@ CREATE TABLE idp_locks (
 CREATE TABLE idp_groups (
   key TEXT PRIMARY KEY,
   kind TEXT NOT NULL CHECK (kind IN ('role', 'custom', 'adopted')),
-  state TEXT NOT NULL CHECK (state IN ('pending', 'live', 'abandoned', 'deleting', 'deleted')),
+  state TEXT NOT NULL CHECK (state IN ('pending', 'live', 'abandoned', 'deleting', 'deleted', 'gone')),
   group_id TEXT UNIQUE,
   name TEXT NOT NULL,
+  -- What the intent asked for, so health settles only a group that matches it.
+  friendly_name TEXT,
   created_by_binding INTEGER NOT NULL CHECK (created_by_binding IN (0, 1)),
   ref TEXT,
   created_at INTEGER NOT NULL,
   deleted_at INTEGER,
-  CHECK ((state IN ('live', 'deleting', 'deleted')) = (group_id IS NOT NULL))
+  CHECK ((state IN ('live', 'deleting', 'deleted', 'gone')) = (group_id IS NOT NULL))
 ) STRICT;
 
 CREATE TRIGGER idp_groups_no_delete BEFORE DELETE ON idp_groups
@@ -134,9 +138,10 @@ BEGIN SELECT RAISE(ABORT, 'idp_groups is append-only'); END;
 
 CREATE TRIGGER idp_groups_guard BEFORE UPDATE ON idp_groups
 WHEN NEW.key != OLD.key OR NEW.kind != OLD.kind OR NEW.name != OLD.name
+  OR NEW.friendly_name IS NOT OLD.friendly_name
   OR NEW.created_by_binding != OLD.created_by_binding OR NEW.created_at != OLD.created_at
   OR (OLD.group_id IS NOT NULL AND NEW.group_id IS NOT OLD.group_id)
   OR (OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NOT OLD.deleted_at)
   OR NOT (NEW.state = OLD.state OR (OLD.state = 'pending' AND NEW.state IN ('live', 'abandoned'))
-    OR (OLD.state = 'live' AND NEW.state = 'deleting') OR (OLD.state = 'deleting' AND NEW.state = 'deleted'))
+    OR (OLD.state = 'live' AND NEW.state IN ('deleting', 'gone')) OR (OLD.state = 'deleting' AND NEW.state IN ('deleted', 'live')))
 BEGIN SELECT RAISE(ABORT, 'idp_groups: immutable fields, or a state out of order'); END;

@@ -1,5 +1,5 @@
 import { type Custom, type Registry, type Settings, withRecorded } from './registry.ts';
-import { listGroupRows } from './store.ts';
+import { listGroupRows } from './store-groups.ts';
 import type { WritableRole } from './types.ts';
 
 /**
@@ -19,7 +19,13 @@ export async function composeRegistry(
   for (const r of rows) {
     if (!r.groupId || (r.state !== 'live' && r.state !== 'deleting')) continue;
     if (r.kind === 'custom')
-      custom.push({ key: r.key, id: r.groupId, name: r.name, kind: 'custom' });
+      custom.push({
+        key: r.key,
+        id: r.groupId,
+        name: r.name,
+        kind: 'custom',
+        deleting: r.state === 'deleting',
+      });
     // An adopted group counts only while the owner still lists it, under the id they listed.
     else if (
       r.kind === 'adopted' &&
@@ -28,4 +34,14 @@ export async function composeRegistry(
       custom.push({ key: r.key, id: r.groupId, name: r.name, kind: 'adopted' });
   }
   return withRecorded(base, roles, custom);
+}
+
+/** The registry without the custom and adopted targets health found renamed or gone. */
+export function withoutBlocked(registry: Registry, blocked: string[]): Registry {
+  if (!blocked.length) return registry;
+  return withRecorded(
+    registry,
+    [],
+    registry.custom.filter((c) => !blocked.includes(`g:${c.key}`)),
+  );
 }
