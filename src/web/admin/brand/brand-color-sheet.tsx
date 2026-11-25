@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
 import { PASS_FIX_COPY } from '@/shared/copy/pass-setup-fix.ts';
-import { Button, Dialog, DialogContent, ErrorState, SkeletonRows, toast } from '@/web/ui/index.ts';
+import { UserMessageError } from '@/web/lib/errors.ts';
+import { ErrorState, FormDialog, SkeletonRows, useFormErrors } from '@/web/ui/index.ts';
 import { HEX } from '../orgs/branding.ts';
 import { ColorField } from '../orgs/color-field.tsx';
 import { brandingUrl } from '../orgs/queries.ts';
@@ -60,13 +61,15 @@ export function BrandColorSheet({
     };
   })();
   const v = { ...start, ...edit };
-  const valid =
-    kind === 'accent'
-      ? HEX.test(v.accent ?? '')
-      : [v.background, v.foreground, v.label].every((c) => HEX.test(c ?? ''));
+  const err = (c: string | undefined) => (c && !HEX.test(c) ? BRAND.colourError : undefined);
+  const keys =
+    kind === 'accent' ? (['accent'] as const) : (['background', 'foreground', 'label'] as const);
+  const check = useFormErrors(
+    Object.fromEntries(keys.flatMap((k) => (HEX.test(v[k] ?? '') ? [] : [[k, BRAND.colourError]]))),
+  );
 
   async function commit() {
-    if (!view || !valid) return;
+    if (!view) return;
     try {
       await save.mutateAsync({
         expectedRevision: view.revision,
@@ -81,91 +84,85 @@ export function BrandColorSheet({
                 },
               },
       });
-      onSaved();
-      onOpenChange(false);
     } catch (cause) {
-      if (isSetupChanged(cause)) {
-        toast.error(COPY.stale, 'Could not save');
-        void setup.refetch();
-      } else toast.error(cause, 'Could not save');
+      if (!isSetupChanged(cause)) throw cause;
+      void setup.refetch();
+      throw new UserMessageError(COPY.stale);
     }
+    onSaved();
+    onOpenChange(false);
   }
 
-  const err = (c: string | undefined) => (c && !HEX.test(c) ? BRAND.colourError : undefined);
   return (
-    <Dialog open={open} onOpenChange={(o) => !save.isPending && onOpenChange(o)}>
-      <DialogContent
-        title={kind === 'accent' ? COPY.accentTitle : COPY.colorsTitle}
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" disabled={save.isPending} onClick={() => onOpenChange(false)}>
-              {COPY.cancel}
-            </Button>
-            <Button loading={save.isPending} disabled={!valid || !view} onClick={commit}>
-              {COPY.save}
-            </Button>
-          </>
-        }
-      >
-        {setup.isPending ? (
-          <SkeletonRows rows={2} label="Loading brand" />
-        ) : setup.isError ? (
-          <ErrorState
-            inline
-            subject="the brand"
-            error={setup.error}
-            onRetry={() => setup.refetch()}
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={kind === 'accent' ? COPY.accentTitle : COPY.colorsTitle}
+      size="md"
+      dirty={edit !== undefined}
+      check={check}
+      onSubmit={commit}
+      submitLabel={COPY.save}
+      busy={save.isPending}
+      onClose={() => setEdit(undefined)}
+    >
+      {setup.isPending ? (
+        <SkeletonRows rows={2} label="Loading brand" />
+      ) : setup.isError ? (
+        <ErrorState
+          inline
+          subject="the brand"
+          error={setup.error}
+          onRetry={() => setup.refetch()}
+        />
+      ) : kind === 'accent' ? (
+        <div className="flex flex-col gap-3">
+          <ColorField
+            label={BRAND.accent}
+            value={v.accent ?? ''}
+            fallback="#0f766e"
+            empty="Default"
+            error={err(v.accent)}
+            help={BRAND.accentHelp}
+            onChange={(accent) => setEdit({ ...edit, accent })}
           />
-        ) : kind === 'accent' ? (
-          <div className="flex flex-col gap-3">
+          <AccentChips value={v.accent ?? ''} onPick={(accent) => setEdit({ ...edit, accent })} />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {(['background', 'foreground', 'label'] as const).map((key) => (
             <ColorField
-              label={BRAND.accent}
-              value={v.accent ?? ''}
-              fallback="#0f766e"
-              empty="Default"
-              error={err(v.accent)}
-              help={BRAND.accentHelp}
-              onChange={(accent) => setEdit({ ...edit, accent })}
-            />
-            <AccentChips value={v.accent ?? ''} onPick={(accent) => setEdit({ ...edit, accent })} />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {(['background', 'foreground', 'label'] as const).map((key) => (
-              <ColorField
-                key={key}
-                label={
-                  key === 'background'
-                    ? BRAND.background
-                    : key === 'foreground'
-                      ? BRAND.text
-                      : BRAND.labels
-                }
-                value={v[key] ?? ''}
-                fallback="#ffffff"
-                empty={BRAND.notSet}
-                error={err(v[key])}
-                onChange={(c) => setEdit({ ...edit, [key]: c })}
-              />
-            ))}
-            <PaletteChips
-              palettes={palettes}
-              current={[v.background ?? '', v.foreground ?? '', v.label ?? '']}
-              disabled={false}
-              onPick={(p) =>
-                setEdit({
-                  ...edit,
-                  background: p.background,
-                  foreground: p.foreground,
-                  label: p.label,
-                })
+              key={key}
+              label={
+                key === 'background'
+                  ? BRAND.background
+                  : key === 'foreground'
+                    ? BRAND.text
+                    : BRAND.labels
               }
+              value={v[key] ?? ''}
+              fallback="#ffffff"
+              empty={BRAND.notSet}
+              error={err(v[key])}
+              onChange={(c) => setEdit({ ...edit, [key]: c })}
             />
-            <ContrastLine bg={v.background ?? ''} fg={v.foreground ?? ''} label={v.label ?? ''} />
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          ))}
+          <PaletteChips
+            palettes={palettes}
+            current={[v.background ?? '', v.foreground ?? '', v.label ?? '']}
+            disabled={false}
+            onPick={(p) =>
+              setEdit({
+                ...edit,
+                background: p.background,
+                foreground: p.foreground,
+                label: p.label,
+              })
+            }
+          />
+          <ContrastLine bg={v.background ?? ''} fg={v.foreground ?? ''} label={v.label ?? ''} />
+        </div>
+      )}
+    </FormDialog>
   );
 }

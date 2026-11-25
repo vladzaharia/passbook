@@ -350,4 +350,33 @@ describe('status page', () => {
       if (el.classList.contains('border') && el.classList.contains('rounded-lg')) framed.push(el);
     expect(framed).toHaveLength(1);
   });
+
+  it('clears the incident draft on Cancel and shows a refused field under it', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/status', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/status': () => json(status),
+        '/api/v1/status/workflows': noRuns,
+        '/api/v1/status/incidents': (_u, init) =>
+          init?.method === 'POST'
+            ? problem(422, 'validation_failed', 'Invalid.', [
+                { path: 'title', message: 'Too vague.' },
+              ])
+            : json({ items: [] }),
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Open note' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Open incident note' });
+    await user.type(within(dialog).getByLabelText(/Title/), 'Slow pushes');
+    await user.type(within(dialog).getByLabelText(/Note/), 'Looking into it');
+    await user.click(within(dialog).getByRole('button', { name: 'Publish' }));
+    expect(await within(dialog).findByText('Too vague.')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await user.click(screen.getByRole('button', { name: 'Open note' }));
+    dialog = await screen.findByRole('dialog', { name: 'Open incident note' });
+    expect(within(dialog).getByLabelText(/Title/)).toHaveValue('');
+    expect(within(dialog).queryByText('Too vague.')).toBeNull();
+  });
 });
