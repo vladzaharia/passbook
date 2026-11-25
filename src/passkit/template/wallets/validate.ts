@@ -112,6 +112,35 @@ export function walletsManifestIssues(
   }
   if (wallets.google?.classKey !== undefined)
     checkExprAt(wallets.google.classKey, 'wallets.google.classKey');
+  if (typeof wallets.google?.classKey === 'string') {
+    const parts = wallets.google.classKey.split(/(\{\{[^}]*\}\})/);
+    const slots = parts.flatMap((part, i) =>
+      part.startsWith('{{')
+        ? [{ url: /\|\s*url\s*\}\}$/.test(part), before: parts[i - 1] ?? '' }]
+        : [],
+    );
+    // `|url` escapes every character but A-Z a-z 0-9 - _ . ! ~ * ' ( ); a joiner from that set can merge parts.
+    const joined = slots.every(
+      (slot, i) => slot.url && (i === 0 || /[^\w\-.!~*'()]/.test(slot.before)),
+    );
+    if (slots.length > 1 && !joined)
+      warn(
+        'WALLETS_CLASS_KEY',
+        'Parts of the class key can run together: end each with |url and join them with | or a space.',
+        'wallets.google.classKey',
+      );
+  }
+  const keyed =
+    typeof wallets.google?.classKey === 'string'
+      ? /^\s*\{\{\s*([\w-]+)\s*\}\}\s*$/.exec(wallets.google.classKey)?.[1]
+      : undefined;
+  const keyType = keyed ? (properties[keyed] as { type?: unknown } | undefined)?.type : undefined;
+  if (keyType === 'object' || keyType === 'array')
+    error(
+      'WALLETS_CLASS_KEY',
+      'The class key is an object or list. Read a text or number input, or one field of it.',
+      'wallets.google.classKey',
+    );
 
   const referenced = new Set<string>();
   for (const name of WALLET_TARGETS) {

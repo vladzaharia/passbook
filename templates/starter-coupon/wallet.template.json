@@ -4,7 +4,13 @@
   "description": "A single-use offer with an expiry.",
   "wallets": {
     "schema": 1,
+    "roles": {
+      "finePrint": {
+        "field": "fine"
+      }
+    },
     "google": {
+      "classKey": "{{offer|url}}",
       "images": {
         "logo": "wallets/google/logo.png"
       }

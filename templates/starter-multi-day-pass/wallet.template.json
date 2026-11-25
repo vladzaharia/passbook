@@ -5,6 +5,7 @@
   "wallets": {
     "schema": 1,
     "google": {
+      "classKey": "{{eventName|url}}|{{startsAt|url}}|{{endsAt|url}}|{{venueName|url}}|{{venueRegion|url}}|{{venueRoom|url}}",
       "images": {
         "logo": "wallets/google/logo.png",
         "thumbnail": "wallets/google/thumbnail.png"
