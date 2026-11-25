@@ -67,14 +67,14 @@ export function RuleWhen({
       : undefined;
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-3 sm:grid-cols-[auto_1fr_1fr_1.4fr] sm:items-start">
+      <div className="grid gap-3 @lg:grid-cols-[auto_1fr_1fr_1.4fr] @lg:items-start">
         <FormField label="Amount" error={errors.offset}>
           {(c) => (
             <NumberField
               {...c}
               min={lastScan ? 1 : 0}
               max={366}
-              className="w-full sm:w-24"
+              className="w-full @lg:w-24"
               value={state.amount}
               onValueChange={(amount) => onChange({ amount })}
             />
@@ -131,7 +131,7 @@ export function RuleWhen({
         />
       )}
       <DependentSettings open={state.unit === 'day'}>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 @md:grid-cols-2">
           <FormField label="Send at" error={errors.sendAt}>
             {(c) => (
               <Input
