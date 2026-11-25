@@ -67,6 +67,8 @@ export function useIdentityCertificates(identityId: string, enabled = true) {
 export function useAppleCalls() {
   return useQuery({
     queryKey: [...KEY, 'apple-calls'],
+    // An unreachable provisioner stays down for seconds; show Retry instead of spinning.
+    retry: false,
     queryFn: ({ signal }) =>
       api.get('/api/v1/platform/apple-calls', AppleCallListSchema, { signal }),
   });
