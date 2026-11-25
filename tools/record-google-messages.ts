@@ -24,7 +24,7 @@ interface Recorded {
 
 const b64u = (v: Buffer | string) => Buffer.from(v).toString('base64url');
 
-async function accessToken(key: { client_email: string; private_key: string }, f: Fetcher) {
+export async function accessToken(key: { client_email: string; private_key: string }, f: Fetcher) {
   const iat = Math.floor(Date.now() / 1000);
   const input = `${b64u(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))}.${b64u(
     JSON.stringify({
