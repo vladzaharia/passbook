@@ -1,12 +1,15 @@
 import { failure, ok, type Req } from './pocket-http.ts';
+import { HEALTH_TTL } from './policy.ts';
 import { ID, type Registry, type Settings } from './registry.ts';
 import type { Routes } from './routes.ts';
 import {
   abandonIntent,
   listGroupRows,
   recordAdopted,
+  setGroupBack,
   setGroupGone,
   setGroupLive,
+  setMissingSince,
 } from './store-groups.ts';
 import { IdpError } from './types.ts';
 
@@ -117,24 +120,36 @@ export interface TargetRead {
   groups: Record<string, string | null>;
   /** Role and protected groups: `[label, live name, configured name]`. A problem here is global. */
   roles: [string, string | null, string][];
-  /** Custom and adopted groups that are renamed or gone: only these targets stop. */
+  /** Custom and adopted groups that are renamed or missing: only these targets stop. */
   blocked: string[];
 }
 
-/** Reads every managed group's name. Large groups are found through the list, never by id. */
+/**
+ * Reads every managed group's name. Groups are found through the list, so a large member array is never
+ * fetched; the by-id read is the fallback for a miss. Role groups are read first: when none answers, the layout is
+ * wrong, nothing else is read and no state changes. A custom group missing once is blocked for that probe and
+ * marked; only a second miss a health TTL later makes it gone, and a found group is live again.
+ */
 export async function readTargets(
   db: D1Database,
   r: Routes,
   registry: Registry,
   req: Req,
+  now: number,
 ): Promise<TargetRead> {
   const out: TargetRead = { groups: {}, roles: [], blocked: [] };
   const rows = await listGroupRows(db);
   const bySearch = async (id: string, name: string): Promise<string | null> => {
-    const res = await req('GET', r.groupSearch(name));
-    if (res.status === 404) return null;
-    if (!ok(res)) throw failure(res);
-    return items(res.body).find((g) => g.id === id)?.name ?? null;
+    for (let page = 1; page <= 5; page++) {
+      const res = await req('GET', r.groupSearch(name, page));
+      if (res.status === 404) return null;
+      if (!ok(res)) throw failure(res);
+      const list = items(res.body);
+      const hit = list.find((g) => g.id === id);
+      if (hit) return hit.name;
+      if (list.length < 100) break;
+    }
+    return null;
   };
   const byId = async (id: string): Promise<string | null> => {
     const res = await req('GET', r.group(id));
@@ -146,26 +161,30 @@ export async function readTargets(
     return name;
   };
   for (const e of registry.entries) {
-    // The user group can hold everyone: it is found through the list, with no member array.
-    const name = e.role === 'users' ? await bySearch(e.id, e.name) : await byId(e.id);
+    const name = (await bySearch(e.id, e.name)) ?? (await byId(e.id));
     out.groups[e.role] ??= name;
     out.roles.push([e.role, name, e.name]);
   }
+  if (out.roles.every(([, name]) => name === null)) return out;
   for (const c of registry.custom) {
     const label = `g:${c.key}`;
-    let name = await bySearch(c.id, c.name);
-    if (name === null) {
-      // Not found under its recorded name: renamed, or deleted. Only the id tells which.
-      name = await byId(c.id);
-      if (
-        name === null &&
-        c.kind === 'custom' &&
-        rows.some((x) => x.key === c.key && x.createdByBinding)
-      )
-        await setGroupGone(db, c.key);
-    }
+    const row = rows.find((x) => x.key === c.key);
+    const name = (await bySearch(c.id, c.name)) ?? (await byId(c.id));
     out.groups[label] = name;
-    if (name !== c.name) out.blocked.push(label);
+    if (name !== null) {
+      if (row?.missingSince != null) await setMissingSince(db, c.key, null);
+      if (name !== c.name) out.blocked.push(label);
+      continue;
+    }
+    out.blocked.push(label);
+    if (row?.missingSince == null) await setMissingSince(db, c.key, now);
+    else if (now - row.missingSince >= HEALTH_TTL && c.kind === 'custom' && row.createdByBinding)
+      await setGroupGone(db, c.key);
+  }
+  // A group marked gone that is found again under its id is live again.
+  for (const row of rows.filter((x) => x.state === 'gone' && x.groupId && x.createdByBinding)) {
+    if ((await bySearch(row.groupId as string, row.name)) === row.name)
+      await setGroupBack(db, row.key);
   }
   return out;
 }

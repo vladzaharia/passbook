@@ -130,6 +130,8 @@ CREATE TABLE idp_groups (
   ref TEXT,
   created_at INTEGER NOT NULL,
   deleted_at INTEGER,
+  -- When health first missed the group; cleared when it is found. A second miss a TTL later marks it gone.
+  missing_since INTEGER,
   CHECK ((state IN ('live', 'deleting', 'deleted', 'gone')) = (group_id IS NOT NULL))
 ) STRICT;
 
@@ -143,5 +145,5 @@ WHEN NEW.key != OLD.key OR NEW.kind != OLD.kind OR NEW.name != OLD.name
   OR (OLD.group_id IS NOT NULL AND NEW.group_id IS NOT OLD.group_id)
   OR (OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NOT OLD.deleted_at)
   OR NOT (NEW.state = OLD.state OR (OLD.state = 'pending' AND NEW.state IN ('live', 'abandoned'))
-    OR (OLD.state = 'live' AND NEW.state IN ('deleting', 'gone')) OR (OLD.state = 'deleting' AND NEW.state IN ('deleted', 'live')))
+    OR (OLD.state = 'live' AND NEW.state IN ('deleting', 'gone')) OR (OLD.state = 'gone' AND NEW.state = 'live') OR (OLD.state = 'deleting' AND NEW.state IN ('deleted', 'live')))
 BEGIN SELECT RAISE(ABORT, 'idp_groups: immutable fields, or a state out of order'); END;
