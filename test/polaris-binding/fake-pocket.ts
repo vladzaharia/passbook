@@ -39,7 +39,15 @@ export interface Seen {
 }
 interface User extends UserFields {
   groups: string[];
+  claims?: { key: string; value: string }[];
 }
+interface GroupMeta {
+  friendly: string;
+  createdAt: number;
+  claims: { key: string; value: string }[];
+  clients: string[];
+}
+const RESERVED = ['sub', 'email', 'name', 'groups', 'iss', 'aud', 'exp', 'iat'];
 interface Token {
   id: string;
   value: string;
@@ -56,8 +64,23 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
     ['g-other', 'staff'],
     ['g-extra', 'other_app'],
   ]);
+  const meta = new Map<string, GroupMeta>();
+  const metaOf = (id: string): GroupMeta => {
+    let m = meta.get(id);
+    if (!m) {
+      m = { friendly: nameOf(id), createdAt: 0, claims: [], clients: [] };
+      meta.set(id, m);
+    }
+    return m;
+  };
   const s = {
     config: { ...SAFE_CONFIG },
+    /** Per-group state the fake keeps: display name, claims and allowed clients. */
+    meta,
+    /** Rewrites what a claim PUT stores (drift). */
+    claimsTransform: undefined as
+      | ((claims: { key: string; value: string }[]) => { key: string; value: string }[])
+      | undefined,
     users: new Map<string, User>(),
     tokens: [] as Token[],
     audit: [] as ReturnType<typeof auditAccountCreated>[],
@@ -96,7 +119,9 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
   const groupList = (ids: string[]) => ids.map((id) => groupDto(id, nameOf(id)));
   const user = (id: string) => {
     const u = s.users.get(id);
-    return u && { ...userDto(id, u), userGroups: groupList(u.groups) };
+    return (
+      u && { ...userDto(id, u), userGroups: groupList(u.groups), customClaims: u.claims ?? [] }
+    );
   };
   const members = (gid: string) =>
     [...s.users.entries()].filter(([, u]) => u.groups.includes(gid)).map(([id]) => user(id));
@@ -125,11 +150,72 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
       return json(s.failWith.body ?? { message: 'nope' }, s.failWith.status);
 
     const group = path.match(new RegExp(`^${base}/user-groups/([^/]+)$`));
+    const dto = (gid: string) => {
+      const m = metaOf(gid);
+      return {
+        ...groupDto(gid, nameOf(gid), members(gid)),
+        friendlyName: m.friendly,
+        customClaims: m.claims,
+        allowedOidcClients: m.clients.map((id) => ({ id })),
+      };
+    };
     if (method === 'GET' && group) {
       const gid = group[1] as string;
       return groups.has(gid) && !s.missing.has(gid)
-        ? json(groupDto(gid, nameOf(gid), members(gid)))
+        ? json(dto(gid))
         : json({ error: 'not found' }, 404);
+    }
+    if (path === `${base}/user-groups` && method === 'GET') {
+      const q = url.searchParams.get('search') ?? '';
+      const hits = [...groups.keys()].filter((id) => nameOf(id).includes(q) && !s.missing.has(id));
+      return json(
+        paginated(
+          hits.map((id) => ({
+            ...groupDto(id, nameOf(id)),
+            createdAt: new Date(metaOf(id).createdAt || clock.now).toISOString(),
+          })),
+        ),
+      );
+    }
+    if (path === `${base}/user-groups` && method === 'POST') {
+      const b = body as { name: string; friendlyName: string };
+      if ([...groups.entries()].some(([id, n]) => n === b.name && !s.missing.has(id)))
+        return json({ error: 'in use' }, 409);
+      const id = `g-new-${groups.size}`;
+      groups.set(id, b.name);
+      meta.set(id, { friendly: b.friendlyName, createdAt: clock.now, claims: [], clients: [] });
+      return json(dto(id), 201);
+    }
+    if (group && method === 'PUT') {
+      const gid = group[1] as string;
+      if (!groups.has(gid)) return json({ error: 'not found' }, 404);
+      const b = body as { name: string; friendlyName: string };
+      groups.set(gid, b.name);
+      metaOf(gid).friendly = b.friendlyName;
+      return json(dto(gid));
+    }
+    if (group && method === 'DELETE') {
+      groups.delete(group[1] as string);
+      return json(null, 204);
+    }
+    const clients = path.match(new RegExp(`^${base}/user-groups/([^/]+)/allowed-oidc-clients$`));
+    if (clients && method === 'PUT') {
+      metaOf(clients[1] as string).clients = (body as { oidcClientIds: string[] }).oidcClientIds;
+      return json(null, 204);
+    }
+    const claimPut = path.match(new RegExp(`^${base}/custom-claims/(user|user-group)/([^/]+)$`));
+    if (claimPut && method === 'PUT') {
+      const list = body as { key: string; value: string }[];
+      const keys = list.map((c) => c.key);
+      if (new Set(keys).size !== keys.length || keys.some((k) => RESERVED.includes(k)))
+        return json({ error: 'invalid claims' }, 400);
+      const stored = s.claimsTransform ? s.claimsTransform(list) : list;
+      if (claimPut[1] === 'user') {
+        const u = s.users.get(claimPut[2] as string);
+        if (!u) return json({ error: 'not found' }, 404);
+        u.claims = stored;
+      } else metaOf(claimPut[2] as string).claims = stored;
+      return json(null, 204);
     }
     const configPath =
       layout === 'admin'

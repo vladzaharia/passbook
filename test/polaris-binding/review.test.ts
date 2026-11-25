@@ -330,7 +330,7 @@ describe('L items', () => {
     pocket.s.override = (m, p) =>
       m === 'GET' && p.endsWith('/users/me') ? { name: 'x' } : undefined;
     expect((await api.health()).unsafe).toContain('key_user_unknown');
-    await expect(api.createSignup('member', ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
+    await expect(api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
   });
 
   it('L2 reads groups and the claim first, reads the user again right before the PUT, and compares every other key', async () => {
@@ -382,7 +382,7 @@ describe('L items', () => {
             userGroups: [{ id: 'g-console' }],
           }
         : undefined;
-    await expect(api.createSignup('member', ctx())).rejects.toThrow(/^IDP_DRIFT/);
+    await expect(api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_DRIFT/);
     expect(pocket.s.seen.some((r) => r.method === 'DELETE' && r.path.endsWith('/tok-id-9'))).toBe(
       true,
     );
@@ -414,6 +414,13 @@ describe('L items', () => {
     expect(methods).toEqual(
       [
         'apply',
+        'claims',
+        'createGroup',
+        'deleteGroup',
+        'ensureRoleGroup',
+        'groups',
+        'setClaims',
+        'updateGroup',
         'calls',
         'createSignup',
         'deleteSignup',
@@ -431,7 +438,7 @@ describe('L items', () => {
 
   it('L8 pages the ledger by id', async () => {
     const { api } = setup();
-    await api.createSignup('member', ctx());
+    await api.createSignup({ kind: 'member' }, ctx());
     const all = await api.calls(0);
     expect(all.length).toBeGreaterThan(2);
     const rest = await api.calls(0, all[0]?.id);

@@ -5,7 +5,7 @@ import type { Deps } from '../../workers/polaris-binding/src/pocket-http.ts';
 import type {
   ApplyCtx,
   BindingEnv,
-  WritableRole,
+  Target,
   WriteCtx,
 } from '../../workers/polaris-binding/src/types.ts';
 import { CLIENT_ID, type FakePocket, fakePocket, GROUPS } from './fake-pocket.ts';
@@ -54,6 +54,7 @@ const TABLES = [
   'idp_breaker',
   'idp_freezes',
   'idp_locks',
+  'idp_groups',
 ];
 
 /** The binding's tables in the worker project's D1; each test recreates them (the setup drops triggers it did not migrate). */
@@ -114,7 +115,7 @@ export async function captureLogs<T>(
 
 export async function seedGrant(
   subject: string,
-  role: WritableRole = 'developer',
+  role: Target = 'developer',
   source: 'signup' | 'added' = 'added',
 ): Promise<void> {
   await env.DB.prepare(
@@ -123,7 +124,7 @@ export async function seedGrant(
     .bind(subject, NOW)
     .run();
   await env.DB.prepare(
-    'INSERT INTO idp_grants (subject, role, source, created_at, confirmed_at) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO idp_grants (subject, target, source, created_at, confirmed_at) VALUES (?, ?, ?, ?, ?)',
   )
     .bind(subject, role, source, NOW, NOW)
     .run();

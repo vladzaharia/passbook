@@ -32,7 +32,9 @@ describe.each(MODES)('dry run when %s', (_n, patch, over) => {
 
   it('reads, computes and ledgers every write, and sends none', async () => {
     const s = await seeded();
-    await expect(s.api.createSignup('member', ctx(over))).resolves.toEqual({ dryRun: true });
+    await expect(s.api.createSignup({ kind: 'member' }, ctx(over))).resolves.toEqual({
+      dryRun: true,
+    });
     await expect(s.api.apply('u2', { add: ['console'] }, ctx(over))).resolves.toEqual({
       added: ['console'],
       removed: [],
@@ -98,7 +100,7 @@ describe.each(MODES)('dry run when %s', (_n, patch, over) => {
       groups: ['g-dev'],
     });
     await env.DB.prepare(
-      "INSERT INTO idp_signups (token_id, token_sha256, kind, ref, created_at, expires_at) VALUES ('tok-x', 'x', 'member', 'r', 1, 2)",
+      `INSERT INTO idp_signups (token_id, token_sha256, kind, targets, ref, created_at, expires_at) VALUES ('tok-x', 'x', 'member', '["console"]', 'r', 1, 2)`,
     ).run();
     await expect(s.api.deleteSignup('tok-x', ctx(over))).resolves.toEqual({ dryRun: true });
     expect(pocket.s.tokens).toHaveLength(1);

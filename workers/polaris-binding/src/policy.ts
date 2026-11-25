@@ -1,4 +1,4 @@
-import { ID, parseRegistry, type Registry } from './registry.ts';
+import { GROUP_KEY, ID, parseRegistry, type Registry, type Settings } from './registry.ts';
 import {
   type Actor,
   type ApplyCtx,
@@ -6,6 +6,7 @@ import {
   IdpError,
   SIGNUP_KINDS,
   type SignupKind,
+  type Target,
   WRITABLE_ROLES,
   type WritableRole,
 } from './types.ts';
@@ -100,31 +101,82 @@ export function assertCtx(value: unknown): Ctx {
   };
 }
 
-/** `add` and `remove` as writable role names, never overlapping. Whether the registry maps them is checked after the config gate. */
-export function assertDelta(value: unknown): { add: WritableRole[]; remove: WritableRole[] } {
+/** A role name or `g:<key>`. Never an id or a name: those are not accepted anywhere. */
+export function assertTarget(value: unknown): Target {
+  if (WRITABLE_ROLES.includes(value as WritableRole)) return value as WritableRole;
+  if (typeof value === 'string' && value.startsWith('g:') && GROUP_KEY.test(value.slice(2)))
+    return value as Target;
+  return refuse('Invalid target.');
+}
+
+export function assertGroupKey(value: unknown): string {
+  if (
+    typeof value !== 'string' ||
+    !GROUP_KEY.test(value) ||
+    WRITABLE_ROLES.includes(value as WritableRole)
+  )
+    refuse('Invalid group key.');
+  return value as string;
+}
+
+export function assertFriendlyName(value: unknown): string {
+  if (
+    typeof value !== 'string' ||
+    value !== value.normalize('NFC') ||
+    value.trim() !== value ||
+    value.length < 2 ||
+    value.length > 50 ||
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what this refuses
+    /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/.test(value)
+  )
+    refuse('Invalid group name.');
+  return value as string;
+}
+
+/** `add` and `remove` as targets (at most 10), never overlapping. Whether the registry maps them is checked later. */
+export function assertDelta(value: unknown): { add: Target[]; remove: Target[] } {
   const v = (value ?? {}) as { add?: unknown; remove?: unknown };
-  const list = (raw: unknown): WritableRole[] => {
+  const list = (raw: unknown): Target[] => {
     if (raw === undefined) return [];
-    if (!Array.isArray(raw) || raw.length > WRITABLE_ROLES.length) refuse('Invalid roles.');
-    for (const r of raw as unknown[])
-      if (!WRITABLE_ROLES.includes(r as WritableRole)) refuse('Invalid role.');
-    return [...new Set(raw as WritableRole[])];
+    if (!Array.isArray(raw) || raw.length > 10) refuse('Invalid roles.');
+    return [...new Set((raw as unknown[]).map(assertTarget))];
   };
   const add = list(v.add);
   const remove = list(v.remove);
   if (!add.length && !remove.length) refuse('Nothing to change.');
+  if (add.length + remove.length > 10) refuse('Too many changes.');
   if (add.some((r) => remove.includes(r))) refuse('A role cannot be added and removed.');
   return { add, remove };
 }
 
-/** The group ids for roles the registry maps as writable. Unmapped and protected roles are refused. */
-export function mappedIds(roles: WritableRole[], registry: Registry): string[] {
-  return roles.map((role) => registry.writableId(role) ?? refuse(`Role ${role} is not mapped.`));
+/** A signup spec: a kind, and up to 5 group keys in all. A platform signup needs a group. */
+export function assertSpec(value: unknown): { kind: SignupKind; groups: string[] } {
+  const v = value as { kind?: unknown; groups?: unknown } | null;
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return refuse('Invalid signup.');
+  const kind = assertKind(v.kind);
+  const raw = v.groups ?? [];
+  if (!Array.isArray(raw) || raw.length > 5) return refuse('Invalid signup groups.');
+  const groups = [...new Set((raw as unknown[]).map(assertGroupKey))];
+  if (kind === 'platform' && !groups.length) return refuse('A platform signup needs a group.');
+  return { kind, groups };
+}
+
+/** The group ids for targets the registry manages. Unmapped, unmanaged and protected targets are refused. */
+export function mappedIds(targets: Target[], registry: Registry): string[] {
+  return targets.map(
+    (t) =>
+      registry.targetId(t) ??
+      refuse(t.startsWith('g:') ? `Group ${t} is not managed.` : `Role ${t} is not mapped.`),
+  );
 }
 
 /** Reasons the deployment's own settings make writes unsafe. Checked before the cache and before any call. */
-export function envReasons(env: BindingEnv): { reasons: string[]; registry: Registry | null } {
-  const { registry, reasons } = parseRegistry(env);
+export function envReasons(env: BindingEnv): {
+  reasons: string[];
+  registry: Registry | null;
+  settings: Settings | null;
+} {
+  const { registry, settings, reasons } = parseRegistry(env);
   const out = [...reasons];
   if (env.POCKET_ID_API !== 'v2' && env.POCKET_ID_API !== 'admin') out.push('env_layout');
   if (!env.POCKET_ID_API_KEY) out.push('env_key');
@@ -136,7 +188,7 @@ export function envReasons(env: BindingEnv): { reasons: string[]; registry: Regi
   } catch {
     out.push('env_origin');
   }
-  return { reasons: out, registry };
+  return { reasons: out, registry, settings };
 }
 
 const emptyList = (raw: string | undefined): boolean => {

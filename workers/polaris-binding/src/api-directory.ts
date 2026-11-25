@@ -12,13 +12,13 @@ import {
   noteExternal,
 } from './store.ts';
 import {
+  type Bucket,
   IdpError,
   type IdpRpc,
-  type Role,
   type Snapshot,
   type SnapshotMember,
+  type Target,
   WRITABLE_ROLES,
-  type WritableRole,
 } from './types.ts';
 
 type DirectoryApi = Pick<IdpRpc, 'findByVerifiedEmail' | 'snapshot' | 'freeze'>;
@@ -42,7 +42,7 @@ export function directoryApi(s: Shared): DirectoryApi {
       const c = await call.guard(meta('findByVerifiedEmail'), () => assertCtx(ctx));
       const m = ctxMeta('findByVerifiedEmail', c);
       const want = await call.guard(m, () => assertEmail(email));
-      const registry = gate.readable();
+      const { registry } = await gate.readable();
       // The address is in the search url and the comparison only: never in the ledger, a log or a result.
       return call.ledgered('findByVerifiedEmail', m, async (req) => {
         const hits: string[] = [];
@@ -89,15 +89,24 @@ export function directoryApi(s: Shared): DirectoryApi {
       const c = await call.guard(meta('snapshot'), () => assertCtx(ctx));
       const m = ctxMeta('snapshot', c);
       const since = await call.guard(m, () => assertSince((ctx as { since?: unknown }).since));
-      const registry = gate.readable();
+      const { registry } = await gate.readable();
       const started = deps.now();
       const dry = s.dry(c.dryRun);
-      return call.ledgered(c.dryRun ? 'preview' : 'snapshot', m, async (req) => {
+      // The user group can hold everyone: its members are not needed, so it is not read.
+      const sources = [
+        ...registry.entries
+          .filter((e) => e.role !== 'users')
+          .map((e) => ({ label: e.role as string, id: e.id })),
+        ...registry.custom.map((g) => ({ label: `g:${g.key}`, id: g.id })),
+      ];
+      const buckets: Bucket[] = [
+        c.dryRun ? 'preview' : 'snapshot',
+        ...sources.map(() => 'snapshot_group' as const),
+      ];
+      return call.ledgered(buckets, m, async (req) => {
         const roles: Snapshot['roles'] = {};
-        const live = new Map<Role, Set<string>>();
-        for (const e of registry.entries) {
-          // The user group can hold everyone: its members are not needed, so it is not read.
-          if (e.role === 'users') continue;
+        const live = new Map<string, Set<string>>();
+        for (const e of sources) {
           const res = await req('GET', r.group(e.id));
           if (!ok(res)) throw failure(res);
           const g = res.body as { name?: unknown; users?: UserRow[] } | null;
@@ -114,16 +123,22 @@ export function directoryApi(s: Shared): DirectoryApi {
               grant: false,
             };
           });
-          live.set(e.role, new Set(members.map((x) => x.subject)));
-          roles[e.role] = {
+          live.set(
+            e.label,
+            new Set([...(live.get(e.label) ?? []), ...members.map((x) => x.subject)]),
+          );
+          roles[e.label] = {
             name: g.name,
-            members: [...(roles[e.role]?.members ?? []), ...members],
+            members: [...(roles[e.label]?.members ?? []), ...members],
           };
         }
         // Every read answered: only now may this Worker's own tables change, and not in a dry run.
         const ended: Snapshot['ended'] = [];
         const enabled: string[] = [];
-        for (const role of WRITABLE_ROLES) {
+        for (const role of [
+          ...WRITABLE_ROLES,
+          ...registry.custom.map((g) => `g:${g.key}` as Target),
+        ]) {
           const members = live.get(role);
           const entry = roles[role];
           if (!members || !entry) continue;
@@ -132,7 +147,7 @@ export function directoryApi(s: Shared): DirectoryApi {
           for (const sub of await grantsOfRole(db, role, started))
             if (!members.has(sub)) {
               if (!dry) await endGrants(db, sub, [role], 'idp_removed', deps.now());
-              ended.push({ subject: sub, role: role as WritableRole });
+              ended.push({ subject: sub, role: role as Target });
             }
           for (const member of entry.members) {
             member.grant = everyGrant.has(member.subject);

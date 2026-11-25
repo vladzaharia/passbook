@@ -26,7 +26,11 @@ describe('signup body', () => {
         await resetLedger();
         const { api, pocket } = setup(layout);
         const hostile = api.createSignup as unknown as (...a: unknown[]) => Promise<unknown>;
-        await hostile(kind, ctx(), { userGroupIds: ['g-admins'], ttl: '999h', usageLimit: 100 });
+        await hostile({ kind }, ctx(), {
+          userGroupIds: ['g-admins'],
+          ttl: '999h',
+          usageLimit: 100,
+        });
         const post = pocket.writes().find((w) => w.method === 'POST');
         expect(post?.body).toEqual({ ttl: '1h', usageLimit: 1, userGroupIds: ids });
         expect(post?.path).toBe(
@@ -55,10 +59,10 @@ describe('signup body', () => {
         platform_admin: { id: 'g-admins', name: 'passbook_platform_admins', protected: true },
       }),
     });
-    await expect(api.createSignup('member', ctx())).rejects.toThrow(
+    await expect(api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(
       /^IDP_REFUSED: Role console is not mapped/,
     );
-    await expect(api.createSignup('developer', ctx())).resolves.toMatchObject({
+    await expect(api.createSignup({ kind: 'developer' }, ctx())).resolves.toMatchObject({
       tokenId: 'tok-id-1',
     });
     expect(pocket.writes()).toHaveLength(1);
@@ -70,7 +74,7 @@ describe('signup body', () => {
     ['an email ref', { ...ctx(), ref: 'a@b.test' }],
   ])('refuses %s', async (_n, bad) => {
     const { api, pocket } = setup();
-    await expect(api.createSignup('member', bad)).rejects.toThrow(/^IDP_REFUSED/);
+    await expect(api.createSignup({ kind: 'member' }, bad)).rejects.toThrow(/^IDP_REFUSED/);
     expect(pocket.s.seen).toHaveLength(0);
   });
 });
@@ -121,7 +125,9 @@ describe('IDP_UNSAFE_CONFIG refuses every write', () => {
     expect(health.ok).toBe(false);
     expect(health.unsafe).toContain(reason);
     const logs = await captureLogs(async () => {
-      await expect(api.createSignup('member', ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
+      await expect(api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(
+        /^IDP_UNSAFE_CONFIG/,
+      );
       await expect(api.apply('u1', { add: ['developer'] }, ctx())).rejects.toThrow(
         /^IDP_UNSAFE_CONFIG/,
       );
@@ -143,7 +149,9 @@ describe('IDP_UNSAFE_CONFIG refuses every write', () => {
     const { api, pocket } = setup('v2', { GROUPS: JSON.stringify(groups) });
     pocket.s.groupNames['g-dev'] = 'passbook_platform_admins';
     expect((await api.health()).unsafe).toContain('group_protected');
-    await expect(api.createSignup('developer', ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
+    await expect(api.createSignup({ kind: 'developer' }, ctx())).rejects.toThrow(
+      /^IDP_UNSAFE_CONFIG/,
+    );
     expect(pocket.s.seen).toHaveLength(0);
   });
 
@@ -153,7 +161,9 @@ describe('IDP_UNSAFE_CONFIG refuses every write', () => {
     const health = await api.health();
     expect(health).toMatchObject({ ok: false, layoutSuspect: false });
     expect(health.unsafe).toEqual(['group_not_found:developer']);
-    await expect(api.createSignup('developer', ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
+    await expect(api.createSignup({ kind: 'developer' }, ctx())).rejects.toThrow(
+      /^IDP_UNSAFE_CONFIG/,
+    );
     expect(pocket.writes()).toHaveLength(0);
   });
 
@@ -204,7 +214,7 @@ describe('IDP_UNSAFE_CONFIG refuses every write', () => {
   ])('refuses bad settings %s without any request', async (reason, patch) => {
     const { api, pocket } = setup('v2', patch);
     expect((await api.health()).unsafe).toContain(reason);
-    await expect(api.createSignup('member', ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
+    await expect(api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
     expect(pocket.s.seen).toHaveLength(0);
   });
 
@@ -242,12 +252,14 @@ describe('health cache', () => {
     expect(first.keyExpiresAt).toBe(Date.parse('2027-02-20T00:00:00Z'));
     const reads = pocket.s.seen.length;
     expect(reads).toBe(8);
-    await api.createSignup('developer', ctx());
+    await api.createSignup({ kind: 'developer' }, ctx());
     await api.health();
     expect(pocket.s.seen.filter((s) => s.method === 'GET')).toHaveLength(reads);
     clock.now += 11 * 60_000;
     pocket.s.config.allowUserSignups = 'open';
-    await expect(api.createSignup('developer', ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
+    await expect(api.createSignup({ kind: 'developer' }, ctx())).rejects.toThrow(
+      /^IDP_UNSAFE_CONFIG/,
+    );
   });
 
   it('re-reads an unsafe answer after a minute', async () => {

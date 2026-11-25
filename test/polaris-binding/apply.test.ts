@@ -20,7 +20,7 @@ describe.each(['v2', 'admin'] as const)('apply (%s layout)', (layout) => {
     expect(put?.body).toEqual({ userGroupIds: ['g-other', 'g-extra', 'g-dev'] });
     expect(pocket.s.seen.at(-1)?.path).toBe(`${base}/users/u1/groups`);
     expect(await rows('idp_grants')).toMatchObject([
-      { subject: 'u1', role: 'developer', source: 'added', ref: 'inv-1', removed_at: null },
+      { subject: 'u1', target: 'developer', source: 'added', ref: 'inv-1', removed_at: null },
     ]);
     expect(await rows('idp_subjects')).toMatchObject([{ subject: 'u1', class: 'linked' }]);
   });

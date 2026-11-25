@@ -19,6 +19,27 @@ export class PolarisBinding extends WorkerEntrypoint<BindingEnv> implements IdpR
   proveSignup(...a: Parameters<IdpRpc['proveSignup']>) {
     return api(this.env).proveSignup(...a);
   }
+  groups() {
+    return api(this.env).groups();
+  }
+  createGroup(...a: Parameters<IdpRpc['createGroup']>) {
+    return api(this.env).createGroup(...a);
+  }
+  ensureRoleGroup(...a: Parameters<IdpRpc['ensureRoleGroup']>) {
+    return api(this.env).ensureRoleGroup(...a);
+  }
+  updateGroup(...a: Parameters<IdpRpc['updateGroup']>) {
+    return api(this.env).updateGroup(...a);
+  }
+  deleteGroup(...a: Parameters<IdpRpc['deleteGroup']>) {
+    return api(this.env).deleteGroup(...a);
+  }
+  claims(...a: Parameters<IdpRpc['claims']>) {
+    return api(this.env).claims(...a);
+  }
+  setClaims(...a: Parameters<IdpRpc['setClaims']>) {
+    return api(this.env).setClaims(...a);
+  }
   findByVerifiedEmail(...a: Parameters<IdpRpc['findByVerifiedEmail']>) {
     return api(this.env).findByVerifiedEmail(...a);
   }

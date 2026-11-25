@@ -1,9 +1,10 @@
-import type { AccountClass, Health, SignupKind, WritableRole } from './types.ts';
+import type { AccountClass, Health, SignupKind, Target } from './types.ts';
 
 export interface SignupRow {
   tokenId: string;
   tokenSha256: string;
   kind: SignupKind;
+  targets: Target[];
   ref: string;
   createdAt: number;
   expiresAt: number;
@@ -11,18 +12,29 @@ export interface SignupRow {
   subject: string | null;
 }
 
-const SIGNUP = `token_id AS tokenId, token_sha256 AS tokenSha256, kind, ref, created_at AS createdAt,
+const SIGNUP = `token_id AS tokenId, token_sha256 AS tokenSha256, kind, targets, ref, created_at AS createdAt,
   expires_at AS expiresAt, state, subject`;
 
 export async function rememberSignup(
   db: D1Database,
-  row: Pick<SignupRow, 'tokenId' | 'tokenSha256' | 'kind' | 'ref' | 'createdAt' | 'expiresAt'>,
+  row: Pick<
+    SignupRow,
+    'tokenId' | 'tokenSha256' | 'kind' | 'targets' | 'ref' | 'createdAt' | 'expiresAt'
+  >,
 ): Promise<void> {
   await db
     .prepare(
-      'INSERT INTO idp_signups (token_id, token_sha256, kind, ref, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO idp_signups (token_id, token_sha256, kind, targets, ref, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
     )
-    .bind(row.tokenId, row.tokenSha256, row.kind, row.ref, row.createdAt, row.expiresAt)
+    .bind(
+      row.tokenId,
+      row.tokenSha256,
+      row.kind,
+      JSON.stringify(row.targets),
+      row.ref,
+      row.createdAt,
+      row.expiresAt,
+    )
     .run();
 }
 
@@ -32,8 +44,8 @@ export async function signupsById(db: D1Database, ids: string[]): Promise<Signup
       `SELECT ${SIGNUP} FROM idp_signups WHERE token_id IN (${ids.map(() => '?').join(',')})`,
     )
     .bind(...ids)
-    .all<SignupRow>();
-  return results;
+    .all<Omit<SignupRow, 'targets'> & { targets: string }>();
+  return results.map((r) => ({ ...r, targets: JSON.parse(r.targets) as Target[] }));
 }
 
 export async function setSignupState(
@@ -52,7 +64,7 @@ export async function recordProof(
   db: D1Database,
   tokenId: string,
   subject: string,
-  roles: WritableRole[],
+  roles: Target[],
   at: number,
 ): Promise<void> {
   await db.batch([
@@ -70,7 +82,7 @@ export async function recordProof(
     ...roles.map((role) =>
       db
         .prepare(
-          "INSERT OR IGNORE INTO idp_grants (subject, role, source, token_id, created_at, confirmed_at) VALUES (?, ?, 'signup', ?, ?, ?)",
+          "INSERT OR IGNORE INTO idp_grants (subject, target, source, token_id, created_at, confirmed_at) VALUES (?, ?, 'signup', ?, ?, ?)",
         )
         .bind(subject, role, tokenId, at, at),
     ),
@@ -85,23 +97,19 @@ export async function subjectClass(db: D1Database, subject: string): Promise<Acc
   return row?.class ?? null;
 }
 
-export async function liveGrants(db: D1Database, subject: string): Promise<WritableRole[]> {
+export async function liveGrants(db: D1Database, subject: string): Promise<Target[]> {
   const { results } = await db
-    .prepare('SELECT role FROM idp_grants WHERE subject = ? AND removed_at IS NULL')
+    .prepare('SELECT target AS role FROM idp_grants WHERE subject = ? AND removed_at IS NULL')
     .bind(subject)
-    .all<{ role: WritableRole }>();
+    .all<{ role: Target }>();
   return results.map((r) => r.role);
 }
 
 /** Subjects with a confirmed grant made at or before `by`. Pending and newer grants are not for a snapshot to end. */
-export async function grantsOfRole(
-  db: D1Database,
-  role: WritableRole,
-  by: number,
-): Promise<string[]> {
+export async function grantsOfRole(db: D1Database, role: Target, by: number): Promise<string[]> {
   const { results } = await db
     .prepare(
-      'SELECT subject FROM idp_grants WHERE role = ? AND removed_at IS NULL AND confirmed_at IS NOT NULL AND confirmed_at <= ?',
+      'SELECT subject FROM idp_grants WHERE target = ? AND removed_at IS NULL AND confirmed_at IS NOT NULL AND confirmed_at <= ?',
     )
     .bind(role, by)
     .all<{ subject: string }>();
@@ -112,7 +120,7 @@ export async function grantsOfRole(
 export async function recordAdded(
   db: D1Database,
   subject: string,
-  roles: WritableRole[],
+  roles: Target[],
   ref: string,
   at: number,
 ): Promise<void> {
@@ -126,7 +134,7 @@ export async function recordAdded(
     ...roles.map((role) =>
       db
         .prepare(
-          "INSERT OR IGNORE INTO idp_grants (subject, role, source, ref, created_at) VALUES (?, ?, 'added', ?, ?)",
+          "INSERT OR IGNORE INTO idp_grants (subject, target, source, ref, created_at) VALUES (?, ?, 'added', ?, ?)",
         )
         .bind(subject, role, ref, at),
     ),
@@ -134,9 +142,9 @@ export async function recordAdded(
 }
 
 /** Everyone with a live grant for the role, pending ones included. */
-export async function liveGrantSubjects(db: D1Database, role: WritableRole): Promise<string[]> {
+export async function liveGrantSubjects(db: D1Database, role: Target): Promise<string[]> {
   const { results } = await db
-    .prepare('SELECT subject FROM idp_grants WHERE role = ? AND removed_at IS NULL')
+    .prepare('SELECT subject FROM idp_grants WHERE target = ? AND removed_at IS NULL')
     .bind(role)
     .all<{ subject: string }>();
   return results.map((r) => r.subject);
@@ -146,14 +154,14 @@ export async function liveGrantSubjects(db: D1Database, role: WritableRole): Pro
 export async function confirmGrants(
   db: D1Database,
   subject: string,
-  roles: WritableRole[],
+  roles: Target[],
   at: number,
 ): Promise<void> {
   await db.batch(
     roles.map((role) =>
       db
         .prepare(
-          'UPDATE idp_grants SET confirmed_at = ? WHERE subject = ? AND role = ? AND removed_at IS NULL AND confirmed_at IS NULL',
+          'UPDATE idp_grants SET confirmed_at = ? WHERE subject = ? AND target = ? AND removed_at IS NULL AND confirmed_at IS NULL',
         )
         .bind(at, subject, role),
     ),
@@ -164,13 +172,13 @@ export async function confirmGrants(
 export async function endedSince(
   db: D1Database,
   since: number,
-): Promise<{ subject: string; role: WritableRole }[]> {
+): Promise<{ subject: string; role: Target }[]> {
   const { results } = await db
     .prepare(
-      "SELECT subject, role FROM idp_grants WHERE removed_reason = 'idp_removed' AND removed_at >= ? ORDER BY id",
+      "SELECT subject, target AS role FROM idp_grants WHERE removed_reason = 'idp_removed' AND removed_at >= ? ORDER BY id",
     )
     .bind(since)
-    .all<{ subject: string; role: WritableRole }>();
+    .all<{ subject: string; role: Target }>();
   return results;
 }
 
@@ -188,7 +196,7 @@ export async function clearDisabledMarks(db: D1Database, subjects: string[]): Pr
 export async function endGrants(
   db: D1Database,
   subject: string,
-  roles: WritableRole[],
+  roles: Target[],
   reason: string,
   at: number,
 ): Promise<void> {
@@ -196,7 +204,7 @@ export async function endGrants(
     roles.map((role) =>
       db
         .prepare(
-          'UPDATE idp_grants SET removed_at = ?, removed_reason = ? WHERE subject = ? AND role = ? AND removed_at IS NULL',
+          'UPDATE idp_grants SET removed_at = ?, removed_reason = ? WHERE subject = ? AND target = ? AND removed_at IS NULL',
         )
         .bind(at, reason, subject, role),
     ),
@@ -207,7 +215,7 @@ export async function endGrants(
 export async function recordOverride(
   db: D1Database,
   subject: string,
-  roles: WritableRole[],
+  roles: Target[],
   ref: string,
   at: number,
 ): Promise<void> {
@@ -215,7 +223,7 @@ export async function recordOverride(
     roles.map((role) =>
       db
         .prepare(
-          `INSERT INTO idp_grants (subject, role, source, ref, created_at, removed_at, removed_reason)
+          `INSERT INTO idp_grants (subject, target, source, ref, created_at, removed_at, removed_reason)
            VALUES (?, ?, 'override', ?, ?, ?, 'override')`,
         )
         .bind(subject, role, ref, at, at),
@@ -299,5 +307,85 @@ export async function writeHealth(db: D1Database, h: HealthCore): Promise<void> 
       h.keyExpiresAt,
       h.layoutSuspect ? 1 : 0,
     )
+    .run();
+}
+
+export interface GroupRow {
+  key: string;
+  kind: 'role' | 'custom' | 'adopted';
+  state: 'pending' | 'live' | 'abandoned' | 'deleting' | 'deleted';
+  groupId: string | null;
+  name: string;
+  createdByBinding: boolean;
+  createdAt: number;
+}
+
+const GROUP = `key, kind, state, group_id AS groupId, name, created_by_binding AS createdByBinding, created_at AS createdAt`;
+
+export async function listGroupRows(db: D1Database): Promise<GroupRow[]> {
+  const { results } = await db
+    .prepare(`SELECT ${GROUP} FROM idp_groups ORDER BY created_at, key`)
+    .all<Omit<GroupRow, 'createdByBinding'> & { createdByBinding: number }>();
+  return results.map((r) => ({ ...r, createdByBinding: r.createdByBinding === 1 }));
+}
+
+/** The intent, written before the POST. */
+export async function insertIntent(
+  db: D1Database,
+  row: { key: string; kind: 'role' | 'custom'; name: string; ref: string; at: number },
+): Promise<void> {
+  await db
+    .prepare(
+      "INSERT INTO idp_groups (key, kind, state, name, created_by_binding, ref, created_at) VALUES (?, ?, 'pending', ?, 1, ?, ?)",
+    )
+    .bind(row.key, row.kind, row.name, row.ref, row.at)
+    .run();
+}
+
+export async function setGroupLive(db: D1Database, key: string, groupId: string): Promise<void> {
+  await db
+    .prepare(
+      "UPDATE idp_groups SET state = 'live', group_id = ? WHERE key = ? AND state = 'pending'",
+    )
+    .bind(groupId, key)
+    .run();
+}
+
+export async function abandonIntent(db: D1Database, key: string): Promise<void> {
+  await db
+    .prepare("UPDATE idp_groups SET state = 'abandoned' WHERE key = ? AND state = 'pending'")
+    .bind(key)
+    .run();
+}
+
+export async function setGroupDeleting(db: D1Database, key: string): Promise<void> {
+  await db
+    .prepare("UPDATE idp_groups SET state = 'deleting' WHERE key = ? AND state = 'live'")
+    .bind(key)
+    .run();
+}
+
+export async function setGroupDeleted(db: D1Database, key: string, at: number): Promise<void> {
+  await db
+    .prepare(
+      "UPDATE idp_groups SET state = 'deleted', deleted_at = ? WHERE key = ? AND state = 'deleting'",
+    )
+    .bind(at, key)
+    .run();
+}
+
+/** First sight of an adopted group: its live name is recorded once. */
+export async function recordAdopted(
+  db: D1Database,
+  key: string,
+  groupId: string,
+  name: string,
+  at: number,
+): Promise<void> {
+  await db
+    .prepare(
+      "INSERT OR IGNORE INTO idp_groups (key, kind, state, group_id, name, created_by_binding, created_at) VALUES (?, 'adopted', 'live', ?, ?, 0, ?)",
+    )
+    .bind(key, groupId, name, at)
     .run();
 }

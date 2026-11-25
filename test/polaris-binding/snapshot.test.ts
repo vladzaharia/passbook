@@ -66,6 +66,9 @@ describe.each(['v2', 'admin'] as const)('snapshot (%s layout)', (layout) => {
     await api.snapshot(ctx({ ref: 'rec-1' }));
     expect((await ledger()).map((r) => [r.phase, r.bucket ?? r.method])).toEqual([
       ['start', 'snapshot'],
+      ['start', 'snapshot_group'],
+      ['start', 'snapshot_group'],
+      ['start', 'snapshot_group'],
       ['end', 'snapshot'],
     ]);
   });

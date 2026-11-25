@@ -16,6 +16,12 @@ export const LIMITS: Record<Bucket, { perMinute: number; perDay: number }> = {
   health: { perMinute: 6, perDay: 300 },
   // Caller-requested dry runs, so a preview never spends a real bucket such as apply_override.
   preview: { perMinute: 30, perDay: 300 },
+  group_write: { perMinute: 2, perDay: 10 },
+  claims_write: { perMinute: 10, perDay: 100 },
+  claims_read: { perMinute: 30, perDay: 1000 },
+  apply_add_group: { perMinute: 10, perDay: 100 },
+  apply_add_group_system: { perMinute: 30, perDay: 500 },
+  snapshot_group: { perMinute: 60, perDay: 2000 },
 };
 const REFUSALS_PER_MINUTE = 30;
 const MINUTE = 60_000;
