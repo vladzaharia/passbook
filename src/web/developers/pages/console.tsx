@@ -1,5 +1,7 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { SIGN_IN } from './layout.tsx';
+import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
+import { PATHS } from '../../../shared/developers.ts';
+import { Gate } from '../ui/gate.tsx';
 import { Head } from './more.tsx';
 
 /** `/developers/console`: the full-page builder. Signed out, the ticket below is the whole page. */
@@ -9,12 +11,7 @@ export function ConsoleView() {
     <>
       <Head title={c.title} line={c.line} />
       <div className="console-slot try" data-island="run" data-mode="console">
-        <div className="card card-b stack g3">
-          <p className="muted sm">{c.placeholder}</p>
-          <a className="btn" href={SIGN_IN}>
-            {c.signIn}
-          </a>
-        </div>
+        <Gate title={GATE_COPY.lines.console} next={PATHS.console} docs={PATHS.reference} />
       </div>
     </>
   );

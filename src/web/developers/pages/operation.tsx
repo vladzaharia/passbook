@@ -1,5 +1,6 @@
 import { ArrowUpRight } from 'lucide-react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
+import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { cliSample } from '../model/cli.ts';
 import { opPath } from '../model/markdown.ts';
@@ -7,10 +8,10 @@ import { exampleSamples, samplesFor } from '../model/samples.ts';
 import type { ErrorRow, Field, OpView, ResourcePage, Site } from '../model/types.ts';
 import { CopyButton, JsonBlock, SampleTabs } from '../ui/code.tsx';
 import { EnvChip } from '../ui/env-chip.tsx';
+import { Gate } from '../ui/gate.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
 import { Prose } from '../ui/prose.tsx';
 import { Ticket } from '../ui/ticket.tsx';
-import { SIGN_IN } from './layout.tsx';
 
 const WHERE_LABEL: Record<Field['where'], string> = {
   path: 'Path',
@@ -139,10 +140,8 @@ function Rail({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
         <Ticket
           stub={<SampleTabs id={`s-${op.anchor}`} samples={samples} name={op.title} />}
           body={
-            <div className="row g3 try-foot">
-              <a className="btn sm" href={SIGN_IN}>
-                {DEV_COPY.reference.signInToTry}
-              </a>
+            <div className="try-foot">
+              <Gate inline title={GATE_COPY.lines.tryIt} next={`${PATHS.reference}/${slug}`} />
             </div>
           }
         />

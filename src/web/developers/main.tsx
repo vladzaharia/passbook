@@ -26,6 +26,7 @@ import './styles/dev-quickstart.css';
 import './styles/dev-responsive.css';
 import '../ui/art/scenes/common.css';
 import '../ui/art/scenes/plug.css';
+import './ui/gate.css';
 import './ui/state-card.css';
 import { PATHS } from '../../shared/developers.ts';
 import { markViewed } from './quickstart/viewed.ts';

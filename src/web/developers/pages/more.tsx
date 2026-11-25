@@ -1,8 +1,10 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
+import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
 import { opUrl, PATHS } from '../../../shared/developers.ts';
 import { operations } from '../model/dates.ts';
 import { pagePath } from '../model/markdown.ts';
 import type { ErrorEntry, Site } from '../model/types.ts';
+import { Gate } from '../ui/gate.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
 
 export function Head({ title, line }: { title: string; line?: string }) {
@@ -177,14 +179,11 @@ export function WebhooksView({ site }: { site: Site }) {
         data-island="webhook-tester"
         data-types={site.webhookEvents.map((e) => e.type).join(',')}
       >
-        <div className="card card-b stack g2">
-          <h2 className="h3">Sign in to capture webhooks</h2>
-          <p>
-            <a className="btn" href="/login?next=%2Fdevelopers%2Fwebhooks">
-              {DEV_COPY.signIn}
-            </a>
-          </p>
-        </div>
+        <Gate
+          title={GATE_COPY.lines.webhooks}
+          next={PATHS.webhooks}
+          docs={`${PATHS.reference}/webhook-endpoints`}
+        />
       </div>
       <section>
         <h2 className="h2">Events</h2>
