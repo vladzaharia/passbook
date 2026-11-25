@@ -3706,7 +3706,7 @@
     "operationId": "templates.postTemplatesByIdReview",
     "op": "POST /api/v1/templates/{id}/review",
     "change": "new operation",
-    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only."
+    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only. The only reviewer of an org approves their own request with alone: true; there is no waiting period after a reviewer leaves."
   },
   {
     "key": "POST /api/v1/templates/{id}/review-requests new operation",

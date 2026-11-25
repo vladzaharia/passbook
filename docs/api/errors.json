@@ -5560,16 +5560,6 @@
       ]
     },
     {
-      "code": "TEMPLATE_SELF_APPROVAL",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "templates",
-        "wallet-providers"
-      ]
-    },
-    {
       "code": "TEMPLATE_SLUG_CONFLICT",
       "statuses": [
         409

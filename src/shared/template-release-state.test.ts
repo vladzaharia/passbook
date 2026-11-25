@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TemplateReleaseStateSchema } from './contracts/template-releases.ts';
-import {
-  isAlone,
-  type ReleaseFacts,
-  releaseState,
-  SOLE_COOLDOWN_MS,
-} from './template-release-state.ts';
+import { isAlone, type ReleaseFacts, releaseState } from './template-release-state.ts';
 
 const NOW = 1_000_000_000_000;
 const ME = 'me';
@@ -15,24 +10,24 @@ type Role = 'solo' | 'admin' | 'author' | 'reviewer' | 'publisher';
 const ROLES: Record<Role, Pick<ReleaseFacts, 'caller' | 'reviewers'>> = {
   solo: {
     caller: { userId: ME, author: true, review: true, publish: true },
-    reviewers: { count: 1, includesCaller: true, lastRemovedAt: null },
+    reviewers: { count: 1, includesCaller: true },
   },
   /** An org admin in a team: every capability, but another reviewer exists. */
   admin: {
     caller: { userId: ME, author: true, review: true, publish: true },
-    reviewers: { count: 2, includesCaller: true, lastRemovedAt: null },
+    reviewers: { count: 2, includesCaller: true },
   },
   author: {
     caller: { userId: ME, author: true, review: false, publish: false },
-    reviewers: { count: 1, includesCaller: false, lastRemovedAt: null },
+    reviewers: { count: 1, includesCaller: false },
   },
   reviewer: {
     caller: { userId: ME, author: false, review: true, publish: false },
-    reviewers: { count: 2, includesCaller: true, lastRemovedAt: null },
+    reviewers: { count: 2, includesCaller: true },
   },
   publisher: {
     caller: { userId: ME, author: false, review: false, publish: true },
-    reviewers: { count: 2, includesCaller: false, lastRemovedAt: null },
+    reviewers: { count: 2, includesCaller: false },
   },
 };
 
@@ -76,7 +71,7 @@ const REVIEWS: Record<Review, ReleaseFacts['reviews']> = {
 };
 
 function facts(role: Role, heads: HeadState, review: Review = 'none'): ReleaseFacts {
-  return { now: NOW, ...HEADS[heads], reviews: REVIEWS[review], ...ROLES[role] };
+  return { ...HEADS[heads], reviews: REVIEWS[review], ...ROLES[role] };
 }
 
 // One row per head state (and, for a changed template, review state); one column per role.
@@ -231,7 +226,7 @@ describe('releaseState heads', () => {
 });
 
 describe('isAlone mirrors the sole approval rule', () => {
-  const solo = { now: NOW, ...ROLES.solo };
+  const solo = ROLES.solo;
   it('needs one review-capable member, the caller, with every capability', () => {
     expect(isAlone(solo)).toBe(true);
     expect(isAlone({ ...solo, reviewers: { ...solo.reviewers, count: 2 } })).toBe(false);
@@ -240,15 +235,5 @@ describe('isAlone mirrors the sole approval rule', () => {
     );
     for (const cap of ['author', 'review', 'publish'] as const)
       expect(isAlone({ ...solo, caller: { ...solo.caller, [cap]: false } })).toBe(false);
-  });
-
-  it('refuses for 7 days after a reviewer is removed', () => {
-    const removed = (ago: number) => ({
-      ...solo,
-      reviewers: { ...solo.reviewers, lastRemovedAt: NOW - ago },
-    });
-    expect(isAlone(removed(SOLE_COOLDOWN_MS - 1))).toBe(false);
-    expect(isAlone(removed(SOLE_COOLDOWN_MS))).toBe(true);
-    expect(isAlone(removed(SOLE_COOLDOWN_MS + 1))).toBe(true);
   });
 });

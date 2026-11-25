@@ -20,11 +20,13 @@ import { getVersion } from './repo.ts';
 import { releasedCandidateIds } from './repo-release-state.ts';
 import { type CandidateRow, listApprovals, listCandidates } from './repo-releases.ts';
 import { newestRequestedVersion } from './repo-reviews.ts';
+import { approvalKind } from './sole-reviewer.ts';
 
 /**
  * A peer's review of a version: approves its open candidate in each mode that has one (Test and
  * Live for a person, Test for a Test key) and, with `release`, releases it when the caller may publish.
- * Approving one's own work is refused, except in a sandbox. Every refusal is decided before the first approval is written.
+ * Approving one's own work follows `approvalKind`: refused unless the author is the org's only reviewer and
+ * confirms with `alone`. Every refusal is decided before the first approval is written.
  */
 export async function reviewTemplate(
   ctx: ServiceContext,
@@ -94,20 +96,19 @@ export async function reviewTemplate(
     ready.push(mode);
     if (
       open.some((c, i) =>
-        (approvals[i] ?? []).some((a) => (sandbox || a.kind === 'peer') && approvalMatches(a, c)),
+        (approvals[i] ?? []).some(
+          (a) => (a.kind === 'peer' || a.reviewerId === authority.userId) && approvalMatches(a, c),
+        ),
       )
     )
       continue;
-    // A sandbox has one member, so the author may approve their own work there (Self-approved).
-    const target = open.find(
-      (c) => sandbox || (c.authorId !== authority.userId && c.versionAuthorId !== authority.userId),
-    );
-    if (!target)
-      throw new ForbiddenError(
-        'You wrote this version. Another reviewer must approve it.',
-        'TEMPLATE_SELF_APPROVAL',
-      );
-    plan.push({ mode, target });
+    const authored = (c: CandidateRow) =>
+      c.authorId === authority.userId || c.versionAuthorId === authority.userId;
+    const target = open.find((c) => !authored(c)) ?? open[0];
+    // Why: the shared rule decides here, so a refusal lands before the first approval is written.
+    if (target && authored(target))
+      await approvalKind(ctx, { orgId, mode, selfAuthored: true, alone: body.alone });
+    plan.push({ mode, target: target ?? null });
   }
   if (ready.length === 0)
     throw new NotFoundError(
@@ -122,7 +123,7 @@ export async function reviewTemplate(
       mode,
       provider: 'apple',
       candidateHash: target.candidateHash,
-      ...(sandbox ? { alone: true } : {}),
+      ...(body.alone === undefined ? {} : { alone: body.alone }),
     });
     approved.push(mode);
   }

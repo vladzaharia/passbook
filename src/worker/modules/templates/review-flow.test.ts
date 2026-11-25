@@ -357,7 +357,7 @@ describe('review', () => {
     expect(await inbox(org, reviewer)).toEqual([]);
   });
 
-  it('lets the only member of a sandbox review their own request, marked Self-approved', async () => {
+  it('lets the only member of a sandbox review their own request, marked Self-approved, once they confirm', async () => {
     const org = await makeOrg(f, { kind: 'developer' });
     const owner = await member(org.id, ['org_admin']);
     const t = await uploaded('Sandbox Review', org, owner, undefined, true);
@@ -368,10 +368,20 @@ describe('review', () => {
       { mode: 'test' },
     );
     expect(asked.status).toBe(200);
-    const result = await ok(
+    await expectProblem(
       await send(
         `/${t.templateId}/review`,
         { orgId: org.id, version: t.version, release: true },
+        owner,
+        { mode: 'test' },
+      ),
+      403,
+      'TEMPLATE_SELF_APPROVAL',
+    );
+    const result = await ok(
+      await send(
+        `/${t.templateId}/review`,
+        { orgId: org.id, version: t.version, release: true, alone: true },
         owner,
         { mode: 'test' },
       ),
@@ -445,6 +455,32 @@ describe('review', () => {
     );
     expect(result.approved).toEqual(['test']);
     expect(await inbox(org, reviewer)).toHaveLength(1);
+  });
+
+  it("keeps a key as its creator: it approves its creator's own Test request only with alone", async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const t = await uploaded('Key Sole Review', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    const sole = await key(org.id, owner.userId);
+    await expectProblem(
+      await send(`/${t.templateId}/review`, { version: t.version }, sole),
+      403,
+      'TEMPLATE_SELF_APPROVAL',
+    );
+    expect(
+      (await ok(await send(`/${t.templateId}/review`, { version: t.version, alone: true }, sole)))
+        .approved,
+    ).toEqual(['test']);
+    await expectProblem(
+      await send(
+        `/${t.templateId}/review`,
+        { version: t.version, alone: true },
+        await key(org.id, owner.userId, 'live'),
+      ),
+      403,
+      'KEY_TEST_ONLY',
+    );
   });
 
   it('releases with release:true when the key also holds publish, and refuses it before approving when not', async () => {

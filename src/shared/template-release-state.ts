@@ -1,8 +1,5 @@
 import type { TemplateReleaseState } from './contracts/template-release-flow.ts';
 
-/** A reviewer removed within this window keeps a sole approval refused (migration 0093). */
-export const SOLE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
-
 export interface ReleaseHeadFact {
   version: string;
   at: number;
@@ -19,7 +16,6 @@ export interface ReviewFact {
 }
 
 export interface ReleaseFacts {
-  now: number;
   /** Every saved version, newest first. */
   versions: readonly { version: string; at: number; ok: boolean; by: string | null }[];
   live: ReleaseHeadFact | null;
@@ -28,23 +24,22 @@ export interface ReleaseFacts {
   reviews: readonly ReviewFact[];
   /** The acting member (a key acts as its creator) and the template capabilities they hold here. */
   caller: { userId: string | null; author: boolean; review: boolean; publish: boolean };
-  /** The `sole` rule's inputs: active review-capable members, and the newest removal of one. */
-  reviewers: { count: number; includesCaller: boolean; lastRemovedAt: number | null };
+  /** The `sole` rule's inputs: active review-capable members, and whether the caller is one. */
+  reviewers: { count: number; includesCaller: boolean };
 }
 
 /**
  * Mirrors `approvalKind` and the `template_approvals_insert` trigger: the caller is the org's only
- * review-capable member and none was removed in the cooldown. They must also author and publish.
+ * review-capable member. They must also author and publish.
  */
-export function isAlone(facts: Pick<ReleaseFacts, 'now' | 'caller' | 'reviewers'>): boolean {
-  const { caller, reviewers, now } = facts;
+export function isAlone(facts: Pick<ReleaseFacts, 'caller' | 'reviewers'>): boolean {
+  const { caller, reviewers } = facts;
   return (
     caller.author &&
     caller.review &&
     caller.publish &&
     reviewers.count === 1 &&
-    reviewers.includesCaller &&
-    !(reviewers.lastRemovedAt !== null && reviewers.lastRemovedAt > now - SOLE_COOLDOWN_MS)
+    reviewers.includesCaller
   );
 }
 
