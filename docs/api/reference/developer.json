@@ -298,5 +298,39 @@
     "response": {
       "ok": true
     }
+  },
+  "developer.postSandboxClose": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-6ba690879abc",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgSlug": "northwind-climbing",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "previewOnly": true,
+      "createdAt": 1794362400000,
+      "closedAt": 1795572000000
+    }
+  },
+  "developer.postSandboxRecreate": {
+    "request": {
+      "turnstileToken": "0.demo-turnstile-response-northwind",
+      "viewedAt": 1795570500000
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-ba4dfb1a0ac6",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgSlug": "northwind-climbing",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "previewOnly": true,
+      "createdAt": 1794362400000,
+      "closedAt": null,
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
+        "name": "Server integration",
+        "secret": "whsec_demo_northwind_53ec29",
+        "mode": "test",
+        "expiresAt": 1798790399999
+      },
+      "previousKey": null
+    }
   }
 }

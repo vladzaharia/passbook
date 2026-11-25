@@ -16,6 +16,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "response 200 removed",
+    "note": ""
+  },
+  {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
     "class": "additive",
     "operationId": "identities.deleteIdentitiesByIdPushKey",
@@ -790,6 +798,22 @@
     "op": "GET /api/v1/passes/{id}/events",
     "change": "200.items[].kind: enum value \"wallet.messaged\" added",
     "note": "wallet.messaged records what a wallet did with a change message: notified, updated only (the card changed, no alert) or not accepted."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].passVersion: field removed",
+    "class": "breaking",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].passVersion: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].stale: field removed",
+    "class": "breaking",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].stale: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
@@ -2229,6 +2253,22 @@
     "note": "With preview=true, test-config dry-runs the unsaved configuration with the mapping, rules and template given."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/close new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxClose",
+    "op": "POST /api/v1/developer/sandbox/close",
+    "change": "new operation",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "new operation",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
     "class": "additive",
     "operationId": "developer.postSandboxReopen",
@@ -2675,6 +2715,46 @@
     "op": "POST /api/v1/passes",
     "change": "idempotency-key reserved prefixes",
     "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/print/drawn operation removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrintDrawn",
+    "op": "POST /api/v1/passes/{id}/print/drawn",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.passVersion: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.passVersion: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.stale: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.stale: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.passVersion: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.passVersion: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.stale: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.stale: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",

@@ -46,8 +46,8 @@ export async function deleteSandbox(
   );
   const owner = rawCheck(
     'config',
-    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.org_id = ? AND d.user_id = ?)',
-    [sandbox.id, orgId, by.userId],
+    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ?)',
+    [sandbox.id, by.userId],
   );
   const g = developerSandboxGrant(
     ctx,
