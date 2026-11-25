@@ -11,7 +11,7 @@ import { CHECK_WAIT, COPY, checkWords, PROVIDER_NAME, safeError } from './copy.t
 import { CredentialDialog } from './credential-dialog.tsx';
 import { type CredentialTarget, isAbort, useCheckCredential, useWalletActions } from './queries.ts';
 
-/** The check state a credential shows: the DTO's verifiedAt, never a secret. */
+/** The latest check a credential shows, passed or failed; verifiedAt only gates enrolment. */
 export function CheckPill({
   credential,
   fresh,
@@ -20,12 +20,15 @@ export function CheckPill({
   /** The server's freshness for the enrolment's source, when this is that credential. */
   fresh?: boolean;
 }) {
-  if (credential.verifiedAt === null) return <StatusPill status="not_checked" />;
-  return checkFresh(credential.verifiedAt, Date.now(), fresh) ? (
-    <StatusPill status="verified">Checked {formatDateTime(credential.verifiedAt)}</StatusPill>
+  const last = credential.lastCheck;
+  if (!last) return <StatusPill status="not_checked" />;
+  if (!last.ok)
+    return <StatusPill status="failed">Check failed {formatDateTime(last.at)}</StatusPill>;
+  return checkFresh(last.at, Date.now(), fresh) ? (
+    <StatusPill status="verified">Checked {formatDateTime(last.at)}</StatusPill>
   ) : (
     <StatusPill status="not_checked" tone="warning">
-      Last checked {formatDateTime(credential.verifiedAt)}
+      Last checked {formatDateTime(last.at)}
     </StatusPill>
   );
 }
@@ -52,15 +55,13 @@ export function CredentialRow({
   const sessionMode = useMode();
   const runCheck = useCheckCredential();
   const [checking, setChecking] = useState(false);
-  const [failed, setFailed] = useState<string | null>(null);
   async function check(c: WalletCredential) {
     setChecking(true);
-    setFailed(null);
     try {
       const result = await runCheck(target, c);
       if (result.status === 'ok') toast.success('Check passed');
-      else if (result.status === 'failed') setFailed(checkWords(result.code));
-      else toast.info('The check is still running. Reload in a moment.');
+      else if (result.status !== 'failed')
+        toast.info('The check is still running. Reload in a moment.');
     } catch (cause) {
       if (isAbort(cause)) return;
       toast.error(
@@ -88,9 +89,9 @@ export function CredentialRow({
           ) : (
             <p className="text-fg-muted">No credentials</p>
           )}
-          {failed ? (
+          {credential?.lastCheck && !credential.lastCheck.ok ? (
             <p role="alert" className="mt-1 text-danger">
-              Check failed. {failed}
+              {checkWords(credential.lastCheck.code)}
             </p>
           ) : null}
         </div>

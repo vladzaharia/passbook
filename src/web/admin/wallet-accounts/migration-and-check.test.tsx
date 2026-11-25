@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
+import type { WalletCredential } from '@/shared/contracts/wallet-providers.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { credential, enrolment, renderOrgAccounts } from './wallet-accounts-test-fixtures.ts';
@@ -14,26 +15,41 @@ beforeEach(() => {
 });
 afterEach(() => resetModeForTests());
 
-const orgHandlers = (check: (init: RequestInit | undefined) => Response) => ({
-  '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
-  '/api/v1/orgs/o1/wallet-enrolments': () =>
-    json({
-      items: [
-        enrolment({
-          state: 'off',
-          source: 'org',
-          prerequisites: { check: false, roundTrip: null },
-        }),
-        enrolment({ provider: 'samsung' }),
-      ],
-      nextCursor: null,
-    }),
-  '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [credential()], nextCursor: null }),
-  '/api/v1/orgs/o1/wallet-credentials/c1/check': (_u: URL, init: RequestInit | undefined) =>
-    check(init),
-  '/api/v1/orgs/o1/wallet-credentials/c1/checks/k1': () =>
-    json({ checkId: 'k1', status: 'failed', code: 'auth_failed', checkedAt: 1 }),
-});
+/** The list serves the stored check, which the result poll records once the check settles. */
+const orgHandlers = (
+  check: (init: RequestInit | undefined) => Response,
+  result: { ok: boolean; code: string | null } = { ok: false, code: 'auth_failed' },
+) => {
+  let lastCheck: WalletCredential['lastCheck'] = null;
+  return {
+    '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
+    '/api/v1/orgs/o1/wallet-enrolments': () =>
+      json({
+        items: [
+          enrolment({
+            state: 'off',
+            source: 'org',
+            prerequisites: { check: false, roundTrip: null },
+          }),
+          enrolment({ provider: 'samsung' }),
+        ],
+        nextCursor: null,
+      }),
+    '/api/v1/orgs/o1/wallet-credentials': () =>
+      json({ items: [credential({ lastCheck })], nextCursor: null }),
+    '/api/v1/orgs/o1/wallet-credentials/c1/check': (_u: URL, init: RequestInit | undefined) =>
+      check(init),
+    '/api/v1/orgs/o1/wallet-credentials/c1/checks/k1': () => {
+      lastCheck = { ok: result.ok, code: result.code, at: Date.now() };
+      return json({
+        checkId: 'k1',
+        status: result.ok ? 'ok' : 'failed',
+        code: result.code,
+        checkedAt: lastCheck.at,
+      });
+    },
+  };
+};
 const north = membershipFixture('o1', { orgName: 'North', capabilities: MANAGE });
 
 describe('credential check', () => {
@@ -52,6 +68,39 @@ describe('credential check', () => {
         { timeout: 6000 },
       ),
     ).toBeInTheDocument();
+    expect(within(google).getByText(/^Check failed /)).toBeInTheDocument();
+  });
+
+  it('shows the passed check on the row without a reload', async () => {
+    const user = userEvent.setup();
+    await renderOrgAccounts({
+      memberships: [north],
+      handlers: orgHandlers(() => json({ checkId: 'k1', status: 'queued' }), {
+        ok: true,
+        code: null,
+      }),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getByText('Not checked')).toBeInTheDocument();
+    await user.click(within(google).getByRole('button', { name: 'Check' }));
+    expect(await within(google).findByText(/^Checked /, {}, { timeout: 6000 })).toBeInTheDocument();
+    expect(within(google).queryByText('Not checked')).not.toBeInTheDocument();
+  });
+
+  it('shows an older passed check as last checked', async () => {
+    await renderOrgAccounts({
+      memberships: [north],
+      handlers: {
+        ...orgHandlers(() => json({ checkId: 'k1', status: 'queued' })),
+        '/api/v1/orgs/o1/wallet-credentials': () =>
+          json({
+            items: [credential({ lastCheck: { ok: true, code: null, at: 1_700_000_000_000 } })],
+            nextCursor: null,
+          }),
+      },
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(await within(google).findByText(/^Last checked /)).toBeInTheDocument();
   });
 
   it('shows the wait when checks are rate limited', async () => {

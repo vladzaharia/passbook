@@ -137,3 +137,25 @@ export function latestChecks(db: D1Database): Promise<LatestCheck[]> {
     ORDER BY c.id LIMIT 500`,
   );
 }
+
+export interface CredentialLastCheck {
+  credential_id: string;
+  ok: number;
+  code: string | null;
+  checked_at: number;
+}
+
+/** The newest check of each credential's current version; a credential without one has no row. */
+export function lastChecksOf(db: D1Database, ids: string[]): Promise<CredentialLastCheck[]> {
+  if (ids.length === 0) return Promise.resolve([]);
+  return all<CredentialLastCheck>(
+    db,
+    `SELECT c.id AS credential_id, k.ok, k.code, k.checked_at
+    FROM wallet_credentials c
+    JOIN wallet_credential_checks k ON k.id = (SELECT k2.id FROM wallet_credential_checks k2
+      WHERE k2.credential_id = c.id AND k2.version_id = c.current_version_id
+      ORDER BY k2.checked_at DESC, k2.rowid DESC LIMIT 1)
+    WHERE c.id IN (${ids.map(() => '?').join(', ')})`,
+    ids,
+  );
+}

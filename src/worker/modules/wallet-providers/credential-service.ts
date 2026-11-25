@@ -20,6 +20,7 @@ import { enqueueVersionCheck } from './account-check.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { credentialIdentityHash } from './account-credential-source.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
+import { lastChecksOf } from './repo-credential-checks.ts';
 import {
   type CredentialRow,
   type CredentialWriter,
@@ -44,7 +45,10 @@ function cardTypesOf(row: CredentialRow): string[] {
   }
 }
 
-export function credentialDto(row: CredentialRow): WalletCredential {
+export function credentialDto(
+  row: CredentialRow,
+  lastCheck: WalletCredential['lastCheck'] = null,
+): WalletCredential {
   return {
     id: row.id,
     scope: row.scope,
@@ -59,7 +63,24 @@ export function credentialDto(row: CredentialRow): WalletCredential {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     cardTypes: cardTypesOf(row),
+    lastCheck,
   };
+}
+
+/** The rows as DTOs, each with its current version's newest check, in one query. */
+async function withLastChecks(
+  ctx: ServiceContext,
+  rows: CredentialRow[],
+): Promise<WalletCredential[]> {
+  const checks = new Map(
+    (
+      await lastChecksOf(
+        ctx.env.DB,
+        rows.map((row) => row.id),
+      )
+    ).map((k) => [k.credential_id, { ok: k.ok === 1, code: k.code, at: k.checked_at }]),
+  );
+  return rows.map((row) => credentialDto(row, checks.get(row.id) ?? null));
 }
 
 export const changed = () =>
@@ -209,7 +230,7 @@ export async function listOrgCredentials(
     mode: auth.mode,
     ...(provider ? { provider } : {}),
   });
-  return { items: rows.map(credentialDto), nextCursor: null };
+  return { items: await withLastChecks(ctx, rows), nextCursor: null };
 }
 
 export async function saveOrgCredential(
@@ -242,7 +263,7 @@ export async function listPlatformCredentials(
 ): Promise<WalletCredentialList> {
   platformWriter(auth, 'platform.wallet.credential_save');
   return {
-    items: (await listCredentials(ctx.env.DB, { orgId: null })).map(credentialDto),
+    items: await withLastChecks(ctx, await listCredentials(ctx.env.DB, { orgId: null })),
     nextCursor: null,
   };
 }

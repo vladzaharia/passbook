@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
+import { WalletCredentialLastCheckSchema } from './wallet-credential-check.ts';
 
 export const WalletProviderSchema = z.enum(['google', 'samsung']);
 export type WalletProvider = z.infer<typeof WalletProviderSchema>;
@@ -132,6 +133,7 @@ export const WalletCredentialSchema = z.strictObject({
   updatedAt: TimestampSchema,
   /** Samsung: the card types that have a card (the default card serves loyalty). Empty for Google. */
   cardTypes: z.array(SamsungCardTypeSchema),
+  lastCheck: WalletCredentialLastCheckSchema.nullable(),
 });
 export type WalletCredential = z.infer<typeof WalletCredentialSchema>;
 
