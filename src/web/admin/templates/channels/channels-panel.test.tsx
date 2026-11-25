@@ -108,6 +108,36 @@ describe('Template channels', () => {
     expect(within(group('Paper')).getByRole('radio', { name: 'Off' })).toBeEnabled();
   });
 
+  it('lists no channel PassBook or the plan stops, and no PassBook or Plan chip', async () => {
+    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />, {
+      '/api/v1/templates/t1/channels': () =>
+        json({
+          channels: null,
+          revision: 0,
+          defaults,
+          effective: {
+            ...effective,
+            google: { on: false, source: 'platform', reason: 'not_released' },
+            paper: { on: false, source: 'platform', reason: 'not_included' },
+          },
+          overrides: noOverrides,
+          overridePasses: 0,
+          levels: {
+            ...levels,
+            google: chain({ level: 'passbook', state: 'locked', reason: 'not_released' }),
+            paper: chain({ level: 'plan', state: 'locked', reason: 'not_included' }),
+          },
+        }),
+    });
+    await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
+    expect(screen.queryByText('Google Wallet')).toBeNull();
+    expect(screen.queryByText('Paper')).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'Paper' })).toBeNull();
+    expect(screen.queryByText('PassBook')).toBeNull();
+    expect(screen.queryByText('Plan')).toBeNull();
+    expect(screen.getAllByText('Organization').length).toBeGreaterThan(0);
+  });
+
   it('says an org block leaves copies alone, a platform switch does not claim it', async () => {
     renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />, {
       '/api/v1/templates/t1/channels': () =>
@@ -339,7 +369,7 @@ describe('Template channels', () => {
       .getAllByRole('list', { name: 'Chain' })
       .find((l) => l.querySelector('[data-stop]'));
     expect(apple?.querySelector('[data-stop]')).toHaveAttribute('data-level', 'org');
-    expect(within(apple as HTMLElement).getAllByRole('listitem')).toHaveLength(4);
+    expect(within(apple as HTMLElement).getAllByRole('listitem')).toHaveLength(2);
     expect(screen.getAllByRole('list', { name: 'Chain' })).toHaveLength(6);
   });
 

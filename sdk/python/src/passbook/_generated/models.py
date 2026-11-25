@@ -42,8 +42,10 @@ __all__ = [
     "ApiKeysRotateCurrentResult",
     "ApiKeysRotateParams",
     "ApiKeysRotateResult",
+    "AuditEntriesListItem",
     "AuditEntriesListResponse",
     "AuditEntriesListResponseItemsItem",
+    "AuditEntriesListResult",
     "BlueprintsCheckUseParams",
     "BlueprintsCheckUseParamsVersion",
     "BlueprintsCheckUseParamsVersionAssetsItem1",
@@ -2056,7 +2058,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write", "audit:read"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -2131,6 +2133,20 @@ class ApiKeysRotateCurrentParams(_Model):
 class ApiKeysRotateParams(_Model):
     orgId: str | None
     overlapHours: int | None = None
+
+class AuditEntriesListItem(_Model):
+    id: int
+    at: int
+    orgId: str | None
+    actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
+    actorId: str | None
+    actorLabel: str | None = None
+    action: str
+    targetType: str | None
+    targetId: str | None
+    targetLabel: str | None = None
+    requestId: str | None
+    detail: _Any | None = None
 
 class AuditEntriesListResponse(_Model):
     items: _List[AuditEntriesListResponseItemsItem]
@@ -13376,6 +13392,8 @@ ApiKeysRotateCurrentBody = ApiKeysRotateCurrentParams
 ApiKeysRotateCurrentResult = ApiKeyRotation
 
 ApiKeysRotateResult = ApiKeyRotation
+
+AuditEntriesListResult = AuditEntriesListResponse
 
 BlueprintsUseBody = BlueprintsUseParams
 

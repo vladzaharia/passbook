@@ -405,6 +405,33 @@
       ]
     },
     {
+      "code": "AUDIT_LIMIT_TOO_HIGH",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "audit"
+      ]
+    },
+    {
+      "code": "AUDIT_WINDOW_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "audit"
+      ]
+    },
+    {
+      "code": "AUDIT_WINDOW_TOO_WIDE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "audit"
+      ]
+    },
+    {
       "code": "AUTHORITY_DENIED",
       "statuses": [
         403
@@ -2832,7 +2859,6 @@
         422
       ],
       "modules": [
-        "audit",
         "bundles",
         "delivery",
         "identities",

@@ -106,3 +106,31 @@ export function withCard(o: ScanOutcome) {
 export function lookFromUrl(params = new URLSearchParams(location.search)) {
   return { sun: params.get('sun') === '1', leftHand: params.get('hand') === 'left' };
 }
+
+/** `?group=chip` offers Check in all; `?group=partial` shows a group with a refused member. */
+export function withGroup(o: ScanOutcome, mode: string | null): ScanOutcome {
+  if (mode !== 'chip' && mode !== 'partial') return o;
+  const bundle = { id: ID, name: 'Chen family', size: 4, checkedIn: 1 };
+  if (mode === 'chip') return { ...o, bundle };
+  const m = (name: string, state: 'done' | 'already' | 'refused', reason: ScanReason | null) => ({
+    name,
+    state,
+    reason,
+  });
+  return {
+    ...o,
+    bundle,
+    group: {
+      total: 4,
+      done: 2,
+      already: 1,
+      refused: 1,
+      members: [
+        m('Taylor Chen', 'done', null),
+        m('Jo Chen', 'done', null),
+        m('Sam Chen', 'already', 'already_done'),
+        m('Kid Chen', 'refused', 'voided'),
+      ],
+    },
+  };
+}

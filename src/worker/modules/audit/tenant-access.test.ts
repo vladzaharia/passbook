@@ -207,9 +207,10 @@ describe('tenant audit access', () => {
     ).toEqual(['south.action']);
     await expectProblem(await get('', headers, true), 403, 'FORBIDDEN');
     expect((await get('', {}, false)).status).toBe(401);
-    expect((await get(`?orgId=${north.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(401);
-    expect((await get(`?orgId=${south.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(401);
-    expect((await get(`?orgId=${north.id}`, fake.apiKey({ scopes: [] }))).status).toBe(401);
+    // A key now reaches this route, but only holding audit:read (the other cases below are in audit-key.test.ts).
+    expect((await get(`?orgId=${north.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(403);
+    expect((await get(`?orgId=${south.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(403);
+    expect((await get(`?orgId=${north.id}`, fake.apiKey({ scopes: [] }))).status).toBe(403);
     expect((await get('', fake.apiKey(), true)).status).toBe(401);
   });
 

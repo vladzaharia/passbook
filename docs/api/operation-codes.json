@@ -176,15 +176,25 @@
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
   "audit get /": [
+    "AUDIT_LIMIT_TOO_HIGH",
+    "AUDIT_WINDOW_REQUIRED",
+    "AUDIT_WINDOW_TOO_WIDE",
     "FORBIDDEN",
     "INVALID_CURSOR",
+    "ORG_FORBIDDEN",
     "ORG_REQUIRED",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "audit get /export": [
+    "AUDIT_LIMIT_TOO_HIGH",
+    "AUDIT_WINDOW_REQUIRED",
+    "AUDIT_WINDOW_TOO_WIDE",
     "FORBIDDEN",
     "INVALID_CURSOR",
+    "ORG_FORBIDDEN",
     "ORG_REQUIRED",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "audit get /platform": [

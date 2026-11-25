@@ -106,6 +106,26 @@ func (r *ApiKeysResource) RotateCurrent(ctx context.Context, body *ApiKeysRotate
 	return &out, nil
 }
 
+type AuditEntriesResource struct {
+	c *core
+}
+
+func newAuditEntriesResource(c *core) *AuditEntriesResource {
+	return &AuditEntriesResource{
+		c: c,
+	}
+}
+
+// Export Export an organization audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key) `GET /api/v1/audit/export`
+func (r *AuditEntriesResource) Export(ctx context.Context, query *AuditEntriesExportQuery, opts ...RequestOption) (*http.Response, error) {
+	return r.c.download(ctx, call{method: "GET", path: "/api/v1/audit/export", query: queryValues(query)}, opts)
+}
+
+// List Query an organization audit log `GET /api/v1/audit`
+func (r *AuditEntriesResource) List(ctx context.Context, query *AuditEntriesListQuery, opts ...RequestOption) *Pager[AuditEntriesListItem] {
+	return newPager[AuditEntriesListItem](r.c, call{method: "GET", path: "/api/v1/audit", query: queryValues(query)}, "cursor", opts)
+}
+
 type BrandWebLogoResource struct {
 	c *core
 }
@@ -2728,6 +2748,7 @@ func (r *WebhookEndpointsResource) Update(ctx context.Context, id string, body *
 // Resources are every resource, named as in docs/api/sdk-names.json.
 type Resources struct {
 	APIKeys          *ApiKeysResource
+	AuditEntries     *AuditEntriesResource
 	Brand            *BrandResource
 	Broadcasts       *BroadcastsResource
 	Bundles          *BundlesResource
@@ -2764,6 +2785,7 @@ type Resources struct {
 func newResources(c *core) Resources {
 	return Resources{
 		APIKeys:          newApiKeysResource(c),
+		AuditEntries:     newAuditEntriesResource(c),
 		Brand:            newBrandResource(c),
 		Broadcasts:       newBroadcastsResource(c),
 		Bundles:          newBundlesResource(c),

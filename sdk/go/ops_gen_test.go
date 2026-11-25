@@ -88,6 +88,20 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"auditEntries.list", "GET", "/api/v1/audit", false,
+		"", `{"items":[{"id":0,"at":0,"orgId":"x","actorType":"user","actorId":"x","action":"x","targetType":"x","targetId":"x","requestId":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.AuditEntries.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"auditEntries.export", "GET", "/api/v1/audit/export", false,
+		"", "",
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return downloaded(c.AuditEntries.Export(ctx, nil))
+		},
+	},
+	{
 		"brand.retrieve", "GET", "/api/v1/brand", false,
 		"", `{"orgId":"x","name":"x","accent":"x","webLogo":{"url":"x","w":0,"h":0},"supportEmail":"x","supportUrl":"x","mark":"full","markChosen":"full","markAllowed":["full"],"configRevision":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

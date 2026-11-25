@@ -239,6 +239,24 @@
     "fix": "Use a slot name from the pass type's image slots in the request path.",
     "retryable": false
   },
+  "AUDIT_LIMIT_TOO_HIGH": {
+    "title": "Audit page too large",
+    "when": "A key asked for more than 100 audit entries a page.",
+    "fix": "Send a limit of 100 or less and page with the cursor.",
+    "retryable": false
+  },
+  "AUDIT_WINDOW_REQUIRED": {
+    "title": "Audit window missing",
+    "when": "A key read the audit log without from.",
+    "fix": "Send from, at most 90 days before to (to defaults to now).",
+    "retryable": false
+  },
+  "AUDIT_WINDOW_TOO_WIDE": {
+    "title": "Audit window too wide",
+    "when": "A key asked for more than 90 days of the audit log at once.",
+    "fix": "Send a from at most 90 days before to, and read older entries in several windows.",
+    "retryable": false
+  },
   "AUTHORITY_DENIED": {
     "title": "Not allowed here",
     "when": "The caller lacks the authority this write needs.",

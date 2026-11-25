@@ -4,7 +4,7 @@
   gap: 16px;
   max-width: 1360px;
   margin-inline: auto;
-  padding: 0 clamp(16px, 3vw, 40px) 48px;
+  padding: 0 40px 16px;
 }
 .wb-loading {
   padding: 24px 0;
@@ -16,7 +16,8 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 16px;
-  margin-top: 56px;
+  /* The buddy stands on the head's top edge: room for it under the tiles. */
+  margin-top: 48px;
   padding: 20px 20px 18px;
   background: var(--dp-stage);
   overflow: visible;
@@ -223,6 +224,9 @@ a.wb-stat:hover {
   }
 }
 @media (max-width: 719px) {
+  .wb {
+    padding-inline: 16px;
+  }
   .wb-head {
     padding: 16px;
   }
@@ -237,7 +241,7 @@ a.wb-stat:hover {
     display: block;
   }
 }
-/* The empty slot on the public home: 1px so the island loader sees it at the top of the page. */
+/* The sandbox slot under the hero: holds the signed-out card, or the Workbench in its place. */
 .wb-slot {
   min-height: 1px;
 }

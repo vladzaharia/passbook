@@ -221,3 +221,11 @@
 .op-list-empty p {
   margin: 0;
 }
+
+/* A phone on its side: the list pane is ~150 px tall, so the empty line sits closer to the buddy. */
+@media (max-height: 500px) {
+  .op-list-empty {
+    margin-top: 64px;
+    padding-block: 12px;
+  }
+}

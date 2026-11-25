@@ -75,7 +75,8 @@ export async function rotateApiKey(
     prefix,
     key_hash: hash,
     secret_label: label,
-    created_by: authority.kind === 'api_key' ? null : authority.userId,
+    // A key that rotates itself keeps its creator (a template scope acts as that member, rechecked live).
+    created_by: authority.kind === 'api_key' ? old.created_by : authority.userId,
     created_at: now,
     last_used_at: null,
     revoked_at: null,
