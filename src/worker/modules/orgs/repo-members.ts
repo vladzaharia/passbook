@@ -182,14 +182,14 @@ export function acceptMembership(
 ) {
   return stmt(
     db,
-    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
- SELECT ?, i.org_id, u.id, i.id, i.roles, ? FROM org_invitations i
+    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at, joined_at)
+ SELECT ?, i.org_id, u.id, i.id, i.roles, ?, ? FROM org_invitations i
  JOIN orgs o ON o.id = i.org_id AND o.status = 'active'
  JOIN users u ON u.id = ? AND u.status = 'active'
  JOIN user_emails e ON e.user_id = u.id AND e.email = i.email
  WHERE i.token_hash = ? AND i.revoked_at IS NULL AND i.accepted_at IS NULL AND i.expires_at > ?
  AND NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.org_id = i.org_id AND m.user_id = u.id AND m.revoked_at IS NULL)`,
-    [id, now, userId, hash, now],
+    [id, now, now, userId, hash, now],
   );
 }
 export function consumeInvitation(db: D1Database, hash: string, now: number) {
