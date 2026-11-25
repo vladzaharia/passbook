@@ -64,6 +64,14 @@
     "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
   },
   {
+    "key": "DELETE /api/v1/nfc/bindings/{bindingId} callable by nfc:write key",
+    "class": "additive",
+    "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
+    "op": "DELETE /api/v1/nfc/bindings/{bindingId}",
+    "change": "callable by nfc:write key",
+    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key. Limited keys: pass-scope bindings of their own passes."
+  },
+  {
     "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.kind: field added",
     "class": "additive",
     "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
@@ -616,6 +624,22 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "GET /api/v1/nfc/passes/{passId}/tags callable by nfc:read key",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcPassesByPassIdTags",
+    "op": "GET /api/v1/nfc/passes/{passId}/tags",
+    "change": "callable by nfc:read key",
+    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key. Limited keys see pass-scope tags of their own passes."
+  },
+  {
+    "key": "GET /api/v1/nfc/tags callable by nfc:read key",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTags",
+    "op": "GET /api/v1/nfc/tags",
+    "change": "callable by nfc:read key",
+    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key. Limited keys list spares only."
+  },
+  {
     "key": "GET /api/v1/nfc/tags optional parameter query:binding added",
     "class": "additive",
     "operationId": "nfc-tags.getNfcTags",
@@ -630,6 +654,30 @@
     "op": "GET /api/v1/nfc/tags",
     "change": "optional parameter query:passId added",
     "note": "With status=spare: lists only the spare tags this pass takes by its tag-type policy."
+  },
+  {
+    "key": "GET /api/v1/nfc/tags query orgId: now optional",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTags",
+    "op": "GET /api/v1/nfc/tags",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
+  },
+  {
+    "key": "GET /api/v1/nfc/tags/{id} callable by nfc:read key",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTagsById",
+    "op": "GET /api/v1/nfc/tags/{id}",
+    "change": "callable by nfc:read key",
+    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key."
+  },
+  {
+    "key": "GET /api/v1/nfc/tags/{id}/history callable by nfc:read key",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTagsByIdHistory",
+    "op": "GET /api/v1/nfc/tags/{id}/history",
+    "change": "callable by nfc:read key",
+    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -2621,12 +2669,44 @@
     "note": "Callable with a live, org-bound nfc:keys key; generated keys are in this answer only (null on an Idempotency-Key replay)."
   },
   {
+    "key": "POST /api/v1/nfc/passes/{passId}/tags/assign 403: code TAG_KEY_LIMITED added",
+    "class": "additive",
+    "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
+    "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
+    "change": "403: code TAG_KEY_LIMITED added",
+    "note": "A key limited to templates is refused a typed tag ID or user scope."
+  },
+  {
+    "key": "POST /api/v1/nfc/passes/{passId}/tags/assign callable by nfc:write key",
+    "class": "additive",
+    "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
+    "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
+    "change": "callable by nfc:write key",
+    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key. Limited keys: spare tags, pass scope (TAG_KEY_LIMITED)."
+  },
+  {
     "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",
     "class": "additive",
     "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
     "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
     "change": "new operation",
     "note": "Assign a typed tag ID or a spare tag to a pass without a scanner."
+  },
+  {
+    "key": "POST /api/v1/nfc/tags/{id}/lost callable by nfc:write key",
+    "class": "additive",
+    "operationId": "nfc-tags.postNfcTagsByIdLost",
+    "op": "POST /api/v1/nfc/tags/{id}/lost",
+    "change": "callable by nfc:write key",
+    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key."
+  },
+  {
+    "key": "POST /api/v1/nfc/tags/{id}/restore callable by nfc:write key",
+    "class": "additive",
+    "operationId": "nfc-tags.postNfcTagsByIdRestore",
+    "op": "POST /api/v1/nfc/tags/{id}/restore",
+    "change": "callable by nfc:write key",
+    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key."
   },
   {
     "key": "POST /api/v1/offboard 200.more: field added",
@@ -4227,85 +4307,5 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
-  },
-  {
-    "key": "GET /api/v1/nfc/tags callable by nfc:read key",
-    "class": "additive",
-    "operationId": "nfc-tags.getNfcTags",
-    "op": "GET /api/v1/nfc/tags",
-    "change": "callable by nfc:read key",
-    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key. Limited keys list spares only."
-  },
-  {
-    "key": "GET /api/v1/nfc/tags/{id} callable by nfc:read key",
-    "class": "additive",
-    "operationId": "nfc-tags.getNfcTagsById",
-    "op": "GET /api/v1/nfc/tags/{id}",
-    "change": "callable by nfc:read key",
-    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key."
-  },
-  {
-    "key": "GET /api/v1/nfc/tags/{id}/history callable by nfc:read key",
-    "class": "additive",
-    "operationId": "nfc-tags.getNfcTagsByIdHistory",
-    "op": "GET /api/v1/nfc/tags/{id}/history",
-    "change": "callable by nfc:read key",
-    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key."
-  },
-  {
-    "key": "GET /api/v1/nfc/passes/{passId}/tags callable by nfc:read key",
-    "class": "additive",
-    "operationId": "nfc-tags.getNfcPassesByPassIdTags",
-    "op": "GET /api/v1/nfc/passes/{passId}/tags",
-    "change": "callable by nfc:read key",
-    "note": "Callable with an org-bound key holding nfc:read; the audit log names the key. Limited keys see pass-scope tags of their own passes."
-  },
-  {
-    "key": "POST /api/v1/nfc/passes/{passId}/tags/assign callable by nfc:write key",
-    "class": "additive",
-    "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
-    "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
-    "change": "callable by nfc:write key",
-    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key. Limited keys: spare tags, pass scope (TAG_KEY_LIMITED)."
-  },
-  {
-    "key": "DELETE /api/v1/nfc/bindings/{bindingId} callable by nfc:write key",
-    "class": "additive",
-    "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
-    "op": "DELETE /api/v1/nfc/bindings/{bindingId}",
-    "change": "callable by nfc:write key",
-    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key. Limited keys: pass-scope bindings of their own passes."
-  },
-  {
-    "key": "POST /api/v1/nfc/tags/{id}/lost callable by nfc:write key",
-    "class": "additive",
-    "operationId": "nfc-tags.postNfcTagsByIdLost",
-    "op": "POST /api/v1/nfc/tags/{id}/lost",
-    "change": "callable by nfc:write key",
-    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key."
-  },
-  {
-    "key": "POST /api/v1/nfc/tags/{id}/restore callable by nfc:write key",
-    "class": "additive",
-    "operationId": "nfc-tags.postNfcTagsByIdRestore",
-    "op": "POST /api/v1/nfc/tags/{id}/restore",
-    "change": "callable by nfc:write key",
-    "note": "Callable with an org-bound key holding nfc:write; the audit log names the key."
-  },
-  {
-    "key": "GET /api/v1/nfc/tags query orgId: now optional",
-    "class": "additive",
-    "operationId": "nfc-tags.getNfcTags",
-    "op": "GET /api/v1/nfc/tags",
-    "change": "query orgId: now optional",
-    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
-  },
-  {
-    "key": "POST /api/v1/nfc/passes/{passId}/tags/assign 403: code TAG_KEY_LIMITED added",
-    "class": "additive",
-    "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
-    "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
-    "change": "403: code TAG_KEY_LIMITED added",
-    "note": "A key limited to templates is refused a typed tag ID or user scope."
   }
 ]

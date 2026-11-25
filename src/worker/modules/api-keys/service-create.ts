@@ -74,19 +74,14 @@ export function assertCredentialKey(
 
 /** Setup, template and audit scopes belong to one organization (a template scope acts as a member of it): a platform key never holds them. */
 export function assertOrgBoundScopes(scopes: readonly string[], kind: ApiKeyKind): void {
-  const orgOnly = [
-    'org:write',
-    'wallet:write',
-    'audit:read',
-    'nfc:read',
-    'nfc:write',
-    ...TEMPLATE_ACT_AS_SCOPES,
-  ];
-  if (kind === 'platform' && scopes.some((s) => orgOnly.includes(s)))
-    throw invalid(
-      'org:write, wallet:write, audit:read, nfc:read, nfc:write and the template scopes are for keys of one organization.',
-      'API_KEY_ORG_SCOPE_ORG_ONLY',
-    );
+  const orgOnly = ['org:write', 'wallet:write', 'audit:read', 'nfc:read', 'nfc:write'];
+  if (
+    kind === 'platform' &&
+    scopes.some(
+      (s) => orgOnly.includes(s) || (TEMPLATE_ACT_AS_SCOPES as readonly string[]).includes(s),
+    )
+  )
+    throw invalid('These scopes are for keys of one organization.', 'API_KEY_ORG_SCOPE_ORG_ONLY');
 }
 
 /** Review and release work with Test keys only; a Live key never holds them, named or through a role. */
