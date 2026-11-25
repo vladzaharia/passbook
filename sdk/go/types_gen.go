@@ -1151,6 +1151,7 @@ type ConnectionsCreateParams struct {
 	IntervalSeconds   *int64                                         `json:"intervalSeconds,omitempty"`
 	MaxConcurrency    *int64                                         `json:"maxConcurrency,omitempty"`
 	RequestsPerMinute *int64                                         `json:"requestsPerMinute,omitempty"`
+	FileID            *string                                        `json:"fileId,omitempty"`
 }
 
 type ConnectionsCreateParamsMappingValue struct {
@@ -1228,6 +1229,154 @@ type ConnectionsDeleteResponse struct {
 }
 
 type ConnectionsDeleteResult = ConnectionsDeleteResponse
+
+type ConnectionsFilesApplyResponse struct {
+	File               ConnectionsFilesApplyResponseFile `json:"file"`
+	RunID              string                            `json:"runId"`
+	WorkflowInstanceID string                            `json:"workflowInstanceId"`
+}
+
+type ConnectionsFilesApplyResponseFile struct {
+	ID            string                                   `json:"id"`
+	ConnectionID  string                                   `json:"connectionId"`
+	Revision      int64                                    `json:"revision"`
+	State         string                                   `json:"state"`
+	Name          string                                   `json:"name"`
+	Format        string                                   `json:"format"`
+	Sheet         *string                                  `json:"sheet"`
+	Bytes         int64                                    `json:"bytes"`
+	Rows          int64                                    `json:"rows"`
+	Skipped       ConnectionsFilesApplyResponseFileSkipped `json:"skipped"`
+	Diff          map[string]any                           `json:"diff"`
+	Applied       bool                                     `json:"applied"`
+	CreatedBy     *string                                  `json:"createdBy"`
+	CreatedByName *string                                  `json:"createdByName"`
+	CreatedAt     int64                                    `json:"createdAt"`
+	ExpiresAt     *int64                                   `json:"expiresAt"`
+	SupersededAt  *int64                                   `json:"supersededAt"`
+}
+
+type ConnectionsFilesApplyResponseFileSkipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
+
+type ConnectionsFilesDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
+
+type ConnectionsFilesListItem struct {
+	ID            string                          `json:"id"`
+	ConnectionID  string                          `json:"connectionId"`
+	Revision      int64                           `json:"revision"`
+	State         string                          `json:"state"`
+	Name          string                          `json:"name"`
+	Format        string                          `json:"format"`
+	Sheet         *string                         `json:"sheet"`
+	Bytes         int64                           `json:"bytes"`
+	Rows          int64                           `json:"rows"`
+	Skipped       ConnectionsFilesListItemSkipped `json:"skipped"`
+	Diff          map[string]any                  `json:"diff"`
+	Applied       bool                            `json:"applied"`
+	CreatedBy     *string                         `json:"createdBy"`
+	CreatedByName *string                         `json:"createdByName"`
+	CreatedAt     int64                           `json:"createdAt"`
+	ExpiresAt     *int64                          `json:"expiresAt"`
+	SupersededAt  *int64                          `json:"supersededAt"`
+}
+
+type ConnectionsFilesListItemSkipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
+type ConnectionsFilesListResponse struct {
+	Items      []ConnectionsFilesListResponseItemsItem `json:"items"`
+	NextCursor *string                                 `json:"nextCursor"`
+}
+
+type ConnectionsFilesListResponseItemsItem struct {
+	ID            string                                       `json:"id"`
+	ConnectionID  string                                       `json:"connectionId"`
+	Revision      int64                                        `json:"revision"`
+	State         string                                       `json:"state"`
+	Name          string                                       `json:"name"`
+	Format        string                                       `json:"format"`
+	Sheet         *string                                      `json:"sheet"`
+	Bytes         int64                                        `json:"bytes"`
+	Rows          int64                                        `json:"rows"`
+	Skipped       ConnectionsFilesListResponseItemsItemSkipped `json:"skipped"`
+	Diff          map[string]any                               `json:"diff"`
+	Applied       bool                                         `json:"applied"`
+	CreatedBy     *string                                      `json:"createdBy"`
+	CreatedByName *string                                      `json:"createdByName"`
+	CreatedAt     int64                                        `json:"createdAt"`
+	ExpiresAt     *int64                                       `json:"expiresAt"`
+	SupersededAt  *int64                                       `json:"supersededAt"`
+}
+
+type ConnectionsFilesListResponseItemsItemSkipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
+
+type ConnectionsFilesUploadParams struct {
+	Name           string  `json:"name"`
+	Content        string  `json:"content"`
+	Encoding       string  `json:"encoding"`
+	Sheet          *string `json:"sheet,omitempty"`
+	RecordsPointer *string `json:"recordsPointer,omitempty"`
+}
+
+type ConnectionsFilesUploadQuery struct {
+	Apply *string `json:"apply,omitempty"`
+}
+
+type ConnectionsFilesUploadResponse = any
+
+type ConnectionsFilesUploadResponse1 struct {
+	ID            string                                 `json:"id"`
+	ConnectionID  string                                 `json:"connectionId"`
+	Revision      int64                                  `json:"revision"`
+	State         string                                 `json:"state"`
+	Name          string                                 `json:"name"`
+	Format        string                                 `json:"format"`
+	Sheet         *string                                `json:"sheet"`
+	Bytes         int64                                  `json:"bytes"`
+	Rows          int64                                  `json:"rows"`
+	Skipped       ConnectionsFilesUploadResponse1Skipped `json:"skipped"`
+	Diff          map[string]any                         `json:"diff"`
+	Applied       bool                                   `json:"applied"`
+	CreatedBy     *string                                `json:"createdBy"`
+	CreatedByName *string                                `json:"createdByName"`
+	CreatedAt     int64                                  `json:"createdAt"`
+	ExpiresAt     *int64                                 `json:"expiresAt"`
+	SupersededAt  *int64                                 `json:"supersededAt"`
+	Unchanged     bool                                   `json:"unchanged"`
+	RunID         *string                                `json:"runId,omitempty"`
+}
+
+type ConnectionsFilesUploadResponse1Skipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesUploadResponse2 struct {
+	Unchanged bool `json:"unchanged"`
+}
+
+type ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 
 type ConnectionsListItem struct {
 	ID                  string                                     `json:"id"`
@@ -1616,6 +1765,7 @@ type ConnectionsTestConfigParams struct {
 	VoidWhen          []ConnectionsTestConfigParamsVoidWhenItem          `json:"voidWhen,omitempty"`
 	AutoCreate        *bool                                              `json:"autoCreate,omitempty"`
 	DefaultTemplateID *string                                            `json:"defaultTemplateId,omitempty"`
+	FileID            *string                                            `json:"fileId,omitempty"`
 }
 
 type ConnectionsTestConfigParamsMappingValue struct {
@@ -1801,6 +1951,131 @@ type ConnectionsUpdateResponseVoidWhenItem struct {
 
 type ConnectionsUpdateResult = ConnectionsUpdateResponse
 
+type ConnectionsUploadsCreateBody = ConnectionsUploadsCreateParams
+
+type ConnectionsUploadsCreateParams struct {
+	Name           string  `json:"name"`
+	Content        string  `json:"content"`
+	Encoding       string  `json:"encoding"`
+	Sheet          *string `json:"sheet,omitempty"`
+	RecordsPointer *string `json:"recordsPointer,omitempty"`
+}
+
+type ConnectionsUploadsCreateResponse struct {
+	ID             string                                        `json:"id"`
+	OrgID          string                                        `json:"orgId"`
+	State          string                                        `json:"state"`
+	Name           string                                        `json:"name"`
+	Format         string                                        `json:"format"`
+	Sheets         []string                                      `json:"sheets"`
+	Sheet          *string                                       `json:"sheet"`
+	RecordsPointer *string                                       `json:"recordsPointer"`
+	Bytes          int64                                         `json:"bytes"`
+	Rows           int64                                         `json:"rows"`
+	Columns        []ConnectionsUploadsCreateResponseColumnsItem `json:"columns"`
+	Preview        ConnectionsUploadsCreateResponsePreview       `json:"preview"`
+	IDCandidates   []string                                      `json:"idCandidates"`
+	CreatedAt      int64                                         `json:"createdAt"`
+	ExpiresAt      *int64                                        `json:"expiresAt"`
+}
+
+type ConnectionsUploadsCreateResponseColumnsItem struct {
+	Pointer    string   `json:"pointer"`
+	Label      string   `json:"label"`
+	Type       string   `json:"type"`
+	Samples    []string `json:"samples"`
+	Blanks     int64    `json:"blanks"`
+	Duplicates int64    `json:"duplicates"`
+}
+
+type ConnectionsUploadsCreateResponsePreview struct {
+	Header []string   `json:"header"`
+	Rows   [][]string `json:"rows"`
+}
+
+type ConnectionsUploadsCreateResult = ConnectionsUploadsCreateResponse
+
+type ConnectionsUploadsDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type ConnectionsUploadsDeleteResult = ConnectionsUploadsDeleteResponse
+
+type ConnectionsUploadsRetrieveResponse struct {
+	ID             string                                          `json:"id"`
+	OrgID          string                                          `json:"orgId"`
+	State          string                                          `json:"state"`
+	Name           string                                          `json:"name"`
+	Format         string                                          `json:"format"`
+	Sheets         []string                                        `json:"sheets"`
+	Sheet          *string                                         `json:"sheet"`
+	RecordsPointer *string                                         `json:"recordsPointer"`
+	Bytes          int64                                           `json:"bytes"`
+	Rows           int64                                           `json:"rows"`
+	Columns        []ConnectionsUploadsRetrieveResponseColumnsItem `json:"columns"`
+	Preview        ConnectionsUploadsRetrieveResponsePreview       `json:"preview"`
+	IDCandidates   []string                                        `json:"idCandidates"`
+	CreatedAt      int64                                           `json:"createdAt"`
+	ExpiresAt      *int64                                          `json:"expiresAt"`
+}
+
+type ConnectionsUploadsRetrieveResponseColumnsItem struct {
+	Pointer    string   `json:"pointer"`
+	Label      string   `json:"label"`
+	Type       string   `json:"type"`
+	Samples    []string `json:"samples"`
+	Blanks     int64    `json:"blanks"`
+	Duplicates int64    `json:"duplicates"`
+}
+
+type ConnectionsUploadsRetrieveResponsePreview struct {
+	Header []string   `json:"header"`
+	Rows   [][]string `json:"rows"`
+}
+
+type ConnectionsUploadsRetrieveResult = ConnectionsUploadsRetrieveResponse
+
+type ConnectionsUploadsUpdateBody = ConnectionsUploadsUpdateParams
+
+type ConnectionsUploadsUpdateParams struct {
+	Sheet          *string `json:"sheet,omitempty"`
+	RecordsPointer *string `json:"recordsPointer,omitempty"`
+}
+
+type ConnectionsUploadsUpdateResponse struct {
+	ID             string                                        `json:"id"`
+	OrgID          string                                        `json:"orgId"`
+	State          string                                        `json:"state"`
+	Name           string                                        `json:"name"`
+	Format         string                                        `json:"format"`
+	Sheets         []string                                      `json:"sheets"`
+	Sheet          *string                                       `json:"sheet"`
+	RecordsPointer *string                                       `json:"recordsPointer"`
+	Bytes          int64                                         `json:"bytes"`
+	Rows           int64                                         `json:"rows"`
+	Columns        []ConnectionsUploadsUpdateResponseColumnsItem `json:"columns"`
+	Preview        ConnectionsUploadsUpdateResponsePreview       `json:"preview"`
+	IDCandidates   []string                                      `json:"idCandidates"`
+	CreatedAt      int64                                         `json:"createdAt"`
+	ExpiresAt      *int64                                        `json:"expiresAt"`
+}
+
+type ConnectionsUploadsUpdateResponseColumnsItem struct {
+	Pointer    string   `json:"pointer"`
+	Label      string   `json:"label"`
+	Type       string   `json:"type"`
+	Samples    []string `json:"samples"`
+	Blanks     int64    `json:"blanks"`
+	Duplicates int64    `json:"duplicates"`
+}
+
+type ConnectionsUploadsUpdateResponsePreview struct {
+	Header []string   `json:"header"`
+	Rows   [][]string `json:"rows"`
+}
+
+type ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
+
 type ConnectionsWebhookFailuresListItem struct {
 	ID             string  `json:"id"`
 	EventRef       string  `json:"eventRef"`
@@ -1853,20 +2128,24 @@ type ConnectorsListItem struct {
 	Version      int64                                          `json:"version"`
 	DisplayName  string                                         `json:"displayName"`
 	Description  *string                                        `json:"description,omitempty"`
+	Category     *string                                        `json:"category,omitempty"`
+	Order        *int64                                         `json:"order,omitempty"`
 	Capabilities ConnectorsListItemCapabilities                 `json:"capabilities"`
 	ConfigSchema any                                            `json:"configSchema,omitempty"`
 	SecretSchema any                                            `json:"secretSchema,omitempty"`
 	OutputFields map[string]ConnectorsListItemOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsListItemDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsListItemRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                           `json:"entitled"`
 }
 
 type ConnectorsListItemCapabilities struct {
-	Poll     bool `json:"poll"`
-	Delta    bool `json:"delta"`
-	Webhook  bool `json:"webhook"`
-	Import   bool `json:"import"`
-	Snapshot bool `json:"snapshot"`
+	Poll     bool  `json:"poll"`
+	Delta    bool  `json:"delta"`
+	Webhook  bool  `json:"webhook"`
+	Import   bool  `json:"import"`
+	Snapshot bool  `json:"snapshot"`
+	Upload   *bool `json:"upload,omitempty"`
 }
 
 type ConnectorsListItemDefaults struct {
@@ -1884,7 +2163,9 @@ type ConnectorsListItemOutputFieldsValue struct {
 type ConnectorsListItemRecipesItem struct {
 	ID               string                                                    `json:"id"`
 	Label            string                                                    `json:"label"`
+	Category         *string                                                   `json:"category,omitempty"`
 	PasteSecret      bool                                                      `json:"pasteSecret"`
+	Entitled         bool                                                      `json:"entitled"`
 	OutputFields     map[string]ConnectorsListItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListItemRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                    `json:"holderEmailField"`
@@ -1926,20 +2207,24 @@ type ConnectorsListResponseItemsItem struct {
 	Version      int64                                                       `json:"version"`
 	DisplayName  string                                                      `json:"displayName"`
 	Description  *string                                                     `json:"description,omitempty"`
+	Category     *string                                                     `json:"category,omitempty"`
+	Order        *int64                                                      `json:"order,omitempty"`
 	Capabilities ConnectorsListResponseItemsItemCapabilities                 `json:"capabilities"`
 	ConfigSchema any                                                         `json:"configSchema,omitempty"`
 	SecretSchema any                                                         `json:"secretSchema,omitempty"`
 	OutputFields map[string]ConnectorsListResponseItemsItemOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsListResponseItemsItemDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsListResponseItemsItemRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                                        `json:"entitled"`
 }
 
 type ConnectorsListResponseItemsItemCapabilities struct {
-	Poll     bool `json:"poll"`
-	Delta    bool `json:"delta"`
-	Webhook  bool `json:"webhook"`
-	Import   bool `json:"import"`
-	Snapshot bool `json:"snapshot"`
+	Poll     bool  `json:"poll"`
+	Delta    bool  `json:"delta"`
+	Webhook  bool  `json:"webhook"`
+	Import   bool  `json:"import"`
+	Snapshot bool  `json:"snapshot"`
+	Upload   *bool `json:"upload,omitempty"`
 }
 
 type ConnectorsListResponseItemsItemDefaults struct {
@@ -1957,7 +2242,9 @@ type ConnectorsListResponseItemsItemOutputFieldsValue struct {
 type ConnectorsListResponseItemsItemRecipesItem struct {
 	ID               string                                                                 `json:"id"`
 	Label            string                                                                 `json:"label"`
+	Category         *string                                                                `json:"category,omitempty"`
 	PasteSecret      bool                                                                   `json:"pasteSecret"`
+	Entitled         bool                                                                   `json:"entitled"`
 	OutputFields     map[string]ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListResponseItemsItemRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                                 `json:"holderEmailField"`
@@ -1990,20 +2277,24 @@ type ConnectorsRetrieveResponse struct {
 	Version      int64                                                  `json:"version"`
 	DisplayName  string                                                 `json:"displayName"`
 	Description  *string                                                `json:"description,omitempty"`
+	Category     *string                                                `json:"category,omitempty"`
+	Order        *int64                                                 `json:"order,omitempty"`
 	Capabilities ConnectorsRetrieveResponseCapabilities                 `json:"capabilities"`
 	ConfigSchema any                                                    `json:"configSchema,omitempty"`
 	SecretSchema any                                                    `json:"secretSchema,omitempty"`
 	OutputFields map[string]ConnectorsRetrieveResponseOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsRetrieveResponseDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsRetrieveResponseRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                                   `json:"entitled"`
 }
 
 type ConnectorsRetrieveResponseCapabilities struct {
-	Poll     bool `json:"poll"`
-	Delta    bool `json:"delta"`
-	Webhook  bool `json:"webhook"`
-	Import   bool `json:"import"`
-	Snapshot bool `json:"snapshot"`
+	Poll     bool  `json:"poll"`
+	Delta    bool  `json:"delta"`
+	Webhook  bool  `json:"webhook"`
+	Import   bool  `json:"import"`
+	Snapshot bool  `json:"snapshot"`
+	Upload   *bool `json:"upload,omitempty"`
 }
 
 type ConnectorsRetrieveResponseDefaults struct {
@@ -2021,7 +2312,9 @@ type ConnectorsRetrieveResponseOutputFieldsValue struct {
 type ConnectorsRetrieveResponseRecipesItem struct {
 	ID               string                                                            `json:"id"`
 	Label            string                                                            `json:"label"`
+	Category         *string                                                           `json:"category,omitempty"`
 	PasteSecret      bool                                                              `json:"pasteSecret"`
+	Entitled         bool                                                              `json:"entitled"`
 	OutputFields     map[string]ConnectorsRetrieveResponseRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsRetrieveResponseRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                            `json:"holderEmailField"`

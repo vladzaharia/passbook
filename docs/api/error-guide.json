@@ -3592,5 +3592,161 @@
     "when": "A sandbox can be reset 3 times in a day.",
     "fix": "Wait until the oldest reset of the day is 24 hours old, then reset again.",
     "retryable": true
+  },
+  "FILE_STATE": {
+    "title": "File not in that state",
+    "when": "The revision is not pending, or another upload landed first.",
+    "fix": "Reload the revisions and retry.",
+    "retryable": false
+  },
+  "FILE_EXPIRED": {
+    "title": "Upload expired",
+    "when": "A draft or pending revision is older than 23 hours.",
+    "fix": "Upload the file again.",
+    "retryable": false
+  },
+  "FILE_NOT_FOUND": {
+    "title": "File not found",
+    "when": "No draft upload with this id exists in the organization.",
+    "fix": "Upload the file again.",
+    "retryable": false
+  },
+  "FILE_ID_COLUMN_MISSING": {
+    "title": "ID column missing",
+    "when": "The file has no such column, or no row has a value in it.",
+    "fix": "Choose a column from idCandidates.",
+    "retryable": false
+  },
+  "FILE_TOO_LARGE": {
+    "title": "File too large",
+    "when": "The file is over 5 MB.",
+    "fix": "Split the file or remove columns.",
+    "retryable": false
+  },
+  "FILE_BAD_POINTER": {
+    "title": "Records path invalid",
+    "when": "recordsPointer is not a JSON pointer into the file.",
+    "fix": "Use a path that starts with /.",
+    "retryable": false
+  },
+  "FILE_SHEET_NOT_FOUND": {
+    "title": "Sheet not found",
+    "when": "The workbook has no sheet with this name.",
+    "fix": "Choose a name from sheets.",
+    "retryable": false
+  },
+  "FILE_FORMAT_UNSUPPORTED": {
+    "title": "File type not supported",
+    "when": "The file is not CSV, Excel (.xlsx) or JSON.",
+    "fix": "Save it as .xlsx or CSV.",
+    "retryable": false
+  },
+  "FILE_MACRO": {
+    "title": "Macros not allowed",
+    "when": "The workbook holds macros.",
+    "fix": "Save it as a plain .xlsx or CSV.",
+    "retryable": false
+  },
+  "FILE_ENCODING": {
+    "title": "Text encoding not supported",
+    "when": "The text is not UTF-8.",
+    "fix": "Save it as UTF-8.",
+    "retryable": false
+  },
+  "FILE_EMPTY": {
+    "title": "File is empty",
+    "when": "The file has no data rows.",
+    "fix": "Add rows and upload again.",
+    "retryable": false
+  },
+  "FILE_DAMAGED": {
+    "title": "File could not be read",
+    "when": "The file is damaged or not valid.",
+    "fix": "Export it again and upload.",
+    "retryable": false
+  },
+  "FILE_ARCHIVE_LIMIT": {
+    "title": "Workbook too large",
+    "when": "The workbook inflates past its limits.",
+    "fix": "Remove sheets or data.",
+    "retryable": false
+  },
+  "FILE_XML_UNSAFE": {
+    "title": "Workbook not accepted",
+    "when": "The workbook holds markup the platform refuses.",
+    "fix": "Save it as CSV.",
+    "retryable": false
+  },
+  "FILE_TOO_MANY_ROWS": {
+    "title": "Too many rows",
+    "when": "The file has more than 10,000 rows.",
+    "fix": "Split the file.",
+    "retryable": false
+  },
+  "FILE_TOO_MANY_COLUMNS": {
+    "title": "Too many columns",
+    "when": "The file has more than 100 columns.",
+    "fix": "Remove columns.",
+    "retryable": false
+  },
+  "FILE_TOO_MANY_CELLS": {
+    "title": "Too many cells",
+    "when": "The workbook has more cells than the limit.",
+    "fix": "Remove unused cells or sheets.",
+    "retryable": false
+  },
+  "FILE_CELL_TOO_LONG": {
+    "title": "Value too long",
+    "when": "A value has more than 2,000 characters.",
+    "fix": "Shorten the value.",
+    "retryable": false
+  },
+  "FILE_LINE_TOO_LONG": {
+    "title": "Line too long",
+    "when": "A line is longer than 64 KB.",
+    "fix": "Split the line into records.",
+    "retryable": false
+  },
+  "FILE_HEADER_MISSING": {
+    "title": "Header missing",
+    "when": "A column has no header.",
+    "fix": "Name every column.",
+    "retryable": false
+  },
+  "FILE_HEADER_TOO_LONG": {
+    "title": "Header too long",
+    "when": "A header has more than 200 characters.",
+    "fix": "Shorten the header.",
+    "retryable": false
+  },
+  "FILE_HEADER_DUPLICATE": {
+    "title": "Duplicate header",
+    "when": "Two columns share a header.",
+    "fix": "Rename one.",
+    "retryable": false
+  },
+  "FILE_ROW_SHAPE": {
+    "title": "Row has too many cells",
+    "when": "A row has more cells than the header.",
+    "fix": "Fix the row and upload again.",
+    "retryable": false
+  },
+  "FILE_JSON_TOO_DEEP": {
+    "title": "JSON nested too deep",
+    "when": "The JSON is nested more than 32 levels.",
+    "fix": "Flatten it.",
+    "retryable": false
+  },
+  "FILE_NOT_RECORDS": {
+    "title": "Not a list of records",
+    "when": "The file, or the records path, is not a list of objects.",
+    "fix": "Set recordsPointer to the list.",
+    "retryable": false
+  },
+  "FILE_RECORDS_NOT_FOUND": {
+    "title": "Records path not found",
+    "when": "recordsPointer points at nothing in the file.",
+    "fix": "Choose another path.",
+    "retryable": false
   }
 }

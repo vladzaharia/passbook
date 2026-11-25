@@ -103,6 +103,7 @@ const CSV_CONNECTOR = {
   outputFields: {},
   defaults: { intervalSeconds: 900, maxConcurrency: 1, requestsPerMinute: 6, timeoutMs: 15_000 },
   recipes: [],
+  entitled: true,
 };
 /** Two saved list views of the passes. */
 const VIEWS = [

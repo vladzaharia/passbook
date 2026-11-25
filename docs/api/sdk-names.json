@@ -2448,5 +2448,37 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
+  },
+  "connections.postConnectionsUploads": {
+    "resource": "connections.uploads",
+    "method": "create"
+  },
+  "connections.getConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "retrieve"
+  },
+  "connections.patchConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "update"
+  },
+  "connections.deleteConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "delete"
+  },
+  "connections.postConnectionsByIdFiles": {
+    "resource": "connections.files",
+    "method": "upload"
+  },
+  "connections.getConnectionsByIdFiles": {
+    "resource": "connections.files",
+    "method": "list"
+  },
+  "connections.postConnectionsByIdFilesByFileIdApply": {
+    "resource": "connections.files",
+    "method": "apply"
+  },
+  "connections.deleteConnectionsByIdFilesByFileId": {
+    "resource": "connections.files",
+    "method": "delete"
   }
 }

@@ -823,6 +823,7 @@ export type ConnectionsCreateParams = {
   intervalSeconds?: number;
   maxConcurrency?: number;
   requestsPerMinute?: number;
+  fileId?: string;
 };
 
 export type ConnectionsCreateResponse = {
@@ -873,6 +874,125 @@ export type ConnectionsCreateResponse = {
 
 export type ConnectionsDeleteResponse = {
   ok: true;
+};
+
+export type ConnectionsFilesApplyResponse = {
+  file: {
+    id: string;
+    connectionId: string;
+    revision: number;
+    state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+    name: string;
+    format: "csv" | "xlsx" | "json" | "ndjson";
+    sheet: string | null;
+    bytes: number;
+    rows: number;
+    skipped: {
+      noId: number;
+      duplicate: number;
+    };
+    diff: {
+      added: number;
+      changed: number;
+      removed: number;
+      examples: {
+        added: Array<string>;
+        changed: Array<string>;
+        removed: Array<string>;
+      };
+    } | null;
+    applied: boolean;
+    createdBy: string | null;
+    createdByName: string | null;
+    createdAt: number;
+    expiresAt: number | null;
+    supersededAt: number | null;
+  };
+  runId: string;
+  workflowInstanceId: string;
+};
+
+export type ConnectionsFilesDeleteResponse = {
+  ok: true;
+};
+
+export type ConnectionsFilesListResponse = {
+  items: Array<{
+    id: string;
+    connectionId: string;
+    revision: number;
+    state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+    name: string;
+    format: "csv" | "xlsx" | "json" | "ndjson";
+    sheet: string | null;
+    bytes: number;
+    rows: number;
+    skipped: {
+      noId: number;
+      duplicate: number;
+    };
+    diff: {
+      added: number;
+      changed: number;
+      removed: number;
+      examples: {
+        added: Array<string>;
+        changed: Array<string>;
+        removed: Array<string>;
+      };
+    } | null;
+    applied: boolean;
+    createdBy: string | null;
+    createdByName: string | null;
+    createdAt: number;
+    expiresAt: number | null;
+    supersededAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ConnectionsFilesUploadParams = {
+  name: string;
+  content: string;
+  encoding: "utf8" | "base64";
+  sheet?: string;
+  recordsPointer?: string;
+};
+
+export type ConnectionsFilesUploadResponse = {
+  id: string;
+  connectionId: string;
+  revision: number;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheet: string | null;
+  bytes: number;
+  rows: number;
+  skipped: {
+    noId: number;
+    duplicate: number;
+  };
+  diff: {
+    added: number;
+    changed: number;
+    removed: number;
+    examples: {
+      added: Array<string>;
+      changed: Array<string>;
+      removed: Array<string>;
+    };
+  } | null;
+  applied: boolean;
+  createdBy: string | null;
+  createdByName: string | null;
+  createdAt: number;
+  expiresAt: number | null;
+  supersededAt: number | null;
+  unchanged: false;
+  runId?: string;
+} | {
+  unchanged: true;
 };
 
 export type ConnectionsListResponse = {
@@ -1139,6 +1259,7 @@ export type ConnectionsTestConfigParams = {
   }>;
   autoCreate?: boolean;
   defaultTemplateId?: string;
+  fileId?: string;
 };
 
 export type ConnectionsTestConfigResponse = {
@@ -1270,6 +1391,107 @@ export type ConnectionsUpdateResponse = {
   webhookSecret?: string;
 };
 
+export type ConnectionsUploadsCreateParams = {
+  name: string;
+  content: string;
+  encoding: "utf8" | "base64";
+  sheet?: string;
+  recordsPointer?: string;
+};
+
+export type ConnectionsUploadsCreateResponse = {
+  id: string;
+  orgId: string;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheets: Array<string>;
+  sheet: string | null;
+  recordsPointer: string | null;
+  bytes: number;
+  rows: number;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+    samples: Array<string>;
+    blanks: number;
+    duplicates: number;
+  }>;
+  preview: {
+    header: Array<string>;
+    rows: Array<Array<string>>;
+  };
+  idCandidates: Array<string>;
+  createdAt: number;
+  expiresAt: number | null;
+};
+
+export type ConnectionsUploadsDeleteResponse = {
+  ok: true;
+};
+
+export type ConnectionsUploadsRetrieveResponse = {
+  id: string;
+  orgId: string;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheets: Array<string>;
+  sheet: string | null;
+  recordsPointer: string | null;
+  bytes: number;
+  rows: number;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+    samples: Array<string>;
+    blanks: number;
+    duplicates: number;
+  }>;
+  preview: {
+    header: Array<string>;
+    rows: Array<Array<string>>;
+  };
+  idCandidates: Array<string>;
+  createdAt: number;
+  expiresAt: number | null;
+};
+
+export type ConnectionsUploadsUpdateParams = {
+  sheet?: string;
+  recordsPointer?: string;
+};
+
+export type ConnectionsUploadsUpdateResponse = {
+  id: string;
+  orgId: string;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheets: Array<string>;
+  sheet: string | null;
+  recordsPointer: string | null;
+  bytes: number;
+  rows: number;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+    samples: Array<string>;
+    blanks: number;
+    duplicates: number;
+  }>;
+  preview: {
+    header: Array<string>;
+    rows: Array<Array<string>>;
+  };
+  idCandidates: Array<string>;
+  createdAt: number;
+  expiresAt: number | null;
+};
+
 export type ConnectionsWebhookFailuresListResponse = {
   items: Array<{
     id: string;
@@ -1301,12 +1523,15 @@ export type ConnectorsListResponse = {
     version: number;
     displayName: string;
     description?: string;
+    category?: "files" | "apis" | "commerce" | "bookings" | "try";
+    order?: number;
     capabilities: {
       poll: boolean;
       delta: boolean;
       webhook: boolean;
       import: boolean;
       snapshot: boolean;
+      upload?: boolean;
     };
     configSchema?: unknown;
     secretSchema?: unknown;
@@ -1323,7 +1548,9 @@ export type ConnectorsListResponse = {
     recipes?: Array<{
       id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
       label: string;
+      category?: "files" | "apis" | "commerce" | "bookings" | "try";
       pasteSecret: boolean;
+      entitled: boolean;
       outputFields: Record<string, {
         type: "string" | "number" | "boolean" | "date";
         description?: string;
@@ -1342,6 +1569,7 @@ export type ConnectorsListResponse = {
         values?: Array<string | number | boolean>;
       }>;
     }>;
+    entitled: boolean;
   }>;
   nextCursor: string | null;
 };
@@ -1351,12 +1579,15 @@ export type ConnectorsRetrieveResponse = {
   version: number;
   displayName: string;
   description?: string;
+  category?: "files" | "apis" | "commerce" | "bookings" | "try";
+  order?: number;
   capabilities: {
     poll: boolean;
     delta: boolean;
     webhook: boolean;
     import: boolean;
     snapshot: boolean;
+    upload?: boolean;
   };
   configSchema?: unknown;
   secretSchema?: unknown;
@@ -1373,7 +1604,9 @@ export type ConnectorsRetrieveResponse = {
   recipes?: Array<{
     id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
     label: string;
+    category?: "files" | "apis" | "commerce" | "bookings" | "try";
     pasteSecret: boolean;
+    entitled: boolean;
     outputFields: Record<string, {
       type: "string" | "number" | "boolean" | "date";
       description?: string;
@@ -1392,6 +1625,7 @@ export type ConnectorsRetrieveResponse = {
       values?: Array<string | number | boolean>;
     }>;
   }>;
+  entitled: boolean;
 };
 
 export type CreatedScanner = {

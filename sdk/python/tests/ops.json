@@ -1319,6 +1319,204 @@
   }
  },
  {
+  "id": "connections.postConnectionsUploads",
+  "call": "connections.uploads.create",
+  "http": "POST",
+  "path": "/api/v1/connections/uploads",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "name": "x",
+   "content": "x",
+   "encoding": "utf8"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheets": [
+    "x"
+   ],
+   "sheet": "x",
+   "recordsPointer": "x",
+   "bytes": 0,
+   "rows": 0,
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "type": "text",
+     "samples": [
+      "x"
+     ],
+     "blanks": 0,
+     "duplicates": 0
+    }
+   ],
+   "preview": {
+    "header": [
+     "x"
+    ],
+    "rows": [
+     [
+      "x"
+     ]
+    ]
+   },
+   "idCandidates": [
+    "x"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "connections.getConnectionsUploadsByFileId",
+  "call": "connections.uploads.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connections/uploads/{fileId}",
+  "pathParams": [
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheets": [
+    "x"
+   ],
+   "sheet": "x",
+   "recordsPointer": "x",
+   "bytes": 0,
+   "rows": 0,
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "type": "text",
+     "samples": [
+      "x"
+     ],
+     "blanks": 0,
+     "duplicates": 0
+    }
+   ],
+   "preview": {
+    "header": [
+     "x"
+    ],
+    "rows": [
+     [
+      "x"
+     ]
+    ]
+   },
+   "idCandidates": [
+    "x"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "connections.patchConnectionsUploadsByFileId",
+  "call": "connections.uploads.update",
+  "http": "PATCH",
+  "path": "/api/v1/connections/uploads/{fileId}",
+  "pathParams": [
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheets": [
+    "x"
+   ],
+   "sheet": "x",
+   "recordsPointer": "x",
+   "bytes": 0,
+   "rows": 0,
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "type": "text",
+     "samples": [
+      "x"
+     ],
+     "blanks": 0,
+     "duplicates": 0
+    }
+   ],
+   "preview": {
+    "header": [
+     "x"
+    ],
+    "rows": [
+     [
+      "x"
+     ]
+    ]
+   },
+   "idCandidates": [
+    "x"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "connections.deleteConnectionsUploadsByFileId",
+  "call": "connections.uploads.delete",
+  "http": "DELETE",
+  "path": "/api/v1/connections/uploads/{fileId}",
+  "pathParams": [
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
   "id": "connections.getConnectionsById",
   "call": "connections.retrieve",
   "http": "GET",
@@ -1475,6 +1673,217 @@
   "cursor": null,
   "result": {
    "ok": true
+  }
+ },
+ {
+  "id": "connections.getConnectionsByIdFiles",
+  "call": "connections.files.list",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/files",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "connectionId": "x",
+     "revision": 0,
+     "state": "draft",
+     "name": "x",
+     "format": "csv",
+     "sheet": "x",
+     "bytes": 0,
+     "rows": 0,
+     "skipped": {
+      "noId": 0,
+      "duplicate": 0
+     },
+     "diff": {
+      "added": 0,
+      "changed": 0,
+      "removed": 0,
+      "examples": {
+       "added": [
+        "x"
+       ],
+       "changed": [
+        "x"
+       ],
+       "removed": [
+        "x"
+       ]
+      }
+     },
+     "applied": false,
+     "createdBy": "x",
+     "createdByName": "x",
+     "createdAt": 0,
+     "expiresAt": 0,
+     "supersededAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdFiles",
+  "call": "connections.files.upload",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/files",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "name": "x",
+   "content": "x",
+   "encoding": "utf8"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "connectionId": "x",
+   "revision": 0,
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheet": "x",
+   "bytes": 0,
+   "rows": 0,
+   "skipped": {
+    "noId": 0,
+    "duplicate": 0
+   },
+   "diff": {
+    "added": 0,
+    "changed": 0,
+    "removed": 0,
+    "examples": {
+     "added": [
+      "x"
+     ],
+     "changed": [
+      "x"
+     ],
+     "removed": [
+      "x"
+     ]
+    }
+   },
+   "applied": false,
+   "createdBy": "x",
+   "createdByName": "x",
+   "createdAt": 0,
+   "expiresAt": 0,
+   "supersededAt": 0,
+   "unchanged": false
+  }
+ },
+ {
+  "id": "connections.deleteConnectionsByIdFilesByFileId",
+  "call": "connections.files.delete",
+  "http": "DELETE",
+  "path": "/api/v1/connections/{id}/files/{fileId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdFilesByFileIdApply",
+  "call": "connections.files.apply",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/files/{fileId}/apply",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "file": {
+    "id": "x",
+    "connectionId": "x",
+    "revision": 0,
+    "state": "draft",
+    "name": "x",
+    "format": "csv",
+    "sheet": "x",
+    "bytes": 0,
+    "rows": 0,
+    "skipped": {
+     "noId": 0,
+     "duplicate": 0
+    },
+    "diff": {
+     "added": 0,
+     "changed": 0,
+     "removed": 0,
+     "examples": {
+      "added": [
+       "x"
+      ],
+      "changed": [
+       "x"
+      ],
+      "removed": [
+       "x"
+      ]
+     }
+    },
+    "applied": false,
+    "createdBy": "x",
+    "createdByName": "x",
+    "createdAt": 0,
+    "expiresAt": 0,
+    "supersededAt": 0
+   },
+   "runId": "x",
+   "workflowInstanceId": "x"
   }
  },
  {
@@ -1851,7 +2260,8 @@
       "maxConcurrency": 0,
       "requestsPerMinute": 0,
       "timeoutMs": 0
-     }
+     },
+     "entitled": false
     }
    ],
    "nextCursor": null
@@ -1891,7 +2301,8 @@
     "maxConcurrency": 0,
     "requestsPerMinute": 0,
     "timeoutMs": 0
-   }
+   },
+   "entitled": false
   }
  },
  {

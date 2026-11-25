@@ -4307,5 +4307,181 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/files/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdFilesByFileId",
+    "op": "DELETE /api/v1/connections/{id}/files/{fileId}",
+    "change": "new operation",
+    "note": "Discard a pending revision and its stored file."
+  },
+  {
+    "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsUploadsByFileId",
+    "op": "DELETE /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Discard a draft upload and its stored file."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/files new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdFiles",
+    "op": "GET /api/v1/connections/{id}/files",
+    "change": "new operation",
+    "note": "Revisions of a connection file, newest first, with their diff and whether a sync applied them."
+  },
+  {
+    "key": "GET /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsUploadsByFileId",
+    "op": "GET /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Read a draft upload."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.upload: field added",
+    "note": "Connectors report capabilities.upload: true when records come from uploaded files."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].category: field added",
+    "note": " List items also carry order and capabilities.upload."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].entitled: field added",
+    "note": "With an org, the list shows only what its plan allows. Create and test-config give 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].order: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].order: field added",
+    "note": "Connectors carry category (files, apis, commerce, bookings or try) and order, which group and sort the connector picker."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].category: field added",
+    "note": "Sender recipes carry the picker category of their tile."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].entitled: field added",
+    "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.upload: field added",
+    "note": "Connectors report capabilities.upload: true when records come from uploaded files."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.category: field added",
+    "note": "Connectors carry category (files, apis, commerce, bookings or try) and order, which group and sort the connector picker."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.entitled: field added",
+    "note": "The detail is never filtered; entitled says whether the plan includes it for new connections. Always true without an org."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.order: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.order: field added",
+    "note": "Connectors carry category (files, apis, commerce, bookings or try) and order, which group and sort the connector picker."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].category: field added",
+    "note": "Sender recipes carry the picker category of their tile."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].entitled: field added",
+    "note": "Each recipe lists whether the plan allows it for new connections. Always true without an org."
+  },
+  {
+    "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsUploadsByFileId",
+    "op": "PATCH /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Read a draft again with another sheet or records path; counts against the upload limit of 30 an hour."
+  },
+  {
+    "key": "POST /api/v1/connections body.fileId: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "body.fileId: optional input field added",
+    "note": "fileId names the uploaded draft a file-upload connection starts from."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/files new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdFiles",
+    "op": "POST /api/v1/connections/{id}/files",
+    "change": "new operation",
+    "note": "Upload a new revision of a connection file. apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/files/{fileId}/apply new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdFilesByFileIdApply",
+    "op": "POST /api/v1/connections/{id}/files/{fileId}/apply",
+    "change": "new operation",
+    "note": "Apply a pending revision (it becomes current) and start a sync."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config body.fileId: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "body.fileId: optional input field added",
+    "note": "fileId tests a file-upload configuration against an uploaded draft."
+  },
+  {
+    "key": "POST /api/v1/connections/uploads new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsUploads",
+    "op": "POST /api/v1/connections/uploads",
+    "change": "new operation",
+    "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   }
 ]

@@ -6,14 +6,20 @@ import { RECIPE_COPY, recipeLine } from './recipe-copy.ts';
 /** Who sends the webhooks. Fixed once the connection exists. */
 export function RecipePicker({
   recipes,
+  customEntitled = true,
   value,
   onChange,
 }: {
   recipes: readonly RecipeInfo[];
+  /** False when the plan lists senders but not a custom one. */
+  customEntitled?: boolean;
   value: RecipeId;
   onChange: (id: RecipeId) => void;
 }) {
-  const options = [{ id: 'custom' as RecipeId, label: 'Custom' }, ...recipes];
+  const options = [
+    ...(customEntitled ? [{ id: 'custom' as RecipeId, label: 'Custom' }] : []),
+    ...recipes.filter((r) => r.entitled !== false),
+  ];
   return (
     <fieldset className="min-w-0">
       <legend className="mb-2 text-sm font-medium text-fg">Sender</legend>

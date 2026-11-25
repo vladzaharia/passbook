@@ -37,7 +37,8 @@
             "requestsPerMinute": 6,
             "timeoutMs": 15000
           },
-          "recipes": []
+          "recipes": [],
+          "entitled": true
         }
       ],
       "nextCursor": null
@@ -79,7 +80,8 @@
         "requestsPerMinute": 6,
         "timeoutMs": 15000
       },
-      "recipes": []
+      "recipes": [],
+      "entitled": true
     }
   }
 }

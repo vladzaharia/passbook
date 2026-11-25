@@ -130,4 +130,4 @@ export const NOT_COMPARED: Partial<Record<EntitlementKey, string>> = {
 };
 
 export const CONNECTORS_ALL = 'All';
-export const CONNECTORS_BASIC = 'CSV and webhook push';
+export const CONNECTORS_BASIC = 'CSV, webhook push and demo';
