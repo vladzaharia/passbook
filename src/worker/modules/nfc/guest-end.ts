@@ -5,6 +5,9 @@ import type { Candidate } from '../scan/repo-lookup.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { resolveCandidateReadTemplates } from '../scan/template-read-snapshot.ts';
 
+/** An org with no `org.timeZone` keeps time here. */
+const DEFAULT_ZONE = 'America/Los_Angeles';
+
 /** When the visit of a pass on a guest plan ends (ms); null on any other plan or template. */
 export async function guestEnd(
   ctx: ServiceContext,
@@ -17,6 +20,6 @@ export async function guestEnd(
   const inputs = applyDefaults(manifest, candidate.pass.personalization);
   const plan = access.plans.find((p) => p.id === inputs[access.input.plan]);
   if (plan?.kind !== 'guest') return null;
-  const zone = (await readOrgTimeZone(ctx.env.DB, orgId)) ?? 'UTC';
+  const zone = (await readOrgTimeZone(ctx.env.DB, orgId)) ?? DEFAULT_ZONE;
   return guestUntil(access, plan, inputs, candidate.pass.createdAt, zone);
 }

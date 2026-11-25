@@ -6,6 +6,7 @@ import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts'
 import { handleJoinResend } from '../modules/join/jobs.ts';
 import { handleHolderMail } from '../modules/me/jobs.ts';
 import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
+import { handleLentWindow } from '../modules/nfc/lent-window.ts';
 import { handlePrintsBulk } from '../modules/prints/jobs.ts';
 import { handleRetentionNotice } from '../modules/retention/jobs.ts';
 import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
@@ -31,6 +32,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'push.deliver': handlePushDeliver,
   'email.send': handleEmailSend,
   'join.resend': handleJoinResend,
+  'tags.lent_window': handleLentWindow,
   'message_rule.check': handleMessageRuleCheck,
   'pass.holder_mail': handleHolderMail,
   'retention.notice': handleRetentionNotice,
@@ -62,6 +64,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'email.send':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'join.resend':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'tags.lent_window':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'message_rule.check':
       return JOB_HANDLERS[job.kind](job, ctx);

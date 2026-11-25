@@ -11,3 +11,11 @@ BEGIN
     AND EXISTS (SELECT 1 FROM nfc_tags t JOIN nfc_tag_types y ON y.id = t.type_id
       WHERE t.id = tag_bindings.tag_id AND t.org_id = NEW.org_id AND y.org_id = NEW.org_id AND y.use = 'visitor');
 END;
+
+-- A loaner's expiry follows its pass's window, so a guest window that moves moves it too (nfc/lent-window.ts).
+-- Every other binding keeps the rule of 0128: set at the bind, never moved.
+DROP TRIGGER tag_bindings_expiry_fixed;
+CREATE TRIGGER tag_bindings_expiry_fixed BEFORE UPDATE OF expires_at ON tag_bindings
+WHEN NEW.expires_at IS NOT OLD.expires_at AND NOT EXISTS (
+  SELECT 1 FROM nfc_tags t JOIN nfc_tag_types y ON y.id = t.type_id WHERE t.id = NEW.tag_id AND y.use = 'visitor')
+BEGIN SELECT RAISE(ABORT, 'tag_binding_immutable'); END;

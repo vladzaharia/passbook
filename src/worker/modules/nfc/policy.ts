@@ -245,6 +245,6 @@ export async function bindPolicy(ctx: ServiceContext, i: BindPolicyInput): Promi
     throw new ConflictError(`This pass has its ${type.name} already.`, 'TAG_TYPE_LIMIT');
   const endsAt = type.use === 'visitor' ? await guestEnd(ctx, i.orgId, candidate) : null;
   if (endsAt !== null && endsAt <= now)
-    throw new ConflictError("Can't assign a tag to a expired pass.", 'TAG_PASS_EXPIRED');
+    throw new ConflictError("Can't assign a tag to an expired pass.", 'TAG_PASS_EXPIRED');
   return { type, expiryDays: type.bindingDays, lapsed, endsAt };
 }
