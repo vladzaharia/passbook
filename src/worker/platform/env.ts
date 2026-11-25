@@ -72,6 +72,8 @@ export const RATE_LIMITS = [
   'RL_JOIN',
   'RL_TEMPLATE_UPLOAD',
   'RL_SESSION',
+  'RL_ACCESS',
+  'RL_ACCESS_ALL',
 ] as const satisfies readonly RateLimitName[];
 
 /**
