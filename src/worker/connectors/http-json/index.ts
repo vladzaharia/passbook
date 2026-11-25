@@ -17,7 +17,14 @@ const MAX_WEBHOOK_REFS = 100;
 const MAX_PAGE_RECORDS = 1000;
 /** Serialized changes of one page; the Workflows step result limit is 1 MiB. */
 const MAX_PAGE_JSON = 900_000;
-const ref80 = (r: string) => r.slice(0, 80);
+
+/** A short digest of the page's whole ref list. */
+async function pageSignature(refs: readonly string[]): Promise<string> {
+  const bytes = new TextEncoder().encode(refs.join('\n'));
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  const hex = Array.from(digest.slice(0, 8), (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${refs.length}:${hex}`;
+}
 
 function asRecord(value: Json | undefined): UpstreamRecord {
   if (value === null || typeof value !== 'object' || Array.isArray(value) || value === undefined) {
@@ -126,7 +133,8 @@ const definition: ConnectorDefinition<Config, Secrets> = {
       throw new ConnectorError('INVALID_PAYLOAD');
     }
     const changes = items.map((item) => changeOf(item, list));
-    if (JSON.stringify(changes).length > MAX_PAGE_JSON) {
+    // Bytes, not characters: the step result limit counts UTF-8.
+    if (new TextEncoder().encode(JSON.stringify(changes)).length > MAX_PAGE_JSON) {
       throw new ConnectorError('INVALID_PAYLOAD', { permanent: true, reason: 'PAGE_TOO_LARGE' });
     }
 
@@ -138,11 +146,14 @@ const definition: ConnectorDefinition<Config, Secrets> = {
     const w = exhaustedUntil(page.headers, ctx.now());
     const m = inc ? highest(items, inc, state.m, ctx.now()) : undefined;
     const pages = (state.p?.k ?? 0) + 1;
-    // The same first and last record as the page before: the API ignores our paging.
-    const first = changes[0];
-    const last = changes.at(-1);
-    const sig = first && last ? `${ref80(first.ref)}|${ref80(last.ref)}` : undefined;
-    const repeated = step.more && sig !== undefined && state.p?.s === sig;
+    // The same records, in the same order, as the page before: the API ignores our paging.
+    const sig = changes.length > 0 ? await pageSignature(changes.map((c) => c.ref)) : undefined;
+    // One record can legitimately sit on two pages in a row while the data moves, so a one-record
+    // page must repeat twice (marked "+" once) before the listing ends; a longer page ends it at once.
+    const before = state.p?.s;
+    const same = sig !== undefined && before?.replace(/\+$/, '') === sig;
+    const repeated = step.more && same && (changes.length > 1 || before?.endsWith('+') === true);
+    const stored = same && !repeated && sig !== undefined ? `${sig}+` : sig;
     if (repeated) ctx.log('rest.repeat_page', { pages });
     const capped = step.more && !repeated && pages >= list.maxPages;
     if (capped) ctx.log('rest.max_pages', { pages });
@@ -152,7 +163,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
     const seen = m === undefined ? {} : { m };
 
     if (step.more && !capped && !repeated && step.next) {
-      const p = { ...step.next, k: pages, ...(sig === undefined ? {} : { s: sig }) };
+      const p = { ...step.next, k: pages, ...(stored === undefined ? {} : { s: stored }) };
       return { changes, cursor: encodeCursor({ p, ...hold, ...seen, ...keep }), hasMore: true };
     }
     if (list.listing === 'full') {

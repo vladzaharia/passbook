@@ -55,7 +55,7 @@ function pageOf(raw: unknown): PageState | null {
   if (u !== undefined) page.u = u;
   if (num(o.n) !== undefined) page.n = num(o.n) as number;
   if (num(o.k) !== undefined) page.k = num(o.k) as number;
-  const sig = typeof o.s === 'string' && o.s.length <= 200 ? o.s : undefined;
+  const sig = typeof o.s === 'string' && o.s.length <= 41 ? o.s : undefined;
   if (sig !== undefined) page.s = sig;
   return page;
 }
