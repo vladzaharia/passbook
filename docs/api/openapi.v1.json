@@ -99859,6 +99859,8 @@
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 1,
                   "status": "active",
+                  "passVersion": 3,
+                  "stale": false,
                   "createdAt": 1795572000000,
                   "voidedAt": null,
                   "voidCause": null,
@@ -99946,6 +99948,8 @@
                       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                       "generation": 3,
                       "status": "active",
+                      "passVersion": 3,
+                      "stale": false,
                       "createdAt": 1794362400000,
                       "voidedAt": null,
                       "voidCause": "refund"
@@ -100038,6 +100042,8 @@
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 1,
                   "status": "voided",
+                  "passVersion": 3,
+                  "stale": false,
                   "createdAt": 1795399200000,
                   "voidedAt": 1795572000000,
                   "voidCause": "manual"
