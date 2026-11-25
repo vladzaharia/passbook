@@ -1,3 +1,4 @@
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { dayStartMs } from './dto-console.ts';
 import { scanLedgerScopeSql } from './repo-feed.ts';
@@ -36,6 +37,7 @@ export async function readStaffActivity(
   zones: readonly string[],
   now: number,
   page: StaffPage,
+  orgZone: string = DEFAULT_TIME_ZONE,
 ): Promise<StaffActivityRaw[]> {
   const name = staffNameMatch(page.q);
   const cursor = afterCursorSql(page.cursor);
@@ -103,7 +105,7 @@ export async function readStaffActivity(
     PIN_MISSES_PER_SCANNER,
     dayWindowOf(now),
     PIN_MISSES_PER_STAFF_DAY,
-    dayStartMs('UTC', now),
+    dayStartMs(orgZone, now),
     ...(page.staffId === undefined ? [] : [page.staffId]),
     ...name.params,
     ...cursor.params,

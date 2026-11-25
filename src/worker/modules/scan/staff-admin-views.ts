@@ -11,6 +11,7 @@ import {
   historyEvidenceOf,
   withKeyset,
 } from './history-row-evidence.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { readStaffActivity, staffTimeZones } from './repo-staff-activity.ts';
 import type { StaffPage } from './repo-staff-page.ts';
 import { type AdminStaffResult, noStaff, staffItem } from './repo-staff-rows.ts';
@@ -43,6 +44,7 @@ export async function staffViews(
     zones,
     now,
     page,
+    await readOrgTimeZone(ctx.env.DB, actor.orgId),
   );
   const scope = raws[0];
   if (scope?.auth_ok !== 1) return noStaff(false, true);

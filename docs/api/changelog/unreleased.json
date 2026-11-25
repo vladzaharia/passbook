@@ -1048,6 +1048,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/settings 200.items.org.timeZone: default changed",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.items.org.timeZone: default changed",
+    "note": "An org without org.timeZone reads America/Los_Angeles with source default; setting it saves an explicit zone, and null resets it."
+  },
+  {
     "key": "GET /api/v1/settings 200.oidc.consoleGroupRequired: field added",
     "class": "additive",
     "operationId": "settings.getSettings",
