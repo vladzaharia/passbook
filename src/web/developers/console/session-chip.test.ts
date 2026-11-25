@@ -165,7 +165,9 @@ describe('the top bar chip', () => {
     });
     expect(host.querySelector('.orgchip-dot')?.textContent).toBe('A');
     expect(host.querySelector('.orgchip-name')?.textContent).toBe('Sandbox');
-    expect(host.querySelector('.orgchip')?.getAttribute('title')).toContain('acme');
+    expect(host.querySelector('.orgchip')?.getAttribute('title')).toBe(
+      'Your test sandbox: acme. New emails go to the Test inbox.',
+    );
     expect(host.querySelector('.orgchip-clock')).toBeNull();
     const items = [...host.querySelectorAll('.orgchip-item')].map((a) => [
       a.textContent,
