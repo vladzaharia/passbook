@@ -1100,6 +1100,33 @@
       ]
     },
     {
+      "code": "DEVELOPER_INVITE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
+      "code": "DEVELOPER_INVITE_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
+      "code": "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
       "code": "DEVICE_INVALID",
       "statuses": [
         400
@@ -2067,6 +2094,24 @@
       ]
     },
     {
+      "code": "IDP_BUDGET",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -2076,12 +2121,58 @@
       ]
     },
     {
+      "code": "IDP_FROZEN",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_REFUSED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_SIGN_IN_REQUIRED",
       "statuses": [
         403
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "IDP_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "dev-access",
+        "idp"
       ]
     },
     {
@@ -2606,6 +2697,7 @@
         409
       ],
       "modules": [
+        "dev-access",
         "orgs"
       ]
     },
@@ -3121,6 +3213,7 @@
         409
       ],
       "modules": [
+        "dev-access",
         "orgs"
       ]
     },

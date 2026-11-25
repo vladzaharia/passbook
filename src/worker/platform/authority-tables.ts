@@ -196,6 +196,10 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   org_entitlements: { org: 'org_id' },
   // A person's developer sandbox (0156): made once with its org, closed by the idle sweep; funnel columns are set once.
   developer_sandboxes: { org: 'org_id' },
+  // Developer invitations (0214): written with the org's manager grant; a setup row is reached through its invitation.
+  developer_invitations: { org: 'org_id' },
+  developer_invite_setups: { org: null, edges: [edge('invitation_id', 'developer_invitations')] },
+  developer_sponsors: { org: 'org_id' },
   org_entitlement_overrides: { org: 'org_id', conflict: ['org_id', 'key'] },
   entitlement_preset_meta: {
     org: null,

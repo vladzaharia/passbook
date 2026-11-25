@@ -3526,6 +3526,160 @@
   }
  },
  {
+  "id": "developer-invitations.getOrgsByIdDeveloperInvitations",
+  "call": "developer_invitations.list",
+  "http": "GET",
+  "path": "/api/v1/orgs/{id}/developer-invitations",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "email": "x",
+     "roles": [
+      "org_admin"
+     ],
+     "state": "pending",
+     "createdAt": 0,
+     "expiresAt": 0,
+     "revokedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "developer-invitations.postOrgsByIdDeveloperInvitations",
+  "call": "developer_invitations.create",
+  "http": "POST",
+  "path": "/api/v1/orgs/{id}/developer-invitations",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "email": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "email": "x",
+   "roles": [
+    "org_admin"
+   ],
+   "state": "pending",
+   "createdAt": 0,
+   "expiresAt": 0,
+   "revokedAt": 0
+  }
+ },
+ {
+  "id": "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId",
+  "call": "developer_invitations.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/orgs/{id}/developer-invitations/{invitationId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "invitationId",
+    "py": "invitation_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "developer-invitations.getOrgsByIdDevelopers",
+  "call": "developers.list",
+  "http": "GET",
+  "path": "/api/v1/orgs/{id}/developers",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "userId": "x",
+     "name": "x",
+     "email": "x",
+     "since": 0,
+     "roles": [
+      "org_admin"
+     ]
+    }
+   ],
+   "nextCursor": null,
+   "available": false,
+   "limit": 0
+  }
+ },
+ {
+  "id": "developer-invitations.deleteOrgsByIdDevelopersByUserId",
+  "call": "developers.remove",
+  "http": "DELETE",
+  "path": "/api/v1/orgs/{id}/developers/{userId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "userId",
+    "py": "user_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
   "id": "entitlements.getOrgsByIdEntitlements",
   "call": "orgs.entitlements.retrieve",
   "http": "GET",

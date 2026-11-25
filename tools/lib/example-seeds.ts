@@ -30,6 +30,7 @@ import {
   WEBHOOK_SECRET,
   ZONE,
 } from './example-canon.ts';
+import { DEV_ACCESS_SEEDS } from './example-seeds-dev-access.ts';
 import { IDP_SEEDS } from './example-seeds-idp.ts';
 import { API, hex, IDS, IMPORT, IMPORT_PLAN, PASS, T, TEMPLATE } from './example-world.ts';
 
@@ -160,6 +161,7 @@ const READY = {
 
 export const SEEDS: Record<string, unknown> = {
   ...IDP_SEEDS,
+  ...DEV_ACCESS_SEEDS,
   'pass-imports.postPassImports response': READY,
   'pass-imports.postPassImportsByIdCheck response': READY,
   'pass-imports.postPassImportsByIdCommit request': { skipInvalid: true, email: true },

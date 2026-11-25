@@ -76,6 +76,7 @@ const KEYED: [RegExp, RegExp, string][] = [
   [/^entitlements$/, /^label$/, 'feature'],
   [/^metrics$/, /^name$/, 'org'],
   [/^(users|me)$/, /^name$/, 'person'],
+  [/^developer$/, /^name$/, 'person'],
   [/^me$/, /^title$/, 'pass'],
   [/^(nfc|keysets)$/, /^name$/, 'keyset'],
 ];

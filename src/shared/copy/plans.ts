@@ -111,7 +111,13 @@ export const COMPARE_ROWS: ReadonlyArray<{ group: string; rows: readonly Compare
       { key: 'connectors', label: 'Connectors', kind: 'connectors' },
     ],
   },
-  { group: 'Team', rows: [{ key: 'members', label: 'Members', kind: 'limit' }] },
+  {
+    group: 'Team',
+    rows: [
+      { key: 'members', label: 'Members', kind: 'limit' },
+      { key: 'members.developers', label: 'Developers', kind: 'limit' },
+    ],
+  },
   {
     group: 'Identity',
     rows: [{ key: 'identity.managed', label: 'Managed Pass Type ID', kind: 'flag' }],

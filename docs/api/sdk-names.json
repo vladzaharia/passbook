@@ -319,6 +319,26 @@
     "resource": "deliveries",
     "method": "list"
   },
+  "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId": {
+    "resource": "developerInvitations",
+    "method": "revoke"
+  },
+  "developer-invitations.deleteOrgsByIdDevelopersByUserId": {
+    "resource": "developers",
+    "method": "remove"
+  },
+  "developer-invitations.getOrgsByIdDeveloperInvitations": {
+    "resource": "developerInvitations",
+    "method": "list"
+  },
+  "developer-invitations.getOrgsByIdDevelopers": {
+    "resource": "developers",
+    "method": "list"
+  },
+  "developer-invitations.postOrgsByIdDeveloperInvitations": {
+    "resource": "developerInvitations",
+    "method": "create"
+  },
   "developer.deleteSandbox": {
     "resource": "developer.sandbox",
     "method": "close",

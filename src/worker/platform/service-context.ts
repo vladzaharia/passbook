@@ -21,6 +21,8 @@ export interface ServiceContext {
   job?: JobAuthority;
   /** The job kind a job context was made for, so a grant's audit row names it. */
   jobName?: string;
+  /** Daily cron only: D1 queries the shared daily budget has spent so far, across every hook. */
+  spent?: () => number;
   /** The request's key came as a developer try token: its audit rows carry `via: 'try'`. */
   via?: 'try';
   /** A cron invocation's D1 queries so far (D1 allows 1,000); only the daily cron sets it. */
