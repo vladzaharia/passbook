@@ -33,12 +33,19 @@ export function WizardResultTitle({ title, icon }: Pick<ResultSpec, 'title' | 'i
  * result's own title with focus on it, no X, and Esc and outside clicks ignored. Render it inside
  * a `Dialog` whose onOpenChange does nothing.
  */
-export function ResultDialogContent({ result }: { result: ResultSpec }) {
+export function ResultDialogContent({
+  result,
+  onCloseAutoFocus,
+}: {
+  result: ResultSpec;
+  onCloseAutoFocus?: () => void;
+}) {
   const title = useRef<HTMLSpanElement>(null);
   return (
     <DialogContent
       size="md"
       closeButton={false}
+      onCloseAutoFocus={onCloseAutoFocus}
       onOpenAutoFocus={(e) => {
         e.preventDefault();
         title.current?.focus({ preventScroll: true });

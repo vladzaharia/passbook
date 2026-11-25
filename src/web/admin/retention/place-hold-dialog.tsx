@@ -1,12 +1,8 @@
 import { useState } from 'react';
 import { RETENTION_COPY } from '@/shared/copy/retention.ts';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
-  Button,
-  Dialog,
-  DialogContent,
   EntityPicker,
-  Form,
+  FormDialog,
   FormField,
   RadioGroup,
   Textarea,
@@ -39,74 +35,40 @@ export function PlaceHoldDialog({
   const [picked, setPicked] = useState<string>();
   const passId = fixedPass ?? picked;
   const [reason, setReason] = useState('');
-  const [server, setServer] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string>();
   const check = useFormErrors({
     ...(reason.trim() ? {} : { reason: 'Give a reason.' }),
     ...(target === 'pass' && !passId ? { passId: 'Choose a pass.' } : {}),
   });
-  const errors: Record<string, string | undefined> = { ...server, ...check.errors };
-
-  function close() {
-    onOpenChange(false);
-    setTarget(fixedPass ? 'pass' : 'org');
-    setPicked(undefined);
-    setReason('');
-    setServer({});
-    setFormError(undefined);
-    check.reset();
-  }
 
   async function submit() {
-    setFormError(undefined);
-    try {
-      await place.mutateAsync({
-        reason: reason.trim(),
-        ...(target === 'pass' ? { passId } : {}),
-      });
-      toast.success('Hold placed. Admins were emailed.');
-      close();
-    } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
-      else setFormError(errorMessage(cause));
-    }
+    await place.mutateAsync({ reason: reason.trim(), ...(target === 'pass' ? { passId } : {}) });
+    toast.success('Hold placed. Admins were emailed.');
+    onOpenChange(false);
   }
 
   return (
-    <Dialog
+    <FormDialog
       open={open}
+      onOpenChange={onOpenChange}
+      title={RETENTION_COPY.place}
+      description="Deletion pauses for what you hold. Every organization admin is emailed."
       dirty={reason.trim() !== ''}
-      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+      check={check}
+      onSubmit={submit}
+      submitLabel={RETENTION_COPY.place}
+      onClose={() => {
+        setTarget(fixedPass ? 'pass' : 'org');
+        setPicked(undefined);
+        setReason('');
+      }}
     >
-      <DialogContent
-        size="md"
-        title={RETENTION_COPY.place}
-        description="Deletion pauses for what you hold. Every organization admin is emailed."
-        footer={
-          <>
-            <Button variant="outline" onClick={close}>
-              Cancel
-            </Button>
-            <Button type="submit" form="place-hold" loading={place.isPending}>
-              {RETENTION_COPY.place}
-            </Button>
-          </>
-        }
-      >
-        <Form id="place-hold" className="flex flex-col gap-4" {...check.form} onValid={submit}>
+      {({ errors: server }) => (
+        <>
           {fixedPass ? null : (
-            <RadioGroup
-              legend="Scope"
-              options={SCOPES}
-              value={target}
-              onValueChange={(v) => {
-                setTarget(v);
-                setServer({});
-              }}
-            />
+            <RadioGroup legend="Scope" options={SCOPES} value={target} onValueChange={setTarget} />
           )}
           {target === 'pass' && !fixedPass ? (
-            <FormField label="Pass" required error={errors.passId}>
+            <FormField label="Pass" required error={check.errors.passId ?? server.passId}>
               {(p) => (
                 <EntityPicker
                   {...p}
@@ -121,7 +83,7 @@ export function PlaceHoldDialog({
           <FormField
             label="Reason"
             required
-            error={errors.reason}
+            error={check.errors.reason ?? server.reason}
             help="Seen by organization admins. Not stored in the audit log."
           >
             {(p) => (
@@ -131,16 +93,12 @@ export function PlaceHoldDialog({
                 rows={3}
                 maxLength={500}
                 value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value);
-                  setServer({});
-                }}
+                onChange={(e) => setReason(e.target.value)}
               />
             )}
           </FormField>
-          {formError ? <p className="text-sm text-danger">{formError}</p> : null}
-        </Form>
-      </DialogContent>
-    </Dialog>
+        </>
+      )}
+    </FormDialog>
   );
 }
