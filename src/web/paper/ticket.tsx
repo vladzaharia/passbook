@@ -1,10 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { PAPER_SPECS } from '../../passkit/template/paper.ts';
+import { PAPER_SPECS, sheetApplies } from '../../passkit/template/paper.ts';
+import { halfFit } from '../../passkit/template/paper-geometry.ts';
 import { TestBand } from '../pass-card/test-band.tsx';
 import { CardBack, CardFront } from './ticket-card.tsx';
 import { TicketFull } from './ticket-full.tsx';
 import type { TicketProps } from './ticket-parts.tsx';
+import { OnSheet } from './ticket-sheet.tsx';
 import { TicketCoupon, TicketPermit } from './ticket-small.tsx';
+import { TicketStrip } from './ticket-strip.tsx';
 
 export type { TicketProps } from './ticket-parts.tsx';
 
@@ -38,20 +41,49 @@ export function PaperTicket(props: TicketProps) {
     pageWith(...a, props.testBand === true);
   const spec = PAPER_SPECS[design.size];
   const size = { w: spec.widthMm, h: spec.heightMm };
-  if (design.size === 'cr80')
+  if (design.sheet && sheetApplies(design.size)) {
+    const sheet = PAPER_SPECS[design.sheet];
+    return pageOf(
+      'sheet',
+      { w: sheet.widthMm, h: sheet.heightMm },
+      design.sheet,
+      <OnSheet p={props} />,
+    );
+  }
+  if (spec.layout === 'card')
     return (
       <>
         {pageOf('front', size, design.size, <CardFront p={props} />)}
         {pageOf('back', size, design.size, <CardBack p={props} />)}
       </>
     );
-  const half = design.size === 'half';
+  if (spec.layout === 'strip') return pageOf('sheet', size, design.size, <TicketStrip p={props} />);
+  const half = spec.layout === 'half';
   const small = content.kind === 'permit' || content.kind === 'coupon';
   if (small) {
     // A permit or coupon is a half-sheet design; on a full page it sits on the top half.
     const inner =
       content.kind === 'permit' ? <TicketPermit p={props} /> : <TicketCoupon p={props} />;
-    if (half) return pageOf('sheet', size, design.size, inner);
+    if (design.size === 'half') return pageOf('sheet', size, design.size, inner);
+    if (half) {
+      // Half letter: the 210 x 148 design, scaled to the page height and centred.
+      const fit = halfFit(design.size);
+      const style = {
+        '--w': 210,
+        '--h': 148,
+        '--sc': fit.scale.toFixed(5),
+        left: `${((fit.dx / size.w) * 100).toFixed(3)}%`,
+        width: `${(((210 * fit.scale) / size.w) * 100).toFixed(3)}%`,
+      } as CSSProperties;
+      return pageOf(
+        'sheet',
+        size,
+        design.size,
+        <div className="pp-hfit" style={style}>
+          {inner}
+        </div>,
+      );
+    }
     const top = {
       '--w': 210,
       '--h': 148,

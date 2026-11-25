@@ -54,9 +54,9 @@ export async function requireOrgAccessOr404(
   }
 }
 
-/** Compromise actions need a Pocket ID sign-in: a magic link or break-glass session is refused. */
+/** Compromise actions need a Polaris ID sign-in: a magic link or break-glass session is refused. */
 export function requireOidcSession(c: C): void {
   const auth = c.var.auth;
   if (auth?.kind !== 'session' || auth.amr !== 'oidc')
-    throw new ForbiddenError('Sign in with Pocket ID to do this.', 'OIDC_REQUIRED');
+    throw new ForbiddenError('Sign in with Polaris ID to do this.', 'OIDC_REQUIRED');
 }

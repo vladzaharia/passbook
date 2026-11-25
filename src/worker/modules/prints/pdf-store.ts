@@ -1,6 +1,11 @@
 /** Printed-ticket PDFs in R2. They hold the print code, so they are read only through an authorized route. */
-export const pdfKey = (orgId: string, passId: string, printId: string): string =>
-  `prints/${orgId}/${passId}/${printId}.pdf`;
+/** A holder's PDF is drawn on a home sheet, staff's at the exact page, so each has its own object. */
+export const pdfKey = (
+  orgId: string,
+  passId: string,
+  printId: string,
+  audience: 'holder' | 'staff' = 'staff',
+): string => `prints/${orgId}/${passId}/${printId}${audience === 'holder' ? '.holder' : ''}.pdf`;
 export const bulkKey = (orgId: string, jobId: string, ext: 'pdf' | 'json'): string =>
   `prints/${orgId}/bulk/${jobId}.${ext}`;
 

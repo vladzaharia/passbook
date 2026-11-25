@@ -13,9 +13,11 @@ import { passChannels } from '../channels/service.ts';
 import { recordPassEvents } from '../events/record.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { printCodeOf, printCodeRef, printRosterHash } from './codes.ts';
+import { paperTicket } from './paper.ts';
+import { paperHash } from './paper-hash.ts';
 import { dropPrintPdfs } from './pdf-drop.ts';
 import * as repo from './repo.ts';
-import { type PrintWriter, writeMint, writeVoid } from './repo-write.ts';
+import { type PrintWriter, writeMint, writeRefresh, writeVoid } from './repo-write.ts';
 
 const HOUR = 3_600_000;
 const PRINT_UNAVAILABLE = 'Printing is not available for this ticket.';
@@ -56,7 +58,11 @@ export async function mintPrint(
   if (!(await existingChannels(ctx, pass)).paper.on)
     throw new ConflictError('Printing is off for this ticket.', 'PRINTING_OFF');
   const existing = await repo.activePrint(ctx.env.DB, pass.id);
-  if (existing && !replace) return { ...existing, code: await codeOf(ctx, pass, existing) };
+  if (existing && !replace) {
+    // The holder or staff opens the print again: it is drawn from the pass as it is now.
+    await refreshActivePrint(ctx, caller.writer, pass);
+    return { ...existing, stale: false, code: await codeOf(ctx, pass, existing) };
+  }
   // A new print needs the plan; the holder is not told to ask PassBook.
   if ((await passChannels(ctx, pass)).effective.paper.reason === 'not_included')
     throw new FeatureNotIncludedError(
@@ -74,11 +80,19 @@ export async function mintPrint(
   });
   const codeHash = await printCodeRef(ctx.env, pass.orgId, pass.mode, code);
   if (!codeHash) throw new ConflictError('Print codes are unavailable.', 'PRINT_CODE_UNAVAILABLE');
+  const ticket = await paperTicket(ctx, pass, caller.writer.by === 'holder' ? 'holder' : 'staff');
   const voided = await writeMint(
     ctx,
     caller.writer,
     pass.id,
-    { id, codeHash, rosterHash: await printRosterHash(code), generation },
+    {
+      id,
+      codeHash,
+      rosterHash: await printRosterHash(code),
+      generation,
+      passVersion: pass.version,
+      paperHash: ticket ? await paperHash(ticket) : null,
+    },
     replace,
   );
   if (existing && voided > 0) await dropPrintPdfs(ctx, pass, existing.id);
@@ -115,4 +129,38 @@ export async function voidPrint(
   await writeVoid(ctx, caller.writer, pass.id, cause, target.id);
   await dropPrintPdfs(ctx, pass, target.id);
   return (await repo.printById(ctx.env.DB, pass.id, target.id)) ?? target;
+}
+
+/** The pass's prints, newest first; the active one is stale when the pass now draws something else. */
+export async function listPassPrints(ctx: ServiceContext, pass: Pass): Promise<PassPrint[]> {
+  const prints = await repo.listPrints(ctx.env.DB, pass.id);
+  const active = prints.find((p) => p.status === 'active');
+  if (!active) return prints;
+  // A ticket that cannot be drawn (the template version is gone) is not stale: the list never fails for it.
+  const ticket = await paperTicket(ctx, pass, 'staff').catch((error: unknown) => {
+    ctx.log.error('prints.stale_unresolved', {
+      code: 'PRINT_STALE_UNRESOLVED',
+      error: error instanceof Error ? error.name : 'unknown',
+    });
+    return null;
+  });
+  if (!ticket) return prints;
+  return repo.listPrints(ctx.env.DB, pass.id, await paperHash(ticket));
+}
+
+/**
+ * The active print was drawn again (the page's Print, a PDF, a bulk render): it now matches the pass as it
+ * is. Returns the print, or null when there is none or the pass cannot be drawn.
+ */
+export async function refreshActivePrint(
+  ctx: ServiceContext,
+  writer: PrintWriter,
+  pass: Pass,
+): Promise<PassPrint | null> {
+  const ticket = await paperTicket(ctx, pass, writer.by === 'holder' ? 'holder' : 'staff');
+  const active = await repo.activePrint(ctx.env.DB, pass.id);
+  if (!ticket || !active) return null;
+  const hash = await paperHash(ticket);
+  await writeRefresh(ctx, writer, pass.id, active.id, pass.version, hash);
+  return repo.activePrint(ctx.env.DB, pass.id, hash);
 }
