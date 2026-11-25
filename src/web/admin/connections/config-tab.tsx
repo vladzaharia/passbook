@@ -36,6 +36,8 @@ import {
   secretKeysFor,
   withoutOpaque,
 } from './config-schema.ts';
+import { RestSlot } from './rest/rest-slot.tsx';
+import { KEY, OWNED, restErrors } from './rest/rest-values.ts';
 import { secretSchema } from './secret-schema.ts';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
@@ -82,6 +84,17 @@ export function ConfigTab({
     () => (cfgSchema ? pickDeclared(cfgSchema, flattenValues(c.config)) : {}),
     [cfgSchema, c.config],
   );
+  const isRest = c.connectorType === 'http-json';
+  // Pagination and the incremental filter belong to the explorer, not the generic form.
+  const ownedStored = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(flattenValues(c.config)).filter(([k]) => OWNED.includes(k)),
+      ),
+    [c.config],
+  );
+  const [owned, setOwned] = useState<FormValues | undefined>();
+  const ownedValue = owned ?? ownedStored;
   const [config, setConfig] = useState<FormValues | undefined>();
   const [replacing, setReplacing] = useState(false);
   const [secrets, setSecrets] = useState<FormValues>({});
@@ -93,18 +106,23 @@ export function ConfigTab({
   const rpmValue = rpm ?? num(c.requestsPerMinute);
   const concValue = conc ?? num(c.maxConcurrency);
   const cfgErrors = cfgSchema ? validateValues(cfgSchema, cfg) : {};
+  const exploring = isRest && canManage;
+  const restProblems = exploring ? restErrors({ ...cfg, ...ownedValue }) : {};
+  const explorerKeys = useMemo(() => new Set([KEY.records, KEY.id, KEY.email]), []);
   const secErrors = replacing && secSchema ? validateValues(secSchema, secrets) : {};
   const rpmError = limitError(rpmValue, 1, 6000);
   const concError = limitError(concValue, 1, 20);
   const check = useFormErrors({
     ...Object.fromEntries(Object.entries(cfgErrors).map(([k, v]) => [`config.${k}`, v])),
     ...Object.fromEntries(Object.entries(secErrors).map(([k, v]) => [`secrets.${k}`, v])),
+    ...Object.fromEntries(Object.entries(restProblems).map(([k, v]) => [`rest.${k}`, v])),
     rpm: rpmError,
     conc: concError,
   });
   const showErrors = Object.values(check.errors).some(Boolean);
   const dirty =
     !sameValues(cfg, initialConfig) ||
+    !sameValues(ownedValue, ownedStored) ||
     replacing ||
     rpmValue !== num(c.requestsPerMinute) ||
     concValue !== num(c.maxConcurrency);
@@ -113,6 +131,7 @@ export function ConfigTab({
 
   function reset() {
     setConfig(undefined);
+    setOwned(undefined);
     setReplacing(false);
     setSecrets({});
     setRpm(undefined);
@@ -124,10 +143,11 @@ export function ConfigTab({
   async function save() {
     if (!canManage) return;
     const patch: ConnectionPatch = {};
-    if (!sameValues(cfg, initialConfig))
+    if (!sameValues(cfg, initialConfig) || !sameValues(ownedValue, ownedStored))
       patch.config = keepOpaque(
         c.config,
-        nestValues(cleanValues(cfg)),
+        nestValues(cleanValues({ ...cfg, ...ownedValue })),
+        OWNED,
       ) as ConnectionPatch['config'];
     if (replacing) {
       patch.secrets = Object.fromEntries(
@@ -151,7 +171,7 @@ export function ConfigTab({
   }
 
   const defaults = connector.data?.defaults;
-  const summary = opaqueSummary(c.config);
+  const summary = opaqueSummary(c.config, exploring);
   return (
     <Form
       id={formId}
@@ -170,6 +190,7 @@ export function ConfigTab({
               showAllErrors={showErrors}
               serverErrors={prefixed(serverFields, 'config.')}
               disabled={!canManage || actions.update.isPending}
+              {...(exploring ? { hiddenKeys: explorerKeys } : {})}
             />
             {summary.length > 0 ? (
               <ul className="mt-4 flex flex-col gap-1 text-sm text-fg-muted">
@@ -180,6 +201,38 @@ export function ConfigTab({
             ) : null}
           </CardBody>
         </Card>
+      ) : null}
+      {exploring ? (
+        <RestSlot
+          orgId={c.orgId}
+          connectionId={c.id}
+          value={{ ...cfg, ...ownedValue }}
+          onChange={(patch) => {
+            const mine = Object.fromEntries(
+              Object.entries(patch).filter(([k]) => OWNED.includes(k)),
+            );
+            const rest = Object.fromEntries(
+              Object.entries(patch).filter(([k]) => !OWNED.includes(k)),
+            );
+            if (Object.keys(mine).length > 0) setOwned((o) => ({ ...(o ?? ownedStored), ...mine }));
+            if (Object.keys(rest).length > 0)
+              setConfig((o) => ({ ...(o ?? initialConfig), ...rest }));
+          }}
+          toConfig={(v) => keepOpaque(c.config, nestValues(cleanValues(v)), OWNED)}
+          secrets={
+            replacing && secSchema
+              ? Object.fromEntries(
+                  Object.entries(cleanValues(secrets))
+                    .filter(
+                      ([k]) => !secretKeysFor(secSchema, String(cfg['auth.type'] ?? 'none')).has(k),
+                    )
+                    .map(([k, v]) => [k, String(v)]),
+                )
+              : undefined
+          }
+          showErrors={showErrors}
+          disabled={actions.update.isPending}
+        />
       ) : null}
       {hasSecrets ? (
         <Card>

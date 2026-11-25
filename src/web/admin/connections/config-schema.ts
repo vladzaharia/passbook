@@ -133,10 +133,10 @@ const STYLES: Record<string, string> = {
 };
 
 /** One short line per opaque setting that is present, shown read-only. */
-export function opaqueSummary(config: Obj): string[] {
+export function opaqueSummary(config: Obj, explorer = false): string[] {
   const out: string[] = [];
   const list = isObj(config.list) ? config.list : undefined;
-  if (list && isObj(list.pagination)) {
+  if (!explorer && list && isObj(list.pagination)) {
     out.push(
       `Pagination: ${STYLES[String(list.pagination.style)] ?? String(list.pagination.style)}`,
     );
@@ -144,7 +144,8 @@ export function opaqueSummary(config: Obj): string[] {
   if (list && Array.isArray(list.query) && list.query.length > 0) {
     out.push(`List parameters: ${list.query.length}`);
   }
-  if (list && isObj(list.incremental)) out.push(`Updated since: ${String(list.incremental.param)}`);
+  if (!explorer && list && isObj(list.incremental))
+    out.push(`Updated since: ${String(list.incremental.param)}`);
   if (Array.isArray(config.headers) && config.headers.length > 0) {
     out.push(`Headers: ${config.headers.length}`);
   }
@@ -152,14 +153,14 @@ export function opaqueSummary(config: Obj): string[] {
 }
 
 /** Puts the opaque values the form never saw back into a saved config. */
-export function keepOpaque(stored: Obj, edited: Obj): Obj {
+export function keepOpaque(stored: Obj, edited: Obj, owned: readonly string[] = []): Obj {
   const out: Obj = { ...edited };
   if (stored.headers !== undefined) out.headers = stored.headers;
   const list = isObj(stored.list) ? stored.list : undefined;
   if (list && isObj(out.list)) {
     const kept: Obj = { ...out.list };
     for (const key of ['query', 'pagination', 'incremental']) {
-      if (list[key] !== undefined) kept[key] = list[key];
+      if (list[key] !== undefined && !owned.includes(`list.${key}`)) kept[key] = list[key];
     }
     out.list = kept;
   }

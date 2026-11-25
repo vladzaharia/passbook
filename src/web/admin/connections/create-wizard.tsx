@@ -73,6 +73,7 @@ export function CreateConnectionWizard() {
     draft,
   });
   const [rows, setRows] = useState<MappingRow[]>(start.rows);
+  const [restSample, setRestSample] = useState<{ pointer: string; preview: string }[]>([]);
   const [life, setLife] = useState<Lifecycle>(start.life);
   const [showErrors, setShowErrors] = useState(false);
   const [createdResult, setCreated] = useState<{
@@ -106,9 +107,11 @@ export function CreateConnectionWizard() {
   const sample =
     test?.kind === 'result' && test.result.sample
       ? test.result.sample
-      : Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {}).map((k) => ({
-          pointer: `/${k}`,
-        }));
+      : restSample.length > 0
+        ? restSample
+        : Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {}).map((k) => ({
+            pointer: `/${k}`,
+          }));
   const targets = selectedTemplate
     ? targetsOf(flatFields(describeSchema(selectedTemplate.inputSchema)))
     : [];
@@ -219,6 +222,7 @@ export function CreateConnectionWizard() {
             onType={(t) => {
               if (t === type) return;
               setType(t);
+              setRestSample([]);
               setDraft((d) => ({ ...d, config: {}, secrets: {} }));
             }}
             onCommit={next}
@@ -248,6 +252,7 @@ export function CreateConnectionWizard() {
               test={test}
               onTest={onTested}
               onRecipe={sender.pick}
+              onSample={setRestSample}
               secretError={sender.secretError}
             />
           ) : connector.isError ? (

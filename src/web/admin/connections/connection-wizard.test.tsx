@@ -20,8 +20,10 @@ import {
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
 const membership = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug });
 
+// Not the REST connector: that one's configuration step is the explorer (rest/explorer.test.tsx).
 const HTTP = {
   ...CONNECTOR,
+  type: 'json-feed',
   description: 'Fetch records from a JSON API.',
   configSchema: {
     type: 'object',
@@ -76,7 +78,7 @@ function wizard(
   return {
     '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
     '/api/v1/connectors': () => json({ items: [HTTP, WEBHOOK], nextCursor: null }),
-    '/api/v1/connectors/http-json': () => json(HTTP),
+    '/api/v1/connectors/json-feed': () => json(HTTP),
     '/api/v1/connectors/webhook-push': () => json(WEBHOOK),
     '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
     '/api/v1/templates/tpl1': () => json(templateDetail()),
@@ -130,7 +132,7 @@ describe('create connection wizard', () => {
           catalogRequests.push({ path: url.pathname, orgId: url.searchParams.get('orgId') });
           return json({ items: [HTTP, WEBHOOK], nextCursor: null });
         },
-        '/api/v1/connectors/http-json': (url) => {
+        '/api/v1/connectors/json-feed': (url) => {
           catalogRequests.push({ path: url.pathname, orgId: url.searchParams.get('orgId') });
           return json(HTTP);
         },
@@ -140,14 +142,14 @@ describe('create connection wizard', () => {
     await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     expect((await screen.findAllByRole('radio')).length).toBeGreaterThan(0);
     expect(screen.queryByRole('combobox', { name: 'Organization' })).toBeNull();
-    expect(screen.queryByText('http-json')).toBeNull();
+    expect(screen.queryByText('json-feed')).toBeNull();
     await toConfig(user);
     expect(await screen.findByLabelText(/Base URL/)).toBeInTheDocument();
     await waitFor(() => expect(catalogRequests).toHaveLength(2));
     expect(catalogRequests).toEqual(
       expect.arrayContaining([
         { path: '/api/v1/connectors', orgId: ORG.id },
-        { path: '/api/v1/connectors/http-json', orgId: ORG.id },
+        { path: '/api/v1/connectors/json-feed', orgId: ORG.id },
       ]),
     );
     expect(screen.getByText('HTTPS.')).toBeInTheDocument();
@@ -172,7 +174,7 @@ describe('create connection wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Test' }));
     expect(await screen.findByText('Test passed')).toBeInTheDocument();
     expect(testPosts.map((body) => body.orgId)).toEqual([ORG.id, ORG.id]);
-    expect(testPosts[0]).toMatchObject({ connectorType: 'http-json' });
+    expect(testPosts[0]).toMatchObject({ connectorType: 'json-feed' });
     await next(user);
     // Mapping: the template is chosen here.
     await user.click(screen.getByRole('combobox', { name: 'Template' }));
@@ -191,7 +193,7 @@ describe('create connection wizard', () => {
     expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id);
     expect(posts[0]).toMatchObject({
       orgId: 'org1',
-      connectorType: 'http-json',
+      connectorType: 'json-feed',
       name: 'Upstream',
       config: { baseUrl: 'https://api.example.com/changed', auth: { type: 'bearer' } },
       secrets: { token: 'sekret' },
