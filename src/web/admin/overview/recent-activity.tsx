@@ -71,7 +71,7 @@ function RecentCard({
   const orgNameOf = (e: (typeof items)[number]) => {
     if (e.orgLabel) return e.orgLabel;
     const name = orgName(e.orgId);
-    return name === e.orgId ? 'Deleted organization' : name;
+    return name === e.orgId ? 'Unknown organization' : name;
   };
   const now = useNow();
   if (hideEmpty && !log.isPending && !log.isError && items.length === 0) return null;

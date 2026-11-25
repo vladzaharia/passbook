@@ -1,5 +1,5 @@
 import { OrgRoleSchema } from '../../../shared/contracts/org-membership.ts';
-import { closedOrgLabel, personalOrgLabel } from '../../../shared/copy/personal-org.ts';
+import { hiddenOrgLabel, personalOrgLabel } from '../../../shared/copy/personal-org.ts';
 import {
   all,
   chunk,
@@ -261,22 +261,29 @@ export async function personalOrgLabels(
   return out;
 }
 
-/** For the platform view: a closed or purged org's label, which no directory lists, for the orgs among `orgIds`. */
-export async function closedOrgLabels(
+/** For the platform view: the label of a closed org or developer sandbox, which no directory lists, for the orgs among `orgIds`. */
+export async function hiddenOrgLabels(
   db: D1Database,
   orgIds: string[],
 ): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   for (const ids of chunk(orgIds)) {
-    const rows = await all<{ id: string; name: string; kind: string; owner: string | null }>(
+    const rows = await all<{
+      id: string;
+      name: string;
+      kind: string;
+      status: string;
+      owner: string | null;
+    }>(
       db,
-      `SELECT o.id, o.name, o.kind,
+      `SELECT o.id, o.name, o.kind, o.status,
          (SELECT u.name FROM audit_log a JOIN users u ON u.id = a.actor_id
           WHERE a.org_id = o.id AND a.actor_type = 'user' ORDER BY a.id LIMIT 1) AS owner
-       FROM orgs o WHERE o.status = 'deleted' AND o.id IN (${placeholders(ids.length)})`,
+       FROM orgs o WHERE (o.status = 'deleted' OR o.kind = 'developer') AND o.id IN (${placeholders(ids.length)})`,
       ids,
     );
-    for (const r of rows) out.set(r.id, closedOrgLabel(r.kind, r.name, r.owner));
+    for (const r of rows)
+      out.set(r.id, hiddenOrgLabel(r.kind, r.status === 'deleted', r.name, r.owner));
   }
   return out;
 }

@@ -12,7 +12,7 @@ import { REKEYED_ACTION, rekeyedDetail } from './rekeyed-detail.ts';
 import {
   type AuditRow,
   auditStmt,
-  closedOrgLabels,
+  hiddenOrgLabels,
   labelKey,
   listAuditRows,
   loadLabels,
@@ -176,7 +176,7 @@ async function listAudit(
   const orgLabels =
     scope.kind === 'platform'
       ? new Map([
-          ...(await closedOrgLabels(ctx.env.DB, orgIds)),
+          ...(await hiddenOrgLabels(ctx.env.DB, orgIds)),
           ...(await personalOrgLabels(ctx.env.DB, orgIds)),
         ])
       : new Map<string, string>();

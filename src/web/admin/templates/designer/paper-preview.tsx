@@ -205,7 +205,7 @@ export function PaperPreview({
                         : {}),
                     });
                 }}
-                className="w-full sm:w-56"
+                className="w-full sm:w-72"
               />
             )}
           </FormField>

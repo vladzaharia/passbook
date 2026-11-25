@@ -16,12 +16,19 @@ export const PERSONAL_ORG_COPY = {
 export const personalOrgLabel = (owner: string | null) =>
   owner ? `${PERSONAL_ORG_COPY.auditLabel} of ${owner}` : PERSONAL_ORG_COPY.auditLabel;
 
-/** How platform views name an org that was closed: a deleted sandbox by its developer, else its stored name. */
-export const closedOrgLabel = (kind: string, name: string, owner: string | null) =>
-  kind === 'developer'
-    ? owner
-      ? `Deleted sandbox (${owner})`
-      : 'Deleted sandbox'
-    : name && name !== 'Closed organization'
-      ? name
-      : 'Deleted organization';
+/**
+ * How platform views name an org no directory lists: a developer sandbox by its developer (deleted or
+ * not), a closed org by its stored name.
+ */
+export const hiddenOrgLabel = (
+  kind: string,
+  deleted: boolean,
+  name: string,
+  owner: string | null,
+) => {
+  if (kind === 'developer') {
+    const word = deleted ? 'Deleted sandbox' : 'Sandbox';
+    return owner ? `${word} (${owner})` : word;
+  }
+  return name && name !== 'Closed organization' ? name : 'Deleted organization';
+};

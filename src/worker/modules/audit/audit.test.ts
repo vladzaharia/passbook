@@ -202,10 +202,11 @@ describe('audit labels', () => {
   });
 });
 
-describe('audit org labels for closed orgs', () => {
-  it('names a deleted sandbox by its developer and a closed org by its stored name', async () => {
+describe('audit org labels for orgs no directory lists', () => {
+  it('names a sandbox by its developer, deleted or not, and a closed org by its stored name', async () => {
     const f = fixtures(appEnv, new ManualClock());
     const sandbox = await makeOrg(f, { kind: 'developer', name: 'Closed organization' });
+    const live = await makeOrg(f, { kind: 'developer' });
     const closed = await makeOrg(f, { name: 'Acme Gym' });
     const user = await makeUser(f);
     await run(env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Dev Name', user.id]);
@@ -214,7 +215,7 @@ describe('audit org labels for closed orgs', () => {
       closed.id,
     ]);
     const ctx = createServiceContext(appEnv);
-    for (const org of [sandbox, closed])
+    for (const org of [sandbox, live, closed])
       await recordAudit(ctx, {
         orgId: org.id,
         actorType: 'user',
@@ -226,6 +227,7 @@ describe('audit org labels for closed orgs', () => {
     };
     const label = (id: string) => page.items.find((i) => i.orgId === id)?.orgLabel;
     expect(label(sandbox.id)).toBe('Deleted sandbox (Dev Name)');
+    expect(label(live.id)).toBe('Sandbox (Dev Name)');
     expect(label(closed.id)).toBe('Acme Gym');
   });
 });
