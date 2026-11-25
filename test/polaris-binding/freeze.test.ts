@@ -26,7 +26,7 @@ async function frozen() {
   await seedGrant('u1');
   await seedCreated('u1');
   await s.api.health();
-  await s.api.createSignup('developer', ctx());
+  await s.api.createSignup({ kind: 'developer' }, ctx());
   s.pocket.s.seen.length = 0;
   await expect(s.api.freeze('incident_response', userCtx())).resolves.toBe('frozen');
   return s;
@@ -35,7 +35,7 @@ async function frozen() {
 describe('freeze', () => {
   it('stops every write with IDP_FROZEN and no Polaris ID request, while reads continue', async () => {
     const s = await frozen();
-    await expect(s.api.createSignup('member', ctx())).rejects.toThrow(/^IDP_FROZEN/);
+    await expect(s.api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_FROZEN/);
     await expect(s.api.deleteSignup('tok-id-1', ctx())).rejects.toThrow(/^IDP_FROZEN/);
     await expect(s.api.apply('u1', { add: ['console'] }, ctx())).rejects.toThrow(/^IDP_FROZEN/);
     await expect(s.api.apply('u1', { remove: ['developer'] }, ctx())).rejects.toThrow(
@@ -99,7 +99,7 @@ describe('freeze', () => {
   it('writes resume after the owner thaws it', async () => {
     const s = await frozen();
     await env.DB.prepare('UPDATE idp_freezes SET thawed_at = 5').run();
-    await expect(s.api.createSignup('member', ctx())).resolves.toMatchObject({
+    await expect(s.api.createSignup({ kind: 'member' }, ctx())).resolves.toMatchObject({
       tokenId: 'tok-id-2',
     });
   });

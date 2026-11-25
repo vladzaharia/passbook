@@ -56,6 +56,20 @@ export async function pocketRequest(
   path: string,
   payload?: unknown,
 ): Promise<PocketResponse> {
+  // The key travels on every request, reads included: the origin must be https, bare and exactly the setting.
+  let origin: URL;
+  try {
+    origin = new URL(env.POCKET_ID_ORIGIN);
+  } catch {
+    throw new IdpError('IDP_MISCONFIGURED', 'The Polaris ID origin is not valid.');
+  }
+  if (
+    origin.protocol !== 'https:' ||
+    origin.username ||
+    origin.password ||
+    origin.origin !== env.POCKET_ID_ORIGIN
+  )
+    throw new IdpError('IDP_MISCONFIGURED', 'The Polaris ID origin is not valid.');
   const url = new URL(path, env.POCKET_ID_ORIGIN);
   const layout = env.POCKET_ID_API === 'admin' ? 'admin' : 'v2';
   if (

@@ -25,7 +25,7 @@ const starts = (bucket: string, n: number, at: number) => {
 describe('budgets fail closed', () => {
   type S = ReturnType<typeof setup>;
   const calls: Record<string, (s: S) => Promise<unknown>> = {
-    createSignup: (s) => s.api.createSignup('member', ctx()),
+    createSignup: (s) => s.api.createSignup({ kind: 'member' }, ctx()),
     findByVerifiedEmail: (s) => s.api.findByVerifiedEmail('a@b.test', ctx()),
     apply_add: (s) =>
       s.api.apply('u1', { add: ['developer'] }, ctx({ actor: { kind: 'user', id: 'a1' } })),
@@ -35,6 +35,7 @@ describe('budgets fail closed', () => {
     setDisabled: (s) => s.api.setDisabled('u1', true, ctx()),
     snapshot: (s) => s.api.snapshot(ctx()),
     lookup: (s) => s.api.lookup('u1'),
+    preview: (s) => s.api.apply('u1', { remove: ['developer'] }, ctx({ dryRun: true })),
     proveSignup: (s) => s.api.proveSignup(['tok-id-1']),
     deleteSignup: (s) => s.api.deleteSignup('tok-id-1', ctx()),
   };
@@ -48,7 +49,7 @@ describe('budgets fail closed', () => {
       await seedCreated('u1');
       // prime the health cache, and the token for the methods that need one
       await s.api.health();
-      await s.api.createSignup('developer', ctx());
+      await s.api.createSignup({ kind: 'developer' }, ctx());
       await starts(bucket, LIMITS[bucket as keyof typeof LIMITS].perMinute, NOW);
       const before = s.pocket.s.seen.length;
       await expect((calls[bucket] as (x: S) => Promise<unknown>)(s)).rejects.toThrow(/^IDP_BUDGET/);
@@ -100,19 +101,20 @@ describe('budgets fail closed', () => {
 
   it('createSignup stops after 10 a minute and 50 a day, and recovers after the minute', async () => {
     const s = setup();
-    for (let i = 0; i < 10; i++) await s.api.createSignup('member', ctx({ ref: `r${i}` }));
-    await expect(s.api.createSignup('member', ctx())).rejects.toThrow(/^IDP_BUDGET/);
+    for (let i = 0; i < 10; i++)
+      await s.api.createSignup({ kind: 'member' }, ctx({ ref: `r${i}` }));
+    await expect(s.api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_BUDGET/);
     expect(s.pocket.s.tokens).toHaveLength(10);
     s.clock.now += 61_000;
-    await s.api.createSignup('member', ctx());
+    await s.api.createSignup({ kind: 'member' }, ctx());
     await starts('createSignup', 39, s.clock.now - 120_000);
-    await expect(s.api.createSignup('member', ctx())).rejects.toThrow(/^IDP_BUDGET/);
+    await expect(s.api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_BUDGET/);
   });
 
   it('caps the config read too, so a write cannot be kept alive past an unreadable config', async () => {
     const s = setup();
     await starts('health', LIMITS.health.perMinute, NOW);
-    await expect(s.api.createSignup('member', ctx())).rejects.toThrow(/^IDP_BUDGET/);
+    await expect(s.api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_BUDGET/);
     expect(s.pocket.s.seen).toHaveLength(0);
   });
 
@@ -120,13 +122,13 @@ describe('budgets fail closed', () => {
     const s = setup();
     await s.api.health();
     await starts('createSignup', 25, NOW - 120_000);
-    const logs = await captureLogs(() => s.api.createSignup('member', ctx()));
+    const logs = await captureLogs(() => s.api.createSignup({ kind: 'member' }, ctx()));
     expect(logs.lines.filter((l) => l.includes('binding.budget_high'))).toHaveLength(1);
   });
 
   it("reports today's use per method in health", async () => {
     const s = setup();
-    await s.api.createSignup('member', ctx());
+    await s.api.createSignup({ kind: 'member' }, ctx());
     const h = await s.api.health();
     expect(h.budget.createSignup).toEqual({ day: 1, limit: 50 });
     expect(h.budget.apply_remove).toEqual({ day: 0, limit: 200 });
@@ -136,7 +138,7 @@ describe('budgets fail closed', () => {
 describe('ledger', () => {
   it('writes start and end rows with the status, and ids only', async () => {
     const s = setup();
-    await s.api.createSignup('member', ctx({ ref: 'inv-9' }));
+    await s.api.createSignup({ kind: 'member' }, ctx({ ref: 'inv-9' }));
     const rows = (await ledger()).filter((r) => r.method === 'createSignup');
     expect(rows.map((r) => r.phase)).toEqual(['start', 'end']);
     expect(rows[1]).toMatchObject({
@@ -157,13 +159,13 @@ describe('ledger', () => {
     const s = setup();
     await s.api.health();
     s.pocket.s.failWith = { match: /^POST /, status: 500 };
-    await expect(s.api.createSignup('member', ctx())).rejects.toThrow(/^IDP_UPSTREAM/);
+    await expect(s.api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(/^IDP_UPSTREAM/);
     expect((await ledger()).at(-1)).toMatchObject({ phase: 'end', status: 'IDP_UPSTREAM' });
   });
 
   it('is append-only', async () => {
     const s = setup();
-    await s.api.createSignup('member', ctx());
+    await s.api.createSignup({ kind: 'member' }, ctx());
     await expect(env.DB.prepare("UPDATE idp_calls SET status = 'x'").run()).rejects.toThrow(
       /append-only/,
     );
@@ -172,7 +174,7 @@ describe('ledger', () => {
 
   it('serves calls(since) newest-window only', async () => {
     const s = setup();
-    await s.api.createSignup('member', ctx());
+    await s.api.createSignup({ kind: 'member' }, ctx());
     expect((await s.api.calls(0)).length).toBeGreaterThan(0);
     expect(await s.api.calls(NOW + 1_000_000)).toEqual([]);
   });

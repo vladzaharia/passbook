@@ -9,7 +9,9 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
     const s = setup(layout);
     const out: SignupRef[] = [];
     for (let i = 0; i < n; i++)
-      out.push((await s.api.createSignup('developer', ctx({ ref: `inv-${i}` }))) as SignupRef);
+      out.push(
+        (await s.api.createSignup({ kind: 'developer' }, ctx({ ref: `inv-${i}` }))) as SignupRef,
+      );
     return { ...s, tokens: out };
   }
 
@@ -34,14 +36,16 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
   it('proves the account a token created, matching the v2 hash or the admin id', async () => {
     const { api, pocket, tokens } = await minted();
     pocket.signUp('tok-id-1', 'u-new');
-    await expect(api.proveSignup([tokens[0]?.tokenId as string], 'u-new')).resolves.toMatchObject({
+    await expect(
+      api.proveSignup([tokens[0]?.tokenId as string], { subject: 'u-new' }),
+    ).resolves.toMatchObject({
       tokenId: 'tok-id-1',
       subject: 'u-new',
     });
     expect(await rows('idp_grants')).toMatchObject([
       {
         subject: 'u-new',
-        role: 'developer',
+        target: 'developer',
         source: 'signup',
         token_id: 'tok-id-1',
         removed_at: null,
@@ -56,9 +60,9 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
   it('is idempotent and answers the same subject again without a call', async () => {
     const { api, pocket } = await minted();
     pocket.signUp('tok-id-1', 'u-new');
-    await api.proveSignup(['tok-id-1'], 'u-new');
+    await api.proveSignup(['tok-id-1'], { subject: 'u-new' });
     const calls = pocket.s.seen.length;
-    await expect(api.proveSignup(['tok-id-1'], 'u-new')).resolves.toMatchObject({
+    await expect(api.proveSignup(['tok-id-1'], { subject: 'u-new' })).resolves.toMatchObject({
       subject: 'u-new',
     });
     await expect(api.proveSignup(['tok-id-1'])).resolves.toMatchObject({ subject: 'u-new' });
@@ -68,15 +72,17 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
   it('answers null when the signed-in account is not the one the token created', async () => {
     const { api, pocket } = await minted();
     pocket.signUp('tok-id-1', 'u-new');
-    await expect(api.proveSignup(['tok-id-1'], 'someone-else')).resolves.toBeNull();
+    await expect(api.proveSignup(['tok-id-1'], { subject: 'someone-else' })).resolves.toBeNull();
     expect(await rows('idp_grants')).toHaveLength(0);
   });
 
   it('refuses a token already proven for another subject', async () => {
     const { api, pocket } = await minted();
     pocket.signUp('tok-id-1', 'u-new');
-    await api.proveSignup(['tok-id-1'], 'u-new');
-    await expect(api.proveSignup(['tok-id-1'], 'someone-else')).rejects.toThrow(/^IDP_REFUSED/);
+    await api.proveSignup(['tok-id-1'], { subject: 'u-new' });
+    await expect(api.proveSignup(['tok-id-1'], { subject: 'someone-else' })).rejects.toThrow(
+      /^IDP_REFUSED/,
+    );
   });
 
   it('allows one subject per token: two accounts on one token match none', async () => {
@@ -122,7 +128,7 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
     pocket.signUp('tok-id-2', 'u-b');
     const proof = await api.proveSignup(['tok-id-1']);
     expect(proof).toBeNull();
-    await expect(api.proveSignup(['tok-id-2'], 'u-b')).resolves.toMatchObject({
+    await expect(api.proveSignup(['tok-id-2'], { subject: 'u-b' })).resolves.toMatchObject({
       tokenId: 'tok-id-2',
     });
   });
@@ -140,7 +146,9 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
   it('withdraws a token that does not carry exactly the groups of its kind', async () => {
     const { api, pocket } = setup(layout);
     pocket.s.tokenGroups = ['g-dev', 'g-admins'];
-    const logs = await captureLogs(() => api.createSignup('developer', ctx({ ref: 'inv-1' })));
+    const logs = await captureLogs(() =>
+      api.createSignup({ kind: 'developer' }, ctx({ ref: 'inv-1' })),
+    );
     expect(String(logs.error)).toMatch(/^IdpError: IDP_DRIFT/);
     expect(pocket.s.tokens).toHaveLength(0);
     expect(await rows('idp_signups')).toHaveLength(0);
@@ -178,7 +186,7 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
     const { api, pocket } = await minted();
     pocket.signUp('tok-id-1', 'u-new');
     pocket.addUser('u-manual', { groups: ['g-dev'] });
-    await api.proveSignup(['tok-id-1'], 'u-new');
+    await api.proveSignup(['tok-id-1'], { subject: 'u-new' });
     await expect(api.apply('u-new', { remove: ['developer'] }, ctx())).resolves.toMatchObject({
       removed: ['developer'],
     });
@@ -192,14 +200,17 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
 
   it('records one grant per role of a member_developer token', async () => {
     const { api, pocket } = setup(layout);
-    await api.createSignup('member_developer', ctx());
+    await api.createSignup({ kind: 'member_developer' }, ctx());
     expect(pocket.writes()[0]?.body).toEqual({
       ttl: '1h',
       usageLimit: 1,
       userGroupIds: ['g-dev', 'g-console'],
     });
     pocket.signUp('tok-id-1', 'u-both');
-    await api.proveSignup(['tok-id-1'], 'u-both');
-    expect((await rows('idp_grants')).map((g) => g.role).sort()).toEqual(['console', 'developer']);
+    await api.proveSignup(['tok-id-1'], { subject: 'u-both' });
+    expect((await rows('idp_grants')).map((g) => g.target).sort()).toEqual([
+      'console',
+      'developer',
+    ]);
   });
 });

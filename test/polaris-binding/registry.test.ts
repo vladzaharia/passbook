@@ -37,7 +37,9 @@ describe('registry', () => {
     await expect(api.apply('u1', { add: ['developer'] }, ctx())).rejects.toThrow(
       /^IDP_UNSAFE_CONFIG/,
     );
-    await expect(api.createSignup('developer', ctx())).rejects.toThrow(/^IDP_UNSAFE_CONFIG/);
+    await expect(api.createSignup({ kind: 'developer' }, ctx())).rejects.toThrow(
+      /^IDP_UNSAFE_CONFIG/,
+    );
     expect(pocket.writes()).toHaveLength(0);
   });
 
@@ -57,6 +59,13 @@ describe('registry', () => {
     expect(Object.keys(api).sort()).toEqual(
       [
         'apply',
+        'claims',
+        'createGroup',
+        'deleteGroup',
+        'ensureRoleGroup',
+        'groups',
+        'setClaims',
+        'updateGroup',
         'calls',
         'createSignup',
         'deleteSignup',

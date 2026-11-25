@@ -18,6 +18,13 @@
     // dry_run computes and ledgers every write and sends none. The owner sets live after a dry-run week.
     "WRITE_MODE": "dry_run",
     "GROUP_PREFIX": "passbook_",
+    // Custom groups the binding creates are named CUSTOM_GROUP_PREFIX + key. Prefix and limit are owner settings.
+    "CUSTOM_GROUP_PREFIX": "passbook_g_",
+    "CUSTOM_GROUP_LIMIT": "50",
+    // {"key": "<group id>"}: owner opt-in for groups outside the namespace.
+    "ADOPT_GROUPS": "{}",
+    // Exact claim keys outside passbook_* the binding may write. Keep empty unless an app needs a bare key.
+    "CLAIM_KEYS": "[]",
     // Role registry. Ids are placeholders until the owner fills them in (docs/operations.md, Polaris ID binding).
     "GROUPS": "{\"console\":{\"id\":\"\",\"name\":\"passbook_console\"},\"developer\":{\"id\":\"\",\"name\":\"passbook_developers\"},\"platform_admin\":{\"id\":\"\",\"name\":\"passbook_platform_admins\",\"protected\":true},\"users\":{\"id\":\"\",\"name\":\"passbook_users\",\"protected\":true}}"
   },
@@ -31,5 +38,6 @@
     }
   ],
   "secrets": { "required": ["POCKET_ID_API_KEY"] },
-  "observability": { "enabled": true }
+  // Traces would record request attributes of calls that carry the key; logs are enough.
+  "observability": { "enabled": true, "traces": { "enabled": false } }
 }

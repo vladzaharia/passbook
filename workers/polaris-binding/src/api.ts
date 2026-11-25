@@ -1,7 +1,9 @@
 import { accountsApi } from './api-accounts.ts';
+import { claimsApi } from './api-claims.ts';
 import { directoryApi } from './api-directory.ts';
 import { signupApi } from './api-groups.ts';
 import { createCall } from './call.ts';
+import { groupAdminApi } from './group-admin.ts';
 import { createGate } from './health.ts';
 import { readCalls } from './ledger.ts';
 import type { Deps } from './pocket-http.ts';
@@ -28,6 +30,8 @@ export function createApi(env: BindingEnv, deps: Deps): IdpRpc {
     ...signupApi(shared),
     ...accountsApi(shared),
     ...directoryApi(shared),
-    calls: (since) => readCalls(env.DB, since),
+    ...groupAdminApi(shared),
+    ...claimsApi(shared),
+    calls: (since, afterId) => readCalls(env.DB, Number(since), Number(afterId ?? 0)),
   };
 }

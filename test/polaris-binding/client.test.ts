@@ -28,7 +28,7 @@ describe('client restriction', () => {
     change(pocket);
     const health = await api.health();
     expect(health).toMatchObject({ ok: true, warnings: ['client_open'] });
-    await expect(api.createSignup('developer', ctx())).resolves.toMatchObject({
+    await expect(api.createSignup({ kind: 'developer' }, ctx())).resolves.toMatchObject({
       tokenId: 'tok-id-1',
     });
   });

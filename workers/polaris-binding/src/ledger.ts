@@ -14,6 +14,14 @@ export const LIMITS: Record<Bucket, { perMinute: number; perDay: number }> = {
   deleteSignup: { perMinute: 30, perDay: 300 },
   lookup: { perMinute: 60, perDay: 1000 },
   health: { perMinute: 6, perDay: 300 },
+  // Caller-requested dry runs, so a preview never spends a real bucket such as apply_override.
+  preview: { perMinute: 30, perDay: 300 },
+  group_write: { perMinute: 2, perDay: 10 },
+  claims_write: { perMinute: 10, perDay: 100 },
+  claims_read: { perMinute: 30, perDay: 1000 },
+  apply_add_group: { perMinute: 10, perDay: 100 },
+  apply_add_group_system: { perMinute: 30, perDay: 500 },
+  snapshot_group: { perMinute: 60, perDay: 2000 },
 };
 const REFUSALS_PER_MINUTE = 30;
 const MINUTE = 60_000;
@@ -193,14 +201,14 @@ export async function finish(
     .run();
 }
 
-export async function readCalls(db: D1Database, since: number): Promise<CallRow[]> {
+export async function readCalls(db: D1Database, since: number, afterId = 0): Promise<CallRow[]> {
   const { results } = await db
     .prepare(
       `SELECT id, call_id AS callId, phase, method, bucket, target, caller, actor, reason, role, delta, status,
               request_id AS requestId, duration_ms AS durationMs, at
-       FROM idp_calls WHERE at >= ? ORDER BY id LIMIT 1000`,
+       FROM idp_calls WHERE at >= ? AND id > ? ORDER BY id LIMIT 1000`,
     )
-    .bind(since)
+    .bind(since, afterId)
     .all<CallRow>();
   return results;
 }

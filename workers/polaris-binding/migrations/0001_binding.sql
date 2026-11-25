@@ -2,7 +2,9 @@
 CREATE TABLE idp_signups (
   token_id TEXT PRIMARY KEY,
   token_sha256 TEXT NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('member', 'developer', 'member_developer')),
+  kind TEXT NOT NULL CHECK (kind IN ('member', 'developer', 'member_developer', 'platform')),
+  -- What the token carries: role names and `g:<key>` group targets, as JSON.
+  targets TEXT NOT NULL CHECK (json_valid(targets)),
   ref TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   expires_at INTEGER NOT NULL,
@@ -24,16 +26,18 @@ CREATE TABLE idp_subjects (
 CREATE TABLE idp_grants (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   subject TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('console', 'developer', 'support')),
+  target TEXT NOT NULL CHECK (target IN ('console', 'developer', 'support') OR target GLOB 'g:[a-z]*'),
   source TEXT NOT NULL CHECK (source IN ('signup', 'added', 'override')),
   ref TEXT,
   token_id TEXT REFERENCES idp_signups (token_id),
   created_at INTEGER NOT NULL,
+  -- Set once the write is read back. A grant without it is pending: a snapshot never ends it.
+  confirmed_at INTEGER,
   removed_at INTEGER,
   removed_reason TEXT
 ) STRICT;
 
-CREATE UNIQUE INDEX idp_grants_live ON idp_grants (subject, role) WHERE removed_at IS NULL;
+CREATE UNIQUE INDEX idp_grants_live ON idp_grants (subject, target) WHERE removed_at IS NULL;
 
 -- The last health read, so writes do not re-read Polaris ID's configuration on every call.
 CREATE TABLE idp_health (
@@ -80,6 +84,7 @@ CREATE TABLE idp_breaker (
   ref TEXT PRIMARY KEY,
   removals INTEGER NOT NULL DEFAULT 0,
   disables INTEGER NOT NULL DEFAULT 0,
+  deletes INTEGER NOT NULL DEFAULT 0,
   at INTEGER NOT NULL
 ) STRICT;
 
@@ -100,3 +105,38 @@ CREATE TRIGGER idp_freezes_thaw_once BEFORE UPDATE ON idp_freezes
 WHEN OLD.thawed_at IS NOT NULL OR NEW.thawed_at IS NULL OR NEW.id != OLD.id OR NEW.at != OLD.at
   OR NEW.reason != OLD.reason OR NEW.actor != OLD.actor
 BEGIN SELECT RAISE(ABORT, 'idp_freezes: only thawed_at may be set, once'); END;
+
+-- One change per account at a time. A lease the holder releases; an expired one may be taken over.
+CREATE TABLE idp_locks (
+  subject TEXT PRIMARY KEY,
+  call_id TEXT NOT NULL,
+  until INTEGER NOT NULL
+) STRICT;
+
+-- Groups the binding manages beyond the configured role ids: role groups it created (kind role), custom groups
+-- it created (passbook_g_<key>) and adopted groups the owner listed. `name` is recorded once; writes need the
+-- live name to match. A pending row is an intent written before the POST; health settles it.
+CREATE TABLE idp_groups (
+  key TEXT PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('role', 'custom', 'adopted')),
+  state TEXT NOT NULL CHECK (state IN ('pending', 'live', 'abandoned', 'deleting', 'deleted')),
+  group_id TEXT UNIQUE,
+  name TEXT NOT NULL,
+  created_by_binding INTEGER NOT NULL CHECK (created_by_binding IN (0, 1)),
+  ref TEXT,
+  created_at INTEGER NOT NULL,
+  deleted_at INTEGER,
+  CHECK ((state IN ('live', 'deleting', 'deleted')) = (group_id IS NOT NULL))
+) STRICT;
+
+CREATE TRIGGER idp_groups_no_delete BEFORE DELETE ON idp_groups
+BEGIN SELECT RAISE(ABORT, 'idp_groups is append-only'); END;
+
+CREATE TRIGGER idp_groups_guard BEFORE UPDATE ON idp_groups
+WHEN NEW.key != OLD.key OR NEW.kind != OLD.kind OR NEW.name != OLD.name
+  OR NEW.created_by_binding != OLD.created_by_binding OR NEW.created_at != OLD.created_at
+  OR (OLD.group_id IS NOT NULL AND NEW.group_id IS NOT OLD.group_id)
+  OR (OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NOT OLD.deleted_at)
+  OR NOT (NEW.state = OLD.state OR (OLD.state = 'pending' AND NEW.state IN ('live', 'abandoned'))
+    OR (OLD.state = 'live' AND NEW.state = 'deleting') OR (OLD.state = 'deleting' AND NEW.state = 'deleted'))
+BEGIN SELECT RAISE(ABORT, 'idp_groups: immutable fields, or a state out of order'); END;

@@ -1,10 +1,12 @@
 import { assertNotFrozen } from './freeze.ts';
+import { readUser } from './groups.ts';
 import { alert, ctxMeta, meta, noteCall } from './ledger.ts';
 import { failure, ok } from './pocket-http.ts';
 import {
   assertCtx,
+  assertEmail,
   assertId,
-  assertKind,
+  assertSpec,
   assertTokenIds,
   ID,
   mappedIds,
@@ -15,7 +17,7 @@ import {
 import { asProved, matchTokens, oldestNeeded, parseAuditPage, sha256Hex } from './proof.ts';
 import type { Shared } from './shared.ts';
 import { recordProof, rememberSignup, setSignupState, signupsById } from './store.ts';
-import { IdpError, type IdpRpc, KIND_ROLES } from './types.ts';
+import { IdpError, type IdpRpc, KIND_ROLES, type Target } from './types.ts';
 
 const str = (v: unknown): string | null => (typeof v === 'string' ? v : null);
 const AUDIT_PAGES = 5;
@@ -28,16 +30,26 @@ export function signupApi(s: Shared): SignupApi {
   const { db, deps, r, call, gate, env } = s;
 
   return {
-    async createSignup(kind, ctx) {
+    async createSignup(spec, ctx) {
       const c = await call.guard(meta('createSignup'), () => assertCtx(ctx));
       const m = ctxMeta('createSignup', c);
-      const k = await call.guard(m, () => assertKind(kind));
-      const mm = { ...m, role: KIND_ROLES[k].join(','), delta: 'signup' };
+      const sp = await call.guard(m, () => assertSpec(spec));
+      const targets: Target[] = [
+        ...KIND_ROLES[sp.kind],
+        ...sp.groups.map((g) => `g:${g}` as const),
+      ];
+      const mm = { ...m, role: targets.join(','), delta: 'signup' };
       const peeked = gate.peek();
-      if (peeked) await call.guard(mm, () => mappedIds(KIND_ROLES[k], peeked));
+      if (peeked)
+        await call.guard(mm, () =>
+          mappedIds(
+            targets.filter((t) => !t.startsWith('g:')),
+            peeked,
+          ),
+        );
       const { registry } = await gate.requireWrite(mm);
-      const groupIds = mappedIds(KIND_ROLES[k], registry);
-      return call.ledgered('createSignup', mm, async (req) => {
+      const groupIds = await call.guard(mm, () => mappedIds(targets, registry));
+      return call.ledgered(c.dryRun ? 'preview' : 'createSignup', mm, async (req) => {
         if (s.dry(c.dryRun)) {
           await noteCall(db, 'dry_run', mm, deps.now(), 'dry_run');
           return { dryRun: true as const };
@@ -55,7 +67,7 @@ export function signupApi(s: Shared): SignupApi {
         const value = str(t?.token);
         if (!tokenId || !ID.test(tokenId) || !value)
           throw new IdpError('IDP_UPSTREAM', 'Polaris ID returned an unexpected signup token.');
-        // Read back what was minted: exactly one use and exactly the kind's groups, or it is withdrawn.
+        // Polaris ID drops unknown group ids silently: the groups read back must be exactly the request.
         const groups = (t?.userGroups ?? []).map((g) => str(g?.id) ?? '');
         if (t?.usageLimit !== 1 || !sameSet(groups, groupIds)) {
           await req('DELETE', r.signupToken(tokenId));
@@ -63,12 +75,18 @@ export function signupApi(s: Shared): SignupApi {
           throw new IdpError('IDP_DRIFT', 'The signup token did not carry the expected groups.');
         }
         const createdAt = deps.now();
-        const parsed = Date.parse(str(t?.expiresAt) ?? '');
-        const expiresAt = Number.isNaN(parsed) ? createdAt + 3_600_000 : parsed;
+        const expiresAt = Date.parse(str(t?.expiresAt) ?? '');
+        // A token that lives past an hour, or says nothing about its end, is withdrawn.
+        if (Number.isNaN(expiresAt) || expiresAt > createdAt + 3_660_000) {
+          await req('DELETE', r.signupToken(tokenId));
+          alert('error', 'binding.drift', { tokenId });
+          throw new IdpError('IDP_DRIFT', 'The signup token did not expire as expected.');
+        }
         await rememberSignup(db, {
           tokenId,
           tokenSha256: await sha256Hex(value),
-          kind: k,
+          kind: sp.kind,
+          targets,
           ref: c.ref,
           createdAt,
           expiresAt,
@@ -127,15 +145,22 @@ export function signupApi(s: Shared): SignupApi {
       });
     },
 
-    async proveSignup(tokenIds, subject) {
-      const { rows, sub } = await call.guard(meta('proveSignup'), async () => {
+    async proveSignup(tokenIds, opts) {
+      const { rows, sub, email } = await call.guard(meta('proveSignup'), async () => {
+        if (opts !== undefined && (!opts || typeof opts !== 'object' || Array.isArray(opts)))
+          refuse('Invalid options.');
+        const subject = opts?.subject;
         const ids = assertTokenIds(tokenIds);
         const found = await signupsById(db, ids);
         if (found.length !== ids.length) refuse('Token was not minted here.');
         const who = subject === undefined ? undefined : assertId('subject', subject);
         if (who && found.some((t) => t.state === 'proven' && t.subject !== who))
           refuse('Token is already proven for another account.');
-        return { rows: found, sub: who };
+        return {
+          rows: found,
+          sub: who,
+          email: opts?.email === undefined ? undefined : assertEmail(opts.email),
+        };
       });
       const m = meta('proveSignup', { target: rows.map((t) => t.tokenId).join(',') });
       const known = rows.filter((t) => t.state === 'proven' && t.subject);
@@ -156,15 +181,9 @@ export function signupApi(s: Shared): SignupApi {
           return asProved(await matchTokens(seen, open));
         });
         for (const hit of created.filter((x) => !sub || x.subject === sub)) {
-          const kind = open.find((t) => t.tokenId === hit.tokenId)?.kind;
+          const targets = open.find((t) => t.tokenId === hit.tokenId)?.targets;
           try {
-            await recordProof(
-              db,
-              hit.tokenId,
-              hit.subject,
-              kind ? KIND_ROLES[kind] : [],
-              deps.now(),
-            );
+            await recordProof(db, hit.tokenId, hit.subject, targets ?? [], deps.now());
           } catch {
             throw new IdpError('IDP_CONFLICT', 'An account is already proven by another token.');
           }
@@ -173,7 +192,21 @@ export function signupApi(s: Shared): SignupApi {
       }
       const out = sub ? matches.filter((x) => x.subject === sub) : matches;
       const first = out[0];
-      return first ? { ...first, matches: out } : null;
+      if (!first) return null;
+      if (email === undefined) return { ...first, matches: out };
+      // The address is compared here and never returned: only whether the proven account uses it, verified.
+      const emailMatch = await call.ledgered(
+        'lookup',
+        meta('proveSignup', { target: first.subject }),
+        async (req) => {
+          const user = await readUser(req, r, first.subject);
+          if (user.emailVerified !== true) return 'unverified' as const;
+          return typeof user.email === 'string' && user.email.toLowerCase() === email
+            ? ('match' as const)
+            : ('mismatch' as const);
+        },
+      );
+      return { ...first, matches: out, emailMatch };
     },
   };
 }

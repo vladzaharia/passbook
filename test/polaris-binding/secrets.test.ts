@@ -34,10 +34,10 @@ describe.each(['v2', 'admin'] as const)(
       };
 
       const logs = await captureLogs(async () => {
-        const link = await s.api.createSignup('developer', ctx({ ref: 'inv-1' }));
+        const link = await s.api.createSignup({ kind: 'developer' }, ctx({ ref: 'inv-1' }));
         expect((link as { url: string }).url).toContain('SECRETTOKEN1');
         s.pocket.signUp('tok-id-1', 'u-new');
-        await s.api.proveSignup(['tok-id-1'], 'u-new');
+        await s.api.proveSignup(['tok-id-1'], { subject: 'u-new' });
         await s.api.apply('u1', { add: ['developer'] }, ctx({ ref: 'inv-1' }));
         await s.api.apply('u1', { remove: ['developer'] }, ctx({ reason: 'ended' }));
         await s.api.findByVerifiedEmail('found.person@example.test', ctx());
@@ -52,18 +52,18 @@ describe.each(['v2', 'admin'] as const)(
           status: 401,
           body: { message: `bad key ${API_KEY}`, token: 'SECRETTOKEN9abcdef' },
         };
-        await run(() => s.api.createSignup('member', ctx({ ref: 'inv-3' })));
+        await run(() => s.api.createSignup({ kind: 'member' }, ctx({ ref: 'inv-3' })));
         s.pocket.s.failWith = {
           match: /signup-tokens/,
           status: 500,
           body: `SECRETTOKEN7abcdef ${API_KEY}`,
         };
-        await run(() => s.api.createSignup('member', ctx({ ref: 'inv-4' })));
+        await run(() => s.api.createSignup({ kind: 'member' }, ctx({ ref: 'inv-4' })));
         await run(() => s.api.deleteSignup('tok-id-1', ctx()));
         s.pocket.s.failWith = undefined;
         s.pocket.s.config.allowUserSignups = 'open';
         s.clock.now += 11 * 60_000;
-        await run(() => s.api.createSignup('member', ctx({ ref: 'inv-5' })));
+        await run(() => s.api.createSignup({ kind: 'member' }, ctx({ ref: 'inv-5' })));
       });
 
       const everything = [
@@ -90,7 +90,7 @@ describe.each(['v2', 'admin'] as const)(
         status: 409,
         body: { message: 'secret-detail-from-pocket-id' },
       };
-      await expect(s.api.createSignup('member', ctx())).rejects.toThrow(
+      await expect(s.api.createSignup({ kind: 'member' }, ctx())).rejects.toThrow(
         /^IDP_CONFLICT: Polaris ID answered 409\.$/,
       );
     });

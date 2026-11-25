@@ -12,6 +12,7 @@ export const IDP_CODES = [
   'IDP_FROZEN',
   'IDP_BREAKER',
   'IDP_NOT_MANAGED',
+  'IDP_IN_USE',
 ] as const;
 export type IdpCode = (typeof IDP_CODES)[number];
 
@@ -36,6 +37,14 @@ export interface BindingEnv {
   /** `dry_run` (anything but `live`) computes and ledgers writes and sends none. */
   WRITE_MODE: string;
   PASSBOOK_CLIENT_ID: string;
+  /** Custom group names are this prefix plus the key. Default `passbook_g_`. */
+  CUSTOM_GROUP_PREFIX?: string;
+  /** Custom plus adopted groups at most. Default 50. */
+  CUSTOM_GROUP_LIMIT?: string;
+  /** JSON `{ key: groupId }`: groups outside the namespace the owner lets the binding manage. */
+  ADOPT_GROUPS?: string;
+  /** JSON list of exact claim keys outside `passbook_*` the binding may write. */
+  CLAIM_KEYS?: string;
 }
 
 export type Layout = 'v2' | 'admin';
@@ -45,13 +54,28 @@ export const WRITABLE_ROLES = ['console', 'developer', 'support'] as const;
 export type WritableRole = (typeof WRITABLE_ROLES)[number];
 export type Role = WritableRole | 'platform_admin' | 'users';
 
-export type SignupKind = 'member' | 'developer' | 'member_developer';
-export const SIGNUP_KINDS: readonly SignupKind[] = ['member', 'developer', 'member_developer'];
+export type SignupKind = 'member' | 'developer' | 'member_developer' | 'platform';
+export const SIGNUP_KINDS: readonly SignupKind[] = [
+  'member',
+  'developer',
+  'member_developer',
+  'platform',
+];
 export const KIND_ROLES: Record<SignupKind, WritableRole[]> = {
   member: ['console'],
   developer: ['developer'],
   member_developer: ['developer', 'console'],
+  platform: [],
 };
+
+/** A role the binding writes, or `g:<key>` for a custom or adopted group. Never a Polaris ID id or name. */
+export type Target = WritableRole | `g:${string}`;
+export type GroupKey = string;
+/** What a signup token carries: the kind's roles plus up to 5 custom or adopted group keys. */
+export interface SignupSpec {
+  kind: SignupKind;
+  groups?: GroupKey[];
+}
 
 export type Actor = { kind: 'user' | 'key'; id: string } | { kind: 'system'; job: string };
 /** Who and why. The actor is the caller's word: it is ledgered and picks budgets, nothing more. */
@@ -76,6 +100,13 @@ export const BUCKETS = [
   'proveSignup',
   'deleteSignup',
   'lookup',
+  'preview',
+  'group_write',
+  'claims_write',
+  'claims_read',
+  'apply_add_group',
+  'apply_add_group_system',
+  'snapshot_group',
 ] as const;
 export type Bucket = (typeof BUCKETS)[number];
 
@@ -87,7 +118,7 @@ export interface Health {
   /** Findings that do not block writes (`client_open`). */
   warnings: string[];
   /** Live group name per registry role, or null when the group was not found. */
-  groups: Partial<Record<Role, string | null>>;
+  groups: Record<string, string | null>;
   layout: string;
   /** Every group read answered 404: the key or `POCKET_ID_API` points at the wrong route layout. */
   layoutSuspect: boolean;
@@ -116,23 +147,25 @@ export interface ProvedSignup {
 export interface ProofResult extends ProvedSignup {
   /** Every token that matched in this call (a sweep records all of them). */
   matches: ProvedSignup[];
+  /** With `email`: whether the proven account uses that address, verified. The address is never returned. */
+  emailMatch?: 'match' | 'mismatch' | 'unverified';
 }
 export type SkipReason = 'already' | 'absent' | 'not_ours';
 export interface ApplyResult {
-  added: WritableRole[];
-  removed: WritableRole[];
-  skipped: { role: WritableRole; reason: SkipReason }[];
+  added: Target[];
+  removed: Target[];
+  skipped: { role: Target; reason: SkipReason }[];
   dryRun: boolean;
 }
 export type AccountClass = 'created' | 'linked' | 'external';
 export interface Lookup {
-  /** Registry roles the account holds, protected ones included. */
-  roles: Role[];
+  /** Registry roles the account holds (protected ones included) and `g:<key>` for managed groups. */
+  roles: (Role | `g:${string}`)[];
   disabled: boolean;
   isAdmin: boolean;
   class: AccountClass;
-  /** Roles with a live grant. */
-  grants: WritableRole[];
+  /** Targets with a live grant. */
+  grants: Target[];
 }
 export interface SnapshotMember {
   subject: string;
@@ -141,9 +174,38 @@ export interface SnapshotMember {
   grant: boolean;
 }
 export interface Snapshot {
-  roles: Partial<Record<Role, { name: string; members: SnapshotMember[] }>>;
-  /** Grants ended because the member is no longer in the group (`idp_removed`). */
-  ended: { subject: string; role: WritableRole }[];
+  /** Keyed by role, or `g:<key>` for a managed group. */
+  roles: Record<string, { name: string; members: SnapshotMember[] }>;
+  /** Grants ended because the member is no longer in the group (`idp_removed`). `role` is a target. */
+  ended: { subject: string; role: Target }[];
+}
+
+export type ClaimType = 'text' | 'number' | 'boolean' | 'json';
+/** One managed claim value, typed. `null` in a change removes the key. */
+export interface ClaimValue {
+  type: ClaimType;
+  value: unknown;
+}
+export type ClaimChange = ClaimValue | null;
+export type ClaimOwner = { subject: string } | { group: Target };
+export interface ClaimView {
+  /** Managed keys only. */
+  claims: Record<string, ClaimValue>;
+  /** Keys other apps or the owner set, which the binding may not touch. Never listed. */
+  otherKeys: number;
+}
+export interface ManagedGroup {
+  /** The role name, or the group key. */
+  key: string;
+  kind: 'role' | 'custom' | 'adopted';
+  name: string;
+  friendlyName: string | null;
+  members: number | null;
+  claims: string[];
+  /** Allowed OIDC clients other than PassBook's. */
+  otherClients: number | null;
+  /** Why this group blocks writes, such as `group_name_mismatch`. */
+  flags: string[];
 }
 export interface CallRow {
   id: number;
@@ -163,17 +225,39 @@ export interface CallRow {
   at: number;
 }
 
-/** The RPC surface of the `polaris-binding` Worker, and nothing else. No method takes a group. */
+/** The RPC surface of the `polaris-binding` Worker, and nothing else. No method takes a Polaris ID group id or name. */
 export interface IdpRpc {
   health(): Promise<Health>;
-  createSignup(kind: SignupKind, ctx: WriteCtx): Promise<SignupRef | DryRun>;
+  groups(): Promise<ManagedGroup[]>;
+  createGroup(
+    key: GroupKey,
+    friendlyName: string,
+    ctx: WriteCtx,
+  ): Promise<{ key: GroupKey } | DryRun>;
+  ensureRoleGroup(role: WritableRole, ctx: WriteCtx): Promise<{ key: WritableRole } | DryRun>;
+  updateGroup(
+    target: Target,
+    change: { friendlyName: string },
+    ctx: WriteCtx,
+  ): Promise<{ target: Target } | DryRun>;
+  deleteGroup(key: GroupKey, ctx: WriteCtx): Promise<{ key: GroupKey } | DryRun>;
+  claims(owner: ClaimOwner): Promise<ClaimView>;
+  setClaims(
+    owner: ClaimOwner,
+    changes: Record<string, ClaimChange>,
+    ctx: WriteCtx,
+  ): Promise<{ set: string[]; removed: string[]; dryRun: boolean }>;
+  createSignup(spec: SignupSpec, ctx: WriteCtx): Promise<SignupRef | DryRun>;
   deleteSignup(tokenId: string, ctx: WriteCtx): Promise<'deleted' | 'used' | 'gone' | DryRun>;
-  proveSignup(tokenIds: string[], subject?: string): Promise<ProofResult | null>;
+  proveSignup(
+    tokenIds: string[],
+    opts?: { subject?: string; email?: string },
+  ): Promise<ProofResult | null>;
   findByVerifiedEmail(email: string, ctx: WriteCtx): Promise<{ subject: string } | null>;
   lookup(subject: string): Promise<Lookup>;
   apply(
     subject: string,
-    delta: { add?: WritableRole[]; remove?: WritableRole[] },
+    delta: { add?: Target[]; remove?: Target[] },
     ctx: ApplyCtx,
   ): Promise<ApplyResult>;
   setDisabled(
@@ -181,7 +265,9 @@ export interface IdpRpc {
     disabled: boolean,
     ctx: WriteCtx,
   ): Promise<{ result: 'disabled' | 'enabled' | 'already'; dryRun: boolean }>;
-  snapshot(ctx: WriteCtx): Promise<Snapshot>;
+  /** `since` (epoch ms) widens `ended` to every grant ended for a missing member since then. */
+  snapshot(ctx: WriteCtx & { since?: number }): Promise<Snapshot>;
   freeze(reason: string, ctx: WriteCtx): Promise<'frozen' | 'already'>;
-  calls(since: number): Promise<CallRow[]>;
+  /** Ledger rows from `since`, 1,000 at a time; pass the last row's id as `afterId` for the next page. */
+  calls(since: number, afterId?: number): Promise<CallRow[]>;
 }
