@@ -205,7 +205,7 @@
     "name": "scan-gallery-customer-accepted",
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
-    "waitFor": "[data-testid=\"scan-live\"]"
+    "waitFor": "[data-testid=\"duo-customer-display\"][data-status=\"accepted\"]"
   },
   {
     "role": "anon",
@@ -213,7 +213,7 @@
     "name": "scan-gallery-customer-refused",
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
-    "waitFor": "[data-testid=\"scan-live\"]"
+    "waitFor": "[data-testid=\"duo-customer-display\"][data-status=\"rejected\"]"
   },
   {
     "role": "anon",
@@ -727,7 +727,7 @@
   },
   {
     "role": "org",
-    "path": "/admin/scanning/sessions/{frontDoorId}",
+    "path": "/admin/scanning/sessions/{eveningSessionId}",
     "name": "scan-admin-session-dates",
     "filterOrg": "northwindId",
     "click": ["button:has-text(\"Edit\")", "legend:text-is(\"Dates\")"]
@@ -765,7 +765,7 @@
     "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scans-status-dropdown",
     "filterOrg": "northwindId",
-    "click": "[aria-haspopup]:has-text(\"Status\"), button:has-text(\"Status\")"
+    "click": "button:has-text(\"All results\")"
   },
   {
     "role": "org",
