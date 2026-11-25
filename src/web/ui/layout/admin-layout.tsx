@@ -2,6 +2,7 @@ import { Outlet } from '@tanstack/react-router';
 import { Menu } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
+import { useMode } from '../../lib/mode.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
 import { scopePath } from '../../lib/scope.ts';
@@ -12,7 +13,7 @@ import { Sheet, SheetContent } from '../sheet.tsx';
 import { AppShell, type AppShellProps } from './app-shell.tsx';
 import { GraceBanner } from './grace-banner.tsx';
 import { MenubarSearch, shortcutHint } from './menubar.tsx';
-import { ModeBand } from './mode-band.tsx';
+import { ModeAnnouncer } from './mode-announcer.tsx';
 import { ModeSwitch } from './mode-switch.tsx';
 import { AdminPalette } from './palette.tsx';
 import { ScopeSwitcher } from './scope-switcher.tsx';
@@ -27,6 +28,9 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
   const org = scope?.kind === 'org';
   const { membership } = useOrgScope();
   const { isAdmin } = useSession();
+  const mode = useMode();
+  // Only where Live and Test are a choice; a sandbox is always Test, so its bar does not change.
+  const switchable = org && !membership?.testOnly;
   const scopeName =
     scope?.kind === 'platform' ? (isAdmin ? 'Platform' : undefined) : membership?.orgName;
   const crumb = useMemo(
@@ -37,11 +41,16 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const touchOnly = useMediaQuery(COARSE_ONLY);
   const palette = useMemo(() => ({ open: () => setPaletteOpen(true) }), []);
+  const tone = switchable && mode === 'test' ? ('test' as const) : undefined;
   const sidebar = (
     // The shell's column paints the sidebar background full page height; this stays sticky.
     <aside className="sticky top-0 flex h-dvh flex-col pl-[env(safe-area-inset-left)]">
       {/* The bar's brand row: from lg the mark lives here, level with the bar. */}
-      <div className="flex h-14 shrink-0 items-center border-b border-border px-4">
+      <div
+        data-bar-start
+        data-tone={tone}
+        className="flex h-14 shrink-0 items-center border-b border-border px-4"
+      >
         <Wordmark to={home} />
       </div>
       <div className="shrink-0 px-4 py-3">
@@ -67,19 +76,15 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         onClick={() => setPaletteOpen(true)}
       />
     ),
-    controls: org && !membership?.testOnly ? <ModeSwitch /> : null,
+    controls: switchable ? <ModeSwitch /> : null,
+    tone,
     account: <UserMenu />,
   };
   return (
     <PaletteContext.Provider value={palette}>
       <ScopeCrumbContext.Provider value={crumb}>
-        <AppShell
-          bar={bar}
-          sidebar={sidebar}
-          band={org ? <ModeBand /> : null}
-          width="console"
-          holder={false}
-        >
+        <AppShell bar={bar} sidebar={sidebar} width="console" holder={false}>
+          {switchable ? <ModeAnnouncer /> : null}
           <GraceBanner />
           {children ?? <Outlet />}
         </AppShell>

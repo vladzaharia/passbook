@@ -89,10 +89,6 @@ export const EXPORT_ENTITIES: readonly ExportEntity[] = [
   ),
   inOrg('scan_group_members', 'group_scan_id, scan_id'),
   inOrg(
-    'visitors',
-    'id, mode, pass_id, name, host_name, host_email, window_from, window_until, note, left_at, left_by, cancelled_at, created_by, created_at',
-  ),
-  inOrg(
     'roll_calls',
     'id, mode, scope_key, places, snapshot, started_by, started_by_id, scanner_id, started_at, ended_at, ended_by, rev',
   ),

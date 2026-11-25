@@ -7,7 +7,14 @@ import { hasNewVersion, type Versions, versionedBreaks } from './lib/changelog.t
 import { readPending } from './lib/changelog-files.ts';
 import { exampleFailures } from './lib/example-lint.ts';
 import { showAt } from './lib/git-show.ts';
-import { breakingChanges, type Doc } from './lib/openapi-diff.ts';
+import {
+  type ApprovedRemoval,
+  approvedRemovalFailures,
+  backdatedDeprecations,
+  breakingChanges,
+  type Doc,
+  withoutApprovedRemovals,
+} from './lib/openapi-diff.ts';
 import { coverage, FLAGS, ratchetFailures, type SdkNames } from './lib/openapi-ratchet.ts';
 
 const SNAPSHOT = 'docs/api/openapi.v1.json';
@@ -19,6 +26,7 @@ const show = (ref: string, file: string): string | null => showAt(root, ref, fil
 const read = <T>(file: string): T => JSON.parse(readFileSync(resolve(root, file), 'utf8')) as T;
 const parse = <T>(raw: string | null): T | null => (raw === null ? null : (JSON.parse(raw) as T));
 
+const approved = read<ApprovedRemoval[]>('tools/openapi-approved-removals.json');
 const prev = parse<Doc>(show(base, SNAPSHOT));
 const next = read<Doc>(SNAPSHOT);
 const failures = ratchetFailures({
@@ -26,11 +34,19 @@ const failures = ratchetFailures({
   next,
   baseNames: parse<SdkNames>(show(base, NAMES)),
   nextNames: read<SdkNames>(NAMES),
+  approvedIds: approved.map((a) => a.operationId),
 });
 if (prev) {
+  failures.push(
+    ...approvedRemovalFailures(prev, next, approved),
+    ...backdatedDeprecations(prev, next),
+  );
   // A breaking change ships only with a new dated PassBook-Version (docs/api/versions.json) that carries a migration note.
   // A breaking change the changelog marks `unversioned` (a safety fix) needs no version; any other does.
-  const broken = versionedBreaks(breakingChanges(prev, next), readPending(root));
+  const broken = versionedBreaks(
+    withoutApprovedRemovals(breakingChanges(prev, next), approved),
+    readPending(root),
+  );
   const versions = read<Versions>('docs/api/versions.json');
   if (
     broken.length &&

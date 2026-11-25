@@ -30,6 +30,7 @@ import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
 import { sweepPrintPdfs } from '../modules/prints/pdf-sweep.ts';
+import { dailyGuestPasses } from '../modules/retention/guest-passes.ts';
 import { dailyPhotos, dailyReceipts } from '../modules/retention/jobs.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
@@ -39,7 +40,6 @@ import { recordCronRun } from '../modules/status/cron.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
-import { dailyVisitors } from '../modules/visitors/retention.ts';
 import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
@@ -100,7 +100,6 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'idempotency.sweep', run: sweepIdempotency },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
     { name: 'passes.import_retention', run: dailyImports },
-    { name: 'visitors.retention', run: dailyVisitors },
     { name: 'connections.retention', run: dailyConnections },
     { name: 'delivery.retention', run: dailyDelivery },
     { name: 'auth.retention', run: dailyAuth },
@@ -123,6 +122,8 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'org_lifecycle.sweep', run: dailyOrgLifecycle },
     { name: 'developer.idle_close', run: dailyDeveloperSandbox },
     { name: 'retention.receipts', run: dailyReceipts },
+    // Near the end: it spends what the other daily hooks left of the query budget.
+    { name: 'retention.guest_passes', run: dailyGuestPasses },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],
@@ -135,8 +136,12 @@ export async function handleScheduled(
 ): Promise<void> {
   const hooks = CRON_HOOKS[controller.cron] ?? [];
   const base = createJobContext(env, 'cron', { ctx, base: { cron: controller.cron } });
-  const hookCtx = (env: AppEnv, hook: string) =>
-    createJobContext(env, 'cron', { ctx, base: { cron: controller.cron, hook } });
+  const hookCtx = (env: AppEnv, hook: string, queries?: () => number) =>
+    createJobContext(env, 'cron', {
+      ctx,
+      base: { cron: controller.cron, hook },
+      ...(queries ? { queries } : {}),
+    });
   const failed = (hook: string, error: unknown) =>
     base.log.error('cron.hook_failed', { hook, code: 'CRON_HOOK_FAILED', error });
   if (controller.cron === DAILY_CRON) {
@@ -152,7 +157,7 @@ export async function handleScheduled(
         continue;
       }
       try {
-        await hook.run(hookCtx(counter.env, hook.name));
+        await hook.run(hookCtx(counter.env, hook.name, counter.count));
       } catch (error) {
         failed(hook.name, error);
       }

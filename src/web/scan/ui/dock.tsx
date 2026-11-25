@@ -1,8 +1,7 @@
-import { DoorOpen, Flashlight, Hash, Nfc, Search, Users } from 'lucide-react';
+import { Flashlight, Hash, Nfc, Search, Users } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { SCAN_TRAY_COPY } from '../../../shared/copy/scan-tray.ts';
-import { VISITOR_COPY } from '../../../shared/copy/visitors.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { CountUp } from '../../ui/count-up.tsx';
 import { TAG_EXTRA_COPY } from '../assign/copy.ts';
@@ -54,7 +53,6 @@ export function DoorThumbRow({
   torchOn,
   canTorch = true,
   inside,
-  visitors,
   tapToRead,
   direction,
 }: {
@@ -68,8 +66,6 @@ export function DoorThumbRow({
   canTorch?: boolean;
   /** Desk scanners with a tracked place: Who's in {42}. */
   inside?: { count: number; onOpen: () => void };
-  /** Desk scanners: today's visitors, with check-out. */
-  visitors?: { onOpen: () => void };
 }) {
   const phone = useMediaQuery(PHONE);
   return (
@@ -89,12 +85,6 @@ export function DoorThumbRow({
           <Users aria-hidden size={20} className="scan-dock-icon-extra" />
           {ACCESS_COPY.inside.open}
           <CountUp value={inside.count} className="scan-dock-count" />
-        </DockButton>
-      ) : null}
-      {visitors ? (
-        <DockButton data-testid="scan-visitors-open" onClick={visitors.onOpen}>
-          <DoorOpen aria-hidden size={20} className="scan-dock-icon-extra" />
-          {VISITOR_COPY.title}
         </DockButton>
       ) : null}
       {direction}

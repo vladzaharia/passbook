@@ -229,3 +229,21 @@ describe('versions', () => {
     ).toEqual(['POST /a body.u: field removed', 'GET /b 200.x: field removed']);
   });
 });
+
+describe('versionedBreaks at a Sunset', () => {
+  it('lets a removal at the Sunset through without a version, and keeps the rest', () => {
+    expect(
+      versionedBreaks(
+        [
+          'GET /a: operation removed at its Sunset 2027-11-25',
+          'GET /b: operation removed before its Sunset 2027-11-25',
+          'GET /c: operation removed',
+        ],
+        [],
+      ),
+    ).toEqual([
+      'GET /b: operation removed before its Sunset 2027-11-25',
+      'GET /c: operation removed',
+    ]);
+  });
+});

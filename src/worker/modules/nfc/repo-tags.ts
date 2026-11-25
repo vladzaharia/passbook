@@ -32,7 +32,7 @@ const VIEW = `SELECT t.id, t.mode, t.system, t.hint, t.label, t.status, t.create
   LEFT JOIN tag_bindings b ON b.tag_id = t.id AND b.ended_at IS NULL
   LEFT JOIN passes p ON p.id = b.pass_id AND p.org_id = t.org_id AND p.mode = t.mode
   LEFT JOIN users hu ON hu.id = b.user_id
-  LEFT JOIN nfc_tag_types y ON y.id = t.type_id`;
+  LEFT JOIN nfc_tag_types y ON y.id = t.type_id AND y.org_id = t.org_id`;
 
 interface ViewRow {
   id: string;
@@ -72,7 +72,7 @@ function toTag(r: ViewRow): Tag {
           userId: r.b_user_id,
           holderName: r.b_scope === 'user' ? r.holder_name : null,
           source: r.b_source,
-          lent: false,
+          lent: r.type_use === 'visitor',
           boundAt: r.b_bound_at,
           boundByName: r.bound_by_name,
           scannerName: r.scanner_name,
@@ -85,7 +85,9 @@ function toTag(r: ViewRow): Tag {
     r.status === 'retired'
       ? 'retired'
       : binding
-        ? 'assigned'
+        ? binding.lent
+          ? 'lent'
+          : 'assigned'
         : r.lost_at !== null
           ? 'lost'
           : 'spare';
@@ -101,7 +103,7 @@ function toTag(r: ViewRow): Tag {
     assurance: assuranceOfSystem(r.system),
     hint: r.hint,
     label: r.label,
-    pool: false,
+    pool: r.type_use === 'visitor',
     status: r.status,
     state,
     createdAt: r.created_at,
@@ -112,11 +114,11 @@ function toTag(r: ViewRow): Tag {
 }
 
 const STATE_SQL = {
-  assigned: "t.status = 'active' AND b.id IS NOT NULL",
+  assigned: "t.status = 'active' AND b.id IS NOT NULL AND y.use IS NOT 'visitor'",
   retired: "t.status = 'retired'",
   lost: "t.status = 'active' AND b.id IS NULL AND t.lost_at IS NOT NULL",
   spare: "t.status = 'active' AND b.id IS NULL AND t.lost_at IS NULL",
-  lent: '0',
+  lent: "t.status = 'active' AND b.id IS NOT NULL AND y.use = 'visitor'",
 } as const;
 
 const escapeLike = (q: string) => q.replace(/[\\%_]/g, (c) => `\\${c}`);

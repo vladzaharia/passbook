@@ -737,6 +737,24 @@
                   "out"
                 ]
               },
+              "zoneId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 300
+              },
+              "exit": {
+                "type": "string",
+                "enum": [
+                  "scan",
+                  "desk",
+                  "stay",
+                  "clear",
+                  "zone",
+                  "forced"
+                ]
+              },
               "method": {
                 "type": [
                   "string",
@@ -47494,434 +47512,6 @@
           "ok"
         ]
       },
-      "VisitorsListResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64
-                },
-                "passId": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64
-                },
-                "name": {
-                  "type": "string"
-                },
-                "hostName": {
-                  "type": "string"
-                },
-                "windowFrom": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "windowUntil": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "note": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "expected",
-                    "in",
-                    "out",
-                    "no_show",
-                    "cancelled"
-                  ]
-                },
-                "statusAt": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0
-                },
-                "autoOut": {
-                  "type": "boolean"
-                },
-                "hasEmail": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "id",
-                "passId",
-                "name",
-                "hostName",
-                "windowFrom",
-                "windowUntil",
-                "note",
-                "status",
-                "statusAt",
-                "autoOut",
-                "hasEmail"
-              ]
-            }
-          },
-          "nextCursor": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "nextCursor"
-        ]
-      },
-      "VisitorsCreateParams": {
-        "type": "object",
-        "properties": {
-          "orgId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "email": {
-            "type": "string",
-            "maxLength": 254
-          },
-          "hostUserId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "hostName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "hostEmail": {
-            "type": "string",
-            "maxLength": 254
-          },
-          "windowFrom": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "windowUntil": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "note": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "templateId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          }
-        },
-        "required": [
-          "orgId",
-          "name",
-          "windowFrom",
-          "windowUntil"
-        ],
-        "additionalProperties": false
-      },
-      "VisitorsCreateResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "passId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "name": {
-            "type": "string"
-          },
-          "hostName": {
-            "type": "string"
-          },
-          "windowFrom": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "windowUntil": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "note": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "expected",
-              "in",
-              "out",
-              "no_show",
-              "cancelled"
-            ]
-          },
-          "statusAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "autoOut": {
-            "type": "boolean"
-          },
-          "hasEmail": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "passId",
-          "name",
-          "hostName",
-          "windowFrom",
-          "windowUntil",
-          "note",
-          "status",
-          "statusAt",
-          "autoOut",
-          "hasEmail"
-        ]
-      },
-      "VisitorsListHostsResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64
-                },
-                "name": {
-                  "type": "string"
-                },
-                "email": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "id",
-                "name",
-                "email"
-              ]
-            }
-          },
-          "nextCursor": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "nextCursor"
-        ]
-      },
-      "VisitorsCheckOutResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "passId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "name": {
-            "type": "string"
-          },
-          "hostName": {
-            "type": "string"
-          },
-          "windowFrom": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "windowUntil": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "note": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "expected",
-              "in",
-              "out",
-              "no_show",
-              "cancelled"
-            ]
-          },
-          "statusAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "autoOut": {
-            "type": "boolean"
-          },
-          "hasEmail": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "passId",
-          "name",
-          "hostName",
-          "windowFrom",
-          "windowUntil",
-          "note",
-          "status",
-          "statusAt",
-          "autoOut",
-          "hasEmail"
-        ]
-      },
-      "VisitorsCancelResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "passId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "name": {
-            "type": "string"
-          },
-          "hostName": {
-            "type": "string"
-          },
-          "windowFrom": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "windowUntil": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "note": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "expected",
-              "in",
-              "out",
-              "no_show",
-              "cancelled"
-            ]
-          },
-          "statusAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "autoOut": {
-            "type": "boolean"
-          },
-          "hasEmail": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "passId",
-          "name",
-          "hostName",
-          "windowFrom",
-          "windowUntil",
-          "note",
-          "status",
-          "statusAt",
-          "autoOut",
-          "hasEmail"
-        ]
-      },
-      "VisitorsSendHostEmailParams": {
-        "type": "object",
-        "properties": {
-          "timeZone": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "default": "UTC"
-          }
-        },
-        "additionalProperties": false
-      },
-      "VisitorsSendHostEmailResponse": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
-          }
-        },
-        "required": [
-          "ok"
-        ]
-      },
       "HoldersOffboardParams": {
         "type": "object",
         "properties": {
@@ -47971,13 +47561,17 @@
           },
           "tags": {
             "type": "integer"
+          },
+          "more": {
+            "type": "boolean"
           }
         },
         "required": [
           "dryRun",
           "holders",
           "passes",
-          "tags"
+          "tags",
+          "more"
         ]
       },
       "DeliveriesListResponse": {
@@ -76856,6 +76450,7 @@
           "RATE_LIMITED",
           "REMOVAL_NOT_FOUND",
           "SESSION_NOT_FOUND",
+          "TAG_LENT",
           "TAG_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -77387,6 +76982,7 @@
           "NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "TAG_LENT",
           "TAG_NOT_FOUND",
           "TAG_TYPE_NOT_FOUND",
           "UNAUTHENTICATED",
@@ -109961,672 +109557,6 @@
         ]
       }
     },
-    "/api/v1/visitors": {
-      "get": {
-        "summary": "List visitors for a day",
-        "tags": [
-          "visitors"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "today",
-                "upcoming",
-                "past"
-              ],
-              "default": "today"
-            },
-            "required": false,
-            "name": "tab",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "minimum": 0
-            },
-            "required": false,
-            "name": "dayStart",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "minimum": 0
-            },
-            "required": false,
-            "name": "dayEnd",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 512
-            },
-            "required": false,
-            "name": "cursor",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VisitorsListResponse"
-                },
-                "example": {
-                  "items": [
-                    {
-                      "id": "0193a1b2-7c00-7000-8000-000000000062",
-                      "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-                      "name": "Jordan Lee",
-                      "hostName": "Sam Rivera",
-                      "windowFrom": 1795568400000,
-                      "windowUntil": 1795575600000,
-                      "note": "Trial session with a coach",
-                      "status": "in",
-                      "statusAt": 1795568700000,
-                      "autoOut": true,
-                      "hasEmail": true
-                    }
-                  ],
-                  "nextCursor": "c1.4812"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "visitors.getVisitors",
-        "x-sdk": {
-          "resource": "visitors",
-          "method": "list"
-        },
-        "description": "Lists the visitors of a day.",
-        "security": [
-          {
-            "apiKey": [
-              "passes:read"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "ORG_FORBIDDEN",
-          "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      },
-      "post": {
-        "summary": "Invite a visitor: a visitor pass with a host",
-        "tags": [
-          "visitors"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VisitorsCreateParams"
-              },
-              "example": {
-                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                "name": "Jordan Lee",
-                "email": "jordan@example.com",
-                "hostName": "Sam Rivera",
-                "windowFrom": 1795568400000,
-                "windowUntil": 1795575600000,
-                "note": "Trial session with a coach"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VisitorsCreateResponse"
-                },
-                "example": {
-                  "id": "0193a1b2-7c00-7000-8000-000000000062",
-                  "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-                  "name": "Jordan Lee",
-                  "hostName": "Sam Rivera",
-                  "windowFrom": 1795568400000,
-                  "windowUntil": 1795575600000,
-                  "note": "Trial session with a coach",
-                  "status": "in",
-                  "statusAt": 1795568700000,
-                  "autoOut": true,
-                  "hasEmail": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "visitors.postVisitors",
-        "x-sdk": {
-          "resource": "visitors",
-          "method": "create"
-        },
-        "description": "Invites a visitor: a visitor pass with a host.",
-        "security": [
-          {
-            "apiKey": [
-              "passes:write"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ACTOR_CHANGED",
-          "ASSET_NOT_FOUND",
-          "ASSET_SLOT",
-          "AUTHORITY_DENIED",
-          "CONNECTION_ORG",
-          "CREATE_STALE",
-          "DELIVERY_STALE",
-          "EMAIL_INVALID",
-          "EMAIL_OUTCOME_UNKNOWN",
-          "EMAIL_RATE_LIMITED",
-          "EXTERNAL_ID_TAKEN",
-          "FEATURE_LIMIT_REACHED",
-          "FEATURE_NOT_INCLUDED",
-          "FORBIDDEN",
-          "IDEMPOTENCY_IN_PROGRESS",
-          "IDEMPOTENCY_KEY_REUSED",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "INVALID_INPUT",
-          "JOIN_NOT_READY",
-          "LINEAGE_CHANGED",
-          "MISSING_SCOPE",
-          "MODE_MISMATCH",
-          "NEW_CODE_UNSUPPORTED",
-          "NOT_FOUND",
-          "ORG_ACCESS_CHANGED",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
-          "PASS_CHANGED",
-          "PASS_CONFLICT",
-          "PASS_INPUT_INVALID",
-          "PASS_INVALID",
-          "PASS_NOT_FOUND",
-          "PASS_REF_TAKEN",
-          "PASS_REISSUE_REQUIRED",
-          "PASS_REMOVED",
-          "PASS_TRANSFER_PENDING",
-          "RATE_LIMITED",
-          "RETENTION_CHANGED",
-          "SCANNER_REPAIR",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_STAFF_CHANGED",
-          "SERIAL_TAKEN",
-          "STALE",
-          "TEMPLATE_CONTENT_CHANGED",
-          "TEMPLATE_IS_BLUEPRINT",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_PROVIDER_UNSUPPORTED",
-          "TEMPLATE_RELEASE_CHANGED",
-          "TEMPLATE_RELEASE_CONFLICT",
-          "TEMPLATE_RELEASE_REQUIRED",
-          "TEMPLATE_VERSION_CONTENT_CONFLICT",
-          "TOKEN_SEAL_MISMATCH",
-          "UNAUTHENTICATED",
-          "VALIDATION",
-          "VERSION_CONFLICT",
-          "VISITOR_CHANGED",
-          "VISITOR_HOST_UNKNOWN",
-          "VISITOR_NOT_FOUND",
-          "VISITOR_TEMPLATE_MISSING",
-          "WALLET_PROJECTION_UNSUPPORTED"
-        ]
-      }
-    },
-    "/api/v1/visitors/hosts": {
-      "get": {
-        "summary": "People who can host a visitor: the org members",
-        "tags": [
-          "visitors"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 512
-            },
-            "required": false,
-            "name": "cursor",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VisitorsListHostsResponse"
-                },
-                "example": {
-                  "items": [
-                    {
-                      "id": "0193a1b2-7c00-7000-8000-000000000011",
-                      "name": "Sam Rivera",
-                      "email": "sam@example.com"
-                    }
-                  ],
-                  "nextCursor": null
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "visitors.getVisitorsHosts",
-        "x-sdk": {
-          "resource": "visitors",
-          "method": "listHosts"
-        },
-        "description": "The people who can host a visitor: the organization's members.",
-        "security": [
-          {
-            "apiKey": [
-              "passes:read"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "ORG_FORBIDDEN",
-          "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/visitors/{id}/check-out": {
-      "post": {
-        "summary": "Check a visitor out",
-        "tags": [
-          "visitors"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VisitorsCheckOutResponse"
-                },
-                "example": {
-                  "id": "0193a1b2-7c00-7000-8000-000000000062",
-                  "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-                  "name": "Jordan Lee",
-                  "hostName": "Sam Rivera",
-                  "windowFrom": 1795568400000,
-                  "windowUntil": 1795575600000,
-                  "note": "Trial session with a coach",
-                  "status": "out",
-                  "statusAt": 1795572000000,
-                  "autoOut": true,
-                  "hasEmail": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "visitors.postVisitorsByIdCheckOut",
-        "x-sdk": {
-          "resource": "visitors",
-          "method": "checkOut"
-        },
-        "description": "Checks a visitor out.",
-        "security": [
-          {
-            "apiKey": [
-              "passes:write"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/visitors/{id}/cancel": {
-      "post": {
-        "summary": "Cancel a visit and void its pass",
-        "tags": [
-          "visitors"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VisitorsCancelResponse"
-                },
-                "example": {
-                  "id": "0193a1b2-7c00-7000-8000-000000000062",
-                  "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-                  "name": "Jordan Lee",
-                  "hostName": "Sam Rivera",
-                  "windowFrom": 1795568400000,
-                  "windowUntil": 1795575600000,
-                  "note": "Trial session with a coach",
-                  "status": "cancelled",
-                  "statusAt": 1795572000000,
-                  "autoOut": true,
-                  "hasEmail": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "visitors.postVisitorsByIdCancel",
-        "x-sdk": {
-          "resource": "visitors",
-          "method": "cancel"
-        },
-        "description": "Cancels a visit and voids its pass.",
-        "security": [
-          {
-            "apiKey": [
-              "passes:write"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/visitors/{id}/host-email": {
-      "post": {
-        "summary": "Send the host their arrival email again",
-        "tags": [
-          "visitors"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VisitorsSendHostEmailParams"
-              },
-              "example": {
-                "timeZone": "America/Los_Angeles"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VisitorsSendHostEmailResponse"
-                },
-                "example": {
-                  "ok": true
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "visitors.postVisitorsByIdHostEmail",
-        "x-sdk": {
-          "resource": "visitors",
-          "method": "sendHostEmail"
-        },
-        "description": "Sends the host their arrival email again.",
-        "security": [
-          {
-            "apiKey": [
-              "passes:write"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED",
-          "VALIDATION",
-          "VISITOR_HOST_NOTICE_FAILED",
-          "VISITOR_NOT_FOUND",
-          "VISITOR_NOT_IN",
-          "VISITOR_RESEND_LIMIT"
-        ]
-      }
-    },
     "/api/v1/offboard": {
       "post": {
         "summary": "Offboard a person: void or remove their passes and let go of their tags",
@@ -110673,7 +109603,8 @@
                   "dryRun": false,
                   "holders": 1,
                   "passes": 2,
-                  "tags": 0
+                  "tags": 0,
+                  "more": false
                 }
               }
             }
@@ -127804,197 +126735,9 @@
         ]
       }
     },
-    "/api/v1/scan/visitors": {
-      "get": {
-        "summary": "Today's visitors",
-        "tags": [
-          "scan"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "minimum": 0
-            },
-            "required": false,
-            "name": "dayStart",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "minimum": 0
-            },
-            "required": false,
-            "name": "dayEnd",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 512
-            },
-            "required": false,
-            "name": "cursor",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "passId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "hostName": {
-                            "type": "string"
-                          },
-                          "windowFrom": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "windowUntil": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "note": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "expected",
-                              "in",
-                              "out",
-                              "no_show",
-                              "cancelled"
-                            ]
-                          },
-                          "statusAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "autoOut": {
-                            "type": "boolean"
-                          },
-                          "hasEmail": {
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "passId",
-                          "name",
-                          "hostName",
-                          "windowFrom",
-                          "windowUntil",
-                          "note",
-                          "status",
-                          "statusAt",
-                          "autoOut",
-                          "hasEmail"
-                        ]
-                      }
-                    },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ]
-                },
-                "example": {
-                  "items": [
-                    {
-                      "id": "0193a1b2-7c00-7000-8000-000000000062",
-                      "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-                      "name": "Jordan Lee",
-                      "hostName": "Sam Rivera",
-                      "windowFrom": 1795568400000,
-                      "windowUntil": 1795575600000,
-                      "note": null,
-                      "status": "in",
-                      "statusAt": 1795568700000,
-                      "autoOut": true,
-                      "hasEmail": true
-                    }
-                  ],
-                  "nextCursor": null
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scan.getScanVisitors",
-        "x-sdk": {
-          "resource": "terminal",
-          "method": "listVisitors",
-          "sdk": false,
-          "reason": "Scanner device protocol; needs a paired scanner session."
-        },
-        "security": [
-          {
-            "scanner": []
-          }
-        ],
-        "x-codes": [
-          "FORBIDDEN",
-          "RATE_LIMITED",
-          "SCANNER_UNAUTHENTICATED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
     "/api/v1/scan/sign-out": {
       "post": {
-        "summary": "Sign someone out: out of every place they are in, and a visitor checked out",
+        "summary": "Sign someone out: out of every place they are in",
         "tags": [
           "scan"
         ],
@@ -128119,8 +126862,7 @@
           "SCAN_STAFF_CHANGED",
           "SCAN_TOO_MANY_OVERRIDES",
           "UNAUTHENTICATED",
-          "VALIDATION",
-          "VISITOR_NOT_IN"
+          "VALIDATION"
         ]
       }
     },
@@ -129443,6 +128185,7 @@
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
+          "TAG_PASS_EXPIRED",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
           "TAG_SCANNER_ONLY",
@@ -130026,6 +128769,7 @@
           "TAG_CHECK_FAILED",
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
+          "TAG_PASS_EXPIRED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
           "TAG_SECURE_REQUIRED",
@@ -146111,6 +144855,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
+          "TAG_PASS_EXPIRED",
           "TAG_TYPED_OFF",
           "TAG_TYPE_ARCHIVED",
           "TAG_TYPE_CHOOSE",
@@ -146350,6 +145095,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
+          "TAG_PASS_EXPIRED",
           "TAG_TYPED_OFF",
           "TAG_TYPE_ARCHIVED",
           "TAG_TYPE_CHOOSE",
@@ -146872,6 +145618,7 @@
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
+          "TAG_PASS_EXPIRED",
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_BUSY",
           "TAG_SECURE_REQUIRED",
@@ -146881,6 +145628,7 @@
           "TAG_TYPE_CHANGED",
           "TAG_TYPE_CHOOSE",
           "TAG_TYPE_LIMIT",
+          "TAG_TYPE_LOANER_SCOPE",
           "TAG_TYPE_MISMATCH",
           "TAG_TYPE_NAME_TAKEN",
           "TAG_TYPE_NOT_FOUND",
@@ -147014,6 +145762,7 @@
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
+          "TAG_PASS_EXPIRED",
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_BUSY",
           "TAG_SECURE_REQUIRED",
@@ -147023,6 +145772,7 @@
           "TAG_TYPE_CHANGED",
           "TAG_TYPE_CHOOSE",
           "TAG_TYPE_LIMIT",
+          "TAG_TYPE_LOANER_SCOPE",
           "TAG_TYPE_MISMATCH",
           "TAG_TYPE_NAME_TAKEN",
           "TAG_TYPE_NOT_FOUND",
@@ -147156,6 +145906,7 @@
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
+          "TAG_PASS_EXPIRED",
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_BUSY",
           "TAG_SECURE_REQUIRED",
@@ -147165,6 +145916,7 @@
           "TAG_TYPE_CHANGED",
           "TAG_TYPE_CHOOSE",
           "TAG_TYPE_LIMIT",
+          "TAG_TYPE_LOANER_SCOPE",
           "TAG_TYPE_MISMATCH",
           "TAG_TYPE_NAME_TAKEN",
           "TAG_TYPE_NOT_FOUND",
@@ -147728,6 +146480,7 @@
           "TAG_ID_INVALID",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
+          "TAG_PASS_EXPIRED",
           "TAG_TYPED_OFF",
           "TAG_TYPE_ARCHIVED",
           "TAG_TYPE_CHOOSE",
@@ -148202,6 +146955,7 @@
           "TAG_SYSTEM_DISABLED",
           "TAG_TYPE_ARCHIVED",
           "TAG_TYPE_CHANGED",
+          "TAG_TYPE_LOANER_SCOPE",
           "TAG_TYPE_NAME_TAKEN",
           "TAG_TYPE_NOT_FOUND",
           "TEMPLATE_RELEASE_CHANGED",
@@ -148325,6 +147079,7 @@
           "TAG_SYSTEM_DISABLED",
           "TAG_TYPE_ARCHIVED",
           "TAG_TYPE_CHANGED",
+          "TAG_TYPE_LOANER_SCOPE",
           "TAG_TYPE_NAME_TAKEN",
           "TAG_TYPE_NOT_FOUND",
           "TEMPLATE_RELEASE_CHANGED",

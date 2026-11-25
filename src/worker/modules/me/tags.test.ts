@@ -13,6 +13,7 @@ import { bindTag } from '../nfc/tags.ts';
 import { restoreTag } from '../nfc/tags-admin.ts';
 import { tagFixture } from '../nfc/tags-test-fixtures.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
+import { insertType } from '../scan/tags-policy-test-fixtures.ts';
 
 let f: Awaited<ReturnType<typeof tagFixture>>;
 let app: ReturnType<typeof createApp>;
@@ -95,6 +96,30 @@ describe('tags on my passes', () => {
 });
 
 describe('report lost', () => {
+  it('refuses a lent tag: it belongs to the desk', async () => {
+    const s = await setup();
+    const typeId = await insertType(f.kit, s.t.org.id, { use: 'visitor', scopes: 'pass' });
+    const { tag } = await bindTag(f.kit.ctx, s.authority, {
+      uid: f.nextUid(),
+      passId: s.pass.id,
+      scope: 'pass',
+      typeId,
+    });
+    const res = await call(`/tags/${tag.id}/lost`, s.headers, 'POST');
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({
+      code: 'TAG_LENT',
+      detail: 'This tag belongs to the desk. Hand it back there.',
+    });
+    const row = await first<{ lost_at: number | null }>(
+      f.kit.env.DB,
+      'SELECT lost_at FROM nfc_tags WHERE id = ?',
+      [tag.id],
+    );
+    expect(row?.lost_at).toBeNull();
+    expect((await tagsOf(s.headers, s.pass.id)).map((t) => t.id)).toEqual([tag.id]);
+  });
+
   it('ends a pass binding, marks the tag, audits it, and lists it as lost', async () => {
     const s = await setup();
     const tag = await bind(s, s.pass.id, 'pass');

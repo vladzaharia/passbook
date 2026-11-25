@@ -15,7 +15,7 @@ const CAUSE: Record<NonNullable<TagBinding['endCause']>, string> = {
   pass_deleted: 'The pass was deleted',
   no_passes: 'The holder has no passes',
   offboard: 'The holder was offboarded',
-  visitor_out: 'Visitor checked out',
+  visitor_out: 'Returned at the desk',
   pass_ended: 'The pass ended',
   tag_retired: 'The tag was retired',
   channel_off: 'NFC was turned off for the pass',

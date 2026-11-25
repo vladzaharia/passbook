@@ -180,6 +180,8 @@ export async function consoleMarkOut(
       override: false,
       approvedBy: null,
       direction: 'out',
+      place: input.place,
+      exit: 'desk',
     },
   );
   const { event, retention } = await signMarkOut(

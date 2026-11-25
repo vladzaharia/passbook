@@ -18,8 +18,11 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   const toggle = page.getByRole('radio', { name: 'Test' });
   await toggle.click();
   await expect(toggle).toBeChecked();
-  const band = page.getByRole('status').filter({ hasText: 'Test mode' });
-  await expect(band).toBeVisible();
+  const bar = page.locator('[data-menubar][data-tone="test"]');
+  await expect(bar).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Test mode on' })).toHaveText(
+    'Test mode on. New emails go to the Test inbox.',
+  );
 
   const pass = await admin.send(
     'POST',
@@ -46,7 +49,7 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   await page.goto(`/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(name);
   await expect(page.locator('main').getByText('Test', { exact: true }).first()).toBeVisible();
-  await expect(band).toBeVisible();
+  await expect(bar).toBeVisible();
 
   // The queue captures the email shortly after the pass is created.
   await page.goto(`/admin/test-inbox?orgId=${encodeURIComponent(orgId)}`);
@@ -73,7 +76,7 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
 
   await page.goto(search);
   await page.getByRole('radio', { name: 'Live' }).click();
-  await expect(band).toBeHidden();
+  await expect(bar).toBeHidden();
   await expect(page.getByText('No passes match')).toBeVisible();
   await expect(page.getByRole('row').filter({ hasText: name })).toHaveCount(0);
 

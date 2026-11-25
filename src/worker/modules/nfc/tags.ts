@@ -178,6 +178,7 @@ export async function bindTag(
         ? null
         : { ref, hint, label: req.label ?? null, system: 'uid', typeId: policy.type?.id ?? null },
       expiryDays: policy.expiryDays,
+      endsAt: policy.endsAt,
       endLapsed: policy.lapsed,
       bindingId: ctx.ids.id(),
       passId: pass.id,

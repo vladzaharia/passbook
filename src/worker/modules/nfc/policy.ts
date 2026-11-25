@@ -8,6 +8,7 @@ import { type Candidate, candidateById } from '../scan/repo-lookup.ts';
 import { levelAllows } from '../scan/tag-assurance.ts';
 import { resolveCandidateReadTemplates } from '../scan/template-read-snapshot.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
+import { guestEnd } from './guest-end.ts';
 import { lapsedOnHolder } from './repo-tag-bindings.ts';
 import { activeTypesOfSystem, getTagType, passTypeCount } from './repo-tag-types.ts';
 import type { TagRow } from './repo-tags.ts';
@@ -139,6 +140,8 @@ export interface BindPolicy {
   expiryDays: number | null;
   /** Bindings of this holder that already lapsed: the bind ends them with its own. */
   lapsed: string[];
+  /** A loaner on a guest-plan pass ends when the visit does (ms); null: no such end. */
+  endsAt: number | null;
 }
 
 /** The type a bind uses: the tag's own, the one asked for, or the one that fits best. */
@@ -219,8 +222,13 @@ export async function bindPolicy(ctx: ServiceContext, i: BindPolicyInput): Promi
       `This pass doesn't take ${type?.use ?? STANDARD_USE} tags.`,
       'TAG_USE_MISMATCH',
     );
-  if (!type) return { type, expiryDays: null, lapsed };
+  if (!type) return { type, expiryDays: null, lapsed, endsAt: null };
   if (type.scopes !== 'both' && type.scopes !== i.scope)
+    throw new ConflictError(
+      "This tag type can't be assigned that way. Choose another type.",
+      'TAG_TYPE_SCOPE',
+    );
+  if (type.use === 'visitor' && i.scope !== 'pass')
     throw new ConflictError(
       "This tag type can't be assigned that way. Choose another type.",
       'TAG_TYPE_SCOPE',
@@ -235,5 +243,8 @@ export async function bindPolicy(ctx: ServiceContext, i: BindPolicyInput): Promi
     (await passTypeCount(ctx.env.DB, i.passId, type.id, i.ending, now)) >= type.perPass
   )
     throw new ConflictError(`This pass has its ${type.name} already.`, 'TAG_TYPE_LIMIT');
-  return { type, expiryDays: type.bindingDays, lapsed };
+  const endsAt = type.use === 'visitor' ? await guestEnd(ctx, i.orgId, candidate) : null;
+  if (endsAt !== null && endsAt <= now)
+    throw new ConflictError("Can't assign a tag to an expired pass.", 'TAG_PASS_EXPIRED');
+  return { type, expiryDays: type.bindingDays, lapsed, endsAt };
 }

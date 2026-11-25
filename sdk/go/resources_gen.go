@@ -2502,62 +2502,6 @@ func (r *TestEmailsResource) Retrieve(ctx context.Context, id string, query *Tes
 	return &out, nil
 }
 
-type VisitorsResource struct {
-	c *core
-}
-
-func newVisitorsResource(c *core) *VisitorsResource {
-	return &VisitorsResource{
-		c: c,
-	}
-}
-
-// Cancel Cancel a visit and void its pass `POST /api/v1/visitors/{id}/cancel`
-func (r *VisitorsResource) Cancel(ctx context.Context, id string, opts ...RequestOption) (*VisitorsCancelResult, error) {
-	var out VisitorsCancelResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/visitors/" + pathEscape(id) + "/cancel"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// CheckOut Check a visitor out `POST /api/v1/visitors/{id}/check-out`
-func (r *VisitorsResource) CheckOut(ctx context.Context, id string, opts ...RequestOption) (*VisitorsCheckOutResult, error) {
-	var out VisitorsCheckOutResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/visitors/" + pathEscape(id) + "/check-out"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Create Invite a visitor: a visitor pass with a host `POST /api/v1/visitors`
-func (r *VisitorsResource) Create(ctx context.Context, body *VisitorsCreateBody, opts ...RequestOption) (*VisitorsCreateResult, error) {
-	var out VisitorsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/visitors", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// List List visitors for a day `GET /api/v1/visitors`
-func (r *VisitorsResource) List(ctx context.Context, query *VisitorsListQuery, opts ...RequestOption) *Pager[VisitorsListItem] {
-	return newPager[VisitorsListItem](r.c, call{method: "GET", path: "/api/v1/visitors", query: queryValues(query)}, "cursor", opts)
-}
-
-// ListHosts People who can host a visitor: the org members `GET /api/v1/visitors/hosts`
-func (r *VisitorsResource) ListHosts(ctx context.Context, query *VisitorsListHostsQuery, opts ...RequestOption) *Pager[VisitorsListHostsItem] {
-	return newPager[VisitorsListHostsItem](r.c, call{method: "GET", path: "/api/v1/visitors/hosts", query: queryValues(query)}, "cursor", opts)
-}
-
-// SendHostEmail Send the host their arrival email again `POST /api/v1/visitors/{id}/host-email`
-func (r *VisitorsResource) SendHostEmail(ctx context.Context, id string, body *VisitorsSendHostEmailBody, opts ...RequestOption) (*VisitorsSendHostEmailResult, error) {
-	var out VisitorsSendHostEmailResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/visitors/" + pathEscape(id) + "/host-email", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 type WebhookEndpointsCapturesResource struct {
 	c *core
 }
@@ -2778,7 +2722,6 @@ type Resources struct {
 	TemplateImports  *TemplateImportsResource
 	Blueprints       *BlueprintsResource
 	TestEmails       *TestEmailsResource
-	Visitors         *VisitorsResource
 	WebhookEndpoints *WebhookEndpointsResource
 }
 
@@ -2815,7 +2758,6 @@ func newResources(c *core) Resources {
 		TemplateImports:  newTemplateImportsResource(c),
 		Blueprints:       newBlueprintsResource(c),
 		TestEmails:       newTestEmailsResource(c),
-		Visitors:         newVisitorsResource(c),
 		WebhookEndpoints: newWebhookEndpointsResource(c),
 	}
 }

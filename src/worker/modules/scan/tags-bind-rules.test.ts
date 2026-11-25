@@ -1,8 +1,11 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { expireBindings } from '../nfc/expiry.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { TAG_UNDO_MS } from './tags-bind-replay.ts';
+import { addType, clearTypes } from './tags-policy-test-fixtures.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
 
 let f: TagScanFixture;
@@ -246,5 +249,113 @@ describe('rate caps', () => {
     const tag = f.read();
     await f.bind(await f.desk(), { card, tag });
     expect((await f.inspect(s, tag)).status).toBe(200);
+  });
+});
+
+describe('loaners', () => {
+  const HOUR = 3_600_000;
+  const guest = {
+    actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+    tags: { uses: ['staff', 'visitor'] },
+    access: {
+      input: { plan: 'tier', until: 'endsAt' },
+      plans: [{ id: 'guest', label: 'Guest', kind: 'guest', zones: [{ zone: '*' }] }],
+    },
+  } as const;
+  const expiry = async (bindingId: unknown) =>
+    (
+      await first<{ expires_at: number | null }>(
+        f.kit.env.DB,
+        'SELECT expires_at FROM tag_bindings WHERE id = ?',
+        [String(bindingId)],
+      )
+    )?.expires_at;
+
+  async function lendTo(endsIn: number, typeSpec: { bindingDays?: number } = {}) {
+    const tpl = await f.kit.scanTemplate('Visitor', guest as never);
+    const type = await addType(f, { use: 'visitor', scopes: 'pass', ...typeSpec });
+    const s = await f.desk({ templateIds: [tpl] });
+    const endsAt = f.kit.clock.now() + endsIn;
+    const { card, pass } = await f.pass({
+      template: tpl,
+      input: { memberName: 'Leo Park', tier: 'guest', endsAt: new Date(endsAt).toISOString() },
+    });
+    return { s, card, pass, type, endsAt, tpl };
+  }
+
+  afterEach(() => clearTypes(f));
+
+  it('a loaner on a 2-hour guest pass expires at the pass end, and opens this pass', async () => {
+    const { s, card, type, endsAt } = await lendTo(2 * HOUR);
+    const res = await f.bind(s, { card, typeId: type });
+    expect(res.status, await res.clone().text()).toBe(200);
+    const body = await json(res);
+    expect(body).toMatchObject({ status: 'bound', scope: 'pass', opensDefault: 'pass' });
+    expect(await expiry(body.bindingId)).toBe(endsAt);
+  });
+
+  it('the earlier of the type expiry and the pass end wins', async () => {
+    const long = await lendTo(5 * 24 * HOUR, { bindingDays: 1 });
+    const a = await json(await f.bind(long.s, { card: long.card, typeId: long.type }));
+    expect(await expiry(a.bindingId)).toBe(f.kit.clock.now() + 24 * HOUR);
+    const short = await lendTo(HOUR, { bindingDays: 2 });
+    const b = await json(await f.bind(short.s, { card: short.card, typeId: short.type }));
+    expect(await expiry(b.bindingId)).toBe(short.endsAt);
+  });
+
+  it('refuses person scope for a loaner, in a preview too', async () => {
+    const t = await lendTo(HOUR);
+    for (const preview of [false, true]) {
+      const res = await f.bind(t.s, { card: t.card, typeId: t.type, binding: 'user', preview });
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    }
+    expect(
+      await f.count('SELECT count(*) AS n FROM tag_bindings WHERE pass_id = ?', [t.pass.id]),
+    ).toBe(0);
+  });
+
+  it('refuses pool: true and names the type instead', async () => {
+    const t = await lendTo(HOUR);
+    const res = await f.bind(t.s, { card: t.card, pool: true });
+    expect(res.status).toBe(422);
+    expect(await json(res)).toMatchObject({ code: 'TAG_POOL_UNSUPPORTED' });
+  });
+
+  it('a pass past its end takes no loaner', async () => {
+    const t = await lendTo(HOUR);
+    f.kit.clock.set(t.endsAt + 1);
+    const res = await f.bind(t.s, { card: t.card, typeId: t.type });
+    expect(res.status).toBe(409);
+    expect(await json(res)).toMatchObject({ code: 'TAG_PASS_EXPIRED' });
+  });
+
+  it('the expiry job ends it at the window end, and the tag is spare again', async () => {
+    const t = await lendTo(2 * HOUR);
+    const body = await json(await f.bind(t.s, { card: t.card, typeId: t.type }));
+    const job = jobCtxOf(f.kit);
+    expect(await expireBindings(job)).toBe(0);
+    f.kit.clock.set(t.endsAt + 1);
+    expect(await expireBindings(job)).toBeGreaterThanOrEqual(1);
+    const row = await first<{ end_cause: string }>(
+      f.kit.env.DB,
+      'SELECT end_cause FROM tag_bindings WHERE id = ?',
+      [String(body.bindingId)],
+    );
+    expect(row?.end_cause).toBe('expired');
+  });
+
+  it('a pass that is not on a guest plan gives a loaner no window end', async () => {
+    const type = await addType(f, { use: 'visitor', scopes: 'pass' });
+    const member = await f.kit.scanTemplate('Member', {
+      ...guest,
+      access: {
+        input: { plan: 'tier' },
+        plans: [{ id: 'gold', label: 'Gold', kind: 'always', zones: [{ zone: '*' }] }],
+      },
+    } as never);
+    const s = await f.desk({ templateIds: [member] });
+    const { card } = await f.pass({ template: member, input: { memberName: 'Ann', tier: 'gold' } });
+    const body = await json(await f.bind(s, { card, typeId: type }));
+    expect(await expiry(body.bindingId)).toBeNull();
   });
 });

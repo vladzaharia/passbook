@@ -68,40 +68,6 @@
       }
     }
   },
-  "visitors.postVisitors": {
-    "snippet": {
-      "request": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Ada Example",
-        "hostName": "Grace Host",
-        "hostEmail": "grace@example.com",
-        "windowFrom": 1764000000000,
-        "windowUntil": 1764086400000
-      }
-    },
-    "request": {
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Jordan Lee",
-      "email": "jordan@example.com",
-      "hostName": "Sam Rivera",
-      "windowFrom": 1795568400000,
-      "windowUntil": 1795575600000,
-      "note": "Trial session with a coach"
-    },
-    "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000062",
-      "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-      "name": "Jordan Lee",
-      "hostName": "Sam Rivera",
-      "windowFrom": 1795568400000,
-      "windowUntil": 1795575600000,
-      "note": "Trial session with a coach",
-      "status": "in",
-      "statusAt": 1795568700000,
-      "autoOut": true,
-      "hasEmail": true
-    }
-  },
   "passes.putPassesByIdChannels": {
     "snippet": {
       "request": {
@@ -128,32 +94,6 @@
         "from": 1,
         "to": 1
       }
-    }
-  },
-  "visitors.getVisitors": {
-    "snippet": {
-      "query": {
-        "dayStart": 1764000000000,
-        "dayEnd": 1764086400000
-      }
-    },
-    "response": {
-      "items": [
-        {
-          "id": "0193a1b2-7c00-7000-8000-000000000062",
-          "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-          "name": "Jordan Lee",
-          "hostName": "Sam Rivera",
-          "windowFrom": 1795568400000,
-          "windowUntil": 1795575600000,
-          "note": "Trial session with a coach",
-          "status": "in",
-          "statusAt": 1795568700000,
-          "autoOut": true,
-          "hasEmail": true
-        }
-      ],
-      "nextCursor": "c1.4812"
     }
   },
   "brand.putBrandWebLogo": {

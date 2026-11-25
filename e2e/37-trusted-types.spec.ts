@@ -57,6 +57,17 @@ test.describe('admin', () => {
   });
 });
 
+test('the public site draws under its own policy', async ({ page }) => {
+  await arm(page);
+  const violations = watch(page);
+  for (const path of ['/', '/door', '/blueprints', '/build', '/access', '/access/sent']) {
+    await page.goto(path);
+    await expect(page.getByRole('main')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+  }
+  expect(await violations()).toEqual([]);
+});
+
 test('login loads the widget under the policy', async ({ page }) => {
   await arm(page);
   await stubTurnstile(page);
