@@ -12,11 +12,11 @@ import {
   Select,
   SkeletonRows,
 } from '../../ui/index.ts';
-import { cleanValues, type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
-import { authOptions, flattenSchema, nestValues, WIZARD_HIDDEN } from './config-schema.ts';
+import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
+import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
 import { recipeHidden } from './recipe-copy.ts';
 import { RecipePicker, SigningSecretField } from './recipe-picker.tsx';
-import { RestSlot } from './rest/rest-slot.tsx';
+import { WizardRest } from './rest/wizard-rest.tsx';
 import { secretSchema } from './secret-schema.ts';
 import type { TestOutcome } from './test-result.tsx';
 import { WizardTest } from './wizard-test.tsx';
@@ -289,17 +289,11 @@ export function ConfigStep({
           />
         ) : null}
         {rest ? (
-          <RestSlot
-            bare
+          <WizardRest
             orgId={orgId}
-            value={draft.config}
-            onChange={(patch) => onChange((d) => ({ ...d, config: { ...d.config, ...patch } }))}
-            toConfig={(v) => nestValues(cleanValues(v))}
-            secrets={Object.fromEntries(
-              Object.entries(cleanValues(draft.secrets))
-                .filter(([k]) => !hiddenSecrets.has(k))
-                .map(([k, v]) => [k, String(v)]),
-            )}
+            draft={draft}
+            onChange={onChange}
+            hiddenSecrets={hiddenSecrets}
             showErrors={showErrors}
             onSample={onSample}
           />

@@ -104,14 +104,16 @@ export function CreateConnectionWizard() {
   const mapped = fromRows(rows);
   const lifeError = lifecycleError(life);
   const sender = useWizardRecipe({ info, draft, setDraft, setRows, setLife });
+  const declared = Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {}).map(
+    (k) => ({
+      pointer: `/${k}`,
+    }),
+  );
+  const tested = test?.kind === 'result' ? test.result.sample : undefined;
+  const declared = Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {});
+  const tested = test?.kind === 'result' ? test.result.sample : undefined;
   const sample =
-    test?.kind === 'result' && test.result.sample
-      ? test.result.sample
-      : restSample.length > 0
-        ? restSample
-        : Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {}).map((k) => ({
-            pointer: `/${k}`,
-          }));
+    tested ?? (restSample.length > 0 ? restSample : declared.map((k) => ({ pointer: `/${k}` })));
   const targets = selectedTemplate
     ? targetsOf(flatFields(describeSchema(selectedTemplate.inputSchema)))
     : [];
