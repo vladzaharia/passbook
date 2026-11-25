@@ -296,35 +296,23 @@ Each is one branch, one PR, `npm run check` green. Shared-file touches are named
 | CW11 | Lifecycle parity | `lifecycle*.ts`, `sync*.ts`, `instance*.ts`, `repo-instance*.ts`; hooks in `modules/broadcasts/**` (n7, shared) and `modules/passes/remove*.ts` (n1, shared) | CW9b, CW10b, epochs | Every row of 6.1 tested; `uncertain` reconciler; outcome ledger labels |
 | CW12 | E2E and device runbook | `e2e/*-wallets-*.spec.ts`, `test/fixtures/wallets/**`, the e2e release (`e2e-release.md`) | CW8, CW11 | Section 7 e2e green; device runbook from `product.md` section 5 extended per type |
 
-CW12 status (2026-11-22):
+CW12 status (2026-11-25):
 
 - **Done.** The e2e release (`e2e-release.md`) opens Google and Samsung on their own e2e server
-  (`npm run test:e2e:wallets`). `e2e/61-wallets-google.spec.ts` covers a Day pass in Test:
-  - the system's Google candidate, approved by a reviewer;
-  - the holder save;
-  - a field edit, and the change message sent with `notify`;
-  - a void (inactive, no barcode, the void message), then an unvoid.
-
-  The per-type device runbook is in `product.md` section 5.
-- **Open: Samsung save and edit e2e.** Blocked because Samsung issuance has no credential path:
-  - `runtime-core-credentials.ts` `snapshot` refuses every read without a purpose.
-  - Both the offer check (`offers-eligibility.ts` `offerStillCurrent`) and `createSamsungRuntimeOffer` make such
-    reads, so no Samsung offer can be listed or redeemed. Worker tests stub that check
-    (`setRuntimeAccountCheckForTest`).
-  - A draft spec, which passes up to the badge, is kept outside the repo; the CW12 report names its path.
-  - It needs a Samsung issuance purpose, like Google's `issuance`, before it can land as
-    `e2e/62-wallets-samsung.spec.ts`. The mock already serves a loyalty card through `POST /__mock/samsung-template`.
-- **Open: Samsung void and unvoid e2e.** Waiting on the issuance purpose above and on CW11
-  (`feat/cw11-lifecycle-parity`), which fixes the Samsung void path. When both are in, add them to the Samsung spec:
-  - void, and the mock records the ref `CANCELED`;
-  - unvoid, and it records `ACTIVE`;
-  - assert both through `__mock/state` `samsung.refs`.
-- **Found while building the specs (not fixed here):**
-  - Projections and offers read the legacy account (`getWalletProviderReadiness` keys on `credential_id`). An org
-    with only a new-model credential and enrolment reads as `absent`, so the spec configures
-    `/api/v1/wallet-providers/accounts`.
-  - The Google class rule blocks Membership, Store card, Stamp card, Coupon and Event ticket as shipped: either
-    "class fields could not be checked" or "class fields depend on pass data". The spec uses Day pass.
+  (`npm run test:e2e:wallets`). The per-type device runbook is in `product.md` section 5.
+  - `e2e/61-wallets-google.spec.ts`: a Day pass in Test with the system's Google candidate, approved by a reviewer;
+    the holder save; a field edit with the change message sent with `notify`; a void (inactive, no barcode, the void
+    message), then an unvoid.
+  - `e2e/62-wallets-samsung.spec.ts`: the holder adds a Test pass, Samsung fetches the card and reports ADDED, and an
+    edit reaches Samsung. Samsung issuance now has its purpose (`SAMSUNG_ISSUANCE`,
+    `runtime-core-credentials.ts`), and the new-model credential and enrolment read as present (0207, 0208).
+- **Open: Samsung void, unvoid, delete and expiry e2e.** CW11 parity is on main, so these are unblocked. Add them to
+  the Samsung spec and assert each through `__mock/state` `samsung.refs`: void records `CANCELED`, unvoid `ACTIVE`,
+  delete a tombstone, expiry `EXPIRED`.
+- **Open: typed types, Live, email, bundles, transfer and reissue e2e.** Only Day pass (Google) and loyalty
+  (Samsung) are covered. The Google class rule passes every blueprint, so the spec no longer needs Day pass alone.
+- **Open: recorded fixtures.** Contract tests still use doc-shape fixtures until the owner records with
+  `tools/record-wallet-contract.ts` (`docs/operations.md`, "Recording wallet contract fixtures").
 
 Parallel lanes: {CW9a, CW10a} start at once; CW1 -> CW2 -> {CW3, CW4, CW6} -> CW5 -> {CW7 -> CW8}; {CW9b, CW10b} after epochs land; CW11; CW12. The issuance gate stays closed throughout; lifting it is an owner action per account (Q2).
 
