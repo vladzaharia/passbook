@@ -12,7 +12,6 @@ import {
 import type { ReactNode } from 'react';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import type { CommandGroup, CommandItem } from '../../ui/command-palette.tsx';
-import { guideIcon } from '../guide/icons.ts';
 import { goTo, openTab } from './nav.ts';
 import { pieces, type Results } from './rank.ts';
 import type { ActionDoc, ErrorDoc, EventDoc, GuideDoc, OpDoc } from './types.ts';
@@ -91,7 +90,7 @@ export const opItem = (o: OpDoc, words: readonly string[]) =>
 
 export const guideItem = (g: GuideDoc, words: readonly string[]) =>
   item(`guide:${g.id}`, g.title, g.href, {
-    icon: g.kind === 'guide' ? guideIcon(g.id) : iconOf(g.kind),
+    icon: iconOf(g.kind),
     content: <Marked text={g.title} words={words} />,
     hint: SEARCH_COPY.hints[
       g.kind === 'guide' ? 'guide' : g.kind === 'page' ? 'page' : 'reference'
