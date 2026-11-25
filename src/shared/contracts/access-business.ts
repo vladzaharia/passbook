@@ -20,8 +20,11 @@ export const OffboardResultSchema = z.object({
   dryRun: z.boolean(),
   /** Holders matched by the email or the external ID. */
   holders: z.number().int(),
+  /** Passes handled by this call: at most 100. */
   passes: z.number().int(),
   tags: z.number().int(),
+  /** More passes of this person remain: send the same request again. */
+  more: z.boolean(),
 });
 
 /** A visitor leaves: the desk checks them out and collects a lent tag. */

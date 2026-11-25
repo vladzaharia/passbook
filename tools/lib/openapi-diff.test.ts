@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { breakingChanges, type Doc, withoutApprovedRemovals } from './openapi-diff.ts';
+import {
+  approvedRemovalFailures,
+  breakingChanges,
+  type Doc,
+  withoutApprovedRemovals,
+} from './openapi-diff.ts';
 
 const op = (schema: unknown) => ({
   operationId: 'a.getA',
@@ -68,5 +73,32 @@ describe('withoutApprovedRemovals', () => {
   it('keeps a field removal on an approved operation that still exists', () => {
     const fieldGone = breakingChanges(doc(inline), doc({ type: 'object', properties: {} }));
     expect(withoutApprovedRemovals(fieldGone, [approval])).toEqual(fieldGone);
+  });
+});
+
+describe('approvedRemovalFailures', () => {
+  const gone: Doc = { paths: {} };
+  const approval = {
+    op: 'GET /a',
+    operationId: 'a.getA',
+    date: '2026-11-24',
+    reason: 'owner decision 2026-11-24',
+  };
+
+  it('accepts an operation the base serves and the next document drops', () => {
+    expect(approvedRemovalFailures(doc(inline), gone, [approval])).toEqual([]);
+  });
+
+  it('fails an entry whose operation the base no longer has, or under another id', () => {
+    expect(approvedRemovalFailures(gone, gone, [approval])[0]).toMatch(/stale/);
+    expect(
+      approvedRemovalFailures(doc(inline), gone, [{ ...approval, operationId: 'a.other' }])[0],
+    ).toMatch(/stale/);
+  });
+
+  it('fails an entry whose operation is still served', () => {
+    expect(approvedRemovalFailures(doc(inline), doc(inline), [approval])[0]).toMatch(
+      /still in the document/,
+    );
   });
 });

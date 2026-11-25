@@ -152,6 +152,33 @@ export const withoutApprovedRemovals = (
   return broken.filter((b) => !free.has(b));
 };
 
+/**
+ * Entries that do not describe a removal this change makes: the operation must be in the base document under
+ * the same operationId and gone from the next one. A stale entry (already removed on the base) or one whose
+ * operation is still served fails, so the list cannot grow into a standing licence.
+ */
+export function approvedRemovalFailures(
+  prev: Doc,
+  next: Doc,
+  approved: ApprovedRemoval[],
+): string[] {
+  const out: string[] = [];
+  const at = (doc: Doc, op: string) => {
+    const [method = '', path = ''] = op.split(' ');
+    return obj(obj(doc.paths?.[path])[method.toLowerCase()]);
+  };
+  for (const a of approved) {
+    const was = at(prev, a.op);
+    if (Object.keys(at(next, a.op)).length)
+      out.push(`${a.op}: approved for removal but still in the document`);
+    else if (was.operationId !== a.operationId)
+      out.push(
+        `${a.op}: approved removal is stale (not in the base document as ${a.operationId}); delete it from openapi-approved-removals.json`,
+      );
+  }
+  return out;
+}
+
 export interface Change {
   operationId: string;
   /** `GET /passes/{id}`. */

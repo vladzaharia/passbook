@@ -22,21 +22,30 @@ export interface OffboardPass {
   voided: boolean;
 }
 
-/** Live passes of a person, named by holder email or by external ID, in one org and mode. */
+/**
+ * Passes of a person still to offboard, named by holder email or by external ID, in one org and mode, in id order.
+ * Void: a voided pass counts only while a tag is still bound to it, so a repeated call moves on.
+ */
 export async function offboardPasses(
   db: D1Database,
   orgId: string,
   mode: Mode,
   by: { email: string } | { externalId: string },
+  how: 'void' | 'remove',
+  limit: number,
 ): Promise<OffboardPass[]> {
   const [column, value] =
     'email' in by ? ['holder_email', by.email] : ['external_id', by.externalId];
+  const todo =
+    how === 'void'
+      ? `AND (status != 'voided' OR EXISTS (SELECT 1 FROM tag_bindings b WHERE b.pass_id = passes.id AND b.ended_at IS NULL))`
+      : '';
   const rows = await all<{ id: string; who: string | null; status: string }>(
     db,
     `SELECT id, COALESCE(owner_user_id, holder_email, id) AS who, status FROM passes
-     WHERE org_id = ? AND mode = ? AND ${column} = ? AND removed_at IS NULL AND deleted_at IS NULL
-     ORDER BY id LIMIT 500`,
-    [orgId, mode, value],
+     WHERE org_id = ? AND mode = ? AND ${column} = ? AND removed_at IS NULL AND deleted_at IS NULL ${todo}
+     ORDER BY id LIMIT ?`,
+    [orgId, mode, value, limit],
   );
   return rows.map((r) => ({ id: r.id, who: r.who ?? r.id, voided: r.status === 'voided' }));
 }

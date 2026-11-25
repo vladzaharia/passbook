@@ -41,9 +41,15 @@ describe('POST /offboard, by key or session', () => {
       dry('route-leaver@example.test'),
     );
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ dryRun: true, holders: 1, passes: 1, tags: 0 });
+    expect(await res.json()).toEqual({ dryRun: true, holders: 1, passes: 1, tags: 0, more: false });
     const none = await call(`/offboard?orgId=${kit.org.id}`, write, dry('nobody@example.test'));
-    expect(await none.json()).toEqual({ dryRun: true, holders: 0, passes: 0, tags: 0 });
+    expect(await none.json()).toEqual({
+      dryRun: true,
+      holders: 0,
+      passes: 0,
+      tags: 0,
+      more: false,
+    });
   });
 
   it('refuses a read-only key, no credential and a key of another org', async () => {

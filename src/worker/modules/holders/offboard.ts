@@ -15,10 +15,13 @@ type Request = z.infer<typeof OffboardRequestSchema>;
 type Result = z.infer<typeof OffboardResultSchema>;
 
 const TAG_BATCH = 20;
+/** Passes one call handles; more is reported and the caller repeats the request. */
+export const OFFBOARD_PAGE = 100;
 
 /**
  * Someone leaves: their passes are voided or removed and their tags let go, or reported lost when
- * they were not handed back. A dry run counts the same and changes nothing.
+ * they were not handed back. At most 100 passes per call; `more` says to call again. A dry run counts the same
+ * and changes nothing.
  */
 export async function offboard(
   ctx: ServiceContext,
@@ -29,7 +32,15 @@ export async function offboard(
   const by = req.holderEmail
     ? { email: normalizeEmail(req.holderEmail) }
     : { externalId: req.externalId as string };
-  const passes = await offboardPasses(ctx.env.DB, authority.orgId, authority.mode, by);
+  const found = await offboardPasses(
+    ctx.env.DB,
+    authority.orgId,
+    authority.mode,
+    by,
+    req.passes,
+    OFFBOARD_PAGE + 1,
+  );
+  const passes = found.slice(0, OFFBOARD_PAGE);
   const bindings = await activeBindingsOn(
     ctx.env.DB,
     passes.map((p) => p.id),
@@ -39,6 +50,7 @@ export async function offboard(
     holders: new Set(passes.map((p) => p.who)).size,
     passes: passes.length,
     tags: bindings.length,
+    more: found.length > OFFBOARD_PAGE,
   };
   if (req.dryRun || passes.length === 0) return result;
   const scope = {
