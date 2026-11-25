@@ -6,7 +6,7 @@ import { idpCodeOf } from './errors.ts';
 import { reconcile } from './reconcile.ts';
 import { clearDirty, dueDirty, failDirty, markDirty } from './repo-dirty.ts';
 import { markClaimSwept, unsettledClaims } from './repo-invite-claims.ts';
-import { dropLease, SYNC_LEASE, takeLease } from './repo-lease.ts';
+import { dropLease, renewLease, SYNC_LEASE, takeLease } from './repo-lease.ts';
 import { deferDirty } from './repo-sync.ts';
 import type { RunEnv } from './run-env.ts';
 import type { IdpRpc } from './types.ts';
@@ -49,20 +49,35 @@ async function openGate(ctx: ServiceContext, rpc: IdpRpc, job: string): Promise<
   }
 }
 
-/** Runs `work` holding the shared lease; a run that finds it taken skips (the next minute or day tries again). */
+/** How long a run that must not be starved waits for the lease, polling every `LEASE_POLL_MS`. */
+export const LEASE_WAIT_MS = 90_000;
+const LEASE_POLL_MS = 5_000;
+
+/**
+ * Runs `work` holding the shared lease, passing it a `renew` for after each subject. A run that finds the lease
+ * taken skips (the next minute tries again), unless it may wait: the daily reconcile polls for up to
+ * `waitMs`, so a drain that runs every minute cannot starve it.
+ */
 async function leased(
   ctx: ServiceContext,
   db: D1Database,
   job: string,
-  work: () => Promise<void>,
+  work: (renew: () => Promise<void>) => Promise<void>,
+  waitMs = 0,
 ): Promise<void> {
   const holder = ctx.ids.id();
-  if (!(await takeLease(db, SYNC_LEASE, holder, ctx.clock.now()))) {
-    ctx.log.info(`${job}.busy`, { lease: SYNC_LEASE });
-    return;
+  let waited = 0;
+  while (!(await takeLease(db, SYNC_LEASE, holder, ctx.clock.now()))) {
+    if (waited >= waitMs) {
+      ctx.log.info(`${job}.busy`, { lease: SYNC_LEASE });
+      return;
+    }
+    await (ctx.clock.sleep?.(LEASE_POLL_MS) ??
+      new Promise((resolve) => setTimeout(resolve, LEASE_POLL_MS)));
+    waited += LEASE_POLL_MS;
   }
   try {
-    await work();
+    await work(async () => void (await renewLease(db, SYNC_LEASE, holder, ctx.clock.now())));
   } finally {
     await dropLease(db, SYNC_LEASE, holder);
   }
@@ -100,7 +115,7 @@ export async function drainIdp(
   const db = counter.env.DB;
   const claims = await unsettledClaims(db, ctx.clock.now(), SWEEP_LIMIT);
   if (claims.length === 0 && (await dueDirty(db, ctx.clock.now(), 1)).length === 0) return;
-  await leased(ctx, db, 'idp.drain', async () => {
+  await leased(ctx, db, 'idp.drain', async (renew) => {
     const rpc = idpClient(counter.env, ctx.log);
     const gate = await openGate(ctx, rpc, 'idp.drain');
     if (!gate) return;
@@ -111,7 +126,7 @@ export async function drainIdp(
       rpc,
       runId: ctx.ids.id(),
       ...gate,
-      counts: { holds: 0 },
+      renew,
     };
     let targets = 0;
     for (const [i, row] of due.entries()) {
@@ -125,6 +140,7 @@ export async function drainIdp(
         return;
       }
       const outcome = await drainSubject(env, row);
+      await renew();
       targets += outcome.targets;
       if (outcome.mark === 'clear') {
         if (gate.dry)
@@ -154,17 +170,23 @@ export async function reconcileIdp(ctx: ServiceContext, cap = RECONCILE_QUERY_CA
   }
   const counter = countQueries(ctx.env);
   const counted: ServiceContext = { ...ctx, env: counter.env };
-  await leased(ctx, counter.env.DB, 'idp.reconcile', async () => {
-    const rpc = idpClient(counter.env, ctx.log);
-    const gate = await openGate(ctx, rpc, 'idp.reconcile');
-    if (!gate) return;
-    const env: RunEnv = {
-      ctx: counted,
-      rpc,
-      runId: ctx.ids.id(),
-      ...gate,
-      counts: { holds: 0 },
-    };
-    await reconcile(env, counter.count, limit);
-  });
+  await leased(
+    ctx,
+    counter.env.DB,
+    'idp.reconcile',
+    async (renew) => {
+      const rpc = idpClient(counter.env, ctx.log);
+      const gate = await openGate(ctx, rpc, 'idp.reconcile');
+      if (!gate) return;
+      const env: RunEnv = {
+        ctx: counted,
+        rpc,
+        runId: ctx.ids.id(),
+        ...gate,
+        renew,
+      };
+      await reconcile(env, counter.count, limit);
+    },
+    LEASE_WAIT_MS,
+  );
 }

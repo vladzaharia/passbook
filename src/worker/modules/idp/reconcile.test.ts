@@ -231,7 +231,7 @@ describe('reconcile: budget', () => {
       runId: 'run-1',
       dry: false,
       blocked: new Set(),
-      counts: { holds: 0 },
+      renew: async () => {},
     };
     const first = await reconcile(run1, counter.count, 40);
     expect(first?.capped).toBe(true);
@@ -279,7 +279,7 @@ describe('reconcile: budget', () => {
         runId: 'run-big',
         dry: false,
         blocked: new Set(),
-        counts: { holds: 0 },
+        renew: async () => {},
       },
       counter.count,
       300,

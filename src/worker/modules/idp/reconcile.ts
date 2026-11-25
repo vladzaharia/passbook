@@ -120,16 +120,26 @@ export async function reconcile(
   // The member scan only prepares writes; they go out fifty to a round trip, so it costs a few queries.
   const writes: D1PreparedStatement[] = [];
   const noted = new Set<string>();
-  const note = async (subject: string, target: Target, kind: DriftKind, batched = false) => {
+  /** True when the difference is new: not open before this run and not noted earlier in it. */
+  const note = async (
+    subject: string,
+    target: Target,
+    kind: DriftKind,
+    batched = false,
+  ): Promise<boolean> => {
     const key = `${subject}|${target}|${kind}`;
-    if (noted.has(key)) return;
+    if (noted.has(key)) return false;
     noted.add(key);
-    if (!batched) return noteDrift(ctx, runId, whoOf(subject), target, kind, driftOf.get(subject));
-    if (driftOf.get(subject)?.some((d) => d.target === target && d.kind === kind)) return;
+    if (driftOf.get(subject)?.some((d) => d.target === target && d.kind === kind)) return false;
+    if (!batched) {
+      await noteDrift(ctx, runId, whoOf(subject), target, kind, driftOf.get(subject));
+      return true;
+    }
     const w = whoOf(subject);
     writes.push(
       driftStmt(db, { id: ctx.ids.id(), runId, userId: w.userId, subject, target, kind, now }),
     );
+    return true;
   };
   const observe = (subject: string, target: Target, presence: 'passbook' | 'external') => {
     const before = stateOf(subject, target);
@@ -144,7 +154,8 @@ export async function reconcile(
   const queued = new Map<string, Queued[]>();
   const queue = (subject: string, q: Queued) =>
     queued.set(subject, [...(queued.get(subject) ?? []), q]);
-  const disabled = new Set<string>();
+  /** Owner-disabled members, and whether the difference is new this run. */
+  const disabled = new Map<string, boolean>();
   for (const [target, group] of groups) {
     for (const m of group.members) {
       report.members++;
@@ -158,8 +169,8 @@ export async function reconcile(
       if (isAdminRoles(identity.last_roles)) continue;
       observe(m.subject, target, m.grant ? 'passbook' : 'external');
       if (m.disabled && identity.status === 'active') {
-        disabled.add(m.subject);
-        await note(m.subject, target, 'disabled_in_idp', true);
+        const fresh = await note(m.subject, target, 'disabled_in_idp', true);
+        disabled.set(m.subject, fresh || disabled.get(m.subject) === true);
       }
       if (m.grant) queue(m.subject, { target, ended: false });
       else {
@@ -169,7 +180,7 @@ export async function reconcile(
     }
   }
   await flush(db, writes);
-  if (!dry) await endDisabledSessions(env, [...disabled], whoOf);
+  if (!dry) await endDisabledSessions(env, disabled, whoOf);
 
   // The owner's removals come first: they are few, and a run low on budget must still hold them.
   const held = new Set<string>();
@@ -179,6 +190,7 @@ export async function reconcile(
     if (isAdminRoles(identities.get(e.subject)?.last_roles ?? '')) continue;
     if (over('ended')) break;
     held.add(key);
+    await env.renew();
     const desired = await desiredState(db, e.subject, now);
     if (desired.skip === 'platform_admin') continue;
     const s = stateOf(e.subject, e.role);
@@ -206,6 +218,7 @@ export async function reconcile(
     const desired = await desiredState(db, subject, now);
     if (desired.skip === 'platform_admin') continue;
     report.verified++;
+    await env.renew();
     if (!dry) await touchObserved(db, subject, now);
     const who = whoOf(subject);
     for (const q of queued.get(subject) ?? []) {
@@ -243,18 +256,23 @@ export async function reconcile(
   return report;
 }
 
-/** Ends the Polaris ID sessions of members the owner disabled, up to `DISABLED_CAP` a run. */
+/**
+ * Ends the Polaris ID sessions of members the owner disabled. Only members who still had live sessions, or are
+ * newly reported, count toward `DISABLED_CAP`, so a second run finishes what the first one left.
+ */
 async function endDisabledSessions(
   env: RunEnv,
-  disabled: string[],
+  disabled: ReadonlyMap<string, boolean>,
   whoOf: (subject: string) => Who,
 ): Promise<void> {
-  for (const [i, subject] of disabled.entries()) {
-    if (i >= DISABLED_CAP) {
+  let acted = 0;
+  for (const [subject, fresh] of disabled) {
+    if (acted >= DISABLED_CAP) {
       env.ctx.log.error('idp.hold_breaker', { code: 'IDP_HOLD_BREAKER', limit: DISABLED_CAP });
       return;
     }
-    await endSessions(env.ctx, whoOf(subject), 'user', 'disabled_in_idp');
+    const ended = await endSessions(env.ctx, whoOf(subject), 'user', 'disabled_in_idp');
+    if (ended > 0 || fresh) acted++;
   }
 }
 
@@ -263,7 +281,7 @@ async function listMissing(
   env: RunEnv,
   subjects: string[],
   inGroup: ReadonlyMap<Target, ReadonlySet<string>>,
-  note: (subject: string, target: Target, kind: DriftKind) => Promise<void>,
+  note: (subject: string, target: Target, kind: DriftKind) => Promise<boolean>,
   over: (phase: string) => boolean,
 ): Promise<void> {
   for (const subject of subjects) {

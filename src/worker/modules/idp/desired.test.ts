@@ -368,3 +368,20 @@ describe('desired state: sponsorships need an active standard org', () => {
     expect((await wants(p.subject, now + 100)).targets).toEqual([]);
   });
 });
+
+describe('desired state: a developer claim needs an active standard org', () => {
+  it('ends when the inviting org is suspended or closed', async () => {
+    const org = await standardOrg(f);
+    const admin = await person(f);
+    const p = await person(f);
+    const inv = await developerInvitation(f, org.id, admin.id, { email: p.email });
+    await claim(f, { developer: inv }, p.subject);
+    expect((await wants(p.subject)).targets).toEqual(['developer']);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['suspended', org.id]);
+    expect((await wants(p.subject)).targets).toEqual([]);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['active', org.id]);
+    expect((await wants(p.subject)).targets).toEqual(['developer']);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['deleted', org.id]);
+    expect((await wants(p.subject)).targets).toEqual([]);
+  });
+});

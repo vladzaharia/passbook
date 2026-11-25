@@ -14,11 +14,11 @@ export interface RunEnv {
   dry: boolean;
   /** Custom targets the binding refuses on their own (renamed or gone). */
   blocked: ReadonlySet<string>;
-  /** What this run has done on the main side, against the caps below. */
-  counts: { holds: number };
+  /** Keeps the `idp-sync` lease alive; called after each subject. */
+  renew: () => Promise<void>;
 }
 
-/** More owner removals than this in one run is a fault in the feed, not an owner's edit: they are recorded, not acted on. */
+/** More owner removals than this in an hour is a fault in the feed, not an owner's edit: they are recorded, not acted on. */
 export const HOLD_CAP = 10;
 /** Likewise for accounts the owner disabled, in one reconcile. */
 export const DISABLED_CAP = 20;

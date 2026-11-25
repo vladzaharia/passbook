@@ -1,3 +1,4 @@
+import { bump } from '../../platform/counters.ts';
 import { chunk } from '../../platform/db.ts';
 import { closeDeveloperSandbox } from '../developer/jobs.ts';
 import { classify, presenceOf } from './classify.ts';
@@ -150,7 +151,9 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
   if (!dry) {
     const wantsDeveloper = !wantsNothing && desired.targets.has('developer');
     const taking = removes.includes('developer');
-    const closing = !wantsDeveloper && (taking || (pendingClose && !present.has('developer')));
+    // From state, not only from this run's removal: a held role, or one never present, still has its sandbox.
+    const gone = !present.has('developer') && (pendingClose || states.has('developer'));
+    const closing = !wantsDeveloper && (taking || gone);
     if (closing) await closeSandbox(env, who, pendingClose);
     await settleSponsorships(ctx, who);
   }
@@ -181,8 +184,9 @@ async function closeSandbox(env: RunEnv, who: Who, pending: boolean): Promise<vo
 }
 
 /**
- * The owner took a role PassBook saw: hold it and end its sessions. A dry run, or more removals in one run than
- * a feed fault would explain (`HOLD_CAP`), records the difference and changes nothing.
+ * The owner took a role PassBook saw: hold it and end its sessions. A dry run, or more removals in the hour than
+ * a feed fault would explain (`HOLD_CAP`, counted per hour like the breaker's `ref`, across runs), records the
+ * difference and changes nothing.
  */
 export async function holdOrReport(
   env: RunEnv,
@@ -192,13 +196,13 @@ export async function holdOrReport(
 ): Promise<void> {
   const { ctx, runId } = env;
   if (env.dry) return noteDrift(ctx, runId, who, target, 'owner_removed', open);
-  if (env.counts.holds >= HOLD_CAP) {
-    if (env.counts.holds === HOLD_CAP)
+  const hour = Math.floor(ctx.clock.now() / 3_600_000);
+  const held = await bump(ctx.env.DB, `idp:holds:${hour}`, hour * 3_600_000);
+  if (held > HOLD_CAP) {
+    if (held === HOLD_CAP + 1)
       ctx.log.error('idp.hold_breaker', { code: 'IDP_HOLD_BREAKER', limit: HOLD_CAP });
-    env.counts.holds++;
     return noteDrift(ctx, runId, who, target, 'owner_removed', open);
   }
-  env.counts.holds++;
   await holdTargetForOwner(ctx, runId, who, target);
 }
 

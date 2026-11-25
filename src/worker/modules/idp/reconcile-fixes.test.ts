@@ -6,6 +6,7 @@ import { membership, person, standardOrg } from './access-test-fixtures.ts';
 import { idpClient } from './client.ts';
 import { drainIdp, reconcileIdp } from './jobs.ts';
 import { reconcile } from './reconcile.ts';
+import { dropLease, SYNC_LEASE, takeLease } from './repo-lease.ts';
 import type { RunEnv } from './run-env.ts';
 import {
   calls,
@@ -23,6 +24,7 @@ import {
 const clearMarks = () => run(env.DB, 'DELETE FROM idp_dirty');
 beforeEach(async () => {
   await clearMarks();
+  await run(env.DB, "DELETE FROM counters WHERE key LIKE 'idp:holds:%'");
   await run(
     env.DB,
     'UPDATE users SET last_roles = \'["user"]\' WHERE last_roles LIKE \'%"admin"%\'',
@@ -38,7 +40,7 @@ const runEnv = (r: Rig): { env: RunEnv; spent: () => number } => {
       runId: 'run',
       dry: false,
       blocked: new Set(),
-      counts: { holds: 0 },
+      renew: async () => {},
     },
     spent: counter.count,
   };
@@ -143,6 +145,33 @@ describe('M4: caps on what one reconcile acts on', () => {
     ).toBe(true);
   });
 
+  it('a second run finishes the members the first left, since ended ones no longer count', async () => {
+    const r = await rig();
+    const org = await standardOrg(r.f);
+    const people = [];
+    for (let i = 0; i < 22; i++) {
+      const p = await person(r.f);
+      passbookAdded(r, p.subject, ['console']);
+      await membership(r.f, org.id, p);
+      people.push(p);
+    }
+    await drainIdp(r.ctx);
+    await drainIdp(r.ctx);
+    await clearMarks();
+    for (const p of people) {
+      const a = r.fake.accounts.get(p.subject);
+      if (a) a.disabled = true;
+      await session(r, p.id, ['user', 'console']);
+    }
+    await reconcileIdp(r.ctx);
+    r.logs.length = 0;
+    await reconcileIdp(r.ctx);
+    let live = 0;
+    for (const p of people) live += (await liveSessions(p.id)).length;
+    expect(live).toBe(0);
+    expect(r.logs.some((l) => l.event === 'idp.hold_breaker')).toBe(false);
+  });
+
   it('ends the sessions of twenty owner-disabled members and reports the rest', async () => {
     const r = await rig();
     const org = await standardOrg(r.f);
@@ -175,6 +204,42 @@ describe('M4: caps on what one reconcile acts on', () => {
   });
 });
 
+describe('LOW: the daily reconcile waits for the lease', () => {
+  const sleeper = (r: Rig, onSleep: (n: number) => Promise<void>) => {
+    let n = 0;
+    return {
+      ...r.ctx,
+      clock: {
+        now: () => r.f.clock.now(),
+        sleep: async () => {
+          n++;
+          await onSleep(n);
+        },
+      },
+    };
+  };
+
+  it('runs once a drain lets go of it', async () => {
+    const r = await rig();
+    expect(await takeLease(env.DB, SYNC_LEASE, 'drain', r.f.clock.now())).toBe(true);
+    await reconcileIdp(
+      sleeper(r, (n) => (n === 3 ? dropLease(env.DB, SYNC_LEASE, 'drain') : Promise.resolve())),
+    );
+    expect(calls(r.fake, 'snapshot')).toBe(1);
+  });
+
+  it('gives up after about ninety seconds', async () => {
+    const r = await rig();
+    expect(await takeLease(env.DB, SYNC_LEASE, 'drain', r.f.clock.now())).toBe(true);
+    let sleeps = 0;
+    await reconcileIdp(sleeper(r, async () => void sleeps++));
+    expect(sleeps).toBe(18);
+    expect(calls(r.fake, 'snapshot')).toBe(0);
+    expect(r.logs.some((l) => l.event === 'idp.reconcile.busy')).toBe(true);
+    await dropLease(env.DB, SYNC_LEASE, 'drain');
+  });
+});
+
 describe('L4: platform admins are judged per person', () => {
   const group = (r: Rig, subject = 'keeper-sub') =>
     r.fake.addAccount(subject, { roles: ['platform_admin'], isAdmin: true });
@@ -198,6 +263,26 @@ describe('L4: platform admins are judged per person', () => {
     await reconcileIdp(r.ctx);
     expect(await liveSessions(p.id)).toHaveLength(1);
     expect(await driftKinds(p.subject)).toEqual([]);
+  });
+
+  it('in a storm reports everyone without revoking, so the next count starts clean', async () => {
+    const r = await rig();
+    group(r);
+    const storm = [];
+    for (let i = 0; i < 7; i++) storm.push(await admin(r));
+    await clearMarks();
+    await reconcileIdp(r.ctx);
+    for (const p of storm) {
+      expect(await liveSessions(p.id)).toHaveLength(1);
+      expect(await driftKinds(p.subject)).toEqual(['admin_changed:console']);
+    }
+    expect(r.logs.some((l) => l.event === 'idp.reconcile.admin_breaker')).toBe(true);
+    const late = await admin(r);
+    await clearMarks();
+    r.logs.length = 0;
+    await reconcileIdp(r.ctx);
+    expect(await liveSessions(late.id)).toEqual([]);
+    expect(r.logs.some((l) => l.event === 'idp.reconcile.admin_breaker')).toBe(false);
   });
 
   it('does not count a person already reported, and closes the report when they sign in again', async () => {

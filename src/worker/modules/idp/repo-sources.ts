@@ -137,6 +137,8 @@ export const claimSources = (db: D1Database, subject: string, now: number) =>
        AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = oi.org_id AND o.status IN ('active', 'suspended'))
      LEFT JOIN developer_invitations di ON di.id = c.developer_invitation_id
        AND di.revoked_at IS NULL AND di.accepted_at IS NULL
+       AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = di.org_id AND o.status = 'active'
+                     AND o.kind = 'standard' AND o.personal_user_id IS NULL)
      LEFT JOIN org_invitations po ON po.id = di.org_invitation_id
        AND po.revoked_at IS NULL AND po.accepted_at IS NULL AND po.expires_at > ?
        AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = po.org_id AND o.status IN ('active', 'suspended'))

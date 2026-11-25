@@ -5,6 +5,7 @@ import { membership, person, sandboxOrg, sponsor, standardOrg } from './access-t
 import { DRAIN_BATCH, drainIdp, reconcileIdp } from './jobs.ts';
 import { markDirty } from './repo-dirty.ts';
 import { dropLease, LEASE_TTL_MS, SYNC_LEASE, takeLease } from './repo-lease.ts';
+import { holdTarget, recordObserved } from './repo-state.ts';
 import {
   calls,
   dirtyRow,
@@ -17,8 +18,12 @@ import {
   session,
   stateRows,
 } from './sync-test-fixtures.ts';
+import type { Target } from './types.ts';
 
-beforeEach(() => run(env.DB, 'DELETE FROM idp_dirty'));
+beforeEach(async () => {
+  await run(env.DB, 'DELETE FROM idp_dirty');
+  await run(env.DB, "DELETE FROM counters WHERE key LIKE 'idp:holds:%'");
+});
 
 const roles = (r: Rig, subject: string) => [...(r.fake.accounts.get(subject)?.roles ?? [])].sort();
 const later = (r: Rig, ms: number) => r.f.clock.advance(ms);
@@ -32,11 +37,11 @@ const settledAt = async (id: string) =>
   )?.settled_at;
 
 /** A developer who holds the role through a sponsorship and has a developer sandbox with a membership. */
-async function developerWithSandbox(r: Rig) {
+async function developerWithSandbox(r: Rig, added: Target[] = ['developer', 'console']) {
   const org = await standardOrg(r.f);
   const sandbox = await sandboxOrg(r.f);
   const p = await person(r.f);
-  passbookAdded(r, p.subject, ['developer', 'console']);
+  passbookAdded(r, p.subject, added);
   const sponsorId = await sponsor(r.f, org.id, p);
   await run(
     env.DB,
@@ -114,6 +119,59 @@ describe('H1: taking developer back closes the sandbox', () => {
     expect(
       (await stateRows(p.subject)).find((s) => s.target === 'developer')?.error_code,
     ).toBeNull();
+  });
+});
+
+describe('H1 residual: the sandbox follows state, not only a removal in the run', () => {
+  it('closes it when a held developer role loses its last reason', async () => {
+    const r = await rig();
+    const { p, sandbox, sponsorId, end } = await developerWithSandbox(r, ['console']);
+    await holdTarget(env.DB, p.subject, 'developer', p.id, r.f.clock.now());
+    await drainIdp(r.ctx);
+    expect((await sandboxState(sandbox.id))?.closed_at).toBeNull();
+    await end();
+    await drainIdp(r.ctx);
+    expect(calls(r.fake, 'apply')).toBe(0);
+    expect((await sandboxState(sandbox.id))?.closed_at).not.toBeNull();
+    expect(await settledAt(sponsorId)).not.toBeNull();
+  });
+
+  it('closes it when developer was never present and nothing wants it', async () => {
+    const r = await rig();
+    const org = await sandboxOrg(r.f);
+    const p = await person(r.f);
+    r.fake.addAccount(p.subject);
+    await run(
+      env.DB,
+      'INSERT INTO developer_sandboxes (id, org_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+      [r.f.ids.id(), org.id, p.id, r.f.clock.now()],
+    );
+    await membership(r.f, org.id, p);
+    await recordObserved(env.DB, {
+      subject: p.subject,
+      target: 'developer',
+      userId: p.id,
+      observed: false,
+      presence: 'none',
+      now: r.f.clock.now(),
+    });
+    await drainIdp(r.ctx);
+    expect((await sandboxState(org.id))?.closed_at).not.toBeNull();
+  });
+
+  it('leaves the sandbox of someone who never had a developer state alone', async () => {
+    const r = await rig();
+    const org = await sandboxOrg(r.f);
+    const p = await person(r.f);
+    r.fake.addAccount(p.subject);
+    await run(
+      env.DB,
+      'INSERT INTO developer_sandboxes (id, org_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+      [r.f.ids.id(), org.id, p.id, r.f.clock.now()],
+    );
+    await membership(r.f, org.id, p);
+    await drainIdp(r.ctx);
+    expect((await sandboxState(org.id))?.closed_at).toBeNull();
   });
 });
 
@@ -212,6 +270,34 @@ describe('M4: the breaker ref is per hour, and holds are capped', () => {
   });
 });
 
+describe('LOW: holds are counted per hour, across runs', () => {
+  it('holds ten in an hour even when they arrive in different minutes', async () => {
+    const r = await rig();
+    const org = await standardOrg(r.f);
+    const people = [];
+    for (let i = 0; i < 12; i++) {
+      const p = await person(r.f);
+      passbookAdded(r, p.subject, ['console']);
+      await membership(r.f, org.id, p);
+      people.push(p);
+    }
+    await drainIdp(r.ctx);
+    await drainIdp(r.ctx);
+    for (const batch of [people.slice(0, 6), people.slice(6)]) {
+      for (const p of batch) {
+        ownerRemoves(r, p.subject, 'console');
+        await markDirty(env.DB, p.subject);
+      }
+      await drainIdp(r.ctx);
+      later(r, 10 * 60_000);
+    }
+    const held = (await Promise.all(people.map((p) => stateRows(p.subject)))).filter(
+      ([s]) => s?.held_at != null,
+    );
+    expect(held).toHaveLength(10);
+  });
+});
+
 describe('L5: one sync run at a time, and per-target cost counts', () => {
   it('skips while another run holds the lease, runs once it is free or has expired', async () => {
     const r = await rig();
@@ -266,5 +352,26 @@ describe('L5: one sync run at a time, and per-target cost counts', () => {
     expect(done).toHaveLength(2);
     expect(r.logs.some((l) => l.event === 'idp.drain.capped' && l.left === 1)).toBe(true);
     expect(DRAIN_BATCH).toBe(20);
+  });
+});
+
+describe('LOW: the lease is renewed after each subject', () => {
+  it('stays taken for a run that outlasts its first five minutes', async () => {
+    const r = await rig();
+    const org = await standardOrg(r.f);
+    for (let i = 0; i < 3; i++) {
+      const p = await person(r.f);
+      r.fake.addAccount(p.subject);
+      await membership(r.f, org.id, p);
+    }
+    const lookup = r.fake.lookup.bind(r.fake);
+    const seen: boolean[] = [];
+    r.fake.lookup = async (s) => {
+      r.f.clock.advance(4 * 60_000);
+      seen.push(await takeLease(env.DB, SYNC_LEASE, 'rival', r.f.clock.now()));
+      return lookup(s);
+    };
+    await drainIdp(r.ctx);
+    expect(seen).toEqual([false, false, false]);
   });
 });

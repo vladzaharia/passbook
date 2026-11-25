@@ -26,3 +26,18 @@ export async function takeLease(
 export async function dropLease(db: D1Database, name: string, holder: string): Promise<void> {
   await run(db, 'DELETE FROM idp_run_lease WHERE name = ? AND holder = ?', [name, holder]);
 }
+
+/** Pushes this holder's expiry out again; false when the lease is no longer theirs. */
+export async function renewLease(
+  db: D1Database,
+  name: string,
+  holder: string,
+  now: number,
+): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    'UPDATE idp_run_lease SET expires_at = ? WHERE name = ? AND holder = ?',
+    [now + LEASE_TTL_MS, name, holder],
+  );
+  return changes > 0;
+}
