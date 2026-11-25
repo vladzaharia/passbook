@@ -248,7 +248,7 @@ export async function setupCounts(
   const row = await first<Omit<SetupCounts, 'latestPassId'>>(
     db,
     `SELECT
-       (SELECT count(*) FROM orgs WHERE status != 'deleted'${orgId ? ' AND id = ?' : ''}) AS orgs,
+       (SELECT count(*) FROM orgs WHERE status != 'deleted'${orgId ? ' AND id = ?' : ' AND personal_user_id IS NULL'}) AS orgs,
        (SELECT count(*) FROM templates WHERE org_id IS NOT NULL AND status != 'deleted'
          ${orgId ? 'AND org_id = ?' : ''}${templateId ? ' AND id = ?' : ''}) AS assignedTemplates,
        (SELECT count(*) FROM passes WHERE deleted_at IS NULL

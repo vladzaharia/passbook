@@ -15,6 +15,7 @@ const entry = (id: number, over: Record<string, unknown> = {}) => ({
   id,
   at: 1_700_000_000_000 + id,
   orgId: null,
+  orgLabel: null,
   actorType: 'user',
   actorId: 'u1',
   actorLabel: 'Ada Lovelace',
@@ -187,6 +188,21 @@ describe('audit page', () => {
     expect(router.state.location.search.filterOrgId).toBeUndefined();
     expect(screen.getByText('Organization filter: All organizations')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Organization' })).toBeInTheDocument();
+  });
+
+  it('names a personal org by its owner, with no directory entry', async () => {
+    await renderApp('/admin/platform/audit', {
+      session: 'admin',
+      memberships: [],
+      handlers: {
+        '/api/v1/audit/platform': page([
+          entry(1, { orgId: 'o-personal', orgLabel: 'Personal org of Pat Owner' }),
+        ]),
+      },
+    });
+    const table = await screen.findByRole('table', { name: 'Audit log' });
+    expect(within(table).getByText('Personal org of Pat Owner')).toBeInTheDocument();
+    expect(within(table).queryByText('o-personal')).toBeNull();
   });
 
   it('preserves the organization filter through filtering, entry navigation and clearing', async () => {
