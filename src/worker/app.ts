@@ -20,6 +20,7 @@ import { holdersRoutes } from './modules/holders/routes.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
 import { marketingRoutes } from './modules/marketing/routes.ts';
@@ -171,6 +172,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);
+  app.route('/api/v1/invitations', invitationRoutes);
   app.route('/api/v1/orgs', passSetupRoutes);
   app.route('/api/v1/orgs', passSetupWriteRoutes);
   app.route('/api/v1/orgs', orgsRoutes);

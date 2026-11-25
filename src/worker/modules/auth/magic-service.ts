@@ -199,7 +199,7 @@ async function finish(
     );
     return { kind: 'linked', next: link.redirect_path };
   }
-  // A link made for an invitation only signs in: joining an org needs a strong session (acceptOrgInvitation).
+  // A link made for an invitation only signs in: joining an org needs a strong session (acceptInvitation).
   const result = await signInMagicLink(ctx, link.email, sign);
   if (result.session === null)
     return { kind: 'kept', userId: result.userId, roles: result.roles, next: link.redirect_path };

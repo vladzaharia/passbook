@@ -4,10 +4,7 @@ import {
   InviteDeveloperSchema,
 } from '../../../shared/contracts/developer-invitations.ts';
 import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
-import {
-  DEVELOPER_INVITE_PATH,
-  DEVELOPER_INVITE_PREFIX,
-} from '../../../shared/developer-invite-link.ts';
+import { INVITE_PATH, INVITE_PREFIX } from '../../../shared/invitation-link.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
 import {
@@ -104,10 +101,10 @@ export async function inviteDeveloper(
       'Invite an org or integration admin from the console.',
       'DEVELOPER_INVITE_ROLE_NEEDS_SESSION',
     );
-  await assertIdpReady(ctx);
+  await assertIdpReady(ctx, roles.length ? ['developer', 'console'] : ['developer']);
   await checkDeveloperInviteAllowed(ctx, { actorId: actor.actorId, orgId, email });
   const now = ctx.clock.now();
-  const secret = `${DEVELOPER_INVITE_PREFIX}${ctx.ids.token(32)}`;
+  const secret = `${INVITE_PREFIX.developer}${ctx.ids.token(32)}`;
   const row = {
     id: ctx.ids.id(),
     email,
@@ -150,7 +147,7 @@ export async function inviteDeveloper(
         orgName: org?.name ?? 'an organization',
         roles,
         inviter: actor.userId ? await members.userName(ctx.env.DB, actor.userId) : null,
-        link: `${baseUrl(ctx.env)}${DEVELOPER_INVITE_PATH}#${secret}`,
+        link: `${baseUrl(ctx.env)}${INVITE_PATH}#${secret}`,
         base: baseUrl(ctx.env),
       }),
     });

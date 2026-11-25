@@ -62,4 +62,6 @@ export interface FakeIdpOptions {
   developerGroup?: string | null;
   /** `CUSTOM_GROUP_LIMIT`. */
   customLimit?: number;
+  /** Signup token ids start with this (a suite whose database outlives one fake needs them unique). */
+  tokenPrefix?: string;
 }

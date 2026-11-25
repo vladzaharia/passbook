@@ -92,9 +92,7 @@ async function invite(
   expect(mail).toHaveLength(count + 1);
   const message = mail[count];
   expect(message?.to.toLowerCase()).toBe(email.trim().toLowerCase());
-  const link = message?.text.match(
-    /https:\/\/wallet\.test\/api\/v1\/orgs\/invitations\/accept#[^\s<>"']+/,
-  )?.[0];
+  const link = message?.text.match(/https:\/\/wallet\.test\/invite#m_[^\s<>"']+/)?.[0];
   expect(link).toBeTruthy();
   const token = new URL(link as string).hash.slice(1);
   expect(token).toBeTruthy();
@@ -142,9 +140,7 @@ describe('organization memberships', () => {
     const email = freshEmail();
     const at = await inviteNew(org.id, email);
     const text = mail[at]?.text ?? '';
-    expect(text).toMatch(
-      /Accept invitation: https:\/\/wallet\.test\/api\/v1\/orgs\/invitations\/accept#/,
-    );
+    expect(text).toMatch(/Accept invitation: https:\/\/wallet\.test\/invite#m_/);
     expect(text).not.toContain('/auth/magic');
     expect(await all(env.DB, 'SELECT 1 FROM magic_links WHERE email = ?', [email])).toHaveLength(0);
   });
@@ -480,13 +476,13 @@ describe('organization memberships', () => {
     );
   });
 
-  it('serves a private public landing page and requires CSRF on acceptance', async () => {
+  it('sends the old landing address to the invitation page and requires CSRF on acceptance', async () => {
     const { org, person } = await setup();
     const issued = await invite(org.id, person.primaryEmail);
+    // The old address sends the browser on to the invitation page; the fragment rides along in the browser.
     const page = await call('GET', '/invitations/accept', undefined, {});
-    expect(page.status).toBe(200);
-    expect(page.headers.get('cache-control')).toContain('no-store');
-    expect(page.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(page.status).toBe(302);
+    expect(page.headers.get('location')).toBe('/invite');
     const { 'x-csrf-token': _csrf, ...withoutCsrf } = user(person.id);
     expect(
       (await call('POST', '/invitations/accept', { token: issued.token }, withoutCsrf)).status,

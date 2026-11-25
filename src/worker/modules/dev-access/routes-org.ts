@@ -30,10 +30,17 @@ const READ = { scope: 'members:read', capability: 'members:read' } as const;
 
 /** Mount at /api/v1/orgs. A developer invitation is `members:manage`, or a Live key naming `members:write`. */
 export const developerOrgRoutes = createRouter();
-developerOrgRoutes.use('*', async (c, next) => {
-  await next();
-  c.header('cache-control', 'no-store');
-});
+// Only these four paths: this router is mounted over every /orgs path, and the rest set their own cache headers.
+for (const path of [
+  '/:id/developer-invitations',
+  '/:id/developer-invitations/:invitationId',
+  '/:id/developers',
+  '/:id/developers/:userId',
+])
+  developerOrgRoutes.use(path, async (c, next) => {
+    await next();
+    c.header('cache-control', 'no-store');
+  });
 
 register(
   developerOrgRoutes,
