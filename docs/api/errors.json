@@ -2660,6 +2660,51 @@
       ]
     },
     {
+      "code": "NTAG_AUTH_FAILED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "NTAG_BAD_RESPONSE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "NTAG_COMMAND_FAILED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "NTAG_MAC_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "NTAG_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
       "code": "OFFLINE_OFF",
       "statuses": [
         409
