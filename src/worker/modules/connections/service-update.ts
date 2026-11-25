@@ -1,5 +1,5 @@
 import type { Actor } from '../../platform/context.ts';
-import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
@@ -308,7 +308,17 @@ export async function update(
   });
   const fresh = await requireConnection(sctx, id);
   // A file connection has no schedule: nothing re-applies until someone starts a sync.
-  if (patch.cursor === null && def.capabilities.upload && fresh.enabled)
-    await startRelist(sctx, actor, fresh, authority);
+  if (patch.cursor === null && def.capabilities.upload && fresh.enabled) {
+    try {
+      await startRelist(sctx, actor, fresh, authority);
+    } catch (error) {
+      // The edit is saved; the next Sync now lists from the start.
+      sctx.log.error('connection.relist_failed', {
+        orgId: conn.orgId,
+        connectionId: id,
+        code: error instanceof AppError ? error.code : 'RELIST_FAILED',
+      });
+    }
+  }
   return { ...toDto(sctx.env, fresh), ...(generated ? { webhookSecret: generated } : {}) };
 }

@@ -3,6 +3,7 @@ import { makeSession } from '../../../../test/helpers/index.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { bump } from '../../platform/counters.ts';
 import { first, run } from '../../platform/db.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { authorizeConnection, type ConnectionAuthority } from './access.ts';
 import * as actions from './actions.ts';
@@ -207,9 +208,11 @@ describe('file-upload through the sync engine', () => {
     reset();
     const inner = inlineStep();
     let restored = false;
+    const after: string[] = [];
     const step: StepLike = {
       sleep: inner.sleep,
       do: async (name, fn) => {
+        if (restored) after.push(name);
         if (!restored && name === 'page-1-apply-0') {
           restored = true;
           // The admin restores m-6 between the removal fetch and its apply.
@@ -225,10 +228,15 @@ describe('file-upload through the sync engine', () => {
     expect(
       await first(
         kit.env.DB,
-        "SELECT 1 FROM connection_runs WHERE connection_id = ? AND error_code = 'RUN_LOST'",
+        "SELECT 1 FROM connection_runs WHERE connection_id = ? AND outcome = 'skipped' AND error_code = 'SUPERSEDED'",
         [dto.id],
       ),
     ).not.toBeNull();
+    // No step of the replaced run ran after that: it wrote no cursor and no health.
+    expect(after).toEqual([]);
+    const stored = (await getConnection(kit.env.DB, dto.id))?.cursor;
+    // It stopped mid-listing: the stored cursor is where the old run left it, not a finished one.
+    expect(stored).not.toContain(':done:');
     // The run Apply starts (mocked here) begins after the promote and lists the new file.
     const cursor = await sync(dto.id);
     const current = (await listFiles(kit.sctx, authority, dto.id, { limit: 1 })).items[0];
@@ -255,6 +263,26 @@ describe('file-upload through the sync engine', () => {
       mapping: { memberName: { from: '/name', transform: { kind: 'upper' } } },
     });
     expect(started).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves a re-listing edit even if starting the run fails, and logs a code', async () => {
+    const dto = await connect(SIX);
+    started.mockRejectedValue(new ConflictError('x', 'CONNECTION_CONFLICT'));
+    const logged: [string, Record<string, unknown>][] = [];
+    const sctx = {
+      ...kit.sctx,
+      log: {
+        ...kit.sctx.log,
+        error: (e: string, d: Record<string, unknown>) => logged.push([e, d]),
+      },
+    } as typeof kit.sctx;
+    const res = await service.update(sctx, kit.actor, dto.id, {
+      mapping: { memberName: { from: '/name', transform: { kind: 'upper' } } },
+    });
+    expect(res.mapping).toMatchObject({ memberName: { transform: { kind: 'upper' } } });
+    expect(logged).toEqual([
+      ['connection.relist_failed', expect.objectContaining({ code: 'CONNECTION_CONFLICT' })],
+    ]);
   });
 
   it('reads the current revision for a single record', async () => {

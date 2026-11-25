@@ -278,3 +278,18 @@ export async function slotAttemptInFlight(
       }
     : null;
 }
+
+/** The run's tracking row was closed by a newer run (`SUPERSEDED`): nothing it still does may be written. */
+export async function runSuperseded(
+  db: D1Database,
+  p: { instanceId: string; orgId: string; connectionId: string },
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 FROM workflow_runs WHERE instance_id = ? AND kind = 'connection_sync' AND org_id = ?
+         AND target_id = ? AND status = 'errored' AND error_code = 'SUPERSEDED'`,
+      [p.instanceId, p.orgId, p.connectionId],
+    )) !== null
+  );
+}

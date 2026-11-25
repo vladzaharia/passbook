@@ -193,7 +193,7 @@ export async function applyRevision(
   });
   // A run still listing the old file must not be adopted: close it, so Apply's run starts after the promote.
   await supersedeOpenRun(ctx, conn);
-  const started = await actions.syncNow(ctx, actor, connectionId, authority);
+  const started = await actions.syncNow(ctx, actor, connectionId, authority, fileId);
   const fresh = (await getFile(ctx.env.DB, conn.orgId, fileId)) ?? row;
   return { file: await dtoOf(ctx, fresh), ...started };
 }

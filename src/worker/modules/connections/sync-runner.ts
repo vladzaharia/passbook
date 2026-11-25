@@ -2,7 +2,7 @@ import { connectors } from '../../connectors/registry.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { closeRun } from './health.ts';
-import { emptyTotals, type ReleaseBlockCode, type Totals } from './records.ts';
+import { emptyTotals, type ReleaseBlockCode } from './records.ts';
 import { getConnection } from './repo.ts';
 import { setWorkflowStatus } from './repo-sync.ts';
 import { type Failure, paceMs } from './runtime.ts';
@@ -26,14 +26,11 @@ import {
   spent,
 } from './sync-chain.ts';
 import type { StepResult } from './sync-context.ts';
+import { add, guardRun, RunSupersededError, type StepLike } from './sync-run-guard.ts';
 import { recordAbort } from './sync-runner-abort.ts';
 import { assertSyncAuthority, assertSyncStart } from './sync-runner-validation.ts';
 
-/** The subset of WorkflowStep the runner needs; tests pass an inline implementation. */
-export interface StepLike {
-  do<T>(name: string, fn: () => Promise<T>): Promise<T>;
-  sleep(name: string, ms: number): Promise<void>;
-}
+export type { StepLike } from './sync-run-guard.ts';
 
 export interface SyncRunParams {
   connectionId: string;
@@ -50,15 +47,6 @@ export interface SyncRunParams {
   writeBudget?: number;
 }
 
-function add(into: Totals, from: Totals): void {
-  into.seen += from.seen;
-  into.changed += from.changed;
-  into.created += from.created;
-  into.missing += from.missing;
-  into.errors += from.errors;
-  if (from.voided) into.voided = (into.voided ?? 0) + from.voided;
-}
-
 const MAX_SAMPLES = 5;
 
 /**
@@ -70,13 +58,21 @@ const MAX_SAMPLES = 5;
  */
 export async function executeSync(
   sctx: ServiceContext,
-  step: StepLike,
+  rawStep: StepLike,
   p: SyncRunParams,
 ): Promise<void> {
   await assertSyncAuthority(sctx, p);
+  const step = guardRun(rawStep, sctx, p);
   try {
     await runSync(sctx, step, p);
   } catch (error) {
+    if (error instanceof RunSupersededError) {
+      sctx.log.info('connection.sync_superseded', {
+        connectionId: p.connectionId,
+        code: 'SUPERSEDED',
+      });
+      return;
+    }
     if (
       error instanceof AppError &&
       (error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' || error.code === 'STALE_CONTEXT')
@@ -296,7 +292,8 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
           }
         }
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof RunSupersededError) throw error;
       sctx.log.error('connection.sync_failed', { connectionId: p.connectionId, code: 'INTERNAL' });
       failure = { code: 'INTERNAL', httpStatus: null, retryAfterMs: null };
     }

@@ -93,7 +93,10 @@ const columns: DataColumnDef<Run, never>[] = [
     header: 'Outcome',
     cell: ({ row }) => {
       const o = OUTCOME[row.original.outcome];
-      return <StatusPill status={o.status}>{o.label}</StatusPill>;
+      const replaced = row.original.errorCode === 'SUPERSEDED';
+      return (
+        <StatusPill status={o.status}>{replaced ? 'Replaced by a newer run' : o.label}</StatusPill>
+      );
     },
   },
   {
@@ -106,7 +109,7 @@ const columns: DataColumnDef<Run, never>[] = [
     id: 'code',
     header: 'Code',
     cell: ({ row }) =>
-      row.original.errorCode ? (
+      row.original.errorCode && row.original.errorCode !== 'SUPERSEDED' ? (
         <span
           className="font-mono text-xs text-fg-muted"
           title={errorMessage(row.original.errorCode) ?? undefined}

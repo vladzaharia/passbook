@@ -177,7 +177,10 @@ export interface Entry {
   record: Record<string, unknown>;
 }
 
-/** A CSV cell and the same XLSX number give one ref: trimmed, and a whole number without a trailing `.0`. */
+/**
+ * A CSV cell and the same XLSX number give one ref: trimmed, and a whole number without a trailing `.0`.
+ * CSV "001" and XLSX 1 stay different on purpose: leading zeros are data.
+ */
 const refOf = (cell: string): string => cell.trim().replace(/^(-?\d+)\.0+$/, '$1');
 
 /** Rows keyed by the ID column, in file order. A row with no usable ID, or an ID already seen, is skipped. */
