@@ -31,9 +31,12 @@ describe('findIdpBinding', () => {
 
   it('lets only the client name it, in any file of the tree', () => {
     const text = 'const rpc = env.IDP;';
-    expect(findIdpBinding('src/worker/modules/dev-access/idp-client.ts', text)).toEqual([]);
-    expect(findIdpBinding('src/worker/modules/dev-access/idp-client.test.ts', text)).toEqual([]);
+    expect(findIdpBinding('src/worker/modules/idp/client.ts', text)).toEqual([]);
+    expect(findIdpBinding('src/worker/modules/idp/client.test.ts', text)).toEqual([]);
     expect(findIdpBinding('src/worker/modules/dev-access/repo.ts', text)).toHaveLength(1);
+    expect(findIdpBinding('src/worker/modules/dev-access/idp-client.ts', text)).toHaveLength(1);
+    expect(findIdpBinding('src/worker/modules/idp/errors.ts', text)).toHaveLength(1);
+    expect(findIdpBinding('src/worker/modules/idp/client-extra.ts', text)).toHaveLength(1);
     expect(findIdpBinding('src/worker/modules/identities/idp-client.ts', text)).toHaveLength(1);
     expect(findIdpBinding('src/worker/app.ts', text)).toHaveLength(1);
   });
