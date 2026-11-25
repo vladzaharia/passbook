@@ -1,17 +1,16 @@
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
 import { h } from './dom.ts';
+import { clock, flavour } from './format.ts';
+import { icon } from './icons.ts';
 import {
-  clock,
   duration,
   durationShare,
-  flavour,
   fullTime,
   type PathRun,
   pathParts,
   SLOW_MS,
-} from './format.ts';
-import { icon } from './icons.ts';
+} from './row-format.ts';
 
 const methodClass = (m: string) => `method ${m === 'DELETE' ? 'del' : m.toLowerCase()}`;
 const runsOf = (cls: string, runs: PathRun[]) =>

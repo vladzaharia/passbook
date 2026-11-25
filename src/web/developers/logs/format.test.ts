@@ -1,15 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  clock,
-  count,
-  duration,
-  durationShare,
-  flavour,
-  fullTime,
-  notToday,
-  pathParts,
-  prettyBody,
-} from './format.ts';
+import { clock, count, flavour, prettyBody } from './format.ts';
+import { duration, durationShare, fullTime, notToday, pathParts } from './row-format.ts';
 
 const text = (runs: { text: string }[]) => runs.map((r) => r.text).join('');
 

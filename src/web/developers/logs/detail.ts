@@ -6,9 +6,10 @@ import type { Json } from '../console/types.ts';
 import { highlightTokens, type Tok } from '../model/highlight.ts';
 import { statusText } from '../ui/status-text.ts';
 import { fill, getJson, h } from './dom.ts';
-import { clock, duration, fullTime, prettyBody } from './format.ts';
+import { clock, prettyBody } from './format.ts';
 import { icon } from './icons.ts';
 import { builderLink, type OpIndex } from './ops.ts';
+import { duration, fullTime } from './row-format.ts';
 
 const D = LOGS_COPY.detail;
 export const LOG_API = '/api/v1/developer/logs';

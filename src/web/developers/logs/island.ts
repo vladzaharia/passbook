@@ -3,11 +3,11 @@ import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
 import { LOG_API, openDetail } from './detail.ts';
 import { fill, getJson, h } from './dom.ts';
 import { showFirstCall, showNoMatch } from './empty.tsx';
-import { notToday } from './format.ts';
 import { listen } from './live.ts';
 import type { OpIndex } from './ops.ts';
 import { loadRail } from './rail.ts';
 import { rowView } from './row.ts';
+import { notToday } from './row-format.ts';
 import { clearState, showFailed, showNoSandbox } from './state.tsx';
 import { type Filters, toolbar } from './toolbar.ts';
 
