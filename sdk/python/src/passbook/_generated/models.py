@@ -370,6 +370,7 @@ __all__ = [
     "InvitationsCreateResponse",
     "InvitationsListResponse",
     "InvitationsListResponseItemsItem",
+    "InvitationsResendResponse",
     "InvitationsRevokeResponse",
     "JoinLinksRetrieveResponse",
     "JoinLinksRetrieveResponseIssuesItem",
@@ -386,6 +387,8 @@ __all__ = [
     "MembershipsListResponse",
     "MembershipsListResponseItemsItem",
     "MembershipsRevokeResponse",
+    "MembershipsUpdateRolesParams",
+    "MembershipsUpdateRolesResponse",
     "MessageRulesCountDueBody",
     "MessageRulesCountDueParams",
     "MessageRulesCountDueParamsAnchor1",
@@ -4248,6 +4251,16 @@ class InvitationsListResponseItemsItem(_Model):
     revokedAt: int | None
     acceptedAt: int | None
 
+class InvitationsResendResponse(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+    acceptedAt: int | None
+
 class InvitationsRevokeResponse(_Model):
     ok: _Literal[True]
 
@@ -4335,6 +4348,24 @@ class MembershipsListResponseItemsItem(_Model):
 
 class MembershipsRevokeResponse(_Model):
     ok: _Literal[True]
+
+class MembershipsUpdateRolesParams(_Model):
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+
+class MembershipsUpdateRolesResponse(_Model):
+    id: str
+    orgId: str
+    orgName: str
+    orgSlug: str
+    personal: bool | None = None
+    testOnly: bool | None = None
+    userId: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    capabilities: _List[_Literal["org:read", "org:manage", "members:read", "members:manage", "integrations:read", "integrations:manage", "templates:read", "templates:author", "templates:review", "templates:publish", "passes:read", "passes:operate", "messages:read", "messages:manage", "scanning:read", "scanning:manage", "audit:read"] | str]
+    createdAt: int
+    revokedAt: int | None
+    userName: str | None
+    userEmail: str | None
 
 class MessageRulesCountDueParams(_Model):
     orgId: str

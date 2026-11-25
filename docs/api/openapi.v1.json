@@ -23064,6 +23064,210 @@
           "ok"
         ]
       },
+      "MembershipsUpdateRolesParams": {
+        "type": "object",
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org_admin",
+                "integration_admin",
+                "template_author",
+                "template_reviewer",
+                "template_publisher",
+                "pass_operator",
+                "read_only"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 7
+          }
+        },
+        "required": [
+          "roles"
+        ],
+        "additionalProperties": false
+      },
+      "MembershipsUpdateRolesResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "orgSlug": {
+            "type": "string"
+          },
+          "personal": {
+            "type": "boolean",
+            "default": false
+          },
+          "testOnly": {
+            "type": "boolean"
+          },
+          "userId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org_admin",
+                "integration_admin",
+                "template_author",
+                "template_reviewer",
+                "template_publisher",
+                "pass_operator",
+                "read_only"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 7
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org:read",
+                "org:manage",
+                "members:read",
+                "members:manage",
+                "integrations:read",
+                "integrations:manage",
+                "templates:read",
+                "templates:author",
+                "templates:review",
+                "templates:publish",
+                "passes:read",
+                "passes:operate",
+                "messages:read",
+                "messages:manage",
+                "scanning:read",
+                "scanning:manage",
+                "audit:read"
+              ]
+            }
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "revokedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "userName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userEmail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "orgName",
+          "orgSlug",
+          "userId",
+          "roles",
+          "capabilities",
+          "createdAt",
+          "revokedAt",
+          "userName",
+          "userEmail"
+        ]
+      },
+      "InvitationsResendResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "email": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org_admin",
+                "integration_admin",
+                "template_author",
+                "template_reviewer",
+                "template_publisher",
+                "pass_operator",
+                "read_only"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 7
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiresAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "revokedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "acceptedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "email",
+          "roles",
+          "createdAt",
+          "expiresAt",
+          "revokedAt",
+          "acceptedAt"
+        ]
+      },
       "PlatformOrgsListResponse": {
         "type": "object",
         "properties": {
@@ -82691,30 +82895,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "roles": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "org_admin",
-                        "integration_admin",
-                        "template_author",
-                        "template_reviewer",
-                        "template_publisher",
-                        "pass_operator",
-                        "read_only"
-                      ]
-                    },
-                    "minItems": 1,
-                    "maxItems": 7
-                  }
-                },
-                "required": [
-                  "roles"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/MembershipsUpdateRolesParams"
+              },
+              "example": {
+                "roles": [
+                  "org_admin"
+                ]
               }
             }
           }
@@ -82725,115 +82911,26 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgName": {
-                      "type": "string"
-                    },
-                    "orgSlug": {
-                      "type": "string"
-                    },
-                    "personal": {
-                      "type": "boolean",
-                      "default": false
-                    },
-                    "testOnly": {
-                      "type": "boolean"
-                    },
-                    "userId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "roles": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "org_admin",
-                          "integration_admin",
-                          "template_author",
-                          "template_reviewer",
-                          "template_publisher",
-                          "pass_operator",
-                          "read_only"
-                        ]
-                      },
-                      "minItems": 1,
-                      "maxItems": 7
-                    },
-                    "capabilities": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "org:read",
-                          "org:manage",
-                          "members:read",
-                          "members:manage",
-                          "integrations:read",
-                          "integrations:manage",
-                          "templates:read",
-                          "templates:author",
-                          "templates:review",
-                          "templates:publish",
-                          "passes:read",
-                          "passes:operate",
-                          "messages:read",
-                          "messages:manage",
-                          "scanning:read",
-                          "scanning:manage",
-                          "audit:read"
-                        ]
-                      }
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "revokedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "userName": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "userEmail": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "orgName",
-                    "orgSlug",
-                    "userId",
-                    "roles",
-                    "capabilities",
-                    "createdAt",
-                    "revokedAt",
-                    "userName",
-                    "userEmail"
-                  ]
+                  "$ref": "#/components/schemas/MembershipsUpdateRolesResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-c28e83793089",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "orgName": "Northwind Climbing",
+                  "orgSlug": "northwind-climbing",
+                  "personal": false,
+                  "testOnly": false,
+                  "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                  "roles": [
+                    "org_admin"
+                  ],
+                  "capabilities": [
+                    "org:read"
+                  ],
+                  "createdAt": 1794362400000,
+                  "revokedAt": null,
+                  "userName": "Sam Rivera",
+                  "userEmail": "sam@example.com"
                 }
               }
             }
@@ -82850,6 +82947,10 @@
           }
         },
         "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+        "x-sdk": {
+          "resource": "memberships",
+          "method": "updateRoles"
+        },
         "security": [
           {
             "session": []
@@ -82909,71 +83010,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "roles": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "org_admin",
-                          "integration_admin",
-                          "template_author",
-                          "template_reviewer",
-                          "template_publisher",
-                          "pass_operator",
-                          "read_only"
-                        ]
-                      },
-                      "minItems": 1,
-                      "maxItems": 7
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "expiresAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "revokedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "acceptedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "email",
-                    "roles",
-                    "createdAt",
-                    "expiresAt",
-                    "revokedAt",
-                    "acceptedAt"
-                  ]
+                  "$ref": "#/components/schemas/InvitationsResendResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0a8eaac2ea79",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "email": "ada@example.com",
+                  "roles": [
+                    "org_admin"
+                  ],
+                  "createdAt": 1794362400000,
+                  "expiresAt": 1798790399999,
+                  "revokedAt": null,
+                  "acceptedAt": 1795570500000
                 }
               }
             }
@@ -82990,6 +83039,10 @@
           }
         },
         "operationId": "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend",
+        "x-sdk": {
+          "resource": "invitations",
+          "method": "resend"
+        },
         "security": [
           {
             "session": []
