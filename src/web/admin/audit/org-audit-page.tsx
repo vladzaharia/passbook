@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { useId } from 'react';
 import { RETENTION_COPY } from '@/shared/copy/retention.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
-import { Button, Card, CardBody, Combobox, EmptyState, Label, PageHeader } from '@/web/ui/index.ts';
+import { Button, Card, CardBody, Combobox, Label, PageHeader } from '@/web/ui/index.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { ACTION_OPTIONS } from './audit-filters.tsx';
 import type { AuditSearch } from './audit-search.ts';
 import { AuditTable } from './audit-table.tsx';
@@ -33,7 +34,7 @@ export function OrgAuditPage({
   const filtered = Object.entries(filters).some(([key, v]) => v !== undefined && key !== 'orgId');
   const patch = (next: AuditSearch) => onSearch({ ...filters, ...next });
   if (!allowed) {
-    return <EmptyState heading art="building" title="Choose an organization" />;
+    return <OrgChooser />;
   }
   const actions =
     filters.action && !ACTION_OPTIONS.some((o) => o.value === filters.action)
