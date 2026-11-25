@@ -2346,7 +2346,7 @@
     "operationId": "connections.postConnectionsByIdProbe",
     "op": "POST /api/v1/connections/{id}/probe",
     "change": "new operation",
-    "note": "Probe a saved REST connection with its stored configuration and secrets, or with a config override. Stored secrets are never sent to a new host. Needs connections:write; same limits."
+    "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
   },
   {
     "key": "POST /api/v1/connections/probe new operation",
@@ -2354,7 +2354,7 @@
     "operationId": "connections.postConnectionsProbe",
     "op": "POST /api/v1/connections/probe",
     "change": "new operation",
-    "note": "Probe an unsaved REST configuration: fetches one sample page or record and returns the pruned JSON with detected records, ID, updated-at, pagination and JSONPath candidates. Needs connections:write; 10 a minute per caller and 60 an hour per org."
+    "note": "Probe an unsaved REST config: one sample page or record, with detected records, ID, pagination and JSONPaths. 10 a minute per caller, 60 an hour per org."
   },
   {
     "key": "POST /api/v1/connections/test-config 200.columns: field added",
