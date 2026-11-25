@@ -18,7 +18,7 @@ const H = QS_COPY.happened;
 const callLine = (c: Extract<Call, { state: 'ok' }>): string =>
   c.via === 'terminal'
     ? [c.status, QS_COPY.call.from, c.client].filter(Boolean).join(' · ')
-    : `${c.status} · ${c.ms} ms`;
+    : [c.status, c.ms > 0 ? `${c.ms} ms` : null].filter(Boolean).join(' · ');
 
 /** What the page's calls and the sandbox's endpoint did, in the order they happened. Rows still to come are open circles. */
 export function rowsOf(input: {

@@ -27,6 +27,8 @@ const KEEP = [
 const MAX_DEPTH = 6;
 /** Standard headers the console sets itself. */
 const OWN_HEADERS = new Set(['idempotency-key', 'authorization', 'content-type', 'accept']);
+/** Bulk runs act on every pass a filter matches: they ask twice like a delete. */
+const BULK = /\/bulk-runs(\/|$)/;
 const DESTRUCTIVE = /(^|[/.])(void|remove|revoke|purge|close|reset|delete)([/.]|$)/;
 
 /** The schema without `$ref`s, composition resolved, platform-only fields gone and depth capped. */
@@ -103,7 +105,8 @@ export function runOp(doc: RawDoc, view: Omit<OpView, 'run'>, op: RawOp, method:
     destructive:
       method === 'delete' ||
       DESTRUCTIVE.test(`${sdk?.method ?? ''}`) ||
-      DESTRUCTIVE.test(view.path),
+      DESTRUCTIVE.test(view.path) ||
+      (method === 'post' && BULK.test(view.path)),
     params: params(doc, op),
     body: body.schema ? slim(doc, body.schema) : null,
     example: view.requestExample as Json | undefined,
