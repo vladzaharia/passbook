@@ -114,5 +114,3 @@ export function ancestors(pointer: string): string[] {
   }
   return out;
 }
-
-export const rowLabel = (r: TreeRow): string => `${r.key}, ${r.preview}`;
