@@ -16,6 +16,7 @@ import {
   AppError,
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   UnavailableError,
   ValidationError,
 } from '../../platform/errors.ts';
@@ -84,6 +85,20 @@ export async function managerOf(
     },
     checks: [membershipCapability(membership.id, 'members:manage')],
   };
+}
+/** Whether the caller manages the org; anything but a refusal still throws. */
+export async function isOrgManager(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  orgId: string,
+): Promise<boolean> {
+  try {
+    await managerOf(ctx, auth, orgId);
+    return true;
+  } catch (error) {
+    if (error instanceof ForbiddenError) return false;
+    throw error;
+  }
 }
 async function requireOrgManager(ctx: ServiceContext, auth: SessionAuth, orgId: string) {
   await managerOf(ctx, auth, orgId);

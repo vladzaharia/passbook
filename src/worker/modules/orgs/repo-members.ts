@@ -109,11 +109,11 @@ export function activeMembershipById(db: D1Database, orgId: string, id: string) 
     user_id: string;
     invitation_id: string;
     roles: string;
-    created_at: number;
+    joined_at: number;
     email: string;
   }>(
     db,
-    `SELECT m.id, m.user_id, m.invitation_id, m.roles, m.created_at, i.email FROM org_memberships m
+    `SELECT m.id, m.user_id, m.invitation_id, m.roles, COALESCE(m.joined_at, m.created_at) AS joined_at, i.email FROM org_memberships m
  JOIN org_invitations i ON i.id = m.invitation_id
  WHERE m.org_id = ? AND m.id = ? AND m.revoked_at IS NULL`,
     [orgId, id],

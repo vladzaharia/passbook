@@ -107,7 +107,7 @@ export async function changeOrgMemberRoles(
     invitationId: ctx.ids.id(),
     hash: await sha256Hex(ctx.ids.token(32)),
     now,
-    since: current.created_at,
+    joinedAt: current.joined_at,
   };
   const losesAdmin = before.includes('org_admin') && !roles.includes('org_admin');
   try {

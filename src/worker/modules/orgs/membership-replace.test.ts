@@ -17,6 +17,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { keyLive } from '../../platform/repo-api-key-sql.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { creatorIsActive } from '../broadcasts/repo-creator.ts';
 import { ACTOR_HOURLY_INVITES } from './invitation-limits.ts';
 import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
 import { inviteOrgMember } from './membership-service.ts';
@@ -300,7 +301,7 @@ describe('change roles: edges', () => {
           invitationId: t.f.ids.id(),
           hash: t.f.ids.token(),
           now: t.f.clock.now(),
-          since: t.f.clock.now(),
+          joinedAt: t.f.clock.now(),
         },
         {
           orgId: t.org.id,
@@ -385,6 +386,18 @@ describe('change roles: edges', () => {
     ]);
     expect(await stateOf(a)).toBe('scheduled');
     expect(await stateOf(b)).toBe('cancelled');
+    // The successor row is newer than the broadcast, but the person joined before it: the send goes.
+    const row = (id: string) =>
+      ({
+        created_by_type: 'user',
+        created_by_id: id,
+        org_id: t.org.id,
+        mode: 'live',
+        kind: 'message',
+        created_at: t.f.clock.now() - 1000,
+      }) as const;
+    expect(await creatorIsActive(t.env.DB, row(kept.user.id), t.f.clock.now())).toBe(true);
+    expect(await creatorIsActive(t.env.DB, row(lost.user.id), t.f.clock.now())).toBe(false);
   });
 });
 

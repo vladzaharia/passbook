@@ -106,6 +106,9 @@ beforeAll(async () => {
   await env.DB.prepare(
     "INSERT OR IGNORE INTO orgs (id, slug, name, created_at, updated_at) VALUES ('o1', 'o1', 'O1', 1, 1)",
   ).run();
+  await env.DB.prepare(
+    "INSERT OR IGNORE INTO users (id, primary_email, created_at) VALUES ('user-1', 'step-up-user@example.test', 1)",
+  ).run();
   for (const [id, roles] of [
     ['inv-admin', '["org_admin"]'],
     ['inv-read', '["read_only"]'],

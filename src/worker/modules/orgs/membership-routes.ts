@@ -35,6 +35,7 @@ import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.
 import {
   acceptOrgInvitation,
   inviteOrgMember,
+  isOrgManager,
   listOrgInvitations,
   listOrgMembers,
   previewOrgInvitation,
@@ -88,11 +89,10 @@ membershipRoutes.use('/:id/invitations/:invitationId/resend', requireConsoleSess
 membershipRoutes.post(
   '/:id/invitations/:invitationId/resend',
   requireStepUp(STEP_UP_SECONDS, async (c) => {
-    const found = await invitationById(
-      c.env.DB,
-      c.req.param('id') ?? '',
-      c.req.param('invitationId') ?? '',
-    );
+    const orgId = c.req.param('id') ?? '';
+    // Only a manager of the org learns anything from whether this asks.
+    if (!(await isOrgManager(serviceContext(c), session(c), orgId))) return false;
+    const found = await invitationById(c.env.DB, orgId, c.req.param('invitationId') ?? '');
     if (!found) return false;
     try {
       return parseRoles(found.roles).some((role) =>

@@ -45,7 +45,7 @@ export async function creatorIsActive(
     const user = await first<{ one: number }>(
       db,
       `SELECT 1 AS one FROM users u JOIN org_memberships m ON m.user_id = u.id AND m.org_id = ?
-       WHERE u.id = ? AND u.status = 'active' AND m.revoked_at IS NULL AND m.created_at <= ? AND ${holds}
+       WHERE u.id = ? AND u.status = 'active' AND m.revoked_at IS NULL AND m.joined_at <= ? AND ${holds}
          ${row.kind === 'change' ? `AND ${holds}` : ''}`,
       [
         row.org_id,
@@ -86,7 +86,7 @@ export function creatorLive(
           AND r.value IN (SELECT value FROM json_each(${b.bind(JSON.stringify(rolesGranting(capability)))})))`;
       return `EXISTS (SELECT 1 FROM users u JOIN org_memberships m ON m.user_id = u.id AND m.org_id = a.org_id
         WHERE u.id = ${b.bind(row.created_by_id)} AND u.status = 'active' AND m.revoked_at IS NULL
-          AND m.created_at <= ${b.bind(row.created_at)} AND ${holds('messages:manage')}
+          AND m.joined_at <= ${b.bind(row.created_at)} AND ${holds('messages:manage')}
           ${row.kind === 'change' ? `AND ${holds('passes:operate')}` : ''})`;
     },
   };
