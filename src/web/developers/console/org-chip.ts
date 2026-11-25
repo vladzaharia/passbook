@@ -1,7 +1,5 @@
 import { PATHS } from '../../../shared/developers.ts';
-import { fetchHome } from '../workbench/api.ts';
 import { RUN_LIMIT, remaining, subscribe } from './budget.ts';
-import { loadClock, onClock, runTime } from './run-clock.ts';
 import { loadSession, onSession, type Session } from './session.ts';
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -15,7 +13,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-/** The top bar's chip: the sandbox you run against and what is left of this minute's runs. */
+/** The top bar's chip: the sandbox you run against (its slug is the title) and what is left of this minute's runs. */
 export function budgetMeter(): { node: HTMLElement; paint: () => void } {
   const node = el('span', 'budget');
   node.setAttribute('role', 'meter');
@@ -38,51 +36,22 @@ export function budgetMeter(): { node: HTMLElement; paint: () => void } {
   return { node, paint };
 }
 
-/** The run clock inside the chip: ticking from the server's start until the quickstart is done, then gone. */
-function clockFor(chip: HTMLElement): void {
-  const node = el('span', 'orgchip-clock mono');
-  node.setAttribute('role', 'timer');
-  node.setAttribute('aria-label', 'Quickstart time');
-  let timer: ReturnType<typeof setInterval> | undefined;
-  const stop = onClock((c) => {
-    clearInterval(timer);
-    const paint = () => {
-      // A chip that was swapped out stops its own clock.
-      if (!node.isConnected && chip.dataset.shown === 'true') {
-        clearInterval(timer);
-        stop();
-        return;
-      }
-      const t = c ? runTime(c) : null;
-      node.textContent = t ?? '';
-      node.hidden = t === null;
-      chip.dataset.running = t === null ? 'false' : 'true';
-    };
-    paint();
-    if (c && c.doneAt === null) timer = setInterval(paint, 1000);
-  });
-  chip.append(node);
-  chip.dataset.shown = 'true';
-  void loadClock(fetchHome);
-}
-
 function chipFor(session: Session): HTMLElement | null {
   // A sandbox that did not read says nothing here: the page shows the error and Retry.
   if (session.kind === 'out' || session.kind === 'failed') return null;
   const chip = el('a', 'orgchip');
-  chip.href = PATHS.reference;
+  chip.href = `${PATHS.quickstart}#sandbox`;
   if (session.kind !== 'ready') {
     chip.className = 'btn outline sm';
     chip.textContent = session.kind === 'closed' ? 'Sandbox closed' : 'Create sandbox';
     return chip;
   }
   const name = session.sandbox.orgSlug;
-  chip.title = 'Your test sandbox';
+  chip.title = `Your test sandbox: ${name}`;
   chip.append(
     el('span', 'orgchip-dot', (name[0] ?? 's').toUpperCase()),
-    el('span', 'orgchip-name', name),
+    el('span', 'orgchip-name', 'Sandbox'),
   );
-  clockFor(chip);
   const meter = budgetMeter();
   chip.append(meter.node);
   subscribe(meter.paint);

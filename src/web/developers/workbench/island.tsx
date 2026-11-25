@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
-import { publishClock } from '../console/run-clock.ts';
 import { loadSession, updateSession } from '../console/session.ts';
 import { fetchCalls, fetchHome, HomeError } from './api.ts';
 import { Workbench, type WorkbenchLinks } from './workbench.tsx';
@@ -20,9 +19,8 @@ function firstVisit(): boolean {
   }
 }
 
-/** The header chip reads the session and the run clock: one read of the home updates both. */
+/** The header chip reads the session: one read of the home updates it. */
 export async function syncChip(home: DeveloperHome): Promise<void> {
-  publishClock(home);
   const session = await loadSession();
   if (session.kind === 'out' || !home.sandbox) return;
   const siteKey = session.kind === 'none' || session.kind === 'ready' ? session.siteKey : '';
