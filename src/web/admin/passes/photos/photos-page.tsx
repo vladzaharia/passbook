@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { pluralize } from '@/web/lib/format.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import {
   Badge,
@@ -92,12 +93,11 @@ export function PhotosPage() {
   const ready = entries.filter(retryable).length;
   const finished = count('done') + count('failed');
   const handled = entries.filter((e) => e.state === 'done' || e.state === 'failed').length;
+  if (!orgId) return <OrgChooser />;
   return (
     <>
       <PageHeader title="Photos" breadcrumbs={CRUMBS} />
-      {!orgId ? (
-        <EmptyState art="people" title="Choose an organization." />
-      ) : !canOperate ? (
+      {!canOperate ? (
         <EmptyState art="lock" title="You cannot change passes in this organization." />
       ) : (
         <div className="flex flex-col gap-6">

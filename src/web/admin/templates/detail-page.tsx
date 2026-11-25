@@ -3,17 +3,12 @@ import { useEffect } from 'react';
 import type { z } from 'zod';
 import { isApiError } from '../../lib/errors.ts';
 import { useOrgScope, useResourceOrg } from '../../lib/org-filter.tsx';
-import {
-  DetailNotFound,
-  detailError,
-  EmptyState,
-  PageHeader,
-  SkeletonDetail,
-} from '../../ui/index.ts';
+import { DetailNotFound, detailError, PageHeader, SkeletonDetail } from '../../ui/index.ts';
 import { useTemplate } from './api.ts';
 import { TemplateDetailContent } from './detail-content.tsx';
 import type { templateDetailSearchSchema } from './search.ts';
 import '../passes/passes.css';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { orgPath } from '../../lib/scope.ts';
 
 type Search = z.infer<typeof templateDetailSearchSchema>;
@@ -78,7 +73,7 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
       isApiError(template.error) &&
       template.error.isForbidden)
   ) {
-    return <EmptyState heading art="building" title="Choose an organization" />;
+    return <OrgChooser />;
   }
   if (template.isError && (scope.hasExplicitOrg || template.isFetchedAfterMount)) {
     return detailError(template, {
