@@ -35,17 +35,18 @@ export function applyGate(el: HTMLElement, gate: Gate): void {
     actions.append(link(`/auth/oidc/start?next=${next}`, G.email.cta, 'btn'));
   } else {
     actions.append(
-      link(`/auth/oidc/start?prompt=login&next=${next}`, G.noaccess.cta, 'btn'),
+      link(`/auth/oidc/start?prompt=login&next=${next}`, G.noaccess.cta, 'btn outline'),
       link('/', G.noaccess.passes, 'btn outline'),
     );
   }
-  if (gate.reason === 'noaccess') {
+  if (gate.reason === 'noaccess' && gate.email) {
+    const email = gate.email;
     const ask = document.createElement('button');
     ask.type = 'button';
     ask.className = 'btn';
     ask.textContent = G.noaccess.copy;
     ask.addEventListener('click', () => {
-      void copyToClipboard(G.noaccess.request(gate.email)).then((ok) => {
+      void copyToClipboard(G.noaccess.request(email)).then((ok) => {
         if (ok) ask.textContent = G.noaccess.copied;
       });
     });

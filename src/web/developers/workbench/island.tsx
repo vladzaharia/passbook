@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
+import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { publishClock } from '../console/run-clock.ts';
 import { loadSession, updateSession } from '../console/session.ts';
 import { fetchCalls, fetchHome, HomeError } from './api.ts';
@@ -91,7 +92,7 @@ export function WorkbenchIsland({
   if (load.kind === 'failed')
     return load.out ? (
       <p className="wb-loading sm muted">
-        No developer access. Ask an administrator for developer access.
+        {QS_COPY.gate.noaccess.title}. {QS_COPY.gate.noaccess.line}
       </p>
     ) : (
       <p className="wb-loading sm muted">

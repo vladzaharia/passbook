@@ -72,7 +72,7 @@ function parseCurl(text: string, secret: string) {
   for (const m of line.matchAll(/-H "([^:]+): ([^"]+)"/g))
     headers[m[1] ?? ''] = (m[2] ?? '')
       .replace('$PASSBOOK_KEY', secret)
-      .replace('$(uuidgen)', crypto.randomUUID());
+      .replace('$(date +%s)-$RANDOM', crypto.randomUUID());
   const body = /-d '([\s\S]*)'\s*$/.exec(line)?.[1];
   return { method, url, headers, body, binary: line.includes('--data-binary') };
 }

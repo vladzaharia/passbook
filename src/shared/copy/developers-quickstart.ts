@@ -1,6 +1,5 @@
 /** Words on the developer quickstart. Shared by the prerendered page and its island. Terse. */
-// biome-ignore lint/suspicious/noTemplateCurlyInString: shell syntax, not a template
-const CHECK = 'echo ${PASSBOOK_KEY:0:9}';
+const CHECK = 'printenv PASSBOOK_KEY | cut -c1-9';
 
 export const QS_COPY = {
   nav: 'Quickstart',
@@ -73,7 +72,7 @@ export const QS_COPY = {
       'Get-Content .env | ForEach-Object { $k, $v = $_ -split \'=\', 2; Set-Item "env:$k" $v }',
     check: 'Check',
     checkLine: CHECK,
-    checkPs: '$env:PASSBOOK_KEY.Substring(0, 9)',
+    checkPs: "$env:PASSBOOK_KEY -replace '^(.{9}).*','$1'",
     checkOut: 'Prints pbp_test_',
   },
   /** Step 3: the call from your terminal, or from this page. */
@@ -188,11 +187,11 @@ export const QS_COPY = {
     },
     noaccess: {
       title: 'No developer access',
-      line: 'Ask your PassBook admin to add you to the developers group.',
+      line: 'Ask your Polaris ID admin to add you to the passbook_developers group.',
       copy: 'Copy request',
       copied: 'Copied',
-      request: (email: string | null) =>
-        `Please add ${email ?? 'my Polaris ID'} to the developers group so I can use the PassBook developer portal.`,
+      request: (email: string) =>
+        `Please add ${email} to the passbook_developers group so I can use the PassBook developer portal.`,
       cta: 'Use another Polaris ID',
       passes: 'My passes',
       signedInAs: (email: string) => `Signed in as ${email}`,

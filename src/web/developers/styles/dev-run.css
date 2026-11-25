@@ -264,7 +264,9 @@ dialog.sheet::backdrop {
    boxes and are not shown, from the first paint: a signed-in page never flashes the signed-out markup, and the page
    never shows Sign in, the avatar, Sign in again. Without script nothing would ever set it, so they show. */
 @media (scripting: enabled) {
-  :is([data-island="account"], [data-island="workbench"]):not([data-ready]) {
+  :is([data-island="account"], [data-island="workbench"], [data-island="hero-start"]):not(
+    [data-ready]
+  ) {
     visibility: hidden;
   }
 }

@@ -72,7 +72,7 @@ function Hero() {
           {h.title} <em>{h.titleFoil}</em>
         </h1>
         <div className="wrap-row g2 mt2">
-          <a className="btn" href={PATHS.quickstart} data-hero-start>
+          <a className="btn" href={PATHS.quickstart} data-hero-start data-island="hero-start">
             {h.start}
             <ArrowRight aria-hidden="true" />
           </a>

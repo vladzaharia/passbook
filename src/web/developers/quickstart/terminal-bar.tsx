@@ -57,7 +57,7 @@ function useCallFix(entry: RequestLogEntry | null, q: Quickstart) {
 /** After 45 quiet seconds: the buddy and the three usual causes. The art is decoration; the words are the hint. */
 function Quiet({ onHere }: { onHere: (() => void) | undefined }) {
   return (
-    <section className="qs-quiet" aria-labelledby="qs-quiet-t">
+    <section className="qs-quiet" role="status" aria-labelledby="qs-quiet-t">
       <BuddyArt mood="curious" size="sm" still />
       <div className="stack g2">
         <h3 className="h3" id="qs-quiet-t">

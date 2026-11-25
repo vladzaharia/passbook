@@ -58,6 +58,19 @@ describe('useListener', () => {
     expect(result.current.over).toBe(false);
   });
 
+  it('is not quiet when a call arrives before 45 s', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ items: [row('c1')] })),
+    );
+    const { result } = renderHook(() => useListener(true, null));
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(result.current.heard).toHaveLength(1);
+    await act(async () => vi.advanceTimersByTimeAsync(QUIET_MS + 2000));
+    expect(result.current.quiet).toBe(false);
+  });
+
   it('does nothing while inactive', async () => {
     vi.useFakeTimers();
     const fetchFn = vi.fn();

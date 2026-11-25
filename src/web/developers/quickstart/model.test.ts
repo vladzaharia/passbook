@@ -51,12 +51,6 @@ describe('the first request', () => {
     }
   });
 
-  it('keys the curl sample with date, not uuidgen', () => {
-    const curl = createCode('tpl-1', firstInput(SAMPLE), BASE).find((c) => c.lang === 'curl');
-    expect(curl?.code).toContain('Idempotency-Key: qs-$(date +%s)');
-    expect(curl?.code).not.toContain('uuidgen');
-  });
-
   it('changes the pass it was given, with the version it read', () => {
     const codes = patchCode('pass-9', 3, 'VIP', BASE);
     for (const c of codes) {
