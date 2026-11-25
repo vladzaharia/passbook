@@ -1458,9 +1458,9 @@
     "retryable": false
   },
   "OIDC_REQUIRED": {
-    "title": "Pocket ID sign-in required",
-    "when": "This action needs a session signed in with Pocket ID.",
-    "fix": "Sign in with Pocket ID, then send the request again.",
+    "title": "Polaris ID sign-in required",
+    "when": "This action needs a session signed in with Polaris ID.",
+    "fix": "Sign in with Polaris ID, then send the request again.",
     "retryable": false
   },
   "ORG_ACCESS_CHANGED": {

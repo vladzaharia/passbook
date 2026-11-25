@@ -5575,6 +5575,35 @@
   "cursor": null
  },
  {
+  "id": "passes.postPassesByIdPrintDrawn",
+  "call": "passes.prints.mark_drawn",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/print/drawn",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "passId": "x",
+   "generation": 0,
+   "status": "active",
+   "passVersion": 0,
+   "stale": false,
+   "createdAt": 0,
+   "voidedAt": 0,
+   "voidCause": "x"
+  }
+ },
+ {
   "id": "passes.getPassesByIdPrintPdf",
   "call": "passes.prints.download_pdf",
   "http": "GET",
@@ -5616,6 +5645,8 @@
      "passId": "x",
      "generation": 0,
      "status": "active",
+     "passVersion": 0,
+     "stale": false,
      "createdAt": 0,
      "voidedAt": 0,
      "voidCause": "x"
@@ -5645,6 +5676,8 @@
    "passId": "x",
    "generation": 0,
    "status": "active",
+   "passVersion": 0,
+   "stale": false,
    "createdAt": 0,
    "voidedAt": 0,
    "voidCause": "x",
@@ -5678,6 +5711,8 @@
    "passId": "x",
    "generation": 0,
    "status": "active",
+   "passVersion": 0,
+   "stale": false,
    "createdAt": 0,
    "voidedAt": 0,
    "voidCause": "x"

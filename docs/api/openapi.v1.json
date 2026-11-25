@@ -36805,6 +36805,16 @@
               "used"
             ]
           },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -36831,6 +36841,8 @@
           "passId",
           "generation",
           "status",
+          "passVersion",
+          "stale",
           "createdAt",
           "voidedAt",
           "voidCause",
@@ -36867,6 +36879,16 @@
                     "used"
                   ]
                 },
+                "passVersion": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1
+                },
+                "stale": {
+                  "type": "boolean"
+                },
                 "createdAt": {
                   "type": "integer",
                   "minimum": 0
@@ -36890,6 +36912,8 @@
                 "passId",
                 "generation",
                 "status",
+                "passVersion",
+                "stale",
                 "createdAt",
                 "voidedAt",
                 "voidCause"
@@ -36926,6 +36950,16 @@
               "used"
             ]
           },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -36949,6 +36983,73 @@
           "passId",
           "generation",
           "status",
+          "passVersion",
+          "stale",
+          "createdAt",
+          "voidedAt",
+          "voidCause"
+        ]
+      },
+      "PassesPrintsMarkDrawnResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "passId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "voided",
+              "used"
+            ]
+          },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "voidedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "voidCause": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "passId",
+          "generation",
+          "status",
+          "passVersion",
+          "stale",
           "createdAt",
           "voidedAt",
           "voidCause"
@@ -73409,7 +73510,7 @@
     },
     "/auth/oidc/client-metadata.json": {
       "get": {
-        "summary": "Client ID Metadata Document for Pocket ID (when OIDC_CLIENT_ID is its URL)",
+        "summary": "Client ID Metadata Document for Polaris ID (when OIDC_CLIENT_ID is its URL)",
         "tags": [
           "auth"
         ],
@@ -100171,6 +100272,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100182,6 +100287,7 @@
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100385,6 +100491,8 @@
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 1,
                   "status": "active",
+                  "passVersion": 3,
+                  "stale": false,
                   "createdAt": 1795572000000,
                   "voidedAt": null,
                   "voidCause": null,
@@ -100423,6 +100531,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100436,6 +100548,7 @@
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100472,6 +100585,8 @@
                       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                       "generation": 3,
                       "status": "active",
+                      "passVersion": 3,
+                      "stale": false,
                       "createdAt": 1794362400000,
                       "voidedAt": null,
                       "voidCause": "refund"
@@ -100511,6 +100626,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100518,6 +100637,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100564,6 +100684,8 @@
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 1,
                   "status": "voided",
+                  "passVersion": 3,
+                  "stale": false,
                   "createdAt": 1795399200000,
                   "voidedAt": 1795572000000,
                   "voidCause": "manual"
@@ -100753,6 +100875,96 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "PASS_NOT_FOUND",
+          "PRINT_NOT_FOUND",
+          "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/passes/{id}/print/drawn": {
+      "post": {
+        "summary": "Record that the active print was drawn again from the pass as it is now",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassesPrintsMarkDrawnResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000053",
+                  "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                  "generation": 1,
+                  "status": "active",
+                  "passVersion": 3,
+                  "stale": false,
+                  "createdAt": 1795399200000,
+                  "voidedAt": null,
+                  "voidCause": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesByIdPrintDrawn",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "markDrawn"
+        },
+        "description": "Records that the active print was drawn again from the pass as it is now, so it is no longer stale.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PRINT_NOT_FOUND",
@@ -114537,7 +114749,7 @@
     },
     "/api/v1/identities/{id}/revoke-certificate": {
       "post": {
-        "summary": "Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in",
+        "summary": "Revoke a superseded certificate after a compromise; needs a Polaris ID sign-in",
         "tags": [
           "identities"
         ],
