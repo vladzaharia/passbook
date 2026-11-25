@@ -728,6 +728,14 @@
     "note": "Lists the org's shared Google issuers."
   },
   {
+    "key": "GET /api/v1/orgs/{orgId}/wallet-credentials 200.items[].lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentials",
+    "op": "GET /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.items[].lastCheck: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
     "class": "additive",
     "operationId": "pass-imports.getPassImportsById",
@@ -894,6 +902,14 @@
     "op": "GET /api/v1/platform/personal-org-labels",
     "change": "new operation",
     "note": "Platform admins read the names of personal organizations, which are not listed, to label them in views that show an org by id."
+  },
+  {
+    "key": "GET /api/v1/platform/wallet-credentials 200.items[].lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.getPlatformWalletCredentials",
+    "op": "GET /api/v1/platform/wallet-credentials",
+    "change": "200.items[].lastCheck: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -2621,6 +2637,14 @@
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared 200.credential.lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
+    "change": "200.credential.lastCheck: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
     "class": "additive",
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
@@ -2635,6 +2659,14 @@
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
     "change": "200.cardTypes: field added",
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
+    "change": "200.lastCheck: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2835,6 +2867,14 @@
     "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
     "change": "200.cardTypes: field added",
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
+    "change": "200.lastCheck: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -3837,6 +3877,14 @@
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
+    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+    "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.lastCheck: field removed",
+    "note": ""
+  },
+  {
     "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
@@ -3901,12 +3949,28 @@
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
+    "key": "PUT /api/v1/platform/wallet-credentials 200.lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.putPlatformWalletCredentials",
+    "op": "PUT /api/v1/platform/wallet-credentials",
+    "change": "200.lastCheck: field removed",
+    "note": ""
+  },
+  {
     "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-platform.putPlatformWalletCredentials",
     "op": "PUT /api/v1/platform/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards 200.lastCheck: field removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.putPlatformWalletCredentialsByIdCards",
+    "op": "PUT /api/v1/platform/wallet-credentials/{id}/cards",
+    "change": "200.lastCheck: field removed",
+    "note": ""
   },
   {
     "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards new operation",

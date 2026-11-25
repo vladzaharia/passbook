@@ -27800,6 +27800,41 @@
           "moved"
         ]
       },
+      "PlatformOrgsPersonalLabelsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "orgId",
+                "label"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "PlatformOrgsLegalHoldsListResponse": {
         "type": "object",
         "properties": {
@@ -79698,6 +79733,7 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -80241,6 +80277,7 @@
           "ORG_FORBIDDEN",
           "ORG_HELD",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -87711,7 +87748,6 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
-          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
@@ -87803,7 +87839,6 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
-          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
@@ -88505,39 +88540,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "orgId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "label": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "orgId",
-                          "label"
-                        ]
-                      }
-                    },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                  "$ref": "#/components/schemas/PlatformOrgsPersonalLabelsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "label": "Northwind Climbing"
                     }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ]
+                  ],
+                  "nextCursor": "c1.4812"
                 }
               }
             }
@@ -88554,41 +88566,15 @@
           }
         },
         "operationId": "orgs.getPlatformPersonalOrgLabels",
+        "x-sdk": {
+          "resource": "platform.orgs.personalLabels",
+          "method": "list"
+        },
         "x-sign-in": "idp",
         "x-codes": [
-          "BRANDING_UNREADABLE",
-          "BRAND_ASSET_NOT_FOUND",
-          "BRAND_IMAGE_NOT_FOUND",
-          "BRAND_MARK_NOT_ALLOWED",
-          "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
-          "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
-          "IMAGE_BYTES",
-          "IMAGE_INVALID",
-          "IMAGE_NOT_FOUND",
-          "IMAGE_SCALE",
-          "IMAGE_SIZE",
-          "INVITATION_INVALID",
-          "INVITATION_PENDING",
-          "LAST_ORG_ADMIN",
-          "MEMBERSHIP_CONFLICT",
-          "MISSING_SCOPE",
-          "MODE_LIVE_REQUIRED",
-          "ORG_CONFLICT",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_PERSONAL",
-          "ORG_PERSONAL_SINGLE_MEMBER",
-          "ORG_SLUG_RESERVED",
-          "ORG_SLUG_TAKEN",
-          "ORG_STATUS_ALONE",
-          "PASS_SETUP_CHANGED",
-          "PASS_SETUP_EMPTY",
-          "PRESET_MOVING",
-          "PRESET_NOT_FOUND",
           "RATE_LIMITED",
-          "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -89432,6 +89418,7 @@
           "INVALID_CURSOR",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -89624,6 +89611,7 @@
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -89726,6 +89714,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -89844,6 +89833,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -89976,6 +89966,7 @@
           "INVALID_INPUT",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90261,6 +90252,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90380,6 +90372,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90458,6 +90451,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90589,6 +90583,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90740,6 +90735,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90899,6 +90895,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -91014,6 +91011,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -91095,6 +91093,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -91291,6 +91290,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -91404,6 +91404,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -92529,6 +92530,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -92640,6 +92642,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -92778,6 +92781,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93065,6 +93069,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93326,6 +93331,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93436,6 +93442,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93518,6 +93525,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93676,6 +93684,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93791,6 +93800,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93923,6 +93933,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94051,6 +94062,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94225,6 +94237,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94341,6 +94354,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94524,6 +94538,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94700,6 +94715,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94811,6 +94827,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -95343,6 +95360,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -95484,6 +95502,7 @@
           "INVALID_CURSOR",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -115987,6 +116006,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -116205,6 +116225,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -116286,6 +116307,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -116377,6 +116399,7 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
@@ -116610,6 +116633,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -116725,6 +116749,7 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
@@ -117663,6 +117688,9 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_CONFLICT",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "SELF_DISABLE",
           "UNAUTHENTICATED",
@@ -122059,6 +122087,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "METRICS_NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"

@@ -6852,6 +6852,14 @@ export type PlatformOrgsListResponse = {
   nextCursor: string | null;
 };
 
+export type PlatformOrgsPersonalLabelsListResponse = {
+  items: Array<{
+    orgId: string;
+    label: string;
+  }>;
+  nextCursor: string | null;
+};
+
 export type PlatformOrgsRetentionReceiptsDownloadResponse = {
   receipt: {
     id: string;

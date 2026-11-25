@@ -1082,6 +1082,8 @@ __all__ = [
     "PlatformOrgsListResponse",
     "PlatformOrgsListResponseItemsItem",
     "PlatformOrgsListResponseItemsItemCounts",
+    "PlatformOrgsPersonalLabelsListResponse",
+    "PlatformOrgsPersonalLabelsListResponseItemsItem",
     "PlatformOrgsRetentionReceiptsDownloadResponse",
     "PlatformOrgsRetentionReceiptsDownloadResponseReceipt",
     "PlatformOrgsRetentionReceiptsListResponse",
@@ -8457,6 +8459,14 @@ class PlatformOrgsListResponseItemsItemCounts(_Model):
     connections: int
     apiKeys: int
     members: int | None = None
+
+class PlatformOrgsPersonalLabelsListResponse(_Model):
+    items: _List[PlatformOrgsPersonalLabelsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformOrgsPersonalLabelsListResponseItemsItem(_Model):
+    orgId: str
+    label: str
 
 class PlatformOrgsRetentionReceiptsDownloadResponse(_Model):
     receipt: PlatformOrgsRetentionReceiptsDownloadResponseReceipt

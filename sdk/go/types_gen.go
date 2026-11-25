@@ -8007,6 +8007,16 @@ type PlatformOrgsListResponseItemsItemCounts struct {
 	Members     *int64 `json:"members,omitempty"`
 }
 
+type PlatformOrgsPersonalLabelsListResponse struct {
+	Items      []PlatformOrgsPersonalLabelsListResponseItemsItem `json:"items"`
+	NextCursor *string                                           `json:"nextCursor"`
+}
+
+type PlatformOrgsPersonalLabelsListResponseItemsItem struct {
+	OrgID string `json:"orgId"`
+	Label string `json:"label"`
+}
+
 type PlatformOrgsRetentionReceiptsDownloadResponse struct {
 	Receipt PlatformOrgsRetentionReceiptsDownloadResponseReceipt `json:"receipt"`
 }
