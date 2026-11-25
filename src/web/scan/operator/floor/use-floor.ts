@@ -13,13 +13,13 @@ import type { QueuedMark } from '../../roll-call/roll-call-model.ts';
 import { useRollCall } from '../../roll-call/use-roll-call.ts';
 import { ACCESS_COPY } from '../../ui/copy-access.ts';
 import { isDeskRole } from '../../ui/place.ts';
-import { useDevices, useShift, useVisitors } from './use-floor-data.ts';
+import { useDevices, useShift } from './use-floor-data.ts';
 import type { Hub } from './use-hub.ts';
 
 const ROLL = ACCESS_COPY.roll;
 
 /**
- * What the floor and the Who's in, Visitors and roll call views read. One hub connection feeds
+ * What the floor and the Who's in and roll call views read. One hub connection feeds
  * all of it: a pulse reads again, and the polls under each read carry on when the hub is away.
  * Desk and Manager scanners only; a Door has no floor.
  */
@@ -88,10 +88,9 @@ export function useFloor({
     setRollView(open);
   }, [open]);
   const gate = { online, kick: hub.pulses * 2 + Number(hub.up) };
-  const visitors = useVisitors(api, { ...gate, active: desk });
   // Presence and shift totals do not move with a scan: their own timers carry them.
   const devices = useDevices(api, { ...gate, kick: 0, active: desk && wide });
   const shift = useShift(api, shiftStart, { ...gate, kick: 0, active: wide });
-  return { desk, tracks, hub, inside, roll, visitors, devices, shift };
+  return { desk, tracks, hub, inside, roll, devices, shift };
 }
 export type Floor = ReturnType<typeof useFloor>;
