@@ -147,6 +147,18 @@ describe('prefixMatch and containsMatch', () => {
 });
 
 describe('classifyD1Error', () => {
+  it('classifies a real trigger abort', async () => {
+    await run(env.DB, 'CREATE TABLE IF NOT EXISTS t_trg (a TEXT)');
+    await run(
+      env.DB,
+      "CREATE TRIGGER IF NOT EXISTS t_trg_guard BEFORE INSERT ON t_trg BEGIN SELECT RAISE(ABORT, 'not allowed here'); END",
+    );
+    expect(await failure("INSERT INTO t_trg VALUES ('x')")).toEqual({
+      kind: 'trigger',
+      detail: 'not allowed here',
+    });
+  });
+
   const failure = async (sql: string, params: string[] = []) => {
     try {
       await run(env.DB, sql, params);
@@ -179,6 +191,13 @@ describe('classifyD1Error', () => {
       kind: 'abort',
       detail: 'registration cap reached',
     });
+    expect(
+      classifyD1Error(
+        new Error(
+          'D1_ERROR: provider operation is not authorized: SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_TRIGGER)',
+        ),
+      ),
+    ).toEqual({ kind: 'trigger', detail: 'provider operation is not authorized' });
     expect(classifyD1Error(new Error('D1_ERROR: no such table: nope'))).toBeNull();
     expect(classifyD1Error('boom')).toBeNull();
   });

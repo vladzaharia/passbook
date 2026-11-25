@@ -140,13 +140,7 @@ export async function issueWalletOffer(
     authority: { kind: 'download', token: pass.downloadToken },
   }).catch((error: unknown) => {
     // A guard trigger or constraint that refuses the activation is "not available", never a 500.
-    if (
-      classifyD1Error(error) ||
-      /provider (?:operation|binding|instance binding) is not authorized|is immutable/.test(
-        String(error),
-      )
-    )
-      throw notFound();
+    if (classifyD1Error(error)) throw notFound();
     throw error;
   });
   if (!created) throw notFound();

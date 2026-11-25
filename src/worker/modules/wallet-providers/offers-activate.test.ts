@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { run } from '../../platform/db.ts';
+import { fixture, restore } from './google-runtime-test-fixtures.ts';
 import type { WalletInstance } from './instance.ts';
+import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { instanceCanActivate } from './offers-instance.ts';
 
 const instance = (over: Partial<WalletInstance>) =>
@@ -26,5 +29,31 @@ describe('an offer can only be listed when issue can activate its slot', () => {
     ],
   ])('%s', (_name, existing, expected) => {
     expect(instanceCanActivate(existing, 2)).toBe(expected);
+  });
+});
+
+describe('a trigger that refuses the activation is a 404', () => {
+  afterEach(() => {
+    for (const undo of restore.splice(0).reverse()) undo();
+    vi.unstubAllGlobals();
+  });
+
+  it('maps the abort to not found, never a 500', async () => {
+    const { f } = await fixture();
+    // A second pass has no instance yet, so issuing creates one (the insert the trigger refuses).
+    const second = await f.kit.pass({ holderEmail: 'second@example.test' });
+    const [offer] = await listWalletOffers(f.kit.ctx, second.id);
+    const token = offer?.href.split('/')[2] ?? '';
+    expect(token).not.toBe('');
+    await run(
+      f.kit.env.DB,
+      "CREATE TRIGGER force_abort BEFORE INSERT ON wallet_provider_instance_operations BEGIN SELECT RAISE(ABORT, 'provider operation is not authorized'); END",
+    );
+    await expect(issueWalletOffer(f.kit.ctx, token, 'google')).rejects.toMatchObject({
+      status: 404,
+    });
+    // Without the trigger the same call gets through, so the 404 above came from the abort.
+    await run(f.kit.env.DB, 'DROP TRIGGER force_abort');
+    await expect(issueWalletOffer(f.kit.ctx, token, 'google')).resolves.toMatch(/^https:\/\//);
   });
 });

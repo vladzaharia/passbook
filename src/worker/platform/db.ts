@@ -153,11 +153,11 @@ export async function casUpdate(
   return row?.version ?? null;
 }
 
-export type D1ErrorKind = 'unique' | 'foreign_key' | 'abort';
+export type D1ErrorKind = 'unique' | 'foreign_key' | 'abort' | 'trigger';
 
 export interface D1ErrorInfo {
   kind: D1ErrorKind;
-  /** `table.column` list for unique violations, the RAISE text for aborts, else the message. */
+  /** `table.column` list for unique violations, the RAISE text for aborts and triggers, else the message. */
   detail: string;
 }
 
@@ -170,5 +170,11 @@ export function classifyD1Error(error: unknown): D1ErrorInfo | null {
     return { kind: 'foreign_key', detail: message };
   const abort = /(?:^|: )(registration cap reached|authority_denied:[a-z]+)\b/.exec(message);
   if (abort?.[1]) return { kind: 'abort', detail: abort[1] };
+  // Any other RAISE(ABORT) of a trigger: D1 reports `<RAISE text>: SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_TRIGGER)`.
+  const trigger =
+    /^(?:D1_ERROR: )?(.*?): SQLITE_CONSTRAINT \(extended: SQLITE_CONSTRAINT_TRIGGER\)/s.exec(
+      message,
+    );
+  if (trigger) return { kind: 'trigger', detail: trigger[1] ?? message };
   return null;
 }
