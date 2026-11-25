@@ -520,6 +520,7 @@ const FIELD: Record<string, Maker> = {
   userGroup: t('northwind-staff'),
   address: t('ada@example.com'),
   targetLabel: t('Day pass'),
+  orgLabel: t('Personal org of Sam Rivera'),
   tag: t('wristband-14'),
   timestamp: t(new Date(T.recent).toISOString()),
   unavailable: t('not_configured'),

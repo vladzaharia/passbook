@@ -1499,6 +1499,12 @@
     "fix": "Check orgId with GET /api/v1/orgs.",
     "retryable": false
   },
+  "ORG_PERSONAL": {
+    "title": "Personal organization",
+    "when": "A platform admin other than the owner used a platform action on a personal organization: its directory page, plan, features, status, close or reopen.",
+    "fix": "A personal organization is managed by its owner. Use a regular organization.",
+    "retryable": false
+  },
   "ORG_PERSONAL_SINGLE_MEMBER": {
     "title": "Personal organization has one member",
     "when": "You invited a member to, or revoked the owner of, a personal organization.",

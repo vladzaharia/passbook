@@ -36,6 +36,16 @@ export function personalOrgIdOf(db: D1Database, userId: string) {
   return first<{ id: string }>(db, 'SELECT id FROM orgs WHERE personal_user_id = ?', [userId]);
 }
 
+/** The owner of a personal org; null for any other org, or an unknown id. */
+export async function personalOwnerOf(db: D1Database, orgId: string): Promise<string | null> {
+  const row = await first<{ owner: string | null }>(
+    db,
+    'SELECT personal_user_id AS owner FROM orgs WHERE id = ?',
+    [orgId],
+  );
+  return row?.owner ?? null;
+}
+
 export async function isPersonalOrg(db: D1Database, orgId: string): Promise<boolean> {
   return (
     (await first(db, 'SELECT 1 AS x FROM orgs WHERE id = ? AND personal_user_id IS NOT NULL', [
@@ -98,7 +108,7 @@ export async function insertPersonalOrg(
     ],
     [row.orgId, row.slug, row.name, 'active', null, '{}', row.now, row.now, row.userId],
   );
-  addOrgEntitlements(g, row.orgId, 'standard', row.now);
+  addOrgEntitlements(g, row.orgId, 'legacy', row.now);
   g.insertSelect(
     'org_invitations',
     ['id', 'org_id', 'email', 'roles', 'token_hash', 'created_at', 'expires_at', 'accepted_at'],
@@ -116,7 +126,7 @@ export async function insertPersonalOrg(
     action: 'org.create',
     targetType: 'org',
     targetId: row.orgId,
-    detail: { slug: row.slug, preset: 'standard', personal: true },
+    detail: { slug: row.slug, preset: 'legacy', personal: true },
   });
   await g.commit();
 }

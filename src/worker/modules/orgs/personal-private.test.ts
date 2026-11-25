@@ -1,0 +1,241 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+import migration from '../../../../migrations/0216_personal_orgs_unlimited.sql?raw';
+import {
+  type Fixtures,
+  fixtures,
+  makeEnv,
+  makeOrg,
+  makeSession,
+  makeUser,
+  type SessionFixture,
+} from '../../../../test/helpers/index.ts';
+import { createApp } from '../../app.ts';
+import { denyAllStores } from '../../platform/auth.ts';
+import { ManualClock } from '../../platform/clock.ts';
+import { all, first, run } from '../../platform/db.ts';
+import type { AppEnv } from '../../platform/env.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import { createSessionStore } from '../auth/sessions.ts';
+import { ensurePersonalOrg } from './personal.ts';
+
+const clock = new ManualClock();
+const app = createApp({
+  stores: (e) => ({ ...denyAllStores, sessions: createSessionStore(e, clock) }),
+  clock,
+});
+let env: AppEnv;
+let f: Fixtures;
+let other: SessionFixture;
+let owner: SessionFixture;
+let personalId: string;
+let regularId: string;
+const ctx = () => createServiceContext(env, { clock });
+
+async function adminSession(name: string) {
+  const user = await makeUser(f);
+  await run(env.DB, 'UPDATE users SET name = ? WHERE id = ?', [name, user.id]);
+  const session = await makeSession(f, { userId: user.id, roles: ['admin', 'user'] });
+  return { user, session };
+}
+const call = (as: SessionFixture, method: string, path: string, body?: unknown) =>
+  app.request(
+    path,
+    {
+      method,
+      headers: { ...as.headers, 'content-type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    },
+    env,
+  );
+const code = async (res: Response) => ((await res.json()) as { code: string }).code;
+
+beforeAll(async () => {
+  env = await makeEnv();
+  f = fixtures(env, clock);
+  other = (await adminSession('Other Admin')).session;
+  const { user, session } = await adminSession('Pat Owner');
+  owner = session;
+  await ensurePersonalOrg(ctx(), {
+    userId: user.id,
+    sessionId: await sha256Hex(session.cookieValue),
+  });
+  personalId =
+    (
+      await first<{ id: string }>(env.DB, 'SELECT id FROM orgs WHERE personal_user_id = ?', [
+        user.id,
+      ])
+    )?.id ?? '';
+  regularId = (await makeOrg(f)).id;
+});
+
+describe('personal orgs are private to the platform', () => {
+  it('leaves personal orgs out of the directory, by list and by search', async () => {
+    const res = await call(other, 'GET', '/api/v1/orgs?limit=200');
+    const ids = ((await res.json()) as { items: { id: string }[] }).items.map((o) => o.id);
+    expect(ids).toContain(regularId);
+    expect(ids).not.toContain(personalId);
+    const found = await call(other, 'GET', '/api/v1/orgs?q=personal');
+    expect(
+      ((await found.json()) as { items: { id: string }[] }).items.map((o) => o.id),
+    ).not.toContain(personalId);
+  });
+
+  it('refuses the directory page, status, close, features and plan to another platform admin', async () => {
+    const refused = [
+      await call(other, 'GET', `/api/v1/orgs/${personalId}`),
+      await call(other, 'POST', `/api/v1/orgs/${personalId}/status`, { status: 'suspended' }),
+      await call(other, 'DELETE', `/api/v1/orgs/${personalId}`),
+      await call(other, 'GET', `/api/v1/platform/orgs/${personalId}/entitlements`),
+      await call(other, 'PUT', `/api/v1/platform/orgs/${personalId}/entitlements`, {
+        expectedRevision: 1,
+        preset: 'trial',
+        overrides: {},
+      }),
+      await call(other, 'GET', `/api/v1/orgs/${personalId}/lifecycle`),
+    ];
+    for (const res of refused) {
+      expect(res.status).toBe(403);
+      expect(await code(res)).toBe('ORG_PERSONAL');
+    }
+    // Editing it is a tenant action: a non-member is refused there, whatever the body.
+    const patch = await call(other, 'PATCH', `/api/v1/orgs/${personalId}`, { status: 'suspended' });
+    expect(patch.status).toBe(403);
+    expect(
+      await first(env.DB, "SELECT 1 AS x FROM orgs WHERE id = ? AND status = 'active'", [
+        personalId,
+      ]),
+    ).not.toBeNull();
+  });
+
+  it('still lets an ordinary org be managed', async () => {
+    const res = await call(other, 'GET', `/api/v1/orgs/${regularId}`);
+    expect(res.status).toBe(200);
+    expect(
+      (await call(other, 'GET', `/api/v1/platform/orgs/${regularId}/entitlements`)).status,
+    ).toBe(200);
+  });
+
+  it('leaves the owner their own org, its directory page and workspace included', async () => {
+    const page = await call(owner, 'GET', `/api/v1/orgs/${personalId}`);
+    expect(page.status).toBe(200);
+    expect(await page.json()).toMatchObject({
+      personal: true,
+      personalOwner: { name: 'Pat Owner' },
+    });
+    expect((await call(owner, 'GET', `/api/v1/orgs/${personalId}/workspace`)).status).toBe(200);
+    const mine = await call(owner, 'GET', '/api/v1/orgs/memberships/me');
+    expect(
+      ((await mine.json()) as { items: { orgId: string }[] }).items.map((m) => m.orgId),
+    ).toEqual([personalId]);
+  });
+
+  it('keeps personal orgs out of the closed list and the preset org counts', async () => {
+    await run(
+      env.DB,
+      "UPDATE orgs SET status = 'deleted', closed_at = 1, purge_after = 9999999999999 WHERE id = ?",
+      [personalId],
+    );
+    const closed = await call(other, 'GET', '/api/v1/platform/closed-orgs');
+    expect(closed.status).toBe(200);
+    expect(
+      ((await closed.json()) as { items: { id: string }[] }).items.map((o) => o.id),
+    ).not.toContain(personalId);
+    await run(
+      env.DB,
+      "UPDATE orgs SET status = 'active', closed_at = NULL, purge_after = NULL WHERE id = ?",
+      [personalId],
+    );
+    const presets = await call(other, 'GET', '/api/v1/platform/entitlement-presets');
+    const unlimited = (
+      (await presets.json()) as { presets: { preset: string; orgCount: number }[] }
+    ).presets.find((p) => p.preset === 'legacy');
+    const total = await first<{ n: number }>(
+      env.DB,
+      "SELECT count(*) AS n FROM org_entitlements e JOIN orgs o ON o.id = e.org_id WHERE e.preset = 'legacy' AND o.personal_user_id IS NULL",
+    );
+    expect(unlimited?.orgCount).toBe(total?.n);
+  });
+});
+
+describe('platform audit', () => {
+  it('keeps the events of a personal org and names it by its owner, with no link to manage it', async () => {
+    for (const id of [personalId, regularId])
+      await run(
+        env.DB,
+        "INSERT INTO audit_log (at, org_id, actor_type, action, target_type, target_id) VALUES (1, ?, 'system', 'org.update', 'org', ?)",
+        [id, id],
+      );
+    const res = await call(other, 'GET', '/api/v1/audit/platform?limit=200');
+    const items = ((await res.json()) as { items: { orgId: string; orgLabel: string | null }[] })
+      .items;
+    expect(items.find((e) => e.orgId === personalId)?.orgLabel).toBe('Personal org of Pat Owner');
+    expect(items.find((e) => e.orgId === regularId)?.orgLabel).toBeNull();
+  });
+});
+
+describe('Unlimited', () => {
+  it('puts a new personal org on Unlimited', async () => {
+    expect(
+      await first(env.DB, 'SELECT preset FROM org_entitlements WHERE org_id = ?', [personalId]),
+    ).toMatchObject({ preset: 'legacy' });
+  });
+
+  it('moves existing personal orgs, and only them, in migration 0216', async () => {
+    const { user } = await adminSession('Old Personal');
+    const oldId = f.ids.id();
+    await run(
+      env.DB,
+      "INSERT INTO orgs (id, slug, name, created_at, updated_at, personal_user_id) VALUES (?, 'personal-old', 'Old', 1, 1, ?)",
+      [oldId, user.id],
+    );
+    await run(
+      env.DB,
+      "INSERT INTO org_entitlements (org_id, preset, updated_at) VALUES (?, 'standard', 1)",
+      [oldId],
+    );
+    await run(
+      env.DB,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'members', '3', 1)",
+      [oldId],
+    );
+    const regular = await first<{ preset: string; revision: number }>(
+      env.DB,
+      'SELECT preset, revision FROM org_entitlements WHERE org_id = ?',
+      [regularId],
+    );
+    const statements = migration
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('--'))
+      .join('\n')
+      .split(/;\s*\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const s of statements) await run(env.DB, s);
+    const moved = await first<{ preset: string; preset_revision: number; revision: number }>(
+      env.DB,
+      'SELECT preset, preset_revision, revision FROM org_entitlements WHERE org_id = ?',
+      [oldId],
+    );
+    const meta = await first<{ revision: number }>(
+      env.DB,
+      "SELECT revision FROM entitlement_preset_meta WHERE preset = 'legacy'",
+    );
+    expect(moved).toEqual({ preset: 'legacy', preset_revision: meta?.revision, revision: 2 });
+    expect(
+      await all(env.DB, 'SELECT key FROM org_entitlement_overrides WHERE org_id = ?', [oldId]),
+    ).toEqual([]);
+    expect(
+      await first(
+        env.DB,
+        "SELECT detail FROM audit_log WHERE org_id = ? AND action = 'org.entitlements_update'",
+        [oldId],
+      ),
+    ).not.toBeNull();
+    expect(
+      await first(env.DB, 'SELECT preset, revision FROM org_entitlements WHERE org_id = ?', [
+        regularId,
+      ]),
+    ).toEqual(regular);
+  });
+});

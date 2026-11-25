@@ -246,6 +246,7 @@ export type AuditEntriesListResponse = {
     id: number;
     at: number;
     orgId: string | null;
+    orgLabel?: string | null;
     actorType: "user" | "api_key" | "system" | "connection" | "device" | "scanner";
     actorId: string | null;
     actorLabel?: string | null;
@@ -6541,6 +6542,7 @@ export type PlatformAuditEntriesListResponse = {
     id: number;
     at: number;
     orgId: string | null;
+    orgLabel?: string | null;
     actorType: "user" | "api_key" | "system" | "connection" | "device" | "scanner";
     actorId: string | null;
     actorLabel?: string | null;

@@ -58102,6 +58102,12 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
+                "orgLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "actorType": {
                   "type": "string",
                   "enum": [
@@ -58203,6 +58209,12 @@
                   ],
                   "minLength": 1,
                   "maxLength": 64
+                },
+                "orgLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "actorType": {
                   "type": "string",
@@ -82662,7 +82674,7 @@
     },
     "/api/v1/orgs": {
       "get": {
-        "summary": "List organizations",
+        "summary": "List organizations (personal organizations are never listed)",
         "tags": [
           "orgs"
         ],
@@ -82943,6 +82955,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -83061,6 +83074,7 @@
           "ORG_CONFLICT",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
@@ -83131,6 +83145,7 @@
           "ORG_CONFLICT",
           "ORG_HELD",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -83240,6 +83255,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -83334,6 +83350,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -86317,6 +86334,7 @@
           "ORG_FORBIDDEN",
           "ORG_HELD",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -87574,6 +87592,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
@@ -87665,6 +87684,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
@@ -88070,6 +88090,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -88180,6 +88201,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"

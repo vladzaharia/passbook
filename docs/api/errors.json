@@ -2835,6 +2835,15 @@
       ]
     },
     {
+      "code": "ORG_PERSONAL",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "ORG_PERSONAL_SINGLE_MEMBER",
       "statuses": [
         409

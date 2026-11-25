@@ -327,6 +327,7 @@ type AuditEntriesListItem struct {
 	ID          int64   `json:"id"`
 	At          int64   `json:"at"`
 	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
 	ActorType   string  `json:"actorType"`
 	ActorID     *string `json:"actorId"`
 	ActorLabel  *string `json:"actorLabel,omitempty"`
@@ -361,6 +362,7 @@ type AuditEntriesListResponseItemsItem struct {
 	ID          int64   `json:"id"`
 	At          int64   `json:"at"`
 	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
 	ActorType   string  `json:"actorType"`
 	ActorID     *string `json:"actorId"`
 	ActorLabel  *string `json:"actorLabel,omitempty"`
@@ -7641,6 +7643,7 @@ type PlatformAuditEntriesListResponseItemsItem struct {
 	ID          int64   `json:"id"`
 	At          int64   `json:"at"`
 	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
 	ActorType   string  `json:"actorType"`
 	ActorID     *string `json:"actorId"`
 	ActorLabel  *string `json:"actorLabel,omitempty"`

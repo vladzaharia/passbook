@@ -21,6 +21,7 @@ import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
 import { closeOrg } from '../org-lifecycle/service.ts';
 import { markPassesStale } from './branding-stale.ts';
 import { toDto } from './org-dto.ts';
+import { requirePersonalOwner } from './personal-guard.ts';
 import {
   countsFor,
   getOrgRow,
@@ -98,9 +99,10 @@ export async function getOrg(
   ctx: ServiceContext,
   id: string,
   mode: Mode = 'live',
-  platform = false,
+  platform?: { userId: string },
 ): Promise<Summary> {
   const row = await requireOrg(ctx, id);
+  if (platform) requirePersonalOwner(row.personal_user_id, platform.userId);
   return summarize(
     row,
     (await countsFor(ctx.env.DB, [id], mode)).get(id),
@@ -252,6 +254,7 @@ export async function setOrgStatus(
   admin: OrgAdmin,
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
+  requirePersonalOwner(before.personal_user_id, admin.userId);
   if (before.status === status) return toDto(before);
   const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
     ? await getOrgRow(ctx.env.DB, id)

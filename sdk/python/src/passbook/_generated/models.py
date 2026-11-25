@@ -2141,6 +2141,7 @@ class AuditEntriesListItem(_Model):
     id: int
     at: int
     orgId: str | None
+    orgLabel: str | None = None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
     actorId: str | None
     actorLabel: str | None = None
@@ -2159,6 +2160,7 @@ class AuditEntriesListResponseItemsItem(_Model):
     id: int
     at: int
     orgId: str | None
+    orgLabel: str | None = None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
     actorId: str | None
     actorLabel: str | None = None
@@ -8139,6 +8141,7 @@ class PlatformAuditEntriesListResponseItemsItem(_Model):
     id: int
     at: int
     orgId: str | None
+    orgLabel: str | None = None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
     actorId: str | None
     actorLabel: str | None = None

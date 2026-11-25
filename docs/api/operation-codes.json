@@ -1234,7 +1234,9 @@
   ],
   "entitlements get /entitlement-presets": [],
   "entitlements get /orgs/{id}/entitlements": [
-    "ORG_NOT_FOUND"
+    "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
   ],
   "entitlements get /{id}/entitlements": [
     "FORBIDDEN",
@@ -1252,6 +1254,7 @@
   "entitlements put /orgs/{id}/entitlements": [
     "ENTITLEMENTS_CHANGED",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
@@ -2515,6 +2518,7 @@
     "ORG_FORBIDDEN",
     "ORG_HELD",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED",
     "VALIDATION"
@@ -2585,6 +2589,7 @@
     "ORG_CONFLICT",
     "ORG_HELD",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
@@ -2598,7 +2603,9 @@
   ],
   "orgs get /": [],
   "orgs get /{id}": [
-    "ORG_NOT_FOUND"
+    "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
   ],
   "orgs get /{id}/branding/{slot}/{scale}": [
     "FORBIDDEN",
@@ -2626,6 +2633,7 @@
     "FORBIDDEN",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
@@ -2635,6 +2643,7 @@
     "ORG_CONFLICT",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_SLUG_RESERVED",
     "ORG_SLUG_TAKEN",
     "ORG_STATUS_ALONE",
@@ -2651,6 +2660,7 @@
   "orgs post /{id}/status": [
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED"
   ],
   "orgs put /{id}/branding/{slot}": [
@@ -7798,6 +7808,7 @@
     "CONFLICT",
     "FORBIDDEN",
     "NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_ENROLMENT_PREREQUISITE"
@@ -7806,6 +7817,7 @@
     "CONFLICT",
     "FORBIDDEN",
     "NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_ENROLMENT_PREREQUISITE"

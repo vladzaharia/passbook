@@ -57,11 +57,11 @@ export const standingOverrides = (db: D1Database, orgId: string, now: number) =>
     [orgId, now],
   );
 
-/** Every preset with the organizations on it. */
+/** Every preset with the organizations on it, personal ones left out of the count. */
 export const presetRows = (db: D1Database) =>
   all<PresetRow>(
     db,
-    `SELECT m.preset, m.label, m.revision, m.updated_at, m.previous_values, (SELECT count(*) FROM org_entitlements e WHERE e.preset = m.preset) AS org_count
+    `SELECT m.preset, m.label, m.revision, m.updated_at, m.previous_values, (SELECT count(*) FROM org_entitlements e JOIN orgs o ON o.id = e.org_id WHERE e.preset = m.preset AND o.personal_user_id IS NULL) AS org_count
      FROM entitlement_preset_meta m ORDER BY m.is_plan, m.preset`,
   );
 

@@ -24,6 +24,7 @@ import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
 import { authOf } from '../passes/http.ts';
 import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
 import { setPlatformSamsungCard } from './credential-cards.ts';
@@ -176,9 +177,11 @@ register(
     response: WalletEnrolmentHoldResultSchema,
   },
   async (c) => {
+    const session = sessionOf(c);
+    await requireNotPersonalFor(c.env.DB, c.req.valid('param').orgId, session.userId);
     const status = await holdEnrolment(
       serviceContext(c),
-      sessionOf(c),
+      session,
       c.req.valid('param'),
       c.req.valid('json').reason,
     );
@@ -196,10 +199,13 @@ register(
     params: PlatformWalletEnrolmentParamsSchema,
     response: WalletEnrolmentHoldResultSchema,
   },
-  async (c) =>
-    c.json({
-      status: await releaseEnrolment(serviceContext(c), sessionOf(c), c.req.valid('param')),
-    }),
+  async (c) => {
+    const session = sessionOf(c);
+    await requireNotPersonalFor(c.env.DB, c.req.valid('param').orgId, session.userId);
+    return c.json({
+      status: await releaseEnrolment(serviceContext(c), session, c.req.valid('param')),
+    });
+  },
 );
 
 register(

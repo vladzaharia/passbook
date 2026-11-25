@@ -70,7 +70,7 @@ register(
   {
     method: 'get',
     path: '/',
-    summary: 'List organizations',
+    summary: 'List organizations (personal organizations are never listed)',
     query: OrgListQuerySchema,
     response: PlatformOrgListSchema,
   },
@@ -109,7 +109,7 @@ register(
   async (c) =>
     c.json(
       PlatformOrgSummarySchema.parse(
-        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth), true),
+        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth), adminOf(c)),
       ),
     ),
 );
@@ -166,7 +166,9 @@ register(
     const ctx = serviceContext(c);
     const id = c.req.valid('param').id;
     await setOrgStatus(ctx, requestActor(c), id, c.req.valid('json').status, adminOf(c));
-    return c.json(PlatformOrgSummarySchema.parse(await getOrg(ctx, id, modeOf(c.var.auth), true)));
+    return c.json(
+      PlatformOrgSummarySchema.parse(await getOrg(ctx, id, modeOf(c.var.auth), adminOf(c))),
+    );
   },
 );
 register(
