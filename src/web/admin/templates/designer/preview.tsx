@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PassJson } from '@/passkit/types.ts';
-import { normalize } from '@/shared/pass-view/index.ts';
+import { normalize, type PassTarget } from '@/shared/pass-view/index.ts';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import { PassCardStage } from '../../../pass-card/index.tsx';
 import { Badge, LoadingRail, type PassSide, PassSideToggle, Skeleton } from '../../../ui/index.ts';
@@ -47,6 +47,7 @@ export function DesignerPreview({
   checking,
   stripUrl,
   assetOverrides,
+  target = 'ios27',
 }: {
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
@@ -56,6 +57,8 @@ export function DesignerPreview({
   stripUrl?: string | null;
   /** File name to URL: the organization's logo and icon, where they apply. */
   assetOverrides?: Record<string, string> | undefined;
+  /** The face the Edit layout toggle has selected; iOS 27 when the pass has one layout. */
+  target?: PassTarget;
 }) {
   const [face, setFace] = useState<PassSide>('front');
   const host = usePartDrop(passJson);
@@ -81,7 +84,7 @@ export function DesignerPreview({
           <PassCardStage
             view={view}
             face={face}
-            target="ios27"
+            target={target}
             flippable
             tilt
             glow

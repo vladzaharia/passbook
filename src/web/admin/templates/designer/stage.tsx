@@ -3,6 +3,7 @@ import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
+import type { PassTarget } from '@/shared/pass-view/index.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
 import type { PreviewChannel, PreviewSource } from '../../../channel-previews/types.ts';
 import { useSettings } from '../../settings/queries.ts';
@@ -26,12 +27,14 @@ export function DesignerStage({
   templateId,
   orgId,
   onPaper,
+  target,
   ...card
 }: {
   manifest: Record<string, unknown>;
   templateId?: string | undefined;
   orgId?: string | undefined;
   onPaper?: ((patch: PaperPatch) => void) | undefined;
+  target?: PassTarget | undefined;
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
   assetBase: string;
@@ -100,7 +103,13 @@ export function DesignerStage({
       source={source}
       channels={effective}
       notes={notes}
-      apple={<DesignerPreview {...card} assetOverrides={assetOverrides} />}
+      apple={
+        <DesignerPreview
+          {...card}
+          assetOverrides={assetOverrides}
+          {...(target ? { target } : {})}
+        />
+      }
       paper={
         <PaperPreview
           passJson={passJson}

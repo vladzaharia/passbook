@@ -1,6 +1,6 @@
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { Dialog, DialogContent } from '../../../ui/dialog.tsx';
-import { keyLabel, SHORTCUTS, type ShortcutRow } from '../keys.ts';
+import { keyLabel, SHORTCUTS, type ShortcutRow, viewKeys } from '../keys.ts';
 import { Kbd } from './command-field.tsx';
 
 const H = OPERATOR_COPY.help;
@@ -20,7 +20,7 @@ export function shortcutsFor(facts: {
       (row.when === 'rollCall' && facts.rollCall) ||
       (row.when === 'views' && facts.views > 1) ||
       (row.when === 'walkIn' && facts.walkIn),
-  );
+  ).map((row) => (row.id === 'views' ? { ...row, keys: [viewKeys(facts.views)] } : row));
 }
 
 /** `?`: every shortcut, from the same table the keys resolve from. */
