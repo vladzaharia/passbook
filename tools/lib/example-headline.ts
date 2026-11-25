@@ -34,6 +34,11 @@ const importSource = { kind: 'file', name: 'members.csv', csv: MEMBERS_CSV };
 
 /** `<operationId> <request|response>` to its example. */
 export const HEADLINE: Record<string, unknown> = {
+  'scan.postScanSignOut request': {
+    idempotencyKey: '0193a1b2-7c00-7000-8000-0000000000aa',
+    passId: '0193a1b2-7c00-7000-8000-0000000000c1',
+    tag: 'returned',
+  },
   'passes.postPasses request': create,
   'passes.postPasses response': {
     ...PASS,
