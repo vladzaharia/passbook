@@ -1,6 +1,7 @@
 import { type ReactNode, useId } from 'react';
+import { DEFAULT_TIME_ZONE, DEFAULT_TIME_ZONE_LABEL } from '@/shared/time-zone.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { localZone, zoneOptions } from '@/web/lib/timezones.ts';
+import { localZone, zoneLabel, zoneOptions } from '@/web/lib/timezones.ts';
 import { Button, Combobox, Input, Label, NumberField, SwitchRow } from '@/web/ui/index.ts';
 import type { SettingField } from './fields.ts';
 
@@ -23,6 +24,12 @@ export interface SettingRowProps {
 }
 
 const UNSET = '__unset';
+
+/** The zone an unset org follows, named the way the picker names it. */
+function defaultZoneLabel(zone: string | undefined): string {
+  const id = zone ?? DEFAULT_TIME_ZONE;
+  return `${id === DEFAULT_TIME_ZONE ? DEFAULT_TIME_ZONE_LABEL : zoneLabel(id)} · default`;
+}
 const ROW = 'px-4 py-4';
 const SPLIT = 'grid gap-x-8 gap-y-2 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-center';
 /** Number fields stay beside their label on phones too, like switches. */
@@ -70,9 +77,9 @@ function Control({
         aria-invalid={invalid || undefined}
         disabled={disabled}
         className="w-full"
-        placeholder="Not set (UTC)"
+        placeholder={defaultZoneLabel(placeholder)}
         searchPlaceholder="Search time zones"
-        options={[{ value: UNSET, label: 'Not set (UTC)' }, ...zoneOptions()]}
+        options={[{ value: UNSET, label: defaultZoneLabel(placeholder) }, ...zoneOptions()]}
         value={String(value) || undefined}
         onValueChange={(zone) => onChange(zone === UNSET ? '' : zone)}
       />
