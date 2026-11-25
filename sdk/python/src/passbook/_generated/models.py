@@ -8943,6 +8943,7 @@ class PlatformWalletCredentialsListResponseItemsItem(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class PlatformWalletCredentialsMigrateResponse(_Model):
     queued: int
@@ -8994,6 +8995,7 @@ class PlatformWalletCredentialsRevokeResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class PlatformWalletCredentialsRotateKeyResponse(_Model):
     runId: str
@@ -9017,6 +9019,7 @@ class PlatformWalletCredentialsSetSamsungCardResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class PlatformWalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -9059,6 +9062,7 @@ class PlatformWalletCredentialsUpsertResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class PlatformWalletEnrollmentsListResponse(_Model):
     items: _List[PlatformWalletEnrollmentsListResponseItemsItem]
@@ -12846,6 +12850,7 @@ class WalletAccountsGoogleSharedCreateResponseCredential(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class WalletAccountsGoogleSharedRetrieveResponse(_Model):
     serviceAccountEmail: str | None
@@ -12878,6 +12883,7 @@ class WalletCredentialsListResponseItemsItem(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class WalletCredentialsRevokeParams(_Model):
     expectedRevision: int
@@ -12896,6 +12902,7 @@ class WalletCredentialsRevokeResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class WalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -12936,6 +12943,7 @@ class WalletCredentialsUpsertResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: _Dict[str, _Any] | None
 
 class WalletEnrollmentsDisableParams(_Model):
     expectedRevision: int

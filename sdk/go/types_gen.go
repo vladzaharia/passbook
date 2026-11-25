@@ -8545,19 +8545,20 @@ type PlatformWalletCredentialsListResponse struct {
 }
 
 type PlatformWalletCredentialsListResponseItemsItem struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type PlatformWalletCredentialsMigrateResponse struct {
@@ -8604,19 +8605,20 @@ type PlatformWalletCredentialsRevokeParams struct {
 }
 
 type PlatformWalletCredentialsRevokeResponse struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type PlatformWalletCredentialsRotateKeyResponse struct {
@@ -8630,19 +8632,20 @@ type PlatformWalletCredentialsSetSamsungCardParams struct {
 }
 
 type PlatformWalletCredentialsSetSamsungCardResponse struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type PlatformWalletCredentialsUpsertParams = any
@@ -8679,19 +8682,20 @@ type PlatformWalletCredentialsUpsertParams2Credentials struct {
 }
 
 type PlatformWalletCredentialsUpsertResponse struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type PlatformWalletEnrollmentsListResponse struct {
@@ -13331,19 +13335,20 @@ type WalletAccountsGoogleSharedCreateResponse struct {
 }
 
 type WalletAccountsGoogleSharedCreateResponseCredential struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type WalletAccountsGoogleSharedRetrieveResponse struct {
@@ -13368,19 +13373,20 @@ type WalletCredentialsListResponse struct {
 }
 
 type WalletCredentialsListResponseItemsItem struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type WalletCredentialsRevokeParams struct {
@@ -13388,19 +13394,20 @@ type WalletCredentialsRevokeParams struct {
 }
 
 type WalletCredentialsRevokeResponse struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type WalletCredentialsUpsertParams = any
@@ -13435,19 +13442,20 @@ type WalletCredentialsUpsertParams2Credentials struct {
 }
 
 type WalletCredentialsUpsertResponse struct {
-	ID           string   `json:"id"`
-	Scope        string   `json:"scope"`
-	OrgID        *string  `json:"orgId"`
-	Mode         string   `json:"mode"`
-	Provider     string   `json:"provider"`
-	IdentityHint string   `json:"identityHint"`
-	Provenance   string   `json:"provenance"`
-	Revision     int64    `json:"revision"`
-	VerifiedAt   *int64   `json:"verifiedAt"`
-	RevokedAt    *int64   `json:"revokedAt"`
-	CreatedAt    int64    `json:"createdAt"`
-	UpdatedAt    int64    `json:"updatedAt"`
-	CardTypes    []string `json:"cardTypes"`
+	ID           string         `json:"id"`
+	Scope        string         `json:"scope"`
+	OrgID        *string        `json:"orgId"`
+	Mode         string         `json:"mode"`
+	Provider     string         `json:"provider"`
+	IdentityHint string         `json:"identityHint"`
+	Provenance   string         `json:"provenance"`
+	Revision     int64          `json:"revision"`
+	VerifiedAt   *int64         `json:"verifiedAt"`
+	RevokedAt    *int64         `json:"revokedAt"`
+	CreatedAt    int64          `json:"createdAt"`
+	UpdatedAt    int64          `json:"updatedAt"`
+	CardTypes    []string       `json:"cardTypes"`
+	LastCheck    map[string]any `json:"lastCheck"`
 }
 
 type WalletEnrollmentsDisableParams struct {

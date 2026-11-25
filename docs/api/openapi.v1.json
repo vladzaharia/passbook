@@ -23916,6 +23916,33 @@
                   "type": "string",
                   "pattern": "^[a-z]{1,16}$"
                 }
+              },
+              "lastCheck": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -23931,7 +23958,8 @@
               "revokedAt",
               "createdAt",
               "updatedAt",
-              "cardTypes"
+              "cardTypes",
+              "lastCheck"
             ],
             "additionalProperties": false
           },
@@ -24045,6 +24073,33 @@
                     "type": "string",
                     "pattern": "^[a-z]{1,16}$"
                   }
+                },
+                "lastCheck": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "code": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "code",
+                    "at"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -24060,7 +24115,8 @@
                 "revokedAt",
                 "createdAt",
                 "updatedAt",
-                "cardTypes"
+                "cardTypes",
+                "lastCheck"
               ],
               "additionalProperties": false
             }
@@ -24291,6 +24347,33 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "at": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "ok",
+              "code",
+              "at"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -24306,7 +24389,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -24403,6 +24487,33 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "at": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "ok",
+              "code",
+              "at"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -24418,7 +24529,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26209,6 +26321,33 @@
                     "type": "string",
                     "pattern": "^[a-z]{1,16}$"
                   }
+                },
+                "lastCheck": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "code": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "code",
+                    "at"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -26224,7 +26363,8 @@
                 "revokedAt",
                 "createdAt",
                 "updatedAt",
-                "cardTypes"
+                "cardTypes",
+                "lastCheck"
               ],
               "additionalProperties": false
             }
@@ -26471,6 +26611,33 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "at": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "ok",
+              "code",
+              "at"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -26486,7 +26653,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26597,6 +26765,33 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "at": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "ok",
+              "code",
+              "at"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -26612,7 +26807,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26709,6 +26905,33 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "at": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "ok",
+              "code",
+              "at"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -26724,7 +26947,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
