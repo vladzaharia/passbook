@@ -105,7 +105,9 @@ function DemoSteps({ tray }: { tray: TrayCase }) {
     if (tray === 'enter-results' || tray === 'enter-confirm')
       timers.push(
         setTimeout(() => {
-          const field = document.querySelector<HTMLInputElement>('input[type="text"], input:not([type])');
+          const field = document.querySelector<HTMLInputElement>(
+            'input[type="text"], input:not([type])',
+          );
           if (!field) return;
           Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
             field,
