@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import type { TemplateReleaseState } from '@/shared/contracts/template-release-flow.ts';
+import type { VersionReleases } from './version-info.ts';
 
 /** Saved version information supplied by the template detail response. */
 export interface ReleaseVersion {
@@ -23,6 +25,8 @@ export interface TemplateReleasesPanelProps {
   capabilities: readonly OrgCapability[];
   /** The server's release state: Test following Live decides Restore's reach. */
   release?: TemplateReleaseState | undefined;
+  /** The Versions list: it gets what the releases say, or null when they did not load. */
+  children?: ((releases: VersionReleases | null) => ReactNode) | undefined;
 }
 
 /** "Version 2" by age, oldest first; the version hash stays in technical details. */

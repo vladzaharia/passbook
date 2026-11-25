@@ -4,7 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setCsrfProvider } from '../../../lib/api.ts';
 import { resetModeForTests } from '../../../lib/mode.ts';
 import { problem } from '../../../lib/test-utils.tsx';
-import { mountPanel, OLD_HASH, release, releaseServer, SCOPE } from './test-fixtures.tsx';
+import {
+  mountPanel,
+  OLD_HASH,
+  pickRowAction,
+  release,
+  releaseServer,
+  SCOPE,
+} from './test-fixtures.tsx';
 
 beforeEach(() => setCsrfProvider(async () => 'csrf-token'));
 afterEach(() => {
@@ -14,7 +21,7 @@ afterEach(() => {
 });
 
 describe('template release actions', () => {
-  it('lists the release by version and publisher, with ids under technical details', async () => {
+  it('lists a version with its release badges and date, ids in its side sheet', async () => {
     const user = userEvent.setup();
     const active = release({
       id: 'active-release-id',
@@ -24,27 +31,18 @@ describe('template release actions', () => {
     });
     releaseServer({ active, history: [active] });
     mountPanel({ mode: 'test' });
-    const timeline = await screen.findByRole('list', { name: 'Releases' });
-    const row = within(timeline).getAllByRole('listitem')[0];
-    if (!row) throw new Error('Release row missing');
+    const list = await screen.findByRole('list', { name: 'Versions' });
+    const row = within(list).getAllByRole('listitem')[0];
+    if (!row) throw new Error('Version row missing');
     expect(row).toHaveTextContent('v2');
-    expect(row).toHaveTextContent('Pia Publisher');
-    const disclosure = within(row).getByText('Technical details');
-    const details = disclosure.closest('details');
-    expect(details).not.toHaveAttribute('open');
-    await user.click(disclosure);
-    expect(details).toHaveAttribute('open');
+    expect(row).toHaveTextContent('Live');
+    expect(row).toHaveTextContent('Test');
+    expect(row).toHaveTextContent(/Released/);
+    expect(within(list).queryByText('Technical details')).not.toBeInTheDocument();
+    await pickRowAction(user, 'v2', 'Technical details');
+    const sheet = await screen.findByRole('dialog', { name: 'v2 details' });
     for (const value of ['4', OLD_HASH])
-      expect(within(row).getAllByText(value).length).toBeGreaterThan(0);
-  });
-
-  it('names an unknown publisher plainly, never by id', async () => {
-    const active = release({ createdBy: 'user-uuid', createdByName: null });
-    releaseServer({ active, history: [active] });
-    mountPanel();
-    const timeline = await screen.findByRole('list', { name: 'Releases' });
-    expect(within(timeline).getAllByText(/Someone/).length).toBeGreaterThan(0);
-    expect(screen.queryByText('user-uuid')).not.toBeInTheDocument();
+      expect(within(sheet).getAllByText(value).length).toBeGreaterThan(0);
   });
 
   it('requires a reason and rolls back an earlier approved release as a new generation', async () => {
@@ -53,7 +51,7 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', version: 'version-2', generation: 5 });
     const server = releaseServer({ active: head, history: [earlier, head] });
     mountPanel();
-    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    await pickRowAction(user, 'v1', 'Restore');
     const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     expect(reason).toBeRequired();
@@ -111,7 +109,7 @@ describe('template release actions', () => {
         ),
     });
     mountPanel();
-    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    await pickRowAction(user, 'v1', 'Restore');
     const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     await user.type(reason, 'Restore the previous build');
@@ -135,7 +133,7 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', generation: 5 });
     const server = releaseServer({ active: null, history: [head] });
     mountPanel({ templateStatus: 'archived' });
-    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    await pickRowAction(user, 'v1', 'Restore');
     const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     await user.type(
       within(dialog).getByRole('textbox', { name: /Reason/ }),
