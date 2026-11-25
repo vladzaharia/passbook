@@ -249,6 +249,8 @@ test('a developer sandbox has no Connections: hidden from the nav, a direct URL 
     await expect(nav.getByRole('link', { name: 'Webhooks' })).toBeVisible();
     for (const scheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme: scheme });
+      // The drawer slides in; the shot waits for it to settle.
+      await page.waitForTimeout(800);
       await page.screenshot({ path: `${dir}/live-only-sandbox-nav-menu-390-${scheme}.png` });
     }
     await page.emulateMedia({ colorScheme: 'light' });
