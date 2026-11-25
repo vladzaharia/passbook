@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
+import { SetSamsungCardSchema } from '../../../shared/contracts/wallet-provider-actions.ts';
 import {
   HoldWalletEnrolmentSchema,
   PlatformWalletCredentialCheckParamsSchema,
@@ -25,6 +26,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf } from '../passes/http.ts';
 import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
+import { setPlatformSamsungCard } from './credential-cards.ts';
 import { migrationReport, queueMigration } from './credential-migrate.ts';
 import { resolveMigration } from './credential-migrate-resolve.ts';
 import {
@@ -77,6 +79,28 @@ register(
   },
   async (c) =>
     c.json(await savePlatformCredential(serviceContext(c), sessionOf(c), c.req.valid('json'))),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'put',
+    path: '/wallet-credentials/{id}/cards',
+    summary: 'Name the Samsung card of one more type on a platform credential',
+    params: z.strictObject({ id: IdSchema }),
+    body: SetSamsungCardSchema,
+    response: WalletCredentialSchema,
+  },
+  async (c) =>
+    c.json(
+      await setPlatformSamsungCard(
+        serviceContext(c),
+        sessionOf(c),
+        c.req.valid('param').id,
+        c.req.valid('json'),
+      ),
+    ),
 );
 
 register(

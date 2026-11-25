@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ScanSetupIntentSchema } from './contracts/scan-setup-intent.ts';
 import { applyPreset } from './scan-setup-plan-presets.ts';
-import { codes, ORG, planned } from './scan-setup-plan-test-fixtures.ts';
+import { codes, ctxOf, ORG, planned } from './scan-setup-plan-test-fixtures.ts';
 import { SCAN_SETUP_PRESET_IDS } from './scan-setup-preset-ids.ts';
 
 const filled = (preset: string, door: Record<string, unknown> = {}) => {
@@ -154,5 +154,62 @@ describe('planned sessions of the new presets', () => {
         doors: [{ ...door, place: 'galleries' }],
       }),
     ).toEqual([]);
+  });
+});
+
+describe('hard limit: capped by the place, an ancestor, or an event', () => {
+  const door = { name: 'D', admits: { templateIds: ['tpl_day'] }, more: { hardLimit: true } };
+  const zone = (id: string, over: Record<string, unknown> = {}) => ({
+    id,
+    key: id.slice(5),
+    name: id,
+    parentId: null,
+    archived: false,
+    occupancy: 'track' as const,
+    capacity: null,
+    ...over,
+  });
+  const NO = 'SETUP_HARD_LIMIT_NO_CAPACITY';
+
+  it('an admitted event with a max caps a door with no place', () => {
+    const event = {
+      ref: 'g',
+      name: 'Gala',
+      templateIds: ['tpl_ticket'],
+      opensAt: 1000,
+      closesAt: 2000,
+    };
+    expect(
+      codes({ events: [{ ...event, max: 100 }], doors: [{ ...door, admits: { events: ['g'] } }] }),
+    ).toEqual([]);
+    expect(codes({ events: [event], doors: [{ ...door, admits: { events: ['g'] } }] })).toContain(
+      NO,
+    );
+  });
+
+  it('a counted place inside a parent with a max is capped by the parent', () => {
+    const places = [
+      { ref: 'club', name: 'Club', max: 50 },
+      { ref: 'pool', name: 'Pool', inside: 'club', count: true },
+    ];
+    expect(codes({ places, doors: [{ ...door, place: 'pool' }] })).toEqual([]);
+    expect(
+      codes({
+        places: [{ ...places[0], max: undefined, count: true }, places[1]],
+        doors: [{ ...door, place: 'pool' }],
+      }),
+    ).toContain(NO);
+  });
+
+  it('an existing zone is capped by its own capacity or an ancestor, else refused', () => {
+    const zones = [
+      zone('zone_top', { capacity: 40 }),
+      zone('zone_kid', { parentId: 'zone_top' }),
+      zone('zone_open'),
+    ];
+    const ctx = ctxOf({ zones });
+    expect(codes({ doors: [{ ...door, place: 'zone_top' }] }, ctx)).toEqual([]);
+    expect(codes({ doors: [{ ...door, place: 'zone_kid' }] }, ctx)).toEqual([]);
+    expect(codes({ doors: [{ ...door, place: 'zone_open' }] }, ctx)).toContain(NO);
   });
 });

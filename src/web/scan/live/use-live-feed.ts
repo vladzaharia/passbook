@@ -38,7 +38,7 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
         void refetch();
         return;
       }
-      if ('resolved' in parsed.data || 'enroll' in parsed.data) return;
+      if ('resolved' in parsed.data || 'enroll' in parsed.data || 'draft' in parsed.data) return;
       const snapshot = parsed.data;
       cursor = snapshot.cursor;
       if (snapshot.welcome !== undefined) setWelcome(snapshot.welcome);

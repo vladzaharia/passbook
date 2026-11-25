@@ -198,19 +198,22 @@ describe('schema 1 and the Google publish path', () => {
     ).toMatchObject({ reviewerId: kit.reviewer.userId });
   });
 
-  it('keeps the final release trigger on the schema and Samsung-evidence rules', async () => {
-    // The database is built from every migration, so this is the final trigger. Schema 2 is
-    // accepted for both providers and needs no evidence; schema 1 stays Samsung's, with evidence.
+  it('keeps the final release trigger on the compiled schema and the card-state rule', async () => {
+    // The database is built from every migration, so this is the final trigger (0202). Only schema 2 is
+    // released, for both providers; a Samsung release needs a fresh card-state row by its state, and no
+    // stored evidence is read.
     const trigger = await S.env.DB.prepare(
       "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'template_provider_releases_insert'",
     ).first<{ sql: string }>();
     const sql = (trigger?.sql ?? '').replace(/\s+/g, ' ');
     expect(sql).toContain(
-      "(json_extract(c.projection_json, '$.schema') = 2 OR (c.provider = 'samsung' AND json_extract(c.projection_json, '$.schema') = 1))",
+      "AND json_extract(c.projection_json, '$.schema') = 2 AND c.adapter_revision = 1",
     );
-    const evidenceGuard =
-      "NEW.provider = 'samsung' AND NOT EXISTS (SELECT 1 FROM template_candidates s2 WHERE s2.id = NEW.candidate_id AND json_extract(s2.projection_json, '$.schema') = 2) AND NOT EXISTS (";
-    expect(sql.split(evidenceGuard).length - 1).toBe(2);
+    expect(sql).not.toContain('wallet_provider_projection_evidence');
+    expect(sql).not.toContain("'$.schema') = 1");
+    expect(sql).toContain(
+      "((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (NEW.mode = 'test' AND st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED')))",
+    );
     expect(sql).toContain("THEN RAISE(ABORT, 'invalid provider release approval or source')");
   });
 });

@@ -5,6 +5,7 @@ import { PROVIDER_NAME } from './copy.ts';
 import { CredentialRow } from './credential-row.tsx';
 import { EnrolmentTable } from './enrolment-table.tsx';
 import { usePlatformCredentials } from './queries.ts';
+import { SamsungCards } from './samsung-cards.tsx';
 
 const MODES: { mode: Mode; label: string }[] = [
   { mode: 'live', label: 'Live' },
@@ -28,22 +29,29 @@ export function ProviderTab({ provider }: { provider: WalletProvider }) {
               onRetry={() => credentials.refetch()}
             />
           ) : (
-            MODES.map(({ mode, label }) => (
-              <CredentialRow
-                key={mode}
-                label={label}
-                target={{ kind: 'platform', mode }}
-                provider={provider}
-                canManage
-                credential={credentials.data.items.find(
-                  (c) =>
-                    c.provider === provider &&
-                    c.mode === mode &&
-                    c.scope === 'platform' &&
-                    c.revokedAt === null,
-                )}
-              />
-            ))
+            MODES.map(({ mode, label }) => {
+              const credential = credentials.data.items.find(
+                (c) =>
+                  c.provider === provider &&
+                  c.mode === mode &&
+                  c.scope === 'platform' &&
+                  c.revokedAt === null,
+              );
+              return (
+                <div key={mode} className="flex flex-col gap-2">
+                  <CredentialRow
+                    label={label}
+                    target={{ kind: 'platform', mode }}
+                    provider={provider}
+                    canManage
+                    credential={credential}
+                  />
+                  {provider === 'samsung' && credential ? (
+                    <SamsungCards credential={credential} />
+                  ) : null}
+                </div>
+              );
+            })
           )}
         </CardBody>
       </Card>

@@ -58,6 +58,32 @@ function admitsOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) 
   return { templateIds: [...templateIds], events: links };
 }
 
+/** The first max up a made place's chain of `inside` parents (made places, then existing zones). */
+function refMax(env: DoorPlanEnv, ref: string): number | null {
+  const seen = new Set<string>();
+  for (let at: string | undefined = ref; at !== undefined && !seen.has(at); ) {
+    seen.add(at);
+    const p = env.intent.places.find((x) => 'ref' in x && x.ref === at);
+    if (p === undefined) return zoneMax(env, at);
+    if (!('ref' in p)) return zoneMax(env, p.zoneId);
+    if (p.max !== undefined) return p.max;
+    at = p.inside;
+  }
+  return null;
+}
+
+/** The first capacity from an existing zone up its parents. */
+function zoneMax(env: DoorPlanEnv, id: string): number | null {
+  const seen = new Set<string>();
+  for (let z = env.ctx.zones.find((x) => x.id === id); z && !seen.has(z.id); ) {
+    if (z.capacity !== null) return z.capacity;
+    seen.add(z.id);
+    const parent = z.parentId;
+    z = parent === null ? undefined : env.ctx.zones.find((x) => x.id === parent);
+  }
+  return null;
+}
+
 /** The door's zone, and whether people scan out of it. */
 function placeOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) {
   const id = door.place;
@@ -67,7 +93,7 @@ function placeOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) {
   if (target?.kind === 'place') {
     const p = intent.places.find((x) => 'ref' in x && x.ref === id);
     const exits = p !== undefined && 'ref' in p && isTracked(p) && p.tapOut !== false;
-    const max = p !== undefined && 'ref' in p ? (p.max ?? null) : null;
+    const max = refMax(env, id);
     return { zone: { ref: id }, exits, max };
   }
   if (target) {
@@ -75,7 +101,8 @@ function placeOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) {
     return { zone: null, exits: false, max: null };
   }
   const z = ctx.zones.find((x) => x.id === id);
-  if (z && !z.archived) return { zone: { id }, exits: z.occupancy !== 'off', max: z.capacity };
+  if (z && !z.archived)
+    return { zone: { id }, exits: z.occupancy !== 'off', max: zoneMax(env, z.id) };
   issues.push({
     code: z ? 'ZONE_ARCHIVED' : isRef(id) ? 'SETUP_REF_UNKNOWN' : 'ZONE_NOT_FOUND',
     path,
@@ -98,7 +125,10 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
       path: [...path, 'hours'],
       params: { door: door.name },
     });
-  if (door.more?.hardLimit === true && max === null)
+  const eventCap = (accepts?.events ?? []).some(
+    (l) => (eventOf(env, l)?.capacity ?? null) !== null,
+  );
+  if (door.more?.hardLimit === true && max === null && !eventCap)
     env.issues.push({
       code: 'SETUP_HARD_LIMIT_NO_CAPACITY',
       path: [...path, 'more', 'hardLimit'],

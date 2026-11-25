@@ -19,6 +19,7 @@ export const COPY = {
   revoke: 'Revoke',
   hold: 'Hold',
   release: 'Release',
+  reissue: 'Update passes',
   sourceSwitchedOff: 'Source changed. Turned off.',
   empty: 'No organizations enrolled',
 } as const;

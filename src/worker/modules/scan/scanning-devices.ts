@@ -1,9 +1,11 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import type {
-  CreateScanningDeviceSchema,
-  UpdateScanningDeviceSchema,
+import {
+  type CreateScanningDeviceSchema,
+  type ScanDeviceOverrides,
+  ScanDeviceOverridesSchema,
+  type UpdateScanningDeviceSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
 import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
@@ -13,6 +15,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { getUser } from '../users/repo.ts';
+import { resolveFollows } from './device-follows.ts';
 import { planScanningDevice, scanningDeviceStatements } from './device-statements.ts';
 import { kickScreen } from './live.ts';
 import {
@@ -29,6 +32,7 @@ import {
   addScanningDeviceUpdate,
   adminScanningDevice,
   scanningDeviceRow,
+  scanningDeviceRows,
 } from './repo-scanning-devices.ts';
 import { readScannerScope } from './repo-scope.ts';
 import {
@@ -144,7 +148,20 @@ export async function updateScanningDevice(
       [],
       'SCAN_SURFACE_UNSUPPORTED',
     );
-  const overrides = input.overrides ?? JSON.parse(device.overrides);
+  const storedParsed = ScanDeviceOverridesSchema.safeParse(JSON.parse(device.overrides));
+  if (!storedParsed.success && input.overrides === undefined)
+    throw new ValidationError(
+      'Correct this device’s settings first.',
+      [],
+      'SCANNING_FOLLOWS_INVALID',
+    );
+  const storedOverrides: ScanDeviceOverrides = storedParsed.success ? storedParsed.data : {};
+  const overrides = resolveFollows(
+    input.overrides ?? storedOverrides,
+    effective,
+    await scanningDeviceRows(ctx.env.DB, parent.org_id, parent.id),
+    storedOverrides.follows ?? [],
+  );
   const scope = await resolveSessionScope(ctx, parent);
   const parentSettings = input.overrides === undefined ? null : effectiveSessionSettings(parent);
   if (input.overrides !== undefined && !parentSettings)

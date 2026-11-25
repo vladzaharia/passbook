@@ -3,6 +3,7 @@ import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from '
 import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
 import { ZoneIdsSchema } from './scan-access.ts';
 import { ScanCustomerViewSchema } from './scan-customer.ts';
+import { ScanLiveDraftSchema } from './scan-draft.ts';
 import { ScanOccupancySchema, ScanOutCauseSchema, ScanPlaceRevSchema } from './scan-occupancy.ts';
 import {
   DeviceRoleSchema,
@@ -111,4 +112,5 @@ export const ScanLiveMessageSchema = z.union([
   z.object({ resolved: ScanLiveResolvedSchema }),
   z.object({ control: z.literal('reset') }),
   z.object({ enroll: ScanLiveEnrollSchema }),
+  z.object({ draft: ScanLiveDraftSchema }),
 ]);

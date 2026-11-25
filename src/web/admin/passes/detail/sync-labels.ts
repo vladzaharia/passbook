@@ -56,6 +56,8 @@ export function walletDetail(e: PassEventDto): string | null {
 const MESSAGED_FACT: Record<string, { text: string; tone: 'info' | 'warning' }> = {
   notified: { text: 'Notified', tone: 'info' },
   text: { text: 'Daily limit reached', tone: 'warning' },
+  // Samsung has no notifying call: the card changed and Samsung decides what the holder sees.
+  updated: { text: 'Updated only', tone: 'info' },
   failed: { text: 'Not accepted', tone: 'warning' },
   unknown: { text: 'Not confirmed', tone: 'warning' },
 };

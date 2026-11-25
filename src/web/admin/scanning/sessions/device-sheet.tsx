@@ -1,12 +1,15 @@
 import { QrCode, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import type { ScanningDevice, ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
+import { surfaceFor } from '@/shared/scan-surfaces.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { DiscardDialog } from '@/web/ui/alert-dialog.tsx';
 import { Badge, Button, Callout, FormField, Input, Sheet, SheetContent } from '@/web/ui/index.ts';
 import { useUpdateSessionDevice } from './api.ts';
+import { DeviceFollows, followable } from './device-follows.tsx';
 import { DeviceOverrides } from './device-overrides.tsx';
 import { HardwareBadges } from './hardware-badges.tsx';
+import type { SessionDetailData } from './session-live.ts';
 import { SurfacePicker } from './surface-picker.tsx';
 
 export function DeviceSheet({
@@ -18,7 +21,7 @@ export function DeviceSheet({
   onRevoke,
 }: {
   device: ScanningDevice;
-  session: ScanningSession;
+  session: SessionDetailData;
   canManage: boolean;
   onClose: () => void;
   onPair: () => void;
@@ -36,11 +39,19 @@ export function DeviceSheet({
     name !== device.name ||
     surface !== device.surface ||
     JSON.stringify(overrides) !== JSON.stringify(device.overrides);
-  const layout = surface === 'desk' ? 'operator' : surface;
+  // The surface the server will resolve for this choice and these capabilities.
+  const layout = surfaceFor(surface, device.capabilities);
   async function submit() {
     setError('');
     try {
-      await save.mutateAsync({ name: name.trim(), surface, overrides, revision });
+      // A scan surface leaves `follows` out: the server keeps the stored ids, inert, for a flip back.
+      const { follows: _follows, ...scanOverrides } = overrides;
+      await save.mutateAsync({
+        name: name.trim(),
+        surface,
+        overrides: layout === 'customer' ? overrides : scanOverrides,
+        revision,
+      });
       onClose();
     } catch (cause) {
       setError(errorMessage(cause));
@@ -182,9 +193,14 @@ export function DeviceSheet({
                   <DeviceOverrides value={overrides} onChange={setOverrides} session={session} />
                 </section>
               ) : (
-                <p className="text-sm text-fg-muted">
-                  This display follows scanners in the same session and cannot check anyone in.
-                </p>
+                <>
+                  <p className="text-sm text-fg-muted">This display cannot check anyone in.</p>
+                  <DeviceFollows
+                    value={overrides}
+                    onChange={setOverrides}
+                    scanners={followable(session.devices)}
+                  />
+                </>
               )}
             </fieldset>
             {canManage ? (

@@ -47,7 +47,8 @@
           "verifiedAt": 1795399200000,
           "revokedAt": null,
           "createdAt": 1794362400000,
-          "updatedAt": 1795399200000
+          "updatedAt": 1795399200000,
+          "cardTypes": ["northwind"]
         }
       ],
       "nextCursor": null
@@ -77,7 +78,8 @@
       "verifiedAt": 1795570500000,
       "revokedAt": null,
       "createdAt": 1794362400000,
-      "updatedAt": 1795399200000
+      "updatedAt": 1795399200000,
+      "cardTypes": ["northwind"]
     }
   },
   "wallet-platform.postPlatformWalletCredentialsByIdRevoke": {
@@ -96,7 +98,8 @@
       "verifiedAt": 1795399200000,
       "revokedAt": 1795572000000,
       "createdAt": 1794362400000,
-      "updatedAt": 1795572000000
+      "updatedAt": 1795572000000,
+      "cardTypes": ["northwind"]
     }
   },
   "wallet-platform.postPlatformWalletCredentialsByIdCheck": {
@@ -182,6 +185,28 @@
     },
     "response": {
       "accounts": 1
+    }
+  },
+  "wallet-platform.putPlatformWalletCredentialsByIdCards": {
+    "request": {
+      "type": "loyalty",
+      "cardId": "northwind",
+      "expectedRevision": 3
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-13a7e9559214",
+      "scope": "platform",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "identityHint": "Northwind signing identity",
+      "provenance": "platform",
+      "revision": 3,
+      "verifiedAt": 1795570500000,
+      "revokedAt": null,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "cardTypes": ["northwind"]
     }
   }
 }
