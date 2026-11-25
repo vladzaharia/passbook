@@ -70,6 +70,16 @@ describe('second set specifics', () => {
     expect(JSON.stringify(template.manifest.scan?.display)).toContain('"minRole":"desk"');
   });
 
+  it('Visitor takes loaner tags only and holds no host email', async () => {
+    const { template } = await loadBaked('starter-visitor-pass', { strips: false });
+    const m = template.manifest;
+    // A member-use tag fails the `uses` check of the bind policy (TAG_USE_MISMATCH).
+    expect(m.scan?.tags?.uses).toEqual(['visitor']);
+    expect(Object.keys(m.inputs?.properties ?? {})).not.toContain('hostEmail');
+    expect(Object.keys(m.sample ?? {})).not.toContain('hostEmail');
+    expect(m.scan?.access?.input?.sponsor).toBe('sponsor');
+  });
+
   it('Staff badge has staff, shift and contractor plans and suspends on leave', async () => {
     const { template } = await loadBaked('starter-staff-badge', { strips: false });
     const access = template.manifest.scan?.access;
