@@ -2675,6 +2675,12 @@
     "fix": "Check the tag id.",
     "retryable": false
   },
+  "TAG_NOT_LENT": {
+    "title": "Tag is not lent",
+    "when": "A lent tag was tapped to sign out or read a pass, but the tag is not on loan.",
+    "fix": "Name the pass instead, or lend the tag first.",
+    "retryable": false
+  },
   "TAG_NO_ACCOUNT": {
     "title": "Holder has no account",
     "when": "The person has no account to bind the tag to yet.",
