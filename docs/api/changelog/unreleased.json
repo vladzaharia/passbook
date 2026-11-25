@@ -808,6 +808,22 @@
     "note": "wallet.messaged records what a wallet did with a change message: notified, updated only (the card changed, no alert) or not accepted."
   },
   {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].passVersion: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].passVersion: field added",
+    "note": "Prints report passVersion, the pass version they were made from (null for older prints)."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].stale: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].stale: field added",
+    "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now."
+  },
+  {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
     "class": "additive",
     "operationId": "passes.getPassesBulkRunsById",
@@ -2691,6 +2707,46 @@
     "op": "POST /api/v1/passes",
     "change": "idempotency-key reserved prefixes",
     "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/print/drawn new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrintDrawn",
+    "op": "POST /api/v1/passes/{id}/print/drawn",
+    "change": "new operation",
+    "note": "POST /passes/{id}/print/drawn records that the active print was drawn again from the pass as it is now, clearing stale."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.passVersion: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.passVersion: field added",
+    "note": "Prints report passVersion, the pass version they were made from (null for older prints)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.stale: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.stale: field added",
+    "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.passVersion: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.passVersion: field added",
+    "note": "Prints report passVersion, the pass version they were made from (null for older prints)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.stale: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.stale: field added",
+    "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now."
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",

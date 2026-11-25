@@ -7,16 +7,16 @@
  */
 import { PAPER_COPY } from '../../shared/copy/print.ts';
 import type { Expr, PassJson, Personalization, TemplateManifest } from '../types.ts';
-import { resolveRoles } from '../wallets/roles.ts';
 import type { RoleValue } from '../wallets/types.ts';
 import { buildFields, styleOf } from '../wallets/view-fields.ts';
 import { relevanceOf } from '../wallets/view-parts.ts';
 import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
 import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
-import { paperZoneOf } from './paper-format.ts';
+import { checkInOnce, declaredTimes, printZone } from './paper-declared.ts';
 import { type PaperColors, paperInk } from './paper-ink.ts';
-import { type Kinded, kindContent, kindOf } from './paper-kinds.ts';
+import { ISO, type Kinded, kindContent, kindOf } from './paper-kinds.ts';
+import { dedupeAddress, idFlagged, paperRoles } from './paper-roles.ts';
 
 export type PaperArt = 'artwork' | 'background' | 'thumbnail' | 'strip';
 export interface PaperFact {
@@ -39,13 +39,17 @@ export interface PaperContent {
   kicker: string;
   /** "Ticket", "Pass": what the phone copy is called in the one-ticket line. */
   noun: string;
+  /** The template's check-in admits once; otherwise the print and the phone both keep working. */
+  once: boolean;
   start?: string;
   end?: string;
   doors?: string;
   validFrom?: string;
   validUntil?: string;
-  /** IANA name or `+hh:mm`; every time prints with this zone. */
+  /** IANA name or `+hh:mm`: the zone of the start, or of every time when `zoneNamed`. */
   zone?: string;
+  /** A named zone (template input or the org's): every time prints in it. Else each keeps its offset. */
+  zoneNamed: boolean;
   /** Venue, or the home club for a membership. */
   venue?: string;
   address?: string;
@@ -68,13 +72,18 @@ export interface PaperContent {
 
 export interface PaperContentInput {
   passJson: PassJson;
-  manifest: Pick<TemplateManifest, 'wallets' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'>;
+  manifest: Pick<
+    TemplateManifest,
+    'wallets' | 'behaviors' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'
+  >;
   personalization: Personalization;
   design: PaperDesign;
   /** The holder's name when the pass has one; never an email address. */
   holderName?: string | null;
   /** The pass's own scan code: a field equal to it is never printed. */
   scanCode?: string | null;
+  /** The org's time zone: times written in UTC read in it. */
+  orgTimeZone?: string | null;
   /** Image slots the template ships (`logo`, `artwork`, ...). Absent: the logo is assumed, no art. */
   images?: readonly string[];
 }
@@ -101,19 +110,6 @@ const ART_ORDER: Record<PaperKind, PaperArt[]> = {
 const MAX_HELP = 3;
 const MAX_BRING = 4;
 
-/** An address that starts with the venue name drops the repeat; one that equals it vanishes. */
-export function dedupeAddress(venue: string | undefined, address: string | undefined) {
-  if (!address) return undefined;
-  if (!venue) return address;
-  let rest = address;
-  while (rest.toLowerCase().startsWith(venue.toLowerCase()))
-    rest = rest
-      .slice(venue.length)
-      .replace(/^[\s,·–-]+/, '')
-      .trim();
-  return rest || undefined;
-}
-
 /** The ticket's words. Pure; the same pass and design always give the same content. */
 export function paperContent(input: PaperContentInput): PaperContent {
   const { passJson, manifest, design } = input;
@@ -132,16 +128,8 @@ export function paperContent(input: PaperContentInput): PaperContent {
     lookups: manifest.lookups ?? {},
   };
   const evalExpr = (e: Expr) => evaluate(e, scope);
-  const { roles } = resolveRoles(
-    {
-      style,
-      org: passJson.organizationName,
-      fields,
-      ...(passJson.semantics ? { semantics: passJson.semantics } : {}),
-      barcodes: [],
-      dates: relevance.dates,
-      locations: relevance.locations,
-    },
+  const roles = paperRoles(
+    { style, org: passJson.organizationName, fields, passJson, relevance },
     manifest.wallets?.roles,
     evalExpr,
   );
@@ -200,6 +188,7 @@ export function paperContent(input: PaperContentInput): PaperContent {
     semantics,
     holderName: input.holderName ?? undefined,
     publicLookup: publicLookup ? lookupValue : undefined,
+    declared: declaredTimes(manifest, input.personalization),
   };
   const parts = kindContent(ctx);
   const venue = parts.venue;
@@ -223,7 +212,8 @@ export function paperContent(input: PaperContentInput): PaperContent {
   const have = new Set(input.images);
   const art = input.images ? ART_ORDER[kind].find((slot) => have.has(slot)) : undefined;
 
-  const title = parts.title ?? text(roles.title) ?? passJson.description;
+  const lead = text(roles.title);
+  const title = parts.title ?? (lead && !ISO.test(lead) ? lead : undefined) ?? passJson.description;
   const label = parts.kicker ?? manifest.name;
   // The permit blueprint's own label is "Permit"; on paper it says what it is.
   const kicker = (kind === 'permit' && label === 'Permit' ? 'Parking permit' : label) ?? title;
@@ -246,7 +236,12 @@ export function paperContent(input: PaperContentInput): PaperContent {
         .map((v) => v.replace(/^(?:mailto:|tel:)/, '')),
     ),
   ].slice(0, MAX_HELP);
-  const zone = paperZoneOf(parts.start ?? parts.validUntil ?? parts.end, named);
+  const { zone, zoneNamed } = printZone(
+    { start: parts.start, end: parts.end, doors: parts.doors },
+    [parts.validUntil, parts.validFrom],
+    named,
+    input.orgTimeZone,
+  );
   const room = parts.room && parts.room !== venue ? parts.room : undefined;
   const address = dedupeAddress(room, dedupeAddress(venue, parts.address));
   return {
@@ -259,12 +254,14 @@ export function paperContent(input: PaperContentInput): PaperContent {
     title,
     kicker,
     noun,
+    once: checkInOnce(manifest),
     ...(parts.start ? { start: parts.start } : {}),
     ...(parts.end ? { end: parts.end } : {}),
     ...(parts.doors ? { doors: parts.doors } : {}),
     ...(parts.validFrom ? { validFrom: parts.validFrom } : {}),
     ...(parts.validUntil ? { validUntil: parts.validUntil } : {}),
     ...(zone ? { zone } : {}),
+    zoneNamed,
     ...(venue ? { venue } : {}),
     ...(address ? { address } : {}),
     ...(room ? { room } : {}),
@@ -280,13 +277,4 @@ export function paperContent(input: PaperContentInput): PaperContent {
     ...(terms ? { terms } : {}),
     extras,
   };
-}
-
-/** `scan.flags` names an `idRequired` input and this pass has it on. */
-function idFlagged(manifest: PaperContentInput['manifest'], personalization: Personalization) {
-  const flags = (manifest.scan as { flags?: { input?: string }[] } | undefined)?.flags ?? [];
-  return flags.some((f) => {
-    const v = f.input === 'idRequired' ? personalization.idRequired : undefined;
-    return v === true || (typeof v === 'string' && /^(true|yes|y|1)$/i.test(v));
-  });
 }

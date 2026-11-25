@@ -984,6 +984,8 @@ __all__ = [
     "PassesPrintsListResponse",
     "PassesPrintsListResponsePrintsItem",
     "PassesPrintsListResult",
+    "PassesPrintsMarkDrawnResponse",
+    "PassesPrintsMarkDrawnResult",
     "PassesPrintsVoidResponse",
     "PassesPrintsVoidResult",
     "PassesRefreshResponse",
@@ -7997,6 +7999,8 @@ class PassesPrintsCreateResponse(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8010,6 +8014,19 @@ class PassesPrintsListResponsePrintsItem(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
+    createdAt: int
+    voidedAt: int | None
+    voidCause: str | None
+
+class PassesPrintsMarkDrawnResponse(_Model):
+    id: str
+    passId: str
+    generation: int
+    status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8019,6 +8036,8 @@ class PassesPrintsVoidResponse(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -13760,6 +13779,8 @@ PassesMemberPhotoUploadResult = PassesMemberPhotoUploadResponse
 PassesPrintsCreateResult = PassesPrintsCreateResponse
 
 PassesPrintsListResult = PassesPrintsListResponse
+
+PassesPrintsMarkDrawnResult = PassesPrintsMarkDrawnResponse
 
 PassesPrintsVoidResult = PassesPrintsVoidResponse
 
