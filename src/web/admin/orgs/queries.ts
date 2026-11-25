@@ -5,6 +5,7 @@ import {
   type CreateOrgSchema,
   OrgListSchema,
   OrgSchema,
+  OrgSummarySchema,
   PlatformOrgSummarySchema,
   type UpdateOrgSchema,
 } from '@/shared/contracts/orgs.ts';
