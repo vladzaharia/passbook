@@ -1,6 +1,8 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { bump } from '../../platform/counters.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { purgeExpired } from '../auth/repo.ts';
 import { membership, person, sandboxOrg, sponsor, standardOrg } from './access-test-fixtures.ts';
 import { DRAIN_BATCH, drainIdp, reconcileIdp } from './jobs.ts';
 import { markDirty } from './repo-dirty.ts';
@@ -295,6 +297,21 @@ describe('LOW: holds are counted per hour, across runs', () => {
       ([s]) => s?.held_at != null,
     );
     expect(held).toHaveLength(10);
+  });
+});
+
+describe('LOW: hold counters are pruned by the daily counter sweep', () => {
+  it('drops an old hour and keeps the current one', async () => {
+    const hour = Math.floor(Date.now() / 3_600_000);
+    const now = hour * 3_600_000;
+    await bump(env.DB, `idp:holds:${hour - 72}`, (hour - 72) * 3_600_000);
+    await bump(env.DB, `idp:holds:${hour}`, now);
+    await purgeExpired(env.DB, now);
+    const keys = await all<{ key: string }>(
+      env.DB,
+      "SELECT key FROM counters WHERE key LIKE 'idp:holds:%'",
+    );
+    expect(keys.map((k) => k.key)).toEqual([`idp:holds:${hour}`]);
   });
 });
 
