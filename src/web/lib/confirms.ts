@@ -212,6 +212,16 @@ export function revokeAccessConfirm(
   };
 }
 
+/** Removing a member from the org; the roles go with them. */
+export function removeMemberConfirm(name: string, org: string): ConfirmCopy {
+  return {
+    title: `Remove ${name}?`,
+    confirmLabel: 'Remove',
+    description: `They lose access to ${org} at once.`,
+    typed: false,
+  };
+}
+
 /** Revoking a scanner: plain, so a lost phone stays one click away (like an API key). */
 export function revokeScannerConfirm(name: string): ConfirmCopy {
   return {

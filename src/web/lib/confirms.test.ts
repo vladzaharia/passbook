@@ -7,6 +7,7 @@ import {
   goLiveConfirm,
   pairAgainConfirm,
   removeEmailConfirm,
+  removeMemberConfirm,
   revokeKeyConfirm,
   revokeScannerConfirm,
   revokeSessionsConfirm,
@@ -14,6 +15,15 @@ import {
 } from './confirms.ts';
 
 describe('confirm copy', () => {
+  it('asks to remove a member and says access ends at once', () => {
+    expect(removeMemberConfirm('Ada', 'Acme')).toEqual({
+      title: 'Remove Ada?',
+      confirmLabel: 'Remove',
+      description: 'They lose access to Acme at once.',
+      typed: false,
+    });
+  });
+
   it('asks "Delete {name}?" and says it cannot be undone', () => {
     const org = deleteConfirm('org', 'Northwind');
     expect(org).toMatchObject({ title: 'Delete Northwind?', confirmLabel: 'Delete' });
