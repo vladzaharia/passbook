@@ -28,10 +28,10 @@ import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { svc } from '../passes/http.ts';
 import { serveCurrentPassFile } from '../passes/timed-variant.ts';
+import { holderZone } from '../public/holder-zone.ts';
 import { presentationForPass } from '../public/presentation.ts';
-import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
+import { EMAILED, langOf, PAGE_HEADERS } from '../public/routes.ts';
 import { isTokenShape, openPublicAsset, supportContacts } from '../public/service.ts';
-import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { bundleItems } from './public-items.ts';
 import { registerMemberPage } from './public-member.ts';
 import {
@@ -88,7 +88,7 @@ register(
       const bundle = await bundleForToken(ctx, token);
       const members = await bundleMembers(ctx, bundle);
       const lang = langOf(c.req.header('accept-language'));
-      const zone = zoneOf(c) ?? (await readOrgTimeZone(ctx.env.DB, bundle.org_id));
+      const zone = await holderZone(c, ctx, bundle.org_id);
       const now = new Date(ctx.clock.now());
       const wallets = await Promise.all(
         members.map(({ pass }) => bundleWalletProviders(ctx, pass)),

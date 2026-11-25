@@ -10,10 +10,10 @@ import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { voidedAt } from '../events/repo-voided.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { svc } from '../passes/http.ts';
+import { holderZone } from '../public/holder-zone.ts';
 import { canPresent } from '../public/presentation.ts';
-import { endedFor, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
+import { endedFor, langOf, PAGE_HEADERS } from '../public/routes.ts';
 import { supportContacts } from '../public/service.ts';
-import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { assertBundleMember, bundleForToken, bundleMember, bundlePass } from './public-service.ts';
 import { bundleWalletHref, bundleWalletProviders } from './wallet-links.ts';
@@ -43,7 +43,7 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
         const pass = await bundlePass(ctx, bundle, p.passId);
         const { model } = await bundleMember(ctx, p.token, pass);
         const now = new Date(ctx.clock.now());
-        const zone = zoneOf(c) ?? (await readOrgTimeZone(ctx.env.DB, pass.orgId));
+        const zone = await holderZone(c, ctx, pass.orgId);
         const lang = langOf(c.req.header('accept-language'));
         const view = normalize(model.passJson, {
           assets: model.assets,
