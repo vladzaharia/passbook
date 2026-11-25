@@ -3,6 +3,7 @@ import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { BuddyArt } from '../../ui/art/buddy-art.tsx';
+import { GuideTile } from '../guide/tile.tsx';
 import { shortDate } from '../model/dates.ts';
 import { highlight } from '../model/highlight.ts';
 import type { Site } from '../model/types.ts';
@@ -181,7 +182,7 @@ function Guides() {
       <div className="card-b recipes">
         {DEV_GUIDES.slice(0, 4).map((g) => (
           <a key={g.id} className="row g3" href={`${PATHS.guides}/${g.id}`}>
-            <span className={`sw ${g.tone}`} />
+            <GuideTile id={g.id} />
             <span className="strong">{g.title}</span>
           </a>
         ))}
