@@ -107,6 +107,7 @@ export const ENTITLEMENTS = {
   'templates.stylesBlocked': block([BOARDING, BOARDING, NONE, NONE, NONE, NONE]),
   'email.perDay': limit([100, 250, 500, 5000, null, 100]),
   members: limit([3, 5, 25, 100, null, 1]),
+  'members.developers': limit([1, 2, 5, 25, null, 0]),
   'brand.mark': level(['none', 'quiet', 'full'], ['full', 'full', 'quiet', 'none', 'none', 'full']),
   domains: limit([0, 0, 1, 5, null, 0]),
   'identity.own': flag([0, 0, 1, 1, 1, 0]),
