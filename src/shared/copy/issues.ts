@@ -156,6 +156,7 @@ export const ISSUE_WORDS: Record<WarningCode, Words> = {
     ['name'],
     (p) => `Paper lists ${p.name}, which is not on the pass.`,
   ),
+  PAPER_FIELD_UNDRAWN: 'A card, permit or coupon prints no extra fields.',
   PAPER_INK: 'The pass colours are too light for black and white. Paper prints mono.',
   PAPER_INPUT: named(
     'A paper field names an input the template does not have.',

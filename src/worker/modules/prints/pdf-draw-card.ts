@@ -114,7 +114,7 @@ export function drawCardBack(pen: Pen, s: Sheet): void {
       },
     ) + 1.4;
   const p: TextStyle = { size: 2.1167, font: 'regular', color: COLORS.text };
-  const [, line] = PAPER_COPY.oneTicket(c.noun);
+  const [, line] = PAPER_COPY.oneTicket(c.noun, c.once);
   for (const t of [line, PAPER_COPY.reprints[1], c.help.slice(0, 2).join(' · ')])
     if (t) y += pen.para(t, x, y, w, p, { maxLines: 2 }) + 1.4;
   const meta: TextStyle = { size: 1.905, font: 'regular', color: COLORS.muted };
