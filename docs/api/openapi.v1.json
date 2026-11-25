@@ -82658,6 +82658,355 @@
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
+      },
+      "patch": {
+        "summary": "Change an organization member's roles",
+        "tags": [
+          "organization-memberships"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "membershipId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "org_admin",
+                        "integration_admin",
+                        "template_author",
+                        "template_reviewer",
+                        "template_publisher",
+                        "pass_operator",
+                        "read_only"
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 7
+                  }
+                },
+                "required": [
+                  "roles"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgName": {
+                      "type": "string"
+                    },
+                    "orgSlug": {
+                      "type": "string"
+                    },
+                    "personal": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "testOnly": {
+                      "type": "boolean"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "org_admin",
+                          "integration_admin",
+                          "template_author",
+                          "template_reviewer",
+                          "template_publisher",
+                          "pass_operator",
+                          "read_only"
+                        ]
+                      },
+                      "minItems": 1,
+                      "maxItems": 7
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "org:read",
+                          "org:manage",
+                          "members:read",
+                          "members:manage",
+                          "integrations:read",
+                          "integrations:manage",
+                          "templates:read",
+                          "templates:author",
+                          "templates:review",
+                          "templates:publish",
+                          "passes:read",
+                          "passes:operate",
+                          "messages:read",
+                          "messages:manage",
+                          "scanning:read",
+                          "scanning:manage",
+                          "audit:read"
+                        ]
+                      }
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "revokedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "userName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "userEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "orgName",
+                    "orgSlug",
+                    "userId",
+                    "roles",
+                    "capabilities",
+                    "createdAt",
+                    "revokedAt",
+                    "userName",
+                    "userEmail"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "LAST_ORG_ADMIN",
+          "MEMBERSHIP_CONFLICT",
+          "MEMBERSHIP_NOT_FOUND",
+          "NOT_FOUND",
+          "ORG_PERSONAL_SINGLE_MEMBER",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/orgs/{id}/invitations/{invitationId}/resend": {
+      "post": {
+        "summary": "Resend an organization invitation",
+        "tags": [
+          "organization-memberships"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "invitationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "org_admin",
+                          "integration_admin",
+                          "template_author",
+                          "template_reviewer",
+                          "template_publisher",
+                          "pass_operator",
+                          "read_only"
+                        ]
+                      },
+                      "minItems": 1,
+                      "maxItems": 7
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "revokedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "acceptedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "email",
+                    "roles",
+                    "createdAt",
+                    "expiresAt",
+                    "revokedAt",
+                    "acceptedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVITATION_PENDING",
+          "MEMBERSHIP_CONFLICT",
+          "NOT_FOUND",
+          "ORG_PERSONAL_SINGLE_MEMBER",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
       }
     },
     "/api/v1/orgs": {
