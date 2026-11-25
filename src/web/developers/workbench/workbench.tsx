@@ -71,7 +71,7 @@ function Head({
       />
       <div className="stack g1 wb-head-main">
         <span className="eyebrow">Sandbox</span>
-        <h1 className="h1 wb-name">{sandbox.name}</h1>
+        <h2 className="h1 wb-name">{sandbox.name}</h2>
         <span className="wrap-row g2">
           <span className="pill accent">Test only</span>
           <span className="pill neutral">Previews only</span>
@@ -119,7 +119,7 @@ function NoSandbox({ home, links }: { home: DeveloperHome; links: WorkbenchLinks
         <Buddy size="sm" at="end" scene="wave" />
         <div className="stack g1 wb-head-main">
           <span className="eyebrow">Sandbox</span>
-          <h1 className="h2">No sandbox yet</h1>
+          <h2 className="h2">No sandbox yet</h2>
         </div>
         <a className="btn" href={links.sandbox}>
           Create sandbox
