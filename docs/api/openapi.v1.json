@@ -60082,120 +60082,6 @@
           "templates"
         ]
       },
-      "TerminalSignOutEverywhereParams": {
-        "type": "object",
-        "properties": {
-          "idempotencyKey": {
-            "type": "string",
-            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
-          },
-          "passId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "The pass to sign out. Send this or `read`, not both."
-          },
-          "read": {
-            "type": "object",
-            "properties": {
-              "uid": {
-                "type": "string",
-                "pattern": "^(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{14}|[0-9a-fA-F]{20})$"
-              },
-              "uidRandom": {
-                "type": "boolean"
-              },
-              "tech": {
-                "type": "string",
-                "enum": [
-                  "a",
-                  "b",
-                  "isodep",
-                  "unknown"
-                ]
-              },
-              "ndef": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "U",
-                      "T"
-                    ]
-                  },
-                  "value": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "type",
-                  "value"
-                ],
-                "additionalProperties": false
-              },
-              "source": {
-                "type": "string",
-                "enum": [
-                  "native",
-                  "webnfc"
-                ]
-              }
-            },
-            "required": [
-              "tech",
-              "source"
-            ],
-            "additionalProperties": false,
-            "description": "The lent tag, tapped instead of naming the pass. Its binding names the pass; a tag that is not lent is 409 TAG_NOT_LENT."
-          },
-          "tag": {
-            "type": "string",
-            "enum": [
-              "returned",
-              "not_returned",
-              "none"
-            ],
-            "description": "What happened to the pass's lent tag. Default `none` with `passId` (the tag stays lent), `returned` with `read`."
-          }
-        },
-        "required": [
-          "idempotencyKey"
-        ],
-        "additionalProperties": false
-      },
-      "TerminalSignOutEverywhereResponse": {
-        "type": "object",
-        "properties": {
-          "passId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "stayMs": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "tag": {
-            "type": "string",
-            "enum": [
-              "returned",
-              "not_returned",
-              "none"
-            ],
-            "description": "What happened to the lent tag; `none` when the pass had none to collect."
-          }
-        },
-        "required": [
-          "passId",
-          "stayMs",
-          "tag"
-        ]
-      },
       "TerminalResolveParams": {
         "type": "object",
         "properties": {
@@ -127037,7 +126923,87 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TerminalSignOutEverywhereParams"
+                "type": "object",
+                "properties": {
+                  "idempotencyKey": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+                  },
+                  "passId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "The pass to sign out. Send this or `read`, not both."
+                  },
+                  "read": {
+                    "type": "object",
+                    "properties": {
+                      "uid": {
+                        "type": "string",
+                        "pattern": "^(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{14}|[0-9a-fA-F]{20})$"
+                      },
+                      "uidRandom": {
+                        "type": "boolean"
+                      },
+                      "tech": {
+                        "type": "string",
+                        "enum": [
+                          "a",
+                          "b",
+                          "isodep",
+                          "unknown"
+                        ]
+                      },
+                      "ndef": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "U",
+                              "T"
+                            ]
+                          },
+                          "value": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "native",
+                          "webnfc"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tech",
+                      "source"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The lent tag, tapped instead of naming the pass. Its binding names the pass; a tag that is not lent is 409 TAG_NOT_LENT."
+                  },
+                  "tag": {
+                    "type": "string",
+                    "enum": [
+                      "returned",
+                      "not_returned",
+                      "none"
+                    ],
+                    "description": "What happened to the pass's lent tag. Default `none` with `passId` (the tag stays lent), `returned` with `read`."
+                  }
+                },
+                "required": [
+                  "idempotencyKey"
+                ],
+                "additionalProperties": false
               },
               "example": {
                 "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
@@ -127053,7 +127019,35 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TerminalSignOutEverywhereResponse"
+                  "type": "object",
+                  "properties": {
+                    "passId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "stayMs": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "tag": {
+                      "type": "string",
+                      "enum": [
+                        "returned",
+                        "not_returned",
+                        "none"
+                      ],
+                      "description": "What happened to the lent tag; `none` when the pass had none to collect."
+                    }
+                  },
+                  "required": [
+                    "passId",
+                    "stayMs",
+                    "tag"
+                  ]
                 },
                 "example": {
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -127077,7 +127071,9 @@
         "operationId": "scan.postScanSignOut",
         "x-sdk": {
           "resource": "terminal",
-          "method": "signOutEverywhere"
+          "method": "signOutEverywhere",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
         },
         "security": [
           {
