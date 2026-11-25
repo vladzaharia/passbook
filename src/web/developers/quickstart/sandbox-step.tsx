@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Copy, LoaderCircle } from 'lucide-react';
+import { ArrowRight, Check, Copy, LoaderCircle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
@@ -14,11 +14,27 @@ const M = QS_COPY.made;
 const REVEAL_MS = 60_000;
 
 /** One thing the server made, ticked once the home says it exists. */
-function Made({ done, label, line }: { done: boolean; label: string; line: string }) {
+function Made({
+  done,
+  label,
+  line,
+  failed = false,
+}: {
+  done: boolean;
+  label: string;
+  line: string;
+  failed?: boolean;
+}) {
   return (
-    <li className="qs-made" data-done={done}>
+    <li className="qs-made" data-done={done} data-failed={failed && !done}>
       <span className="qs-made-dot" aria-hidden="true">
-        {done ? <Check className="lucide" /> : <LoaderCircle className="lucide qs-spin" />}
+        {done ? (
+          <Check className="lucide" />
+        ) : failed ? (
+          <X className="lucide" />
+        ) : (
+          <LoaderCircle className="lucide qs-spin" />
+        )}
       </span>
       <strong>{label}</strong>
       <span className="muted">{done ? line : ''}</span>
@@ -106,16 +122,39 @@ export function SandboxStep({
   const made = home?.state === 'open';
   const capture = home?.endpoints.some((e) => e.target === 'capture') ?? false;
   const key = (home?.keys.length ?? 0) > 0 || secret !== null;
+  // The home has been read and the server did not finish: a spinner would never end, so offer the retry
+  // (the server completes what is missing).
+  const stuck =
+    sandbox !== null && home !== null && home.state === 'open' && !(capture && templateId);
+  const retryKey = session.kind === 'ready' || session.kind === 'none' ? session.siteKey : '';
   return (
     <Step n={2} state={state} title={C.title} tag={<Tag>{C.tag}</Tag>}>
       {sandbox ? (
         <>
           <ul className="qs-mades">
             <Made done={made} label={M.org} line={sandbox.orgSlug} />
-            <Made done={Boolean(templateId)} label={M.template} line={M.templateLine} />
-            <Made done={capture} label={M.capture} line={M.captureLine} />
+            <Made
+              done={Boolean(templateId)}
+              failed={stuck}
+              label={M.template}
+              line={M.templateLine}
+            />
+            <Made done={capture} failed={stuck} label={M.capture} line={M.captureLine} />
             <Made done={key} label={M.key} line={M.keyLine} />
           </ul>
+          {stuck ? (
+            <div className="qs-stuck">
+              <p className="sm qs-bad" role="alert">
+                {M.stuck}
+              </p>
+              <MakeSandbox
+                csrf={q.csrf}
+                siteKey={retryKey}
+                label={M.retry}
+                onMade={q.sandboxMade}
+              />
+            </div>
+          ) : null}
           {secret && templateId ? (
             <EnvBox secret={secret} templateId={templateId} onNext={onNext} />
           ) : (

@@ -5,6 +5,7 @@ import { notFound, redirect } from '@tanstack/react-router';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { currentPath } from './current-path.ts';
 import { canAccessAdminPath } from './guards.ts';
+import { listableMemberships } from './org-lists.ts';
 import {
   type AdminScope,
   orgPath,
@@ -119,8 +120,10 @@ function platformFirst(ctx: LegacyContext): boolean {
 export function legacyAdminTarget(
   pathname: string,
   search: Record<string, unknown>,
-  ctx: LegacyContext,
+  context: LegacyContext,
 ): LegacyTarget | undefined {
+  // A remembered or lone sandbox never reopens in admin; an orgId in the URL still does.
+  const ctx = { ...context, memberships: listableMemberships(context.memberships) };
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
   const step = plan(path, search);
   if (!step) return undefined;

@@ -74,10 +74,16 @@ async function checkSlug(ctx: ServiceContext, slug: string, exceptId?: string) {
 
 export async function listOrgs(
   ctx: ServiceContext,
-  query: { cursor?: string; limit: number; q?: string },
+  query: { cursor?: string; limit: number; q?: string; sandboxes?: 'hide' | 'show' | 'only' },
   mode: Mode = 'live',
 ): Promise<{ items: Summary[]; nextCursor: string | null }> {
-  const rows = await listOrgRows(ctx.env.DB, query.cursor, query.limit + 1, query.q);
+  const rows = await listOrgRows(
+    ctx.env.DB,
+    query.cursor,
+    query.limit + 1,
+    query.q,
+    query.sandboxes,
+  );
   const page = rows.slice(0, query.limit);
   const counts = await countsFor(
     ctx.env.DB,

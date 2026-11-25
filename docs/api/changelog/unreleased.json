@@ -624,6 +624,14 @@
     "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
+    "key": "GET /api/v1/orgs optional parameter query:sandboxes added",
+    "class": "additive",
+    "operationId": "orgs.getOrgs",
+    "op": "GET /api/v1/orgs",
+    "change": "optional parameter query:sandboxes added",
+    "note": "The platform list leaves developer sandboxes out; sandboxes=show adds them and sandboxes=only lists just them."
+  },
+  {
     "key": "GET /api/v1/orgs/{id} 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgsById",

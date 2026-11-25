@@ -94,6 +94,8 @@ export const PersonalOrgLabelsSchema = pageOf(z.object({ orgId: IdSchema, label:
 export const OrgListQuerySchema = PageQuerySchema.extend({
   /** Name or slug contains. */
   q: z.string().max(200).optional(),
+  /** Developer sandboxes: left out when omitted (`hide`), added with `show`, alone with `only`. */
+  sandboxes: z.enum(['hide', 'show', 'only']).optional(),
 });
 
 export const CreateOrgSchema = z.object({
