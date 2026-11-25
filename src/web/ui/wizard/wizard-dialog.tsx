@@ -53,11 +53,11 @@ export function WizardDialog<Id extends string>({
   children,
 }: WizardDialogProps<Id>) {
   const working = Boolean(busy) || wizard.finishing;
-  useOnClose(open, onClose);
+  const afterClose = useOnClose(open, onClose);
   if (result) {
     return (
       <Dialog open={open} onOpenChange={() => undefined}>
-        <ResultDialogContent result={result} />
+        <ResultDialogContent result={result} onCloseAutoFocus={afterClose} />
       </Dialog>
     );
   }
@@ -71,6 +71,7 @@ export function WizardDialog<Id extends string>({
       <DialogContent
         size="xl"
         title={title}
+        onCloseAutoFocus={afterClose}
         footer={
           <WizardActions
             wizard={wizard}

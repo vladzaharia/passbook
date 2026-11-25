@@ -6,7 +6,6 @@ import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Button,
-  EmptyState,
   ErrorState,
   PageHeader,
   SkeletonRows,
@@ -15,6 +14,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/web/ui/index.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useScannerPages } from './queries.ts';
 import { ScannersTab } from './scanners/scanners-tab.tsx';
 import {
@@ -74,7 +74,7 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
   if (scope.isLoading) return <SkeletonRows label="Loading scanning" />;
   if (scope.isError) return <ErrorState error={scope.error} onRetry={() => scope.refetch()} />;
   if (!scope.orgId || !scope.membership?.capabilities.includes('scanning:read')) {
-    return <EmptyState art="scanner" title="Select an organization" />;
+    return <OrgChooser />;
   }
   return (
     <>

@@ -164,6 +164,10 @@ afterEach(() => {
   }
 });
 
+// The card (and its Front/Details flip) draws only after the dry run answers. Under v8 coverage on a
+// saturated runner that took over the global 10 s window; a passing test never waits this long.
+const SLOW = { timeout: 45_000 };
+
 describe('designer', () => {
   it('refetches ownership before reopening the designer without an explicit org', async () => {
     const s = setup();
@@ -418,7 +422,7 @@ describe('designer', () => {
     const s = setup();
     const { container } = await open(s);
     expect(await screen.findByRole('navigation', { name: 'Structure' })).toBeInTheDocument();
-    expect(await screen.findByRole('radio', { name: 'Details' })).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: 'Details' }, SLOW)).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Issues' })).toBeInTheDocument();
     await screen.findByText('Ready to save.');
     await userEvent.click(screen.getByRole('button', { name: 'Colors' }));
@@ -774,7 +778,7 @@ describe('designer', () => {
     await open(s);
     expect(await screen.findByText('Preview only')).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Structure' })).toBeNull();
-    expect(await screen.findByRole('radio', { name: 'Details' })).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: 'Details' }, SLOW)).toBeInTheDocument();
   });
 
   it('keeps the two selections and shares undo across mode switches', async () => {

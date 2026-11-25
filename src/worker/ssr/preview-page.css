@@ -148,6 +148,20 @@ body {
 .pv-panel[data-p="paper"][data-size="cr80"] {
   max-width: 30rem;
 }
+.pv-panel[data-p="paper"][data-size="cr80p"] {
+  max-width: 14rem;
+}
+.pv-panel[data-p="paper"][data-size="stub"],
+.pv-panel[data-p="paper"][data-size="a6"] {
+  max-width: 32rem;
+}
+.pv-panel[data-p="paper"][data-size="half-letter"] {
+  max-width: 34rem;
+}
+.pv-panel[data-p="paper"][data-size="atb"],
+.pv-panel[data-p="paper"][data-size="dl"] {
+  max-width: 40rem;
+}
 .pv-tabs:has(#pv-apple:checked) .pv-panel[data-p="apple"],
 .pv-tabs:has(#pv-google:checked) .pv-panel[data-p="google"],
 .pv-tabs:has(#pv-samsung:checked) .pv-panel[data-p="samsung"],
