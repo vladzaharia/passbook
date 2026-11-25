@@ -11,11 +11,19 @@ import './live-screen.css';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { MonitorHardware } from '../hardware/hardware-control.tsx';
+import {
+  DRAFT_HOLD_MS,
+  reviewAmount,
+  settledDrafts,
+  shownDraft,
+  withoutReplacedReady,
+} from './customer-draft.ts';
 import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
 import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
 import { MonitorInside } from './monitor-inside.tsx';
 import type { LetIn } from './monitor-model.ts';
+import { useLeaving } from './use-leaving.ts';
 import { useLiveFeed } from './use-live-feed.ts';
 
 function stageTone(row: ScanLiveRow | undefined): StageTone {
@@ -56,7 +64,7 @@ export function LiveScreen({
   /** The device API: Desk actions need it. Without one the monitor only reads. */
   api?: ScanApi;
 }) {
-  const { rows, places, welcome, connected, now, setNow } = useLiveFeed(session, refetch);
+  const { rows, places, drafts, welcome, connected, now, setNow } = useLiveFeed(session, refetch);
   const [replay, setReplay] = useState(0);
   const [setup, setSetup] = useState(false);
   const [setupFocused, setSetupFocused] = useState(false);
@@ -109,11 +117,23 @@ export function LiveScreen({
   const branding = session.branding ?? null;
   const logoUrl = scanBrandLogoUrl(branding, session);
   const orgName = session.scanner?.orgName ?? '';
-  const recent = rows.filter(
+  const recent = (customer ? withoutReplacedReady(rows) : rows).filter(
     (row) => now - row.at < (customer ? CUSTOMER_HOLD_MS[row.kind] : 15 * 60_000),
   );
   const latest = recent[0];
-  const view = latest?.customer ?? null;
+  const draft = customer ? shownDraft(settledDrafts(drafts, rows), latest, now) : null;
+  const held = useLeaving(draft?.view);
+  const shown = held.value;
+  const view = shown ?? latest?.customer ?? null;
+  const draftAt = draft?.at;
+  useEffect(() => {
+    if (draftAt === undefined) return;
+    const expiry = window.setTimeout(
+      () => setNow(Date.now()),
+      draftAt + DRAFT_HOLD_MS - Date.now() + 1,
+    );
+    return () => window.clearTimeout(expiry);
+  }, [draftAt, setNow]);
   const latestId = latest?.id;
   const latestAt = latest?.at;
   const latestKind = latest?.kind;
@@ -143,11 +163,13 @@ export function LiveScreen({
   if (customer)
     return (
       <CustomerStage
-        tone={stageTone(latest)}
+        tone={shown && !held.leaving ? 'review' : stageTone(latest)}
         replay={replay}
         brandName={orgName || 'PassBook'}
         logoUrl={logoUrl}
         title={view ? view.band.headline : latest ? latest.label : (welcome ?? undefined)}
+        amount={shown ? reviewAmount(shown) : undefined}
+        leaving={held.leaving}
         eyebrow={view?.greet ?? undefined}
         hint={view?.band.sub ?? undefined}
         notice={connected ? null : CUSTOMER_COPY.reconnecting}

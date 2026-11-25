@@ -165,6 +165,7 @@ export const PASS_SETUP_COPY = {
     colourSet: 'Set all three colours.',
     accent: 'Accent',
     accentHelp: 'Pages and emails',
+    accentPresets: 'Presets',
     mark: 'PassBook footer',
     markOptions: {
       full: 'Issued with PassBook',

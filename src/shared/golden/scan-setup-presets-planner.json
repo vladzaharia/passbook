@@ -1,0 +1,7705 @@
+[
+  {
+    "preset": "front_desk",
+    "d": {},
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "hours": "always"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": "always",
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "hours": {
+        "every": ["10:00-12:00"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": {
+            "every": ["10:00-12:00"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": {
+              "mon": ["10:00-12:00"],
+              "tue": ["10:00-12:00"],
+              "wed": ["10:00-12:00"],
+              "thu": ["10:00-12:00"],
+              "fri": ["10:00-12:00"],
+              "sat": ["10:00-12:00"],
+              "sun": ["10:00-12:00"]
+            },
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "scanners": {
+        "by": "anyone",
+        "as": "desk"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "desk"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": false,
+              "roleWithoutSignIn": "desk"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "scanners": {
+        "by": "staff"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "devices": [
+        {
+          "layout": "operator"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            }
+          ],
+          "scanners": {
+            "by": "staff"
+          },
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "devices": [
+        {
+          "layout": "phone"
+        },
+        {
+          "layout": "phone",
+          "reader": "barcode"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            },
+            {
+              "layout": "phone",
+              "reader": "barcode"
+            }
+          ],
+          "scanners": {
+            "by": "staff"
+          },
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "reader": "barcode"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "devices": [
+        {
+          "layout": "phone",
+          "direction": "in"
+        },
+        {
+          "layout": "phone",
+          "direction": "out"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone",
+              "direction": "in"
+            },
+            {
+              "layout": "phone",
+              "direction": "out"
+            }
+          ],
+          "scanners": {
+            "by": "staff"
+          },
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true,
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "in"
+                },
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "out"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "more": {
+        "lookup": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "lookup": false,
+            "showPhoto": true,
+            "deskActions": true
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": false,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {
+                  "lookup": true
+                },
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "more": {
+        "checkIn": {
+          "mode": "single"
+        }
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true,
+            "checkIn": {
+              "mode": "single"
+            }
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "checkIn": {
+                "mode": "single"
+              },
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "more": {
+        "offline": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true,
+            "offline": false
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "offline": false,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "place": "p1"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "p1",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "ref": "p1"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "direction": "both",
+              "staffSignIn": true,
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "place": "zone_gym"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "zone_gym",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "id": "zone_gym"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "direction": "both",
+              "staffSignIn": true,
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "NO_MANAGER",
+            "level": "warn",
+            "message": "noManager",
+            "params": {
+              "place": "Gym"
+            },
+            "door": "door-1",
+            "fix": {
+              "kind": "add_staff",
+              "role": "manager"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["event_gala"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["event_gala"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "id": "event_gala"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Gala"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "event_gala"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "preset": "front_desk",
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["ev1"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["ev1"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "auto"
+            }
+          ],
+          "more": {
+            "lookup": true,
+            "showPhoto": true,
+            "deskActions": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "front_desk",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "ref": "ev1"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "showPhoto": true,
+              "deskActions": true,
+              "direction": "both",
+              "staffSignIn": true,
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Show"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "ev1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {},
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "hours": "always"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": "always",
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "hours": {
+        "every": ["10:00-12:00"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": {
+            "every": ["10:00-12:00"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": {
+              "mon": ["10:00-12:00"],
+              "tue": ["10:00-12:00"],
+              "wed": ["10:00-12:00"],
+              "thu": ["10:00-12:00"],
+              "fri": ["10:00-12:00"],
+              "sat": ["10:00-12:00"],
+              "sun": ["10:00-12:00"]
+            },
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "scanners": {
+        "by": "anyone",
+        "as": "desk"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "desk"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "desk",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "scanners": {
+        "by": "staff"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": true,
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "devices": [
+        {
+          "layout": "operator"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            }
+          ],
+          "scanners": {
+            "by": "staff"
+          },
+          "more": {
+            "lookup": true
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": true,
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "devices": [
+        {
+          "layout": "phone"
+        },
+        {
+          "layout": "phone",
+          "reader": "barcode"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            },
+            {
+              "layout": "phone",
+              "reader": "barcode"
+            }
+          ],
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "reader": "barcode"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "devices": [
+        {
+          "layout": "phone",
+          "direction": "in"
+        },
+        {
+          "layout": "phone",
+          "direction": "out"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone",
+              "direction": "in"
+            },
+            {
+              "layout": "phone",
+              "direction": "out"
+            }
+          ],
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "in"
+                },
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "out"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "more": {
+        "lookup": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "lookup": false
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": false,
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "more": {
+        "checkIn": {
+          "mode": "single"
+        }
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "checkIn": {
+              "mode": "single"
+            }
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "checkIn": {
+                "mode": "single"
+              },
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "more": {
+        "offline": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "offline": false
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "offline": false,
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "place": "p1"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "p1",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "ref": "p1"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "place": "zone_gym"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "zone_gym",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "id": "zone_gym"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["event_gala"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["event_gala"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "id": "event_gala"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "offline": true,
+              "whenOffline": "list"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Gala"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "event_gala"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "preset": "event_night",
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["ev1"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "event_night",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["ev1"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "more": {}
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "event_night",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "ref": "ev1"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Show"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "ev1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {},
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "hours": "always"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": "always"
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "hours": {
+        "every": ["10:00-12:00"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": {
+            "every": ["10:00-12:00"]
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": {
+              "mon": ["10:00-12:00"],
+              "tue": ["10:00-12:00"],
+              "wed": ["10:00-12:00"],
+              "thu": ["10:00-12:00"],
+              "fri": ["10:00-12:00"],
+              "sat": ["10:00-12:00"],
+              "sun": ["10:00-12:00"]
+            },
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "scanners": {
+        "by": "anyone",
+        "as": "desk"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "desk"
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "desk"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "scanners": {
+        "by": "staff"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "devices": [
+        {
+          "layout": "operator"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "devices": [
+        {
+          "layout": "phone"
+        },
+        {
+          "layout": "phone",
+          "reader": "barcode"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            },
+            {
+              "layout": "phone",
+              "reader": "barcode"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "reader": "barcode"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "devices": [
+        {
+          "layout": "phone",
+          "direction": "in"
+        },
+        {
+          "layout": "phone",
+          "direction": "out"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone",
+              "direction": "in"
+            },
+            {
+              "layout": "phone",
+              "direction": "out"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "in"
+                },
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "out"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "more": {
+        "lookup": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "lookup": false
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": false,
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "more": {
+        "checkIn": {
+          "mode": "single"
+        }
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "checkIn": {
+              "mode": "single"
+            }
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "checkIn": {
+                "mode": "single"
+              },
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "more": {
+        "offline": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "offline": false
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "offline": false,
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "place": "p1"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "p1",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "ref": "p1"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "place": "zone_gym"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "zone_gym",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "id": "zone_gym"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["event_gala"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["event_gala"]
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "id": "event_gala"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Gala"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "event_gala"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "preset": "venue",
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["ev1"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "preset": "venue",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["ev1"]
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": "venue",
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "ref": "ev1"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Show"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "ev1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "d": {},
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "hours": "always"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": "always"
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "hours": {
+        "every": ["10:00-12:00"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "hours": {
+            "every": ["10:00-12:00"]
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": {
+              "mon": ["10:00-12:00"],
+              "tue": ["10:00-12:00"],
+              "wed": ["10:00-12:00"],
+              "thu": ["10:00-12:00"],
+              "fri": ["10:00-12:00"],
+              "sat": ["10:00-12:00"],
+              "sun": ["10:00-12:00"]
+            },
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "scanners": {
+        "by": "anyone",
+        "as": "desk"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "desk"
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "desk"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "scanners": {
+        "by": "staff"
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": true
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "devices": [
+        {
+          "layout": "operator"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "operator",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "devices": [
+        {
+          "layout": "phone"
+        },
+        {
+          "layout": "phone",
+          "reader": "barcode"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            },
+            {
+              "layout": "phone",
+              "reader": "barcode"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {},
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "reader": "barcode"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "devices": [
+        {
+          "layout": "phone",
+          "direction": "in"
+        },
+        {
+          "layout": "phone",
+          "direction": "out"
+        }
+      ]
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "devices": [
+            {
+              "layout": "phone",
+              "direction": "in"
+            },
+            {
+              "layout": "phone",
+              "direction": "out"
+            }
+          ]
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "in"
+                },
+                "role": "scan"
+              },
+              {
+                "ref": "door-1-2",
+                "name": "Door 2",
+                "surface": "phone",
+                "overrides": {
+                  "direction": "out"
+                },
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "more": {
+        "lookup": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "lookup": false
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "lookup": false,
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "more": {
+        "checkIn": {
+          "mode": "single"
+        }
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "checkIn": {
+              "mode": "single"
+            }
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "checkIn": {
+                "mode": "single"
+              },
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "more": {
+        "offline": false
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          },
+          "more": {
+            "offline": false
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "offline": false,
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "place": "p1"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "p1",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "ref": "p1"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "place": "zone_gym"
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "place": "zone_gym",
+          "admits": {
+            "templateIds": ["tpl_day"],
+            "events": []
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": ["tpl_day"],
+              "events": []
+            },
+            "zones": [
+              {
+                "id": "zone_gym"
+              }
+            ],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": []
+      }
+    }
+  },
+  {
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["event_gala"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["event_gala"]
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "id": "event_gala"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door"
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Gala"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "event_gala"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "d": {
+      "admits": {
+        "templateIds": [],
+        "events": ["ev1"]
+      }
+    },
+    "applied": {
+      "orgId": "org_1",
+      "places": [
+        {
+          "ref": "p1",
+          "name": "Inside",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "ref": "ev1",
+          "name": "Show",
+          "templateIds": ["tpl_ticket"],
+          "opensAt": 1780000000000,
+          "closesAt": 1780020000000,
+          "reentry": true
+        }
+      ],
+      "staff": [
+        {
+          "name": "Ana",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Door",
+          "admits": {
+            "templateIds": [],
+            "events": ["ev1"]
+          }
+        }
+      ]
+    },
+    "plan": {
+      "ok": true,
+      "plan": {
+        "mode": "live",
+        "timeZone": "Europe/Berlin",
+        "preset": null,
+        "zones": [
+          {
+            "ref": "p1",
+            "key": "inside",
+            "name": "Inside",
+            "parent": null,
+            "timeZone": null,
+            "occupancy": "track",
+            "capacity": null,
+            "maxStayMinutes": 720,
+            "clearAt": null
+          }
+        ],
+        "events": [
+          {
+            "ref": "ev1",
+            "name": "Show",
+            "templateIds": ["tpl_ticket"],
+            "match": null,
+            "opensAt": 1780000000000,
+            "closesAt": 1780020000000,
+            "timeZone": "Europe/Berlin",
+            "capacity": null,
+            "reentry": true
+          }
+        ],
+        "staff": [
+          {
+            "ref": "staff-1",
+            "name": "Ana",
+            "role": "desk"
+          }
+        ],
+        "sessions": [
+          {
+            "ref": "door-1",
+            "name": "Door",
+            "timeZone": "Europe/Berlin",
+            "accepts": {
+              "templateIds": [],
+              "events": [
+                {
+                  "ref": "ev1"
+                }
+              ]
+            },
+            "zones": [],
+            "hours": null,
+            "settings": {
+              "direction": "both",
+              "staffSignIn": false,
+              "roleWithoutSignIn": "door",
+              "checkIn": {
+                "mode": "in_out"
+              }
+            },
+            "devices": [
+              {
+                "ref": "door-1-1",
+                "name": "Door 1",
+                "surface": "auto",
+                "overrides": {},
+                "role": "scan"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "code": "EVENT_NO_PASSES",
+            "level": "info",
+            "message": "eventNoPasses",
+            "params": {
+              "event": "Show"
+            },
+            "door": "door-1",
+            "subject": {
+              "kind": "event",
+              "ref": "ev1"
+            }
+          }
+        ]
+      }
+    }
+  }
+]
