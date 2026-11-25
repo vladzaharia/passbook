@@ -1,7 +1,13 @@
 import { expect, type Route, test } from '@playwright/test';
 import type { OrgMembership } from '../src/shared/contracts/org-membership.ts';
 import type { SessionResponse } from '../src/shared/contracts/session.ts';
-import { apiAs, createPass, requireActiveTemplateRelease, uid } from './helpers/api.ts';
+import {
+  apiAs,
+  createPass,
+  freshAdminApi,
+  requireActiveTemplateRelease,
+  uid,
+} from './helpers/api.ts';
 import { templateFromBlueprint } from './helpers/releases.ts';
 import { addOrgMember, createOrgWithRoles, readSeed } from './helpers/seed.ts';
 
@@ -173,8 +179,12 @@ test.describe('platform administrator', () => {
 
   test('workspace and pass access disappear after a real administrator membership is revoked', async ({
     page,
+    browser,
   }) => {
-    const api = await apiAs('admin');
+    // Inviting an org_admin needs a recent sign-in; the stored session is minutes old by this spec.
+    // A new sign-in ends the old session, so the page takes the new cookies.
+    const api = await freshAdminApi(browser);
+    await page.context().addCookies((await api.ctx.storageState()).cookies);
     let revoke: { orgId: string; id: string } | undefined;
     try {
       const slug = uid('shell-revocation').toLowerCase();
