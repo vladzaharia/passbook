@@ -175,11 +175,7 @@ One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
        npx wrangler secret put ASC_KEY_ID --config workers/apple-provisioner/wrangler.jsonc
        npx wrangler secret put ASC_ISSUER_ID --config workers/apple-provisioner/wrangler.jsonc
 
-5. Deploy the provisioner: `npx wrangler deploy --config workers/apple-provisioner/wrangler.jsonc`. Cloudflare fails a deploy whose service binding names a Worker that does not exist yet, so `wrangler.jsonc` does not carry the `APPLE` binding until the provisioner is live. Once it is, add this to `wrangler.jsonc` (before `send_email`), run `npm run gen`, commit, and deploy the main Worker (with `--first` if the deploy tool asks):
-
-       "services": [{ "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }],
-
-   Until then `ascClient` reports `ASC_UNAVAILABLE`.
+5. Deploy the provisioner: `npx wrangler deploy --config workers/apple-provisioner/wrangler.jsonc`. The `APPLE` service binding is in `wrangler.jsonc`; Cloudflare fails a main Worker deploy if the provisioner does not exist yet, so deploy it first. Then deploy the main Worker (with `--first` if the deploy tool asks). Until then `ascClient` reports `ASC_UNAVAILABLE`.
 6. Seed the allowlist with the platform pass type: `node tools/apple-provisioner-seed.ts --apply --remote`. Without `--apply` it prints the command. The first `findPassType('pass.im.plrs.wallet')` call fills in Apple's id.
 
 Platform certificates: the provisioner never orders or revokes for `pass.im.plrs.wallet`, `pass.mobile.passbook.wallet` or any identifier outside `pass.mobile.passbook.<handle>`. Order and renew those yourself in the developer portal (or Xcode) with your own Apple ID, then upload the result as `SIGNER_PLATFORM_*`. Nothing the main Worker can call does this.
