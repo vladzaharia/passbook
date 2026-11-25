@@ -40,6 +40,7 @@ import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
 import { displayRequiresHistory } from './scan-display-history.ts';
 import type { StopAuthority } from './scan-stop-authority.ts';
+import type { ScanApprover } from './scan-write-grant.ts';
 import { SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import type { PinReservation } from './staff-pin.ts';
 
@@ -56,7 +57,7 @@ export interface ValueInput {
   stopAuthority: StopAuthority;
   originalCandidate: Candidate | null;
   facts: Omit<LedgerFacts, 'outcome' | 'reason'>;
-  approver: { id: string; authEpoch: number; deskOk?: boolean } | null;
+  approver: ScanApprover | null;
   onFailureCommitted(): void;
 }
 
@@ -166,7 +167,6 @@ export async function commitValue(i: ValueInput): Promise<ScanOutcome> {
       reads: afterReads([...counts.stmts, ...(bound?.stmts ?? [])]),
     };
   };
-
   let fills = false;
   const commit: PublishCommit = {
     open: (passChecks) => open(passChecks),

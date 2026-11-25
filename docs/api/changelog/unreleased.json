@@ -3509,6 +3509,14 @@
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
+    "key": "POST /api/v1/scan/actions body.approval.alone: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "body.approval.alone: optional input field added",
+    "note": "The only staff member who can approve sends alone: true with their own PIN to approve their own request; it is audited as scan.approved_alone."
+  },
+  {
     "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
     "class": "additive",
     "operationId": "scan.postScanBatch",
@@ -4133,12 +4141,20 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "POST /api/v1/templates/{id}/review body.alone: optional input field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdReview",
+    "op": "POST /api/v1/templates/{id}/review",
+    "change": "body.alone: optional input field added",
+    "note": "The only reviewer of an org approves their own request with alone: true; nothing waits after a reviewer leaves."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/review new operation",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdReview",
     "op": "POST /api/v1/templates/{id}/review",
     "change": "new operation",
-    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only."
+    "note": "Approves a requested version in Test and Live; release: true also releases it. Test keys approve Test only. An author may approve own Test work with alone."
   },
   {
     "key": "POST /api/v1/templates/{id}/review-requests new operation",

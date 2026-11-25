@@ -270,6 +270,25 @@ describe('live template snapshots', () => {
     ).toBeNull();
   });
 
+  it('accepts a release its author approved alone (sole), and still rejects a peer approval by the author', async () => {
+    const { kit, pass } = await fixture();
+    const { binding, snapshot } = await capture(kit, pass.id);
+    const raw = JSON.parse(snapshot.raw) as {
+      release: { candidate: { authorId: string }; approval: { reviewerId: string; kind?: string } };
+    };
+    raw.release.approval.reviewerId = raw.release.candidate.authorId;
+    raw.release.approval.kind = 'peer';
+    expect(
+      await verifyLiveTemplateSnapshot(kit.ctx, binding, { raw: JSON.stringify(raw) }, 'commit'),
+    ).toBeNull();
+    for (const kind of ['sole', 'test']) {
+      raw.release.approval.kind = kind;
+      expect(
+        await verifyLiveTemplateSnapshot(kit.ctx, binding, { raw: JSON.stringify(raw) }, 'commit'),
+      ).not.toBeNull();
+    }
+  });
+
   it('rejects cross-tenant, cross-mode, corrupt JSON, altered release and tampered asset bytes', async () => {
     const { kit, id, pass } = await fixture();
     const { binding, snapshot } = await capture(kit, pass.id);

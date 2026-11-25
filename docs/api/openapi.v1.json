@@ -6974,6 +6974,9 @@
           "release": {
             "type": "boolean"
           },
+          "alone": {
+            "type": "boolean"
+          },
           "note": {
             "type": "string",
             "minLength": 1,
@@ -62657,6 +62660,9 @@
               "pin": {
                 "type": "string",
                 "pattern": "^\\d{6}$"
+              },
+              "alone": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -89042,7 +89048,6 @@
           "SAMSUNG_UNAUTHENTICATED",
           "SAMSUNG_UNAVAILABLE",
           "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_SELF_APPROVAL",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
@@ -89186,7 +89191,6 @@
           "SAMSUNG_UNAUTHENTICATED",
           "SAMSUNG_UNAVAILABLE",
           "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_SELF_APPROVAL",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
@@ -89330,7 +89334,6 @@
           "SAMSUNG_UNAUTHENTICATED",
           "SAMSUNG_UNAVAILABLE",
           "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_SELF_APPROVAL",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
@@ -132511,6 +132514,7 @@
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
+          "PIN_ALONE_NOT_SELF",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
@@ -135298,6 +135302,7 @@
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
+          "PIN_ALONE_NOT_SELF",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
@@ -137636,6 +137641,7 @@
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
+          "PIN_ALONE_NOT_SELF",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
@@ -146243,6 +146249,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
@@ -146496,6 +146503,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
@@ -148106,6 +148114,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
@@ -148359,6 +148368,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",

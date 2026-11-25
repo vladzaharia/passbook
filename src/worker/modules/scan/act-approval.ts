@@ -201,14 +201,19 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       failureStatements: [failActionClaimStmt(ctx.env.DB, ownedClaim, claimAt)],
       onFailureCommitted: recordFailure,
     };
-    // No one approves their own request.
-    const others = approver.filter((a) => a.id !== (authorityActor.staff?.id ?? null));
+    // No one approves their own request, unless no one else can: then the requester confirms with `alone`
+    // and their own PIN (two staff who can approve still mean two people).
+    const self = authorityActor.staff?.id ?? null;
+    const others = approver.filter((a) => a.id !== self);
+    const mine = approver.find((a) => a.id === self) ?? null;
+    const alone = approval?.alone === true && others.length === 0 && mine !== null;
+    const pool = alone && mine ? [mine] : others;
     const results = reservation ? await ctx.env.DB.batch(reservation.stmts) : [];
     const verified =
       reservation && approval
-        ? await (approval.staffId
-            ? reservation.verify(results, others[0] ?? null, approval.pin, true, failure, deskOk)
-            : reservation.verifyAny(results, others, approval.pin, failure, false, deskOk))
+        ? await (approval.staffId && !alone
+            ? reservation.verify(results, pool[0] ?? null, approval.pin, true, failure, deskOk)
+            : reservation.verifyAny(results, pool, approval.pin, failure, false, deskOk))
         : null;
     if (reservation && !verified) throw new StaleScanAuthority();
     const commit = () =>
@@ -226,6 +231,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
         approvedBy: verified?.id ?? null,
         approvedRole: verified?.role ?? null,
         approvedAuthEpoch: verified?.authEpoch ?? null,
+        approvedSole: alone,
         reservation,
         credentialTombstoneRefs: credentials.credentialTombstoneRefs,
         credentialKeysetCommitment: credentials.credentialKeysetCommitment,

@@ -9652,6 +9652,7 @@ type ReviewTemplate struct {
 	OrgID   *string `json:"orgId,omitempty"`
 	Version string  `json:"version"`
 	Release *bool   `json:"release,omitempty"`
+	Alone   *bool   `json:"alone,omitempty"`
 	Note    *string `json:"note,omitempty"`
 }
 
@@ -13652,6 +13653,7 @@ type TerminalActParams struct {
 type TerminalActParamsApproval struct {
 	StaffID *string `json:"staffId,omitempty"`
 	PIN     string  `json:"pin"`
+	Alone   *bool   `json:"alone,omitempty"`
 }
 
 type TerminalActParamsInput1 struct {

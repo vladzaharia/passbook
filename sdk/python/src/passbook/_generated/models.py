@@ -9837,6 +9837,7 @@ class ReviewTemplate(_Model):
     orgId: str | None = None
     version: str
     release: bool | None = None
+    alone: bool | None = None
     note: str | None = None
 
 class RollCallsCreateResponse(_Model):
@@ -13110,6 +13111,7 @@ class TerminalActParams(_Model):
 class TerminalActParamsApproval(_Model):
     staffId: str | None = None
     pin: str
+    alone: bool | None = None
 
 class TerminalActParamsInput1(_Model):
     code: str

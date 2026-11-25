@@ -43,6 +43,8 @@ interface CommitInput {
   /** The verified approver's role: a Desk approver is pinned as such in the grant. */
   approvedRole?: 'door' | 'desk' | 'manager' | null;
   approvedAuthEpoch: number | null;
+  /** The requester approved their own request as the only approver. */
+  approvedSole?: boolean;
   reservation: PinReservation | null;
   onFailureCommitted(): void;
 }
@@ -254,7 +256,12 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
   if (action.kind !== 'check_in') {
     const approver =
       approvedBy && approvedAuthEpoch !== null
-        ? { id: approvedBy, authEpoch: approvedAuthEpoch, deskOk: input.approvedRole === 'desk' }
+        ? {
+            id: approvedBy,
+            authEpoch: approvedAuthEpoch,
+            deskOk: input.approvedRole === 'desk',
+            ...(input.approvedSole ? { sole: { scanId } } : {}),
+          }
         : null;
     const outcome = await commitValue({
       ctx,
@@ -273,7 +280,17 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       onFailureCommitted,
     });
     if (outcome.kind === 'ok' && !outcome.replay)
-      deferTermStart({ ctx, actor, found, req, action, claim, originalCandidate, approver });
+      // The term stamp is its own grant: the sole audit row belongs to the scan's commit alone.
+      deferTermStart({
+        ctx,
+        actor,
+        found,
+        req,
+        action,
+        claim,
+        originalCandidate,
+        approver: approver && { ...approver, sole: undefined },
+      });
     return outcome;
   }
   return commitCheckInSuccess({
@@ -294,7 +311,12 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     facts,
     approver:
       approvedBy && approvedAuthEpoch !== null
-        ? { id: approvedBy, authEpoch: approvedAuthEpoch, deskOk: input.approvedRole === 'desk' }
+        ? {
+            id: approvedBy,
+            authEpoch: approvedAuthEpoch,
+            deskOk: input.approvedRole === 'desk',
+            ...(input.approvedSole ? { sole: { scanId } } : {}),
+          }
         : null,
     onFailureCommitted,
   });

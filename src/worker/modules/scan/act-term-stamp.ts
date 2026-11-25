@@ -17,6 +17,7 @@ import { effectiveReleaseCheck } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { noOtherStandingScan } from './repo-term-stamp.ts';
 import type { Found } from './resolve.ts';
+import type { ScanApprover } from './scan-write-grant.ts';
 import { SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 
 interface TermStamp {
@@ -27,7 +28,7 @@ interface TermStamp {
   action: ResolvedScanAction;
   claim: gates.GateClaim;
   originalCandidate: Candidate | null;
-  approver: { id: string; authEpoch: number; deskOk?: boolean } | null;
+  approver: ScanApprover | null;
 }
 
 const filled = (v: unknown) => typeof v === 'string' && v !== '';
@@ -131,7 +132,7 @@ interface TermClear {
   actor: ScanActor;
   target: { id: string; passId: string; at: number };
   event: ScanEventRow | null;
-  approver: { id: string; authEpoch: number; deskOk?: boolean } | null;
+  approver: ScanApprover | null;
 }
 
 /**

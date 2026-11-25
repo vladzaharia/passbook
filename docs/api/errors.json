@@ -3566,6 +3566,15 @@
       ]
     },
     {
+      "code": "PIN_ALONE_NOT_SELF",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "PIN_GENERATION_FAILED",
       "statuses": [
         503
@@ -5958,8 +5967,7 @@
         403
       ],
       "modules": [
-        "templates",
-        "wallet-providers"
+        "templates"
       ]
     },
     {
