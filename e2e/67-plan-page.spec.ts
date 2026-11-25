@@ -1,7 +1,38 @@
+import { mkdirSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { apiAs, uid } from './helpers/api.ts';
-import { shoot } from './helpers/shots.ts';
+
+const DIR = process.env.SHOTS_DIR;
+const WIDTHS = [
+  [1440, 900],
+  [1024, 768],
+  [820, 1180],
+  [390, 844],
+] as const;
+
+/** The state at 1440, 1024, 820 and 390, light and dark. No-op unless SHOTS_DIR is set. */
+async function shoot(
+  page: Page,
+  name: string,
+  widths: readonly (typeof WIDTHS)[number][] = WIDTHS,
+) {
+  if (!DIR) return;
+  mkdirSync(DIR, { recursive: true });
+  const before = page.viewportSize();
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const [width, height] of widths) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(
+        () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+      );
+      await page.screenshot({ path: `${DIR}/${name}-${width}-${scheme}.png`, fullPage: true });
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  if (before) await page.setViewportSize(before);
+}
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 test.setTimeout(120_000);
@@ -24,7 +55,7 @@ async function newOrg(preset: string, overrides: Record<string, { value: number 
   return org.id;
 }
 
-const contrast = async (page: import('@playwright/test').Page) => {
+const contrast = async (page: Page) => {
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   return results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
 };
@@ -63,4 +94,35 @@ test('Overview names a limit at 80% or more and links to Plan', async ({ page })
     page.getByRole('region', { name: 'Features' }).getByText('Google Wallet'),
   ).toHaveCount(0);
   await shoot(page, 'plan-trial-at-limit');
+});
+
+test('the plan picker shows five equal tiles, compares and confirms', async ({ page }) => {
+  const id = await newOrg('standard');
+  await page.goto(`/admin/platform/orgs/${id}?tab=features`);
+  const group = page.getByRole('radiogroup', { name: 'Plan' });
+  await expect(group).toBeVisible();
+  await expect(group.getByRole('radio')).toHaveCount(5);
+  await expect(page.getByText('Current')).toHaveCount(1);
+  await page.waitForTimeout(800);
+  await shoot(page, 'picker');
+
+  await page.getByRole('radio', { name: 'Premium' }).check({ force: true });
+  await expect(page.getByText('Premium instead of Standard').first()).toBeVisible();
+  await shoot(page, 'picker-picked');
+
+  await page.getByRole('button', { name: 'Compare' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Compare plans' });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByText(/^Updated /)).toBeVisible();
+  await page.waitForTimeout(500);
+  await shoot(page, 'picker-compare', [WIDTHS[0], WIDTHS[3]]);
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: 'Apply Premium' }).click();
+  const confirm = page.getByRole('alertdialog');
+  await expect(confirm).toBeVisible();
+  await page.waitForTimeout(400);
+  await shoot(page, 'picker-confirm', [WIDTHS[0], WIDTHS[3]]);
+  await confirm.getByRole('button', { name: 'Cancel' }).click();
+  expect(await contrast(page)).toEqual([]);
 });
