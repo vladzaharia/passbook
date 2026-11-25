@@ -2,11 +2,11 @@ import type { ReactNode } from 'react';
 import { Dialog, DialogContent } from '../dialog.tsx';
 import { useOnClose } from '../dialog-close.ts';
 import { Form } from '../form.tsx';
-import type { WizardModel } from './use-wizard.ts';
 import { WizardActions } from './wizard-actions.tsx';
 import { ResultDialogContent, type ResultSpec } from './wizard-result.tsx';
 import { WizardStep } from './wizard-step.tsx';
 import { WizardStepper } from './wizard-stepper.tsx';
+import type { WizardModel } from './wizard-types.ts';
 
 export interface WizardDialogProps<Id extends string> {
   open: boolean;

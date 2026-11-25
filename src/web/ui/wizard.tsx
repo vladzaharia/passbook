@@ -1,10 +1,11 @@
-import { type CSSProperties, type ReactNode, useEffect, useId, useRef } from 'react';
-import { cn } from '../lib/cn.ts';
+import { type ReactNode, useEffect, useRef } from 'react';
+import { useChangeCount } from '../lib/change-count.ts';
 import { useMediaQuery } from '../lib/media.ts';
-import { prefersReducedMotion, useChangeCount } from '../lib/motion.ts';
-import { Button } from './button.tsx';
-import { Tick } from './checkbox.tsx';
 import { useBlockedSubmit } from './form.tsx';
+import { WizardButtons } from './wizard/wizard-actions.tsx';
+import { WizardStep } from './wizard/wizard-step.tsx';
+import { WizardStepper } from './wizard/wizard-stepper.tsx';
+import type { WizardRail } from './wizard/wizard-types.ts';
 import { WizardStage } from './wizard-stage.tsx';
 
 export interface WizardProps {
@@ -38,7 +39,10 @@ export interface WizardProps {
   nextLabel?: string;
   /** The last step ends in something hard to take back (a void): the button wears the danger style. */
   nextTone?: 'danger';
-  /** Next or Create cannot run yet (the step explains why). */
+  /**
+   * Next or Create cannot run yet (the step explains why). Soft: the button stays focusable, a press
+   * neither submits nor calls onNext, and focuses the first invalid control or announces the hint.
+   */
   nextDisabled?: boolean;
   /** Why Next is off, in a few words; shown beside it while it is disabled. */
   nextHint?: string;
@@ -46,106 +50,15 @@ export interface WizardProps {
   children: ReactNode;
 }
 
-/** Numbered circles joined by a hairline that fills; done steps are buttons with a check. */
-export function Stepper({
-  steps,
-  current,
-  onStep,
-  skipped = [],
-}: Pick<WizardProps, 'steps' | 'current' | 'onStep' | 'skipped'>) {
-  const progress = steps.length > 1 ? current / (steps.length - 1) : 1;
-  const step = steps[current];
-  return (
-    <nav aria-label="Steps">
-      <div className="sm:hidden">
-        <p className="text-sm text-fg-muted">
-          Step {current + 1} of {steps.length}
-          {step ? <span className="text-fg-strong"> · {step.title}</span> : null}
-        </p>
-        <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-border">
-          <div
-            className="wl-fill h-full origin-left rounded-full bg-accent"
-            style={{ transform: `scaleX(${(current + 1) / steps.length})` } as CSSProperties}
-          />
-        </div>
-      </div>
-      <ol
-        className="relative grid items-start max-sm:hidden"
-        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
-      >
-        {/* Circles sit at equal column centres; the line runs from the first to the last. */}
-        <span
-          aria-hidden
-          className="absolute top-2.5 h-px bg-border"
-          style={{ left: `${50 / steps.length}%`, right: `${50 / steps.length}%` }}
-        >
-          <span
-            className="wl-fill absolute inset-0 origin-left bg-accent"
-            style={{ transform: `scaleX(${progress})` } as CSSProperties}
-          />
-        </span>
-        {steps.map((s, i) => {
-          const skip = skipped.includes(s.id) && i !== current;
-          const done = i < current && !skip;
-          const here = i === current;
-          const circle = (
-            <span
-              className={cn(
-                'relative inline-flex size-5 items-center justify-center rounded-full border text-[0.6875rem] font-semibold tabular-nums',
-                done && 'wl-step-done border-accent bg-accent text-accent-on',
-                here && 'border-accent bg-surface-page text-accent-fg',
-                !done && !here && 'border-border-strong bg-surface-page text-fg-muted',
-                skip && 'border-dashed',
-              )}
-            >
-              {done ? <Tick draw className="size-3" /> : skip ? '–' : i + 1}
-            </span>
-          );
-          return (
-            <li key={s.id} className="relative flex min-w-0 flex-col items-center gap-1.5">
-              {skip ? (
-                <span className="flex flex-col items-center gap-1.5" data-skipped="">
-                  {circle}
-                  <span className="text-xs text-fg-muted line-through">{s.title}</span>
-                </span>
-              ) : done ? (
-                <button
-                  type="button"
-                  onClick={() => onStep(i)}
-                  className="group flex flex-col items-center gap-1.5 rounded-md"
-                >
-                  {circle}
-                  <span className="text-xs text-fg-muted group-hover:text-fg-strong">
-                    {s.title}
-                  </span>
-                </button>
-              ) : (
-                <span
-                  aria-current={here ? 'step' : undefined}
-                  className="flex flex-col items-center gap-1.5"
-                >
-                  {circle}
-                  <span className={cn('text-xs', here ? 'text-fg-strong' : 'text-fg-muted')}>
-                    {s.title}
-                  </span>
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
-  );
-}
-
 /**
  * Fixed at the bottom like SaveBar (beside the sidebar at 1024 and up): Cancel left, Back and
- * Next or Create right.
+ * Next or Create right. Cancel stays at every width: a page has no X.
  */
 export function WizardBar({
   onCancel,
   onBack,
   onNext,
+  onBlocked,
   formId,
   nextLabel = 'Next',
   nextTone,
@@ -163,8 +76,7 @@ export function WizardBar({
   | 'nextDisabled'
   | 'nextHint'
   | 'busy'
->) {
-  const hintId = useId();
+> & { onBlocked?: () => void }) {
   return (
     <section
       aria-label="Wizard actions"
@@ -172,43 +84,72 @@ export function WizardBar({
       data-static=""
       className="wl-bar fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface-overlay pb-[env(safe-area-inset-bottom)] shadow-elevation-3 lg:left-60"
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-safe py-3 sm:[--wl-gutter:1.5rem]">
-        <Button variant="ghost" disabled={busy} onClick={onCancel}>
-          Cancel
-        </Button>
-        <div className="flex items-center gap-2">
-          {nextDisabled && nextHint ? (
-            <span id={hintId} className="text-xs text-fg-muted">
-              {nextHint}
-            </span>
-          ) : null}
-          {onBack ? (
-            <Button variant="outline" disabled={busy} onClick={onBack}>
-              Back
-            </Button>
-          ) : null}
-          <Button
-            type={formId ? 'submit' : 'button'}
-            variant={nextTone === 'danger' ? 'danger' : undefined}
-            form={formId}
-            loading={busy}
-            disabled={nextDisabled}
-            aria-describedby={nextDisabled && nextHint ? hintId : undefined}
-            onClick={formId ? undefined : onNext}
-          >
-            {nextLabel}
-          </Button>
-        </div>
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-safe py-3 sm:[--wl-gutter:1.5rem]">
+        <WizardButtons
+          keepCancel
+          first={!onBack}
+          label={nextLabel}
+          tone={nextTone}
+          blocked={nextDisabled}
+          hint={nextHint}
+          working={busy}
+          formId={formId}
+          onCancel={onCancel}
+          onBack={onBack}
+          onNext={onNext as (() => void) | undefined}
+          onBlocked={onBlocked}
+        />
       </div>
     </section>
   );
 }
 
+/** The rail model of a page wizard, from its props: done steps behind, to do ahead. */
+function railOf({
+  steps,
+  current,
+  onStep,
+  skipped = [],
+}: Pick<WizardProps, 'steps' | 'current' | 'onStep' | 'skipped'>): WizardRail {
+  return {
+    mode: 'create',
+    index: current,
+    steps: steps.map((s, i) => ({
+      ...s,
+      skip: skipped.includes(s.id),
+      state:
+        i === current
+          ? 'current'
+          : skipped.includes(s.id)
+            ? 'skipped'
+            : i < current
+              ? 'done'
+              : 'todo',
+    })),
+    go: (to) => {
+      const at = typeof to === 'number' ? to : steps.findIndex((s) => s.id === to);
+      if (at >= 0) onStep(at);
+    },
+  };
+}
+
 /**
- * The wizard shell: Stepper on top, one content width on every step, the aside as a stage at 1024
- * and up, and the WizardBar. A step change scrolls to the top and focuses the step heading (for
- * screen readers; the stepper shows it); the new step slides 16 px in from the direction of travel
- * (opacity only under reduced motion).
+ * Progress above a page that is not a step (an import's check and results): the compact line and
+ * bar. Capped under the rail's 43.5rem so it never turns into a rail.
+ */
+export function Stepper(props: Pick<WizardProps, 'steps' | 'current' | 'onStep' | 'skipped'>) {
+  return (
+    <div className="@container max-w-[40rem]">
+      <WizardStepper wizard={railOf(props)} />
+    </div>
+  );
+}
+
+/**
+ * The page wizard: the rail beside the step from 43.5rem of frame width (one compact line above
+ * it below that), the aside as a stage at 1024 and up, and the WizardBar. A step change scrolls
+ * to the top and focuses the step heading; the new step slides 16 px in from the direction of
+ * travel (a fade under reduced motion). Next is soft-disabled: see `nextDisabled`.
  */
 export function Wizard({
   steps,
@@ -222,50 +163,50 @@ export function Wizard({
   onNext,
   ...bar
 }: WizardProps) {
-  const heading = useRef<HTMLHeadingElement>(null);
   const blocked = useBlockedSubmit<HTMLDivElement>();
   // The stage is a desktop companion; below 1024 it would stack under the step as dead space.
   const staged = useMediaQuery('(min-width: 1024px)') && Boolean(aside);
   const previous = useRef(current);
+  const key = useChangeCount(current);
   const direction = current >= previous.current ? 1 : -1;
-  const changed = useChangeCount(current);
   useEffect(() => {
     previous.current = current;
-    if (!changed) return;
-    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-    heading.current?.focus({ preventScroll: true });
-  }, [current, changed]);
-  const step = steps[current];
-  const body = (
-    <div
-      key={current}
-      ref={blocked.ref}
-      data-step={step?.id}
-      className={cn('flex min-w-0 flex-col gap-6', changed > 0 && 'wl-step')}
-      style={{ '--wl-step-x': `${direction * 16}px` } as CSSProperties}
-    >
-      <h2 ref={heading} tabIndex={-1} className="sr-only">
-        {step?.title}
-      </h2>
-      {children}
-      {blocked.live}
-    </div>
-  );
+  }, [current]);
+  const rail = railOf({ steps, current, onStep, skipped });
+  const view = {
+    ...rail,
+    id: steps[current]?.id ?? '',
+    last: !steps.slice(current + 1).some((s) => !skipped?.includes(s.id)),
+    finishing: Boolean(bar.busy),
+    motion: { key, direction } as const,
+    formError: undefined,
+  };
   const next = onNext
     ? () => {
-        if (onNext() === false) blocked.block();
+        if (onNext() === false) blocked.block(bar.nextHint);
       }
     : undefined;
   return (
     <div data-staged={staged || undefined} className="wl-wizard flex min-w-0 flex-col gap-6 pb-24">
-      <Stepper steps={steps} current={current} onStep={onStep} skipped={skipped} />
-      {body}
+      <div className="@container">
+        <div className="flex flex-col gap-5 @[43.5rem]:flex-row @[43.5rem]:gap-8">
+          <div className="@[43.5rem]:sticky @[43.5rem]:top-[calc(4.5rem+env(safe-area-inset-top))] @[43.5rem]:self-start">
+            <WizardStepper wizard={rail} />
+          </div>
+          <div ref={blocked.ref} className="@container min-w-0 flex-1">
+            <WizardStep wizard={view} level={2}>
+              {children}
+            </WizardStep>
+            {blocked.live}
+          </div>
+        </div>
+      </div>
       {staged ? (
         <WizardStage label={asideLabel} quiet={asideQuiet}>
           {aside}
         </WizardStage>
       ) : null}
-      <WizardBar {...bar} onNext={next} />
+      <WizardBar {...bar} onNext={next} onBlocked={() => blocked.block(bar.nextHint)} />
     </div>
   );
 }
