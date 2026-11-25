@@ -304,16 +304,6 @@ export function voidPrintConfirm(): ConfirmCopy {
   };
 }
 
-/** A platform hold turns an organization's wallet account Off until it is released. Dangerous tone. */
-export function holdConfirm(name: string): ConfirmCopy {
-  return {
-    title: `Hold ${name}?`,
-    confirmLabel: 'Hold',
-    description: 'Turns it Off. The organization cannot turn it on until you release it.',
-    typed: false,
-  };
-}
-
 /** One pass's channel off: no new copies, and the ones out there keep working until New code. */
 export function channelOffConfirm(channel: string, paper = false): ConfirmCopy {
   return {
@@ -335,3 +325,4 @@ export function bulkChannelsOffConfirm(channels: readonly string[], count: numbe
     typed: false,
   };
 }
+export { holdConfirm } from './confirms-wallet.ts';
