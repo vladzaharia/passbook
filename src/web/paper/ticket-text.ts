@@ -1,6 +1,6 @@
 /** The words on a ticket, per class and panel, from the renderer-neutral content. Pure. */
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
-import { paperDate, paperZoneInfo } from '../../passkit/template/paper-format.ts';
+import { paperDate, paperZoneFor, paperZoneInfo } from '../../passkit/template/paper-format.ts';
 import { PAPER_COPY } from '../../shared/copy/print.ts';
 
 export interface Issued {
@@ -23,7 +23,25 @@ export interface Column {
 
 const join = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' · ');
 const at = (c: PaperContent, iso: string | undefined, style: Parameters<typeof paperDate>[2]) =>
-  iso ? paperDate(iso, c.zone, style) : '';
+  iso ? paperDate(iso, paperZoneFor(c, iso), style) : '';
+const abbrAt = (c: PaperContent, iso: string) => {
+  const zone = paperZoneFor(c, iso);
+  return zone ? paperZoneInfo(zone, iso)?.abbr : undefined;
+};
+/** The start and the end read in different zones: each carries its own abbreviation. */
+const splitZones = (c: PaperContent) =>
+  Boolean(c.start && c.end && abbrAt(c, c.start) !== abbrAt(c, c.end));
+const startAt = (c: PaperContent, start: string) =>
+  splitZones(c) ? `${at(c, start, 'timeZone')}` : at(c, start, 'time');
+/** The end's clock: its day when it is another day, its own zone when that differs from the start's. */
+const endAt = (c: PaperContent, end: string) => {
+  const clock =
+    c.start && at(c, end, 'long') !== at(c, c.start, 'long')
+      ? `${at(c, end, 'short')}, ${at(c, end, 'time')}`
+      : at(c, end, 'time');
+  const own = abbrAt(c, end);
+  return own && c.start && own !== abbrAt(c, c.start) ? `${clock} ${own}` : clock;
+};
 const zoneAbbr = (c: PaperContent) => {
   const iso = c.start ?? c.validUntil;
   return c.zone && iso ? paperZoneInfo(c.zone, iso)?.abbr : undefined;
@@ -64,13 +82,20 @@ export function doorRows(c: PaperContent): { label: string; text: string }[] {
 const timesLine = (c: PaperContent): string | undefined => {
   const parts = [
     c.doors && `Doors ${at(c, c.doors, 'time')}`,
-    c.start && `Starts ${at(c, c.start, 'time')}`,
-    c.end && `Ends ${at(c, c.end, 'time')}`,
+    c.start && `Starts ${startAt(c, c.start)}`,
+    c.end && `Ends ${endAt(c, c.end)}`,
   ].filter(Boolean);
   if (!parts.length) return undefined;
-  const abbr = zoneAbbr(c);
+  const abbr = splitZones(c) ? undefined : zoneAbbr(c);
   return `${parts.join(' · ')}${abbr ? ` (${abbr})` : ''}`;
 };
+
+/** Lines that fit above the seat boxes on a sheet (7) and a half sheet (6), measured on a full ticket. */
+const MAX_FACE_LINES = 7;
+const MAX_HALF_LINES = 6;
+
+/** The half sheet's notes only have room under a short panel. */
+export const faceNotesFit = (lines: readonly Line[]) => lines.length <= 4;
 
 /** The holder panel's text under the band, largest first. */
 export function faceLines(c: PaperContent, half = false): Line[] {
@@ -98,7 +123,9 @@ export function faceLines(c: PaperContent, half = false): Line[] {
     sub(join(c.address, c.room));
     sub(join(c.holder, c.type));
   }
-  for (const e of c.extras) sub(e.label ? `${e.label}: ${e.text}` : e.text);
+  // The panel has a fixed height: extras past the cap would run into the fact boxes.
+  const cap = half ? MAX_HALF_LINES : MAX_FACE_LINES;
+  for (const e of c.extras) if (lines.length < cap) sub(e.label ? `${e.label}: ${e.text}` : e.text);
   return lines;
 }
 
@@ -142,9 +169,9 @@ export function infoColumns(c: PaperContent): Column[] {
         ...strong(at(c, c.start, 'long')),
         lines: [
           c.doors && `Doors open ${at(c, c.doors, 'time')}`,
-          `Show starts ${at(c, c.start, 'time')}`,
-          c.end && `Ends about ${at(c, c.end, 'time')}`,
-          abbr && info ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined,
+          `Show starts ${startAt(c, c.start)}`,
+          c.end && `Ends about ${endAt(c, c.end)}`,
+          abbr && info && !splitZones(c) ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined,
         ].filter((x): x is string => Boolean(x)),
       }
     : {
@@ -158,7 +185,7 @@ export function infoColumns(c: PaperContent): Column[] {
 /** The wash box under the columns: up to four rules. */
 export function rules(c: PaperContent, fold: boolean): [string, string][] {
   const out: [string, string][] = [
-    [...PAPER_COPY.oneTicket(c.noun)] as [string, string],
+    [...PAPER_COPY.oneTicket(c.noun, c.once)] as [string, string],
     [...PAPER_COPY.reprints] as [string, string],
   ];
   if (c.kind === 'admission' || c.kind === 'membership')
@@ -191,8 +218,8 @@ export function compactBefore(c: PaperContent): string | undefined {
 export function rangeText(c: PaperContent): string | undefined {
   if (!c.validUntil) return undefined;
   if (!c.validFrom) return `Until ${at(c, c.validUntil, 'short')}`;
-  const from = paperDate(c.validFrom, c.zone, 'short').replace(/^\w+ /, '');
-  const to = paperDate(c.validUntil, c.zone, 'short').replace(/^\w+ /, '');
+  const from = at(c, c.validFrom, 'short').replace(/^\w+ /, '');
+  const to = at(c, c.validUntil, 'short').replace(/^\w+ /, '');
   const sameYear = from.slice(-4) === to.slice(-4);
   return `${sameYear ? from.slice(0, -5) : from} – ${to}`;
 }

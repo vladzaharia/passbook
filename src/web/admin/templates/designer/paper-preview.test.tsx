@@ -71,7 +71,8 @@ describe('designer Paper tab', () => {
     expect(container.textContent).toContain('Spring Concert');
     expect(container.textContent).not.toContain('SECRET-SCAN-CODE');
 
-    await user.click(screen.getByRole('radio', { name: 'Card' }));
+    await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
+    await user.click(await screen.findByRole('option', { name: 'Card, landscape' }));
     await waitFor(() => expect(container.querySelector('.pp-cr80')).not.toBeNull());
   });
 
@@ -125,6 +126,23 @@ describe('designer Paper tab', () => {
     expect(screen.queryByText('Layout from the ticket fields.')).toBeNull();
   });
 
+  it('offers a home sheet for card sizes only, and QR only where Code 128 does not fit', async () => {
+    const user = userEvent.setup();
+    const onPaper = vi.fn();
+    renderTags(stage({ schema: 1, size: 'cr80p', barcode: 'qr' }, onPaper), {
+      '/api/v1/templates/t1/channels': channels(on),
+    });
+    await user.click(await screen.findByRole('radio', { name: 'Paper' }));
+    expect(screen.queryByRole('radio', { name: 'Code 128' })).toBeNull();
+    expect(screen.getByText('Code 128 does not fit this size.')).toBeInTheDocument();
+    await user.click(await screen.findByRole('combobox', { name: /Holder sheet/ }));
+    await user.click(await screen.findByRole('option', { name: 'A4' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ sheet: 'a4' });
+    await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
+    await user.click(await screen.findByRole('option', { name: 'Boarding pass' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ size: 'atb' });
+  });
+
   it('edits the block: starts it, then barcode, holder, and shows validation', async () => {
     const user = userEvent.setup();
     const onPaper = vi.fn();
@@ -148,7 +166,8 @@ describe('designer Paper tab', () => {
     expect(onPaper).toHaveBeenLastCalledWith({ barcode: 'code128' });
     await user.click(screen.getByRole('checkbox', { name: 'Holders can print' }));
     expect(onPaper).toHaveBeenLastCalledWith({ holder: false });
-    await user.click(screen.getByRole('radio', { name: 'Letter' }));
+    await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
+    await user.click(await screen.findByRole('option', { name: 'Letter' }));
     expect(onPaper).toHaveBeenLastCalledWith({ size: 'letter' });
     await user.click(screen.getByRole('radio', { name: 'Mono' }));
     expect(onPaper).toHaveBeenLastCalledWith({ ink: 'mono' });
