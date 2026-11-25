@@ -18,6 +18,7 @@ export * from './metrics.ts';
 export * from './nfc.ts';
 export * from './org-lifecycle.ts';
 export * from './org-membership.ts';
+export * from './org-plan.ts';
 export * from './orgs.ts';
 export * from './passes.ts';
 export * from './prints.ts';
