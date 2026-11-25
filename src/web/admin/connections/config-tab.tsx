@@ -27,7 +27,15 @@ import {
   validateValues,
 } from '../passes/schema-form/index.ts';
 import { type ConnectionPatch, useConnectionActions, useConnector } from './api.ts';
-import { flattenSchema, flattenValues, nestValues, secretKeysFor } from './config-schema.ts';
+import {
+  flattenSchema,
+  flattenValues,
+  keepOpaque,
+  nestValues,
+  opaqueSummary,
+  secretKeysFor,
+  withoutOpaque,
+} from './config-schema.ts';
 import { secretSchema } from './secret-schema.ts';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
@@ -62,7 +70,7 @@ export function ConfigTab({
   const actions = useConnectionActions(c.id);
   const connector = useConnector(c.connectorType, c.orgId);
   const cfgSchema = useMemo(
-    () => flattenSchema(connector.data?.configSchema),
+    () => withoutOpaque(flattenSchema(connector.data?.configSchema)),
     [connector.data?.configSchema],
   );
   const secSchema = useMemo(
@@ -117,7 +125,10 @@ export function ConfigTab({
     if (!canManage) return;
     const patch: ConnectionPatch = {};
     if (!sameValues(cfg, initialConfig))
-      patch.config = nestValues(cleanValues(cfg)) as ConnectionPatch['config'];
+      patch.config = keepOpaque(
+        c.config,
+        nestValues(cleanValues(cfg)),
+      ) as ConnectionPatch['config'];
     if (replacing) {
       patch.secrets = Object.fromEntries(
         Object.entries(cleanValues(secrets)).map(([k, v]) => [k, String(v)]),
@@ -140,6 +151,7 @@ export function ConfigTab({
   }
 
   const defaults = connector.data?.defaults;
+  const summary = opaqueSummary(c.config);
   return (
     <Form
       id={formId}
@@ -159,6 +171,13 @@ export function ConfigTab({
               serverErrors={prefixed(serverFields, 'config.')}
               disabled={!canManage || actions.update.isPending}
             />
+            {summary.length > 0 ? (
+              <ul className="mt-4 flex flex-col gap-1 text-sm text-fg-muted">
+                {summary.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            ) : null}
           </CardBody>
         </Card>
       ) : null}

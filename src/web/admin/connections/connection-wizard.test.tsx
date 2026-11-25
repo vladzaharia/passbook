@@ -109,7 +109,7 @@ type User = ReturnType<typeof userEvent.setup>;
 const next = (user: User) =>
   user.click(screen.getByRole('button', { name: /^(Next|Create( without mappings)?)$/ }));
 
-async function toConfig(user: User, connector = /HTTP JSON/) {
+async function toConfig(user: User, connector = /REST API/) {
   await user.click(await screen.findByRole('radio', { name: connector }));
   await next(user);
 }
