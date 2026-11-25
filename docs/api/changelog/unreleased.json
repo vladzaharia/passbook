@@ -301,7 +301,7 @@
     "operationId": "connections.getConnectionsById",
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].passesCreated: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept. A connection stored by an older connector version shows connectorVersion and config migrated to the current version; one that does not migrate shows as stored."
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
   },
   {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesVoided: field added",
@@ -381,7 +381,7 @@
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].entitled: field added",
-    "note": "With an org, the list shows only what its plan allows. POST /connections gives 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks. POST /connections/test-config, with or without ?preview=true, also gives 403 FEATURE_NOT_INCLUDED. GET /connectors is filtered when an org is given."
+    "note": "With an org, the list shows only what its plan allows. Create and test-config give 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].order: field added",
