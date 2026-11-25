@@ -68,7 +68,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   await anon.dispose();
   expect(empty.status()).toBe(401);
   await expect(page.getByText('Quiet so far.')).toBeVisible({ timeout: 55_000 });
-  await expect(page.getByRole('region', { name: 'Quiet so far.' })).toContainText(
+  await expect(page.getByRole('status', { name: 'Quiet so far.' })).toContainText(
     'The key is not loaded.',
   );
   const api = context.request;
