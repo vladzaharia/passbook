@@ -1,7 +1,9 @@
 import { INS } from './apdu.ts';
 import { concat, u24 } from './bytes.ts';
 import type { Ev2Session } from './ev2.ts';
-import { fullCommand } from './secure-messaging.ts';
+import { fullCommand, plainCommand } from './secure-messaging.ts';
+
+export const PLAIN_WRITE_MAX = 248;
 
 /**
  * SDM on file 02, as the verifier reads it (`sun.ts`): FileOption 40 (SDM, CommMode plain, so the read is free),
@@ -35,13 +37,21 @@ export const FACTORY_NDEF_SETTINGS = new Uint8Array([0x00, 0xe0, 0xee]);
 export const changeFileSettings = (s: Ev2Session, fileNo: number, data: Uint8Array) =>
   fullCommand(s, INS.changeFileSettings, new Uint8Array([fileNo]), data);
 
-/** One-frame WriteData in CommMode.Full: header `file || offset || length` (3-byte little endian each). */
-export function writeData(s: Ev2Session, fileNo: number, offset: number, data: Uint8Array) {
-  if (data.length > 239) throw new RangeError('one WriteData frame carries 239 bytes');
-  return fullCommand(
-    s,
-    INS.writeData,
-    concat(new Uint8Array([fileNo]), u24(offset), u24(data.length)),
-    data,
-  );
+/**
+ * One-frame WriteData, header `file || offset || length` (3-byte little endian each). The mode is the file's:
+ * file 02 is CommMode.Plain (248 data bytes a frame; the answer is a bare 9100), file 03 is Full (239).
+ */
+export async function writeData(
+  s: Ev2Session,
+  fileNo: number,
+  offset: number,
+  data: Uint8Array,
+  mode: 'plain' | 'full' = 'plain',
+) {
+  if (data.length > (mode === 'plain' ? PLAIN_WRITE_MAX : 239))
+    throw new RangeError('one WriteData frame is too long');
+  const header = concat(new Uint8Array([fileNo]), u24(offset), u24(data.length));
+  return mode === 'plain'
+    ? plainCommand(s, INS.writeData, header, data)
+    : fullCommand(s, INS.writeData, header, data);
 }

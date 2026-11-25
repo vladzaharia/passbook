@@ -1,5 +1,5 @@
 import { ZERO16 } from '../bytes.ts';
-import type { ProgramPlan } from './program.ts';
+import type { ProgramPlan } from './relay-server.ts';
 import { SIM_ORIGINALITY_KEY } from './tag.ts';
 
 /** Keys that differ in every slot and from the factory zeros. */

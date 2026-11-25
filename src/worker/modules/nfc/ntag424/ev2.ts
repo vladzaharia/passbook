@@ -10,6 +10,8 @@ export interface Ev2Session {
   encKey: Uint8Array;
   macKey: Uint8Array;
   ctr: number;
+  /** A bad MAC or a status other than 9100 ended the session on the tag; no command may use it again. */
+  dead: boolean;
 }
 
 const rotl = (b: Uint8Array): Uint8Array => concat(b.slice(1), b.slice(0, 1));
@@ -71,5 +73,5 @@ export async function authFinish(
   for (let i = 0; i < 16; i++) diff |= (echoed[i] as number) ^ (rndA[i] as number);
   if (diff !== 0) throw new Ntag424Error('NTAG_AUTH_FAILED', 'The tag did not prove its key.');
   const { encKey, macKey } = await deriveSessionKeys(key, rndA, rndB);
-  return { keyNo, ti: plain.slice(0, 4), encKey, macKey, ctr: 0 };
+  return { keyNo, ti: plain.slice(0, 4), encKey, macKey, ctr: 0, dead: false };
 }

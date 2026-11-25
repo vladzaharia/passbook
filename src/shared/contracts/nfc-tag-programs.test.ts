@@ -8,14 +8,17 @@ import {
   TagProgramDoneSchema,
   type TagProgramErrorCode,
   TagProgramErrorCodeSchema,
+  TagProgramProbeSchema,
+  TagProgramReauthedSchema,
+  TagProgramReauthSchema,
   TagProgramResultSchema,
   TagProgramSchema,
-  TagProgramScriptSchema,
   type TagProgramStart,
   TagProgramStartedSchema,
   TagProgramStartSchema,
   type TagProgramState,
   TagProgramStateSchema,
+  TagProgramStepSchema,
 } from './nfc-tag-programs.ts';
 import {
   TAG_PROGRAM_FEATURE,
@@ -61,12 +64,21 @@ describe('tag program contracts', () => {
     ).toBe(false);
     expect(TagProgramAuthSchema.safeParse({ responses: [hex(34)] }).success).toBe(true);
     expect(TagProgramAuthSchema.safeParse({ responses: [] }).success).toBe(false);
-    expect(TagProgramScriptSchema.safeParse({ apdus: [hex(20)], stopOn: '9100' }).success).toBe(
-      true,
-    );
+    const script = { next: 'script', apdus: [hex(20)], stopOn: '9100' };
+    expect(TagProgramStepSchema.safeParse(script).success).toBe(true);
     expect(
-      TagProgramScriptSchema.safeParse({ apdus: Array(33).fill(hex(2)), stopOn: '9100' }).success,
+      TagProgramStepSchema.safeParse({ ...script, apdus: Array(33).fill(hex(2)) }).success,
     ).toBe(false);
+    // A resumed row probes, a refused factory key re-authenticates; each answers on its own path.
+    expect(
+      TagProgramStepSchema.safeParse({ next: 'probe', apdus: [hex(14), hex(14)], stopOn: '9100' })
+        .success,
+    ).toBe(true);
+    expect(TagProgramStepSchema.safeParse({ next: 'reauth', apdus: [hex(8)] }).success).toBe(true);
+    expect(TagProgramStepSchema.safeParse({ next: 'reauth', apdus: [] }).success).toBe(false);
+    expect(TagProgramProbeSchema.safeParse({ responses: [hex(10)] }).success).toBe(true);
+    expect(TagProgramReauthSchema.safeParse({ responses: [hex(18), hex(18)] }).success).toBe(false);
+    expect(TagProgramReauthedSchema.safeParse({ apdus: [hex(37)] }).success).toBe(true);
   });
 
   it('result carries every response, the read-back and an optional binding request', () => {
@@ -109,7 +121,7 @@ describe('tag program contracts', () => {
       hint: 'AB12',
       scannerId: null,
       attempts: 1,
-      errorCode: 'TAG_LOST',
+      errorCode: 'TAG_MOVED',
       createdAt: 1,
       updatedAt: 2,
       uid: 'x',

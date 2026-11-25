@@ -12,6 +12,7 @@ import {
 import { checkResponse, getKeyVersion } from '../secure-messaging.ts';
 import { testPlan, ZERO16 } from './fixtures.ts';
 import { authenticate, programTag, readUrl } from './program.ts';
+import { RelayServer } from './relay-server.ts';
 import { Ntag424Sim } from './tag.ts';
 
 const sendOf = (sim: Ntag424Sim) => (apdu: Uint8Array) => sim.transceive(apdu);
@@ -21,7 +22,7 @@ const plan = testPlan();
 
 async function programmed() {
   const sim = new Ntag424Sim();
-  await programTag(sendOf(sim), plan);
+  await programTag(sendOf(sim), new RelayServer(plan));
   sim.reattach();
   return sim;
 }
@@ -85,12 +86,12 @@ describe('message refusals', () => {
   it('a recorded command does not run in a new session', async () => {
     const sim = await programmed();
     const send = sendOf(sim);
-    const first = await authenticate(send, 0, plan.keys[0] as Uint8Array);
-    const { apdu } = await writeData(first, 3, 0, new Uint8Array([1, 2, 3]));
+    const first = await authenticate(send, 3, plan.keys[3] as Uint8Array);
+    const { apdu } = await writeData(first, 3, 0, new Uint8Array([1, 2, 3]), 'full');
     sim.reattach();
-    await authenticate(send, 0, plan.keys[0] as Uint8Array);
+    await authenticate(send, 3, plan.keys[3] as Uint8Array);
     expect(await sw(sim, apdu)).toBe(SW.integrity);
-    expect(sim.tag.other.get(3)?.[0]).toBe(0);
+    expect(sim.tag.files.get(3)?.data[0]).toBe(0);
   });
 
   it('a ChangeKey built from the wrong old key fails its CRC and the key stays', async () => {
@@ -127,9 +128,12 @@ describe('access rights after programming', () => {
   it('only key 0 changes the file settings; another key is refused', async () => {
     const sim = await programmed();
     const send = sendOf(sim);
-    const k1 = await authenticate(send, 1, plan.keys[1] as Uint8Array);
+    let k1 = await authenticate(send, 1, plan.keys[1] as Uint8Array);
     const data = sdmFileSettings({ piccOffset: 37, macOffset: 82 });
     expect(await sw(sim, (await changeFileSettings(k1, 2, data)).apdu)).toBe(0x919d);
+    // The refusal ended the session on the tag.
+    expect(sim.tag.session).toBeNull();
+    k1 = await authenticate(send, 1, plan.keys[1] as Uint8Array);
     expect(
       await sw(
         sim,
@@ -144,7 +148,7 @@ describe('access rights after programming', () => {
     const session = await authenticate(send, 0, plan.keys[0] as Uint8Array);
     const { apdu, sent } = await changeFileSettings(session, 2, FACTORY_NDEF_SETTINGS);
     await checkResponse(session, sent, await send(apdu));
-    expect(sim.tag.ndef.sdm).toBeNull();
+    expect(sim.tag.files.get(2)?.sdm).toBeNull();
     await send(selectNdefApp());
     expect(await readUrl(send)).toBe(
       `https://passbook.mobile/t/${plan.slug}?p=${'0'.repeat(32)}&m=${'0'.repeat(16)}`,

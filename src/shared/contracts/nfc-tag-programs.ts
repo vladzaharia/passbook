@@ -28,9 +28,9 @@ export const TagProgramStateSchema = z.enum([
 ]);
 export type TagProgramState = z.infer<typeof TagProgramStateSchema>;
 
-/** `TAG_LOST` is the shared code in `nfc-tag-errors.ts`; the rest are new here. */
+/** `TAG_MOVED`: the tag left the field mid-program (`TAG_LOST` already means a reported loss). */
 export const TAG_PROGRAM_ERROR_CODES = [
-  'TAG_LOST',
+  'TAG_MOVED',
   'TAG_NOT_BLANK',
   'TAG_NOT_424',
   'TAG_KNOWN',
@@ -70,12 +70,35 @@ export const TagProgramStartedSchema = z.object({
 /** `POST /scan/tag-programs/{id}/auth`: the answer to auth part 2. */
 export const TagProgramAuthSchema = z.strictObject({ responses: z.array(HexSchema).length(1) });
 
-export const TagProgramScriptSchema = z.object({
-  /** The whole post-auth script, run in order. */
-  apdus: z.array(HexSchema).min(1).max(32),
-  /** The device stops at the first status word not in this set (the native 9100, ISO 9000). */
-  stopOn: z.literal('9100'),
+/**
+ * What the server asks the device to do next. `probe` (a resumed row): GetKeyVersion for keys 1 to 4, answered
+ * to `/probe`. `reauth`: the factory key was refused, so run AuthenticateEV2First again (one APDU) and answer
+ * to `/reauth`. `script`: the whole post-auth script, run in order.
+ */
+export const TagProgramStepSchema = z.discriminatedUnion('next', [
+  z.object({
+    next: z.literal('probe'),
+    apdus: z.array(HexSchema).min(1).max(8),
+    stopOn: z.literal('9100'),
+  }),
+  z.object({ next: z.literal('reauth'), apdus: z.array(HexSchema).length(1) }),
+  z.object({
+    next: z.literal('script'),
+    apdus: z.array(HexSchema).min(1).max(32),
+    /** The device stops at the first status word not in this set (the native 9100, ISO 9000). */
+    stopOn: z.literal('9100'),
+  }),
+]);
+
+/** `POST /scan/tag-programs/{id}/probe`: one answer per probe APDU. */
+export const TagProgramProbeSchema = z.strictObject({
+  responses: z.array(HexSchema).min(1).max(8),
 });
+
+/** `POST /scan/tag-programs/{id}/reauth`: the tag's answer to the new auth part 1. */
+export const TagProgramReauthSchema = z.strictObject({ responses: z.array(HexSchema).length(1) });
+/** Auth part 2 for the new try; the device then answers to `/auth` again. */
+export const TagProgramReauthedSchema = z.object({ apdus: z.array(HexSchema).length(1) });
 
 /** `POST /scan/tag-programs/{id}/result`: every response, and the URL read back as a tap. */
 export const TagProgramResultSchema = z.strictObject({

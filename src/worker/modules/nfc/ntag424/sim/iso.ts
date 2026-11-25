@@ -1,5 +1,5 @@
 import { mirroredRead } from './sdm.ts';
-import { FILE_SIZE, type SimTag, status } from './state.ts';
+import { type NdefFile, type SimTag, status } from './state.ts';
 
 const AID = [0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01];
 const FILE_OF: Record<number, number> = { 57603: 1, 57604: 2, 57605: 3 };
@@ -29,20 +29,19 @@ export async function isoCommand(
   const file = tag.selectedFile;
   if (!tag.selectedApp || file === null) return status(0x6985);
   const offset = ((p1 & 0x7f) << 8) | p2;
-  const ndef = tag.ndef;
+  const ndef = tag.files.get(file) as NdefFile;
   if (ins === 0xb0) {
-    if (file !== 2) return status(0x6982);
     const free = ndef.read === 0xe || ndef.rw === 0xe;
     if (!free && !([ndef.read, ndef.rw] as number[]).includes(tag.session?.keyNo ?? -1))
       return status(0x6982);
     const content = await mirroredRead(tag, ndef, random);
     const le = (apdu[apdu.length - 1] as number) || 256;
-    return status(0x9000, content.slice(offset, Math.min(offset + le, FILE_SIZE)));
+    return status(0x9000, content.slice(offset, Math.min(offset + le, ndef.data.length)));
   }
   if (ins === 0xd6) {
-    if (file !== 2 || ![ndef.write, ndef.rw].includes(0xe)) return status(0x6982);
+    if (![ndef.write, ndef.rw].includes(0xe) || ndef.option & 3) return status(0x6982);
     const data = apdu.slice(5, 5 + (apdu[4] as number));
-    if (offset + data.length > FILE_SIZE) return status(0x6700);
+    if (offset + data.length > ndef.data.length) return status(0x6700);
     ndef.data.set(data, offset);
     return status(0x9000);
   }

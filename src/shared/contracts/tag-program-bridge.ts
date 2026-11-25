@@ -6,7 +6,10 @@ import { z } from 'zod';
  */
 export const TAG_PROGRAM_FEATURE = 'tagProgram';
 
-const Hex = z.string().regex(/^(?:[0-9a-fA-F]{2})+$/);
+const Hex = z
+  .string()
+  .regex(/^(?:[0-9a-fA-F]{2})+$/)
+  .max(520);
 
 /** Web to app. */
 export const TagProgramOpSchema = z.discriminatedUnion('op', [

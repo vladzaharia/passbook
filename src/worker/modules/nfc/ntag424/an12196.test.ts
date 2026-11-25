@@ -16,6 +16,7 @@ const session = (enc: string, mac: string, ti: string, ctr: number): Ev2Session 
   encKey: h(enc),
   macKey: h(mac),
   ctr,
+  dead: false,
 });
 
 describe('AuthenticateEV2First: Table 14 (key 0) and Table 19 (key 3), both zero keys', () => {
@@ -129,7 +130,7 @@ describe('CommMode.Full', () => {
     const file = new Uint8Array(128);
     file.set([0x00, 0x51, ...record]);
     const sess = A();
-    const { apdu, sent } = await writeData(sess, 2, 0, file);
+    const { apdu, sent } = await writeData(sess, 2, 0, file, 'full');
     expect(hex(apdu)).toBe(
       '908d00009f02000000800000421c73a27d827658af481fdff20a5025b559d0e3aa21e58d347f343cffc768bfe596c706bc00f2176781d4b0242642a0ff5a42c461aaf894d9a1284b8c76bcfa658acd40555d362e08db15cf421b51283f9064bcbe20e96cae545b407c9d651a3315b27373772e5da2367d2064ae054af996c6f1f669170fa88ce8c4e3a4a7bbbef0fd971ff532c3a802af745660f2b4d1d9a8499661ebf300',
     );
@@ -149,6 +150,16 @@ describe('CommMode.Full', () => {
     expect(await checkResponse(sess, sent, h('57BFF87B1241E93D9100'))).toHaveLength(0);
   });
 
+  it('Table 24: WriteData in Plain mode builds a bare frame and still moves the counter', async () => {
+    const sess = A();
+    const data = h(`FF0506E10500808283${'00'.repeat(9)}`);
+    const { apdu, sent } = await writeData(sess, 1, 0x0e, data);
+    expect(hex(apdu)).toBe(`908d000019010e0000120000ff0506e10500808283${'00'.repeat(9)}00`);
+    expect(sess.ctr).toBe(1);
+    expect(checkBare(sess, h('9100')).sw).toBe(0x9100);
+    expect(sent.ctr).toBe(0);
+  });
+
   it('Table 21: WriteData to file 03 under the key 3 session', async () => {
     const sess = session(
       '7A93D6571E4B180FCA6AC90C9A7488D4',
@@ -156,7 +167,7 @@ describe('CommMode.Full', () => {
       '7614281A',
       0,
     );
-    const { apdu, sent } = await writeData(sess, 3, 0, h('0102030405060708090A'));
+    const { apdu, sent } = await writeData(sess, 3, 0, h('0102030405060708090A'), 'full');
     expect(hex(apdu)).toBe(
       '908d00001f030000000a00006b5e6804909962fc4e3ff5522cf0f8436c0c53315b9c73aa00',
     );
@@ -198,7 +209,7 @@ describe('ChangeKey: Tables 25 and 26', () => {
     expect(hex(r.apdu)).toBe(
       '90c400002900c0eb4deefeddf0b513a03a95a75491818580503190d4d05053ff75668a01d6fda6610234bded643200',
     );
-    expect(checkBare(h('9100')).sw).toBe(0x9100);
+    expect(checkBare(sess, h('9100')).sw).toBe(0x9100);
   });
 
   it('refuses a version of 0, a wrong key length, and another key without its old value', async () => {

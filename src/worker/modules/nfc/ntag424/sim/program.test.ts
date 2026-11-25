@@ -5,6 +5,7 @@ import { authFirstApdu } from '../ev2.ts';
 import { checkResponse, getFileSettings } from '../secure-messaging.ts';
 import { countingRandom, testPlan, ZERO16 } from './fixtures.ts';
 import { authenticate, programTag, readUrl } from './program.ts';
+import { RelayServer } from './relay-server.ts';
 import { Ntag424Sim } from './tag.ts';
 
 const sendOf = (sim: Ntag424Sim) => (apdu: Uint8Array) => sim.transceive(apdu);
@@ -19,7 +20,7 @@ describe('programming a blank simulated tag', () => {
     const plan = testPlan();
     const sim = new Ntag424Sim({ random: countingRandom() });
     const send = sendOf(sim);
-    const url = parseSunUrl(await programTag(send, plan));
+    const url = parseSunUrl(await programTag(send, new RelayServer(plan)));
     expect(url).toMatchObject({ host: 'passbook.mobile', slug: plan.slug });
     expect(sim.tag.keys.map(bytesToHex)).toEqual(plan.keys.map(bytesToHex));
     expect(sim.tag.versions).toEqual([3, 3, 3, 3, 3]);
@@ -47,7 +48,7 @@ describe('programming a blank simulated tag', () => {
     const plan = testPlan();
     const sim = new Ntag424Sim();
     const send = sendOf(sim);
-    await programTag(send, plan);
+    await programTag(send, new RelayServer(plan));
     const session = await authenticate(send, 0, plan.keys[0] as Uint8Array);
     const { apdu, sent } = await getFileSettings(session, 2);
     const settings = await checkResponse(session, sent, await send(apdu));
@@ -60,7 +61,7 @@ describe('programming a blank simulated tag', () => {
   it('the factory zeros no longer authenticate, the intended key 0 does', async () => {
     const plan = testPlan();
     const sim = new Ntag424Sim();
-    await programTag(sendOf(sim), plan);
+    await programTag(sendOf(sim), new RelayServer(plan));
     await expect(authenticate(sendOf(sim), 0, ZERO16)).rejects.toMatchObject({
       code: 'NTAG_AUTH_FAILED',
     });
@@ -70,7 +71,7 @@ describe('programming a blank simulated tag', () => {
   it('refuses a tag whose originality signature does not verify', async () => {
     const sim = new Ntag424Sim();
     sim.signature[3] = (sim.signature[3] as number) ^ 1;
-    await expect(programTag(sendOf(sim), testPlan())).rejects.toMatchObject({
+    await expect(programTag(sendOf(sim), new RelayServer(testPlan()))).rejects.toMatchObject({
       code: 'NTAG_UNSUPPORTED',
     });
     expect(sim.tag.versions).toEqual([0, 0, 0, 0, 0]);

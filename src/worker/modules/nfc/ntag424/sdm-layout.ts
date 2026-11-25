@@ -1,4 +1,5 @@
 import { Ntag424Error } from './bytes.ts';
+import { PLAIN_WRITE_MAX } from './file-settings.ts';
 
 export interface SunTemplate {
   /** The NDEF file as written: 2-byte NLEN, then one short URI record carrying the placeholders. */
@@ -28,6 +29,8 @@ export function sunTemplate(host: string, slug: string): SunTemplate {
   file[0] = record.length >> 8;
   file[1] = record.length & 0xff;
   file.set(record, 2);
+  if (file.length > PLAIN_WRITE_MAX)
+    throw new Ntag424Error('NTAG_UNSUPPORTED', 'The tag URL does not fit one write.');
   // Record header is 4 bytes, then the prefix code, then the text.
   const base = 2 + 4 + 1;
   return { file, piccOffset: base + rest.length, macOffset: base + rest.length + tail.length };

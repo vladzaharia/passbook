@@ -1,10 +1,10 @@
 import { cbcDecrypt, cbcEncrypt } from '../aes.ts';
 import { concat, ZERO16 } from '../bytes.ts';
-import { deriveSessionKeys } from '../ev2.ts';
-import { encodeSignature } from '../originality.ts';
-import { ecdsaSign, publicPoint, toInt } from '../p224.ts';
+import { deriveSessionKeys, type Ev2Session } from '../ev2.ts';
+import { toInt } from '../p224.ts';
 import { secureCommand } from './commands.ts';
 import { isoCommand } from './iso.ts';
+import { ecdsaSign, encodeSignature, publicPoint } from './sign.ts';
 import { blankTag, type SimTag, status, TagLostError } from './state.ts';
 
 /** A test-only originality key pair: stands in for NXP's, whose private half no one outside NXP holds. */
@@ -91,7 +91,21 @@ export class Ntag424Sim {
     throw new TagLostError();
   }
 
+  /** Any native answer other than 9100 (or 91AF, more to come) ends the authenticated state. */
   private async dispatch(apdu: Uint8Array): Promise<Uint8Array> {
+    const answer = await this.run(apdu);
+    if (apdu[0] === 0x90) {
+      const sw =
+        ((answer[answer.length - 2] as number) << 8) | (answer[answer.length - 1] as number);
+      if (sw !== 0x9100 && sw !== 0x91af) {
+        this.tag.session = null;
+        this.tag.pending = null;
+      }
+    }
+    return answer;
+  }
+
+  private async run(apdu: Uint8Array): Promise<Uint8Array> {
     const [cla, ins, p1, p2] = apdu as unknown as [number, number, number, number];
     if (cla === 0x00) return isoCommand(this.tag, ins, p1, p2, apdu, this.random);
     if (cla !== 0x90) return status(0x6e00);
@@ -107,7 +121,9 @@ export class Ntag424Sim {
       case 0x3c:
         return status(0x9100, this.signature);
       case 0x71:
-        return this.authFirst(body);
+        return this.authFirst(body, false);
+      case 0x77:
+        return this.authFirst(body, true);
       case 0xf5:
       case 0x64:
       case 0x5f:
@@ -129,12 +145,13 @@ export class Ntag424Sim {
     return status(0x91ca);
   }
 
-  private async authFirst(body: Uint8Array): Promise<Uint8Array> {
+  private async authFirst(body: Uint8Array, nonFirst: boolean): Promise<Uint8Array> {
     const keyNo = body[0] as number;
-    this.tag.session = null;
-    if (body.length < 2 || keyNo > 4) return status(0x9140);
+    if (nonFirst ? !this.tag.session : false) return status(AUTH_ERROR);
+    if (!nonFirst) this.tag.session = null;
+    if (body.length < (nonFirst ? 1 : 2) || keyNo > 4) return status(0x9140);
     const rndB = this.random(16);
-    this.tag.pending = { keyNo, rndB };
+    this.tag.pending = { keyNo, rndB, nonFirst };
     this.tag.chain = 'auth';
     return status(0x91af, await cbcEncrypt(this.tag.keys[keyNo] as Uint8Array, ZERO16, rndB));
   }
@@ -147,9 +164,15 @@ export class Ntag424Sim {
     const plain = await cbcDecrypt(key, ZERO16, body);
     const rndA = plain.slice(0, 16);
     if (!same(plain.slice(16), rotl(pending.rndB))) return status(AUTH_ERROR);
-    const ti = this.random(4);
     const { encKey, macKey } = await deriveSessionKeys(key, rndA, pending.rndB);
-    this.tag.session = { keyNo: pending.keyNo, ti, encKey, macKey, ctr: 0 };
+    if (pending.nonFirst) {
+      // EV2NonFirst keeps the transaction id and the counter; only the keys are new.
+      const kept = this.tag.session as Ev2Session;
+      this.tag.session = { ...kept, keyNo: pending.keyNo, encKey, macKey };
+      return status(0x9100, await cbcEncrypt(key, ZERO16, rotl(rndA)));
+    }
+    const ti = this.random(4);
+    this.tag.session = { keyNo: pending.keyNo, ti, encKey, macKey, ctr: 0, dead: false };
     return status(
       0x9100,
       await cbcEncrypt(key, ZERO16, concat(ti, rotl(rndA), new Uint8Array(12))),

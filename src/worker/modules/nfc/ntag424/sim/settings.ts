@@ -17,13 +17,22 @@ export function parseSettings(d: Uint8Array): Parsed | number {
     read: (d[2] as number) >> 4,
     write: (d[2] as number) & 0xf,
   };
+  const valid = (k: number) => k <= 4 || k === 0xe || k === 0xf;
+  if (![base.rw, base.change, base.read, base.write].every(valid)) return 0x919e;
   if (!(base.option & 0x40)) return d.length === 3 ? { ...base, sdm: null } : 0x917e;
   if (d.length < 6) return 0x917e;
   const options = d[3] as number;
   const ctrKey = (d[4] as number) & 0xf;
   const metaKey = (d[5] as number) >> 4;
   const fileKey = (d[5] as number) & 0xf;
-  // Only the shape this platform writes: encrypted PICCData, a MAC, no mirrored file data, no read limit.
+  if (![ctrKey, metaKey, fileKey].every(valid)) return 0x919e;
+  // Datasheet Table 71 parameter rules.
+  const uid = (options & 0x80) !== 0;
+  const ctr = (options & 0x40) !== 0;
+  if (!uid && !ctr && metaKey !== 0xf) return 0x919e;
+  if (metaKey === 0xf && uid) return 0x919e;
+  if (ctrKey !== 0xf && !ctr) return 0x919e;
+  // Beyond that, only the shape this platform writes: encrypted PICCData, a MAC, no file data mirror, no limit.
   if (metaKey > 4 || fileKey > 4 || options & 0x30) return 0x911c;
   if (d.length !== 15) return 0x917e;
   const sdm: SdmState = {
@@ -37,6 +46,9 @@ export function parseSettings(d: Uint8Array): Parsed | number {
   };
   if (sdm.piccOffset + 32 > FILE_SIZE || sdm.macOffset + 16 > FILE_SIZE) return 0x919e;
   if (sdm.macInputOffset > sdm.macOffset) return 0x919e;
+  // SDMMAC and PICCData must not overlap.
+  if (!(sdm.macOffset >= sdm.piccOffset + 32 || sdm.piccOffset >= sdm.macOffset + 16))
+    return 0x919e;
   return { ...base, sdm };
 }
 

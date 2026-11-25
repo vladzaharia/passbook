@@ -1,5 +1,3 @@
-import { AppError } from '../../../platform/errors.ts';
-
 /** Why an NTAG 424 DNA exchange was refused. Messages never carry keys, UIDs or APDUs. */
 export type Ntag424Failure =
   | 'NTAG_AUTH_FAILED'
@@ -8,9 +6,13 @@ export type Ntag424Failure =
   | 'NTAG_COMMAND_FAILED'
   | 'NTAG_UNSUPPORTED';
 
-export class Ntag424Error extends AppError {
+/** Never reaches HTTP: the programming service maps it to a `TAG_PROGRAM_*` code. */
+export class Ntag424Error extends Error {
+  readonly code: Ntag424Failure;
   constructor(code: Ntag424Failure, message: string) {
-    super(code, 422, message);
+    super(message);
+    this.name = 'Ntag424Error';
+    this.code = code;
   }
 }
 

@@ -13,7 +13,7 @@ export const SCAN_TAG_PROGRAM_COPY = {
     TAG_NOT_424: "This tag can't be secured. Use an NTAG 424 DNA.",
     TAG_NOT_GENUINE: "This tag can't be checked. Use a genuine NTAG 424 DNA.",
     TAG_KNOWN: 'This tag is already yours.',
-    TAG_LOST: 'Tag moved. Hold it again to finish.',
+    TAG_MOVED: 'Tag moved. Hold it again to finish.',
     TAG_PROGRAM_EXPIRED: 'Took too long. Hold the tag again.',
     TAG_PROGRAM_FAILED: "Couldn't finish this tag. Set it aside.",
     TAG_PROGRAM_RATE_LIMITED: 'Too many tags set up. Try again in a few minutes.',

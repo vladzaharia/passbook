@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bytesToHex, hexToBytes } from '../sun.ts';
-import { NXP_ORIGINALITY_KEY, verifyOriginality } from './originality.ts';
+import { verifyOriginality } from './originality.ts';
+import { verifyUidSignature } from './p224.ts';
 import { Ntag424Sim, SIM_ORIGINALITY_KEY } from './sim/tag.ts';
 
 const h = (hex: string) => hexToBytes(hex.replaceAll(' ', '')) as Uint8Array;
@@ -24,8 +25,13 @@ describe('verifyOriginality: AN12196 Table 30', () => {
   });
   it('the simulator signs with its own test key, not NXP', () => {
     const sim = new Ntag424Sim();
-    expect(verifyOriginality(sim.tag.uid, sim.signature, SIM_ORIGINALITY_KEY)).toBe(true);
-    expect(verifyOriginality(sim.tag.uid, sim.signature, NXP_ORIGINALITY_KEY)).toBe(false);
+    expect(verifyUidSignature(SIM_ORIGINALITY_KEY, sim.tag.uid, sim.signature)).toBe(true);
+    expect(verifyOriginality(sim.tag.uid, sim.signature)).toBe(false);
     expect(bytesToHex(sim.tag.uid)).toBe('04518dfaa96180');
+  });
+  it('verifies in well under a second (BigInt, not constant time: public data only)', () => {
+    const t = performance.now();
+    verifyOriginality(h(UID), h(SIG));
+    expect(performance.now() - t < 1000).toBe(true);
   });
 });

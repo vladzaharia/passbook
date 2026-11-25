@@ -22,6 +22,7 @@ export const SW = { ok: 0x9100, more: 0x91af, authError: 0x91ae, integrity: 0x91
 
 /** A native command: `90 INS 00 00 Lc body 00`, or without Lc and body when `body` is empty. */
 export function native(ins: number, body: Uint8Array = new Uint8Array(0)): Uint8Array {
+  if (body.length > 255) throw new RangeError('one APDU carries 255 data bytes');
   const head = [0x90, ins, 0x00, 0x00];
   if (body.length === 0) return new Uint8Array([...head, 0x00]);
   return concat(new Uint8Array([...head, body.length]), body, new Uint8Array([0x00]));

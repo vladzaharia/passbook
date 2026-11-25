@@ -37,36 +37,45 @@ export interface SimTag {
   uid: Uint8Array;
   keys: Uint8Array[];
   versions: number[];
-  ndef: NdefFile;
-  /** File 01 (E103) and 03 (E105), written but never interpreted. */
-  other: Map<number, Uint8Array>;
+  /** Files 01 (E103), 02 (E104, the NDEF file) and 03 (E105), by number. */
+  files: Map<number, NdefFile>;
   readCounter: number;
   selectedApp: boolean;
   selectedFile: number | null;
   chain: Chain | null;
-  pending: { keyNo: number; rndB: Uint8Array } | null;
+  pending: { keyNo: number; rndB: Uint8Array; nonFirst: boolean } | null;
   session: Ev2Session | null;
 }
 
 export const FILE_SIZE = 256;
+
+/** A file as it leaves the factory (datasheet Tables 8 and 13): rights RW, Change, Read, Write. */
+const file = (
+  size: number,
+  option: number,
+  rw: number,
+  change: number,
+  read: number,
+  write: number,
+): NdefFile => ({
+  data: new Uint8Array(size),
+  option,
+  rw,
+  change,
+  read,
+  write,
+  sdm: null,
+});
 
 export function blankTag(uid: Uint8Array): SimTag {
   return {
     uid,
     keys: Array.from({ length: 5 }, () => new Uint8Array(16)),
     versions: [0, 0, 0, 0, 0],
-    ndef: {
-      data: new Uint8Array(FILE_SIZE),
-      option: 0x00,
-      rw: 0xe,
-      change: 0x0,
-      read: 0xe,
-      write: 0xe,
-      sdm: null,
-    },
-    other: new Map([
-      [1, new Uint8Array(32)],
-      [3, new Uint8Array(128)],
+    files: new Map([
+      [1, file(32, 0x00, 0x0, 0x0, 0xe, 0x0)],
+      [2, file(FILE_SIZE, 0x00, 0xe, 0x0, 0xe, 0xe)],
+      [3, file(128, 0x03, 0x3, 0x0, 0x3, 0x3)],
     ]),
     readCounter: 0,
     selectedApp: false,

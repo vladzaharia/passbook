@@ -10,6 +10,7 @@ import { sunStale, verifySunTap } from '../../systems/sun.ts';
 import { tagRef } from '../../tag-ref.ts';
 import { countingRandom, testPlan } from './fixtures.ts';
 import { programTag, readUrl } from './program.ts';
+import { RelayServer } from './relay-server.ts';
 import { Ntag424Sim } from './tag.ts';
 
 let f: EnrollFixture;
@@ -36,7 +37,7 @@ describe('a programmed simulated tag, tapped at the existing verifier', () => {
     plan.version = 1;
     const sim = new Ntag424Sim({ random: countingRandom() });
     const send = (apdu: Uint8Array) => sim.transceive(apdu);
-    const readback = await programTag(send, plan);
+    const readback = await programTag(send, new RelayServer(plan));
 
     // What programming commits: the tag, and its own file key (K2) sealed under the keyset.
     const uid = bytesToHex(sim.tag.uid);
@@ -89,7 +90,7 @@ describe('a programmed simulated tag, tapped at the existing verifier', () => {
       random: countingRandom(),
     });
     const send = (apdu: Uint8Array) => sim.transceive(apdu);
-    await programTag(send, plan);
+    await programTag(send, new RelayServer(plan));
     const tap = await verifySunTap(kit.ctx, kit.org.id, 'live', read(await readUrl(send)));
     expect(tap).toMatchObject({ ok: false, code: 'TAG_SUN_VERIFY' });
   });
