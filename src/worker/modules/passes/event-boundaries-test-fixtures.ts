@@ -23,7 +23,7 @@ const ORIGIN = 'https://wallet.test';
 export const iso = (ms: number) => new Date(ms).toISOString();
 
 /** A season pass template: events from the `events` input, 90 minutes for an event without an end. */
-export function seasonKit(): Promise<Kit> {
+export function seasonKit(config: Record<string, unknown> = {}): Promise<Kit> {
   return setupKit({
     template: (id) => {
       const registry = new InMemoryTemplateRegistry();
@@ -53,7 +53,7 @@ export function seasonKit(): Promise<Kit> {
             {
               use: 'upcoming-events',
               version: 1,
-              config: { input: 'events', fallbackMinutes: 90 },
+              config: { input: 'events', fallbackMinutes: 90, ...config },
             },
           ],
         },
@@ -205,7 +205,12 @@ export const listed = (json: PassJson | null) =>
  * The write an event boundary makes, on any pass and template: a render with its own update tag and a
  * push, committed the way `handleBoundaryRefresh` commits it. For the fences of other modules' flows.
  */
-export async function stampRender(env: AppEnv, clock: Clock, passId: string): Promise<void> {
+export async function stampRender(
+  env: AppEnv,
+  clock: Clock,
+  passId: string,
+  keys: Record<string, unknown> = {},
+): Promise<void> {
   const ctx = createJobContext(env, 'test', { clock });
   const pass = await getPass(env.DB, passId);
   if (!pass) throw new Error('Missing pass');
@@ -220,8 +225,17 @@ export async function stampRender(env: AppEnv, clock: Clock, passId: string): Pr
     ctx,
     { passId, objectKey: pass.objectKey, lease },
     pass,
-    { renderedAt: clock.now(), render: '{}', dueAt: null, now: clock.now() },
+    { renderedAt: clock.now(), render: JSON.stringify(keys), dueAt: null, now: clock.now() },
     `push:${passId}:boundary:${ctx.ids.id()}`,
   );
   if (outcome !== 'stamped') throw new Error(`render ${outcome}`);
+}
+
+/** pass.json inside a .pkpass, or inside the `<passId>.pkpass` entry of a .pkpasses. */
+export function passJsonIn(bytes: Uint8Array, passId?: string): PassJson {
+  const files = unzipSync(bytes);
+  const inner = passId ? files[`${passId}.pkpass`] : undefined;
+  const raw = (inner ? unzipSync(inner) : files)['pass.json'];
+  if (!raw) throw new Error('No pass.json');
+  return JSON.parse(new TextDecoder().decode(raw)) as PassJson;
 }

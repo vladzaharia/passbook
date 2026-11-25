@@ -146,7 +146,7 @@ describe('add to a wallet', () => {
     await expect(servePassFile(kit.env.BUCKET, pass, new Request(ORIGIN))).rejects.toBeInstanceOf(
       PreviewOnlyError,
     );
-    expect(() => packagePassObjects(kit.env.BUCKET, [pass])).toThrow(PreviewOnlyError);
+    await expect(packagePassObjects(kit.ctx, [pass])).rejects.toBeInstanceOf(PreviewOnlyError);
   });
 
   it('offers no Apple copy: the channel reads as not included', async () => {

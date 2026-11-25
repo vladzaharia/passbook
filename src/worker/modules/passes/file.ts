@@ -37,14 +37,16 @@ export interface PassFileVariant {
   modifiedAt?: number;
 }
 
+// A render is signed again on each fetch, so its bytes differ while its content does not: a weak tag.
 const etagOf = (pass: Pass, variant?: PassFileVariant) =>
-  `"${pass.objectSha256 ?? `v${pass.version}`}${variant ? `-${variant.name}` : ''}"`;
+  `${variant?.render ? 'W/' : ''}"${pass.objectSha256 ?? `v${pass.version}`}${variant ? `-${variant.name}` : ''}"`;
 
 const second = (ms: number) => Math.floor(ms / 1000);
 
 function matchesEtag(header: string, etag: string): boolean {
   if (header.trim() === '*') return true;
-  return header.split(',').some((part) => part.trim().replace(/^W\//, '') === etag);
+  const tag = etag.replace(/^W\//, '');
+  return header.split(',').some((part) => part.trim().replace(/^W\//, '') === tag);
 }
 
 /**
@@ -83,12 +85,11 @@ export async function servePassFile(
   if (notModified) return new Response(null, { status: 304, headers });
   headers.set('content-disposition', `attachment; filename="${passFileName(pass)}"`);
   if (variant?.render) {
+    // HEAD neither renders nor signs: the length is only known once the body is built.
+    if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
     const bytes = await variant.render();
     headers.set('content-length', String(bytes.byteLength));
-    return new Response(request.method === 'HEAD' ? null : (bytes as BodyInit), {
-      status: 200,
-      headers,
-    });
+    return new Response(bytes as BodyInit, { status: 200, headers });
   }
   await variant?.ensure?.();
   const object = await bucket.get(variant?.objectKey ?? pass.objectKey);
