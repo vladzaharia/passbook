@@ -17,6 +17,7 @@ import {
 import { scanBans } from './authority-scope-bans.ts';
 import { opaqueFindings, opaqueHash } from './authority-scope-opaque.ts';
 import { OPAQUE_ALLOWLIST } from './authority-scope-opaque-allowlist.ts';
+import { fragmentPlacement } from './authority-scope-placement.ts';
 import {
   type Cx,
   describeStatement,
@@ -291,7 +292,14 @@ export function ownerOf(rel: string, owners: Owners): string | null {
 function writeEntries(
   source: string,
   cx?: Cx,
-): { table: string; id: string; holder: string | null; exported: boolean; calls: string[] }[] {
+): {
+  table: string;
+  id: string;
+  holder: string | null;
+  exported: boolean;
+  calls: string[];
+  text: string;
+}[] {
   const stripped = stripComments(source, cx);
   const { text } = stripped;
   const out: {
@@ -300,12 +308,20 @@ function writeEntries(
     holder: string | null;
     exported: boolean;
     calls: string[];
+    text: string;
   }[] = [];
   for (const m of text.matchAll(WRITE)) {
     if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
     const table = m[1] ?? m[2] ?? '';
     const { text: statement, holder, exported, calls } = describeStatement(stripped, m.index ?? 0);
-    out.push({ table, id: `${table}:${fingerprint(statement)}`, holder, exported, calls });
+    out.push({
+      table,
+      id: `${table}:${fingerprint(statement)}`,
+      holder,
+      exported,
+      calls,
+      text: statement,
+    });
   }
   for (const m of text.matchAll(HELPER_WRITE)) {
     const open = (m.index ?? 0) + m[0].indexOf('(');
@@ -315,6 +331,7 @@ function writeEntries(
       holder: null,
       exported: false,
       calls: [],
+      text: '',
     });
   }
   return out;
@@ -327,6 +344,15 @@ export function uninlinedWriteCalls(
 ): string[] {
   const cx = where && { ...where, seen: new Set<string>() };
   return writeEntries(source, cx).flatMap((e) => e.calls.map((c) => `${e.table}:${c}`));
+}
+
+/** Placement findings of the caller-built fragments in the raw writes of a file (`fragmentPlacement`). */
+export function fragmentFindings(
+  source: string,
+  where?: { rel: string; files: ReadonlyMap<string, string> },
+): string[] {
+  const cx = where && { ...where, seen: new Set<string>() };
+  return [...new Set(writeEntries(source, cx).flatMap((e) => fragmentPlacement(e.text)))];
 }
 
 /**
@@ -393,6 +419,9 @@ export function scanFile(
       OPAQUE_ALLOWLIST[rel],
       files,
     ))
+      add('raw-guarded-write', detail);
+  if (rel in RAW_WRITE_ALLOWLIST)
+    for (const detail of fragmentFindings(text, files && { rel, files }))
       add('raw-guarded-write', detail);
   for (const id of rawWriteStatements(text, files && { rel, files })) {
     const at = pinned.indexOf(id);
@@ -582,8 +611,10 @@ if (import.meta.main) {
     process.exit(0);
   }
   if (process.argv.includes('--opaque')) {
-    for (const [rel, entry] of Object.entries(OPAQUE_ALLOWLIST))
-      process.stdout.write(`${rel} ${opaqueHash(rel, entry.deps ?? [], new Map(files))}\n`);
+    for (const rel of Object.keys(OPAQUE_ALLOWLIST))
+      process.stdout.write(
+        `${rel} ${opaqueHash(rel, new Map(files), OPAQUE_ALLOWLIST[rel]?.via)}\n`,
+      );
     process.exit(0);
   }
   const findings = scanTree(readFileSync(join(root, DOC), 'utf8'), files);

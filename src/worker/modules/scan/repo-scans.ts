@@ -210,7 +210,7 @@ export const quarantineGateClaimStmt = (
     db,
     `UPDATE scans SET state = 'failed', reason = 'stale'
   WHERE id = ? AND state = 'pending' AND at = ?
-    AND ((${AMBIGUOUS_SCAN})${original ? ` OR NOT (${original.sql})` : ''})`,
+    AND ${original ? `NOT (NOT (${AMBIGUOUS_SCAN}) AND (${original.sql}))` : `(${AMBIGUOUS_SCAN})`}`,
     [id, at, ...(original?.params ?? [])],
   );
 

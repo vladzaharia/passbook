@@ -83,17 +83,17 @@ export async function replaceMemberPhoto(
     ? stmt(
         db,
         `DELETE FROM member_photos WHERE org_id = ? AND pass_id = ? AND version = ?
-         AND EXISTS (SELECT 1 FROM passes p WHERE ${passWhere}) RETURNING pass_id`,
+         AND EXISTS (SELECT 1 FROM passes p WHERE (${passWhere})) RETURNING pass_id`,
         [orgId, passId, previousVersion, ...passParams],
       )
     : stmt(
         db,
         `INSERT INTO member_photos(pass_id,org_id,r2_key,sha1,size,crc32,include_in_pass,version,updated_at)
-         SELECT ?,?,?,?,?,?,?,?,? FROM passes p WHERE ${passWhere} AND ${
+         SELECT ?,?,?,?,?,?,?,?,? FROM passes p WHERE (${passWhere}) AND ${
            previousVersion === null
              ? 'NOT EXISTS (SELECT 1 FROM member_photos m WHERE m.org_id = ? AND m.pass_id = ?)'
              : 'EXISTS (SELECT 1 FROM member_photos m WHERE m.org_id = ? AND m.pass_id = ? AND m.version = ?)'
-         }${uploadWhere}${candidateWhere}${sameKeyWhere}
+         }${uploadWhere ? ` AND (${uploadWhere})` : ''}${candidateWhere ? ` AND (${candidateWhere})` : ''}${sameKeyWhere}
          ON CONFLICT(pass_id) DO UPDATE SET r2_key=excluded.r2_key,sha1=excluded.sha1,
            size=excluded.size,crc32=excluded.crc32,include_in_pass=excluded.include_in_pass,
            version=excluded.version,updated_at=excluded.updated_at

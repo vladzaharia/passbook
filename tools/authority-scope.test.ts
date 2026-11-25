@@ -248,7 +248,7 @@ describe('authority-scope', () => {
       scanFile(rel, source, owners, map).filter((f) => f.rule === 'raw-guarded-write');
     // The reviewer's probe: strip the org term out of the constant before it is interpolated.
     const probe = text
-      .replace('${connectionPassPredicate} ${fences}', '${pred} ${fences}')
+      .replace('${connectionPassPredicate}${fences ?', '${pred}${fences ?')
       .replace(
         'const fences =',
         'const pred = connectionPassPredicate.replace("org_id = ? AND ", "");\n  const fences =',
@@ -312,7 +312,7 @@ describe('authority-scope', () => {
     const rel = 'src/worker/modules/auth/repo-sessions.ts';
     const text = new Map(treeFiles()).get(rel) ?? '';
     expect(uninlinedWriteCalls(text)).toEqual([]);
-    const called = `${text}\nrun(db, \`DELETE FROM sessions WHERE $\{scopeSql(x)}\`, []);`;
+    const called = `${text}\nrun(db, \`DELETE FROM sessions WHERE id = ? AND ($\{scopeSql(x)})\`, []);`;
     expect(uninlinedWriteCalls(called)).toEqual(['sessions:scopeSql(x)']);
     expect(
       scanFile(rel, called, owners).filter((f) => f.detail.includes('scopeSql(x)')),

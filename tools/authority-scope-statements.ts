@@ -96,6 +96,9 @@ export function stripComments(source: string, cx?: Cx): Stripped {
 }
 
 const MAX_INLINE_DEPTH = 4;
+/** Wrap what `expand()` inlines (a constant, a ternary): not parentheses of the SQL, so `fingerprint` turns them back into the parentheses the pins were taken over. */
+export const INLINE_OPEN = '\u0001';
+export const INLINE_CLOSE = '\u0002';
 const IDENT = /^[A-Za-z_$][\w$]*$/;
 
 /** The index of the `}` that closes the `${` whose body starts at `from`. */
@@ -232,7 +235,7 @@ function expand(stripped: Stripped, raw: string, at: number, depth: number): str
         ? constantBody(stripped, expr, at, depth)
         : branches &&
           `${expand(stripped, branches[0], at, depth + 1)}|${expand(stripped, branches[1], at, depth + 1)}`;
-      out += body === null ? `\${${expr}}` : `(${body})`;
+      out += body === null ? `\${${expr}}` : `${INLINE_OPEN}${body}${INLINE_CLOSE}`;
       i = end;
     } else out += raw[i];
   }
@@ -269,6 +272,35 @@ function concatenatedTail(stripped: Stripped, from: number): string {
 }
 
 /**
+ * The first `;` that ends the statement at `from`, or -1. In a literal it is a SQL `;`: one inside an
+ * `${...}`, a quoted SQL string or a SQL comment does not end it. In code it is a `;` outside every literal.
+ */
+function statementEnd(stripped: Stripped, from: number, end: number, inLiteral: boolean): number {
+  const { text } = stripped;
+  if (!inLiteral) {
+    for (let i = from; i < end; i++) {
+      const lit = stripped.literals.find(([a, b]) => a <= i && i < b);
+      if (lit) i = lit[1] - 1;
+      else if (text[i] === ';') return i;
+    }
+    return -1;
+  }
+  for (let i = from; i < end; i++) {
+    const c = text[i];
+    if (c === '$' && text[i + 1] === '{') i = closeBrace(text, i + 2);
+    else if (c === "'") {
+      for (i++; i < end && !(text[i] === "'" && text[i + 1] !== "'"); i++) if (text[i] === "'") i++;
+    } else if (c === '-' && text[i + 1] === '-') {
+      while (i < end && text[i] !== '\n') i++;
+    } else if (c === '/' && text[i + 1] === '*') {
+      const close = text.indexOf('*/', i + 2);
+      i = close === -1 ? end : close + 1;
+    } else if (c === ';') return i;
+  }
+  return -1;
+}
+
+/**
  * The statement that starts at `from`: to the next `;` or the end of the literal that holds it, with
  * interpolations expanded and any `+ ...` tail joined on. `holder` names the `const` (a literal or an
  * object of them) the statement is declared in, whose uses are further call sites.
@@ -279,8 +311,8 @@ export function describeStatement(
 ): { text: string; holder: string | null; exported: boolean; calls: string[] } {
   const literal = stripped.literals.find(([start, end]) => start <= from && from < end);
   const end = literal ? literal[1] - 1 : Math.min(stripped.text.length, from + 400);
-  const semicolon = stripped.text.indexOf(';', from);
-  const cut = semicolon !== -1 && semicolon < end;
+  const semicolon = statementEnd(stripped, from, end, literal !== undefined);
+  const cut = semicolon !== -1;
   const raw = stripped.text.slice(from, cut ? semicolon : end);
   let text = expand(stripped, raw, from, 0);
   if (literal && !cut) text += expand(stripped, concatenatedTail(stripped, literal[1]), from, 0);
@@ -292,16 +324,23 @@ export function describeStatement(
  * survive any change to it: the caller must fail instead of trusting the pin.
  */
 export function opaqueInterpolations(expanded: string): string[] {
-  const out: string[] = [];
+  return opaqueSpans(expanded).map((s) => s.expr);
+}
+
+/** The `${...}` interpolations of expanded statement text: whitespace-collapsed expression and the `start`..`end` of its braces. */
+export function opaqueSpans(expanded: string): { expr: string; start: number; end: number }[] {
+  const out: { expr: string; start: number; end: number }[] = [];
   for (let i = 0; i < expanded.length; i++)
     if (expanded[i] === '$' && expanded[i + 1] === '{') {
       const end = closeBrace(expanded, i + 2);
-      out.push(
-        expanded
+      out.push({
+        expr: expanded
           .slice(i + 2, end)
           .replace(/\s+/g, ' ')
           .trim(),
-      );
+        start: i,
+        end,
+      });
       i = end;
     }
   return out;
@@ -339,6 +378,8 @@ export function usesOf(stripped: Stripped, name: string): number {
 /** Whitespace and SQL comments removed, then hashed: 12 hex characters. */
 export function fingerprint(statement: string): string {
   const normalized = statement
+    .replaceAll(INLINE_OPEN, '(')
+    .replaceAll(INLINE_CLOSE, ')')
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/--[^\n]*/g, ' ')
     .replace(/\s+/g, ' ')

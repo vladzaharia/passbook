@@ -50,12 +50,14 @@ export const connectionPassPredicate = `org_id = ? AND mode = ? AND mode = 'live
 /** Only the fences the context carries; append after `connectionPassPredicate`. */
 export function connectionPassFences(context: ConnectionPassContext): string {
   return [
-    context.expectedRowVersion === undefined ? '' : 'AND row_version = ?',
-    context.retainedReleaseProof ? 'AND (release_id = ? AND template_version = ?)' : '',
+    context.expectedRowVersion === undefined ? '' : 'row_version = ?',
+    context.retainedReleaseProof ? '(release_id = ? AND template_version = ?)' : '',
     context.retainedBinding
-      ? 'AND (passes.template_id = ? AND passes.release_id IS ? AND passes.template_version = ?)'
+      ? '(passes.template_id = ? AND passes.release_id IS ? AND passes.template_version = ?)'
       : '',
-  ].join(' ');
+  ]
+    .filter(Boolean)
+    .join(' AND ');
 }
 
 /** Binds of `connectionPassPredicate`, then of `connectionPassFences`. */
