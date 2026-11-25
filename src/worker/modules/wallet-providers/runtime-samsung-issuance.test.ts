@@ -1,4 +1,6 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { fixture, restore } from './google-runtime-test-fixtures.ts';
+import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { assertWalletRuntimeAccount, createSamsungRuntimeOffer } from './runtime.ts';
 import { runtimeGoogleAccount, runtimeSamsungAccount, SAMSUNG_ISSUANCE } from './runtime-core.ts';
@@ -7,6 +9,11 @@ import { createSamsungRefId } from './samsung.ts';
 
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
+});
+
+afterEach(() => {
+  for (const undo of restore.splice(0).reverse()) undo();
+  vi.unstubAllGlobals();
 });
 
 describe('Samsung issuance credential path', () => {
@@ -33,8 +40,32 @@ describe('Samsung issuance credential path', () => {
     await expect(runtimeSamsungAccount(ctx, f.scope, { kind: 'issuance' })).rejects.toMatchObject({
       code: 'account_unavailable',
     });
-    // The mirror: Samsung's purpose does not open a Google read.
-    await expect(runtimeGoogleAccount(ctx, f.scope, SAMSUNG_ISSUANCE)).rejects.toMatchObject({
+  });
+
+  it('does not open a Google read: a valid Google scope refuses the Samsung purpose only', async () => {
+    const { f } = await fixture();
+    const { pass, kit } = f;
+    if (!pass.releaseId) throw new Error('Missing source release.');
+    const approved = await getApprovedProjection(kit.ctx, {
+      orgId: pass.orgId,
+      mode: pass.mode,
+      provider: 'google',
+      templateId: pass.templateId,
+      templateVersion: pass.templateVersion,
+      appleReleaseId: pass.releaseId,
+    });
+    if (!approved) throw new Error('Missing approved Google projection.');
+    const scope = {
+      orgId: pass.orgId,
+      mode: pass.mode,
+      accountId: approved.release.accountId,
+      accountRevision: approved.release.accountRevision,
+      providerIdentityHash: approved.release.providerIdentityHash,
+      providerReleaseId: approved.release.id,
+    };
+    // Control: the same scope opens under Google's own purpose, so only the purpose check refuses below.
+    await expect(runtimeGoogleAccount(kit.ctx, scope, { kind: 'issuance' })).resolves.toBeDefined();
+    await expect(runtimeGoogleAccount(kit.ctx, scope, SAMSUNG_ISSUANCE)).rejects.toMatchObject({
       code: 'account_unavailable',
     });
   });

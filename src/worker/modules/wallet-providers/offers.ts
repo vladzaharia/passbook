@@ -140,8 +140,10 @@ export async function issueWalletOffer(
     authority: { kind: 'download', token: pass.downloadToken },
   }).catch((error: unknown) => {
     // A guard trigger or constraint that refuses the activation is "not available", never a 500.
-    if (classifyD1Error(error)) throw notFound();
-    throw error;
+    const refused = classifyD1Error(error, { triggers: true });
+    if (!refused) throw error;
+    ctx.log.warn('wallet.offer_refused', { code: 'WALLET_OFFER_REFUSED', detail: refused.detail });
+    throw notFound();
   });
   if (!created) throw notFound();
   const { operation, ref, expiresAt } = created;

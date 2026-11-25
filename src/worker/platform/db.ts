@@ -161,8 +161,15 @@ export interface D1ErrorInfo {
   detail: string;
 }
 
-/** Maps D1's SQLite error text to a kind. Null for anything else, so callers rethrow. */
-export function classifyD1Error(error: unknown): D1ErrorInfo | null {
+/**
+ * Maps D1's SQLite error text to a kind. Null for anything else, so callers rethrow. A trigger's own
+ * RAISE(ABORT, text) is a `trigger` only when the caller opts in (`{ triggers: true }`): most callers
+ * must keep treating an unknown abort as a fault.
+ */
+export function classifyD1Error(
+  error: unknown,
+  options: { triggers?: boolean } = {},
+): D1ErrorInfo | null {
   const message = error instanceof Error ? error.message : '';
   const unique = /UNIQUE constraint failed: ([^:]+?)(?::|$| \()/.exec(message);
   if (unique?.[1]) return { kind: 'unique', detail: unique[1] };
@@ -170,11 +177,10 @@ export function classifyD1Error(error: unknown): D1ErrorInfo | null {
     return { kind: 'foreign_key', detail: message };
   const abort = /(?:^|: )(registration cap reached|authority_denied:[a-z]+)\b/.exec(message);
   if (abort?.[1]) return { kind: 'abort', detail: abort[1] };
-  // Any other RAISE(ABORT) of a trigger: D1 reports `<RAISE text>: SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_TRIGGER)`.
-  const trigger =
-    /^(?:D1_ERROR: )?(.*?): SQLITE_CONSTRAINT \(extended: SQLITE_CONSTRAINT_TRIGGER\)/s.exec(
-      message,
-    );
-  if (trigger) return { kind: 'trigger', detail: trigger[1] ?? message };
+  if (options.triggers && !/constraint failed/i.test(message)) {
+    // `<RAISE text>: SQLITE_CONSTRAINT` with or without the `(extended: ...)` suffix, which only miniflare is proven to add.
+    const trigger = /^(?:D1_ERROR: )?(.*?): SQLITE_CONSTRAINT(?:$| \()/s.exec(message);
+    if (trigger) return { kind: 'trigger', detail: trigger[1] ?? message };
+  }
   return null;
 }

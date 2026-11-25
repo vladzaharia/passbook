@@ -69,16 +69,16 @@ export function channelOffSuccessor(instance: WalletInstance): {
 
 /**
  * Whether tapping the badge can still activate this slot: the one check listing and issuing share. It mirrors
- * the operation guard (0149): a ready placeholder (a transfer's successor, with no account bound yet) has
- * no active, bound instance for the first operation to join, so it cannot activate; a live instance must be
- * at the pass's credential generation. A pending transfer is already refused by the pass snapshot.
+ * the operation guard (0208): a ready placeholder (a transfer's successor, no operation yet) takes its first
+ * operation; a blocked one cannot; a live instance must be at the pass's credential generation. A pending transfer is already refused by the pass snapshot.
  */
 export function instanceCanActivate(
   instance: WalletInstance | null,
   passCredentialGeneration: number,
 ): boolean {
   if (!instance || channelOffSuccessor(instance)) return true;
-  if (instance.lifecycle === 'ready' || instance.lifecycle === 'blocked') return false;
+  if (instance.lifecycle === 'blocked') return false;
+  if (instance.lifecycle === 'ready' && instance.desiredVersion !== 0) return false;
   return instance.credentialGeneration === passCredentialGeneration;
 }
 

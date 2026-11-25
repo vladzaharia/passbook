@@ -6,7 +6,8 @@ import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
-import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { setWalletProvidersEnabledForTest, walletEnrolmentIssues } from './provider-policy.ts';
+import { findEnrolmentGateRow } from './repo-enrolment-gate.ts';
 import { enrol, platformSource, seedInstance } from './wallet-roundtrip-test-fixtures.ts';
 
 beforeAll(() => {
@@ -164,5 +165,53 @@ describe('0207 recreated the presence test', () => {
       /COALESCE\((\w+)\.credential_id, \1\.credential_source_id\) IS NOT NULL/,
     );
     expect(row?.sql).not.toMatch(/\w\.credential_id IS NOT NULL/);
+  });
+});
+
+let liveSource: Awaited<ReturnType<typeof platformSource>> | undefined;
+
+describe('a migrated account (legacy envelope and a source) follows Off, Held and On', () => {
+  async function migrated(state: 'off' | 'held' | 'on') {
+    const f = await setupWalletOfferKit({
+      google: 'absent',
+      samsung: 'configured',
+      holderEmail: 'h@example.test',
+    });
+    const { kit } = f;
+    kit.clock.set(Date.now());
+    // One platform credential serves every org of the mode.
+    liveSource ??= await platformSource(f, 'live', 'card996', 'samsung');
+    const source = liveSource;
+    await dropTriggers(env.DB, 'wallet_provider_accounts');
+    const now = kit.clock.now();
+    await run(
+      env.DB,
+      `UPDATE wallet_provider_accounts SET credential_source_id = ?, enrolment_revision = 1, enabled_at = ?,
+        platform_hold_at = ? WHERE org_id = ? AND provider = 'samsung' AND mode = 'live'`,
+      [source.id, state === 'off' ? null : now, state === 'held' ? now : null, kit.org.id],
+    );
+    const row = await first<{ id: string; revision: number }>(
+      env.DB,
+      "SELECT id, revision FROM wallet_provider_accounts WHERE org_id = ? AND provider = 'samsung' AND mode = 'live'",
+      [kit.org.id],
+    );
+    if (!row) throw new Error('Missing account.');
+    return { f, account: { accountId: row.id, revision: row.revision } };
+  }
+
+  it.each([
+    ['off', false],
+    ['held', false],
+    ['on', true],
+  ] as const)('%s: issues %s', async (state, issues) => {
+    const { f, account } = await migrated(state);
+    const gate = await findEnrolmentGateRow(env.DB, 'samsung', f.kit.org.id, 'live');
+    expect(walletEnrolmentIssues(gate)).toBe(issues);
+    // The database agrees: an instance on the account is refused while it is Off or Held.
+    await dropSeedGuards(env.DB);
+    const pass = await f.kit.pass({ mode: 'live', holderEmail: 'h@example.test' });
+    const seeding = seedInstance(f, pass, account, null, 1, 'samsung');
+    if (issues) await expect(seeding).resolves.toBeDefined();
+    else await expect(seeding).rejects.toThrow(/provider enrolment is not on/);
   });
 });

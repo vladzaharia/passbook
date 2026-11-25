@@ -250,7 +250,7 @@ export async function createPassRowWithRelease(
     issuedOwnerUserId = inserted.ownerUserId;
     issuedRevision = inserted.revision;
   } catch (error) {
-    const info = classifyD1Error(error);
+    const info = classifyD1Error(error, { triggers: true });
     // A failed D1 response can conceal a committed batch. Only delete when no INSERT was
     // attempted, the CAS definitely lost, or SQLite reported a definite rolled-back error.
     // A grant refusal rolled the batch back, so the artifact is unreferenced.
