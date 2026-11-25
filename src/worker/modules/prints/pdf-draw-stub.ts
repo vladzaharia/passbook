@@ -8,6 +8,7 @@ import { groupPrintCode } from '../../../shared/copy/print.ts';
 import { codeLabel } from '../../../web/paper/ticket-parts.tsx';
 import { stripText, stripType } from '../../../web/paper/ticket-strip-text.ts';
 import { footMeta } from '../../../web/paper/ticket-text.ts';
+import { fitWidths } from '../../../web/paper/ticket-widths.ts';
 import { codeMark, passbookLine, plate, specOf, typedCode } from './pdf-draw-parts.ts';
 import { type Box, COLORS, type Pen, type TextStyle } from './pdf-kit.ts';
 import type { Sheet } from './pdf-sheet.ts';
@@ -102,7 +103,7 @@ export function drawStrip(pen: Pen, s: Sheet): void {
     footTop,
     meta,
   );
-  passbookLine(pen, s.mark, x + w, pen.baselineOf(meta, footTop), meta.size);
+  passbookLine(pen, s.mark, x + w, pen.baselineOf(meta, footTop), meta.size, meta.color);
 
   if (t.compact) {
     const lineSt: TextStyle = { size: ty.typed, font: 'mono', color: fg, ls: 0.04, lh: 1.3 };
@@ -146,10 +147,7 @@ export function drawStrip(pen: Pen, s: Sheet): void {
     const natural = t.rows.map(
       (r) => Math.max(pen.measure(r.label, lbl), pen.measure(r.text, val)) + 4,
     );
-    const sum = natural.reduce((n, v) => n + v, 0);
-    const widths = natural.map((v) =>
-      sum > room ? (v * room) / sum : v + (room - sum) / natural.length,
-    );
+    const widths = fitWidths(natural, room);
     let bx = x;
     for (const [i, r] of t.rows.entries()) {
       const cw = widths[i] ?? 0;

@@ -27,9 +27,10 @@ describe('the PDF of each new class says what the page says', () => {
     expect(t.replace(/\s/g, '')).toContain(SAMPLE_CODE);
   });
 
-  it('a booking: what, with, where and status, in one page with no ticket words', async () => {
+  it('a booking: what, with and where, no status, no ticket words', async () => {
     const t = await text('booking', 'half');
-    for (const want of ['Cut and colour', 'Sam', 'Soho', 'Booked']) expect(t).toContain(want);
+    for (const want of ['Cut and colour', 'Sam', 'Soho']) expect(t).toContain(want);
+    expect(t).not.toContain('Booked');
     expect(t).not.toMatch(/ticket/i);
   });
 
@@ -39,14 +40,25 @@ describe('the PDF of each new class says what the page says', () => {
       expect(t).toContain(want);
   });
 
-  it('keeps the title clear of the logo on a long route', async () => {
-    const long = 'Wolfeschlegelsteinhausenbergerdorf – Llanfairpwllgwyngyll';
-    const bytes = await renderPdf([sheet('journey', 'half', { content: { title: long } })], {
-      assets: env.ASSETS,
-    });
-    const [page] = await readPdf(bytes);
-    expect(page).toBeDefined();
-    expect(await pdfText(bytes)).toContain('Wolfeschlegelsteinhausen');
+  it('a long route clamps each end and says the whole name on its own line', async () => {
+    const bytes = await renderPdf(
+      [
+        sheet('journey', 'a4', {
+          content: {
+            title: 'Wolfeschlegelst… – Llanfairpwllgwyng…',
+            info: {
+              fromFull: 'Wolfeschlegelsteinhausenbergerdorf',
+              toFull: 'Llanfairpwllgwyngyllgogerych',
+            },
+          },
+        }),
+      ],
+      { assets: env.ASSETS },
+    );
+    const t = await pdfText(bytes);
+    expect(t).toContain('Wolfeschlegelst… – Llanfairpwllgwyng…');
+    expect(t).toContain('From Wolfeschlegelsteinhausenbergerdorf');
+    expect(t).toContain('To Llanfairpwllgwyngyllgogerych');
   });
 
   it.each([

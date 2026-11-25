@@ -26,6 +26,7 @@ import {
   infoColumns,
   rules,
 } from './ticket-text.ts';
+import { widestIndex } from './ticket-widths.ts';
 
 const ART_POS = {
   artwork: '50% 30%',
@@ -210,8 +211,13 @@ export function TicketFull({ p, half }: { p: TicketProps; half: boolean }) {
             </div>
             {c.facts.length ? (
               <div className="pp-facts">
-                {c.facts.map((f) => (
-                  <div className="pp-fact" key={f.label}>
+                {c.facts.map((f, i) => (
+                  <div
+                    className={
+                      i === widestIndex(c.facts.map((x) => x.text)) ? 'pp-fact pp-wide' : 'pp-fact'
+                    }
+                    key={f.label}
+                  >
                     <div className="pp-lbl">{f.label}</div>
                     <div className="pp-v">{f.text}</div>
                   </div>

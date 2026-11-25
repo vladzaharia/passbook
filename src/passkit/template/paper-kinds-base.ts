@@ -45,6 +45,8 @@ export interface KindParts {
 export type InfoKey =
   | 'from'
   | 'fromCity'
+  | 'fromFull'
+  | 'toFull'
   | 'to'
   | 'toCity'
   | 'vehicle'
@@ -59,7 +61,6 @@ export type InfoKey =
   | 'arrives'
   | 'arrivesZone'
   | 'with'
-  | 'status'
   | 'nights'
   | 'included'
   | 'team'

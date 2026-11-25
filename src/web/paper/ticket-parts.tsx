@@ -10,6 +10,7 @@ import type { PaperDrawing } from './drawing.ts';
 import { buddyPose, TicketBuddy } from './ticket-buddy.tsx';
 import { footMeta, type Issued } from './ticket-text.ts';
 import { initialsOf } from './ticket-text-base.ts';
+import { widestIndex } from './ticket-widths.ts';
 
 export interface TicketProps {
   content: PaperContent;
@@ -251,8 +252,13 @@ export function sheetProps(p: TicketProps, extra: string, vars: CSSProperties = 
 export const Rows = ({ rows }: { rows: { label: string; text: string }[] }): ReactNode =>
   rows.length ? (
     <div className="pp-door-rows">
-      {rows.map((r) => (
-        <div key={r.label}>
+      {rows.map((r, i) => (
+        <div
+          key={r.label}
+          className={
+            i === widestIndex(rows.map((x) => `${x.label}${x.text}`)) ? 'pp-wide' : undefined
+          }
+        >
           <div className="pp-lbl">{r.label}</div>
           <div className="pp-v">{r.text}</div>
         </div>

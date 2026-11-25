@@ -87,7 +87,7 @@ describe('what each class prints', () => {
     const { c } = await content('starter-booking');
     expect(c.title).toBe('Cut and colour');
     expect(c.title).not.toMatch(/^\d{4}-/);
-    expect(c.info).toMatchObject({ with: 'Sam', status: 'Booked' });
+    expect(c.info).toMatchObject({ with: 'Sam' });
     expect(c.venue).toBe('Soho');
   });
 
@@ -120,7 +120,7 @@ describe('what each class prints', () => {
     expect(c.info.number).toBeUndefined();
   });
 
-  it('a pack prints "pack of N", a stamp card its reward and goal, neither a live count', async () => {
+  it('a pack prints "pack of N" and no live count, a store card no balance', async () => {
     const pack = (await content('starter-pack')).c;
     expect(pack.hero?.offer).toBe('Pack of 10 washes');
     expect(JSON.stringify(pack)).not.toContain('"7"');
@@ -128,10 +128,31 @@ describe('what each class prints', () => {
     expect(JSON.stringify(store)).not.toMatch(/\$\s?\d/);
   });
 
+  it('a stamp card prints its reward and goal and never the stamps taken', async () => {
+    const { passJson, manifest, personalization } = await blueprintPass(
+      'starter-stamp-card',
+      {},
+      { strips: true },
+    );
+    const c = paperContent({
+      passJson,
+      manifest,
+      personalization,
+      design: resolvePaper(undefined),
+    });
+    expect(c.kind).toBe('membership');
+    expect(c.type).toBe('10 stamps = Free coffee');
+    expect(c.info).toMatchObject({ reward: 'Free coffee', goal: '10' });
+    expect(JSON.stringify(c)).not.toMatch(/7 of 10|"7"/);
+  });
+
   it("Henry's prints neither the member number nor ticket words", async () => {
     const { c, manifest } = await content('henrys-blue');
     const lookup = (manifest.scan as { lookup: { input: string } }).lookup.input;
     expect(lookup).toBe('memberId');
+    const number = String(manifest.sample?.[lookup]);
+    expect(number.length).toBeGreaterThan(3);
+    expect(JSON.stringify(c)).not.toContain(number);
     expect(c.bring.join(' ')).not.toMatch(/page|ticket/i);
     expect(c.noun).not.toBe('ticket');
   });
@@ -142,3 +163,30 @@ describe('what each class prints', () => {
     expect(c.room).toBe('Entrance B');
   });
 });
+
+describe('long values', () => {
+  it('a journey clamps each end of the route on its own and keeps the whole name', async () => {
+    const { c } = await content2('starter-transit-ticket', {
+      origin: 'Wolfeschlegelsteinhausenbergerdorf Harbour',
+      destination: 'Llanfairpwllgwyngyllgogerychwyrndrobwll',
+    });
+    const [from, to] = c.title.split(' – ');
+    expect(from?.length).toBeLessThanOrEqual(18);
+    expect(to?.length).toBeLessThanOrEqual(18);
+    expect(from).toMatch(/…$/);
+    expect(to).toMatch(/…$/);
+    expect(c.info.fromFull).toBe('Wolfeschlegelsteinhausenbergerdorf Harbour');
+    expect(c.info.toFull).toBe('Llanfairpwllgwyngyllgogerychwyrndrobwll');
+  });
+});
+
+async function content2(slug: string, over: Record<string, string>) {
+  const { passJson, manifest, personalization } = await blueprintPass(slug, over);
+  const c = paperContent({
+    passJson,
+    manifest,
+    personalization,
+    design: resolvePaper(manifest.paper),
+  });
+  return { c };
+}

@@ -28,6 +28,8 @@ const extrasOf = (c: Kinded, skip: string[]): string | undefined => {
   return out.length ? out.join(' · ') : undefined;
 };
 
+const MAX_END = 18;
+
 export function tripParts(c: Kinded, parts: KindParts, seat: NonNullable<KindParts['seat']>): void {
   const { info } = parts;
   const set = (key: keyof typeof info, v: string | undefined) => {
@@ -36,7 +38,13 @@ export function tripParts(c: Kinded, parts: KindParts, seat: NonNullable<KindPar
   if (c.kind === 'journey') {
     const from = place(c, ['origin', 'from'], 'departureCityName');
     const to = place(c, ['destination', 'to'], 'destinationCityName');
-    parts.title = [from?.main, to?.main].filter(Boolean).join(' – ') || undefined;
+    // Each end is clamped on its own, so a long one never hides the other; the whole name moves
+    // to the note line.
+    const end = (v: string | undefined) =>
+      v && v.length > MAX_END ? `${v.slice(0, MAX_END - 1).trimEnd()}…` : v;
+    parts.title = [end(from?.main), end(to?.main)].filter(Boolean).join(' – ') || undefined;
+    if (from && end(from.main) !== from.main) info.fromFull = from.main;
+    if (to && end(to.main) !== to.main) info.toFull = to.main;
     set('from', from?.main);
     set('fromCity', from?.city);
     set('to', to?.main);
@@ -79,11 +87,9 @@ export function tripParts(c: Kinded, parts: KindParts, seat: NonNullable<KindPar
     const where = c.field('where', 'location');
     if (where) parts.venue = where;
     set('with', c.field('with', 'provider', 'staff'));
-    set('status', c.field('status'));
     for (const [label, v] of [
       ['With', info.with],
       ['Where', where],
-      ['Status', info.status],
     ] as const)
       if (v) parts.facts.push({ label, text: v });
     return;

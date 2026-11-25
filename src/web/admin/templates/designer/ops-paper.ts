@@ -17,7 +17,7 @@ export type PaperPatch = null | {
   barcode?: PaperBarcode;
   fields?: string[];
   terms?: string;
-  holder?: boolean;
+  holder?: boolean | undefined;
   /** `null` goes back to the layout derived from the template. */
   kind?: PaperKind | null;
   ink?: PaperInk;
@@ -57,7 +57,7 @@ export function setPaper(doc: DesignDoc, patch: PaperPatch): DesignDoc {
   const terms = 'terms' in patch ? patch.terms : old.terms;
   if (typeof terms === 'string' ? terms.trim() : terms) block.terms = terms;
   const holder = 'holder' in patch ? patch.holder : old.holder;
-  if (holder === false) block.holder = false;
+  if (typeof holder === 'boolean') block.holder = holder;
   const kind = 'kind' in patch ? patch.kind : old.kind;
   if (typeof kind === 'string') block.kind = kind;
   const ink = patch.ink ?? old.ink;

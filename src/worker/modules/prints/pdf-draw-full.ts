@@ -12,6 +12,7 @@ import {
   faceNotesFit,
   folds,
 } from '../../../web/paper/ticket-text.ts';
+import { fitWidths } from '../../../web/paper/ticket-widths.ts';
 import { drawBuddy } from './pdf-buddy.ts';
 import { drawInfo } from './pdf-draw-info.ts';
 import {
@@ -42,12 +43,8 @@ function doorFacts(pen: Pen, s: Sheet, x: number, w: number, bottom: number): vo
   pen.line(x, top + 0.125, x + w, top + 0.125, COLORS.hair, 0.25);
   const gap = 4;
   const natural = rows.map((r) => Math.max(pen.measure(r.label, LBL), pen.measure(r.text, value)));
-  const total = natural.reduce((a, b) => a + b, 0);
-  const spare = w - total - gap * (rows.length - 1);
-  // flex: 1 1 auto. Room left is shared equally; too little shrinks each box by its own width.
-  const widths = natural.map((n) =>
-    spare >= 0 ? n + spare / rows.length : n * (1 + spare / total),
-  );
+  // Boxes keep their text's width plus an equal share of the slack; only the widest give way.
+  const widths = fitWidths(natural, w - gap * (rows.length - 1));
   let at = x;
   for (const [i, r] of rows.entries()) {
     const cw = widths[i] ?? 4;
@@ -141,9 +138,15 @@ function faceBody(pen: Pen, s: Sheet, face: Box, top: number, bottom: number, ha
   if (!c.facts.length) return;
   const h = factsH;
   const n = c.facts.length;
-  const fw = (w - 2 * (n - 1)) / n;
+  const widths = fitWidths(
+    c.facts.map((f) => Math.max(pen.measure(f.label, LBL), pen.measure(f.text, value)) + 5.4),
+    w - 2 * (n - 1),
+  );
+  let bx = x;
   for (const [i, f] of c.facts.entries()) {
-    const box = { x: x + i * (fw + 2), y: bottom - 5.5 - h, w: fw, h };
+    const fw = widths[i] ?? 0;
+    const box = { x: bx, y: bottom - 5.5 - h, w: fw, h };
+    bx += fw + 2;
     pen.strokeBox(
       { x: box.x + 0.15, y: box.y + 0.15, w: box.w - 0.3, h: box.h - 0.3 },
       COLORS.hair,

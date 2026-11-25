@@ -7,6 +7,7 @@ import {
   type PaperSize,
   resolvePaper,
   supportsCode128,
+  withKind,
 } from '@/passkit/template/paper.ts';
 import { bestImage, imageSlots } from '@/passkit/template/paper-assets.ts';
 import { paperContent } from '@/passkit/template/paper-content.ts';
@@ -220,7 +221,9 @@ export function PaperPreview({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Badge tone="neutral">{PRINT_COPY.sample}</Badge>
             {saved.derived ? <Badge tone="neutral">{PRINT_COPY.derived}</Badge> : null}
-            {saved.holder ? null : <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>}
+            {(content ? withKind(saved, content.kind) : saved).holder ? null : (
+              <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>
+            )}
             {content?.ink === 'mono' && saved.ink !== 'mono' ? (
               <Badge tone="neutral">{PRINT_COPY.inkMonoNote}</Badge>
             ) : null}

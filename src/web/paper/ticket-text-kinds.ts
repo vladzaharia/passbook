@@ -34,10 +34,16 @@ function tripTimes(c: PaperContent): string | undefined {
 }
 
 /** `Arrives 4:30 pm EDT`, in the destination's own zone. */
-const arrival = (c: PaperContent): string | undefined =>
-  c.info.arrives
-    ? `Arrives ${paperDate(c.info.arrives, c.info.arrivesZone ?? paperZoneFor(c, c.info.arrives), 'timeZone')}`
-    : undefined;
+const arrival = (c: PaperContent): string | undefined => {
+  if (!c.info.arrives) return undefined;
+  const zone = c.info.arrivesZone ?? paperZoneFor(c, c.info.arrives);
+  // An arrival on another day than the departure names its day.
+  const other =
+    c.start && paperDate(c.info.arrives, zone, 'long') !== at(c, c.start, 'long')
+      ? `${noYear(paperDate(c.info.arrives, zone, 'short'))}, `
+      : '';
+  return `Arrives ${other}${paperDate(c.info.arrives, zone, 'timeZone')}`;
+};
 
 const zoneLine = (c: PaperContent): string | undefined => {
   if (splitZones(c)) return undefined;
@@ -91,7 +97,7 @@ export function tripRows(c: PaperContent): Row[] {
     return rowsOf([
       { label: L.holder, text: c.holder },
       { label: L.with, text: c.info.with },
-      { label: L.status, text: c.info.status },
+      { label: L.where, text: c.venue },
     ]);
   return rowsOf([
     { label: L.holder, text: c.holder },
@@ -110,6 +116,8 @@ export function tripLines(c: PaperContent, half: boolean): Line[] {
     sub(tripTimes(c));
     sub(arrival(c));
     big(named(c.info.vehicleLabel, c.info.vehicle));
+    sub(c.info.fromFull && `${L.from} ${c.info.fromFull}`);
+    sub(c.info.toFull && `${L.to} ${c.info.toFull}`);
     sub(
       c.info.fromCity || c.info.toCity
         ? `${c.info.fromCity ?? c.info.from ?? ''} to ${c.info.toCity ?? c.info.to ?? ''}`
@@ -192,7 +200,10 @@ const validity = (c: PaperContent): { label: string; text: string | undefined } 
   c.info.arrives && c.validUntil
     ? {
         label: 'Valid',
-        text: `${noYear(at(c, c.info.arrives, 'short'))} · ${at(c, c.info.arrives, 'time')} – ${at(c, c.validUntil, 'time')}`,
+        text:
+          at(c, c.info.arrives, 'long') === at(c, c.validUntil, 'long')
+            ? `${noYear(at(c, c.info.arrives, 'short'))} · ${at(c, c.info.arrives, 'time')} – ${at(c, c.validUntil, 'time')}`
+            : `${noYear(at(c, c.info.arrives, 'short'))} ${at(c, c.info.arrives, 'time')} – ${noYear(at(c, c.validUntil, 'short'))} ${at(c, c.validUntil, 'time')}`,
       }
     : c.validFrom && c.validUntil
       ? {
@@ -234,6 +245,14 @@ export const idRows = (c: PaperContent): Row[] => {
   ).slice(0, 3);
 };
 
+/** The extras the design names, after the class's own lines, up to what the panel holds. */
+function withExtras(c: PaperContent, lines: Line[], half: boolean): Line[] {
+  for (const e of c.extras)
+    if (lines.length < (half ? 6 : 9))
+      lines.push({ text: e.label ? `${e.label}: ${e.text}` : e.text });
+  return lines;
+}
+
 export function idLines(c: PaperContent, half: boolean): Line[] {
   const lines: Line[] = [];
   const d = idDetails(c);
@@ -241,12 +260,12 @@ export function idLines(c: PaperContent, half: boolean): Line[] {
   if (c.kind === 'credential') {
     if (c.holder) lines.push({ big: true, text: c.holder });
     for (const r of d.slice(1, half ? 4 : 6)) lines.push({ text: `${r.label}: ${r.text}` });
-    return lines;
+    return withExtras(c, lines, half);
   }
   if (first?.label === 'Role') lines.push({ big: true, text: first.text });
   for (const r of d.slice(first?.label === 'Role' ? 1 : 0, half ? 5 : 7))
     lines.push({ text: `${r.label}: ${r.text}` });
-  return lines;
+  return withExtras(c, lines, half);
 }
 
 export function idColumns(c: PaperContent, bring: Column): Column[] {

@@ -64,10 +64,11 @@ describe('journey paper', () => {
 });
 
 describe('booking and stay paper', () => {
-  it('a booking prints what, with, where and status, and no raw time', async () => {
+  it('a booking prints what, with and where, no status and no raw time', async () => {
     const h = await html('starter-booking', 'half', { kind: 'booking' });
     const t = text(h);
-    for (const s of ['Cut and colour', 'Sam', 'Soho', 'Booked']) expect(t).toContain(s);
+    for (const s of ['Cut and colour', 'Sam', 'Soho']) expect(t).toContain(s);
+    expect(t).not.toContain('Booked');
     expect(h).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
     expect(h).not.toMatch(/ticket/i);
   });
@@ -154,17 +155,46 @@ describe('wording per class', () => {
   });
 });
 
-describe('long values', () => {
-  it('clamp the band title, the face lines and the facts', async () => {
-    const h = await html(
-      'starter-event-ticket',
-      'a4',
-      { kind: 'admission' },
-      {
-        eventName: 'A'.repeat(70),
-      },
+describe('days and nights', () => {
+  it('a badge valid over several days prints both dates', async () => {
+    const t = text(
+      await html(
+        'starter-visitor-pass',
+        'cr80',
+        { kind: 'badge' },
+        { validUntil: '2030-11-22T17:00:00-08:00' },
+      ),
     );
-    expect(h).toMatch(/--tl:\d/);
-    expect(h).toContain('pp-face-lines');
+    expect(t).toContain('Valid: Mon 18 Nov 9:30 am – Fri 22 Nov 5:00 pm');
+  });
+
+  it('an overnight arrival names its day', async () => {
+    const t = text(
+      await html(
+        'starter-boarding-pass',
+        'a4',
+        { kind: 'journey' },
+        { arrivesAt: '2030-06-02T04:30:00-04:00' },
+      ),
+    );
+    expect(t).toContain('Arrives Sun 2 Jun, 4:30 am EDT');
+  });
+});
+
+describe('long names', () => {
+  it('a long route keeps each end short and the whole name below', async () => {
+    const t = text(
+      await html(
+        'starter-transit-ticket',
+        'a4',
+        { kind: 'journey' },
+        {
+          origin: 'Wolfeschlegelsteinhausenbergerdorf Harbour',
+          destination: 'Llanfairpwllgwyngyllgogerychwyrndrobwll',
+        },
+      ),
+    );
+    expect(t).toContain('From Wolfeschlegelsteinhausenbergerdorf Harbour');
+    expect(t).toContain('To Llanfairpwllgwyngyllgogerychwyrndrobwll');
   });
 });

@@ -43,12 +43,16 @@ export function kindOf(
   const keys = boundKeys(manifest);
   const group = (manifest.display as { group?: string } | undefined)?.group;
   const scan = manifest.scan as { window?: unknown; display?: { photo?: unknown } } | undefined;
-  if (group === 'prove-collect' && keys.has('credential')) return 'credential';
+  const proving = group === 'prove-collect';
+  if (proving && ['credential', 'certificate', 'licence', 'license'].some((k) => keys.has(k)))
+    return 'credential';
+  // A permit's window beats a stay's or a booking's field names.
+  if (proving && scan?.window) return 'permit';
   if (style === 'boardingPass' || (keys.has('origin') && keys.has('destination'))) return 'journey';
   if (keys.has('in') && keys.has('out')) return 'stay';
   if (keys.has('what') && (keys.has('when') || keys.has('with'))) return 'booking';
   if (style === 'eventTicket' || roles.eventStart) return 'admission';
-  if (group === 'prove-collect') return scan?.window ? 'permit' : 'pickup';
+  if (proving) return 'pickup';
   if (group === 'get-in' && scan?.display?.photo) return 'badge';
   if (style === 'storeCard' || group === 'membership-id' || roles.memberName) return 'membership';
   return 'admission';

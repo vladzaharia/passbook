@@ -49,8 +49,8 @@ export const SMALL_CSS = `.pp-pm{--org:rgb(170,28,44);--org-label:rgb(255,210,21
 .pp-cd-front .pp-cd-l{position:absolute;left:calc(var(--mm) * 4);top:calc(var(--mm) * 4);bottom:calc(var(--mm) * 4);width:calc(var(--mm) * 37);display:flex;flex-direction:column}
 .pp-cd-front .pp-cd-l img{width:calc(var(--mm) * 24);height:auto;display:block}
 .pp-cd-front .pp-cd-k{font-size:calc(var(--mm) * 1.7639);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--org-label)}
-.pp-cd-front .pp-cd-name{font-size:calc(var(--mm) * 3.5278);font-weight:600;line-height:1.1;margin-top:calc(var(--mm) * 0.6)}
-.pp-cd-front .pp-cd-tier{font-size:calc(var(--mm) * 2.3283);margin-top:calc(var(--mm) * 0.8);color:var(--org-fg)}
+.pp-cd-front .pp-cd-name{font-size:calc(var(--mm) * 3.5278);font-weight:600;line-height:1.1;margin-top:calc(var(--mm) * 0.6);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.pp-cd-front .pp-cd-tier{font-size:calc(var(--mm) * 2.3283);margin-top:calc(var(--mm) * 0.8);color:var(--org-fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pp-cd-front .pp-cd-grow{flex:1}
 .pp-cd-front .pp-cd-tile{position:absolute;right:calc(var(--mm) * 3.4);top:50%;transform:translateY(-50%);background:#fff;border-radius:calc(var(--mm) * 2);line-height:0;overflow:hidden}
 .pp-cd-back{background:#fff}

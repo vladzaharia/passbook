@@ -43,12 +43,12 @@ export async function ticketPdf(
   const key = pdfKey(pass.orgId, pass.id, model.printId, audience);
   const fingerprint = await pdfFingerprint({
     sheet: sheetOf(model),
-    images: await imageIds(ctx, pass, model.files),
+    images: await imageIds(ctx, pass, model.files, audience),
     template: [pass.templateId, pass.templateVersion],
   });
   const hit = await cachedPdf(ctx.env.BUCKET, key, pass.version, fingerprint);
   if (hit) return hit.body;
-  const images = await loadImages(ctx, pass, model.files);
+  const images = await loadImages(ctx, pass, model.files, undefined, audience);
   const bytes = await renderPdf([{ ...sheetOf(model), images }], {
     assets: ctx.env.ASSETS,
     onLossy: () => ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' }),

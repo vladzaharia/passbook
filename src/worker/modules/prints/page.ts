@@ -50,6 +50,8 @@ export async function printPageModel(
   audience: PrintAudience,
   /** The org's brand when the caller has read it already (one read per request). */
   known?: OrgBrand,
+  /** The page draws the photo from a `data:` URL; the PDF and a bulk job read the bytes themselves. */
+  withPhoto = false,
 ): Promise<PrintPageModel> {
   if (pass.status !== 'active' || pass.removedAt !== null || pass.deletedAt !== null)
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
@@ -73,7 +75,7 @@ export async function printPageModel(
           design: ticket.design,
           content: ticket.content,
           files: ticket.files,
-          ...(await photoUrl(ctx, pass, ticket.files)),
+          ...(withPhoto ? await photoUrl(ctx, pass, ticket.files, audience) : {}),
           printedAt: print.createdAt,
           generation: print.generation,
           printId: print.id,
@@ -104,8 +106,9 @@ async function photoUrl(
   ctx: ServiceContext,
   pass: Pass,
   files: PaperFiles,
+  audience: PrintAudience,
 ): Promise<{ photo?: string }> {
   if (!files.photo) return {};
-  const photo = await loadPhoto(ctx, pass);
+  const photo = await loadPhoto(ctx, pass, audience);
   return photo ? { photo: `data:image/png;base64,${base64(photo.bytes)}` } : {};
 }

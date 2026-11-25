@@ -13,13 +13,15 @@ import { PAPER_SPECS, type PaperDesign, sheetApplies } from '../../../passkit/te
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
 import { COUPON_BAND, halfFit, sheetLayout } from '../../../passkit/template/paper-geometry.ts';
 import type { BrandMark } from '../../../shared/contracts/orgs.ts';
+import { PRINT_BULK_MAX } from '../../../shared/contracts/prints.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
 import type { Issued } from '../../../web/paper/ticket-text.ts';
 import { needsFallback } from './pdf-coverage.ts';
 import { drawCardBack, drawCardFront } from './pdf-draw-card.ts';
+import { drawCoupon } from './pdf-draw-coupon.ts';
 import { drawFull } from './pdf-draw-full.ts';
-import { drawCoupon, drawPermit } from './pdf-draw-small.ts';
+import { drawPermit } from './pdf-draw-small.ts';
 import { drawStrip } from './pdf-draw-stub.ts';
 import { type AssetSource, embedFonts, type PdfFonts } from './pdf-fonts.ts';
 import { COLORS, Pen, PT } from './pdf-kit.ts';
@@ -57,7 +59,7 @@ export interface RenderOptions {
 }
 
 /** Member photos one PDF embeds: one per pass, so a bulk of badges holds as many as its cap. */
-export const MAX_PHOTOS = 60;
+export const MAX_PHOTOS = PRINT_BULK_MAX;
 
 /** Distinct images one PDF embeds: each costs a decode, and a bulk of 50 must stay inside the CPU budget. */
 export const MAX_DISTINCT_IMAGES = 12;

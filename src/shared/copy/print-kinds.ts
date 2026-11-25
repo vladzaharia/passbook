@@ -9,9 +9,6 @@ export function paperNoun(kind: PaperKind, kicker: string): string {
     case 'admission':
     case 'journey':
       return 'ticket';
-    case 'booking':
-    case 'stay':
-      return 'booking';
     case 'badge':
       return 'badge';
     case 'credential':
@@ -35,6 +32,7 @@ export function codeLabelOf(kind: PaperKind, noun: string, pack = false): string
   if (kind === 'coupon') return pack ? 'Pack code' : 'Coupon code';
   if (kind === 'pickup') return 'Slip code';
   if (kind === 'membership') return 'Card code';
+  if (kind === 'booking' || kind === 'stay') return 'Booking code';
   return CODE[noun as keyof typeof CODE] ?? CODE.pass;
 }
 

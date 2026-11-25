@@ -46,7 +46,9 @@ export const zoneAbbr = (c: PaperContent) => {
 
 /** Up to two capitals for the tile that stands in for a missing photo. */
 export function initialsOf(name: string | undefined): string {
-  const words = (name ?? '').split(/\s+/).filter((w) => /\p{L}/u.test(w));
+  const words = (name ?? '')
+    .split(/\s+/)
+    .filter((w) => /\p{L}/u.test(w) && !/^(?:jr|sr|ii|iii|iv)\.?$/i.test(w));
   const pick = words.length > 1 ? [words[0], words.at(-1)] : words.slice(0, 1);
   return pick.map((w) => ((w ?? '').match(/\p{L}/u)?.[0] ?? '').toUpperCase()).join('');
 }

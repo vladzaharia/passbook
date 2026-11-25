@@ -14,7 +14,7 @@ import { relevanceOf } from '../wallets/view-parts.ts';
 import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
 import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
-import { wantsPhoto } from './paper-content-util.ts';
+import { ART_ORDER, wantsPhoto } from './paper-content-util.ts';
 import { checkInOnce, declaredTimes, printZone } from './paper-declared.ts';
 import { type PaperColors, paperInk } from './paper-ink.ts';
 import { type Info, ISO, type Kinded, kindContent, kindOf } from './paper-kinds.ts';
@@ -106,19 +106,6 @@ const plain = (v: unknown): string | undefined => {
   return undefined;
 };
 
-const ART_ORDER: Record<PaperKind, PaperArt[]> = {
-  coupon: ['strip', 'artwork', 'background'],
-  admission: ['artwork', 'background', 'thumbnail', 'strip'],
-  // Never the thumbnail: on an ID card it is the member's photo.
-  membership: ['artwork', 'background'],
-  permit: [],
-  pickup: [],
-  journey: ['artwork', 'background', 'strip'],
-  booking: ['artwork', 'background'],
-  stay: ['artwork', 'background'],
-  badge: [],
-  credential: [],
-};
 const MAX_HELP = 3;
 const MAX_BRING = 4;
 

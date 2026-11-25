@@ -47,7 +47,7 @@ holderPrintRoutes.get('/:token/print', async (c) => {
   try {
     const pass = await passForToken(ctx, token);
     const brand = await orgBrandOf(ctx, pass.orgId);
-    const model = await printPageModel(ctx, pass, 'holder', brand);
+    const model = await printPageModel(ctx, pass, 'holder', brand, true);
     const html = renderPrintPage({
       model,
       audience: 'holder',

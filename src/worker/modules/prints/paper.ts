@@ -1,7 +1,11 @@
-import { type PaperDesign, resolvePaper, withKind } from '../../../passkit/template/paper.ts';
+import {
+  holderMayPrint,
+  type PaperDesign,
+  resolvePaper,
+  withKind,
+} from '../../../passkit/template/paper.ts';
 import { bestImage, imageSlots } from '../../../passkit/template/paper-assets.ts';
 import { type PaperContent, paperContent } from '../../../passkit/template/paper-content.ts';
-import { kindOf } from '../../../passkit/template/paper-kinds.ts';
 import { forAudience } from '../../../passkit/template/paper-region.ts';
 import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
@@ -34,10 +38,7 @@ function orgZone(ctx: ServiceContext, orgId: string): Promise<string | undefined
 /** `paper.holder: false` keeps printing with staff: the holder's link neither prints nor reprints nor voids. */
 export async function assertHolderMayPrint(ctx: ServiceContext, pass: Pass): Promise<void> {
   const manifest = await repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion);
-  const design = resolvePaper(manifest?.paper);
-  // No block: the class the template reads as decides who may print (an ID is staff-only).
-  const kind = manifest && design.derived ? kindOf(manifest, undefined, {}) : undefined;
-  if (!(kind ? withKind(design, kind) : design).holder)
+  if (!holderMayPrint(manifest))
     throw new ForbiddenError('Printing is available from the organizer.', 'PRINT_STAFF_ONLY');
 }
 

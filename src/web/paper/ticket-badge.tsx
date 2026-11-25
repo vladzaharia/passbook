@@ -24,7 +24,7 @@ const clamp = (lines: number): CSSProperties => ({ '--lines': lines }) as unknow
 
 function layoutOf(p: TicketProps) {
   const spec = PAPER_SPECS[p.design.size];
-  return badgeLayout(spec.widthMm, spec.heightMm);
+  return badgeLayout(spec.widthMm, spec.heightMm, p.content.kind === 'credential' ? 2 : 1);
 }
 
 /** Front: the photo leads, then the name, the role and what the door needs. */
@@ -54,12 +54,12 @@ export function BadgeFront({ p }: { p: TicketProps }) {
         {f.name}
       </div>
       {f.role ? (
-        <div className="pp-bd-role" style={at(L.role)}>
+        <div className="pp-bd-role" style={at(L.role, clamp(L.role.lines))}>
           {f.role}
         </div>
       ) : null}
       <div className="pp-bd-details" style={at(L.details, clamp(L.details.lines))}>
-        {f.details.map((d) => (
+        {f.details.slice(0, L.details.lines).map((d) => (
           <div key={d}>{d}</div>
         ))}
       </div>

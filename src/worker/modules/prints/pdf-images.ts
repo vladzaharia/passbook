@@ -78,11 +78,24 @@ async function load(
 }
 
 /**
+ * The member photo a print may draw: staff see any; a holder's link only the one the org put on
+ * the pass (`include_in_pass`), so a photo kept for the door never reaches a holder's print.
+ */
+async function photoRow(ctx: ServiceContext, pass: Pass, audience: 'holder' | 'staff') {
+  const row = await memberPhoto(ctx.env.DB, pass.orgId, pass.id);
+  return row && (audience === 'staff' || row.include_in_pass === 1) ? row : null;
+}
+
+/**
  * The pass's own member photo, for a badge or ID. It is the holder's, never the template's art, so
  * it is not cached across passes. A missing or refused photo is left out; the sheet draws initials.
  */
-export async function loadPhoto(ctx: ServiceContext, pass: Pass): Promise<ImageSource | undefined> {
-  const row = await memberPhoto(ctx.env.DB, pass.orgId, pass.id);
+export async function loadPhoto(
+  ctx: ServiceContext,
+  pass: Pass,
+  audience: 'holder' | 'staff' = 'staff',
+): Promise<ImageSource | undefined> {
+  const row = await photoRow(ctx, pass, audience);
   if (!row) return undefined;
   const object = await ctx.env.BUCKET.get(row.r2_key);
   if (!object) {
@@ -103,11 +116,12 @@ export async function loadImages(
   pass: Pass,
   files: PaperFiles,
   cache: ImageCache = new Map(),
+  audience: 'holder' | 'staff' = 'staff',
 ): Promise<{ logo?: ImageSource; art?: ImageSource; photo?: ImageSource }> {
   const [logo, art, photo] = await Promise.all([
     files.logo ? load(ctx, pass, files.logo, cache) : undefined,
     files.art ? load(ctx, pass, files.art, cache) : undefined,
-    files.photo ? loadPhoto(ctx, pass) : undefined,
+    files.photo ? loadPhoto(ctx, pass, audience) : undefined,
   ]);
   return { ...(logo ? { logo } : {}), ...(art ? { art } : {}), ...(photo ? { photo } : {}) };
 }
@@ -128,6 +142,7 @@ export async function imageIds(
   ctx: ServiceContext,
   pass: Pass,
   files: PaperFiles,
+  audience: 'holder' | 'staff' = 'staff',
 ): Promise<{ logo?: string; art?: string; photo?: string }> {
   const id = async (name: string | undefined): Promise<string | undefined> => {
     if (!name) return undefined;
@@ -144,7 +159,7 @@ export async function imageIds(
     id(files.logo),
     id(files.art),
     files.photo
-      ? memberPhoto(ctx.env.DB, pass.orgId, pass.id).then((r) => (r ? `photo:${r.sha1}` : 'none'))
+      ? photoRow(ctx, pass, audience).then((r) => (r ? `photo:${r.sha1}` : 'none'))
       : undefined,
   ]);
   return { ...(logo ? { logo } : {}), ...(art ? { art } : {}), ...(photo ? { photo } : {}) };

@@ -135,11 +135,13 @@ export function passbookLine(
   right: number,
   baseline: number,
   size = PASSBOOK.size,
+  color?: string,
 ): number {
   const credit = passbookCredit(mark);
   if (!credit) return 0;
-  const plain = { ...PASSBOOK, size };
-  const bold = { ...PASSBOOK_NAME, size };
+  // A coloured strip passes its own ink: the grey of a white page would vanish on the band.
+  const plain = { ...PASSBOOK, size, ...(color ? { color } : {}) };
+  const bold = { ...PASSBOOK_NAME, size, ...(color ? { color } : {}) };
   const lead = credit.name ? `${credit.lead} ` : credit.lead;
   const a = pen.measure(lead, plain);
   const b = credit.name ? pen.measure(credit.name, bold) : 0;
@@ -168,6 +170,19 @@ export function footRow(
     : 0;
   pen.text(pen.wrap(meta, w - used - reserve, META, 1)[0] ?? '', x, top, META);
   passbookLine(pen, s.mark, x + w, pen.baselineOf(META, top));
+}
+
+/** `text` cut at the character that fits `w`, with an ellipsis: what a `nowrap` ellipsis does on the page. */
+export function ellipsize(pen: Pen, text: string, w: number, st: TextStyle): string {
+  if (pen.measure(text, st) <= w) return text;
+  let lo = 0;
+  let hi = text.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (pen.measure(`${text.slice(0, mid).trimEnd()}…`, st) <= w) lo = mid;
+    else hi = mid - 1;
+  }
+  return `${text.slice(0, lo).trimEnd()}…`;
 }
 
 /**

@@ -5,7 +5,7 @@
  * code; the door credential on paper is the print code.
  */
 import { z } from 'zod';
-import type { Expr, PassJson, TemplateManifest, ValidationIssue } from '../types.ts';
+import type { Expr, PassJson, PassStyle, TemplateManifest, ValidationIssue } from '../types.ts';
 import { styleOf } from '../wallets/view-fields.ts';
 import { checkExpr, exprReferences } from './expr.ts';
 import { paperInk } from './paper-ink.ts';
@@ -98,7 +98,10 @@ export interface PaperDesign {
   barcode: PaperBarcode;
   fields: string[];
   terms?: Expr;
+  /** Who may print: the author's word, else true until `withKind` applies the class's default. */
   holder: boolean;
+  /** The block says `holder`; it beats the class's default. */
+  holderExplicit?: boolean;
   /** Absent: derived from the template. */
   kind?: PaperKind;
   ink: PaperInk;
@@ -122,7 +125,29 @@ export const DERIVED_PAPER: PaperDesign = {
 
 /** A derived design has no block to say who may print: an ID class is staff-only by default. */
 export function withKind(design: PaperDesign, kind: PaperKind): PaperDesign {
-  return design.derived && STAFF_ONLY_KINDS.has(kind) ? { ...design, holder: false } : design;
+  const holder = design.holderExplicit ?? !STAFF_ONLY_KINDS.has(kind);
+  return holder === design.holder ? design : { ...design, holder };
+}
+
+/**
+ * Whether the holder's link may print, from the manifest alone: the block's `holder`, else the
+ * class's default (an ID is staff-only), the class being the block's or the derived one.
+ */
+export function holderMayPrint(
+  manifest:
+    | {
+        paper?: unknown;
+        display?: unknown;
+        scan?: unknown;
+        bindings?: TemplateManifest['bindings'];
+      }
+    | null
+    | undefined,
+  style?: PassStyle,
+): boolean {
+  const design = resolvePaper(manifest?.paper);
+  const kind = design.kind ?? (manifest ? kindOf(manifest, style, {}) : 'admission');
+  return withKind(design, kind).holder;
 }
 
 /** The design for a manifest's `paper` value. An invalid block falls back to derived. */
@@ -140,7 +165,8 @@ export function resolvePaper(raw: unknown): PaperDesign {
     fields: fields ?? [],
     ...(terms === undefined ? {} : { terms }),
     // An ID is reprinted by staff only unless the author says otherwise.
-    holder: holder ?? !(kind && STAFF_ONLY_KINDS.has(kind)),
+    holder: holder ?? true,
+    ...(holder === undefined ? {} : { holderExplicit: holder }),
     ...(kind ? { kind } : {}),
     ink: ink ?? 'colour',
     fold: fold !== false,
