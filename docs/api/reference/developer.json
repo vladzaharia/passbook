@@ -53,6 +53,7 @@
       "tier": "standard",
       "limitPerMinute": 60,
       "callsLastHour": 11,
+      "series": [14],
       "key": {
         "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
         "name": "Sandbox key",
