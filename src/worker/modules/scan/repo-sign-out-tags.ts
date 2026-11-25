@@ -1,7 +1,9 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { type Check, tenantMatch } from '../../platform/authority-checks.ts';
 import { all } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { consumeSun, type SunSeen, sunFreshCheck } from '../nfc/repo-sun.ts';
 import { endBinding } from '../nfc/repo-tags-write.ts';
 import { triggerRefusal } from '../nfc/tags.ts';
 import type { ScanActor } from './guard.ts';
@@ -34,6 +36,8 @@ export async function collectTags(
   pass: { id: string; templateId: string },
   bindings: readonly { id: string; tagId: string }[],
   as: 'returned' | 'not_returned',
+  /** A Secure tap: its counter is used up in the same batch, so the read cannot be presented again. */
+  sun?: { tagId: string; seen: SunSeen },
 ): Promise<void> {
   const now = ctx.clock.now();
   const by = actor.staff
@@ -43,11 +47,16 @@ export async function collectTags(
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.tag.unbind',
     now,
-    pausedSession: true,
     templateId: pass.templateId,
+    // Still a loaner binding at commit: a type changed since the read ends nothing.
+    checks: [
+      ...bindings.map((b) => stillLent(b.id)),
+      ...(sun ? sunFreshCheck(sun.tagId, sun.seen) : []),
+    ],
     codes: { stale: 'TAG_NOT_LENT' },
     tables: TABLES,
   });
+  if (sun) consumeSun(g, sun.tagId, sun.seen, now);
   for (const binding of bindings) {
     endBinding(g, binding, cause, by, now);
     grantedAudit(g, ctx, {
@@ -73,3 +82,13 @@ export async function collectTags(
     throw await scannerRefusal(ctx, actor, triggerRefusal(error) ?? error);
   }
 }
+
+/** The binding is active, pass-scope, and its tag's type is for visitors, in the actor's org and mode. */
+const stillLent = (bindingId: string): Check => ({
+  reason: 'stale',
+  ok: (b, scope) =>
+    `EXISTS (SELECT 1 FROM tag_bindings tb JOIN nfc_tags t ON t.id = tb.tag_id
+      JOIN nfc_tag_types y ON y.id = t.type_id AND y.org_id = t.org_id
+      WHERE tb.id = ${b.bind(bindingId)} AND tb.scope = 'pass' AND tb.ended_at IS NULL
+        AND y.use = 'visitor' AND ${tenantMatch('nfc_tags', 't', scope)})`,
+});

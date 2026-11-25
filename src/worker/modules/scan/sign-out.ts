@@ -22,7 +22,7 @@ import { insidePlaces } from './repo-sign-out.ts';
 import { collectTags, lentBindings } from './repo-sign-out-tags.ts';
 import { scanPolicy } from './rules.ts';
 import { notFound } from './tags-bind.ts';
-import { assertReadMatches, identifyRead } from './tags-sun.ts';
+import { assertReadMatches, identifyRead, type ReadIdentity } from './tags-sun.ts';
 
 type SignOutRequest = z.infer<typeof SignOutRequestSchema>;
 type SignOutResult = z.infer<typeof SignOutResultSchema>;
@@ -37,7 +37,11 @@ async function lentBindingOf(
   ctx: ServiceContext,
   actor: ScanActor,
   read: NonNullable<SignOutRequest['read']>,
-): Promise<{ passId: string; binding: { id: string; tagId: string } }> {
+): Promise<{
+  passId: string;
+  binding: { id: string; tagId: string };
+  sun: { tagId: string; seen: NonNullable<ReadIdentity['sun']> } | null;
+}> {
   const db = ctx.env.DB;
   await ensureCredentialRefKeyset(db, ctx.env);
   const identity = await identifyRead(ctx, actor, read);
@@ -47,7 +51,11 @@ async function lentBindingOf(
   const binding = (await tagView(db, actor.orgId, actor.mode, tag.id))?.binding;
   if (!binding?.lent || binding.scope !== 'pass')
     throw new ConflictError("This tag isn't lent.", 'TAG_NOT_LENT');
-  return { passId: binding.passId, binding: { id: binding.id, tagId: tag.id } };
+  return {
+    passId: binding.passId,
+    binding: { id: binding.id, tagId: tag.id },
+    sun: identity.sun ? { tagId: tag.id, seen: identity.sun } : null,
+  };
 }
 
 async function run(
@@ -88,7 +96,8 @@ async function run(
     : want === 'none'
       ? []
       : await lentBindings(db, actor.orgId, actor.mode, pass.id);
-  if (want !== 'none' && lent.length > 0) await collectTags(ctx, actor, pass, lent, want);
+  if (want !== 'none' && lent.length > 0)
+    await collectTags(ctx, actor, pass, lent, want, tapped?.sun ?? undefined);
   if (marked === 0 && skipped === 0 && lent.length === 0)
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
   return {

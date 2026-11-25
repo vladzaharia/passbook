@@ -1,6 +1,21 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { first } from '../../platform/db.ts';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+const after = vi.hoisted(() => ({ hook: null as null | (() => Promise<void>) }));
+vi.mock('./occupancy/mark-out.ts', async (original) => {
+  const real = await original<typeof import('./occupancy/mark-out.ts')>();
+  return {
+    ...real,
+    markOut: async (...args: Parameters<typeof real.markOut>) => {
+      const out = await real.markOut(...args);
+      await after.hook?.();
+      return out;
+    },
+  };
+});
+
+import { first, run } from '../../platform/db.ts';
 import { personInside, station, trackedZone, useKit } from './occupancy/whos-in-test-fixtures.ts';
+import { enrolledSunTag, sunCounter, sunKeyset, sunTap } from './sun-test-fixtures.ts';
 import { addType, clearTypes } from './tags-policy-test-fixtures.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
 import { key } from './test-kit.ts';
@@ -280,5 +295,56 @@ describe('which tags a sign-out collects', () => {
     const { bindingId } = await lendAnother(desk, pass, loaner);
     expect((await post(desk, { passId: pass.id, tag: 'returned' })).status).toBe(200);
     expect(await binding(bindingId)).toMatchObject({ ended_by_type: 'staff' });
+  });
+});
+
+describe('a tap at commit', () => {
+  it('a Secure tap uses the tag counter up, so the same read is refused', async () => {
+    const zone = await trackedZone();
+    const pass = await personInside(tpl, 'Leo Park', [`zone:${zone.id}`], { input: GUEST() });
+    const desk = await station([tpl], [zone.id]);
+    const keyset = await sunKeyset(f.kit, f.kit.org.id);
+    const secure = await addType(f, { use: 'visitor', scopes: 'pass', system: 'sun' });
+    const { tagId, bindingId } = await enrolledSunTag(f.kit, keyset, '04aabbccddee77', pass, 5);
+    await run(f.kit.env.DB, 'UPDATE nfc_tags SET type_id = ? WHERE id = ?', [secure, tagId]);
+    const read = await sunTap(keyset, '04aabbccddee77', 6);
+    const res = await post(desk, { read });
+    expect(res.status).toBe(200);
+    expect((await binding(bindingId))?.end_cause).toBe('visitor_out');
+    expect(await sunCounter(f.kit, tagId)).toBe(6);
+    const replay = await post(desk, { read });
+    expect(replay.status).not.toBe(200);
+    expect(await replay.json()).toMatchObject({ code: 'TAG_CHECK_FAILED' });
+  });
+
+  it('a binding re-typed after the read is not ended as a loaner', async () => {
+    const member = await addType(f, { use: 'member', scopes: 'pass' });
+    const a = await lent();
+    after.hook = async () => {
+      await run(
+        f.kit.env.DB,
+        'UPDATE nfc_tags SET type_id = ? WHERE id = (SELECT tag_id FROM tag_bindings WHERE id = ?)',
+        [member, a.bindingId],
+      );
+    };
+    try {
+      const res = await post(a.desk, { read: a.tag });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ code: 'TAG_NOT_LENT' });
+    } finally {
+      after.hook = null;
+    }
+    expect((await binding(a.bindingId))?.end_cause).not.toBe('visitor_out');
+  });
+
+  it('a paused scanning session cannot sign anyone out', async () => {
+    const a = await lent();
+    await run(f.kit.env.DB, "UPDATE scanning_sessions SET status = 'paused' WHERE id = ?", [
+      a.desk.sessionId,
+    ]);
+    const res = await post(a.desk, { passId: a.pass.id, tag: 'returned' });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ code: 'SCANNING_SESSION_PAUSED' });
+    expect((await binding(a.bindingId))?.end_cause).toBeNull();
   });
 });
