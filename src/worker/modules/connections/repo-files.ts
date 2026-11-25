@@ -1,10 +1,5 @@
 import type { ConnectionFileFormat } from '../../../shared/contracts/connection-files.ts';
-import type { Grant, GrantedStatement } from '../../platform/authority.ts';
-import { exactlyOne } from '../../platform/authority-checks.ts';
-import { gt } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
-import { type ConnectionActor, connectionGrant, connectionIs } from './repo-grants.ts';
 
 export type FileState = 'draft' | 'pending' | 'current' | 'superseded' | 'expired' | 'discarded';
 
