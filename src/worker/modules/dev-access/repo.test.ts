@@ -26,11 +26,12 @@ async function setup(label: string) {
   const g = await setupGrant(label);
   const { s, route, member } = g;
   const principal = member();
-  const audit = (action: string) => ({
+  const audit = (action: string, targetId?: string) => ({
     orgId: s.org.id,
     actorType: 'user' as const,
     actorId: s.user.id,
     action,
+    targetId,
   });
   const now = s.f.clock.now();
   const invite = async (email = 'dev@example.test') => {
@@ -51,7 +52,7 @@ async function setup(label: string) {
         expires: now + 7 * 86_400_000,
         org: { id: orgId, roles: '["read_only"]', hash: s.f.ids.token() },
       },
-      audit('developer_invitation.create'),
+      audit('developer_invitation.create', id),
     );
     return { id, hash, orgId };
   };
