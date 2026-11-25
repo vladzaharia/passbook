@@ -90,6 +90,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'webhook.secret.rotate': a('Webhook secret rotated', I.rotate, 'info'),
   'cron.run': a('Scheduled job ran', Clock, 'neutral'),
   'delivery.dead_letter': a('Delivery failed', MailX, 'danger'),
+  'entitlement_preset.update': a('Preset changed', SlidersHorizontal, 'info'),
   'holder.assign': a('Holder assignment requested', UserPlus, 'info'),
   'holder.attach': a('Holder attachment requested', UserCheck, 'info'),
   'holder.attach_reissue_required': a('Holder attachment requires reissue', UserX, 'warning'),

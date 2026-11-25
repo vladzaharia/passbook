@@ -132,7 +132,10 @@ export async function deleteWebLogo(
   return commit(ctx, actor, before, rest, { changes: { 'branding.web': null } }, authority);
 }
 
-/** Accent and mark level. `none` needs the entitlement; the stored choice never silently changes. */
+/**
+ * Accent and mark level. The plan must allow the mark. A later plan change never rewrites it: holders see
+ * `effectiveMark(stored, allowed)`, so a stored mark the plan no longer allows is harmless.
+ */
 export async function updateBrandKit(
   ctx: ServiceContext,
   actor: Actor,

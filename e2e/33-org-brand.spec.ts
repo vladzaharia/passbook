@@ -71,16 +71,41 @@ async function shoot(page: Page, name: string) {
   }
 }
 
+type Api = Awaited<ReturnType<typeof apiAs>>;
+interface PlanItems {
+  preset: string;
+  revision: number;
+  items: { key: string; value: unknown; source: string; note: string | null }[];
+}
+
+/** Sets the org's `brand.mark` plan value (`null` removes it), keeping its other overrides. */
+async function markPlan(admin: Api, orgId: string, value: 'none' | 'quiet' | null) {
+  const path = `/api/v1/platform/orgs/${orgId}/entitlements`;
+  const plan = await admin.get<PlanItems>(path);
+  const overrides: Record<string, { value: unknown; note?: string }> = {};
+  for (const i of plan.items)
+    if (i.source === 'override' && i.key !== 'brand.mark')
+      overrides[i.key] = { value: i.value, ...(i.note ? { note: i.note } : {}) };
+  if (value) overrides['brand.mark'] = { value };
+  await admin.send('PUT', path, {
+    expectedRevision: plan.revision,
+    preset: plan.preset,
+    overrides,
+  });
+}
+
 test('the org brand leads holder pages, and the mark follows its level', async ({ browser }) => {
   const admin = await apiAs('admin');
   const orgId = readSeed().org.id;
   const q = `?orgId=${encodeURIComponent(orgId)}`;
 
+  // The seed plan shows PassBook in full only; this plan may show it small.
+  await markPlan(admin, orgId, 'quiet');
   await admin.send('PUT', `/api/v1/brand/web-logo${q}`, { png: logoPng().toString('base64') });
   await admin.send('PATCH', `/api/v1/brand${q}`, { accent: '#b4232c', mark: 'full' });
   const kit = await admin.get(`/api/v1/brand${q}`);
   expect(kit.webLogo.url).toMatch(new RegExp(`^/brand/${orgId}/[0-9a-f]{64}\\.png$`));
-  expect(kit.markAllowed).not.toContain('none');
+  expect(kit.markAllowed).toEqual(['small', 'full']);
 
   const pass = await createPass(admin, orgId, { holder: `Brand ${uid('B')}` });
   const detail = await admin.get(`/api/v1/passes/${pass.id}`);
@@ -117,7 +142,7 @@ test('the org brand leads holder pages, and the mark follows its level', async (
   await expect(page.getByText('Issued with')).toHaveCount(0);
   await shoot(page, 'pass-small');
 
-  // `none` is an entitlement the org does not have yet.
+  // `none` is not in this plan.
   await expect(admin.send('PATCH', `/api/v1/brand${q}`, { mark: 'none' })).rejects.toThrow('403');
 
   const preview = await admin.ctx.get(`/api/v1/orgs/${orgId}/email-preview`);
@@ -139,6 +164,7 @@ test('the org brand leads holder pages, and the mark follows its level', async (
   await adminCtx.close();
 
   await anon.close();
+  await markPlan(admin, orgId, null);
   await admin.dispose();
 });
 
@@ -146,6 +172,7 @@ test('admin sets the brand from Brand and channels', async ({ browser }) => {
   const orgId = readSeed().org.id;
   const admin = await apiAs('admin');
   const q = `?orgId=${encodeURIComponent(orgId)}`;
+  await markPlan(admin, orgId, 'quiet');
   await admin.send('PUT', `/api/v1/brand/web-logo${q}`, { png: logoPng().toString('base64') });
   await admin.send('PATCH', `/api/v1/brand${q}`, { accent: '#b4232c', mark: 'full' });
   await admin.dispose();
@@ -154,18 +181,21 @@ test('admin sets the brand from Brand and channels', async ({ browser }) => {
   await page.goto(`/admin/o/${orgId}/brand`);
   await expect(page.getByRole('heading', { name: 'Brand and channels', level: 1 })).toBeVisible();
   const brand = page.getByRole('region', { name: 'Brand', exact: true });
-  await expect(brand.getByRole('radio', { name: /None/ })).toBeDisabled();
-  await brand.getByRole('radio', { name: /Small/ }).check();
+  await expect(brand.getByRole('radio', { name: 'No PassBook footer' })).toHaveCount(0);
+  await brand.getByRole('radio', { name: 'Powered by PassBook' }).check();
   await page.getByRole('button', { name: 'Review', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByText('PassBook mark')).toBeVisible();
+  await expect(dialog.getByText('PassBook footer')).toBeVisible();
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(dialog).toBeHidden();
   // The bar's "Saved" and the toast are both brief; the saved level is the durable proof.
-  await expect(brand.getByRole('radio', { name: /Small/ })).toBeChecked();
+  await expect(brand.getByRole('radio', { name: 'Powered by PassBook' })).toBeChecked();
   await expect(page.getByRole('region', { name: 'Unsaved changes' })).toBeHidden();
   await shoot(page, 'admin-brand');
   await ctx.close();
+  const reset = await apiAs('admin');
+  await markPlan(reset, orgId, null);
+  await reset.dispose();
 });
 
 /** starter-generic as an upload that can take public sign-ups (as 31-join-submit). */

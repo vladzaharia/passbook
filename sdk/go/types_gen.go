@@ -4656,6 +4656,7 @@ type OrgsEntitlementsRetrieveResponse struct {
 	Preset *string                                     `json:"preset"`
 	Label  *string                                     `json:"label"`
 	Items  []OrgsEntitlementsRetrieveResponseItemsItem `json:"items"`
+	Usage  map[string]int64                            `json:"usage"`
 }
 
 type OrgsEntitlementsRetrieveResponseItemsItem struct {
@@ -7651,6 +7652,41 @@ type PlatformAuditEntriesListResponseItemsItem struct {
 	Detail      any     `json:"detail,omitempty"`
 }
 
+type PlatformEntitlementPresetsListResponse struct {
+	Presets []PlatformEntitlementPresetsListResponsePresetsItem `json:"presets"`
+}
+
+type PlatformEntitlementPresetsListResponsePresetsItem struct {
+	Preset      string         `json:"preset"`
+	Label       string         `json:"label"`
+	Revision    int64          `json:"revision"`
+	UpdatedAt   int64          `json:"updatedAt"`
+	OrgCount    int64          `json:"orgCount"`
+	PendingOrgs int64          `json:"pendingOrgs"`
+	Values      map[string]any `json:"values"`
+}
+
+type PlatformEntitlementPresetsUpdateParams struct {
+	Preset           string         `json:"preset"`
+	ExpectedRevision int64          `json:"expectedRevision"`
+	Values           map[string]any `json:"values"`
+}
+
+type PlatformEntitlementPresetsUpdateResponse struct {
+	Preset PlatformEntitlementPresetsUpdateResponsePreset `json:"preset"`
+	Moved  int64                                          `json:"moved"`
+}
+
+type PlatformEntitlementPresetsUpdateResponsePreset struct {
+	Preset      string         `json:"preset"`
+	Label       string         `json:"label"`
+	Revision    int64          `json:"revision"`
+	UpdatedAt   int64          `json:"updatedAt"`
+	OrgCount    int64          `json:"orgCount"`
+	PendingOrgs int64          `json:"pendingOrgs"`
+	Values      map[string]any `json:"values"`
+}
+
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
 	Range       string                                              `json:"range"`
@@ -7933,10 +7969,11 @@ type PlatformOrgsListResponseItemsItem struct {
 	Name          string                                  `json:"name"`
 	Status        string                                  `json:"status"`
 	Personal      *bool                                   `json:"personal,omitempty"`
-	PersonalOwner map[string]any                          `json:"personalOwner,omitempty"`
 	CreatedAt     int64                                   `json:"createdAt"`
 	Counts        PlatformOrgsListResponseItemsItemCounts `json:"counts"`
 	CountsCapped  bool                                    `json:"countsCapped"`
+	PersonalOwner map[string]any                          `json:"personalOwner,omitempty"`
+	Plan          map[string]any                          `json:"plan,omitempty"`
 }
 
 type PlatformOrgsListResponseItemsItemCounts struct {
@@ -7992,10 +8029,11 @@ type PlatformOrgsRetrieveResponse struct {
 	Name          string                             `json:"name"`
 	Status        string                             `json:"status"`
 	Personal      *bool                              `json:"personal,omitempty"`
-	PersonalOwner map[string]any                     `json:"personalOwner,omitempty"`
 	CreatedAt     int64                              `json:"createdAt"`
 	Counts        PlatformOrgsRetrieveResponseCounts `json:"counts"`
 	CountsCapped  bool                               `json:"countsCapped"`
+	PersonalOwner map[string]any                     `json:"personalOwner,omitempty"`
+	Plan          map[string]any                     `json:"plan,omitempty"`
 }
 
 type PlatformOrgsRetrieveResponseCounts struct {
@@ -8016,10 +8054,11 @@ type PlatformOrgsSetStatusResponse struct {
 	Name          string                              `json:"name"`
 	Status        string                              `json:"status"`
 	Personal      *bool                               `json:"personal,omitempty"`
-	PersonalOwner map[string]any                      `json:"personalOwner,omitempty"`
 	CreatedAt     int64                               `json:"createdAt"`
 	Counts        PlatformOrgsSetStatusResponseCounts `json:"counts"`
 	CountsCapped  bool                                `json:"countsCapped"`
+	PersonalOwner map[string]any                      `json:"personalOwner,omitempty"`
+	Plan          map[string]any                      `json:"plan,omitempty"`
 }
 
 type PlatformOrgsSetStatusResponseCounts struct {

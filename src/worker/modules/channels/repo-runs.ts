@@ -39,6 +39,8 @@ export interface ApplyRun {
   /** The entitlement revisions the run covers, `from_rev` to `to_rev`; null on a template-save run. */
   fromRev: number | null;
   toRev: number | null;
+  /** A full reconcile: every pass is brought to `toBlocked` (stop what it blocks, resume what it allows); never dropped as a no-op. */
+  reconcileAll: boolean;
   requestedBy: string;
   dueAt: number;
   updatedAt: number;
@@ -64,6 +66,7 @@ interface RunRow {
   to_blocked: string | null;
   from_rev: number | null;
   to_rev: number | null;
+  reconcile_all: number;
   requested_by: string;
   due_at: number;
   updated_at: number;
@@ -75,7 +78,7 @@ interface RunRow {
 }
 
 const COLUMNS = `id, org_id, mode, template_id, state, from_channels, from_revision, to_channels, to_revision,
-  replace_channels, from_blocked, to_blocked, from_rev, to_rev, requested_by, due_at, updated_at, cursor, counts, error_code, started_at, finished_at`;
+  replace_channels, from_blocked, to_blocked, from_rev, to_rev, reconcile_all, requested_by, due_at, updated_at, cursor, counts, error_code, started_at, finished_at`;
 
 const map = (r: RunRow): ApplyRun => ({
   id: r.id,
@@ -92,6 +95,7 @@ const map = (r: RunRow): ApplyRun => ({
   toBlocked: r.to_blocked === null ? null : (JSON.parse(r.to_blocked) as Channel[]),
   fromRev: r.from_rev,
   toRev: r.to_rev,
+  reconcileAll: r.reconcile_all === 1,
   requestedBy: r.requested_by,
   dueAt: r.due_at,
   updatedAt: r.updated_at,

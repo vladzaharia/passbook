@@ -192,7 +192,7 @@
       "namespace_id": "1018",
       "simple": { "limit": 120, "period": 60 }
     },
-    // Webhook test sends: 10 a minute per endpoint (key test:<endpoint>).
+    // Webhook test sends: 10 a minute per org and mode (key test:<org>:<mode>).
     { "name": "RL_WEBHOOK_OUT", "namespace_id": "1016", "simple": { "limit": 10, "period": 60 } },
     // Join link submits per link and IP.
     { "name": "RL_JOIN", "namespace_id": "1019", "simple": { "limit": 10, "period": 60 } },

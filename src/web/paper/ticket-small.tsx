@@ -2,6 +2,7 @@ import { PAPER_COPY } from '../../shared/copy/print.ts';
 import {
   BuddyCameo,
   CodeMark,
+  Credit,
   Plate,
   sheetProps,
   type TicketProps,
@@ -78,9 +79,7 @@ export function TicketPermit({ p }: { p: TicketProps }) {
         </div>
         <div className="pp-pm-meta">
           <span>{[c.holder, footMeta(c, p.issued)].filter(Boolean).join(' · ')}</span>
-          <span className="pp-passbook">
-            {PAPER_COPY.issuedWith} <b>PassBook</b>
-          </span>
+          <Credit mark={p.mark} />
         </div>
       </footer>
     </article>
@@ -146,9 +145,7 @@ export function TicketCoupon({ p }: { p: TicketProps }) {
           <div className="pp-cp-meta">
             {footMeta(c, p.issued)}
             <br />
-            <span className="pp-passbook">
-              {PAPER_COPY.issuedWith} <b>PassBook</b>
-            </span>
+            <Credit mark={p.mark} />
           </div>
         </footer>
       </div>

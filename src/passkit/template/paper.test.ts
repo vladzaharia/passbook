@@ -4,6 +4,7 @@ import { validateManifest } from './manifest.ts';
 import { DERIVED_PAPER, PAPER_SPECS, paperManifestIssues, resolvePaper } from './paper.ts';
 import { paperContent } from './paper-content.ts';
 import { EVENT_MANIFEST, EVENT_PASS } from './paper-fixtures.ts';
+import { overlaps, paperBoxes } from './paper-geometry.ts';
 
 const withPaper = (paper: unknown): TemplateManifest =>
   ({ ...EVENT_MANIFEST, paper }) as unknown as TemplateManifest;
@@ -251,5 +252,33 @@ describe('paper content derivation', () => {
 
   it('uses the holder name only when the pass names no attendee', () => {
     expect(content(DERIVED_PAPER, 'Grace').holder).toBe('Ada Lovelace');
+  });
+});
+
+describe('half sheet cameo and the PassBook credit', () => {
+  const W = PAPER_SPECS.half.widthMm;
+  const H = PAPER_SPECS.half.heightMm;
+  // The footer row's meta text stops before the credit (about 26 mm and a 6 mm gap) and the cameo's 16 mm reserve.
+  const meta = (mark: 'full' | 'small' | 'none') => ({
+    x: 12,
+    y: H - 8 - 16,
+    w: W - 24 - (mark === 'none' ? 0 : 32) - 16,
+    h: 16,
+  });
+
+  it('sits left of the credit when there is one, and at the right edge at none', () => {
+    const full = paperBoxes('half', 'admission', { buddy: true, mark: 'full' }).buddy;
+    const none = paperBoxes('half', 'admission', { buddy: true, mark: 'none' }).buddy;
+    expect(full).toBeDefined();
+    expect(none).toBeDefined();
+    expect((none?.x ?? 0) + (none?.w ?? 0)).toBeCloseTo(W - 12);
+    expect(none?.x).toBeGreaterThan(full?.x ?? 0);
+  });
+
+  it('never overlaps the meta text, with a long help line, at any mark', () => {
+    for (const mark of ['full', 'small', 'none'] as const) {
+      const buddy = paperBoxes('half', 'admission', { buddy: true, mark }).buddy;
+      expect(buddy && overlaps(buddy, meta(mark))).toBe(false);
+    }
   });
 });

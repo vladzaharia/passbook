@@ -130,6 +130,7 @@ function sheetHtml(props: PrintPageProps, model: Ready) {
       code={model.code}
       drawing={drawPaperCode(toSvg, model.design.barcode, model.code)}
       mode={model.mode}
+      mark={model.mark}
       issued={{ generation: model.generation, at: new Date(model.printedAt).toISOString() }}
       assets={{ logo: url(model.files.logo), art: url(model.files.art) }}
     />,
