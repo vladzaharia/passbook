@@ -82,8 +82,8 @@ export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
     qrMm: 32,
     barMm: 83,
   },
-  a6: { label: 'A6', layout: 'strip', widthMm: 148, heightMm: 105, qrMm: 34, barMm: 0 },
-  dl: { label: 'DL', layout: 'strip', widthMm: 210, heightMm: 99, qrMm: 36, barMm: 88 },
+  a6: { label: 'A6 postcard', layout: 'strip', widthMm: 148, heightMm: 105, qrMm: 34, barMm: 0 },
+  dl: { label: 'DL insert', layout: 'strip', widthMm: 210, heightMm: 99, qrMm: 36, barMm: 88 },
   'half-letter': {
     label: 'Half letter',
     layout: 'half',
