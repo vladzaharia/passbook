@@ -6,3 +6,8 @@ Checks on a real NTAG 424 DNA and a reader, before NFC programming leaves dark. 
 - `ChangeKey(0)` to an identical key and version must answer 9100. If the tag refuses it, the recovery script's last step cannot close the session that way.
 - Fallback when a read-back fails after the script: re-SELECT the NDEF application before the read-back.
 - A fully blank tag on a non-releaser resume is refused and audited as `TAG_CLONE_SUSPECTED`; a console abandon is the only way on. Check a genuinely half-keyed tag still resumes.
+
+## P6 notes
+
+- After a console abandon, a non-releaser still reads all 00 and fails the clone check again. P6 needs either "finish on the original scanner" or an audited Manager "discard keys and start over", allowed only while the tag reads fully blank.
+- A script-kind marker, so only a checked reset script can clear keys.
