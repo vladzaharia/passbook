@@ -126124,8 +126124,7 @@
           "SCAN_STAFF_CHANGED",
           "SCAN_TOO_MANY_OVERRIDES",
           "UNAUTHENTICATED",
-          "VALIDATION",
-          "VISITOR_NOT_IN"
+          "VALIDATION"
         ]
       }
     },
