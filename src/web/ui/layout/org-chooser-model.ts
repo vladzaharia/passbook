@@ -9,14 +9,6 @@ export type Choice =
   | { kind: 'org'; key: string; name: string; to: string; last: boolean; membership: OrgMembership }
   | { kind: 'platform'; key: string; name: string; to: string; last: boolean };
 
-/**
- * Developer sandboxes (org kind 'developer': `testOnly` on a membership) are not offered. One
- * place, so the shared scope filter can take it over.
- */
-export function chooserMemberships(memberships: readonly OrgMembership[]): OrgMembership[] {
-  return memberships.filter((m) => !m.testOnly);
-}
-
 /** The section asked for in the chosen organization, else the first one its roles open. */
 export function chooserTarget(membership: OrgMembership, next: string): string {
   const wanted = orgPath(membership.orgId, next);

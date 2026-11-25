@@ -13,7 +13,6 @@ import { ErrorState } from '../error-state.tsx';
 import { FilterBar } from '../filter-bar.tsx';
 import {
   type Choice,
-  chooserMemberships,
   columnsOf,
   gridStep,
   matchesChoice,
@@ -63,7 +62,8 @@ export function OrgChooser({ next, title = C.choose, inline = false }: OrgChoose
   const here = parseAdminPath(pathname);
   const section = next ?? (here.scope?.kind === 'org' ? here.rest : '');
   // A page in an organization it cannot use offers the others; the same one would land here again.
-  const offered = chooserMemberships(scope.memberships);
+  // Sandboxes stay out (lib/org-lists.ts), as in the switcher.
+  const offered = scope.choices;
   const others = offered.filter((m) => m.orgId !== scope.requestedOrgId);
   const memberships = others.length > 0 ? others : offered;
   const last = readTabScope() ?? remembered;
