@@ -10,6 +10,7 @@ import {
   confirmGrants,
   disabledByBinding,
   endGrants,
+  liveGrantRows,
   liveGrants,
   markDisabled,
   recordAdded,
@@ -39,14 +40,15 @@ export function accountsApi(s: Shared): AccountsApi {
             .filter((g) => account.groups.includes(g.id))
             .map((g) => `g:${g.key}` as const),
         ];
-        const grants = await liveGrants(db, sub);
+        const rows = await liveGrantRows(db, sub);
         if (!account.disabled) await clearDisabledMarks(db, [sub]);
         return {
           roles,
           disabled: account.disabled,
           isAdmin: account.isAdmin,
           class: (await subjectClass(db, sub)) ?? 'external',
-          grants,
+          grants: rows.map((g) => g.role),
+          confirmedGrants: rows.filter((g) => g.confirmed).map((g) => g.role),
         };
       });
     },

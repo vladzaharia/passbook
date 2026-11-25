@@ -67,6 +67,7 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
   const wantsNothing = desired.skip === 'disabled';
   const present = new Set(lookup.roles.filter(isManaged));
   const grants = new Set(lookup.grants);
+  const confirmed = new Set(lookup.confirmedGrants);
   const everyTarget = new Set<Target>([
     ...desired.targets.keys(),
     ...present,
@@ -99,7 +100,9 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
       grant: grants.has(target),
       wanted: !wantsNothing && desired.targets.has(target),
       held: s?.held_at != null,
-      seen: s?.observed === 1,
+      // A read-back grant stands in for an observation only until PassBook has observed the target once: after
+      // an observed absence (a hold, then Restore) the grant outlives the role and must not block the re-add.
+      seen: s?.observed === 1 || (s?.observed == null && confirmed.has(target)),
     };
     const presence = presenceOf(facts);
     switch (classify(facts)) {
@@ -126,8 +129,7 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
         else if (account === 'no')
           await noteDrift(ctx, runId, who, target, 'disabled_in_idp', open);
         else {
-          // A grant that was never seen present: its write may have been lost, so it goes in again. If the
-          // owner took it before the first drain, this undoes that; PB-R should have lookup() say which grants are confirmed.
+          // A pending grant (never read back, never observed) may have lost its write, so it goes in again.
           if (facts.grant)
             ctx.log.warn('idp.access_readded', { code: 'IDP_READDED', subject, target });
           adds.push(target);

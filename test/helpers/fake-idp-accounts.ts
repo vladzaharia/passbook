@@ -43,6 +43,7 @@ export function accountMethods(
         isAdmin: a.isAdmin,
         class: a.class,
         grants: [...a.grants] as Target[],
+        confirmedGrants: [...a.grants].filter((t) => !a.pending.has(t)) as Target[],
       };
     },
     async apply(subject, delta, ctx) {
