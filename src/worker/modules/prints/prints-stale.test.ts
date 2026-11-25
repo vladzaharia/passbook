@@ -126,9 +126,9 @@ describe('prints: stale printouts', () => {
   });
 
   it('lists without failing when the ticket cannot be drawn, and says not stale', async () => {
-    const { api, pass, list, setPass } = await setup();
+    const { kit, api, pass, list } = await setup();
     await api('POST', `/passes/${pass.id}/prints`);
-    await setPass("template_version = 'gone'");
+    await run(kit.env.DB, 'DELETE FROM pass_versions WHERE pass_id = ?', [pass.id]);
     const res = await api('GET', `/passes/${pass.id}/prints`);
     expect(res.status).toBe(200);
     expect(await list()).toMatchObject([{ status: 'active', stale: false }]);
