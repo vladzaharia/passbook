@@ -1,5 +1,13 @@
 [
   {
+    "key": "Authorization: API_KEY_MISSING added",
+    "class": "notable",
+    "operationId": "",
+    "op": "Authorization header",
+    "change": "401 API_KEY_MISSING: added",
+    "note": "A Bearer header with no key now answers 401 API_KEY_MISSING instead of UNAUTHENTICATED."
+  },
+  {
     "key": "DELETE /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.deleteBrandWebLogo",
@@ -1222,6 +1230,14 @@
     "op": "GET /b/{token}/{passId}",
     "change": "new operation",
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
+  },
+  {
+    "key": "Pass input: required issue path",
+    "class": "notable",
+    "operationId": "",
+    "op": "Pass input errors",
+    "change": "issues[].path: input.<field> for a missing required field",
+    "note": "A missing required input reports path input.<field> and the message <field> is required."
   },
   {
     "key": "PATCH /api/v1/brand 200.kind: field added",

@@ -35,6 +35,12 @@
     "fix": "Send an earlier expiresAt.",
     "retryable": false
   },
+  "API_KEY_MISSING": {
+    "title": "No API key",
+    "when": "The Authorization header names the Bearer scheme but carries no key.",
+    "fix": "Set PASSBOOK_KEY to your key, export it, and send Authorization: Bearer $PASSBOOK_KEY.",
+    "retryable": false
+  },
   "API_KEY_MODE_MISMATCH": {
     "title": "Key mode mismatch",
     "when": "You tried to rotate a key from the other mode (live or test).",

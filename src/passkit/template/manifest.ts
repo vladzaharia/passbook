@@ -273,7 +273,10 @@ export function inputChecker(manifest: TemplateManifest) {
 
 /** Validates against the inputs schema after defaults. Returns the problems (empty when valid). */
 export function checkInput(manifest: TemplateManifest, input: Personalization): ValidationIssue[] {
-  return inputChecker(manifest)(input).map(({ keyword: _keyword, ...issue }) => issue);
+  return inputChecker(manifest)(input).map(({ keyword, ...issue }) => {
+    const field = keyword === 'required' ? /"([^"]+)"/.exec(issue.message)?.[1] : undefined;
+    return field ? { ...issue, path: `input.${field}`, message: `${field} is required.` } : issue;
+  });
 }
 
 export interface DisplayProjection {

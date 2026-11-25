@@ -162,6 +162,8 @@ async function expectSame(
         run(declared, verified, principal, method),
         run(legacy, legacyTag, principal, method),
       ]);
+      // The one deliberate difference: a Bearer header with no key has its own refusal (auth-bearer.test.ts).
+      if (now.code === 'API_KEY_MISSING') continue;
       expect({ name, method, ...now }).toEqual({ name, method, ...before });
     }
 }

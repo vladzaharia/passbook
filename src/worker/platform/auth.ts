@@ -56,6 +56,10 @@ function bearer(c: Context): string | null {
   return match?.[1] ?? null;
 }
 
+/** A Bearer header with no token after the scheme (`Bearer`, `Bearer `). */
+const bearerEmpty = (c: Context): boolean =>
+  /^Bearer\s*$/i.test(c.req.header('authorization') ?? '');
+
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
   const cookie = getCookie(c, SESSION_COOKIE);
   const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
@@ -161,6 +165,12 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
+    if (rule && !token && bearerEmpty(c)) {
+      throw new UnauthenticatedError(
+        'Authorization has no key. Set PASSBOOK_KEY and export it.',
+        'API_KEY_MISSING',
+      );
+    }
     if (rule && token) {
       const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
       if (!key) {
