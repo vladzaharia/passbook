@@ -30,7 +30,12 @@ const STRIP: StripEntry = { kind: 'ok', title: 'Taylor Chen', meta: '6:42 PM', u
 function useStaticStore(recent: Recent[], at: number) {
   const [store] = useState(() => {
     const state = { ...initialState(at), recent };
-    const snapshot = { state, view: viewOf(state), now: at };
+    const snapshot = {
+      state,
+      view: viewOf(state),
+      now: at,
+      draftFailures: { count: 0, last: null },
+    };
     return {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,

@@ -111,5 +111,6 @@ describe('draft sync', () => {
     await flush();
     expect(store.getSnapshot().state.loop.s).toBe('member');
     expect(store.getSnapshot().state.block).toBeNull();
+    expect(store.getSnapshot().draftFailures).toEqual({ count: 1, last: 'network' });
   });
 });

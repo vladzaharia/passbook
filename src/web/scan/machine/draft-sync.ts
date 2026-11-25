@@ -22,7 +22,8 @@ const same = (a: Want | null, b: Want | null) =>
     a.actionId === b.actionId &&
     a.amount === b.amount);
 
-export function createDraftSync(deps: ScanDeps) {
+/** `failed` hears each failed draft call with the server's code, or `network`. */
+export function createDraftSync(deps: ScanDeps, failed: (code: string) => void = () => undefined) {
   const port = deps.draft;
   /** The read the last server `resolve` was sent for: its key is the draft's `ref`. */
   let read: { sig: string; key: string } | null = null;
@@ -47,8 +48,11 @@ export function createDraftSync(deps: ScanDeps) {
   }
 
   function quiet(call: Promise<unknown>) {
-    // A draft is a courtesy: a failure is dropped, never retried, never shown to staff.
-    call.catch((error: unknown) => void error);
+    // A draft is a courtesy: a failure is counted, never retried, never shown to staff.
+    call.catch((error: unknown) => {
+      const code = (error as { code?: unknown } | null)?.code;
+      failed(typeof code === 'string' ? code : 'network');
+    });
   }
 
   function send() {

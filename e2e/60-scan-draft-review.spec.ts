@@ -135,6 +135,7 @@ const SIZES = [
   [834, 1112],
   [1440, 900],
   [667, 375],
+  [568, 320],
 ] as const;
 
 /** Axe in both themes always; shots at four sizes in both themes when SHOTS_DIR is set. */

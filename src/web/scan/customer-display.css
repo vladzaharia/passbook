@@ -176,22 +176,6 @@
   display: inline-block;
   animation: cstage-roll 120ms ease-out both;
 }
-/* A short screen, a phone on its side: the amount shrinks so it clears the corner button. */
-@media (max-height: 520px) {
-  .cstage-copy:has(.cstage-draft) {
-    padding-top: 8px;
-  }
-  .cstage-copy:has(.cstage-draft) .cstage-badge {
-    width: 44px;
-    margin-bottom: 8px;
-  }
-  .cstage-copy h1.cstage-draft {
-    font-size: clamp(36px, 9vw, 60px);
-  }
-  .cstage-copy:has(.cstage-draft) .cstage-hint {
-    font-size: 18px;
-  }
-}
 @keyframes cstage-amount-in {
   from {
     opacity: 0;
