@@ -776,3 +776,12 @@ Owner steps, App Store Connect:
   not a newer draft. This read does not itself run baked sync; newly installed baked choices
   appear after the normal sync has verified and recorded their system releases. A final issuance
   still rechecks authority, release head and asset integrity.
+
+## SDK release checks
+
+Run before publishing; publishing is the owner's. Bump `version` in the four manifests and the constants (`sdk/typescript/src/version.ts`, `CLI_VERSION` in `sdk/cli/src/cli.ts`, `Version` in `sdk/go/core.go`, `sdk/python/src/passbook/_version.py`) together; tests compare them.
+
+1. `npx tsc -p sdk/typescript/tsconfig.build.json`, then `(cd sdk/typescript && npm pack --dry-run)`: only `dist`, README, LICENSE and package.json.
+2. The CLI build resolves `@passbook/sdk` from node_modules, not from source paths: `(cd sdk/typescript && npm link) && (cd sdk/cli && npm link @passbook/sdk && npx tsc -p tsconfig.build.json && npm pack --dry-run)`.
+3. `pip install build && (cd sdk/python && python -m build)`.
+4. `(cd sdk/go && go vet ./... && go test ./...)`.

@@ -182,14 +182,14 @@ export const getLog = (db: D1Database, orgId: string, id: string, now: number) =
     [orgId, id, id, now - LOG_META_MS, id],
   );
 
-export const callsSince = async (db: D1Database, orgId: string, since: number) =>
-  (
-    await first<{ n: number }>(
-      db,
-      'SELECT count(*) AS n FROM request_log WHERE org_id = ? AND at >= ?',
-      [orgId, since],
-    )
-  )?.n ?? 0;
+/** Calls since `since` in `width` ms buckets (`b` 0 is the oldest), without the portal's own background reads. */
+export const callBuckets = (db: D1Database, orgId: string, since: number, width: number) =>
+  all<{ b: number; n: number }>(
+    db,
+    `SELECT CAST((at - ?) / ? AS INTEGER) AS b, count(*) AS n FROM request_log
+     WHERE org_id = ? AND at >= ? AND (client IS NULL OR client <> 'portal') GROUP BY b`,
+    [since, width, orgId, since],
+  );
 
 /** Blanks the bodies of rows older than `cutoff`: the row and its metadata stay. */
 export const purgeBodies = async (db: D1Database, cutoff: number, limit: number) =>

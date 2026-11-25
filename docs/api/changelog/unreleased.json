@@ -1,5 +1,13 @@
 [
   {
+    "key": "Authorization: API_KEY_MISSING added",
+    "class": "notable",
+    "operationId": "",
+    "op": "Authorization header",
+    "change": "401 API_KEY_MISSING: added",
+    "note": "A Bearer header with no key (empty, a placeholder like undefined or $KEY, or a bare key) now answers 401 API_KEY_MISSING instead of UNAUTHENTICATED."
+  },
+  {
     "key": "DELETE /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.deleteBrandWebLogo",
@@ -390,6 +398,14 @@
     "op": "GET /api/v1/developer/logs",
     "change": "optional parameter query:portal added",
     "note": "hide leaves out the portal's own background reads."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.series: field added",
+    "class": "additive",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.series: field added",
+    "note": "The rail carries the last hour in five-minute buckets; callsLastHour leaves out the portal's own background reads."
   },
   {
     "key": "GET /api/v1/developer/resolve new operation",
@@ -1430,6 +1446,14 @@
     "op": "GET /b/{token}/{passId}",
     "change": "new operation",
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
+  },
+  {
+    "key": "Pass input: required issue path",
+    "class": "notable",
+    "operationId": "",
+    "op": "Pass input errors",
+    "change": "issues[].path: input.<field> for input problems",
+    "note": "Input problems report path input.<field>, and a missing field names its full location in <field> is required."
   },
   {
     "key": "PATCH /api/v1/brand 200.kind: field added",

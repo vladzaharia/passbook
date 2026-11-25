@@ -73,7 +73,12 @@ export function RunStep({
           </div>
         )}
         {!q.sandbox ? null : where === 'terminal' ? (
-          <TerminalBar q={q} active={open} done={state === 'done'} />
+          <TerminalBar
+            q={q}
+            active={open}
+            done={state === 'done'}
+            onHere={() => setWhere('here')}
+          />
         ) : (
           <RunBar
             call={run}

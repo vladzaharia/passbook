@@ -1,6 +1,7 @@
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import type { Gate } from '../console/session.ts';
+import { copyToClipboard } from '../playground/copy.ts';
 
 const G = QS_COPY.gate;
 const next = encodeURIComponent(`${PATHS.quickstart}#sandbox`);
@@ -34,9 +35,22 @@ export function applyGate(el: HTMLElement, gate: Gate): void {
     actions.append(link(`/auth/oidc/start?next=${next}`, G.email.cta, 'btn'));
   } else {
     actions.append(
-      link(`/auth/oidc/start?prompt=login&next=${next}`, G.noaccess.cta, 'btn'),
+      link(`/auth/oidc/start?prompt=login&next=${next}`, G.noaccess.cta, 'btn outline'),
       link('/', G.noaccess.passes, 'btn outline'),
     );
+  }
+  if (gate.reason === 'noaccess' && gate.email) {
+    const email = gate.email;
+    const ask = document.createElement('button');
+    ask.type = 'button';
+    ask.className = 'btn';
+    ask.textContent = G.noaccess.copy;
+    ask.addEventListener('click', () => {
+      void copyToClipboard(G.noaccess.request(email)).then((ok) => {
+        if (ok) ask.textContent = G.noaccess.copied;
+      });
+    });
+    actions.prepend(ask);
   }
   const rest: HTMLElement[] = [line, actions];
   if (gate.reason === 'noaccess' && gate.email) {

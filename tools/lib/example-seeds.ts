@@ -206,7 +206,9 @@ export const SEEDS: Record<string, unknown> = {
     externalRef: 'booking_8841',
   }),
   'passes.getPassesByIdDiff response': {
-    changes: [{ path: 'input.validUntil', from: '2026-12-31', to: '2027-01-31' }],
+    changes: [
+      { path: 'input.endsAt', from: '2026-12-04T22:00:00-08:00', to: '2026-12-04T23:00:00-08:00' },
+    ],
   },
   'passes.getPassesByIdAssets response': { items: [THUMBNAIL], nextCursor: null },
   'passes.putPassesByIdAssetsByName response': THUMBNAIL,
@@ -228,7 +230,7 @@ export const SEEDS: Record<string, unknown> = {
   'passes.postPassesByIdStamps request': { action: 'add', count: 1 },
   'passes.postPassesByIdStamps response': changed({}),
   'passes.postPassesByIdRenew response': changed({
-    personalization: { ...TEMPLATE.sample, validUntil: '2027-12-31' },
+    personalization: { ...TEMPLATE.sample, endsAt: '2026-12-05T22:00:00-08:00' },
   }),
   'passes.postPassesBulkReissue request': { templateId: IDS.template, version: '4' },
   'passes.postPassesBulkChannels request': {
@@ -252,7 +254,7 @@ export const SEEDS: Record<string, unknown> = {
   'passes.postPassesByIdRemove response': changed({ status: 'voided', removedAt: T.now }),
   'passes.postPassesByIdRestore response': changed({ status: 'active' }, 3),
   'passes.patchPassesById response': changed({
-    personalization: { ...TEMPLATE.sample, validUntil: '2027-01-31' },
+    personalization: { ...TEMPLATE.sample, endsAt: '2026-12-04T23:00:00-08:00' },
   }),
   'passes.getPassesByIdDevices response': {
     version: 1,
@@ -377,7 +379,6 @@ export const SEEDS: Record<string, unknown> = {
       next: 'request_review',
     },
   },
-  'templates.postTemplatesByIdPreview request': { version: '3', input: TEMPLATE.sample },
   'templates.postTemplatesByIdPreview response': {
     passJson: TEMPLATE.passJson,
     warnings: [
@@ -425,15 +426,7 @@ export const SEEDS: Record<string, unknown> = {
     ],
     nextCursor: null,
   },
-  'templates.getTemplatesByIdInputSchema response': {
-    type: 'object',
-    properties: {
-      name: { type: 'string', title: 'Guest', maxLength: 80 },
-      tier: { type: 'string', title: 'Pass', enum: ['Day pass', 'Ten-visit card'] },
-      validUntil: { type: 'string', title: 'Valid until', format: 'date' },
-    },
-    required: ['name'],
-  },
+  'templates.getTemplatesByIdInputSchema response': TEMPLATE.inputSchema,
   'templates.getTemplatesByIdChannelsRuns response': [
     {
       id: uuid('channel-run'),
@@ -520,7 +513,7 @@ export const SEEDS: Record<string, unknown> = {
   'broadcasts.postBroadcastsPreview request': {
     orgId: IDS.org,
     target: { templateIds: [IDS.template] },
-    patch: { validUntil: '2027-01-31' },
+    patch: { endsAt: '2026-12-04T23:00:00-08:00' },
     notify: true,
   },
   'broadcasts.postBroadcastsPreview response': {
@@ -531,9 +524,14 @@ export const SEEDS: Record<string, unknown> = {
     samples: [
       {
         passId: IDS.pass,
-        title: 'Day pass',
+        title: TEMPLATE.title,
         changes: [
-          { key: 'validUntil', label: 'Valid until', from: '2026-12-31', to: '2027-01-31' },
+          {
+            key: 'endsAt',
+            label: 'Ends',
+            from: '2026-12-04T22:00:00-08:00',
+            to: '2026-12-04T23:00:00-08:00',
+          },
         ],
       },
     ],
@@ -569,7 +567,7 @@ export const SEEDS: Record<string, unknown> = {
     items: [
       {
         passId: IDS.pass,
-        title: 'Day pass',
+        title: TEMPLATE.title,
         holderEmail: 'ada@example.com',
         outcome: 'updated',
         silent: false,
@@ -743,8 +741,8 @@ export const SEEDS: Record<string, unknown> = {
   'sandbox.getTestInbox response': { items: [TEST_EMAIL], nextCursor: null },
   'sandbox.getTestInboxById response': {
     ...TEST_EMAIL,
-    html: '<p>Your pass is ready.</p><p>Day pass for Ada Example.</p>',
-    text: 'Your pass is ready. Day pass for Ada Example.',
+    html: '<p>Your pass is ready.</p><p>Friday Night Bouldering for Ada Example.</p>',
+    text: 'Your pass is ready. Friday Night Bouldering for Ada Example.',
     forwarding: 'none',
   },
   'offboard.postOffboard response': { dryRun: false, holders: 1, passes: 2, tags: 0, more: false },

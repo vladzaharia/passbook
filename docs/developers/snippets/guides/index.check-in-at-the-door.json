@@ -1,0 +1,66 @@
+[
+  {
+    "id": "check-in-rules",
+    "title": "Set how often a pass admits",
+    "guide": "check-in-at-the-door",
+    "ops": [
+      "passes.putPassesByIdCheckIn"
+    ],
+    "files": {
+      "ts": "check-in-rules.ts",
+      "curl": "check-in-rules.sh"
+    }
+  },
+  {
+    "id": "door-resolve",
+    "title": "Read a pass at the door",
+    "guide": "check-in-at-the-door",
+    "ops": [
+      "scan.postScanResolve"
+    ],
+    "files": {
+      "ts": "door-resolve.ts",
+      "curl": "door-resolve.sh"
+    },
+    "sandbox": "TERMINAL_NOT_FOUND"
+  },
+  {
+    "id": "door-check-in",
+    "title": "Admit a pass at the door",
+    "guide": "check-in-at-the-door",
+    "ops": [
+      "scan.postScanActions"
+    ],
+    "files": {
+      "ts": "door-check-in.ts",
+      "curl": "door-check-in.sh"
+    },
+    "sandbox": "TERMINAL_NOT_FOUND"
+  },
+  {
+    "id": "door-again",
+    "title": "Scan an admitted pass again",
+    "guide": "check-in-at-the-door",
+    "ops": [
+      "scan.postScanActions"
+    ],
+    "files": {
+      "ts": "door-again.ts",
+      "curl": "door-again.sh"
+    },
+    "sandbox": "TERMINAL_NOT_FOUND"
+  },
+  {
+    "id": "undo-scan",
+    "title": "Undo an admit",
+    "guide": "check-in-at-the-door",
+    "ops": [
+      "scan.postScanScansByScanIdUndo"
+    ],
+    "files": {
+      "ts": "undo-scan.ts",
+      "curl": "undo-scan.sh"
+    },
+    "expect": "handler"
+  }
+]

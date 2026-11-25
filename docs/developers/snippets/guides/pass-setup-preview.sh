@@ -2,7 +2,7 @@ curl -X PATCH "https://passbook.mobile/api/v1/orgs/0193a1b2-7c00-7000-8000-00000
   -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-  "expectedRevision": "r1",
+  "expectedRevision": "test.1.0.0",
   "brand": {
     "passColors": {
       "background": "#0f172a",

@@ -70,3 +70,23 @@ describe('validate', () => {
     expect(msg({ type: 'array', maxItems: 2 }, [1, 2, 3])).toBe('allows at most 2 items');
   });
 });
+
+describe('a template input schema', () => {
+  const closed: RunSchema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: { startsAt: { type: 'string', format: 'date-time' } },
+  };
+  it('names a field the schema does not take', () => {
+    expect(validate(closed, { startsAt: '2026-12-04T18:00:00-08:00', extra: 1 })).toEqual([
+      { path: 'extra', message: 'is not a field of this schema' },
+    ]);
+    expect(validate({ ...closed, additionalProperties: true }, { extra: 1 })).toEqual([]);
+  });
+  it('wants a date and time with an offset', () => {
+    expect(validate(closed, { startsAt: '2026-12-04T18:00:00-08:00' })).toEqual([]);
+    expect(validate(closed, { startsAt: '2026-12-04T18:00:00Z' })).toEqual([]);
+    for (const bad of ['2026-12-04', '2026-12-04T18:00', '2026-02-30T18:00:00Z', 'soon'])
+      expect(validate(closed, { startsAt: bad }).map((i) => i.path)).toEqual(['startsAt']);
+  });
+});

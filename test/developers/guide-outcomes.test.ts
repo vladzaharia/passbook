@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { handleEmailSend } from '../../src/worker/modules/delivery/jobs.ts';
 import { all } from '../../src/worker/platform/db.ts';
 import { createJobContext } from '../../src/worker/platform/service-context.ts';
-import { fence, guideApi } from './guide-api.ts';
+import { guideApi, snippetBody } from './guide-api.ts';
 import { kit } from './snippet-world.ts';
 
 vi.mock('@passbook/sdk', () => import('../../sdk/typescript/src/index.ts'));
@@ -11,7 +11,7 @@ vi.mock('@passbook/sdk', () => import('../../sdk/typescript/src/index.ts'));
 describe('issue on purchase', () => {
   it('replays an order to the same pass, refuses a changed body, finds it, emails it and ends at a preview', async () => {
     const { call, world } = await guideApi();
-    const body = { ...fence('issue-on-purchase', 'passes.postPasses') };
+    const body = { ...snippetBody('create-order-pass') };
     const headers = { 'idempotency-key': 'order-8841' };
     const first = await call('POST', '/passes', body, headers);
     expect(first.status).toBe(201);
@@ -71,6 +71,7 @@ describe('update a pass', () => {
     );
     expect(changed.status).toBe(200);
     expect(changed.json.version).toBe(pass.version + 1);
+    expect(changed.headers.get('etag')).toBe(`"${pass.version + 1}"`);
 
     const stale = await call(
       'PATCH',
@@ -105,6 +106,10 @@ describe('pass lifecycle', () => {
     const removed = await call('POST', `/passes/${pass.id}/remove`, { message: 'Refunded' });
     expect(removed.status).toBe(200);
     expect(removed.json.removedAt).not.toBeNull();
+    // A removed pass reads voided: `removedAt` tells it from a void.
+    expect(removed.json.status).toBe('voided');
+    const voidRemoved = await call('POST', `/passes/${pass.id}/void`);
+    expect(voidRemoved.json.code).toBe('PASS_REMOVED');
     const list = await call('GET', '/passes?status=removed');
     expect(list.json.items.map((p: { id: string }) => p.id)).toContain(pass.id);
     const restored = await call('POST', `/passes/${pass.id}/restore`);
@@ -117,7 +122,9 @@ describe('pass lifecycle', () => {
     expect((await world.fetch(rotated.json.downloadUrl)).status).toBe(200);
 
     expect((await call('DELETE', `/passes/${pass.id}`)).status).toBeLessThan(300);
-    expect((await call('GET', `/passes/${pass.id}`)).status).toBe(404);
+    const gone = await call('GET', `/passes/${pass.id}`);
+    expect(gone.status).toBe(404);
+    expect(gone.json.code).toBe('PASS_NOT_FOUND');
   });
 });
 

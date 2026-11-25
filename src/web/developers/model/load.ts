@@ -30,9 +30,14 @@ interface GuideRow {
   files: { ts: string; curl?: string };
 }
 
-/** The hand-written snippets listed in `<dir>/index.json`, with their files read. */
+/** The hand-written snippets listed in `<dir>/index.*.json`, one file per guide, with their files read. */
 export function guideExamples(dir: string): Example[] {
-  const index = optional<GuideRow[]>(join(dir, 'index.json')) ?? [];
+  const index = existsSync(dir)
+    ? readdirSync(dir)
+        .filter((f) => /^index\..+\.json$/.test(f))
+        .sort()
+        .flatMap((f) => read<GuideRow[]>(join(dir, f)))
+    : [];
   return index.map((row) => ({
     id: row.id,
     title: row.title,

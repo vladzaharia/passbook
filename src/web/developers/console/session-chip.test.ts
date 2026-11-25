@@ -148,6 +148,7 @@ describe('the top bar chip', () => {
       '/api/v1/developer/sandbox': json({ sandbox: null }),
     });
     expect(none.textContent).toBe('Create sandbox');
+    expect(none.querySelector('a')?.getAttribute('href')).toBe('/developers/quickstart#sandbox');
     vi.resetModules();
     const closed = await mountWith({
       '/api/v1/session': authed,
@@ -163,7 +164,9 @@ describe('the top bar chip', () => {
       '/api/v1/developer/sandbox': json({ sandbox: { id: 's', orgSlug: 'acme' } }),
     });
     expect(host.querySelector('.orgchip-dot')?.textContent).toBe('A');
-    expect(host.querySelector('.orgchip-name')?.textContent).toBe('acme');
+    expect(host.querySelector('.orgchip-name')?.textContent).toBe('Sandbox');
+    expect(host.querySelector('.orgchip')?.getAttribute('title')).toContain('acme');
+    expect(host.querySelector('.orgchip-clock')).toBeNull();
     const items = [...host.querySelectorAll('.orgchip-item')].map((a) => [
       a.textContent,
       a.getAttribute('href'),

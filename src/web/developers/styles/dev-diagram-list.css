@@ -1,0 +1,222 @@
+/* Guide diagrams, narrow layout: the list that replaces the drawing in a small container. */
+
+/* The narrow list: steps with a rail, or stacked cards. */
+/* Wide: the list stays in the accessibility tree (aria-details) but is clipped away. */
+.dg-list {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  list-style: none;
+}
+@container dg (max-width: 519.98px) {
+  .dg-t520 .dg-svg {
+    display: none;
+  }
+  .dg-t520 .dg-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+@container dg (max-width: 599.98px) {
+  .dg-t600 .dg-svg {
+    display: none;
+  }
+  .dg-t600 .dg-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+@container dg (max-width: 679.98px) {
+  .dg-t680 .dg-svg {
+    display: none;
+  }
+  .dg-t680 .dg-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+@container dg (max-width: 759.98px) {
+  .dg-t760 .dg-svg {
+    display: none;
+  }
+  .dg-t760 .dg-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+@container dg (max-width: 839.98px) {
+  .dg-t840 .dg-svg {
+    display: none;
+  }
+  .dg-t840 .dg-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+@container dg (max-width: 919.98px) {
+  .dg-t920 .dg-svg {
+    display: none;
+  }
+  .dg-t920 .dg-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+.dg-step {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 18px;
+}
+.dg-step::before {
+  content: "";
+  position: absolute;
+  inset: 26px auto 0 11px;
+  border-left: 1px dashed var(--pk-border-strong);
+}
+.dg-step:last-child {
+  padding-bottom: 0;
+}
+.dg-step:last-child::before {
+  display: none;
+}
+.dg-n {
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-full);
+  background: var(--pk-surface-sunken);
+  color: var(--pk-text-muted);
+  font: 600 11px var(--pk-font-mono);
+}
+.dg-body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.dg-who {
+  color: var(--pk-text-muted);
+  font-size: var(--pk-font-size-xs);
+}
+.dg-what {
+  color: var(--pk-text-strong);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.dg-what.dg-code {
+  font: 500 13px var(--pk-font-mono);
+}
+.dg-reply .dg-what::before {
+  content: "\21A9\00a0";
+  color: var(--pk-text-muted);
+}
+.dg-aside {
+  justify-self: start;
+  padding: 2px 8px;
+  border: 1px solid var(--pk-info-border);
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-info-subtle);
+  color: var(--pk-text-default);
+  font-size: var(--pk-font-size-xs);
+}
+.dg-grp {
+  margin: 4px 0 18px;
+  padding: 10px 12px 14px;
+  border: 1px dashed var(--pk-border-strong);
+  border-radius: var(--pk-radius-lg);
+  background: color-mix(in oklab, var(--pk-surface-sunken) 60%, transparent);
+}
+.dg-grp:last-child {
+  margin-bottom: 0;
+}
+.dg-grp-name {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--pk-text-default);
+  font-size: var(--pk-font-size-xs);
+  font-weight: 600;
+}
+.dg-sub {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dg-card {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--dg-edge);
+  border-radius: var(--pk-radius-lg);
+  background: var(--dg-fill);
+}
+.dg-card.dg-dashed {
+  border-style: dashed;
+}
+.dg-card:last-child {
+  margin-bottom: 0;
+}
+.dg-card > .dg-name {
+  font-size: var(--pk-font-size-base);
+}
+.dg-card > .dg-note {
+  font-size: var(--pk-font-size-sm);
+}
+.dg-outs {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--pk-border-subtle);
+  list-style: none;
+}
+.dg-outs li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+.dg-to {
+  color: var(--pk-text-muted);
+  font-size: var(--pk-font-size-sm);
+}

@@ -2,7 +2,15 @@
 // Same contract as example-seeds.ts: a partial value the sampler fits to the schema.
 import { DEFAULT_TIME_ZONE } from '../../src/shared/time-zone.ts';
 import { CHANNELS, IDENTITY_RUN, ROLL_CALL, TAG_TYPE, TEMPLATE_VERSION } from './example-canon.ts';
-import { ACTIVITY, CALL, DEVELOPER_HOME, METRICS, SANDBOX, SANDBOX_KEY } from './example-stats.ts';
+import {
+  ACTIVITY,
+  CALL,
+  DEVELOPER_HOME,
+  METRICS,
+  SANDBOX,
+  SANDBOX_KEY,
+  spread,
+} from './example-stats.ts';
 import { hex, IDS, keySecret, T, TEMPLATE, TEMPLATE_DETAIL } from './example-world.ts';
 
 /** An org's overview: the platform's, without the platform directory cards. */
@@ -147,9 +155,9 @@ export const IDP_SEEDS: Record<string, unknown> = {
     bindingId: null,
     card: {
       passId: IDS.pass,
-      title: 'Day pass',
+      title: TEMPLATE.title,
       subtitle: 'Ada Example',
-      templateName: 'Day pass',
+      templateName: TEMPLATE.name,
       holderName: 'Ada Example',
       photoUrl: `/api/v1/passes/${IDS.pass}/member-photo/image?v=1`,
     },
@@ -204,12 +212,12 @@ export const IDP_SEEDS: Record<string, unknown> = {
     status: 'active',
     updatedAt: T.now,
   },
-  'templates.postTemplatesByIdClone request': { orgId: IDS.org, name: 'Day pass (kids)' },
+  'templates.postTemplatesByIdClone request': { orgId: IDS.org, name: 'Quickstart ticket (kids)' },
   'templates.postTemplatesByIdClone response': {
     ...TEMPLATE_DETAIL,
     id: uuid('template-clone'),
-    slug: 'day-pass-kids',
-    name: 'Day pass (kids)',
+    slug: 'quickstart-kids',
+    name: 'Quickstart ticket (kids)',
     passCount: 0,
     createdAt: T.now,
     updatedAt: T.now,
@@ -366,6 +374,8 @@ export const IDP_SEEDS: Record<string, unknown> = {
     tier: 'standard',
     limitPerMinute: 60,
     callsLastHour: 11,
+    // The same 11 calls in five-minute buckets, oldest first: a burst while the quickstart ran.
+    series: spread(11, [0, 0, 1, 0, 0, 2, 3, 1, 0, 0, 1, 1]),
     key: { id: SANDBOX_KEY.id, name: SANDBOX_KEY.name, prefix: 's4Ndb0xK' },
   },
   'developer.postSandbox response': { ...SANDBOX_ROW, key: SANDBOX_KEY, previousKey: null },

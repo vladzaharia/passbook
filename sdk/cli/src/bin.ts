@@ -17,6 +17,11 @@ process.exitCode = await run(process.argv.slice(2), {
     for await (const c of process.stdin) chunks.push(c as Buffer);
     return Buffer.concat(chunks).toString('utf8');
   },
-  makeClient: ({ apiKey, baseUrl }) => new PassBook({ apiKey, ...(baseUrl ? { baseUrl } : {}) }),
+  makeClient: ({ apiKey, baseUrl, userAgent }) =>
+    new PassBook({
+      apiKey,
+      ...(baseUrl ? { baseUrl } : {}),
+      ...(userAgent ? { userAgent } : {}),
+    }),
   signal: stop.signal,
 });

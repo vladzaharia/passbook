@@ -1,0 +1,45 @@
+{
+  "title": "Issue a pass when an order completes",
+  "desc": "Checkout tells your server the order completed. Your server calls POST /passes with the order id as Idempotency-Key and gets 201 with the pass. The holder opens the pass link in Wallet. A retried webhook sends the same key and gets the same pass.",
+  "kind": "sequence",
+  "actors": [
+    { "id": "shop", "label": "Checkout" },
+    { "id": "app", "label": "Your server" },
+    { "id": "pb", "label": "PassBook", "tone": "accent" },
+    { "id": "wallet", "label": "Wallet", "tone": "info" }
+  ],
+  "steps": [
+    { "from": "shop", "to": "app", "label": "order.completed", "code": true },
+    {
+      "from": "app",
+      "to": "pb",
+      "label": "POST /passes",
+      "code": true,
+      "note": "Idempotency-Key: order id"
+    },
+    {
+      "from": "pb",
+      "to": "app",
+      "label": "201 pass",
+      "code": true,
+      "reply": true,
+      "note": "pass.url is the install link"
+    },
+    { "from": "wallet", "to": "pb", "label": "Holder opens the link" },
+    { "from": "pb", "to": "wallet", "label": "Signed .pkpass", "reply": true },
+    {
+      "group": "Webhook retried",
+      "steps": [
+        { "from": "shop", "to": "app", "label": "order.completed, again", "code": true },
+        { "from": "app", "to": "pb", "label": "POST /passes, same key", "code": true },
+        {
+          "from": "pb",
+          "to": "app",
+          "label": "201, Idempotent-Replayed",
+          "code": true,
+          "reply": true
+        }
+      ]
+    }
+  ]
+}

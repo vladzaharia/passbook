@@ -1,0 +1,78 @@
+/* The buddy's guide callout: its face at the start, a note with a tail toward it, then the words.
+   Each tone owns one colour: its border, a wash of it behind the text and the label. */
+.bnote {
+  --bn: var(--pk-accent);
+  --bn-fg: var(--pk-accent-fg);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-block: 20px;
+}
+.bnote[data-tone="gotcha"] {
+  --bn: var(--pk-warning-border);
+  --bn-fg: var(--pk-warning);
+}
+.bnote[data-tone="done"] {
+  --bn: var(--pk-success-border);
+  --bn-fg: var(--pk-success);
+}
+.bnote-face {
+  width: 44px;
+  height: auto;
+  margin-top: 4px;
+  /* The eyes look along the line into the note. */
+  --bn-look: 0.9px;
+}
+.bnote-face [data-look] {
+  translate: var(--bn-look) 0;
+}
+.bnote-body {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in oklab, var(--bn) 55%, var(--pk-border-subtle));
+  border-radius: var(--pk-radius-lg);
+  background: color-mix(in oklab, var(--bn) 9%, var(--pk-surface-raised));
+  color: var(--pk-text-default);
+  font-size: var(--pk-font-size-sm);
+  line-height: var(--pk-line-height-sm);
+  overflow-wrap: anywhere;
+}
+/* The tail: a rotated square on the face's side, joined to the note by the same border and fill. */
+.bnote-body::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  inset-inline-start: -6px;
+  width: 10px;
+  height: 10px;
+  border: inherit;
+  border-width: 0 0 1px 1px;
+  background: inherit;
+  rotate: 45deg;
+}
+.bnote-label {
+  color: var(--bn-fg);
+  font-weight: var(--pk-font-weight-semibold);
+}
+.bnote-body code {
+  font-size: 0.92em;
+}
+.bnote-body > :last-child {
+  margin-bottom: 0;
+}
+@media (max-width: 480px) {
+  .bnote {
+    gap: 12px;
+  }
+  .bnote-face {
+    width: 36px;
+  }
+}
+[dir="rtl"] .bnote-face {
+  --bn-look: -0.9px;
+}
+[dir="rtl"] .bnote-body::before {
+  rotate: -135deg;
+}

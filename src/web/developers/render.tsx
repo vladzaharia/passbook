@@ -4,7 +4,6 @@
  * pieces, rendered once at build); nothing here ships to the browser.
  */
 import type { ReactElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { KEYS_COPY } from '../../shared/copy/developers-keys.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
@@ -41,7 +40,7 @@ import { ChangelogView } from './pages/changelog.tsx';
 import { ConsoleView } from './pages/console.tsx';
 import { HomeView } from './pages/home.tsx';
 import { KeysView } from './pages/keys.tsx';
-import { type NavKey, Shell, SideNav } from './pages/layout.tsx';
+import type { NavKey } from './pages/layout.tsx';
 import { LogsView } from './pages/logs.tsx';
 import {
   ErrorEntryView,
@@ -56,10 +55,17 @@ import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
 import type { BlueprintPreviews } from './playground/model.ts';
 import { PlaygroundPage } from './playground/page.tsx';
-import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
+import { QuickstartView } from './quickstart/page.tsx';
 import { type Doc, document, fileOf, opIndex } from './render-doc.ts';
-
-const html = (node: ReactElement) => renderToStaticMarkup(node);
+import {
+  crumbs,
+  type FrameOpts,
+  framer,
+  guidePager,
+  navGuides,
+  opPager,
+  toc,
+} from './render-frame.tsx';
 
 export function renderSite(
   site: Site,
@@ -74,18 +80,15 @@ export function renderSite(
     out.push({ file: fileOf(doc.url, dir), body: document(doc, origin, assets), url: doc.url });
     if (doc.twin !== undefined) out.push({ file: twin(doc.url), body: doc.twin });
   };
-  const side = (
-    current?: Site['pages'][number],
-    ops = false,
-    op?: Site['pages'][number]['ops'][number],
-  ) => <SideNav site={site} current={current} ops={ops} op={op} />;
+  const guides = guideInputs.docs.map(({ doc }) => resolveGuide(doc, site, guideInputs.examples));
+  const fr = framer(site, navGuides(guides));
   const page = (
     url: string,
     title: string,
     description: string,
     active: NavKey | undefined,
     child: ReactElement,
-    o: { side?: ReactElement; dir?: boolean; head?: string; md?: string } = {},
+    o: FrameOpts & { dir?: boolean; head?: string; md?: string } = {},
   ) =>
     add(
       {
@@ -94,11 +97,7 @@ export function renderSite(
         description,
         head: o.head,
         twin: o.md,
-        body: html(
-          <Shell site={site} active={active} side={o.side}>
-            {child}
-          </Shell>,
-        ),
+        body: fr.shell(url, active, child, o),
       },
       o.dir,
     );
@@ -112,11 +111,7 @@ export function renderSite(
         url: PATHS.home,
         title: `PassBook ${DEV_COPY.brand}`,
         description: DEV_COPY.home.lede,
-        body: html(
-          <Shell site={site} bare>
-            <HomeView site={site} />
-          </Shell>,
-        ),
+        body: fr.shell(PATHS.home, undefined, <HomeView site={site} />, { bare: true }),
         md: true,
       },
       origin,
@@ -131,7 +126,7 @@ export function renderSite(
     DEV_COPY.reference.lede,
     'reference',
     <ReferenceIndex site={site} />,
-    { side: side(), dir: true, md: referenceIndexMarkdown(site) },
+    { dir: true, md: referenceIndexMarkdown(site) },
   );
   for (const p of site.pages) {
     const url = pagePath(p);
@@ -146,11 +141,10 @@ export function renderSite(
             .slice(0, 3)
             .map((o) => o.title)
             .join(', ')}.`,
-          body: html(
-            <Shell site={site} active="reference" side={side(p, true)}>
-              <ResourceView page={p} />
-            </Shell>,
-          ),
+          body: fr.shell(url, 'reference', <ResourceView page={p} />, {
+            resource: p,
+            crumbs: crumbs.resource(p),
+          }),
           md: true,
         },
         origin,
@@ -169,11 +163,12 @@ export function renderSite(
             title: `${op.title} · ${p.label} · API reference · ${base}`,
             description:
               `${op.method.toUpperCase()} ${op.path}. ${op.description.split('\n')[0] ?? ''}`.trim(),
-            body: html(
-              <Shell site={site} active="reference" side={side(p, true, op)}>
-                <OperationView page={p} op={op} site={site} />
-              </Shell>,
-            ),
+            body: fr.shell(opUrl, 'reference', <OperationView page={p} op={op} site={site} />, {
+              resource: p,
+              crumbs: crumbs.op(p, op),
+              pager: opPager(p, op),
+              toc: toc.op(op),
+            }),
             md: true,
           },
           origin,
@@ -189,7 +184,7 @@ export function renderSite(
     'Apple, scanner and public routes.',
     'reference',
     <ProtocolsView site={site} />,
-    { side: side(), md: protocolsMarkdown(site) },
+    { md: protocolsMarkdown(site) },
   );
   page(
     PATHS.errors,
@@ -197,7 +192,7 @@ export function renderSite(
     'Error codes and their fixes.',
     'reference',
     <ErrorsIndex site={site} />,
-    { side: side(), dir: true, md: errorsIndexMarkdown(site) },
+    { dir: true, crumbs: crumbs.errors(), toc: toc.errors(site), md: errorsIndexMarkdown(site) },
   );
   for (const e of site.errors)
     page(
@@ -206,7 +201,7 @@ export function renderSite(
       e.fix || e.title,
       'reference',
       <ErrorEntryView entry={e} />,
-      { side: side(), md: errorMarkdown(e) },
+      { crumbs: crumbs.errors(e.code), md: errorMarkdown(e) },
     );
   // Wide, no docs grid: the tester needs two columns.
   add({
@@ -214,11 +209,10 @@ export function renderSite(
     title: `Webhooks · ${base}`,
     description: 'Capture signed webhooks in your sandbox, verify them and replay them.',
     twin: webhooksMarkdown(site),
-    body: html(
-      <Shell site={site} active="webhooks" bare>
-        <WebhooksView site={site} />
-      </Shell>,
-    ),
+    body: fr.shell(PATHS.webhooks, 'workbench', <WebhooksView site={site} />, {
+      bare: true,
+      tools: true,
+    }),
   });
   page(
     PATHS.changelog,
@@ -227,6 +221,7 @@ export function renderSite(
     undefined,
     <ChangelogView site={site} />,
     {
+      toc: toc.changelog(site),
       head: `<link rel="alternate" type="application/atom+xml" title="PassBook API changelog" href="${PATHS.changelogFeed}">`,
       md: changelogMarkdown(site),
     },
@@ -237,9 +232,11 @@ export function renderSite(
     title: `${DEV_COPY.slots.playground.title} · ${base}`,
     description: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
     twin: appTwins.playground(),
-    body: html(<PlaygroundPage site={site} previews={previews} />),
+    body: fr.provide(PATHS.playground, <PlaygroundPage site={site} previews={previews} />),
   });
-  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, undefined, <ConsoleView />, {
+  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'workbench', <ConsoleView />, {
+    app: true,
+    tools: true,
     md: appTwins.console(),
   });
   // What the Run island reads: per page the operations it can run, and one index for the console.
@@ -260,22 +257,20 @@ export function renderSite(
     title: `${KEYS_COPY.title} · ${base}`,
     description: 'Make, roll and revoke the keys of your sandbox.',
     twin: appTwins.keys(),
-    body: html(
-      <Shell site={site} bare>
-        <KeysView />
-      </Shell>,
-    ),
+    body: fr.shell(PATHS.keys, 'workbench', <KeysView />, { bare: true, tools: true }),
   });
-  page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'logs', <LogsView />, { md: appTwins.logs() });
+  page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'workbench', <LogsView />, {
+    app: true,
+    tools: true,
+    md: appTwins.logs(),
+  });
   page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />, {
     md: appTwins.status(),
   });
   out.push({ file: PATHS.logsOps, body: JSON.stringify(opIndex(site)) });
   page(PATHS.quickstart, QS_COPY.title, QS_COPY.lede, 'quickstart', <QuickstartView />, {
-    side: <QuickstartSide />,
     md: quickstartMarkdown(),
   });
-  const guides = guideInputs.docs.map(({ doc }) => resolveGuide(doc, site, guideInputs.examples));
   page(
     PATHS.guides,
     DEV_COPY.slots.guides.title,
@@ -290,10 +285,15 @@ export function renderSite(
       url: g.url,
       title: `${g.meta.title} · Guides · ${base}`,
       description: g.meta.line,
-      body: html(
-        <Shell site={site} active="guides">
-          <GuideView guide={g} examples={guideInputs.examples} markdown={markdown} />
-        </Shell>,
+      body: fr.shell(
+        g.url,
+        'guides',
+        <GuideView guide={g} examples={guideInputs.examples} markdown={markdown} />,
+        {
+          crumbs: crumbs.guide(g.meta.title),
+          pager: guidePager(guides, g.meta.id),
+          toc: toc.guide(g),
+        },
       ),
       md: true,
     });
@@ -309,11 +309,7 @@ export function renderSite(
         url: PATHS.home,
         title: `${DEV_COPY.notFound.title} · ${base}`,
         description: DEV_COPY.notFound.line,
-        body: html(
-          <Shell site={site}>
-            <NotFoundView />
-          </Shell>,
-        ),
+        body: fr.shell('', undefined, <NotFoundView />),
       },
       origin,
       assets,

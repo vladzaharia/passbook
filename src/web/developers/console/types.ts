@@ -20,6 +20,7 @@ export interface RunSchema {
   oneOf?: RunSchema[];
   anyOf?: RunSchema[];
   nullable?: boolean;
+  additionalProperties?: boolean | RunSchema;
   description?: string;
 }
 

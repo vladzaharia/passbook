@@ -21,6 +21,9 @@ export type BuddyScene =
   | 'stow'
   | 'count'
   | 'scan'
+  | 'listen'
+  | 'catch'
+  | 'explain'
   | 'beat';
 
 export interface BuddyProps {
@@ -68,6 +71,16 @@ const TEAR = (
     d="M42.6 45.6c-1.3 1.9-2.4 3.4-2.4 4.7a2.4 2.4 0 0 0 4.8 0c0-1.3-1.1-2.8-2.4-4.7Z"
   />
 );
+
+/** The catch scene's envelope, hidden at rest: it falls into the pocket and is gone. */
+const ENVELOPE = (
+  <g data-env="" opacity="0">
+    <rect className="o m" x="37.5" y="18.5" width="21" height="13" rx="2.5" />
+    <path className="m" d="M38.8 20.4 48 26.6l9.2-6.2" />
+  </g>
+);
+
+const FRONT: Partial<Record<BuddyScene, ReactNode>> = { search: ASK, tear: TEAR, catch: ENVELOPE };
 
 /**
  * The buddy's markup, SSR-safe (no hooks): buddy.tsx adds the scene's replay in the app; SSR pages
@@ -119,7 +132,7 @@ export function BuddyArt({
         onCard={onCard}
         aside={aside}
         mood={mood}
-        front={front ?? (scene === 'search' ? ASK : scene === 'tear' ? TEAR : undefined)}
+        front={front ?? FRONT[scene]}
       />
       {prop ? <span className="wl-buddy-prop">{prop}</span> : null}
     </span>

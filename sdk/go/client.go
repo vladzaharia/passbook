@@ -1,9 +1,12 @@
 // Package passbook is the Go client for the PassBook API.
 //
 //	pb, err := passbook.NewClient(os.Getenv("PASSBOOK_KEY"))
-//	pass, err := pb.Passes.Create(ctx, &passbook.PassesCreateBody{TemplateID: id, Input: map[string]any{"name": "Ada"}})
+//	pass, err := pb.Passes.Create(ctx, &passbook.PassesCreateBody{
+//		TemplateID: "0193a1b2-7c00-7000-8000-0000000000b1",
+//		Input:      map[string]any{"eventName": "Harbor Night", "attendee": "Ada Example", "ticketId": "TICKET-0001"},
+//	})
 //
-// A pb_test_ key works in test mode: sandboxes never issue real passes.
+// A pbp_test_ key works in test mode: sandboxes never issue real passes.
 package passbook
 
 import (
@@ -16,7 +19,7 @@ import (
 // Client is the API client. Every resource is a field, named as in the API reference.
 type Client struct {
 	Resources
-	// Mode is "live" or "test" from the key's prefix, and "" for a key that does not follow pb_<mode>_.
+	// Mode is "live" or "test" from the key's prefix, and "" for a key that does not follow pb[p|o]_<mode>_.
 	Mode string
 }
 
@@ -38,10 +41,13 @@ func WithTimeout(d time.Duration) Option { return func(c *core) { c.timeout = d 
 // WithRetryDelay sets the first backoff step. Default 500 ms.
 func WithRetryDelay(d time.Duration) Option { return func(c *core) { c.retryDelay = d } }
 
+// WithAPIVersion sets PassBook-Version. Default: the newest version this SDK was generated against.
+func WithAPIVersion(v string) Option { return func(c *core) { c.apiVersion = v } }
+
 // NewClient returns a client for the key.
 func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	if strings.TrimSpace(apiKey) == "" {
-		return nil, errors.New("passbook: apiKey is required: pass a pb_live_ or pb_test_ key")
+		return nil, errors.New("passbook: apiKey is required: pass a pbp_live_ or pbp_test_ key")
 	}
 	c := &core{
 		apiKey:     apiKey,
@@ -50,6 +56,7 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 		maxRetries: 2,
 		timeout:    60 * time.Second,
 		retryDelay: 500 * time.Millisecond,
+		apiVersion: apiVersion,
 		sleep:      sleepContext,
 	}
 	for _, o := range opts {
@@ -57,8 +64,10 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	}
 	mode := ""
 	for _, m := range []string{"live", "test"} {
-		if strings.HasPrefix(apiKey, "pb_"+m+"_") {
-			mode = m
+		for _, p := range []string{"pb", "pbp", "pbo"} {
+			if strings.HasPrefix(apiKey, p+"_"+m+"_") {
+				mode = m
+			}
 		}
 	}
 	return &Client{Resources: newResources(c), Mode: mode}, nil
