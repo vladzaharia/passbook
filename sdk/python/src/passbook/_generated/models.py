@@ -9825,7 +9825,7 @@ class ScanSetupAnswer1ZonesItem(_Model):
 class ScanSetupAnswer2(_Model):
     mode: _Literal["live", "test"] | str
     timeZone: str
-    preset: _Literal["front_desk", "event_night", "venue", "club", "conference", "gates", "counter", "pickup", "timed", None] | str
+    preset: _Literal["front_desk", "event_night", "venue", "club", "conference", "gates", "counter", "pickup", "capacity", None] | str
     zones: _List[ScanSetupAnswer2ZonesItem]
     events: _List[ScanSetupAnswer2EventsItem]
     staff: _List[ScanSetupAnswer2StaffItem]
@@ -11111,7 +11111,7 @@ class ScanningSessionsOverrideHoursParams3(_Model):
 
 class ScanningSessionsSetupParams(_Model):
     orgId: str
-    preset: _Literal["front_desk", "event_night", "venue", "club", "conference", "gates", "counter", "pickup", "timed"] | str | None = None
+    preset: _Literal["front_desk", "event_night", "venue", "club", "conference", "gates", "counter", "pickup", "capacity"] | str | None = None
     timeZone: str | None = None
     places: _List[ScanningSessionsSetupParamsPlacesItem1 | ScanningSessionsSetupParamsPlacesItem2] | None = None
     events: _List[ScanningSessionsSetupParamsEventsItem1 | ScanningSessionsSetupParamsEventsItem2 | ScanningSessionsSetupParamsEventsItem3] | None = None

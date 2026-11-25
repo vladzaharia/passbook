@@ -19613,7 +19613,7 @@
                   "gates",
                   "counter",
                   "pickup",
-                  "timed",
+                  "capacity",
                   null
                 ]
               },
@@ -62243,7 +62243,7 @@
               "gates",
               "counter",
               "pickup",
-              "timed"
+              "capacity"
             ]
           },
           "timeZone": {

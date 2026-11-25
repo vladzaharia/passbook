@@ -8,5 +8,5 @@ export const SCAN_SETUP_PRESET_IDS = [
   'gates',
   'counter',
   'pickup',
-  'timed',
+  'capacity',
 ] as const;

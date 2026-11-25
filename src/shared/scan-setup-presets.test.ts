@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ScanSetupIntentSchema } from './contracts/scan-setup-intent.ts';
 import { applyPreset } from './scan-setup-plan-presets.ts';
-import { ORG, planned } from './scan-setup-plan-test-fixtures.ts';
+import { codes, ORG, planned } from './scan-setup-plan-test-fixtures.ts';
 import { SCAN_SETUP_PRESET_IDS } from './scan-setup-preset-ids.ts';
 
 const filled = (preset: string, door: Record<string, unknown> = {}) => {
@@ -26,7 +26,7 @@ describe('applyPreset: the new presets fill exactly', () => {
     expect(filled('club')?.hours).toBeUndefined();
   });
 
-  it('conference: staff PIN, a badge tablet and a room phone, once a day, 08:00-18:00', () => {
+  it('conference: staff PIN, a badge tablet and a second badge lane, once a day, 08:00-18:00', () => {
     expect(filled('conference')).toMatchObject({
       scanners: { by: 'staff' },
       devices: [{ layout: 'operator' }, { layout: 'phone' }],
@@ -45,7 +45,7 @@ describe('applyPreset: the new presets fill exactly', () => {
 
   it('counter: a tablet and a customer screen, unlimited, the operator chooses', () => {
     expect(filled('counter')).toMatchObject({
-      scanners: { by: 'anyone', as: 'desk' },
+      scanners: { by: 'staff' },
       devices: [{ layout: 'operator' }, { layout: 'customer' }],
       more: {
         checkIn: { mode: 'unlimited' },
@@ -65,10 +65,13 @@ describe('applyPreset: the new presets fill exactly', () => {
     });
   });
 
-  it('timed: two phones, 09:00-17:00, a hard limit', () => {
-    expect(filled('timed')).toMatchObject({
+  it('capacity: an in phone and an out phone, 09:00-17:00, a hard limit', () => {
+    expect(filled('capacity')).toMatchObject({
       scanners: { by: 'anyone', as: 'door' },
-      devices: [{ layout: 'phone' }, { layout: 'phone' }],
+      devices: [
+        { layout: 'phone', direction: 'in' },
+        { layout: 'phone', direction: 'out' },
+      ],
       hours: { every: ['09:00-17:00'] },
       more: { checkIn: { mode: 'in_out' }, hardLimit: true },
     });
@@ -96,7 +99,8 @@ describe('applyPreset: the new presets fill exactly', () => {
     for (const preset of SCAN_SETUP_PRESET_IDS) {
       const plan = planned({
         preset,
-        doors: [{ name: 'Door', admits: { templateIds: ['tpl_day'] } }],
+        places: [{ ref: 'p1', name: 'Inside', max: 40 }],
+        doors: [{ name: 'Door', place: 'p1', admits: { templateIds: ['tpl_day'] } }],
       });
       expect(plan.sessions).toHaveLength(1);
     }
@@ -114,19 +118,16 @@ describe('planned sessions of the new presets', () => {
     });
     expect(s?.devices.map((d) => d.overrides)).toEqual([{}, {}, { reader: 'barcode' }]);
   });
-  it('counter: operator and customer screen, desk role without sign-in', () => {
+  it('counter: operator and customer screen, staff sign in', () => {
     const [s] = planned({ preset: 'counter', doors: [door] }).sessions;
     expect(s?.devices.map((d) => d.surface)).toEqual(['operator', 'customer']);
-    expect(s?.settings).toMatchObject({
-      staffSignIn: false,
-      roleWithoutSignIn: 'desk',
-      flow: 'choose',
-    });
+    expect(s?.settings).toMatchObject({ staffSignIn: true, flow: 'choose' });
   });
-  it('timed: hours on the session, a counted place with exits keeps in and out', () => {
+  const place = { ref: 'galleries', name: 'Galleries', count: true };
+  it('capacity: hours on the session, in and out phones, a hard limit', () => {
     const plan = planned({
-      preset: 'timed',
-      places: [{ ref: 'galleries', name: 'Galleries', count: true }],
+      preset: 'capacity',
+      places: [{ ...place, max: 40 }],
       doors: [{ ...door, place: 'galleries' }],
     });
     const [s] = plan.sessions;
@@ -136,5 +137,22 @@ describe('planned sessions of the new presets', () => {
       direction: 'both',
       checkIn: { mode: 'in_out' },
     });
+    expect(s?.devices.map((d) => d.overrides)).toEqual([{ direction: 'in' }, { direction: 'out' }]);
+  });
+  it('capacity: a hard limit with no max is refused', () => {
+    const none = codes({
+      preset: 'capacity',
+      places: [place],
+      doors: [{ ...door, place: 'galleries' }],
+    });
+    expect(none).toContain('SETUP_HARD_LIMIT_NO_CAPACITY');
+    expect(codes({ preset: 'capacity', doors: [door] })).toContain('SETUP_HARD_LIMIT_NO_CAPACITY');
+    expect(
+      codes({
+        preset: 'capacity',
+        places: [{ ...place, max: 40 }],
+        doors: [{ ...door, place: 'galleries' }],
+      }),
+    ).toEqual([]);
   });
 });

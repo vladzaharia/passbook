@@ -12,7 +12,7 @@ const PRESETS = [
   ['club', 0],
   ['conference', 1],
   ['gates', 0],
-  ['timed', 0],
+  ['capacity', 0],
 ] as const;
 
 for (const [preset, at] of PRESETS) {
@@ -32,6 +32,8 @@ for (const [preset, at] of PRESETS) {
       await page.goto(`/admin/o/${orgId}/scanning/setup?preset=${preset}`);
       const door = uid('Door');
       await page.getByRole('textbox', { name: /Door name/ }).fill(door);
+      if (preset === 'capacity')
+        await page.getByRole('spinbutton', { name: 'Max inside' }).fill('40');
       await page.getByRole('button', { name: 'Next', exact: true }).click();
       // Who gets in: any pass type keeps the run short.
       await page.getByRole('switch', { name: 'Any pass type' }).click();
@@ -104,3 +106,37 @@ for (const [preset, at] of PRESETS) {
     }
   });
 }
+
+test('club keeps its own defaults: anyone as Door, no forced PIN', async ({ browser }) => {
+  const orgId = readSeed().org.id;
+  const admin = await browser.newContext({
+    storageState: stateFile('admin'),
+    reducedMotion: 'reduce',
+  });
+  try {
+    const page = await admin.newPage();
+    await page.goto(`/admin/o/${orgId}/scanning/setup?preset=club`);
+    await page.getByRole('textbox', { name: /Door name/ }).fill(uid('Club'));
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.getByRole('switch', { name: 'Any pass type' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.getByRole('button', { name: 'Review', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Checks' })).toBeVisible();
+    await expect(page.getByText('Anyone, as Door')).toBeVisible();
+    await expect(page.getByTestId('settings-line')).toHaveText('Check-in: in and out');
+    const applied = page.waitForResponse(
+      (r) =>
+        r.url().includes('/scanning-sessions/setup') &&
+        !r.url().includes('dryRun') &&
+        r.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Set up', exact: true }).click();
+    const made = await (await applied).json();
+    expect(made.staff).toEqual([]);
+    expect(made.sessions[0].devices).toHaveLength(2);
+  } finally {
+    await admin.close();
+  }
+});

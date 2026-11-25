@@ -61,26 +61,27 @@ function admitsOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) 
 /** The door's zone, and whether people scan out of it. */
 function placeOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) {
   const id = door.place;
-  if (id === null || id === undefined) return { zone: null, exits: false };
+  if (id === null || id === undefined) return { zone: null, exits: false, max: null };
   const { intent, ctx, refs, issues } = env;
   const target = refs.get(id);
   if (target?.kind === 'place') {
     const p = intent.places.find((x) => 'ref' in x && x.ref === id);
     const exits = p !== undefined && 'ref' in p && isTracked(p) && p.tapOut !== false;
-    return { zone: { ref: id }, exits };
+    const max = p !== undefined && 'ref' in p ? (p.max ?? null) : null;
+    return { zone: { ref: id }, exits, max };
   }
   if (target) {
     issues.push({ code: 'SETUP_REF_KIND', path, params: { ref: id, kind: 'place' } });
-    return { zone: null, exits: false };
+    return { zone: null, exits: false, max: null };
   }
   const z = ctx.zones.find((x) => x.id === id);
-  if (z && !z.archived) return { zone: { id }, exits: z.occupancy !== 'off' };
+  if (z && !z.archived) return { zone: { id }, exits: z.occupancy !== 'off', max: z.capacity };
   issues.push({
     code: z ? 'ZONE_ARCHIVED' : isRef(id) ? 'SETUP_REF_UNKNOWN' : 'ZONE_NOT_FOUND',
     path,
     params: { ref: id },
   });
-  return { zone: null, exits: false };
+  return { zone: null, exits: false, max: null };
 }
 
 /** One door as a session: admits, zone, hours, sign-in, derived direction and its devices. */
@@ -88,13 +89,19 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
   const ref = `door-${i + 1}`;
   const path = ['doors', i];
   const accepts = admitsOf(door, [...path, 'admits'], env);
-  const { zone, exits } = placeOf(door, [...path, 'place'], env);
+  const { zone, exits, max } = placeOf(door, [...path, 'place'], env);
   const reentry = (accepts?.events ?? []).some((l) => eventOf(env, l)?.reentry === true);
   const hours = sessionHoursOf(door.hours);
   if (hours === 'empty')
     env.issues.push({
       code: 'SETUP_HOURS_EMPTY',
       path: [...path, 'hours'],
+      params: { door: door.name },
+    });
+  if (door.more?.hardLimit === true && max === null)
+    env.issues.push({
+      code: 'SETUP_HARD_LIMIT_NO_CAPACITY',
+      path: [...path, 'more', 'hardLimit'],
       params: { door: door.name },
     });
   const scanners = door.scanners ?? { by: 'anyone', as: 'door' };

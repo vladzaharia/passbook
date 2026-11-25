@@ -7,7 +7,7 @@ import {
   NumberField,
   SwitchRow,
 } from '@/web/ui/index.ts';
-import { NAME_SUGGESTIONS, whereOf } from '../draft.ts';
+import { nameSuggestions, whereOf } from '../draft.ts';
 import { AreaTree } from './area-tree.tsx';
 import type { StepProps } from './step-props.ts';
 
@@ -28,7 +28,7 @@ function DoorName({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
       </FormField>
       <fieldset className="flex flex-wrap gap-2">
         <legend className="sr-only">Suggested names</legend>
-        {NAME_SUGGESTIONS[draft.preset].map((n) => (
+        {nameSuggestions(draft.preset).map((n) => (
           <Button
             key={n}
             size="sm"

@@ -26,7 +26,7 @@ import {
   initialDraft,
   isPreset,
   LAYOUT_LABEL,
-  PRESET_LABEL,
+  presetLabel,
   STEPS,
   type StepId,
   skipsWhen,
@@ -174,7 +174,7 @@ function Body({
       <PageHeader
         title="Set up scanning"
         breadcrumbs={CRUMBS}
-        meta={<Badge tone="accent">{PRESET_LABEL[draft.preset]}</Badge>}
+        meta={<Badge tone="accent">{presetLabel(draft.preset)}</Badge>}
       />
       <Wizard
         steps={STEPS}

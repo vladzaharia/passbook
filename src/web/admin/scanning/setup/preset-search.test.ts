@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ZodType } from 'zod';
 import { SCAN_SETUP_PRESET_IDS } from '@/shared/scan-setup-preset-ids.ts';
 import { Route } from '../../../routes/admin/o/$orgId/scanning/setup.tsx';
-import { isPreset, PRESET_LABEL, PRESETS } from './draft.ts';
+import { isPreset, PRESETS, presetLabel } from './draft.ts';
 
 const schema = Route.options.validateSearch as unknown as ZodType<{ preset?: string }>;
 const parse = (search: unknown) => schema.parse(search);
@@ -17,7 +17,7 @@ describe('setup route search', () => {
     expect(isPreset('spa')).toBe(false);
   });
   it('every preset has a tile label', () => {
-    expect(PRESETS.map((p) => PRESET_LABEL[p])).toEqual([
+    expect(PRESETS.map((p) => presetLabel(p))).toEqual([
       'Front desk',
       'Event night',
       'Several areas',
@@ -26,7 +26,7 @@ describe('setup route search', () => {
       'Ticket gates',
       'Counter',
       'Pickup',
-      'Timed entry',
+      'Capacity',
     ]);
   });
 });

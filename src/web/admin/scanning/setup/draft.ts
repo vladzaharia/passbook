@@ -73,12 +73,11 @@ export const PRESETS: readonly ScanSetupPreset[] = SCAN_SETUP_PRESET_IDS;
 export const isPreset = (v: unknown): v is ScanSetupPreset =>
   typeof v === 'string' && (PRESETS as readonly string[]).includes(v);
 
-export const PRESET_LABEL = Object.fromEntries(
-  PRESETS.map((p) => [p, PRESET_SPECS[p].label]),
-) as Record<ScanSetupPreset, string>;
-export const NAME_SUGGESTIONS = Object.fromEntries(
-  PRESETS.map((p) => [p, PRESET_SPECS[p].names]),
-) as unknown as Record<ScanSetupPreset, readonly [string, ...string[]]>;
+export const presetLabel = (p: ScanSetupPreset): string => PRESET_SPECS[p].label;
+export const nameSuggestions = (p: ScanSetupPreset): readonly string[] => PRESET_SPECS[p].names;
+/** A hard limit caps nothing without a max. */
+export const needsMax = (p: ScanSetupPreset): boolean => PRESET_SPECS[p].more.hardLimit === true;
+const whole = (v: string): boolean => Number.isInteger(Number(v)) && Number(v) >= 1;
 /** What Where asks for: nothing, one counted area, or an area tree. */
 export const whereOf = (p: ScanSetupPreset) => PRESET_SPECS[p].where;
 
@@ -204,6 +203,7 @@ export function stepProblem(d: Draft, step: StepId): string | undefined {
     case 'where':
       if (!d.name.trim()) return 'Name the door.';
       if (whereOf(d.preset) === 'count' && d.count && !d.area.trim()) return 'Name the area.';
+      if (needsMax(d.preset) && !(d.count && whole(d.max))) return 'Set the max inside.';
       if (whereOf(d.preset) === 'areas' && d.areas.some((a) => !a.name.trim()))
         return 'Name every area.';
       return undefined;

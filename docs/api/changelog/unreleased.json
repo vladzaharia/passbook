@@ -2789,12 +2789,20 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"capacity\" added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.preset: enum value \"capacity\" added",
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"club\" added",
     "class": "notable",
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.preset: enum value \"club\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"conference\" added",
@@ -2802,7 +2810,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.preset: enum value \"conference\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"counter\" added",
@@ -2810,7 +2818,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.preset: enum value \"counter\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"gates\" added",
@@ -2818,7 +2826,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.preset: enum value \"gates\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"pickup\" added",
@@ -2826,7 +2834,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.preset: enum value \"pickup\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"timed\" added",
@@ -2834,7 +2842,15 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.preset: enum value \"timed\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"capacity\" added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.preset: enum value \"capacity\" added",
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"club\" added",
@@ -2842,7 +2858,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "body.preset: enum value \"club\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"conference\" added",
@@ -2850,7 +2866,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "body.preset: enum value \"conference\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"counter\" added",
@@ -2858,7 +2874,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "body.preset: enum value \"counter\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"gates\" added",
@@ -2866,7 +2882,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "body.preset: enum value \"gates\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"pickup\" added",
@@ -2874,7 +2890,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "body.preset: enum value \"pickup\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"timed\" added",
@@ -2882,7 +2898,7 @@
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "body.preset: enum value \"timed\" added",
-    "note": "Setup presets club, conference, gates, counter, pickup and timed join the first three."
+    "note": "Setup presets club, conference, gates, counter, pickup and capacity join the first three."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup new operation",

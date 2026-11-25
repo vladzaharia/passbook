@@ -5,7 +5,7 @@ import {
   Coffee,
   DoorOpen,
   Fence,
-  Hourglass,
+  Gauge,
   Layers,
   PackageCheck,
   Presentation,
@@ -15,7 +15,7 @@ import type { CSSProperties } from 'react';
 import type { ScanSetupPreset } from '@/shared/contracts/scan-setup-intent.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { CARD_SURFACE } from '@/web/ui/index.ts';
-import { PRESET_LABEL, PRESETS } from './draft.ts';
+import { PRESETS, presetLabel } from './draft.ts';
 import './setup.css';
 
 const LOOK = {
@@ -23,11 +23,11 @@ const LOOK = {
   event_night: { icon: Ticket, tone: 'bg-info-subtle text-info' },
   venue: { icon: Layers, tone: 'bg-warning-subtle text-warning' },
   club: { icon: ArrowLeftRight, tone: 'bg-success-subtle text-success' },
-  conference: { icon: Presentation, tone: 'bg-danger-subtle text-danger' },
+  conference: { icon: Presentation, tone: 'bg-accent-subtle text-accent-fg' },
   gates: { icon: Fence, tone: 'bg-info-subtle text-info' },
   counter: { icon: Coffee, tone: 'bg-warning-subtle text-warning' },
-  pickup: { icon: PackageCheck, tone: 'bg-accent-subtle text-accent-fg' },
-  timed: { icon: Hourglass, tone: 'bg-success-subtle text-success' },
+  pickup: { icon: PackageCheck, tone: 'bg-info-subtle text-info' },
+  capacity: { icon: Gauge, tone: 'bg-success-subtle text-success' },
 } as const satisfies Record<ScanSetupPreset, unknown>;
 
 /** The starting points: an icon and a name each. A tile opens the wizard with its answers. */
@@ -58,7 +58,7 @@ export function PresetTiles({ orgId }: { orgId: string }) {
                 <ChevronRight aria-hidden className="order-last size-4 text-fg-muted" />
               </span>
               <span className="min-w-0 flex-1 text-sm font-medium text-fg-strong sm:flex-none">
-                {PRESET_LABEL[p]}
+                {presetLabel(p)}
               </span>
             </Link>
           </li>

@@ -8,7 +8,12 @@ import type {
 type More = NonNullable<SetupDoor['more']>;
 type Scanners = NonNullable<SetupDoor['scanners']>;
 
-/** What a preset answers: the labels, the shape of Where, and what it fills for a door that leaves it out. */
+/**
+ * One preset, two readers. The wizard starts its answers from `names`, `where`, `count`, `scanners`,
+ * `devices` and `hours`; the door it sends then carries them all. `applyPreset` fills the same fields
+ * (and `more`) only for a door that leaves them out, which is how the API takes a preset. A preset
+ * with `fills: false` adds nothing there (event_night decides itself; venue adds nothing).
+ */
 export interface PresetSpec {
   label: string;
   /** The wizard's name chips; the first is the start. */
@@ -26,7 +31,15 @@ export interface PresetSpec {
   fills: boolean;
 }
 
-export const PRESET_SPECS: Record<ScanSetupPreset, PresetSpec> = {
+function deepFreeze<T>(v: T): T {
+  if (typeof v === 'object' && v !== null && !Object.isFrozen(v)) {
+    Object.freeze(v);
+    for (const child of Object.values(v)) deepFreeze(child);
+  }
+  return v;
+}
+
+const SPECS: Record<ScanSetupPreset, PresetSpec> = {
   front_desk: {
     label: 'Front desk',
     names: ['Front desk', 'Main door', 'Reception'],
@@ -92,7 +105,7 @@ export const PRESET_SPECS: Record<ScanSetupPreset, PresetSpec> = {
     label: 'Counter',
     names: ['Counter', 'Till', 'Cafe'],
     where: 'none',
-    scanners: { by: 'anyone', as: 'desk' },
+    scanners: { by: 'staff' },
     devices: [{ layout: 'operator' }, { layout: 'customer' }],
     more: {
       checkIn: { mode: 'unlimited' },
@@ -112,26 +125,32 @@ export const PRESET_SPECS: Record<ScanSetupPreset, PresetSpec> = {
     more: { checkIn: { mode: 'single' }, lookup: true, deskActions: true },
     fills: true,
   },
-  timed: {
-    label: 'Timed entry',
+  capacity: {
+    label: 'Capacity',
     names: ['Entrance', 'Ticket check', 'Main door'],
     where: 'count',
     count: 'Galleries',
     scanners: { by: 'anyone', as: 'door' },
-    devices: [{ layout: 'phone' }, { layout: 'phone' }],
+    devices: [
+      { layout: 'phone', direction: 'in' },
+      { layout: 'phone', direction: 'out' },
+    ],
     more: { checkIn: { mode: 'in_out' }, hardLimit: true },
     hours: { every: ['09:00-17:00'] },
     fills: true,
   },
 };
 
+/** Read-only: a door must never share an array or object with a spec. */
+export const PRESET_SPECS: Readonly<Record<ScanSetupPreset, PresetSpec>> = deepFreeze(SPECS);
+
 /** Fills what the door leaves out; the door's own `more` wins setting by setting. */
 export function fillDoor(spec: PresetSpec, door: SetupDoor): SetupDoor {
   return {
     ...door,
-    scanners: door.scanners ?? spec.scanners,
-    devices: door.devices ?? spec.devices,
-    ...(door.hours === undefined && spec.hours ? { hours: spec.hours } : {}),
-    more: { ...spec.more, ...door.more },
+    scanners: door.scanners ?? structuredClone(spec.scanners),
+    devices: door.devices ?? structuredClone(spec.devices),
+    ...(door.hours === undefined && spec.hours ? { hours: structuredClone(spec.hours) } : {}),
+    more: { ...structuredClone(spec.more), ...door.more },
   };
 }
