@@ -47,7 +47,8 @@ export interface LiveRingRow {
   /** What a committed value scan says on a customer screen (Paid $12.00). It names the value, so it is dropped with the identity. */
   receipt?: {
     headline: string;
-    sub: string | null /** The sub is a money balance (the session's showDraft governs it). */;
+    sub: string | null;
+    /** The sub is a money balance (the session's showDraft governs it). */
     balance?: true;
   } | null;
   /** A refusal or hold a desk may let in (SA 20.9). */
