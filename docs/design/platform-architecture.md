@@ -245,7 +245,7 @@ Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 obj
 Connector type = trusted code plugin; connection = admin-configured instance per org (audit B §5.3 `ConnectorDefinition` interface, verbatim apart from naming). Core applies `connections.mapping` (template input ← upstream field via pointer + small transforms) and validates with the template's input schema, so connectors stay template-agnostic.
 
 Built-in connectors v1:
-- `http-json` — per-record GET with URL template (`{ref}` encoded, `..` rejected), optional list/delta endpoint with cursor, auth from encrypted secrets (bearer, basic, custom header), JSON pointer extraction, `holderEmail` pointer, `test()`.
+- `http-json` (REST API, v2) — per-record GET with URL template (`{ref}` encoded, `..` rejected), and an optional list: full or feed, six pagination styles (cursor, last-id, next link, Link header, page, offset), incremental sync by updated-since, 429 and rate-limit-header waits, bearer, basic, header and query-parameter auth from encrypted secrets, JSON pointer extraction, `holderEmail` pointer, `test()`. Egress is pinned to the base URL's origin: a next link on another host fails with `OFF_ORIGIN`. v1 configs and cursors migrate in place.
 - `webhook-push` — records arrive in the signed webhook body (no fetch).
 
 Webhooks are a **mode** of a connection (`poll | webhook | hybrid | manual`), not a separate connector combined with another: any connector may implement `verifyWebhook` (HMAC-SHA256 with timestamp, replay window, `webhook_events` dedupe); `http-json` supports it, so a hybrid connection receives refs by webhook and fetches them itself.

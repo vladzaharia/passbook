@@ -29,9 +29,31 @@ export function assertSafeRef(ref: string): string {
   return encodeURIComponent(ref);
 }
 
-function retryAfterMs(res: SafeResponse): number | undefined {
-  const seconds = Number(res.headers.get('retry-after'));
-  return Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, 3600) * 1000 : undefined;
+const MAX_WAIT_MS = 3_600_000;
+
+/** A reset header as a wait in ms: whole seconds ahead, or an epoch in seconds or ms. At most an hour. */
+function resetMs(raw: string | null, now: number): number | undefined {
+  if (raw === null || !/^\d+(\.\d+)?$/.test(raw.trim())) return undefined;
+  const n = Number(raw);
+  const wait = n >= 1e12 ? n - now : n >= 1e9 ? n * 1000 - now : n * 1000;
+  return wait > 0 ? Math.min(Math.ceil(wait), MAX_WAIT_MS) : undefined;
+}
+
+/** How long the API asks to wait: `Retry-After` (seconds or HTTP-date), else a rate-limit reset header. */
+export function waitFromHeaders(headers: Headers, now: number): number | undefined {
+  const retry = headers.get('retry-after')?.trim();
+  if (retry) {
+    if (/^\d+$/.test(retry)) return Math.min(Number(retry) * 1000, MAX_WAIT_MS) || undefined;
+    const at = Date.parse(retry);
+    if (Number.isFinite(at) && at > now) return Math.min(at - now, MAX_WAIT_MS);
+  }
+  return resetMs(headers.get('ratelimit-reset') ?? headers.get('x-ratelimit-reset'), now);
+}
+
+/** The requests left in this window, when the API says. */
+export function remainingFromHeaders(headers: Headers): number | undefined {
+  const raw = headers.get('ratelimit-remaining') ?? headers.get('x-ratelimit-remaining');
+  return raw !== null && /^\d+$/.test(raw.trim()) ? Number(raw) : undefined;
 }
 
 /** Maps transport failures and HTTP statuses to connector error codes. Bodies are never echoed. */
@@ -63,7 +85,7 @@ export async function request(
   if (status === 403)
     throw new ConnectorError('FORBIDDEN', { permanent: true, httpStatus: status });
   if (status === 429) {
-    const wait = retryAfterMs(res);
+    const wait = waitFromHeaders(res.headers, ctx.now());
     throw new ConnectorError('RATE_LIMITED', {
       httpStatus: status,
       ...(wait ? { retryAfterMs: wait } : {}),
