@@ -6,6 +6,7 @@ import {
   OrgListSchema,
   OrgSchema,
   OrgSummarySchema,
+  PersonalOrgLabelsSchema,
   PlatformOrgSummarySchema,
   type UpdateOrgSchema,
 } from '@/shared/contracts/orgs.ts';
@@ -65,7 +66,16 @@ export function useOrgWorkspace(id: string, enabled = true) {
 /** Org id to name for tables with an org column. Falls back to the id while loading. */
 export function useOrgNames(): (id: string | null) => string {
   const { data } = useOrgList();
-  const names = new Map((data?.items ?? []).map((o) => [o.id, o.name]));
+  const personal = useQuery({
+    queryKey: [...orgKeys.all, 'personal-labels'],
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/platform/personal-org-labels', PersonalOrgLabelsSchema, { signal }),
+    staleTime: 5 * 60_000,
+  });
+  const names = new Map([
+    ...(personal.data?.items ?? []).map((o) => [o.orgId, o.label] as const),
+    ...(data?.items ?? []).map((o) => [o.id, o.name] as const),
+  ]);
   return (id) => (id === null ? 'Platform' : (names.get(id) ?? id));
 }
 

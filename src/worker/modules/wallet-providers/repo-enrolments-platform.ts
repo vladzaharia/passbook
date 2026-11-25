@@ -16,7 +16,7 @@ export interface PlatformEnrolmentRow {
 
 export type EnrolmentCursor = [name: string, orgId: string, mode: string];
 
-/** A page after `cursor` in (org name, org id, mode) order; `limit` rows. Deleted orgs and rows that never picked a source are left out. */
+/** A page after `cursor` in (org name, org id, mode) order; `limit` rows. Deleted and personal orgs, and rows that never picked a source are left out. */
 export function platformEnrolmentRows(
   db: D1Database,
   provider: WalletProvider,
@@ -30,7 +30,7 @@ export function platformEnrolmentRows(
      FROM wallet_provider_accounts a
      JOIN orgs o ON o.id = a.org_id
      LEFT JOIN wallet_credentials c ON c.id = a.credential_source_id
-     WHERE a.provider = ? AND o.status != 'deleted'
+     WHERE a.provider = ? AND o.status != 'deleted' AND o.personal_user_id IS NULL
        AND (a.credential_source_id IS NOT NULL OR a.revoked_at IS NOT NULL)
        ${cursor ? 'AND (o.name, a.org_id, a.mode) > (?, ?, ?)' : ''}
      ORDER BY o.name, a.org_id, a.mode

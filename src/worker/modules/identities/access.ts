@@ -4,6 +4,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { enforceFeatures } from '../../platform/feature-guard.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
 
 type C = Context<AppBindings>;
@@ -25,7 +26,11 @@ export async function requireOrgAccess(
 ): Promise<void> {
   const auth = authOf(c);
   if (isPlatformAdmin(c)) {
-    if (orgId) await enforceFeatures(ctx, auth, orgId);
+    if (orgId) {
+      // A personal org's identity runs and lists are its owner's; renew and revoke-certificate skip this.
+      if (auth.kind === 'session') await requireNotPersonalFor(ctx.env.DB, orgId, auth.userId);
+      await enforceFeatures(ctx, auth, orgId);
+    }
     return;
   }
   if (auth.kind !== 'session') throw new UnauthenticatedError();

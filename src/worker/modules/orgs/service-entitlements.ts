@@ -83,7 +83,7 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
       preset: p.preset,
       label: p.label,
       revision: p.revision,
-      orgCount: p.org_count,
+      orgCount: p.shown_count,
       values: byPreset.get(p.preset) ?? {},
     }))
     .sort((a, b) => presetOrder(a.preset, b.preset));

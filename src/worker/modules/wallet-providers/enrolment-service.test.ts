@@ -275,6 +275,30 @@ describe('platform hold', () => {
     expect(await releaseEnrolment(k.ctx, admin.auth, scope)).toBe('released');
   });
 
+  it('on a personal org the owner releases only a hold they placed', async () => {
+    const { org, admin } = await enrolled();
+    const owner = await k.admin();
+    await run(env.DB, 'DROP TRIGGER orgs_personal_fixed');
+    await run(env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
+      owner.auth.userId,
+      org.id,
+    ]);
+    await run(
+      env.DB,
+      `CREATE TRIGGER orgs_personal_fixed BEFORE UPDATE OF personal_user_id ON orgs
+       WHEN NEW.personal_user_id IS NOT OLD.personal_user_id
+       BEGIN SELECT RAISE(ABORT, 'orgs personal marker is immutable'); END`,
+    );
+    const scope = { orgId: org.id, mode: 'test' as const, provider: 'google' as const };
+    expect(await holdEnrolment(k.ctx, admin.auth, scope, 'abuse')).toBe('held');
+    await expect(releaseEnrolment(k.ctx, owner.auth, scope)).rejects.toMatchObject({
+      code: 'ORG_PERSONAL',
+    });
+    expect(await releaseEnrolment(k.ctx, admin.auth, scope)).toBe('released');
+    expect(await holdEnrolment(k.ctx, owner.auth, scope, 'mine')).toBe('held');
+    expect(await releaseEnrolment(k.ctx, owner.auth, scope)).toBe('released');
+  });
+
   it('a suspended org takes the hold through its job, recording the platform user', async () => {
     const { org, m, admin } = await enrolled();
     await run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);

@@ -19,21 +19,25 @@ export function AuditPage({
 }) {
   const directory = useOrgPages();
   const orgs = useOrgList();
+  const { entry, ...filters } = search;
+  const orgId = filters.filterOrgId;
+  const log = usePlatformAuditLog(filters);
   const orgNames = useMemo(() => {
     const names = new Map<string, string>();
     for (const org of orgs.data?.items ?? []) names.set(org.id, org.name);
     for (const page of directory.data?.pages ?? []) {
       for (const org of page.items) names.set(org.id, org.name);
     }
+    // A personal org is not in the directory: its entries carry the label.
+    for (const page of log.data?.pages ?? [])
+      for (const row of page.items)
+        if (row.orgId && row.orgLabel) names.set(row.orgId, row.orgLabel);
     return names;
-  }, [directory.data, orgs.data]);
+  }, [directory.data, orgs.data, log.data]);
   const orgName = useCallback(
     (id: string | null) => (id ? orgNames.get(id) : undefined),
     [orgNames],
   );
-  const { entry, ...filters } = search;
-  const orgId = filters.filterOrgId;
-  const log = usePlatformAuditLog(filters);
   const rows = log.data?.pages.flatMap((p) => p.items) ?? [];
   const selected = entry === undefined ? undefined : rows.find((r) => r.id === entry);
   const filtered = Object.values(filters).some((v) => v !== undefined);
