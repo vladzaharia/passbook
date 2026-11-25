@@ -357,6 +357,89 @@ class BundlesResource:
         return self._core.request("POST", f"/api/v1/bundles/{_p(id)}/send-email", body=body, idempotent=True, result=m.BundlesSendEmailResult, **opts)
 
 
+class ConnectionsUploadsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        body: m.ConnectionsUploadsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsCreateResult:
+        """Upload a file as a draft `POST /api/v1/connections/uploads`"""
+        return self._core.request("POST", "/api/v1/connections/uploads", body=body, result=m.ConnectionsUploadsCreateResult, **opts)
+
+    def delete(
+        self,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsDeleteResult:
+        """Discard a draft upload `DELETE /api/v1/connections/uploads/{fileId}`"""
+        return self._core.request("DELETE", f"/api/v1/connections/uploads/{_p(file_id)}", result=m.ConnectionsUploadsDeleteResult, **opts)
+
+    def retrieve(
+        self,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsRetrieveResult:
+        """Read a draft upload `GET /api/v1/connections/uploads/{fileId}`"""
+        return self._core.request("GET", f"/api/v1/connections/uploads/{_p(file_id)}", result=m.ConnectionsUploadsRetrieveResult, **opts)
+
+    def update(
+        self,
+        file_id: str,
+        body: m.ConnectionsUploadsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsUpdateResult:
+        """Read a draft again with another sheet or records path `PATCH /api/v1/connections/uploads/{fileId}`"""
+        return self._core.request("PATCH", f"/api/v1/connections/uploads/{_p(file_id)}", body=body, result=m.ConnectionsUploadsUpdateResult, **opts)
+
+
+class ConnectionsFilesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def apply(
+        self,
+        id: str,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsFilesApplyResult:
+        """Apply a pending revision and sync `POST /api/v1/connections/{id}/files/{fileId}/apply`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}/apply", result=m.ConnectionsFilesApplyResult, **opts)
+
+    def delete(
+        self,
+        id: str,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsFilesDeleteResult:
+        """Discard a pending revision `DELETE /api/v1/connections/{id}/files/{fileId}`"""
+        return self._core.request("DELETE", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}", result=m.ConnectionsFilesDeleteResult, **opts)
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ConnectionsFilesListItem]:
+        """Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`"""
+        return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/files", query={"cursor": cursor, "limit": limit}, result=m.ConnectionsFilesListResult, cursor_param="cursor", **opts)
+
+    def upload(
+        self,
+        id: str,
+        body: m.ConnectionsFilesUploadBody | _Dict[str, _Any],
+        *,
+        apply: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsFilesUploadResult:
+        """Upload a new revision of a connection file `POST /api/v1/connections/{id}/files`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/files", body=body, query={"apply": apply}, result=m.ConnectionsFilesUploadResult, **opts)
+
+
 class ConnectionsRunsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -409,6 +492,8 @@ class ConnectionsWebhookFailuresResource:
 class ConnectionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.uploads = ConnectionsUploadsResource(core)
+        self.files = ConnectionsFilesResource(core)
         self.runs = ConnectionsRunsResource(core)
         self.webhook_failures = ConnectionsWebhookFailuresResource(core)
 

@@ -16,6 +16,7 @@ import {
   LoadMore,
   StatusPill,
 } from '@/web/ui/index.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { ScanFilters } from './scans/filters.tsx';
 import {
   actionText,
@@ -128,7 +129,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
     },
   ];
   if (!allowed || !orgId) {
-    return <EmptyState art="activity" title="Select an organization" />;
+    return <OrgChooser inline />;
   }
   if (query.isError && !query.isFetchNextPageError) {
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;

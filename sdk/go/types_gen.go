@@ -1228,6 +1228,154 @@ type ConnectionsDeleteResponse struct {
 
 type ConnectionsDeleteResult = ConnectionsDeleteResponse
 
+type ConnectionsFilesApplyResponse struct {
+	File               ConnectionsFilesApplyResponseFile `json:"file"`
+	RunID              string                            `json:"runId"`
+	WorkflowInstanceID string                            `json:"workflowInstanceId"`
+}
+
+type ConnectionsFilesApplyResponseFile struct {
+	ID            string                                   `json:"id"`
+	ConnectionID  string                                   `json:"connectionId"`
+	Revision      int64                                    `json:"revision"`
+	State         string                                   `json:"state"`
+	Name          string                                   `json:"name"`
+	Format        string                                   `json:"format"`
+	Sheet         *string                                  `json:"sheet"`
+	Bytes         int64                                    `json:"bytes"`
+	Rows          int64                                    `json:"rows"`
+	Skipped       ConnectionsFilesApplyResponseFileSkipped `json:"skipped"`
+	Diff          map[string]any                           `json:"diff"`
+	Applied       bool                                     `json:"applied"`
+	CreatedBy     *string                                  `json:"createdBy"`
+	CreatedByName *string                                  `json:"createdByName"`
+	CreatedAt     int64                                    `json:"createdAt"`
+	ExpiresAt     *int64                                   `json:"expiresAt"`
+	SupersededAt  *int64                                   `json:"supersededAt"`
+}
+
+type ConnectionsFilesApplyResponseFileSkipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
+
+type ConnectionsFilesDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
+
+type ConnectionsFilesListItem struct {
+	ID            string                          `json:"id"`
+	ConnectionID  string                          `json:"connectionId"`
+	Revision      int64                           `json:"revision"`
+	State         string                          `json:"state"`
+	Name          string                          `json:"name"`
+	Format        string                          `json:"format"`
+	Sheet         *string                         `json:"sheet"`
+	Bytes         int64                           `json:"bytes"`
+	Rows          int64                           `json:"rows"`
+	Skipped       ConnectionsFilesListItemSkipped `json:"skipped"`
+	Diff          map[string]any                  `json:"diff"`
+	Applied       bool                            `json:"applied"`
+	CreatedBy     *string                         `json:"createdBy"`
+	CreatedByName *string                         `json:"createdByName"`
+	CreatedAt     int64                           `json:"createdAt"`
+	ExpiresAt     *int64                          `json:"expiresAt"`
+	SupersededAt  *int64                          `json:"supersededAt"`
+}
+
+type ConnectionsFilesListItemSkipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
+type ConnectionsFilesListResponse struct {
+	Items      []ConnectionsFilesListResponseItemsItem `json:"items"`
+	NextCursor *string                                 `json:"nextCursor"`
+}
+
+type ConnectionsFilesListResponseItemsItem struct {
+	ID            string                                       `json:"id"`
+	ConnectionID  string                                       `json:"connectionId"`
+	Revision      int64                                        `json:"revision"`
+	State         string                                       `json:"state"`
+	Name          string                                       `json:"name"`
+	Format        string                                       `json:"format"`
+	Sheet         *string                                      `json:"sheet"`
+	Bytes         int64                                        `json:"bytes"`
+	Rows          int64                                        `json:"rows"`
+	Skipped       ConnectionsFilesListResponseItemsItemSkipped `json:"skipped"`
+	Diff          map[string]any                               `json:"diff"`
+	Applied       bool                                         `json:"applied"`
+	CreatedBy     *string                                      `json:"createdBy"`
+	CreatedByName *string                                      `json:"createdByName"`
+	CreatedAt     int64                                        `json:"createdAt"`
+	ExpiresAt     *int64                                       `json:"expiresAt"`
+	SupersededAt  *int64                                       `json:"supersededAt"`
+}
+
+type ConnectionsFilesListResponseItemsItemSkipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
+
+type ConnectionsFilesUploadParams struct {
+	Name           string  `json:"name"`
+	Content        string  `json:"content"`
+	Encoding       string  `json:"encoding"`
+	Sheet          *string `json:"sheet,omitempty"`
+	RecordsPointer *string `json:"recordsPointer,omitempty"`
+}
+
+type ConnectionsFilesUploadQuery struct {
+	Apply *string `json:"apply,omitempty"`
+}
+
+type ConnectionsFilesUploadResponse = any
+
+type ConnectionsFilesUploadResponse1 struct {
+	ID            string                                 `json:"id"`
+	ConnectionID  string                                 `json:"connectionId"`
+	Revision      int64                                  `json:"revision"`
+	State         string                                 `json:"state"`
+	Name          string                                 `json:"name"`
+	Format        string                                 `json:"format"`
+	Sheet         *string                                `json:"sheet"`
+	Bytes         int64                                  `json:"bytes"`
+	Rows          int64                                  `json:"rows"`
+	Skipped       ConnectionsFilesUploadResponse1Skipped `json:"skipped"`
+	Diff          map[string]any                         `json:"diff"`
+	Applied       bool                                   `json:"applied"`
+	CreatedBy     *string                                `json:"createdBy"`
+	CreatedByName *string                                `json:"createdByName"`
+	CreatedAt     int64                                  `json:"createdAt"`
+	ExpiresAt     *int64                                 `json:"expiresAt"`
+	SupersededAt  *int64                                 `json:"supersededAt"`
+	Unchanged     bool                                   `json:"unchanged"`
+	RunID         *string                                `json:"runId,omitempty"`
+}
+
+type ConnectionsFilesUploadResponse1Skipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
+
+type ConnectionsFilesUploadResponse2 struct {
+	Unchanged bool `json:"unchanged"`
+}
+
+type ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
+
 type ConnectionsListItem struct {
 	ID                  string                                     `json:"id"`
 	OrgID               string                                     `json:"orgId"`
@@ -1800,6 +1948,131 @@ type ConnectionsUpdateResponseVoidWhenItem struct {
 }
 
 type ConnectionsUpdateResult = ConnectionsUpdateResponse
+
+type ConnectionsUploadsCreateBody = ConnectionsUploadsCreateParams
+
+type ConnectionsUploadsCreateParams struct {
+	Name           string  `json:"name"`
+	Content        string  `json:"content"`
+	Encoding       string  `json:"encoding"`
+	Sheet          *string `json:"sheet,omitempty"`
+	RecordsPointer *string `json:"recordsPointer,omitempty"`
+}
+
+type ConnectionsUploadsCreateResponse struct {
+	ID             string                                        `json:"id"`
+	OrgID          string                                        `json:"orgId"`
+	State          string                                        `json:"state"`
+	Name           string                                        `json:"name"`
+	Format         string                                        `json:"format"`
+	Sheets         []string                                      `json:"sheets"`
+	Sheet          *string                                       `json:"sheet"`
+	RecordsPointer *string                                       `json:"recordsPointer"`
+	Bytes          int64                                         `json:"bytes"`
+	Rows           int64                                         `json:"rows"`
+	Columns        []ConnectionsUploadsCreateResponseColumnsItem `json:"columns"`
+	Preview        ConnectionsUploadsCreateResponsePreview       `json:"preview"`
+	IDCandidates   []string                                      `json:"idCandidates"`
+	CreatedAt      int64                                         `json:"createdAt"`
+	ExpiresAt      *int64                                        `json:"expiresAt"`
+}
+
+type ConnectionsUploadsCreateResponseColumnsItem struct {
+	Pointer    string   `json:"pointer"`
+	Label      string   `json:"label"`
+	Type       string   `json:"type"`
+	Samples    []string `json:"samples"`
+	Blanks     int64    `json:"blanks"`
+	Duplicates int64    `json:"duplicates"`
+}
+
+type ConnectionsUploadsCreateResponsePreview struct {
+	Header []string   `json:"header"`
+	Rows   [][]string `json:"rows"`
+}
+
+type ConnectionsUploadsCreateResult = ConnectionsUploadsCreateResponse
+
+type ConnectionsUploadsDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type ConnectionsUploadsDeleteResult = ConnectionsUploadsDeleteResponse
+
+type ConnectionsUploadsRetrieveResponse struct {
+	ID             string                                          `json:"id"`
+	OrgID          string                                          `json:"orgId"`
+	State          string                                          `json:"state"`
+	Name           string                                          `json:"name"`
+	Format         string                                          `json:"format"`
+	Sheets         []string                                        `json:"sheets"`
+	Sheet          *string                                         `json:"sheet"`
+	RecordsPointer *string                                         `json:"recordsPointer"`
+	Bytes          int64                                           `json:"bytes"`
+	Rows           int64                                           `json:"rows"`
+	Columns        []ConnectionsUploadsRetrieveResponseColumnsItem `json:"columns"`
+	Preview        ConnectionsUploadsRetrieveResponsePreview       `json:"preview"`
+	IDCandidates   []string                                        `json:"idCandidates"`
+	CreatedAt      int64                                           `json:"createdAt"`
+	ExpiresAt      *int64                                          `json:"expiresAt"`
+}
+
+type ConnectionsUploadsRetrieveResponseColumnsItem struct {
+	Pointer    string   `json:"pointer"`
+	Label      string   `json:"label"`
+	Type       string   `json:"type"`
+	Samples    []string `json:"samples"`
+	Blanks     int64    `json:"blanks"`
+	Duplicates int64    `json:"duplicates"`
+}
+
+type ConnectionsUploadsRetrieveResponsePreview struct {
+	Header []string   `json:"header"`
+	Rows   [][]string `json:"rows"`
+}
+
+type ConnectionsUploadsRetrieveResult = ConnectionsUploadsRetrieveResponse
+
+type ConnectionsUploadsUpdateBody = ConnectionsUploadsUpdateParams
+
+type ConnectionsUploadsUpdateParams struct {
+	Sheet          *string `json:"sheet,omitempty"`
+	RecordsPointer *string `json:"recordsPointer,omitempty"`
+}
+
+type ConnectionsUploadsUpdateResponse struct {
+	ID             string                                        `json:"id"`
+	OrgID          string                                        `json:"orgId"`
+	State          string                                        `json:"state"`
+	Name           string                                        `json:"name"`
+	Format         string                                        `json:"format"`
+	Sheets         []string                                      `json:"sheets"`
+	Sheet          *string                                       `json:"sheet"`
+	RecordsPointer *string                                       `json:"recordsPointer"`
+	Bytes          int64                                         `json:"bytes"`
+	Rows           int64                                         `json:"rows"`
+	Columns        []ConnectionsUploadsUpdateResponseColumnsItem `json:"columns"`
+	Preview        ConnectionsUploadsUpdateResponsePreview       `json:"preview"`
+	IDCandidates   []string                                      `json:"idCandidates"`
+	CreatedAt      int64                                         `json:"createdAt"`
+	ExpiresAt      *int64                                        `json:"expiresAt"`
+}
+
+type ConnectionsUploadsUpdateResponseColumnsItem struct {
+	Pointer    string   `json:"pointer"`
+	Label      string   `json:"label"`
+	Type       string   `json:"type"`
+	Samples    []string `json:"samples"`
+	Blanks     int64    `json:"blanks"`
+	Duplicates int64    `json:"duplicates"`
+}
+
+type ConnectionsUploadsUpdateResponsePreview struct {
+	Header []string   `json:"header"`
+	Rows   [][]string `json:"rows"`
+}
+
+type ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
 
 type ConnectionsWebhookFailuresListItem struct {
 	ID             string  `json:"id"`
@@ -8598,6 +8871,19 @@ type PlatformWalletCredentialsListResponseItemsItem struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsListResponseItemsItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsListResponseItemsItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletCredentialsMigrateResponse struct {
@@ -8657,6 +8943,19 @@ type PlatformWalletCredentialsRevokeResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsRevokeResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsRevokeResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletCredentialsRotateKeyResponse struct {
@@ -8683,6 +8982,19 @@ type PlatformWalletCredentialsSetSamsungCardResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsSetSamsungCardResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsSetSamsungCardResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletCredentialsUpsertParams = any
@@ -8732,6 +9044,19 @@ type PlatformWalletCredentialsUpsertResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsUpsertResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsUpsertResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletEnrollmentsListResponse struct {
@@ -13384,6 +13709,19 @@ type WalletAccountsGoogleSharedCreateResponseCredential struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletAccountsGoogleSharedRetrieveResponse struct {
@@ -13421,6 +13759,19 @@ type WalletCredentialsListResponseItemsItem struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletCredentialsListResponseItemsItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletCredentialsListResponseItemsItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletCredentialsRevokeParams struct {
@@ -13441,6 +13792,19 @@ type WalletCredentialsRevokeResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletCredentialsRevokeResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletCredentialsRevokeResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletCredentialsUpsertParams = any
@@ -13488,6 +13852,19 @@ type WalletCredentialsUpsertResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletCredentialsUpsertResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletCredentialsUpsertResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletEnrollmentsDisableParams struct {

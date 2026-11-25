@@ -16,6 +16,22 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "DELETE /api/v1/connections/{id}/files/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdFilesByFileId",
+    "op": "DELETE /api/v1/connections/{id}/files/{fileId}",
+    "change": "new operation",
+    "note": "Discard a pending revision and its stored file."
+  },
+  {
+    "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsUploadsByFileId",
+    "op": "DELETE /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Discard a draft upload and its stored file."
+  },
+  {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
     "class": "additive",
     "operationId": "identities.deleteIdentitiesByIdPushKey",
@@ -285,7 +301,7 @@
     "operationId": "connections.getConnectionsById",
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].passesCreated: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept. A connection stored by an older connector version shows connectorVersion and config migrated to the current version; one that does not migrate shows as stored."
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
   },
   {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesVoided: field added",
@@ -302,6 +318,14 @@
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/files new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdFiles",
+    "op": "GET /api/v1/connections/{id}/files",
+    "change": "new operation",
+    "note": "Revisions of a connection file, newest first, with their diff and whether a sync applied them."
   },
   {
     "key": "GET /api/v1/connections/{id}/runs 200.items[].passesCreated: field added",
@@ -328,12 +352,20 @@
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
   },
   {
+    "key": "GET /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsUploadsByFileId",
+    "op": "GET /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Read a draft upload."
+  },
+  {
     "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].capabilities.upload: field added",
-    "note": ""
+    "note": "Connectors report capabilities.upload: true when records come from uploaded files."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].category: field added",
@@ -349,7 +381,7 @@
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].entitled: field added",
-    "note": "With an org, the list shows only what its plan allows. POST /connections gives 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks. POST /connections/test-config, with or without ?preview=true, also gives 403 FEATURE_NOT_INCLUDED. GET /connectors is filtered when an org is given."
+    "note": "With an org, the list shows only what its plan allows. Create and test-config give 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].order: field added",
@@ -357,7 +389,7 @@
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].order: field added",
-    "note": ""
+    "note": "Connectors carry category (files, apis, commerce, bookings or try) and order, which group and sort the connector picker."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].recipes[].category: field added",
@@ -365,7 +397,7 @@
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].recipes[].category: field added",
-    "note": ""
+    "note": "Sender recipes carry the picker category of their tile."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].recipes[].entitled: field added",
@@ -704,6 +736,14 @@
     "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
+    "key": "GET /api/v1/orgs optional parameter query:sandboxes added",
+    "class": "additive",
+    "operationId": "orgs.getOrgs",
+    "op": "GET /api/v1/orgs",
+    "change": "optional parameter query:sandboxes added",
+    "note": "The platform list leaves developer sandboxes out; sandboxes=show adds them and sandboxes=only lists just them."
+  },
+  {
     "key": "GET /api/v1/orgs/{id} 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgsById",
@@ -798,6 +838,14 @@
     "op": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
     "change": "new operation",
     "note": "Lists the org's shared Google issuers."
+  },
+  {
+    "key": "GET /api/v1/orgs/{orgId}/wallet-credentials 200.items[].lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentials",
+    "op": "GET /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.items[].lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
     "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
@@ -958,6 +1006,14 @@
     "op": "GET /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
+  },
+  {
+    "key": "GET /api/v1/platform/wallet-credentials 200.items[].lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.getPlatformWalletCredentials",
+    "op": "GET /api/v1/platform/wallet-credentials",
+    "change": "200.items[].lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -1517,6 +1573,14 @@
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.version: optional input field added",
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsUploadsByFileId",
+    "op": "PATCH /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Read a draft again with another sheet or records path; counts against the upload limit of 30 an hour."
   },
   {
     "key": "PATCH /api/v1/identities/{id} 200.handle: field added",
@@ -2253,6 +2317,22 @@
     "note": "fileId names the uploaded draft a file-upload connection starts from."
   },
   {
+    "key": "POST /api/v1/connections/{id}/files new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdFiles",
+    "op": "POST /api/v1/connections/{id}/files",
+    "change": "new operation",
+    "note": "Upload a new revision of a connection file. apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/files/{fileId}/apply new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdFilesByFileIdApply",
+    "op": "POST /api/v1/connections/{id}/files/{fileId}/apply",
+    "change": "new operation",
+    "note": "Apply a pending revision (it becomes current) and start a sync."
+  },
+  {
     "key": "POST /api/v1/connections/{id}/preview new operation",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdPreview",
@@ -2355,6 +2435,14 @@
     "op": "POST /api/v1/connections/test-config",
     "change": "optional parameter query:preview added",
     "note": "With preview=true, test-config dry-runs the unsaved configuration with the mapping, rules and template given."
+  },
+  {
+    "key": "POST /api/v1/connections/uploads new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsUploads",
+    "op": "POST /api/v1/connections/uploads",
+    "change": "new operation",
+    "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
@@ -2701,6 +2789,14 @@
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared 200.credential.lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
+    "change": "200.credential.lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
+  },
+  {
     "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
     "class": "additive",
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
@@ -2715,6 +2811,14 @@
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
     "change": "200.cardTypes: field added",
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
+    "change": "200.lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2915,6 +3019,14 @@
     "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
     "change": "200.cardTypes: field added",
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
+    "change": "200.lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
     "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -3917,6 +4029,14 @@
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
+    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+    "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
+  },
+  {
     "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
@@ -3981,12 +4101,28 @@
     "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
+    "key": "PUT /api/v1/platform/wallet-credentials 200.lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.putPlatformWalletCredentials",
+    "op": "PUT /api/v1/platform/wallet-credentials",
+    "change": "200.lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
+  },
+  {
     "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-platform.putPlatformWalletCredentials",
     "op": "PUT /api/v1/platform/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards 200.lastCheck: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.putPlatformWalletCredentialsByIdCards",
+    "op": "PUT /api/v1/platform/wallet-credentials/{id}/cards",
+    "change": "200.lastCheck: field added",
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
     "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards new operation",

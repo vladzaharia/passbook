@@ -1,4 +1,5 @@
 // Examples written by hand for the operations people read first. The generator applies them over the sampled ones.
+import { CONNECTION_FILE_EXAMPLES } from './example-connection-files.ts';
 import {
   API,
   IDS,
@@ -129,6 +130,7 @@ export const HEADLINE: Record<string, unknown> = {
     source: importSource,
     mapping: 'auto',
   },
+  ...CONNECTION_FILE_EXAMPLES,
 };
 
 /** `<operationId> requests`: named variants shown beside the main request. */

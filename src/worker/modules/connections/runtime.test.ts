@@ -70,7 +70,7 @@ describe('prepare', () => {
     expect(cc.files).toBeUndefined();
   });
 
-  it('gives an upload connector a files port that refuses as CONFIG until the store exists', async () => {
+  it('gives an upload connector a files port over its own revisions: none yet, and a foreign file refuses as CONFIG', async () => {
     const row = await rowOf((await createDemo(kit)).id);
     const original = connectors.get.bind(connectors);
     vi.spyOn(connectors, 'get').mockImplementation((type) =>
@@ -79,13 +79,9 @@ describe('prepare', () => {
     const { cc } = await prepare(kit.sctx, row);
     const files = cc.files;
     if (!files) throw new Error('expected a files port');
-    for (const read of [
-      files.current(),
-      files.previous(3),
-      files.page('f1', 0),
-      files.refs('f1'),
-      files.find('f1', 'm-001'),
-    ]) {
+    expect(await files.current()).toBeNull();
+    expect(await files.previous(3)).toEqual([]);
+    for (const read of [files.page('f1', 0), files.refs('f1'), files.find('f1', 'm-001')]) {
       expect(await rejection(read)).toMatchObject({ code: 'CONFIG', permanent: true });
     }
   });
@@ -103,10 +99,18 @@ describe('unsavedContext', () => {
 
   it('binds an upload connector to its draft, with or without a file id', async () => {
     const config = upload.configSchema.parse({});
-    for (const fileId of ['01900000-0000-7000-8000-00000000f11e', undefined]) {
-      const files = unsavedContext(kit.sctx, upload, kit.org.id, config, undefined, fileId).files;
-      if (!files) throw new Error('expected a files port');
-      expect((await rejection(files.current())).code).toBe('CONFIG');
-    }
+    const named = unsavedContext(
+      kit.sctx,
+      upload,
+      kit.org.id,
+      config,
+      undefined,
+      '01900000-0000-7000-8000-00000000f11e',
+    ).files;
+    if (!named) throw new Error('expected a files port');
+    expect((await rejection(named.current())).code).toBe('CONFIG');
+    const bare = unsavedContext(kit.sctx, upload, kit.org.id, config, undefined).files;
+    if (!bare) throw new Error('expected a files port');
+    expect(await bare.current()).toBeNull();
   });
 });

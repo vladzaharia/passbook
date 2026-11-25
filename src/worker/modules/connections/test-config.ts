@@ -70,6 +70,11 @@ export async function firstRecord(
   return fetched.status === 'ok' ? fetched.record : null;
 }
 
+const idPointerOf = (config: unknown): { idPointer?: string } => {
+  const idColumn = (config as { idColumn?: unknown } | null)?.idColumn;
+  return typeof idColumn === 'string' ? { idPointer: idColumn } : {};
+};
+
 /**
  * The connector context of an unsaved configuration: the platform safe fetch pinned to the connector's
  * egress, secrets for this request only, and an upload connector's files bound to the draft `fileId`.
@@ -97,7 +102,7 @@ export function unsavedContext(
     now: () => sctx.clock.now(),
     fetch: egressFetch(def, config, safeFetch),
     ...(def.capabilities.upload
-      ? { files: filesPort(sctx, { orgId, draftId: fileId ?? null }) }
+      ? { files: filesPort(sctx, { orgId, draftId: fileId ?? null, ...idPointerOf(config) }) }
       : {}),
     signal: AbortSignal.timeout(30_000),
     log: (event, data) =>

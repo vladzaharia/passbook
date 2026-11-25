@@ -4,6 +4,7 @@ import type { ScanZone } from '@/shared/contracts/scan-access.ts';
 import { archiveZoneConfirm } from '@/web/lib/confirms.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, ConfirmDialog, EmptyState, ErrorState, Skeleton, toast } from '@/web/ui/index.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useInsideApi } from './inside-api.ts';
 import { InsideSheet } from './inside-sheet.tsx';
 import { ZoneDialog } from './zone-dialog.tsx';
@@ -19,7 +20,7 @@ type Dialog =
 
 export function ZonesTab() {
   const { orgId, membership } = useOrgScope();
-  if (!orgId) return <EmptyState art="building" title="Select an organization" />;
+  if (!orgId) return <OrgChooser inline />;
   const canManage = membership?.capabilities.includes('scanning:manage') ?? false;
   return <OrgZones key={`${orgId}:${canManage}`} orgId={orgId} canManage={canManage} />;
 }

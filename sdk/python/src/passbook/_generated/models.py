@@ -182,6 +182,25 @@ __all__ = [
     "ConnectionsCreateResult",
     "ConnectionsDeleteResponse",
     "ConnectionsDeleteResult",
+    "ConnectionsFilesApplyResponse",
+    "ConnectionsFilesApplyResponseFile",
+    "ConnectionsFilesApplyResponseFileSkipped",
+    "ConnectionsFilesApplyResult",
+    "ConnectionsFilesDeleteResponse",
+    "ConnectionsFilesDeleteResult",
+    "ConnectionsFilesListItem",
+    "ConnectionsFilesListItemSkipped",
+    "ConnectionsFilesListResponse",
+    "ConnectionsFilesListResponseItemsItem",
+    "ConnectionsFilesListResponseItemsItemSkipped",
+    "ConnectionsFilesListResult",
+    "ConnectionsFilesUploadBody",
+    "ConnectionsFilesUploadParams",
+    "ConnectionsFilesUploadResponse",
+    "ConnectionsFilesUploadResponse1",
+    "ConnectionsFilesUploadResponse1Skipped",
+    "ConnectionsFilesUploadResponse2",
+    "ConnectionsFilesUploadResult",
     "ConnectionsListItem",
     "ConnectionsListItemMappingValue",
     "ConnectionsListItemMappingValueTransform",
@@ -245,6 +264,24 @@ __all__ = [
     "ConnectionsUpdateResponseMappingValueTransform",
     "ConnectionsUpdateResponseVoidWhenItem",
     "ConnectionsUpdateResult",
+    "ConnectionsUploadsCreateBody",
+    "ConnectionsUploadsCreateParams",
+    "ConnectionsUploadsCreateResponse",
+    "ConnectionsUploadsCreateResponseColumnsItem",
+    "ConnectionsUploadsCreateResponsePreview",
+    "ConnectionsUploadsCreateResult",
+    "ConnectionsUploadsDeleteResponse",
+    "ConnectionsUploadsDeleteResult",
+    "ConnectionsUploadsRetrieveResponse",
+    "ConnectionsUploadsRetrieveResponseColumnsItem",
+    "ConnectionsUploadsRetrieveResponsePreview",
+    "ConnectionsUploadsRetrieveResult",
+    "ConnectionsUploadsUpdateBody",
+    "ConnectionsUploadsUpdateParams",
+    "ConnectionsUploadsUpdateResponse",
+    "ConnectionsUploadsUpdateResponseColumnsItem",
+    "ConnectionsUploadsUpdateResponsePreview",
+    "ConnectionsUploadsUpdateResult",
     "ConnectionsWebhookFailuresListItem",
     "ConnectionsWebhookFailuresListResponse",
     "ConnectionsWebhookFailuresListResponseItemsItem",
@@ -1150,6 +1187,8 @@ __all__ = [
     "PlatformWalletCredentialsChecksRetrieveResponse",
     "PlatformWalletCredentialsListResponse",
     "PlatformWalletCredentialsListResponseItemsItem",
+    "PlatformWalletCredentialsListResponseItemsItemLastCheck1",
+    "PlatformWalletCredentialsListResponseItemsItemLastCheck2",
     "PlatformWalletCredentialsMigrateResponse",
     "PlatformWalletCredentialsResolveMigrationParams",
     "PlatformWalletCredentialsResolveMigrationResponse",
@@ -1158,15 +1197,21 @@ __all__ = [
     "PlatformWalletCredentialsRetrieveMigrationResponseItemsItemIdentitySharedItem",
     "PlatformWalletCredentialsRevokeParams",
     "PlatformWalletCredentialsRevokeResponse",
+    "PlatformWalletCredentialsRevokeResponseLastCheck1",
+    "PlatformWalletCredentialsRevokeResponseLastCheck2",
     "PlatformWalletCredentialsRotateKeyResponse",
     "PlatformWalletCredentialsSetSamsungCardParams",
     "PlatformWalletCredentialsSetSamsungCardResponse",
+    "PlatformWalletCredentialsSetSamsungCardResponseLastCheck1",
+    "PlatformWalletCredentialsSetSamsungCardResponseLastCheck2",
     "PlatformWalletCredentialsUpsertParams",
     "PlatformWalletCredentialsUpsertParams1",
     "PlatformWalletCredentialsUpsertParams1Credentials",
     "PlatformWalletCredentialsUpsertParams2",
     "PlatformWalletCredentialsUpsertParams2Credentials",
     "PlatformWalletCredentialsUpsertResponse",
+    "PlatformWalletCredentialsUpsertResponseLastCheck1",
+    "PlatformWalletCredentialsUpsertResponseLastCheck2",
     "PlatformWalletEnrollmentsListResponse",
     "PlatformWalletEnrollmentsListResponseItemsItem",
     "PrintJobsCreateBody",
@@ -1775,19 +1820,27 @@ __all__ = [
     "WalletAccountsGoogleSharedCreateParams",
     "WalletAccountsGoogleSharedCreateResponse",
     "WalletAccountsGoogleSharedCreateResponseCredential",
+    "WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1",
+    "WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2",
     "WalletAccountsGoogleSharedRetrieveResponse",
     "WalletCredentialsChecksCreateResponse",
     "WalletCredentialsChecksRetrieveResponse",
     "WalletCredentialsListResponse",
     "WalletCredentialsListResponseItemsItem",
+    "WalletCredentialsListResponseItemsItemLastCheck1",
+    "WalletCredentialsListResponseItemsItemLastCheck2",
     "WalletCredentialsRevokeParams",
     "WalletCredentialsRevokeResponse",
+    "WalletCredentialsRevokeResponseLastCheck1",
+    "WalletCredentialsRevokeResponseLastCheck2",
     "WalletCredentialsUpsertParams",
     "WalletCredentialsUpsertParams1",
     "WalletCredentialsUpsertParams1Credentials",
     "WalletCredentialsUpsertParams2",
     "WalletCredentialsUpsertParams2Credentials",
     "WalletCredentialsUpsertResponse",
+    "WalletCredentialsUpsertResponseLastCheck1",
+    "WalletCredentialsUpsertResponseLastCheck2",
     "WalletEnrollmentsDisableParams",
     "WalletEnrollmentsDisableResponse",
     "WalletEnrollmentsDisableResponseIssuance1",
@@ -2828,6 +2881,122 @@ class ConnectionsCreateResponseVoidWhenItem(_Model):
 class ConnectionsDeleteResponse(_Model):
     ok: _Literal[True]
 
+class ConnectionsFilesApplyResponse(_Model):
+    file: ConnectionsFilesApplyResponseFile
+    runId: str
+    workflowInstanceId: str
+
+class ConnectionsFilesApplyResponseFile(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesApplyResponseFileSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesApplyResponseFileSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class ConnectionsFilesListItem(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesListItemSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesListItemSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesListResponse(_Model):
+    items: _List[ConnectionsFilesListResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsFilesListResponseItemsItem(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesListResponseItemsItemSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesListResponseItemsItemSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesUploadParams(_Model):
+    name: str
+    content: str
+    encoding: _Literal["utf8", "base64"] | str
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsFilesUploadResponse1(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesUploadResponse1Skipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+    unchanged: _Literal[False]
+    runId: str | None = None
+
+class ConnectionsFilesUploadResponse1Skipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesUploadResponse2(_Model):
+    unchanged: _Literal[True]
+
 class ConnectionsListItem(_Model):
     id: str
     orgId: str
@@ -3308,6 +3477,107 @@ class ConnectionsUpdateResponseVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
+
+class ConnectionsUploadsCreateParams(_Model):
+    name: str
+    content: str
+    encoding: _Literal["utf8", "base64"] | str
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsUploadsCreateResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsCreateResponseColumnsItem]
+    preview: ConnectionsUploadsCreateResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsCreateResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsCreateResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
+
+class ConnectionsUploadsDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class ConnectionsUploadsRetrieveResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsRetrieveResponseColumnsItem]
+    preview: ConnectionsUploadsRetrieveResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsRetrieveResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsRetrieveResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
+
+class ConnectionsUploadsUpdateParams(_Model):
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsUploadsUpdateResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsUpdateResponseColumnsItem]
+    preview: ConnectionsUploadsUpdateResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsUpdateResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsUpdateResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
 
 class ConnectionsWebhookFailuresListItem(_Model):
     id: str
@@ -8982,6 +9252,17 @@ class PlatformWalletCredentialsListResponseItemsItem(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsListResponseItemsItemLastCheck1 | PlatformWalletCredentialsListResponseItemsItemLastCheck2 | None
+
+class PlatformWalletCredentialsListResponseItemsItemLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsListResponseItemsItemLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletCredentialsMigrateResponse(_Model):
     queued: int
@@ -9033,6 +9314,17 @@ class PlatformWalletCredentialsRevokeResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsRevokeResponseLastCheck1 | PlatformWalletCredentialsRevokeResponseLastCheck2 | None
+
+class PlatformWalletCredentialsRevokeResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsRevokeResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletCredentialsRotateKeyResponse(_Model):
     runId: str
@@ -9056,6 +9348,17 @@ class PlatformWalletCredentialsSetSamsungCardResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsSetSamsungCardResponseLastCheck1 | PlatformWalletCredentialsSetSamsungCardResponseLastCheck2 | None
+
+class PlatformWalletCredentialsSetSamsungCardResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsSetSamsungCardResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -9098,6 +9401,17 @@ class PlatformWalletCredentialsUpsertResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsUpsertResponseLastCheck1 | PlatformWalletCredentialsUpsertResponseLastCheck2 | None
+
+class PlatformWalletCredentialsUpsertResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsUpsertResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletEnrollmentsListResponse(_Model):
     items: _List[PlatformWalletEnrollmentsListResponseItemsItem]
@@ -12885,6 +13199,17 @@ class WalletAccountsGoogleSharedCreateResponseCredential(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1 | WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2 | None
+
+class WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletAccountsGoogleSharedRetrieveResponse(_Model):
     serviceAccountEmail: str | None
@@ -12917,6 +13242,17 @@ class WalletCredentialsListResponseItemsItem(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletCredentialsListResponseItemsItemLastCheck1 | WalletCredentialsListResponseItemsItemLastCheck2 | None
+
+class WalletCredentialsListResponseItemsItemLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletCredentialsListResponseItemsItemLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletCredentialsRevokeParams(_Model):
     expectedRevision: int
@@ -12935,6 +13271,17 @@ class WalletCredentialsRevokeResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletCredentialsRevokeResponseLastCheck1 | WalletCredentialsRevokeResponseLastCheck2 | None
+
+class WalletCredentialsRevokeResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletCredentialsRevokeResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -12975,6 +13322,17 @@ class WalletCredentialsUpsertResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletCredentialsUpsertResponseLastCheck1 | WalletCredentialsUpsertResponseLastCheck2 | None
+
+class WalletCredentialsUpsertResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletCredentialsUpsertResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletEnrollmentsDisableParams(_Model):
     expectedRevision: int
@@ -13533,6 +13891,18 @@ ConnectionsCreateResult = ConnectionsCreateResponse
 
 ConnectionsDeleteResult = ConnectionsDeleteResponse
 
+ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
+
+ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
+
+ConnectionsFilesListResult = ConnectionsFilesListResponse
+
+ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
+
+ConnectionsFilesUploadResponse = ConnectionsFilesUploadResponse1 | ConnectionsFilesUploadResponse2
+
+ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
+
 ConnectionsListResult = ConnectionsListResponse
 
 ConnectionsPreviewResult = ConnectionPreview
@@ -13558,6 +13928,18 @@ ConnectionsTestResult = ConnectionsTestResponse
 ConnectionsUpdateBody = ConnectionsUpdateParams
 
 ConnectionsUpdateResult = ConnectionsUpdateResponse
+
+ConnectionsUploadsCreateBody = ConnectionsUploadsCreateParams
+
+ConnectionsUploadsCreateResult = ConnectionsUploadsCreateResponse
+
+ConnectionsUploadsDeleteResult = ConnectionsUploadsDeleteResponse
+
+ConnectionsUploadsRetrieveResult = ConnectionsUploadsRetrieveResponse
+
+ConnectionsUploadsUpdateBody = ConnectionsUploadsUpdateParams
+
+ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
 
 ConnectionsWebhookFailuresListResult = ConnectionsWebhookFailuresListResponse
 

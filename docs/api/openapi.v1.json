@@ -23916,6 +23916,61 @@
                   "type": "string",
                   "pattern": "^[a-z]{1,16}$"
                 }
+              },
+              "lastCheck": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean",
+                        "enum": [
+                          true
+                        ]
+                      },
+                      "code": {
+                        "type": "null"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "ok",
+                      "code",
+                      "at"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean",
+                        "enum": [
+                          false
+                        ]
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "ok",
+                      "code",
+                      "at"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -23931,7 +23986,8 @@
               "revokedAt",
               "createdAt",
               "updatedAt",
-              "cardTypes"
+              "cardTypes",
+              "lastCheck"
             ],
             "additionalProperties": false
           },
@@ -24045,6 +24101,61 @@
                     "type": "string",
                     "pattern": "^[a-z]{1,16}$"
                   }
+                },
+                "lastCheck": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "code": {
+                          "type": "null"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -24060,7 +24171,8 @@
                 "revokedAt",
                 "createdAt",
                 "updatedAt",
-                "cardTypes"
+                "cardTypes",
+                "lastCheck"
               ],
               "additionalProperties": false
             }
@@ -24291,6 +24403,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -24306,7 +24473,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -24403,6 +24571,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -24418,7 +24641,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26209,6 +26433,61 @@
                     "type": "string",
                     "pattern": "^[a-z]{1,16}$"
                   }
+                },
+                "lastCheck": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "code": {
+                          "type": "null"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -26224,7 +26503,8 @@
                 "revokedAt",
                 "createdAt",
                 "updatedAt",
-                "cardTypes"
+                "cardTypes",
+                "lastCheck"
               ],
               "additionalProperties": false
             }
@@ -26471,6 +26751,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -26486,7 +26821,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26597,6 +26933,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -26612,7 +27003,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26709,6 +27101,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -26724,7 +27171,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -48575,6 +49023,1329 @@
           "total",
           "byHealth",
           "attention"
+        ]
+      },
+      "ConnectionsUploadsCreateParams": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6990508
+          },
+          "encoding": {
+            "type": "string",
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          },
+          "sheet": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "recordsPointer": {
+            "type": "string",
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+          }
+        },
+        "required": [
+          "name",
+          "content",
+          "encoding"
+        ]
+      },
+      "ConnectionsUploadsCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending",
+              "current",
+              "superseded",
+              "expired",
+              "discarded"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx",
+              "json",
+              "ndjson"
+            ]
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 200
+          },
+          "sheet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100
+          },
+          "recordsPointer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pointer": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                },
+                "label": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "date",
+                    "email",
+                    "url",
+                    "list"
+                  ]
+                },
+                "samples": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "maxItems": 3
+                },
+                "blanks": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "duplicates": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "pointer",
+                "label",
+                "type",
+                "samples",
+                "blanks",
+                "duplicates"
+              ]
+            },
+            "maxItems": 100
+          },
+          "preview": {
+            "type": "object",
+            "properties": {
+              "header": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "maxItems": 100
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "maxItems": 100
+                },
+                "maxItems": 20
+              }
+            },
+            "required": [
+              "header",
+              "rows"
+            ]
+          },
+          "idCandidates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500,
+              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+            },
+            "maxItems": 100
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiresAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "state",
+          "name",
+          "format",
+          "sheets",
+          "sheet",
+          "recordsPointer",
+          "bytes",
+          "rows",
+          "columns",
+          "preview",
+          "idCandidates",
+          "createdAt",
+          "expiresAt"
+        ]
+      },
+      "ConnectionsUploadsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending",
+              "current",
+              "superseded",
+              "expired",
+              "discarded"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx",
+              "json",
+              "ndjson"
+            ]
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 200
+          },
+          "sheet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100
+          },
+          "recordsPointer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pointer": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                },
+                "label": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "date",
+                    "email",
+                    "url",
+                    "list"
+                  ]
+                },
+                "samples": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "maxItems": 3
+                },
+                "blanks": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "duplicates": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "pointer",
+                "label",
+                "type",
+                "samples",
+                "blanks",
+                "duplicates"
+              ]
+            },
+            "maxItems": 100
+          },
+          "preview": {
+            "type": "object",
+            "properties": {
+              "header": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "maxItems": 100
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "maxItems": 100
+                },
+                "maxItems": 20
+              }
+            },
+            "required": [
+              "header",
+              "rows"
+            ]
+          },
+          "idCandidates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500,
+              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+            },
+            "maxItems": 100
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiresAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "state",
+          "name",
+          "format",
+          "sheets",
+          "sheet",
+          "recordsPointer",
+          "bytes",
+          "rows",
+          "columns",
+          "preview",
+          "idCandidates",
+          "createdAt",
+          "expiresAt"
+        ]
+      },
+      "ConnectionsUploadsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "sheet": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "recordsPointer": {
+            "type": "string",
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+          }
+        }
+      },
+      "ConnectionsUploadsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending",
+              "current",
+              "superseded",
+              "expired",
+              "discarded"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx",
+              "json",
+              "ndjson"
+            ]
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 200
+          },
+          "sheet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100
+          },
+          "recordsPointer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pointer": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                },
+                "label": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "date",
+                    "email",
+                    "url",
+                    "list"
+                  ]
+                },
+                "samples": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "maxItems": 3
+                },
+                "blanks": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "duplicates": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "pointer",
+                "label",
+                "type",
+                "samples",
+                "blanks",
+                "duplicates"
+              ]
+            },
+            "maxItems": 100
+          },
+          "preview": {
+            "type": "object",
+            "properties": {
+              "header": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "maxItems": 100
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "maxItems": 100
+                },
+                "maxItems": 20
+              }
+            },
+            "required": [
+              "header",
+              "rows"
+            ]
+          },
+          "idCandidates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500,
+              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+            },
+            "maxItems": 100
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiresAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "state",
+          "name",
+          "format",
+          "sheets",
+          "sheet",
+          "recordsPointer",
+          "bytes",
+          "rows",
+          "columns",
+          "preview",
+          "idCandidates",
+          "createdAt",
+          "expiresAt"
+        ]
+      },
+      "ConnectionsUploadsDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "ConnectionsFilesUploadParams": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6990508
+          },
+          "encoding": {
+            "type": "string",
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          },
+          "sheet": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "recordsPointer": {
+            "type": "string",
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+          }
+        },
+        "required": [
+          "name",
+          "content",
+          "encoding"
+        ]
+      },
+      "ConnectionsFilesUploadResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "connectionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "revision": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "pending",
+                  "current",
+                  "superseded",
+                  "expired",
+                  "discarded"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "csv",
+                  "xlsx",
+                  "json",
+                  "ndjson"
+                ]
+              },
+              "sheet": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 100
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "rows": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "skipped": {
+                "type": "object",
+                "properties": {
+                  "noId": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "duplicate": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "noId",
+                  "duplicate"
+                ]
+              },
+              "diff": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "added": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "changed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "removed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "examples": {
+                    "type": "object",
+                    "properties": {
+                      "added": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "maxItems": 5
+                      },
+                      "changed": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "maxItems": 5
+                      },
+                      "removed": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "maxItems": 5
+                      }
+                    },
+                    "required": [
+                      "added",
+                      "changed",
+                      "removed"
+                    ]
+                  }
+                },
+                "required": [
+                  "added",
+                  "changed",
+                  "removed",
+                  "examples"
+                ]
+              },
+              "applied": {
+                "type": "boolean"
+              },
+              "createdBy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "createdByName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              },
+              "createdAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "expiresAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "supersededAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "unchanged": {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              "runId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "connectionId",
+              "revision",
+              "state",
+              "name",
+              "format",
+              "sheet",
+              "bytes",
+              "rows",
+              "skipped",
+              "diff",
+              "applied",
+              "createdBy",
+              "createdByName",
+              "createdAt",
+              "expiresAt",
+              "supersededAt",
+              "unchanged"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "unchanged": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            },
+            "required": [
+              "unchanged"
+            ]
+          }
+        ]
+      },
+      "ConnectionsFilesListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "connectionId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "revision": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "pending",
+                    "current",
+                    "superseded",
+                    "expired",
+                    "discarded"
+                  ]
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "format": {
+                  "type": "string",
+                  "enum": [
+                    "csv",
+                    "xlsx",
+                    "json",
+                    "ndjson"
+                  ]
+                },
+                "sheet": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 100
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "rows": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "skipped": {
+                  "type": "object",
+                  "properties": {
+                    "noId": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "duplicate": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "noId",
+                    "duplicate"
+                  ]
+                },
+                "diff": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "added": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "changed": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "removed": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "examples": {
+                      "type": "object",
+                      "properties": {
+                        "added": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "maxItems": 5
+                        },
+                        "changed": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "maxItems": 5
+                        },
+                        "removed": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "maxItems": 5
+                        }
+                      },
+                      "required": [
+                        "added",
+                        "changed",
+                        "removed"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "added",
+                    "changed",
+                    "removed",
+                    "examples"
+                  ]
+                },
+                "applied": {
+                  "type": "boolean"
+                },
+                "createdBy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "createdByName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 200
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "expiresAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "supersededAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "connectionId",
+                "revision",
+                "state",
+                "name",
+                "format",
+                "sheet",
+                "bytes",
+                "rows",
+                "skipped",
+                "diff",
+                "applied",
+                "createdBy",
+                "createdByName",
+                "createdAt",
+                "expiresAt",
+                "supersededAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "ConnectionsFilesApplyResponse": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "connectionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "revision": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "pending",
+                  "current",
+                  "superseded",
+                  "expired",
+                  "discarded"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "csv",
+                  "xlsx",
+                  "json",
+                  "ndjson"
+                ]
+              },
+              "sheet": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 100
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "rows": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "skipped": {
+                "type": "object",
+                "properties": {
+                  "noId": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "duplicate": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "noId",
+                  "duplicate"
+                ]
+              },
+              "diff": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "added": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "changed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "removed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "examples": {
+                    "type": "object",
+                    "properties": {
+                      "added": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "maxItems": 5
+                      },
+                      "changed": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "maxItems": 5
+                      },
+                      "removed": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "maxItems": 5
+                      }
+                    },
+                    "required": [
+                      "added",
+                      "changed",
+                      "removed"
+                    ]
+                  }
+                },
+                "required": [
+                  "added",
+                  "changed",
+                  "removed",
+                  "examples"
+                ]
+              },
+              "applied": {
+                "type": "boolean"
+              },
+              "createdBy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "createdByName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              },
+              "createdAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "expiresAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "supersededAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "connectionId",
+              "revision",
+              "state",
+              "name",
+              "format",
+              "sheet",
+              "bytes",
+              "rows",
+              "skipped",
+              "diff",
+              "applied",
+              "createdBy",
+              "createdByName",
+              "createdAt",
+              "expiresAt",
+              "supersededAt"
+            ]
+          },
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "workflowInstanceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "runId",
+          "workflowInstanceId"
+        ]
+      },
+      "ConnectionsFilesDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "ConnectionsRetrieveResponse": {
@@ -82882,6 +84653,19 @@
             "required": false,
             "name": "q",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "hide",
+                "show",
+                "only"
+              ]
+            },
+            "required": false,
+            "name": "sandboxes",
+            "in": "query"
           }
         ],
         "responses": {
@@ -84669,7 +86453,12 @@
                     "updatedAt": 1795399200000,
                     "cardTypes": [
                       "northwind"
-                    ]
+                    ],
+                    "lastCheck": {
+                      "ok": true,
+                      "code": null,
+                      "at": 1795570500000
+                    }
                   },
                   "serviceAccountEmail": "wallet-issuer@example.com"
                 }
@@ -84848,7 +86637,12 @@
                       "updatedAt": 1795399200000,
                       "cardTypes": [
                         "northwind"
-                      ]
+                      ],
+                      "lastCheck": {
+                        "ok": true,
+                        "code": null,
+                        "at": 1795570500000
+                      }
                     }
                   ],
                   "nextCursor": null
@@ -84951,7 +86745,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -85059,7 +86858,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87195,7 +88999,12 @@
                       "updatedAt": 1795399200000,
                       "cardTypes": [
                         "northwind"
-                      ]
+                      ],
+                      "lastCheck": {
+                        "ok": true,
+                        "code": null,
+                        "at": 1795570500000
+                      }
                     }
                   ],
                   "nextCursor": null
@@ -87284,7 +89093,12 @@
                   "updatedAt": 1795399200000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87381,7 +89195,12 @@
                   "updatedAt": 1795399200000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87478,7 +89297,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -110565,6 +112389,8 @@
         "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_NOT_FOUND",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111198,6 +113024,10 @@
           "CONNECTOR_UNKNOWN",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111297,6 +113127,1121 @@
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/uploads": {
+      "post": {
+        "summary": "Upload a file as a draft",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsUploadsCreateParams"
+              },
+              "example": {
+                "name": "members.csv",
+                "content": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n",
+                "encoding": "utf8"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsUploadsCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000014",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "state": "draft",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheets": [],
+                  "sheet": null,
+                  "recordsPointer": null,
+                  "bytes": 330,
+                  "rows": 5,
+                  "columns": [
+                    {
+                      "pointer": "/Holder email",
+                      "label": "Holder email",
+                      "type": "email",
+                      "samples": [
+                        "ada@example.com",
+                        "grace@example.com"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Name",
+                      "label": "Name",
+                      "type": "text",
+                      "samples": [
+                        "Ada Example",
+                        "Grace Okafor"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Member ID",
+                      "label": "Member ID",
+                      "type": "text",
+                      "samples": [
+                        "NW-1001",
+                        "NW-1002"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    }
+                  ],
+                  "preview": {
+                    "header": [
+                      "Holder email",
+                      "Name",
+                      "Member ID"
+                    ],
+                    "rows": [
+                      [
+                        "ada@example.com",
+                        "Ada Example",
+                        "NW-1001"
+                      ],
+                      [
+                        "grace@example.com",
+                        "Grace Okafor",
+                        "NW-1002"
+                      ]
+                    ]
+                  },
+                  "idCandidates": [
+                    "/Member ID",
+                    "/Holder email",
+                    "/Name"
+                  ],
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.postConnectionsUploads",
+        "x-sdk": {
+          "resource": "connections.uploads",
+          "method": "create"
+        },
+        "description": "Uploads a CSV, Excel or JSON file as a draft: columns, a preview and ID column candidates. Create the connection with its fileId within 23 hours.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "AUTHORITY_DENIED",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_NOT_FOUND",
+          "FILE_TOO_LARGE",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/uploads/{fileId}": {
+      "get": {
+        "summary": "Read a draft upload",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsUploadsRetrieveResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000014",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "state": "draft",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheets": [],
+                  "sheet": null,
+                  "recordsPointer": null,
+                  "bytes": 330,
+                  "rows": 5,
+                  "columns": [
+                    {
+                      "pointer": "/Holder email",
+                      "label": "Holder email",
+                      "type": "email",
+                      "samples": [
+                        "ada@example.com",
+                        "grace@example.com"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Name",
+                      "label": "Name",
+                      "type": "text",
+                      "samples": [
+                        "Ada Example",
+                        "Grace Okafor"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Member ID",
+                      "label": "Member ID",
+                      "type": "text",
+                      "samples": [
+                        "NW-1001",
+                        "NW-1002"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    }
+                  ],
+                  "preview": {
+                    "header": [
+                      "Holder email",
+                      "Name",
+                      "Member ID"
+                    ],
+                    "rows": [
+                      [
+                        "ada@example.com",
+                        "Ada Example",
+                        "NW-1001"
+                      ],
+                      [
+                        "grace@example.com",
+                        "Grace Okafor",
+                        "NW-1002"
+                      ]
+                    ]
+                  },
+                  "idCandidates": [
+                    "/Member ID",
+                    "/Holder email",
+                    "/Name"
+                  ],
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.getConnectionsUploadsByFileId",
+        "x-sdk": {
+          "resource": "connections.uploads",
+          "method": "retrieve"
+        },
+        "description": "Reads a draft upload.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "CONNECTION_NOT_FOUND",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "patch": {
+        "summary": "Read a draft again with another sheet or records path",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsUploadsUpdateParams"
+              },
+              "example": {
+                "sheet": "Members"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsUploadsUpdateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000014",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "state": "draft",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheets": [],
+                  "sheet": null,
+                  "recordsPointer": null,
+                  "bytes": 330,
+                  "rows": 5,
+                  "columns": [
+                    {
+                      "pointer": "/Holder email",
+                      "label": "Holder email",
+                      "type": "email",
+                      "samples": [
+                        "ada@example.com",
+                        "grace@example.com"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Name",
+                      "label": "Name",
+                      "type": "text",
+                      "samples": [
+                        "Ada Example",
+                        "Grace Okafor"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Member ID",
+                      "label": "Member ID",
+                      "type": "text",
+                      "samples": [
+                        "NW-1001",
+                        "NW-1002"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    }
+                  ],
+                  "preview": {
+                    "header": [
+                      "Holder email",
+                      "Name",
+                      "Member ID"
+                    ],
+                    "rows": [
+                      [
+                        "ada@example.com",
+                        "Ada Example",
+                        "NW-1001"
+                      ],
+                      [
+                        "grace@example.com",
+                        "Grace Okafor",
+                        "NW-1002"
+                      ]
+                    ]
+                  },
+                  "idCandidates": [
+                    "/Member ID",
+                    "/Holder email",
+                    "/Name"
+                  ],
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.patchConnectionsUploadsByFileId",
+        "x-sdk": {
+          "resource": "connections.uploads",
+          "method": "update"
+        },
+        "description": "Reads a draft again from its stored file with another sheet or records path.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "AUTHORITY_DENIED",
+          "CONNECTION_NOT_FOUND",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "delete": {
+        "summary": "Discard a draft upload",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsUploadsDeleteResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.deleteConnectionsUploadsByFileId",
+        "x-sdk": {
+          "resource": "connections.uploads",
+          "method": "delete"
+        },
+        "description": "Discards a draft upload and its stored file.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "AUTHORITY_DENIED",
+          "CONNECTION_NOT_FOUND",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FILE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/{id}/files": {
+      "post": {
+        "summary": "Upload a new revision of a connection file",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "apply",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsFilesUploadParams"
+              },
+              "example": {
+                "name": "members.csv",
+                "content": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n",
+                "encoding": "utf8"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsFilesUploadResponse"
+                },
+                "example": {
+                  "unchanged": false,
+                  "id": "0193a1b2-7c00-7000-8000-000000000034",
+                  "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                  "revision": 2,
+                  "state": "pending",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheet": null,
+                  "bytes": 370,
+                  "rows": 6,
+                  "skipped": {
+                    "noId": 0,
+                    "duplicate": 0
+                  },
+                  "diff": {
+                    "added": 1,
+                    "changed": 1,
+                    "removed": 0,
+                    "examples": {
+                      "added": [
+                        "NW-1006"
+                      ],
+                      "changed": [
+                        "NW-1001"
+                      ],
+                      "removed": []
+                    }
+                  },
+                  "applied": false,
+                  "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+                  "createdByName": "Mei Tanaka",
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000,
+                  "supersededAt": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.postConnectionsByIdFiles",
+        "x-sdk": {
+          "resource": "connections.files",
+          "method": "upload"
+        },
+        "description": "Uploads a new revision of the connection's file. It stays pending until applied; apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true and store nothing.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "AUTHORITY_DENIED",
+          "CONNECTION_CONFLICT",
+          "CONNECTION_DISABLED",
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_UNKNOWN",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
+          "FILE_STATE",
+          "FILE_TOO_LARGE",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_INACTIVE",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "get": {
+        "summary": "Revisions of a connection file, newest first",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsFilesListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-000000000034",
+                      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                      "revision": 2,
+                      "state": "pending",
+                      "name": "members.csv",
+                      "format": "csv",
+                      "sheet": null,
+                      "bytes": 370,
+                      "rows": 6,
+                      "skipped": {
+                        "noId": 0,
+                        "duplicate": 0
+                      },
+                      "diff": {
+                        "added": 1,
+                        "changed": 1,
+                        "removed": 0,
+                        "examples": {
+                          "added": [
+                            "NW-1006"
+                          ],
+                          "changed": [
+                            "NW-1001"
+                          ],
+                          "removed": []
+                        }
+                      },
+                      "applied": false,
+                      "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+                      "createdByName": "Mei Tanaka",
+                      "createdAt": 1795572000000,
+                      "expiresAt": 1795654800000,
+                      "supersededAt": null
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.getConnectionsByIdFiles",
+        "x-sdk": {
+          "resource": "connections.files",
+          "method": "list"
+        },
+        "description": "Lists the connection's file revisions, newest first.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_UNKNOWN",
+          "FILE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/{id}/files/{fileId}/apply": {
+      "post": {
+        "summary": "Apply a pending revision and sync",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsFilesApplyResponse"
+                },
+                "example": {
+                  "file": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000034",
+                    "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                    "revision": 2,
+                    "state": "current",
+                    "name": "members.csv",
+                    "format": "csv",
+                    "sheet": null,
+                    "bytes": 370,
+                    "rows": 6,
+                    "skipped": {
+                      "noId": 0,
+                      "duplicate": 0
+                    },
+                    "diff": {
+                      "added": 1,
+                      "changed": 1,
+                      "removed": 0,
+                      "examples": {
+                        "added": [
+                          "NW-1006"
+                        ],
+                        "changed": [
+                          "NW-1001"
+                        ],
+                        "removed": []
+                      }
+                    },
+                    "applied": false,
+                    "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+                    "createdByName": "Mei Tanaka",
+                    "createdAt": 1795572000000,
+                    "expiresAt": null,
+                    "supersededAt": null
+                  },
+                  "runId": "0193a1b2-7c00-7000-8000-000000000023",
+                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.postConnectionsByIdFilesByFileIdApply",
+        "x-sdk": {
+          "resource": "connections.files",
+          "method": "apply"
+        },
+        "description": "Makes a pending revision current and syncs now.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "AUTHORITY_DENIED",
+          "CONNECTION_CONFLICT",
+          "CONNECTION_DISABLED",
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_UNKNOWN",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
+          "FILE_STATE",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_INACTIVE",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/{id}/files/{fileId}": {
+      "delete": {
+        "summary": "Discard a pending revision",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsFilesDeleteResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.deleteConnectionsByIdFilesByFileId",
+        "x-sdk": {
+          "resource": "connections.files",
+          "method": "delete"
+        },
+        "description": "Discards a pending revision and its stored file.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "AUTHORITY_DENIED",
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_UNKNOWN",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FILE_NOT_FOUND",
+          "FILE_STATE",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -111843,6 +114788,8 @@
         "x-codes": [
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111938,6 +114885,8 @@
           "CONNECTION_NOT_FOUND",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -150980,6 +153929,8 @@
           "CONNECTION_CONFLICT",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "LINEAGE_CHANGED",
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",

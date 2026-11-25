@@ -1,6 +1,15 @@
 {
   "codes": [
     {
+      "code": "ACCESS_MAIL_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "marketing"
+      ]
+    },
+    {
       "code": "ACCOUNT_DISABLED",
       "statuses": [
         403
@@ -1340,6 +1349,241 @@
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "FILE_ARCHIVE_LIMIT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_BAD_POINTER",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_CELL_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_DAMAGED",
+      "statuses": [
+        422,
+        500
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_ENCODING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_EXPIRED",
+      "statuses": [
+        410
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_FORMAT_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_HEADER_DUPLICATE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_HEADER_MISSING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_HEADER_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_ID_COLUMN_MISSING",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_JSON_TOO_DEEP",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_LINE_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_MACRO",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_NOT_RECORDS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_RECORDS_NOT_FOUND",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_ROW_SHAPE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_SHEET_NOT_FOUND",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_STATE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_LARGE",
+      "statuses": [
+        413
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_MANY_CELLS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_MANY_COLUMNS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_MANY_ROWS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_XML_UNSAFE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
       ]
     },
     {
@@ -5780,7 +6024,8 @@
         415
       ],
       "modules": [
-        "join"
+        "join",
+        "marketing"
       ]
     },
     {

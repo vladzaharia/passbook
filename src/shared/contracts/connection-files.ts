@@ -57,7 +57,8 @@ export const UploadConnectionFileSchema = z.object({
   /** JSON: where the records array sits. Default: the detected one. */
   recordsPointer: JsonPointerSchema.optional(),
 });
-export const UploadConnectionFileQuerySchema = z.object({ orgId: IdSchema });
+/** Sessions say which organization; a key bound to one needs no hint. */
+export const UploadConnectionFileQuerySchema = z.object({ orgId: IdSchema.optional() });
 /** Re-reads a draft's stored source with another sheet or records array. */
 export const UpdateConnectionFileSchema = z.object({
   sheet: SheetSchema.optional(),
@@ -145,6 +146,11 @@ export const ConnectionFileRevisionSchema = z.object({
   /** When an unapplied pending revision is discarded. */
   expiresAt: TimestampSchema.nullable(),
   supersededAt: TimestampSchema.nullable(),
+});
+/** The cursor is the `nextCursor` of the page before. */
+export const ConnectionFileRevisionsQuerySchema = z.object({
+  cursor: z.string().max(512).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 /** Newest first. */
 export const ConnectionFileRevisionListSchema = pageOf(ConnectionFileRevisionSchema);

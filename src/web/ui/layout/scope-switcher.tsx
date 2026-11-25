@@ -17,31 +17,48 @@ const ITEM =
 const GROUP =
   '[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-fg-muted';
 
-const MARK =
-  'flex size-6 shrink-0 items-center justify-center rounded-md bg-accent-subtle text-accent-fg';
+const MARK = 'flex shrink-0 items-center justify-center bg-accent-subtle text-accent-fg';
+/** 24 in rows and the switcher; 48 on the chooser's cards. */
+const MARK_SIZE = {
+  24: 'size-6 rounded-md [&_svg]:size-4',
+  48: 'size-12 rounded-lg [&_svg]:size-6',
+} as const;
+type MarkSize = keyof typeof MARK_SIZE;
 
-export function PlatformMark() {
+export function PlatformMark({ size = 24 }: { size?: MarkSize }) {
   return (
-    <span className={MARK}>
-      <Globe aria-hidden className="size-4" />
+    <span className={cn(MARK, MARK_SIZE[size])}>
+      <Globe aria-hidden />
     </span>
   );
 }
 
-export function PersonalMark() {
+export function PersonalMark({ size = 24 }: { size?: MarkSize }) {
   return (
-    <span className={MARK}>
-      <User aria-hidden className="size-4" />
+    <span className={cn(MARK, MARK_SIZE[size])}>
+      <User aria-hidden />
     </span>
   );
 }
 
 /** The mark of an organization as a scope: the user tile for a personal one, else its avatar. */
-export function OrgMark({ org }: { org: Pick<OrgMembership, 'orgId' | 'orgName' | 'personal'> }) {
+export function OrgMark({
+  org,
+  size = 24,
+}: {
+  org: Pick<OrgMembership, 'orgId' | 'orgName' | 'personal'>;
+  size?: MarkSize;
+}) {
   return org.personal ? (
-    <PersonalMark />
+    <PersonalMark size={size} />
   ) : (
-    <EntityAvatar kind="org" id={org.orgId} name={org.orgName} />
+    <EntityAvatar
+      kind="org"
+      id={org.orgId}
+      name={org.orgName}
+      size={size}
+      className={size === 48 ? 'text-xl' : undefined}
+    />
   );
 }
 
@@ -75,7 +92,14 @@ function Item({
 export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   const scope = useAdminScope();
   const { isAdmin } = useSession();
-  const { memberships, membership, switchScope, isLoading, isError, refetch } = useOrgScope();
+  const {
+    choices: memberships,
+    membership,
+    switchScope,
+    isLoading,
+    isError,
+    refetch,
+  } = useOrgScope();
   const [open, setOpen] = useState(false);
   if (isLoading) {
     return (

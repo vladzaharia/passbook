@@ -150,7 +150,7 @@ describe('organization wallet accounts', () => {
           }),
           enrolment({ provider: 'samsung' }),
         ],
-        [credential({ verifiedAt: 1_700_000_000_000 })],
+        [credential({ lastCheck: { ok: true, code: null, at: 1_700_000_000_000 } })],
       ),
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
@@ -171,7 +171,7 @@ describe('organization wallet accounts', () => {
           }),
           enrolment({ provider: 'samsung' }),
         ],
-        [credential({ verifiedAt: 1_700_000_000_000 })],
+        [credential({ lastCheck: { ok: true, code: null, at: 1_700_000_000_000 } })],
       ),
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });

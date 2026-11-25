@@ -317,6 +317,42 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"connections.uploads.create", "POST", "/api/v1/connections/uploads", false,
+		`{"name":"x","content":"x","encoding":"utf8"}`, `{"id":"x","orgId":"x","state":"draft","name":"x","format":"csv","sheets":["x"],"sheet":"x","recordsPointer":"x","bytes":0,"rows":0,"columns":[{"pointer":"x","label":"x","type":"text","samples":["x"],"blanks":0,"duplicates":0}],"preview":{"header":["x"],"rows":[["x"]]},"idCandidates":["x"],"createdAt":0,"expiresAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsUploadsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.Uploads.Create(ctx, &b)
+		},
+	},
+	{
+		"connections.uploads.retrieve", "GET", "/api/v1/connections/uploads/id1", false,
+		"", `{"id":"x","orgId":"x","state":"draft","name":"x","format":"csv","sheets":["x"],"sheet":"x","recordsPointer":"x","bytes":0,"rows":0,"columns":[{"pointer":"x","label":"x","type":"text","samples":["x"],"blanks":0,"duplicates":0}],"preview":{"header":["x"],"rows":[["x"]]},"idCandidates":["x"],"createdAt":0,"expiresAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Uploads.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"connections.uploads.update", "PATCH", "/api/v1/connections/uploads/id1", false,
+		`{}`, `{"id":"x","orgId":"x","state":"draft","name":"x","format":"csv","sheets":["x"],"sheet":"x","recordsPointer":"x","bytes":0,"rows":0,"columns":[{"pointer":"x","label":"x","type":"text","samples":["x"],"blanks":0,"duplicates":0}],"preview":{"header":["x"],"rows":[["x"]]},"idCandidates":["x"],"createdAt":0,"expiresAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsUploadsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.Uploads.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"connections.uploads.delete", "DELETE", "/api/v1/connections/uploads/id1", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Uploads.Delete(ctx, "id1")
+		},
+	},
+	{
 		"connections.retrieve", "GET", "/api/v1/connections/id1", false,
 		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0,"runs":[{"id":"x","trigger":"schedule","startedAt":0,"finishedAt":0,"outcome":"running","recordsSeen":0,"passesChanged":0,"passesCreated":0,"passesVoided":0,"recordsFailed":0,"errorCode":"x","httpStatus":0,"durationMs":0}],"metrics":{"p50Ms":0,"p95Ms":0,"errorRate":0,"passCount":0}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -339,6 +375,38 @@ var generatedOps = []opCase{
 		"", `{"ok":true}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Delete(ctx, "id1")
+		},
+	},
+	{
+		"connections.files.list", "GET", "/api/v1/connections/id1/files", false,
+		"", `{"items":[{"id":"x","connectionId":"x","revision":0,"state":"draft","name":"x","format":"csv","sheet":"x","bytes":0,"rows":0,"skipped":{"noId":0,"duplicate":0},"diff":{"added":0,"changed":0,"removed":0,"examples":{"added":["x"],"changed":["x"],"removed":["x"]}},"applied":false,"createdBy":"x","createdByName":"x","createdAt":0,"expiresAt":0,"supersededAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Files.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"connections.files.upload", "POST", "/api/v1/connections/id1/files", false,
+		`{"name":"x","content":"x","encoding":"utf8"}`, `{"id":"x","connectionId":"x","revision":0,"state":"draft","name":"x","format":"csv","sheet":"x","bytes":0,"rows":0,"skipped":{"noId":0,"duplicate":0},"diff":{"added":0,"changed":0,"removed":0,"examples":{"added":["x"],"changed":["x"],"removed":["x"]}},"applied":false,"createdBy":"x","createdByName":"x","createdAt":0,"expiresAt":0,"supersededAt":0,"unchanged":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsFilesUploadBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.Files.Upload(ctx, "id1", &b, nil)
+		},
+	},
+	{
+		"connections.files.delete", "DELETE", "/api/v1/connections/id1/files/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Files.Delete(ctx, "id1", "id2")
+		},
+	},
+	{
+		"connections.files.apply", "POST", "/api/v1/connections/id1/files/id2/apply", false,
+		"", `{"file":{"id":"x","connectionId":"x","revision":0,"state":"draft","name":"x","format":"csv","sheet":"x","bytes":0,"rows":0,"skipped":{"noId":0,"duplicate":0},"diff":{"added":0,"changed":0,"removed":0,"examples":{"added":["x"],"changed":["x"],"removed":["x"]}},"applied":false,"createdBy":"x","createdByName":"x","createdAt":0,"expiresAt":0,"supersededAt":0},"runId":"x","workflowInstanceId":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Files.Apply(ctx, "id1", "id2")
 		},
 	},
 	{
