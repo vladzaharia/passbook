@@ -1,54 +1,47 @@
 /** The words on a ticket, per class and panel, from the renderer-neutral content. Pure. */
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
-import { paperDate, paperZoneFor, paperZoneInfo } from '../../passkit/template/paper-format.ts';
+import { paperDate, paperZoneInfo } from '../../passkit/template/paper-format.ts';
 import { PAPER_COPY } from '../../shared/copy/print.ts';
+import {
+  beforeHeading,
+  codeLabelOf,
+  doorRule,
+  FOLDING_KINDS,
+} from '../../shared/copy/print-kinds.ts';
+import {
+  at,
+  type Column,
+  endAt,
+  type Issued,
+  join,
+  type Line,
+  splitZones,
+  startAt,
+  zoneAbbr,
+} from './ticket-text-base.ts';
+import {
+  idColumns,
+  idLines,
+  idRows,
+  tripColumns,
+  tripLines,
+  tripRows,
+  tripWhen,
+} from './ticket-text-kinds.ts';
 
-export interface Issued {
-  generation: number;
-  /** ISO time the print was made. */
-  at?: string;
-}
-
-export interface Line {
-  big?: boolean;
-  text: string;
-}
-export interface Column {
-  title: string;
-  strong?: string;
-  lines?: string[];
-  list?: string[];
-  boxes?: boolean;
-}
-
-const join = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' · ');
-const at = (c: PaperContent, iso: string | undefined, style: Parameters<typeof paperDate>[2]) =>
-  iso ? paperDate(iso, paperZoneFor(c, iso), style) : '';
-const abbrAt = (c: PaperContent, iso: string) => {
-  const zone = paperZoneFor(c, iso);
-  return zone ? paperZoneInfo(zone, iso)?.abbr : undefined;
-};
-/** The start and the end read in different zones: each carries its own abbreviation. */
-const splitZones = (c: PaperContent) =>
-  Boolean(c.start && c.end && abbrAt(c, c.start) !== abbrAt(c, c.end));
-const startAt = (c: PaperContent, start: string) =>
-  splitZones(c) ? `${at(c, start, 'timeZone')}` : at(c, start, 'time');
-/** The end's clock: its day when it is another day, its own zone when that differs from the start's. */
-const endAt = (c: PaperContent, end: string) => {
-  const clock =
-    c.start && at(c, end, 'long') !== at(c, c.start, 'long')
-      ? `${at(c, end, 'short')}, ${at(c, end, 'time')}`
-      : at(c, end, 'time');
-  const own = abbrAt(c, end);
-  return own && c.start && own !== abbrAt(c, c.start) ? `${clock} ${own}` : clock;
-};
-const zoneAbbr = (c: PaperContent) => {
-  const iso = c.start ?? c.validUntil;
-  return c.zone && iso ? paperZoneInfo(c.zone, iso)?.abbr : undefined;
-};
+export type { Column, Issued, Line } from './ticket-text-base.ts';
 
 /** `Sat 13 Feb 2027 · 7:30 pm NZDT`, or what the pass is valid until. */
 export function doorWhen(c: PaperContent): string | undefined {
+  if (c.kind === 'journey' || c.kind === 'booking' || c.kind === 'stay') return tripWhen(c);
+  if (c.kind === 'badge' || c.kind === 'credential') {
+    return (
+      join(
+        c.info.arrives && `Arrives ${at(c, c.info.arrives, 'timeZone')}`,
+        c.validUntil && `Valid until ${at(c, c.validUntil, 'short')}`,
+      ) || undefined
+    );
+  }
   if (c.start) return `${at(c, c.start, 'short')} · ${at(c, c.start, 'timeZone')}`;
   if (!c.validUntil) return undefined;
   if (c.kind === 'pickup') return `Collect by ${at(c, c.validUntil, 'stamp')}`;
@@ -57,12 +50,14 @@ export function doorWhen(c: PaperContent): string | undefined {
 
 /** The three facts under the door panel's code. */
 export function doorRows(c: PaperContent): { label: string; text: string }[] {
+  if (c.kind === 'journey' || c.kind === 'booking' || c.kind === 'stay') return tripRows(c);
+  if (c.kind === 'badge' || c.kind === 'credential') return idRows(c);
   const seat = c.seat && [c.seat.section, c.seat.row, c.seat.seat].filter(Boolean).join(' · ');
   const rows =
     c.kind === 'membership'
       ? [
-          { label: 'Tier', text: c.type },
-          { label: 'Club', text: c.venue },
+          { label: c.info.typeLabel ?? 'Plan', text: c.type },
+          { label: c.info.venueLabel ?? 'Club', text: c.venue },
           { label: 'Valid to', text: c.validUntil ? at(c, c.validUntil, 'short') : undefined },
         ]
       : c.kind === 'pickup'
@@ -73,8 +68,10 @@ export function doorRows(c: PaperContent): { label: string; text: string }[] {
           ]
         : [
             { label: 'Name', text: c.holder },
-            { label: c.noun === 'pass' ? 'Pass' : 'Ticket', text: c.type },
+            { label: 'Party', text: c.info.party },
+            { label: c.noun === 'ticket' ? 'Ticket' : 'Pass', text: c.type },
             { label: 'Seat', text: seat },
+            { label: 'Gate', text: c.info.gate },
           ];
   return rows.filter((r): r is { label: string; text: string } => Boolean(r.text)).slice(0, 3);
 }
@@ -102,6 +99,8 @@ export function faceLines(c: PaperContent, half = false): Line[] {
   const lines: Line[] = [];
   const big = (text: string | undefined) => text && lines.push({ big: true, text });
   const sub = (text: string | undefined) => text && lines.push({ text });
+  if (c.kind === 'journey' || c.kind === 'booking' || c.kind === 'stay') return tripLines(c, half);
+  if (c.kind === 'badge' || c.kind === 'credential') return idLines(c, half);
   if (c.kind === 'membership') {
     big(c.type);
     sub(c.venue);
@@ -134,10 +133,14 @@ const strong = (text: string | undefined) => (text ? { strong: text } : {});
 /** The three columns of "Before you go". */
 export function infoColumns(c: PaperContent): Column[] {
   const bring: Column = { title: 'Bring', list: c.bring };
+  const filled = (cols: Column[]) =>
+    cols.filter(
+      (col) => col.title === 'Bring' || col.list?.length || col.strong || col.lines?.length,
+    );
   const whereLines = [c.address, c.room, c.directions].filter((x): x is string => Boolean(x));
   const where: Column = { title: 'Where', ...strong(c.venue), lines: whereLines };
   if (c.kind === 'pickup') {
-    return [
+    return filled([
       { title: 'Items', list: c.items ?? [], boxes: true },
       {
         title: 'Where',
@@ -145,18 +148,18 @@ export function infoColumns(c: PaperContent): Column[] {
         lines: [c.address].filter((x): x is string => Boolean(x)),
       },
       bring,
-    ].filter((col) => col.title === 'Bring' || col.list?.length || col.strong || col.lines?.length);
+    ]);
   }
+  if (c.kind === 'journey' || c.kind === 'booking' || c.kind === 'stay')
+    return filled(tripColumns(c, bring));
+  if (c.kind === 'badge' || c.kind === 'credential') return filled(idColumns(c, bring));
   if (c.kind === 'membership') {
-    return [
-      {
-        title: 'Valid',
-        ...strong(c.validUntil && `To ${at(c, c.validUntil, 'long')}`),
-        lines: [c.type].filter((x): x is string => Boolean(x)),
-      },
-      { ...where, title: 'Club' },
+    return filled([
+      { title: c.info.typeLabel ?? 'Plan', ...strong(c.type) },
+      { title: 'Valid', ...strong(c.validUntil && `To ${at(c, c.validUntil, 'long')}`) },
+      { ...where, title: c.info.venueLabel ?? 'Club' },
       bring,
-    ];
+    ]);
   }
   const abbr = zoneAbbr(c);
   const info =
@@ -179,7 +182,7 @@ export function infoColumns(c: PaperContent): Column[] {
         ...strong(c.validUntil && `Until ${at(c, c.validUntil, 'long')}`),
         lines: [],
       };
-  return [when, where, bring];
+  return filled([when, where, bring]);
 }
 
 /** The wash box under the columns: up to four rules. */
@@ -188,11 +191,18 @@ export function rules(c: PaperContent, fold: boolean): [string, string][] {
     [...PAPER_COPY.oneTicket(c.noun, c.once)] as [string, string],
     [...PAPER_COPY.reprints] as [string, string],
   ];
-  if (c.kind === 'admission' || c.kind === 'membership')
-    out.push([...PAPER_COPY.atDoor] as [string, string]);
-  if (fold) out.push([...PAPER_COPY.folding] as [string, string]);
+  if (c.kind !== 'permit' && c.kind !== 'coupon' && c.kind !== 'pickup')
+    out.push(doorRule(c.kind, codeWord(c)));
+  if (fold && folds(c)) out.push([...PAPER_COPY.folding] as [string, string]);
   return out.slice(0, 4);
 }
+
+const named = (label: string, text: string | undefined) => (text ? `${label} ${text}` : undefined);
+const codeWord = (c: PaperContent) => codeLabelOf(c.kind, c.noun, Boolean(c.info.pack));
+export const beforeTitle = (c: PaperContent) => beforeHeading(c.kind);
+
+/** The printed fold marks and their rule: only a page that folds in half has them. */
+export const folds = (c: PaperContent): boolean => FOLDING_KINDS.includes(c.kind);
 
 /** `Print 1 · Issued 19 Nov 2026, 2:02 pm NZDT`. */
 export function footMeta(c: PaperContent, issued: Issued | undefined): string {
@@ -203,6 +213,21 @@ export function footMeta(c: PaperContent, issued: Issued | undefined): string {
 
 /** A half sheet's "Before you go": when and where in one line, when the pass has both. */
 export function compactBefore(c: PaperContent): string | undefined {
+  if (c.kind === 'journey') {
+    const t = c.info.boards
+      ? `${c.info.boardsLabel ?? 'Boards'} ${at(c, c.info.boards, 'time')}`
+      : c.start && `Departs ${at(c, c.start, 'time')}`;
+    return t ? join(t, named(c.info.gateLabel ?? 'Gate', c.info.gate)) : undefined;
+  }
+  if (c.kind === 'booking') return join(c.start && at(c, c.start, 'time'), c.venue) || undefined;
+  if (c.kind === 'stay')
+    return (
+      join(
+        c.start && `Check-in ${at(c, c.start, 'time')}`,
+        c.end && `Check-out ${at(c, c.end, 'time')}`,
+      ) || undefined
+    );
+  if (c.kind === 'badge' || c.kind === 'credential') return undefined;
   const when = c.doors
     ? `Doors ${at(c, c.doors, 'time')}`
     : c.start

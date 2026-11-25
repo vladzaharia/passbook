@@ -13,13 +13,15 @@ import { PAPER_SPECS, type PaperDesign, sheetApplies } from '../../../passkit/te
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
 import { COUPON_BAND, halfFit, sheetLayout } from '../../../passkit/template/paper-geometry.ts';
 import type { BrandMark } from '../../../shared/contracts/orgs.ts';
+import { PRINT_BULK_MAX } from '../../../shared/contracts/prints.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
 import type { Issued } from '../../../web/paper/ticket-text.ts';
 import { needsFallback } from './pdf-coverage.ts';
 import { drawCardBack, drawCardFront } from './pdf-draw-card.ts';
+import { drawCoupon } from './pdf-draw-coupon.ts';
 import { drawFull } from './pdf-draw-full.ts';
-import { drawCoupon, drawPermit } from './pdf-draw-small.ts';
+import { drawPermit } from './pdf-draw-small.ts';
 import { drawStrip } from './pdf-draw-stub.ts';
 import { type AssetSource, embedFonts, type PdfFonts } from './pdf-fonts.ts';
 import { COLORS, Pen, PT } from './pdf-kit.ts';
@@ -27,7 +29,7 @@ import { embedPixels, type PdfPicture, type PictureFit, readPng } from './pdf-pn
 import type { PdfImages, Sheet } from './pdf-sheet.ts';
 
 /** Part of every cache fingerprint: bump it when the drawing changes. */
-export const PDF_RENDER_VERSION = 'pt4-6';
+export const PDF_RENDER_VERSION = 'pt4-8';
 
 /** A PNG a sheet draws, with an id that names its content (an etag). */
 export interface ImageSource {
@@ -44,7 +46,7 @@ export interface PrintSheet {
   issued?: Issued;
   /** The org's footer choice. */
   mark: BrandMark;
-  images?: { logo?: ImageSource; art?: ImageSource };
+  images?: { logo?: ImageSource; art?: ImageSource; photo?: ImageSource };
 }
 
 export interface RenderOptions {
@@ -56,13 +58,17 @@ export interface RenderOptions {
   onImageError?: (id: string, reason: 'invalid' | 'limit') => void;
 }
 
+/** Member photos one PDF embeds: one per pass, so a bulk of badges holds as many as its cap. */
+export const MAX_PHOTOS = PRINT_BULK_MAX;
+
 /** Distinct images one PDF embeds: each costs a decode, and a bulk of 50 must stay inside the CPU budget. */
 export const MAX_DISTINCT_IMAGES = 12;
 
 /** The box an image fills on this sheet, for the print resolution it needs. */
-function fitOf(sheet: PrintSheet, role: 'logo' | 'art'): PictureFit {
+function fitOf(sheet: PrintSheet, role: 'logo' | 'art' | 'photo'): PictureFit {
   const { design, content } = sheet;
   if (role === 'logo') return { wMm: 24, hMm: 20, mode: 'contain' };
+  if (role === 'photo') return { wMm: 36, hMm: 36, mode: 'cover' };
   const spec = PAPER_SPECS[design.size];
   if (spec.layout === 'card') return { wMm: spec.widthMm, hMm: spec.heightMm, mode: 'cover' };
   if (content.kind === 'coupon') return { wMm: 189, hMm: COUPON_BAND, mode: 'cover' };
@@ -151,14 +157,21 @@ export async function renderPdf(
   const state = { lossy: false };
   const embedded = new Map<string, PdfPicture | undefined>();
   let distinct = 0;
-  const embed = (src: ImageSource | undefined, fit: PictureFit): PdfPicture | undefined => {
+  let photos = 0;
+  const embed = (
+    src: ImageSource | undefined,
+    fit: PictureFit,
+    isPhoto = false,
+  ): PdfPicture | undefined => {
     if (!src) return undefined;
     const key = `${src.id}|${fit.mode}|${Math.round(fit.wMm)}x${Math.round(fit.hMm)}`;
     if (embedded.has(key)) return embedded.get(key);
     let picture: PdfPicture | undefined;
-    if (distinct >= MAX_DISTINCT_IMAGES) options.onImageError?.(src.id, 'limit');
+    if (isPhoto ? photos >= MAX_PHOTOS : distinct >= MAX_DISTINCT_IMAGES)
+      options.onImageError?.(src.id, 'limit');
     else {
-      distinct++;
+      if (isPhoto) photos++;
+      else distinct++;
       // Bounded decode: a refused file (animated, oversized, a bomb) is drawn without.
       const pixels = readPng(src.bytes, fit);
       if (pixels) picture = embedPixels(doc, pixels);
@@ -176,6 +189,8 @@ export async function renderPdf(
         : embed(s.images?.art, fitOf(s, 'art'));
     if (logo) images.logo = logo;
     if (art) images.art = art;
+    const photo = embed(s.images?.photo, fitOf(s, 'photo'), true);
+    if (photo) images.photo = photo;
     drawSheet(
       doc,
       fonts,

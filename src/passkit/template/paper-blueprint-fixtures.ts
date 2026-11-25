@@ -9,8 +9,9 @@ export const SCAN_CODE = 'SCAN-XYZ-0001';
 export async function blueprintPass(
   slug: string,
   over: Personalization = {},
+  options: { strips?: boolean } = {},
 ): Promise<{ passJson: PassJson; manifest: TemplateManifest; personalization: Personalization }> {
-  const { template, registry } = await loadBaked(slug, { strips: false });
+  const { template, registry } = await loadBaked(slug, { strips: options.strips ?? false });
   const personalization = { ...template.manifest.sample, ...over };
   const { passJson } = planPass({
     template,

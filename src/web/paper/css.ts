@@ -5,6 +5,7 @@ import {
   sheetApplies,
 } from '../../passkit/template/paper.ts';
 import bandCss from '../pass-card/test-band.css?raw';
+import { BADGE_CSS } from './css-badge.ts';
 import { FULL_CSS, HALF_FULL_CSS } from './css-full.ts';
 import { SIZES_CSS } from './css-sizes.ts';
 import { SMALL_CSS } from './css-small.ts';
@@ -56,7 +57,7 @@ const BASE_CSS = `${FALLBACK_FONT_CSS}
 .pp-sheet{--mm:1mm;border-radius:0;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }`;
 
-export const PAPER_CSS = `${BASE_CSS}\n${FULL_CSS}\n${HALF_FULL_CSS}\n${SMALL_CSS}\n${SIZES_CSS}\n${bandCss}`;
+export const PAPER_CSS = `${BASE_CSS}\n${FULL_CSS}\n${HALF_FULL_CSS}\n${SMALL_CSS}\n${BADGE_CSS}\n${SIZES_CSS}\n${bandCss}`;
 
 /** `@page` for one size, or for the home sheet a card or strip prints on; the sheet fills the page, so the margin is 0. */
 export function pageRule(size: PaperSize, sheet?: PaperSheet): string {

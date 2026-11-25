@@ -13,10 +13,10 @@ const html = (size: PaperSize, over: object = {}, kind: 'admission' | 'permit' =
   const content = { ...ADMISSION, kind, hero: { zone: 'C', plate: 'AB12 CDE' } };
   return renderToStaticMarkup(
     <PaperTicket
+      mark="full"
       content={content}
       design={design}
       code={CODE}
-      mark="full"
       drawing={drawPaperCode(toSvg, design.barcode, CODE)}
     />,
   );
@@ -60,10 +60,10 @@ describe('new sizes on the print page', () => {
     const design = resolvePaper({ schema: 1, size: 'cr80p', barcode: 'qr', sheet: 'a4' });
     const out = renderToStaticMarkup(
       <PaperTicket
+        mark="full"
         content={{ ...ADMISSION, ink: 'mono' }}
         design={design}
         code={CODE}
-        mark="full"
         drawing={drawPaperCode(toSvg, design.barcode, CODE)}
       />,
     );

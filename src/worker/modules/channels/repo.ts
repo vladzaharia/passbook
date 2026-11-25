@@ -1,3 +1,4 @@
+import { holderMayPrint } from '../../../passkit/template/paper.ts';
 import {
   CHANNELS,
   type Channel,
@@ -170,13 +171,13 @@ export async function capabilityOf(
   version: string | null,
 ): Promise<Capability> {
   const r = version
-    ? await first<{ g: string | null; s: string | null; h: number | null; d: string | null }>(
+    ? await first<{ g: string | null; s: string | null; m: string | null; d: string | null }>(
         db,
         `SELECT CASE WHEN json_type(manifest, '$.wallets.google') = 'object'
              THEN COALESCE(json_extract(manifest, '$.wallets.google.type'), 'on') END AS g,
            CASE WHEN json_type(manifest, '$.wallets.samsung') = 'object'
              THEN COALESCE(json_extract(manifest, '$.wallets.samsung.type'), 'on') END AS s,
-           json_extract(manifest, '$.paper.holder') AS h,
+           manifest AS m,
            CASE WHEN json_type(manifest, '$.channels') = 'object'
              THEN json_extract(manifest, '$.channels') END AS d
          FROM template_versions WHERE template_id = ? AND version = ?`,
@@ -186,7 +187,7 @@ export async function capabilityOf(
   return {
     google: !!r?.g && r.g !== 'off',
     samsung: !!r?.s && r.s !== 'off',
-    paperHolder: r?.h !== 0,
+    paperHolder: holderMayPrint(r?.m ? (JSON.parse(r.m) as Record<string, unknown>) : null),
     defaults: parseDefaults(r?.d),
   };
 }

@@ -94,3 +94,13 @@ export function paperDate(iso: string, zone: string | undefined, style: PaperDat
   if (style === 'timeZone') return `${clock()}${tail}`;
   return `${fmt({ day: 'numeric', month: 'short', year: 'numeric' }).format(at)}, ${clock()}${tail}`;
 }
+
+/** Whole nights between two written times, by the calendar days they carry (each in its own zone). */
+export function paperNights(start: string, end: string): number {
+  const day = (iso: string) => {
+    const [y = 0, m = 1, d = 1] = iso.slice(0, 10).split('-').map(Number);
+    return Date.UTC(y, m - 1, d) / 86_400_000;
+  };
+  const n = day(end) - day(start);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}

@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  holderClassOf,
   PAPER_SIZES,
   PAPER_SPECS,
   type PaperDesign,
   type PaperSize,
   resolvePaper,
   supportsCode128,
+  withKind,
 } from '@/passkit/template/paper.ts';
 import { bestImage, imageSlots } from '@/passkit/template/paper-assets.ts';
 import { paperContent } from '@/passkit/template/paper-content.ts';
@@ -141,12 +143,13 @@ export function PaperPreview({
         personalization: (manifest.sample as Record<string, never> | undefined) ?? {},
         design: saved,
         holderName: 'Sample holder',
+        orgTimeZone: timeZone ?? null,
         images: imageSlots(assets),
       });
     } catch {
       return null;
     }
-  }, [passJson, manifest, saved, assets]);
+  }, [passJson, manifest, saved, assets, timeZone]);
   const urls = useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]);
   const files = useMemo(() => {
     const url = (name: string | undefined) => (name ? urls[name] : undefined);
@@ -219,7 +222,9 @@ export function PaperPreview({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Badge tone="neutral">{PRINT_COPY.sample}</Badge>
             {saved.derived ? <Badge tone="neutral">{PRINT_COPY.derived}</Badge> : null}
-            {saved.holder ? null : <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>}
+            {withKind(saved, holderClassOf(manifest)).holder ? null : (
+              <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>
+            )}
             {content?.ink === 'mono' && saved.ink !== 'mono' ? (
               <Badge tone="neutral">{PRINT_COPY.inkMonoNote}</Badge>
             ) : null}
@@ -230,7 +235,13 @@ export function PaperPreview({
             </Button>
           ) : null}
           {onEdit && !saved.derived ? (
-            <PaperEditor design={saved} manifest={manifest} passJson={passJson} onEdit={onEdit} />
+            <PaperEditor
+              design={saved}
+              kind={holderClassOf(manifest)}
+              manifest={manifest}
+              passJson={passJson}
+              onEdit={onEdit}
+            />
           ) : null}
         </>
       )}
