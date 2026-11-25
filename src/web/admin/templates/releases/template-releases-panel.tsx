@@ -4,12 +4,12 @@ import type {
   TemplateReleaseProvider,
   TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
-import { Callout, Card, CardBody, ErrorState, Skeleton, toast } from '../../../ui/index.ts';
+import { Card, CardBody, ErrorState, Skeleton, toast } from '../../../ui/index.ts';
 import { useReleaseActions, useReleaseLists } from './api.ts';
 import { selfApproved } from './eligibility.ts';
 import { ReleaseDialog, type ReleaseOperation } from './release-dialog.tsx';
-import { ReleaseTimeline, timelineEntries } from './release-timeline.tsx';
 import { type TemplateReleasesPanelProps, versionShort } from './types.ts';
+import { versionReleases } from './version-info.ts';
 import { WalletRows } from './wallet-rows.tsx';
 
 export type { TemplateReleasesPanelProps } from './types.ts';
@@ -29,6 +29,7 @@ function ScopedPanel({
   versions,
   capabilities,
   release,
+  children,
 }: TemplateReleasesPanelProps & { orgId: string }) {
   const [provider, setProvider] = useState<TemplateReleaseProvider>('apple');
   const scope: TemplateReleaseScope = { orgId, mode, provider };
@@ -87,26 +88,32 @@ function ScopedPanel({
   );
   if (failed) {
     return (
-      <ErrorState
-        inline
-        subject="template releases"
-        error={failed.error}
-        onRetry={() =>
-          Promise.all([
-            releases.refetch(),
-            candidates.refetch(),
-            liveLists.releases.refetch(),
-            testLists.releases.refetch(),
-          ])
-        }
-      />
+      <div className="grid gap-4">
+        <ErrorState
+          inline
+          subject="template releases"
+          error={failed.error}
+          onRetry={() =>
+            Promise.all([
+              releases.refetch(),
+              candidates.refetch(),
+              liveLists.releases.refetch(),
+              testLists.releases.refetch(),
+            ])
+          }
+        />
+        {children?.(null)}
+      </div>
     );
   }
   if (!releases.data || !candidates.data || !liveLists.releases.data || !testLists.releases.data) {
     return (
-      <div role="status" aria-busy className="grid gap-2">
-        <span className="sr-only">Loading releases</span>
-        <Skeleton className="h-24 w-full" />
+      <div className="grid gap-4">
+        <div role="status" aria-busy className="grid gap-2">
+          <span className="sr-only">Loading releases</span>
+          <Skeleton className="h-24 w-full" />
+        </div>
+        {children?.(null)}
       </div>
     );
   }
@@ -136,24 +143,20 @@ function ScopedPanel({
           candidates: candidates.data.items,
         }}
       />
-      {templateOrigin === 'baked' ? (
-        <Callout>
-          Built-in releases are managed by the system. Duplicate to release your own.
-        </Callout>
-      ) : null}
-      <ReleaseTimeline
-        entries={timelineEntries(live.items, testLists.releases.data.items)}
-        name={name}
-        liveId={live.active?.id ?? null}
-        testId={testLists.releases.data.active?.id ?? null}
-        selfApprovals={selfApprovals}
-        canRestore={canPublish}
-        busy={busy}
-        restorable={restorable}
-        onRestore={(r) =>
-          setOperation({ kind: 'rollback', release: r, generation: liveGeneration })
-        }
-      />
+      {children?.(
+        versionReleases({
+          orgId,
+          mode,
+          live,
+          test: testLists.releases.data,
+          selfApprovals,
+          restorable,
+          onRestore: canPublish
+            ? (r) => setOperation({ kind: 'rollback', release: r, generation: liveGeneration })
+            : null,
+          busy,
+        }),
+      )}
       {operation ? (
         <ReleaseDialog
           operation={operation}
@@ -173,27 +176,28 @@ function ScopedPanel({
 
 /** Mount on the template detail page with the selected organization's capabilities. */
 export function TemplateReleasesPanel(props: TemplateReleasesPanelProps) {
-  if (!props.orgId)
+  const { orgId } = props;
+  const note = !orgId
+    ? 'Select an organization.'
+    : props.templateOrgId !== null && props.templateOrgId !== orgId
+      ? 'Select the owning organization.'
+      : null;
+  if (note || !orgId)
     return (
-      <Card>
-        <CardBody>
-          <p className="text-sm text-fg-muted">Select an organization.</p>
-        </CardBody>
-      </Card>
-    );
-  if (props.templateOrgId !== null && props.templateOrgId !== props.orgId)
-    return (
-      <Card>
-        <CardBody>
-          <p className="text-sm text-fg-muted">Select the owning organization.</p>
-        </CardBody>
-      </Card>
+      <div className="grid gap-4">
+        <Card>
+          <CardBody>
+            <p className="text-sm text-fg-muted">{note ?? 'Select an organization.'}</p>
+          </CardBody>
+        </Card>
+        {props.children?.(null)}
+      </div>
     );
   return (
     <ScopedPanel
       key={JSON.stringify([props.templateId, props.orgId, props.mode])}
       {...props}
-      orgId={props.orgId}
+      orgId={orgId}
     />
   );
 }

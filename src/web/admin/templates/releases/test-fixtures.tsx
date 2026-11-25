@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import type {
   TemplateApproval,
   TemplateCandidate,
@@ -8,6 +8,7 @@ import type {
 } from '@/shared/contracts/template-releases.ts';
 import { json, stubFetch } from '../../../lib/test-utils.tsx';
 import { TooltipProvider } from '../../../ui/tooltip.tsx';
+import { VersionList } from '../version-list.tsx';
 import { TemplateReleasesPanel } from './template-releases-panel.tsx';
 import type { TemplateReleasesPanelProps } from './types.ts';
 
@@ -131,6 +132,24 @@ export const ALL_CAPABILITIES = [
   'templates:publish',
 ] as const;
 
+const LIST_TEMPLATE = {
+  id: TEMPLATE,
+  orgId: SCOPE.orgId,
+  passesOnOlderVersions: 0,
+  versions: VERSIONS.map((v) => ({
+    ...v,
+    createdBy: null,
+    assets: [],
+    report: { ok: true, issues: [] },
+    passCount: 0,
+  })),
+} as unknown as ComponentProps<typeof VersionList>['template'];
+
+/** The Versions list beside the panel, as the template page mounts it. */
+const renderList: NonNullable<TemplateReleasesPanelProps['children']> = (releases) => (
+  <VersionList template={LIST_TEMPLATE} releases={releases} canCompare onReport={() => undefined} />
+);
+
 export function panelProps(
   overrides: Partial<TemplateReleasesPanelProps> = {},
 ): TemplateReleasesPanelProps {
@@ -143,6 +162,7 @@ export function panelProps(
     mode: SCOPE.mode,
     versions: VERSIONS,
     capabilities: ALL_CAPABILITIES,
+    children: renderList,
     ...overrides,
   };
 }
