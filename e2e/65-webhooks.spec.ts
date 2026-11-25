@@ -85,7 +85,7 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
   await page.keyboard.press('Escape');
 
   // Pause and resume.
-  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Pause' }).click();
   await expect(page.getByText('Nothing is sent until you resume.')).toBeVisible();
   await page.getByRole('button', { name: 'Resume' }).click();
@@ -106,7 +106,7 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
   await expect(page.getByText(/Queued \d+ deliver/)).toBeVisible();
 
   // Delete, after the confirm.
-  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByRole('tab', { name: 'Webhook endpoints', selected: true })).toBeVisible();
