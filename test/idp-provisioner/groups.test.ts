@@ -59,7 +59,7 @@ describe.each(['v2', 'admin'] as const)('group edits (%s layout)', (layout) => {
     pocket.addUser('u1');
     pocket.s.putTransform = (ids) => [...ids, 'g-admins'];
     const logs = await captureLogs(() => api.addDeveloper('u1', 'r1'));
-    expect(String(logs.error)).toMatch(/^Error: IDP_DRIFT/);
+    expect(String(logs.error)).toMatch(/^IdpError: IDP_DRIFT/);
     expect(pocket.writes().filter((w) => w.method === 'PUT')).toHaveLength(1);
     const alertLine = logs.lines.find((l) => l.includes('provisioner.drift'));
     expect(alertLine).toContain('"subject":"u1"');

@@ -30,8 +30,11 @@ export async function probe(env: ProvisionerEnv, r: Routes, req: Req) {
   const group = await req('GET', r.group(env.DEVELOPER_GROUP_ID));
   const layoutSuspect = group.status === 404;
   if (!ok(group) && !layoutSuspect) throw failure(group);
-  const groupName = layoutSuspect ? null : str((group.body as { name?: unknown } | null)?.name);
-  if (!layoutSuspect && groupName === null)
+  // Pocket ID answers 404 for every route of the other layout, so nothing past this read can be trusted.
+  if (layoutSuspect)
+    return { unsafe: ['group_not_found'], groupName: null, layoutSuspect, keyExpiresAt: null };
+  const groupName = str((group.body as { name?: unknown } | null)?.name);
+  if (groupName === null)
     throw new IdpError('IDP_UPSTREAM', 'Pocket ID returned an unexpected group.');
 
   const config = await req('GET', r.config);

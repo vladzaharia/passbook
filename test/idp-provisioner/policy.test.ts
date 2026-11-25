@@ -160,6 +160,7 @@ describe('health cache', () => {
       '/api/application-configuration/all',
       '/api/api-keys',
     ]);
+    await resetLedger();
     const admin = setup('admin');
     await admin.api.health();
     expect(admin.pocket.s.seen.map((s) => s.path)).toEqual([

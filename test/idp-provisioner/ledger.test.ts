@@ -63,7 +63,7 @@ describe('budgets fail closed', () => {
     expect(s.pocket.s.tokens).toHaveLength(10);
     s.clock.now += 61_000;
     await s.api.createSignup('r11');
-    await starts('createSignup', 38, s.clock.now - 120_000);
+    await starts('createSignup', 39, s.clock.now - 120_000);
     await expect(s.api.createSignup('r12')).rejects.toThrow(/^IDP_BUDGET/);
   });
 

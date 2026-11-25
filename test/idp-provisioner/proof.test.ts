@@ -132,7 +132,7 @@ describe.each(['v2', 'admin'] as const)('signup proof (%s layout)', (layout) => 
     const { api, pocket } = setup(layout);
     pocket.s.tokenGroups = ['g-dev', 'g-admins'];
     const logs = await captureLogs(() => api.createSignup('inv-1'));
-    expect(String(logs.error)).toMatch(/^Error: IDP_DRIFT/);
+    expect(String(logs.error)).toMatch(/^IdpError: IDP_DRIFT/);
     expect(pocket.s.tokens).toHaveLength(0);
     expect(await rows('idp_signups')).toHaveLength(0);
   });

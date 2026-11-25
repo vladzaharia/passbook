@@ -88,7 +88,7 @@ describe('pocketRequest', () => {
         '/api/x',
       ),
     );
-    expect(String(logs.error)).toBe('Error: IDP_UPSTREAM: Pocket ID was unreachable.');
+    expect(String(logs.error)).toBe('IdpError: IDP_UPSTREAM: Pocket ID was unreachable.');
   });
 });
 

@@ -56,7 +56,13 @@ export async function pocketRequest(
   payload?: unknown,
 ): Promise<PocketResponse> {
   const url = new URL(path, env.POCKET_ID_ORIGIN);
-  if (url.origin !== env.POCKET_ID_ORIGIN || !path.startsWith('/api/'))
+  if (
+    url.origin !== env.POCKET_ID_ORIGIN ||
+    !url.pathname.startsWith('/api/') ||
+    !path.startsWith('/api/') ||
+    path.includes('..') ||
+    path.includes('\\')
+  )
     throw new IdpError('IDP_MISCONFIGURED', 'Request left the Pocket ID origin.');
   let res: Response;
   try {
