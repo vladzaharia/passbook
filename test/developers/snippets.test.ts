@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 import { describe, expect, it, vi } from 'vitest';
 import openapi from '../../docs/api/openapi.v1.json';
-import guides from '../../docs/developers/snippets/guides/index.json';
 import { validateAgainst } from '../helpers/openapi-validate.ts';
 import { type Call, kit, snippetWorld } from './snippet-world.ts';
 
@@ -16,6 +15,12 @@ vi.mock('node:fs/promises', () => ({
 }));
 
 const ts = import.meta.glob('../../docs/developers/snippets/generated/ts/*.ts');
+const guideRows = Object.values(
+  import.meta.glob<Guide[]>('../../docs/developers/snippets/guides/index.*.json', {
+    import: 'default',
+    eager: true,
+  }),
+).flat();
 const guideTs = import.meta.glob('../../docs/developers/snippets/guides/*.ts');
 const guideSh = import.meta.glob<string>('../../docs/developers/snippets/guides/*.sh', {
   query: '?raw',
@@ -138,18 +143,21 @@ interface Guide {
   guide: string;
   ops: string[];
   files: { ts: string; curl?: string };
-  expect?: 'reached' | 'fails' | 'handler';
+  sandbox?: string;
+  expect?: 'fails' | 'handler';
 }
-const hand = guides as Guide[];
+const hand = guideRows;
 
-/** Every call must answer 2xx; `reached` and `fails` are for snippets that need a device or show an error. */
+/** Every call must answer 2xx, except the code the row says a sandbox answers (`sandbox`) or `fails` for a snippet that shows an error. */
 function handFailures(g: Guide, calls: Call[]): string[] {
   if (calls.length === 0) return [`${g.id}: made no request`];
   const line = (c: Call) =>
     `${g.id}: ${c.method} ${c.path} ${c.status} ${c.code} ${c.detail ?? ''}`;
-  if (g.expect === 'reached') return calls.filter((c) => !reached(c)).map(line);
   if (g.expect === 'fails') return calls.filter((c) => c.status < 400 || c.status >= 500).map(line);
-  return calls.filter((c) => c.status >= 300).map(line);
+  // The webhook host check's DNS-over-HTTPS lookup goes through the same fetch; it is not the snippet's call.
+  return calls
+    .filter((c) => c.status >= 300 && c.code !== g.sandbox && c.path !== '/dns-query')
+    .map(line);
 }
 
 describe('guide snippets', () => {

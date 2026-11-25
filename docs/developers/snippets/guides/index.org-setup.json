@@ -1,0 +1,63 @@
+[
+  {
+    "id": "pass-setup-read",
+    "title": "Read an organization setup",
+    "guide": "org-setup",
+    "ops": [
+      "pass-setup.getOrgsByOrgIdPassSetup"
+    ],
+    "files": {
+      "ts": "pass-setup-read.ts",
+      "curl": "pass-setup-read.sh"
+    }
+  },
+  {
+    "id": "pass-setup-logo",
+    "title": "Stage a logo",
+    "guide": "org-setup",
+    "ops": [
+      "pass-setup.postOrgsByOrgIdBrandAssets"
+    ],
+    "files": {
+      "ts": "pass-setup-logo.ts",
+      "curl": "pass-setup-logo.sh"
+    }
+  },
+  {
+    "id": "pass-setup-preview",
+    "title": "Preview a brand change",
+    "guide": "org-setup",
+    "ops": [
+      "pass-setup.patchOrgsByOrgIdPassSetup"
+    ],
+    "files": {
+      "ts": "pass-setup-preview.ts",
+      "curl": "pass-setup-preview.sh"
+    },
+    "sandbox": "PASS_SETUP_CHANGED"
+  },
+  {
+    "id": "pass-setup-apply",
+    "title": "Apply a brand change",
+    "guide": "org-setup",
+    "ops": [
+      "pass-setup.patchOrgsByOrgIdPassSetup"
+    ],
+    "files": {
+      "ts": "pass-setup-apply.ts"
+    }
+  },
+  {
+    "id": "pass-setup-block",
+    "title": "Preview blocking a channel",
+    "guide": "org-setup",
+    "ops": [
+      "pass-setup.patchOrgsByOrgIdPassSetup"
+    ],
+    "files": {
+      "ts": "pass-setup-block.ts",
+      "curl": "pass-setup-block.sh"
+    },
+    "expect": "fails"
+  }
+]

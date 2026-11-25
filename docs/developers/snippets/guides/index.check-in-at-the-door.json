@@ -1,0 +1,27 @@
+[
+  {
+    "id": "check-in-rules",
+    "title": "Set how often a pass admits",
+    "guide": "check-in-at-the-door",
+    "ops": [
+      "passes.putPassesByIdCheckIn"
+    ],
+    "files": {
+      "ts": "check-in-rules.ts",
+      "curl": "check-in-rules.sh"
+    }
+  },
+  {
+    "id": "door-check-in",
+    "title": "Check a pass in at the door",
+    "guide": "check-in-at-the-door",
+    "ops": [
+      "scan.postScanResolve",
+      "scan.postScanActions"
+    ],
+    "files": {
+      "ts": "door-check-in.ts"
+    },
+    "sandbox": "TERMINAL_NOT_FOUND"
+  }
+]
