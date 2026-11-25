@@ -144,4 +144,24 @@ describe('rolesFromGroups', () => {
       expect(rolesFromGroups(pinned, ['wallet_users'], undefined, 'sub-a')).toEqual(['user']);
     });
   });
+
+  describe('a name configured in more than one variable', () => {
+    const dup = { ...env, OIDC_USER_GROUP: 'wallet_users,wallet_admins' };
+
+    it('grants only the lowest role and warns with a stable code', () => {
+      const warn = vi.fn();
+      expect(rolesFromGroups(dup, ['wallet_admins'], { warn })).toEqual(['user']);
+      expect(warn).toHaveBeenCalledWith('auth.oidc_group_duplicate', {
+        code: 'GROUP_CONFIGURED_TWICE',
+        configured: 'wallet_admins',
+        variables: ['OIDC_USER_GROUP', 'OIDC_PLATFORM_ADMIN_GROUP'],
+      });
+    });
+
+    it('leaves the other names alone and stays quiet when the claim lacks the name', () => {
+      const warn = vi.fn();
+      expect(rolesFromGroups(dup, ['wallet_org_admins'], { warn })).toEqual(['user', 'console']);
+      expect(warn).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -74,11 +74,23 @@ const csv = (value: string | undefined) =>
     .map((part) => part.trim())
     .filter((part) => part.length > 0);
 
+/** The exact names a group variable holds (a comma list); empty when unset. */
+export const configuredNames = (env: object, variable: string) => csv(envString(env, variable));
+
+/** Lowest role first: a name configured twice grants only the lowest of its variables. */
+const GROUP_VARIABLES = [
+  'OIDC_USER_GROUP',
+  'OIDC_DEVELOPER_GROUP',
+  'OIDC_ADMIN_GROUP',
+  'OIDC_PLATFORM_ADMIN_GROUP',
+] as const;
+
 /**
  * A claim matches a configured group name exactly, case included. Each `OIDC_*_GROUP` var holds one
  * name or a comma list of exact names (the rename window: old and new name side by side); every
- * alias grants the same role. If Polaris ID normalises a group's name in the claim
- * (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
+ * alias grants the same role. A name configured in more than one variable grants only the lowest
+ * role among them and logs `GROUP_CONFIGURED_TWICE`. If Polaris ID normalises a group's name in the
+ * claim (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
  *
  * Platform admins get everything. The admin group carries `console` (it opens the console where
  * `OIDC_CONSOLE_GROUP_REQUIRED` is on; which orgs is in-app membership). While
@@ -91,11 +103,23 @@ export function rolesFromGroups(
   log?: Pick<Logger, 'warn'>,
   subject?: string,
 ): Role[] {
+  const lowest = new Map<string, string>();
+  for (const variable of GROUP_VARIABLES)
+    for (const name of configuredNames(env, variable)) {
+      const first = lowest.get(name);
+      if (first === undefined) lowest.set(name, variable);
+      else if (first !== variable && groups.includes(name))
+        log?.warn('auth.oidc_group_duplicate', {
+          code: 'GROUP_CONFIGURED_TWICE',
+          configured: name,
+          variables: [first, variable],
+        });
+    }
   const has = (variable: string) => {
     let matched = false;
-    for (const name of csv(envString(env, variable))) {
+    for (const name of configuredNames(env, variable)) {
       if (groups.includes(name)) {
-        matched = true;
+        if (lowest.get(name) === variable) matched = true;
         continue;
       }
       // Grants nothing: a group that matches only after the old normalising is a config mistake to fix.

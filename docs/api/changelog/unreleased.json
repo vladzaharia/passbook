@@ -1176,6 +1176,14 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
+    "key": "GET /api/v1/settings 200.oidc.platformAdminPinned: field added",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field added",
+    "note": "The oidc block reports how many Polaris ID subjects pin platform admin (0: the group alone decides). Its group fields are now lists of exact names instead of one name or null; an empty list means unset."
+  },
+  {
     "key": "GET /api/v1/status/incidents new operation",
     "class": "additive",
     "operationId": "status.getStatusIncidents",
@@ -4131,6 +4139,14 @@
     "op": "PUT /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.platformAdminPinned: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field added",
+    "note": "The oidc block reports how many Polaris ID subjects pin platform admin (0: the group alone decides). Its group fields are now lists of exact names instead of one name or null; an empty list means unset."
   },
   {
     "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",

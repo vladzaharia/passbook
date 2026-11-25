@@ -25,6 +25,7 @@ import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
+import { configuredNames } from '../auth/service.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
@@ -246,10 +247,11 @@ describe('settings api', () => {
     });
     expect(body.oidc).toEqual({
       issuer: appEnv.OIDC_ISSUER,
-      platformAdminGroup: appEnv.OIDC_PLATFORM_ADMIN_GROUP || null,
-      adminGroup: appEnv.OIDC_ADMIN_GROUP || null,
-      developerGroup: appEnv.OIDC_DEVELOPER_GROUP || null,
-      userGroup: appEnv.OIDC_USER_GROUP || null,
+      platformAdminGroup: configuredNames(appEnv, 'OIDC_PLATFORM_ADMIN_GROUP'),
+      adminGroup: configuredNames(appEnv, 'OIDC_ADMIN_GROUP'),
+      developerGroup: configuredNames(appEnv, 'OIDC_DEVELOPER_GROUP'),
+      userGroup: configuredNames(appEnv, 'OIDC_USER_GROUP'),
+      platformAdminPinned: 0,
       consoleGroupRequired: false,
     });
     expect(body.released).toEqual({
@@ -263,10 +265,11 @@ describe('settings api', () => {
     expect(put.status).toBe(200);
     expect(((await put.json()) as List).oidc).toEqual({
       issuer: appEnv.OIDC_ISSUER,
-      platformAdminGroup: appEnv.OIDC_PLATFORM_ADMIN_GROUP || null,
-      adminGroup: appEnv.OIDC_ADMIN_GROUP || null,
-      developerGroup: appEnv.OIDC_DEVELOPER_GROUP || null,
-      userGroup: appEnv.OIDC_USER_GROUP || null,
+      platformAdminGroup: configuredNames(appEnv, 'OIDC_PLATFORM_ADMIN_GROUP'),
+      adminGroup: configuredNames(appEnv, 'OIDC_ADMIN_GROUP'),
+      developerGroup: configuredNames(appEnv, 'OIDC_DEVELOPER_GROUP'),
+      userGroup: configuredNames(appEnv, 'OIDC_USER_GROUP'),
+      platformAdminPinned: 0,
       consoleGroupRequired: false,
     });
     const ctx = createServiceContext(appEnv);

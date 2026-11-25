@@ -57916,28 +57916,31 @@
                 "type": "string"
               },
               "platformAdminGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "adminGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "developerGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "userGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "platformAdminPinned": {
+                "type": "integer"
               },
               "consoleGroupRequired": {
                 "type": "boolean"
@@ -57949,6 +57952,7 @@
               "adminGroup",
               "developerGroup",
               "userGroup",
+              "platformAdminPinned",
               "consoleGroupRequired"
             ]
           },
@@ -58091,28 +58095,31 @@
                 "type": "string"
               },
               "platformAdminGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "adminGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "developerGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "userGroup": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "platformAdminPinned": {
+                "type": "integer"
               },
               "consoleGroupRequired": {
                 "type": "boolean"
@@ -58124,6 +58131,7 @@
               "adminGroup",
               "developerGroup",
               "userGroup",
+              "platformAdminPinned",
               "consoleGroupRequired"
             ]
           },
