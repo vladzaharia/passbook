@@ -7,10 +7,10 @@ import {
   type Source,
 } from './bindings.ts';
 import {
-  everyKey,
   type DesignDoc,
   type Dict,
   dictOf,
+  everyKey,
   fieldsOf,
   findField,
   type GroupId,

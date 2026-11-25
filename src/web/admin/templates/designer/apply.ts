@@ -23,6 +23,7 @@ import {
 import { type PaperPatch, setPaper } from './ops-paper.ts';
 import {
   addField,
+  addGenericLayout,
   moveField,
   nudgeField,
   removeField,
@@ -33,9 +34,8 @@ import {
   setFieldValue,
   setPassProp,
   setPoster,
-  setTarget,
-  addGenericLayout,
   setStyle,
+  setTarget,
   updateField,
 } from './ops-pass.ts';
 import { type ActionsOp, applyActionsOp } from './scan/actions/ops.ts';

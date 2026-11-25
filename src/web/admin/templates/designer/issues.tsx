@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, TriangleAlert } from 'lucide-react';
-import { Button } from '../../../ui/index.ts';
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { issueWords } from '@/shared/copy/issues.ts';
+import { Button } from '../../../ui/index.ts';
 import type { Op } from './apply.ts';
 import { useDesigner } from './context.tsx';
 import { contrastWarnings } from './contrast.ts';

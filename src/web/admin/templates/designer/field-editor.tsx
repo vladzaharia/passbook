@@ -4,7 +4,7 @@ import { fieldSource } from './bindings.ts';
 import { useDesigner } from './context.tsx';
 import { NameEdit, PickEdit, SourcePicker, TextEdit } from './controls.tsx';
 import { readInputs } from './inputs.ts';
-import { everyKey, type Dict, type GroupId } from './model.ts';
+import { type Dict, everyKey, type GroupId } from './model.ts';
 
 const NONE = 'none';
 const words = (s: string) =>

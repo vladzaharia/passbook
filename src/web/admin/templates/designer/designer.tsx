@@ -162,7 +162,7 @@ export function Designer({
     if (added.kind === 'input') return focusTarget({ section: 'inputs', key: added.key });
     const at = findField(state.doc.passJson, added.key, state.doc.target);
     if (at) focusTarget({ section: at.group, key: added.key });
-  }, [added, state.doc.passJson, focusTarget]);
+  }, [added, state.doc.passJson, state.doc.target, focusTarget]);
 
   useDraftPersistence(draftKey, version, state.doc, dirty);
 
