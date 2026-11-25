@@ -1,6 +1,9 @@
 import { type Context, Hono } from 'hono';
 import { ArrowLeft } from 'lucide-react';
-import { ACCESS_FORM_MAX_BYTES } from '../../../shared/contracts/access-request.ts';
+import {
+  ACCESS_FORM_MAX_BYTES,
+  ACCESS_FORM_POST_MAX_BYTES,
+} from '../../../shared/contracts/access-request.ts';
 import { ACCESS_COPY } from '../../../shared/copy/access.ts';
 import { MARKETING_PATHS } from '../../../shared/marketing.ts';
 import { limitBody } from '../../platform/body-limit.ts';
@@ -37,12 +40,16 @@ function parseJson(text: string): Record<string, unknown> {
 
 /** A browser form post that failed for a reason a reload cannot fix: the page says so and links back. */
 function failurePage(c: Context<AppBindings>, error: AppError): Response {
-  const limited = error.status === 429;
   const html = renderErrorPage({
     status: error.status,
     nonce: c.var.nonce,
     theme: requestTheme(c),
-    line: limited ? ACCESS_COPY.tooMany : ACCESS_COPY.unavailable,
+    line:
+      error.status === 429
+        ? ACCESS_COPY.tooMany
+        : error.status === 413
+          ? ACCESS_COPY.tooLarge
+          : ACCESS_COPY.unavailable,
     action: { label: ACCESS_COPY.back, href: MARKETING_PATHS.access, icon: ArrowLeft },
   });
   return new Response(html, {
@@ -55,14 +62,23 @@ function failurePage(c: Context<AppBindings>, error: AppError): Response {
   });
 }
 
-marketingRoutes.post('/', sameOriginOnly, limitBody(ACCESS_FORM_MAX_BYTES), async (c) => {
+marketingRoutes.post('/', sameOriginOnly, async (c) => {
   const type = (c.req.header('content-type') ?? '').toLowerCase();
   const json = type.startsWith(JSON_TYPE);
   try {
-    return await accept(c, type, json);
+    let out: Response | undefined;
+    // JSON from the page's script stays small; a plain form post is percent-encoded and may be longer.
+    await limitBody(json ? ACCESS_FORM_MAX_BYTES : ACCESS_FORM_POST_MAX_BYTES)(c, async () => {
+      out = await accept(c, type, json);
+    });
+    return out as Response;
   } catch (error) {
     // No script runs on a plain form post, so the refusal must explain itself.
-    if (!json && error instanceof AppError && (error.status === 429 || error.status === 503))
+    if (
+      !json &&
+      error instanceof AppError &&
+      (error.status === 429 || error.status === 503 || error.status === 413)
+    )
       return failurePage(c, error);
     throw error;
   }

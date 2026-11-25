@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { makeEnv } from '../../../../test/helpers/env.ts';
 import { fakeAuth } from '../../../../test/helpers/fake-auth.ts';
 import { fakeRateLimiter } from '../../../../test/helpers/fakes.ts';
+import { ACCESS_COPY } from '../../../shared/copy/access.ts';
 import { createApp } from '../../app.ts';
 import type { AppEnv } from '../../platform/env.ts';
 
@@ -138,6 +139,31 @@ describe('POST /access', () => {
     const { sent, post } = await setup();
     expect((await post(form({ purpose: 'Something else' }))).status).toBe(303);
     expect(sent[0]?.text).toContain('For: Something else');
+  });
+
+  it('a long valid entry in Cyrillic posts as a form but not as JSON over 4 KB', async () => {
+    const { sent, post } = await setup();
+    const long = {
+      name: 'Я'.repeat(120),
+      org: 'Я'.repeat(160),
+      message: 'Я'.repeat(600),
+    };
+    // Percent-encoded, this is far over 4 KB.
+    expect((await post(form(long))).status).toBe(303);
+    expect(sent).toHaveLength(1);
+    expect((await post({ ...VALID, junk: 'x'.repeat(5000) }, { json: true })).status).toBe(413);
+  });
+
+  it('a form post over 12 KB gets the error page with a link back', async () => {
+    const { sent, post } = await setup();
+    const res = await post(form({ junk: 'x'.repeat(13000) }), {
+      headers: { accept: 'text/html' },
+    });
+    expect(res.status).toBe(413);
+    const html = await res.text();
+    expect(html).toContain(ACCESS_COPY.tooLarge);
+    expect(html).toContain('href="/access"');
+    expect(sent).toHaveLength(0);
   });
 
   it('a filled honeypot answers success and sends nothing', async () => {

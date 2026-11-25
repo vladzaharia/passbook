@@ -7,6 +7,7 @@ export const ACCESS_COPY = {
   message: 'Keep the message under 600 characters, in plain text.',
   back: 'Back to the form',
   invalid: 'Check the form and try again.',
+  tooLarge: 'That request is too long. Shorten it and try again.',
   tooMany: 'Too many requests. Try again in a minute.',
   unavailable: 'Your request was not sent. Email support@passbook.mobile.',
 } as const;

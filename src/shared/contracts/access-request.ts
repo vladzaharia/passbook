@@ -16,6 +16,8 @@ export const ACCESS_NAME_MAX = 120;
 export const ACCESS_ORG_MAX = 160;
 export const ACCESS_MESSAGE_MAX = 600;
 export const ACCESS_FORM_MAX_BYTES = 4096;
+/** A form post percent-encodes every non-ASCII byte, so a long valid entry in Cyrillic or CJK needs room. */
+export const ACCESS_FORM_POST_MAX_BYTES = 12 * 1024;
 
 /** Controls and invisible formatting (bidi overrides, zero-width marks) never belong in a name or organization. */
 const HIDDEN = /[\p{Cc}\p{Cf}]/u;
