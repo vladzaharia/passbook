@@ -45,6 +45,7 @@ export function parseTabular(bytes: Uint8Array, options: ParseOptions = {}): Par
     }
   } catch (error) {
     if (error instanceof TabularError) throw error;
-    throw new TabularError('FILE_DAMAGED', 'The file could not be read.');
+    // The original error rides as `cause` so a caller can log its name, never its message.
+    throw new TabularError('FILE_DAMAGED', 'The file could not be read.', error);
   }
 }

@@ -46,8 +46,8 @@ export type TabularErrorCode =
 /** The only error the parsers throw. Messages are one sentence and carry no file content. */
 export class TabularError extends Error {
   readonly code: TabularErrorCode;
-  constructor(code: TabularErrorCode, message: string) {
-    super(message);
+  constructor(code: TabularErrorCode, message: string, cause?: unknown) {
+    super(message, cause === undefined ? undefined : { cause });
     this.name = 'TabularError';
     this.code = code;
   }
