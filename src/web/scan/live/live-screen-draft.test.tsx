@@ -30,6 +30,7 @@ const view = (
   screen: 'ready' | 'review',
   headline: string,
   sub: string | null,
+  figure?: string,
 ): ScanCustomerView => ({
   v: 1,
   screen,
@@ -43,6 +44,7 @@ const view = (
   lines: [],
   milestone: null,
   test: false,
+  ...(figure ? { figure } : {}),
 });
 
 const ready = (id = READY): ScanLiveRow => ({
@@ -60,8 +62,8 @@ const ready = (id = READY): ScanLiveRow => ({
   customer: view('ready', 'Hi, Sam', null),
 });
 
-const draft = (ref: string, at: number, amount = 'To pay $12.00') => ({
-  draft: { ref, at, customer: view('review', amount, 'Balance after: $30.50') },
+const draft = (ref: string, at: number, figure = '$12.00') => ({
+  draft: { ref, at, customer: view('review', 'To pay', 'Balance after: $30.50', figure) },
 });
 
 function screen() {
@@ -101,8 +103,8 @@ describe('customer screen draft', () => {
     expect(hero).toHaveTextContent('Balance after: $30.50');
     expect(hero).toHaveTextContent('Hi, Sam');
     expect(hero?.querySelector('[data-buddy]')).toHaveAttribute('data-scene', 'inspect');
-    act(() => socket.say(draft(READY, Date.now() + 5, 'To pay $15.00')));
-    expect(getByTestId('customer-draft')).toHaveTextContent('To pay $15.00');
+    act(() => socket.say(draft(READY, Date.now() + 5, '$15.00')));
+    expect(getByTestId('customer-draft')).toHaveTextContent('$15.00');
   });
 
   it('ignores a draft for another ref, an old one and an out-of-order one', () => {

@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { liveDraft, nextDraft, splitHeadline, withoutReplacedReady } from './customer-draft.ts';
+import { liveDraft, nextDraft, reviewAmount, withoutReplacedReady } from './customer-draft.ts';
 
-const view = { band: { headline: 'To pay $12.00', sub: null } } as never;
+const view = { band: { headline: 'To pay', sub: null }, figure: '$12.00' } as never;
 
 describe('customer draft', () => {
-  it('splits the headline by the copy', () => {
-    expect(splitHeadline('To pay $12.00')).toEqual({ label: 'To pay', value: '$12.00' });
-    expect(splitHeadline('Adding 20,00 €')).toEqual({ label: 'Adding', value: '20,00 €' });
-    expect(splitHeadline('Hello')).toEqual({ label: '', value: 'Hello' });
+  it('reads the words and the figure from the view', () => {
+    expect(reviewAmount(view)).toEqual({ label: 'To pay', value: '$12.00' });
+    expect(reviewAmount({ band: { headline: 'Hello', sub: null } } as never)).toBeUndefined();
   });
   it('the latest at wins and a cancel for the same ref clears', () => {
     const a = nextDraft(null, { ref: 'r', at: 10, customer: view });

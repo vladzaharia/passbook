@@ -11,7 +11,7 @@ import './live-screen.css';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { MonitorHardware } from '../hardware/hardware-control.tsx';
-import { liveDraft, splitHeadline, withoutReplacedReady } from './customer-draft.ts';
+import { liveDraft, reviewAmount, withoutReplacedReady } from './customer-draft.ts';
 import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
 import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
@@ -150,7 +150,7 @@ export function LiveScreen({
         brandName={orgName || 'PassBook'}
         logoUrl={logoUrl}
         title={view ? view.band.headline : latest ? latest.label : (welcome ?? undefined)}
-        amount={shown ? splitHeadline(shown.band.headline) : undefined}
+        amount={shown ? reviewAmount(shown) : undefined}
         eyebrow={view?.greet ?? undefined}
         hint={view?.band.sub ?? undefined}
         notice={connected ? null : CUSTOMER_COPY.reconnecting}

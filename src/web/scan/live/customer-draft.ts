@@ -1,7 +1,6 @@
 import type { ScanCustomerView } from '../../../shared/contracts/scan-customer.ts';
 import type { ScanLiveDraft } from '../../../shared/contracts/scan-draft.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
-import { CUSTOMER_COPY } from '../../../shared/copy/scan-customer.ts';
 
 /** A draft older than this is a read the desk walked away from. */
 export const DRAFT_HOLD_MS = 60_000;
@@ -32,15 +31,9 @@ export function liveDraft(
   return draft;
 }
 
-/** "To pay $12.00" into its words and its figure, by the copy's own template. */
-export function splitHeadline(headline: string): { label: string; value: string } {
-  for (const template of [CUSTOMER_COPY.toPay, CUSTOMER_COPY.adding]) {
-    const at = template.indexOf('{amount}');
-    const label = (at < 0 ? template : template.slice(0, at)).trim();
-    if (label && headline.startsWith(label) && headline.length > label.length)
-      return { label, value: headline.slice(label.length).trim() };
-  }
-  return { label: '', value: headline };
+/** The words and the figure of a review body ("To pay", "$12.00"); none when the view carries no figure. */
+export function reviewAmount(view: ScanCustomerView): { label: string; value: string } | undefined {
+  return view.figure ? { label: view.band.headline, value: view.figure } : undefined;
 }
 
 /** Each character with its place counted from the right: a digit rolls only when its place changes. */
