@@ -1,3 +1,5 @@
+import { formatWallTime } from '@/web/lib/format.ts';
+import { zoneLabel } from '@/web/lib/timezones.ts';
 import { CheckboxField } from '@/web/ui/checkbox.tsx';
 import type { DateTimeValue } from '@/web/ui/date-time-field.tsx';
 import { DateTimeField } from '@/web/ui/date-time-field.tsx';
@@ -155,7 +157,7 @@ export function StepLimits({ draft, set, errors, clear }: StepProps) {
 }
 
 const when = (v: DateTimeValue | null) =>
-  v?.local ? `${v.local.replace('T', ' ')} ${v.zone}` : 'Not set';
+  v?.local ? `${formatWallTime(v.local)}, ${zoneLabel(v.zone)}` : 'Not set';
 
 export function EventReview({
   draft,

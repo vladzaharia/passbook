@@ -2,6 +2,7 @@ import { WizardReview } from '@/web/ui/index.ts';
 import type { SessionDraft } from './draft.ts';
 import { ruleLabel, type SessionStepId } from './session-steps.ts';
 
+const DIRECTION = { pass: 'Pass rules', in: 'In', out: 'Out', both: 'Both' } as const;
 const yes = (on: boolean) => (on ? 'On' : 'Off');
 
 /** What the session will do, by step, each with a way back to change it. */
@@ -37,7 +38,7 @@ export function SessionReview({
           id: 'access',
           title: 'Access',
           items: [
-            { label: 'Direction', value: draft.direction },
+            { label: 'Direction', value: DIRECTION[draft.direction] },
             { label: 'Desk actions', value: yes(draft.deskActions) },
           ],
         },
