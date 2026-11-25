@@ -3662,6 +3662,7 @@ class HoldersOffboardResponse(_Model):
     holders: int
     passes: int
     tags: int
+    more: bool
 
 class HoldersReassignParams(_Model):
     passId: str

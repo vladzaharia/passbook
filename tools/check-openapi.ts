@@ -9,6 +9,7 @@ import { exampleFailures } from './lib/example-lint.ts';
 import { showAt } from './lib/git-show.ts';
 import {
   type ApprovedRemoval,
+  approvedRemovalFailures,
   breakingChanges,
   type Doc,
   withoutApprovedRemovals,
@@ -35,6 +36,7 @@ const failures = ratchetFailures({
   approvedIds: approved.map((a) => a.operationId),
 });
 if (prev) {
+  failures.push(...approvedRemovalFailures(prev, next, approved));
   // A breaking change ships only with a new dated PassBook-Version (docs/api/versions.json) that carries a migration note.
   // A breaking change the changelog marks `unversioned` (a safety fix) needs no version; any other does.
   const broken = versionedBreaks(

@@ -60,6 +60,7 @@ describe('offboard', () => {
       holders: 1,
       passes: 1,
       tags: 0,
+      more: false,
     });
     expect(await statusOf(mine.id)).toEqual({ status: 'active' });
     expect(await offboard(kit.ctx, actor, a, { ...req, dryRun: false })).toMatchObject({
@@ -112,7 +113,7 @@ describe('offboard', () => {
     expect((await state(lost))?.lost_at).not.toBeNull();
   });
 
-  it('handles more than 100 passes of one email, each with a tag', async () => {
+  it('handles 100 passes a call and says more until all 150, each with a tag, are done', async () => {
     const a = await admin();
     const email = 'many@example.test';
     const passes = [];
@@ -139,13 +140,22 @@ describe('offboard', () => {
     expect(await offboard(kit.ctx, actor, a, req)).toEqual({
       dryRun: true,
       holders: 1,
-      passes: 150,
-      tags: 150,
+      passes: 100,
+      tags: 100,
+      more: true,
     });
-    expect(await offboard(kit.ctx, actor, a, { ...req, dryRun: false })).toMatchObject({
-      passes: 150,
-      tags: 150,
+    const live = { ...req, dryRun: false };
+    expect(await offboard(kit.ctx, actor, a, live)).toMatchObject({
+      passes: 100,
+      tags: 100,
+      more: true,
     });
+    expect(await offboard(kit.ctx, actor, a, live)).toMatchObject({
+      passes: 50,
+      tags: 50,
+      more: false,
+    });
+    expect(await offboard(kit.ctx, actor, a, live)).toMatchObject({ passes: 0, more: false });
     const voided = await all<{ id: string }>(
       kit.env.DB,
       "SELECT id FROM passes WHERE holder_email = ? AND status = 'voided'",

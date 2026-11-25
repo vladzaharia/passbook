@@ -13,6 +13,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { policyActor } from './dto.ts';
 import type { ScanActor } from './guard.ts';
+import { passInScope } from './history-scope.ts';
 import { markOut } from './occupancy/mark-out.ts';
 import { insidePlaces } from './repo-sign-out.ts';
 import { scanPolicy } from './rules.ts';
@@ -38,7 +39,7 @@ export async function signOut(
     throw new ForbiddenError('Only Desk and above can sign someone out.', 'FORBIDDEN');
   const db = ctx.env.DB;
   const pass = await getPass(db, req.passId, actor.orgId);
-  if (!pass || pass.mode !== actor.mode)
+  if (!pass || pass.mode !== actor.mode || !passInScope(actor, pass.templateId))
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   let stay: number | null = null;
   let marked = 0;

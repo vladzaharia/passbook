@@ -1581,6 +1581,7 @@ export type HoldersOffboardResponse = {
   holders: number;
   passes: number;
   tags: number;
+  more: boolean;
 };
 
 export type HoldersReassignParams = {

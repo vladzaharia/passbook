@@ -74,6 +74,18 @@ describe('POST /scan/sign-out', () => {
     expect((await signOut(desk.headers, foreign.id)).status).toBe(404);
   });
 
+  it("will not sign out a pass outside the device's templates", async () => {
+    const zone = await trackedZone();
+    const other = await accessTemplate(ACCESS, 'Other card');
+    const pass = await personInside(other, 'Mia Stone', [`zone:${zone.id}`], {
+      input: { plan: 'guest' },
+    });
+    const desk = await station([tpl], [zone.id]);
+    const res = await signOut(desk.headers, pass.id);
+    expect(res.status).toBe(404);
+    expect((await presenceOf(pass.id, `zone:${zone.id}`))[0]?.state).toBe('in');
+  });
+
   it('is refused at a door device', async () => {
     const door = await makeDoor([tpl]);
     const pass = await kit.scanPass(tpl, { plan: 'guest' });

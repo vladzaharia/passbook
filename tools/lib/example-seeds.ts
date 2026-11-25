@@ -732,7 +732,7 @@ export const SEEDS: Record<string, unknown> = {
     text: 'Your pass is ready. Day pass for Ada Example.',
     forwarding: 'none',
   },
-  'offboard.postOffboard response': { dryRun: false, holders: 1, passes: 2, tags: 0 },
+  'offboard.postOffboard response': { dryRun: false, holders: 1, passes: 2, tags: 0, more: false },
   'connections.postConnectionsTestConfig request': {
     orgId: IDS.org,
     connectorType: CONNECTION.connectorType,
