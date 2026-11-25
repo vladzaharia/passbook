@@ -178,3 +178,8 @@ END;
 CREATE TRIGGER nfc_tag_admin_keys_no_delete BEFORE DELETE ON nfc_tag_admin_keys
 WHEN EXISTS (SELECT 1 FROM nfc_tags t WHERE t.id = OLD.tag_id)
 BEGIN SELECT RAISE(ABORT, 'admin_keys_fixed'); END;
+
+-- A developer org holds no Live row, whoever writes it (0156). Created last, so it fires before the checks above.
+CREATE TRIGGER nfc_tag_programs_developer_no_live BEFORE INSERT ON nfc_tag_programs
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live data'); END;
