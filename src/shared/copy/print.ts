@@ -77,17 +77,14 @@ export const PRINT_COPY = {
   useDerived: 'Use derived layout',
 } as const;
 
-/** What a printed ticket says besides the facts. `oneTicket` says the print and the phone are one. */
+/** What a printed ticket says besides the facts. `oneTicket` says the print and the phone are one; `once` comes from the check-in rule. */
 export const PAPER_COPY = {
   before: 'Before you go',
   beforePickup: 'Your order',
-  oneTicket: (noun: string) =>
-    noun === 'ticket'
-      ? [
-          'One ticket',
-          'This print and your phone ticket are the same ticket. Either one gets you in once.',
-        ]
-      : [`One ${noun}`, `This print and your phone ${noun} are the same ${noun}. Use either one.`],
+  oneTicket: (noun: string, once: boolean) => [
+    `One ${noun}`,
+    `This print and your phone ${noun} are the same ${noun}. ${once ? 'Either one gets you in once.' : 'Use either one.'}`,
+  ],
   reprints: ['Reprints', 'A reprint cancels this copy. Only the newest print works.'],
   atDoor: ['At the door', 'Keep the code flat and unmarked. Staff can type the ticket code.'],
   folding: ['Folding', 'Fold on the marks, in half and in half again. The code stays outside.'],

@@ -16,7 +16,7 @@ import { applyDefaults } from './manifest.ts';
 import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
 import { paperZoneOf } from './paper-format.ts';
 import { type PaperColors, paperInk } from './paper-ink.ts';
-import { type Kinded, kindContent, kindOf } from './paper-kinds.ts';
+import { ISO, type Kinded, kindContent, kindOf } from './paper-kinds.ts';
 
 export type PaperArt = 'artwork' | 'background' | 'thumbnail' | 'strip';
 export interface PaperFact {
@@ -39,6 +39,8 @@ export interface PaperContent {
   kicker: string;
   /** "Ticket", "Pass": what the phone copy is called in the one-ticket line. */
   noun: string;
+  /** The template's check-in admits once; otherwise the print and the phone both keep working. */
+  once: boolean;
   start?: string;
   end?: string;
   doors?: string;
@@ -68,7 +70,10 @@ export interface PaperContent {
 
 export interface PaperContentInput {
   passJson: PassJson;
-  manifest: Pick<TemplateManifest, 'wallets' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'>;
+  manifest: Pick<
+    TemplateManifest,
+    'wallets' | 'behaviors' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'
+  >;
   personalization: Personalization;
   design: PaperDesign;
   /** The holder's name when the pass has one; never an email address. */
@@ -132,19 +137,28 @@ export function paperContent(input: PaperContentInput): PaperContent {
     lookups: manifest.lookups ?? {},
   };
   const evalExpr = (e: Expr) => evaluate(e, scope);
-  const { roles } = resolveRoles(
-    {
-      style,
-      org: passJson.organizationName,
-      fields,
-      ...(passJson.semantics ? { semantics: passJson.semantics } : {}),
-      barcodes: [],
-      dates: relevance.dates,
-      locations: relevance.locations,
-    },
+  const roleInput = {
+    style,
+    org: passJson.organizationName,
+    fields,
+    ...(passJson.semantics ? { semantics: passJson.semantics } : {}),
+    barcodes: [],
+    locations: relevance.locations,
+  };
+  const { roles: resolved } = resolveRoles(
+    { ...roleInput, dates: relevance.dates },
     manifest.wallets?.roles,
     evalExpr,
   );
+  // The lock-screen relevance date sits early on purpose; it is not when the event starts.
+  const { roles: exact } = resolveRoles(
+    { ...roleInput, dates: [] },
+    manifest.wallets?.roles,
+    evalExpr,
+  );
+  const roles = { ...resolved, eventStart: exact.eventStart, eventEnd: exact.eventEnd };
+  if (!roles.eventStart) delete roles.eventStart;
+  if (!roles.eventEnd) delete roles.eventEnd;
   const evalText = (e: Expr): string | undefined => {
     try {
       return plain(evalExpr(e));
@@ -200,6 +214,7 @@ export function paperContent(input: PaperContentInput): PaperContent {
     semantics,
     holderName: input.holderName ?? undefined,
     publicLookup: publicLookup ? lookupValue : undefined,
+    declared: declaredTimes(manifest, input.personalization),
   };
   const parts = kindContent(ctx);
   const venue = parts.venue;
@@ -223,7 +238,8 @@ export function paperContent(input: PaperContentInput): PaperContent {
   const have = new Set(input.images);
   const art = input.images ? ART_ORDER[kind].find((slot) => have.has(slot)) : undefined;
 
-  const title = parts.title ?? text(roles.title) ?? passJson.description;
+  const lead = text(roles.title);
+  const title = parts.title ?? (lead && !ISO.test(lead) ? lead : undefined) ?? passJson.description;
   const label = parts.kicker ?? manifest.name;
   // The permit blueprint's own label is "Permit"; on paper it says what it is.
   const kicker = (kind === 'permit' && label === 'Permit' ? 'Parking permit' : label) ?? title;
@@ -259,6 +275,7 @@ export function paperContent(input: PaperContentInput): PaperContent {
     title,
     kicker,
     noun,
+    once: checkInOnce(manifest),
     ...(parts.start ? { start: parts.start } : {}),
     ...(parts.end ? { end: parts.end } : {}),
     ...(parts.doors ? { doors: parts.doors } : {}),
@@ -280,6 +297,34 @@ export function paperContent(input: PaperContentInput): PaperContent {
     ...(terms ? { terms } : {}),
     extras,
   };
+}
+
+function checkInOnce(manifest: PaperContentInput['manifest']): boolean {
+  const actions = (manifest.scan as { actions?: { kind?: string; repeat?: string }[] } | undefined)
+    ?.actions;
+  return actions?.find((a) => a.kind === 'check_in')?.repeat === 'once';
+}
+
+const START_INPUTS = ['startsAt', 'departsAt', 'checkIn', 'validFrom'];
+const END_INPUTS = ['endsAt', 'checkOut'];
+
+/**
+ * The start and end the author's inputs name. Arrival is left out (it is in another zone) and so
+ * is `validUntil`, which paper prints as the validity. A `relevance-window` behavior's own start
+ * input covers other names.
+ */
+function declaredTimes(manifest: PaperContentInput['manifest'], personalization: Personalization) {
+  const window = manifest.behaviors?.find((b) => b.use === 'relevance-window')?.config as
+    | { start?: unknown }
+    | undefined;
+  const read = (names: (string | unknown)[]) => {
+    for (const n of names) {
+      const v = typeof n === 'string' ? plain(personalization[n]) : undefined;
+      if (v && ISO.test(v)) return v;
+    }
+    return undefined;
+  };
+  return { start: read([...START_INPUTS, window?.start]), end: read(END_INPUTS) };
 }
 
 /** `scan.flags` names an `idRequired` input and this pass has it on. */

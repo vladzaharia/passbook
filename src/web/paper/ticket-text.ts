@@ -24,6 +24,11 @@ export interface Column {
 const join = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' · ');
 const at = (c: PaperContent, iso: string | undefined, style: Parameters<typeof paperDate>[2]) =>
   iso ? paperDate(iso, c.zone, style) : '';
+/** The end's clock, with its day when it falls on another day than the start (a hotel checkout). */
+const endAt = (c: PaperContent, end: string) =>
+  c.start && at(c, end, 'long') !== at(c, c.start, 'long')
+    ? `${at(c, end, 'short')}, ${at(c, end, 'time')}`
+    : at(c, end, 'time');
 const zoneAbbr = (c: PaperContent) => {
   const iso = c.start ?? c.validUntil;
   return c.zone && iso ? paperZoneInfo(c.zone, iso)?.abbr : undefined;
@@ -65,12 +70,15 @@ const timesLine = (c: PaperContent): string | undefined => {
   const parts = [
     c.doors && `Doors ${at(c, c.doors, 'time')}`,
     c.start && `Starts ${at(c, c.start, 'time')}`,
-    c.end && `Ends ${at(c, c.end, 'time')}`,
+    c.end && `Ends ${endAt(c, c.end)}`,
   ].filter(Boolean);
   if (!parts.length) return undefined;
   const abbr = zoneAbbr(c);
   return `${parts.join(' · ')}${abbr ? ` (${abbr})` : ''}`;
 };
+
+const MAX_FACE_LINES = 9;
+const MAX_HALF_LINES = 6;
 
 /** The holder panel's text under the band, largest first. */
 export function faceLines(c: PaperContent, half = false): Line[] {
@@ -98,7 +106,9 @@ export function faceLines(c: PaperContent, half = false): Line[] {
     sub(join(c.address, c.room));
     sub(join(c.holder, c.type));
   }
-  for (const e of c.extras) sub(e.label ? `${e.label}: ${e.text}` : e.text);
+  // The panel has a fixed height: extras past the cap would run into the fact boxes.
+  const cap = half ? MAX_HALF_LINES : MAX_FACE_LINES;
+  for (const e of c.extras) if (lines.length < cap) sub(e.label ? `${e.label}: ${e.text}` : e.text);
   return lines;
 }
 
@@ -143,7 +153,7 @@ export function infoColumns(c: PaperContent): Column[] {
         lines: [
           c.doors && `Doors open ${at(c, c.doors, 'time')}`,
           `Show starts ${at(c, c.start, 'time')}`,
-          c.end && `Ends about ${at(c, c.end, 'time')}`,
+          c.end && `Ends about ${endAt(c, c.end)}`,
           abbr && info ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined,
         ].filter((x): x is string => Boolean(x)),
       }
@@ -158,7 +168,7 @@ export function infoColumns(c: PaperContent): Column[] {
 /** The wash box under the columns: up to four rules. */
 export function rules(c: PaperContent, fold: boolean): [string, string][] {
   const out: [string, string][] = [
-    [...PAPER_COPY.oneTicket(c.noun)] as [string, string],
+    [...PAPER_COPY.oneTicket(c.noun, c.once)] as [string, string],
     [...PAPER_COPY.reprints] as [string, string],
   ];
   if (c.kind === 'admission' || c.kind === 'membership')
