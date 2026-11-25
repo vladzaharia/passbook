@@ -23,9 +23,28 @@ Without `scanning:admin` the answer has no PINs and no pairing codes. Pair devic
 
 {{show scan-setup-preview}}
 
-## The three presets
+## The presets
 
-`preset` picks the defaults; send only what differs.
+`preset` picks the defaults; send only what differs. A door's own value always wins; `hours: "always"` overrides a preset's hours.
+
+| Preset | For | Fills |
+| --- | --- | --- |
+| `front_desk` | A staffed desk | Staff PIN; tablet and phone; lookup, photo, desk actions |
+| `event_night` | Doors for an event | Anyone as Door; offline list when no exits |
+| `venue` | Several areas | Nothing; one session per door |
+| `club` | Self-serve members' door | Anyone as Door; an in phone and an out phone; in and out |
+| `conference` | Badge desk, several days | Staff PIN; tablet and phone, both badge lanes; once a day; 08:00-18:00 |
+| `gates` | Ticket gates | Anyone as Door; two phones and a phone with a barcode reader; one entry; offline list |
+| `counter` | Café or loyalty counter | Staff PIN; tablet and customer screen; unlimited; the operator chooses the action |
+| `pickup` | Pickup or will-call | Staff PIN; one tablet; one pickup per pass |
+| `capacity` | Entry with a head limit | Anyone as Door; an in phone and an out phone; in and out; hard limit; 09:00-17:00 |
+
+Notes:
+
+- `conference` checks in once a day per pass, so use it for the badge desk. Make each room door its own session set to unlimited.
+- `gates` with the offline list: each gate decides alone offline, and a duplicate shows after sync.
+- `capacity` needs a place with `max`. A hard limit with no max is refused with `SETUP_HARD_LIMIT_NO_CAPACITY`.
+- `counter` needs staff PINs so charges and stamps are attributed.
 
 Front desk: one door, a counted place, staff with PINs.
 

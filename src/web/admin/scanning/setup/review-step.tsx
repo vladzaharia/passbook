@@ -6,7 +6,7 @@ import { ErrorState, FormField, Select, Skeleton } from '@/web/ui/index.ts';
 import { CheckList } from './check-list.tsx';
 import { DoorSummary } from './door-summary.tsx';
 import type { StepId } from './draft.ts';
-import type { SummaryLine } from './summary.ts';
+import { type SummaryLine, settingsLine } from './summary.ts';
 import type { SetupPreview } from './types.ts';
 
 const ZONES = zoneOptions().map((z) => ({ value: z.value, label: z.label }));
@@ -37,9 +37,15 @@ export function ReviewStep({
   namesFor: (c: ScanSetupCheck) => { device?: string; person?: string };
 }) {
   const checks = preview.data?.plan.checks ?? [];
+  const settings = settingsLine(preview.data?.plan.sessions[0]);
   return (
     <div className="grid gap-6">
       <DoorSummary name={name} lines={lines} onEdit={onEdit} scene="peek" />
+      {settings ? (
+        <p data-testid="settings-line" className="-mt-3 px-1 text-sm text-fg-muted">
+          {settings}
+        </p>
+      ) : null}
       <section
         aria-label="Checks"
         className="grid gap-3 rounded-lg border border-border bg-surface-raised p-4"

@@ -9008,7 +9008,7 @@ export type ScanSetupAnswer = {
 } | {
   mode: "live" | "test";
   timeZone: string;
-  preset: "front_desk" | "event_night" | "venue" | null;
+  preset: "front_desk" | "event_night" | "venue" | "club" | "conference" | "gates" | "counter" | "pickup" | "capacity" | null;
   zones: Array<{
     occupancy: "off" | "track" | "enforce";
     capacity: number | null;
@@ -10324,7 +10324,7 @@ export type ScanningSessionsOverrideHoursParams = {
 
 export type ScanningSessionsSetupParams = {
   orgId: string;
-  preset?: "front_desk" | "event_night" | "venue";
+  preset?: "front_desk" | "event_night" | "venue" | "club" | "conference" | "gates" | "counter" | "pickup" | "capacity";
   timeZone?: string;
   places?: Array<{
     zoneId: string;

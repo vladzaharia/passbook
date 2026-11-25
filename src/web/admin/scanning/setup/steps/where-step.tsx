@@ -7,7 +7,7 @@ import {
   NumberField,
   SwitchRow,
 } from '@/web/ui/index.ts';
-import { NAME_SUGGESTIONS } from '../draft.ts';
+import { nameSuggestions, whereOf } from '../draft.ts';
 import { AreaTree } from './area-tree.tsx';
 import type { StepProps } from './step-props.ts';
 
@@ -28,7 +28,7 @@ function DoorName({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
       </FormField>
       <fieldset className="flex flex-wrap gap-2">
         <legend className="sr-only">Suggested names</legend>
-        {NAME_SUGGESTIONS[draft.preset].map((n) => (
+        {nameSuggestions(draft.preset).map((n) => (
           <Button
             key={n}
             size="sm"
@@ -50,7 +50,7 @@ export function WhereStep({ draft, set }: StepProps) {
   return (
     <div className="grid gap-6">
       <DoorName draft={draft} set={set} />
-      {draft.preset === 'front_desk' ? (
+      {whereOf(draft.preset) === 'count' ? (
         <div className="grid gap-4 rounded-lg border border-border bg-surface-raised p-4">
           <SwitchRow
             label="Count who's inside"
@@ -85,7 +85,7 @@ export function WhereStep({ draft, set }: StepProps) {
           </DependentSettings>
         </div>
       ) : null}
-      {draft.preset === 'venue' ? (
+      {whereOf(draft.preset) === 'areas' ? (
         <AreaTree
           areas={draft.areas}
           doorArea={draft.doorArea}

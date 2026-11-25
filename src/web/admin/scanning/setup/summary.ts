@@ -11,6 +11,7 @@ import {
   LAYOUT_LABEL,
   type StepId,
   skipsWhen,
+  whereOf,
 } from './draft.ts';
 import { hoursOf } from './intent.ts';
 
@@ -65,9 +66,9 @@ export function doorLines(
   const admitted = d.templateIds.map(nameOf);
   const eventCap = d.events.find((e) => e.max)?.max;
   const place =
-    d.preset === 'venue'
+    whereOf(d.preset) === 'areas'
       ? d.areas.find((a) => a.ref === d.doorArea)
-      : d.preset === 'front_desk' && d.count
+      : whereOf(d.preset) === 'count' && d.count
         ? { name: d.area, max: d.max }
         : undefined;
   const where = place?.name
@@ -121,3 +122,26 @@ export function doorLines(
 /** The server names devices "<door> 1", "<door> 2"; so does the wizard, until they exist. */
 export const deviceNames = (d: Draft): string[] =>
   d.devices.map((_v, i) => deviceName(d.name.trim() || 'Door', i + 1));
+
+const CHECK_IN = {
+  single: 'once',
+  daily: 'once a day',
+  unlimited: 'unlimited',
+  in_out: 'in and out',
+} as const;
+
+/** What the planned session settings add beyond the five answers: "Check-in: once a day · Hard limit". */
+export function settingsLine(
+  session: ScanSetupPlan['sessions'][number] | undefined,
+): string | null {
+  if (!session) return null;
+  const s = session.settings;
+  const mode = s.checkIn?.mode;
+  const parts = [
+    mode ? `Check-in: ${CHECK_IN[mode]}` : null,
+    s.hardLimit ? 'Hard limit' : null,
+    s.offline && s.whenOffline === 'list' ? 'Offline list' : null,
+    session.devices.some((d) => d.surface === 'customer') ? 'Customer screen' : null,
+  ].filter((p): p is string => p !== null);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}

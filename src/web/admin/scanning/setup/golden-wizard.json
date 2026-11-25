@@ -1,0 +1,2222 @@
+[
+  {
+    "p": "front_desk",
+    "tpl": null,
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": null,
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": true,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "any": true
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": null,
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": true,
+      "area": "Inside",
+      "max": "40",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Inside",
+          "max": 40
+        }
+      ],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "place": "area-#",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": null,
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "set",
+        "from": "09:00",
+        "to": "17:00",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "hours": {
+            "every": ["09:00-17:00"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": null,
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [
+        {
+          "id": "s",
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [
+        {
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": true,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "any": true
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": true,
+      "area": "Inside",
+      "max": "40",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Inside",
+          "max": 40
+        }
+      ],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "place": "area-#",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "set",
+        "from": "09:00",
+        "to": "17:00",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "hours": {
+            "every": ["09:00-17:00"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "front_desk",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "front_desk",
+      "name": "Front desk",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [
+        {
+          "id": "s",
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "operator"
+        },
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "front_desk",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [
+        {
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Front desk",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "operator"
+            },
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": null,
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": null,
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": true,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "any": true
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": null,
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": true,
+      "area": "Inside",
+      "max": "40",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": null,
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "set",
+        "from": "09:00",
+        "to": "17:00",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "hours": {
+            "every": ["09:00-17:00"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": null,
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [
+        {
+          "id": "s",
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [],
+      "staff": [
+        {
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": true,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "any": true
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": true,
+      "area": "Inside",
+      "max": "40",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "set",
+        "from": "09:00",
+        "to": "17:00",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "event_night",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "event_night",
+      "name": "Doors",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [],
+      "doorArea": null,
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [
+        {
+          "id": "s",
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "event_night",
+      "timeZone": "UTC",
+      "places": [],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [
+        {
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Doors",
+          "admits": {
+            "templateIds": [],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": null,
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": null,
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": true,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "any": true
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": null,
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": true,
+      "area": "Inside",
+      "max": "40",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": null,
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "set",
+        "from": "09:00",
+        "to": "17:00",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "hours": {
+            "every": ["09:00-17:00"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": null,
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": [],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": null,
+      "fromIssued": false,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [
+        {
+          "id": "s",
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [],
+      "staff": [
+        {
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": [],
+            "events": []
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": true,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "any": true
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": true,
+      "area": "Inside",
+      "max": "40",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "set",
+        "from": "09:00",
+        "to": "17:00",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "anyone",
+      "as": "door",
+      "staff": [],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "hours": {
+            "every": ["09:00-17:00"]
+          },
+          "scanners": {
+            "by": "anyone",
+            "as": "door"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "p": "venue",
+    "tpl": "tpl_x",
+    "draft": {
+      "preset": "venue",
+      "name": "Main door",
+      "count": false,
+      "area": "",
+      "max": "",
+      "areas": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "inside": null,
+          "max": ""
+        }
+      ],
+      "doorArea": "area-#",
+      "any": false,
+      "templateIds": ["tpl_x"],
+      "eventIds": [],
+      "events": [],
+      "fromTemplate": "tpl_x",
+      "fromIssued": true,
+      "hours": {
+        "mode": "always",
+        "from": "",
+        "to": "",
+        "split": false,
+        "closed": []
+      },
+      "scanners": "staff",
+      "as": "door",
+      "staff": [
+        {
+          "id": "s",
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "devices": [
+        {
+          "id": "d#",
+          "layout": "phone"
+        }
+      ],
+      "timeZone": "UTC"
+    },
+    "intent": {
+      "orgId": "o1",
+      "preset": "venue",
+      "timeZone": "UTC",
+      "places": [
+        {
+          "ref": "area-#",
+          "name": "Gym",
+          "count": true
+        }
+      ],
+      "events": [
+        {
+          "fromTemplate": "tpl_x",
+          "ref": "template-events"
+        }
+      ],
+      "staff": [
+        {
+          "name": "A",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Main door",
+          "place": "area-#",
+          "admits": {
+            "templateIds": ["tpl_x"],
+            "events": ["template-events"]
+          },
+          "scanners": {
+            "by": "staff"
+          },
+          "devices": [
+            {
+              "layout": "phone"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
