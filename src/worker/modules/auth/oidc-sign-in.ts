@@ -74,7 +74,7 @@ export async function signInOidc(
   sign: SignInContext,
 ): Promise<SignInResult> {
   const db = ctx.env.DB;
-  const roles = rolesFromGroups(ctx.env, claims.groups, ctx.log);
+  const roles = rolesFromGroups(ctx.env, claims.groups, ctx.log, claims.sub);
   if (roles.length === 0) {
     // Group names, not people: what arrived is what an operator needs to fix the mapping.
     ctx.log.warn('auth.oidc_no_access', { code: 'NO_ACCESS', groups: claims.groups.slice(0, 20) });

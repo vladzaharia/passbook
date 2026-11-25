@@ -24,10 +24,11 @@ describe('wrangler.jsonc', () => {
       'OIDC_ADMIN_GROUP',
       'OIDC_DEVELOPER_GROUP',
       'OIDC_USER_GROUP',
-    ].map((key) => wrangler.vars?.[key]);
+    ].flatMap((key) => String(wrangler.vars?.[key]).split(','));
     for (const name of names) expect(name).toMatch(/^[a-z0-9_]+$/);
     expect(new Set(names).size).toBe(names.length);
     expect(wrangler.vars?.OIDC_CONSOLE_GROUP_REQUIRED).toBe('false');
+    expect(wrangler.vars?.OIDC_PLATFORM_ADMIN_SUBJECTS).toBe('');
   });
 
   it('is what the mock IdP issues', () => {

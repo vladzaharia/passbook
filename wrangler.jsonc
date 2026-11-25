@@ -59,7 +59,10 @@
     "OIDC_ISSUER": "https://id.plrs.im",
     "OIDC_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     // Pocket ID groups, matched by exact name. Platform admins: every org and the platform scope, developer implied.
+    // Each OIDC_*_GROUP var takes one exact name or a comma list (the rename window; see docs/operations.md).
     "OIDC_PLATFORM_ADMIN_GROUP": "wallet_admins",
+    // Comma list of Polaris ID subjects. When set, platform admin needs the group and a listed subject.
+    "OIDC_PLATFORM_ADMIN_SUBJECTS": "",
     // May use the console; which orgs is decided by membership in PassBook.
     "OIDC_ADMIN_GROUP": "wallet_org_admins",
     "OIDC_DEVELOPER_GROUP": "passbook_developers",
