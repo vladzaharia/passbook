@@ -1,22 +1,20 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { currentPassJson } from '../passes/repo-read-pass.ts';
+import { readTimedSource, timedOrBuilt } from '../passes/timed-source.ts';
 import { getWalletInstanceById } from './instance.ts';
 import type { WalletOperation } from './instance-types.ts';
 import { readPassSnapshot } from './repo-instance.ts';
 import { priorSucceededOperation } from './repo-instance-prior.ts';
 import type { SamsungCardState } from './samsung-token.ts';
 
-/** The expiry in the current pass.json, in epoch ms; null when there is none or it is unreadable. */
+/** The expiry of the pass as a wallet shows it now (its timed render), in epoch ms; null when there is none. */
 async function expiryOf(ctx: ServiceContext, passId: string): Promise<number | null> {
-  const raw = await currentPassJson(ctx.env.DB, passId);
-  if (raw === null) return null;
-  try {
-    const value = (JSON.parse(raw) as { expirationDate?: unknown }).expirationDate;
-    const at = typeof value === 'string' ? Date.parse(value) : Number.NaN;
-    return Number.isFinite(at) ? at : null;
-  } catch {
-    return null;
-  }
+  const source = await readTimedSource(ctx, passId);
+  if (!source) return null;
+  const { built, personalization, template } = source;
+  const now = ctx.clock.now();
+  const pass = template ? timedOrBuilt(ctx, passId, built, personalization, template, now) : built;
+  const at = typeof pass.expirationDate === 'string' ? Date.parse(pass.expirationDate) : Number.NaN;
+  return Number.isFinite(at) ? at : null;
 }
 
 /**

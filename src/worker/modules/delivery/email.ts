@@ -20,6 +20,7 @@ import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import { currentPassBytes } from '../passes/timed-variant.ts';
 import { passImages } from '../public/service.ts';
 import { captureEmail } from '../sandbox/capture.ts';
 import { loadManifests, manifestCacheKey } from '../scan/repo-template-manifests.ts';
@@ -212,15 +213,10 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   try {
     if (attachApple) {
       assertSignedObject(pass.objectKey);
-      const object = await ctx.env.BUCKET.get(pass.objectKey);
-      if (!object) throw new PermanentEmailError('Pass object is missing.');
-      attachments = [
-        {
-          filename: 'pass.pkpass',
-          type: 'application/vnd.apple.pkpass',
-          content: new Uint8Array(await object.arrayBuffer()),
-        },
-      ];
+      // The pass as its last event boundary left it (docs/design/event-boundaries.md).
+      const content = await currentPassBytes(ctx, pass);
+      if (!content) throw new PermanentEmailError('Pass object is missing.');
+      attachments = [{ filename: 'pass.pkpass', type: 'application/vnd.apple.pkpass', content }];
     }
     if (!(await stillCurrent())) return;
   } catch (error) {

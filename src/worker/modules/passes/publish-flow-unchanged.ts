@@ -84,7 +84,8 @@ export async function publishUnchangedAttempt(
     templateVersion: next.templateVersion,
     release,
     requireNoReleaseHistory,
-    contentHash: artifact.contentHash,
+    // Matched through the render: the hash stays the artifact's, so the next render still matches.
+    contentHash: (prepared.asRendered && current.contentHash) || artifact.contentHash,
     barcodeHash: artifact.barcodeHash,
     lookupHash: artifact.lookupHash,
     scanCode,

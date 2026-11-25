@@ -29,11 +29,10 @@ export function registerScanDraftRoutes(scanRoutes: OpenAPIHono<AppBindings>): v
     {
       method: 'delete',
       path: '/draft',
-      summary: 'Clear the draft and the ready card on the customer screen',
+      summary: 'Clear the draft, and the ready card unless keep=ready',
       query: ScanDraftRefSchema,
       response: ScanDraftResultSchema,
     },
-    async (c) =>
-      c.json(await deleteDraft(serviceContext(c), scanActorOf(c), c.req.valid('query').ref)),
+    async (c) => c.json(await deleteDraft(serviceContext(c), scanActorOf(c), c.req.valid('query'))),
   );
 }
