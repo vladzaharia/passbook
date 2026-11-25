@@ -602,6 +602,10 @@ __all__ = [
     "OrgsEntitlementsRetrieveResponse",
     "OrgsEntitlementsRetrieveResponseItemsItem",
     "OrgsEntitlementsRetrieveResult",
+    "OrgsPlanRetrieveResponse",
+    "OrgsPlanRetrieveResponseFeaturesItem",
+    "OrgsPlanRetrieveResponseLimitsItem",
+    "OrgsPlanRetrieveResult",
     "OrgsReopenResponse",
     "OrgsRetrieveLifecycleResponse",
     "OrgsRetrievePassSetupResult",
@@ -5758,6 +5762,23 @@ class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
     key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
+
+class OrgsPlanRetrieveResponse(_Model):
+    orgId: str
+    preset: str | None
+    label: str | None
+    limits: _List[OrgsPlanRetrieveResponseLimitsItem]
+    features: _List[OrgsPlanRetrieveResponseFeaturesItem]
+    footer: _Literal["full", "quiet", "none"] | str
+
+class OrgsPlanRetrieveResponseFeaturesItem(_Model):
+    key: _Literal["apple", "wallet.google", "wallet.samsung", "print", "nfc", "api", "webhooks", "templates.uploads", "identity.managed"] | str
+    level: str | None
+
+class OrgsPlanRetrieveResponseLimitsItem(_Model):
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    limit: int | None
+    used: int | None
 
 class OrgsReopenResponse(_Model):
     orgId: str
@@ -13690,6 +13711,8 @@ NfcTagTypesUpdateResult = NfcTagTypesUpdateResponse
 NfcTagsAssignParams = NfcTagsAssignParams1 | NfcTagsAssignParams2
 
 OrgsEntitlementsRetrieveResult = OrgsEntitlementsRetrieveResponse
+
+OrgsPlanRetrieveResult = OrgsPlanRetrieveResponse
 
 OrgsRetrievePassSetupResult = PassSetup
 

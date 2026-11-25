@@ -712,6 +712,14 @@
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/plan new operation",
+    "class": "additive",
+    "operationId": "entitlements.getOrgsByIdPlan",
+    "op": "GET /api/v1/orgs/{id}/plan",
+    "change": "new operation",
+    "note": "New: read an organization's plan, with its limits and use, the features it can use now and its PassBook footer rule. Needs org:read."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
     "class": "additive",
     "operationId": "orgs.getOrgsByIdWorkspace",

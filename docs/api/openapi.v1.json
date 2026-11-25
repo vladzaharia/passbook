@@ -22497,6 +22497,137 @@
           "usage"
         ]
       },
+      "OrgsPlanRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "preset": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "api",
+                    "api.rateTier",
+                    "api.keys",
+                    "apps",
+                    "webhooks",
+                    "webhooks.endpoints",
+                    "connections",
+                    "connectors",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "print",
+                    "nfc",
+                    "scanning.devices",
+                    "join.perDay",
+                    "messages.perDay",
+                    "passes.changesPerDay",
+                    "passes.live",
+                    "passes.test",
+                    "templates",
+                    "templates.uploads",
+                    "templates.stylesBlocked",
+                    "email.perDay",
+                    "members",
+                    "brand.mark",
+                    "domains",
+                    "identity.own",
+                    "identity.managed"
+                  ]
+                },
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "Null is no limit."
+                },
+                "used": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "key",
+                "limit",
+                "used"
+              ]
+            }
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "apple",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "print",
+                    "nfc",
+                    "api",
+                    "webhooks",
+                    "templates.uploads",
+                    "identity.managed"
+                  ]
+                },
+                "level": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The level, for a feature that has them."
+                }
+              },
+              "required": [
+                "key",
+                "level"
+              ]
+            }
+          },
+          "footer": {
+            "type": "string",
+            "enum": [
+              "full",
+              "quiet",
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "orgId",
+          "preset",
+          "label",
+          "limits",
+          "features",
+          "footer"
+        ]
+      },
       "OrgsUpdatePassSetupParams": {
         "type": "object",
         "properties": {
@@ -81003,6 +81134,110 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/orgs/{id}/plan": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "org:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Read the organization's plan: limits with use, features and the footer rule",
+        "tags": [
+          "entitlements"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgsPlanRetrieveResponse"
+                },
+                "example": {
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "preset": "standard",
+                  "label": null,
+                  "limits": [
+                    {
+                      "key": "passes.live",
+                      "limit": 5000,
+                      "used": 3214
+                    },
+                    {
+                      "key": "members",
+                      "limit": 25,
+                      "used": 2
+                    },
+                    {
+                      "key": "email.perDay",
+                      "limit": 500,
+                      "used": null
+                    }
+                  ],
+                  "features": [
+                    {
+                      "key": "apple",
+                      "level": null
+                    },
+                    {
+                      "key": "nfc",
+                      "level": "basic"
+                    }
+                  ],
+                  "footer": "quiet"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "entitlements.getOrgsByIdPlan",
+        "x-sdk": {
+          "resource": "orgs.plan",
+          "method": "retrieve"
+        },
+        "description": "The organization's plan: each limit with how much is used, the features it can use now, and the smallest PassBook footer the plan allows.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",

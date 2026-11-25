@@ -7,13 +7,14 @@ import {
   CONNECTORS_ALL,
   CONNECTORS_BASIC,
   type CompareRow,
+  FOOTER_SAMPLE,
   PLAN_COPY,
+  PLAN_PLACES,
 } from '@/shared/copy/plans.ts';
 import { planFacts } from '@/shared/plan-facts.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { formatCount } from '@/web/lib/format.ts';
+import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import { Badge, Sheet, SheetContent } from '@/web/ui/index.ts';
-import { FooterSample } from './plan-footer-popover.tsx';
 import { planIcon } from './plan-icons.ts';
 
 /** A cell: the text a reader sees and what a screen reader says when that is not the same. */
@@ -46,8 +47,56 @@ function Cell({ row, plan }: { row: CompareRow; plan: PresetOptionDto }) {
       if (!Array.isArray(value) || value.length === 0) return off;
       return <>{value.includes('*') ? CONNECTORS_ALL : CONNECTORS_BASIC}</>;
     case 'footer':
-      return <FooterSample level={planFacts(plan.values).footer} />;
+      return <>{FOOTER_SAMPLE[planFacts(plan.values).footer]}</>;
   }
+}
+
+/** Where PassBook shows, by the footer a plan allows. */
+function Places() {
+  return (
+    <section aria-labelledby="plan-places" className="mt-8 flex flex-col gap-3">
+      <h3 id="plan-places" className="text-sm font-semibold text-fg-strong">
+        {PLAN_COPY.placesTitle}
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[32rem] border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr>
+              <th scope="col" className="p-2 text-left font-medium text-fg-muted">
+                <span className="sr-only">Place</span>
+              </th>
+              {(['full', 'quiet', 'none'] as const).map((l) => (
+                <th key={l} scope="col" className="p-2 text-left font-medium text-fg-muted">
+                  {PLAN_COPY.footer}: {FOOTER_SAMPLE[l]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {PLAN_PLACES.map((row) => (
+              <tr key={row.place}>
+                <th
+                  scope="row"
+                  className="border-t border-border p-2 text-left font-normal text-fg"
+                >
+                  {row.place}
+                  {row.hint ? (
+                    <span className="block text-xs text-fg-muted">{row.hint}</span>
+                  ) : null}
+                </th>
+                {(['full', 'quiet', 'none'] as const).map((l) => (
+                  <td key={l} className="border-t border-border p-2 text-fg-strong">
+                    {row.by[l].replace('{Org}', 'Org name')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-fg-muted">{PLAN_COPY.placesNote}</p>
+    </section>
+  );
 }
 
 /** Read-only: every plan side by side, the picked one tinted. */
@@ -55,11 +104,13 @@ export function PlanCompareSheet({
   plans,
   current,
   picked,
+  updatedAt,
   onClose,
 }: {
   plans: readonly PresetOptionDto[];
   current: string;
   picked: string;
+  updatedAt: number | null;
   onClose: () => void;
 }) {
   return (
@@ -141,6 +192,12 @@ export function PlanCompareSheet({
             })}
           </table>
         </section>
+        <Places />
+        {updatedAt === null ? null : (
+          <p className="mt-6 border-t border-border pt-3 text-xs text-fg-muted">
+            {PLAN_COPY.updated(formatDateTime(updatedAt))}
+          </p>
+        )}
       </SheetContent>
     </Sheet>
   );

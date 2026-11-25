@@ -3989,6 +3989,22 @@ export type OrgsEntitlementsRetrieveResponse = {
   usage: Record<string, number>;
 };
 
+export type OrgsPlanRetrieveResponse = {
+  orgId: string;
+  preset: string | null;
+  label: string | null;
+  limits: Array<{
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    limit: number | null;
+    used: number | null;
+  }>;
+  features: Array<{
+    key: "apple" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "api" | "webhooks" | "templates.uploads" | "identity.managed";
+    level: string | null;
+  }>;
+  footer: "full" | "quiet" | "none";
+};
+
 export type OrgsReopenResponse = {
   orgId: string;
   status: "active" | "suspended" | "closed";
