@@ -79,6 +79,43 @@ describe('authority-scope fragment placement', () => {
     expect(placement('OR EXISTS (SELECT 1 FROM p WHERE (${guard.sql}))')).toEqual(notAnded);
   });
 
+  it('fails a fragment OR-joined after it, at every level', () => {
+    expect(fragmentPlacement('DELETE FROM t WHERE (${x}) OR id = ?')).toEqual(notAnded);
+    expect(fragmentPlacement('DELETE FROM t WHERE id = ? AND ((${x}) OR s = ?)')).toEqual(notAnded);
+    expect(
+      fragmentPlacement('DELETE FROM t WHERE id IN (SELECT id FROM u WHERE (${x}) OR org_id = ?)'),
+    ).toEqual(notAnded);
+    expect(fragmentPlacement('DELETE FROM t WHERE (${x}) AND id = ? RETURNING id')).toEqual([]);
+    expect(fragmentPlacement('DELETE FROM t WHERE id = ? AND (${x}) RETURNING id')).toEqual([]);
+    expect(fragmentPlacement(`DELETE FROM t WHERE id = ? AND (\${x})${O} OR s = ?|${C}`)).toEqual(
+      notAnded,
+    );
+  });
+
+  it('walks back over IN, NOT IN and a comparison to the connective', () => {
+    const w = (head: string) =>
+      fragmentPlacement(`DELETE FROM t WHERE a = ? ${head} (SELECT id FROM u WHERE (\${x}))`);
+    expect(w('OR id IN')).toEqual(notAnded);
+    expect(w('OR id IN')).toEqual(notAnded);
+    expect(w('OR id NOT IN')).toEqual(notAnded);
+    expect(w('OR 0 =')).toEqual(notAnded);
+    expect(w('AND id IN')).toEqual([]);
+    expect(w('AND id NOT IN')).toEqual([]);
+    expect(w('AND 0 =')).toEqual([]);
+    expect(
+      fragmentPlacement('DELETE FROM t WHERE a = ? OR id IN(SELECT id FROM u WHERE (${x}))'),
+    ).toEqual(notAnded);
+    expect(
+      fragmentPlacement('DELETE FROM t WHERE a = ? OR 0 = (SELECT count(*) FROM u WHERE (${x}))'),
+    ).toEqual(notAnded);
+  });
+
+  it('fails closed on a group it cannot place', () => {
+    expect(
+      fragmentPlacement('DELETE FROM t WHERE a = ? AND foo(SELECT 1 FROM u WHERE (${x}))'),
+    ).toEqual(notAnded);
+  });
+
   it('sees through an inlined constant', () => {
     const run = (w: string, where: string) =>
       findings(

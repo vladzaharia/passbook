@@ -8,6 +8,23 @@ import { INLINE_CLOSE, INLINE_OPEN, opaqueSpans } from './authority-scope-statem
 const TRAILING = new RegExp(`[\\s${INLINE_OPEN}]+$`);
 const LEADING = new RegExp(`^[\\s${INLINE_CLOSE}]+`);
 const SUBQUERY = new RegExp(`^[\\s${INLINE_OPEN}]*(?:SELECT|WITH)\\b`, 'i');
+const TERM_ENDS = new Set([
+  'AND',
+  'ORDER',
+  'GROUP',
+  'HAVING',
+  'LIMIT',
+  'OFFSET',
+  'RETURNING',
+  'ON',
+  'UNION',
+  'EXCEPT',
+  'INTERSECT',
+  'WINDOW',
+  'THEN',
+  'ELSE',
+  'END',
+]);
 const sentinel = (c: string | undefined) => c === INLINE_OPEN || c === INLINE_CLOSE;
 
 /** Spaces for SQL comments and single-quoted strings (and every `${...}` body), keeping offsets. */
@@ -88,12 +105,37 @@ export function fragmentPlacement(statement: string): string[] {
         prior = f ? prior.slice(0, f.open) : prior.slice(0, -1);
       } else if (/(?<![\w$])(?:NOT|EXISTS)$/i.test(prior)) prior = prior.replace(/\w+$/, '');
       else if (/(?<![\w$])IN$/i.test(prior))
-        prior = prior.replace(/\w+$/, '').replace(/[\w$.]+$/, '');
+        prior = prior
+          .replace(/\w+$/, '')
+          .trimEnd()
+          .replace(/(?<![\w$])NOT$/i, '')
+          .trimEnd()
+          .replace(/[\w$.?]+$/, '');
+      else if (/(?:<>|!=|<=|>=|=|<|>)$/.test(prior))
+        prior = prior
+          .replace(/(?:<>|!=|<=|>=|=|<|>)$/, '')
+          .trimEnd()
+          .replace(/[\w$.?]+$/, '');
       else break;
     }
     if (prior.endsWith('(')) return 'start';
     const word = /(?<![\w$])(AND|OR|WHERE)$/i.exec(prior)?.[1]?.toUpperCase();
     return word === 'AND' ? 'and' : word === 'OR' ? 'or' : word === 'WHERE' ? 'where' : 'other';
+  };
+  /** Does the group closing at `close` end a term: followed by AND, `)`, the end or a clause keyword, never OR. */
+  const endsTerm = (close: number): boolean => {
+    let i = close + 1;
+    for (;;) {
+      while (/\s/.test(masked[i] ?? '') || sentinel(masked[i])) i++;
+      if (masked[i] === '|' && masked[i + 1] !== '|') {
+        const f = innermost(inline, i);
+        if (!f) return false;
+        i = f.close + 1;
+      } else break;
+    }
+    if (i >= masked.length || masked[i] === ')') return true;
+    const word = /^[A-Za-z]+/.exec(masked.slice(i))?.[0]?.toUpperCase() ?? '';
+    return TERM_ENDS.has(word);
   };
   /** Is `at` inside a WHERE condition: a WHERE earlier on its level or an outer one, not past a subquery's select list. */
   const inWhere = (at: number) => {
@@ -118,19 +160,20 @@ export function fragmentPlacement(statement: string): string[] {
     // Only a WHERE condition can be widened; a SET or CASE value, or a select list, cannot.
     let at = before.length - 1;
     if (!inWhere(at)) continue;
-    let how = connective(at);
+    let close = masked.indexOf(')', end + 1);
     for (;;) {
-      if (how === 'or' || (how === 'other' && at === before.length - 1)) {
+      const how = connective(at);
+      if (how === 'or' || how === 'other' || !endsTerm(close)) {
         out.push(
-          `\${${expr}} is not ANDed into the WHERE (OR-joined or bare, here or in a group around it): write AND (\${${expr}})`,
+          `\${${expr}} is not ANDed into the WHERE (OR-joined before or after, or bare, here or in a group around it): write AND (\${${expr}})`,
         );
         break;
       }
       const group = innermost(real, at);
-      if (!group || how === 'other') break;
+      if (!group) break;
       at = group.open;
+      close = group.close;
       if (!inWhere(at)) break;
-      how = connective(at);
     }
   }
   return out;

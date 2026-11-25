@@ -37,8 +37,9 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/modules/scan/repo-scan-passless.ts',
       'src/worker/modules/scan/repo-scan-retention.ts',
       'src/worker/platform/authority-statements.ts',
+      'src/worker/modules/scan/outcome-bucket.ts',
     ],
-    hash: '4aebc6ff6926',
+    hash: '1a6d21b95cce',
   },
   'src/worker/modules/events/repo.ts': {
     reason:

@@ -62,7 +62,6 @@ describe('authority-scope opaque deps', () => {
     const W = 'src/worker/';
     const IGNORED: Record<string, string> = {
       [`${W}platform/authority-error.ts`]: 'error class; builds no SQL',
-      [`${W}modules/scan/outcome-bucket.ts`]: 'maps an outcome to a label; builds no SQL',
       [`${W}modules/templates/release-content.ts`]: 'reads release bytes; builds no SQL',
       [`${W}modules/scan/scan-retention-proof.ts`]: 'signs and verifies a proof; builds no SQL',
       [`${W}modules/scan/scan-retention-proof-data.ts`]: 'proof field layout; builds no SQL',
