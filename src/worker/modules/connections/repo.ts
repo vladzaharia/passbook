@@ -2,7 +2,7 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import type { VoidRule } from '../../../shared/contracts/connections.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
-import { withinLimit } from '../../platform/entitlements.ts';
+import { entitled, withinLimit } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   type ConnectionActor,
@@ -176,6 +176,12 @@ function insertValues(row: ConnectionRow): SqlValue[] {
   ];
 }
 
+/** The plan's allow-list item: `type`, or `type/recipe` for a connector with a fixed recipe. */
+const connectorItem = (row: ConnectionRow): string =>
+  typeof row.config.recipe === 'string'
+    ? `${row.connectorType}/${row.config.recipe}`
+    : row.connectorType;
+
 export async function insertConnection(
   ctx: ServiceContext,
   row: ConnectionRow,
@@ -185,7 +191,10 @@ export async function insertConnection(
     ctx,
     actor,
     'create',
-    [withinLimit('connections', 'SELECT COUNT(*) FROM connections cn WHERE cn.org_id = {org}')],
+    [
+      entitled('connectors', connectorItem(row)),
+      withinLimit('connections', 'SELECT COUNT(*) FROM connections cn WHERE cn.org_id = {org}'),
+    ],
     row.id,
   );
   g.insertSelect('connections', INSERT_COLUMNS, insertValues(row));

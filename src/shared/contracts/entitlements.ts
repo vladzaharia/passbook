@@ -71,7 +71,7 @@ const block = (r: Row<string[]>): EntitlementDef => ({
 });
 const limit = (r: Row<LimitValue>): EntitlementDef => ({ kind: 'limit', presets: col(r) });
 
-const CSV: string[] = ['csv-url', 'webhook-push/*'];
+const CSV: string[] = ['csv-url', 'webhook-push/*', 'file-upload', 'demo'];
 const ALL: string[] = ['*'];
 const BOARDING: string[] = ['boardingPass'];
 const NONE: string[] = [];
