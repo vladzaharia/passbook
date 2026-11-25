@@ -14,6 +14,7 @@ import { relevanceOf } from '../wallets/view-parts.ts';
 import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
 import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
+import { checkInOnce, declaredTimes } from './paper-declared.ts';
 import { paperZoneOf } from './paper-format.ts';
 import { type PaperColors, paperInk } from './paper-ink.ts';
 import { ISO, type Kinded, kindContent, kindOf } from './paper-kinds.ts';
@@ -297,34 +298,6 @@ export function paperContent(input: PaperContentInput): PaperContent {
     ...(terms ? { terms } : {}),
     extras,
   };
-}
-
-function checkInOnce(manifest: PaperContentInput['manifest']): boolean {
-  const actions = (manifest.scan as { actions?: { kind?: string; repeat?: string }[] } | undefined)
-    ?.actions;
-  return actions?.find((a) => a.kind === 'check_in')?.repeat === 'once';
-}
-
-const START_INPUTS = ['startsAt', 'departsAt', 'checkIn', 'validFrom'];
-const END_INPUTS = ['endsAt', 'checkOut'];
-
-/**
- * The start and end the author's inputs name. Arrival is left out (it is in another zone) and so
- * is `validUntil`, which paper prints as the validity. A `relevance-window` behavior's own start
- * input covers other names.
- */
-function declaredTimes(manifest: PaperContentInput['manifest'], personalization: Personalization) {
-  const window = manifest.behaviors?.find((b) => b.use === 'relevance-window')?.config as
-    | { start?: unknown }
-    | undefined;
-  const read = (names: (string | unknown)[]) => {
-    for (const n of names) {
-      const v = typeof n === 'string' ? plain(personalization[n]) : undefined;
-      if (v && ISO.test(v)) return v;
-    }
-    return undefined;
-  };
-  return { start: read([...START_INPUTS, window?.start]), end: read(END_INPUTS) };
 }
 
 /** `scan.flags` names an `idRequired` input and this pass has it on. */
