@@ -1,49 +1,76 @@
-/** What the create confirmation says about the key about to be made. */
+import { WizardReview, type WizardReviewSection } from '@/web/ui/index.ts';
+import { ROLE_LABELS } from '../orgs/org-roles.ts';
+import { EXPIRY } from './key-kind-fields.ts';
+import { SCOPE_LABEL } from './queries.ts';
+import type { KeyForm, StepId } from './use-key-form.ts';
+
+/** Everything the key will have, by step, each with a way back to change it. */
 export function KeyReview({
+  form,
   orgId,
   orgName,
-  mode,
-  name,
-  personal,
-  permissions,
-  ipAllow,
-  days,
+  onEdit,
 }: {
+  form: KeyForm;
   orgId: string | null;
   orgName: string;
-  mode: string;
-  name: string;
-  personal: boolean;
-  permissions: string;
-  ipAllow: readonly string[];
-  days: string;
+  onEdit: (step: StepId) => void;
 }) {
-  const modeName = mode === 'test' ? 'Test' : 'Live';
+  const modeName = form.keyMode === 'test' ? 'Test' : 'Live';
+  const sections: WizardReviewSection<StepId>[] = [
+    {
+      id: 'basics',
+      title: 'Basics',
+      items: [
+        { label: 'Name', value: form.name.trim() },
+        { label: 'Organization', value: orgId === null ? 'Platform: all organizations' : orgName },
+        ...(orgId === null
+          ? []
+          : [
+              {
+                label: 'Type',
+                value: form.kind === 'personal' ? 'Personal, acts as you' : 'Service',
+              },
+            ]),
+        {
+          label: 'Expires',
+          value: EXPIRY.find((o) => o.value === form.expiry)?.label ?? form.expiry,
+        },
+      ],
+    },
+    {
+      id: 'access',
+      title: 'Access',
+      items: [
+        {
+          label: 'Permissions',
+          value: form.role
+            ? ROLE_LABELS[form.role]
+            : form.scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', '),
+        },
+        ...(form.scansWrite && orgId !== null
+          ? [{ label: 'Terminals', value: String(form.terminalIds.length) }]
+          : []),
+      ],
+    },
+    {
+      id: 'limits',
+      title: 'Limits',
+      items: [
+        {
+          label: 'Allowed IPs',
+          value: form.ipAllow.length ? form.ipAllow.join(', ') : 'Any',
+          mono: form.ipAllow.length > 0,
+        },
+        { label: 'Mode', value: modeName },
+      ],
+    },
+  ];
   return (
-    <span className="block">
-      <span className="block">
-        {orgId === null ? (
-          <>This key can access all organizations in {modeName} mode.</>
-        ) : (
-          <>
-            This key is bound to {orgName} in {modeName} mode.
-          </>
-        )}
-      </span>
-      <span className="mt-3 block">Name: {name}</span>
-      <span className="block">
-        {personal && orgId !== null ? 'Type: personal, acts as you.' : null}
-      </span>
-      <span className="block">Permissions: {permissions}</span>
-      {ipAllow.length ? <span className="block">Allowed IPs: {ipAllow.join(', ')}</span> : null}
-      <span className="block">
-        {days === 'never'
-          ? 'It will not expire.'
-          : `It expires after ${days === '180' ? '6 months' : days === '365' ? '1 year' : `${days} days`}.`}
-      </span>
-      <span className="mt-3 block">
-        No secret has been issued yet. It will be shown once after creation.
-      </span>
-    </span>
+    <WizardReview
+      sections={sections}
+      onEdit={onEdit}
+      note="The key is shown once, after you create it."
+    />
   );
 }

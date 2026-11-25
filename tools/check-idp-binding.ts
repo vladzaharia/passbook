@@ -1,11 +1,11 @@
-// The IDP service binding reaches the Polaris ID (Pocket ID) admin key through the idp-provisioner Worker.
+// The IDP service binding reaches the Polaris ID (Pocket ID) admin key through the polaris-binding Worker.
 // Only its typed client may name it; the same checks as check-apple-binding.ts. Run in `npm run check:rules`.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { findBinding } from './check-apple-binding.ts';
 
 const root = resolve(import.meta.dirname, '..');
-const ALLOWED = /^src\/worker\/modules\/dev-access\/idp-client(\.test)?\.ts$/;
+const ALLOWED = /^src\/worker\/modules\/idp\/client(\.test)?\.ts$/;
 
 function* sources(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
@@ -25,7 +25,7 @@ if (import.meta.main) {
     findIdpBinding(relative(root, f), readFileSync(f, 'utf8')),
   );
   if (bad.length > 0) {
-    process.stderr.write(`env.IDP outside modules/dev-access/idp-client.ts:\n${bad.join('\n')}\n`);
+    process.stderr.write(`env.IDP outside modules/idp/client.ts:\n${bad.join('\n')}\n`);
     process.exit(1);
   }
 }

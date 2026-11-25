@@ -1,6 +1,15 @@
 {
   "codes": [
     {
+      "code": "ACCESS_MAIL_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "marketing"
+      ]
+    },
+    {
       "code": "ACCOUNT_DISABLED",
       "statuses": [
         403
@@ -1834,39 +1843,12 @@
       ]
     },
     {
-      "code": "IDP_BUDGET",
-      "statuses": [
-        429
-      ],
-      "modules": [
-        "dev-access"
-      ]
-    },
-    {
-      "code": "IDP_CONFLICT",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "dev-access"
-      ]
-    },
-    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
       ],
       "modules": [
         "sign-in"
-      ]
-    },
-    {
-      "code": "IDP_REFUSED",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "dev-access"
       ]
     },
     {
@@ -1884,7 +1866,7 @@
         503
       ],
       "modules": [
-        "dev-access"
+        "idp"
       ]
     },
     {
@@ -5845,7 +5827,8 @@
         415
       ],
       "modules": [
-        "join"
+        "join",
+        "marketing"
       ]
     },
     {

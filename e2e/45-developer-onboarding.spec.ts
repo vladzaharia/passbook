@@ -5,6 +5,7 @@ import { e2eOrigin } from '../tools/lib/e2e-ports.ts';
 import { apiAs, createPass, uid } from './helpers/api.ts';
 import { startOidcAs } from './helpers/auth.ts';
 import { signInHolder } from './helpers/holder.ts';
+import { sandboxOrgId } from './helpers/sandbox.ts';
 import { readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
@@ -126,7 +127,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
     (r) => r.request().method() === 'GET' && r.url().includes('/api/v1/metrics/activity?'),
     { timeout: 60_000 },
   );
-  await page.goto('/admin');
+  await page.goto(`/admin/o/${await sandboxOrgId(page)}`);
   await activity;
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Mode' })).toHaveCount(0);
