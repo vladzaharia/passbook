@@ -15,7 +15,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
-import { requireNotPersonalFor } from './personal-guard.ts';
+import { requireNotPersonal, requireNotPersonalFor } from './personal-guard.ts';
 import { listPresets, setPreset } from './presets-service.ts';
 import { orgsOnPreset } from './repo-presets.ts';
 import { readOrgEntitlements, setOrgEntitlements } from './service-entitlements.ts';
@@ -84,7 +84,7 @@ register(
   async (c) => {
     const auth = authOf(c);
     if (auth.kind !== 'session') throw new UnauthenticatedError();
-    await requireNotPersonalFor(c.env.DB, c.req.valid('param').id, auth.userId);
+    await requireNotPersonal(c.env.DB, c.req.valid('param').id);
     return c.json(
       await setOrgEntitlements(
         serviceContext(c),

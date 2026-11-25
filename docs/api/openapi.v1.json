@@ -83445,6 +83445,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -83453,6 +83457,7 @@
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -88453,6 +88458,124 @@
           "PRESET_NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/personal-org-labels": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:orgs",
+        "summary": "Names of the personal organizations, which are not listed, for views that show an org by id",
+        "tags": [
+          "orgs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "orgId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "orgId",
+                          "label"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "orgs.getPlatformPersonalOrgLabels",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "BRANDING_UNREADABLE",
+          "BRAND_ASSET_NOT_FOUND",
+          "BRAND_IMAGE_NOT_FOUND",
+          "BRAND_MARK_NOT_ALLOWED",
+          "ENTITLEMENTS_CHANGED",
+          "FORBIDDEN",
+          "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMAGE_BYTES",
+          "IMAGE_INVALID",
+          "IMAGE_NOT_FOUND",
+          "IMAGE_SCALE",
+          "IMAGE_SIZE",
+          "INVITATION_INVALID",
+          "INVITATION_PENDING",
+          "LAST_ORG_ADMIN",
+          "MEMBERSHIP_CONFLICT",
+          "MISSING_SCOPE",
+          "MODE_LIVE_REQUIRED",
+          "ORG_CONFLICT",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
+          "ORG_PERSONAL_SINGLE_MEMBER",
+          "ORG_SLUG_RESERVED",
+          "ORG_SLUG_TAKEN",
+          "ORG_STATUS_ALONE",
+          "PASS_SETUP_CHANGED",
+          "PASS_SETUP_EMPTY",
+          "PRESET_MOVING",
+          "PRESET_NOT_FOUND",
+          "RATE_LIMITED",
+          "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

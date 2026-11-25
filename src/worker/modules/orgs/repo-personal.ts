@@ -46,6 +46,24 @@ export async function personalOwnerOf(db: D1Database, orgId: string): Promise<st
   return row?.owner ?? null;
 }
 
+/** Who placed the standing suspension: the actor of the org's newest `org.suspend` row. */
+export async function suspendedBy(db: D1Database, orgId: string): Promise<string | null> {
+  const row = await first<{ actor_id: string | null }>(
+    db,
+    "SELECT actor_id FROM audit_log WHERE org_id = ? AND action = 'org.suspend' ORDER BY id DESC LIMIT 1",
+    [orgId],
+  );
+  return row?.actor_id ?? null;
+}
+
+/** Every personal org with its owner's name, for the labels platform views show in place of an id. */
+export const personalOrgNames = (db: D1Database) =>
+  all<{ id: string; name: string | null }>(
+    db,
+    `SELECT o.id, u.name FROM orgs o JOIN users u ON u.id = o.personal_user_id
+     WHERE o.personal_user_id IS NOT NULL ORDER BY o.id`,
+  );
+
 export async function isPersonalOrg(db: D1Database, orgId: string): Promise<boolean> {
   return (
     (await first(db, 'SELECT 1 AS x FROM orgs WHERE id = ? AND personal_user_id IS NOT NULL', [

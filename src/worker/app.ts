@@ -40,6 +40,7 @@ import {
   orgEntitlementsRoutes,
   platformEntitlementsRoutes,
 } from './modules/orgs/routes-entitlements.ts';
+import { platformPersonalLabelsRoutes } from './modules/orgs/routes-personal-labels.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
@@ -178,6 +179,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', platformEntitlementsRoutes);
+  app.route('/api/v1/platform', platformPersonalLabelsRoutes);
   app.route('/api/v1/platform', retentionPlatformRoutes);
   app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);

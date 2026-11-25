@@ -3,6 +3,7 @@ import migration from '../../../../migrations/0216_personal_orgs_unlimited.sql?r
 import {
   type Fixtures,
   fixtures,
+  makeApiKey,
   makeEnv,
   makeOrg,
   makeSession,
@@ -16,12 +17,18 @@ import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { ensurePersonalOrg } from './personal.ts';
+import { presetRows } from './repo-entitlements.ts';
 
 const clock = new ManualClock();
 const app = createApp({
-  stores: (e) => ({ ...denyAllStores, sessions: createSessionStore(e, clock) }),
+  stores: (e) => ({
+    ...denyAllStores,
+    sessions: createSessionStore(e, clock),
+    apiKeys: createApiKeyStore(e, clock),
+  }),
   clock,
 });
 let env: AppEnv;
@@ -84,7 +91,6 @@ describe('personal orgs are private to the platform', () => {
   it('refuses the directory page, status, close, features and plan to another platform admin', async () => {
     const refused = [
       await call(other, 'GET', `/api/v1/orgs/${personalId}`),
-      await call(other, 'POST', `/api/v1/orgs/${personalId}/status`, { status: 'suspended' }),
       await call(other, 'DELETE', `/api/v1/orgs/${personalId}`),
       await call(other, 'GET', `/api/v1/platform/orgs/${personalId}/entitlements`),
       await call(other, 'PUT', `/api/v1/platform/orgs/${personalId}/entitlements`, {
@@ -199,6 +205,17 @@ describe('Unlimited', () => {
       "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'members', '3', 1)",
       [oldId],
     );
+    // An org already on Unlimited keeps its row, revision and overrides.
+    await run(
+      env.DB,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'members', '9', 1)",
+      [personalId],
+    );
+    const staying = await first<{ preset: string; revision: number; preset_revision: number }>(
+      env.DB,
+      'SELECT preset, revision, preset_revision FROM org_entitlements WHERE org_id = ?',
+      [personalId],
+    );
     const regular = await first<{ preset: string; revision: number }>(
       env.DB,
       'SELECT preset, revision FROM org_entitlements WHERE org_id = ?',
@@ -217,11 +234,20 @@ describe('Unlimited', () => {
       'SELECT preset, preset_revision, revision FROM org_entitlements WHERE org_id = ?',
       [oldId],
     );
-    const meta = await first<{ revision: number }>(
-      env.DB,
-      "SELECT revision FROM entitlement_preset_meta WHERE preset = 'legacy'",
-    );
-    expect(moved).toEqual({ preset: 'legacy', preset_revision: meta?.revision, revision: 2 });
+    // Below any preset revision: the next apply of Unlimited re-evaluates the org in full.
+    expect(moved).toEqual({ preset: 'legacy', preset_revision: 0, revision: 2 });
+    expect(
+      await first(
+        env.DB,
+        'SELECT preset, revision, preset_revision FROM org_entitlements WHERE org_id = ?',
+        [personalId],
+      ),
+    ).toEqual(staying);
+    expect(
+      await all(env.DB, 'SELECT value FROM org_entitlement_overrides WHERE org_id = ?', [
+        personalId,
+      ]),
+    ).toHaveLength(1);
     expect(
       await all(env.DB, 'SELECT key FROM org_entitlement_overrides WHERE org_id = ?', [oldId]),
     ).toEqual([]);
@@ -237,5 +263,141 @@ describe('Unlimited', () => {
         regularId,
       ]),
     ).toEqual(regular);
+  });
+});
+
+/** A fresh admin with a personal org of their own. */
+async function ownerWithOrg(name: string) {
+  const { user, session } = await adminSession(name);
+  await ensurePersonalOrg(ctx(), {
+    userId: user.id,
+    sessionId: await sha256Hex(session.cookieValue),
+  });
+  const org = await first<{ id: string }>(
+    env.DB,
+    'SELECT id FROM orgs WHERE personal_user_id = ?',
+    [user.id],
+  );
+  return { user, session, orgId: org?.id ?? '' };
+}
+
+describe('the platform emergency stop', () => {
+  it('lets another admin suspend; the org is cut off; the owner cannot lift it; a second admin can', async () => {
+    const o = await ownerWithOrg('Stopped Owner');
+    const key = await makeApiKey(f, { orgId: o.orgId, scopes: ['templates:read'] });
+    const before = await app.request('/api/v1/templates', { headers: key.headers }, env);
+    expect(before.status).toBe(200);
+    const stop = await call(other, 'POST', `/api/v1/orgs/${o.orgId}/status`, {
+      status: 'suspended',
+    });
+    expect(stop.status).toBe(200);
+    // A suspended org's key stops at the door (the key store refuses it: 401 today, 403 in other paths).
+    expect([401, 403]).toContain(
+      (await app.request('/api/v1/templates', { headers: key.headers }, env)).status,
+    );
+    const audit = await first<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE org_id = ? AND action = 'org.suspend'",
+      [o.orgId],
+    );
+    expect(JSON.parse(audit?.detail ?? '{}')).toMatchObject({ personal: true, override: true });
+    const lift = await call(o.session, 'POST', `/api/v1/orgs/${o.orgId}/status`, {
+      status: 'active',
+    });
+    expect(lift.status).toBe(403);
+    expect(await code(lift)).toBe('ORG_PERSONAL');
+    const second = (await adminSession('Second Admin')).session;
+    expect(
+      (await call(second, 'POST', `/api/v1/orgs/${o.orgId}/status`, { status: 'active' })).status,
+    ).toBe(200);
+    expect((await app.request('/api/v1/templates', { headers: key.headers }, env)).status).toBe(
+      200,
+    );
+  });
+
+  it('lets the owner suspend and reactivate their own', async () => {
+    const o = await ownerWithOrg('Self Stopper');
+    expect(
+      (await call(o.session, 'POST', `/api/v1/orgs/${o.orgId}/status`, { status: 'suspended' }))
+        .status,
+    ).toBe(200);
+    expect(
+      (await call(o.session, 'POST', `/api/v1/orgs/${o.orgId}/status`, { status: 'active' }))
+        .status,
+    ).toBe(200);
+  });
+
+  it("suspends a user's personal org when the user is disabled", async () => {
+    const o = await ownerWithOrg('Disabled Owner');
+    const res = await call(other, 'PATCH', `/api/v1/users/${o.user.id}`, { status: 'disabled' });
+    expect(res.status).toBe(200);
+    expect(await first(env.DB, 'SELECT status FROM orgs WHERE id = ?', [o.orgId])).toMatchObject({
+      status: 'suspended',
+    });
+  });
+
+  it('refuses the owner a plan or override write too', async () => {
+    const o = await ownerWithOrg('Plan Owner');
+    const res = await call(o.session, 'PUT', `/api/v1/platform/orgs/${o.orgId}/entitlements`, {
+      expectedRevision: 1,
+      preset: 'trial',
+      overrides: {},
+    });
+    expect(res.status).toBe(403);
+    expect(await code(res)).toBe('ORG_PERSONAL');
+  });
+});
+
+describe('other platform paths into a personal org', () => {
+  it('keeps another admin out of its members, invitations and identity runs; the owner stays in', async () => {
+    const o = await ownerWithOrg('Members Owner');
+    for (const path of [
+      `/api/v1/orgs/${o.orgId}/memberships`,
+      `/api/v1/orgs/${o.orgId}/invitations`,
+      `/api/v1/identity-runs?orgId=${o.orgId}`,
+      `/api/v1/wallet-identities?orgId=${o.orgId}`,
+    ]) {
+      const res = await call(other, 'GET', path);
+      expect([403, 404], path).toContain(res.status);
+    }
+    expect((await call(o.session, 'GET', `/api/v1/orgs/${o.orgId}/memberships`)).status).toBe(200);
+    expect((await call(o.session, 'GET', `/api/v1/identity-runs?orgId=${o.orgId}`)).status).toBe(
+      200,
+    );
+  });
+
+  it('refuses platform metrics for a personal org to anyone but its owner', async () => {
+    const o = await ownerWithOrg('Metrics Owner');
+    const res = await call(other, 'GET', `/api/v1/metrics/platform/overview?orgId=${o.orgId}`);
+    expect(res.status).toBe(403);
+    expect(await code(res)).toBe('ORG_PERSONAL');
+    expect(
+      (await call(o.session, 'GET', `/api/v1/metrics/platform/overview?orgId=${o.orgId}`)).status,
+    ).toBe(200);
+  });
+
+  it('keeps an org-less platform key from reading its templates', async () => {
+    const o = await ownerWithOrg('Template Owner');
+    const key = await makeApiKey(f, { orgId: null, kind: 'platform', scopes: ['templates:read'] });
+    const res = await app.request(
+      `/api/v1/templates?orgId=${o.orgId}`,
+      { headers: key.headers },
+      env,
+    );
+    expect([403, 404]).toContain(res.status);
+    const ok = await app.request(
+      `/api/v1/templates?orgId=${regularId}`,
+      { headers: key.headers },
+      env,
+    );
+    expect(ok.status).toBe(200);
+  });
+
+  it('names personal orgs for views that show an org by id, and counts the raw preset size', async () => {
+    const res = await call(other, 'GET', '/api/v1/platform/personal-org-labels');
+    const items = ((await res.json()) as { items: { orgId: string; label: string }[] }).items;
+    expect(items.find((i) => i.orgId === personalId)?.label).toBe('Personal org of Pat Owner');
+    const legacy = (await presetRows(env.DB)).find((p) => p.preset === 'legacy');
+    expect(legacy?.org_count).toBeGreaterThan(legacy?.shown_count ?? 0);
   });
 });

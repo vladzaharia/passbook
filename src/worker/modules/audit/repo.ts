@@ -1,5 +1,5 @@
 import { OrgRoleSchema } from '../../../shared/contracts/org-membership.ts';
-import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
+import { personalOrgLabel } from '../../../shared/copy/personal-org.ts';
 import {
   all,
   chunk,
@@ -256,11 +256,7 @@ export async function personalOrgLabels(
        WHERE o.id IN (${placeholders(ids.length)})`,
       ids,
     );
-    for (const r of rows)
-      out.set(
-        r.id,
-        r.name ? `${PERSONAL_ORG_COPY.auditLabel} of ${r.name}` : PERSONAL_ORG_COPY.auditLabel,
-      );
+    for (const r of rows) out.set(r.id, personalOrgLabel(r.name));
   }
   return out;
 }

@@ -30,6 +30,8 @@ export interface PresetRow {
   updated_at: number;
   previous_values: string | null;
   org_count: number;
+  /** The count the platform lists show: personal orgs left out. */
+  shown_count: number;
 }
 
 export const orgExists = async (db: D1Database, orgId: string): Promise<boolean> =>
@@ -57,11 +59,12 @@ export const standingOverrides = (db: D1Database, orgId: string, now: number) =>
     [orgId, now],
   );
 
-/** Every preset with the organizations on it, personal ones left out of the count. */
+/** Every preset with the organizations on it, `shown_count` leaves personal orgs out. */
 export const presetRows = (db: D1Database) =>
   all<PresetRow>(
     db,
-    `SELECT m.preset, m.label, m.revision, m.updated_at, m.previous_values, (SELECT count(*) FROM org_entitlements e JOIN orgs o ON o.id = e.org_id WHERE e.preset = m.preset AND o.personal_user_id IS NULL) AS org_count
+    `SELECT m.preset, m.label, m.revision, m.updated_at, m.previous_values, (SELECT count(*) FROM org_entitlements e WHERE e.preset = m.preset) AS org_count,
+       (SELECT count(*) FROM org_entitlements e JOIN orgs o ON o.id = e.org_id WHERE e.preset = m.preset AND o.personal_user_id IS NULL) AS shown_count
      FROM entitlement_preset_meta m ORDER BY m.is_plan, m.preset`,
   );
 

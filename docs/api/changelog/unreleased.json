@@ -880,6 +880,14 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
+    "key": "GET /api/v1/platform/personal-org-labels new operation",
+    "class": "additive",
+    "operationId": "orgs.getPlatformPersonalOrgLabels",
+    "op": "GET /api/v1/platform/personal-org-labels",
+    "change": "new operation",
+    "note": "Platform admins read the names of personal organizations, which are not listed, to label them in views that show an org by id."
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",

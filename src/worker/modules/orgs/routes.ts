@@ -23,12 +23,14 @@ import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { deleteBrandingImage, getBrandingImage, putBrandingImage } from './branding.ts';
 import { renderEmailPreview } from './email-preview.ts';
 import { membershipRoutes } from './membership-routes.ts';
 import type { OrgAdmin } from './repo-org-writes.ts';
+import { isPersonalOrg } from './repo-personal.ts';
 import { createOrg, deleteOrg, getOrg, listOrgs, setOrgStatus, updateOrg } from './service.ts';
 
 // Platform provisioning deliberately exposes only the directory projection, not workspace data.
@@ -41,6 +43,11 @@ guard(orgsRoutes, requireTenantSession);
 // Directory and lifecycle are platform operations, not tenant workspace access.
 orgsRoutes.use('/', requireAdmin);
 orgsRoutes.use('/:id/status', requireAdmin);
+// Suspending a personal org is the platform's break-glass: a fresh sign-in.
+orgsRoutes.post(
+  '/:id/status',
+  requireStepUp(STEP_UP_SECONDS, (c) => isPersonalOrg(c.env.DB, c.req.param('id') ?? '')),
+);
 orgsRoutes.use('/:id', (c, next) =>
   c.req.method === 'GET' || c.req.method === 'HEAD' || c.req.method === 'DELETE'
     ? requireAdmin(c, next)
@@ -167,7 +174,9 @@ register(
     const id = c.req.valid('param').id;
     await setOrgStatus(ctx, requestActor(c), id, c.req.valid('json').status, adminOf(c));
     return c.json(
-      PlatformOrgSummarySchema.parse(await getOrg(ctx, id, modeOf(c.var.auth), adminOf(c))),
+      PlatformOrgSummarySchema.parse(
+        await getOrg(ctx, id, modeOf(c.var.auth), { ...adminOf(c), afterStatus: true }),
+      ),
     );
   },
 );
