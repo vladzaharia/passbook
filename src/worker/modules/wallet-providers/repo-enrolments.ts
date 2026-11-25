@@ -60,7 +60,6 @@ export async function orgStatus(db: D1Database, orgId: string): Promise<string |
   );
 }
 
-/** The highest event revision, which a hold or release steps past (a stray event cannot block it). */
 /** Who placed the newest hold on an account (its newest `hold` event). */
 export async function lastHoldActor(db: D1Database, accountId: string): Promise<string | null> {
   return (
@@ -74,6 +73,7 @@ export async function lastHoldActor(db: D1Database, accountId: string): Promise<
   );
 }
 
+/** The highest event revision, which a hold or release steps past (a stray event cannot block it). */
 export async function maxEventRevision(db: D1Database, accountId: string): Promise<number> {
   return (
     (
