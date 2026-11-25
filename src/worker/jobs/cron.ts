@@ -29,6 +29,7 @@ import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
 import { sweepPrintPdfs } from '../modules/prints/pdf-sweep.ts';
+import { dailyGuestPasses } from '../modules/retention/guest-passes.ts';
 import { dailyPhotos, dailyReceipts } from '../modules/retention/jobs.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
@@ -38,7 +39,6 @@ import { recordCronRun } from '../modules/status/cron.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
-import { dailyVisitors } from '../modules/visitors/retention.ts';
 import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
@@ -98,7 +98,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'idempotency.sweep', run: sweepIdempotency },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
     { name: 'passes.import_retention', run: dailyImports },
-    { name: 'visitors.retention', run: dailyVisitors },
+    { name: 'visitors.retention', run: dailyGuestPasses },
     { name: 'connections.retention', run: dailyConnections },
     { name: 'delivery.retention', run: dailyDelivery },
     { name: 'auth.retention', run: dailyAuth },
