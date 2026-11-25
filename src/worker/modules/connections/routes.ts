@@ -33,6 +33,7 @@ import { registerConnectorCatalogRoutes } from './catalog-routes.ts';
 import { registerConnectionFileRoutes } from './files-routes.ts';
 import { registerConnectionListRoutes } from './list-routes.ts';
 import { previewUnsaved } from './preview.ts';
+import { registerConnectionProbeRoutes } from './probe-routes.ts';
 import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import * as service from './service.ts';
 import { testConfig } from './test-config.ts';
@@ -92,6 +93,7 @@ connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
 registerConnectionFileRoutes(connectionsRoutes);
+registerConnectionProbeRoutes(connectionsRoutes);
 register(
   connectionsRoutes,
   'connections',

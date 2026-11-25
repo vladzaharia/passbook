@@ -55,7 +55,7 @@ function assertFixedConfig(
   }
 }
 
-const storedConfig = (def: ReturnType<typeof requireConnector>, conn: ConnectionRow) =>
+export const storedConfig = (def: ReturnType<typeof requireConnector>, conn: ConnectionRow) =>
   def.configSchema.parse(
     conn.connectorVersion !== def.version && def.migrate
       ? def.migrate(conn.connectorVersion, conn.config)
@@ -65,7 +65,7 @@ const storedConfig = (def: ReturnType<typeof requireConnector>, conn: Connection
 const originsOf = (urls: string[]) => new Set(urls.map((u) => new URL(u).origin));
 
 /** A stored credential is bound to the origins it was entered for; a new origin needs a new credential. */
-function assertCredentialOrigin(
+export function assertCredentialOrigin(
   def: ReturnType<typeof requireConnector>,
   conn: ConnectionRow,
   next: Record<string, unknown>,

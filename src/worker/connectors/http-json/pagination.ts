@@ -1,8 +1,11 @@
 import type { Json } from '../../../shared/contracts/common.ts';
+import { nextFromLinkHeader } from '../../../shared/rest/link-header.ts';
 import { offOrigin } from '../lib/egress.ts';
 import { getPointer } from '../lib/pointer.ts';
 import type { ListConfig } from './config.ts';
 import type { PageState } from './cursor.ts';
+
+export { nextFromLinkHeader };
 
 /** What one page tells us about the next. */
 export interface Advance {
@@ -22,18 +25,6 @@ export interface PageResult {
 
 const asKey = (v: unknown): string | null =>
   typeof v === 'string' && v !== '' ? v : typeof v === 'number' ? String(v) : null;
-
-/** The `rel="next"` target of a Link header, or null. */
-export function nextFromLinkHeader(header: string | null): string | null {
-  if (!header) return null;
-  for (const part of header.split(/,\s*(?=<)/)) {
-    const m = /^\s*<([^>]*)>(.*)$/.exec(part);
-    if (!m) continue;
-    const rels = /;\s*rel\s*=\s*"?([^";]+)"?/i.exec(m[2] ?? '')?.[1]?.split(/\s+/) ?? [];
-    if (rels.some((r) => r.toLowerCase() === 'next')) return m[1] ?? null;
-  }
-  return null;
-}
 
 /** The URL of the first or next request. A next link or Link header already carries its own query. */
 export function pageUrl(base: URL, list: ListConfig, p: PageState | null, since?: string): URL {
