@@ -5,6 +5,7 @@ import { lookupApi } from './visual-trays.tsx';
 const API = lookupApi(false);
 
 export function VisualLookup({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
   return (
     <LookupSheet
       open={open}
