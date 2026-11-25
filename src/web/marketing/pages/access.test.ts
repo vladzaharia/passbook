@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ACCESS_COPY } from '@/shared/copy/access.ts';
 
 const html = readFileSync(join(process.cwd(), 'marketing/access.html'), 'utf8');
-const NOT_SENT = 'Your request was not sent. Email support@passbook.mobile.';
+const NOT_SENT = ACCESS_COPY.unavailable;
 
 function load() {
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>'));
@@ -61,7 +62,7 @@ describe('access page script', () => {
     expect(JSON.parse(init.body as string)).toMatchObject({
       name: 'Alex Morgan',
       email: 'alex@example.com',
-      organization: 'Northside Climbing',
+      org: 'Northside Climbing',
       purpose: 'Memberships',
     });
     expect(document.getElementById('acc-ticket')?.classList.contains('sent')).toBe(true);

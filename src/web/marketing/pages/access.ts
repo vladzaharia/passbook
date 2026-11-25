@@ -1,11 +1,10 @@
+import { ACCESS_COPY } from '@/shared/copy/access.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { draw, star, startBuddy, svg } from '../buddy/index.ts';
 import '../styles/page-access.css';
 import { trustedHtml } from '../trusted-html.ts';
 
-/** Shown when the request did not go through; the same line the server's error page carries. */
-const NOT_SENT = 'Your request was not sent. Email support@passbook.mobile.';
-const FIELDS = ['name', 'email', 'organization', 'purpose', 'message', 'website'] as const;
+const FIELDS = ['name', 'email', 'org', 'purpose', 'message', 'website'] as const;
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const form = byId<HTMLFormElement>('acc-form');
@@ -106,7 +105,7 @@ function showSent(animate: boolean) {
 function showNotSent() {
   ticket.classList.remove('sending');
   setBuddy('sorry');
-  sendError.textContent = NOT_SENT;
+  sendError.textContent = ACCESS_COPY.unavailable;
   sendError.hidden = false;
   submitting = false;
 }
@@ -161,6 +160,8 @@ form.addEventListener('submit', (e) => {
 
 const init = () => {
   if (location.hash === '#sent') showSent(false);
+  // /access/sent arrives with the sent state already in the markup.
+  else if (ticket.classList.contains('sent')) sparksOn();
 };
 window.addEventListener('hashchange', init);
 if (document.readyState === 'complete') init();

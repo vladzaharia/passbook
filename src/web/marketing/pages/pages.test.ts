@@ -53,7 +53,7 @@ describe('marketing pages', () => {
     const html = page('access');
     expect(html).toContain('method="post" action="/access"');
     expect(html).not.toContain('novalidate');
-    for (const n of ['name', 'email', 'organization', 'purpose', 'message', 'website'])
+    for (const n of ['name', 'email', 'org', 'purpose', 'message', 'website'])
       expect(html).toContain(`name="${n}"`);
     expect(html).toContain('id="acc-send-e"');
   });
