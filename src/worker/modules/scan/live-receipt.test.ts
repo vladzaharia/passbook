@@ -55,10 +55,10 @@ describe('the customer receipt of a committed scan', () => {
         [],
         'stamps',
       )?.headline;
-    expect(counter('Glasses', 0, 2)).toBe('+2 Glasses');
-    expect(counter('Glasses', 0, 1)).toBe('+1 Glasses');
-    expect(counter('Coffee', 0, 1)).toBe('+1 Coffee');
-    expect(counter('Visits', 3, 3)).toBe('+0 Visits');
+    expect(counter('Glasses', 0, 2)).toBe('Glasses +2');
+    expect(counter('Glasses', 0, 1)).toBe('Glasses +1');
+    expect(counter('Coffee', 0, 1)).toBe('Coffee +1');
+    expect(counter('Visits', 3, 3)).toBe('Visits +0');
   });
 
   it('names the reward of a take that has one, and redeemed for a take that has none', () => {
