@@ -175,14 +175,16 @@ export function footRow(
 /** `text` cut at the character that fits `w`, with an ellipsis: what a `nowrap` ellipsis does on the page. */
 export function ellipsize(pen: Pen, text: string, w: number, st: TextStyle): string {
   if (pen.measure(text, st) <= w) return text;
+  // By code point, so an emoji or an astral letter is never cut in half.
+  const chars = Array.from(text);
   let lo = 0;
-  let hi = text.length;
+  let hi = chars.length;
   while (lo < hi) {
     const mid = Math.ceil((lo + hi) / 2);
-    if (pen.measure(`${text.slice(0, mid).trimEnd()}…`, st) <= w) lo = mid;
+    if (pen.measure(`${chars.slice(0, mid).join('').trimEnd()}…`, st) <= w) lo = mid;
     else hi = mid - 1;
   }
-  return `${text.slice(0, lo).trimEnd()}…`;
+  return `${chars.slice(0, lo).join('').trimEnd()}…`;
 }
 
 /**

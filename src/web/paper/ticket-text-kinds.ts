@@ -203,7 +203,7 @@ const validity = (c: PaperContent): { label: string; text: string | undefined } 
         text:
           at(c, c.info.arrives, 'long') === at(c, c.validUntil, 'long')
             ? `${noYear(at(c, c.info.arrives, 'short'))} · ${at(c, c.info.arrives, 'time')} – ${at(c, c.validUntil, 'time')}`
-            : `${noYear(at(c, c.info.arrives, 'short'))} ${at(c, c.info.arrives, 'time')} – ${noYear(at(c, c.validUntil, 'short'))} ${at(c, c.validUntil, 'time')}`,
+            : `${noYear(at(c, c.info.arrives, 'short'))} ${at(c, c.info.arrives, 'time')} – ${at(c, c.validUntil, 'short')} ${at(c, c.validUntil, 'time')}`,
       }
     : c.validFrom && c.validUntil
       ? {

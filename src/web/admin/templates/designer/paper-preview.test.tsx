@@ -143,6 +143,19 @@ describe('designer Paper tab', () => {
     expect(onPaper).toHaveBeenLastCalledWith({ size: 'atb' });
   });
 
+  it('shows an ID kind as staff-only and writes holder true when ticked', async () => {
+    const user = userEvent.setup();
+    const onPaper = vi.fn();
+    renderTags(stage({ schema: 1, size: 'cr80', barcode: 'qr', kind: 'badge' }, onPaper), {
+      '/api/v1/templates/t1/channels': channels(on),
+    });
+    await user.click(await screen.findByRole('radio', { name: 'Paper' }));
+    const box = await screen.findByRole('checkbox', { name: 'Holders can print' });
+    expect(box).not.toBeChecked();
+    await user.click(box);
+    expect(onPaper).toHaveBeenLastCalledWith({ holder: true, effectiveKind: 'badge' });
+  });
+
   it('edits the block: starts it, then barcode, holder, and shows validation', async () => {
     const user = userEvent.setup();
     const onPaper = vi.fn();

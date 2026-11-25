@@ -183,6 +183,16 @@ describe('long values', () => {
     expect(c.info.fromFull).toBe('Wolfeschlegelsteinhausenbergerdorf Harbour');
     expect(c.info.toFull).toBe('Llanfairpwllgwyngyllgogerychwyrndrobwll');
   });
+
+  it('clamps by code point, never cutting an emoji in half', async () => {
+    const { c } = await content2('starter-transit-ticket', {
+      origin: '🚀'.repeat(30),
+      destination: 'Harbor Point',
+    });
+    const from = c.title.split(' – ')[0] ?? '';
+    expect(Array.from(from)).toHaveLength(18);
+    expect(from.isWellFormed()).toBe(true);
+  });
 });
 
 async function content2(slug: string, over: Record<string, string>) {

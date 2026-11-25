@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { TemplateManifest } from '../types.ts';
 import { validateManifest } from './manifest.ts';
-import { DERIVED_PAPER, PAPER_SPECS, paperManifestIssues, resolvePaper } from './paper.ts';
+import {
+  DERIVED_PAPER,
+  PAPER_SPECS,
+  paperManifestIssues,
+  resolvePaper,
+  withKind,
+} from './paper.ts';
 import { paperContent } from './paper-content.ts';
 import { EVENT_MANIFEST, EVENT_PASS } from './paper-fixtures.ts';
 import { overlaps, paperBoxes } from './paper-geometry.ts';
@@ -117,6 +123,13 @@ describe('paper block validation', () => {
 });
 
 describe('paper design', () => {
+  it('an invalid block that says holder: false stays closed', () => {
+    const d = resolvePaper({ schema: 9, size: 'a4', barcode: 'qr', holder: false });
+    expect(d).toMatchObject({ derived: true, holder: false });
+    expect(withKind(d, 'admission').holder).toBe(false);
+    expect(resolvePaper({ schema: 9, holder: true }).holder).toBe(true);
+  });
+
   it('derives when absent or invalid, fills defaults when present', () => {
     expect(resolvePaper(undefined)).toBe(DERIVED_PAPER);
     expect(resolvePaper({ nope: true })).toBe(DERIVED_PAPER);

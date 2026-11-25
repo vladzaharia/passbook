@@ -154,7 +154,11 @@ export function holderMayPrint(
 export function resolvePaper(raw: unknown): PaperDesign {
   if (raw === undefined || raw === null) return DERIVED_PAPER;
   const parsed = PaperManifestSchema.safeParse(raw);
-  if (!parsed.success) return DERIVED_PAPER;
+  if (!parsed.success) {
+    // A block that fails to parse still keeps a `holder: false` it says: never open what it closed.
+    const closed = (raw as { holder?: unknown }).holder === false;
+    return closed ? { ...DERIVED_PAPER, holder: false, holderExplicit: false } : DERIVED_PAPER;
+  }
   const { size, sheet, barcode, fields, terms, holder, kind, ink, fold, bring, buddy } =
     parsed.data;
   return {

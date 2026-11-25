@@ -7,6 +7,7 @@ import {
   paperManifestIssues,
   sheetApplies,
   supportsCode128,
+  withKind,
 } from '@/passkit/template/paper.ts';
 import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
@@ -50,11 +51,14 @@ const KINDS = [
  */
 export function PaperEditor({
   design,
+  kind,
   manifest,
   passJson,
   onEdit,
 }: {
   design: PaperDesign;
+  /** The class the layout resolves to, the block's or the derived one. */
+  kind: PaperKind;
   manifest: Record<string, unknown>;
   passJson: Record<string, unknown> | null | undefined;
   onEdit: (patch: PaperPatch) => void;
@@ -168,9 +172,9 @@ export function PaperEditor({
       </FormField>
       <CheckboxField
         label="Holders can print"
-        checked={design.holder}
+        checked={withKind(design, kind).holder}
         onCheckedChange={(on) => {
-          onEdit({ holder: on === true });
+          onEdit({ holder: on === true, effectiveKind: kind });
         }}
       />
       {issues.map((i) => (

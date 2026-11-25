@@ -165,7 +165,7 @@ describe('days and nights', () => {
         { validUntil: '2030-11-22T17:00:00-08:00' },
       ),
     );
-    expect(t).toContain('Valid: Mon 18 Nov 9:30 am – Fri 22 Nov 5:00 pm');
+    expect(t).toContain('Valid: Mon 18 Nov 9:30 am – Fri 22 Nov 2030 5:00 pm');
   });
 
   it('an overnight arrival names its day', async () => {

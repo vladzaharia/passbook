@@ -234,7 +234,13 @@ export function PaperPreview({
             </Button>
           ) : null}
           {onEdit && !saved.derived ? (
-            <PaperEditor design={saved} manifest={manifest} passJson={passJson} onEdit={onEdit} />
+            <PaperEditor
+              design={saved}
+              kind={content?.kind ?? saved.kind ?? 'admission'}
+              manifest={manifest}
+              passJson={passJson}
+              onEdit={onEdit}
+            />
           ) : null}
         </>
       )}

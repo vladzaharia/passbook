@@ -18,4 +18,4 @@ export const BADGE_CSS = `.pp-bd-front{background:var(--org);color:var(--org-fg)
 .pp-bd-back .pp-typed{text-align:center}
 .pp-bd-back p{font-size:calc(var(--mm) * 2.1167);line-height:1.3}
 .pp-bd-back .pp-bd-meta{margin-top:auto;display:flex;flex-direction:column;gap:calc(var(--mm) * 0.4);font-size:calc(var(--mm) * 1.905);color:var(--muted);border-top:calc(var(--mm) * 0.2) solid var(--hair);padding-top:calc(var(--mm) * 1)}
-.pp-bd-back .pp-bd-meta .pp-passbook{font-size:calc(var(--mm) * 1.905)}`;
+.pp-bd-back .pp-bd-meta .pp-passbook{font-size:calc(var(--mm) * 1.905);align-self:flex-end}`;

@@ -40,8 +40,15 @@ export function tripParts(c: Kinded, parts: KindParts, seat: NonNullable<KindPar
     const to = place(c, ['destination', 'to'], 'destinationCityName');
     // Each end is clamped on its own, so a long one never hides the other; the whole name moves
     // to the note line.
-    const end = (v: string | undefined) =>
-      v && v.length > MAX_END ? `${v.slice(0, MAX_END - 1).trimEnd()}…` : v;
+    const end = (v: string | undefined) => {
+      const chars = Array.from(v ?? '');
+      return chars.length > MAX_END
+        ? `${chars
+            .slice(0, MAX_END - 1)
+            .join('')
+            .trimEnd()}…`
+        : v;
+    };
     parts.title = [end(from?.main), end(to?.main)].filter(Boolean).join(' – ') || undefined;
     if (from && end(from.main) !== from.main) info.fromFull = from.main;
     if (to && end(to.main) !== to.main) info.toFull = to.main;

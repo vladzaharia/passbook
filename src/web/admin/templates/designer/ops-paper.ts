@@ -19,6 +19,8 @@ export type PaperPatch = null | {
   fields?: string[];
   terms?: string;
   holder?: boolean | undefined;
+  /** The class the layout resolves to (a derived one has no `kind`): what "default" means for `holder`. */
+  effectiveKind?: PaperKind;
   /** `null` goes back to the layout derived from the template. */
   kind?: PaperKind | null;
   ink?: PaperInk;
@@ -57,11 +59,14 @@ export function setPaper(doc: DesignDoc, patch: PaperPatch): DesignDoc {
   if (Array.isArray(fields) && fields.length > 0) block.fields = fields;
   const terms = 'terms' in patch ? patch.terms : old.terms;
   if (typeof terms === 'string' ? terms.trim() : terms) block.terms = terms;
-  const holder = 'holder' in patch ? patch.holder : old.holder;
+  const edited = 'holder' in patch;
+  const holder = edited ? patch.holder : old.holder;
   const kind = 'kind' in patch ? patch.kind : old.kind;
-  // Only a word that differs from the class's default is written: staff-only for an ID, else open.
-  const staffByDefault = typeof kind === 'string' && STAFF_ONLY_KINDS.has(kind as PaperKind);
-  if (typeof holder === 'boolean' && holder === staffByDefault) block.holder = holder;
+  const effective = typeof kind === 'string' ? (kind as PaperKind) : patch.effectiveKind;
+  // A holder edit is written only when it differs from the class's default (staff-only for an ID,
+  // else open). An earlier word of the author's stays through a kind change.
+  const staffByDefault = effective !== undefined && STAFF_ONLY_KINDS.has(effective);
+  if (typeof holder === 'boolean' && (!edited || holder === staffByDefault)) block.holder = holder;
   if (typeof kind === 'string') block.kind = kind;
   const ink = patch.ink ?? old.ink;
   if (ink === 'mono') block.ink = ink;

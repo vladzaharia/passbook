@@ -79,7 +79,8 @@ export async function paperTicket(
     images,
     orgTimeZone: await readOrgTimeZone(ctx.env.DB, pass.orgId),
   });
-  const design = withKind(base, content.kind);
+  // One answer for who may print, the one mint, reprint, void and the print link read.
+  const design = { ...withKind(base, content.kind), holder: holderMayPrint(manifest) };
   const logo = bestImage(template.assets, 'logo');
   const art = content.art ? bestImage(template.assets, content.art) : undefined;
   return {

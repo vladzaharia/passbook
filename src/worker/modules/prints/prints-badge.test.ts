@@ -154,3 +154,37 @@ describe('the member photo on paper', () => {
     expect(withPhotos).toBeGreaterThan(without);
   });
 });
+
+describe('one answer for who may print', () => {
+  it('an event-ticket pass with a door photo agrees on the page and the mint', async () => {
+    const { kit, withPaper, token, holder } = await setup();
+    // Event style, but the template reads as a badge: get-in with a photo at the door.
+    const pass = await withPaper(undefined, {
+      manifest: {
+        display: { title: '{{name}}', group: 'get-in' },
+        scan: {
+          lookup: { input: 'ticketNo' },
+          display: {
+            v: 1,
+            holder: '{{inputs.name}}',
+            photo: { minRole: 'door' },
+            header: {},
+            panels: [],
+          },
+        },
+      } as unknown as Partial<TemplateManifest>,
+    });
+    const t = await token(pass);
+    const mint = await holder(t, 'POST');
+    const page = await (await holder(t)).text();
+    const offered = mint.status === 200;
+    expect(page.includes('data-act="make"') || page.includes('data-act="reprint"')).toBe(offered);
+    expect((await holderChannels(jobCtxOf(kit), pass as never)).holderPrint).toBe(offered);
+  });
+
+  it('a block that fails to parse keeps the staff-only word it says', async () => {
+    const { kit, withPaper } = await setup();
+    const pass = await withPaper({ schema: 9, size: 'a4', barcode: 'qr', holder: false });
+    expect((await holderChannels(jobCtxOf(kit), pass as never)).holderPrint).toBe(false);
+  });
+});
