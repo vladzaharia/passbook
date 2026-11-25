@@ -29,11 +29,12 @@ describe('quickstart step 1 gate', () => {
     applyGate(el, { reason: 'noaccess', email: 'a@b.test' });
     expect(el.querySelector('.qs-h')?.textContent).toBe('No developer access');
     expect(el.querySelector('.qs-empty')).toBeNull();
-    expect(el.textContent).toContain('Ask an administrator for developer access.');
+    expect(el.textContent).toContain('Ask your PassBook admin to add you to the developers group.');
     expect(el.textContent).toContain('Signed in as a@b.test');
     expect([...el.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
       'Use another Polaris ID',
       'My passes',
     ]);
+    expect(el.querySelector('button')?.textContent).toBe('Copy request');
   });
 });

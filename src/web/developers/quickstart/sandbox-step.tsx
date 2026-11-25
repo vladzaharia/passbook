@@ -69,6 +69,26 @@ export function EnvBox({
           {templateId}
         </pre>
       </div>
+      <div className="qs-load">
+        <p className="sm">{M.load}</p>
+        <dl className="qs-load-l">
+          <dt className="xs muted">{M.bash}</dt>
+          <dd>
+            <code className="mono xs">{M.bashLine}</code>
+          </dd>
+          <dt className="xs muted">{M.ps}</dt>
+          <dd>
+            <code className="mono xs">{M.psLine}</code>
+          </dd>
+          <dt className="xs muted">{M.check}</dt>
+          <dd>
+            <code className="mono xs">{M.checkLine}</code>
+            <span className="xs muted"> · </span>
+            <code className="mono xs">{M.checkPs}</code>
+            <span className="xs muted"> · {M.checkOut}</span>
+          </dd>
+        </dl>
+      </div>
       <div className="row g3 wrap-row qs-env-a">
         <button type="button" className="btn" onClick={() => void copy()}>
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}

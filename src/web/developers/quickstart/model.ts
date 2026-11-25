@@ -33,7 +33,10 @@ export interface Code {
 
 /** `POST /passes` for the sandbox's ticket, in four languages. */
 export const createCode = (templateId: string, input: InputValues, apiBase: string): Code[] =>
-  snippetsFor(templateId, input, apiBase);
+  snippetsFor(templateId, input, apiBase).map((c) =>
+    // uuidgen is missing on many Linux images and on Windows; date is everywhere curl is.
+    c.lang === 'curl' ? { ...c, code: c.code.replaceAll('$(uuidgen)', 'qs-$(date +%s)') } : c,
+  );
 
 const LANG_KEY: Record<CodeLang, string> = { ts: 'ts', curl: 'curl', py: 'py', go: 'go' };
 

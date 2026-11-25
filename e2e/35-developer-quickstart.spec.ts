@@ -7,6 +7,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   page,
   context,
 }) => {
+  test.setTimeout(150_000);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await stubTurnstile(page);
   // The mock provider picks the account by login_hint, as helpers/auth.ts does for the other specs.
@@ -57,6 +58,17 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   // Step 3: curl is the default (no SDK is published) and the page listens for a call from outside it.
   await expect(page.getByRole('tab', { name: 'curl' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText(/Listening for pbp_test_…[\w-]{4}/)).toBeVisible();
+  await expect(page.getByText('set -a; . ./.env; set +a')).toBeVisible();
+  // An empty key (the shell never exported it) is a 401 the page cannot see: after 45 s it names the causes.
+  const empty = await context.request.post('/api/v1/passes', {
+    headers: { authorization: 'Bearer ', 'idempotency-key': 'e2e-empty' },
+    data: {},
+  });
+  expect(empty.status()).toBe(401);
+  await expect(page.getByText('Quiet so far.')).toBeVisible({ timeout: 55_000 });
+  await expect(page.getByRole('region', { name: 'Quiet so far.' })).toContainText(
+    'The key is not loaded.',
+  );
   const api = context.request;
   const auth = { authorization: `Bearer ${secret}`, 'user-agent': 'curl/8.7.1' };
   const template = (await (
@@ -74,9 +86,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   expect(bad.status()).toBe(422);
   await expect(page.getByText('422 INVALID')).toBeVisible();
   await expect(page.getByRole('alert').filter({ hasText: 'ticketId is required.' })).toBeVisible();
-  await expect(
-    page.getByRole('alert').filter({ hasText: 'input[ticketId]=QS-1042' }),
-  ).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: '"ticketId": "QS-1042"' })).toBeVisible();
 
   const made = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-good' },
