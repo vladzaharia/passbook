@@ -7401,6 +7401,15 @@ export type PlatformWalletCredentialsListResponse = {
     createdAt: number;
     updatedAt: number;
     cardTypes: Array<string>;
+    lastCheck: {
+      ok: true;
+      code: null;
+      at: number;
+    } | {
+      ok: false;
+      code: string;
+      at: number;
+    } | null;
   }>;
   nextCursor: string | null;
 };
@@ -7458,6 +7467,15 @@ export type PlatformWalletCredentialsRevokeResponse = {
   createdAt: number;
   updatedAt: number;
   cardTypes: Array<string>;
+  lastCheck: {
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
+    at: number;
+  } | null;
 };
 
 export type PlatformWalletCredentialsRotateKeyResponse = {
@@ -7484,6 +7502,15 @@ export type PlatformWalletCredentialsSetSamsungCardResponse = {
   createdAt: number;
   updatedAt: number;
   cardTypes: Array<string>;
+  lastCheck: {
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
+    at: number;
+  } | null;
 };
 
 export type PlatformWalletCredentialsUpsertParams = {
@@ -7525,6 +7552,15 @@ export type PlatformWalletCredentialsUpsertResponse = {
   createdAt: number;
   updatedAt: number;
   cardTypes: Array<string>;
+  lastCheck: {
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
+    at: number;
+  } | null;
 };
 
 export type PlatformWalletEnrollmentsListResponse = {
@@ -11983,6 +12019,15 @@ export type WalletAccountsGoogleSharedCreateResponse = {
     createdAt: number;
     updatedAt: number;
     cardTypes: Array<string>;
+    lastCheck: {
+      ok: true;
+      code: null;
+      at: number;
+    } | {
+      ok: false;
+      code: string;
+      at: number;
+    } | null;
   };
   serviceAccountEmail: string;
 };
@@ -12018,6 +12063,15 @@ export type WalletCredentialsListResponse = {
     createdAt: number;
     updatedAt: number;
     cardTypes: Array<string>;
+    lastCheck: {
+      ok: true;
+      code: null;
+      at: number;
+    } | {
+      ok: false;
+      code: string;
+      at: number;
+    } | null;
   }>;
   nextCursor: string | null;
 };
@@ -12040,6 +12094,15 @@ export type WalletCredentialsRevokeResponse = {
   createdAt: number;
   updatedAt: number;
   cardTypes: Array<string>;
+  lastCheck: {
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
+    at: number;
+  } | null;
 };
 
 export type WalletCredentialsUpsertParams = {
@@ -12079,6 +12142,15 @@ export type WalletCredentialsUpsertResponse = {
   createdAt: number;
   updatedAt: number;
   cardTypes: Array<string>;
+  lastCheck: {
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
+    at: number;
+  } | null;
 };
 
 export type WalletEnrollmentsDisableParams = {

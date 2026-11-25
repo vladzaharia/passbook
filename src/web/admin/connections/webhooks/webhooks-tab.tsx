@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { STATE_COPY } from '@/shared/copy/states.ts';
 import { pluralize } from '@/web/lib/format.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useMode } from '../../../lib/mode.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
@@ -98,7 +99,7 @@ export function WebhooksTab() {
     [now],
   );
 
-  if (!orgId) return <EmptyState art="building" title="Choose an organization" />;
+  if (!orgId) return <OrgChooser inline />;
   if (!canRead) return <EmptyState art="lock" title={STATE_COPY.forbidden} />;
   if (list.isError && rows.length === 0)
     return <ErrorState error={list.error} onRetry={() => void list.refetch()} />;

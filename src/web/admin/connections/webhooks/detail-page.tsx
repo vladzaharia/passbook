@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { backTo, notFoundTitle } from '@/shared/copy/states.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { isApiError } from '../../../lib/errors.ts';
 import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
 import { Button, detailError, EmptyState, PageHeader, SkeletonDetail } from '../../../ui/index.ts';
@@ -77,13 +78,7 @@ function Loader({ endpointId }: { endpointId: string }) {
     ) : (
       detailError(endpoint, { entity: 'connection', to: TO, header })
     );
-  if (resourceScope === 'choose-org')
-    return (
-      <>
-        {header}
-        <EmptyState art="building" title="Choose an organization" />
-      </>
-    );
+  if (resourceScope === 'choose-org') return <OrgChooser />;
   if (
     scope.isLoading ||
     resourceScope !== 'ready' ||

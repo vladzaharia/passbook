@@ -17,6 +17,8 @@ import { signInLevelOf } from './sign-in-guard.ts';
 
 /** Open to anyone on purpose: a capability URL, a provider signature or a sign-in step is the route's own credential. */
 const PUBLIC = [
+  // The site's Request access form: same origin, honeypot and two rate limits; it only mails PassBook's inbox.
+  'POST /access',
   'GET /api/v1/session',
   'DELETE /wallet/v1/devices/:deviceId/registrations/:passTypeId/:serial',
   'GET /api/v1/docs',
