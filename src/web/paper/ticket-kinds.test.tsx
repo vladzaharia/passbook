@@ -44,7 +44,7 @@ describe('journey paper', () => {
     const t = text(await html('starter-boarding-pass', 'a4', { kind: 'journey' }));
     for (const s of [
       'SFO – JFK',
-      'Flight WA100',
+      'Flight ZA1100',
       'Gate',
       'B12',
       'Boards 7:15 am',

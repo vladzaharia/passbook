@@ -172,6 +172,7 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   idp_drift: 'Polaris ID differences by subject and target',
   idp_group_members: 'Polaris ID group members by subject, no org',
   idp_groups: 'Polaris ID custom groups, platform level',
+  idp_run_lease: 'Polaris ID sync run locks by name',
   idp_target_state: 'Polaris ID projection cache by subject and target',
   entitlement_preset_meta: 'platform plan presets',
   entitlement_presets: 'platform plan presets',

@@ -1,3 +1,4 @@
+import type { MiddlewareHandler } from 'hono';
 import { CursorQuerySchema, IdParamSchema, OkSchema } from '../../../shared/contracts/common.ts';
 import {
   DeveloperInvitationListSchema,
@@ -30,10 +31,15 @@ const READ = { scope: 'members:read', capability: 'members:read' } as const;
 
 /** Mount at /api/v1/orgs. A developer invitation is `members:manage`, or a Live key naming `members:write`. */
 export const developerOrgRoutes = createRouter();
-developerOrgRoutes.use('*', async (c, next) => {
+// Only its own paths: mounted at /api/v1/orgs, a '*' would mark every org route after it no-store.
+const noStore: MiddlewareHandler = async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
-});
+};
+developerOrgRoutes.use('/:id/developer-invitations', noStore);
+developerOrgRoutes.use('/:id/developer-invitations/*', noStore);
+developerOrgRoutes.use('/:id/developers', noStore);
+developerOrgRoutes.use('/:id/developers/*', noStore);
 
 register(
   developerOrgRoutes,

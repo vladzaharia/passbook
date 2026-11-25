@@ -10,7 +10,7 @@ const sources = import.meta.glob(['./**/*.ts', '!./**/*.test.ts'], {
 const ALLOWED = [
   /^\/src\/worker\/connectors\//,
   /^\/src\/shared\//,
-  /^\/src\/generated\/connectors\.ts$/,
+  /^\/src\/generated\/(?:connectors|demo-words)\.ts$/,
   /^\/src\/worker\/platform\/(?:safe-fetch|read-capped|ids|errors)\.ts$/,
 ];
 const PACKAGES = new Set(['zod']);
