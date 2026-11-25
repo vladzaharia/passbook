@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { trackCurrentPath } from '../../lib/current-path.ts';
-import { getMode, resetModeForTests, setTestOnlyOrgs } from '../../lib/mode.ts';
+import { getMode, resetModeForTests, setMode, setTestOnlyOrgs } from '../../lib/mode.ts';
 import { TooltipProvider } from '../tooltip.tsx';
 import { ModeAnnouncer } from './mode-announcer.tsx';
 import { ModePill } from './mode-pill.tsx';
@@ -74,6 +74,18 @@ describe('TestStrip', () => {
 });
 
 describe('ModeSwitch and ModeAnnouncer', () => {
+  it('stays silent when it loads with Test already on', () => {
+    setMode('test');
+    render(
+      <TooltipProvider>
+        <ModeSwitch />
+        <ModeAnnouncer />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole('radio', { name: 'Test' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
   it('switches between Live and Test and announces each change, not the load', async () => {
     const user = userEvent.setup();
     const { container } = render(

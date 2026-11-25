@@ -26,7 +26,7 @@
 [data-menubar][data-tone="test"] [role="radiogroup"] {
   background-color: color-mix(in srgb, var(--pk-warning-border) 18%, transparent);
 }
-[data-menubar][data-tone="test"] [role="radio"][aria-checked="false"] {
+[data-menubar][data-tone="test"] [role="radio"][aria-checked="false"]:not(:hover) {
   color: var(--pk-text-default);
 }
 @media (prefers-reduced-motion: reduce) {

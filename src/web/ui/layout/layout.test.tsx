@@ -130,6 +130,19 @@ describe('route guards in the app', () => {
     expect(bar).not.toHaveAttribute('data-tone');
   });
 
+  it('leaves a test-only organization untinted and silent', async () => {
+    await renderApp('/admin/passes', {
+      session: 'admin',
+      memberships: [membershipFixture('o1', { testOnly: true })],
+      selectedOrg: 'o1',
+      handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+    });
+    await screen.findByRole('heading', { name: 'Passes', level: 1 });
+    expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull();
+    expect(document.querySelector('[data-menubar]')).not.toHaveAttribute('data-tone');
+    expect(screen.queryByText(/mode on\./)).toBeNull();
+  });
+
   it('labels a single organization as a link into it, not a menu, from a platform page', async () => {
     await renderApp('/admin/platform/status', {
       session: 'user',
