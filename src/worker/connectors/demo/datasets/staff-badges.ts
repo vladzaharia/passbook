@@ -1,5 +1,6 @@
 import { fullName, makePerson } from '../people.ts';
-import { DAY, isoDate, memo, scatter, title, worldKey, worldRng } from '../world.ts';
+import type { Rng } from '../prng.ts';
+import { DAY, isoWall, memo, scatter, title, worldKey, worldRng } from '../world.ts';
 import { D, type DatasetDef, PERSON_FIELDS, personFields, S } from './types.ts';
 
 const TEAMS = [
@@ -10,7 +11,9 @@ const TEAMS = [
   'Finance',
   'Support',
 ] as const;
-const ZONES = ['Lobby', 'Floor 2', 'Floor 3', 'Lab', 'Warehouse', 'Garage'] as const;
+const ZONES = ['lobby', 'floor-2', 'floor-3', 'lab', 'warehouse', 'garage'] as const;
+const zonesFor = (plan: unknown, r: Rng) =>
+  r.shuffle(ZONES).slice(0, plan === 'contractor' ? 2 : r.range(2, 4));
 const PLANS = ['staff', 'staff', 'staff', 'shift', 'contractor'] as const;
 const VALID_DAYS = { staff: 365, shift: 30, contractor: 14 } as const;
 const STATUS = ['Active', 'On leave', 'Suspended'] as const;
@@ -42,7 +45,6 @@ export const staffBadges: DatasetDef = {
     const p = makePerson(x, r, index);
     const plan = r.pick(PLANS);
     const from = x.t0 - r.range(0, 30) * DAY;
-    const zones = r.shuffle(ZONES).slice(0, plan === 'contractor' ? 2 : r.range(2, 4));
     return {
       holderEmail: p.email,
       record: {
@@ -52,15 +54,15 @@ export const staffBadges: DatasetDef = {
         company: company(x),
         team: r.pick(TEAMS),
         plan,
-        zones: zones.join(', '),
-        validFrom: isoDate(from),
-        validUntil: isoDate(from + VALID_DAYS[plan] * DAY),
+        zones: zonesFor(plan, r),
+        validFrom: isoWall(from, x.zone.offset),
+        validUntil: isoWall(from + VALID_DAYS[plan] * DAY, x.zone.offset),
         status: r.chance(85) ? 'Active' : r.pick(STATUS.slice(1)),
       },
     };
   },
   change(_x, _i, record, r) {
     record.status = r.chance(70) ? 'Active' : r.pick(STATUS.slice(1));
-    record.zones = r.shuffle(ZONES).slice(0, r.range(2, 4)).join(', ');
+    record.zones = zonesFor(record.plan, r);
   },
 };

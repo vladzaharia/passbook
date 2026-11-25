@@ -20,6 +20,8 @@ function defs(f: Fk, mod: string, key: string): unknown {
   try {
     return (f.definitions as unknown as Defs)[mod]?.[key];
   } catch {
+    // faker throws when a locale has no data for a key; the caller then falls back to English.
+    console.warn(`faker has no ${mod}.${key} here; using English`);
     return undefined;
   }
 }

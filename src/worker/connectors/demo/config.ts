@@ -34,6 +34,7 @@ const RESERVED_TLDS = ['test', 'example', 'invalid'];
 /** RFC 2606 names: nothing generated under them can reach a real inbox. */
 export function isReservedDomain(domain: string): boolean {
   const host = domain.trim().toLowerCase();
+  if (!/^[a-z0-9.-]+$/.test(host)) return false;
   if (RESERVED_HOSTS.some((r) => host === r || host.endsWith(`.${r}`))) return true;
   const tld = host.split('.').pop() ?? '';
   return RESERVED_TLDS.includes(tld);
@@ -115,6 +116,8 @@ export const config = z
       .meta({
         'x-order': 10,
         'x-label': 'Simulated failure',
+        'x-help':
+          'Second page fails needs more than 50 records (10 for Classic); Invalid records needs 20.',
         'x-enumLabels': {
           none: 'None',
           auth: 'Auth rejected',
@@ -128,6 +131,21 @@ export const config = z
       }),
   })
   .superRefine((c, ctx) => {
+    const page = c.dataset === 'classic' ? 10 : 50;
+    if (c.fail === 'page_two' && c.count <= page) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['fail'],
+        message: `Second page fails needs more than ${page} records.`,
+      });
+    }
+    if (c.fail === 'bad_records' && c.count < 20) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['fail'],
+        message: 'Invalid records needs at least 20 records.',
+      });
+    }
     if (c.dataset !== 'classic' && !isReservedDomain(c.holderDomain)) {
       ctx.addIssue({
         code: 'custom',

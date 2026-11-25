@@ -16,6 +16,7 @@ import { D, type DatasetDef, N, PERSON_FIELDS, personFields, S } from './types.t
 const KIND = ['Live', 'Festival', 'Night', 'Sessions'] as const;
 const VENUE = ['Arena', 'Hall', 'Theatre', 'Pavilion', 'Park'] as const;
 const GATES = ['A', 'B', 'C', 'D'] as const;
+const TICKET_TYPES = ['3-day', 'Friday', 'Saturday', 'Sunday', 'VIP'] as const;
 const STATUS = ['valid', 'refunded', 'transferred'] as const;
 
 interface Event {
@@ -64,6 +65,7 @@ export const eventTickets: DatasetDef = {
     ticketId: S,
     orderRef: S,
     attendee: S,
+    name: S,
     eventName: S,
     venueName: S,
     venueRegion: S,
@@ -88,7 +90,8 @@ export const eventTickets: DatasetDef = {
     const ev = events(x)[or.int(events(x).length)] as Event;
     // Seats come from a bijection of the ticket number, so they are unique across every event.
     const p = ((index - 1) * 421 + 17) % 1024;
-    const ticketType = r.pick(['Standard', 'Standard', 'VIP', 'Early bird']);
+    const ticketType = r.pick(TICKET_TYPES);
+    const attendee = pos === 0 ? fullName(buyer) : `${r.pick(x.words.first)} ${buyer.lastName}`;
     const at = (ms: number) => isoWall(ms, x.zone.offset);
     return {
       holderEmail: buyer.email,
@@ -96,7 +99,8 @@ export const eventTickets: DatasetDef = {
         ...personFields(buyer),
         ticketId: `TK-${scatter(index, 100000, 900000)}`,
         orderRef: `O-${scatter(order, 100000, 900000)}`,
-        attendee: pos === 0 ? fullName(buyer) : `${r.pick(x.words.first)} ${buyer.lastName}`,
+        name: attendee,
+        attendee,
         eventName: ev.name,
         venueName: ev.venue,
         venueRegion: ev.region,

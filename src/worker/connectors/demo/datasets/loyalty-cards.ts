@@ -1,5 +1,5 @@
 import { fullName, makePerson } from '../people.ts';
-import { DAY, isoDate } from '../world.ts';
+import { DAY, HOUR, isoDate, isoWall, MIN } from '../world.ts';
 import { D, type DatasetDef, N, PERSON_FIELDS, personFields, S } from './types.ts';
 
 const REWARDS: Record<string, readonly string[]> = {
@@ -39,10 +39,14 @@ export const loyaltyCards: DatasetDef = {
     stamps: N,
     reward: S,
     memberSince: D,
+    offer: S,
+    code: S,
+    expirationDate: D,
   },
   bad: ['holder', 'cardNumber'],
   build(x, index, r) {
     const p = makePerson(x, r, index);
+    const reward = r.pick(REWARDS[x.c.locale] ?? REWARDS['en-US'] ?? []);
     return {
       holderEmail: p.email,
       record: {
@@ -54,17 +58,21 @@ export const loyaltyCards: DatasetDef = {
         currency: x.zone.currency,
         points: r.range(0, 3000),
         stamps: r.range(0, 9),
-        reward: r.pick(REWARDS[x.c.locale] ?? REWARDS['en-US'] ?? []),
+        reward,
         memberSince: isoDate(x.t0 - r.range(30, 1800) * DAY),
+        offer: reward,
+        code: r.pattern('????-####'),
+        expirationDate: isoWall(
+          x.t0 + r.range(14, 180) * DAY + 23 * HOUR + 59 * MIN,
+          x.zone.offset,
+        ),
       },
     };
   },
-  change(_x, _i, record, r) {
-    record.points = Number(record.points) + r.range(5, 200);
-    record.balance = Math.max(
-      0,
-      Math.round((Number(record.balance) + r.range(-2000, 3000) / 100) * 100) / 100,
-    );
+  change(_x, _i, record, r, last) {
+    record.points = Number(record.points) + last * 30 + r.int(30);
+    // Cents rise with the step too: 5 per step plus under 5.
+    record.balance = Math.round((Number(record.balance) + last * 5 + r.int(500) / 100) * 100) / 100;
     record.stamps = r.range(0, 9);
     if (Number(record.points) > 2500) record.tier = 'Gold';
   },

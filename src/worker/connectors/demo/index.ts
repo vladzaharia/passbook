@@ -1,8 +1,8 @@
+import { localDate } from '../../../shared/zoned.ts';
 import { type ConnectorDefinition, ConnectorError } from '../types.ts';
 import { type Config, config } from './config.ts';
 import { buildClassic, CLASSIC_FIELDS, classicRef } from './datasets/classic.ts';
 import { buildRecord, DATASET_DEFS, indexOf, refOf } from './datasets/index.ts';
-import { isoDate } from './world.ts';
 
 const CLASSIC_PAGE = 10;
 
@@ -23,7 +23,15 @@ function layout(c: Config) {
         const n = m ? Number(m[1]) : 0;
         return n > 0 && classicRef(n) === ref ? n : null;
       },
-      build: (i: number) => buildClassic(c, classicRef(i)),
+      build: (i: number) => {
+        const built = buildClassic(c, classicRef(i));
+        // Only this failure touches classic records, so every other config stays byte-identical to v1.
+        if (c.fail === 'bad_records' && i % 20 === 0) {
+          built.record.memberName = '';
+          built.record.memberId = '';
+        }
+        return built;
+      },
     };
   }
   const def = DATASET_DEFS[c.dataset];
@@ -80,8 +88,10 @@ const definition: ConnectorDefinition<Config, undefined> = {
     return config.parse({ ...(stored as object), dataset: 'classic' });
   },
 
-  prepareConfig(c, { now }) {
-    return c.dataset === 'classic' || c.anchor ? c : { ...c, anchor: isoDate(now) };
+  /** The org's local date, once at create; an update that leaves it out keeps the stored one. */
+  prepareConfig(c, { now, timeZone, previous }) {
+    if (c.dataset === 'classic' || c.anchor) return c;
+    return { ...c, anchor: previous?.anchor ?? localDate(now, timeZone) };
   },
 
   async test(ctx) {

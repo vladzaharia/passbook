@@ -62,15 +62,28 @@ describe('demo v2 shape', () => {
     expect(demoCtx({ holderDomain: 'acme.io' }).connection.config.holderDomain).toBe('acme.io');
   });
 
-  it('stamps the anchor at create, once, and never for classic', () => {
+  it('stamps the org-local date once, keeps a stored one, and never touches classic', () => {
     const prepare = connector.prepareConfig;
-    const now = Date.parse('2026-07-09T12:00:00Z');
+    const now = Date.parse('2026-07-09T03:00:00Z');
+    const la = { now, timeZone: 'America/Los_Angeles' };
     const v2 = demoCtx({ dataset: 'gym-members' }).connection.config;
-    expect(prepare?.(v2, { now })?.anchor).toBe('2026-07-09');
-    const set = demoCtx({ dataset: 'gym-members', anchor: '2026-01-01' }).connection.config;
-    expect(prepare?.(set, { now })?.anchor).toBe('2026-01-01');
+    expect(prepare?.(v2, la)?.anchor).toBe('2026-07-08');
+    expect(prepare?.(v2, { now, timeZone: 'Europe/Berlin' })?.anchor).toBe('2026-07-09');
+    expect(prepare?.(v2, { ...la, previous: { ...v2, anchor: '2026-01-01' } })?.anchor).toBe(
+      '2026-01-01',
+    );
+    const set = demoCtx({ dataset: 'gym-members', anchor: '2026-02-02' }).connection.config;
+    expect(prepare?.(set, la)?.anchor).toBe('2026-02-02');
     const classic = demoCtx({}).connection.config;
-    expect(prepare?.(classic, { now })).toBe(classic);
+    expect(prepare?.(classic, la)).toBe(classic);
+  });
+
+  it('refuses a domain with odd characters and warns about silent failure modes', () => {
+    expect(() => demoCtx({ dataset: 'bookings', holderDomain: 'a b.example.com' })).toThrow();
+    expect(() => demoCtx({ dataset: 'bookings', count: 50, fail: 'page_two' })).toThrow();
+    expect(() => demoCtx({ count: 10, fail: 'page_two' })).toThrow();
+    expect(() => demoCtx({ count: 11, fail: 'page_two' })).not.toThrow();
+    expect(() => demoCtx({ count: 19, fail: 'bad_records' })).toThrow();
   });
 });
 
@@ -247,5 +260,32 @@ describe('demo v2 failure modes', () => {
       null,
     );
     expect(rows?.changes.find((c) => c.ref === 'b-0002')).toEqual({ ref: 'b-0002', deleted: true });
+  });
+});
+
+describe('demo classic and v1 configs', () => {
+  it('matches what main produced for the same config', async () => {
+    const rows = await listRecords({
+      seed: 'golden',
+      count: 12,
+      revision: 2,
+      holderDomain: 'acme.io',
+    });
+    await expect(`${JSON.stringify(rows, null, 1)}\n`).toMatchFileSnapshot(
+      './__golden__/classic.golden',
+    );
+  });
+
+  it('migrates a v1 config to classic and keeps its holder domain', () => {
+    const v1 = { seed: 's1', count: 12, revision: 3, holderDomain: 'acme.io' };
+    const migrated = connector.migrate?.(1, v1);
+    expect(migrated).toMatchObject({ ...v1, dataset: 'classic', fail: 'none', missing: [] });
+  });
+
+  it('classic honours bad_records only when asked', async () => {
+    const plain = await listRecords({ count: 40 });
+    expect(plain.every((r) => r.memberName !== '')).toBe(true);
+    const bad = await listRecords({ count: 40, fail: 'bad_records' });
+    expect(bad.filter((r) => r.memberName === '')).toHaveLength(2);
   });
 });

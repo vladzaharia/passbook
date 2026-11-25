@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DATASETS } from './config.ts';
-import { lastChange } from './datasets/index.ts';
+import { DATASET_DEFS, lastChange, refOf } from './datasets/index.ts';
 import connector from './index.ts';
 import { demoCtx, listRecords, str } from './test-kit.ts';
 
@@ -29,7 +29,8 @@ describe('demo revisions', () => {
         .config;
       let changed = 0;
       for (let i = 1; i <= 500; i++) {
-        if (lastChange({ ...c, revision: 7 }, `m-${i}`) === 7) changed++;
+        if (lastChange({ ...c, revision: 7 }, refOf(DATASET_DEFS['gym-members'], i)) === 7)
+          changed++;
       }
       expect(Math.abs((changed / 500) * 100 - changeRate)).toBeLessThanOrEqual(5);
     }
@@ -54,5 +55,46 @@ describe('demo revisions', () => {
       p1?.cursor ?? null,
     );
     expect(p2?.changes).toHaveLength(50);
+  });
+});
+
+describe('demo revisions: counters and speed', () => {
+  it('points, visits and balance never go down as the revision rises', async () => {
+    const watch = [
+      ['gym-members', ['points', 'visits']],
+      ['loyalty-cards', ['points', 'balance']],
+    ] as const;
+    for (const [dataset, keys] of watch) {
+      let prev = await listRecords({ dataset, count: 40 });
+      for (const revision of [1, 2, 3, 5, 8, 13, 21, 40]) {
+        const next = await listRecords({ dataset, count: 40, revision, changeRate: 40 });
+        for (let i = 0; i < next.length; i++) {
+          for (const k of keys) {
+            expect(Number(next[i]?.[k])).toBeGreaterThanOrEqual(Number(prev[i]?.[k]));
+          }
+        }
+        prev = next;
+      }
+    }
+  });
+
+  it('contractors keep two zones through changes', async () => {
+    const rows = await listRecords({
+      dataset: 'staff-badges',
+      count: 200,
+      revision: 4,
+      changeRate: 100,
+    });
+    const contractors = rows.filter((r) => r.plan === 'contractor');
+    expect(contractors.length).toBeGreaterThan(0);
+    for (const r of contractors) expect(r.zones).toHaveLength(2);
+  });
+
+  it('the worst case, revision 10,000 at 1 percent, stays fast', () => {
+    const c = demoCtx({ dataset: 'gym-members', count: 1000, revision: 10_000, changeRate: 1 })
+      .connection.config;
+    const start = performance.now();
+    for (let i = 1; i <= 1000; i++) lastChange(c, refOf(DATASET_DEFS['gym-members'], i));
+    expect(performance.now() - start).toBeLessThan(100);
   });
 });

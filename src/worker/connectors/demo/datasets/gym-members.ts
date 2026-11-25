@@ -1,5 +1,5 @@
 import { makePerson } from '../people.ts';
-import { DAY, isoDate, memo, scatter, worldKey, worldRng } from '../world.ts';
+import { DAY, isoDate, isoWall, memo, scatter, worldKey, worldRng } from '../world.ts';
 import { B, D, type DatasetDef, N, PERSON_FIELDS, personFields, S } from './types.ts';
 
 const PLANS = ['member', 'member', 'member', 'off_peak', 'guest'] as const;
@@ -52,14 +52,15 @@ export const gymMembers: DatasetDef = {
       guests: r.range(0, 5),
       homeClub: r.pick(clubs(x)),
       joinedAt: isoDate(x.t0 - r.range(30, 1500) * DAY),
-      validFrom: isoDate(validFrom),
-      validUntil: isoDate(validFrom + RENEW[plan] * DAY),
+      validFrom: isoWall(validFrom, x.zone.offset),
+      validUntil: isoWall(validFrom + RENEW[plan] * DAY, x.zone.offset),
     };
     return { record: { ...record, active: record.status === 'Active' }, holderEmail: p.email };
   },
-  change(_x, _i, record, r) {
-    record.points = Number(record.points) + r.range(10, 500);
-    record.visits = Number(record.visits) + r.range(1, 8);
+  change(_x, _i, record, r, last) {
+    // `last * 40 + 0..39` rises with every later change step, so a counter never goes back.
+    record.points = Number(record.points) + last * 40 + r.int(40);
+    record.visits = Number(record.visits) + last * 2 + r.int(2);
     record.status = record.status === 'Active' && r.chance(30) ? 'Suspended' : 'Active';
     record.active = record.status === 'Active';
     if (r.chance(25)) record.tier = r.pick(TIERS);

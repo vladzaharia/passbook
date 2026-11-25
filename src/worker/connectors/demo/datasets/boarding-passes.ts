@@ -3,19 +3,19 @@ import { type Ctx, DAY, HOUR, isoWall, MIN, memo, scatter, worldKey, worldRng } 
 import { AIRPORTS, distanceKm } from './airports.ts';
 import { D, type DatasetDef, PERSON_FIELDS, personFields, S } from './types.ts';
 
-/** Fictional carriers; none is a real airline. */
+/** Fictional carriers. A code with a digit in third place cannot be an IATA (2 characters) or ICAO (3 letters) designator. */
 const CARRIERS = [
-  ['SK', 'Skylark Air'],
-  ['MJ', 'Meridian Jet'],
-  ['LK', 'Larkspur Airways'],
-  ['CB', 'Cobalt Air'],
-  ['TN', 'Tern Airlines'],
-  ['QL', 'Quill Air'],
+  ['ZA1', 'Skylark Air'],
+  ['ZB1', 'Meridian Jet'],
+  ['ZC1', 'Larkspur Airways'],
+  ['ZD1', 'Cobalt Air'],
+  ['ZE1', 'Tern Airlines'],
+  ['ZF1', 'Quill Air'],
 ] as const;
 
 interface Flight {
   code: string;
-  number: string;
+  number: number;
   from: (typeof AIRPORTS)[number];
   to: (typeof AIRPORTS)[number];
   /** Departure instant. */
@@ -36,7 +36,7 @@ const flights = (x: Ctx): Flight[] =>
       const minutes = Math.round((distanceKm(from, to) / 800) * 12 + 8) * 5;
       return {
         code: r.pick(CARRIERS)[0],
-        number: String(r.range(100, 999)),
+        number: r.range(100, 999),
         from,
         to,
         departs: wall - from.offset * HOUR,
@@ -98,7 +98,7 @@ export const boardingPasses: DatasetDef = {
         gate: f.gate,
         seat: `${Math.floor(slot / 6) + 1}${'ABCDEF'[slot % 6]}`,
         boardingGroup: String(r.range(1, 5)),
-        ticketId: `0161${scatter(index, 100000000, 900000000)}`,
+        ticketId: `ZT-${scatter(index, 100000000, 900000000)}`,
         transitType: 'air',
       },
     };

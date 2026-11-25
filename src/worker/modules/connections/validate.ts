@@ -6,6 +6,7 @@ import { type FieldIssue, ValidationError } from '../../platform/errors.ts';
 import { assertPublicHost, assertSafeUrl, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { blueprintRefusal } from '../templates/blueprint-guard.ts';
 import { templateVisibleToOrg } from '../templates/repo-list.ts';
 import { getDeps, resolverOf } from './deps.ts';
@@ -111,4 +112,18 @@ export async function assertOrg(sctx: ServiceContext, orgId: string): Promise<vo
       'ORG_NOT_FOUND',
     );
   }
+}
+
+/** The org's clock for stamped dates: `org.timeZone`, else Pacific. Never UTC. */
+export async function orgZoneOf(sctx: ServiceContext, orgId: string): Promise<string> {
+  return (await readOrgTimeZone(sctx.env.DB, orgId)) ?? 'America/Los_Angeles';
+}
+
+/** Fills create-time values (the connector's `prepareConfig`) on a parsed config; a no-op without a hook. */
+export function prepare<C>(
+  def: AnyConnector,
+  parsed: C,
+  context: { now: number; timeZone: string; previous?: C },
+): C {
+  return def.prepareConfig ? (def.prepareConfig(parsed, context) as C) : parsed;
 }

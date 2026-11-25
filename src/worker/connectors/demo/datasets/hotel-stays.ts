@@ -1,6 +1,6 @@
 import { fullName, makePerson } from '../people.ts';
 import { DAY, HOUR, isoWall, memo, scatter, title, worldKey, worldRng } from '../world.ts';
-import { B, D, type DatasetDef, N, PERSON_FIELDS, personFields, S } from './types.ts';
+import { D, type DatasetDef, N, PERSON_FIELDS, personFields, S } from './types.ts';
 
 /** 3 floors of 10 rooms. */
 const ROOMS = Array.from(
@@ -9,6 +9,7 @@ const ROOMS = Array.from(
 );
 /** A room's stays sit in back-to-back 6-day slots: check-in on day 0 to 2, at most 3 nights. */
 const SLOT_DAYS = 6;
+const included = (yes: boolean) => (yes ? 'Included' : 'Not included');
 const TIERS = ['Member', 'Silver', 'Gold', 'Platinum'] as const;
 
 const hotel = (x: Parameters<DatasetDef['build']>[0]) =>
@@ -29,8 +30,8 @@ export const hotelStays: DatasetDef = {
     nights: N,
     checkOut: D,
     room: S,
-    breakfast: B,
-    spa: B,
+    breakfast: S,
+    spa: S,
     plate: S,
     wifiNetwork: S,
     wifiPassword: S,
@@ -56,8 +57,8 @@ export const hotelStays: DatasetDef = {
         nights,
         checkOut: isoWall(day + nights * DAY + 11 * HOUR, off),
         room,
-        breakfast: r.chance(50),
-        spa: r.chance(25),
+        breakfast: included(r.chance(50)),
+        spa: included(r.chance(25)),
         plate: r.pattern('???-####'),
         wifiNetwork: `${hotel(x)}-Guest`,
         wifiPassword: `${r.pick(x.words.adjective)}${r.pick(x.words.noun)}${r.range(10, 99)}`,
@@ -67,8 +68,8 @@ export const hotelStays: DatasetDef = {
     };
   },
   change(_x, _i, record, r) {
-    record.breakfast = r.chance(50);
-    record.spa = r.chance(30);
+    record.breakfast = included(r.chance(50));
+    record.spa = included(r.chance(30));
     record.status = r.chance(85) ? 'Confirmed' : 'Cancelled';
   },
 };

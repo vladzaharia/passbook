@@ -6,7 +6,10 @@ export const MIN = 60_000;
 export const HOUR = 3_600_000;
 export const DAY = 86_400_000;
 
-/** Fixed standard-time offsets: no DST tables, so output never depends on the runtime's zone data. */
+/**
+ * Fixed standard-time offsets, with no DST tables, so output never depends on the runtime's zone data.
+ * In summer a zone that observes DST reads one hour early against its real clock; demo data accepts that.
+ */
 const LOCALE_ZONE = {
   'en-US': { tz: 'America/Los_Angeles', offset: -8, currency: 'USD', lat: 47.6, lng: -122.3 },
   'en-GB': { tz: 'Europe/London', offset: 0, currency: 'GBP', lat: 51.5, lng: -0.1 },

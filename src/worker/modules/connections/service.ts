@@ -37,7 +37,9 @@ import {
   assertPointer,
   assertSafeUrls,
   assertTemplateUsable,
+  orgZoneOf,
   parseWith,
+  prepare,
   requireConnector,
 } from './validate.ts';
 import { validateVoidWhen } from './void-when.ts';
@@ -99,8 +101,10 @@ export async function create(
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   const now = sctx.clock.now();
-  const parsed = parseWith(def.configSchema, input.config, 'config');
-  const config = def.prepareConfig ? def.prepareConfig(parsed, { now }) : parsed;
+  const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
+    now,
+    timeZone: await orgZoneOf(sctx, input.orgId),
+  });
   const mode =
     input.mode ??
     (def.capabilities.poll ? 'poll' : def.capabilities.webhook ? 'webhook' : 'manual');

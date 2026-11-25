@@ -13,6 +13,14 @@ export function hash32(text: string): number {
   return mix(text, 0);
 }
 
+/** Mixes a record's base hash with a revision step: integer maths only, so 500 steps cost microseconds. */
+export function stepHash(base: number, step: number): number {
+  let h = Math.imul(base ^ Math.imul(step + 1, 0x9e3779b1), 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
 /** sfc32 seeded from a 128-bit hash of the key. The same key gives the same stream, anywhere. */
 export class Rng {
   private a: number;

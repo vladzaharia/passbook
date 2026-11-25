@@ -18,8 +18,8 @@ export interface DatasetDef {
   bad: readonly string[];
   /** The record as first issued (index is 1-based). `r` is this record's own stream. */
   build(x: Ctx, index: number, r: Rng): Built;
-  /** Applies one upstream change in place; `r` is seeded by the record and its last change step. */
-  change(x: Ctx, index: number, record: UpstreamRecord, r: Rng): void;
+  /** Applies one upstream change in place; `r` is seeded by the record and its last change step `last`; counters grow with `last`, never shrink. */
+  change(x: Ctx, index: number, record: UpstreamRecord, r: Rng, last: number): void;
 }
 
 const f = (type: ConnectorOutputField['type']) => ({ type }) as const;

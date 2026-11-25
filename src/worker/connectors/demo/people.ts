@@ -4,13 +4,16 @@ import { DAY } from './world.ts';
 
 const AVATAR = ['red', 'orange', 'amber', 'green', 'teal', 'blue', 'violet', 'pink'] as const;
 
-/** Fictional ranges where a country has one (NANP 555-01xx, Ofcom drama, fr 06 39 98). */
+/**
+ * Official fictional ranges: NANP 212 555-01xx, Ofcom drama 07700 900xxx, Arcep 06 39 98 xx xx, and Berlin
+ * 030 23125 xxx. Spain publishes none, so its pattern starts 000, which no Spanish number can.
+ */
 const PHONE: Record<string, string> = {
   'en-US': '(212) 555-01##',
   'en-GB': '07700 900###',
-  'de-DE': '+49 151 5550####',
+  'de-DE': '+49 30 23125###',
   'fr-FR': '+33 6 39 98 ## ##',
-  'es-ES': '+34 6## ### ###',
+  'es-ES': '+34 000 ### ###',
 };
 
 /** ASCII, lower case, letters and digits only: safe in an email local part. */

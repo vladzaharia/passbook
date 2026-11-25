@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "b269541e7b5ee1c684de2633ea312491848973cb";
+export const BAKED_BUILD_HASH = "fe123bbd2dabf1e0a232559ac602ebc84c57110a";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -2311,7 +2311,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-boarding-pass",
     "slug": "starter-boarding-pass",
-    "version": "f7cc309f9e6f7a2b",
+    "version": "e077bf699b4a0665",
     "name": "Boarding pass",
     "description": "Flight, gate and seat, with a route footer.",
     "org": null,
@@ -2557,7 +2557,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "sample": {
         "passengerGiven": "Alex",
         "passengerFamily": "Morgan",
-        "airlineCode": "WA",
+        "airlineCode": "ZA1",
         "flightNumber": 100,
         "origin": "SFO",
         "originCity": "San Francisco",
@@ -3036,7 +3036,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         }
       ],
       "semantics": {
-        "airlineCode": "WA",
+        "airlineCode": "ZA1",
         "flightNumber": 100,
         "departureAirportCode": "SFO",
         "departureCityName": "San Francisco",
@@ -3063,7 +3063,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "flight",
             "label": "Flight",
-            "value": "WA100"
+            "value": "ZA1100"
           },
           {
             "key": "gate",
@@ -3164,7 +3164,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2152989108,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/en.lproj/pass.strings"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/en.lproj/pass.strings"
         }
       },
       {
@@ -3178,7 +3178,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/footer@2x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/footer@2x.png"
         }
       },
       {
@@ -3192,7 +3192,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/footer@3x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/footer@3x.png"
         }
       },
       {
@@ -3206,7 +3206,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/icon@2x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/icon@2x.png"
         }
       },
       {
@@ -3220,7 +3220,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/icon@3x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/icon@3x.png"
         }
       },
       {
@@ -3234,7 +3234,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/logo@2x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/logo@2x.png"
         }
       },
       {
@@ -3248,7 +3248,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/logo@3x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/logo@3x.png"
         }
       },
       {
@@ -3262,7 +3262,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/primaryLogo@2x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/primaryLogo@2x.png"
         }
       },
       {
@@ -3276,7 +3276,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/primaryLogo@3x.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/primaryLogo@3x.png"
         }
       },
       {
@@ -3290,7 +3290,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 660,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/f7cc309f9e6f7a2b/wallets/google/logo.png"
+          "path": "/templates/starter-boarding-pass/e077bf699b4a0665/wallets/google/logo.png"
         }
       }
     ],
