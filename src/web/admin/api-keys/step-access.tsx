@@ -9,7 +9,7 @@ import { TerminalRows } from './scope-rows.tsx';
 import type { KeyForm } from './use-key-form.ts';
 
 const TILE = 'min-h-0 p-3';
-const GRID = 'grid gap-3 @md:grid-cols-2 @xl:grid-cols-3';
+const GRID = 'grid grid-cols-2 gap-3 @xl:grid-cols-3';
 
 /** What the key may do: a preset, a role, or scopes picked one by one. */
 export function StepAccess({
@@ -44,7 +44,7 @@ export function StepAccess({
   return (
     <>
       <fieldset className="flex min-w-0 flex-col">
-        <legend className="mb-2 text-sm font-medium text-fg">Access</legend>
+        <legend className="mb-2 text-sm font-medium text-fg">Presets</legend>
         <div className={GRID}>
           {presets.map((p) => (
             <OptionTile
@@ -71,24 +71,6 @@ export function StepAccess({
             }}
           />
         </div>
-        {platform ? null : (
-          <>
-            <p className="mt-4 mb-2 text-xs font-medium text-fg-muted">Roles</p>
-            <div className={GRID}>
-              {ROLES.map((r) => (
-                <OptionTile
-                  key={r}
-                  name="key-access"
-                  value={r}
-                  label={ROLE_LABELS[r]}
-                  className={TILE}
-                  checked={current === r}
-                  onSelect={() => form.setAccess(r)}
-                />
-              ))}
-            </div>
-          </>
-        )}
       </fieldset>
       {current !== 'custom' ? null : (
         <ScopePicker
@@ -107,6 +89,24 @@ export function StepAccess({
           error={errors.terminalIds}
         />
       ) : null}
+      {platform ? null : (
+        <fieldset className="flex min-w-0 flex-col">
+          <legend className="mb-2 text-sm font-medium text-fg">Or a role</legend>
+          <div className={GRID}>
+            {ROLES.map((r) => (
+              <OptionTile
+                key={r}
+                name="key-access"
+                value={r}
+                label={ROLE_LABELS[r]}
+                className={TILE}
+                checked={current === r}
+                onSelect={() => form.setAccess(r)}
+              />
+            ))}
+          </div>
+        </fieldset>
+      )}
     </>
   );
 }

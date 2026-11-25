@@ -160,7 +160,7 @@ export function CreateKeyDialog({
         title="New API key"
         footer={
           <>
-            <Button variant="ghost" className="sm:mr-auto" onClick={close}>
+            <Button variant="ghost" className="max-sm:hidden sm:mr-auto" onClick={close}>
               Cancel
             </Button>
             {blocked ? (
@@ -168,14 +168,16 @@ export function CreateKeyDialog({
                 {HINT[stepId]}
               </span>
             ) : null}
-            {step > 0 ? (
-              <Button variant="outline" onClick={() => go(step - 1)}>
-                Back
+            <div className="flex gap-2 max-sm:[&>*]:flex-1">
+              {step > 0 ? (
+                <Button variant="outline" onClick={() => go(step - 1)}>
+                  Back
+                </Button>
+              ) : null}
+              <Button type="submit" form="new-key" disabled={blocked} loading={create.isPending}>
+                {last ? 'Create key' : 'Next'}
               </Button>
-            ) : null}
-            <Button type="submit" form="new-key" disabled={blocked} loading={create.isPending}>
-              {last ? 'Create key' : 'Next'}
-            </Button>
+            </div>
           </>
         }
       >
