@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeApiKey, makeOrg } from '../../../../test/helpers/index.ts';
 import { all, run } from '../../platform/db.ts';
 import { resetDeps } from './deps.ts';
-import { BASE, probeApp, reply, upstream } from './probe-test-kit.ts';
+import { BASE, probeApp, reply, upstream } from './probe-fixtures.ts';
 import * as service from './service.ts';
 
 let t: Awaited<ReturnType<typeof probeApp>>;

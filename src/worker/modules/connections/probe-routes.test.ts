@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { resetDeps, setDeps } from './deps.ts';
-import { BASE, probeApp, reply, upstream } from './probe-test-kit.ts';
+import { BASE, probeApp, reply, upstream } from './probe-fixtures.ts';
 import { publicResolver } from './test-kit.ts';
 
 let t: Awaited<ReturnType<typeof probeApp>>;
