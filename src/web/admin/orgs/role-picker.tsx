@@ -44,13 +44,16 @@ export function RolePicker({ roles, onChange, error, idPrefix = 'role' }: RolePi
                 id={id}
                 checked={checked}
                 disabled={off}
+                aria-labelledby={`${id}-name`}
                 aria-describedby={`${id}-blurb`}
                 aria-invalid={(role === ROLES[0] && Boolean(error)) || undefined}
                 onCheckedChange={(value) => onChange(toggleRole(roles, role, value === true))}
                 className="mt-0.5 pointer-coarse:-my-3 pointer-coarse:-ml-3"
               />
               <span className="flex min-w-0 flex-col">
-                <span className="text-sm font-medium text-fg-strong">{ROLE_LABELS[role]}</span>
+                <span id={`${id}-name`} className="text-sm font-medium text-fg-strong">
+                  {ROLE_LABELS[role]}
+                </span>
                 <span id={`${id}-blurb`} className="text-xs text-fg-muted">
                   {ROLE_BLURBS[role]}
                 </span>
