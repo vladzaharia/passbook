@@ -107,8 +107,11 @@ export function ratchetFailures(input: {
   next: Doc;
   baseNames: SdkNames | null;
   nextNames: SdkNames;
+  /** operationIds the owner approved for removal: their frozen names may go. */
+  approvedIds?: readonly string[];
 }): string[] {
   const { base, next, baseNames, nextNames } = input;
+  const approved = new Set(input.approvedIds ?? []);
   const out: string[] = [];
   const nextOps = opsOf(next);
   const byId = new Map(nextOps.map((o) => [o.id, o]));
@@ -116,6 +119,7 @@ export function ratchetFailures(input: {
   if (baseNames) {
     for (const [id, was] of Object.entries(baseNames)) {
       const now = nextNames[id];
+      if (!now && approved.has(id) && !byId.has(id)) continue;
       if (!now) out.push(`${id}: name removed (names are frozen)`);
       else if (now.resource !== was.resource || now.method !== was.method)
         out.push(

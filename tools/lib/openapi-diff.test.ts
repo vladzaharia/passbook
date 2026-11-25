@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { breakingChanges, type Doc } from './openapi-diff.ts';
+import { breakingChanges, type Doc, withoutApprovedRemovals } from './openapi-diff.ts';
 
 const op = (schema: unknown) => ({
   operationId: 'a.getA',
@@ -46,5 +46,27 @@ describe('breakingChanges', () => {
       'POST /a body.t: unknown keys now refused',
     ]);
     expect(breakingChanges(post(closed), post(closed))).toEqual([]);
+  });
+});
+
+describe('withoutApprovedRemovals', () => {
+  const gone: Doc = { paths: {} };
+  const approval = {
+    op: 'GET /a',
+    operationId: 'a.getA',
+    date: '2026-11-24',
+    reason: 'owner decision 2026-11-24',
+  };
+
+  it('sets aside a removal the owner approved, and nothing else', () => {
+    const broken = breakingChanges(doc(inline), gone);
+    expect(broken).toEqual(['GET /a: operation removed']);
+    expect(withoutApprovedRemovals(broken, [approval])).toEqual([]);
+    expect(withoutApprovedRemovals(broken, [{ ...approval, op: 'GET /b' }])).toEqual(broken);
+  });
+
+  it('keeps a field removal on an approved operation that still exists', () => {
+    const fieldGone = breakingChanges(doc(inline), doc({ type: 'object', properties: {} }));
+    expect(withoutApprovedRemovals(fieldGone, [approval])).toEqual(fieldGone);
   });
 });

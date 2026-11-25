@@ -24,7 +24,6 @@ const TAG_FAMILY: Record<string, Family> = {
   'scan-events': 'scan',
   'scan-staff': 'scan',
   'scan-display': 'scan',
-  visitors: 'scan',
   'roll-calls': 'scan',
   'nfc-tags': 'scan',
   'nfc-keysets': 'scan',

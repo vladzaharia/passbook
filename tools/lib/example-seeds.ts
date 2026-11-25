@@ -26,7 +26,6 @@ import {
   SESSION,
   STAFF,
   TAG_TYPE,
-  VISITOR,
   WEBHOOK_ENDPOINT,
   WEBHOOK_SECRET,
   ZONE,
@@ -351,15 +350,6 @@ export const SEEDS: Record<string, unknown> = {
   'passes.patchPassesById request': {
     input: { ...TEMPLATE.sample, validUntil: '2027-01-31' },
     notify: true,
-  },
-  'visitors.postVisitors request': {
-    orgId: IDS.org,
-    name: VISITOR.name,
-    email: 'jordan@example.com',
-    hostName: VISITOR.hostName,
-    windowFrom: VISITOR.windowFrom,
-    windowUntil: VISITOR.windowUntil,
-    note: VISITOR.note,
   },
   'scan-events.postScanEvents request': {
     orgId: IDS.org,
@@ -1032,12 +1022,6 @@ export const SEEDS: Record<string, unknown> = {
   'scan-zones.patchScanZonesById request': { capacity: 150 },
   'scan-zones.patchScanZonesById response': { ...ZONE, capacity: 150 },
   'scan-zones.postScanZonesByIdArchive response': { ...ZONE, archivedAt: T.now },
-  'visitors.postVisitorsByIdCheckOut response': { ...VISITOR, status: 'out', statusAt: T.now },
-  'visitors.postVisitorsByIdCancel response': { ...VISITOR, status: 'cancelled', statusAt: T.now },
-  'visitors.getVisitorsHosts response': {
-    items: [{ id: IDS.user, name: 'Sam Rivera', email: 'sam@example.com' }],
-    nextCursor: null,
-  },
   'scanners.postScanningSessionsByIdHold request': { action: 'close', revision: 3 },
   'scanners.postScanningSessionsByIdHold response': {
     ...SESSION,

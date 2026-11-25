@@ -134,6 +134,24 @@ export function breakingChanges(prev: Doc, next: Doc): string[] {
   return out;
 }
 
+/** One operation the owner approved for outright removal (tools/openapi-approved-removals.json). */
+export interface ApprovedRemoval {
+  /** `GET /api/v1/visitors`, as the document names it. */
+  op: string;
+  operationId: string;
+  date: string;
+  reason: string;
+}
+
+/** The breaking changes left once approved operation removals are set aside. */
+export const withoutApprovedRemovals = (
+  broken: string[],
+  approved: ApprovedRemoval[],
+): string[] => {
+  const free = new Set(approved.map((a) => `${a.op}: operation removed`));
+  return broken.filter((b) => !free.has(b));
+};
+
 export interface Change {
   operationId: string;
   /** `GET /passes/{id}`. */

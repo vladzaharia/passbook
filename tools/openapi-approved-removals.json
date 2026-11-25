@@ -1,0 +1,44 @@
+[
+  {
+    "op": "GET /api/v1/visitors",
+    "operationId": "visitors.getVisitors",
+    "date": "2026-11-24",
+    "reason": "owner decision 2026-11-24"
+  },
+  {
+    "op": "POST /api/v1/visitors",
+    "operationId": "visitors.postVisitors",
+    "date": "2026-11-24",
+    "reason": "owner decision 2026-11-24"
+  },
+  {
+    "op": "GET /api/v1/visitors/hosts",
+    "operationId": "visitors.getVisitorsHosts",
+    "date": "2026-11-24",
+    "reason": "owner decision 2026-11-24"
+  },
+  {
+    "op": "POST /api/v1/visitors/{id}/check-out",
+    "operationId": "visitors.postVisitorsByIdCheckOut",
+    "date": "2026-11-24",
+    "reason": "owner decision 2026-11-24"
+  },
+  {
+    "op": "POST /api/v1/visitors/{id}/cancel",
+    "operationId": "visitors.postVisitorsByIdCancel",
+    "date": "2026-11-24",
+    "reason": "owner decision 2026-11-24"
+  },
+  {
+    "op": "POST /api/v1/visitors/{id}/host-email",
+    "operationId": "visitors.postVisitorsByIdHostEmail",
+    "date": "2026-11-24",
+    "reason": "owner decision 2026-11-24"
+  },
+  {
+    "op": "GET /api/v1/scan/visitors",
+    "operationId": "scan.getScanVisitors",
+    "date": "2026-11-24",
+    "reason": "owner decision 2026-11-24"
+  }
+]
