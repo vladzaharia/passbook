@@ -30,7 +30,7 @@ import { clearDraft } from './drafts.ts';
 import { useGoalFlow } from './goal-flow.tsx';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
-import { type DesignDoc, findField, hasBothFaces, type Selection } from './model.ts';
+import { type DesignDoc, findField, previewTargetOf, type Selection } from './model.ts';
 import { useOrgBrandedPass } from './org-logo-text.ts';
 import { Outline } from './outline.tsx';
 import {
@@ -121,12 +121,6 @@ export function Designer({
     create ? { orgId: create.orgId, name: create.name } : undefined,
   );
   const shownPass = useOrgBrandedPass(check.lastBuilt);
-  // With both layouts the Edit layout toggle picks the face; the card follows it.
-  const previewTarget = hasBothFaces(state.doc.passJson)
-    ? state.doc.target === 'poster'
-      ? 'ios27'
-      : 'legacy'
-    : undefined;
 
   const edit = useCallback(
     (op: Op, merge?: string) => {
@@ -177,8 +171,7 @@ export function Designer({
     if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
     const k = e.key.toLowerCase();
     if (k !== 'z' && k !== 'y') return;
-    // Text fields share the designer's history: one undo model, not a browser one per field.
-    e.preventDefault();
+    e.preventDefault(); // Text fields share the designer's history: one undo model, not a browser one per field.
     dispatch({ type: k === 'y' || e.shiftKey ? 'redo' : 'undo' });
   }
 
@@ -300,7 +293,7 @@ export function Designer({
                   readOnly || phone ? undefined : (patch) => edit({ op: 'paper', patch }, 'paper')
                 }
                 passJson={readOnly ? readOnly.passJson : shownPass}
-                target={previewTarget}
+                target={previewTargetOf(state.doc.passJson, state.doc.target)}
                 assets={state.doc.assets}
                 assetBase={base_}
                 checking={readOnly ? false : check.checking}
