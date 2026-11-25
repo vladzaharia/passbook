@@ -56,7 +56,8 @@ const dirOf = (p: string) => p.slice(0, Math.max(p.lastIndexOf('/'), 0));
 
 export function parseXlsx(bytes: Uint8Array, options: { sheet?: string } = {}): XlsxTable {
   let remaining: number = L.totalBytes;
-  const take = (select: (name: string) => boolean) => {
+  // `keep` false: the bytes are freed after use, so they do not count against what later parts may use.
+  const take = (select: (name: string) => boolean, keep = true) => {
     const limits: ZipLimits = {
       archiveBytes: TABULAR_LIMITS.fileBytes,
       rawEntries: L.entries,
@@ -66,7 +67,7 @@ export function parseXlsx(bytes: Uint8Array, options: { sheet?: string } = {}): 
       ratioFloor: L.ratioFloor,
     };
     const out = inflateGuarded(bytes, limits, select);
-    for (const f of out.files.values()) remaining -= f.length;
+    if (keep) for (const f of out.files.values()) remaining -= f.length;
     return out;
   };
   try {
@@ -78,7 +79,7 @@ export function parseXlsx(bytes: Uint8Array, options: { sheet?: string } = {}): 
 }
 
 function read(
-  take: (select: (name: string) => boolean) => ReturnType<typeof inflateGuarded>,
+  take: (select: (name: string) => boolean, keep?: boolean) => ReturnType<typeof inflateGuarded>,
   wanted: string | undefined,
 ): XlsxTable {
   const first = take((n) => n === '[Content_Types].xml');
@@ -157,24 +158,27 @@ function read(
     if (chosen.length === 0)
       throw new TabularError('FILE_SHEET_NOT_FOUND', 'The workbook has no sheet with that name.');
   } else {
-    chosen = [...sheets.filter((s) => !s.hidden), ...sheets.filter((s) => s.hidden)];
+    // Hidden sheets are read only when named.
+    chosen = sheets.filter((s) => !s.hidden);
   }
   if (chosen.length === 0) throw new TabularError('FILE_EMPTY', 'The workbook has no sheets.');
-  const paths = new Set(chosen.map((s) => s.part?.target));
-  const body = take((n) => n === sstPath || n === stylesPath || paths.has(n));
-  const shared = parseSharedStrings(sstPath ? body.files.get(sstPath) : undefined);
-  const styles = parseStyles(stylesPath ? body.files.get(stylesPath) : undefined);
+  const names = sheets.map((x) => x.name);
 
+  const aux = take((n) => n === sstPath || n === stylesPath, false);
+  const shared = parseSharedStrings(sstPath ? aux.files.get(sstPath) : undefined);
+  const styles = parseStyles(stylesPath ? aux.files.get(stylesPath) : undefined);
+  aux.files.clear();
+
+  // One sheet at a time: each is freed before the next is inflated.
   for (const s of chosen) {
-    const part = s.part?.target ? body.files.get(s.part.target) : undefined;
-    if (!part) throw damaged();
-    const { rows } = parseSheet(part, shared, styles, date1904);
-    if (rows.length === 0) continue;
-    return table(
-      sheets.map((x) => x.name),
-      s.name,
-      rows,
-    );
+    const path = s.part?.target;
+    if (!path) throw damaged();
+    const part = take((n) => n === path, false);
+    const bytes = part.files.get(path);
+    if (!bytes) throw damaged();
+    const { rows } = parseSheet(bytes, shared, styles, date1904);
+    part.files.clear();
+    if (rows.length > 0) return table(names, s.name, rows);
   }
   throw new TabularError('FILE_EMPTY', 'The spreadsheet is empty.');
 }

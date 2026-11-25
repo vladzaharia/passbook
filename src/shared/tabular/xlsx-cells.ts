@@ -21,10 +21,22 @@ const BUILT_IN: Record<number, DateKind> = {
   47: 'time',
 };
 
+/** Text up to the first `;` outside quotes and escapes. */
+function firstSection(code: string): string {
+  let quoted = false;
+  for (let i = 0; i < code.length; i++) {
+    const c = code[i];
+    if (c === '\\') i++;
+    else if (c === '"') quoted = !quoted;
+    else if (c === ';' && !quoted) return code.slice(0, i);
+  }
+  return code;
+}
+
 /** Date kind of a custom format code, or null for a number format. */
 export function classifyFormat(code: string): DateKind | null {
-  // First section only; drop quoted text, escapes, padding and bracket parts (keeping [h] [m] [s]).
-  const section = code.split(/;(?=(?:[^"]*"[^"]*")*[^"]*$)/)[0] ?? '';
+  if (code.length > 255) throw new TabularError('FILE_DAMAGED', 'The spreadsheet is damaged.');
+  const section = firstSection(code);
   let elapsed = false;
   const bare = section
     .replace(/"[^"]*"/g, '')
@@ -81,7 +93,8 @@ export function serialToValue(serial: number, kind: DateKind, date1904: boolean)
   let day = Math.floor(serial);
   let secs = Math.round((serial - day) * 86400);
   if (secs === 86400) {
-    day += 1;
+    // A time of day wraps within the day; a date carries into the next one.
+    if (!(kind === 'time' && day === 0)) day += 1;
     secs = 0;
   }
   const hh = pad(Math.floor(secs / 3600));
@@ -210,6 +223,9 @@ export function parseSheet(
         row[col] = value;
       } else if (name === 'row') {
         if (row.some((c) => c !== null)) rows.push(row);
+        // The header is the first row.
+        if (rows.length > TABULAR_LIMITS.rows + 1)
+          throw new TabularError('FILE_TOO_MANY_ROWS', `Use at most ${TABULAR_LIMITS.rows} rows.`);
       }
     },
   });

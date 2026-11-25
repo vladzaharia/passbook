@@ -69,16 +69,18 @@ function table(items: unknown[], recordsPointer?: string): JsonTable {
   for (const item of items) {
     if (!isPlain(item))
       throw new TabularError('FILE_NOT_RECORDS', 'Every record must be an object.');
-    for (const [k, v] of Object.entries(item)) {
+    for (const k in item) {
+      if (!Object.hasOwn(item, k)) continue;
       columns.add(k);
+      if (columns.size > TABULAR_LIMITS.columns)
+        throw new TabularError(
+          'FILE_TOO_MANY_COLUMNS',
+          `Use at most ${TABULAR_LIMITS.columns} columns.`,
+        );
+      const v = item[k];
       if (typeof v === 'string' && v.length > TABULAR_LIMITS.cellChars)
         throw new TabularError('FILE_CELL_TOO_LONG', 'A value has more than 2,000 characters.');
     }
-    if (columns.size > TABULAR_LIMITS.columns)
-      throw new TabularError(
-        'FILE_TOO_MANY_COLUMNS',
-        `Use at most ${TABULAR_LIMITS.columns} columns.`,
-      );
     records.push(item);
   }
   const names = [...columns];

@@ -56,6 +56,7 @@ function assertZipMagic(zip: Uint8Array): void {
 function listEntries(zip: Uint8Array, rawEntries: number): Declared[] {
   const declared: Declared[] = [];
   const seen = new Set<string>();
+  let packed = 0;
   try {
     unzipSync(zip, {
       filter: (file) => {
@@ -64,6 +65,9 @@ function listEntries(zip: Uint8Array, rawEntries: number): Declared[] {
         if (seen.has(file.name))
           throw new ZipError('ZIP_DUPLICATE', 'The archive repeats an entry.');
         seen.add(file.name);
+        // Compressed sizes are bytes of this archive, so they cannot exceed it, alone or together.
+        packed += file.size;
+        if (file.size > zip.length || packed > zip.length) throw invalid();
         declared.push({
           name: file.name,
           size: file.size,
@@ -84,7 +88,7 @@ function listEntries(zip: Uint8Array, rawEntries: number): Declared[] {
 const FEED = 4096;
 
 function stream(zip: Uint8Array, keep: Map<string, Declared>, limits: ZipLimits) {
-  const chunks = new Map<string, Uint8Array[]>();
+  const bufs = new Map<string, Uint8Array>();
   const sizes = new Map<string, number>();
   let failure: ZipError | null = null;
   let inflated = 0;
@@ -92,12 +96,14 @@ function stream(zip: Uint8Array, keep: Map<string, Declared>, limits: ZipLimits)
     const entry = keep.get(file.name);
     if (!entry || failure) return;
     // The central directory names each file once; a repeated local header is a second inflate of it.
-    if (chunks.has(file.name)) {
+    if (bufs.has(file.name)) {
       failure = new ZipError('ZIP_DUPLICATE', 'The archive repeats an entry.');
       return;
     }
-    const parts: Uint8Array[] = [];
-    chunks.set(file.name, parts);
+    // Sized from the central directory, already checked against the caps; chunks are copied in as
+    // they arrive, so memory is the entry's size once, not a list of chunks plus a copy.
+    const buf = new Uint8Array(entry.originalSize);
+    bufs.set(file.name, buf);
     sizes.set(file.name, 0);
     file.ondata = (err, chunk) => {
       if (failure) return;
@@ -107,7 +113,8 @@ function stream(zip: Uint8Array, keep: Map<string, Declared>, limits: ZipLimits)
         return;
       }
       inflated += chunk.length;
-      const size = (sizes.get(file.name) ?? 0) + chunk.length;
+      const before = sizes.get(file.name) ?? 0;
+      const size = before + chunk.length;
       sizes.set(file.name, size);
       if (inflated > limits.totalBytes)
         failure = new ZipError('ZIP_TOO_LARGE', 'The archive expands too much.');
@@ -119,7 +126,7 @@ function stream(zip: Uint8Array, keep: Map<string, Declared>, limits: ZipLimits)
         file.terminate();
         return;
       }
-      parts.push(chunk);
+      buf.set(chunk, before);
     };
     file.start();
   });
@@ -132,7 +139,7 @@ function stream(zip: Uint8Array, keep: Map<string, Declared>, limits: ZipLimits)
     throw failure ?? invalid();
   }
   if (failure) throw failure;
-  return { chunks, sizes };
+  return { bufs, sizes };
 }
 
 /**
@@ -169,18 +176,11 @@ export function inflateGuarded(
     keep.set(entry.name, entry);
   }
 
-  const { chunks, sizes } = stream(zip, keep, limits);
+  const { bufs, sizes } = stream(zip, keep, limits);
   const files = new Map<string, Uint8Array>();
   for (const [name, entry] of keep) {
-    const parts = chunks.get(name);
-    const length = sizes.get(name) ?? 0;
-    if (!parts || length !== entry.originalSize) throw invalid();
-    const bytes = new Uint8Array(length);
-    let at = 0;
-    for (const part of parts) {
-      bytes.set(part, at);
-      at += part.length;
-    }
+    const bytes = bufs.get(name);
+    if (!bytes || sizes.get(name) !== entry.originalSize) throw invalid();
     files.set(name, bytes);
   }
   return { files, names: declared.map((d) => d.name) };

@@ -44,13 +44,22 @@ export function decodeEntities(s: string): string {
   });
 }
 
-const ATTR = /([^\s=/]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+// Sticky and anchored: each step starts where the last ended, so a body with no `=` is one linear scan.
+const ATTR = /\s*([^\s=/"']+)\s*=\s*(?:"([^"]*)"|'([^']*)')/y;
 
 function attributes(body: string): Record<string, string> {
-  const attrs: Record<string, string> = {};
-  if (body.trim() === '') return attrs;
-  for (const m of body.matchAll(ATTR))
+  const attrs: Record<string, string> = Object.create(null);
+  let pos = 0;
+  while (pos < body.length) {
+    ATTR.lastIndex = pos;
+    const m = ATTR.exec(body);
+    if (!m) {
+      if (body.slice(pos).trim() !== '') throw damaged();
+      break;
+    }
     attrs[local(m[1] ?? '')] = decodeEntities(m[2] ?? m[3] ?? '');
+    pos = ATTR.lastIndex;
+  }
   return attrs;
 }
 

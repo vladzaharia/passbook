@@ -40,8 +40,12 @@ export function detectRecordsArrays(root: unknown): ArrayCandidate[] {
       return;
     }
     if (!isPlain(value) || depth >= MAX_DEPTH) return;
-    for (const [k, v] of Object.entries(value))
-      walk(v, `${pointer}/${escapeToken(k)}`, k, depth + 1);
+    // for...in with a budget: Object.entries would allocate every pair of a huge object first.
+    for (const k in value) {
+      if (!Object.hasOwn(value, k)) continue;
+      if (nodes > MAX_NODES) return;
+      walk(value[k], `${pointer}/${escapeToken(k)}`, k, depth + 1);
+    }
   };
   walk(root, '', '', 0);
   return found.sort(
