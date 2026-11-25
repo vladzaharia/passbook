@@ -74,8 +74,8 @@ export async function markOut(
   actor: ScanActor,
   req: MarkOutRequest,
   extra?: WithGrant,
-  /** Called by a sign-out: it judges the actor as a sign-out and refuses a paused session; a bare mark-out still clears who is inside. */
-  signOut = false,
+  /** `signOut`: called by a sign-out. It judges the actor as a sign-out and refuses a paused session; a bare mark-out still clears who is inside. */
+  { signOut = false }: { signOut?: boolean } = {},
 ): Promise<ScanOutcome> {
   if (!scanPolicy(policyActor(actor), { kind: signOut ? 'sign_out' : 'mark_out' }).allow)
     throw new ForbiddenError('Only Desk and above can mark someone out.', 'FORBIDDEN');
@@ -196,6 +196,7 @@ export async function markOut(
               ? 'monitor'
               : 'scanner',
         ...(actor.staff ? { staffId: actor.staff.id } : {}),
+        ...(actor.apiKeyId ? { viaKeyId: actor.apiKeyId } : {}),
       },
     },
     [scanIs(scanId, { state: 'done' })],

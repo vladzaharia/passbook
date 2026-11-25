@@ -88,7 +88,7 @@ async function run(
         actor,
         { idempotencyKey: ctx.ids.ordered(ctx.clock.now()), passId: pass.id, place },
         undefined,
-        true,
+        { signOut: true },
       );
       marked += 1;
       stay ??= outcome.occupancy?.stayMs ?? null;

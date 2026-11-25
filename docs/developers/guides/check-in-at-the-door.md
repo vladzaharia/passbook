@@ -34,6 +34,10 @@ A till call needs a key and names the terminal in `x-passbook-device`.
 
 `POST /scan/scans/{scanId}/undo` reverses an admit made by mistake, inside the undo window and only for scans the same key made. See the [terminal reference](/developers/reference/terminal).
 
+## Sign out
+
+`POST /scan/sign-out` with a pass id marks the person out of every tracked place and collects a lent tag (`tag`: `returned`, or `not_returned` to report it lost). Send `read` instead of `passId` to tap the lent tag. The same `idempotencyKey` repeats the first answer. A terminal that is in no scanning session, or whose session has no zones, marks nobody out: the answer counts those places in `stillInside`.
+
 ## Result
 
 The rules read back as you set them. The pass counts as admitted once; a second scan is refused. Open the pass's `downloadUrl`: the test preview shows the pass the till would read.

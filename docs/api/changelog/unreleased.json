@@ -384,6 +384,14 @@
     "note": "hide leaves out the portal's own background reads."
   },
   {
+    "key": "GET /api/v1/developer/rail 200.series: field removed",
+    "class": "breaking",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.series: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",
@@ -710,6 +718,14 @@
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.usage: field added",
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/plan operation removed",
+    "class": "breaking",
+    "operationId": "entitlements.getOrgsByIdPlan",
+    "op": "GET /api/v1/orgs/{id}/plan",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -1176,6 +1192,14 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
+    "key": "GET /api/v1/settings 200.oidc.platformAdminPinned: field removed",
+    "class": "breaking",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/status/incidents new operation",
     "class": "additive",
     "operationId": "status.getStatusIncidents",
@@ -1621,6 +1645,14 @@
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} operation removed",
+    "class": "breaking",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/orgs/{orgId}/pass-setup new operation",
@@ -2365,6 +2397,22 @@
     "note": "With preview=true, test-config dry-runs the unsaved configuration with the mapping, rules and template given."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/close operation removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxClose",
+    "op": "POST /api/v1/developer/sandbox/close",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate operation removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
     "class": "additive",
     "operationId": "developer.postSandboxReopen",
@@ -2659,6 +2707,14 @@
     "op": "POST /api/v1/orgs",
     "change": "body.preset: enum value \"starter\" added",
     "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/invitations/{invitationId}/resend operation removed",
+    "class": "breaking",
+    "operationId": "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend",
+    "op": "POST /api/v1/orgs/{id}/invitations/{invitationId}/resend",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
@@ -3202,7 +3258,7 @@
     "operationId": "scan.postScanSignOut",
     "op": "POST /api/v1/scan/sign-out",
     "change": "behaviour changed",
-    "note": "Marks out every place and collects the lent tag; not_returned reports it lost. No visit. VISITOR_NOT_IN is gone. tag is the outcome, not an echo."
+    "note": "Marks out every place, collects the lent tag (not_returned reports it lost); no visit. Same key repeats the answer. VISITOR_NOT_IN is gone."
   },
   {
     "key": "POST /api/v1/scan/sign-out body.read: optional input field added",
@@ -4155,6 +4211,14 @@
     "op": "PUT /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.platformAdminPinned: field removed",
+    "class": "breaking",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field removed",
+    "note": ""
   },
   {
     "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",
