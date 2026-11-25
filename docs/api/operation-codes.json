@@ -1077,6 +1077,11 @@
   ],
   "developer invitations get /{id}/developers": [
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1088,6 +1093,11 @@
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",
