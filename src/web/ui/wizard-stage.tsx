@@ -21,9 +21,7 @@ export function WizardStage({
       <p id={id} className={quiet ? 'sr-only' : 'px-6 pt-5 text-xs font-medium text-fg-muted'}>
         {label}
       </p>
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-4">
-        {children}
-      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-4">{children}</div>
     </aside>
   );
 }
