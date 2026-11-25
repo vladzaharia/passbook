@@ -19,14 +19,26 @@ const plainValue = z
   .max(200)
   .refine((v) => !CONTROL.test(v), 'Invalid value.');
 
-/** A static header must not carry a credential: those go through the auth helper and are encrypted. */
-const SECRET_LOOKING = /^(authorization|cookie|proxy-.*)$|key|token|secret|signature/i;
+/**
+ * Config is stored unencrypted and shown to anyone who can read connections, so a name or value that
+ * looks like a credential is refused: credentials go through the encrypted auth helper.
+ */
+const SECRET_NAME =
+  /auth|key|token|secret|signature|pass|pwd|credential|session|cookie|^proxy-|^bearer$/i;
+const SECRET_VALUE =
+  /^(bearer|basic|token)\s+\S|^(sk|pk|rk)_(live|test)_|^gh[pousr]_|^xox[abposr]-|^[A-Za-z0-9_-]{32,}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const USE_AUTH = 'Use Authentication for credentials.';
+
+const plainSafe = plainValue.refine((v) => UUID.test(v) || !SECRET_VALUE.test(v), USE_AUTH);
+const safeName = (n: string) => !SECRET_NAME.test(n);
+
 const staticHeader = z.object({
   name: z
     .string()
     .refine((n) => HEADER_NAME.test(n) && isAllowedHeaderName(n), 'Header not allowed.')
-    .refine((n) => !SECRET_LOOKING.test(n), 'Use Authentication for credentials.'),
-  value: plainValue,
+    .refine(safeName, USE_AUTH),
+  value: plainSafe,
 });
 
 const pagination = z.discriminatedUnion('style', [
@@ -74,7 +86,7 @@ const list = z
       'x-placeholder': '/members',
     }),
     query: z
-      .array(z.object({ name: paramName, value: plainValue }))
+      .array(z.object({ name: paramName.refine(safeName, USE_AUTH), value: plainSafe }))
       .max(10)
       .default([]),
     listing: z.enum(['full', 'feed']).default('full'),

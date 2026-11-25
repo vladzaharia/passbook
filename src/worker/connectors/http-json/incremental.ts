@@ -22,8 +22,8 @@ export function updatedAt(record: Json, inc: Incremental): number | undefined {
 }
 
 /**
- * The highest updated time on a page, folded into `m`. A time more than a day ahead of the clock is
- * ignored, so one bad record cannot pin the high-water mark in the future and hide every later change.
+ * The highest updated time on a page, folded into `m` and never past the clock: a time in the future
+ * (skew, a scheduled-at field) would otherwise push the next `since` ahead and hide every later change.
  */
 export function highest(
   items: readonly Json[],
@@ -34,7 +34,9 @@ export function highest(
   let top = m;
   for (const item of items) {
     const at = updatedAt(item, inc);
-    if (at !== undefined && at <= now + 86_400_000 && (top === undefined || at > top)) top = at;
+    if (at === undefined) continue;
+    const t = Math.min(at, now);
+    if (top === undefined || t > top) top = t;
   }
   return top;
 }

@@ -1,14 +1,20 @@
 import { ConnectorError } from '../types.ts';
 
 const PREFIX = 'r2.';
-export const MAX_CURSOR_CHARS = 2048;
+/** One limit for a cursor value or a stored next URL, checked on the way in and on the way out. */
+export const MAX_VALUE_CHARS = 4000;
+export const MAX_CURSOR_CHARS = 8192;
 
-/** Where the listing stands. `c` a cursor value, `u` the next URL (path and query), `n` a page or offset, `k` pages this run. */
+/**
+ * Where the listing stands. `c` a cursor value, `u` the next URL (path and query), `n` a page or offset,
+ * `k` pages this run, `s` the first and last record of the page just read (a repeated page ends the listing).
+ */
 export interface PageState {
   c?: string;
   u?: string;
   n?: number;
   k?: number;
+  s?: string;
 }
 
 /** `p` page state (null: start at page one), `h` high-water mark, `m` highest seen this run, `w` wait until (ms). */
@@ -21,10 +27,11 @@ export interface CursorState {
 
 function b64urlEncode(text: string): string {
   const bytes = new TextEncoder().encode(text);
-  return btoa(String.fromCharCode(...bytes))
-    .replaceAll('+', '-')
-    .replaceAll('/', '_')
-    .replace(/=+$/, '');
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
 }
 
 function b64urlDecode(text: string): string {
@@ -35,19 +42,21 @@ function b64urlDecode(text: string): string {
 
 const num = (v: unknown): number | undefined =>
   typeof v === 'number' && Number.isFinite(v) ? v : undefined;
-const text = (v: unknown, max: number): string | undefined =>
-  typeof v === 'string' && v.length <= max ? v : undefined;
+const text = (v: unknown): string | undefined =>
+  typeof v === 'string' && v.length <= MAX_VALUE_CHARS ? v : undefined;
 
 function pageOf(raw: unknown): PageState | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
   const o = raw as Record<string, unknown>;
   const page: PageState = {};
-  const c = text(o.c, 600);
-  const u = text(o.u, 600);
+  const c = text(o.c);
+  const u = text(o.u);
   if (c !== undefined) page.c = c;
   if (u !== undefined) page.u = u;
   if (num(o.n) !== undefined) page.n = num(o.n) as number;
   if (num(o.k) !== undefined) page.k = num(o.k) as number;
+  const sig = typeof o.s === 'string' && o.s.length <= 200 ? o.s : undefined;
+  if (sig !== undefined) page.s = sig;
   return page;
 }
 
@@ -71,10 +80,17 @@ export function decodeCursor(raw: string | null): { state: CursorState; damaged:
   }
 }
 
+const tooLong = () =>
+  new ConnectorError('INVALID_PAYLOAD', { permanent: true, reason: 'CURSOR_TOO_LONG' });
+
+/** A cursor too long to keep is a permanent, named error, raised before the page is applied. */
 export function encodeCursor(state: CursorState): string {
+  if ((state.p?.c?.length ?? 0) > MAX_VALUE_CHARS || (state.p?.u?.length ?? 0) > MAX_VALUE_CHARS) {
+    throw tooLong();
+  }
   const body: Record<string, unknown> = { p: state.p };
   for (const key of ['h', 'm', 'w'] as const) if (state[key] !== undefined) body[key] = state[key];
   const out = `${PREFIX}${b64urlEncode(JSON.stringify(body))}`;
-  if (out.length > MAX_CURSOR_CHARS) throw new ConnectorError('INVALID_PAYLOAD');
+  if (out.length > MAX_CURSOR_CHARS) throw tooLong();
   return out;
 }

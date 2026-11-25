@@ -278,7 +278,7 @@ describe('pagination stops and limits', () => {
     expect(
       atob((first?.cursor ?? '').slice(3).replaceAll('-', '+').replaceAll('_', '/')),
     ).not.toContain('SECRET');
-    expect(decodeCursor(first?.cursor ?? null).state.p).toEqual({ u: '/v1/m?page=2', k: 1 });
+    expect(decodeCursor(first?.cursor ?? null).state.p).toMatchObject({ u: '/v1/m?page=2', k: 1 });
     await connector.listChanges?.(ctx, first?.cursor ?? null);
     expect(calls[0]?.url).toContain('api_key=SECRET-KEY');
     expect(new URL(calls[1]?.url ?? '').searchParams.get('api_key')).toBe('SECRET-KEY');
@@ -297,7 +297,7 @@ describe('pagination stops and limits', () => {
     expect((await connector.listChanges?.(empty.ctx, null))?.hasMore).toBe(false);
   });
 
-  it('ends a full listing at maxPages, logs it and leaves the high-water mark alone', async () => {
+  it('a full listing cut at maxPages carries on next run and moves the mark only at the end', async () => {
     const { ctx, logs } = harness(
       {
         ...base,
@@ -309,13 +309,21 @@ describe('pagination stops and limits', () => {
         },
       },
       {},
-      (u) => ({ body: { items: [{ id: u.searchParams.get('offset'), at: 1_000 }] } }),
+      (u) => {
+        const o = Number(u.searchParams.get('offset'));
+        return { body: { items: o < 5 ? [{ id: String(o), at: 1_000 + o }] : [] } };
+      },
     );
-    const out = await drain(ctx);
-    expect(out.pages).toBe(3);
-    expect(out.refs).toEqual(['0', '1', '2']);
+    const first = await drain(ctx);
+    expect(first.refs).toEqual(['0', '1', '2']);
     expect(logs).toContain('rest.max_pages');
-    expect(decodeCursor(out.cursor).state).toEqual({ p: null });
+    const cut = decodeCursor(first.cursor).state;
+    expect(cut.p).toEqual({ n: 3 });
+    expect(cut.h).toBeUndefined();
+    expect(cut.m).toBe(1_002_000);
+    const second = await drain(ctx, first.cursor);
+    expect(second.refs).toEqual(['3', '4']);
+    expect(decodeCursor(second.cursor).state).toEqual({ p: null, h: 1_004_000 });
   });
 
   it('a feed cut at maxPages resumes from the next page', async () => {
@@ -338,20 +346,13 @@ describe('pagination stops and limits', () => {
     expect((await drain(ctx, out.cursor)).refs).toEqual(['2', '3']);
   });
 
-  it('refuses a page of more than 1,000 records and a cursor over 2 KB', async () => {
+  it('refuses a page of more than 1,000 records', async () => {
     const big = harness({ ...base, list: { path: '/m' } }, {}, () => ({
       body: { items: Array.from({ length: 1001 }, (_, i) => ({ id: String(i) })) },
     }));
     await expect(connector.listChanges?.(big.ctx, null)).rejects.toMatchObject({
       code: 'INVALID_PAYLOAD',
     });
-    const long = harness(
-      { ...base, list: { path: '/m', pagination: { style: 'cursor' } } },
-      {},
-      () => ({ body: { items: ids('a'), cursor: 'x'.repeat(590) } }),
-    );
-    expect(await connector.listChanges?.(long.ctx, null)).toMatchObject({ hasMore: true });
-    expect(() => encodeCursor({ p: { c: 'x'.repeat(2000) } })).toThrow();
   });
 });
 

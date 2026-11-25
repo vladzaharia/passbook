@@ -38,7 +38,9 @@ export function nextFromLinkHeader(header: string | null): string | null {
 /** The URL of the first or next request. A next link or Link header already carries its own query. */
 export function pageUrl(base: URL, list: ListConfig, p: PageState | null, since?: string): URL {
   if (p?.u !== undefined) {
-    const url = new URL(p.u, base);
+    // Joined to the origin as text, never resolved as a reference: "//host/x" stays a path.
+    if (!p.u.startsWith('/')) throw offOrigin();
+    const url = new URL(`${base.origin}${p.u}`);
     if (url.origin !== base.origin) throw offOrigin();
     return url;
   }
@@ -60,20 +62,31 @@ export function pageUrl(base: URL, list: ListConfig, p: PageState | null, since?
   return url;
 }
 
-/** A link to the next page, same origin only; the auth parameter never goes into a stored cursor. */
-function linkState(raw: string | null, page: PageResult, base: URL, authParam?: string) {
+/** The credential, by parameter name or by value, so an echo under another name is dropped too. */
+export interface Scrub {
+  param?: string | undefined;
+  secret?: string | undefined;
+}
+
+/** Path and query with the credential removed: what a cursor may store. */
+function stored(url: URL, scrub: Scrub): string {
+  const out = new URL(url);
+  const name = scrub.param?.toLowerCase();
+  for (const [key, value] of [...out.searchParams]) {
+    if (key.toLowerCase() === name || (scrub.secret && value === scrub.secret)) {
+      out.searchParams.delete(key);
+    }
+  }
+  return `${out.pathname}${out.search}`;
+}
+
+/** A link to the next page, same origin only; the credential never goes into a stored cursor. */
+function linkState(raw: string | null, page: PageResult, base: URL, scrub: Scrub) {
   if (raw === null || raw === '') return null;
   if (!URL.canParse(raw, page.url.href)) return null;
   const url = new URL(raw, page.url);
   if (url.origin !== base.origin) throw offOrigin();
-  if (authParam) url.searchParams.delete(authParam);
-  return { u: `${url.pathname}${url.search}` } satisfies PageState;
-}
-
-function currentLink(page: PageResult, authParam?: string): string {
-  const url = new URL(page.url);
-  if (authParam) url.searchParams.delete(authParam);
-  return `${url.pathname}${url.search}`;
+  return { u: stored(url, scrub) } satisfies PageState;
 }
 
 /** Decides whether another page follows, and the state to request or to resume from. */
@@ -82,11 +95,11 @@ export function advance(
   p: PageState | null,
   page: PageResult,
   base: URL,
-  authParam?: string,
+  scrub: Scrub = {},
 ): Advance {
   const pg = list.pagination;
   const empty = page.items.length === 0;
-  const { k: _pages, ...stay } = p ?? {};
+  const { k: _pages, s: _sig, ...stay } = p ?? {};
   const stayed = p === null ? null : stay;
   switch (pg.style) {
     case 'none':
@@ -100,7 +113,9 @@ export function advance(
             ? asKey(getPointer(page.body, pg.cursorPointer))
             : null;
       const flag = pg.hasMorePointer ? getPointer(page.body, pg.hasMorePointer) === true : true;
-      const more = next !== null && next !== p?.c && flag && !empty;
+      // With an explicit has-more flag an empty page can still be followed by data (filtered listings).
+      const more =
+        next !== null && next !== p?.c && flag && (!empty || pg.hasMorePointer !== undefined);
       const state = next === null ? null : { c: next };
       return { more, next: state, rest: state ?? stayed };
     }
@@ -110,8 +125,8 @@ export function advance(
         pg.style === 'next-link'
           ? asKey(getPointer(page.body, pg.nextPointer))
           : nextFromLinkHeader(page.headers.get('link'));
-      const state = linkState(raw, page, base, authParam);
-      const repeated = state !== null && state.u === currentLink(page, authParam);
+      const state = linkState(raw, page, base, scrub);
+      const repeated = state !== null && state.u === stored(page.url, scrub);
       const more = state !== null && !repeated && !empty;
       return { more, next: state, rest: stayed };
     }

@@ -43,7 +43,9 @@ function resetMs(raw: string | null, now: number): number | undefined {
 export function waitFromHeaders(headers: Headers, now: number): number | undefined {
   const retry = headers.get('retry-after')?.trim();
   if (retry) {
-    if (/^\d+$/.test(retry)) return Math.min(Number(retry) * 1000, MAX_WAIT_MS) || undefined;
+    if (/^\d+(\.\d+)?$/.test(retry)) {
+      return Math.min(Math.ceil(Number(retry) * 1000), MAX_WAIT_MS) || undefined;
+    }
     const at = Date.parse(retry);
     if (Number.isFinite(at) && at > now) return Math.min(at - now, MAX_WAIT_MS);
   }

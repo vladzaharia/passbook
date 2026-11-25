@@ -15,6 +15,9 @@ import { assertCredential, authParamOf, endpoint, getJson } from './request.ts';
 const MAX_WEBHOOK_REFS = 100;
 /** Records per page; a longer page is refused rather than cut, because a cut page breaks paging. */
 const MAX_PAGE_RECORDS = 1000;
+/** Serialized changes of one page; the Workflows step result limit is 1 MiB. */
+const MAX_PAGE_JSON = 900_000;
+const ref80 = (r: string) => r.slice(0, 80);
 
 function asRecord(value: Json | undefined): UpstreamRecord {
   if (value === null || typeof value !== 'object' || Array.isArray(value) || value === undefined) {
@@ -60,7 +63,8 @@ const definition: ConnectorDefinition<Config, Secrets> = {
     maxConcurrency: 4,
     requestsPerMinute: 60,
     timeoutMs: 15_000,
-    maxResponseBytes: 1024 * 1024,
+    // Half the Workflows 1 MiB step-result limit: a page's changes are the result of one step.
+    maxResponseBytes: 512 * 1024,
   },
 
   async test(ctx) {
@@ -85,7 +89,8 @@ const definition: ConnectorDefinition<Config, Secrets> = {
 
   async fetchRecord(ctx, ref) {
     const { config: c } = ctx.connection;
-    if (!c.recordPath) return { status: 'not_modified' };
+    // A list-only connection has no per-record fetch; a ref that needs one is a config problem.
+    if (!c.recordPath) throw new ConnectorError('CONFIG', { permanent: true });
     const page = await getJson(ctx, endpoint(c.baseUrl, c.recordPath, ref), true);
     if (page === null) return { status: 'not_found' };
     const { body } = page;
@@ -121,41 +126,48 @@ const definition: ConnectorDefinition<Config, Secrets> = {
       throw new ConnectorError('INVALID_PAYLOAD');
     }
     const changes = items.map((item) => changeOf(item, list));
+    if (JSON.stringify(changes).length > MAX_PAGE_JSON) {
+      throw new ConnectorError('INVALID_PAYLOAD', { permanent: true, reason: 'PAGE_TOO_LARGE' });
+    }
 
-    const step = advance(
-      list,
-      state.p,
-      { ...page, items },
-      base,
-      authParamOf(ctx.connection.config),
-    );
+    const config = ctx.connection.config;
+    const step = advance(list, state.p, { ...page, items }, base, {
+      param: authParamOf(config),
+      secret: ctx.secrets.queryValue,
+    });
     const w = exhaustedUntil(page.headers, ctx.now());
     const m = inc ? highest(items, inc, state.m, ctx.now()) : undefined;
     const pages = (state.p?.k ?? 0) + 1;
-    const capped = step.more && pages >= list.maxPages;
+    // The same first and last record as the page before: the API ignores our paging.
+    const first = changes[0];
+    const last = changes.at(-1);
+    const sig = first && last ? `${ref80(first.ref)}|${ref80(last.ref)}` : undefined;
+    const repeated = step.more && sig !== undefined && state.p?.s === sig;
+    if (repeated) ctx.log('rest.repeat_page', { pages });
+    const capped = step.more && !repeated && pages >= list.maxPages;
     if (capped) ctx.log('rest.max_pages', { pages });
     const keep = { ...(w === undefined ? {} : { w }) };
+    const h = state.h;
+    const hold = h === undefined ? {} : { h };
+    const seen = m === undefined ? {} : { m };
 
-    if (step.more && !capped && step.next) {
-      const h = state.h;
-      const p = { ...step.next, k: pages };
-      return {
-        changes,
-        cursor: encodeCursor({
-          p,
-          ...(h === undefined ? {} : { h }),
-          ...(m === undefined ? {} : { m }),
-          ...keep,
-        }),
-        hasMore: true,
-      };
+    if (step.more && !capped && !repeated && step.next) {
+      const p = { ...step.next, k: pages, ...(sig === undefined ? {} : { s: sig }) };
+      return { changes, cursor: encodeCursor({ p, ...hold, ...seen, ...keep }), hasMore: true };
     }
     if (list.listing === 'full') {
-      // A listing cut short has not seen everything, so the mark stays where it was.
-      const h = capped ? state.h : maxOf(state.h, m);
+      // A listing cut at maxPages carries on from the next page on the next run, with the mark held,
+      // so it finishes; a repeating one starts over, because carrying on would loop.
+      if (capped)
+        return {
+          changes,
+          cursor: encodeCursor({ p: step.next, ...hold, ...seen, ...keep }),
+          hasMore: false,
+        };
+      const end = repeated ? h : maxOf(h, m);
       return {
         changes,
-        cursor: encodeCursor({ p: null, ...(h === undefined ? {} : { h }), ...keep }),
+        cursor: encodeCursor({ p: null, ...(end === undefined ? {} : { h: end }), ...keep }),
         hasMore: false,
       };
     }

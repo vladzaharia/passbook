@@ -187,7 +187,7 @@ describe('http-json auth', () => {
     });
     expect(
       await header({ auth: { type: 'header', headerName: 'X-Api-Key' } }, { headerValue: 'k' }),
-    ).toMatchObject({ 'X-Api-Key': 'k' });
+    ).toMatchObject({ 'x-api-key': 'k' });
     expect(await header({}, {})).not.toHaveProperty('authorization');
   });
 
@@ -234,7 +234,7 @@ describe('http-json listChanges (v1 configs through migrate)', () => {
       { ref: '7' },
     ]);
     expect(res?.hasMore).toBe(true);
-    expect(stateOf(res?.cursor)).toEqual({ p: { c: 'c2', k: 1 } });
+    expect(stateOf(res?.cursor)).toMatchObject({ p: { c: 'c2', k: 1 } });
   });
 
   it('stops when the cursor does not advance and keeps it for the next run', async () => {

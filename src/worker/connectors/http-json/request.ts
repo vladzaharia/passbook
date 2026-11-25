@@ -39,8 +39,8 @@ export const authParamOf = (c: Config): string | undefined =>
 /** Static headers first, the credential last, so a static header can never replace it. */
 function headersOf(ctx: Ctx, header?: [string, string]): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const { name, value } of ctx.connection.config.headers) out[name] = value;
-  if (header) out[header[0]] = header[1];
+  for (const { name, value } of ctx.connection.config.headers) out[name.toLowerCase()] = value;
+  if (header) out[header[0].toLowerCase()] = header[1];
   return out;
 }
 
