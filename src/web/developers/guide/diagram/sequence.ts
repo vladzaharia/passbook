@@ -30,7 +30,7 @@ export function drawSequence(spec: SequenceSpec, uid: string): Drawn {
   const idx = new Map(spec.actors.map((a, i) => [a.id, i]));
   const lane = (id: string): number => idx.get(id) ?? 0;
   const pillW = spec.actors.map((a) =>
-    Math.max(110, mustFit(`actor ${a.id}`, a.label, 14, 'semibold', 180) + 32),
+    Math.max(110, mustFit(`actor ${a.id}`, a.label, 15, 'semibold', 180) + 32),
   );
   const widest = Math.max(...pillW);
   let spacing = Math.max(MIN_LANE, widest + 20);

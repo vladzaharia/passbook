@@ -1,6 +1,9 @@
 import { type FlowSpec, isGroup, type SequenceSpec, type SequenceStep } from './spec.ts';
 import { esc, toneClass } from './svg.ts';
 
+/** Safari drops list semantics under list-style: none; the role keeps them. */
+const LIST = ' role="list"';
+
 /** The phone layout, also the long description for assistive tech: a list that says what the picture shows. */
 
 function sequenceList(spec: SequenceSpec): string {
@@ -19,7 +22,7 @@ function sequenceList(spec: SequenceSpec): string {
   return spec.steps
     .map((s) =>
       isGroup(s)
-        ? `<li class="dg-grp"><span class="dg-grp-name">${esc(s.group)}</span><ol class="dg-sub">${s.steps.map(item).join('')}</ol></li>`
+        ? `<li class="dg-grp"><span class="dg-grp-name">${esc(s.group)}</span><ol class="dg-sub"${LIST}>${s.steps.map(item).join('')}</ol></li>`
         : item(s),
     )
     .join('');
@@ -56,7 +59,7 @@ function flowList(spec: FlowSpec): string {
         `<li class="dg-card ${toneClass(nd.tone)}${nd.dashed ? ' dg-dashed' : ''}"><span class="dg-name">${esc(nd.label)}</span>` +
         (nd.note ? `<span class="dg-note">${esc(nd.note)}</span>` : '') +
         (outs.length
-          ? `<ul class="dg-outs">${outs.map((e) => `<li><code class="dg-call">${esc(e.label)}</code><span class="dg-to">&rarr; ${esc(byId.get(e.to)?.label ?? e.to)}</span></li>`).join('')}</ul>`
+          ? `<ul class="dg-outs"${LIST}>${outs.map((e) => `<li><code class="dg-call">${esc(e.label)}</code><span class="dg-to">&rarr; ${esc(byId.get(e.to)?.label ?? e.to)}</span></li>`).join('')}</ul>`
           : '') +
         '</li>'
       );
@@ -64,7 +67,7 @@ function flowList(spec: FlowSpec): string {
     .join('');
 }
 
-export function narrowList(spec: SequenceSpec | FlowSpec): string {
+export function narrowList(spec: SequenceSpec | FlowSpec, uid: string): string {
   const cls = spec.kind === 'sequence' ? 'dg-list dg-steps' : 'dg-list dg-cards';
-  return `<ol class="${cls}" aria-label="${esc(spec.title)}">${spec.kind === 'sequence' ? sequenceList(spec) : flowList(spec)}</ol>`;
+  return `<ol id="${uid}-list"${LIST} class="${cls}" aria-label="${esc(spec.title)}">${spec.kind === 'sequence' ? sequenceList(spec) : flowList(spec)}</ol>`;
 }

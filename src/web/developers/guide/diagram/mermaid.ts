@@ -2,7 +2,36 @@ import { type FlowSpec, isGroup, type SequenceSpec, type SequenceStep } from './
 
 /** Mermaid text for the markdown twin, so an agent or a GitHub view gets the same picture as words. */
 
-const clean = (s: string): string => s.replace(/"/g, "'").replace(/;/g, ',').replace(/#/g, '');
+const clean = (s: string): string =>
+  s
+    .replace(/#/g, '#35;')
+    .replace(/"/g, '#quot;')
+    .replace(/;/g, '#59;')
+    .replace(/\|/g, '#124;')
+    .replace(/\s+/g, ' ');
+
+const RESERVED = new Set([
+  'state',
+  'end',
+  'note',
+  'direction',
+  'class',
+  'classdef',
+  'click',
+  'style',
+  'default',
+  'subgraph',
+  'graph',
+  'flowchart',
+  'participant',
+  'actor',
+  'loop',
+  'opt',
+  'alt',
+  'par',
+  'rect',
+  'as',
+]);
 const mid = (id: string): string => id.replace(/-/g, '_');
 
 function sequence(spec: SequenceSpec): string {
@@ -26,7 +55,15 @@ function sequence(spec: SequenceSpec): string {
 function flow(spec: FlowSpec): string {
   const names = new Map(spec.nodes.map((nd) => [nd.id, nd.label]));
   if (spec.mermaid === 'state') {
-    const plain = (id: string) => /^\w+$/.test(names.get(id) ?? '');
+    const labels = [...names.values()].map((l) => l.toLowerCase());
+    const plain = (id: string) => {
+      const l = names.get(id) ?? '';
+      return (
+        /^\w+$/.test(l) &&
+        !RESERVED.has(l.toLowerCase()) &&
+        labels.filter((x) => x === l.toLowerCase()).length === 1
+      );
+    };
     const out = ['stateDiagram-v2'];
     for (const nd of spec.nodes)
       if (!plain(nd.id)) out.push(`  state "${clean(nd.label)}" as ${mid(nd.id)}`);

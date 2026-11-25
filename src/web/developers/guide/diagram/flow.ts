@@ -113,21 +113,43 @@ function drawSide(
 }
 
 /** A vertical arrow, drawn at the centre of whichever box sits inside the other's width. */
-function drawDown(e: FlowEdge, a: Box, b: Box, uid: string): string {
-  const inside = (x: number, box: Box) => x >= box.x + 12 && x <= box.x + box.w - 12;
+function drawDown(
+  e: FlowEdge,
+  a: Box,
+  b: Box,
+  uid: string,
+  lane: -1 | 0 | 1,
+  boxes: Map<string, Box>,
+  width: number,
+): string {
+  const inside = (x: number, box: Box) => x >= box.x + 28 && x <= box.x + box.w - 28;
   const ca = a.x + a.w / 2;
   const cb = b.x + b.w / 2;
-  const x = inside(ca, b) ? ca : inside(cb, a) ? cb : Number.NaN;
-  if (Number.isNaN(x))
+  const base = inside(ca, b) ? ca : inside(cb, a) ? cb : Number.NaN;
+  if (Number.isNaN(base))
     throw new DiagramError(`edge "${e.label}" has no straight path: align the columns`);
+  const x = base + lane * 14;
+  const lo = Math.min(a.node.row, b.node.row);
+  const hi = Math.max(a.node.row, b.node.row);
+  for (const o of boxes.values()) {
+    const r = o.node.row;
+    if (o !== a && o !== b && r > lo && r < hi && x >= o.x && x <= o.x + o.w) {
+      throw new DiagramError(`edge "${e.label}" runs through node "${o.node.id}"`);
+    }
+  }
   const down = b.y > a.y;
   const y1 = down ? a.y + a.h + ARROW_INSET : a.y - ARROW_INSET;
   const y2 = down ? b.y - ARROW_INSET : b.y + b.h + ARROW_INSET;
+  const left = lane === -1;
+  if (!e.quiet) {
+    const room = left ? x - 10 - PAD : width - PAD - (x + 10);
+    mustFit(`edge ${e.label}`, e.label, CALL, 'mono', room);
+  }
   return (
     `<g class="dg-edge"><line class="${lineCls(e)}" x1="${n(x)}" y1="${n(y1)}" x2="${n(x)}" y2="${n(y2)}" marker-end="url(#${uid}-head)"/>` +
     (e.quiet
       ? ''
-      : `<text class="dg-call" x="${n(x + 10)}" y="${n((y1 + y2) / 2 + 4)}" text-anchor="start">${esc(e.label)}</text>`) +
+      : `<text class="dg-call" x="${n(left ? x - 10 : x + 10)}" y="${n((y1 + y2) / 2 + 4)}" text-anchor="${left ? 'end' : 'start'}">${esc(e.label)}</text>`) +
     '</g>'
   );
 }
@@ -139,13 +161,20 @@ export function drawFlow(spec: FlowSpec, uid: string): Drawn {
     const a = boxes.get(e.from);
     const b = boxes.get(e.to);
     if (!a || !b) throw new DiagramError(`edge "${e.label}" points at a missing node`);
-    if (a.node.row !== b.node.row) return drawDown(e, a, b, uid);
     const key = [e.from, e.to].sort().join('|');
     const seen = pairSeen.get(key) ?? 0;
     pairSeen.set(key, seen + 1);
     const pair = spec.edges.filter((o) => [o.from, o.to].sort().join('|') === key).length;
     if (pair > 2) throw new DiagramError(`${e.from} and ${e.to} have more than two edges`);
-    return drawSide(e, a, b, pair === 1 ? 0 : seen === 0 ? -1 : 1, gapX, uid);
+    const lane = pair === 1 ? 0 : seen === 0 ? -1 : 1;
+    if (a.node.row !== b.node.row) return drawDown(e, a, b, uid, lane, boxes, w);
+    for (const o of boxes.values()) {
+      const [l, r] = a.x < b.x ? [a, b] : [b, a];
+      if (o !== a && o !== b && o.node.row === a.node.row && o.x >= l.x && o.x + o.w <= r.x + r.w) {
+        throw new DiagramError(`edge "${e.label}" runs through node "${o.node.id}"`);
+      }
+    }
+    return drawSide(e, a, b, lane, gapX, uid);
   });
   return {
     w,

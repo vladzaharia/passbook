@@ -1,10 +1,16 @@
 /* Guide diagrams, narrow layout: the list that replaces the drawing in a small container. */
 
 /* The narrow list: steps with a rail, or stacked cards. */
+/* Wide: the list stays in the accessibility tree (aria-details) but is clipped away. */
 .dg-list {
-  display: none;
-  margin: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
   padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
   list-style: none;
 }
 @container dg (max-width: 519.98px) {
@@ -12,7 +18,13 @@
     display: none;
   }
   .dg-t520 .dg-list {
-    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
   }
 }
 @container dg (max-width: 599.98px) {
@@ -20,7 +32,13 @@
     display: none;
   }
   .dg-t600 .dg-list {
-    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
   }
 }
 @container dg (max-width: 679.98px) {
@@ -28,7 +46,13 @@
     display: none;
   }
   .dg-t680 .dg-list {
-    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
   }
 }
 @container dg (max-width: 759.98px) {
@@ -36,7 +60,13 @@
     display: none;
   }
   .dg-t760 .dg-list {
-    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
   }
 }
 @container dg (max-width: 839.98px) {
@@ -44,7 +74,13 @@
     display: none;
   }
   .dg-t840 .dg-list {
-    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
   }
 }
 @container dg (max-width: 919.98px) {
@@ -52,7 +88,13 @@
     display: none;
   }
   .dg-t920 .dg-list {
-    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
   }
 }
 .dg-step {
@@ -142,7 +184,7 @@
   position: relative;
   display: grid;
   gap: 2px;
-  margin-bottom: 22px;
+  margin-bottom: 10px;
   padding: 12px 14px;
   border: 1.5px solid var(--dg-edge);
   border-radius: var(--pk-radius-lg);
@@ -153,14 +195,6 @@
 }
 .dg-card:last-child {
   margin-bottom: 0;
-}
-.dg-card:not(:last-child)::after {
-  content: "\2193";
-  position: absolute;
-  inset: auto 0 -21px;
-  color: var(--pk-text-muted);
-  line-height: 20px;
-  text-align: center;
 }
 .dg-card > .dg-name {
   font-size: var(--pk-font-size-base);

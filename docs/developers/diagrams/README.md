@@ -46,7 +46,7 @@ Actors across the top, steps down the page, laid out automatically. Lanes widen 
 }
 ```
 
-A full one is `issue-on-purchase.json`.
+A full one is `checkout-to-pass.json`.
 
 ## flow
 
@@ -91,4 +91,4 @@ becomes numbered steps; a flow becomes stacked cards in reading order, each with
 the long description. `diagramMermaid(spec)` returns the text for the markdown twin.
 
 Output is deterministic: the same file gives the same bytes. `guide/diagram/diagram.test.ts` checks the schema, label
-fit, determinism, token-only output, contrast in both themes, and snapshots `pass-lifecycle` under `__snapshots__/`.
+fit, determinism, token-only output, contrast in both themes, and snapshots `pass-lifecycle` under `__snapshots__/` (the figure as `.figure.txt`).

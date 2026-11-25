@@ -6,6 +6,7 @@
   margin: 24px 0;
 }
 .dg {
+  position: relative;
   --dg-ink: var(--pk-text-default);
   margin: 0;
   padding: 20px;
@@ -52,7 +53,7 @@
 
 .dg-svg {
   display: block;
-  width: 100%;
+  width: auto;
   max-width: 100%;
   height: auto;
   margin-inline: auto;

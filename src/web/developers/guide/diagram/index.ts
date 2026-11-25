@@ -26,6 +26,6 @@ export function renderDiagram(name: string, spec: DiagramSpec): string {
   const w = Number(/viewBox="0 0 ([\d.]+) /.exec(svg)?.[1] ?? 0);
   return (
     `<div class="dg-wrap"><figure class="dg dg-${spec.kind} dg-t${tierFor(w)}" data-diagram="${esc(name)}">` +
-    `${svg}${narrowList(spec)}</figure></div>`
+    `${svg}${narrowList(spec, uidOf(name))}</figure></div>`
   );
 }
