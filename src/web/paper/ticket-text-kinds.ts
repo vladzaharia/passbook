@@ -3,7 +3,15 @@ import type { PaperContent } from '../../passkit/template/paper-content.ts';
 import { paperDate, paperZoneFor, paperZoneInfo } from '../../passkit/template/paper-format.ts';
 import { PAPER_COPY } from '../../shared/copy/print.ts';
 import { KIND_LABELS as L } from '../../shared/copy/print-kinds.ts';
-import { at, type Column, clockAt, join, type Line, zoneAbbr } from './ticket-text-base.ts';
+import {
+  at,
+  type Column,
+  clockAt,
+  join,
+  type Line,
+  startAt,
+  zoneAbbr,
+} from './ticket-text-base.ts';
 
 type Row = { label: string; text: string };
 const rowsOf = (rows: { label: string; text: string | undefined }[]): Row[] =>
@@ -94,7 +102,7 @@ export function tripLines(c: PaperContent, half: boolean): Line[] {
     sub(join(c.address, c.directions));
     if (!half) sub(c.holder);
   } else {
-    big(c.start && `${L.checkIn} ${noYear(at(c, c.start, 'short'))} · ${at(c, c.start, 'time')}`);
+    big(c.start && `${L.checkIn} ${noYear(at(c, c.start, 'short'))} · ${startAt(c, c.start)}`);
     big(c.end && `${L.checkOut} ${noYear(at(c, c.end, 'short'))} · ${clockAt(c, c.end)}`);
     sub(zoneLine(c));
     sub(join(c.venue, c.address));

@@ -26,7 +26,7 @@ export const at = (
   iso: string | undefined,
   style: Parameters<typeof paperDate>[2],
 ) => (iso ? paperDate(iso, paperZoneFor(c, iso), style) : '');
-const abbrAt = (c: PaperContent, iso: string) => {
+export const abbrAt = (c: PaperContent, iso: string) => {
   const zone = paperZoneFor(c, iso);
   return zone ? paperZoneInfo(zone, iso)?.abbr : undefined;
 };
@@ -58,3 +58,9 @@ export const clockAt = (c: PaperContent, iso: string): string => {
     ? `${at(c, iso, 'time')} ${own}`
     : at(c, iso, 'time');
 };
+
+/** The start and the end read in different zones: each carries its own abbreviation. */
+export const splitZones = (c: PaperContent) =>
+  Boolean(c.start && c.end && abbrAt(c, c.start) !== abbrAt(c, c.end));
+export const startAt = (c: PaperContent, start: string) =>
+  splitZones(c) ? at(c, start, 'timeZone') : at(c, start, 'time');

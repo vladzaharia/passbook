@@ -15,6 +15,8 @@ import {
   type Issued,
   join,
   type Line,
+  splitZones,
+  startAt,
   zoneAbbr,
 } from './ticket-text-base.ts';
 import {
@@ -77,11 +79,11 @@ export function doorRows(c: PaperContent): { label: string; text: string }[] {
 const timesLine = (c: PaperContent): string | undefined => {
   const parts = [
     c.doors && `Doors ${at(c, c.doors, 'time')}`,
-    c.start && `Starts ${at(c, c.start, 'time')}`,
+    c.start && `Starts ${startAt(c, c.start)}`,
     c.end && `Ends ${endAt(c, c.end)}`,
   ].filter(Boolean);
   if (!parts.length) return undefined;
-  const abbr = zoneAbbr(c);
+  const abbr = splitZones(c) ? undefined : zoneAbbr(c);
   return `${parts.join(' · ')}${abbr ? ` (${abbr})` : ''}`;
 };
 
@@ -170,9 +172,9 @@ export function infoColumns(c: PaperContent): Column[] {
         ...strong(at(c, c.start, 'long')),
         lines: [
           c.doors && `Doors open ${at(c, c.doors, 'time')}`,
-          `Show starts ${at(c, c.start, 'time')}`,
+          `Show starts ${startAt(c, c.start)}`,
           c.end && `Ends about ${endAt(c, c.end)}`,
-          abbr && info ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined,
+          abbr && info && !splitZones(c) ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined,
         ].filter((x): x is string => Boolean(x)),
       }
     : {
