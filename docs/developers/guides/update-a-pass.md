@@ -5,27 +5,35 @@ line: Change fields, notify
 status: ready
 ops: passes.getPassesById
 ---
-Change a field on a pass you made, handle a stale version, and end the pass if the order is cancelled. You need a pass: make one with [issue on purchase](/developers/guides/issue-on-purchase) and keep its `id` and `version`.
+Change a field on a pass you made, handle a stale version, and void the pass if the order is cancelled. You need a pass: make one with [issue on purchase](/developers/guides/issue-on-purchase) and set `PASS_ID` to its `id`.
+
+## Read the version
+
+Every change names the `version` you last read. Set `VERSION` to the `version` in the answer.
+
+{{run read-pass}}
 
 ## Change a field
 
-`PATCH` takes the fields to change under `input`. `notify: true` asks for a push to phones that have the pass.
+`PATCH` takes the fields to change under `input`. Send `If-Match` with the `VERSION` you read: if the pass changed since, the call is refused instead of overwriting it. `notify: true` asks for a push to phones that have the pass.
 
 {{run update-field}}
 
-Paste the pass `id` into the path. The answer is the pass with `version` one higher.
+The answer is the pass with `version` one higher. The `ETag` header carries the same number: use it as the next `VERSION`.
 
 ## Guard against a stale write
 
-Send `If-Match` with the `version` you last read. If someone else changed the pass first, the answer is `412 VERSION_CONFLICT`. In the console, add the If-Match chip and set an old version to see it.
+An `If-Match` that is not the pass's current version is `412` [VERSION_CONFLICT](/developers/errors/VERSION_CONFLICT). This request sends version 0, which no pass has ever had.
 
-Handle it by reading the pass again and retrying with the new `version`. See [VERSION_CONFLICT](/developers/errors/VERSION_CONFLICT).
+{{show stale-write}}
+
+Handle it by reading the pass again, applying your change to what you read, and sending the new `version`. Without `If-Match`, the last write wins.
 
 ## Read what changed
 
 {{run pass-activity}}
 
-The activity list shows the update and its new version, newest first. The pass detail lists every version.
+The activity list is newest first. `pass.updated` carries the new `version`. With `notify`, a `push.queued` entry follows: a sandbox queues the push and never sends it. The pass detail lists every version.
 
 ## Void a pass
 
@@ -41,4 +49,4 @@ To end a pass for good, see [pass lifecycle](/developers/guides/pass-lifecycle).
 
 ## Result
 
-Open the pass's `downloadUrl` after each call. The preview page shows the new field, and the void state after a void. Nothing is pushed in a sandbox; the preview and the activity list are the proof.
+Read the pass: `subtitle` says Ada Lovelace and `version` is one higher than before. The activity list holds the `pass.updated` entry. Nothing was pushed to a phone; the pass detail and the activity list are the proof.

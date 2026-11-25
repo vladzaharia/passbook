@@ -1,14 +1,26 @@
 [
   {
-    "id": "send-pass-email",
-    "title": "Email a pass",
+    "id": "create-order-pass",
+    "title": "Create a pass for an order",
     "guide": "issue-on-purchase",
     "ops": [
-      "passes.postPassesByIdResendEmail"
+      "passes.postPasses"
     ],
     "files": {
-      "ts": "send-pass-email.ts",
-      "curl": "send-pass-email.sh"
+      "ts": "create-order-pass.ts",
+      "curl": "create-order-pass.sh"
+    }
+  },
+  {
+    "id": "retry-create",
+    "title": "Retry a create without a duplicate",
+    "guide": "issue-on-purchase",
+    "ops": [
+      "passes.postPasses"
+    ],
+    "files": {
+      "ts": "retry-create.ts",
+      "curl": "retry-create.sh"
     }
   },
   {
@@ -24,26 +36,15 @@
     }
   },
   {
-    "id": "rotate-link",
-    "title": "Replace a pass link",
+    "id": "send-pass-email",
+    "title": "Email a pass",
     "guide": "issue-on-purchase",
     "ops": [
-      "passes.postPassesByIdRotateLink"
+      "passes.postPassesByIdResendEmail"
     ],
     "files": {
-      "ts": "rotate-link.ts",
-      "curl": "rotate-link.sh"
-    }
-  },
-  {
-    "id": "retry-create",
-    "title": "Retry a create without a duplicate",
-    "guide": "issue-on-purchase",
-    "ops": [
-      "passes.postPasses"
-    ],
-    "files": {
-      "ts": "retry-create.ts"
+      "ts": "send-pass-email.ts",
+      "curl": "send-pass-email.sh"
     }
   }
 ]

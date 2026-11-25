@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fence, guideApi, snippetBody } from './guide-api.ts';
+import { guideApi, snippetBody } from './guide-api.ts';
 import { kit } from './snippet-world.ts';
 
 vi.mock('@passbook/sdk', () => import('../../sdk/typescript/src/index.ts'));
@@ -17,7 +17,7 @@ describe('check in at the door', () => {
     const hour = 3_600_000;
     const iso = (h: number) =>
       new Date(world.clock.now() + h * hour).toISOString().replace('Z', '+00:00');
-    const body = fence('issue-on-purchase', 'passes.postPasses') as { input: object };
+    const body = snippetBody('create-order-pass') as { input: object };
     const made = await call('POST', '/passes', {
       ...body,
       externalId: 'door-1',
