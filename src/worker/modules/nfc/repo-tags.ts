@@ -23,7 +23,8 @@ const VIEW = `SELECT t.id, t.mode, t.system, t.hint, t.label, t.status, t.create
     b.bound_at AS b_bound_at, b.expires_at AS b_expires_at,
     y.id AS type_id, y.name AS type_name, y.use AS type_use, p.display_title AS pass_title, hu.name AS holder_name,
     CASE b.bound_by_type
-      WHEN 'user' THEN (SELECT u.name FROM users u WHERE u.id = b.bound_by)
+      WHEN 'user' THEN COALESCE((SELECT u.name FROM users u WHERE u.id = b.bound_by),
+        (SELECT k.name FROM api_keys k WHERE b.bound_by LIKE 'k:%' AND k.id = substr(b.bound_by, 3) AND k.org_id = t.org_id))
       WHEN 'staff' THEN (SELECT s.name FROM scan_staff s WHERE s.id = b.bound_by AND s.org_id = t.org_id)
       ELSE (SELECT s.name FROM scanners s WHERE s.id = b.bound_by AND s.org_id = t.org_id) END AS bound_by_name,
     (SELECT s.name FROM scanners s WHERE s.id = b.scanner_id AND s.org_id = t.org_id) AS scanner_name,
@@ -174,16 +175,24 @@ export async function tagView(db: Db, orgId: string, mode: Mode, id: string): Pr
 export async function passTagViews(
   db: Db,
   pass: { id: string; orgId: string; mode: Mode; ownerUserId: string | null },
+  /** Pass-scope tags only: a user-scope tag is anchored on a pass that may be outside a limited key's templates. */
+  passScopeOnly = false,
 ): Promise<Tag[]> {
   // Found through the bindings' own indexes: an org's tag table can be large, a pass has few tags.
   const ids = await all<{ tag_id: string }>(
     db,
     `SELECT b.tag_id FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id AND t.org_id = ? AND t.mode = ?
      WHERE b.pass_id = ? AND b.scope = 'pass' AND b.ended_at IS NULL
-     UNION
+     ${
+       passScopeOnly
+         ? ''
+         : `UNION
      SELECT b.tag_id FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id AND t.org_id = ? AND t.mode = ?
-     WHERE b.user_id = ? AND b.scope = 'user' AND b.ended_at IS NULL`,
-    [pass.orgId, pass.mode, pass.id, pass.orgId, pass.mode, pass.ownerUserId],
+     WHERE b.user_id = ? AND b.scope = 'user' AND b.ended_at IS NULL`
+     }`,
+    passScopeOnly
+      ? [pass.orgId, pass.mode, pass.id]
+      : [pass.orgId, pass.mode, pass.id, pass.orgId, pass.mode, pass.ownerUserId],
   );
   return tagViewsByIds(
     db,

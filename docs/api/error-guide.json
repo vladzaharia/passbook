@@ -2621,6 +2621,12 @@
     "fix": "Check the ID against the reader or the supplier's list.",
     "retryable": false
   },
+  "TAG_KEY_LIMITED": {
+    "title": "Key limited to templates",
+    "when": "A key limited to templates assigned a typed tag ID or a user-scope tag, or listed tags that are not spare.",
+    "fix": "Assign a spare tag to a pass with scope pass, or use a key without template limits.",
+    "retryable": false
+  },
   "TAG_KEY_UNREADABLE": {
     "title": "Tag key unreadable",
     "when": "A stored tag key could not be decrypted.",
@@ -2655,6 +2661,12 @@
     "title": "Holder has no account",
     "when": "The person has no account to bind the tag to yet.",
     "fix": "Assign the tag to the pass instead.",
+    "retryable": false
+  },
+  "TAG_PASS_EXPIRED": {
+    "title": "Pass has ended",
+    "when": "The pass's validity window has ended, so it takes no new tag.",
+    "fix": "Extend the pass's end date, or assign the tag to another pass.",
     "retryable": false
   },
   "TAG_PASS_NOT_ACCEPTED": {

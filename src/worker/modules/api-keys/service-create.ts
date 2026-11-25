@@ -74,10 +74,17 @@ export function assertCredentialKey(
 
 /** Setup, template and audit scopes belong to one organization (a template scope acts as a member of it): a platform key never holds them. */
 export function assertOrgBoundScopes(scopes: readonly string[], kind: ApiKeyKind): void {
-  const orgOnly = ['org:write', 'wallet:write', 'audit:read', ...TEMPLATE_ACT_AS_SCOPES];
+  const orgOnly = [
+    'org:write',
+    'wallet:write',
+    'audit:read',
+    'nfc:read',
+    'nfc:write',
+    ...TEMPLATE_ACT_AS_SCOPES,
+  ];
   if (kind === 'platform' && scopes.some((s) => orgOnly.includes(s)))
     throw invalid(
-      'org:write, wallet:write, audit:read and the template scopes are for keys of one organization.',
+      'org:write, wallet:write, audit:read, nfc:read, nfc:write and the template scopes are for keys of one organization.',
       'API_KEY_ORG_SCOPE_ORG_ONLY',
     );
 }

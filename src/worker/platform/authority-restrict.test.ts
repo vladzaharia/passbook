@@ -6,7 +6,13 @@ import { passRow } from './authority-checks.ts';
 import { jsonSet } from './authority-expr.ts';
 import { db, refusal } from './authority-ext-fixtures.ts';
 import { authorityPredicate, tenantFilter } from './authority-read.ts';
-import { columnOf, hasTemplateRef, partsOf, TEMPLATE_REFS } from './authority-restrict.ts';
+import {
+  CARRIED_BY_EDGE,
+  columnOf,
+  hasTemplateRef,
+  partsOf,
+  TEMPLATE_REFS,
+} from './authority-restrict.ts';
 import { visible, world } from './authority-restrict-fixtures.ts';
 import { GUARDED_TABLES } from './authority-tables.ts';
 import { all, first, run } from './db.ts';
@@ -567,8 +573,6 @@ describe('the corpus: every table with a template column is covered', () => {
     connections: 'default_template_id configures a sync; a connection is not a template resource',
     bundles: 'a bundle holds passes of several templates',
     bundle_passes: 'reached through a bundle, which has no template',
-    tag_bindings:
-      'carried by its pass edge (`CARRIED_BY_EDGE`): a tag is org-level stock with no template',
     nfc_tag_type_templates: 'reached through a tag type, which spans templates',
     scan_event_templates: 'reached through an event, which spans templates',
     scanner_templates: 'reached through a scanner, which spans templates',
@@ -599,7 +603,12 @@ describe('the corpus: every table with a template column is covered', () => {
       const columns = await columnsOf(table);
       const names = columns.some((c) => /^(template_id|template_ids|pass_id|endpoint_id)$/.test(c));
       const edgeParent = (GUARDED_TABLES[table]?.edges ?? []).some((e) => hasTemplateRef(e.parent));
-      if ((names || edgeParent) && !hasTemplateRef(table) && !(table in REFUSED))
+      if (
+        (names || edgeParent) &&
+        !hasTemplateRef(table) &&
+        !(table in REFUSED) &&
+        !(table in CARRIED_BY_EDGE)
+      )
         unexplained.push(table);
     }
     expect(unexplained).toEqual([]);

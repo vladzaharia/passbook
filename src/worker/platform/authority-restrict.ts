@@ -110,7 +110,7 @@ export const hasTemplateRef = (table: string): boolean => table in TEMPLATE_REFS
  * writes them only through that edge (`joined` with `via`, `insertJoined`), which holds the pass to its templates.
  * `tag_bindings`: a tag is org-level stock, the pass it opens is what carries a template.
  */
-const CARRIED_BY_EDGE: Readonly<Record<string, string>> = { tag_bindings: 'pass_id' };
+export const CARRIED_BY_EDGE: Readonly<Record<string, string>> = { tag_bindings: 'pass_id' };
 
 /**
  * Whether a limited key may write `table`: an org table needs its own reference; an org-less child needs one on the

@@ -24,6 +24,7 @@ import {
   tagActorOf,
   tagAuditActorOf,
   tagGrant,
+  tagKeyIdOf,
 } from './repo-tags-write.ts';
 import { decideBind, triggerRefusal } from './tags.ts';
 
@@ -97,6 +98,7 @@ export async function place(
       audited: rebind !== null,
       source: 'admin',
       actor: tagActorOf(a),
+      keyId: tagKeyIdOf(a),
       scannerId: null,
       orgId: a.orgId,
       mode: a.mode,

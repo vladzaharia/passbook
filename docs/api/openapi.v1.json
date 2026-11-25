@@ -145480,6 +145480,7 @@
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "TAG_KEY_LIMITED",
           "UNAUTHENTICATED",

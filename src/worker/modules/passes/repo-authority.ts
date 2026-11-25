@@ -21,7 +21,12 @@ export const orgEpochParams = (revision: number): [number] => [revision];
  * The caller must also bind its target row to authority.orgId, either by providing its SQL table alias
  * here or by including an equivalent predicate in the mutation. The alias is a static SQL identifier.
  */
-export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: string): string {
+export function tenantPassAuthoritySql(
+  authority: TenantPassWrite,
+  tableAlias?: string,
+  /** The capture check only: a key limited to templates is live, its limits are held by grants and reads. Raw statements never pass this. */
+  options: { admitLimited?: true } = {},
+): string {
   if (tableAlias !== undefined && !/^[a-z_][a-z0-9_]*$/i.test(tableAlias))
     throw new Error('Invalid tenant authority table alias.');
   const target = tableAlias ? `${tableAlias}.org_id = ?` : '? IS NOT NULL';
@@ -44,7 +49,7 @@ export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: 
     WHERE k.id = ? AND k.org_id IS ? AND (k.org_id IS NULL OR k.org_id = o.id)
       AND (k.org_id IS NOT NULL OR o.personal_user_id IS NULL)
       AND k.mode = ? AND ${developerTestOnly('o', 'k.mode')}
-      AND ${keyLive('k', 0, authority.limited === true).sql} AND ${keyHoldsScope('k', authority.scope).sql}
+      AND ${keyLive('k', 0, options.admitLimited === true).sql} AND ${keyHoldsScope('k', authority.scope).sql}
   ))`;
 }
 
@@ -153,7 +158,11 @@ export async function tenantPassAuthorityValid(
 ): Promise<boolean> {
   const row = await first<{ ok: number }>(
     db,
-    `SELECT 1 AS ok WHERE ${tenantPassAuthoritySql(authority)}`,
+    `SELECT 1 AS ok WHERE ${tenantPassAuthoritySql(
+      authority,
+      undefined,
+      authority.kind === 'api_key' && authority.limited ? { admitLimited: true } : {},
+    )}`,
     tenantPassAuthorityParams(authority, now),
   );
   return row !== null;

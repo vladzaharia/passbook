@@ -71,7 +71,8 @@ export const FULL_SANDBOX = { id: 'full', label: 'Full sandbox' } as const;
 
 /**
  * Admin's last preset: everything a key can hold except key minting, the terminal scope, the credential scopes and the
- * audit log (those are ticked on purpose, never by a preset), and, in Live, the Test-only scopes.
+ * audit log (those are ticked on purpose, never by a preset), and, in Live, the Test-only scopes. It does include
+ * `nfc:read` and `nfc:write` (owner decision: full means full); roles and `ROLE_PRESETS` never carry them.
  */
 export function fullAccess(mode: Mode) {
   return {

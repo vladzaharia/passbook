@@ -1,10 +1,19 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeApiKey } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
+import { ROLE_PRESETS } from '../../platform/api-scopes.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createAuthStores } from '../../stores.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import {
+  tenantPassAuthorityParams,
+  tenantPassAuthoritySql,
+  tenantPassAuthorityValid,
+} from '../passes/repo-authority.ts';
 import { type EnrollFixture, enrollFixture } from '../scan/tags-enroll-test-fixtures.ts';
 import { insertType } from '../scan/tags-policy-test-fixtures.ts';
+import { tagWriterOf } from './tags-admin.ts';
+import { assignTag } from './tags-assign.ts';
 
 const DAY = 86_400_000;
 const ORIGIN = 'https://wallet.test';
@@ -271,5 +280,147 @@ describe('tags by a key limited to templates', () => {
         code: 'API_KEY_RESTRICTED_ROUTE',
       });
     }
+  });
+});
+
+describe('tags by key: review follow-ups', () => {
+  it('a limited key never sees a user-scope tag anchored on a pass of another template', async () => {
+    const mine = await f.pass({ owner: true });
+    const theirs = await f.pass({ ownerId: mine.ownerId as string, template: f.otherTpl });
+    const free = await key(['nfc:write', 'nfc:read']);
+    const w = await key(['nfc:write', 'nfc:read'], { templateIds: [f.tpl] });
+    const userTag = await spare();
+    const passTag = await spare();
+    const bound = await call(free, 'POST', `/passes/${theirs.pass.id}/tags/assign`, {
+      tagId: userTag,
+      binding: 'user',
+    });
+    expect(bound.status, JSON.stringify(bound.body)).toBe(200);
+    await call(free, 'POST', `/passes/${mine.pass.id}/tags/assign`, {
+      tagId: passTag,
+      binding: 'pass',
+    });
+    const ids = (r: { body: Record<string, any> }) => r.body.items.map((t: { id: string }) => t.id);
+    expect(ids(await call(free, 'GET', `/passes/${mine.pass.id}/tags`))).toEqual(
+      expect.arrayContaining([userTag, passTag]),
+    );
+    expect(ids(await call(w, 'GET', `/passes/${mine.pass.id}/tags`))).toEqual([passTag]);
+  });
+
+  it('a limited key cannot probe a pass outside its templates through the spare list', async () => {
+    const theirs = (await f.pass({ template: f.otherTpl })).pass;
+    const w = await key(['nfc:read'], { templateIds: [f.tpl] });
+    const res = await call(w, 'GET', `/tags?status=spare&passId=${theirs.id}`);
+    expect({ status: res.status, code: res.body.code }).toEqual({
+      status: 404,
+      code: 'PASS_NOT_FOUND',
+    });
+  });
+
+  it('the grant refuses a user-scope bind to a limited key, whatever the route does', async () => {
+    const mine = await f.pass({ owner: true });
+    const w = await key(['nfc:write'], { templateIds: [f.tpl] });
+    const tagId = await spare();
+    const rev = await first<{ access_revision: number }>(
+      f.kit.env.DB,
+      'SELECT access_revision FROM orgs WHERE id = ?',
+      [f.kit.org.id],
+    );
+    const authority = tagWriterOf({
+      kind: 'api_key',
+      orgId: f.kit.org.id,
+      orgAccessRevision: rev?.access_revision ?? 0,
+      keyId: w.id,
+      keyOrgId: f.kit.org.id,
+      scopes: ['nfc:write'],
+      scope: 'nfc:write',
+      mode: 'live',
+      limited: true,
+    });
+    await expect(
+      assignTag(f.kit.ctx, authority, mine.pass.id, { tagId, binding: 'user' }),
+    ).rejects.toBeTruthy();
+    expect(await bindingOf(tagId)).toBeNull();
+  });
+
+  it('only the capture check admits a limited key; raw authority SQL still refuses it', async () => {
+    const k = await key(['nfc:write'], { templateIds: [f.tpl] });
+    const org = f.kit.org.id;
+    const rev = await first<{ access_revision: number }>(
+      f.kit.env.DB,
+      'SELECT access_revision FROM orgs WHERE id = ?',
+      [org],
+    );
+    const a: TenantPassWrite = {
+      kind: 'api_key',
+      orgId: org,
+      orgAccessRevision: rev?.access_revision ?? 0,
+      keyId: k.id,
+      keyOrgId: org,
+      scopes: ['nfc:write'],
+      scope: 'nfc:write',
+      mode: 'live',
+      limited: true,
+    };
+    const now = f.kit.clock.now();
+    const raw = await first(
+      f.kit.env.DB,
+      `SELECT 1 AS ok WHERE ${tenantPassAuthoritySql(a)}`,
+      tenantPassAuthorityParams(a, now),
+    );
+    expect(raw).toBeNull();
+    expect(await tenantPassAuthorityValid(f.kit.env.DB, a, now)).toBe(true);
+    const plain = { ...a };
+    delete plain.limited;
+    expect(await tenantPassAuthorityValid(f.kit.env.DB, plain, now)).toBe(false);
+  });
+
+  it('shows the key by name as who bound a tag', async () => {
+    const { pass } = await f.pass();
+    const w = await key(['nfc:write', 'nfc:read'], { name: 'Front desk VMS' });
+    const tagId = await spare();
+    await call(w, 'POST', `/passes/${pass.id}/tags/assign`, { tagId, binding: 'pass' });
+    const one = await call(w, 'GET', `/tags/${tagId}`);
+    expect(one.body.binding.boundByName).toBe('Front desk VMS');
+  });
+
+  it('another org, a platform key and the role presets', async () => {
+    const mine = await spare();
+    const { pass } = await f.pass();
+    const foreign = await key(['nfc:write', 'nfc:read'], { orgId: f.other.id });
+    for (const [method, path, body] of [
+      ['GET', `/tags/${mine}/history`, undefined],
+      ['POST', `/tags/${mine}/restore`, undefined],
+      ['GET', `/passes/${pass.id}/tags`, undefined],
+      ['GET', `/tags?orgId=${f.kit.org.id}`, undefined],
+    ] as const) {
+      const r = await call(foreign, method, path, body);
+      expect({ path, status: r.status }).toEqual({ path, status: 404 });
+    }
+    const bound = await call(await key(['nfc:write']), 'POST', `/passes/${pass.id}/tags/assign`, {
+      tagId: mine,
+      binding: 'pass',
+    });
+    const binding = await bindingOf(mine);
+    expect(bound.status).toBe(200);
+    expect((await call(foreign, 'DELETE', `/bindings/${binding?.id}`)).status).toBe(404);
+    const platform = await key(['nfc:read'], {
+      orgId: null,
+      kind: 'platform',
+      ipAllow: ['203.0.113.0/24'],
+      expiresAt: f.kit.clock.now() + 30 * DAY,
+    });
+    expect(
+      (
+        await call(
+          { headers: { ...platform.headers, 'cf-connecting-ip': '203.0.113.7' } },
+          'GET',
+          `/tags/${mine}`,
+        )
+      ).status,
+    ).toBe(404);
+    for (const scopes of Object.values(ROLE_PRESETS))
+      expect(scopes).not.toEqual(expect.arrayContaining(['nfc:read']));
+    for (const scopes of Object.values(ROLE_PRESETS)) expect(scopes).not.toContain('nfc:write');
   });
 });

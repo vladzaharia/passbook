@@ -65,10 +65,15 @@ register(
   async (c) => {
     const pass = await passFacts(serviceContext(c).env.DB, c.req.valid('param').passId);
     if (!pass) throw passNotFound();
-    const { ctx, authority } = await actingKeyOrSession(c, pass.orgId, 'passes:read', passNotFound);
+    const { ctx, authority, limited } = await actingKeyOrSession(
+      c,
+      pass.orgId,
+      'passes:read',
+      passNotFound,
+    );
     if (pass.mode !== authority.mode || pass.deletedAt !== null) throw passNotFound();
     if (!(await keyReachesPass(c, authority, pass.id))) throw passNotFound();
-    return c.json({ items: await passTagViews(ctx.env.DB, pass), nextCursor: null });
+    return c.json({ items: await passTagViews(ctx.env.DB, pass, limited), nextCursor: null });
   },
 );
 
@@ -120,6 +125,9 @@ register(
       orgNotFound,
     );
     if (limited && q.status !== 'spare') throw limitedKeyRefusal();
+    // Spares fitted to a pass tell what its policy takes: only a pass inside the limit.
+    if (limited && q.passId && !(await keyReachesPass(c, authority, q.passId)))
+      throw passNotFound();
     const filter = {
       orgId,
       mode: authority.mode,

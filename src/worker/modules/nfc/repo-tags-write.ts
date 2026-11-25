@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
-import { type Check, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, rowIs, unlimitedActor } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { entitled } from '../../platform/authority-entitled.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -30,6 +30,10 @@ export const tagActorOf = (a: TagAuthority): { type: 'user'; id: string } => ({
   type: 'user',
   id: a.kind === 'session' ? a.userId : `k:${a.keyId}`,
 });
+
+/** The key of a tag edit made by a key. */
+export const tagKeyIdOf = (a: TagAuthority): string | null =>
+  a.kind === 'api_key' ? a.keyId : null;
 
 /** The audit actor of a tag edit: the user, or the key by its own id. */
 export const tagAuditActorOf = (
@@ -138,6 +142,8 @@ export interface BindPlan {
   cleared?: { at: number; by: string } | null;
   /** A scanner bind's idempotency key and request hash: a retry replays the result. */
   idempotency?: { key: string; hash: string } | null;
+  /** The key that makes this bind, for the audit row: set by a key's route, never read from the actor id. */
+  keyId?: string | null;
   /** The caller writes its own audit row (restore). */
   audited?: boolean;
   source: 'scanner' | 'remote' | 'admin';
@@ -153,8 +159,10 @@ export interface BindPlan {
  */
 export const bindChecks = (
   p: Pick<BindPlan, 'passId' | 'holderGeneration' | 'holderOwner'> &
-    Partial<Pick<BindPlan, 'tagId' | 'newTag' | 'sun'>>,
+    Partial<Pick<BindPlan, 'tagId' | 'newTag' | 'sun' | 'scope'>>,
 ): Check[] => [
+  // A user-scope tag opens the owner's passes of every template: a key limited to templates never makes one.
+  ...(p.scope === 'user' ? [unlimitedActor] : []),
   rowIs('passes', p.passId, {
     deleted_at: null,
     credential_generation: p.holderGeneration,
@@ -251,8 +259,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
     ],
     returning: ['id'],
   });
-  const keyActor =
-    p.actor.type === 'user' && p.actor.id.startsWith('k:') ? p.actor.id.slice(2) : null;
+  const keyActor = p.keyId ?? null;
   if (!p.audited)
     grantedAudit(
       g,

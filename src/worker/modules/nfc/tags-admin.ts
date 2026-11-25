@@ -22,6 +22,7 @@ import {
   tagActorOf,
   tagAuditActorOf,
   tagGrant,
+  tagKeyIdOf,
 } from './repo-tags-write.ts';
 import { commitTag } from './tags.ts';
 
@@ -196,6 +197,7 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     audited: true,
     source: 'admin' as const,
     actor: tagActorOf(a),
+    keyId: tagKeyIdOf(a),
     scannerId: null,
     orgId: a.orgId,
     mode: a.mode,
