@@ -46,6 +46,18 @@ export async function adminInstanceId(
   return `sync-${scope.slice(0, 32)}-admin-${Math.floor(now / bucketMs)}`;
 }
 
+/**
+ * Ends the connection's open sync as lost, so the next request starts a run of its own instead of joining it:
+ * the old run's remaining steps see its tracking row closed and stop. Used when the source changed under it.
+ */
+export async function supersedeOpenRun(
+  sctx: ServiceContext,
+  conn: Pick<ConnectionRow, 'id' | 'orgId'>,
+): Promise<void> {
+  const open = await openRunOf(sctx.env.DB, { connectionId: conn.id, instanceId: '' });
+  if (open) await closeLostRun(sctx, { orgId: conn.orgId, connectionId: conn.id, runId: open.id });
+}
+
 /** A queued run whose launch failed has no instance yet: start it, so adopting it is not a dead end. */
 async function ensureInstance(
   sctx: ServiceContext,

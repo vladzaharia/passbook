@@ -223,14 +223,13 @@ export async function promotePending(
   connectionId: string,
   file: FileRow,
   now: number,
-  generation: number,
 ): Promise<void> {
   const g = connectionGrant(
     ctx,
     actor,
     'file_apply',
     [
-      connectionIs({ id: connectionId, enabled: true, generation }),
+      connectionIs({ id: connectionId, enabled: true }),
       exactlyOne(
         'connection_files',
         { id: file.id, connection_id: connectionId, state: 'pending', expires_at: gt(now) },
@@ -249,7 +248,5 @@ export async function promotePending(
     set: { state: 'current', expires_at: null },
     require: 'one',
   });
-  // A run listing the old file ends stale; the run Apply starts next lists this one from its start.
-  g.update('connections', { set: { generation: generation + 1 }, where: { id: connectionId } });
   await g.commit();
 }

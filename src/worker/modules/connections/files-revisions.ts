@@ -34,6 +34,7 @@ import {
   userNames,
 } from './repo-files.ts';
 import { discardFile, insertPending, promotePending } from './repo-files-writes.ts';
+import { supersedeOpenRun } from './schedule.ts';
 import { auditActor, requireConnection } from './service-shared.ts';
 import { requireConnector } from './validate.ts';
 
@@ -176,14 +177,7 @@ export async function applyRevision(
   if ((row.expiresAt ?? 0) <= ctx.clock.now()) throw new FileExpiredError();
   if (!conn.enabled) throw new ConflictError('The connection is disabled.', 'CONNECTION_DISABLED');
   try {
-    await promotePending(
-      ctx,
-      { orgId: conn.orgId, authority },
-      connectionId,
-      row,
-      ctx.clock.now(),
-      conn.generation,
-    );
+    await promotePending(ctx, { orgId: conn.orgId, authority }, connectionId, row, ctx.clock.now());
   } catch (error) {
     if (error instanceof ConflictError)
       throw new FileStateError('The revision changed. Reload and retry.');
@@ -197,6 +191,8 @@ export async function applyRevision(
     targetId: connectionId,
     detail: { fileId, format: row.format, rows: row.rows, bytes: row.bytes },
   });
+  // A run still listing the old file must not be adopted: close it, so Apply's run starts after the promote.
+  await supersedeOpenRun(ctx, conn);
   const started = await actions.syncNow(ctx, actor, connectionId, authority);
   const fresh = (await getFile(ctx.env.DB, conn.orgId, fileId)) ?? row;
   return { file: await dtoOf(ctx, fresh), ...started };

@@ -218,12 +218,17 @@ describe('file-upload through the sync engine', () => {
         return inner.do(name, fn);
       },
     };
-    const before = (await getConnection(kit.env.DB, dto.id))?.generation ?? 0;
     await sync(dto.id, step);
     expect(restored).toBe(true);
-    // Apply moved the generation: the first run stopped without voiding anything.
-    expect((await getConnection(kit.env.DB, dto.id))?.generation).toBe(before + 1);
+    // Apply closed the run that was listing the old file: it stopped without voiding anything.
     expect(kit.seams.missing).toEqual([]);
+    expect(
+      await first(
+        kit.env.DB,
+        "SELECT 1 FROM connection_runs WHERE connection_id = ? AND error_code = 'RUN_LOST'",
+        [dto.id],
+      ),
+    ).not.toBeNull();
     // The run Apply starts (mocked here) begins after the promote and lists the new file.
     const cursor = await sync(dto.id);
     const current = (await listFiles(kit.sctx, authority, dto.id, { limit: 1 })).items[0];
