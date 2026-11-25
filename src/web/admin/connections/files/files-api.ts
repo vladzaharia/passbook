@@ -11,9 +11,9 @@ import { connectionKeys } from '../api.ts';
 import type { UploadBody } from './read-upload.ts';
 
 const base = (id: string) => `/api/v1/connections/${encodeURIComponent(id)}/files`;
-const filesKey = (id: string) => [...connectionKeys.detail(id), 'files'] as const;
+export const filesKey = (id: string) => [...connectionKeys.detail(id), 'files'] as const;
 
-/** Revisions, newest first. Polls while an applied revision is still syncing. */
+/** Revisions, newest first. */
 export function useRevisions(connectionId: string, enabled = true) {
   return useQuery({
     queryKey: filesKey(connectionId),
@@ -23,10 +23,6 @@ export function useRevisions(connectionId: string, enabled = true) {
         signal,
       }),
     enabled,
-    refetchInterval: (q) => {
-      const rows = q.state.data?.items ?? [];
-      return rows.some((r) => r.state === 'current' && !r.applied) ? 2000 : false;
-    },
   });
 }
 

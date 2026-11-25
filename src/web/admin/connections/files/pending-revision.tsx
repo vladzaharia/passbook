@@ -11,11 +11,14 @@ export function PendingRevision({
   revision,
   onMissing,
   canManage,
+  onApplied,
 }: {
   connectionId: string;
   revision: Revision;
   onMissing: OnMissing;
   canManage: boolean;
+  /** The run that applies it was started. */
+  onApplied: () => void;
 }) {
   const apply = useApplyRevision(connectionId);
   const discard = useDiscardRevision(connectionId);
@@ -44,6 +47,7 @@ export function PendingRevision({
               iconStart={<Check aria-hidden />}
               onClick={() =>
                 apply.mutate(revision.id, {
+                  onSuccess: onApplied,
                   onError: (error) => toast.error(error, 'Could not apply'),
                 })
               }

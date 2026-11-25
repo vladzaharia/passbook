@@ -244,7 +244,13 @@ export function ConnectionDetail({
           </TabsList>
           {showFile ? (
             <TabsContent value="file">
-              <FileTab connectionId={connectionId} onMissing={c.onMissing} canManage={canManage} />
+              <FileTab
+                connectionId={connectionId}
+                onMissing={c.onMissing}
+                canManage={canManage}
+                enabled={c.enabled}
+                runs={c.runs}
+              />
             </TabsContent>
           ) : null}
           <TabsContent value="health">

@@ -143,4 +143,28 @@ describe('File tab', () => {
     );
     expect(await screen.findByText('The file could not be read.')).toBeInTheDocument();
   });
+
+  it('offers Sync now for a first file no run has applied, and shows the wait', async () => {
+    const user = userEvent.setup();
+    const syncs: string[] = [];
+    await open(() => [current({ applied: false })], {
+      '/api/v1/connections/c1': () =>
+        json(
+          connectionDetail({ id: 'c1', connectorType: 'file-upload', mode: 'manual', runs: [] }),
+        ),
+      '/api/v1/connections/c1/sync': (u) => {
+        syncs.push(u.pathname);
+        return json({ runId: 'r9', workflowInstanceId: 'w9' });
+      },
+    });
+    expect(await screen.findByText('Not applied yet')).toBeInTheDocument();
+    await user.click(screen.getAllByRole('button', { name: 'Sync now' }).at(-1) as HTMLElement);
+    await waitFor(() => expect(syncs).toEqual(['/api/v1/connections/c1/sync']));
+    expect(await screen.findByRole('list', { name: 'Applying the file' })).toBeInTheDocument();
+  });
+
+  it('says the last sync failed when a file is not applied and the newest run errored', async () => {
+    await open(() => [current({ applied: false })]);
+    expect(await screen.findByText('The last sync failed')).toBeInTheDocument();
+  });
 });

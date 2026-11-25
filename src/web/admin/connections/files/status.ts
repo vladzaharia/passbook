@@ -12,7 +12,7 @@ export function statusOf(r: Revision): { label: string; tone: Tone } {
     case 'current':
       return r.applied
         ? { label: 'Applied', tone: 'success' }
-        : { label: 'Applying', tone: 'info' };
+        : { label: 'Not applied', tone: 'info' };
     case 'superseded':
       return r.applied
         ? { label: 'Replaced', tone: 'neutral' }

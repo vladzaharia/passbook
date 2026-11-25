@@ -1,8 +1,10 @@
 import { CircleCheck } from 'lucide-react';
 import { useState } from 'react';
+import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { formatDateTime, pluralize } from '../../../lib/format.ts';
 import {
   Badge,
+  Button,
   Card,
   CardBody,
   CardHeader,
@@ -16,16 +18,46 @@ import { sizeOf } from './upload-config.tsx';
 import { UploadDrop } from './upload-drop.tsx';
 import type { RevisionUpload } from './use-revision-upload.ts';
 
-/** Syncing: the file is uploaded, the passes follow. The list polls until the run is done. */
-function Applying({ revision }: { revision: Revision }) {
+/** The file is uploaded; the passes follow once a run applies it. */
+function Applying({
+  revision,
+  working,
+  failed,
+  onSync,
+}: {
+  revision: Revision;
+  working: boolean;
+  failed: boolean;
+  onSync: (() => void) | undefined;
+}) {
   return (
-    <StepList
-      label="Applying the file"
-      items={[
-        { id: 'up', state: 'done', label: 'Uploaded', detail: revision.name },
-        { id: 'sync', state: 'working', label: 'Updating passes', detail: undefined },
-      ]}
-    />
+    <div className="flex min-w-0 flex-col gap-3">
+      <StepList
+        label={working ? 'Applying the file' : 'File not applied'}
+        items={[
+          { id: 'up', state: 'done', label: 'Uploaded', detail: revision.name },
+          working
+            ? { id: 'sync', state: 'working', label: 'Updating passes', detail: undefined }
+            : {
+                id: 'sync',
+                state: failed ? 'invalid' : 'current',
+                label: failed ? 'The last sync failed' : 'Not applied yet',
+                detail: failed ? 'Check Health, then sync again.' : undefined,
+              },
+        ]}
+      />
+      {!working && onSync ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="self-start"
+          iconStart={<ACTION_ICON.refresh aria-hidden />}
+          onClick={onSync}
+        >
+          Sync now
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
@@ -57,14 +89,22 @@ export function CurrentRevision({
   revision,
   upload,
   canManage,
+  applying,
+  failed,
+  onSync,
 }: {
   revision: Revision;
   upload: RevisionUpload;
   canManage: boolean;
+  applying: boolean;
+  /** The newest run ended in an error. */
+  failed: boolean;
+  /** Runs the sync; absent when the connection is off or the viewer cannot manage it. */
+  onSync: (() => void) | undefined;
 }) {
   // Opened mid-run: the finish is worth a cheer. Opened after: it is not news.
   const [sawApplying] = useState(!revision.applied);
-  const status = statusOf(revision);
+  const status = applying ? { label: 'Applying', tone: 'info' as const } : statusOf(revision);
   return (
     <Card>
       <CardHeader title="File" actions={<Badge tone={status.tone}>{status.label}</Badge>} />
@@ -72,7 +112,7 @@ export function CurrentRevision({
         {revision.applied ? (
           <Applied revision={revision} fresh={sawApplying} />
         ) : (
-          <Applying revision={revision} />
+          <Applying revision={revision} working={applying} failed={failed} onSync={onSync} />
         )}
         <KeyValue
           items={[
