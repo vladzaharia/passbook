@@ -52,9 +52,9 @@
     <div class="panel tone-raised notched acc-ticket" id="acc-ticket">
       <div class="acc-head"><span class="label">Request access</span><span class="acc-no" aria-hidden="true">PB</span></div>
       <form class="acc-form perf" id="acc-form" method="post" action="/access">
-        <div class="acc-f"><label for="a-name">Name</label><input id="a-name" name="name" type="text" autocomplete="name" required><p class="acc-err" id="a-name-e" role="alert"></p></div>
+        <div class="acc-f"><label for="a-name">Name</label><input id="a-name" name="name" type="text" maxlength="120" autocomplete="name" required><p class="acc-err" id="a-name-e" role="alert"></p></div>
         <div class="acc-f"><label for="a-email">Work email</label><input id="a-email" name="email" type="email" autocomplete="email" inputmode="email" required><p class="acc-err" id="a-email-e" role="alert"></p></div>
-        <div class="acc-f"><label for="a-org">Organization</label><input id="a-org" name="org" type="text" autocomplete="organization" required><p class="acc-err" id="a-org-e" role="alert"></p></div>
+        <div class="acc-f"><label for="a-org">Organization</label><input id="a-org" name="org" type="text" maxlength="160" autocomplete="organization" required><p class="acc-err" id="a-org-e" role="alert"></p></div>
         <div class="acc-f"><label for="a-for">What is the pass for?</label>
           <span class="acc-sel"><select id="a-for" name="purpose" required><option value="" selected disabled>Choose one</option><option>Memberships</option><option>Events and tickets</option><option>Loyalty and stamps</option><option>Visitors and staff</option><option>Something else</option></select></span><p class="acc-err" id="a-for-e" role="alert"></p></div>
         <div class="acc-f"><label for="a-msg">Message <span class="acc-opt">Optional</span></label><textarea id="a-msg" name="message" rows="3" maxlength="600" autocomplete="off"></textarea></div>

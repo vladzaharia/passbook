@@ -102,16 +102,27 @@ function showSent(animate: boolean) {
   if (animate) done.focus({ preventScroll: true });
 }
 
-function showNotSent() {
+function showNotSent(line: string) {
   ticket.classList.remove('sending');
   setBuddy('sorry');
-  sendError.textContent = ACCESS_COPY.unavailable;
+  sendError.textContent = line;
   sendError.hidden = false;
   submitting = false;
 }
 
-/** True only for 204: any other answer, or no answer, means the request was not sent. */
-function post(): Promise<boolean> {
+/** The line to show when the request was not sent, from the answer's status. */
+async function refusal(res: Response): Promise<string> {
+  if (res.status === 429) return ACCESS_COPY.tooMany;
+  if (res.status === 422) {
+    const problem = (await res.json().catch(() => null)) as { detail?: unknown } | null;
+    if (typeof problem?.detail === 'string' && problem.detail) return problem.detail;
+    return ACCESS_COPY.invalid;
+  }
+  return ACCESS_COPY.unavailable;
+}
+
+/** Null only for 204; anything else, or no answer, is the line saying the request was not sent. */
+function post(): Promise<string | null> {
   const body: Record<string, string> = {};
   const data = new FormData(form);
   for (const k of FIELDS) {
@@ -123,8 +134,8 @@ function post(): Promise<boolean> {
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(body),
   }).then(
-    (res) => res.status === 204,
-    () => false,
+    (res) => (res.status === 204 ? null : refusal(res)),
+    () => ACCESS_COPY.unavailable,
   );
 }
 
@@ -143,7 +154,7 @@ form.addEventListener('submit', (e) => {
   sendError.textContent = '';
   const request = post();
   if (still) {
-    void request.then((ok) => (ok ? showSent(true) : showNotSent()));
+    void request.then((line) => (line === null ? showSent(true) : showNotSent(line)));
     return;
   }
   const tr = ticket.getBoundingClientRect();
@@ -155,14 +166,10 @@ form.addEventListener('submit', (e) => {
   ticket.classList.add('sending');
   setBuddy('tuck');
   const flown = new Promise<void>((resolve) => setTimeout(resolve, 800));
-  void Promise.all([request, flown]).then(([ok]) => (ok ? showSent(true) : showNotSent()));
+  void Promise.all([request, flown]).then(([line]) =>
+    line === null ? showSent(true) : showNotSent(line),
+  );
 });
 
-const init = () => {
-  if (location.hash === '#sent') showSent(false);
-  // /access/sent arrives with the sent state already in the markup.
-  else if (ticket.classList.contains('sent')) sparksOn();
-};
-window.addEventListener('hashchange', init);
-if (document.readyState === 'complete') init();
-else window.addEventListener('load', init);
+// /access/sent arrives with the sent state already in the markup; nothing in a link can set it.
+if (ticket.classList.contains('sent')) sparksOn();

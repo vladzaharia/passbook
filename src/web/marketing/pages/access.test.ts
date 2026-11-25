@@ -90,4 +90,37 @@ describe('access page script', () => {
     expect(line.textContent).toBe(NOT_SENT);
     expect(document.getElementById('acc-buddy')?.querySelector('.b-pose-sorry')).not.toBeNull();
   });
+
+  it('names a rate limit and a refused field instead of a mail failure', async () => {
+    const answers = [
+      new Response('{}', { status: 429 }),
+      new Response(JSON.stringify({ detail: 'Enter a valid email address.' }), { status: 422 }),
+      new Response('not json', { status: 422 }),
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => answers.shift()),
+    );
+    await load();
+    fillValid();
+    const line = document.getElementById('acc-send-e') as HTMLElement;
+    for (const expected of [
+      ACCESS_COPY.tooMany,
+      'Enter a valid email address.',
+      ACCESS_COPY.invalid,
+    ]) {
+      submit();
+      await flush();
+      expect(line.textContent).toBe(expected);
+    }
+  });
+
+  it('never shows the sent state for a #sent link', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    window.location.hash = '#sent';
+    await load();
+    expect(document.getElementById('acc-ticket')?.classList.contains('sent')).toBe(false);
+    expect((document.getElementById('acc-form') as HTMLElement).hidden).toBe(false);
+    window.location.hash = '';
+  });
 });
