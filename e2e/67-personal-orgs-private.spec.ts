@@ -55,8 +55,8 @@ test.describe('personal orgs are private', () => {
 
     await sweep(page, '/admin/platform/orgs', 'platform-orgs', async () => {
       await expect(page.getByRole('heading', { name: 'Organizations', level: 1 })).toBeVisible();
-      await expect(page.getByRole('table')).toBeVisible();
-      await expect(page.getByRole('table').getByText('Personal', { exact: true })).toHaveCount(0);
+      await expect(page.getByText(/^\d+ organizations?$/)).toBeVisible();
+      await expect(page.getByText('Personal', { exact: true })).toHaveCount(0);
     });
     await sweep(
       page,
@@ -64,6 +64,9 @@ test.describe('personal orgs are private', () => {
       'personal-settings',
       async () => {
         await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
+        await expect(page.getByText('Organization details')).toBeVisible();
+        await expect(page.getByText(/Loading identities/)).toHaveCount(0);
+        await page.waitForLoadState('networkidle');
       },
     );
   });
