@@ -1,7 +1,7 @@
 import { BROADCAST_MESSAGE_MAX } from '@/shared/contracts/broadcasts.ts';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { ruleSummary } from '@/shared/copy/message-rules.ts';
-import { localZone } from '../../lib/timezones.ts';
+import { localZone, zoneLabel } from '../../lib/timezones.ts';
 import {
   FormField,
   Input,
@@ -211,7 +211,7 @@ export function RuleReview({
       title: 'When',
       items: [
         { label: 'Sends', value: whenSummary(state, fields) ?? '' },
-        { label: 'Time zone', value: state.timeZone || localZone() },
+        { label: 'Time zone', value: zoneLabel(state.timeZone || localZone()) },
       ],
     },
     {
