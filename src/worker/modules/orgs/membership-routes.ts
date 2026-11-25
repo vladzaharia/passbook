@@ -88,7 +88,11 @@ membershipRoutes.use('/:id/invitations/:invitationId/resend', requireConsoleSess
 membershipRoutes.post(
   '/:id/invitations/:invitationId/resend',
   requireStepUp(STEP_UP_SECONDS, async (c) => {
-    const found = await invitationById(c.env.DB, c.req.param('id'), c.req.param('invitationId'));
+    const found = await invitationById(
+      c.env.DB,
+      c.req.param('id') ?? '',
+      c.req.param('invitationId') ?? '',
+    );
     if (!found) return false;
     try {
       return parseRoles(found.roles).some((role) =>
