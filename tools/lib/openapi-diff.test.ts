@@ -89,11 +89,14 @@ describe('approvedRemovalFailures', () => {
     expect(approvedRemovalFailures(doc(inline), gone, [approval])).toEqual([]);
   });
 
-  it('fails an entry whose operation the base no longer has, or under another id', () => {
-    expect(approvedRemovalFailures(gone, gone, [approval])[0]).toMatch(/stale/);
+  it('fails an entry when the base serves the operation under another id', () => {
     expect(
       approvedRemovalFailures(doc(inline), gone, [{ ...approval, operationId: 'a.other' }])[0],
-    ).toMatch(/stale/);
+    ).toMatch(/not a.other/);
+  });
+
+  it('passes an entry for an operation both documents already lack (base after the removal)', () => {
+    expect(approvedRemovalFailures(gone, gone, [approval])).toEqual([]);
   });
 
   it('fails an entry whose operation is still served', () => {
