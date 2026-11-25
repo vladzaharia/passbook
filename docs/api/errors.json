@@ -1807,6 +1807,24 @@
       ]
     },
     {
+      "code": "IDP_BUDGET",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
+      "code": "IDP_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -1816,12 +1834,30 @@
       ]
     },
     {
+      "code": "IDP_REFUSED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
       "code": "IDP_SIGN_IN_REQUIRED",
       "statuses": [
         403
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "IDP_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "dev-access"
       ]
     },
     {
