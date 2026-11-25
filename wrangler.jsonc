@@ -154,6 +154,10 @@
     { "name": "wallet-org-purge", "binding": "ORG_PURGE", "class_name": "OrgPurge" }
   ],
 
+  "services": [
+    { "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }
+  ],
+
   "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["delivery@passbook.mobile"] }],
 
   // Enable at go-live after uploading the platform certificate. A missing binding means "push unavailable".
