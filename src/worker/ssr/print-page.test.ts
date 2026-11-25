@@ -161,7 +161,10 @@ describe('print page for a holder', () => {
 
   it('says when the print predates the pass, and when the earlier print ended', () => {
     expect(page(ready(design()))).not.toContain('data-stale');
-    const stale = page({ ...ready(design()), stale: true });
+    const stale = page({
+      ...(ready(design()) as Extract<PrintPageModel, { state: 'ready' }>),
+      stale: true,
+    });
     expect(stale).toContain('data-stale');
     expect(stale).toContain('Printed before the last change. Reprint to update.');
     const again = page({ state: 'empty', again: true, orgName: 'Northwind Hall', mode: 'live' });
