@@ -3,12 +3,15 @@ import type { Logger } from '../../platform/log.ts';
 import { IDP_UNAVAILABLE_MESSAGE, mapIdpError } from './errors.ts';
 import type { IdpRpc } from './types.ts';
 
+// The `IDP` service binding is not in the generated env until PB-T adds it to wrangler.jsonc, so callers pass any env.
+const bindingOf = (env: object): IdpRpc | undefined => (env as { IDP?: IdpRpc }).IDP;
+
 /** True when the binding exists. Before the binding is deployed it does not, and the feature stays hidden. */
-export const idpConfigured = (env: { IDP?: unknown }): boolean => env.IDP !== undefined;
+export const idpConfigured = (env: object): boolean => bindingOf(env) !== undefined;
 
 /** Typed wrapper over the `IDP` service binding. Every failure is an AppError; a missing binding is `IDP_UNAVAILABLE`. */
-export function idpClient(env: { IDP?: unknown }, log?: Logger): IdpRpc {
-  const rpc = env.IDP as IdpRpc | undefined;
+export function idpClient(env: object, log?: Logger): IdpRpc {
+  const rpc = bindingOf(env);
   const call = async <T>(run: (r: IdpRpc) => Promise<T>): Promise<T> => {
     if (!rpc) throw new UnavailableError(IDP_UNAVAILABLE_MESSAGE, 'IDP_UNAVAILABLE');
     try {
