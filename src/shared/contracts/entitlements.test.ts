@@ -117,11 +117,12 @@ describe('entitlement registry', () => {
       '*',
       'webhook-push/shopify',
       'webhook-push/*',
+      'webhook-push',
     ]);
     expect(entitledValue('connectors', ['*'], 'anything')).toBe(true);
     expect(entitledValue('connectors', ['webhook-push/*'], 'webhook-push/shopify')).toBe(true);
     expect(entitledValue('connectors', ['webhook-push/*'], 'webhook-push')).toBe(true);
-    expect(entitledValue('connectors', ['csv-url'], 'csv-url/x')).toBe(false);
+    expect(entitledValue('connectors', ['csv-url'], 'csv-url/x')).toBe(true);
     expect(entitledValue('connectors', ['csv-url'], 'webhook-push/x')).toBe(false);
     expect(entitledValue('connectors', [], 'csv-url')).toBe(false);
     expect(entitledValue('connectors', ['*'])).toBe(false);

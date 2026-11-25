@@ -50650,6 +50650,9 @@
                       "pasteSecret": {
                         "type": "boolean"
                       },
+                      "entitled": {
+                        "type": "boolean"
+                      },
                       "outputFields": {
                         "type": "object",
                         "additionalProperties": {
@@ -50765,6 +50768,7 @@
                       "id",
                       "label",
                       "pasteSecret",
+                      "entitled",
                       "outputFields",
                       "mapping",
                       "holderEmailField",
@@ -50772,6 +50776,9 @@
                     ]
                   },
                   "default": []
+                },
+                "entitled": {
+                  "type": "boolean"
                 }
               },
               "required": [
@@ -50780,7 +50787,8 @@
                 "displayName",
                 "capabilities",
                 "outputFields",
-                "defaults"
+                "defaults",
+                "entitled"
               ]
             }
           },
@@ -50941,6 +50949,9 @@
                 "pasteSecret": {
                   "type": "boolean"
                 },
+                "entitled": {
+                  "type": "boolean"
+                },
                 "outputFields": {
                   "type": "object",
                   "additionalProperties": {
@@ -51056,6 +51067,7 @@
                 "id",
                 "label",
                 "pasteSecret",
+                "entitled",
                 "outputFields",
                 "mapping",
                 "holderEmailField",
@@ -51063,6 +51075,9 @@
               ]
             },
             "default": []
+          },
+          "entitled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -51071,7 +51086,8 @@
           "displayName",
           "capabilities",
           "outputFields",
-          "defaults"
+          "defaults",
+          "entitled"
         ]
       },
       "WebhookEndpointsCreateParams": {
@@ -73903,7 +73919,7 @@
     },
     "/auth/oidc/client-metadata.json": {
       "get": {
-        "summary": "Client ID Metadata Document for Pocket ID (when OIDC_CLIENT_ID is its URL)",
+        "summary": "Client ID Metadata Document for Polaris ID (when OIDC_CLIENT_ID is its URL)",
         "tags": [
           "auth"
         ],
@@ -112295,7 +112311,8 @@
                         "requestsPerMinute": 6,
                         "timeoutMs": 15000
                       },
-                      "recipes": []
+                      "recipes": [],
+                      "entitled": true
                     }
                   ],
                   "nextCursor": null
@@ -112417,7 +112434,8 @@
                     "requestsPerMinute": 6,
                     "timeoutMs": 15000
                   },
-                  "recipes": []
+                  "recipes": [],
+                  "entitled": true
                 }
               }
             }
@@ -115696,7 +115714,7 @@
     },
     "/api/v1/identities/{id}/revoke-certificate": {
       "post": {
-        "summary": "Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in",
+        "summary": "Revoke a superseded certificate after a compromise; needs a Polaris ID sign-in",
         "tags": [
           "identities"
         ],

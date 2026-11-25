@@ -1851,7 +1851,8 @@
       "maxConcurrency": 0,
       "requestsPerMinute": 0,
       "timeoutMs": 0
-     }
+     },
+     "entitled": false
     }
    ],
    "nextCursor": null
@@ -1891,7 +1892,8 @@
     "maxConcurrency": 0,
     "requestsPerMinute": 0,
     "timeoutMs": 0
-   }
+   },
+   "entitled": false
   }
  },
  {

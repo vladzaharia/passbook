@@ -1329,6 +1329,7 @@ export type ConnectorsListResponse = {
       label: string;
       category?: "files" | "apis" | "commerce" | "bookings" | "try";
       pasteSecret: boolean;
+      entitled: boolean;
       outputFields: Record<string, {
         type: "string" | "number" | "boolean" | "date";
         description?: string;
@@ -1347,6 +1348,7 @@ export type ConnectorsListResponse = {
         values?: Array<string | number | boolean>;
       }>;
     }>;
+    entitled: boolean;
   }>;
   nextCursor: string | null;
 };
@@ -1383,6 +1385,7 @@ export type ConnectorsRetrieveResponse = {
     label: string;
     category?: "files" | "apis" | "commerce" | "bookings" | "try";
     pasteSecret: boolean;
+    entitled: boolean;
     outputFields: Record<string, {
       type: "string" | "number" | "boolean" | "date";
       description?: string;
@@ -1401,6 +1404,7 @@ export type ConnectorsRetrieveResponse = {
       values?: Array<string | number | boolean>;
     }>;
   }>;
+  entitled: boolean;
 };
 
 export type CreatedScanner = {
