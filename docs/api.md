@@ -750,7 +750,7 @@ events of its own mode only. Other orgs' and the other mode's endpoints answer `
 | `GET /webhook-endpoints?orgId=` | read | `{ items }`, at most 10 per org and mode |
 | `POST /webhook-endpoints` | manage | `{ orgId?, url, description?, eventTypes, templateIds? }`. `201` `{ endpoint, secret }`. `?validate=1` checks everything, writes nothing, answers `200 { ok: true }` |
 | `GET`, `PATCH`, `DELETE /webhook-endpoints/{id}` | read, manage, manage | `PATCH` takes any create field plus `status` (`active`, `paused`) and `apiVersion`. A resume clears the failure counters |
-| `POST /webhook-endpoints/{id}/secret` | manage | `{ overlapHours: 0 \| 24 \| 72 }` (default 24). `{ secret }`, shown once |
+| `POST /webhook-endpoints/{id}/secret` | manage | `{ overlapHours: 0 \| 1 \| 24 \| 72 \| 168 }` (default 24). `{ secret }`, shown once |
 | `POST /webhook-endpoints/{id}/test` | manage | `{ type? }`, default `webhook.test`: sends one signed event to this endpoint: `{ ok, status, durationMs, errorCode, captureId }`. Any other type carries sample data (`sample: true` on the event, `externalId` `sample_order_1042`) and goes to Test endpoints only (`409 SAMPLE_EVENT_LIVE`). 10 a minute per org and mode, then `429`; the destination host's shared send budget is charged too |
 | `POST /webhook-endpoints/capture` | manage | the sandbox's capture endpoint, made if it has none: `201 { endpoint, secret }`, or `200` with `secret: null` when it exists. `409 CAPTURE_DEVELOPER_ONLY` outside a developer sandbox in Test |
 | `GET /webhook-endpoints/{id}/captures`, `.../captures/{captureId}` | read | stored requests, newest first (`type`, `limit`, `cursor`): headers and the raw body |

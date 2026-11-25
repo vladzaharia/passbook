@@ -11,6 +11,8 @@ type Page = z.infer<typeof ScanRosterSchema>;
 /** `day` marks an `in` that holds for one venue day; `inDay` is the day it was marked. */
 export type RosterEntry = Pick<Page['entries'][number], 'status' | 'state' | 'day'> & {
   inDay?: string;
+  /** The other hashes of the same pass: admitting one admits all. */
+  sib?: string[];
 };
 
 /** The window of the last download, with the server's signature of it, which `batch` echoes. */
@@ -63,7 +65,11 @@ export function createRosterStore(
     },
     async markIn(hash, day) {
       const entry = await rows.get(hash);
-      if (entry) await rows.set(hash, { ...entry, state: 'in', inDay: day });
+      if (!entry) return;
+      for (const h of [hash, ...(entry.sib ?? [])]) {
+        const e = await rows.get(h);
+        if (e) await rows.set(h, { ...e, state: 'in', inDay: day });
+      }
     },
     async refresh(api, now, scopeKey, dayOf) {
       const before = await meta.get(META);
@@ -76,6 +82,8 @@ export function createRosterStore(
       do {
         const page = await api.roster(cursor, since);
         first ??= page;
+        const group = new Map<string, string[]>();
+        for (const e of page.entries) if (e.g) group.set(e.g, [...(group.get(e.g) ?? []), e.h]);
         for (const e of page.entries)
           fetched.push([
             e.h,
@@ -84,6 +92,7 @@ export function createRosterStore(
               state: e.state,
               ...(e.day ? { day: true } : {}),
               ...(e.state === 'in' ? { inDay: dayOf(page.asOf) } : {}),
+              ...(e.g ? { sib: (group.get(e.g) ?? []).filter((h) => h !== e.h) } : {}),
             },
           ]);
         cursor = page.cursor ?? undefined;

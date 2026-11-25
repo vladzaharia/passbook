@@ -159,7 +159,7 @@ export function selectedPreset<P extends { scopes: readonly string[] }>(
 }
 
 /** Expiry choices for a personal key (the server's limit is 90 days). */
-export const KEY_EXPIRY_DAYS = [7, 30, 90] as const;
+export const KEY_EXPIRY_DAYS = [1, 7, 14, 30, 60, 90] as const;
 
 /** A roll keeps the old key working this long beside the new one. */
 export const ROLL_OVERLAP_HOURS = 1;

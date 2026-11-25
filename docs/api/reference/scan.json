@@ -1017,6 +1017,7 @@
                 "state": "active"
               }
             ],
+            "draftFailures": 1,
             "surfaces": ["phone"],
             "preferred": "phone"
           },
@@ -1308,6 +1309,7 @@
                 "state": "active"
               }
             ],
+            "draftFailures": 1,
             "surfaces": ["phone"],
             "preferred": "phone"
           },
@@ -1620,6 +1622,7 @@
                 "state": "active"
               }
             ],
+            "draftFailures": 1,
             "surfaces": ["phone"],
             "preferred": "phone"
           },
@@ -1911,6 +1914,7 @@
                 "state": "active"
               }
             ],
+            "draftFailures": 1,
             "surfaces": ["phone"],
             "preferred": "phone"
           },
@@ -2204,6 +2208,7 @@
                   "state": "active"
                 }
               ],
+              "draftFailures": 1,
               "surfaces": ["phone"],
               "preferred": "phone"
             },
@@ -3301,6 +3306,7 @@
                 "state": "active"
               }
             ],
+            "draftFailures": 1,
             "surfaces": ["phone"],
             "preferred": "phone"
           },
@@ -3569,7 +3575,8 @@
           "h": "8893d06a3faf43681946ec0a8b3936e7",
           "status": "active",
           "state": "in",
-          "day": false
+          "day": false,
+          "g": "1"
         }
       ],
       "cursor": "c1.4812",
@@ -4179,6 +4186,7 @@
               "state": "active"
             }
           ],
+          "draftFailures": 1,
           "surfaces": ["phone"],
           "preferred": "phone"
         },
