@@ -136,7 +136,7 @@ function Rail({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
         className="try"
       >
         <Ticket
-          stub={<SampleTabs id={`s-${op.anchor}`} samples={samples} />}
+          stub={<SampleTabs id={`s-${op.anchor}`} samples={samples} name={op.title} />}
           body={
             <div className="row g3 try-foot">
               <a className="btn sm" href={SIGN_IN}>
@@ -152,7 +152,11 @@ function Rail({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
           {op.examples.map((e) => (
             <details key={e.id} className="example">
               <summary>{e.title}</summary>
-              <SampleTabs id={`e-${op.anchor}-${e.id}`} samples={exampleSamples(e)} />
+              <SampleTabs
+                id={`e-${op.anchor}-${e.id}`}
+                samples={exampleSamples(e)}
+                name={`Example: ${e.title}`}
+              />
             </details>
           ))}
         </div>

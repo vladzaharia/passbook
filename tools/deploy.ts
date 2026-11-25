@@ -44,6 +44,7 @@ import {
   secretNames,
   uploadAndMigrate,
 } from './lib/deploy-plan.ts';
+import { e2eReleaseProblems } from './lib/e2e-release.ts';
 import { entitlementsRefusal, orgsWithoutEntitlements } from './lib/entitlements-gate.ts';
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
@@ -162,6 +163,7 @@ const buildRefusal = buildProblem({
   git,
   stamp: existsSync(stampPath(root)) ? readFileSync(stampPath(root), 'utf8') : null,
   uploadedSha: existsSync(shaFile) ? readFileSync(shaFile, 'utf8').trim() : null,
+  e2eRelease: e2eReleaseProblems(resolve(root, 'dist/wallet')),
 });
 if (buildRefusal) {
   console.error(`Not deploying. ${buildRefusal}`);

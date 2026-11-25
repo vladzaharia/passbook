@@ -5,6 +5,7 @@ import {
   requireCredentialRefKeyset,
 } from '../passes/credential-keyset.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
+import { mockProvidersUrl } from './mock-endpoint.ts';
 import {
   type GoogleCallbackBindingInput,
   isGoogleCallbackBindingCurrent,
@@ -18,8 +19,9 @@ export function googleCallbackUrl(ctx: ServiceContext, accountId: string): strin
   try {
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(accountId)) throw new Error();
     const origin = new URL(baseUrl(ctx.env));
+    // Plain http only for the loopback origin of dev and e2e, where Google is the mock (mock-endpoint.ts).
     if (
-      origin.protocol !== 'https:' ||
+      (origin.protocol !== 'https:' && !mockProvidersUrl(ctx.env)) ||
       origin.username ||
       origin.password ||
       origin.pathname !== '/' ||

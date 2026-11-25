@@ -4,6 +4,7 @@ import type { CheckOutcome } from './account-check-types.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
 import { GoogleWalletError, googleFetch } from './google-errors.ts';
 import { getGoogleAccessToken } from './google-oauth.ts';
+import { providerFetch } from './mock-endpoint.ts';
 
 const ISSUER_API = 'https://walletobjects.googleapis.com/walletobjects/v1/issuer';
 
@@ -39,12 +40,13 @@ export async function probeGoogleIssuer(
 ): Promise<CheckOutcome> {
   try {
     const account = await validateGoogleAccount(credentials);
+    const fetcher = providerFetch(ctx.env);
     const { accessToken } = await getGoogleAccessToken(account, {
       issuedAt: Math.floor(ctx.clock.now() / 1000),
-      fetcher: globalThis.fetch,
+      fetcher,
     });
     const response = await googleFetch(
-      globalThis.fetch,
+      fetcher,
       `${ISSUER_API}/${encodeURIComponent(account.issuerId)}`,
       { method: 'GET', headers: { Authorization: `Bearer ${accessToken}` } },
       'issuer',

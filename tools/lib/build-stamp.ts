@@ -66,6 +66,8 @@ interface GuardInput {
   stamp: string | null;
   /** The commit recorded when `--migrate-only` uploaded the version; null when none. */
   uploadedSha: string | null;
+  /** `e2eReleaseProblems` of dist/wallet (tools/lib/e2e-release.ts); empty for a deployable Worker. */
+  e2eRelease?: string[];
 }
 
 /**
@@ -77,6 +79,7 @@ export function buildProblem({
   git,
   stamp,
   uploadedSha,
+  e2eRelease = [],
 }: GuardInput): string | null {
   if (git.changed.length > 0) return dirtyMessage(git.changed);
   if (servesUploaded) {
@@ -88,6 +91,8 @@ export function buildProblem({
   if (!built)
     return 'dist/ has no build stamp. Run npm run build (npm run check does) in this checkout.';
   if (built.e2e) return 'dist/ is an e2e build (raised rate limits). Run npm run build.';
+  if (e2eRelease.length > 0)
+    return `dist/ carries the e2e provider release: ${e2eRelease[0]}. Run npm run build.`;
   if (built.dirty)
     return 'dist/ was built from a dirty tree. Run npm run build in the clean worktree.';
   if (built.sha !== git.head)

@@ -17,6 +17,12 @@ function loopbackHttp(value: string | undefined): URL | null {
   }
 }
 
+/** The mock's URL when it and `PUBLIC_BASE_URL` are both plain-http loopback (dev and e2e), else null. */
+export function mockProvidersUrl(env: object): URL | null {
+  const mock = loopbackHttp(envString(env, 'WALLET_MOCK_PROVIDERS_URL'));
+  return mock && loopbackHttp(envString(env, 'PUBLIC_BASE_URL')) ? mock : null;
+}
+
 /**
  * Dev and e2e only: with `WALLET_MOCK_PROVIDERS_URL` (test/mock-wallets) set, provider calls go to
  * the local fake. Both it and `PUBLIC_BASE_URL` must be plain-http loopback, so no production
@@ -24,10 +30,18 @@ function loopbackHttp(value: string | undefined): URL | null {
  * real provider URL; only the outgoing request moves.
  */
 export function mockProviderInput(env: object, input: RequestInfo | URL): RequestInfo | URL {
-  const mock = loopbackHttp(envString(env, 'WALLET_MOCK_PROVIDERS_URL'));
-  if (!mock || !loopbackHttp(envString(env, 'PUBLIC_BASE_URL'))) return input;
+  const mock = mockProvidersUrl(env);
+  if (!mock) return input;
   const url = new URL(input instanceof Request ? input.url : String(input));
   if (!PROVIDER_ORIGINS.has(url.origin)) return input;
   const target = `${mock.origin}${url.pathname}${url.search}`;
   return input instanceof Request ? new Request(target, input) : target;
+}
+
+/**
+ * `fetch` through `mockProviderInput`, for provider calls made outside runtime-core (credential checks,
+ * Samsung card reads). Outside dev and e2e it is `fetch` unchanged.
+ */
+export function providerFetch(env: object): typeof fetch {
+  return (input, init) => globalThis.fetch(mockProviderInput(env, input), init);
 }
