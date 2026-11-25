@@ -29,14 +29,14 @@ export function badgeLayout(w: number, h: number, roleLines = 1): BadgeLayout {
   const portrait = h > w;
   const roleH = 3.6 * roleLines + 0.4;
   if (portrait) {
-    const top = 66 + roleH + 1.2;
+    const top = 63.5 + roleH + 1.2;
     return {
       portrait,
       plate: { x: 4, y: 4, w: 8, h: 8 },
       kicker: { x: 15, y: 6.2, w: w - 19, h: 4 },
-      photo: { x: (w - 36) / 2, y: 15, w: 36, h: 36 },
-      name: { x: 4, y: 55, w: w - 8, h: 10, lines: 2, size: 4.4 },
-      role: { x: 4, y: 66, w: w - 8, h: roleH, lines: roleLines },
+      photo: { x: (w - 34) / 2, y: 15, w: 34, h: 34 },
+      name: { x: 4, y: 52.5, w: w - 8, h: 10, lines: 2, size: 4.4 },
+      role: { x: 4, y: 63.5, w: w - 8, h: roleH, lines: roleLines },
       details: { x: 4, y: top, w: w - 8, h: h - 3.5 - top, lines: linesFrom(top, h) },
       code: { x: 4, y: 4, w: w - 8, h: 46 },
       note: { x: 4, y: 52, w: w - 8, h: h - 56 },

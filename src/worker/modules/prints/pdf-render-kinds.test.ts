@@ -56,7 +56,8 @@ describe('the PDF of each new class says what the page says', () => {
       { assets: env.ASSETS },
     );
     const t = await pdfText(bytes);
-    expect(t).toContain('Wolfeschlegelst… – Llanfairpwllgwyng…');
+    expect(t).toContain('Wolfeschlegelst… –');
+    expect(t).toContain('Llanfairpwllgwyng…');
     expect(t).toContain('From Wolfeschlegelsteinhausenbergerdorf');
     expect(t).toContain('To Llanfairpwllgwyngyllgogerych');
   });

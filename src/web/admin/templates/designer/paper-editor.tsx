@@ -5,7 +5,6 @@ import {
   type PaperInk,
   type PaperKind,
   paperManifestIssues,
-  STAFF_ONLY_KINDS,
   sheetApplies,
   supportsCode128,
 } from '@/passkit/template/paper.ts';
@@ -171,9 +170,7 @@ export function PaperEditor({
         label="Holders can print"
         checked={design.holder}
         onCheckedChange={(on) => {
-          // Only a choice that differs from the class's default is written.
-          const byDefault = !STAFF_ONLY_KINDS.has(design.kind ?? 'admission');
-          onEdit({ holder: (on === true) === byDefault ? undefined : on === true });
+          onEdit({ holder: on === true });
         }}
       />
       {issues.map((i) => (

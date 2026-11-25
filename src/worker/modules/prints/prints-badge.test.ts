@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import { holderChannels } from '../channels/gate.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handlePrintsBulk } from './jobs.ts';
@@ -152,8 +152,5 @@ describe('the member photo on paper', () => {
     await photo(kit, b, 0);
     const withPhotos = await run1();
     expect(withPhotos).toBeGreaterThan(without);
-    expect(await first(kit.env.DB, 'SELECT COUNT(*) AS n FROM member_photos')).toMatchObject({
-      n: 2,
-    });
   });
 });

@@ -28,7 +28,10 @@ describe('bandFit', () => {
   it('keeps the title clear of the logo: fewer lines or a smaller size on a short band', () => {
     const tall = bandFit('A'.repeat(70), 67, 44);
     const half = bandFit('A'.repeat(70), 67, 38);
-    expect(tall.lines).toBeLessThanOrEqual(2);
-    expect(half.lines * half.size * 1.08).toBeLessThanOrEqual(38 - 2 * 5.5 - 9 - 2 - 4 + 1);
+    for (const [fit, band] of [
+      [tall, 44],
+      [half, 38],
+    ] as const)
+      expect(fit.lines * fit.size * 1.08).toBeLessThanOrEqual(band - 2 * 5.5 - 9 - 2 - 4 + 0.01);
   });
 });

@@ -4,6 +4,7 @@ import {
   type PaperKind,
   type PaperSheet,
   type PaperSize,
+  STAFF_ONLY_KINDS,
   sheetApplies,
 } from '@/passkit/template/paper.ts';
 import type { DesignDoc } from './model.ts';
@@ -57,8 +58,10 @@ export function setPaper(doc: DesignDoc, patch: PaperPatch): DesignDoc {
   const terms = 'terms' in patch ? patch.terms : old.terms;
   if (typeof terms === 'string' ? terms.trim() : terms) block.terms = terms;
   const holder = 'holder' in patch ? patch.holder : old.holder;
-  if (typeof holder === 'boolean') block.holder = holder;
   const kind = 'kind' in patch ? patch.kind : old.kind;
+  // Only a word that differs from the class's default is written: staff-only for an ID, else open.
+  const staffByDefault = typeof kind === 'string' && STAFF_ONLY_KINDS.has(kind as PaperKind);
+  if (typeof holder === 'boolean' && holder === staffByDefault) block.holder = holder;
   if (typeof kind === 'string') block.kind = kind;
   const ink = patch.ink ?? old.ink;
   if (ink === 'mono') block.ink = ink;

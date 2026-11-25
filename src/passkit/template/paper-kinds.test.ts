@@ -44,9 +44,14 @@ describe('derived classes', () => {
     const { c, design } = await content('starter-staff-badge');
     expect(design.holder).toBe(true);
     expect(withKind(design, c.kind).holder).toBe(false);
-    expect(resolvePaper({ schema: 1, size: 'cr80', barcode: 'qr', kind: 'badge' }).holder).toBe(
-      false,
-    );
+    // A block with a kind but no `holder` leaves it to the class.
+    expect(
+      withKind(resolvePaper({ schema: 1, size: 'cr80', barcode: 'qr', kind: 'badge' }), 'badge')
+        .holder,
+    ).toBe(false);
+    expect(
+      withKind(resolvePaper({ schema: 1, size: 'cr80', barcode: 'qr' }), 'credential').holder,
+    ).toBe(false);
     expect(
       resolvePaper({ schema: 1, size: 'cr80', barcode: 'qr', kind: 'badge', holder: true }).holder,
     ).toBe(true);

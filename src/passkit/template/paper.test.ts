@@ -125,6 +125,7 @@ describe('paper design', () => {
       barcode: 'code128',
       fields: [],
       holder: false,
+      holderExplicit: false,
       ink: 'colour',
       fold: true,
       buddy: false,
