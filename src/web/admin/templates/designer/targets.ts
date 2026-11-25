@@ -19,7 +19,7 @@ import { scanIssueTarget } from './scan/scan-issue-target.ts';
 const COLORS = /^(backgroundColor|foregroundColor|labelColor|stripColor|footerBackgroundColor)\b/;
 const RELEVANCE = /^(locations|beacons|relevantDates?|expirationDate|maxDistance)\b/;
 const STYLE =
-  /^(logoText|eventLogoText|description|organizationName|preferredStyleSchemes|useAutomaticColors|\w+\.transitType)\b/;
+  /^(posterGeneric|logoText|eventLogoText|description|organizationName|preferredStyleSchemes|useAutomaticColors|\w+\.transitType)\b/;
 
 /** Keys PassBook fills in when it issues a pass; an author cannot fix them here. */
 export const platformManaged = (issue: ValidationIssue): boolean =>
@@ -52,8 +52,8 @@ export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection |
   const field = /^\w+\.(\w+Fields)\[(\d+)\]/.exec(path);
   if (field) {
     const group = field[1] as GroupId;
-    if (!groupsFor(styleOf(doc.passJson)).includes(group)) return null;
-    const key = keyOf(fieldsOf(doc.passJson, group)[Number(field[2])] ?? {});
+    if (!groupsFor(styleOf(doc.passJson, doc.target)).includes(group)) return null;
+    const key = keyOf(fieldsOf(doc.passJson, group, doc.target)[Number(field[2])] ?? {});
     return { section: group, ...(key ? { key } : {}) };
   }
   if (/^barcodes?\b/.test(path)) return { section: 'barcode' };
@@ -69,8 +69,8 @@ export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection |
     if ('barcode' in to) return { section: 'barcode' };
     const key = typeof to.field === 'string' ? to.field : undefined;
     const group = key
-      ? groupsFor(styleOf(doc.passJson)).find((g) =>
-          fieldsOf(doc.passJson, g).some((f) => keyOf(f) === key),
+      ? groupsFor(styleOf(doc.passJson, doc.target)).find((g) =>
+          fieldsOf(doc.passJson, g, doc.target).some((f) => keyOf(f) === key),
         )
       : undefined;
     return group ? { section: group, key } : { section: 'inputs' };

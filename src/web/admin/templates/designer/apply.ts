@@ -6,7 +6,7 @@ import type { Source } from './bindings.ts';
 import { applyCounterOp, type CounterOp } from './counters.ts';
 import { setSlotImage } from './images.ts';
 import type { InputSpec } from './inputs.ts';
-import type { DesignDoc, DraftAsset, GroupId } from './model.ts';
+import type { DesignDoc, DraftAsset, GroupId, Target } from './model.ts';
 import { setBrandPart } from './ops-brand.ts';
 import {
   addInput,
@@ -33,6 +33,8 @@ import {
   setFieldValue,
   setPassProp,
   setPoster,
+  setTarget,
+  addGenericLayout,
   setStyle,
   updateField,
 } from './ops-pass.ts';
@@ -54,6 +56,8 @@ export type Op =
   | { op: 'meta'; name?: string; description?: string }
   | { op: 'style'; style: PassStyle }
   | { op: 'poster'; on: boolean }
+  | { op: 'target'; target: Target }
+  | { op: 'poster-repair' }
   | { op: 'pass-prop'; key: string; value: unknown }
   | { op: 'dict-prop'; key: string; value: unknown }
   | { op: 'field-add'; group: GroupId; key?: string }
@@ -111,6 +115,10 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setStyle(doc, o.style);
     case 'poster':
       return setPoster(doc, o.on);
+    case 'target':
+      return setTarget(doc, o.target);
+    case 'poster-repair':
+      return addGenericLayout(doc);
     case 'pass-prop':
       return setPassProp(doc, o.key, o.value);
     case 'dict-prop':

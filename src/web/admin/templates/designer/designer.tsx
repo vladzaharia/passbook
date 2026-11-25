@@ -160,7 +160,7 @@ export function Designer({
     if (!added || added.n === handled.current) return;
     handled.current = added.n;
     if (added.kind === 'input') return focusTarget({ section: 'inputs', key: added.key });
-    const at = findField(state.doc.passJson, added.key);
+    const at = findField(state.doc.passJson, added.key, state.doc.target);
     if (at) focusTarget({ section: at.group, key: added.key });
   }, [added, state.doc.passJson, focusTarget]);
 

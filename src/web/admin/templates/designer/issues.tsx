@@ -1,6 +1,8 @@
 import { CircleAlert, CircleCheck, TriangleAlert } from 'lucide-react';
+import { Button } from '../../../ui/index.ts';
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { issueWords } from '@/shared/copy/issues.ts';
+import type { Op } from './apply.ts';
 import { useDesigner } from './context.tsx';
 import { contrastWarnings } from './contrast.ts';
 import { type Selection, sectionLabel } from './model.ts';
@@ -12,6 +14,8 @@ interface Row {
   message: string;
   target: Selection | null;
   managed?: boolean;
+  /** One click that resolves it. */
+  fix?: { label: string; op: Op };
 }
 
 const ORDER = { error: 0, warning: 1 } as const;
@@ -27,7 +31,7 @@ export function Issues({
   /** The check itself failed (network, server); the list may be stale. */
   failed?: string | undefined;
 }) {
-  const { doc, focusTarget } = useDesigner();
+  const { doc, focusTarget, edit } = useDesigner();
   // The dry run already says it; the local check only fills in while it has not answered.
   const server = issues.some(
     (i) => i.code === 'COLOR_CONTRAST' && /^(foreground|label)Color$/.test(i.path ?? ''),
@@ -41,6 +45,9 @@ export function Issues({
         message: issueWords(i),
         target: issueTarget(i, doc),
         managed: platformManaged(i),
+        ...(i.code === 'POSTER_FALLBACK'
+          ? { fix: { label: 'Add Generic layout', op: { op: 'poster-repair' } as Op } }
+          : {}),
       })),
     ...(server ? [] : contrastWarnings(doc.passJson)).map((w) => ({
       id: `contrast:${w.key}`,
@@ -118,6 +125,15 @@ export function Issues({
                     {body}
                   </div>
                 )}
+                {row.fix ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => edit((row.fix as { op: Op }).op)}
+                  >
+                    {row.fix.label}
+                  </Button>
+                ) : null}
               </li>
             );
           })}
