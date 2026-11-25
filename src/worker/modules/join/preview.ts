@@ -79,6 +79,7 @@ export async function joinPreview(
     assets,
     locale: view.locale,
     timeZone: view.timeZone,
+    showZone: true,
     now: new Date(ctx.clock.now()),
   });
   return hideEmpty(card);

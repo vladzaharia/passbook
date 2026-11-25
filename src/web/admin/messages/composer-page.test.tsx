@@ -85,6 +85,27 @@ describe('Message composer', () => {
     expect(requests).not.toContain('unscoped');
   });
 
+  it('schedules in the org time zone', async () => {
+    setup('/admin/messages/new?orgId=org1', {
+      '/api/v1/settings': () =>
+        json({
+          items: [
+            {
+              scope: 'org:org1',
+              key: 'org.timeZone',
+              value: 'Asia/Tokyo',
+              source: 'org',
+              updatedAt: 1,
+              updatedBy: null,
+            },
+          ],
+        }),
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('radio', { name: 'Schedule' }));
+    expect(await screen.findByText(/Time zone: Tokyo/)).toBeInTheDocument();
+  });
+
   it('keeps Send and Save draft off until there is a template and a message', async () => {
     setup('/admin/messages/new?orgId=org1');
     const user = userEvent.setup();

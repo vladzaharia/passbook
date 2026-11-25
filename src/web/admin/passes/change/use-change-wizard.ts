@@ -116,6 +116,7 @@ export function useChangeWizard(
   }
 
   return {
+    timeZone: orgZone,
     details,
     fields,
     step,

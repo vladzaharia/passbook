@@ -85,6 +85,7 @@ export async function previewFor(
     locale,
     now,
     timeZone: zone,
+    showZone: true,
     ...stateWordOption(pass),
   });
   let wallets: PreviewPageProps['wallets'] = null;

@@ -115,7 +115,7 @@ register(
       const pass = await passForToken(svcCtx, token);
       const snapshot = await capturePassSnapshot(svcCtx, pass);
       const model = await pageModel(svcCtx, pass);
-      const zone = await holderZone(c, svcCtx, pass.orgId);
+      const zone = await holderZone(svcCtx, pass.orgId);
       const page = `/p/${token}`;
       const notice = model.removal ? undefined : await codesReplacedNotice(svcCtx, pass);
       // Resolve only links to this bearer under the same snapshot as the page and its assets.
@@ -130,6 +130,7 @@ register(
         locale: lang,
         now: new Date(svcCtx.clock.now()),
         timeZone: zone,
+        showZone: true,
         ...stateWordOption(pass),
       });
       const html = renderPassPage({

@@ -46,7 +46,13 @@ export function ChangeStep({
         ))}
       </div>
       {w.kind === 'fields' ? (
-        <FieldRows fields={w.fields} rows={w.rows} onChange={w.setRows} showErrors={showErrors} />
+        <FieldRows
+          fields={w.fields}
+          rows={w.rows}
+          onChange={w.setRows}
+          showErrors={showErrors}
+          timeZone={w.timeZone}
+        />
       ) : null}
     </div>
   );

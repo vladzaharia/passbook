@@ -43,13 +43,14 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
         const pass = await bundlePass(ctx, bundle, p.passId);
         const { model } = await bundleMember(ctx, p.token, pass);
         const now = new Date(ctx.clock.now());
-        const zone = await holderZone(c, ctx, pass.orgId);
+        const zone = await holderZone(ctx, pass.orgId);
         const lang = langOf(c.req.header('accept-language'));
         const view = normalize(model.passJson, {
           assets: model.assets,
           locale: lang,
           now,
           timeZone: zone,
+          showZone: true,
           ...stateWordOption(pass),
         });
         const base = `/b/${p.token}/${pass.id}`;

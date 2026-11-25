@@ -88,7 +88,7 @@ register(
       const bundle = await bundleForToken(ctx, token);
       const members = await bundleMembers(ctx, bundle);
       const lang = langOf(c.req.header('accept-language'));
-      const zone = await holderZone(c, ctx, bundle.org_id);
+      const zone = await holderZone(ctx, bundle.org_id);
       const now = new Date(ctx.clock.now());
       const wallets = await Promise.all(
         members.map(({ pass }) => bundleWalletProviders(ctx, pass)),

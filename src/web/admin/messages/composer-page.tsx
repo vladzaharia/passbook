@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { useDebounced } from '../../lib/debounce.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
@@ -117,6 +118,7 @@ function ComposerForm({
   draft: BroadcastDto | undefined;
 }) {
   const navigate = useNavigate();
+  const orgZone = useOrgTimeZone(orgId);
   const orgs = useOrgOptions();
   const org = orgs.data?.items.find((o) => o.id === orgId);
   const [state, setState] = useState<ComposerState>(() =>
@@ -241,7 +243,12 @@ function ComposerForm({
           <Card>
             <CardHeader title="When" />
             <CardBody>
-              <WhenSection state={state} onChange={change} error={checks.errors.when} />
+              <WhenSection
+                state={state}
+                onChange={change}
+                error={checks.errors.when}
+                timeZone={orgZone}
+              />
             </CardBody>
           </Card>
           <div className="flex flex-wrap items-center gap-2">

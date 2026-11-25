@@ -73,7 +73,7 @@ async function formPage(
     try {
       card = await joinPreview(ctx, link, open, c.req.param('token') ?? '', {
         locale: langOf(c.req.header('accept-language')),
-        timeZone: await holderZone(c, ctx, link.orgId),
+        timeZone: await holderZone(ctx, link.orgId),
       });
     } catch (error) {
       if (error instanceof AppError && error.status < 500) {
