@@ -9,6 +9,12 @@ describe('zone-less datetimes', () => {
     expect(inZone('2026-07-01T12:00:00', 'Asia/Kolkata')).toBe('2026-07-01T12:00:00+05:30');
   });
 
+  it('keeps half-hour changeover zones right with a warm cache', () => {
+    inZone('2026-03-08T01:40:00', 'America/St_Johns');
+    expect(inZone('2026-03-08T03:10:00', 'America/St_Johns')).toBe('2026-03-08T03:10:00-02:30');
+    expect(inZone('2026-03-08T01:40:00', 'America/St_Johns')).toBe('2026-03-08T01:40:00-03:30');
+  });
+
   it('leaves dates, offsets and other text alone', () => {
     for (const v of ['2026-07-01', '2026-07-01T09:30:00Z', '2026-07-01T09:30:00+02:00', 'hello'])
       expect(inZone(v, 'America/Los_Angeles')).toBe(v);

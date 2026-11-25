@@ -5,7 +5,7 @@ const ZONELESS = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(\.\d+)?)?$
 
 const formats = new Map<string, Intl.DateTimeFormat>();
 const offsets = new Map<string, number>();
-const HOUR = 3_600_000;
+const STEP = 900_000;
 
 const formatOf = (zone: string): Intl.DateTimeFormat => {
   let f = formats.get(zone);
@@ -25,9 +25,9 @@ const formatOf = (zone: string): Intl.DateTimeFormat => {
   return f;
 };
 
-/** The zone's offset (ms) at `instant`. A formatter per zone, and one answer per zone and UTC hour: offsets only move on the hour. */
+/** The zone's offset (ms) at `instant`. A formatter per zone, and one answer per zone and UTC quarter hour: offsets move on quarter hours at most. */
 function offsetAt(instant: number, zone: string): number {
-  const key = `${zone}|${Math.floor(instant / HOUR)}`;
+  const key = `${zone}|${Math.floor(instant / STEP)}`;
   const hit = offsets.get(key);
   if (hit !== undefined) return hit;
   const parts = formatOf(zone).formatToParts(new Date(instant));
