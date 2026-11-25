@@ -164,6 +164,9 @@ describe('the top bar chip', () => {
     });
     expect(host.querySelector('.orgchip-dot')?.textContent).toBe('A');
     expect(host.querySelector('.orgchip-name')?.textContent).toBe('acme');
+    expect(host.querySelector('.orgchip')?.getAttribute('title')).toBe(
+      'Your test sandbox. New emails go to the Test inbox.',
+    );
     const items = [...host.querySelectorAll('.orgchip-item')].map((a) => [
       a.textContent,
       a.getAttribute('href'),

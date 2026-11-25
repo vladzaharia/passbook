@@ -78,7 +78,7 @@ function chipFor(session: Session): HTMLElement | null {
   const name = session.sandbox.orgSlug;
   // The chip opens a small menu: the sandbox, and the two ways to begin again (the quickstart confirms them).
   const chip = el('details', 'orgchip');
-  chip.title = 'Your test sandbox';
+  chip.title = 'Your test sandbox. New emails go to the Test inbox.';
   const head = el('summary', 'orgchip-head');
   head.setAttribute('aria-label', 'Sandbox menu');
   head.append(
