@@ -66,6 +66,51 @@ describe('claim-existing is bounded per invitation', () => {
   });
 });
 
+describe('claim-existing with no account for the address', () => {
+  it('searches once, remembers the answer for ten minutes, and searches at most five times a day', async () => {
+    const invite = await memberInvite(r, 'nobody@agency.test');
+    const search = () => r.idp.log.filter((m) => m === 'findByVerifiedEmail').length;
+    for (let i = 0; i < 30; i++)
+      await expectProblem(
+        await post(r, '/claim-existing', challenge(invite.secret)),
+        404,
+        'INVITATION_NO_ACCOUNT',
+      );
+    expect(search()).toBe(1);
+    // After the memory ends a search runs again, but never more than five in a day: the rest answer the same.
+    for (let i = 0; i < 12; i++) {
+      r.h.clock.advance(11 * 60_000);
+      await expectProblem(
+        await post(r, '/claim-existing', challenge(invite.secret)),
+        404,
+        'INVITATION_NO_ACCOUNT',
+      );
+    }
+    expect(search()).toBe(5);
+    // Many invitations of one link holder's making cost the binding one search each, not one per call.
+    const other = await memberInvite(r, 'other@agency.test');
+    for (let i = 0; i < 10; i++) await post(r, '/claim-existing', challenge(other.secret));
+    expect(search()).toBe(6);
+  });
+
+  it('still finds an account that appears later, once the memory ends', async () => {
+    const invite = await memberInvite(r, 'late@agency.test');
+    await expectProblem(
+      await post(r, '/claim-existing', challenge(invite.secret)),
+      404,
+      'INVITATION_NO_ACCOUNT',
+    );
+    r.idp.addAccount('sub-late', { email: invite.email, emailVerified: true });
+    await expectProblem(
+      await post(r, '/claim-existing', challenge(invite.secret)),
+      404,
+      'INVITATION_NO_ACCOUNT',
+    );
+    r.h.clock.advance(11 * 60_000);
+    expect((await post(r, '/claim-existing', challenge(invite.secret))).status).toBe(200);
+  });
+});
+
 describe('the Polaris ID gate', () => {
   const polaris = async (secret: string) =>
     ((await (await post(r, '/preview', { token: secret })).json()) as { polaris: boolean }).polaris;

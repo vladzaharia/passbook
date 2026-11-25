@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { InvitationChallengeSchema } from '../../../../shared/contracts/invitations.ts';
+import { bump, read } from '../../../platform/counters.ts';
 import { AppError } from '../../../platform/errors.ts';
 import { enforceRateLimit } from '../../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
@@ -12,6 +13,10 @@ import type { Invite } from './resolve.ts';
 
 const DAY = 24 * 60 * 60 * 1000;
 const CLAIM_CAP = 3;
+const MINUTE = 60_000;
+const NONE_MEMORY_MIN = 10;
+const SEARCHES_PER_DAY = 5;
+const minuteOf = (t: number) => t - (t % MINUTE);
 
 /**
  * Gives an existing Polaris ID account what the invitation carries, at once, and records why (a claim row the sweep
@@ -79,15 +84,23 @@ export async function claimExisting(
     )
   )
     return;
+  const noAccount = () =>
+    new AppError('INVITATION_NO_ACCOUNT', 404, 'No Polaris ID uses this address. Create one.');
+  const db = ctx.env.DB;
+  // The directory search is the binding's scarce, platform-wide budget. An answer of "no account" is remembered for
+  // ten minutes (counters, so it holds across isolates), and an invitation gets a few searches a day, then the same answer.
+  for (let back = 0; back < NONE_MEMORY_MIN; back++)
+    if ((await read(db, `invclaim:none:${invite.row.id}`, minuteOf(now) - back * MINUTE)) > 0)
+      throw noAccount();
+  if ((await bump(db, `invclaim:search:${invite.row.id}`, now - (now % DAY))) > SEARCHES_PER_DAY)
+    throw noAccount();
   const found = await idpClient(ctx.env, ctx.log).findByVerifiedEmail(
     invite.row.email,
     ledgerOf(invite, 'invitation.find'),
   );
-  if (!found)
-    throw new AppError(
-      'INVITATION_NO_ACCOUNT',
-      404,
-      'No Polaris ID uses this address. Create one.',
-    );
+  if (!found) {
+    await bump(db, `invclaim:none:${invite.row.id}`, minuteOf(now));
+    throw noAccount();
+  }
   await claimAccount(ctx, invite, found.subject);
 }
