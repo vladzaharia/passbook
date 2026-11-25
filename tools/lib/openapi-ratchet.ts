@@ -117,6 +117,8 @@ export function ratchetFailures(input: {
   nextNames: SdkNames;
   /** Today, `YYYY-MM-DD`: a name may go with an operation the base deprecated once its `x-sunset` has come. */
   on?: string;
+  /** operationIds the owner approved for removal: their frozen names may go. */
+  approvedIds?: readonly string[];
 }): string[] {
   const { base, next, baseNames, nextNames } = input;
   const on = input.on ?? new Date().toISOString().slice(0, 10);
@@ -128,6 +130,7 @@ export function ratchetFailures(input: {
         })
       : [],
   );
+  const approved = new Set(input.approvedIds ?? []);
   const out: string[] = [];
   const nextOps = opsOf(next);
   const byId = new Map(nextOps.map((o) => [o.id, o]));
@@ -135,6 +138,7 @@ export function ratchetFailures(input: {
   if (baseNames) {
     for (const [id, was] of Object.entries(baseNames)) {
       const now = nextNames[id];
+      if (!now && approved.has(id) && !byId.has(id)) continue;
       if (!now) {
         if (!sunsetIds.has(id) || nextOps.some((o) => o.id === id))
           out.push(`${id}: name removed (names are frozen)`);

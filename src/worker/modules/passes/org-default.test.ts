@@ -115,33 +115,6 @@ const ROUTES: Route[] = [
     scope: 'templates:read',
     query: RELEASE,
   },
-  {
-    op: 'visitors.getVisitors',
-    method: 'GET',
-    path: '/visitors',
-    scope: 'passes:read',
-    query: 'dayStart=0&dayEnd=1',
-  },
-  { op: 'visitors.getVisitorsHosts', method: 'GET', path: '/visitors/hosts', scope: 'passes:read' },
-  {
-    op: 'visitors.postVisitorsByIdCancel',
-    method: 'POST',
-    path: `/visitors/${ID}/cancel`,
-    scope: 'passes:write',
-  },
-  {
-    op: 'visitors.postVisitorsByIdCheckOut',
-    method: 'POST',
-    path: `/visitors/${ID}/check-out`,
-    scope: 'passes:write',
-  },
-  {
-    op: 'visitors.postVisitorsByIdHostEmail',
-    method: 'POST',
-    path: `/visitors/${ID}/host-email`,
-    scope: 'passes:write',
-    body: {},
-  },
 ];
 
 const auth = fakeAuth('https://wallet.test');

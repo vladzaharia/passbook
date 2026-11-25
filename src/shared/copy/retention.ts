@@ -29,7 +29,7 @@ export const RETENTION_COPY = {
 export const RETENTION_LINES: Record<RetentionClass, string> = {
   scans: 'Deletes scan records (time, place, result, staff) after this many days.',
   events: 'Deletes pass activity (opens, adds, updates, syncs) after this many days.',
-  visitors: 'Deletes a visitor pass this many days after the visit ends.',
+  visitors: 'Deletes a pass on a guest plan this many days after its visit ends.',
   delivery: 'Deletes emails sent to holders and push results after this many days.',
   photos: 'Deletes photos of voided passes after this many days.',
   imports: 'Clears imported rows and sync error detail after this many days. Counts stay.',

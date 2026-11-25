@@ -1008,6 +1008,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scan/visitors operation removed",
+    "class": "breaking",
+    "operationId": "scan.getScanVisitors",
+    "op": "GET /api/v1/scan/visitors",
+    "change": "operation removed",
+    "note": "Removed. Action: read who is inside with GET /scan/live/inside."
+  },
+  {
     "key": "GET /api/v1/scanners 200.items[].staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanners",
@@ -1294,6 +1302,22 @@
     "op": "GET /api/v1/users/{id}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "GET /api/v1/visitors operation removed",
+    "class": "breaking",
+    "operationId": "visitors.getVisitors",
+    "op": "GET /api/v1/visitors",
+    "change": "operation removed",
+    "note": "Removed. Action: list passes with GET /passes (templateId, externalId)."
+  },
+  {
+    "key": "GET /api/v1/visitors/hosts operation removed",
+    "class": "breaking",
+    "operationId": "visitors.getVisitorsHosts",
+    "op": "GET /api/v1/visitors/hosts",
+    "change": "operation removed",
+    "note": "Removed. Action: keep your own list of hosts."
   },
   {
     "key": "GET /api/v1/wallet-identities new operation",
@@ -2549,6 +2573,14 @@
     "note": "Assign a typed tag ID or a spare tag to a pass without a scanner."
   },
   {
+    "key": "POST /api/v1/offboard 200.more: field added",
+    "class": "additive",
+    "operationId": "offboard.postOffboard",
+    "op": "POST /api/v1/offboard",
+    "change": "200.more: field added",
+    "note": "Up to 100 passes a call. more is true while passes remain: send the same request again."
+  },
+  {
     "key": "POST /api/v1/orgs 201.kind: field added",
     "class": "additive",
     "operationId": "orgs.postOrgs",
@@ -3091,6 +3123,14 @@
     "op": "POST /api/v1/scan/scans/{scanId}/undo",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/sign-out behaviour changed",
+    "class": "notable",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "behaviour changed",
+    "note": "Marks out of every place; no visit is recorded. A retry after success is 409 NOT_INSIDE. VISITOR_NOT_IN is gone; a pass outside the session's templates is 404."
   },
   {
     "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
@@ -3755,6 +3795,38 @@
     "op": "POST /api/v1/users/{id}/emails/{email}/primary",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/visitors operation removed",
+    "class": "breaking",
+    "operationId": "visitors.postVisitors",
+    "op": "POST /api/v1/visitors",
+    "change": "operation removed",
+    "note": "Removed. Action: issue a pass on a guest plan with POST /passes."
+  },
+  {
+    "key": "POST /api/v1/visitors/{id}/cancel operation removed",
+    "class": "breaking",
+    "operationId": "visitors.postVisitorsByIdCancel",
+    "op": "POST /api/v1/visitors/{id}/cancel",
+    "change": "operation removed",
+    "note": "Removed. Action: void the pass with POST /passes/{id}/void."
+  },
+  {
+    "key": "POST /api/v1/visitors/{id}/check-out operation removed",
+    "class": "breaking",
+    "operationId": "visitors.postVisitorsByIdCheckOut",
+    "op": "POST /api/v1/visitors/{id}/check-out",
+    "change": "operation removed",
+    "note": "Removed. Action: sign out with POST /scan/sign-out, or scan an exit."
+  },
+  {
+    "key": "POST /api/v1/visitors/{id}/host-email operation removed",
+    "class": "breaking",
+    "operationId": "visitors.postVisitorsByIdHostEmail",
+    "op": "POST /api/v1/visitors/{id}/host-email",
+    "change": "operation removed",
+    "note": "Removed; host arrival emails are no longer sent. Action: email the host from your system on pass.scanned."
   },
   {
     "key": "POST /api/v1/wallet-providers/reissue new operation",

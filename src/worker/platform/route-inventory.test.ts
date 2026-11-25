@@ -109,7 +109,6 @@ const SCANNER = [
   'GET /api/v1/scan/stats',
   'GET /api/v1/scan/summary',
   'GET /api/v1/scan/tag-enrollments/pending',
-  'GET /api/v1/scan/visitors',
   'POST /api/v1/scan/actions',
   'POST /api/v1/scan/batch',
   'POST /api/v1/scan/device',

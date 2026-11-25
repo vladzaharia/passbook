@@ -59,7 +59,7 @@ export const DATA_CLASSES: Readonly<Record<RetentionClass, DataClass>> = {
     key: 'retention.visitorsDays',
     maxKey: 'retention.visitorsMaxDays',
     label: 'Visitor passes',
-    holds: 'Visitor passes, after the visit ends',
+    holds: 'Passes on a guest plan, after the visit ends',
     floor: 1,
     platformDefault: 90,
     platformMax: 400,

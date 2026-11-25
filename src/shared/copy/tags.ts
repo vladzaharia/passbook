@@ -190,11 +190,6 @@ export const TAG_COPY = {
       label: 'Accept basic tags',
       help: 'Basic tags can be copied. Use secure tags for doors that matter.',
     },
-    visitors: {
-      hostRequired: 'Host required',
-      notifyHost: 'Notify host on arrival',
-      lendTags: 'Lend tags at check-in',
-    },
   },
   portal: {
     access: 'Access',

@@ -1,7 +1,6 @@
 /** The floor's facts as pure functions: who is where on a roll call, what a device line says. */
 import type { RollCall, RollCallPerson } from '../../../../shared/contracts/scan-roll-call.ts';
 import type { SessionDevices } from '../../../../shared/contracts/scanning-session-devices.ts';
-import type { Visitor } from '../../../../shared/contracts/visitors.ts';
 import type { OperatorView } from '../keys.ts';
 
 export interface ZoneProgress {
@@ -56,11 +55,6 @@ export function deviceState(
   return { online: false, text: min >= 60 ? 'Offline' : `Offline · ${min} min` };
 }
 
-/** Visitors still to come and those in, for the card's line: `1 of 3 in`. */
-export function visitorTally(items: readonly Visitor[]): { in: number; total: number } {
-  return { in: items.filter((v) => v.status === 'in').length, total: items.length };
-}
-
 export type RollFilter = 'open' | 'lapsed' | 'present' | 'out';
 
 const MARKED: Record<'present' | 'out', (p: RollCallPerson) => boolean> = {
@@ -89,10 +83,9 @@ export function rollRows(call: RollCall, filter: RollFilter): RollCallPerson[] {
 export const rollCount = (call: RollCall, filter: RollFilter): number =>
   rollRows(call, filter).length;
 
-/** The list views a session has, in tab order: Who's in needs a counted place, Visitors a Desk role. */
-export const viewsFor = (f: { tracks: boolean; desk: boolean }): OperatorView[] => [
+/** The list views a session has, in tab order: Who's in needs a counted place. */
+export const viewsFor = (f: { tracks: boolean }): OperatorView[] => [
   'activity',
   'problems',
   ...(f.tracks ? (['inside'] as const) : []),
-  ...(f.desk ? (['visitors'] as const) : []),
 ];

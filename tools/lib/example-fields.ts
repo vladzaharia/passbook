@@ -31,7 +31,6 @@ const RULES: Rule[] = [
   [ANY, /\.overrides\.latest\[\d+\]\.reason$/, nth(['already_done', 'no_balance'])],
   // The native shell reports VAS; a working reader reports no reason (scanning-sessions.ts).
   [ANY, /\.vas\.reason$/, ''],
-  [/^scan\.getScanVisitors$/, /\.note$/, null],
   [ANY, /(^|\.)pairing\.code$/, PAIRING_CODE],
   [/^scan\.postScanPair|^scanners\.postScannersByIdPairing$/, /^\.code$/, PAIRING_CODE],
   [

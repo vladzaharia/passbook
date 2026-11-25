@@ -131,7 +131,6 @@ export async function populateOrg(rk: RetentionKit, label: string): Promise<Popu
     orgId,
     label,
     passId: live.id,
-    otherPassId: second.id,
     scannerId: scanner.id,
   });
   await recordAudit(ctx, {

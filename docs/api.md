@@ -261,7 +261,7 @@ Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog
 
 - **Status**: creating a resource returns `201`; queuing a job returns `202` and names the job
   or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` answers
-  `201` under `PassBook-Version: 2026-11-20` and later, `200` without it. `POST /offboard` is an action and stays `200`.
+  `201` under `PassBook-Version: 2026-11-20` and later, `200` without it. `POST /offboard` is an action and stays `200`. It handles up to 100 passes per call: while the answer says `more: true`, send the same request again.
 - **Lists**: return `pageOf(item)` (`{ items, nextCursor }`) and take `cursor` and `limit`. Use
   `after` only for an ordered stream.
 - **Time filters**: `createdAfter`, `createdBefore`, `updatedSince`, in ms.

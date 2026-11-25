@@ -1358,8 +1358,7 @@
       ],
       "modules": [
         "platform",
-        "scan",
-        "visitors"
+        "scan"
       ]
     },
     {
@@ -2652,8 +2651,7 @@
         409
       ],
       "modules": [
-        "scan",
-        "visitors"
+        "scan"
       ]
     },
     {
@@ -3058,7 +3056,6 @@
         "public",
         "retention",
         "scan",
-        "visitors",
         "wallet-providers"
       ]
     },
@@ -5905,88 +5902,6 @@
       ],
       "modules": [
         "passes"
-      ]
-    },
-    {
-      "code": "VISITOR_CHANGED",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_HOST_NOTICE_FAILED",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_HOST_UNKNOWN",
-      "statuses": [
-        403,
-        404
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_IN",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_NOT_FOUND",
-      "statuses": [
-        404
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_NOT_IN",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_OUT",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_RESEND_LIMIT",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_TEMPLATE_MISSING",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
       ]
     },
     {

@@ -161,6 +161,49 @@ export function breakingChanges(prev: Doc, next: Doc, on: string = today()): str
   return out;
 }
 
+/** One operation the owner approved for outright removal (tools/openapi-approved-removals.json). */
+export interface ApprovedRemoval {
+  /** `GET /api/v1/visitors`, as the document names it. */
+  op: string;
+  operationId: string;
+  date: string;
+  reason: string;
+}
+
+/** The breaking changes left once approved operation removals are set aside. */
+export const withoutApprovedRemovals = (
+  broken: string[],
+  approved: ApprovedRemoval[],
+): string[] => {
+  const free = new Set(approved.map((a) => `${a.op}: operation removed`));
+  return broken.filter((b) => !free.has(b));
+};
+
+/**
+ * Entries that contradict the change: an approved operation still served fails (a re-added operation fails until
+ * its entry is deleted), and one the base has under another operationId fails. An entry for an operation absent from
+ * both documents passes quietly, so the list can stay after the removal has landed.
+ */
+export function approvedRemovalFailures(
+  prev: Doc,
+  next: Doc,
+  approved: ApprovedRemoval[],
+): string[] {
+  const out: string[] = [];
+  const at = (doc: Doc, op: string) => {
+    const [method = '', path = ''] = op.split(' ');
+    return obj(obj(doc.paths?.[path])[method.toLowerCase()]);
+  };
+  for (const a of approved) {
+    const was = at(prev, a.op);
+    if (Object.keys(at(next, a.op)).length)
+      out.push(`${a.op}: approved for removal but still in the document`);
+    else if (Object.keys(was).length && was.operationId !== a.operationId)
+      out.push(`${a.op}: the base has it as ${String(was.operationId)}, not ${a.operationId}`);
+  }
+  return out;
+}
+
 export interface Change {
   operationId: string;
   /** `GET /passes/{id}`. */

@@ -1,13 +1,6 @@
 // Seeds for the IdP-only operations: the console's metrics, the developer portal, wallet accounts and org members.
 // Same contract as example-seeds.ts: a partial value the sampler fits to the schema.
-import {
-  CHANNELS,
-  IDENTITY_RUN,
-  ROLL_CALL,
-  TAG_TYPE,
-  TEMPLATE_VERSION,
-  VISITOR,
-} from './example-canon.ts';
+import { CHANNELS, IDENTITY_RUN, ROLL_CALL, TAG_TYPE, TEMPLATE_VERSION } from './example-canon.ts';
 import { ACTIVITY, CALL, DEVELOPER_HOME, METRICS, SANDBOX, SANDBOX_KEY } from './example-stats.ts';
 import { hex, IDS, keySecret, T, TEMPLATE, TEMPLATE_DETAIL } from './example-world.ts';
 
@@ -331,7 +324,6 @@ export const IDP_SEEDS: Record<string, unknown> = {
   },
   'identities.postIdentitiesByIdRevokeCertificate response': { ...IDENTITY_RUN, kind: 'revoke' },
   'identities.postIdentitiesByIdRenew response': IDENTITY_RUN,
-  'scan.getScanVisitors response': { items: [{ ...VISITOR, note: null }], nextCursor: null },
   'organization-memberships.postOrgsByIdInvitations request': {
     email: INVITATION.email,
     roles: INVITATION.roles,

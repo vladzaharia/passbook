@@ -33,6 +33,24 @@ describe('ratchet', () => {
     expect(run(base, { 'passes.getPasses': hidden }).join()).toMatch(/true to false/);
   });
 
+  it('lets an approved removal drop its frozen name, and only that one', () => {
+    const none: Doc = { paths: {} };
+    const gone = (approvedIds: string[]) =>
+      ratchetFailures({ base, next: none, baseNames: names, nextNames: {}, approvedIds });
+    expect(gone(['passes.getPasses'])).toEqual([]);
+    expect(gone(['passes.other']).join()).toMatch(/passes.getPasses: name removed/);
+    // An approval does not cover an operation that is still in the document.
+    expect(
+      ratchetFailures({
+        base,
+        next: base,
+        baseNames: names,
+        nextNames: {},
+        approvedIds: ['passes.getPasses'],
+      }).join(),
+    ).toMatch(/name removed/);
+  });
+
   it('allows false to true', () => {
     const was = {
       'passes.getPasses': { resource: 'passes', method: 'list', sdk: false, reason: 'r' },

@@ -50,7 +50,6 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
   [
     page('Messages', '/messages', 'broadcast'),
     page('Scanning', '/scanning', 'scanner', ['scanners', 'staff', 'events', 'check in', 'nfc']),
-    page('Visitors', '/visitors', 'visitor', ['guests', 'host', 'check in', 'check out']),
     {
       label: 'Test inbox',
       section: '/test-inbox',
