@@ -92,7 +92,14 @@ function Item({
 export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   const scope = useAdminScope();
   const { isAdmin } = useSession();
-  const { memberships, membership, switchScope, isLoading, isError, refetch } = useOrgScope();
+  const {
+    choices: memberships,
+    membership,
+    switchScope,
+    isLoading,
+    isError,
+    refetch,
+  } = useOrgScope();
   const [open, setOpen] = useState(false);
   if (isLoading) {
     return (

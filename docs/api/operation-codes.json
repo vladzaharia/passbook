@@ -3303,8 +3303,13 @@
   ],
   "passes get /{id}/prints": [
     "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "ORG_FORBIDDEN",
     "PASS_NOT_FOUND",
+    "TEMPLATE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "passes get /{id}/versions/{version}": [
@@ -3550,6 +3555,10 @@
   ],
   "passes post /bulk-print": [
     "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "PASS_NOT_ACTIVE",
@@ -3557,6 +3566,7 @@
     "PRINTING_OFF",
     "PRINT_CODE_UNAVAILABLE",
     "PRINT_CONFLICT",
+    "TEMPLATE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "passes post /bulk-reissue": [
@@ -3710,8 +3720,27 @@
     "VERSION_CONFLICT",
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
+  "passes post /{id}/print/drawn": [
+    "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "MODE_MISMATCH",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "PASS_NOT_FOUND",
+    "PRINT_NOT_FOUND",
+    "TEMPLATE_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
   "passes post /{id}/prints": [
     "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "MODE_MISMATCH",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
@@ -3721,6 +3750,7 @@
     "PRINTING_OFF",
     "PRINT_CODE_UNAVAILABLE",
     "PRINT_CONFLICT",
+    "TEMPLATE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "passes post /{id}/prints/{printId}/void": [

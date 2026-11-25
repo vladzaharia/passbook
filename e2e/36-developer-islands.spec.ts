@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { sandboxOrgId } from './helpers/sandbox.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 const SHOTS = process.env.ISLAND_SHOTS;
@@ -145,7 +146,7 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   expect(errors).toEqual([]);
 
   // The same test send is listed in Admin, tagged the same way.
-  await page.goto('/admin/connections');
+  await page.goto(`/admin/o/${await sandboxOrgId(page)}/connections`);
   await page.getByRole('tab', { name: 'Webhook endpoints' }).click();
   await page
     .getByRole('link', { name: /hooks\.example\.com/ })

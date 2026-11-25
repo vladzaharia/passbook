@@ -7,13 +7,8 @@ import { Tick } from './checkbox.tsx';
 import { useBlockedSubmit } from './form.tsx';
 import { WizardStage } from './wizard-stage.tsx';
 
-export interface WizardStep {
-  id: string;
-  title: string;
-}
-
 export interface WizardProps {
-  steps: readonly WizardStep[];
+  steps: readonly { id: string; title: string }[];
   /** Index of the current step. */
   current: number;
   /** A done step was clicked: go back to it (its state is kept by the caller). */
