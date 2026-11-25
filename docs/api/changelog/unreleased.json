@@ -600,6 +600,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs 200.items[].plan: field removed",
+    "class": "breaking",
+    "operationId": "orgs.getOrgs",
+    "op": "GET /api/v1/orgs",
+    "change": "200.items[].plan: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/orgs/{id} 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgsById",
@@ -616,6 +624,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs/{id} 200.plan: field removed",
+    "class": "breaking",
+    "operationId": "orgs.getOrgsById",
+    "op": "GET /api/v1/orgs/{id}",
+    "change": "200.plan: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
     "class": "notable",
     "operationId": "entitlements.getOrgsByIdEntitlements",
@@ -630,6 +646,14 @@
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/entitlements 200.usage: field removed",
+    "class": "breaking",
+    "operationId": "entitlements.getOrgsByIdEntitlements",
+    "op": "GET /api/v1/orgs/{id}/entitlements",
+    "change": "200.usage: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -798,6 +822,14 @@
     "op": "GET /api/v1/platform/apple-calls",
     "change": "new operation",
     "note": "Lists recorded Apple provisioning calls."
+  },
+  {
+    "key": "GET /api/v1/platform/entitlement-presets operation removed",
+    "class": "breaking",
+    "operationId": "entitlements.getPlatformEntitlementPresets",
+    "op": "GET /api/v1/platform/entitlement-presets",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -2461,6 +2493,22 @@
     "note": "addMe (default true) makes the creating admin an org_admin of the new org, with the invitation and membership written in the create batch."
   },
   {
+    "key": "POST /api/v1/orgs body.preset: enum value \"premium\" removed",
+    "class": "breaking",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "body.preset: enum value \"premium\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/orgs body.preset: enum value \"starter\" removed",
+    "class": "breaking",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "body.preset: enum value \"starter\" removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
@@ -2475,6 +2523,14 @@
     "op": "POST /api/v1/orgs/{id}/status",
     "change": "200.personalOwner: field added",
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/status 200.plan: field removed",
+    "class": "breaking",
+    "operationId": "orgs.postOrgsByIdStatus",
+    "op": "POST /api/v1/orgs/{id}/status",
+    "change": "200.plan: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
@@ -3715,6 +3771,14 @@
     "op": "PUT /api/v1/passes/views",
     "change": "new operation",
     "note": "PUT /passes/views replaces the saved views (at most 20)."
+  },
+  {
+    "key": "PUT /api/v1/platform/entitlement-presets operation removed",
+    "class": "breaking",
+    "operationId": "entitlements.putPlatformEntitlementPresets",
+    "op": "PUT /api/v1/platform/entitlement-presets",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
