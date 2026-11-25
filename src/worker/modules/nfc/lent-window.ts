@@ -7,13 +7,12 @@ import { lentBindings } from './repo-lent-window.ts';
 
 const DAY_MS = 86_400_000;
 
-/** Queues a recompute when the pass holds a lent tag; a pass without one costs one read. */
+/** Queues a recompute; the job looks for lent tags, so the publish itself adds no D1 round trip. */
 export async function queueLentWindow(
   ctx: ServiceContext,
   pass: { id: string; orgId: string },
 ): Promise<void> {
-  if ((await lentBindings(ctx.env.DB, pass.id, pass.orgId, 1)).length > 0)
-    await ctx.env.JOBS.send({ kind: 'tags.lent_window', passId: pass.id, orgId: pass.orgId });
+  await ctx.env.JOBS.send({ kind: 'tags.lent_window', passId: pass.id, orgId: pass.orgId });
 }
 
 /**
@@ -24,10 +23,11 @@ export async function handleLentWindow(
   job: JobOf<'tags.lent_window'>,
   ctx: ServiceContext,
 ): Promise<void> {
+  const rows = await lentBindings(ctx.env.DB, job.passId, job.orgId);
+  if (rows.length === 0) return;
   const candidate = await candidateById(ctx.env.DB, job.orgId, job.passId);
   const endsAt = candidate ? await guestEnd(ctx, job.orgId, candidate) : null;
   if (endsAt === null) return;
-  const rows = await lentBindings(ctx.env.DB, job.passId, job.orgId);
   for (const row of rows) {
     const byType = row.binding_days ? row.bound_at + row.binding_days * DAY_MS : endsAt;
     // expires_at must follow bound_at: a window shortened to before the bind lapses at once.

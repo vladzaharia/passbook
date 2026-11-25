@@ -86,7 +86,7 @@ describe('a guest pass window that changes', () => {
     return { ctx, queued: () => sent.filter((m) => m.kind === 'tags.lent_window') };
   };
 
-  it('queues the recompute only when the pass holds a lent tag', async () => {
+  it('queues the recompute on a window change; the job ignores a pass without a lent tag', async () => {
     const tpl = await f.kit.scanTemplate('Visitor', guest as never);
     const bare = await f.pass({
       template: tpl,
@@ -106,10 +106,16 @@ describe('a guest pass window that changes', () => {
         { scope: null },
       );
     await edit(bare.pass.id);
-    expect(queued()).toHaveLength(0);
+    const [job] = queued();
+    expect(job).toEqual({ kind: 'tags.lent_window', passId: bare.pass.id, orgId: bare.pass.orgId });
+    await expect(handleLentWindow(job as never, ctx)).resolves.toBeUndefined();
     const { pass } = await lent();
     await edit(pass.id);
-    expect(queued()).toEqual([{ kind: 'tags.lent_window', passId: pass.id, orgId: pass.orgId }]);
+    expect(queued().at(-1)).toEqual({
+      kind: 'tags.lent_window',
+      passId: pass.id,
+      orgId: pass.orgId,
+    });
   });
 
   it('queues it from any publish, as an import or a sync does', async () => {
