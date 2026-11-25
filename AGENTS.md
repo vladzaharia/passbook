@@ -98,6 +98,7 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | n8-ad | scanner: admin | `src/web/admin/scanning/**`, `src/web/routes/admin/scanning/**` |
 | n8-td | scanner: template designer | `src/web/admin/templates/designer/scan/**` |
 | dx | developer portal, SDKs | `src/web/developers/**`, `docs/developers/**`, `src/worker/modules/developer/**`, `sdk/**`, `tools/gen-sdk-{py,go}*`, `src/shared/sdk-names.ts`; `dev.*` analytics events carry the org id only |
+| mk | marketing site | `marketing/**`, `src/web/marketing/**`, `src/worker/modules/marketing/**`, `src/worker/email/access-request*`, `src/shared/{marketing.ts,contracts/access-request.ts,copy/access.ts}` |
 | integration | schema, wiring, e2e, email polish | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |
 
 `modules/events` was built by the foundation (`migrations/0010_events.sql`, `recordPassEvent`, mode plumbing, scan codes) and passes to n1 after it. The streams' specs are in `docs/design/next-wave.md`; the scanner's are in `docs/design/scanner/` (start with `scanner-plan.md`).
