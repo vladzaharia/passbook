@@ -67,6 +67,12 @@ function RecentCard({
   hideEmpty?: boolean;
 }) {
   const items = log.data?.pages[0]?.items ?? [];
+  // The row's own label covers closed and personal orgs; an id is never a name.
+  const orgNameOf = (e: (typeof items)[number]) => {
+    if (e.orgLabel) return e.orgLabel;
+    const name = orgName(e.orgId);
+    return name === e.orgId ? 'Deleted organization' : name;
+  };
   const now = useNow();
   if (hideEmpty && !log.isPending && !log.isError && items.length === 0) return null;
   return (
@@ -128,7 +134,7 @@ function RecentCard({
                       {entryLabel(e)}
                     </RowLink>
                   }
-                  meta={[target?.name, actor, orgName(e.orgId)].filter(Boolean).join(' · ')}
+                  meta={[target?.name, actor, orgNameOf(e)].filter(Boolean).join(' · ')}
                   trailing={
                     <span className="text-xs whitespace-nowrap text-fg-muted">
                       <RelTime at={e.at} now={now} />

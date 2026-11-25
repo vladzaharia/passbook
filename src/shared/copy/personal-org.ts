@@ -15,3 +15,13 @@ export const PERSONAL_ORG_COPY = {
 /** How platform views name a personal org they do not list: "Personal org of <owner>". */
 export const personalOrgLabel = (owner: string | null) =>
   owner ? `${PERSONAL_ORG_COPY.auditLabel} of ${owner}` : PERSONAL_ORG_COPY.auditLabel;
+
+/** How platform views name an org that was closed: a deleted sandbox by its developer, else its stored name. */
+export const closedOrgLabel = (kind: string, name: string, owner: string | null) =>
+  kind === 'developer'
+    ? owner
+      ? `Deleted sandbox (${owner})`
+      : 'Deleted sandbox'
+    : name && name !== 'Closed organization'
+      ? name
+      : 'Deleted organization';

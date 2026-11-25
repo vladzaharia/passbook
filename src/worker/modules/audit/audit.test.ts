@@ -202,6 +202,34 @@ describe('audit labels', () => {
   });
 });
 
+describe('audit org labels for closed orgs', () => {
+  it('names a deleted sandbox by its developer and a closed org by its stored name', async () => {
+    const f = fixtures(appEnv, new ManualClock());
+    const sandbox = await makeOrg(f, { kind: 'developer', name: 'Closed organization' });
+    const closed = await makeOrg(f, { name: 'Acme Gym' });
+    const user = await makeUser(f);
+    await run(env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Dev Name', user.id]);
+    await run(env.DB, "UPDATE orgs SET status = 'deleted' WHERE id IN (?, ?)", [
+      sandbox.id,
+      closed.id,
+    ]);
+    const ctx = createServiceContext(appEnv);
+    for (const org of [sandbox, closed])
+      await recordAudit(ctx, {
+        orgId: org.id,
+        actorType: 'user',
+        actorId: user.id,
+        action: 'org.update',
+      });
+    const page = (await (await get('')).json()) as {
+      items: { orgId: string; orgLabel: string | null }[];
+    };
+    const label = (id: string) => page.items.find((i) => i.orgId === id)?.orgLabel;
+    expect(label(sandbox.id)).toBe('Deleted sandbox (Dev Name)');
+    expect(label(closed.id)).toBe('Acme Gym');
+  });
+});
+
 describe('audit retention', () => {
   it('deletes rows older than retention.auditDays and records the cron run', async () => {
     const day = 86_400_000;
