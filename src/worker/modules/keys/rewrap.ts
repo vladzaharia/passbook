@@ -2,13 +2,8 @@ import { loadKekRing } from '../../platform/crypto.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { recordKeyRing, recordMacRoots } from './mac-root-check.ts';
-import {
-  type CaptureMove,
-  type Move,
-  moveRows,
-  selectCaptures,
-  selectEnvelopes,
-} from './repo-rewrap.ts';
+import { type Move, moveRows, selectEnvelopes } from './repo-rewrap.ts';
+import { type CaptureMove, selectCaptures } from './repo-rewrap-captures.ts';
 import { countOlderEnvelopes, hasOlderEnvelope } from './repo-rewrap-older.ts';
 import { type Plan, planCaptures, planPlace } from './rewrap-plan.ts';
 import { PLACES, stampOf } from './rewrap-tables.ts';

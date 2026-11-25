@@ -64,6 +64,11 @@ export interface Move {
   now: number;
   session?: Envelope | null;
   intended?: Envelope;
+  /** The actor key that releases the intended keys, recorded with them. */
+  releasedBy?: string;
+  /** The session the caller read: the move applies only while it is still the row's (a takeover replaced it). */
+  fence?: Envelope | null;
+  refusal?: string | null;
   expiresAt?: number;
   errorCode?: string | null;
   /** One more auth part 2 released; refused at the cap. */
@@ -85,6 +90,8 @@ export function moveProgram(g: Grant, id: string, m: Move): GrantedStatement {
   if (m.errorCode !== undefined) set.error_code = m.errorCode;
   if (m.expiresAt !== undefined) set.expires_at = m.expiresAt;
   if (m.tagId !== undefined) set.tag_id = m.tagId;
+  if (m.releasedBy !== undefined) set.released_by = m.releasedBy;
+  if (m.refusal !== undefined) set.refusal = m.refusal;
   if (m.intended) {
     set.kek_version = m.intended.kekVersion;
     set.iv = m.intended.iv;
@@ -104,6 +111,7 @@ export function moveProgram(g: Grant, id: string, m: Move): GrantedStatement {
       id,
       state: m.from.length === 1 ? (m.from[0] as string) : inList(m.from),
       ...(m.step ? { step: m.step } : {}),
+      ...(m.fence ? { sess_iv: m.fence.iv } : {}),
       ...(m.attempt ? { attempts: lt(m.attempt.cap) } : {}),
     },
     returning: ['id'],

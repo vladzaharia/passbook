@@ -70,4 +70,26 @@ describe('the daily sweep of programs', () => {
     void all;
     void run;
   });
+
+  it('never purges an abandoned row that still holds keys', async () => {
+    const tag = new Ntag424Sim({
+      uid: Uint8Array.from([4, 0x63, 9, 9, 9, 9, 9]),
+      random: countingRandom(),
+    });
+    const a = await f.authority();
+    tag.tearAt(8, 'after');
+    await expect(programTag(f.sendOf(tag), f.port(a))).rejects.toMatchObject({
+      name: 'TagLostError',
+    });
+    f.kit.clock.advance(2 * 60_000);
+    await sweepPrograms(job());
+    await run(
+      f.kit.env.DB,
+      "UPDATE nfc_tag_programs SET state = 'abandoned' WHERE state = 'interrupted' AND org_id = ?",
+      [f.o.org.id],
+    );
+    f.kit.clock.advance(401 * DAY);
+    await sweepPrograms(job());
+    expect(await f.rowsOf(tag)).toMatchObject([{ state: 'abandoned' }]);
+  });
 });

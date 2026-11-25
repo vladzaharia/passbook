@@ -13,7 +13,16 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { sealTagKey } from './keyset-seal.ts';
 import { type BindOutcome, planBind } from './program-bind.ts';
-import { endHold, loadHold, nfcChecks, notFound, programAudit, scopeOf } from './program-hold.ts';
+import {
+  actorKeyOf,
+  endHold,
+  guarded,
+  loadHold,
+  nfcChecks,
+  notFound,
+  programAudit,
+  scopeOf,
+} from './program-hold.ts';
 import { programError } from './program-recover.ts';
 import { checkBatch, sessionOf } from './program-script.ts';
 import { openIntended, sealAdmin } from './program-seal.ts';
@@ -68,12 +77,16 @@ export async function resultProgram(
 ): Promise<Done> {
   const done = await programById(ctx.env.DB, a.orgId, a.mode, id);
   if (!done) throw notFound();
-  if (done.state === 'programmed') return doneOf(ctx, done, null);
+  if (done.state === 'programmed') {
+    // A repeat gets the first answer, to the device that made it (or a Manager).
+    if (done.releasedBy !== actorKeyOf(a) && !a.manager) throw notFound();
+    return doneOf(ctx, done, done.refusal);
+  }
   const { row, session } = await loadHold(ctx, a, id);
   if (row.state !== 'scripted' || row.step !== 'result' || !session.expect || !row.intended)
     throw programError('TAG_PROGRAM_FAILED');
   const checked = await checkBatch(
-    sessionOf(session),
+    await guarded(ctx, a, row, () => sessionOf(session)),
     session.expect,
     req.responses.map((r) => r.toLowerCase()),
   );
@@ -100,32 +113,28 @@ export async function resultProgram(
     throw new ConflictError('This organization has the most tags allowed.', 'TAG_LIMIT');
 
   const tagId = ctx.ids.id();
-  const bound = req.bind ? await planBind(ctx, a, tagId, req.bind) : null;
+  const bound = req.bind ? await planBind(ctx, a, tagId, req.bind, keyset.typeId) : null;
   const refusal = bound && 'refusal' in bound ? bound.refusal : null;
+  const made = (typeId: string | null): Made => ({
+    row,
+    keys,
+    slug: keyset.slug,
+    typeId,
+    ctr: read.read.counter,
+    tagId,
+  });
   try {
-    await commit(
-      ctx,
-      a,
-      ring,
-      { row, keys, slug: keyset.slug, typeId: keyset.typeId, ctr: read.read.counter, tagId },
-      bound,
-    );
+    const planned = bound && 'plan' in bound ? bound : null;
+    await commit(ctx, a, ring, made(planned ? planned.typeId : keyset.typeId), bound);
     return doneOf(ctx, { ...row, state: 'programmed', tagId }, refusal);
   } catch (error) {
-    const bind = bound && 'plan' in bound;
-    // A bind that went stale in the meantime is not a reason to lose the tag: set it up as a spare.
-    if (bind && error instanceof AppError && error.code === 'TAG_HOLDER_CHANGED') {
-      await commit(
-        ctx,
-        a,
-        ring,
-        { row, keys, slug: keyset.slug, typeId: keyset.typeId, ctr: read.read.counter, tagId },
-        { refusal: 'TAG_HOLDER_CHANGED' },
-      );
-      return doneOf(ctx, { ...row, state: 'programmed', tagId }, 'TAG_HOLDER_CHANGED');
-    }
     if (classifyD1Error(error)?.kind === 'unique') throw programError('TAG_KNOWN');
-    throw error;
+    // A bind that went stale in the meantime is not a reason to lose the tag: set it up as a spare. If the
+    // spare commit fails too, that error is the real one.
+    if (!(bound && 'plan' in bound) || !(error instanceof AppError)) throw error;
+    const spare = { refusal: 'TAG_HOLDER_CHANGED' } as const;
+    await commit(ctx, a, ring, made(keyset.typeId), spare);
+    return doneOf(ctx, { ...row, state: 'programmed', tagId }, spare.refusal);
   }
 }
 
@@ -158,7 +167,7 @@ async function commit(
       ...nfcChecks(),
       exactlyOne(
         'nfc_tag_programs',
-        { id: row.id, state: 'scripted', step: 'result' },
+        { id: row.id, state: 'scripted', step: 'result', sess_iv: row.session?.iv ?? null },
         undefined,
         'stale',
       ),
@@ -177,7 +186,6 @@ async function commit(
       ...(bind?.checks ?? []),
     ],
     TABLES,
-    { lineage: 'TAG_HOLDER_CHANGED' },
   );
   g.insertSelect(
     'nfc_tags',
@@ -220,6 +228,7 @@ async function commit(
     tagId,
     clearKeys: true,
     errorCode: null,
+    refusal: bound && 'refusal' in bound ? bound.refusal : null,
   });
   if (bind) addBind(g, ctx, bind.plan);
   grantedAudit(

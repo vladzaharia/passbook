@@ -13,7 +13,16 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { SW, splitResponse } from './ntag424/apdu.ts';
 import { authPart2 } from './ntag424/ev2.ts';
-import { actorKeyOf, endHold, loadHold, nfcChecks, programAudit, scopeOf } from './program-hold.ts';
+import {
+  actorKeyOf,
+  endHold,
+  guarded,
+  loadHold,
+  nfcChecks,
+  notFound,
+  programAudit,
+  scopeOf,
+} from './program-hold.ts';
 import { ATTEMPT_CAP, mapNtag, oldKeysFromProbe, programError } from './program-recover.ts';
 import { checkBatch, scriptBatch, sesOf, sessionOf } from './program-script.ts';
 import {
@@ -56,7 +65,7 @@ export async function probeProgram(
     return asStep(session.scriptStep);
   if (row.state !== 'scripted' || row.step !== 'probe' || !session.probes || !row.intended)
     throw programError('TAG_PROGRAM_FAILED');
-  const ses = sessionOf(session);
+  const ses = await guarded(ctx, a, row, () => sessionOf(session));
   const checked = await checkBatch(
     ses,
     session.probes.map((ctr) => ({ ctr, kind: 'mac' as const })),
@@ -70,14 +79,16 @@ export async function probeProgram(
   if (!old) return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED', { to: 'failed' });
   const keyset = await programKeyset(ctx.env.DB, row.orgId, row.mode, row.keysetId);
   if (!keyset) return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED');
-  const script = await scriptBatch(ses, {
-    keys,
-    version: row.keyVersion,
-    host: new URL(ctx.env.PUBLIC_BASE_URL).host,
-    slug: keyset.slug,
-    old,
-    keyed: false,
-  });
+  const script = await guarded(ctx, a, row, () =>
+    scriptBatch(ses, {
+      keys,
+      version: row.keyVersion,
+      host: new URL(ctx.env.PUBLIC_BASE_URL).host,
+      slug: keyset.slug,
+      old,
+      keyed: false,
+    }),
+  );
   const next: Next = { next: 'script', apdus: script.apdus, stopOn: '9100' };
   const g = programGrant(ctx, a, nfcChecks());
   const move = moveProgram(g, row.id, {
@@ -94,6 +105,7 @@ export async function probeProgram(
       scriptStep: next,
       expect: script.expect,
     }),
+    fence: row.session,
   });
   if (!changed(await g.commit(), g, move)) throw programError('TAG_PROGRAM_FAILED');
   return asStep(next);
@@ -148,6 +160,7 @@ export async function reauthProgram(
     now: ctx.clock.now(),
     session: await sealSession(ring, scopeOf(row), row.id, state),
     attempt: { cap: ATTEMPT_CAP },
+    fence: row.session,
   });
   if (!changed(await g.commit(), g, move)) throw programError('TAG_PROGRAM_FAILED');
   return { apdus: [state.part2] };
@@ -164,7 +177,12 @@ export async function abortProgram(
   req: z.infer<typeof TagProgramAbortSchema>,
 ): Promise<{ state: 'interrupted' }> {
   const known = await programById(ctx.env.DB, a.orgId, a.mode, id);
-  if (known?.state === 'interrupted') return { state: 'interrupted' };
+  if (known && known.state !== 'started' && known.state !== 'scripted') {
+    // Only the hold's own actor, or a Manager, may ask about a row that has already rested.
+    const mine = [known.actorKey, known.releasedBy].includes(actorKeyOf(a));
+    if (known.state !== 'interrupted' || !(mine || a.manager)) throw notFound();
+    return { state: 'interrupted' };
+  }
   const { row } = await loadHold(ctx, a, id, { lenient: true });
   const g = programGrant(ctx, a, nfcChecks());
   moveProgram(g, row.id, {
@@ -175,6 +193,7 @@ export async function abortProgram(
     errorCode:
       req.why === 'timeout' ? 'TAG_PROGRAM_EXPIRED' : req.why === 'lost' ? 'TAG_MOVED' : null,
     session: null,
+    fence: row.session,
   });
   grantedAudit(g, ctx, programAudit(a, row, 'nfc_tag.program_failed', { code: req.why }), [
     exists('nfc_tag_programs', { id: row.id, state: 'interrupted' }),

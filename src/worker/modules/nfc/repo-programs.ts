@@ -27,6 +27,10 @@ export interface ProgramAuthority {
   principal: Principal;
   checks: Check[];
   actor: ProgramActor;
+  /** May continue another actor's hold, and release keys another actor released: a signed-in Manager. */
+  manager: boolean;
+  /** What the actor may assign: to a pass, and to a person. The bind checks them. */
+  rights: { assign: boolean; assignAll: boolean };
 }
 
 export interface ProgramRow {
@@ -43,6 +47,8 @@ export interface ProgramRow {
   step: 'auth' | 'reauth' | 'probe' | 'result' | 'done';
   attempts: number;
   errorCode: string | null;
+  refusal: string | null;
+  releasedBy: string | null;
   intended: Envelope | null;
   session: Envelope | null;
   tagId: string | null;
@@ -66,6 +72,8 @@ interface Raw {
   step: ProgramRow['step'];
   attempts: number;
   error_code: string | null;
+  refusal: string | null;
+  released_by: string | null;
   kek_version: number | null;
   iv: EnvelopeRaw['iv'] | null;
   wrapped_dek: EnvelopeRaw['wrapped_dek'] | null;
@@ -82,7 +90,7 @@ interface Raw {
 }
 
 const COLUMNS = `id, org_id, mode, keyset_id, key_version, tag_ref, hint, actor_key, purpose, state, step, attempts,
-  error_code, kek_version, iv, wrapped_dek, ciphertext, sess_kek_version, sess_iv, sess_wrapped_dek, sess_ciphertext,
+  error_code, refusal, released_by, kek_version, iv, wrapped_dek, ciphertext, sess_kek_version, sess_iv, sess_wrapped_dek, sess_ciphertext,
   tag_id, binding_id, created_at, updated_at, expires_at`;
 
 const rowOf = (r: Raw): ProgramRow => ({
@@ -99,6 +107,8 @@ const rowOf = (r: Raw): ProgramRow => ({
   step: r.step,
   attempts: r.attempts,
   errorCode: r.error_code,
+  refusal: r.refusal,
+  releasedBy: r.released_by,
   intended:
     r.kek_version === null
       ? null

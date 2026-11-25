@@ -6,7 +6,7 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 import { lapsedPrograms, purgeableProgramTenants } from './repo-programs-sweep.ts';
 
 const DAY = 86_400_000;
-/** Ended program rows are kept this long. A row that held keys goes only once the tag is reset or abandoned and 30 days old. */
+/** Ended program rows are kept this long. A row that still holds keys (abandoned, failed) is never purged here. */
 export const PROGRAM_RETENTION_DAYS = 400;
 const SWEEP_BATCH = 200;
 const JOB = 'nfc.programs';
@@ -22,8 +22,8 @@ const grantFor = (ctx: ServiceContext, orgId: string, mode: 'live' | 'test') =>
 
 /**
  * Daily: a hold nobody ended is closed (to `interrupted` with its keys, else `failed`) and its session cleared,
- * then ended rows past retention are deleted. A row that holds keys is never deleted before it is reset or
- * abandoned (the migration's trigger refuses it).
+ * then ended rows past retention are deleted. A row that holds keys is never deleted by the sweep:
+ * only a future explicit discard (P6) may, once it is abandoned and 30 days old (the trigger's allowance).
  */
 export async function sweepPrograms(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
@@ -66,7 +66,7 @@ export async function sweepPrograms(ctx: ServiceContext): Promise<void> {
   for (const t of tenants) {
     const g = grantFor(ctx, t.orgId, t.mode);
     g.delete('nfc_tag_programs', {
-      where: { state: inList(['programmed', 'reset', 'abandoned']), updated_at: lt(before) },
+      where: { state: inList(['programmed', 'reset']), updated_at: lt(before) },
     });
     g.delete('nfc_tag_programs', {
       where: { state: 'failed', kek_version: null, updated_at: lt(before) },

@@ -35,6 +35,10 @@ CREATE TABLE nfc_tag_programs (
   -- Auth part 2 messages released for this tag, across holds: capped, so a bug cannot count key 0 toward its lockout.
   attempts INTEGER NOT NULL CHECK (attempts BETWEEN 0 AND 20),
   error_code TEXT,
+  -- Why a programmed tag was not assigned in the same commit (a bind refusal code); the first answer, kept for a repeat.
+  refusal TEXT,
+  -- The actor key that first released the intended keys: only it, or a Manager, resumes the row.
+  released_by TEXT,
   -- Intended keys K0 || K1 || K2 || K3 || K4 (80 bytes, 96 sealed). Set once, with `scripted`; gone once `programmed` or `reset`.
   kek_version INTEGER,
   iv BLOB,
@@ -59,6 +63,7 @@ CREATE TABLE nfc_tag_programs (
       AND length(sess_ciphertext) BETWEEN 17 AND 8192)),
   CHECK ((state IN ('started', 'scripted')) = (sess_kek_version IS NOT NULL)),
   CHECK (state <> 'scripted' OR kek_version IS NOT NULL),
+  CHECK (kek_version IS NULL OR released_by IS NOT NULL),
   CHECK (state NOT IN ('programmed', 'reset') OR kek_version IS NULL),
   CHECK ((state IN ('programmed', 'reset')) = (step = 'done')),
   CHECK (state <> 'started' OR step IN ('auth', 'reauth')),
@@ -116,6 +121,8 @@ BEGIN
   SELECT RAISE(ABORT, 'program_state') WHERE NEW.state = 'programmed' AND (OLD.step <> 'result' OR NEW.tag_id IS NULL
     OR NOT EXISTS (SELECT 1 FROM nfc_tags t WHERE t.id = NEW.tag_id AND t.org_id = NEW.org_id AND t.mode = NEW.mode
       AND t.tag_ref = NEW.tag_ref));
+  SELECT RAISE(ABORT, 'program_state') WHERE NEW.state = 'reset' AND OLD.state <> 'reset' AND OLD.step <> 'result';
+  SELECT RAISE(ABORT, 'program_fixed') WHERE OLD.released_by IS NOT NULL AND NEW.released_by IS NOT OLD.released_by;
   SELECT RAISE(ABORT, 'program_attempts') WHERE NEW.attempts < OLD.attempts OR NEW.attempts > OLD.attempts + 1;
   SELECT RAISE(ABORT, 'program_expiry') WHERE NEW.expires_at < OLD.expires_at;
   SELECT RAISE(ABORT, 'program_keys_fixed') WHERE

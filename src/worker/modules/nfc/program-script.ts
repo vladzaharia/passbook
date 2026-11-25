@@ -54,8 +54,8 @@ export interface ScriptPlan {
 
 /**
  * The whole post-auth script: NDEF to file 02 (Plain: no MAC, the counter still moves), the SDM settings,
- * ChangeKey for keys 1 to 4 and key 0 last (it ends the session, so its bare 9100 proves nothing the tag can
- * show). A tag that tears anywhere in it is resumed from the probe, never by new keys.
+ * ChangeKey for keys 1 to 4 (not when the intended key 0 already authenticated) and key 0 last (it ends the
+ * session, so its bare 9100 proves nothing the tag can show). A tag that tears anywhere in it is resumed from the probe, never by new keys.
  */
 export async function scriptBatch(
   s: Ev2Session,
@@ -70,7 +70,7 @@ export async function scriptBatch(
   };
   add(await writeData(s, FILE_NDEF, 0, template.file), 'bare');
   add(await changeFileSettings(s, FILE_NDEF, sdmFileSettings(template)), 'mac');
-  if (!plan.keyed) {
+  if (!plan.keyed)
     for (const n of [1, 2, 3, 4])
       add(
         await changeKey(s, {
@@ -81,11 +81,12 @@ export async function scriptBatch(
         }),
         'mac',
       );
-    add(
-      await changeKey(s, { keyNo: 0, newKey: plan.keys[0] as Uint8Array, version: plan.version }),
-      'bare',
-    );
-  }
+  // Key 0 last, to the same key and version when the tag already has it: the tag ends the session, so no
+  // authenticated state is left when the read-back follows.
+  add(
+    await changeKey(s, { keyNo: 0, newKey: plan.keys[0] as Uint8Array, version: plan.version }),
+    'bare',
+  );
   return { apdus, expect };
 }
 

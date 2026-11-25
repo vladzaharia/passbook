@@ -246,7 +246,7 @@ describe('time, and whose hold it is', () => {
     );
   });
 
-  it('the same tag programs in two orgs, each with its own keys', async () => {
+  it('a tag one org programmed is not blank to another org, which does not see its row', async () => {
     const other = await f.org();
     const { sunKeyset } = await import('../scan/sun-test-fixtures.ts');
     const second = await sunKeyset(f.kit, other.org.id, { perTag: true });

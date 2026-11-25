@@ -38,7 +38,7 @@ export async function purgeableProgramTenants(
   const rows = await all<{ org_id: string; mode: Mode }>(
     db,
     `SELECT DISTINCT org_id, mode FROM nfc_tag_programs
-      WHERE updated_at < ? AND (state IN ('programmed', 'reset', 'abandoned') OR (state = 'failed' AND kek_version IS NULL))`,
+      WHERE updated_at < ? AND (state IN ('programmed', 'reset') OR (state = 'failed' AND kek_version IS NULL))`,
     [before],
   );
   return rows.map((r) => ({ orgId: r.org_id, mode: r.mode }));

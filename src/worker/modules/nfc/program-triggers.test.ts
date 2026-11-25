@@ -74,7 +74,7 @@ const NO_SESSION = {
   sess_wrapped_dek: null,
   sess_ciphertext: null,
 };
-const KEYS = sealed(96);
+const KEYS = { ...sealed(96), released_by: 'scanner:s1' };
 
 describe('inserting a program', () => {
   it('takes a started row on a programmable per-tag keyset, once per tag', async () => {
@@ -127,6 +127,23 @@ describe('the state compare-and-set', () => {
     await expect(update(id, { state: 'programmed', step: 'done' })).rejects.toThrow(
       /program_state/,
     );
+  });
+
+  it('moves to reset only from a hold that reached its result', async () => {
+    const id = await insert();
+    await expect(update(id, { state: 'reset', step: 'done', ...NO_SESSION })).rejects.toThrow(
+      /program_state/,
+    );
+    await update(id, { state: 'scripted', step: 'result', ...KEYS });
+    await update(id, {
+      state: 'reset',
+      step: 'done',
+      kek_version: null,
+      iv: null,
+      wrapped_dek: null,
+      ciphertext: null,
+      ...NO_SESSION,
+    });
   });
 
   it('holds a session only while started or scripted', async () => {

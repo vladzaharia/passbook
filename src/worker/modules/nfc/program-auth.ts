@@ -7,7 +7,15 @@ import { type KekRing, loadKekRing } from '../../platform/crypto.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { SW, splitResponse } from './ntag424/apdu.ts';
 import { authFinish, authFirstApdu } from './ntag424/ev2.ts';
-import { endHold, type Hold, loadHold, nfcChecks, scopeOf } from './program-hold.ts';
+import {
+  actorKeyOf,
+  endHold,
+  guarded,
+  type Hold,
+  loadHold,
+  nfcChecks,
+  scopeOf,
+} from './program-hold.ts';
 import { metaKeyOf, newKeys } from './program-keys.ts';
 import { mapNtag, programError } from './program-recover.ts';
 import { probeBatch, scriptBatch, sesOf } from './program-script.ts';
@@ -77,7 +85,7 @@ export async function authProgram(
   if (session.candidate === 1 && keys)
     return release(ctx, a, ring, hold, ses, base, keys, { keyed: true });
   if (!keys) return fresh(ctx, a, ring, hold, ses, base);
-  const probe = await probeBatch(ses);
+  const probe = await guarded(ctx, a, row, () => probeBatch(ses));
   const next: Next = { next: 'probe', apdus: probe.apdus, stopOn: '9100' };
   return advance(
     ctx,
@@ -113,6 +121,7 @@ async function refused(
       authAnswer: answer,
       authStep: next,
     }),
+    fence: row.session,
   });
   if (!changed(await g.commit(), g, move)) throw programError('TAG_PROGRAM_FAILED');
   return asStep(next);
@@ -150,14 +159,16 @@ async function release(
   const { row } = hold;
   const keyset = await programKeyset(ctx.env.DB, row.orgId, row.mode, row.keysetId);
   if (!keyset) return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED');
-  const script = await scriptBatch(ses, {
-    keys,
-    version: row.keyVersion,
-    host: new URL(ctx.env.PUBLIC_BASE_URL).host,
-    slug: keyset.slug,
-    old: [],
-    keyed: how.keyed,
-  });
+  const script = await guarded(ctx, a, row, () =>
+    scriptBatch(ses, {
+      keys,
+      version: row.keyVersion,
+      host: new URL(ctx.env.PUBLIC_BASE_URL).host,
+      slug: keyset.slug,
+      old: [],
+      keyed: how.keyed,
+    }),
+  );
   const next: Next = { next: 'script', apdus: script.apdus, stopOn: '9100' };
   return advance(
     ctx,
@@ -189,7 +200,8 @@ async function advance(
     toStep: next.next === 'probe' ? 'probe' : 'result',
     now: ctx.clock.now(),
     session: await sealSession(ring, scopeOf(row), row.id, state),
-    ...(intended ? { intended } : {}),
+    fence: row.session,
+    ...(intended ? { intended, releasedBy: actorKeyOf(a) } : {}),
   });
   if (!changed(await g.commit(), g, move)) throw programError('TAG_PROGRAM_FAILED');
   return asStep(next);

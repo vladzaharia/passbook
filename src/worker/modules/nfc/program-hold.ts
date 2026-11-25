@@ -6,7 +6,8 @@ import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { KeyScope } from './keyset-seal.ts';
-import { programError } from './program-recover.ts';
+import { Ntag424Error } from './ntag424/bytes.ts';
+import { mapNtag, programError } from './program-recover.ts';
 import { openSession, type SessionState } from './program-seal.ts';
 import {
   type ProgramAuthority,
@@ -69,6 +70,7 @@ export async function endHold(
     now: ctx.clock.now(),
     errorCode: code,
     session: null,
+    fence: row.session,
   });
   grantedAudit(g, ctx, programAudit(a, row, 'nfc_tag.program_failed', { code }), [
     exists('nfc_tag_programs', { id: row.id, state: to }),
@@ -97,4 +99,24 @@ export async function loadHold(
 }
 
 /** The nfc entitlement, still on: part of every grant that touches a tag. */
-export const nfcChecks = () => [entitled('nfc', 'basic')];
+export const nfcChecks = () => [entitled('nfc', 'secure')];
+
+/**
+ * Runs a builder that parses or builds protocol messages: a refusal of the tag library (or a counter or size
+ * limit) ends the hold with the code the device understands, never an unmapped error.
+ */
+export async function guarded<T>(
+  ctx: ServiceContext,
+  a: ProgramAuthority,
+  row: ProgramRow,
+  build: () => T | Promise<T>,
+): Promise<T> {
+  try {
+    return await build();
+  } catch (error) {
+    if (error instanceof RangeError) return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED');
+    if (error instanceof Ntag424Error)
+      return endHold(ctx, a, row, mapNtag(error).code as TagProgramErrorCode);
+    throw error;
+  }
+}

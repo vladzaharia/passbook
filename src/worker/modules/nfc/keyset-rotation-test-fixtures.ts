@@ -96,7 +96,7 @@ export async function seedTagKeys(
   const intended = await c.seal(programId, c.orgId, program, programKeys);
   await run(
     db,
-    `UPDATE nfc_tag_programs SET state = 'scripted', step = 'result', kek_version = ?, iv = ?, wrapped_dek = ?, ciphertext = ?
+    `UPDATE nfc_tag_programs SET state = 'scripted', step = 'result', released_by = 'scanner:rotation', kek_version = ?, iv = ?, wrapped_dek = ?, ciphertext = ?
      WHERE id = ?`,
     [intended.kekVersion, intended.iv, intended.wrappedDek, intended.ciphertext, programId],
   );

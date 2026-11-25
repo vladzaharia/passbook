@@ -107,6 +107,8 @@ export class Ntag424Sim {
 
   private async run(apdu: Uint8Array): Promise<Uint8Array> {
     const [cla, ins, p1, p2] = apdu as unknown as [number, number, number, number];
+    // An ISO command inside an authenticated state is unverified on silicon: the simulator ends the session.
+    if (cla === 0x00) this.tag.session = null;
     if (cla === 0x00) return isoCommand(this.tag, ins, p1, p2, apdu, this.random);
     if (cla !== 0x90) return status(0x6e00);
     const body = apdu.length > 5 ? apdu.slice(5, 5 + (apdu[4] as number)) : new Uint8Array(0);

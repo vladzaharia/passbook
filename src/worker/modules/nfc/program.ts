@@ -3,9 +3,12 @@ import type {
   TagProgramStartedSchema,
   TagProgramStartSchema,
 } from '../../../shared/contracts/nfc-tag-programs.ts';
+import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { type KekRing, loadKekRing } from '../../platform/crypto.ts';
 import { classifyD1Error } from '../../platform/db.ts';
+import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
+import { FeatureNotIncludedError } from '../../platform/errors.ts';
 import { randomBytes } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -108,6 +111,9 @@ export async function startProgram(
 ): Promise<Started> {
   const off = await tagsRefusal(ctx, a.orgId);
   if (off) throw off;
+  // Programming makes Secure tags: the plan must include them, not just Basic ones.
+  if (!isEntitled(await entitlementsOf(ctx, a.orgId), 'nfc', 'secure'))
+    throw new FeatureNotIncludedError('nfc', featureNotIncluded('nfc'));
   if (req.purpose !== 'blank') throw programError('TAG_PROGRAM_FAILED');
   const uid = genuineUid(req);
   const db = ctx.env.DB;
@@ -195,7 +201,20 @@ async function resume(
     return endHold(ctx, a, open, 'TAG_PROGRAM_FAILED', { to: 'failed' });
   }
   const now = ctx.clock.now();
-  const hold = await newHold(actorKeyOf(a), req);
+  const by = actorKeyOf(a);
+  // Another device's live hold is not ours to take: its session is the fence of its next call.
+  if (
+    open.session &&
+    (open.state === 'started' || open.state === 'scripted') &&
+    now <= open.expiresAt
+  ) {
+    const held = await openSession(ring, scopeOf(open), open.id, open.session);
+    if (held.by !== by) throw programError('TAG_PROGRAM_BUSY');
+  }
+  // The keys go back to the device that first released them, or to a Manager.
+  const original = open.releasedBy === null || open.releasedBy === by;
+  if (!original && !a.manager) throw programError('TAG_PROGRAM_FAILED');
+  const hold = await newHold(by, req);
   const g = programGrant(ctx, a, nfcChecks());
   const expiresAt = now + HOLD_TTL_MS;
   const move = moveProgram(g, open.id, {
@@ -207,10 +226,17 @@ async function resume(
     errorCode: null,
     session: await sealSession(ring, scopeOf(open), open.id, hold),
     attempt: { cap: ATTEMPT_CAP },
+    fence: open.session,
   });
-  grantedAudit(g, ctx, programAudit(a, open, 'nfc_tag.program_started', { resume: true }), [
-    exists('nfc_tag_programs', { id: open.id, state: 'started' }),
-  ]);
+  grantedAudit(
+    g,
+    ctx,
+    programAudit(a, open, 'nfc_tag.program_started', {
+      resume: true,
+      keysTo: original ? 'releaser' : 'manager',
+    }),
+    [exists('nfc_tag_programs', { id: open.id, state: 'started' })],
+  );
   const results = await g.commit();
   if (!changed(results, g, move)) return null;
   ctx.log.info('nfc.program.resumed', { orgId: a.orgId, programId: open.id, hint: open.hint });

@@ -280,11 +280,15 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'retention_receipts:726f943d12d9',
     ],
   },
+  'src/worker/modules/keys/repo-rewrap-captures.ts': {
+    reason:
+      'cron keys.rewrap replaces the packed envelope header of a captured test email in place (the body is never read), a compare-and-set on the header it read; platform job with no tenant principal (docs/design/authority-epochs.md, 7.2)',
+    writes: ['captured_emails:511fe05ea909'],
+  },
   'src/worker/modules/keys/repo-rewrap.ts': {
     reason:
       'cron keys.rewrap moves an envelope to the newest KEK (kek_version and wrapped_dek only), a compare-and-set on the envelope it read; platform job with no tenant principal, and no authority column changes (docs/design/authority-epochs.md, 7.2)',
     writes: [
-      'captured_emails:511fe05ea909',
       'connection_webhook_retention:84821c1d359b',
       'nfc_tag_admin_keys:b7a64cd1c448',
       'nfc_tag_keys:2c11078e8a24',

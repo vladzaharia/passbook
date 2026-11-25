@@ -1,4 +1,5 @@
 import { expect } from 'vitest';
+import type { z } from 'zod';
 import { TagProgramResultSchema } from '../../../shared/contracts/nfc-tag-programs.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -19,9 +20,16 @@ import { bytesToHex } from './sun.ts';
 import { tagRef } from './tag-ref.ts';
 import { tagFixture } from './tags-test-fixtures.ts';
 
+/** The relay the simulator drives, with what the service last answered and was sent. */
+export type ProgramPort = RelayPort & {
+  last?: { refusal: string | null; state: string };
+  lastId?: string;
+  lastInput?: z.infer<typeof TagProgramResultSchema>;
+};
+
 /** An org with a programmable per-tag keyset, and callers that program as a scanner of it. */
 export async function programFixture() {
-  const f = await tagFixture();
+  const f = await tagFixture({ releases: true });
   const { kit } = f;
   const o = await f.org();
   const keyset = await sunKeyset(kit, o.org.id, { perTag: true });
@@ -29,7 +37,13 @@ export async function programFixture() {
 
   /** A scanner of an org, with a staff member signed in or not. */
   async function authority(
-    over: { scannerId?: string; staffId?: string | null; org?: typeof o } = {},
+    over: {
+      scannerId?: string;
+      staffId?: string | null;
+      org?: typeof o;
+      manager?: boolean;
+      rights?: { assign: boolean; assignAll: boolean };
+    } = {},
   ): Promise<ProgramAuthority> {
     const who = over.org ?? o;
     const authority = await who.authority();
@@ -39,6 +53,8 @@ export async function programFixture() {
       principal: tenantPrincipal(authority),
       checks: capabilityChecks(authority),
       actor: { type: 'scanner', id: over.scannerId ?? 'scanner-1', staffId: over.staffId ?? null },
+      manager: over.manager ?? false,
+      rights: over.rights ?? { assign: true, assignAll: true },
     };
   }
 
@@ -48,9 +64,9 @@ export async function programFixture() {
     tamper: { url?: (url: string) => string; responses?: (batch: string[]) => string[] } = {},
     seen: string[][] = [],
     bind?: { passId: string; scope: 'pass' | 'user' },
-  ): RelayPort & { last?: { refusal: string | null; state: string } } {
+  ): ProgramPort {
     const ctx = kit.ctx;
-    const out: RelayPort & { last?: { refusal: string | null; state: string } } = {
+    const out: ProgramPort = {
       start: (req) => startProgram(ctx, a, req),
       async auth(id, req) {
         const step = await authProgram(ctx, a, id, req);
@@ -64,20 +80,18 @@ export async function programFixture() {
         return step;
       },
       async result(id, req) {
-        const done = await resultProgram(
-          ctx,
-          a,
-          id,
-          TagProgramResultSchema.parse({
-            responses: tamper.responses ? tamper.responses(req.responses) : req.responses,
-            readback: {
-              tech: 'isodep',
-              source: 'native',
-              ndef: { type: 'U', value: tamper.url ? tamper.url(req.url) : req.url },
-            },
-            ...(bind ? { bind } : {}),
-          }),
-        );
+        const input = TagProgramResultSchema.parse({
+          responses: tamper.responses ? tamper.responses(req.responses) : req.responses,
+          readback: {
+            tech: 'isodep',
+            source: 'native',
+            ndef: { type: 'U', value: tamper.url ? tamper.url(req.url) : req.url },
+          },
+          ...(bind ? { bind } : {}),
+        });
+        out.lastId = id;
+        out.lastInput = input;
+        const done = await resultProgram(ctx, a, id, input);
         out.last = done;
         return done;
       },

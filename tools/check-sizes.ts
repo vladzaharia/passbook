@@ -6,13 +6,7 @@ const root = resolve(import.meta.dirname, '..');
 export const MAX_LINES = 330;
 
 /** Files allowed over the limit. Every entry names an owner and a reason. */
-export const ALLOWLIST: Record<string, { owner: string; reason: string }> = {
-  'src/worker/modules/keys/repo-rewrap.ts': {
-    owner: 'keys',
-    reason:
-      'one literal statement per envelope place, each pinned in authority-scope-allowlists.ts: they cannot move to another file without a new allowlist entry; the tag programming tables add two',
-  },
-};
+export const ALLOWLIST: Record<string, { owner: string; reason: string }> = {};
 
 const TEST_FILE = /\.test\.tsx?$/;
 /** Modules that exist for tests; production code must not import them. */
