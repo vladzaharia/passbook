@@ -29,7 +29,8 @@
 }
 /* The console page: the ticket plus the operation's heading row. */
 .console-slot {
-  min-block-size: 45rem;
+  /* 45rem, less on a short window: the footer stays on the first screen of a signed-out console. */
+  min-block-size: clamp(24rem, calc(100dvh - 27rem), 45rem);
   margin-top: 24px;
 }
 /* A state card (no sandbox, failed) is not a ticket: no blank 45rem under it. */
