@@ -9,7 +9,7 @@ import { stageVersion } from '../scan/action-template-read-race-test-fixtures.ts
 import { approveScanReleases } from '../scan/test-kit.ts';
 import { readSystemValue } from '../settings/repo.ts';
 import { dailyGuestPasses } from './guest-passes.ts';
-import { ctx, DAY, gone, hold, pass, raced, row } from './guest-passes-test-fixtures.ts';
+import { ctx, DAY, gone, hold, pass, raced, receipts, row } from './guest-passes-test-fixtures.ts';
 import { writeReceipt } from './receipt-service.ts';
 import { GUEST_CANDIDATES_SQL } from './repo-guest-passes.ts';
 
@@ -68,7 +68,11 @@ describe('a change after the read', () => {
   it('keeps a pass, unvoided, when a hold lands after the read', async () => {
     const p = await pass(tpl);
     kit.clock.advance(100 * DAY);
-    await dailyGuestPasses(raced('read', () => hold(kit.org.id, p.id)));
+    await dailyGuestPasses(
+      raced('read', async () => {
+        await hold(kit.org.id, p.id);
+      }),
+    );
     expect(await row(p.id)).toMatchObject({ d: null, status: 'active' });
   });
 
