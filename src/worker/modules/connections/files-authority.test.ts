@@ -137,6 +137,10 @@ describe('files of another org', () => {
         {
           fileId: a.draft,
           idPointer: '/id',
+          bindId: 'b',
+          sheet: null,
+          recordsPointer: null,
+          sha256: 'x',
           pages: 1,
           skippedNoId: 0,
           skippedDuplicate: 0,
@@ -186,5 +190,75 @@ describe('files of another org', () => {
       keyB.headers,
     );
     expect(res.status).toBe(403);
+  });
+});
+
+describe('refusals within and across modes', () => {
+  it('refuses a Test-mode key: stored files have no Test environment (L6)', async () => {
+    const a = await orgAFiles();
+    const test = await makeApiKey(kit, {
+      orgId: kit.org.id,
+      mode: 'test',
+      scopes: ['connections:read', 'connections:write'],
+    });
+    for (const [method, path, body] of [
+      ['POST', `/api/v1/connections/uploads?orgId=${kit.org.id}`, csvBody(MEMBERS)],
+      ['GET', `/api/v1/connections/uploads/${a.draft}`],
+      ['GET', `/api/v1/connections/${a.connection}/files`],
+      ['POST', `/api/v1/connections/${a.connection}/files/${a.pending}/apply`],
+    ] as const) {
+      const res = await call(method, path, body, test.headers);
+      expect(res.status, `${method} ${path}`).toBe(404);
+    }
+    expect(
+      (
+        await first<{ state: string }>(
+          kit.env.DB,
+          'SELECT state FROM connection_files WHERE id = ?',
+          [a.pending],
+        )
+      )?.state,
+    ).toBe('pending');
+  });
+
+  it('refuses a read-only key on PATCH and DELETE of a draft (L6)', async () => {
+    const a = await orgAFiles();
+    const read = await makeApiKey(kit, { orgId: kit.org.id, scopes: ['connections:read'] });
+    for (const [method, body] of [['PATCH', {}], ['DELETE']] as const) {
+      const res = await call(method, `/api/v1/connections/uploads/${a.draft}`, body, read.headers);
+      expect(res.status).toBe(403);
+      expect(res.json.code).toBe('MISSING_SCOPE');
+    }
+    expect(
+      (
+        await first<{ state: string }>(
+          kit.env.DB,
+          'SELECT state FROM connection_files WHERE id = ?',
+          [a.draft],
+        )
+      )?.state,
+    ).toBe('draft');
+  });
+
+  it('refuses a file of connection Y named through connection X in the same org (L6)', async () => {
+    const x = await orgAFiles();
+    const y = await orgAFiles();
+    for (const [method, path] of [
+      ['POST', `/api/v1/connections/${x.connection}/files/${y.pending}/apply`],
+      ['DELETE', `/api/v1/connections/${x.connection}/files/${y.pending}`],
+    ] as const) {
+      const res = await call(method, path);
+      expect(res.status, `${method} ${path}`).toBe(404);
+      expect(res.json.code).toBe('FILE_NOT_FOUND');
+    }
+    expect(
+      (
+        await first<{ state: string }>(
+          kit.env.DB,
+          'SELECT state FROM connection_files WHERE id = ?',
+          [y.pending],
+        )
+      )?.state,
+    ).toBe('pending');
   });
 });

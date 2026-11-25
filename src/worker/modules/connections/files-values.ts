@@ -3,20 +3,40 @@ import { TABULAR_LIMITS, TabularError } from '../../../shared/tabular/index.ts';
 export const DEFAULT_ZONE = 'America/Los_Angeles';
 const ZONELESS = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(\.\d+)?)?$/;
 
+const formats = new Map<string, Intl.DateTimeFormat>();
+const offsets = new Map<string, number>();
+const HOUR = 3_600_000;
+
+const formatOf = (zone: string): Intl.DateTimeFormat => {
+  let f = formats.get(zone);
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    });
+    formats.set(zone, f);
+  }
+  return f;
+};
+
+/** The zone's offset (ms) at `instant`. A formatter per zone, and one answer per zone and UTC hour: offsets only move on the hour. */
 function offsetAt(instant: number, zone: string): number {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: zone,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-  }).formatToParts(new Date(instant));
+  const key = `${zone}|${Math.floor(instant / HOUR)}`;
+  const hit = offsets.get(key);
+  if (hit !== undefined) return hit;
+  const parts = formatOf(zone).formatToParts(new Date(instant));
   const n = (type: string) => Number(parts.find((p) => p.type === type)?.value);
   const local = Date.UTC(n('year'), n('month') - 1, n('day'), n('hour'), n('minute'), n('second'));
-  return local - Math.floor(instant / 1000) * 1000;
+  const offset = local - Math.floor(instant / 1000) * 1000;
+  if (offsets.size > 50_000) offsets.clear();
+  offsets.set(key, offset);
+  return offset;
 }
 
 /** `2026-10-31T11:00:00` read in `zone`, written with that zone's offset on that day. */

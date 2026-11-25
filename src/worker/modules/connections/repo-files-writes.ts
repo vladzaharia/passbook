@@ -15,6 +15,7 @@ const COLUMNS = [
   'sheet',
   'records_pointer',
   'id_pointer',
+  'bind_id',
   'column_labels',
   'bytes',
   'sha256',
@@ -43,6 +44,7 @@ function values(r: FileRow) {
     r.sheet,
     r.recordsPointer,
     r.idPointer,
+    r.bindId,
     JSON.stringify(r.columnLabels),
     r.bytes,
     r.sha256,
@@ -134,6 +136,12 @@ export async function discardFile(
 export interface Bind {
   fileId: string;
   idPointer: string;
+  /** The subprefix the pages were written under. */
+  bindId: string;
+  /** What prepareBind read: the commit holds only while the draft still has them. */
+  sheet: string | null;
+  recordsPointer: string | null;
+  sha256: string;
   pages: number;
   skippedNoId: number;
   skippedDuplicate: number;
@@ -144,11 +152,17 @@ export interface Bind {
  * Inside the create grant: the draft becomes revision 1 of the new connection. The check and the write both
  * hold only while the draft is still a draft, unexpired, in the grant's org.
  */
+const pinned = (b: Bind) => ({
+  sheet: b.sheet,
+  records_pointer: b.recordsPointer,
+  sha256: b.sha256,
+});
+
 export function bindChecks(b: Bind) {
   return [
     exactlyOne(
       'connection_files',
-      { id: b.fileId, state: 'draft', expires_at: gt(b.now) },
+      { id: b.fileId, state: 'draft', expires_at: gt(b.now), ...pinned(b) },
       undefined,
       'stale',
     ),
@@ -157,8 +171,9 @@ export function bindChecks(b: Bind) {
 
 export function addBind(g: Grant, connectionId: string, b: Bind): GrantedStatement {
   return g.update('connection_files', {
-    where: { id: b.fileId, state: 'draft', expires_at: gt(b.now) },
+    where: { id: b.fileId, state: 'draft', expires_at: gt(b.now), ...pinned(b) },
     set: {
+      bind_id: b.bindId,
       connection_id: connectionId,
       revision: 1,
       state: 'current',
@@ -173,14 +188,17 @@ export function addBind(g: Grant, connectionId: string, b: Bind): GrantedStateme
   });
 }
 
-/** Closes any older pending revision and inserts the new one, so there is never more than one. */
+/**
+ * Closes any older pending revision and inserts the new one, so there is never more than one. Returns the ids
+ * it actually discarded: one that became current meanwhile is not among them, and its objects must stay.
+ */
 export async function insertPending(
   ctx: ServiceContext,
   actor: ConnectionActor,
   connectionId: string,
   row: FileRow,
   now: number,
-): Promise<void> {
+): Promise<string[]> {
   const g = connectionGrant(
     ctx,
     actor,
@@ -188,12 +206,14 @@ export async function insertPending(
     [connectionIs({ id: connectionId })],
     row.id,
   );
-  g.update('connection_files', {
+  const discard = g.update('connection_files', {
     where: { connection_id: connectionId, state: 'pending' },
     set: { state: 'discarded', expires_at: now },
+    returning: ['id'],
   });
   g.insertSelect('connection_files', COLUMNS, values(row));
-  await g.commit();
+  const results = await g.commit();
+  return (results[g.indexOf(discard)]?.results ?? []).map((r) => (r as { id: string }).id);
 }
 
 /** One batch: the current revision is superseded and the pending one becomes current, or neither. */

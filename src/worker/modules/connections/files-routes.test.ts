@@ -7,6 +7,7 @@ import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { doneCursor } from './files-dto.ts';
 import { csvBody, MEMBERS, useUploadConnector } from './files-fixtures.ts';
+import * as store from './files-store.ts';
 import { addMembership, type Kit, makeKit, withWorkflow } from './test-kit.ts';
 
 let kit: Kit;
@@ -287,6 +288,66 @@ describe('revisions', () => {
     const left = await kit.env.BUCKET.list({ prefix: `uploads/connection-files/${kit.org.id}/` });
     expect(left.objects).toEqual([]);
     expect([fileId, next.json.id].length).toBe(2);
+  });
+});
+
+describe('races and plans', () => {
+  it('keeps the objects of a pending revision that became current during the next upload (M1)', async () => {
+    const { id } = await connection();
+    const older = await call(
+      'POST',
+      files(id),
+      csvBody([...MEMBERS, ['m-8', 'Old', 'o@example.com', '']]),
+    );
+    const original = store.writeRows;
+    vi.spyOn(store, 'writeRows').mockImplementation(async (...args) => {
+      const written = await original(...args);
+      if (args[2] !== older.json.id) {
+        await run(
+          kit.env.DB,
+          "UPDATE connection_files SET state = 'superseded' WHERE connection_id = ? AND state = 'current'",
+          [id],
+        );
+        await run(
+          kit.env.DB,
+          "UPDATE connection_files SET state = 'current', expires_at = NULL WHERE id = ?",
+          [older.json.id],
+        );
+      }
+      return written;
+    });
+    const next = await call(
+      'POST',
+      files(id),
+      csvBody([...MEMBERS, ['m-9', 'New', 'n@example.com', '']]),
+    );
+    expect(next.status).toBe(200);
+    const states = await all<{ id: string; state: string }>(
+      kit.env.DB,
+      'SELECT id, state FROM connection_files WHERE connection_id = ?',
+      [id],
+    );
+    expect(states.find((r) => r.id === older.json.id)?.state).toBe('current');
+    const left = await kit.env.BUCKET.list({
+      prefix: `uploads/connection-files/${kit.org.id}/${older.json.id}/`,
+    });
+    expect(left.objects.length).toBeGreaterThan(2);
+  });
+
+  it('needs the connector on the plan to upload a revision (L2)', async () => {
+    const { id } = await connection();
+    await run(
+      kit.env.DB,
+      `INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'connectors', '["http-json"]', 1)`,
+      [kit.org.id],
+    );
+    const res = await call(
+      'POST',
+      files(id),
+      csvBody([...MEMBERS, ['m-5', 'Z', 'z@example.com', '']]),
+    );
+    expect(res.status).toBe(403);
+    expect(res.json.code).toBe('FEATURE_NOT_INCLUDED');
   });
 });
 

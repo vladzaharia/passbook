@@ -12,6 +12,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
 import * as actions from './actions.ts';
+import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { diffRefs } from './files-diff.ts';
 import { doneCursor, revisionDto } from './files-dto.ts';
 import {
@@ -70,6 +71,11 @@ export async function uploadRevision(
 ): Promise<UploadResult> {
   const conn = await requireUploadConnection(ctx, authority, connectionId);
   const orgId = conn.orgId;
+  await requireConnectorEntitled(
+    ctx,
+    orgId,
+    connectorItem(conn.connectorType, conn.config as { recipe?: unknown }),
+  );
   await takeUpload(ctx, orgId);
   const bytes = bytesOf(ctx, orgId, body);
   const sha = await sha256Hex(bytes);
@@ -93,29 +99,33 @@ export async function uploadRevision(
   if (entries.length === 0)
     throw new FileIdColumnMissingError('No row has a value in the ID column.');
   const now = ctx.clock.now();
-  const older = await fileInState(ctx.env.DB, orgId, connectionId, 'pending');
   const row = {
     ...rowOf(ctx.ids.id(), orgId, 'pending', body.name, bytes, sha, file, actor.id, now),
     connectionId,
     revision: await nextRevision(ctx.env.DB, orgId, connectionId),
     idPointer,
+    bindId: ctx.ids.id(),
     skippedNoId: noId,
     skippedDuplicate: duplicate,
   };
+  let discarded: string[] = [];
   try {
     await putSource(ctx, orgId, row.id, bytes);
-    const { pages, refs } = await writeRows(ctx, orgId, row.id, entries);
+    const { pages, refs } = await writeRows(ctx, orgId, row.id, row.bindId, entries);
     row.pages = pages;
-    const before = current ? ((await readRefs(ctx, orgId, current.id)) ?? []) : [];
+    const before = current?.bindId
+      ? ((await readRefs(ctx, orgId, current.id, current.bindId)) ?? [])
+      : [];
     row.diff = current ? diffRefs(before, refs) : null;
-    await insertPending(ctx, { orgId, authority }, connectionId, row, now);
+    discarded = await insertPending(ctx, { orgId, authority }, connectionId, row, now);
   } catch (error) {
     await deleteFileObjects(ctx, orgId, row.id).catch(() => undefined);
     if (classifyD1Error(error)?.kind === 'unique')
       throw new ConflictError('Another upload landed first. Try again.', 'FILE_STATE');
     throw error;
   }
-  if (older) await deleteFileObjects(ctx, orgId, older.id);
+  // Only revisions this commit discarded lose their objects: one applied meanwhile is current now.
+  for (const id of discarded) await deleteFileObjects(ctx, orgId, id);
   await auditFile(ctx, actor, orgId, 'connection.file_upload', connectionId, row);
   if (!apply) return { unchanged: false, ...(await dtoOf(ctx, row)) };
   const applied = await applyRevision(ctx, actor, authority, connectionId, row.id);

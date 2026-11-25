@@ -65,7 +65,7 @@ function storedPort(ctx: ServiceContext, orgId: string, connectionId: string): C
   };
   const page = async (fileId: string, n: number): Promise<Entry[]> => {
     const row = await owned(fileId);
-    return (await readPage(ctx, orgId, row.id, n)) ?? refuse();
+    return (await readPage(ctx, orgId, row.id, row.bindId ?? refuse(), n)) ?? refuse();
   };
   return {
     current: async () => {
@@ -79,11 +79,11 @@ function storedPort(ctx: ServiceContext, orgId: string, connectionId: string): C
     page: async (fileId, n) => (await page(fileId, n)) as { ref: string; record: UpstreamRecord }[],
     refs: async (fileId) => {
       const row = await owned(fileId);
-      return (await readRefs(ctx, orgId, row.id)) ?? refuse();
+      return (await readRefs(ctx, orgId, row.id, row.bindId ?? refuse())) ?? refuse();
     },
     find: async (fileId, ref) => {
       const row = await owned(fileId);
-      const refs = (await readRefs(ctx, orgId, row.id)) ?? refuse();
+      const refs = (await readRefs(ctx, orgId, row.id, row.bindId ?? refuse())) ?? refuse();
       return findIn(refs, ref, (n) => page(fileId, n));
     },
   };

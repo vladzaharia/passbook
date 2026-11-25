@@ -20,8 +20,10 @@ export interface StoredRef {
 const ROOT = 'uploads/connection-files/';
 const DELETE_BATCH = 1000;
 const prefixOf = (orgId: string, fileId: string) => `${ROOT}${orgId}/${fileId}/`;
-const pageKey = (orgId: string, fileId: string, n: number) =>
-  `${prefixOf(orgId, fileId)}rows/${n}.json`;
+const rowsOf = (orgId: string, fileId: string, bindId: string) =>
+  `${prefixOf(orgId, fileId)}rows/${bindId}/`;
+const pageKey = (orgId: string, fileId: string, bindId: string, n: number) =>
+  `${rowsOf(orgId, fileId, bindId)}${n}.json`;
 
 export async function putSource(
   ctx: ServiceContext,
@@ -64,18 +66,19 @@ export async function writeRows(
   ctx: ServiceContext,
   orgId: string,
   fileId: string,
+  bindId: string,
   entries: readonly Entry[],
 ): Promise<{ pages: number; refs: StoredRef[] }> {
   const refs: StoredRef[] = [];
   let pages = 0;
   for (let at = 0; at < entries.length; at += PAGE_SIZE) {
     const chunk = entries.slice(at, at + PAGE_SIZE);
-    await ctx.env.BUCKET.put(pageKey(orgId, fileId, pages), JSON.stringify(chunk));
+    await ctx.env.BUCKET.put(pageKey(orgId, fileId, bindId, pages), JSON.stringify(chunk));
     for (const e of chunk) refs.push({ ref: e.ref, digest: await digestOf(e.record), page: pages });
     pages++;
   }
   refs.sort((a, b) => (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
-  await ctx.env.BUCKET.put(`${prefixOf(orgId, fileId)}refs.json`, JSON.stringify(refs));
+  await ctx.env.BUCKET.put(`${rowsOf(orgId, fileId, bindId)}refs.json`, JSON.stringify(refs));
   return { pages, refs };
 }
 
@@ -83,9 +86,10 @@ export async function readPage(
   ctx: ServiceContext,
   orgId: string,
   fileId: string,
+  bindId: string,
   n: number,
 ): Promise<Entry[] | null> {
-  const object = await ctx.env.BUCKET.get(pageKey(orgId, fileId, n));
+  const object = await ctx.env.BUCKET.get(pageKey(orgId, fileId, bindId, n));
   return object ? ((await object.json()) as Entry[]) : null;
 }
 
@@ -93,8 +97,9 @@ export async function readRefs(
   ctx: ServiceContext,
   orgId: string,
   fileId: string,
+  bindId: string,
 ): Promise<StoredRef[] | null> {
-  const object = await ctx.env.BUCKET.get(`${prefixOf(orgId, fileId)}refs.json`);
+  const object = await ctx.env.BUCKET.get(`${rowsOf(orgId, fileId, bindId)}refs.json`);
   return object ? ((await object.json()) as StoredRef[]) : null;
 }
 

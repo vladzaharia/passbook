@@ -10,7 +10,7 @@ import {
   ISO_DATETIME,
   resolvePointer,
 } from '../../../shared/records/fields.ts';
-import { type ParsedTable, parseTabular, TabularError } from '../../../shared/tabular/index.ts';
+import { parseTabular, TabularError } from '../../../shared/tabular/index.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { rejectFile } from './files-errors.ts';
 import { storable } from './files-values.ts';
@@ -67,25 +67,26 @@ export function parseFile(
   options: { sheet?: string | undefined; recordsPointer?: string | undefined },
   zone: string,
 ): ParsedFile {
-  let table: ParsedTable;
-  let records: Record<string, unknown>[];
   try {
-    table = parseTabular(bytes, {
+    const table = parseTabular(bytes, {
       ...(options.sheet === undefined ? {} : { sheet: options.sheet }),
       ...(options.recordsPointer === undefined ? {} : { recordsPointer: options.recordsPointer }),
     });
-    records = table.records.map((r) => storable(r, zone) as Record<string, unknown>);
+    // Rows are converted where they stand: a second array of every record would double the heap at 10,000 rows.
+    const records = table.records;
+    for (let i = 0; i < records.length; i++)
+      records[i] = storable(records[i], zone) as Record<string, unknown>;
+    return {
+      format: table.format,
+      columns: table.columns,
+      records,
+      sheets: table.sheets ?? [],
+      sheet: table.sheet ?? null,
+      recordsPointer: table.recordsPointer ?? null,
+    };
   } catch (error) {
     return rejectFile(ctx, orgId, error);
   }
-  return {
-    format: table.format,
-    columns: table.columns,
-    records,
-    sheets: table.sheets ?? [],
-    sheet: table.sheet ?? null,
-    recordsPointer: table.recordsPointer ?? null,
-  };
 }
 
 export const pointerOf = (label: string): string => `/${escapeToken(label)}`;

@@ -26,6 +26,8 @@ const ENDED_KEPT_MS = 7 * DAY;
 /** Files one run touches per phase; a backlog drains over several days. */
 export const FILE_LIMITS = { unfinished: 500, ended: 500, platform: 150, orgs: 150 };
 const ORPHAN_PAGE = 1000;
+/** Listing pages one run reads: a bound on objects, so a large bucket is walked over several days. */
+const ORPHAN_PAGES = 3;
 const ORPHAN_CURSOR = 'retention.cursor:connection-files';
 /** An object this young may belong to an upload whose row is not written yet. */
 const ORPHAN_AGE_MS = HOUR;
@@ -82,24 +84,46 @@ async function dropObjects(ctx: ServiceContext, f: RetentionFile): Promise<void>
   }
 }
 
-/** Objects with no row, older than an hour: left by a crash between the two deletes. Walks the bucket by cursor. */
+/** Newest upload time among all objects of one file (a listing page may have split it). */
+async function newestOf(ctx: ServiceContext, orgId: string, fileId: string): Promise<number> {
+  let newest = 0;
+  let cursor: string | undefined;
+  do {
+    const page = await ctx.env.BUCKET.list({
+      prefix: `uploads/connection-files/${orgId}/${fileId}/`,
+      limit: 1000,
+      ...(cursor ? { cursor } : {}),
+    });
+    for (const o of page.objects) newest = Math.max(newest, o.uploaded.getTime());
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  return newest;
+}
+
+/**
+ * Objects with no row, whose newest object is over an hour old: left by a crash between the two deletes. Walks
+ * the bucket by a stored cursor, a few pages a run. A file a page boundary split is measured over all of its
+ * objects before it is judged, so an upload in flight is never taken for an orphan.
+ */
 export async function sweepOrphans(ctx: ServiceContext): Promise<number> {
   const stored = await readSystemValue(ctx.env.DB, ORPHAN_CURSOR);
-  const { files, cursor } = await listFileIds(
-    ctx,
-    typeof stored === 'string' ? stored : undefined,
-    ORPHAN_PAGE,
-  );
-  const known = await idsWithRows(
-    ctx.env.DB,
-    files.map((f) => f.fileId),
-  );
+  let cursor = typeof stored === 'string' ? stored : undefined;
   const cutoff = ctx.clock.now() - ORPHAN_AGE_MS;
   let removed = 0;
-  for (const f of files) {
-    if (known.has(f.fileId) || f.newest > cutoff) continue;
-    await deleteFileObjects(ctx, f.orgId, f.fileId);
-    removed++;
+  for (let page = 0; page < ORPHAN_PAGES; page++) {
+    const listed = await listFileIds(ctx, cursor, ORPHAN_PAGE);
+    const known = await idsWithRows(
+      ctx.env.DB,
+      listed.files.map((f) => f.fileId),
+    );
+    for (const f of listed.files) {
+      if (known.has(f.fileId) || f.newest > cutoff) continue;
+      if ((await newestOf(ctx, f.orgId, f.fileId)) > cutoff) continue;
+      await deleteFileObjects(ctx, f.orgId, f.fileId);
+      removed++;
+    }
+    cursor = listed.cursor;
+    if (!cursor) break;
   }
   await writeSystemValue(ctx.env.DB, ORPHAN_CURSOR, cursor ?? null, ctx.clock.now());
   return removed;

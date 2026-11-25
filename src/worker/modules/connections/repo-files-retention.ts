@@ -18,10 +18,15 @@ const COLUMNS = 'id, org_id, connection_id, state';
 /** The newest superseded revisions of a connection that retention keeps for removal diffs. */
 export const SUPERSEDED_KEPT = 2;
 
-/** An org-wide hold keeps its files. */
-const HELD = `EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = %ORG% AND h.pass_id IS NULL)`;
-const heldSql = (org: string) => HELD.replace('%ORG%', org);
-const notHeld: Check = { reason: 'retention', ok: () => `NOT ${heldSql('a.org_id')}` };
+/** An org-wide hold, or a hold on any pass the connection issued, keeps its files. */
+const heldSql = (org: string, connection: string) =>
+  `EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = ${org}
+     AND (h.pass_id IS NULL OR h.pass_id IN (SELECT p.id FROM passes p WHERE p.connection_id = ${connection})))`;
+const notHeld = (fileId: string): Check => ({
+  reason: 'retention',
+  ok: (b) =>
+    `NOT ${heldSql('a.org_id', `(SELECT connection_id FROM connection_files WHERE id = ${b.bind(fileId)})`)}`,
+});
 const receiptExists = (receiptId: string): Check => ({
   reason: 'config',
   ok: (b) => `EXISTS (SELECT 1 FROM retention_receipts WHERE id = ${b.bind(receiptId)})`,
@@ -56,7 +61,7 @@ export function supersededDue(
   return all<RetentionFile>(
     db,
     `SELECT f.id, f.org_id, f.connection_id, f.state FROM connection_files f
-     WHERE f.state = 'superseded' AND f.id > ? AND ${sc.sql} AND NOT ${heldSql('f.org_id')}
+     WHERE f.state = 'superseded' AND f.id > ? AND ${sc.sql} AND NOT ${heldSql('f.org_id', 'f.connection_id')}
        AND (f.superseded_at < ? OR (SELECT COUNT(*) FROM connection_files n
          WHERE n.connection_id = f.connection_id AND n.state = 'superseded' AND n.revision > f.revision) >= ${SUPERSEDED_KEPT})
      ORDER BY f.id LIMIT ?`,
@@ -128,7 +133,7 @@ export async function deleteSuperseded(
 ): Promise<void> {
   const g = retentionGrant(ctx, f, 'retire', [
     exactlyOne('connection_files', { id: f.id, state: 'superseded' }, undefined, 'stale'),
-    notHeld,
+    notHeld(f.id),
     receiptExists(receipt.receipt.id),
   ]);
   g.delete('connection_files', { where: { id: f.id, state: 'superseded' }, require: 'one' });

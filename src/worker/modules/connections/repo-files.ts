@@ -14,6 +14,7 @@ export interface FileRow {
   sheet: string | null;
   recordsPointer: string | null;
   idPointer: string | null;
+  bindId: string | null;
   columnLabels: string[];
   bytes: number;
   sha256: string;
@@ -45,6 +46,7 @@ interface Sql {
   sheet: string | null;
   records_pointer: string | null;
   id_pointer: string | null;
+  bind_id: string | null;
   column_labels: string;
   bytes: number;
   sha256: string;
@@ -75,6 +77,7 @@ function toRow(r: Sql): FileRow {
     sheet: r.sheet,
     recordsPointer: r.records_pointer,
     idPointer: r.id_pointer,
+    bindId: r.bind_id,
     columnLabels: JSON.parse(r.column_labels) as string[],
     bytes: r.bytes,
     sha256: r.sha256,

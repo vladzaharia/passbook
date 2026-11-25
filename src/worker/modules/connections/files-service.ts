@@ -11,6 +11,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import type { ConnectionAuthority } from './access.ts';
+import { requireConnectorEntitled } from './entitlement.ts';
 import { draftDto, type FileDto } from './files-dto.ts';
 import {
   FileExpiredError,
@@ -107,6 +108,7 @@ export const rowOf = (
   sheet: file.sheet,
   recordsPointer: file.recordsPointer,
   idPointer: null,
+  bindId: null,
   columnLabels: file.columns,
   bytes: bytes.length,
   sha256,
@@ -165,6 +167,7 @@ export async function createDraft(
   const now = ctx.clock.now();
   if ((await openDrafts(ctx.env.DB, orgId, now)) >= OPEN_DRAFTS)
     throw new RateLimitedError(60, 'Too many open uploads. Discard one first.');
+  await requireConnectorEntitled(ctx, orgId, 'file-upload');
   await takeUpload(ctx, orgId);
   const bytes = bytesOf(ctx, orgId, body);
   const file = parseFile(ctx, orgId, bytes, body, await zoneOf(ctx, orgId));
@@ -272,10 +275,15 @@ export async function prepareBind(
   const { entries, noId, duplicate } = entriesOf(file.records, idColumn);
   if (entries.length === 0)
     throw new FileIdColumnMissingError('No row has a value in the ID column.');
-  const { pages } = await writeRows(ctx, orgId, fileId, entries);
+  const bindId = ctx.ids.id();
+  const { pages } = await writeRows(ctx, orgId, fileId, bindId, entries);
   return {
     fileId,
     idPointer: idColumn,
+    bindId,
+    sheet: row.sheet,
+    recordsPointer: row.recordsPointer,
+    sha256: row.sha256,
     pages,
     skippedNoId: noId,
     skippedDuplicate: duplicate,

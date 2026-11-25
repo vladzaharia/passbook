@@ -7,6 +7,7 @@ import { createSessionStore } from '../auth/sessions.ts';
 import { authorizeConnection, type ConnectionAuthority } from './access.ts';
 import { rejectFile } from './files-errors.ts';
 import { createUpload, csvBody, MEMBERS, useUploadConnector } from './files-fixtures.ts';
+import { parseFile } from './files-parse.ts';
 import { filesPort } from './files-port.ts';
 import { createDraft, discardDraft, readDraft, reparseDraft, takeUpload } from './files-service.ts';
 import * as store from './files-store.ts';
@@ -185,9 +186,11 @@ describe('bind at create', () => {
       skippedDuplicate: 1,
       expiresAt: null,
     });
+    const bound = await getFile(kit.env.DB, kit.org.id, d.id);
+    expect(bound?.bindId).toBeTruthy();
     expect((await keysOf(d.id)).sort()).toEqual([
-      'refs.json',
-      'rows/0.json',
+      `rows/${bound?.bindId}/0.json`,
+      `rows/${bound?.bindId}/refs.json`,
       'source',
       'summary.json',
     ]);
@@ -296,6 +299,62 @@ describe('bind at create', () => {
       }),
     ).rejects.toMatchObject({ code: 'FILE_CELL_TOO_LONG' });
   });
+});
+
+describe('bind pins what it read', () => {
+  it('refuses at commit when the draft was re-read with another sha or sheet (L1), and creates nothing', async () => {
+    const d = await draft();
+    const original = store.writeRows;
+    vi.spyOn(store, 'writeRows').mockImplementation(async (...args) => {
+      const written = await original(...args);
+      await run(kit.env.DB, "UPDATE connection_files SET sha256 = 'other' WHERE id = ?", [d.id]);
+      return written;
+    });
+    await expect(createUpload(kit, d.id)).rejects.toMatchObject({ status: 409 });
+    expect(
+      await first(kit.env.DB, 'SELECT id FROM connections WHERE org_id = ?', [kit.org.id]),
+    ).toBeNull();
+  });
+});
+
+describe('entitlement', () => {
+  it('needs file-upload on the plan to upload a draft, before the allowance is spent', async () => {
+    await run(
+      kit.env.DB,
+      `INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'connectors', '["demo"]', 1)`,
+      [kit.org.id],
+    );
+    await expect(draft()).rejects.toMatchObject({ code: 'FEATURE_NOT_INCLUDED', status: 403 });
+    const used = await first(kit.env.DB, 'SELECT count FROM counters WHERE key = ?', [
+      `connection-file-upload:${kit.org.id}`,
+    ]);
+    expect(used).toBeNull();
+  });
+});
+
+describe('maximum size', () => {
+  const rows = 10_000;
+  const cells = (i: number) =>
+    Object.fromEntries(
+      Array.from({ length: 12 }, (_, c) => [`c${c}`, `v${i}-${c}-${'x'.repeat(8)}`]),
+    );
+  const text = {
+    csv: () =>
+      [
+        Array.from({ length: 12 }, (_, c) => `c${c}`).join(','),
+        ...Array.from({ length: rows }, (_, i) => Object.values(cells(i)).join(',')),
+      ].join('\n'),
+    json: () => JSON.stringify(Array.from({ length: rows }, (_, i) => cells(i))),
+    ndjson: () => Array.from({ length: rows }, (_, i) => JSON.stringify(cells(i))).join('\n'),
+  };
+  for (const format of ['csv', 'json', 'ndjson'] as const)
+    it(`parses and stores ${rows} ${format} rows by converting them in place`, async () => {
+      const bytes = new TextEncoder().encode(text[format]());
+      const parsed = parseFile(kit.sctx, kit.org.id, bytes, {}, 'America/Los_Angeles');
+      expect(parsed.records).toHaveLength(rows);
+      expect(parsed.columns).toHaveLength(12);
+      expect(parsed.records[rows - 1]?.c11).toBe(`v${rows - 1}-11-${'x'.repeat(8)}`);
+    });
 });
 
 describe('unsaved test over a draft', () => {

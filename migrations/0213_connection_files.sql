@@ -11,6 +11,8 @@ CREATE TABLE connection_files (
   sheet TEXT,
   records_pointer TEXT,
   id_pointer TEXT,
+  -- The R2 subprefix rows/<bind_id>/ that holds this row's pages and refs.
+  bind_id TEXT,
   -- Column labels in file order, as a JSON array.
   column_labels TEXT NOT NULL,
   bytes INTEGER NOT NULL,

@@ -7,7 +7,7 @@ import { authorizeConnection } from './access.ts';
 import { createUpload, csvBody, MEMBERS, useUploadConnector } from './files-fixtures.ts';
 import { dailyConnectionFiles, FILE_LIMITS, sweepOrphans } from './files-retention.ts';
 import { createDraft } from './files-service.ts';
-import { addMembership, type Kit, makeKit } from './test-kit.ts';
+import { addMembership, type Kit, linkedPass, makeKit } from './test-kit.ts';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -140,6 +140,44 @@ describe('daily connection files', () => {
     );
     await dailyConnectionFiles(kit.sctx);
     expect(await Promise.all(ids.map(stateOf))).toEqual(['superseded', 'superseded', 'superseded']);
+  });
+
+  it('holds superseded revisions while a pass the connection issued is held (L3)', async () => {
+    const d = await draft();
+    const conn = await createUpload(kit, d.id);
+    const ids = [
+      await superseded(conn.id, 2, kit.clock.now()),
+      await superseded(conn.id, 3, kit.clock.now()),
+      await superseded(conn.id, 4, kit.clock.now()),
+    ];
+    const pass = await linkedPass(kit, conn.id, 'm-1');
+    await run(
+      kit.env.DB,
+      `INSERT INTO retention_holds (id, org_id, pass_id, placed_by_kind, placed_by, reason, created_at) VALUES (?, ?, ?, 'org', ?, 'legal', ?)`,
+      [kit.ids.id(), kit.org.id, pass.id, kit.actor.id, kit.clock.now()],
+    );
+    await dailyConnectionFiles(kit.sctx);
+    expect(await Promise.all(ids.map(stateOf))).toEqual(['superseded', 'superseded', 'superseded']);
+  });
+
+  it('judges an orphan by its newest object even when a listing page split it (L4)', async () => {
+    const orphan = kit.ids.id();
+    await kit.env.BUCKET.put(`${prefix(orphan)}source`, 'x');
+    await kit.env.BUCKET.put(`${prefix(orphan)}rows/b/refs.json`, '[]');
+    kit.clock.set(Date.now() + 10 * 60_000);
+    const list = kit.env.BUCKET.list.bind(kit.env.BUCKET);
+    // The root page shows only the old half of the file; the whole prefix holds a young object too.
+    vi.spyOn(kit.env.BUCKET, 'list').mockImplementation(async (options) => {
+      const page = await list(options);
+      if (options?.prefix !== 'uploads/connection-files/') return page;
+      const objects = page.objects
+        .filter((o) => o.key === `${prefix(orphan)}source`)
+        .map((o) => ({ ...o, uploaded: new Date(0) }));
+      return { ...page, objects, truncated: false } as typeof page;
+    });
+    await run(kit.env.DB, "DELETE FROM settings WHERE key = 'retention.cursor:connection-files'");
+    await sweepOrphans(kit.sctx);
+    expect(await objects(orphan)).toBe(2);
   });
 
   it('deletes rows of ended uploads a week later', async () => {
