@@ -8,7 +8,7 @@ import { parseAdminPath } from '../../lib/scope.ts';
 import { readTabScope, useRememberedScope } from '../../lib/scope-store.ts';
 import { useSession } from '../../lib/session.ts';
 import { Buddy, EntityArt } from '../art/index.ts';
-import { FilteredEmpty } from '../empty-state.tsx';
+import { EmptyState } from '../empty-state.tsx';
 import { ErrorState } from '../error-state.tsx';
 import { FilterBar } from '../filter-bar.tsx';
 import {
@@ -27,6 +27,7 @@ const C = {
   none: 'No organizations',
   noneHint: 'Ask an organization admin to invite you.',
   find: 'Find an organization',
+  noMatch: 'No organizations match',
   list: 'Organizations',
   loading: 'Loading organizations',
 } as const;
@@ -111,6 +112,8 @@ export function OrgChooser({ next, title = C.choose, inline = false }: OrgChoose
               mood="sad"
               scene="inspect"
               prop={<EntityArt name="building" size="sm" />}
+              // The building stands at its side: room for it inside the band's end.
+              className="[--wl-buddy-inset:4.5rem]"
             />
           ) : (
             <Buddy
@@ -153,7 +156,8 @@ export function OrgChooser({ next, title = C.choose, inline = false }: OrgChoose
         </p>
       ) : null}
       {unmatched && !none ? (
-        <FilteredEmpty entity="org" inline onClear={() => setQuery('')} />
+        // The filter's own Clear sits beside the field.
+        <EmptyState inline art="building" variant="filtered" title={C.noMatch} />
       ) : shown.length > 0 ? (
         <KeycardGrid ref={list} choices={shown} onKeyDown={onGridKey} />
       ) : null}

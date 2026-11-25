@@ -96,7 +96,8 @@ describe('org chooser', () => {
     await user.type(find, 'zzz');
     expect(screen.getByText('No organizations match')).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Organizations' })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(document.querySelector('main [data-buddy]')).toHaveAttribute('data-scene', 'sorry');
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
     expect(cards()).toHaveLength(7);
     await user.type(find, 'gink{Enter}');
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/t6/passes'));

@@ -25,7 +25,6 @@
   --kc-l2: 0.22;
   --kc-ink: white;
   --kc-lit: var(--pk-brand-gold);
-  --kc-c: 1;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) .wl-kc {
@@ -46,8 +45,8 @@
   height: 5.25rem;
   background: linear-gradient(
     160deg,
-    oklch(var(--kc-l1) calc(0.07 * var(--kc-c)) var(--h, 250)),
-    oklch(var(--kc-l2) calc(0.035 * var(--kc-c)) var(--h, 250))
+    oklch(var(--kc-l1) 0.07 var(--h, 250)),
+    oklch(var(--kc-l2) 0.035 var(--h, 250))
   );
 }
 .wl-kc-ghost .wl-kc-band {

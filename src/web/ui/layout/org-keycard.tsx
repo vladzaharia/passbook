@@ -8,12 +8,13 @@ import type { Choice } from './org-chooser-model.ts';
 import { rolesLine } from './org-chooser-model.ts';
 import { OrgMark, PlatformMark } from './scope-switcher.tsx';
 
-/** The personal band takes the accent's hue, as its mark does; the platform's is neutral. */
+/** The personal band takes the accent's hue, as its mark does; the platform's is slate blue. */
 const PERSONAL_HUE = 178;
+const PLATFORM_HUE = 250;
 const WINDOWS = Array.from({ length: 12 }, (_, i) => i);
 
 function bandStyle(choice: Choice, index: number): CSSProperties {
-  if (choice.kind === 'platform') return { '--i': index, '--h': 250, '--kc-c': 0 } as CSSProperties;
+  if (choice.kind === 'platform') return { '--i': index, '--h': PLATFORM_HUE } as CSSProperties;
   const { membership } = choice;
   const hue = membership.personal ? PERSONAL_HUE : hueOf(membership.orgId);
   return { '--i': index, '--h': hue } as CSSProperties;
