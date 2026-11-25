@@ -1,8 +1,19 @@
-import { Trash2, UserCog } from 'lucide-react';
+import { MoreHorizontal, Trash2, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { OrgMember } from '@/shared/contracts/org-membership.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
-import { Badge, DataTable, EntityAvatar, RowActions } from '@/web/ui/index.ts';
+import {
+  Badge,
+  DataTable,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  EntityAvatar,
+  IconButton,
+  type RowAction,
+  RowActions,
+} from '@/web/ui/index.ts';
 import { NO_EMAIL_LABEL } from '../../../shared/email.ts';
 import { ROLE_LABELS } from './org-roles.ts';
 
@@ -15,7 +26,7 @@ export const memberName = (member: OrgMember) =>
 export function RoleBadges({ roles }: { roles: OrgMember['roles'] }) {
   const rest = roles.slice(SHOWN_ROLES);
   return (
-    <span className="flex flex-wrap items-center gap-1">
+    <span className="flex w-max max-w-full flex-wrap items-center gap-1">
       {roles.slice(0, SHOWN_ROLES).map((role) => (
         <Badge key={role}>{ROLE_LABELS[role]}</Badge>
       ))}
@@ -28,6 +39,33 @@ export function RoleBadges({ roles }: { roles: OrgMember['roles'] }) {
         </Badge>
       ) : null}
     </span>
+  );
+}
+
+/** One destructive action is the kit's trash button; anything else is a menu, so every row has the same control. */
+function MemberActions({ actions, label }: { actions: readonly RowAction[]; label: string }) {
+  const [only] = actions;
+  if (!only) return null;
+  if (actions.length === 1 && only.destructive)
+    return <RowActions label={label} actions={actions} />;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <IconButton label={label} size="sm" icon={<MoreHorizontal aria-hidden />} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {actions.map((action) => (
+          <DropdownMenuItem
+            key={action.label}
+            destructive={action.destructive}
+            onSelect={action.onSelect}
+          >
+            <action.icon aria-hidden />
+            {action.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -80,6 +118,7 @@ export function MemberTable({
     {
       id: 'roles',
       header: 'Roles',
+      meta: { stackNoLabel: true },
       cell: ({ row }) => <RoleBadges roles={row.original.roles} />,
     },
     {
@@ -115,7 +154,7 @@ export function MemberTable({
             ];
         return (
           <div className="flex justify-end">
-            <RowActions label={`Actions for ${name}`} actions={actions} />
+            <MemberActions label={`Actions for ${name}`} actions={actions} />
           </div>
         );
       },
