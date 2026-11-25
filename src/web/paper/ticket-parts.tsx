@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { PAPER_SPECS, type PaperDesign } from '../../passkit/template/paper.ts';
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
+import { codeSymbolMm } from '../../passkit/template/paper-geometry-sizes.ts';
 import type { BrandMark } from '../../shared/contracts/orgs.ts';
 import { passbookCredit } from '../../shared/copy/passbook-credit.ts';
 import { groupPrintCode, PAPER_COPY, PRINT_COPY } from '../../shared/copy/print.ts';
@@ -37,7 +38,7 @@ export const codeLabel = (c: PaperContent): string =>
 /** The code's size in mm: the symbol alone is `qrMm` (QR) or `barMm` (Code 128) wide. */
 function codeStyle(design: PaperDesign, drawing: PaperDrawing): CSSProperties {
   const spec = PAPER_SPECS[design.size];
-  const symbolMm = drawing.kind === 'qr' ? spec.qrMm : spec.barMm;
+  const symbolMm = codeSymbolMm(spec, drawing.kind);
   const width = (symbolMm * drawing.whole) / drawing.symbol;
   const height = drawing.kind === 'qr' ? width : Math.max(13, symbolMm * 0.22);
   return {
@@ -135,7 +136,8 @@ export function Plate({ p, style }: { p: TicketProps; style?: CSSProperties }) {
 /** The buddy cameo when the template turns it on and the class and size have a pose. */
 export function BuddyCameo({ p }: { p: TicketProps }) {
   const { content: c, design } = p;
-  const pose = design.buddy && design.size !== 'cr80' ? buddyPose(c.kind, c.noun) : null;
+  const roomy = ['page', 'half'].includes(PAPER_SPECS[design.size].layout);
+  const pose = design.buddy && roomy ? buddyPose(c.kind, c.noun) : null;
   return pose ? <TicketBuddy pose={pose} mono={c.ink === 'mono'} /> : null;
 }
 
