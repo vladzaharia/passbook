@@ -9,7 +9,7 @@ import {
   NEW_KEY_PREFIX,
   PASS,
   T,
-  TEMPLATE,
+  TICKET_INPUT,
 } from './example-world.ts';
 
 const INCIDENT = {
@@ -24,7 +24,7 @@ const INCIDENT = {
 
 const create = {
   templateId: IDS.template,
-  input: TEMPLATE.sample,
+  input: TICKET_INPUT,
   holderEmail: 'ada@example.com',
   externalId: 'booking_8841',
   sendEmail: true,
@@ -37,6 +37,9 @@ export const HEADLINE: Record<string, unknown> = {
   'passes.postPasses request': create,
   'passes.postPasses response': {
     ...PASS,
+    mode: 'test',
+    subtitle: TICKET_INPUT.attendee,
+    personalization: TICKET_INPUT,
     createdAt: T.now,
     modifiedAt: T.now,
     deviceCount: 0,
@@ -45,6 +48,13 @@ export const HEADLINE: Record<string, unknown> = {
     versions: PASS.versions.map((v) => ({ ...v, createdAt: T.now })),
     email: { outcome: 'queued', cap: 'org' },
   },
+  'passes.patchPassesById request': {
+    input: { ...TICKET_INPUT, endsAt: '2026-12-04T23:00:00-08:00' },
+    notify: true,
+  },
+  'templates.postTemplatesByIdPreview request': { input: TICKET_INPUT },
+  // No `version`: the template's active one, which is the reader's own, not one of the world's.
+  'passes.postPassesBulkReissue request': { templateId: IDS.template },
   'templates.getTemplatesByIdReleasesImpact response': {
     fromVersion: '2',
     toVersion: '3',

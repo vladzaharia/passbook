@@ -36,25 +36,36 @@ export function skeleton(schema: RunSchema): Json {
   return EMPTY[t ?? ''] ?? null;
 }
 
-/** Examples show the sandbox's own template, so the first Run works. */
-export function swapTemplate(value: Json, templateId: string | null): Json {
+const isObject = (v: Json | undefined): v is Record<string, Json> =>
+  v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * Examples show the sandbox's own template, so the first Run works: its id, and its `sample` as the `input` of
+ * any body that names a template.
+ */
+export function swapTemplate(value: Json, templateId: string | null, sample?: Json): Json {
   if (!templateId || value === null || typeof value !== 'object') return value;
-  if (Array.isArray(value)) return value.map((v) => swapTemplate(v, templateId));
+  if (Array.isArray(value)) return value.map((v) => swapTemplate(v, templateId, sample));
+  const names = typeof value.templateId === 'string';
   return Object.fromEntries(
     Object.entries(value).map(([k, v]) => [
       k,
-      k === 'templateId' && typeof v === 'string' ? templateId : swapTemplate(v, templateId),
+      k === 'templateId' && typeof v === 'string'
+        ? templateId
+        : k === 'input' && names && sample !== undefined && isObject(v)
+          ? sample
+          : swapTemplate(v, templateId, sample),
     ]),
   );
 }
 
-export function initialDraft(op: RunOp, templateId: string | null = null): Draft {
+export function initialDraft(op: RunOp, templateId: string | null = null, sample?: Json): Draft {
   const body = op.body ? (op.example ?? skeleton(op.body)) : undefined;
   return {
     path: {},
     query: {},
     header: {},
-    body: body === undefined ? '' : JSON.stringify(swapTemplate(body, templateId), null, 2),
+    body: body === undefined ? '' : JSON.stringify(swapTemplate(body, templateId, sample), null, 2),
     idemOn: op.idempotent,
     idemKey: newKey(),
   };
@@ -71,8 +82,32 @@ export function parseBody(text: string): Parsed {
   }
 }
 
+/** The sandbox template's input schema, to check `input` against. */
+export interface InputCheck {
+  templateId: string;
+  schema: RunSchema;
+}
+
+/** The `input` of a body that names `templateId`, when the operation's `input` is free-form. */
+function inputOf(op: RunOp, draft: Draft): Record<string, Json> | undefined {
+  const own = op.body?.properties?.input;
+  if (!own || own.properties) return undefined;
+  const parsed = parseBody(draft.body);
+  return parsed.ok && isObject(parsed.value) && isObject(parsed.value.input)
+    ? parsed.value.input
+    : undefined;
+}
+
+/** True when the body holds a free-form `input` that no template schema has checked. */
+export function inputUnchecked(op: RunOp, draft: Draft, check?: InputCheck): boolean {
+  if (!inputOf(op, draft)) return false;
+  const parsed = parseBody(draft.body);
+  const named = parsed.ok && isObject(parsed.value) ? parsed.value.templateId : undefined;
+  return !check || named !== check.templateId;
+}
+
 /** Everything wrong before sending: missing parameters and the body against the schema. */
-export function problems(op: RunOp, draft: Draft): Issue[] {
+export function problems(op: RunOp, draft: Draft, check?: InputCheck): Issue[] {
   const out: Issue[] = [];
   for (const p of op.params) {
     const v = draft[p.where][p.name] ?? '';
@@ -94,6 +129,9 @@ export function problems(op: RunOp, draft: Draft): Issue[] {
     else if (parsed.value === undefined) {
       if ((op.body.required?.length ?? 0) > 0) out.push({ path: 'body', message: 'is required' });
     } else out.push(...validate(op.body, parsed.value));
+    const input = inputOf(op, draft);
+    if (input && check && !inputUnchecked(op, draft, check))
+      out.push(...validate(check.schema, input, 'input'));
   }
   return out;
 }

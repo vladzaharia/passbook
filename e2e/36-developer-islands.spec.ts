@@ -102,9 +102,15 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   // D10: Try it on an operation page is bound to the sandbox, and runs there.
   await page.goto('/developers/reference/passes/create');
   await expect(page.locator('[data-sandbox]')).toHaveText(/^test · \S+/);
-  await expect(
-    page.locator('.try').getByRole('button', { name: 'Run', exact: true }),
-  ).toBeVisible();
+  const tryRun = page.locator('.try').getByRole('button', { name: 'Run', exact: true });
+  await expect(tryRun).toBeVisible();
+  // R1: the example fits the sandbox's Quickstart ticket, so the first Run creates a pass.
+  await expect(page.locator('.try')).toContainText('Valid against the schema');
+  const created = page.waitForResponse(
+    (r) => r.url().endsWith('/api/v1/passes') && r.request().method() === 'POST',
+  );
+  await tryRun.click();
+  expect((await created).status()).toBe(201);
 
   // D1: the webhook tester renders, with no Trusted Types error.
   await page.goto('/developers/webhooks');

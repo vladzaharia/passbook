@@ -129,6 +129,20 @@ export const TEMPLATE = {
   },
 };
 
+/**
+ * `input` for the sandbox's Quickstart ticket (templates/starter-event-ticket) with Northwind values: the sample every
+ * `input` example sends, so a reader's first Run and copied sample pass the template's own input schema.
+ */
+export const TICKET_INPUT = {
+  eventName: 'Friday Night Bouldering',
+  venueName: 'Northwind Climbing',
+  venueRegion: 'Seattle, WA',
+  startsAt: '2026-12-04T18:00:00-08:00',
+  endsAt: '2026-12-04T22:00:00-08:00',
+  attendee: 'Ada Example',
+  ticketId: 'NW-1001',
+};
+
 /** Now: 18:00 on 24 November 2026 at the gym (Pacific time), the evening rush. */
 const BASE = Date.UTC(2026, 10, 25, 2, 0, 0);
 const MIN = 60_000;
