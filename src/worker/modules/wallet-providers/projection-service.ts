@@ -13,7 +13,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
-import { approvalKind } from '../templates/sole-reviewer.ts';
+import { approvalKind, soleAuditDetail } from '../templates/sole-reviewer.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import {
   candidateDto,
@@ -144,6 +144,7 @@ export async function approveProjectionCandidate(
       candidateHash: candidate.candidateHash,
       mode: scope.mode,
       provider: scope.provider,
+      ...(await soleAuditDetail(ctx, scope.orgId, kind)),
     },
   });
   if (!written) return failedWrite(ctx, authority);

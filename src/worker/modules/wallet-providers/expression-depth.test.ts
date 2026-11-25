@@ -103,21 +103,23 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       env.DB,
       `SELECT name, sql FROM sqlite_master WHERE type = 'trigger'
        AND name IN ('template_provider_approvals_insert', 'template_approvals_insert',
-         'template_provider_releases_insert', 'wallet_provider_generation_ready_guard',
+         'template_provider_releases_insert', 'template_releases_insert', 'wallet_provider_generation_ready_guard',
          'pass_credential_transfer_complete_guard', 'wallet_provider_instances_settle',
          'wallet_samsung_tombstones_approved_insert', 'wallet_samsung_tombstone_keyset_insert')`,
       [],
     );
-    expect(triggers.length).toBe(8);
+    expect(triggers.length).toBe(9);
     const ceiling: Record<string, [number, number]> = {
       wallet_provider_instances_settle: [4, 2],
       wallet_provider_generation_ready_guard: [15, 16],
       pass_credential_transfer_complete_guard: [48, 59],
       template_provider_approvals_insert: [33, 39],
-      template_approvals_insert: [19, 29],
+      template_approvals_insert: [18, 26],
+      // 0222: the sole recount at release (count and approver) joined the void check: 34/86.
+      template_releases_insert: [34, 86],
       // 0199: the schema 2 branch (two evidence bypasses and the card-state row requirement) took the
       // release trigger from 46/113 to 50/131. Remote D1's limit is 100.
-      template_provider_releases_insert: [47, 99],
+      template_provider_releases_insert: [51, 106],
       // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
       wallet_samsung_tombstones_approved_insert: [37, 33],
       wallet_samsung_tombstone_keyset_insert: [39, 37],
@@ -128,15 +130,23 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       expect(terms(t.sql), t.name).toBeLessThanOrEqual(n);
     }
   });
-  it('measures the retirement view the settle trigger reads (0199 made its evidence optional)', async () => {
-    const [view] = await all<{ sql: string }>(
+  it('measures the views 0222 rebuilt: the retirement base and the Apple source', async () => {
+    const views = await all<{ name: string; sql: string }>(
       env.DB,
-      "SELECT sql FROM sqlite_master WHERE type = 'view' AND name = 'wallet_provider_retirement_complete'",
+      `SELECT name, sql FROM sqlite_master WHERE type = 'view'
+       AND name IN ('wallet_provider_retirement_complete_base', 'template_provider_apple_sources')`,
       [],
     );
-    expect(view).toBeDefined();
-    // Measured 33 deep, 75 terms at CW10b; remote D1's limit is 100.
-    expect(exprDepth(view?.sql ?? '')).toBeLessThanOrEqual(33);
-    expect(terms(view?.sql ?? '')).toBeLessThanOrEqual(75);
+    expect(views).toHaveLength(2);
+    const ceiling: Record<string, [number, number]> = {
+      // 0199 made the evidence optional (33/75); 0222 added the sole approval clause (33/77).
+      wallet_provider_retirement_complete_base: [33, 77],
+      template_provider_apple_sources: [37, 41],
+    };
+    for (const v of views) {
+      const [depth, n] = ceiling[v.name] ?? [0, 0];
+      expect(exprDepth(v.sql), v.name).toBeLessThanOrEqual(depth);
+      expect(terms(v.sql), v.name).toBeLessThanOrEqual(n);
+    }
   });
 });

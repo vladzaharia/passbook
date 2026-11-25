@@ -12730,6 +12730,7 @@ class TerminalActParams(_Model):
 class TerminalActParamsApproval(_Model):
     staffId: str | None = None
     pin: str
+    alone: bool | None = None
 
 class TerminalActParamsInput1(_Model):
     code: str
@@ -12808,6 +12809,7 @@ class TerminalScansUndoParams(_Model):
 class TerminalScansUndoParamsApproval(_Model):
     staffId: str | None = None
     pin: str
+    alone: bool | None = None
 
 class TerminalScansUndoParamsScope(_Model):
     setupId: str | None = None

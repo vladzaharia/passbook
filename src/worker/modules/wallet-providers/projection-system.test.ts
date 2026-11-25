@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import { groupOf } from '../../../passkit/wallets/fidelity.ts';
 import type { CompileResult, FidelityItem } from '../../../passkit/wallets/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
@@ -34,6 +35,10 @@ import {
   updateCompiler,
 } from './projection-v2-test-fixtures.ts';
 import { walletInstanceProofSql } from './repo-instance-proof.ts';
+import {
+  getProjectionRetirementMetadata,
+  projectionReleaseBindingValid,
+} from './repo-projection.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
 import { writeProjectionApproval } from './repo-projection-write.ts';
 
@@ -85,6 +90,23 @@ const audit = (kit: Kit) =>
      WHERE org_id = ? AND action LIKE 'template.system_%' ORDER BY id`,
     [kit.orgId],
   );
+
+/** The runtime reads that offers and upserts rely on find the sole release valid. */
+async function expectBound(kit: Kit, releaseId: string) {
+  expect(
+    await projectionReleaseBindingValid(S.env.DB, {
+      releaseId,
+      orgId: kit.orgId,
+      mode: 'live',
+      provider: 'google',
+      templateId: kit.templateId,
+      version: kit.version,
+      sourceReleaseId: kit.sourceId,
+      now: S.clock.now(),
+    }),
+  ).toBe(true);
+  expect(await getProjectionRetirementMetadata(S.env.DB, releaseId)).not.toBeNull();
+}
 
 describe('system-authored provider candidates (CW7b)', () => {
   it('publishes itself when only look and absent items remain, and audits each step', async () => {
@@ -201,6 +223,32 @@ describe('system-authored provider candidates (CW7b)', () => {
       expectedGeneration: 0,
     });
     expect(release).toMatchObject({ generation: 1, approvalId: approval.id });
+    await expectBound(kit, release.id);
+  });
+
+  it('runs a one-member org from its sole Apple release to a sole wallet class release', async () => {
+    const orgId = (await makeOrg(S.f)).id;
+    const author = await member(orgId);
+    const kit = await setup({}, undefined, { orgId, author, reviewer: author }, true);
+    const candidate = await candidateOf(kit, request());
+    const approval = await approveProjectionCandidate(
+      kit.ctx,
+      kit.author,
+      kit.templateId,
+      candidate.id,
+      { ...kit.scope, candidateHash: candidate.candidateHash, alone: true },
+    );
+    expect(approval.kind).toBe('sole');
+    const release = await publishProjectionRelease(kit.ctx, kit.author, kit.templateId, {
+      ...kit.scope,
+      candidateId: candidate.id,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      expectedGeneration: 0,
+    });
+    expect(release.generation).toBe(1);
+    await expectBound(kit, release.id);
+    expect(await getApprovedProjection(kit.ctx, lookup(kit))).not.toBeNull();
   });
 
   it('voids a sole class approval when a reviewer joins before release', async () => {

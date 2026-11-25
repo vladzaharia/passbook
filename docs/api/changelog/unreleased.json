@@ -392,6 +392,14 @@
     "note": "hide leaves out the portal's own background reads."
   },
   {
+    "key": "GET /api/v1/developer/rail 200.series: field removed",
+    "class": "breaking",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.series: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",
@@ -718,6 +726,14 @@
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.usage: field added",
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/plan operation removed",
+    "class": "breaking",
+    "operationId": "entitlements.getOrgsByIdPlan",
+    "op": "GET /api/v1/orgs/{id}/plan",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -1182,6 +1198,14 @@
     "op": "GET /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "GET /api/v1/settings 200.oidc.platformAdminPinned: field removed",
+    "class": "breaking",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/status/incidents new operation",
@@ -3101,6 +3125,14 @@
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
+    "key": "POST /api/v1/scan/actions body.approval.alone: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "body.approval.alone: optional input field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
     "class": "additive",
     "operationId": "scan.postScanBatch",
@@ -3155,6 +3187,14 @@
     "op": "POST /api/v1/scan/overrides",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/overrides body.approval.alone: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanOverrides",
+    "op": "POST /api/v1/scan/overrides",
+    "change": "body.approval.alone: optional input field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
@@ -3227,6 +3267,22 @@
     "op": "POST /api/v1/scan/scans/{scanId}/undo",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/scans/{scanId}/undo body.approval.alone: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanScansByScanIdUndo",
+    "op": "POST /api/v1/scan/scans/{scanId}/undo",
+    "change": "body.approval.alone: optional input field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/session/open-now body.approval.alone: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanSessionOpenNow",
+    "op": "POST /api/v1/scan/session/open-now",
+    "change": "body.approval.alone: optional input field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/sign-out behaviour changed",
@@ -3714,7 +3770,7 @@
     "operationId": "templates.postTemplatesByIdReview",
     "op": "POST /api/v1/templates/{id}/review",
     "change": "new operation",
-    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only."
+    "note": "Approves a requested version in Test and Live; release: true also releases it. Test keys approve Test only. An author may approve own Test work with alone."
   },
   {
     "key": "POST /api/v1/templates/{id}/review-requests new operation",
@@ -4179,6 +4235,14 @@
     "op": "PUT /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.platformAdminPinned: field removed",
+    "class": "breaking",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field removed",
+    "note": ""
   },
   {
     "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",

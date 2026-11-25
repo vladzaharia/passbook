@@ -37,4 +37,6 @@ export const ScanAdminScopeSchema = z.object({
 export const ScanApprovalSchema = z.object({
   staffId: IdSchema.optional(),
   pin: z.string().regex(/^\d{6}$/),
+  /** The requester confirms approving their own request with their own PIN: only when no other staff can approve here. */
+  alone: z.boolean().optional(),
 });

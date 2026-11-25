@@ -11848,6 +11848,7 @@ export type TerminalActParams = {
   approval?: {
     staffId?: string;
     pin: string;
+    alone?: boolean;
   };
 };
 
@@ -11896,6 +11897,7 @@ export type TerminalScansUndoParams = {
   approval?: {
     staffId?: string;
     pin: string;
+    alone?: boolean;
   };
 };
 

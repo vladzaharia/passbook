@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import sql from '../../../../migrations/0093_template_sole_approval.sql?raw';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
@@ -288,6 +287,53 @@ describe('sole-reviewer approval', () => {
     );
   });
 
+  it('refuses to publish a sole approval when a reviewer joined with an older timestamp', async () => {
+    const { org, owner, t, c } = await soloOrg('Backdated Reviewer');
+    clock.advance(5000);
+    const a = TemplateApprovalSchema.parse(
+      await (await approve(org, t.templateId, c, owner, { alone: true })).json(),
+    );
+    const now = clock.now();
+    clock.set(a.createdAt - 1000);
+    await member(org.id, ['template_reviewer']);
+    clock.set(now);
+    const released = await post(
+      `/${t.templateId}/releases`,
+      {
+        ...scope(org.id),
+        candidateId: c.id,
+        approvalId: a.id,
+        candidateHash: c.candidateHash,
+        expectedGeneration: 0,
+      },
+      owner,
+    );
+    expect(released.status).toBe(409);
+    expect(
+      await first(env.DB, 'SELECT id FROM template_releases WHERE template_id = ?', [t.templateId]),
+    ).toBeNull();
+  });
+
+  it('records the newest reviewer removal in the approved-alone audit row', async () => {
+    const { org, owner, t, c } = await soloOrg('Removal Audit');
+    const leaving = await member(org.id, ['template_reviewer']);
+    clock.advance(1000);
+    await run(env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+      clock.now(),
+      leaving.membershipId,
+    ]);
+    clock.advance(1000);
+    expect((await approve(org, t.templateId, c, owner, { alone: true })).status).toBe(201);
+    const audit = await first<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE target_id = ? AND action = 'template.approved_alone'",
+      [t.templateId],
+    );
+    expect(JSON.parse(audit?.detail ?? '{}').lastReviewerRemoval).toMatchObject({
+      userId: leaving.userId,
+    });
+  });
+
   it('refuses to publish a sole approval after another reviewer joined', async () => {
     const { org, owner, t, c } = await soloOrg('Banked Approval');
     const a = TemplateApprovalSchema.parse(
@@ -350,10 +396,19 @@ describe('sole-reviewer approval', () => {
     ).toBeNull();
   });
 
-  it('keeps the trigger role list equal to the roles that grant review', () => {
-    const lists = sql.match(/IN \('org_admin'[^)]*\)/g) ?? [];
-    expect(lists.length).toBeGreaterThan(0);
-    for (const list of lists) expect(list.slice(3)).toBe(REVIEW_ROLES);
+  it('keeps the live trigger role lists equal to the roles that grant review', async () => {
+    const rows = await all<{ name: string; sql: string }>(
+      env.DB,
+      `SELECT name, sql FROM sqlite_master WHERE name IN
+        ('template_approvals_insert', 'template_releases_insert', 'template_provider_releases_insert')`,
+      [],
+    );
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      const lists = row.sql.match(/IN \('org_admin'[^)]*\)/g) ?? [];
+      expect(lists.length, row.name).toBeGreaterThan(0);
+      for (const list of lists) expect(list.slice(3), row.name).toBe(REVIEW_ROLES);
+    }
   });
 
   it('requires an author with review rights for a test row, in the database', async () => {

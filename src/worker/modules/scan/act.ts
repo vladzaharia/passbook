@@ -156,7 +156,7 @@ export async function act(
                 approverStatement(
                   ctx.env.DB,
                   actor.orgId,
-                  req.approval.staffId,
+                  req.approval.alone ? undefined : req.approval.staffId,
                   actor.settings.approvals === 'desk',
                 ),
               ]

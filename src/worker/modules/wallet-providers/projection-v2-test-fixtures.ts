@@ -122,6 +122,8 @@ export async function setup(
   files: Record<string, Uint8Array | string> = {},
   wallets: unknown = withLogo,
   existing?: Pick<Kit, 'orgId' | 'author' | 'reviewer'>,
+  /** The reviewer is the author in a one-member org: the Apple release is approved alone. */
+  sole = false,
 ): Promise<Kit> {
   const { env, f, clock } = S;
   const orgId = existing?.orgId ?? (await makeOrg(f)).id;
@@ -150,6 +152,7 @@ export async function setup(
   const a = await approveCandidate(ctx, reviewer, templateId, c.id, {
     ...apple,
     candidateHash: c.candidateHash,
+    ...(sole ? { alone: true } : {}),
   });
   const source = await publishRelease(ctx, author, templateId, {
     ...apple,
@@ -159,7 +162,7 @@ export async function setup(
     expectedGeneration: 0,
   });
   const scope = { orgId, mode: 'live' as const, provider: 'google' as const };
-  if (!existing)
+  if (!existing || sole)
     await configureWalletProviderAccount(ctx, author, {
       ...scope,
       expectedRevision: 0,

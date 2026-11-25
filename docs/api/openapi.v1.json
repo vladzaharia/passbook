@@ -60699,6 +60699,9 @@
               "pin": {
                 "type": "string",
                 "pattern": "^\\d{6}$"
+              },
+              "alone": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -60770,6 +60773,9 @@
               "pin": {
                 "type": "string",
                 "pattern": "^\\d{6}$"
+              },
+              "alone": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -127199,6 +127205,9 @@
                       "pin": {
                         "type": "string",
                         "pattern": "^\\d{6}$"
+                      },
+                      "alone": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -129315,6 +129324,9 @@
                       "pin": {
                         "type": "string",
                         "pattern": "^\\d{6}$"
+                      },
+                      "alone": {
+                        "type": "boolean"
                       }
                     },
                     "required": [

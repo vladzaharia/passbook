@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { makeScanStaff, TEST_NOW } from '../../../../test/helpers/index.ts';
+import { run } from '../../platform/db.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
 import { signIn } from './overrides-test-fixtures.ts';
 import { deskMayApprove } from './rules.ts';
@@ -152,5 +153,56 @@ describe('deskMayApprove', () => {
     expect(deskMayApprove({ approvals: 'desk' }, { kind: 'add' }, true)).toBe(false);
     expect(deskMayApprove({ approvals: 'managers' }, { kind: 'add' }, false)).toBe(false);
     expect(deskMayApprove({}, { kind: 'add' }, false)).toBe(false);
+  });
+});
+
+describe('the only staff who can approve may approve their own request, with a confirm', () => {
+  const MGR_ADD = { ...ADD, id: 'sadd', label: 'Manager add', minRole: 'manager' } as const;
+  async function alone(role: 'desk' | 'manager', pin: string, others: boolean) {
+    const t = await kit.scanTemplate('Sole', { actions: [MGR_ADD] });
+    const s = await kit.scanner({
+      templateIds: [t],
+      settings: { approvals: 'desk', staffSignIn: true },
+    });
+    const me = await staff(role, pin);
+    await signIn(s.id, me.id);
+    // Only `me` is active: every earlier member of the org is disabled.
+    await run(kit.env.DB, 'UPDATE scan_staff SET disabled_at = ? WHERE org_id = ? AND id != ?', [
+      kit.clock.now(),
+      kit.org.id,
+      me.id,
+    ]);
+    if (others) await staff('desk', `${pin.slice(0, 5)}9`);
+    const pass = await kit.scanPass(t, { balance: 0 });
+    return {
+      me,
+      send: (approval: Record<string, unknown>) =>
+        act(s.headers, codeOf(pass), { actionId: 'sadd', approval }),
+    };
+  }
+
+  it('needs alone: true, then records the requester as approver and audits it', async () => {
+    const { me, send } = await alone('desk', '246802', false);
+    const refused = await send({ staffId: me.id, pin: me.pin });
+    expect(refused.status).not.toBe(200);
+    const res = await send({ staffId: me.id, pin: me.pin, alone: true });
+    expect(res.status, await res.clone().text()).toBe(200);
+    const o = await out(res);
+    expect(o.kind).toBe('ok');
+    const [scan] = await rows<{ approved_by: string | null }>(
+      'SELECT approved_by FROM scans WHERE id = ?',
+      [o.scanId ?? ''],
+    );
+    expect(scan?.approved_by).toBe(me.id);
+    const audit = await rows<{ detail: string }>(
+      "SELECT detail FROM audit_log WHERE action = 'scan.approved_alone' AND target_id = ?",
+      [o.scanId ?? ''],
+    );
+    expect(JSON.parse(audit[0]?.detail ?? '{}')).toMatchObject({ kind: 'sole', staffId: me.id });
+  });
+
+  it('is refused while another staff member can approve: two staff mean two people', async () => {
+    const { me, send } = await alone('desk', '135791', true);
+    expect((await send({ staffId: me.id, pin: me.pin, alone: true })).status).not.toBe(200);
   });
 });

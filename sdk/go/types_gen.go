@@ -13163,6 +13163,7 @@ type TerminalActParams struct {
 type TerminalActParamsApproval struct {
 	StaffID *string `json:"staffId,omitempty"`
 	PIN     string  `json:"pin"`
+	Alone   *bool   `json:"alone,omitempty"`
 }
 
 type TerminalActParamsInput1 struct {
@@ -13264,6 +13265,7 @@ type TerminalScansUndoParams struct {
 type TerminalScansUndoParamsApproval struct {
 	StaffID *string `json:"staffId,omitempty"`
 	PIN     string  `json:"pin"`
+	Alone   *bool   `json:"alone,omitempty"`
 }
 
 type TerminalScansUndoParamsScope struct {

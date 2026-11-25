@@ -403,6 +403,44 @@ describe('review', () => {
     );
   });
 
+  it('does not count a voided sole approval as reviewed once a reviewer has joined', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const t = await uploaded('Voided Sole Review', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    const body = { orgId: org.id, version: t.version };
+    const first = await ok(await send(`/${t.templateId}/review`, { ...body, alone: true }, owner));
+    expect(first.approved).toEqual(['test', 'live']);
+    clock.advance(1000);
+    await member(org.id, ['template_reviewer']);
+    await expectProblem(
+      await send(`/${t.templateId}/review`, { ...body, alone: true }, owner),
+      403,
+      'TEMPLATE_SELF_APPROVAL',
+    );
+  });
+
+  it('asks a one-member org to confirm, without sending it to another reviewer', async () => {
+    const org = await makeOrg(f, { kind: 'developer' });
+    const owner = await member(org.id, ['org_admin']);
+    const t = await uploaded('Test Confirm Copy', org, owner, undefined, true);
+    await send(`/${t.templateId}/review-requests`, { orgId: org.id, version: t.version }, owner, {
+      mode: 'test',
+    });
+    const res = await send(
+      `/${t.templateId}/review`,
+      { orgId: org.id, version: t.version },
+      owner,
+      {
+        mode: 'test',
+      },
+    );
+    expect(res.status).toBe(403);
+    const problem = (await res.json()) as { detail?: string; message?: string };
+    expect(JSON.stringify(problem)).toContain('Confirm to approve it yourself.');
+    expect(JSON.stringify(problem)).not.toMatch(/another reviewer/i);
+  });
+
   it('records the version and its number on each release audit row', async () => {
     const org = await makeOrg(f);
     const owner = await member(org.id, ['org_admin']);

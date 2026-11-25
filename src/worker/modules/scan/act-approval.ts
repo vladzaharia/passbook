@@ -1,5 +1,6 @@
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordAudit } from '../audit/service.ts';
 import { answerWithoutRow } from './act-answer.ts';
 import { commitCheckIn } from './act-check-in.ts';
 import { type ActRequest, claimOf, failActionClaimStmt } from './act-claim.ts';
@@ -201,14 +202,19 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       failureStatements: [failActionClaimStmt(ctx.env.DB, ownedClaim, claimAt)],
       onFailureCommitted: recordFailure,
     };
-    // No one approves their own request.
-    const others = approver.filter((a) => a.id !== (authorityActor.staff?.id ?? null));
+    // No one approves their own request, unless no one else can: then the requester confirms with `alone`
+    // and their own PIN (two staff who can approve still mean two people).
+    const self = authorityActor.staff?.id ?? null;
+    const others = approver.filter((a) => a.id !== self);
+    const mine = approver.find((a) => a.id === self) ?? null;
+    const alone = approval?.alone === true && others.length === 0 && mine !== null;
+    const pool = alone && mine ? [mine] : others;
     const results = reservation ? await ctx.env.DB.batch(reservation.stmts) : [];
     const verified =
       reservation && approval
-        ? await (approval.staffId
-            ? reservation.verify(results, others[0] ?? null, approval.pin, true, failure, deskOk)
-            : reservation.verifyAny(results, others, approval.pin, failure, false, deskOk))
+        ? await (approval.staffId && !alone
+            ? reservation.verify(results, pool[0] ?? null, approval.pin, true, failure, deskOk)
+            : reservation.verifyAny(results, pool, approval.pin, failure, false, deskOk))
         : null;
     if (reservation && !verified) throw new StaleScanAuthority();
     const commit = () =>
@@ -240,6 +246,16 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       if (error instanceof ScanEffectStop) return settleEffectStop(error);
       throw error;
     });
+    if (alone && verified && outcome.scanId !== null && !outcome.replay)
+      await recordAudit(ctx, {
+        orgId: authorityActor.orgId,
+        actorType: authorityActor.scanner ? 'scanner' : 'system',
+        actorId: authorityActor.scanner?.id ?? null,
+        action: 'scan.approved_alone',
+        targetType: 'scan',
+        targetId: outcome.scanId,
+        detail: { kind: 'sole', staffId: verified.id, role: verified.role },
+      });
     return {
       outcome,
       evaluatedSnapshot: found.liveCandidate ?? null,

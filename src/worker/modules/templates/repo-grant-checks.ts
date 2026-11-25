@@ -141,8 +141,9 @@ export const publishable = (f: PublishFacts): Check =>
         AND (t.status = 'active' OR (c.mode = 'live' AND t.org_id = c.org_id))
         AND ${
           f.action === 'release'
-            ? `(ap.kind != 'sole' OR NOT EXISTS (SELECT 1 FROM org_memberships m
-          WHERE m.org_id = c.org_id AND m.created_at > ap.created_at AND ${reviews('m')}))`
+            ? `(ap.kind != 'sole' OR (NOT EXISTS (SELECT 1 FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.created_at > ap.created_at AND ${reviews('m')})
+          AND ${soleReviewerSql('c.org_id', () => 'ap.reviewer_id')}))`
             : '1'
         }
         AND (ap.kind != 'peer' OR (ap.reviewer_id != c.author_id

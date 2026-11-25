@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ApprovalKind } from './repo-releases.ts';
-import { countEligibleReviewers } from './repo-sole-reviewer.ts';
+import { countEligibleReviewers, latestReviewerRemoval } from './repo-sole-reviewer.ts';
 
 /**
  * How an approval by the caller is recorded, for every provider. An independent reviewer is `peer`.
@@ -26,7 +26,9 @@ export async function approvalKind(
   if (input.mode === 'test' && (input.provider ?? 'apple') === 'apple') {
     if (input.alone !== true)
       throw new ForbiddenError(
-        'You wrote this version. Confirm to approve it alone in Test, or ask another reviewer.',
+        (await countEligibleReviewers(ctx.env.DB, input.orgId)) === 1
+          ? 'You wrote this version. Confirm to approve it yourself.'
+          : 'You wrote this version. Confirm to approve it alone in Test, or ask another reviewer.',
         'TEMPLATE_SELF_APPROVAL',
       );
     return 'test';
@@ -42,4 +44,17 @@ export async function approvalKind(
       'TEMPLATE_SELF_APPROVAL',
     );
   return 'sole';
+}
+
+/** What a `sole` approval's audit row adds: the newest reviewer removal, so the two read as one event. */
+export async function soleAuditDetail(
+  ctx: ServiceContext,
+  orgId: string,
+  kind: ApprovalKind,
+): Promise<Record<string, unknown>> {
+  if (kind !== 'sole') return {};
+  const removed = await latestReviewerRemoval(ctx.env.DB, orgId);
+  return removed
+    ? { lastReviewerRemoval: { at: removed.at, userId: removed.userId, by: removed.by } }
+    : {};
 }

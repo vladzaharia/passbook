@@ -52,6 +52,24 @@ export async function reviewerAddedSince(
   return (row?.n ?? 0) > 0;
 }
 
+/** The newest removal of a review-capable member: when, who left and who removed them (from the audit log). */
+export async function latestReviewerRemoval(
+  db: D1Database,
+  orgId: string,
+): Promise<{ at: number; userId: string; by: string | null } | null> {
+  const row = await first<{ at: number; userId: string; by: string | null }>(
+    db,
+    `SELECT m.revoked_at AS at, m.user_id AS userId,
+       (SELECT l.actor_id FROM audit_log l WHERE l.org_id = m.org_id AND l.target_id = m.id
+         ORDER BY l.id DESC LIMIT 1) AS by
+     FROM org_memberships m
+     WHERE m.org_id = ? AND m.revoked_at IS NOT NULL AND ${reviews('m')}
+     ORDER BY m.revoked_at DESC LIMIT 1`,
+    [orgId],
+  );
+  return row ?? null;
+}
+
 /**
  * Versions whose newest approved Test release is what a new Live candidate would be: the same
  * content and the current adapter and audience policy revisions.

@@ -83,8 +83,12 @@ BEGIN
       AND (a.kind = 'sole' OR c.version_author_id IS NULL OR (c.author_id = 'system:wallet-projection' AND c.provider = 'google') OR a.reviewer_id != c.version_author_id)
       AND (a.reviewer_id != 'system:wallet-projection:auto' OR (c.author_id = 'system:wallet-projection' AND NEW.created_by = 'system:wallet-projection:auto'
         AND json_array_length(json_extract(c.projection_json, '$.approvedOmissions')) = 0))
-      AND (NEW.action != 'release' OR a.kind != 'sole' OR NOT EXISTS (SELECT 1 FROM org_memberships m
-        WHERE m.org_id = c.org_id AND m.created_at > a.created_at AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value IN ('org_admin', 'template_reviewer'))))
+      AND (NEW.action != 'release' OR a.kind != 'sole' OR (NOT EXISTS (SELECT 1 FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.created_at > a.created_at AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value IN ('org_admin', 'template_reviewer')))
+        AND (SELECT count(*) FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.revoked_at IS NULL AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value IN ('org_admin', 'template_reviewer'))) = 1
+        AND EXISTS (SELECT 1 FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.user_id = a.reviewer_id AND m.revoked_at IS NULL AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value IN ('org_admin', 'template_reviewer')))))
       AND NEW.created_by IS NOT NULL
       AND v.created_by IS c.version_author_id AND c.projection_json IS NOT NULL
       AND json_extract(c.projection_json, '$.schema') = 2
@@ -237,3 +241,105 @@ CREATE VIEW wallet_provider_retirement_complete AS
 SELECT id FROM wallet_provider_retirement_complete_base
 UNION ALL
 SELECT id FROM wallet_google_retirement_complete;
+
+-- A sole release is only valid while its approver is still the org's only reviewer (counted at commit, not by timestamp).
+DROP TRIGGER template_releases_insert;
+CREATE TRIGGER template_releases_insert BEFORE INSERT ON template_releases
+WHEN NEW.provider = 'apple'
+BEGIN
+  SELECT CASE WHEN NEW.generation != COALESCE((
+    SELECT MAX(r.generation) FROM template_releases r
+    WHERE r.template_id = NEW.template_id AND r.org_id IS NEW.org_id
+      AND r.mode = NEW.mode AND r.provider = NEW.provider
+  ), 0) + 1 OR NEW.previous_release_id IS NOT (
+    SELECT r.id FROM template_releases r
+    WHERE r.template_id = NEW.template_id AND r.org_id IS NEW.org_id
+      AND r.mode = NEW.mode AND r.provider = NEW.provider ORDER BY r.generation DESC LIMIT 1
+  ) THEN RAISE(ABORT, 'stale template release') END;
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1 FROM templates t WHERE t.id = NEW.template_id
+      AND ((NEW.source = 'system' AND t.origin = 'baked' AND t.org_id IS NEW.org_id
+          AND t.status = 'active' AND t.active_version = NEW.version)
+        -- Cutover amendment: a legacy release pins the template's current active version.
+        OR (NEW.source = 'legacy' AND t.origin = 'uploaded' AND NEW.org_id IS NOT NULL
+          AND (t.org_id IS NULL OR t.org_id = NEW.org_id)
+          AND t.status = 'active' AND t.active_version = NEW.version)
+        OR (NEW.source = 'approved' AND t.origin = 'uploaded' AND NEW.org_id IS NOT NULL
+          AND (t.org_id IS NULL OR t.org_id = NEW.org_id)
+          AND (t.status = 'active' OR (t.status = 'archived' AND NEW.mode = 'live' AND t.org_id = NEW.org_id))))
+  ) THEN RAISE(ABORT, 'invalid template release scope') END;
+  SELECT CASE WHEN NEW.source = 'legacy' AND EXISTS (
+    SELECT 1 FROM template_releases r WHERE r.template_id = NEW.template_id AND r.org_id IS NEW.org_id
+      AND r.mode = NEW.mode AND r.provider = NEW.provider
+  ) THEN RAISE(ABORT, 'legacy release requires an empty scope') END;
+  SELECT CASE WHEN NEW.source = 'approved' AND NOT EXISTS (
+    SELECT 1 FROM template_candidates c JOIN template_approvals a ON a.candidate_id = c.id
+    WHERE c.id = NEW.candidate_id AND a.id = NEW.approval_id
+      AND c.template_id = NEW.template_id AND c.org_id IS NEW.org_id
+      AND c.mode = NEW.mode AND c.provider = NEW.provider AND c.version = NEW.version
+      AND c.candidate_hash = NEW.candidate_hash AND a.candidate_hash = c.candidate_hash
+      AND c.content_hash = NEW.content_hash AND c.adapter_revision = NEW.adapter_revision
+      AND c.adapter_capabilities = NEW.adapter_capabilities
+      AND c.audience_policy_revision = NEW.audience_policy_revision
+      AND (NEW.action != 'release' OR a.kind != 'sole' OR (NOT EXISTS (SELECT 1 FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.created_at > a.created_at AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value IN ('org_admin', 'template_reviewer')))
+        AND (SELECT count(*) FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.revoked_at IS NULL AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value IN ('org_admin', 'template_reviewer'))) = 1
+        AND EXISTS (SELECT 1 FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.user_id = a.reviewer_id AND m.revoked_at IS NULL AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value IN ('org_admin', 'template_reviewer')))))
+      AND (a.kind != 'peer' OR (a.reviewer_id != c.author_id
+        AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)))
+  ) THEN RAISE(ABORT, 'invalid template release approval') END;
+  SELECT CASE WHEN NEW.action = 'release' AND EXISTS (
+    SELECT 1 FROM template_releases r WHERE r.candidate_id = NEW.candidate_id AND r.source = 'approved'
+  ) THEN RAISE(ABORT, 'template candidate already released') END;
+  SELECT CASE WHEN NEW.action = 'rollback' AND NOT EXISTS (
+    SELECT 1 FROM template_releases r WHERE r.id = NEW.rollback_of_release_id AND r.source = 'approved'
+      AND r.template_id = NEW.template_id AND r.org_id IS NEW.org_id AND r.mode = NEW.mode
+      AND r.provider = NEW.provider AND (r.generation < NEW.generation - 1 OR (
+        r.generation = NEW.generation - 1 AND NEW.mode = 'live'
+        AND EXISTS (SELECT 1 FROM templates restore_template WHERE restore_template.id = NEW.template_id
+          AND restore_template.status = 'archived' AND restore_template.org_id = NEW.org_id)))
+      AND r.candidate_id = NEW.candidate_id AND r.approval_id = NEW.approval_id
+      AND r.candidate_hash = NEW.candidate_hash AND r.version = NEW.version
+  ) THEN RAISE(ABORT, 'invalid template rollback') END;
+  SELECT CASE WHEN NEW.adapter_revision < COALESCE((
+    SELECT r.adapter_revision FROM template_releases r WHERE r.template_id = NEW.template_id
+      AND r.org_id IS NEW.org_id AND r.mode = NEW.mode AND r.provider = NEW.provider
+    ORDER BY r.generation DESC LIMIT 1), 0) OR NEW.audience_policy_revision < COALESCE((
+    SELECT r.audience_policy_revision FROM template_releases r WHERE r.template_id = NEW.template_id
+      AND r.org_id IS NEW.org_id AND r.mode = NEW.mode AND r.provider = NEW.provider
+    ORDER BY r.generation DESC LIMIT 1), 0) THEN RAISE(ABORT, 'stale template policy') END;
+END;
+
+-- An Apple release approved by its author (sole or Test) is a valid source for a wallet class.
+DROP VIEW template_provider_apple_sources;
+CREATE VIEW template_provider_apple_sources AS
+SELECT r.id, r.template_id, r.org_id, r.mode, r.version, r.generation, r.candidate_hash,
+       r.content_hash, t.origin, t.org_id AS template_org_id
+FROM template_releases r
+JOIN templates t ON t.id = r.template_id
+JOIN template_versions v ON v.template_id = r.template_id AND v.version = r.version
+WHERE r.provider = 'apple' AND t.status = 'active'
+  AND r.adapter_revision = 1 AND r.adapter_capabilities = '["apple-passkit"]'
+  AND r.audience_policy_revision = 1
+  AND NOT EXISTS (SELECT 1 FROM template_releases newer
+    WHERE newer.template_id = r.template_id AND newer.org_id IS r.org_id
+      AND newer.mode = r.mode AND newer.provider = 'apple' AND newer.generation > r.generation)
+  AND ((r.source = 'system' AND r.action = 'system' AND t.origin = 'baked'
+        AND r.org_id IS t.org_id AND r.version = t.active_version
+        AND r.candidate_id IS NULL AND r.approval_id IS NULL)
+    OR (r.source = 'approved' AND r.action IN ('release', 'rollback') AND t.origin = 'uploaded'
+        AND r.org_id IS NOT NULL AND (t.org_id IS NULL OR t.org_id = r.org_id)
+        AND EXISTS (SELECT 1 FROM template_candidates c
+          JOIN template_approvals a ON a.candidate_id = c.id
+          WHERE c.id = r.candidate_id AND a.id = r.approval_id
+            AND c.template_id = r.template_id AND c.org_id IS r.org_id AND c.mode = r.mode
+            AND c.provider = 'apple' AND c.version = r.version
+            AND c.candidate_hash = r.candidate_hash AND a.candidate_hash = c.candidate_hash
+            AND c.content_hash = r.content_hash AND c.adapter_revision = r.adapter_revision
+            AND c.adapter_capabilities = r.adapter_capabilities
+            AND c.audience_policy_revision = r.audience_policy_revision
+            AND v.created_by IS c.version_author_id
+            AND (a.kind != 'peer' OR (a.reviewer_id != c.author_id
+              AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id))))));
