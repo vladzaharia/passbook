@@ -55,10 +55,10 @@ describe('formatEndedOn', () => {
   const at = Date.UTC(2026, 10, 19, 1, 50);
   const pass = { modifiedAt: at, voidedAt: at };
 
-  it('is the day in the holder zone, UTC when none is given', () => {
+  it('is the day in the holder zone, Seattle when none is given', () => {
     expect(formatEndedOn('voided', pass, 'America/New_York')).toBe('Nov 18, 2026');
     expect(formatEndedOn('voided', pass, 'UTC')).toBe('Nov 19, 2026');
-    expect(formatEndedOn('voided', pass)).toBe('Nov 19, 2026');
+    expect(formatEndedOn('voided', pass)).toBe('Nov 18, 2026');
   });
 
   it('falls back to the last change, and an expired pass names its expiry', () => {

@@ -3,6 +3,7 @@ import { makeScanStaff, makeSession, makeUser } from '../../../../test/helpers/i
 import { run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
+import { CHECK_IN } from './act-test-fixtures.ts';
 import { captureConsoleFeed, consoleReadAuthority } from './feed-console-page.ts';
 import { readStaffActivity } from './repo-staff-activity.ts';
 import { grantScanMembership, setupScanKit } from './test-kit.ts';
@@ -23,15 +24,17 @@ describe('staff "today" count', () => {
       kit.ctx,
       await captureConsoleFeed(kit.ctx, session, authority),
     );
+    const tpl = await kit.scanTemplate('Gym card', { actions: [CHECK_IN] });
+    const pass = await kit.scanPass(tpl, {});
     const staff = await makeScanStaff(kit.fx, { orgId: kit.org.id });
     // 20:00 UTC on 31 May is 13:00 in Seattle; "now" is 03:00 UTC on 1 June, still 31 May there.
     const now = Date.UTC(2026, 5, 1, 3);
     await run(
       kit.env.DB,
-      `INSERT INTO scans (id, org_id, mode, actor_type, actor_id, actor_key, staff_id, idempotency_key,
+      `INSERT INTO scans (id, org_id, mode, pass_id, template_id, actor_type, actor_id, actor_key, staff_id, idempotency_key,
          request_hash, method, state, outcome, action_kind, at)
-       VALUES ('s-1', ?, 'live', 'user', 'u', 'k', ?, 'i-1', 'h', 'manual', 'done', 'ok', 'check_in', ?)`,
-      [kit.org.id, staff.id, Date.UTC(2026, 4, 31, 20)],
+       VALUES ('s-1', ?, 'live', ?, ?, 'user', 'u', 'k', ?, 'i-1', 'h', 'manual', 'done', 'ok', 'check_in', ?)`,
+      [kit.org.id, pass.id, tpl, staff.id, Date.UTC(2026, 4, 31, 20)],
     );
     const today = async (zone?: string) =>
       (await readStaffActivity(kit.env.DB, auth, [], now, PAGE, zone)).find(
