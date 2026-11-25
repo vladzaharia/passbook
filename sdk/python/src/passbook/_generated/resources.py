@@ -881,10 +881,24 @@ class OrgsEntitlementsResource:
         return self._core.request("GET", f"/api/v1/orgs/{_p(id)}/entitlements", result=m.OrgsEntitlementsRetrieveResult, **opts)
 
 
+class OrgsPlanResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OrgsPlanRetrieveResult:
+        """Read the organization's plan: limits with use, features and the footer rule `GET /api/v1/orgs/{id}/plan`"""
+        return self._core.request("GET", f"/api/v1/orgs/{_p(id)}/plan", result=m.OrgsPlanRetrieveResult, **opts)
+
+
 class OrgsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
         self.entitlements = OrgsEntitlementsResource(core)
+        self.plan = OrgsPlanResource(core)
 
     def retrieve_pass_setup(
         self,

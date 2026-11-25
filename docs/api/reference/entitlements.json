@@ -27,6 +27,42 @@
       }
     }
   },
+  "entitlements.getOrgsByIdPlan": {
+    "description": "The organization's plan: each limit with how much is used, the features it can use now, and the smallest PassBook footer the plan allows.",
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "premium",
+      "label": "Premium",
+      "limits": [
+        {
+          "key": "passes.live",
+          "limit": 5000,
+          "used": 3214
+        },
+        {
+          "key": "members",
+          "limit": null,
+          "used": 2
+        },
+        {
+          "key": "email.perDay",
+          "limit": 500,
+          "used": null
+        }
+      ],
+      "features": [
+        {
+          "key": "apple",
+          "level": null
+        },
+        {
+          "key": "nfc",
+          "level": "basic"
+        }
+      ],
+      "footer": "quiet"
+    }
+  },
   "entitlements.getPlatformOrgsByIdEntitlements": {
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",

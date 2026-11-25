@@ -387,6 +387,10 @@
     "resource": "orgs.entitlements",
     "method": "retrieve"
   },
+  "entitlements.getOrgsByIdPlan": {
+    "resource": "orgs.plan",
+    "method": "retrieve"
+  },
   "entitlements.getPlatformOrgsByIdEntitlements": {
     "resource": "platform.orgs.entitlements",
     "method": "retrieve"

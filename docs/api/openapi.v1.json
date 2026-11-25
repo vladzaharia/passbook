@@ -73628,6 +73628,139 @@
           "disabledAt",
           "versions"
         ]
+      },
+      "OrgsPlanRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "preset": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "api",
+                    "api.rateTier",
+                    "api.keys",
+                    "apps",
+                    "webhooks",
+                    "webhooks.endpoints",
+                    "connections",
+                    "connectors",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "print",
+                    "nfc",
+                    "scanning.devices",
+                    "join.perDay",
+                    "messages.perDay",
+                    "passes.changesPerDay",
+                    "passes.live",
+                    "passes.test",
+                    "templates",
+                    "templates.uploads",
+                    "templates.stylesBlocked",
+                    "email.perDay",
+                    "members",
+                    "brand.mark",
+                    "domains",
+                    "identity.own",
+                    "identity.managed"
+                  ]
+                },
+                "limit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "Null is no limit."
+                },
+                "used": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "key",
+                "limit",
+                "used"
+              ]
+            }
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "apple",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "print",
+                    "nfc",
+                    "api",
+                    "apps",
+                    "webhooks",
+                    "templates.uploads",
+                    "identity.own",
+                    "identity.managed"
+                  ]
+                },
+                "level": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The level, for a feature that has them."
+                }
+              },
+              "required": [
+                "key",
+                "level"
+              ]
+            }
+          },
+          "footer": {
+            "type": "string",
+            "enum": [
+              "full",
+              "quiet",
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "orgId",
+          "preset",
+          "label",
+          "limits",
+          "features",
+          "footer"
+        ]
       }
     },
     "parameters": {
@@ -80601,137 +80734,40 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
+                  "$ref": "#/components/schemas/OrgsPlanRetrieveResponse"
+                },
+                "example": {
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "preset": "premium",
+                  "label": "Premium",
+                  "limits": [
+                    {
+                      "key": "passes.live",
+                      "limit": 5000,
+                      "used": 3214
                     },
-                    "preset": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                    {
+                      "key": "members",
+                      "limit": null,
+                      "used": 2
                     },
-                    "label": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "limits": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "api",
-                              "api.rateTier",
-                              "api.keys",
-                              "apps",
-                              "webhooks",
-                              "webhooks.endpoints",
-                              "connections",
-                              "connectors",
-                              "wallet.google",
-                              "wallet.samsung",
-                              "print",
-                              "nfc",
-                              "scanning.devices",
-                              "join.perDay",
-                              "messages.perDay",
-                              "passes.changesPerDay",
-                              "passes.live",
-                              "passes.test",
-                              "templates",
-                              "templates.uploads",
-                              "templates.stylesBlocked",
-                              "email.perDay",
-                              "members",
-                              "brand.mark",
-                              "domains",
-                              "identity.own",
-                              "identity.managed"
-                            ]
-                          },
-                          "limit": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0,
-                            "description": "Null is no limit."
-                          },
-                          "used": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "limit",
-                          "used"
-                        ]
-                      }
-                    },
-                    "features": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "apple",
-                              "wallet.google",
-                              "wallet.samsung",
-                              "print",
-                              "nfc",
-                              "api",
-                              "apps",
-                              "webhooks",
-                              "templates.uploads",
-                              "identity.own",
-                              "identity.managed"
-                            ]
-                          },
-                          "level": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "The level, for a feature that has them."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "level"
-                        ]
-                      }
-                    },
-                    "footer": {
-                      "type": "string",
-                      "enum": [
-                        "full",
-                        "quiet",
-                        "none"
-                      ]
+                    {
+                      "key": "email.perDay",
+                      "limit": 500,
+                      "used": null
                     }
-                  },
-                  "required": [
-                    "orgId",
-                    "preset",
-                    "label",
-                    "limits",
-                    "features",
-                    "footer"
-                  ]
+                  ],
+                  "features": [
+                    {
+                      "key": "apple",
+                      "level": null
+                    },
+                    {
+                      "key": "nfc",
+                      "level": "basic"
+                    }
+                  ],
+                  "footer": "quiet"
                 }
               }
             }
@@ -80748,6 +80784,11 @@
           }
         },
         "operationId": "entitlements.getOrgsByIdPlan",
+        "x-sdk": {
+          "resource": "orgs.plan",
+          "method": "retrieve"
+        },
+        "description": "The organization's plan: each limit with how much is used, the features it can use now, and the smallest PassBook footer the plan allows.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",

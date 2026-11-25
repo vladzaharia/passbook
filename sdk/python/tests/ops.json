@@ -3145,6 +3145,43 @@
   }
  },
  {
+  "id": "entitlements.getOrgsByIdPlan",
+  "call": "orgs.plan.retrieve",
+  "http": "GET",
+  "path": "/api/v1/orgs/{id}/plan",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "orgId": "x",
+   "preset": "x",
+   "label": "x",
+   "limits": [
+    {
+     "key": "api",
+     "limit": 0,
+     "used": 0
+    }
+   ],
+   "features": [
+    {
+     "key": "apple",
+     "level": "x"
+    }
+   ],
+   "footer": "full"
+  }
+ },
+ {
   "id": "pass-setup.postOrgsByOrgIdBrandAssets",
   "call": "orgs.stage_brand_asset",
   "http": "POST",

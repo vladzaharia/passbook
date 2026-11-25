@@ -914,15 +914,36 @@ func (r *OrgsEntitlementsResource) Retrieve(ctx context.Context, id string, opts
 	return &out, nil
 }
 
+type OrgsPlanResource struct {
+	c *core
+}
+
+func newOrgsPlanResource(c *core) *OrgsPlanResource {
+	return &OrgsPlanResource{
+		c: c,
+	}
+}
+
+// Retrieve Read the organization's plan: limits with use, features and the footer rule `GET /api/v1/orgs/{id}/plan`
+func (r *OrgsPlanResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*OrgsPlanRetrieveResult, error) {
+	var out OrgsPlanRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/plan"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type OrgsResource struct {
 	c            *core
 	Entitlements *OrgsEntitlementsResource
+	Plan         *OrgsPlanResource
 }
 
 func newOrgsResource(c *core) *OrgsResource {
 	return &OrgsResource{
 		c:            c,
 		Entitlements: newOrgsEntitlementsResource(c),
+		Plan:         newOrgsPlanResource(c),
 	}
 }
 

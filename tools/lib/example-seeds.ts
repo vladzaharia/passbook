@@ -709,6 +709,21 @@ export const SEEDS: Record<string, unknown> = {
       { key: 'nfc', value: 0, source: 'preset' },
     ],
   },
+  'entitlements.getOrgsByIdPlan response': {
+    orgId: IDS.org,
+    preset: 'premium',
+    label: 'Premium',
+    limits: [
+      { key: 'passes.live', limit: 5000, used: 3214 },
+      { key: 'members', limit: null, used: 2 },
+      { key: 'email.perDay', limit: 500, used: null },
+    ],
+    features: [
+      { key: 'apple', level: null },
+      { key: 'nfc', level: 'basic' },
+    ],
+    footer: 'quiet',
+  },
   'pass-imports.getPassImportsMappings response': { saved: [SAVED_MAPPING] },
   'pass-imports.putPassImportsMappings request': {
     name: SAVED_MAPPING.name,
