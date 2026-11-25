@@ -102716,7 +102716,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -110426,7 +110425,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -111714,7 +111712,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -111814,7 +111811,6 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION"
         ]
       }
@@ -113346,7 +113342,6 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
@@ -150943,7 +150938,6 @@
           "TEMPLATE_RELEASE_REQUIRED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WEBHOOK_PAYLOAD",
