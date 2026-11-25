@@ -6,6 +6,7 @@ import { fidelityReport, omissionKeys, reportHash } from '../../../passkit/walle
 import { samsungPortalUrl } from '../../../passkit/wallets/samsung/index.ts';
 import type { FidelityReport, WalletPassView } from '../../../passkit/wallets/types.ts';
 import { resolveWalletView } from '../../../passkit/wallets/view.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -65,6 +66,8 @@ export async function computeProjectionPins(
   const viewOf = (planned: PlannedPass, input: Personalization) =>
     resolveWalletView({ ...planned, assets: sizeShipped(planned.assets, art) }, template.manifest, {
       now,
+      // Pins come from the immutable version alone, with no tenant settings: the default zone.
+      timeZone: DEFAULT_TIME_ZONE,
       locales: [],
       input,
       assets: template.assets.map((asset) => {

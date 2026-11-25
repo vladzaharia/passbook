@@ -16,6 +16,10 @@ export const PIN_NAMED_MISSES_PER_DEVICE_DAY = 100;
 export const PIN_NAMED_MISSES_ALERT_ORG_DAY = 300;
 const DAY = 24 * 3_600_000;
 
+/**
+ * The fixed 24-hour window the wrong-PIN counters run on. It is a rate-limit epoch, not a calendar
+ * day: an org zone would make it 23 or 25 hours twice a year and cost a zone read per attempt.
+ */
 export const dayWindowOf = (now: number) => now - (now % DAY);
 
 const lockedError = (window: number, now: number) =>

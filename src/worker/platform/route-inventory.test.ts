@@ -307,6 +307,8 @@ it('lets an email-link session reach only the holder routes, and deny every othe
   for (const route of [
     'POST /api/v1/developer/sandbox',
     'DELETE /api/v1/developer/sandbox',
+    'POST /api/v1/developer/sandbox/close',
+    'POST /api/v1/developer/sandbox/recreate',
     'POST /api/v1/developer/try-token',
     'DELETE /api/v1/developer/try-token',
     'POST /api/v1/orgs/:orgId/close',

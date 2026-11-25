@@ -27,13 +27,15 @@ export const SettingsListSchema = z.object({
   items: z.array(SettingEntrySchema),
   /** An org scope: send it back with a save; a save made from older values is a 409 SETTINGS_CHANGED. */
   configRevision: z.number().int().optional(),
-  /** Read-only: managed in Polaris ID. */
+  /** Read-only: managed in Polaris ID. Group lists hold exact names; empty means unset. */
   oidc: z.object({
     issuer: z.string(),
-    platformAdminGroup: z.string().nullable(),
-    adminGroup: z.string().nullable(),
-    developerGroup: z.string().nullable(),
-    userGroup: z.string().nullable(),
+    platformAdminGroup: z.array(z.string()),
+    adminGroup: z.array(z.string()),
+    developerGroup: z.array(z.string()),
+    userGroup: z.array(z.string()),
+    /** How many Polaris ID subjects pin platform admin; 0 means the group alone decides. */
+    platformAdminPinned: z.number().int(),
     /** Whether org console access needs the admin group. */
     consoleGroupRequired: z.boolean(),
   }),

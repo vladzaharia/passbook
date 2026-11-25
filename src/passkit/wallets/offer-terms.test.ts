@@ -47,6 +47,7 @@ async function viewFor(slug: string, over: object, original: boolean) {
   const manifest = original ? before(template.manifest) : template.manifest;
   return resolveWalletView(plan, manifest, {
     now: NOW,
+    timeZone: 'UTC',
     locales: ['en'],
     input,
     assets: template.assets,

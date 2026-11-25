@@ -13,6 +13,7 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { getTemplate } from '../templates/repo.ts';
 import { storedAdmits } from './admits.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
   listedEventValues,
   ownEventValues,
@@ -78,7 +79,10 @@ export async function setupTemplateScan(
   const planned = plan.events;
   const truncated = plan.more || own.more || listed.more;
   const eventStyle = source.own !== null || source.list !== null;
-  const timeZone = input.timeZone ?? planned.find((e) => e.timeZone)?.timeZone ?? 'UTC';
+  const timeZone =
+    input.timeZone ??
+    planned.find((e) => e.timeZone)?.timeZone ??
+    (await readOrgTimeZone(db, orgId));
   const actor = await setupActor(ctx, auth, authority, mode);
   const ensureEvent = async (e: PlannedEvent): Promise<Made | null> => {
     const found = await setupEvent(db, orgId, mode, e.key);

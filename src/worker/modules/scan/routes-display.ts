@@ -23,6 +23,7 @@ import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { previewScope } from './display-preview.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import { candidateById } from './repo-lookup.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import { previewActorStmt, previewCurrentStmt } from './repo-routes-display.ts';
 import { foundOf } from './resolve.ts';
@@ -71,7 +72,7 @@ register(
       orgId,
       event: null,
       templateIds: [templateId],
-      timeZone: 'UTC',
+      timeZone: await readOrgTimeZone(ctx.env.DB, orgId),
     });
     actor.tenantAuthority = capturedAuthority;
     actor.platformSessionId = auth.sessionId;

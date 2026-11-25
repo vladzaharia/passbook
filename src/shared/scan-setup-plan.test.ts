@@ -289,8 +289,8 @@ describe('planScanSetup derived defaults', () => {
     const own = planned({ timeZone: 'America/New_York', doors: [door()] });
     expect(own.sessions[0]?.timeZone).toBe('America/New_York');
     expect(planned({ doors: [door()] }).timeZone).toBe('Europe/Berlin');
-    const utc = planned({ doors: [door()] }, ctxOf({ orgTimeZone: null }));
-    expect(utc.timeZone).toBe('UTC');
-    expect(utc.sessions[0]?.timeZone).toBe('UTC');
+    const unset = planned({ doors: [door()] }, ctxOf({ orgTimeZone: null }));
+    expect(unset.timeZone).toBe('America/Los_Angeles');
+    expect(unset.sessions[0]?.timeZone).toBe('America/Los_Angeles');
   });
 });

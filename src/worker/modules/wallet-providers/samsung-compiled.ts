@@ -10,6 +10,7 @@ import { resolveWalletView } from '../../../passkit/wallets/view.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { previewPlan } from '../templates/build-check.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
@@ -71,12 +72,14 @@ export async function compileSamsungCard(
   const registry = createTemplateRegistry(ctx.env, { ctx });
   const template = await registry.resolve(pass.templateId, pass.templateVersion);
   const now = new Date(ctx.clock.now());
+  const zone = await readOrgTimeZone(ctx.env.DB, pass.orgId);
   const plan = previewPlan(
     ctx.env,
     template,
     template.manifest.sample,
     template.passJson.organizationName,
     now,
+    zone,
   );
   const key = `${input.candidateId}|${input.art}`;
   const art = await memoArt(key, now.getTime(), async () => {
@@ -106,6 +109,7 @@ export async function compileSamsungCard(
     template.manifest,
     {
       now,
+      timeZone: zone,
       locales: [],
       input: pass.personalization,
       ...(pass.scanCode ? { pass: { scanCode: pass.scanCode } } : {}),

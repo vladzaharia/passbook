@@ -13,7 +13,7 @@ describe('codeActivity', () => {
   it.each([
     { kind: 'out' },
     { kind: 'none', csrf: 'c', siteKey: '' },
-    { kind: 'closed', csrf: 'c' },
+    { kind: 'closed', csrf: 'c', siteKey: '' },
   ] as Session[])('makes no logs call with the session $kind', async (session) => {
     loadSession.mockResolvedValue(session);
     const fetchMock = vi.fn();

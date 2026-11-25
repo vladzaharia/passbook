@@ -246,7 +246,7 @@ describe('times with their zone', () => {
 
   it('takes the zone from the template input, else from the offset in the time', async () => {
     expect(paperZoneOf('2027-04-12T19:30:00-05:00')).toBe('-05:00');
-    expect(paperZoneOf('2027-04-12T19:30:00Z')).toBe('UTC');
+    expect(paperZoneOf('2027-04-12T19:30:00Z')).toBeUndefined();
     expect(paperZoneOf('2027-04-12T19:30:00', 'Mars/Base')).toBeUndefined();
     const { content } = await contentOf('starter-event-ticket', 'admission', {
       venueTimeZone: 'Pacific/Auckland',

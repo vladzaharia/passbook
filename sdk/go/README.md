@@ -7,8 +7,16 @@ pb, err := passbook.NewClient(os.Getenv("PASSBOOK_KEY"))
 if err != nil { ... }
 
 pass, err := pb.Passes.Create(ctx, &passbook.PassesCreateBody{
-	TemplateID: templateID,
-	Input:      map[string]any{"name": "Ada Example"},
+	TemplateID: "0193a1b2-7c00-7000-8000-0000000000b1",
+	Input: map[string]any{
+		"eventName":   "Harbor Night",
+		"venueName":   "Harbor Hall",
+		"venueRegion": "Cupertino, CA",
+		"startsAt":    "2030-06-01T19:00:00-07:00",
+		"endsAt":      "2030-06-01T22:00:00-07:00",
+		"attendee":    "Ada Example",
+		"ticketId":    "TICKET-0001",
+	},
 })
 ```
 
@@ -16,11 +24,11 @@ Resources and methods are named as in the API reference: `pb.Passes.Create`, `pb
 
 ## Test mode
 
-A `pb_test_` key only sees test data, and sandboxes never issue real passes. `pb.Mode` is `"live"`, `"test"` or empty.
+A `pbp_test_` key only sees test data, and sandboxes never issue real passes. `pb.Mode` is `"live"`, `"test"` or empty.
 
 ## Options
 
-`NewClient(key, WithBaseURL(u), WithHTTPClient(h), WithMaxRetries(n), WithTimeout(d), WithRetryDelay(d))`. Per call: `WithIdempotencyKey`, `WithHeader`, `WithCallMaxRetries`, `WithCallTimeout`.
+`NewClient(key, WithBaseURL(u), WithHTTPClient(h), WithMaxRetries(n), WithTimeout(d), WithRetryDelay(d), WithAPIVersion(v))`. `WithAPIVersion` sets `PassBook-Version`; default: the newest version this SDK was generated against. Per call: `WithIdempotencyKey`, `WithHeader`, `WithCallMaxRetries`, `WithCallTimeout`.
 
 ## Idempotency and retries
 

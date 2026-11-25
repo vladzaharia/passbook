@@ -23,9 +23,9 @@ export const SCAN_BUDGET_BYTES = 140_000;
 export const DEV_BUDGET_BYTES = 60_000;
 /**
  * The Try it island, everything its loader pulls (React, the console, its stylesheet), in gzip
- * bytes: 88.3 kB measured. It loads only for a signed-in visitor, so it sits outside the 60 kB.
+ * bytes: 96.3 kB measured (W35: Try it fill, sandbox run). It loads only for a signed-in visitor, so it sits outside the 60 kB.
  */
-export const DEV_ISLAND_BUDGET_BYTES = 95_000;
+export const DEV_ISLAND_BUDGET_BYTES = 98_000;
 /**
  * The ⌘K search island (palette, kit dialog, cmdk, React): loads on the first ⌘K or click of the
  * search button, so it sits outside the 60 kB: 130 kB measured, of which React and Radix are 90 kB
@@ -70,9 +70,9 @@ export const PLAYGROUND_BUDGET_BYTES = 215_000;
 
 /**
  * The quickstart island, on top of the portal's initial load: React, the steps, and the playground's card renderers
- * and compilers' loader (the barcode encoder and the wallet compilers stay lazy). Signed-in visitors only. 183 kB measured.
+ * and compilers' loader (the barcode encoder and the wallet compilers stay lazy). Signed-in visitors only. 197 kB measured: the cards carry FacePair and FitBox (Front / Back, whole paper); W35 first-run steps add to it.
  */
-export const QUICKSTART_BUDGET_BYTES = 195_000;
+export const QUICKSTART_BUDGET_BYTES = 198_000;
 
 export function initialAssets(html: string, stylesheets = false): string[] {
   const urls = [

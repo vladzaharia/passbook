@@ -4,6 +4,7 @@ import {
   type OrgInvitation,
   type OrgMember,
   type OrgMembership,
+  type OrgRole,
 } from '../../../shared/contracts/org-membership.ts';
 import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
@@ -15,6 +16,7 @@ import {
   AppError,
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   UnavailableError,
   ValidationError,
 } from '../../platform/errors.ts';
@@ -39,18 +41,18 @@ import {
 import * as repo from './repo-members.ts';
 import { isPersonalOrg } from './repo-personal.ts';
 
-const TTL = 7 * 24 * 60 * 60 * 1000;
+export const INVITATION_TTL = 7 * 24 * 60 * 60 * 1000;
 const invalidLink = () =>
   new BadRequestError('This invitation is invalid or expired.', 'INVITATION_INVALID');
-const changed = () =>
+export const changed = () =>
   new ConflictError('The request could not be completed.', 'MEMBERSHIP_CONFLICT');
 /** A personal org has one member, its owner: nobody is invited and the owner is never revoked. */
-async function assertNotPersonal(ctx: ServiceContext, orgId: string): Promise<void> {
+export async function assertNotPersonal(ctx: ServiceContext, orgId: string): Promise<void> {
   if (await isPersonalOrg(ctx.env.DB, orgId))
     throw new ConflictError(PERSONAL_ORG_COPY.singleMember, 'ORG_PERSONAL_SINGLE_MEMBER');
 }
 /** Platform-admin bypass, re-verified against the live admin session inside each statement. */
-const adminFenceOf = (ctx: ServiceContext, auth: SessionAuth): repo.AdminFence =>
+export const adminFenceOf = (ctx: ServiceContext, auth: SessionAuth): repo.AdminFence =>
   auth.roles.includes('admin')
     ? {
         sql: `1 AND ${platformAdminSessionSql}`,
@@ -63,7 +65,7 @@ const adminFenceOf = (ctx: ServiceContext, auth: SessionAuth): repo.AdminFence =
  * The grant re-checks the principal inside the write; the capability is re-derived from the membership's
  * own roles.
  */
-async function managerOf(
+export async function managerOf(
   ctx: ServiceContext,
   auth: SessionAuth,
   orgId: string,
@@ -83,6 +85,20 @@ async function managerOf(
     },
     checks: [membershipCapability(membership.id, 'members:manage')],
   };
+}
+/** Whether the caller manages the org; anything but a refusal still throws. */
+export async function isOrgManager(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  orgId: string,
+): Promise<boolean> {
+  try {
+    await managerOf(ctx, auth, orgId);
+    return true;
+  } catch (error) {
+    if (error instanceof ForbiddenError) return false;
+    throw error;
+  }
 }
 async function requireOrgManager(ctx: ServiceContext, auth: SessionAuth, orgId: string) {
   await managerOf(ctx, auth, orgId);
@@ -119,6 +135,55 @@ export async function listOrgInvitations(
     invitationDto,
   );
 }
+/** Mails the accept link; when the mail cannot go, the invitation is revoked again and the request fails. */
+export async function deliverInvitation(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  manager: { principal: Principal; checks: Check[] },
+  orgId: string,
+  id: string,
+  email: string,
+  roles: OrgRole[],
+  token: string,
+): Promise<void> {
+  const accept = `/api/v1/orgs/invitations/accept#${token}`;
+  const acceptLink = `${baseUrl(ctx.env)}${accept}`;
+  const org = await repo.orgName(ctx.env.DB, orgId);
+  await assertNotPreviewOnly(ctx.env.DB, orgId);
+  try {
+    await createEmailBindingMailer(ctx.env).send({
+      to: email,
+      ...invitationEmail({
+        orgName: org?.name ?? 'an organization',
+        roles: roles,
+        inviter: await repo.userName(ctx.env.DB, auth.userId),
+        link: acceptLink,
+        base: baseUrl(ctx.env),
+      }),
+    });
+  } catch {
+    // Provider errors can contain message content, including the secret link, so none is logged.
+    ctx.log.error('org_invitation.send_failed', { orgId, code: 'INVITATION_SEND_FAILED' });
+    try {
+      // Same manager grant as the invite: a revoked manager cannot clean up, and the failure is logged.
+      await revokePendingInvitation(ctx, manager.principal, manager.checks, id, {
+        orgId,
+        actorType: 'user',
+        actorId: auth.userId,
+        action: 'org_invitation.revoke',
+        targetType: 'org_invitation',
+        targetId: id,
+      });
+    } catch (error) {
+      ctx.log.error('org_invitation.compensation_failed', {
+        orgId,
+        code: 'INVITATION_COMPENSATION_FAILED',
+        error,
+      });
+    }
+    throw new UnavailableError('Unable to deliver the invitation.');
+  }
+}
 export async function inviteOrgMember(
   ctx: ServiceContext,
   auth: SessionAuth,
@@ -140,7 +205,7 @@ export async function inviteOrgMember(
     roles: JSON.stringify(parsed.data.roles),
     hash: await sha256Hex(token),
     now,
-    expires: now + TTL,
+    expires: now + INVITATION_TTL,
   };
   await insertInvitation(ctx, manager.principal, [...manager.checks, membersLimit(now)], row, {
     orgId,
@@ -150,43 +215,7 @@ export async function inviteOrgMember(
     targetType: 'org_invitation',
     targetId: row.id,
   });
-  const accept = `/api/v1/orgs/invitations/accept#${token}`;
-  const acceptLink = `${baseUrl(ctx.env)}${accept}`;
-  const org = await repo.orgName(ctx.env.DB, orgId);
-  await assertNotPreviewOnly(ctx.env.DB, orgId);
-  try {
-    await createEmailBindingMailer(ctx.env).send({
-      to: row.email,
-      ...invitationEmail({
-        orgName: org?.name ?? 'an organization',
-        roles: parsed.data.roles,
-        inviter: await repo.userName(ctx.env.DB, auth.userId),
-        link: acceptLink,
-        base: baseUrl(ctx.env),
-      }),
-    });
-  } catch {
-    // Provider errors can contain message content, including the secret link, so none is logged.
-    ctx.log.error('org_invitation.send_failed', { orgId, code: 'INVITATION_SEND_FAILED' });
-    try {
-      // Same manager grant as the invite: a revoked manager cannot clean up, and the failure is logged.
-      await revokePendingInvitation(ctx, manager.principal, manager.checks, row.id, {
-        orgId,
-        actorType: 'user',
-        actorId: auth.userId,
-        action: 'org_invitation.revoke',
-        targetType: 'org_invitation',
-        targetId: row.id,
-      });
-    } catch (error) {
-      ctx.log.error('org_invitation.compensation_failed', {
-        orgId,
-        code: 'INVITATION_COMPENSATION_FAILED',
-        error,
-      });
-    }
-    throw new UnavailableError('Unable to deliver the invitation.');
-  }
+  await deliverInvitation(ctx, auth, manager, orgId, row.id, row.email, parsed.data.roles, token);
   return {
     id: row.id,
     orgId,

@@ -36,6 +36,7 @@ export async function viewOf(
   ) as TemplateManifest;
   return resolveWalletView(plan, manifest, {
     now: NOW,
+    timeZone: 'UTC',
     locales: ['en'],
     input: template.manifest.sample,
     assets: template.assets,

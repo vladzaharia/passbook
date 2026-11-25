@@ -475,6 +475,11 @@
     "name": "admin-retention"
   },
   {
+    "role": "org",
+    "path": "/admin/o/{orgId}/plan",
+    "name": "admin-plan"
+  },
+  {
     "role": "platform",
     "path": "/admin/platform/retention",
     "name": "admin-platform-retention"

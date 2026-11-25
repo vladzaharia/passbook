@@ -50,7 +50,7 @@ describe('wallet rows', () => {
       enrolment('samsung', 'absent', { state: 'enabled' }),
     ]);
     const { container } = mountPanel();
-    await screen.findByRole('heading', { name: 'Releases' });
+    await screen.findByRole('heading', { name: 'Versions' });
     await waitFor(() => expect(screen.queryByText('Checking.')).toBeNull());
     expect(screen.queryByRole('list', { name: 'Wallets' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Review (Google|Samsung)/ })).toBeNull();

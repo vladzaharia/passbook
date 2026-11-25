@@ -167,11 +167,13 @@ export function Stage({ q, fix }: { q: Quickstart; fix: Fix | null }) {
               className="qs-seg"
             />
             <div className="qs-pane" data-channel={channel}>
-              {channel === 'apple' ? <ApplePane source={source} face="front" /> : null}
+              {channel === 'apple' ? <ApplePane source={source} /> : null}
               {channel === 'google' || channel === 'samsung' ? (
-                <WalletPane target={channel} previews={wallets} face="front" />
+                <WalletPane target={channel} previews={wallets} />
               ) : null}
-              {channel === 'paper' ? <PaperPane source={source} image={undefined} /> : null}
+              {channel === 'paper' ? (
+                <PaperPane source={source} image={undefined} maxHeight={480} />
+              ) : null}
             </div>
           </>
         ) : (

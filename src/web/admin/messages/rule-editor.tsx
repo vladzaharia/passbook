@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import type { MessageRuleDto } from '@/shared/contracts/message-rules.ts';
 import { RULE_COPY } from '@/shared/copy/message-rules.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
+import { useSeededZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { useDebounced } from '../../lib/debounce.ts';
 import { useOrgOptions } from '../../lib/search.ts';
-import { localZone } from '../../lib/timezones.ts';
 import { Button, Callout, toast, useWizard, WizardDialog } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
 import { useTemplateDetails } from './audience.tsx';
@@ -37,10 +38,13 @@ export function RuleEditor({
   const [stale, setStale] = useState(false);
   const rules = useRules(orgId);
   const initial = useMemo(
-    () => (rule ? stateOfRule(rule) : { ...INITIAL_RULE, timeZone: localZone() }),
+    () => (rule ? stateOfRule(rule) : { ...INITIAL_RULE, timeZone: DEFAULT_TIME_ZONE }),
     [rule],
   );
   const [state, setState] = useState<RuleState>(initial);
+  useSeededZone(rule ? undefined : orgId, (from, to) =>
+    setState((s) => (s.timeZone === from ? { ...s, timeZone: to } : s)),
+  );
   const org = useOrgOptions().data?.items.find((o) => o.id === orgId);
   const templates = useTemplates({ orgId });
   const usable = useMemo(

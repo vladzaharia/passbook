@@ -68,7 +68,7 @@ beforeEach(() => {
 
 describe('RunApp with a sandbox', () => {
   it('says a closed sandbox is read-only', () => {
-    render(<RunApp session={{ kind: 'closed', csrf: 'c' }} mode="op" />);
+    render(<RunApp session={{ kind: 'closed', csrf: 'c', siteKey: '' }} mode="op" />);
     expect(screen.getByText('Your sandbox is closed')).toBeInTheDocument();
   });
 

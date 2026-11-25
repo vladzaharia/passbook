@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { PassJson } from '@/passkit/types.ts';
-import { normalize } from '@/shared/pass-view/index.ts';
+import { normalize, type PassView } from '@/shared/pass-view/index.ts';
+import { FacePair } from '../../../channel-previews/face-pair.tsx';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import { PassCardStage } from '../../../pass-card/index.tsx';
-import { Badge, LoadingRail, type PassSide, PassSideToggle, Skeleton } from '../../../ui/index.ts';
+import { Badge, LoadingRail, Skeleton } from '../../../ui/index.ts';
 import { previewAssetMap } from './images.ts';
 import { allKeys, type DraftAsset } from './model.ts';
 
@@ -39,7 +40,20 @@ function usePartDrop(passJson: Record<string, unknown> | null | undefined) {
   return host;
 }
 
-/** The live card with its Front / Details flip, drawn from the dry run's pass and the draft's files. */
+function DesignerFace({ view, face }: { view: PassView; face: 'front' | 'back' }) {
+  return (
+    <PassCardStage
+      view={view}
+      face={face}
+      target="ios27"
+      tilt
+      glow
+      className="mx-auto w-full max-w-xs"
+    />
+  );
+}
+
+/** The live card, front and back (FacePair), drawn from the dry run's pass and the draft's files. */
 export function DesignerPreview({
   passJson,
   assets,
@@ -57,7 +71,6 @@ export function DesignerPreview({
   /** File name to URL: the organization's logo and icon, where they apply. */
   assetOverrides?: Record<string, string> | undefined;
 }) {
-  const [face, setFace] = useState<PassSide>('front');
   const host = usePartDrop(passJson);
   const view = useMemo(() => {
     if (!passJson) return null;
@@ -78,14 +91,9 @@ export function DesignerPreview({
       <div ref={host} className="relative w-full">
         <LoadingRail show={checking} />
         {view ? (
-          <PassCardStage
-            view={view}
-            face={face}
-            target="ios27"
-            flippable
-            tilt
-            glow
-            className="mx-auto w-full max-w-xs"
+          <FacePair
+            front={<DesignerFace view={view} face="front" />}
+            back={<DesignerFace view={view} face="back" />}
           />
         ) : passJson ? (
           <p role="alert" className="text-sm text-danger">
@@ -95,14 +103,11 @@ export function DesignerPreview({
           <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
         )}
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <PassSideToggle value={face} onChange={setFace} />
-        {view?.layouts.ios27.approximate ? (
-          <Badge tone="neutral" title="Wallet lays this style out from its semantics.">
-            Approximate
-          </Badge>
-        ) : null}
-      </div>
+      {view?.layouts.ios27.approximate ? (
+        <Badge tone="neutral" title="Wallet lays this style out from its semantics.">
+          Approximate
+        </Badge>
+      ) : null}
     </div>
   );
 }

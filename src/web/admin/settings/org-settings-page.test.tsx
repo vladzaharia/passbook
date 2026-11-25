@@ -144,10 +144,13 @@ describe('org settings inheritance', () => {
 describe('org time zone', () => {
   it('suggests the browser zone but saves nothing until it is picked and saved', async () => {
     const puts: unknown[] = [];
-    await setup({ 'org.timeZone': { value: null } }, (put) => puts.push(put));
+    await setup(
+      { 'org.timeZone': { value: 'America/Los_Angeles', default: 'America/Los_Angeles' } },
+      (put) => puts.push(put),
+    );
     const user = userEvent.setup();
     const picker = await screen.findByRole('combobox', { name: /Time zone/ });
-    expect(picker).toHaveTextContent('Not set (UTC)');
+    expect(picker).toHaveTextContent('Pacific Time (Seattle) · default');
     expect(puts).toEqual([]);
     await user.click(screen.getByRole('button', { name: `Use ${localZone()}` }));
     expect(screen.queryByRole('button', { name: `Use ${localZone()}` })).toBeNull();
@@ -171,7 +174,9 @@ describe('org time zone', () => {
       expect(puts[0]).toEqual({ scope: 'org:o1', values: { 'org.timeZone': 'Europe/Berlin' } }),
     );
     await user.click(screen.getByRole('combobox', { name: /Time zone/ }));
-    await user.click(await screen.findByRole('option', { name: 'Not set (UTC)' }));
+    await user.click(
+      await screen.findByRole('option', { name: 'Pacific Time (Seattle) · default' }),
+    );
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>
       expect(puts[1]).toEqual({ scope: 'org:o1', values: { 'org.timeZone': null } }),

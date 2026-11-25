@@ -21,6 +21,7 @@ import {
   withKeyset,
 } from './history-row-evidence.ts';
 import type { ScanLogFilter } from './repo-feed.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { recordedRoleProjected } from './scan-event-proof-recorded.ts';
 
 export type ConsoleAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
@@ -117,7 +118,7 @@ export async function consoleFeedActor(
     orgId: authority.orgId,
     event: null,
     templateIds: [],
-    timeZone: 'UTC',
+    timeZone: await readOrgTimeZone(ctx.env.DB, authority.orgId),
   });
   actor.tenantAuthority = await captureScanTenantAuthority(ctx, session, authority);
   actor.platformSessionId = session.sessionId;

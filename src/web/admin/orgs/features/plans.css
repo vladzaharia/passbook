@@ -1,6 +1,6 @@
 /*
- * Plan cards (plan-tile.tsx). Only transform and opacity animate. A pick replays the plan's icon once,
- * by a React key, never on load. Reduced motion drops the verbs; the ring and the fades stay.
+ * Plan tiles (plan-tile.tsx, plan-picker.tsx). Only transform and opacity animate. A pick replays the plan's
+ * icon once, by a React key, never on load. Reduced motion drops the verbs and the lift; the ring stays.
  */
 .plan-ring {
   position: absolute;
@@ -14,6 +14,29 @@
 }
 .plan-ring[data-on] {
   opacity: 1;
+}
+
+/* A wrapping grid: as many equal tiles per row as fit, never fewer than 13rem wide. */
+.plan-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+.plan-row > .plan-tile {
+  min-width: 0;
+}
+
+.plan-face {
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: var(--wl-dur-hover);
+  transition-timing-function: var(--wl-ease-move);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .plan-face:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--wl-glow-accent);
+  }
 }
 
 @keyframes plan-turn {

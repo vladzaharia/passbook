@@ -42,8 +42,8 @@ async function shoot(page: Page, url: string, name: string, ready: () => Promise
       await page.setViewportSize({ width, height });
       await gotoRollout(page, url);
       await ready();
-      // The Releases panel shows a loading skeleton first: shoot once it has painted.
-      await expect(page.getByRole('list', { name: 'Releases' })).toBeVisible();
+      // The Versions list shows a loading skeleton first: shoot once it has painted.
+      await expect(page.getByRole('list', { name: 'Versions' })).toBeVisible();
       await page.screenshot({
         path: `${SHOTS}/${name}-${width}-${colorScheme}.png`,
         fullPage: true,

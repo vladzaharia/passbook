@@ -14,8 +14,6 @@ export const PREVIEW_LABEL: Record<PreviewChannel, string> = {
 /** `{wallet}` is "Google Wallet" or "Samsung Wallet". */
 export const PREVIEW_COPY = {
   switcher: 'Channel',
-  badge: 'Preview',
-  approximate: '{wallet} draws the real card.',
   notShown: 'Not shown',
   different: 'Shown differently',
   allShown: 'Everything shows.',
@@ -25,7 +23,6 @@ export const PREVIEW_COPY = {
   loading: 'Loading preview',
   failed: 'This preview cannot be built. See the issues.',
   sampleValues: 'Sample values. Each pass shows its own.',
-  mobileLine: 'The page a holder opens on their phone.',
   mobileFrame: 'Mobile ticket preview',
   allPreviews: 'All previews',
   off: 'Off',

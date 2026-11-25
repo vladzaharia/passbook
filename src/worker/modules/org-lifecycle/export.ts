@@ -1,4 +1,6 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
+import { derivedHmacKey } from '../../platform/crypto.ts';
+import { toHex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { exportRunning } from './repo.ts';
 import { EXPORT_ENTITIES, type ExportEntity, exportPage } from './repo-export.ts';
@@ -162,4 +164,19 @@ export async function dropParts(ctx: ServiceContext, orgId: string, id: string):
   const objects = await listAll(bucket, partsPrefix(orgId, id));
   for (let i = 0; i < objects.length; i += 500)
     await bucket.delete(objects.slice(i, i + 500).map((o) => o.key));
+}
+
+export async function linkMac(
+  env: object,
+  orgId: string,
+  exportId: string,
+  exp: number,
+): Promise<string> {
+  const key = await derivedHmacKey(env, 'org-export-link.v1');
+  const mac = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(`${orgId}|${exportId}|${exp}`),
+  );
+  return toHex(new Uint8Array(mac));
 }

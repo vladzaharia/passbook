@@ -101,7 +101,7 @@ export const SCAN_OK = {
     passId: IDS.pass,
     version: 1,
     mode: 'live',
-    title: 'Day pass',
+    title: 'Friday Night Bouldering',
     subtitle: 'Ada Example',
     template: { id: IDS.template, name: TEMPLATE.name, style: 'generic' },
     status: 'active',
@@ -595,7 +595,11 @@ export const ROLLOUT = {
   updating: [{ version: '3', count: 5 }],
   failedCount: 2,
   failed: [
-    { passId: uuid('pass-grace'), title: 'Day pass', reason: 'The pass changed. Retry.' },
+    {
+      passId: uuid('pass-grace'),
+      title: 'Friday Night Bouldering',
+      reason: 'The pass changed. Retry.',
+    },
     {
       passId: uuid('pass-alan'),
       title: 'Ten-visit card',

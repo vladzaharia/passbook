@@ -1,6 +1,6 @@
 import { runOp } from '../console/run-spec.ts';
 import { buildChangelog } from './changelog.ts';
-import { errorStatuses } from './error-status.ts';
+import { errorStatuses, errorStatusLabels } from './error-status.ts';
 import { minimalExample } from './example.ts';
 import { GROUP_ORDER, groupOf, labelOf, slugOf } from './resources.ts';
 import { bodyFields, paramFields, refName, resolve } from './schema.ts';
@@ -60,6 +60,7 @@ function errorRows(
   op: RawOp,
   status: Map<string, number>,
   guide: Record<string, Dict>,
+  labels: Map<string, string>,
 ): ErrorRow[] {
   const raw = op['x-codes'];
   if (!Array.isArray(raw)) return [];
@@ -71,6 +72,7 @@ function errorRows(
       {
         code: e.code,
         status: typeof e.status === 'number' ? e.status : (status.get(e.code) ?? null),
+        statusText: typeof e.status === 'number' ? undefined : labels.get(e.code),
         fix: typeof fix === 'string' ? fix : '',
       },
     ];
@@ -178,7 +180,7 @@ function view(
           example: returnsExample,
         }
       : null,
-    errors: errorRows(op, status, inputs.guide ?? {}),
+    errors: errorRows(op, status, inputs.guide ?? {}, errorStatusLabels(inputs.errors)),
     deprecated: op.deprecated === true,
     sub,
     changedIn: changed.get(op.operationId) ?? null,
@@ -302,12 +304,14 @@ function errorEntries(
           ...(used.get(e.code) ?? []),
           { slug: p.slug, anchor: op.anchor, title: op.title },
         ]);
+  const labels = errorStatusLabels(inputs.errors);
   const codes = new Set([...used.keys(), ...status.keys()]);
   return [...codes].sort().map((code) => {
     const g = inputs.guide?.[code] ?? {};
     return {
       code,
       status: status.get(code) ?? null,
+      statusText: labels.get(code),
       title: typeof g.title === 'string' ? g.title : code,
       when: typeof g.when === 'string' ? g.when : '',
       fix: typeof g.fix === 'string' ? g.fix : '',

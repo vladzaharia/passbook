@@ -1,4 +1,4 @@
-import { CircleCheck, type LucideIcon, Pause, RotateCcw, Unlock } from 'lucide-react';
+import { CircleCheck, type LucideIcon, Pause, RotateCcw, Trash2, Unlock } from 'lucide-react';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -9,6 +9,7 @@ export const DEVELOPER_ACTIONS = {
   'status.incident.open': a('Incident note opened', Pause, 'warning'),
   'status.incident.resolve': a('Incident note resolved', CircleCheck, 'success'),
   'developer_sandbox.close': a('Developer sandbox closed', Pause, 'warning'),
+  'developer_sandbox.delete': a('Developer sandbox deleted', Trash2, 'danger'),
   'developer_sandbox.create': a('Developer sandbox made', ENTITY.org.icon, 'success'),
   'developer_sandbox.reopen': a('Developer sandbox reopened', Unlock, 'success'),
   'developer_sandbox.reset': a('Developer sandbox reset', RotateCcw, 'warning'),

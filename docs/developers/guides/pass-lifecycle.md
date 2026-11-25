@@ -5,7 +5,7 @@ line: Void, remove, delete
 status: ready
 ops: passes.deletePassesById
 ---
-A pass is Active, Voided, Removed or Deleted. Three calls end it and several change it without ending it. Their names overlap; this page says which does what. Run each on a pass from your sandbox: nothing here reaches a phone.
+A pass is Active, Voided, Removed or Deleted. Three calls end it and several change it without ending it. Their names overlap; this page says which does what. Run each on a pass from your sandbox, such as the one from [issue on purchase](/developers/guides/issue-on-purchase): set `PASS_ID` to its `id`. Nothing here reaches a phone.
 
 {{diagram lifecycle}}
 
@@ -19,6 +19,17 @@ A pass is Active, Voided, Removed or Deleted. Three calls end it and several cha
 
 Pick `void` to pause a pass, `remove` to take it out of a wallet and keep the record, `DELETE` only when the record itself must go. Void a pass before you delete it if its holder should see why.
 
+Read the state from the pass:
+
+| State | `status` | `removedAt` |
+| --- | --- | --- |
+| Active | `active` | `null` |
+| Voided | `voided` | `null` |
+| Removed | `voided` | a timestamp |
+| Deleted | `404` [PASS_NOT_FOUND](/developers/errors/PASS_NOT_FOUND) | none |
+
+A removed pass is also `voided`: `removedAt` tells the two apart. Voiding a removed pass is `409` [PASS_REMOVED](/developers/errors/PASS_REMOVED); restore it first.
+
 ## Changing a pass that stays Active
 
 | Call | What changes | Old value |
@@ -30,21 +41,25 @@ Pick `void` to pause a pass, `remove` to take it out of a wallet and keep the re
 | `rotate-link` | The download and public links. The pass itself is unchanged. | Stops working. |
 | `bulk-reissue` | Rebuilds every pass of a template. | Replaced. |
 
-Email has two names for two things: `resend-email` sends a pass's email, `send-email` sends a bundle's.
-
 ## Void and undo
 
 {{run void-pass}}
 
+The pass answers with `status: "voided"`.
+
 {{run unvoid-pass}}
 
-The pass answers with `status: "voided"`, then `"active"`. Paste the pass `id` into the path.
+It is `"active"` again.
 
 ## Remove and restore
 
 {{run remove-pass}}
 
-Undo it with [restore](console:passes.postPassesByIdRestore).
+The pass answers with `status: "voided"` and `removedAt` set. It is in the list `GET /passes?status=removed`.
+
+{{run restore-pass}}
+
+`removedAt` is `null` and `status` is `"active"`.
 
 ## Replace the links
 
@@ -52,6 +67,14 @@ Undo it with [restore](console:passes.postPassesByIdRestore).
 
 The old `downloadUrl` and `publicUrl` stop working; the new ones are in the answer.
 
+## Delete
+
+Do this last: the pass and its id are gone.
+
+{{run delete-pass}}
+
+The answer is `200`. Reading the pass is now `404 PASS_NOT_FOUND`.
+
 ## Result
 
-After each call, open the pass's `downloadUrl`. The preview page shows the state: void, removed or normal. A deleted pass has no page.
+After each call, read the pass: `status` and `removedAt` match the state table. The `downloadUrl` preview page shows the state: void, removed or normal. A deleted pass has no page.

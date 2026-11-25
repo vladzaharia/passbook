@@ -1,5 +1,6 @@
 import { RULE_COPY, ruleSummary } from '@/shared/copy/message-rules.ts';
-import { localZone, zoneOptions } from '../../lib/timezones.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
+import { zoneOptions } from '../../lib/timezones.ts';
 import {
   Combobox,
   DependentSettings,
@@ -148,7 +149,7 @@ export function RuleWhen({
                 id={c.id}
                 searchPlaceholder="Find a city"
                 options={zoneOptions()}
-                value={state.timeZone || localZone()}
+                value={state.timeZone || DEFAULT_TIME_ZONE}
                 onValueChange={(timeZone) => onChange({ timeZone })}
               />
             )}

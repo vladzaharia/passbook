@@ -1,40 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LOGS_COPY, RAIL_COPY } from '../../../shared/copy/developers-ops.ts';
+import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
 import { fill, getJson, h } from './dom.ts';
 import { logsIsland, railIsland } from './entry.ts';
-import { clock, count, flavour, prettyBody } from './format.ts';
-import { mountLogs } from './island.ts';
 import { builderLink, loadOps } from './ops.ts';
-import { mountRail } from './rail.ts';
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+import { entry, expand, json, open, page, rowsOf } from './test-support.ts';
 
 afterEach(() => {
   document.body.innerHTML = '';
   vi.unstubAllGlobals();
   vi.useRealTimers();
-});
-
-describe('log formatting', () => {
-  it('shows the time today and the date before', () => {
-    const now = new Date(2026, 10, 20, 15, 0, 0).getTime();
-    expect(clock(new Date(2026, 10, 20, 9, 5, 7).getTime(), now)).toBe('09:05:07');
-    expect(clock(new Date(2026, 10, 19, 14, 2, 11).getTime(), now)).toBe('Nov 19 14:02');
-  });
-
-  it('groups thousands and tones a status', () => {
-    expect(count(0)).toBe('0');
-    expect(count(1234567)).toBe('1,234,567');
-    expect([200, 302, 404, 503].map(flavour)).toEqual(['success', 'info', 'warning', 'danger']);
-  });
-
-  it('indents JSON bodies, keeps a marker as it is, and has nothing for none', () => {
-    expect(prettyBody('{"a":1}')).toBe('{\n  "a": 1\n}');
-    expect(prettyBody('[binary body]')).toBe('[binary body]');
-    expect(prettyBody(null)).toBeNull();
-    expect(prettyBody('')).toBeNull();
-  });
 });
 
 describe('dom helpers', () => {
@@ -70,7 +44,7 @@ describe('dom helpers', () => {
 });
 
 describe('the operation index', () => {
-  it('links a logged route to the builder, in the document spelling', () => {
+  it('links a logged route to the console, in the document spelling', () => {
     const index = { 'GET /api/v1/passes/{id}': 'passes.getPassesById' };
     expect(builderLink(index, 'GET', '/api/v1/passes/:id')).toBe(
       '/developers/console#passes.getPassesById',
@@ -97,7 +71,7 @@ describe('the operation index', () => {
     expect(await loadOps()).toEqual({});
   });
 
-  it('the islands mount the list and the rail', async () => {
+  it('the islands leave a signed-out page as it was', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => json({}, 401)),
@@ -109,94 +83,11 @@ describe('the operation index', () => {
   });
 });
 
-describe('the api rail', () => {
-  const rail = {
-    mode: 'test',
-    scopes: ['passes:read', 'passes:write'],
-    tier: 'standard',
-    limitPerMinute: 1200,
-    callsLastHour: 3456,
-    key: { id: 'k1', name: 'Sandbox key', prefix: 'pbk_ab12' },
-  };
-  const mount = async (res: Response) => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => res),
-    );
-    const el = h('aside', {}, 'placeholder');
-    await mountRail(el);
-    return el;
-  };
-
-  it('keeps the placeholder when signed out, and says there is no sandbox on a 404', async () => {
-    expect((await mount(json({}, 401))).textContent).toBe('placeholder');
-    expect((await mount(json({}, 404))).textContent).toBe(
-      `${RAIL_COPY.title}${RAIL_COPY.noSandbox}`,
-    );
+describe('the request log rows', () => {
+  it('reads Yours by default: your key’s calls, not the portal’s own reads', async () => {
+    const { calls } = await open([page([entry(1)])]);
+    expect(calls[0]).toContain('source=key');
   });
-
-  it('says it failed on any other error', async () => {
-    const el = await mount(json({}, 500));
-    expect(el.querySelector('h3')).not.toBeNull();
-    expect(el.textContent).not.toBe('placeholder');
-  });
-
-  it('shows the key, mode, scopes, tier and calls', async () => {
-    const el = await mount(json(rail));
-    expect(el.textContent).toContain('Sandbox key · pbk_ab12');
-    expect(el.querySelector('.pill')?.textContent).toBe('Test');
-    expect([...el.querySelectorAll('.chip')].map((c) => c.textContent)).toEqual(rail.scopes);
-    expect(el.textContent).toContain('standard · 1,200');
-    expect(el.querySelector('strong')?.textContent).toBe('3,456');
-  });
-
-  it('says there is no key, and marks a live key', async () => {
-    const el = await mount(json({ ...rail, mode: 'live', key: null }));
-    expect(el.querySelector('code')).toBeNull();
-    expect(el.querySelector('.pill')?.textContent).toBe('Live');
-  });
-});
-
-describe('the request log', () => {
-  const entry = (n: number, over: Record<string, unknown> = {}) => ({
-    id: `log-${n}`,
-    requestId: `req-${n}`,
-    at: Date.now() - n * 1000,
-    method: 'POST',
-    route: '/api/v1/passes/:id',
-    path: '/api/v1/passes/p1',
-    query: 'a=1',
-    status: 201,
-    code: null,
-    durationMs: 12,
-    keyId: 'key-12345678-xyz',
-    mode: 'test',
-    via: 'try',
-    hasBodies: true,
-    ...over,
-  });
-  const page = (items: unknown[], extra: Record<string, unknown> = {}) =>
-    json({ items, nextCursor: null, capped: null, ...extra });
-
-  /** A fetch that answers by path; list answers are consumed in order. */
-  function api(lists: Response[], detail?: Response) {
-    const calls: string[] = [];
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string) => {
-        calls.push(url);
-        if (/logs\/log-/.test(url)) return detail ?? json({}, 500);
-        return lists.shift() ?? page([]);
-      }),
-    );
-    return calls;
-  }
-  const open = async (lists: Response[], detail?: Response) => {
-    const calls = api(lists, detail);
-    const el = h('div', {}, 'prerendered');
-    await mountLogs(el, Promise.resolve({ 'POST /api/v1/passes/{id}': 'passes.postPassesById' }));
-    return { el, calls };
-  };
 
   it('stays as prerendered when signed out, and offers the quickstart without a sandbox', async () => {
     const out = await open([json({}, 401)]);
@@ -208,113 +99,149 @@ describe('the request log', () => {
     expect(failed.el.textContent).toContain(LOGS_COPY.notLoaded);
   });
 
-  it('lists the calls with method, path, status and time', async () => {
+  it('puts one call on one line: time, method, the path cut in the middle, code, status and duration', async () => {
+    const long = '/api/v1/webhook-endpoints/01a21159-de5d-7fd9-91ff-508b01a4310d/captures';
     const { el } = await open([
-      page([entry(1), entry(2, { method: 'DELETE', status: 404, code: 'NOT_FOUND', query: null })]),
+      page([
+        entry(1),
+        entry(2, { method: 'DELETE', status: 404, code: 'NOT_FOUND', query: null }),
+        entry(3, { method: 'GET', path: long, query: 'limit=50', status: 503, durationMs: 2400 }),
+      ]),
     ]);
-    const rows = el.querySelectorAll('.logs-row');
-    expect(rows).toHaveLength(2);
+    const rows = rowsOf(el);
+    expect(rows).toHaveLength(3);
     expect(rows[0]?.querySelector('.logs-path')?.textContent).toBe('/passes/p1?a=1');
+    expect(rows[0]?.querySelector('.logs-time')?.getAttribute('title')).toMatch(
+      /^\w{3} \d+, \d{4}, /,
+    );
     expect(rows[1]?.querySelector('.method')?.textContent).toBe('DEL');
     expect(rows[1]?.querySelector('.logs-code')?.textContent).toBe('NOT_FOUND');
+    expect(rows[1]?.dataset.tone).toBe('warning');
     expect(rows[1]?.querySelector('.pill')?.className).toContain('warning');
-    expect(el.querySelector('.logs-more button')?.hasAttribute('hidden')).toBe(true);
+    const where = rows[2]?.querySelector('.logs-where');
+    expect(where?.getAttribute('title')).toBe(
+      '/webhook-endpoints/01a21159-de5d-7fd9-91ff-508b01a4310d/captures?limit=50',
+    );
+    expect(where?.querySelector('.logs-tail')?.textContent).toBe('/captures?limit=50');
+    expect(where?.querySelector('.logs-id')?.textContent).toBe(
+      '01a21159-de5d-7fd9-91ff-508b01a4310d',
+    );
+    expect(rows[2]?.dataset.tone).toBe('danger');
+    expect(rows[2]?.querySelector('.logs-ms')?.hasAttribute('data-slow')).toBe(true);
+    expect(rows[2]?.querySelector('.logs-ms')?.textContent).toBe('2.4 s');
   });
 
-  it('says when the log is empty and when it is full', async () => {
-    const empty = await open([page([])]);
-    expect(empty.el.querySelector('.logs-list')?.textContent).toBe(LOGS_COPY.empty);
-    const full = await open([page([entry(1)], { capped: 'hour' })]);
-    const note = full.el.querySelector<HTMLElement>('.logs-full');
+  it('marks a call sent from the portal, and tells Run here from the portal’s own reads', async () => {
+    const { el } = await open([
+      page([entry(1, { via: 'try', client: null }), entry(2, { via: 'try', client: 'portal' })]),
+    ]);
+    const marks = [...el.querySelectorAll('.logs-via')].map((m) => m.getAttribute('title'));
+    expect(marks).toEqual([LOGS_COPY.detail.via, LOGS_COPY.detail.portal]);
+  });
+
+  it('shows no Load more when there is no more, and counts what is shown', async () => {
+    const { el } = await open([page([entry(1), entry(2)])]);
+    expect(el.querySelector<HTMLButtonElement>('.logs-foot button')?.hidden).toBe(true);
+    expect(el.querySelector('.logs-foot')?.textContent).toContain(LOGS_COPY.count(2));
+  });
+
+  it('loads the next page with its cursor, appends it, and hides Load more at the end', async () => {
+    const { el, calls } = await open([page([entry(1)], { nextCursor: 'c1' }), page([entry(2)])]);
+    const more = el.querySelector<HTMLButtonElement>('.logs-foot button');
+    expect(more?.hidden).toBe(false);
+    more?.click();
+    await vi.waitFor(() => expect(rowsOf(el)).toHaveLength(2));
+    expect(calls.at(-1)).toContain('cursor=c1');
+    expect(more?.hidden).toBe(true);
+    expect(el.querySelector('.logs-foot')?.textContent).toContain(LOGS_COPY.count(2));
+  });
+
+  it('says when the log is full', async () => {
+    const { el } = await open([page([entry(1)], { capped: 'hour' })]);
+    const note = el.querySelector<HTMLElement>('.logs-full');
     expect(note?.hidden).toBe(false);
     expect(note?.textContent).toBe(LOGS_COPY.capped.hour);
   });
 
-  it('opens a row once: facts, a link to the builder, and the redacted bodies', async () => {
-    const detail = json({
-      ...entry(1),
+  it('moves between rows with the arrow keys', async () => {
+    const { el } = await open([page([entry(1), entry(2)])]);
+    const [a, b] = [...el.querySelectorAll<HTMLElement>('.logs-row > summary')];
+    a?.focus();
+    a?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(b);
+    b?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(document.activeElement).toBe(a);
+  });
+});
+
+describe('an opened row', () => {
+  const detail = (over: Record<string, unknown> = {}) =>
+    json({
+      ...entry(1, { code: 'INVALID_INPUT', status: 422 }),
       requestBody: '{"a":1}',
-      responseBody: null,
+      responseBody: '{"code":"INVALID_INPUT"}',
       bodiesExpireAt: Date.now() + 3600_000,
+      ...over,
     });
-    const { el, calls } = await open([page([entry(1)])], detail);
-    const row = el.querySelector<HTMLDetailsElement>('.logs-row');
-    if (row) row.open = true;
-    row?.dispatchEvent(new Event('toggle'));
-    await vi.waitFor(() => expect(row?.querySelector('.logs-bodies')).not.toBeNull());
-    expect(row?.textContent).toContain('req-1');
-    expect(row?.textContent).toContain('key-1234');
-    expect(row?.querySelector('a')?.getAttribute('href')).toBe(
-      '/developers/console#passes.postPassesById',
+
+  it('shows the exchange once: request line, stamp, tinted bodies, the console and the error guide', async () => {
+    const { el, calls } = await open([page([entry(1, { code: 'INVALID_INPUT', status: 422 })])], {
+      detail: detail(),
+    });
+    const row = rowsOf(el)[0];
+    expand(row);
+    await vi.waitFor(() => expect(row?.querySelector('.logs-x')).not.toBeNull());
+    const panes = row?.querySelectorAll('.logs-pane');
+    expect(panes?.[0]?.querySelector('.logs-line')?.textContent).toBe('POST /api/v1/passes/p1?a=1');
+    expect(panes?.[0]?.textContent).toContain('curl/8.7.1');
+    expect(panes?.[0]?.querySelector('pre .k')?.textContent).toBe('"a"');
+    expect(panes?.[1]?.querySelector('.stamp')?.textContent).toBe('422 Unprocessable');
+    expect(panes?.[1]?.querySelector('.stamp')?.className).toContain('warn');
+    const links = [...(row?.querySelectorAll('.logs-acts a') ?? [])].map((a) =>
+      a.getAttribute('href'),
     );
-    expect(row?.querySelector('.logs-bodies pre')?.textContent).toContain('"a": 1');
-    expect(row?.textContent).toContain(LOGS_COPY.detail.noBody);
+    expect(links).toEqual([
+      '/developers/console#passes.postPassesById',
+      '/developers/errors/INVALID_INPUT',
+    ]);
+    expect(row?.textContent).toContain('req-1');
+    // The strip's own key is named by its prefix.
+    expect(row?.querySelector('.logs-facts')?.textContent).toContain('pb_test_ab12');
     expect(row?.textContent).toContain(LOGS_COPY.detail.expires);
-    row?.dispatchEvent(new Event('toggle'));
-    expect(calls.filter((c) => c.includes('log-1'))).toHaveLength(1);
+    expand(row);
+    expect(calls.filter((c) => c.includes('logs/log-1'))).toHaveLength(1);
+  });
+
+  it('copies the call as curl, with the key from the environment and the logged body', async () => {
+    const { el } = await open([page([entry(1)])], { detail: detail() });
+    const row = rowsOf(el)[0];
+    expand(row);
+    await vi.waitFor(() => expect(row?.querySelector('.logs-acts')).not.toBeNull());
+    const curl = row?.querySelector('[data-copy-text^="curl"]')?.getAttribute('data-copy-text');
+    expect(curl).toContain(`curl -X POST '${location.origin}/api/v1/passes/p1?a=1'`);
+    expect(curl).toContain('Bearer $PASSBOOK_KEY');
+    expect(curl).toContain(`-d '{\n  "a": 1\n}'`);
+    expect(row?.querySelector('[data-copy-text="req-1"]')?.getAttribute('aria-label')).toBe(
+      LOGS_COPY.detail.copyId,
+    );
   });
 
   it('says so when the bodies are gone, and when the detail fails', async () => {
-    const gone = await open(
-      [page([entry(1)])],
-      json({
-        ...entry(1, { hasBodies: false, via: null, keyId: null }),
+    const gone = await open([page([entry(1)])], {
+      detail: detail({
+        hasBodies: false,
         requestBody: null,
         responseBody: null,
         bodiesExpireAt: null,
       }),
-    );
-    const row = gone.el.querySelector<HTMLDetailsElement>('.logs-row');
-    if (row) row.open = true;
-    row?.dispatchEvent(new Event('toggle'));
+    });
+    const row = rowsOf(gone.el)[0];
+    expand(row);
     await vi.waitFor(() => expect(row?.textContent).toContain(LOGS_COPY.detail.bodiesGone));
+    expect(row?.querySelector('pre')).toBeNull();
     const bad = await open([page([entry(1)])]);
-    const row2 = bad.el.querySelector<HTMLDetailsElement>('.logs-row');
-    if (row2) row2.open = true;
-    row2?.dispatchEvent(new Event('toggle'));
+    const row2 = rowsOf(bad.el)[0];
+    expand(row2);
     await vi.waitFor(() => expect(row2?.textContent).toContain(LOGS_COPY.failed));
-  });
-
-  it('filters after a short pause, tells no match from empty, and clears', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const { el, calls } = await open([page([entry(1)]), page([]), page([entry(1)])]);
-    const status = el.querySelector<HTMLSelectElement>('[name=status]');
-    const code = el.querySelector<HTMLInputElement>('[name=code]');
-    if (status) status.value = '4xx';
-    status?.dispatchEvent(new Event('change'));
-    if (code) code.value = ' not_found ';
-    code?.dispatchEvent(new Event('input'));
-    await vi.advanceTimersByTimeAsync(300);
-    expect(calls.at(-1)).toContain('status=4xx');
-    expect(calls.at(-1)).toContain('code=NOT_FOUND');
-    expect(el.querySelector('.logs-list')?.textContent).toBe(LOGS_COPY.noMatch);
-    const form = el.querySelector('form');
-    form?.dispatchEvent(new Event('submit', { cancelable: true }));
-    [...el.querySelectorAll('button')]
-      .find((b) => b.textContent === LOGS_COPY.filters.clear)
-      ?.click();
-    await vi.advanceTimersByTimeAsync(300);
-    expect(calls.at(-1)).not.toContain('status=');
-    expect(el.querySelectorAll('.logs-row')).toHaveLength(1);
-  });
-
-  it('loads the next page with its cursor and appends it', async () => {
-    const { el, calls } = await open([page([entry(1)], { nextCursor: 'c1' }), page([entry(2)])]);
-    const more = el.querySelector<HTMLButtonElement>('.logs-more button');
-    expect(more?.hidden).toBe(false);
-    more?.click();
-    await vi.waitFor(() => expect(el.querySelectorAll('.logs-row')).toHaveLength(2));
-    expect(calls.at(-1)).toContain('cursor=c1');
-    expect(more?.hidden).toBe(true);
-  });
-
-  it('shows a failure when a later page cannot load', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const { el } = await open([page([entry(1)]), json({}, 500)]);
-    const method = el.querySelector<HTMLSelectElement>('[name=method]');
-    if (method) method.value = 'GET';
-    method?.dispatchEvent(new Event('change'));
-    await vi.advanceTimersByTimeAsync(300);
-    expect(el.querySelector('.logs-list')?.textContent).toBe(LOGS_COPY.failed);
   });
 });

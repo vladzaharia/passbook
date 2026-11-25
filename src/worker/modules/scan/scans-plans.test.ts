@@ -112,7 +112,7 @@ describe('console list query plans (SC)', () => {
 
   it('staff: the latest scan and day count of each person are index probes, never a scan of scans', async () => {
     for (const page of [{ limit: 50 }, { limit: 50, q: 'ana' }, { limit: 1, staffId: 'p' }]) {
-      const lines = await plans((db) => readStaffActivity(db, fixedAuth, ['UTC'], 5, page));
+      const lines = await plans((db) => readStaffActivity(db, fixedAuth, ['UTC'], 5, page, 'UTC'));
       expect(fullScans(lines, 's')).toEqual([]);
       expect(fullScans(lines, 'scans')).toEqual([]);
       expect(lines.join('\n')).toContain('scans_staff');

@@ -14,8 +14,8 @@ describe('formatEndedOn locale', () => {
     expect(formatDayIn(at, 'UTC', 'fr')).toBe('19 nov. 2026');
   });
 
-  it('defaults to en-US and UTC', () => {
-    expect(formatEndedOn('voided', { modifiedAt: at })).toBe('Nov 19, 2026');
+  it('defaults to en-US and Seattle time', () => {
+    expect(formatEndedOn('voided', { modifiedAt: at })).toBe('Nov 18, 2026');
   });
 });
 
@@ -23,5 +23,6 @@ describe('date-only expiry', () => {
   it('shows the written day in any zone', () => {
     const pass = { modifiedAt: at, expirationDate: '2026-12-01' };
     expect(formatEndedOn('expired', pass, 'America/Los_Angeles')).toBe('Dec 1, 2026');
+    expect(formatEndedOn('expired', pass)).toBe('Dec 1, 2026');
   });
 });

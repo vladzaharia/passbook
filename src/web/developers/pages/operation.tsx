@@ -50,6 +50,7 @@ function Params({ fields }: { fields: Field[] }) {
 /** Shown first: what the request's shape decides, before the codes of the resource's module. */
 const COMMON = [
   'UNAUTHENTICATED',
+  'API_KEY_MISSING',
   'INVALID_API_KEY',
   'MISSING_SCOPE',
   'FORBIDDEN',
@@ -80,7 +81,7 @@ function ErrorTable({ rows, known }: { rows: ErrorRow[]; known: Set<string> }) {
               <td className="mono">
                 {known.has(e.code) ? <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a> : e.code}
               </td>
-              <td className="mono">{e.status ?? ''}</td>
+              <td className="mono">{e.statusText ?? e.status ?? ''}</td>
               <td>{e.fix}</td>
             </tr>
           ))}
@@ -255,13 +256,17 @@ export function OperationView({ page, op, site }: { page: ResourcePage; op: OpVi
           </p>
           {groups.map((g) => (
             <div key={g.w}>
-              <h2 className="h2 mt8">{WHERE_LABEL[g.w]}</h2>
+              <h2 className="h2 mt8" id={`params-${g.w}`}>
+                {WHERE_LABEL[g.w]}
+              </h2>
               <Params fields={g.fields} />
             </div>
           ))}
           {op.returns ? (
             <>
-              <h2 className="h2 mt8">{DEV_COPY.reference.returns}</h2>
+              <h2 className="h2 mt8" id="returns">
+                {DEV_COPY.reference.returns}
+              </h2>
               <p className="mt2">
                 <span className="pill success mono">{op.returns.status}</span>{' '}
                 {op.returns.schema ? (

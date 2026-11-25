@@ -1,5 +1,6 @@
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { offlineModeOf } from '../../../shared/scan-offline.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import type { ClockPort } from '../machine/ports.ts';
 import type { ScanStore } from '../machine/store.ts';
@@ -40,7 +41,7 @@ export function connectOffline(a: {
     clock: a.clock,
     online: () => navigator.onLine,
     scope: () => offlineScopeOf(a.session()),
-    timeZone: () => a.session().scanner?.timeZone ?? 'UTC',
+    timeZone: () => a.session().scanner?.timeZone ?? DEFAULT_TIME_ZONE,
     counts: () => store.getSnapshot().state.counts,
     emit: {
       outcome: (key, outcome) => store.dispatch({ type: 'offline', key, outcome }),

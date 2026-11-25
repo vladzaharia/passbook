@@ -30,6 +30,7 @@ import {
   insertEndpoint,
   listEndpoints,
   updateEndpoint,
+  webhooksIncluded,
 } from './repo-endpoints.ts';
 import { insertSecret } from './repo-secrets.ts';
 import { resolverFor } from './resolver-memo.ts';
@@ -209,7 +210,7 @@ export async function makeEndpoint(
     endpointId,
     mode,
   });
-  const g = webhookGrant(ctx, access, 'endpoint.create', [endpointSlot()]);
+  const g = webhookGrant(ctx, access, 'endpoint.create', [webhooksIncluded(), endpointSlot()]);
   insertEndpoint(g, {
     id: endpointId,
     url: input.url,

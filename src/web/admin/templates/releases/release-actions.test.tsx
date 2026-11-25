@@ -1,9 +1,10 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setCsrfProvider } from '../../../lib/api.ts';
 import { resetModeForTests } from '../../../lib/mode.ts';
 import { problem } from '../../../lib/test-utils.tsx';
+import { pickRowAction, releasesLoaded } from './row-actions.ts';
 import { mountPanel, OLD_HASH, release, releaseServer, SCOPE } from './test-fixtures.tsx';
 
 beforeEach(() => setCsrfProvider(async () => 'csrf-token'));
@@ -14,7 +15,7 @@ afterEach(() => {
 });
 
 describe('template release actions', () => {
-  it('lists the release by version and publisher, with ids under technical details', async () => {
+  it('lists a version with its release badges and date, ids in its side sheet', async () => {
     const user = userEvent.setup();
     const active = release({
       id: 'active-release-id',
@@ -24,27 +25,19 @@ describe('template release actions', () => {
     });
     releaseServer({ active, history: [active] });
     mountPanel({ mode: 'test' });
-    const timeline = await screen.findByRole('list', { name: 'Releases' });
-    const row = within(timeline).getAllByRole('listitem')[0];
-    if (!row) throw new Error('Release row missing');
+    const list = await screen.findByRole('list', { name: 'Versions' });
+    await releasesLoaded();
+    const row = within(list).getAllByRole('listitem')[0];
+    if (!row) throw new Error('Version row missing');
     expect(row).toHaveTextContent('v2');
-    expect(row).toHaveTextContent('Pia Publisher');
-    const disclosure = within(row).getByText('Technical details');
-    const details = disclosure.closest('details');
-    expect(details).not.toHaveAttribute('open');
-    await user.click(disclosure);
-    expect(details).toHaveAttribute('open');
+    expect(row).toHaveTextContent('Live');
+    expect(row).toHaveTextContent('Test');
+    expect(row).toHaveTextContent(/Released/);
+    expect(within(list).queryByText('Technical details')).not.toBeInTheDocument();
+    await pickRowAction(user, 'v2', 'Technical details');
+    const sheet = await screen.findByRole('dialog', { name: 'v2 details' });
     for (const value of ['4', OLD_HASH])
-      expect(within(row).getAllByText(value).length).toBeGreaterThan(0);
-  });
-
-  it('names an unknown publisher plainly, never by id', async () => {
-    const active = release({ createdBy: 'user-uuid', createdByName: null });
-    releaseServer({ active, history: [active] });
-    mountPanel();
-    const timeline = await screen.findByRole('list', { name: 'Releases' });
-    expect(within(timeline).getAllByText(/Someone/).length).toBeGreaterThan(0);
-    expect(screen.queryByText('user-uuid')).not.toBeInTheDocument();
+      expect(within(sheet).getAllByText(value).length).toBeGreaterThan(0);
   });
 
   it('requires a reason and rolls back an earlier approved release as a new generation', async () => {
@@ -53,7 +46,7 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', version: 'version-2', generation: 5 });
     const server = releaseServer({ active: head, history: [earlier, head] });
     mountPanel();
-    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    await pickRowAction(user, 'v1', 'Restore');
     const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     expect(reason).toBeRequired();
@@ -69,7 +62,7 @@ describe('template release actions', () => {
     await user.type(reason, '  Barcode regression  ');
     await user.click(confirm);
 
-    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
+    await waitFor(() => expect(server.active?.id).toBe('release-rollback'));
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );
@@ -99,7 +92,7 @@ describe('template release actions', () => {
   it('keeps the rollback reason visible when the generation conflicts', async () => {
     const user = userEvent.setup();
     const earlier = release({ id: 'earlier', generation: 1 });
-    const head = release({ id: 'head', generation: 4 });
+    const head = release({ id: 'head', generation: 4, version: 'version-2' });
     const server = releaseServer({
       active: head,
       history: [head, earlier],
@@ -111,7 +104,7 @@ describe('template release actions', () => {
         ),
     });
     mountPanel();
-    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    await pickRowAction(user, 'v1', 'Restore');
     const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     await user.type(reason, 'Restore the previous build');
@@ -135,14 +128,14 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', generation: 5 });
     const server = releaseServer({ active: null, history: [head] });
     mountPanel({ templateStatus: 'archived' });
-    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    await pickRowAction(user, 'v1', 'Restore');
     const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     await user.type(
       within(dialog).getByRole('textbox', { name: /Reason/ }),
       'Restore the archived template',
     );
     await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
-    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
+    await waitFor(() => expect(server.active?.id).toBe('release-rollback'));
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );
@@ -159,5 +152,29 @@ describe('template release actions', () => {
       generation: 6,
       action: 'rollback',
     });
+  });
+
+  it('never offers Restore on the version that is Live now', async () => {
+    const user = userEvent.setup();
+    const older = release({ id: 'older', generation: 1, version: 'version-2' });
+    const head = release({ id: 'head', generation: 3, version: 'version-2' });
+    releaseServer({ active: head, history: [older, head] });
+    mountPanel();
+    await screen.findByRole('list', { name: 'Versions' });
+    await releasesLoaded();
+    await user.click(screen.getByRole('button', { name: 'Actions for v2' }));
+    expect(screen.queryByRole('menuitem', { name: 'Restore' })).not.toBeInTheDocument();
+  });
+
+  it('names who released a version and marks a restore in its details', async () => {
+    const user = userEvent.setup();
+    const restored = release({ id: 'r', generation: 2, action: 'rollback', version: 'version-2' });
+    releaseServer({ active: restored, history: [restored] });
+    mountPanel();
+    await pickRowAction(user, 'v2', 'Technical details');
+    const sheet = await screen.findByRole('dialog', { name: 'v2 details' });
+    expect(within(sheet).getByText('Released by')).toBeInTheDocument();
+    expect(within(sheet).getByText('Pia Publisher')).toBeInTheDocument();
+    expect(within(sheet).getByText('Restored')).toBeInTheDocument();
   });
 });

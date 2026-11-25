@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  holderClassOf,
   PAPER_SIZES,
   PAPER_SPECS,
   type PaperDesign,
   type PaperSize,
   resolvePaper,
   supportsCode128,
+  withKind,
 } from '@/passkit/template/paper.ts';
 import { bestImage, imageSlots } from '@/passkit/template/paper-assets.ts';
 import { paperContent } from '@/passkit/template/paper-content.ts';
@@ -15,6 +17,7 @@ import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import { TemplateChannelsResponseSchema } from '@/shared/contracts/channels.ts';
 import { channelReason } from '@/shared/copy/channels.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
+import { FitBox } from '../../../channel-previews/fit-box.tsx';
 import { api } from '../../../lib/api.ts';
 import { PAPER_CSS } from '../../../paper/css.ts';
 import { drawPaperCode, type PaperDrawing } from '../../../paper/drawing.ts';
@@ -99,6 +102,7 @@ export function PaperPreview({
   assetBase = '',
   onEdit,
   testBand,
+  fitHeight,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   manifest: Record<string, unknown>;
@@ -113,6 +117,8 @@ export function PaperPreview({
   onEdit?: ((patch: PaperPatch) => void) | undefined;
   /** A sandbox pass: the TEST PREVIEW band on every page. */
   testBand?: boolean | undefined;
+  /** Draws the page whole, scaled to the room and at most this tall (px), instead of by its size's width. */
+  fitHeight?: number | undefined;
 }) {
   const inlineCss = usePaperCss();
   const channels = useTemplatePaper(templateId, orgId);
@@ -141,12 +147,13 @@ export function PaperPreview({
         personalization: (manifest.sample as Record<string, never> | undefined) ?? {},
         design: saved,
         holderName: 'Sample holder',
+        orgTimeZone: timeZone ?? null,
         images: imageSlots(assets),
       });
     } catch {
       return null;
     }
-  }, [passJson, manifest, saved, assets]);
+  }, [passJson, manifest, saved, assets, timeZone]);
   const urls = useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]);
   const files = useMemo(() => {
     const url = (name: string | undefined) => (name ? urls[name] : undefined);
@@ -155,6 +162,18 @@ export function PaperPreview({
       art: url(content?.art ? bestImage(assets, content.art) : undefined),
     };
   }, [assets, urls, content?.art]);
+
+  const ticket = (c: NonNullable<typeof content>, d: PaperDrawing | undefined) => (
+    <PaperTicket
+      content={c}
+      design={design}
+      code={SAMPLE_CODE}
+      mark={mark}
+      drawing={d}
+      assets={files}
+      testBand={testBand}
+    />
+  );
 
   return (
     <div className="flex w-full flex-col items-center gap-3" data-testid="designer-paper">
@@ -195,19 +214,15 @@ export function PaperPreview({
             onCheckedChange={(on) => setGrey(on === true)}
           />
           <div
-            className={`w-full ${WIDTH[picked]}`}
+            className={fitHeight ? 'w-full' : `w-full ${WIDTH[picked]}`}
             style={grey ? { filter: 'grayscale(1)' } : undefined}
           >
             {content && drawing !== null ? (
-              <PaperTicket
-                content={content}
-                design={design}
-                code={SAMPLE_CODE}
-                mark={mark}
-                drawing={drawing}
-                assets={files}
-                testBand={testBand}
-              />
+              fitHeight ? (
+                <FitBox maxHeight={fitHeight}>{ticket(content, drawing)}</FitBox>
+              ) : (
+                ticket(content, drawing)
+              )
             ) : passJson && content === null ? (
               <p role="alert" className="text-sm text-danger">
                 This ticket cannot be previewed. See the issues.
@@ -219,7 +234,9 @@ export function PaperPreview({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Badge tone="neutral">{PRINT_COPY.sample}</Badge>
             {saved.derived ? <Badge tone="neutral">{PRINT_COPY.derived}</Badge> : null}
-            {saved.holder ? null : <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>}
+            {withKind(saved, holderClassOf(manifest)).holder ? null : (
+              <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>
+            )}
             {content?.ink === 'mono' && saved.ink !== 'mono' ? (
               <Badge tone="neutral">{PRINT_COPY.inkMonoNote}</Badge>
             ) : null}
@@ -230,7 +247,13 @@ export function PaperPreview({
             </Button>
           ) : null}
           {onEdit && !saved.derived ? (
-            <PaperEditor design={saved} manifest={manifest} passJson={passJson} onEdit={onEdit} />
+            <PaperEditor
+              design={saved}
+              kind={holderClassOf(manifest)}
+              manifest={manifest}
+              passJson={passJson}
+              onEdit={onEdit}
+            />
           ) : null}
         </>
       )}

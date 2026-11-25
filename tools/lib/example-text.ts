@@ -94,7 +94,7 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
   passes: {
     'remove.message': ['Your day pass was replaced by a monthly membership.'],
     // passes/bulk-service.ts: the reason a ticket was left out of a print run.
-    'skipped.reason': ['Paper is off for Day pass'],
+    'skipped.reason': ['Paper is off for Quickstart ticket'],
   },
   templates: {
     // templates/package/images.ts: the warnings a package check writes.
@@ -128,7 +128,7 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
       'The bouldering cave reopens on Saturday with new routes.',
     ],
     'rule.message': ['Your membership renews in 7 days.'],
-    text: ['Your pass is ready. Day pass for Ada Example.'],
+    text: ['Your pass is ready. Friday Night Bouldering for Ada Example.'],
   },
   org: {
     'hold.reason': [

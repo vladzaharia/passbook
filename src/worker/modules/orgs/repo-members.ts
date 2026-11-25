@@ -102,6 +102,45 @@ export function orgInvitations(
     [orgId, ...m.params],
   );
 }
+/** An active membership of the org with the address it was invited by (kept on a role change). */
+export function activeMembershipById(db: D1Database, orgId: string, id: string) {
+  return first<{
+    id: string;
+    user_id: string;
+    invitation_id: string;
+    roles: string;
+    joined_at: number;
+    email: string;
+  }>(
+    db,
+    `SELECT m.id, m.user_id, m.invitation_id, m.roles, COALESCE(m.joined_at, m.created_at) AS joined_at, i.email FROM org_memberships m
+ JOIN org_invitations i ON i.id = m.invitation_id
+ WHERE m.org_id = ? AND m.id = ? AND m.revoked_at IS NULL`,
+    [orgId, id],
+  );
+}
+/**
+ * One membership of the org, active or not, as the member list shows it (the address it was invited
+ * by). No manager fence: the caller just wrote the row, and a manager who demoted themselves, or a
+ * target who is suspended, still has the answer to what they did.
+ */
+export function memberRowById(db: D1Database, orgId: string, id: string) {
+  return first<MembershipRow>(
+    db,
+    `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
+       COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email
+     FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
+     WHERE m.org_id = ? AND m.id = ?`,
+    [orgId, id],
+  );
+}
+export function invitationById(db: D1Database, orgId: string, id: string) {
+  return first<InvitationRow>(
+    db,
+    'SELECT id, org_id, email, roles, created_at, expires_at, revoked_at, accepted_at FROM org_invitations WHERE org_id = ? AND id = ?',
+    [orgId, id],
+  );
+}
 export function invitationByHash(db: D1Database, hash: string) {
   return first<InvitationRow>(
     db,
@@ -144,14 +183,14 @@ export function acceptMembership(
 ) {
   return stmt(
     db,
-    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
- SELECT ?, i.org_id, u.id, i.id, i.roles, ? FROM org_invitations i
+    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at, joined_at)
+ SELECT ?, i.org_id, u.id, i.id, i.roles, ?, ? FROM org_invitations i
  JOIN orgs o ON o.id = i.org_id AND o.status = 'active'
  JOIN users u ON u.id = ? AND u.status = 'active'
  JOIN user_emails e ON e.user_id = u.id AND e.email = i.email
  WHERE i.token_hash = ? AND i.revoked_at IS NULL AND i.accepted_at IS NULL AND i.expires_at > ?
  AND NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.org_id = i.org_id AND m.user_id = u.id AND m.revoked_at IS NULL)`,
-    [id, now, userId, hash, now],
+    [id, now, now, userId, hash, now],
   );
 }
 export function consumeInvitation(db: D1Database, hash: string, now: number) {

@@ -91,7 +91,6 @@ export function MobilePreview({
           </div>
         </PhoneFrame>
       </div>
-      <p className="text-center text-xs text-fg-muted">{PREVIEW_COPY.mobileLine}</p>
     </div>
   );
 }

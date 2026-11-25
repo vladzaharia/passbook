@@ -1,5 +1,13 @@
 [
   {
+    "key": "Authorization: API_KEY_MISSING added",
+    "class": "notable",
+    "operationId": "",
+    "op": "Authorization header",
+    "change": "401 API_KEY_MISSING: added",
+    "note": "A Bearer header with no key (empty, a placeholder like undefined or $KEY, or a bare key) now answers 401 API_KEY_MISSING instead of UNAUTHENTICATED."
+  },
+  {
     "key": "DELETE /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.deleteBrandWebLogo",
@@ -14,6 +22,14 @@
     "op": "DELETE /api/v1/brand/web-logo",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "DELETE /api/v1/developer/sandbox behavior changed",
+    "class": "breaking",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "behavior changed",
+    "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
@@ -384,6 +400,14 @@
     "note": "hide leaves out the portal's own background reads."
   },
   {
+    "key": "GET /api/v1/developer/rail 200.series: field added",
+    "class": "additive",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.series: field added",
+    "note": "The rail carries the last hour in five-minute buckets; callsLastHour leaves out the portal's own background reads."
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",
@@ -710,6 +734,14 @@
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.usage: field added",
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/plan new operation",
+    "class": "additive",
+    "operationId": "entitlements.getOrgsByIdPlan",
+    "op": "GET /api/v1/orgs/{id}/plan",
+    "change": "new operation",
+    "note": "New: read an organization's plan, with its limits and use, the features it can use now and its PassBook footer rule. Needs org:read."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -1152,6 +1184,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/settings 200.items.org.timeZone: default changed",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.items.org.timeZone: default changed",
+    "note": "An org with no org.timeZone reads America/Los_Angeles (source default); its access hours and dates run on that zone, not the scanner's or UTC."
+  },
+  {
     "key": "GET /api/v1/settings 200.oidc.consoleGroupRequired: field added",
     "class": "additive",
     "operationId": "settings.getSettings",
@@ -1174,6 +1214,14 @@
     "op": "GET /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "GET /api/v1/settings 200.oidc.platformAdminPinned: field added",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field added",
+    "note": "Counts the Polaris ID subjects that pin platform admin (0: the group decides). The oidc group fields are lists of exact names; empty means unset."
   },
   {
     "key": "GET /api/v1/status/incidents new operation",
@@ -1400,6 +1448,14 @@
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
   },
   {
+    "key": "Pass input: required issue path",
+    "class": "notable",
+    "operationId": "",
+    "op": "Pass input errors",
+    "change": "issues[].path: input.<field> for input problems",
+    "note": "Input problems report path input.<field>, and a missing field names its full location in <field> is required."
+  },
+  {
     "key": "PATCH /api/v1/brand 200.kind: field added",
     "class": "additive",
     "operationId": "brand.patchBrand",
@@ -1621,6 +1677,14 @@
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",
+    "class": "additive",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "new operation",
+    "note": "Changes a member's roles. The membership id changes; personal API keys tied to the old membership stop working. Service keys are unaffected."
   },
   {
     "key": "PATCH /api/v1/orgs/{orgId}/pass-setup new operation",
@@ -2365,6 +2429,22 @@
     "note": "With preview=true, test-config dry-runs the unsaved configuration with the mapping, rules and template given."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/close new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxClose",
+    "op": "POST /api/v1/developer/sandbox/close",
+    "change": "new operation",
+    "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "new operation",
+    "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
     "class": "additive",
     "operationId": "developer.postSandboxReopen",
@@ -2659,6 +2739,14 @@
     "op": "POST /api/v1/orgs",
     "change": "body.preset: enum value \"starter\" added",
     "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/invitations/{invitationId}/resend new operation",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend",
+    "op": "POST /api/v1/orgs/{id}/invitations/{invitationId}/resend",
+    "change": "new operation",
+    "note": "Resends a pending invitation with a fresh link; the new invitation has a new id."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
@@ -4131,6 +4219,14 @@
     "op": "PUT /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.platformAdminPinned: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.platformAdminPinned: field added",
+    "note": "Counts the Polaris ID subjects that pin platform admin (0: the group decides). The oidc group fields are lists of exact names; empty means unset."
   },
   {
     "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",

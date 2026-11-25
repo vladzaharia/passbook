@@ -124,5 +124,37 @@
       ],
       "nextCursor": null
     }
+  },
+  "organization-memberships.patchOrgsByIdMembershipsByMembershipId": {
+    "request": {
+      "roles": ["org_admin"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-c28e83793089",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgName": "Northwind Climbing",
+      "orgSlug": "northwind-climbing",
+      "personal": false,
+      "testOnly": false,
+      "userId": "0193a1b2-7c00-7000-8000-000000000011",
+      "roles": ["org_admin"],
+      "capabilities": ["org:read"],
+      "createdAt": 1794362400000,
+      "revokedAt": null,
+      "userName": "Sam Rivera",
+      "userEmail": "sam@example.com"
+    }
+  },
+  "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0a8eaac2ea79",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "email": "ada@example.com",
+      "roles": ["org_admin"],
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "revokedAt": null,
+      "acceptedAt": 1795570500000
+    }
   }
 }

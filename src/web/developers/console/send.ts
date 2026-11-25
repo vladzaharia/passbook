@@ -47,16 +47,45 @@ export class RunError extends Error {
   }
 }
 
-async function once(op: RunOp, draft: Draft, csrf: string): Promise<Response> {
-  const wire = wireOf(op, draft);
+async function call(
+  path: string,
+  init: { method?: string; headers: Record<string, string>; body?: string },
+  csrf: string,
+): Promise<Response> {
   const bearer = await token(csrf);
   spend();
-  return fetch(wire.path, {
-    method: op.method.toUpperCase(),
+  return fetch(path, {
+    ...init,
     redirect: 'error',
-    headers: { ...wire.headers, authorization: `Bearer ${bearer}` },
-    ...(wire.body !== undefined ? { body: wire.body } : {}),
+    headers: { ...init.headers, authorization: `Bearer ${bearer}` },
   });
+}
+
+async function once(op: RunOp, draft: Draft, csrf: string): Promise<Response> {
+  const wire = wireOf(op, draft);
+  return call(
+    wire.path,
+    {
+      method: op.method.toUpperCase(),
+      headers: wire.headers,
+      ...(wire.body !== undefined ? { body: wire.body } : {}),
+    },
+    csrf,
+  );
+}
+
+/** A read the page makes for itself (the template's sample): the try token goes in here, nowhere else. A stale token is refused as UNAUTHENTICATED: forget it and ask once more. */
+export async function readWithToken(
+  path: string,
+  headers: Record<string, string>,
+  csrf: string,
+): Promise<Response> {
+  let res = await call(path, { headers }, csrf);
+  if (res.status === 401) {
+    drop();
+    res = await call(path, { headers }, csrf);
+  }
+  return res;
 }
 
 /** Sends the request with the try token. One retry with a fresh token when the first is refused as stale. */

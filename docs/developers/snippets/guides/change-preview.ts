@@ -7,7 +7,7 @@ const preview = await pb.broadcasts.countRecipients({
   orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
   target: {
     templateIds: ['0193a1b2-7c00-7000-8000-0000000000b1'],
-    match: [{ input: 'venueName', values: ['Sample Hall'] }],
+    match: [{ input: 'venueName', values: ['Harbor Hall'] }],
   },
   patch: { venueName: { set: 'Pier 9' } },
   notify: false,

@@ -13,6 +13,7 @@ import { resolveTemplate } from '../passes/builder.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { currentPassJson } from '../passes/repo-read-pass.ts';
 import { timedOrBuilt } from '../passes/timed-source.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { walletArtExists } from './assets.ts';
 import { GoogleWalletError } from './google-errors.ts';
 import { googleClassKeyDigest } from './google-ids.ts';
@@ -126,6 +127,7 @@ export async function compileGooglePass(
     template.manifest,
     {
       now,
+      timeZone: await readOrgTimeZone(ctx.env.DB, pass.orgId),
       locales: [],
       input: pass.personalization,
       assets: template.assets.map((asset) => {

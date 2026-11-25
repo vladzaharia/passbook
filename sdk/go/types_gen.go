@@ -2916,6 +2916,17 @@ type InvitationsListResponseItemsItem struct {
 	AcceptedAt *int64   `json:"acceptedAt"`
 }
 
+type InvitationsResendResponse struct {
+	ID         string   `json:"id"`
+	OrgID      string   `json:"orgId"`
+	Email      string   `json:"email"`
+	Roles      []string `json:"roles"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+}
+
 type InvitationsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
@@ -3018,6 +3029,26 @@ type MembershipsListResponseItemsItem struct {
 
 type MembershipsRevokeResponse struct {
 	Ok bool `json:"ok"`
+}
+
+type MembershipsUpdateRolesParams struct {
+	Roles []string `json:"roles"`
+}
+
+type MembershipsUpdateRolesResponse struct {
+	ID           string   `json:"id"`
+	OrgID        string   `json:"orgId"`
+	OrgName      string   `json:"orgName"`
+	OrgSlug      string   `json:"orgSlug"`
+	Personal     *bool    `json:"personal,omitempty"`
+	TestOnly     *bool    `json:"testOnly,omitempty"`
+	UserID       string   `json:"userId"`
+	Roles        []string `json:"roles"`
+	Capabilities []string `json:"capabilities"`
+	CreatedAt    int64    `json:"createdAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	UserName     *string  `json:"userName"`
+	UserEmail    *string  `json:"userEmail"`
 }
 
 type MessageRulesCountDueBody = MessageRulesCountDueParams
@@ -4669,6 +4700,28 @@ type OrgsEntitlementsRetrieveResponseItemsItem struct {
 }
 
 type OrgsEntitlementsRetrieveResult = OrgsEntitlementsRetrieveResponse
+
+type OrgsPlanRetrieveResponse struct {
+	OrgID    string                                 `json:"orgId"`
+	Preset   *string                                `json:"preset"`
+	Label    *string                                `json:"label"`
+	Limits   []OrgsPlanRetrieveResponseLimitsItem   `json:"limits"`
+	Features []OrgsPlanRetrieveResponseFeaturesItem `json:"features"`
+	Footer   string                                 `json:"footer"`
+}
+
+type OrgsPlanRetrieveResponseFeaturesItem struct {
+	Key   string  `json:"key"`
+	Level *string `json:"level"`
+}
+
+type OrgsPlanRetrieveResponseLimitsItem struct {
+	Key   string `json:"key"`
+	Limit *int64 `json:"limit"`
+	Used  *int64 `json:"used"`
+}
+
+type OrgsPlanRetrieveResult = OrgsPlanRetrieveResponse
 
 type OrgsReopenResponse struct {
 	OrgID      string `json:"orgId"`
@@ -11701,12 +11754,13 @@ type SettingsRetrieveResponseItemsItem struct {
 }
 
 type SettingsRetrieveResponseOidc struct {
-	Issuer               string  `json:"issuer"`
-	PlatformAdminGroup   *string `json:"platformAdminGroup"`
-	AdminGroup           *string `json:"adminGroup"`
-	DeveloperGroup       *string `json:"developerGroup"`
-	UserGroup            *string `json:"userGroup"`
-	ConsoleGroupRequired bool    `json:"consoleGroupRequired"`
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
 }
 
 type SettingsRetrieveResponseReleased struct {
@@ -11742,12 +11796,13 @@ type SettingsUpdateResponseItemsItem struct {
 }
 
 type SettingsUpdateResponseOidc struct {
-	Issuer               string  `json:"issuer"`
-	PlatformAdminGroup   *string `json:"platformAdminGroup"`
-	AdminGroup           *string `json:"adminGroup"`
-	DeveloperGroup       *string `json:"developerGroup"`
-	UserGroup            *string `json:"userGroup"`
-	ConsoleGroupRequired bool    `json:"consoleGroupRequired"`
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
 }
 
 type SettingsUpdateResponseReleased struct {

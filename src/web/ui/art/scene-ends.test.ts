@@ -86,3 +86,75 @@ describe('nudge, list, stage and miniature scenes', () => {
     expect(keyframes('face.css').has('wl-s-face-wink')).toBe(true);
   });
 });
+
+// BX1: the portal's scenes. Each ends where the art rests, plays 3.2 s at most, moves only
+// transform and opacity, and runs only when motion is welcome (reduced motion holds the final pose).
+describe('portal scenes: listen, catch, explain and the face hop', () => {
+  const FILES = ['listen.css', 'catch.css', 'explain.css', 'face.css'];
+  const MOVES = new Set(['translate', 'rotate', 'scale', 'opacity', 'transform']);
+  // The catch envelope is hidden at rest (buddy-art.tsx), so it ends transparent.
+  const rest = (name: string, prop: string) =>
+    name === 'wl-s-catch-env' && prop === 'opacity' ? '0' : REST[prop];
+  const own = (f: string, name: string) =>
+    f === 'face.css' ? name === 'wl-s-face-hop' : name.startsWith(`wl-s-${f.replace('.css', '')}-`);
+
+  it('end every animation at rest, with a closing frame', () => {
+    for (const f of FILES) {
+      for (const [name, frames] of keyframes(f)) {
+        if (!own(f, name)) continue;
+        const end = frames.find(([sel]) => sel.split(',').some((x) => x.trim() === '100%'));
+        expect(end, `${f} ${name} has no 100% frame`).toBeDefined();
+        for (const decl of (end?.[1] ?? '').split(';')) {
+          const [prop = '', value] = decl.split(':').map((x) => x.trim());
+          if (prop && prop !== 'animation-timing-function')
+            expect(value, `${f} ${name} ${prop}`).toBe(rest(name, prop));
+        }
+      }
+    }
+  });
+
+  it('move only transform and opacity', () => {
+    for (const f of FILES) {
+      for (const [name, frames] of keyframes(f)) {
+        if (!own(f, name)) continue;
+        for (const [, body] of frames)
+          for (const decl of body.split(';')) {
+            const prop = decl.split(':')[0]?.trim();
+            if (prop && prop !== 'animation-timing-function')
+              expect(MOVES.has(prop), `${f} ${name} ${prop}`).toBe(true);
+          }
+      }
+    }
+  });
+
+  it('run once, 3.2 s at most, and only where motion is welcome', () => {
+    const scenes = { 'listen.css': 1.6, 'catch.css': 1.8, 'explain.css': 2.2 };
+    for (const [f, total] of Object.entries(scenes)) {
+      const text = css(f);
+      const runs = [...text.matchAll(/animation: (wl-s-[\w-]+) ([\d.]+)s [^;]*;/g)];
+      expect(runs.length, f).toBeGreaterThan(0);
+      for (const [decl, name, s] of runs) {
+        expect(Number(s), `${f} ${name}`).toBe(total);
+        expect(Number(s)).toBeLessThanOrEqual(3.2);
+        expect(decl).not.toMatch(/infinite|\d+ ?(?:alternate)/);
+        expect(keyframes(f).has(name ?? ''), `${f} ${name} keyframes`).toBe(true);
+      }
+      // Every animation sits inside the no-preference block.
+      const outside = blocks(text)
+        .filter(([sel]) => !sel.includes('prefers-reduced-motion: no-preference'))
+        .map(([, body]) => body)
+        .join('\n');
+      expect(outside, f).not.toMatch(/animation:/);
+    }
+    const hop = css('face.css').match(
+      /data-scene="hop"\]\[data-run\] \[data-body\] \{\s*animation: wl-s-face-hop (\d+)ms/,
+    );
+    expect(Number(hop?.[1])).toBe(480);
+  });
+
+  it('are in the scene union, and catch draws a hidden envelope', () => {
+    const art = readFileSync(join(process.cwd(), 'src/web/ui/art/buddy-art.tsx'), 'utf8');
+    for (const name of ['listen', 'catch', 'explain']) expect(art).toContain(`| '${name}'`);
+    expect(art).toMatch(/data-env="" opacity="0"/);
+  });
+});

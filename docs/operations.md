@@ -47,6 +47,20 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
      membership), `OIDC_DEVELOPER_GROUP` (`passbook_developers`) and `OIDC_USER_GROUP`
      (`wallet_users`). Check the real values in the logs of a refused sign-in
      (`auth.oidc_no_access` lists the groups it received) before a deploy that changes them.
+   - Renaming groups in Polaris ID (`wallet_admins` to `passbook_platform_admins`, `wallet_org_admins`
+     to `passbook_console`, `wallet_users` to `passbook_users`): each `OIDC_*_GROUP` var takes a comma
+     list of exact names, and every name in a var grants that var's role only.
+     1. Deploy with both names (`wrangler.jsonc` ships this): `OIDC_PLATFORM_ADMIN_GROUP` `wallet_admins,passbook_platform_admins`,
+        `OIDC_ADMIN_GROUP` `wallet_org_admins,passbook_console`, `OIDC_USER_GROUP`
+        `wallet_users,passbook_users`.
+     2. Rename the groups in Polaris ID (ids and members stay) and keep the PassBook client's allowed
+        groups in step.
+     3. Deploy the new names only (drop the old ones from the three vars). A near miss (a claim that differs from a configured name only by
+        case or punctuation) grants nothing and logs `auth.oidc_group_near_miss`.
+   - Pinning platform admins (`OIDC_PLATFORM_ADMIN_SUBJECTS`, default empty): a comma list of Polaris ID
+     subject ids (the `sub` claim). While it is not empty, platform admin needs the admin group and a
+     listed subject; a group member who is not listed signs in without admin. Empty keeps group-only
+     behaviour. Add the subject before you add the person to the group. After setting the pin, revoke platform admin sessions or have admins sign in again: existing sessions keep their roles until then. Settings → Polaris ID shows the group lists and how many subjects are pinned (a count only).
    - Turning on the admin group requirement (`OIDC_CONSOLE_GROUP_REQUIRED`, default `"false"`):
      1. In Polaris ID create `wallet_org_admins` (display name `wallet-org-admins`) and add everyone
         who uses an org console, including every current org member. Platform admins need no
@@ -762,3 +776,12 @@ Owner steps, App Store Connect:
   not a newer draft. This read does not itself run baked sync; newly installed baked choices
   appear after the normal sync has verified and recorded their system releases. A final issuance
   still rechecks authority, release head and asset integrity.
+
+## SDK release checks
+
+Run before publishing; publishing is the owner's. Bump `version` in the four manifests and the constants (`sdk/typescript/src/version.ts`, `CLI_VERSION` in `sdk/cli/src/cli.ts`, `Version` in `sdk/go/core.go`, `sdk/python/src/passbook/_version.py`) together; tests compare them.
+
+1. `npx tsc -p sdk/typescript/tsconfig.build.json`, then `(cd sdk/typescript && npm pack --dry-run)`: only `dist`, README, LICENSE and package.json.
+2. The CLI build resolves `@passbook/sdk` from node_modules, not from source paths: `(cd sdk/typescript && npm link) && (cd sdk/cli && npm link @passbook/sdk && npx tsc -p tsconfig.build.json && npm pack --dry-run)`.
+3. `pip install build && (cd sdk/python && python -m build)`.
+4. `(cd sdk/go && go vet ./... && go test ./...)`.

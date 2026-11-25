@@ -20,6 +20,7 @@ import {
   listConsoleEvents,
 } from './repo-events.ts';
 import { addEventCache } from './repo-events-write.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { keyScanReadAuthority, scanReadAuthority } from './repo-read-authority.ts';
 import { releaseHeadsComplete } from './repo-scope-releases.ts';
 
@@ -140,7 +141,7 @@ export async function captureEventAuthority(
     orgId: authority.orgId,
     event: null,
     templateIds: [],
-    timeZone: 'UTC',
+    timeZone: await readOrgTimeZone(ctx.env.DB, authority.orgId),
   });
   actor.tenantAuthority = await captureScanTenantAuthority(ctx, session, authority);
   actor.platformSessionId = session.sessionId;

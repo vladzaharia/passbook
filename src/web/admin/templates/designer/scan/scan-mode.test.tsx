@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'react';
@@ -66,7 +67,13 @@ function Harness() {
 describe('scan mode shared history', () => {
   it('applies a keyboard canvas removal to the shared draft and can undo it', async () => {
     const user = userEvent.setup();
-    render(<Harness />);
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Harness />
+      </QueryClientProvider>,
+    );
     await frameReady();
     const preview = screen.getByRole('group', { name: /Scan screen preview/ });
     expect(frame().getByText('One')).toBeInTheDocument();
@@ -81,7 +88,13 @@ describe('scan mode shared history', () => {
   });
 
   it('moves keyboard focus between a canvas row and its inspector', async () => {
-    render(<Harness />);
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Harness />
+      </QueryClientProvider>,
+    );
     await frameReady();
     const preview = screen.getByRole('group', { name: /Scan screen preview/ });
     const row = (await within(preview).findAllByRole('button', { name: 'Row field' }))[0]!;

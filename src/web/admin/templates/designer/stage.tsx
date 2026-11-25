@@ -6,6 +6,7 @@ import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
 import type { PreviewChannel, PreviewSource } from '../../../channel-previews/types.ts';
 import { useSettings } from '../../settings/queries.ts';
+import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
 import { useTemplateChannels } from '../channels/api.ts';
 import type { DraftAsset } from './model.ts';
 import { ownParts } from './ops-brand.ts';
@@ -52,10 +53,10 @@ export function DesignerStage({
     return out;
   }, [org, manifest]);
   // The Samsung app link is the organization's website when it has one: the preview shows what a pass gets.
-  const orgSettings = useSettings(`org:${orgId}`, Boolean(orgId)).data?.items;
-  const website = orgSettings?.find((i) => i.key === 'org.website')?.value;
-  const zone = orgSettings?.find((i) => i.key === 'org.timeZone')?.value;
-  const timeZone = typeof zone === 'string' && zone ? zone : undefined;
+  const website = useSettings(`org:${orgId}`, Boolean(orgId)).data?.items.find(
+    (i) => i.key === 'org.website',
+  )?.value;
+  const timeZone = useOrgTimeZone(orgId);
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
@@ -90,7 +91,7 @@ export function DesignerStage({
             assets,
             input: (manifest.sample as PreviewSource['input'] | undefined) ?? NO_INPUT,
             ...(typeof website === 'string' && website ? { website } : {}),
-            ...(timeZone ? { timeZone } : {}),
+            timeZone,
           }
         : null,
     [passJson, assets, assetBase, manifest, website, timeZone],

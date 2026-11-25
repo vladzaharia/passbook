@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { drift, writeFiles } from './lib/gen-files.ts';
+import { goApiVersionFile, newestApiVersion } from './lib/sdk-api-version.ts';
 import { GoTypes, planOps, resourcesFile, resourceTree, typesFile } from './lib/sdk-go-emit.ts';
 import { testFile } from './lib/sdk-go-test-emit.ts';
 import { Models } from './lib/sdk-model.ts';
@@ -20,6 +21,7 @@ export function generate(doc: OpenApiDoc, names: SdkNames): Map<string, string> 
   return new Map([
     ['types_gen.go', typesFile(models, types)],
     ['resources_gen.go', resourcesFile(resourceTree(plan), types)],
+    ['api_version_gen.go', goApiVersionFile(newestApiVersion())],
     ['ops_gen_test.go', testFile(plan, types, doc.components.schemas)],
   ]);
 }

@@ -12,6 +12,7 @@ import {
 } from './ticket-parts.tsx';
 import { stripText, stripType } from './ticket-strip-text.ts';
 import { footMeta } from './ticket-text.ts';
+import { widestIndex } from './ticket-widths.ts';
 
 /**
  * A one-row ticket (stub, boarding pass, A6, DL): the text on the pass colour at the left, the code
@@ -72,8 +73,13 @@ export function TicketStrip({ p }: { p: TicketProps }) {
             </>
           ) : t.rows.length ? (
             <div className={t.stacked ? 'pp-st-rows pp-stk' : 'pp-st-rows'}>
-              {t.rows.map((r) => (
-                <div className="pp-st-row" key={r.label}>
+              {t.rows.map((r, i) => (
+                <div
+                  className={
+                    i === widestIndex(t.rows.map((x) => x.text)) ? 'pp-st-row pp-wide' : 'pp-st-row'
+                  }
+                  key={r.label}
+                >
                   <div className="pp-st-rl">{r.label}</div>
                   <div className="pp-st-rv">{r.text}</div>
                 </div>

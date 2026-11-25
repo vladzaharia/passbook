@@ -1,3 +1,4 @@
+import { saveOrgSettings, TEST_NOW } from '../../../../test/helpers/index.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
@@ -17,3 +18,7 @@ export async function captureTestEpochs(ctx: ServiceContext, actor: ScanActor): 
   const row = actor.scanner ? await getScanner(db, actor.scanner.id) : null;
   await captureScanEpochs(db, actor, row ? scannerEpochsOf(row) : undefined, staff?.pinHash);
 }
+
+/** Scan fixtures read their hours on a UTC clock; the unset-zone default has its own tests. */
+export const pinOrgClock = (db: D1Database, orgId: string) =>
+  saveOrgSettings(db, orgId, { 'org.timeZone': 'UTC' }, TEST_NOW);

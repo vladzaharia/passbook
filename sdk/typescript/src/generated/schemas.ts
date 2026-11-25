@@ -2219,6 +2219,17 @@ export type InvitationsListResponse = {
   nextCursor: string | null;
 };
 
+export type InvitationsResendResponse = {
+  id: string;
+  orgId: string;
+  email: string;
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  createdAt: number;
+  expiresAt: number;
+  revokedAt: number | null;
+  acceptedAt: number | null;
+};
+
 export type InvitationsRevokeResponse = {
   ok: true;
 };
@@ -2395,6 +2406,26 @@ export type MembershipsListResponse = {
 
 export type MembershipsRevokeResponse = {
   ok: true;
+};
+
+export type MembershipsUpdateRolesParams = {
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+};
+
+export type MembershipsUpdateRolesResponse = {
+  id: string;
+  orgId: string;
+  orgName: string;
+  orgSlug: string;
+  personal?: boolean;
+  testOnly?: boolean;
+  userId: string;
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read">;
+  createdAt: number;
+  revokedAt: number | null;
+  userName: string | null;
+  userEmail: string | null;
 };
 
 export type MessageRulesCountDueParams = {
@@ -3956,6 +3987,22 @@ export type OrgsEntitlementsRetrieveResponse = {
     source: "preset" | "override";
   }>;
   usage: Record<string, number>;
+};
+
+export type OrgsPlanRetrieveResponse = {
+  orgId: string;
+  preset: string | null;
+  label: string | null;
+  limits: Array<{
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    limit: number | null;
+    used: number | null;
+  }>;
+  features: Array<{
+    key: "apple" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "api" | "webhooks" | "templates.uploads" | "identity.managed";
+    level: string | null;
+  }>;
+  footer: "full" | "quiet" | "none";
 };
 
 export type OrgsReopenResponse = {
@@ -10686,10 +10733,11 @@ export type SettingsRetrieveResponse = {
   configRevision?: number;
   oidc?: {
     issuer: string;
-    platformAdminGroup: string | null;
-    adminGroup: string | null;
-    developerGroup: string | null;
-    userGroup: string | null;
+    platformAdminGroup: Array<string>;
+    adminGroup: Array<string>;
+    developerGroup: Array<string>;
+    userGroup: Array<string>;
+    platformAdminPinned: number;
     consoleGroupRequired: boolean;
   };
   released?: {
@@ -10721,10 +10769,11 @@ export type SettingsUpdateResponse = {
   configRevision?: number;
   oidc?: {
     issuer: string;
-    platformAdminGroup: string | null;
-    adminGroup: string | null;
-    developerGroup: string | null;
-    userGroup: string | null;
+    platformAdminGroup: Array<string>;
+    adminGroup: Array<string>;
+    developerGroup: Array<string>;
+    userGroup: Array<string>;
+    platformAdminPinned: number;
     consoleGroupRequired: boolean;
   };
   released?: {
