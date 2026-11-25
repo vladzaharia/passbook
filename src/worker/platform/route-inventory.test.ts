@@ -87,6 +87,7 @@ const PUBLIC = [
   'POST /hooks/connections/:id',
   'POST /j/:token',
   'POST /p/:token/print',
+  'POST /p/:token/print/drawn',
   'POST /p/:token/print/reprint',
   'POST /p/:token/print/void',
   'POST /p/:token/resend',

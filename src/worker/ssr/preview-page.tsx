@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import type { BrandMark } from '../../shared/contracts/orgs.ts';
 import '../../web/pass-card/sync-barcode.ts';
 import holderCss from '../../generated/ssr-holder.css?raw';
-import type { PaperDesign } from '../../passkit/template/paper.ts';
+import { type PaperDesign, pageSizeOf } from '../../passkit/template/paper.ts';
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
 import { PREVIEW_PAGE_COPY } from '../../shared/copy/developer.ts';
 import { PREVIEW_COPY, walletName } from '../../shared/copy/previews.ts';
@@ -180,7 +180,7 @@ function PreviewBody({ view, wallets, paper, passTitle }: PreviewPageProps) {
           <section
             className="pv-panel"
             data-p="paper"
-            data-size={paper?.design.size}
+            data-size={paper ? pageSizeOf(paper.design) : undefined}
             aria-label="Paper"
           >
             {paper ? (
