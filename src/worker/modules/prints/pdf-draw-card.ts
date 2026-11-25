@@ -6,6 +6,7 @@
 import { paperBoxes } from '../../../passkit/template/paper-geometry.ts';
 import { PAPER_COPY } from '../../../shared/copy/print.ts';
 import { footMeta, paperAt } from '../../../web/paper/ticket-text.ts';
+import { drawBadgeBack, drawBadgeFront } from './pdf-draw-badge.ts';
 import { codeMark, LBL, passbookLine, plate, specOf, typedCode } from './pdf-draw-parts.ts';
 import { fadeState } from './pdf-gstate.ts';
 import { type Box, COLORS, type Pen, type TextStyle } from './pdf-kit.ts';
@@ -16,6 +17,10 @@ import { watermark } from './pdf-test-mark.ts';
 export const CARD_LOGO_H_PORTRAIT = 16;
 
 export function drawCardFront(pen: Pen, s: Sheet): void {
+  if (s.content.photo) {
+    drawBadgeFront(pen, s);
+    return;
+  }
   const c = s.content;
   const { widthMm: W, heightMm: H } = specOf(s);
   const portrait = H > W;
@@ -74,7 +79,7 @@ export function drawCardFront(pen: Pen, s: Sheet): void {
     nameLines.length * pen.lineHeight(name) +
     (tierLines.length ? 0.8 + tierLines.length * pen.lineHeight(tierSt) : 0);
   let y = (portrait ? code.y - 3 : H - 4) - blockH;
-  pen.text(member ? 'Member' : c.kicker, x, y, kicker);
+  pen.text(c.kicker, x, y, kicker);
   y += pen.lineHeight(kicker) + 0.6;
   for (const l of nameLines) {
     pen.text(l, x, y, name);
@@ -98,6 +103,10 @@ export function drawCardFront(pen: Pen, s: Sheet): void {
 }
 
 export function drawCardBack(pen: Pen, s: Sheet): void {
+  if (s.content.photo) {
+    drawBadgeBack(pen, s);
+    return;
+  }
   const c = s.content;
   const { widthMm: W, heightMm: H } = specOf(s);
   const x = 4;
