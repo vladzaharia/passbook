@@ -15,6 +15,7 @@ import {
   SegmentedControl,
   SkeletonRows,
 } from '@/web/ui/index.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import type { ScanningSearch } from '../scanning/search.ts';
 import { useTagList } from './api.ts';
 import { KindPill } from './enroll-result.tsx';
@@ -35,7 +36,7 @@ const KeysetsView = lazy(() =>
 export function TagsTab({ search }: { search: ScanningSearch }) {
   const scope = useOrgScope();
   const orgId = scope.orgId;
-  if (!orgId) return <EmptyState art="badge" title="Select an organization" />;
+  if (!orgId) return <OrgChooser inline />;
   const canOperate = Boolean(scope.membership?.capabilities.includes('passes:operate'));
   const canManage = Boolean(scope.membership?.capabilities.includes('scanning:manage'));
   return (

@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookEndpointCreatedSchema } from '@/shared/contracts/webhooks.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { isApiError } from '../../../lib/errors.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import {
@@ -9,7 +10,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  EmptyState,
   Form,
   PageHeader,
   SecretReveal,
@@ -93,13 +93,7 @@ export function NewWebhookPage() {
     );
   }
 
-  if (!orgId)
-    return (
-      <>
-        <PageHeader title="Add endpoint" breadcrumbs={crumbs} />
-        <EmptyState art="building" title="Choose an organization" />
-      </>
-    );
+  if (!orgId) return <OrgChooser />;
 
   /** The dry run on blur: the same static and DNS checks as save, nothing written. */
   async function dryRun() {
