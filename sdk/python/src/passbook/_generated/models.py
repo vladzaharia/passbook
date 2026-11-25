@@ -188,10 +188,10 @@ __all__ = [
     "ConnectionsFilesApplyResult",
     "ConnectionsFilesDeleteResponse",
     "ConnectionsFilesDeleteResult",
-    "ConnectionsFilesListResponse",
-    "ConnectionsFilesListResponseItemsItem",
-    "ConnectionsFilesListResponseItemsItemSkipped",
-    "ConnectionsFilesListResult",
+    "ConnectionsFilesRetrieveRevisionsResponse",
+    "ConnectionsFilesRetrieveRevisionsResponseItemsItem",
+    "ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped",
+    "ConnectionsFilesRetrieveRevisionsResult",
     "ConnectionsFilesUploadBody",
     "ConnectionsFilesUploadParams",
     "ConnectionsFilesUploadResponse",
@@ -2892,11 +2892,11 @@ class ConnectionsFilesApplyResponseFileSkipped(_Model):
 class ConnectionsFilesDeleteResponse(_Model):
     ok: _Literal[True]
 
-class ConnectionsFilesListResponse(_Model):
-    items: _List[ConnectionsFilesListResponseItemsItem]
+class ConnectionsFilesRetrieveRevisionsResponse(_Model):
+    items: _List[ConnectionsFilesRetrieveRevisionsResponseItemsItem]
     nextCursor: str | None
 
-class ConnectionsFilesListResponseItemsItem(_Model):
+class ConnectionsFilesRetrieveRevisionsResponseItemsItem(_Model):
     id: str
     connectionId: str
     revision: int
@@ -2906,7 +2906,7 @@ class ConnectionsFilesListResponseItemsItem(_Model):
     sheet: str | None
     bytes: int
     rows: int
-    skipped: ConnectionsFilesListResponseItemsItemSkipped
+    skipped: ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped
     diff: _Dict[str, _Any] | None
     applied: bool
     createdBy: str | None
@@ -2915,7 +2915,7 @@ class ConnectionsFilesListResponseItemsItem(_Model):
     expiresAt: int | None
     supersededAt: int | None
 
-class ConnectionsFilesListResponseItemsItemSkipped(_Model):
+class ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped(_Model):
     noId: int
     duplicate: int
 
@@ -13747,7 +13747,7 @@ ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
 
 ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
 
-ConnectionsFilesListResult = ConnectionsFilesListResponse
+ConnectionsFilesRetrieveRevisionsResult = ConnectionsFilesRetrieveRevisionsResponse
 
 ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
 

@@ -431,9 +431,9 @@ func (r *ConnectionsFilesResource) Delete(ctx context.Context, id string, fileId
 	return &out, nil
 }
 
-// List Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`
-func (r *ConnectionsFilesResource) List(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsFilesListResult, error) {
-	var out ConnectionsFilesListResult
+// RetrieveRevisions Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`
+func (r *ConnectionsFilesResource) RetrieveRevisions(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsFilesRetrieveRevisionsResult, error) {
+	var out ConnectionsFilesRetrieveRevisionsResult
 	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/files"}, &out, opts); err != nil {
 		return nil, err
 	}

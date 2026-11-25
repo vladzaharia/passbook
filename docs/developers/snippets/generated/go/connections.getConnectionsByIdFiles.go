@@ -15,7 +15,7 @@ func main() {
 		panic(err)
 	}
 
-	result, err := pb.Connections.Files.List(ctx, "0193a1b2-7c00-7000-8000-0000000000e1")
+	result, err := pb.Connections.Files.RetrieveRevisions(ctx, "0193a1b2-7c00-7000-8000-0000000000e1")
 	if err != nil {
 		panic(err)
 	}

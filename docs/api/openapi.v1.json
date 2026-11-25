@@ -49369,7 +49369,7 @@
           }
         ]
       },
-      "ConnectionsFilesListResponse": {
+      "ConnectionsFilesRetrieveRevisionsResponse": {
         "type": "object",
         "properties": {
           "items": {
@@ -111676,6 +111676,8 @@
         "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_NOT_FOUND",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -112309,6 +112311,10 @@
           "CONNECTOR_UNKNOWN",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -112564,6 +112570,10 @@
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_NOT_FOUND",
+          "FILE_TOO_LARGE",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -112719,6 +112729,8 @@
         "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_NOT_FOUND",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -112879,6 +112891,10 @@
           "CONNECTION_NOT_FOUND",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -112964,6 +112980,7 @@
           "CONNECTION_NOT_FOUND",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113114,7 +113131,12 @@
           "CONNECTOR_UNKNOWN",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
           "FILE_STATE",
+          "FILE_TOO_LARGE",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -113162,7 +113184,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectionsFilesListResponse"
+                  "$ref": "#/components/schemas/ConnectionsFilesRetrieveRevisionsResponse"
                 },
                 "example": {
                   "items": [
@@ -113221,7 +113243,7 @@
         "operationId": "connections.getConnectionsByIdFiles",
         "x-sdk": {
           "resource": "connections.files",
-          "method": "list"
+          "method": "retrieveRevisions"
         },
         "description": "Lists the connection's file revisions, newest first.",
         "security": [
@@ -113238,6 +113260,7 @@
         "x-codes": [
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
+          "FILE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113366,6 +113389,9 @@
           "CONNECTOR_UNKNOWN",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_EXPIRED",
+          "FILE_NOT_FOUND",
+          "FILE_STATE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113465,6 +113491,8 @@
           "CONNECTOR_UNKNOWN",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_NOT_FOUND",
+          "FILE_STATE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114027,6 +114055,8 @@
         "x-codes": [
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114122,6 +114152,8 @@
           "CONNECTION_NOT_FOUND",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -153164,6 +153196,8 @@
           "CONNECTION_CONFLICT",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
           "LINEAGE_CHANGED",
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",

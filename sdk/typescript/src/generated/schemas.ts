@@ -915,7 +915,7 @@ export type ConnectionsFilesDeleteResponse = {
   ok: true;
 };
 
-export type ConnectionsFilesListResponse = {
+export type ConnectionsFilesRetrieveRevisionsResponse = {
   items: Array<{
     id: string;
     connectionId: string;
