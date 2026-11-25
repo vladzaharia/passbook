@@ -92,6 +92,30 @@ describe('authority-scope fragment placement', () => {
     );
   });
 
+  it('checks every branch of a ternary after the fragment', () => {
+    const run = (tail: string) =>
+      findings(
+        'f.ts',
+        `run(db, \`DELETE FROM sessions WHERE id = ? AND (\${x.sql})${tail}\`, []);`,
+      );
+    expect(run(" ${c ? 'AND a = 1' : 'AND b = 1'}")).toEqual([]);
+    expect(run(" ${c ? 'AND a = 1' : 'OR 1 = 1'}")).toEqual(notAnded);
+    expect(run(" ${c ? 'OR 1 = 1' : 'AND a = 1'}")).toEqual(notAnded);
+    expect(run("${c ? '' : ' OR 1 = 1'}")).toEqual(notAnded);
+    expect(run("${c ? ' OR 1 = 1' : ''}")).toEqual(notAnded);
+    expect(run("${c ? '' : ' AND a = 1'}")).toEqual([]);
+    expect(run(" ${c ? '' : 'AND a = 1'} RETURNING id")).toEqual([]);
+  });
+
+  it('does not take the AND of a BETWEEN for a connective', () => {
+    expect(fragmentPlacement('DELETE FROM t WHERE a = ? AND b BETWEEN 1 AND (${x})')).toEqual(
+      notAnded,
+    );
+    expect(fragmentPlacement('DELETE FROM t WHERE a = ? AND b BETWEEN 1 AND 2 AND (${x})')).toEqual(
+      [],
+    );
+  });
+
   it('walks back over IN, NOT IN and a comparison to the connective', () => {
     const w = (head: string) =>
       fragmentPlacement(`DELETE FROM t WHERE a = ? ${head} (SELECT id FROM u WHERE (\${x}))`);
