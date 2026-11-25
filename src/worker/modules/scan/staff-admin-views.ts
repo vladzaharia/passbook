@@ -37,14 +37,18 @@ export async function staffViews(
     throw error;
   }
   const now = ctx.clock.now();
-  const zones = await staffTimeZones(ctx.env.DB, consoleReadAuthority(ctx, actor));
+  // One trip: the scanner zones and the org's own.
+  const [zones, orgZone] = await Promise.all([
+    staffTimeZones(ctx.env.DB, consoleReadAuthority(ctx, actor)),
+    readOrgTimeZone(ctx.env.DB, actor.orgId),
+  ]);
   const raws = await readStaffActivity(
     ctx.env.DB,
     consoleReadAuthority(ctx, actor),
     zones,
     now,
     page,
-    await readOrgTimeZone(ctx.env.DB, actor.orgId),
+    orgZone,
   );
   const scope = raws[0];
   if (scope?.auth_ok !== 1) return noStaff(false, true);

@@ -3,7 +3,7 @@
 import type { Json } from '../contracts/common.ts';
 import type { FieldChange } from '../contracts/issuing.ts';
 import { formatDayIn } from '../format-date.ts';
-import { CALENDAR_ZONE } from '../time-zone.ts';
+import { CALENDAR_ZONE, isCalendarMidnight } from '../time-zone.ts';
 import { type InputField, inputFields, isDateField } from './fields.ts';
 
 export interface DiffOptions {
@@ -37,7 +37,7 @@ function formatDate(value: string, o: Required<DiffOptions>): string {
   const ms = Date.parse(dayOnly ? `${value}T00:00:00Z` : value);
   if (!Number.isFinite(ms)) return value;
   // A bare calendar day has no zone: it never moves a day.
-  if (dayOnly) return formatDayIn(ms, CALENDAR_ZONE, o.locale);
+  if (dayOnly || isCalendarMidnight(value)) return formatDayIn(ms, CALENDAR_ZONE, o.locale);
   const day = formatDayIn(ms, o.timeZone, o.locale);
   const at = timeFormat(o.timeZone, o.locale, true).formatToParts(ms);
   const midnight = at.every((p) => p.type === 'literal' || p.value === '00');

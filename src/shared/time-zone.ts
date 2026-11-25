@@ -17,3 +17,10 @@ export function resolveOrgTimeZone(setting: string | null | undefined): string {
 
 /** The name shown for a `Z` offset. */
 export const UTC_LABEL = 'UTC';
+
+/**
+ * A date stored as midnight UTC (`2030-01-01T00:00:00Z`, with or without `.000`) is a calendar
+ * date, not an instant: it reads as that day in every zone.
+ */
+export const isCalendarMidnight = (value: string): boolean =>
+  /^\d{4}-\d{2}-\d{2}T00:00:00(?:\.0+)?Z$/.test(value);
