@@ -6,6 +6,10 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { TooltipProvider } from '../../../ui/index.ts';
 import { AccessCard } from './access-card.tsx';
 
+vi.mock('@/web/admin/settings/use-org-time-zone.ts', () => ({
+  useOrgTimeZone: () => 'America/Los_Angeles',
+}));
+
 vi.mock('../../scanning/zones-query.ts', () => ({
   useZones: () => ({
     isSuccess: true,
