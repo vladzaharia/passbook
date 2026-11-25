@@ -118,6 +118,13 @@ describe('WizardStepper pop', () => {
 });
 
 describe('StepMarker and StepList', () => {
+  it('keeps the tick on its own size and colour at every size', () => {
+    for (const size of ['sm', 'md', 'lg'] as const) {
+      const { container } = render(<StepMarker state="done" n={1} size={size} />);
+      expect(container.querySelector('svg')).toHaveClass('!text-current');
+    }
+  });
+
   it('says in words what a marker cannot', () => {
     render(
       <StepList
@@ -137,7 +144,7 @@ describe('StepMarker and StepList', () => {
 
   it('sizes the spinner with the marker', () => {
     const { container } = render(<StepMarker state="working" n={1} size="lg" />);
-    expect(container.querySelector('svg')).toHaveClass('size-4');
+    expect(container.querySelector('svg')).toHaveClass('!size-4');
   });
 
   it('pops and draws only when fresh', () => {
