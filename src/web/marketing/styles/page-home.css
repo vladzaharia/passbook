@@ -1,0 +1,13 @@
+/* home page: fonts, the shared kit, then the page's own rules, in the prototype's order. */
+@import "./fonts.css";
+@import "./kit-01.css";
+@import "./kit-02.css";
+@import "./kit-03.css";
+@import "./kit-04.css";
+@import "./kit-05.css";
+@import "./kit-06.css";
+@import "./kit-07.css";
+@import "./kit-08.css";
+@import "./kit-09.css";
+@import "./kit-10.css";
+@import "./kit-11.css";

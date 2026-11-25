@@ -1,0 +1,292 @@
+.buddy-lg {
+  width: 240px;
+}
+
+/* =================================================================
+   Motion. Acts start when an element gets .in (buddy.js adds it on
+   entering view), pause with .off, and never run under reduced motion.
+   ================================================================= */
+.off,
+.off * {
+  animation-play-state: paused !important;
+}
+.b-arm,
+.b-wave,
+.b-pj,
+.b-c1,
+.b-c3 {
+  transform-box: view-box;
+  transform-origin: 48px 64px;
+}
+.b-shake,
+.b-snore,
+.b-ln,
+.b-dance {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.b-wk,
+.b-plug,
+.s-ck,
+.s-ck1,
+.s-ck4,
+.s-pl,
+.s-nw,
+.s-c2,
+.s-sr,
+.s-lp,
+.s-kp,
+.s-pop,
+.b-hand,
+.s-hand,
+.s-spark,
+.s-ring {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.s-pb {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.s-fl {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+.s-ly {
+  transform-box: view-box;
+  transform-origin: 100px 0;
+}
+.s-bar {
+  transform-box: view-box;
+  transform-origin: 178px 92px;
+}
+.s-k1 {
+  transform: translate(34px, 0);
+}
+.s-k2 {
+  transform: translate(86px, 0);
+}
+.s-k3 {
+  transform: translate(146px, 0);
+}
+.s-k4 {
+  transform: translate(380px, 0);
+}
+.s-vo,
+.s-n7,
+.b-f1 {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* headline words land */
+  .in .land .w {
+    display: inline-block;
+    animation: pb-land 0.8s var(--spring) both;
+    animation-delay: calc(var(--i, 0) * 85ms + 120ms);
+  }
+  /* Buddy pose idles */
+  .in .b-breathe {
+    animation: pb-breathe 4.8s ease-in-out infinite;
+  }
+  .in .b-wave {
+    animation: pb-wave 3.2s ease-in-out infinite;
+  }
+  .in .b-arcs {
+    animation: pb-fade 3.2s ease-in-out infinite;
+  }
+  .in .b-pj {
+    animation: pb-jab 2.4s ease-in-out infinite;
+  }
+  .in .b-pjr {
+    animation-name: pb-jabr;
+  }
+  .in .b-c1 {
+    animation: pb-c1 1.6s ease-in-out infinite;
+  }
+  .in .b-c3 {
+    animation: pb-c3 1.6s ease-in-out infinite;
+  }
+  .in .b-burst {
+    animation: pb-burst 1.6s ease-out infinite;
+  }
+  .in .b-bob {
+    animation: pb-bob 1.8s ease-in-out infinite;
+  }
+  .in .b-peek {
+    animation: pb-peek 3.6s ease-in-out infinite;
+  }
+  .in .b-wk {
+    animation: pb-blink 3.6s ease-in-out infinite;
+  }
+  .in .b-snore {
+    animation: pb-snore 4s ease-in-out infinite;
+  }
+  .in .b-zz {
+    animation: pb-zz 3s ease-out infinite;
+  }
+  .in .b-shake {
+    animation: pb-shake 3.4s ease-in-out infinite;
+  }
+  .in .b-plug {
+    animation: pb-plug 2.6s ease-in-out infinite;
+  }
+  .in .b-tuck {
+    animation: pb-tuck 3.2s ease-in-out infinite;
+  }
+  .in .b-offer {
+    animation: pb-offer 3.6s var(--spring) infinite;
+  }
+  .in .b-hand {
+    animation: pb-back 4s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+  }
+  .in .b-nod {
+    animation: pb-nod 3s ease-in-out infinite;
+  }
+  .in .b-fk {
+    animation: pb-flick 6s ease-out infinite;
+  }
+  .in .b-tw,
+  .in .s-tw {
+    animation: pb-fade 3.4s ease-in-out infinite;
+  }
+  .in .s-t2 {
+    animation-duration: 4.1s;
+    animation-delay: -1.3s;
+  }
+  .in .s-t3 {
+    animation-duration: 2.9s;
+    animation-delay: -2.2s;
+  }
+
+  /* door scene: 12 s queue on a 3 s beat */
+  .in .s-q {
+    animation: pb-q 12s ease-in-out infinite;
+  }
+  .in .s-k1 {
+    animation-delay: -1.2s;
+  }
+  .in .s-k2 {
+    animation-delay: -4.2s;
+  }
+  .in .s-k3 {
+    animation-delay: -7.2s;
+  }
+  .in .s-k4 {
+    animation-delay: -10.2s;
+  }
+  .in .s-pl {
+    animation: pb-pulse 3s ease-out -1.2s infinite;
+  }
+  .in .s-ck {
+    animation: pb-ck 3s var(--spring) -1.2s infinite;
+  }
+  .in .s-wv {
+    animation: pb-wv 3s ease-in-out -1.2s infinite;
+  }
+  .in .b-ln {
+    animation: pb-ln 3s ease-in-out -1.2s infinite;
+  }
+  .in .s-nd {
+    animation: pb-nod 3s ease-in-out -1.2s infinite;
+  }
+  .in .s-bl {
+    animation: pb-bulb 1.6s steps(1) infinite;
+  }
+  .in .s-b2 {
+    animation-delay: -0.8s;
+  }
+  .in .s-dl {
+    animation: pb-fade 2.2s ease-in-out infinite;
+  }
+  .in .s-dl2 {
+    animation-delay: -1.1s;
+  }
+  .in .s-bn {
+    animation: pb-bob 3.6s ease-in-out infinite;
+  }
+
+  /* stops */
+  .in .s-dr {
+    animation: pb-draw 7s ease-out infinite;
+  }
+  .in .s-d1 {
+    animation-delay: 0.35s;
+  }
+  .in .s-d2 {
+    animation-delay: 0.7s;
+  }
+  .in .s-d3 {
+    animation-delay: 1.05s;
+  }
+  .in .s-d4 {
+    animation-delay: 1.4s;
+  }
+  .in .s-sx {
+    animation: pb-sx 6s linear infinite;
+  }
+  .in .s-sy {
+    animation: pb-sy 6s infinite;
+  }
+  .in .s-sr {
+    animation: pb-sr 6s ease-in-out infinite;
+  }
+  .in .s-lp {
+    animation: pb-lp 6s ease-out infinite;
+  }
+  .in .s-pb {
+    animation: pb-pb 6s ease-in-out infinite;
+  }
+  .in .s-fl {
+    animation: pb-fl 6s ease-in-out infinite;
+  }
+  .in .s-vo {
+    animation: pb-vo 8s ease-in-out infinite;
+  }
+  .in .s-vn {
+    animation: pb-vn 8s ease-in-out infinite;
+  }
+  .in .s-swp {
+    animation: pb-sweep 8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
+  }
+  .in .s-hand {
+    animation: pb-hand 8s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+  }
+  .in .s-tp {
+    animation: pb-tp 8s ease-in-out infinite;
+  }
+  .in .s-wk {
+    animation: pb-wk 6.5s ease-in-out infinite;
+  }
+  .in .s-w4 {
+    animation: pb-w4 6.5s ease-in-out infinite;
+  }
+  .in .s-pl2 {
+    animation: pb-p2 6.5s ease-out infinite;
+  }
+  .in .s-ck4 {
+    animation: pb-c4 6.5s var(--spring) infinite;
+  }
+
+  /* kinds, tap cards, jobs, developers, close */
+  .in .s-kj {
+    animation: pb-bob 2.8s ease-in-out infinite;
+  }
+  .in .s-kp {
+    animation: pulse-soft 2.6s ease-out infinite;
+  }
+  .in .s-tapc {
+    animation: pb-tapc 6s ease-in-out infinite;
+  }
+  .in .s-tapw {
+    animation: pb-tapw 6s ease-in-out infinite;
+  }
+  .in .s-ring {
+    animation: pb-ring 3s ease-out infinite;
+  }
+}
