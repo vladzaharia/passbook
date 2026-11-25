@@ -828,6 +828,76 @@ describe('approved issuance over tenant HTTP', () => {
     }
   });
 
+  it('keeps the uploaded artifact for GC when the D1 outcome is unknown', async () => {
+    const { release } = await approved();
+    const passId = kit.fx.ids.id();
+    const before = await objects();
+    const db = kit.env.DB;
+    let failed = 0;
+    // The stub fails the issuance batch without running it: an unclassifiable error, so the outcome is unknown.
+    const sqlOf = new WeakMap<object, { sql: string; native: D1PreparedStatement }>();
+    const wrap = (statement: D1PreparedStatement, sql: string): D1PreparedStatement => {
+      const wrapped = new Proxy(statement, {
+        get(target, prop) {
+          if (prop === 'bind') return (...values: unknown[]) => wrap(target.bind(...values), sql);
+          const value = Reflect.get(target, prop, target);
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+      sqlOf.set(wrapped, { sql, native: statement });
+      return wrapped;
+    };
+    const proxy = new Proxy(db, {
+      get(target, prop) {
+        if (prop === 'prepare') return (sql: string) => wrap(target.prepare(sql), sql);
+        if (prop === 'batch')
+          return async (batch: D1PreparedStatement[]) => {
+            if (
+              !failed &&
+              batch.some((s) => /^\s*INSERT\s+INTO\s+passes\b/i.test(sqlOf.get(s)?.sql ?? ''))
+            ) {
+              failed++;
+              throw new Error('D1_ERROR: Network connection lost');
+            }
+            return target.batch(batch.map((s) => sqlOf.get(s)?.native ?? s));
+          };
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    Object.assign(kit.env, { DB: proxy });
+    try {
+      await expect(
+        createPassRow(jobCtxOf(kit), {
+          orgId: own.orgId,
+          templateId: release.templateId,
+          templateVersion: release.version,
+          releaseId: release.id,
+          releaseGeneration: release.generation,
+          input: { memberName: 'Unknown outcome' },
+          source: 'manual',
+          mode: 'live',
+          execution: { kind: 'system' },
+          actor: { type: 'system', id: null },
+          passId,
+        }),
+      ).rejects.toThrow(/Network connection lost/);
+    } finally {
+      Object.assign(kit.env, { DB: db });
+    }
+    expect(failed).toBe(1);
+    const artifacts = (await kit.env.BUCKET.list({ prefix: `passes/${passId}/` })).objects.map(
+      (object) => object.key,
+    );
+    try {
+      expect(artifacts).toHaveLength(1);
+      await assertNoPassRows(passId);
+      expect(await objects()).toEqual([...before, ...artifacts].sort());
+    } finally {
+      if (artifacts.length) await kit.env.BUCKET.delete(artifacts);
+    }
+  });
+
   it('retains a committed artifact and recovers its email after an ambiguous D1 response', async () => {
     const { release } = await approved();
     const email = `lost-response-${unique()

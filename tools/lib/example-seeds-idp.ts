@@ -8,7 +8,15 @@ import {
   TEMPLATE_VERSION,
   VISITOR,
 } from './example-canon.ts';
-import { ACTIVITY, CALL, DEVELOPER_HOME, METRICS, SANDBOX, SANDBOX_KEY } from './example-stats.ts';
+import {
+  ACTIVITY,
+  CALL,
+  DEVELOPER_HOME,
+  METRICS,
+  SANDBOX,
+  SANDBOX_KEY,
+  spread,
+} from './example-stats.ts';
 import { hex, IDS, keySecret, T, TEMPLATE, TEMPLATE_DETAIL } from './example-world.ts';
 
 /** An org's overview: the platform's, without the platform directory cards. */
@@ -373,6 +381,8 @@ export const IDP_SEEDS: Record<string, unknown> = {
     tier: 'standard',
     limitPerMinute: 60,
     callsLastHour: 11,
+    // The same 11 calls in five-minute buckets, oldest first: a burst while the quickstart ran.
+    series: spread(11, [0, 0, 1, 0, 0, 2, 3, 1, 0, 0, 1, 1]),
     key: { id: SANDBOX_KEY.id, name: SANDBOX_KEY.name, prefix: 's4Ndb0xK' },
   },
   'developer.postSandbox response': { ...SANDBOX_ROW, key: SANDBOX_KEY, previousKey: null },

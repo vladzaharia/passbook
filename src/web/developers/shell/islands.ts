@@ -37,6 +37,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
  */
 const HOLD_UNTIL_MOUNTED = (el: HTMLElement) =>
   el.dataset.island === 'quickstart' ||
+  el.dataset.island === 'logs' ||
   (el.dataset.island === 'run' && el.dataset.mode === 'console');
 
 export function mountIslands(root: ParentNode = document): void {

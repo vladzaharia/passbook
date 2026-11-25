@@ -136,8 +136,15 @@ knownGuards.add(requireAdmin);
 
 /** The mode an admin session works in. Only the exact value `test` selects test mode. */
 export function modeFromRequest(c: Context): Mode {
-  return c.req.header(MODE_HEADER)?.trim().toLowerCase() === 'test' ? 'test' : 'live';
+  if (c.req.header(MODE_HEADER)?.trim().toLowerCase() === 'test') return 'test';
+  // A browser opens the staff print page, its PDF and its images by URL, so it cannot send the header.
+  // These paths alone read `?mode=test`; the route still proves org access and the pass's mode.
+  return PRINT_PAGE_PATH.test(new URL(c.req.url).pathname) && c.req.query('mode') === 'test'
+    ? 'test'
+    : 'live';
 }
+
+const PRINT_PAGE_PATH = /^\/api\/v1\/passes\/[^/]+\/print(\/drawn|\/pdf|\/assets\/[^/]+)?$/;
 
 /** The mode every admin or API list, aggregate and create must apply. */
 export function modeOf(auth: AuthContext | undefined): Mode {

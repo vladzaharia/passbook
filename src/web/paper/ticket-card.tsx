@@ -40,7 +40,7 @@ export function CardFront({ p }: { p: TicketProps }) {
 export function CardBack({ p }: { p: TicketProps }) {
   const { content: c, assets } = p;
   const label = c.kind === 'membership' ? 'Membership card' : c.kicker;
-  const [, line] = PAPER_COPY.oneTicket(c.noun);
+  const [, line] = PAPER_COPY.oneTicket(c.noun, c.once);
   return (
     <article {...sheetProps(p, 'pp-card pp-cd-back')} data-face="back">
       <div className="pp-cd-in">
