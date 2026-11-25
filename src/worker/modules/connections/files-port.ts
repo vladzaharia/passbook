@@ -7,7 +7,7 @@ import {
 } from '../../connectors/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { digestOf, type Entry, entriesOf, PAGE_SIZE, parseFile } from './files-parse.ts';
-import { zoneOf } from './files-service.ts';
+import { takeUpload, zoneOf } from './files-service.ts';
 import { readPage, readRefs, readSource, readSummary } from './files-store.ts';
 import { type FileRow, fileInState, getFile, supersededOf } from './repo-files.ts';
 
@@ -103,6 +103,8 @@ function draftPort(
       const row = await getFile(ctx.env.DB, orgId, draftId);
       if (row?.state !== 'draft' || (row.expiresAt ?? 0) <= ctx.clock.now()) return refuse();
       const bytes = (await readSource(ctx, orgId, draftId)) ?? refuse();
+      // Each test over a draft re-parses the stored file: it spends the same hourly allowance as an upload.
+      await takeUpload(ctx, orgId);
       const pointer =
         idPointer ?? (await readSummary(ctx, orgId, draftId))?.idCandidates[0] ?? refuse();
       const file = parseFile(
