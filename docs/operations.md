@@ -186,6 +186,48 @@ Trust boundary: the service binding, not the lint rule (`tools/check-apple-bindi
 
 Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
 
+## Polaris ID binding
+
+`workers/polaris-binding` is a separate Worker that holds the Polaris ID API key and is the only place PassBook writes to Polaris ID. The main Worker will reach it only through an `IDP` service binding (entrypoint `PolarisBinding`); it has no route and no `workers.dev` host, and `fetch` answers 404. Its D1 (`polaris-binding`) holds the signup tokens it minted (id and SHA-256, never the value), the accounts it knows (`idp_subjects`: created, linked, external), the grants that say which roles it added and may take back (`idp_grants`), a 10-minute health cache, per-run breaker counts, freezes (`idp_freezes`) and the append-only call ledger (`idp_calls`). The migration is `migrations/0001_binding.sql`.
+
+On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of the user that made it. So the key lives only here, and the Worker enforces its own policy:
+
+- **Registry, not groups.** `GROUPS` (JSON) maps roles to groups: `console`, `developer` and `support` are writable; `platform_admin` and `users` are `protected` and only read. A role may be absent (not projected). No method takes a group id or name. Every writable name must start with `GROUP_PREFIX` (`passbook_`) and may not equal a protected name. A write carries every group outside the registry through unchanged.
+- **Fixed bodies.** A signup is `{ ttl: "1h", usageLimit: 1, userGroupIds }` with the ids of the kind's roles (`member` is console, `developer` is developer, `member_developer` is both), read back. A user update (`setDisabled`) echoes every field of a fresh read except `disabled`, reads back and compares each field; a read missing a field sends nothing.
+- **Safe config.** Every write needs a safe config, read from Polaris ID at most every 10 minutes (1 minute after an unsafe answer): every registry group exists with its configured name; signups are `withToken`; email verification is `required`; require user email is on; `emailsVerified` is off; no signup default groups. Any miss is `IDP_UNSAFE_CONFIG`, no write, and an error log `binding.unsafe_config` with the reasons. `health()` also warns `client_open` when the PassBook client is not group-restricted to exactly the registry groups (a warning, not a block).
+- **Who.** Never a Polaris ID admin (`isAdmin`), a member of a protected group, or the key's own user; adds never touch a disabled account. `apply` removes only roles with a live grant (a proven signup, or its own add); anything else is skipped as `not_ours`, unless an override removal (platform admin, 2 a minute) says otherwise. `setDisabled` only for accounts a proven signup created that hold no group outside the registry, and enables only what it disabled.
+- **Read back.** Every group write is read, `before ± registry ids`, written, read again. A mismatch is `IDP_DRIFT` (error log `binding.drift`), never retried.
+- **Budgets**, platform-wide per bucket, fail closed (`IDP_BUDGET`), a minute and a day: `createSignup` and `findByVerifiedEmail` 10 and 50; `apply` add by a user or key 10 and 100, by the system 20 and 200; removal 20 and 200; override removal 2 and 10; `setDisabled` 5 and 20; `snapshot` 1 and 30; `proveSignup` and `deleteSignup` 30 and 300; `lookup` 60 and 1,000; its own config read 6 and 300. Past half a daily budget it logs `binding.budget_high` (error).
+- **Breaker.** One `ref` (a drain or reconcile run) may remove 25 roles and disable 5 accounts. The next call answers `IDP_BREAKER`, logs `binding.breaker` (error) and the run stops.
+- **Dry run.** `WRITE_MODE` is `dry_run` unless it is `live`; a caller may also pass `dryRun`. Reads happen, writes are computed and ledgered as `dry_run` rows, nothing is sent, and the binding records no grants. Budgets and the breaker still count.
+- **Freeze.** `freeze` writes a row and every write then answers `IDP_FROZEN`; reads continue. No RPC thaws. To thaw, run as the owner: `npx wrangler d1 execute polaris-binding --config workers/polaris-binding/wrangler.jsonc --remote --command "UPDATE idp_freezes SET thawed_at = $(date +%s)000 WHERE thawed_at IS NULL"`. Triggers allow only that one update, once per row.
+- **Routes.** Only the routes the RPCs need (`routes.ts`): group, config, API key and OIDC client reads, the key's own user, user search, user and group-id reads, `PUT` of one user and of one user's groups, and signup tokens. Anything else, such as creating or deleting users, one-time tokens, custom claims, group, client, config or key writes, is refused in code.
+- HTTP: origin pinned to `POCKET_ID_ORIGIN`, header `X-API-KEY`, no redirects, 5 s, 256 KB; Polaris ID's text is never forwarded. The key, token values, setup links and email addresses are not logged or stored.
+
+Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`.
+
+One-time setup (owner; the main Worker's SCIM and `IDP` binding steps follow in later changes):
+
+1. Polaris ID v2.19.3 or later. In Application Configuration set: Enable User Signups **Signup with token**; Email verification **Required**; Require user email **on**; signup default groups **none**; emails verified **off**; email login code for unauthenticated users **off**.
+2. Groups: `passbook_console`, `passbook_developers`, `passbook_platform_admins`, `passbook_users` (rename the old `wallet_*` groups; ids and members stay). Note each group's id (the UUID in its URL). Do not create `passbook_support` yet.
+3. PassBook client in Polaris ID: group-restricted, allowed groups exactly those four. Note the client's id.
+4. Create a Polaris ID admin user `passbook-binding` with a verified address you control, sign in as it once, and create an API key `passbook-binding` with a 90-day expiry. On v2.19.3 this key is a full admin key.
+5. `npx wrangler d1 create polaris-binding`, then put the id in `workers/polaris-binding/wrangler.jsonc` (it holds a placeholder).
+6. `npx wrangler d1 migrations apply polaris-binding --config workers/polaris-binding/wrangler.jsonc --remote`
+7. In `wrangler.jsonc` set `POCKET_ID_ORIGIN` (the https origin, no path), `PASSBOOK_CLIENT_ID` and `GROUPS` (names and ids from step 2; keep `"protected": true` on `platform_admin` and `users`). Keep `WRITE_MODE` `dry_run`. Then the secret:
+
+       npx wrangler secret put POCKET_ID_API_KEY --config workers/polaris-binding/wrangler.jsonc
+
+8. `npx wrangler deploy --config workers/polaris-binding/wrangler.jsonc`. The main Worker's `IDP` binding is added in a later change, once this Worker is live (Cloudflare fails a deploy whose binding names a missing Worker).
+9. Check `health()` reports `ok: true`, `mode: "dry_run"`, the group names, no warnings and the key expiry. When every group read answers 404, `layoutSuspect` is set: `POCKET_ID_API` does not match the Polaris ID release.
+10. After a week of dry run, set `WRITE_MODE` to `live` and redeploy the binding.
+
+Next Polaris ID release: it moves admin routes to `/api/admin/...` and adds scoped keys. Recreate the key with `users:invite users:read users:write groups:read audit-logs:read config:read account:api-keys` and set `POCKET_ID_API` to `admin` in the same deploy. Both layouts are covered by `test/polaris-binding`.
+
+Rotate the key (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys): create the new key as `passbook-binding`, `secret put` it, check `health()`, then revoke the old one.
+
+Compromise: the key is a Polaris ID admin key on v2.19.3, so treat it as identity provider compromise. Revoke the key in Polaris ID first, then review the Polaris ID audit log for users, groups, signup tokens and OIDC client changes since the last good `idp_calls` row (D1 table `idp_calls`; `calls(since)`), remove any group or admin you did not add, delete unknown signup tokens, and create a new key. The ledger lists the binding's own calls only; anything else came from outside it. Never give CI a Cloudflare token that can deploy `polaris-binding`: anyone who can redeploy it can read the key.
+
 ## Managed identity runs
 
 `IdentityProvision` (workflow binding `IDENTITY_PROVISION`) provisions a managed pass type and certificate for an org (`provision`) and replaces a certificate (`rotate`). The daily hook `identities.rotation_plan` starts a rotate run 60 days before expiry for every `rotation='auto'` identity with no open run. Adding the binding needs `npm run deploy -- --first`.
