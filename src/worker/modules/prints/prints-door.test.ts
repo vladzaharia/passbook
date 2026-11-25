@@ -6,7 +6,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { seedBundlePrincipal } from '../bundles/test-auth-fixtures.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { newPassCode } from '../passes/new-code.ts';
-import { voidPass } from '../passes/service.ts';
+import { unvoidPass, voidPass } from '../passes/service.ts';
 import {
   key,
   ORIGIN,
@@ -38,25 +38,39 @@ beforeAll(async () => {
   clearSettingsCache(kit.env.DB);
 });
 
-const call = (method: string, path: string, body?: unknown) =>
+const call = (method: string, path: string, body?: unknown, extra: Record<string, string> = {}) =>
   app.request(
     `${ORIGIN}/api/v1${path}`,
     {
       method,
-      headers: { ...headers, ...json },
+      headers: { ...headers, ...json, ...extra },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     },
     kit.env,
   );
-const printable = async (holderEmail?: string) => {
-  const pass = await kit.scanPass(tpl, {}, holderEmail ? { holderEmail } : {});
+const printable = async (holderEmail?: string, mode?: 'live' | 'test') => {
+  const pass = await kit.scanPass(
+    tpl,
+    {},
+    { ...(holderEmail ? { holderEmail } : {}), ...(mode ? { mode } : {}) },
+  );
   expect(
-    (await call('PUT', `/passes/${pass.id}/channels`, { channels: { paper: 'on' } })).status,
+    (
+      await call(
+        'PUT',
+        `/passes/${pass.id}/channels`,
+        { channels: { paper: 'on' } },
+        mode === 'test' ? { 'x-passbook-mode': 'test' } : {},
+      )
+    ).status,
   ).toBe(200);
   return pass;
 };
-const mint = async (passId: string) =>
-  (await (await call('POST', `/passes/${passId}/prints`)).json()) as { id: string; code: string };
+const mint = async (passId: string, extra: Record<string, string> = {}) =>
+  (await (await call('POST', `/passes/${passId}/prints`, undefined, extra)).json()) as {
+    id: string;
+    code: string;
+  };
 const status = (passId: string) =>
   all<{ status: string; void_cause: string | null }>(
     kit.env.DB,
@@ -112,7 +126,7 @@ describe('print codes at the door', () => {
     const seen = await resolve(foreign, p.code);
     expect(seen).toMatchObject({ kind: 'refused', card: null });
     const testDoor = await kit.scanner({ templateIds: [tpl], mode: 'test' });
-    expect(await resolve(testDoor, p.code)).toMatchObject({ kind: 'refused', reason: 'not_found' });
+    expect(await resolve(testDoor, p.code)).toMatchObject({ kind: 'refused', reason: 'live_pass' });
     const s = await kit.scanner({ templateIds: [tpl] });
     const made = `P${p.code.slice(1).split('').reverse().join('')}`;
     expect(await resolve(s, made)).toMatchObject({ kind: 'refused', reason: 'not_found' });
@@ -194,6 +208,42 @@ describe('what ends a print', () => {
     expect(await status(pass.id)).toEqual([{ status: 'voided', void_cause: 'new_code' }]);
     const s = await kit.scanner({ templateIds: [tpl] });
     expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'print_voided' });
+  });
+});
+
+describe('a print whose pass cannot admit', () => {
+  it('a voided pass answers with the pass, not a voided print', async () => {
+    const pass = await printable();
+    const p = await mint(pass.id);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    const s = await kit.scanner({ templateIds: [tpl] });
+    const out = await resolve(s, p.code);
+    expect(out).toMatchObject({ kind: 'refused', reason: 'voided' });
+  });
+
+  it('a voided pass with paper off still says voided, not channel_off', async () => {
+    const pass = await printable();
+    const p = await mint(pass.id);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    await call('PUT', `/passes/${pass.id}/channels`, { channels: { paper: 'off' } });
+    const s = await kit.scanner({ templateIds: [tpl] });
+    expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'voided' });
+  });
+
+  it('a restored pass leaves its print voided', async () => {
+    const pass = await printable();
+    const p = await mint(pass.id);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    await unvoidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    const s = await kit.scanner({ templateIds: [tpl] });
+    expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'print_voided' });
+  });
+
+  it('a test print on a live scanner says test_pass', async () => {
+    const pass = await printable(undefined, 'test');
+    const p = await mint(pass.id, { 'x-passbook-mode': 'test' });
+    const s = await kit.scanner({ templateIds: [tpl] });
+    expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'test_pass' });
   });
 });
 
