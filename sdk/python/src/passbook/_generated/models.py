@@ -182,6 +182,23 @@ __all__ = [
     "ConnectionsCreateResult",
     "ConnectionsDeleteResponse",
     "ConnectionsDeleteResult",
+    "ConnectionsFilesApplyResponse",
+    "ConnectionsFilesApplyResponseFile",
+    "ConnectionsFilesApplyResponseFileSkipped",
+    "ConnectionsFilesApplyResult",
+    "ConnectionsFilesDiscardResponse",
+    "ConnectionsFilesDiscardResult",
+    "ConnectionsFilesListResponse",
+    "ConnectionsFilesListResponseItemsItem",
+    "ConnectionsFilesListResponseItemsItemSkipped",
+    "ConnectionsFilesListResult",
+    "ConnectionsFilesUploadBody",
+    "ConnectionsFilesUploadParams",
+    "ConnectionsFilesUploadResponse",
+    "ConnectionsFilesUploadResponse1",
+    "ConnectionsFilesUploadResponse1Skipped",
+    "ConnectionsFilesUploadResponse2",
+    "ConnectionsFilesUploadResult",
     "ConnectionsListItem",
     "ConnectionsListItemMappingValue",
     "ConnectionsListItemMappingValueTransform",
@@ -245,6 +262,24 @@ __all__ = [
     "ConnectionsUpdateResponseMappingValueTransform",
     "ConnectionsUpdateResponseVoidWhenItem",
     "ConnectionsUpdateResult",
+    "ConnectionsUploadsCreateBody",
+    "ConnectionsUploadsCreateParams",
+    "ConnectionsUploadsCreateResponse",
+    "ConnectionsUploadsCreateResponseColumnsItem",
+    "ConnectionsUploadsCreateResponsePreview",
+    "ConnectionsUploadsCreateResult",
+    "ConnectionsUploadsDeleteResponse",
+    "ConnectionsUploadsDeleteResult",
+    "ConnectionsUploadsRetrieveResponse",
+    "ConnectionsUploadsRetrieveResponseColumnsItem",
+    "ConnectionsUploadsRetrieveResponsePreview",
+    "ConnectionsUploadsRetrieveResult",
+    "ConnectionsUploadsUpdateBody",
+    "ConnectionsUploadsUpdateParams",
+    "ConnectionsUploadsUpdateResponse",
+    "ConnectionsUploadsUpdateResponseColumnsItem",
+    "ConnectionsUploadsUpdateResponsePreview",
+    "ConnectionsUploadsUpdateResult",
     "ConnectionsWebhookFailuresListItem",
     "ConnectionsWebhookFailuresListResponse",
     "ConnectionsWebhookFailuresListResponseItemsItem",
@@ -2826,6 +2861,99 @@ class ConnectionsCreateResponseVoidWhenItem(_Model):
 class ConnectionsDeleteResponse(_Model):
     ok: _Literal[True]
 
+class ConnectionsFilesApplyResponse(_Model):
+    file: ConnectionsFilesApplyResponseFile
+    runId: str
+    workflowInstanceId: str
+
+class ConnectionsFilesApplyResponseFile(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesApplyResponseFileSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesApplyResponseFileSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesDiscardResponse(_Model):
+    ok: _Literal[True]
+
+class ConnectionsFilesListResponse(_Model):
+    items: _List[ConnectionsFilesListResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsFilesListResponseItemsItem(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesListResponseItemsItemSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesListResponseItemsItemSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesUploadParams(_Model):
+    name: str
+    content: str
+    encoding: _Literal["utf8", "base64"] | str
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsFilesUploadResponse1(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesUploadResponse1Skipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+    unchanged: _Literal[False]
+    runId: str | None = None
+
+class ConnectionsFilesUploadResponse1Skipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesUploadResponse2(_Model):
+    unchanged: _Literal[True]
+
 class ConnectionsListItem(_Model):
     id: str
     orgId: str
@@ -3306,6 +3434,107 @@ class ConnectionsUpdateResponseVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
+
+class ConnectionsUploadsCreateParams(_Model):
+    name: str
+    content: str
+    encoding: _Literal["utf8", "base64"] | str
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsUploadsCreateResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsCreateResponseColumnsItem]
+    preview: ConnectionsUploadsCreateResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsCreateResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsCreateResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
+
+class ConnectionsUploadsDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class ConnectionsUploadsRetrieveResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsRetrieveResponseColumnsItem]
+    preview: ConnectionsUploadsRetrieveResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsRetrieveResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsRetrieveResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
+
+class ConnectionsUploadsUpdateParams(_Model):
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsUploadsUpdateResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsUpdateResponseColumnsItem]
+    preview: ConnectionsUploadsUpdateResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsUpdateResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsUpdateResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
 
 class ConnectionsWebhookFailuresListItem(_Model):
     id: str
@@ -13514,6 +13743,18 @@ ConnectionsCreateResult = ConnectionsCreateResponse
 
 ConnectionsDeleteResult = ConnectionsDeleteResponse
 
+ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
+
+ConnectionsFilesDiscardResult = ConnectionsFilesDiscardResponse
+
+ConnectionsFilesListResult = ConnectionsFilesListResponse
+
+ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
+
+ConnectionsFilesUploadResponse = ConnectionsFilesUploadResponse1 | ConnectionsFilesUploadResponse2
+
+ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
+
 ConnectionsListResult = ConnectionsListResponse
 
 ConnectionsPreviewResult = ConnectionPreview
@@ -13539,6 +13780,18 @@ ConnectionsTestResult = ConnectionsTestResponse
 ConnectionsUpdateBody = ConnectionsUpdateParams
 
 ConnectionsUpdateResult = ConnectionsUpdateResponse
+
+ConnectionsUploadsCreateBody = ConnectionsUploadsCreateParams
+
+ConnectionsUploadsCreateResult = ConnectionsUploadsCreateResponse
+
+ConnectionsUploadsDeleteResult = ConnectionsUploadsDeleteResponse
+
+ConnectionsUploadsRetrieveResult = ConnectionsUploadsRetrieveResponse
+
+ConnectionsUploadsUpdateBody = ConnectionsUploadsUpdateParams
+
+ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
 
 ConnectionsWebhookFailuresListResult = ConnectionsWebhookFailuresListResponse
 

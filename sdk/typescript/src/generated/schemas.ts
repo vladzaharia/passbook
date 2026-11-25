@@ -875,6 +875,125 @@ export type ConnectionsDeleteResponse = {
   ok: true;
 };
 
+export type ConnectionsFilesApplyResponse = {
+  file: {
+    id: string;
+    connectionId: string;
+    revision: number;
+    state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+    name: string;
+    format: "csv" | "xlsx" | "json" | "ndjson";
+    sheet: string | null;
+    bytes: number;
+    rows: number;
+    skipped: {
+      noId: number;
+      duplicate: number;
+    };
+    diff: {
+      added: number;
+      changed: number;
+      removed: number;
+      examples: {
+        added: Array<string>;
+        changed: Array<string>;
+        removed: Array<string>;
+      };
+    } | null;
+    applied: boolean;
+    createdBy: string | null;
+    createdByName: string | null;
+    createdAt: number;
+    expiresAt: number | null;
+    supersededAt: number | null;
+  };
+  runId: string;
+  workflowInstanceId: string;
+};
+
+export type ConnectionsFilesDiscardResponse = {
+  ok: true;
+};
+
+export type ConnectionsFilesListResponse = {
+  items: Array<{
+    id: string;
+    connectionId: string;
+    revision: number;
+    state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+    name: string;
+    format: "csv" | "xlsx" | "json" | "ndjson";
+    sheet: string | null;
+    bytes: number;
+    rows: number;
+    skipped: {
+      noId: number;
+      duplicate: number;
+    };
+    diff: {
+      added: number;
+      changed: number;
+      removed: number;
+      examples: {
+        added: Array<string>;
+        changed: Array<string>;
+        removed: Array<string>;
+      };
+    } | null;
+    applied: boolean;
+    createdBy: string | null;
+    createdByName: string | null;
+    createdAt: number;
+    expiresAt: number | null;
+    supersededAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ConnectionsFilesUploadParams = {
+  name: string;
+  content: string;
+  encoding: "utf8" | "base64";
+  sheet?: string;
+  recordsPointer?: string;
+};
+
+export type ConnectionsFilesUploadResponse = {
+  id: string;
+  connectionId: string;
+  revision: number;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheet: string | null;
+  bytes: number;
+  rows: number;
+  skipped: {
+    noId: number;
+    duplicate: number;
+  };
+  diff: {
+    added: number;
+    changed: number;
+    removed: number;
+    examples: {
+      added: Array<string>;
+      changed: Array<string>;
+      removed: Array<string>;
+    };
+  } | null;
+  applied: boolean;
+  createdBy: string | null;
+  createdByName: string | null;
+  createdAt: number;
+  expiresAt: number | null;
+  supersededAt: number | null;
+  unchanged: false;
+  runId?: string;
+} | {
+  unchanged: true;
+};
+
 export type ConnectionsListResponse = {
   items: Array<{
     id: string;
@@ -1269,6 +1388,107 @@ export type ConnectionsUpdateResponse = {
   createdAt: number;
   updatedAt: number;
   webhookSecret?: string;
+};
+
+export type ConnectionsUploadsCreateParams = {
+  name: string;
+  content: string;
+  encoding: "utf8" | "base64";
+  sheet?: string;
+  recordsPointer?: string;
+};
+
+export type ConnectionsUploadsCreateResponse = {
+  id: string;
+  orgId: string;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheets: Array<string>;
+  sheet: string | null;
+  recordsPointer: string | null;
+  bytes: number;
+  rows: number;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+    samples: Array<string>;
+    blanks: number;
+    duplicates: number;
+  }>;
+  preview: {
+    header: Array<string>;
+    rows: Array<Array<string>>;
+  };
+  idCandidates: Array<string>;
+  createdAt: number;
+  expiresAt: number | null;
+};
+
+export type ConnectionsUploadsDeleteResponse = {
+  ok: true;
+};
+
+export type ConnectionsUploadsRetrieveResponse = {
+  id: string;
+  orgId: string;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheets: Array<string>;
+  sheet: string | null;
+  recordsPointer: string | null;
+  bytes: number;
+  rows: number;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+    samples: Array<string>;
+    blanks: number;
+    duplicates: number;
+  }>;
+  preview: {
+    header: Array<string>;
+    rows: Array<Array<string>>;
+  };
+  idCandidates: Array<string>;
+  createdAt: number;
+  expiresAt: number | null;
+};
+
+export type ConnectionsUploadsUpdateParams = {
+  sheet?: string;
+  recordsPointer?: string;
+};
+
+export type ConnectionsUploadsUpdateResponse = {
+  id: string;
+  orgId: string;
+  state: "draft" | "pending" | "current" | "superseded" | "expired" | "discarded";
+  name: string;
+  format: "csv" | "xlsx" | "json" | "ndjson";
+  sheets: Array<string>;
+  sheet: string | null;
+  recordsPointer: string | null;
+  bytes: number;
+  rows: number;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+    samples: Array<string>;
+    blanks: number;
+    duplicates: number;
+  }>;
+  preview: {
+    header: Array<string>;
+    rows: Array<Array<string>>;
+  };
+  idCandidates: Array<string>;
+  createdAt: number;
+  expiresAt: number | null;
 };
 
 export type ConnectionsWebhookFailuresListResponse = {

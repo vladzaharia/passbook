@@ -1343,6 +1343,24 @@
       ]
     },
     {
+      "code": "FILE_DAMAGED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_STATE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
       "code": "FORBIDDEN",
       "statuses": [
         403
