@@ -13,10 +13,15 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 test('webhook endpoint: create, secret once, test event, delivery, pause, replay, delete', async ({
   page,
 }) => {
+  test.setTimeout(160_000);
   const seed = readSeed();
   const org = encodeURIComponent(seed.org.id);
   const path = `/hooks/${uid('e2e')}`;
   const url = `https://hooks.example.com${path}`;
+  const api = await apiAs('admin');
+  // An event from before the endpoint: the replay below picks it up.
+  await createPass(api, seed.org.id, { email: `${uid('wh')}@example.test` });
+  const issuedAt = Date.now();
 
   await page.goto(`/admin/o/${org}/connections?tab=webhooks`);
   await expect(page.getByRole('tab', { name: 'Webhook endpoints', selected: true })).toBeVisible();
@@ -50,7 +55,6 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
 
   // Gone for good: nothing on the detail page or its API shows the secret again.
   await expect(page.getByText(secret)).toHaveCount(0);
-  const api = await apiAs('admin');
   const shown = JSON.stringify(await api.get(`/api/v1/webhook-endpoints/${endpointId}`));
   expect(shown).not.toContain(secret);
 
@@ -82,19 +86,19 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
   await page.getByRole('button', { name: 'Resume' }).click();
   await expect(page.getByText('Nothing is sent until you resume.')).toHaveCount(0);
 
-  // Bulk replay answers with a count or "nothing to replay", never an error.
+  // The dialog's window ends at the last whole minute, so the early event must be older than that.
+  await expect
+    .poll(() => Math.floor((Date.now() - 1000) / 60_000) > Math.floor(issuedAt / 60_000), {
+      timeout: 70_000,
+    })
+    .toBe(true);
+  // Bulk replay: the pass issued before this endpoint existed is queued by "events from before".
   await page.getByRole('button', { name: 'Replay', exact: true }).click();
   const replay = page.getByRole('dialog', { name: 'Replay deliveries' });
   await replay.getByRole('checkbox', { name: /Also send events from before/ }).check();
-  await expect(replay.getByRole('status')).toContainText(/match|No deliveries/);
-  const go = replay.getByRole('button', { name: /^Replay( \d+)?$/ });
-  if (await go.isEnabled()) {
-    await go.click();
-    await expect(page.getByText(/Queued \d+ deliver/)).toBeVisible();
-  } else {
-    await expect(replay.getByRole('status')).toHaveText('No deliveries match.');
-    await replay.getByRole('button', { name: 'Cancel' }).click();
-  }
+  await expect(replay.getByRole('status')).toContainText(/\d+ deliver(y|ies) match/);
+  await replay.getByRole('button', { name: /^Replay \d+$/ }).click();
+  await expect(page.getByText(/Queued \d+ deliver/)).toBeVisible();
 
   // Delete, after the confirm.
   await page.getByRole('button', { name: 'More' }).click();
