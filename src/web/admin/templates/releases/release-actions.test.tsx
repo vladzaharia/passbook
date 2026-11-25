@@ -10,6 +10,7 @@ import {
   pickRowAction,
   release,
   releaseServer,
+  releasesLoaded,
   SCOPE,
 } from './test-fixtures.tsx';
 
@@ -32,6 +33,7 @@ describe('template release actions', () => {
     releaseServer({ active, history: [active] });
     mountPanel({ mode: 'test' });
     const list = await screen.findByRole('list', { name: 'Versions' });
+    await releasesLoaded();
     const row = within(list).getAllByRole('listitem')[0];
     if (!row) throw new Error('Version row missing');
     expect(row).toHaveTextContent('v2');
@@ -166,6 +168,7 @@ describe('template release actions', () => {
     releaseServer({ active: head, history: [older, head] });
     mountPanel();
     await screen.findByRole('list', { name: 'Versions' });
+    await releasesLoaded();
     await user.click(screen.getByRole('button', { name: 'Actions for v2' }));
     expect(screen.queryByRole('menuitem', { name: 'Restore' })).not.toBeInTheDocument();
   });

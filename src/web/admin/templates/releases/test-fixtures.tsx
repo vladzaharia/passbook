@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import type {
@@ -151,8 +151,13 @@ const renderList: NonNullable<TemplateReleasesPanelProps['children']> = (release
   <VersionList template={LIST_TEMPLATE} releases={releases} canCompare onReport={() => undefined} />
 );
 
+/** The list paints at once; its badges and Restore wait for the release lists. */
+export const releasesLoaded = () =>
+  waitFor(() => expect(screen.queryByText('Loading releases')).not.toBeInTheDocument());
+
 /** Opens a version row's menu and picks an action. */
 export async function pickRowAction(user: UserEvent, version: string, action: string) {
+  await releasesLoaded();
   await user.click(await screen.findByRole('button', { name: `Actions for ${version}` }));
   await user.click(await screen.findByRole('menuitem', { name: action }));
 }

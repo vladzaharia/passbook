@@ -678,6 +678,7 @@ describe('template detail', () => {
       'Report',
       'Technical details',
     ]);
+    await user.keyboard('{Escape}');
     expect(screen.getByRole('button', { name: 'Actions for v2' })).toBeInTheDocument();
   });
 

@@ -14,6 +14,7 @@ import {
   pickRowAction,
   release,
   releaseServer,
+  releasesLoaded,
   TEMPLATE,
 } from './test-fixtures.tsx';
 
@@ -185,6 +186,7 @@ describe('template release panel', () => {
     mountPanel();
     const user = userEvent.setup();
     await screen.findByRole('list', { name: 'Versions' });
+    await releasesLoaded();
     await user.click(screen.getByRole('button', { name: 'Actions for v1' }));
     expect(screen.queryByRole('menuitem', { name: 'Restore' })).not.toBeInTheDocument();
   });
@@ -211,6 +213,7 @@ describe('template release panel', () => {
     const head = release({ id: 'head', generation: 2 });
     releaseServer({ active: head, history: [head, previous] });
     mountPanel();
+    await releasesLoaded();
     const trigger = await screen.findByRole('button', { name: 'Actions for v1' });
     trigger.focus();
     await user.keyboard('{Enter}');
