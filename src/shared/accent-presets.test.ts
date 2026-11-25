@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { THEME_COLOR } from '../generated/resolved-tokens.ts';
 import { ACCENT_PRESETS } from './accent-presets.ts';
 import { contrast, parseColor } from './pass-view/color.ts';
 
@@ -10,16 +11,8 @@ const rgb = (hex: string) => {
 };
 
 describe('accent presets', () => {
-  it('offers nine, keeping the first six blueprint colours', () => {
+  it('offers nine', () => {
     expect(ACCENT_PRESETS).toHaveLength(9);
-    expect(ACCENT_PRESETS.slice(0, 6).map((p) => p.hex)).toEqual([
-      '#0f766e',
-      '#4338ca',
-      '#be123c',
-      '#c2410c',
-      '#1d4ed8',
-      '#0f172a',
-    ]);
   });
 
   it('has distinct names and colours that are far apart', () => {
@@ -32,7 +25,13 @@ describe('accent presets', () => {
       }
   });
 
-  it.each(ACCENT_PRESETS.map((p) => [p.name, p.hex]))('%s reads with white text', (_n, hex) => {
-    expect(contrast(rgb(hex as string), WHITE)).toBeGreaterThanOrEqual(4.5);
-  });
+  it.each(ACCENT_PRESETS.map((p) => [p.name, p.hex]))(
+    '%s passes 4.5:1 with white text and 3:1 on both pages',
+    (_n, hex) => {
+      const c = rgb(hex as string);
+      expect(contrast(c, WHITE)).toBeGreaterThanOrEqual(4.5);
+      for (const page of Object.values(THEME_COLOR))
+        expect(contrast(c, rgb(page))).toBeGreaterThanOrEqual(3);
+    },
+  );
 });

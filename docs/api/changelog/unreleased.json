@@ -88,6 +88,14 @@
     "note": "Deletes a saved column mapping by name."
   },
   {
+    "key": "DELETE /api/v1/scan/draft operation removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanDraft",
+    "op": "DELETE /api/v1/scan/draft",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
@@ -816,6 +824,22 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "GET /api/v1/scan/live 200.rows[].customer.figure: field removed",
+    "class": "breaking",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].customer.figure: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/scan/live 200.rows[].customer.screen: enum value \"review\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].customer.screen: enum value \"review\" removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
@@ -862,6 +886,14 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].overrides.follows: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scans/{id} 200.late: field added",
@@ -1407,6 +1439,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].overrides.follows: field removed",
+    "note": ""
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.patchScanningSessionsById",
@@ -1429,6 +1469,22 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.overrides.follows: field removed",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.overrides.follows: input field removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.overrides.follows: input field removed",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/templates/{id} 200.openReview: field added",
@@ -2325,12 +2381,28 @@
     "note": "Starts provisioning a managed Google issuer."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared 200.credential.cardTypes: field removed",
+    "class": "breaking",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
+    "change": "200.credential.cardTypes: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
     "class": "additive",
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
     "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
     "change": "new operation",
     "note": "Attaches an existing Google issuer shared with the platform."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.cardTypes: field removed",
+    "class": "breaking",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
+    "change": "200.cardTypes: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2371,6 +2443,14 @@
     "op": "POST /api/v1/pass-imports/{id}/check",
     "change": "request.plan.overrides: field added",
     "note": "A plan can carry overrides: cell fixes by row and column, at most 200."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/commit body.email.holdMs: maximum raised to 86400000",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdCommit",
+    "op": "POST /api/v1/pass-imports/{id}/commit",
+    "change": "body.email.holdMs: maximum raised to 86400000",
+    "note": "An import's email hold may now be up to 24 hours (86400000 ms); it was 1 hour. The minimum stays 60000."
   },
   {
     "key": "POST /api/v1/pass-imports/{id}/commit request.email: union added",
@@ -2475,6 +2555,14 @@
     "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete",
     "change": "new operation",
     "note": "Completes a managed Google issuer once Google has approved it."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.cardTypes: field removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
+    "change": "200.cardTypes: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2757,6 +2845,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].overrides.follows: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.postScanningSessions",
@@ -2773,6 +2869,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.overrides.follows: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: input field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.overrides.follows: input field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
@@ -2787,6 +2899,22 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].overrides.follows: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].overrides.follows: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.sessions[].devices[].overrides.follows: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup new operation",
@@ -3109,6 +3237,22 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/wallet-providers/reissue operation removed",
+    "class": "breaking",
+    "operationId": "wallet-providers.postWalletProvidersReissue",
+    "op": "POST /api/v1/wallet-providers/reissue",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/{id}/secret body.overlapHours: values 1 and 168 added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpointsByIdSecret",
+    "op": "POST /api/v1/webhook-endpoints/{id}/secret",
+    "change": "body.overlapHours: values 1 and 168 added",
+    "note": "The old signing secret may now stay valid for 1 hour or 7 days (168) as well as 0, 24 or 72 hours."
+  },
+  {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.putBrandWebLogo",
@@ -3189,6 +3333,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.cardTypes: field removed",
+    "class": "breaking",
+    "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+    "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.cardTypes: field removed",
+    "note": ""
+  },
+  {
     "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
@@ -3237,12 +3389,36 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
+    "key": "PUT /api/v1/platform/wallet-credentials 200.cardTypes: field removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.putPlatformWalletCredentials",
+    "op": "PUT /api/v1/platform/wallet-credentials",
+    "change": "200.cardTypes: field removed",
+    "note": ""
+  },
+  {
     "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-platform.putPlatformWalletCredentials",
     "op": "PUT /api/v1/platform/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards operation removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.putPlatformWalletCredentialsByIdCards",
+    "op": "PUT /api/v1/platform/wallet-credentials/{id}/cards",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "PUT /api/v1/scan/draft operation removed",
+    "class": "breaking",
+    "operationId": "scan.putScanDraft",
+    "op": "PUT /api/v1/scan/draft",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field added",
