@@ -822,6 +822,7 @@ export type ConnectionsCreateParams = {
   intervalSeconds?: number;
   maxConcurrency?: number;
   requestsPerMinute?: number;
+  fileId?: string;
 };
 
 export type ConnectionsCreateResponse = {
@@ -1138,6 +1139,7 @@ export type ConnectionsTestConfigParams = {
   }>;
   autoCreate?: boolean;
   defaultTemplateId?: string;
+  fileId?: string;
 };
 
 export type ConnectionsTestConfigResponse = {
@@ -1300,12 +1302,15 @@ export type ConnectorsListResponse = {
     version: number;
     displayName: string;
     description?: string;
+    category?: "files" | "apis" | "commerce" | "bookings" | "try";
+    order?: number;
     capabilities: {
       poll: boolean;
       delta: boolean;
       webhook: boolean;
       import: boolean;
       snapshot: boolean;
+      upload?: boolean;
     };
     configSchema?: unknown;
     secretSchema?: unknown;
@@ -1322,6 +1327,7 @@ export type ConnectorsListResponse = {
     recipes?: Array<{
       id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
       label: string;
+      category?: "files" | "apis" | "commerce" | "bookings" | "try";
       pasteSecret: boolean;
       outputFields: Record<string, {
         type: "string" | "number" | "boolean" | "date";
@@ -1350,12 +1356,15 @@ export type ConnectorsRetrieveResponse = {
   version: number;
   displayName: string;
   description?: string;
+  category?: "files" | "apis" | "commerce" | "bookings" | "try";
+  order?: number;
   capabilities: {
     poll: boolean;
     delta: boolean;
     webhook: boolean;
     import: boolean;
     snapshot: boolean;
+    upload?: boolean;
   };
   configSchema?: unknown;
   secretSchema?: unknown;
@@ -1372,6 +1381,7 @@ export type ConnectorsRetrieveResponse = {
   recipes?: Array<{
     id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
     label: string;
+    category?: "files" | "apis" | "commerce" | "bookings" | "try";
     pasteSecret: boolean;
     outputFields: Record<string, {
       type: "string" | "number" | "boolean" | "date";

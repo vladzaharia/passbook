@@ -1,3 +1,4 @@
+import { egressFetch } from '../../connectors/lib/egress.ts';
 import { connectors } from '../../connectors/registry.ts';
 import {
   type AnyConnector,
@@ -9,6 +10,7 @@ import { AppError } from '../../platform/errors.ts';
 import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getDeps } from './deps.ts';
+import { filesPort } from './files-port.ts';
 import type { ConnectionRow } from './repo.ts';
 import { readConnectorSecrets, readPreviousWebhookSecret, readWebhookSecret } from './secrets.ts';
 
@@ -67,7 +69,7 @@ export async function prepare(
   const previousSecret = webhookSecret ? await readPreviousWebhookSecret(sctx, conn) : undefined;
   const timeoutMs = def.defaults.timeoutMs;
   const deps = getDeps();
-  const fetch = createSafeFetch({
+  const safeFetch = createSafeFetch({
     platformHosts: platformHostsOf(sctx.env),
     timeoutMs,
     ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
@@ -90,7 +92,10 @@ export async function prepare(
         }
       : {}),
     now: () => sctx.clock.now(),
-    fetch,
+    fetch: egressFetch(def, config.data, safeFetch),
+    ...(def.capabilities.upload
+      ? { files: filesPort(sctx, { orgId: conn.orgId, connectionId: conn.id }) }
+      : {}),
     signal: options.signal ?? AbortSignal.timeout(10 * 60_000),
     log: (event, data) => sctx.log.info(`connector.${event}`, { connectionId: conn.id, ...data }),
   };

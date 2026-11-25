@@ -4,6 +4,7 @@ import { idOf, isEvent, one, stripeEvent } from './stripe-shared.ts';
 export const stripePayments: Recipe = {
   id: 'stripe-payments',
   label: 'Stripe payments',
+  category: 'commerce',
   verifier: 'stripe',
   topicHeader: null,
   idPrefix: 'stripe',

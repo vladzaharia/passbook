@@ -5,6 +5,7 @@ const TOPICS = ['customers/create', 'customers/update'];
 export const shopifyCustomers: Recipe = {
   id: 'shopify-customers',
   label: 'Shopify customers',
+  category: 'commerce',
   verifier: 'shopify',
   topicHeader: 'x-shopify-topic',
   idPrefix: 'shopify',
