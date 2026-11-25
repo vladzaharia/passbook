@@ -13440,6 +13440,11 @@
             },
             "maxItems": 16
           },
+          "draftFailures": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
           "surfaces": {
             "type": "array",
             "items": {
@@ -18011,6 +18016,10 @@
                 },
                 "day": {
                   "type": "boolean"
+                },
+                "g": {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,6}$"
                 }
               },
               "required": [
@@ -19621,6 +19630,12 @@
                   "front_desk",
                   "event_night",
                   "venue",
+                  "club",
+                  "conference",
+                  "gates",
+                  "counter",
+                  "pickup",
+                  "capacity",
                   null
                 ]
               },
@@ -36790,6 +36805,16 @@
               "used"
             ]
           },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -36816,6 +36841,8 @@
           "passId",
           "generation",
           "status",
+          "passVersion",
+          "stale",
           "createdAt",
           "voidedAt",
           "voidCause",
@@ -36852,6 +36879,16 @@
                     "used"
                   ]
                 },
+                "passVersion": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1
+                },
+                "stale": {
+                  "type": "boolean"
+                },
                 "createdAt": {
                   "type": "integer",
                   "minimum": 0
@@ -36875,6 +36912,8 @@
                 "passId",
                 "generation",
                 "status",
+                "passVersion",
+                "stale",
                 "createdAt",
                 "voidedAt",
                 "voidCause"
@@ -36911,6 +36950,16 @@
               "used"
             ]
           },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -36934,6 +36983,73 @@
           "passId",
           "generation",
           "status",
+          "passVersion",
+          "stale",
+          "createdAt",
+          "voidedAt",
+          "voidCause"
+        ]
+      },
+      "PassesPrintsMarkDrawnResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "passId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "voided",
+              "used"
+            ]
+          },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "voidedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "voidCause": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "passId",
+          "generation",
+          "status",
+          "passVersion",
+          "stale",
           "createdAt",
           "voidedAt",
           "voidCause"
@@ -41028,7 +41144,7 @@
                   "holdMs": {
                     "type": "integer",
                     "minimum": 60000,
-                    "maximum": 3600000,
+                    "maximum": 86400000,
                     "default": 300000
                   }
                 },
@@ -51158,6 +51274,12 @@
               {
                 "type": "number",
                 "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
                   24
                 ]
               },
@@ -51165,6 +51287,12 @@
                 "type": "number",
                 "enum": [
                   72
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  168
                 ]
               }
             ],
@@ -62879,7 +63007,13 @@
             "enum": [
               "front_desk",
               "event_night",
-              "venue"
+              "venue",
+              "club",
+              "conference",
+              "gates",
+              "counter",
+              "pickup",
+              "capacity"
             ]
           },
           "timeZone": {
@@ -73800,7 +73934,7 @@
     },
     "/auth/oidc/client-metadata.json": {
       "get": {
-        "summary": "Client ID Metadata Document for Pocket ID (when OIDC_CLIENT_ID is its URL)",
+        "summary": "Client ID Metadata Document for Polaris ID (when OIDC_CLIENT_ID is its URL)",
         "tags": [
           "auth"
         ],
@@ -75380,6 +75514,10 @@
           "BUNDLE_SNAPSHOT_INVALID",
           "BUNDLE_TOO_LARGE",
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "PASS_FILE_MISSING",
           "PASS_NOT_FOUND",
@@ -82657,6 +82795,19 @@
             },
             "required": false,
             "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "hide",
+                "show",
+                "only"
+              ]
+            },
+            "required": false,
+            "name": "sandboxes",
             "in": "query"
           }
         ],
@@ -100558,6 +100709,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100569,6 +100724,7 @@
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100772,6 +100928,8 @@
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 1,
                   "status": "active",
+                  "passVersion": 3,
+                  "stale": false,
                   "createdAt": 1795572000000,
                   "voidedAt": null,
                   "voidCause": null,
@@ -100810,6 +100968,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100823,6 +100985,7 @@
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100859,6 +101022,8 @@
                       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                       "generation": 3,
                       "status": "active",
+                      "passVersion": 3,
+                      "stale": false,
                       "createdAt": 1794362400000,
                       "voidedAt": null,
                       "voidCause": "refund"
@@ -100898,6 +101063,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100905,6 +101074,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100951,6 +101121,8 @@
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 1,
                   "status": "voided",
+                  "passVersion": 3,
+                  "stale": false,
                   "createdAt": 1795399200000,
                   "voidedAt": 1795572000000,
                   "voidCause": "manual"
@@ -101140,6 +101312,96 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "PASS_NOT_FOUND",
+          "PRINT_NOT_FOUND",
+          "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/passes/{id}/print/drawn": {
+      "post": {
+        "summary": "Record that the active print was drawn again from the pass as it is now",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassesPrintsMarkDrawnResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000053",
+                  "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                  "generation": 1,
+                  "status": "active",
+                  "passVersion": 3,
+                  "stale": false,
+                  "createdAt": 1795399200000,
+                  "voidedAt": null,
+                  "voidCause": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesByIdPrintDrawn",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "markDrawn"
+        },
+        "description": "Records that the active print was drawn again from the pass as it is now, so it is no longer stale.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PRINT_NOT_FOUND",
@@ -105883,6 +106145,7 @@
           "NO_VERIFIED_EMAIL",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
+          "PASS_FILE_MISSING",
           "RATE_LIMITED",
           "SESSION_REQUIRED",
           "TEST_FORWARD_ALREADY_ATTEMPTED",
@@ -115588,7 +115851,7 @@
     },
     "/api/v1/identities/{id}/revoke-certificate": {
       "post": {
-        "summary": "Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in",
+        "summary": "Revoke a superseded certificate after a compromise; needs a Polaris ID sign-in",
         "tags": [
           "identities"
         ],
@@ -122251,6 +122514,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -122688,6 +122952,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123209,6 +123474,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123583,6 +123849,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123969,6 +124236,7 @@
                               "state": "active"
                             }
                           ],
+                          "draftFailures": 1,
                           "surfaces": [
                             "phone"
                           ],
@@ -127603,6 +127871,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -127912,7 +128181,7 @@
         ]
       },
       "delete": {
-        "summary": "Clear the draft and the ready card on the customer screen",
+        "summary": "Clear the draft, and the ready card unless keep=ready",
         "tags": [
           "scan"
         ],
@@ -127924,6 +128193,17 @@
             },
             "required": true,
             "name": "ref",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ready"
+              ]
+            },
+            "required": false,
+            "name": "keep",
             "in": "query"
           }
         ],
@@ -129421,7 +129701,8 @@
                       "h": "8893d06a3faf43681946ec0a8b3936e7",
                       "status": "active",
                       "state": "in",
-                      "day": false
+                      "day": false,
+                      "g": "1"
                     }
                   ],
                   "cursor": "c1.4812",
@@ -131477,6 +131758,7 @@
                           "state": "active"
                         }
                       ],
+                      "draftFailures": 1,
                       "surfaces": [
                         "phone"
                       ],
@@ -136157,6 +136439,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136435,6 +136718,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136700,6 +136984,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136991,6 +137276,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -137213,6 +137499,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],
@@ -137428,6 +137715,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],
@@ -148709,6 +148997,10 @@
         "x-public": true,
         "x-codes": [
           "BAD_REQUEST",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PAYLOAD_TOO_LARGE",
           "RATE_LIMITED",
@@ -148773,6 +149065,10 @@
         "x-public": true,
         "x-codes": [
           "BAD_REQUEST",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PAYLOAD_TOO_LARGE",
           "RATE_LIMITED",
@@ -149338,6 +149634,10 @@
         "security": [],
         "x-public": true,
         "x-codes": [
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
@@ -149620,6 +149920,10 @@
         "x-public": true,
         "x-codes": [
           "CHANNEL_OFF",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "PASS_FILE_MISSING",
@@ -149934,6 +150238,10 @@
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_TOO_LARGE",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "PASS_FILE_MISSING",
@@ -149996,6 +150304,10 @@
         "x-public": true,
         "x-codes": [
           "CHANNEL_OFF",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "PASS_FILE_MISSING",

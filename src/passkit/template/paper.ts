@@ -13,7 +13,6 @@ import { kindOf } from './paper-kinds.ts';
 import {
   PAPER_SHEETS,
   PAPER_SIZES,
-  PAPER_SPECS,
   type PaperSheet,
   type PaperSize,
   sheetApplies,
@@ -308,16 +307,11 @@ export function paperManifestIssues(
         error('PAPER_LOOKUP_FIELD', 'This field carries the scan lookup value.', path);
     }
   }
-  // A card, permit or coupon draws no extra fields; the kind is the declared one or the derived one.
+  // A card, strip, permit or coupon draws no extra fields; the kind is the declared one or the derived one.
   const kind =
     paper.kind ??
     kindOf(manifest, options.passJson ? styleOf(options.passJson as PassJson) : undefined, {});
-  // A card or a strip (stub, boarding pass, A6, DL) draws no extras either.
-  const layout = PAPER_SPECS[paper.size].layout;
-  if (
-    paper.fields?.length &&
-    (layout === 'card' || layout === 'strip' || kind === 'permit' || kind === 'coupon')
-  )
+  if (paper.fields?.length && (sheetApplies(paper.size) || kind === 'permit' || kind === 'coupon'))
     warn('PAPER_FIELD_UNDRAWN', 'Extra fields are not printed on this layout.', 'paper.fields');
   if (paper.barcode === 'code128' && !supportsCode128(paper.size))
     error('PAPER_BARCODE', 'Code 128 does not fit this size. Use QR.', 'paper.barcode');

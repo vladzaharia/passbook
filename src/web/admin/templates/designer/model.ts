@@ -20,7 +20,12 @@ export interface DesignDoc {
   passJson: Dict;
   manifest: Dict;
   assets: DraftAsset[];
+  /** Which dictionary a pass with both Generic and Poster generic edits; view state, never saved. */
+  target?: Target | undefined;
 }
+
+/** `poster` is iOS 27 (posterGeneric); `legacy` is iOS 26 and earlier. */
+export type Target = 'legacy' | 'poster';
 
 export const STYLE_LABEL: Record<PassStyle, string> = {
   generic: 'Generic',
@@ -61,34 +66,57 @@ export function groupsFor(style: PassStyle): GroupId[] {
 export const isRecord = (v: unknown): v is Dict =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
-export function styleOf(pass: Dict): PassStyle {
+/** The dictionary being edited; a lone posterGeneric is always it. */
+export function styleOf(pass: Dict, target?: Target): PassStyle {
+  if (target === 'poster' && isRecord(pass.posterGeneric)) return 'posterGeneric';
   return PASS_STYLES.find((s) => isRecord(pass[s])) ?? 'generic';
 }
 
-export function dictOf(pass: Dict): Dict {
-  const dict = pass[styleOf(pass)];
+/** The style the author picked: a poster layout always pairs with Generic. */
+export function legacyStyleOf(pass: Dict): PassStyle {
+  const s = PASS_STYLES.find((p) => p !== 'posterGeneric' && isRecord(pass[p]));
+  return s ?? 'generic';
+}
+
+/** Both iOS 27 and legacy layouts exist, so the editor needs a target. */
+export const hasBothFaces = (pass: Dict): boolean =>
+  isRecord(pass.posterGeneric) &&
+  PASS_STYLES.some((s) => s !== 'posterGeneric' && isRecord(pass[s]));
+
+export function dictOf(pass: Dict, target?: Target): Dict {
+  const dict = pass[styleOf(pass, target)];
   return isRecord(dict) ? dict : {};
 }
 
-export function fieldsOf(pass: Dict, group: GroupId): Dict[] {
-  const list = dictOf(pass)[group];
+export function fieldsOf(pass: Dict, group: GroupId, target?: Target): Dict[] {
+  const list = dictOf(pass, target)[group];
   return Array.isArray(list) ? list.filter(isRecord) : [];
 }
 
 export const keyOf = (field: Dict): string => String(field.key ?? '');
 
 /** Where a key lives, or null. */
-export function findField(pass: Dict, key: string): { group: GroupId; index: number } | null {
-  for (const group of groupsFor(styleOf(pass))) {
-    const index = fieldsOf(pass, group).findIndex((f) => keyOf(f) === key);
+export function findField(
+  pass: Dict,
+  key: string,
+  target?: Target,
+): { group: GroupId; index: number } | null {
+  for (const group of groupsFor(styleOf(pass, target))) {
+    const index = fieldsOf(pass, group, target).findIndex((f) => keyOf(f) === key);
     if (index >= 0) return { group, index };
   }
   return null;
 }
 
-export function allKeys(pass: Dict): string[] {
-  return groupsFor(styleOf(pass)).flatMap((g) => fieldsOf(pass, g).map(keyOf));
+export function allKeys(pass: Dict, target?: Target): string[] {
+  return groupsFor(styleOf(pass, target)).flatMap((g) => fieldsOf(pass, g, target).map(keyOf));
 }
+
+/** Keys of every dictionary, so a new key never collides with the other layout. */
+export const everyKey = (pass: Dict): string[] => [
+  ...allKeys(pass, 'legacy'),
+  ...(isRecord(pass.posterGeneric) ? allKeys(pass, 'poster') : []),
+];
 
 export { SLOT_LABEL } from '../../passes/detail/image-slots.ts';
 

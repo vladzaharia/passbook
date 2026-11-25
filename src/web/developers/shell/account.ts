@@ -35,7 +35,7 @@ export async function mountAccount(host: HTMLElement): Promise<() => void> {
   if (!me?.authenticated || !me.user || !me.amr || !me.csrfToken) return () => {};
   const roles = me.roles ?? [];
   let orgMember = false;
-  // Only Pocket ID reaches Admin, so the lookup waits on that.
+  // Only Polaris ID reaches Admin, so the lookup waits on that.
   if (!roles.includes('admin') && me.amr === 'oidc') {
     const list = (await get('/api/v1/orgs/memberships/me')) as {
       items?: { revokedAt: number | null }[];

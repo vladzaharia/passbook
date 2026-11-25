@@ -50,12 +50,18 @@ export interface PaperFiles {
   photo?: true;
 }
 
+export interface PaperTicket {
+  design: PaperDesign;
+  content: PaperContent;
+  files: PaperFiles;
+}
+
 /** The ticket's words for this pass, from its stored pass.json at the current version. */
 export async function paperTicket(
   ctx: ServiceContext,
   pass: Pass,
   audience: 'holder' | 'staff',
-): Promise<{ design: PaperDesign; content: PaperContent; files: PaperFiles } | null> {
+): Promise<PaperTicket | null> {
   const [manifest, raw, template, zone] = await Promise.all([
     repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion),
     passJsonAtVersion(ctx.env.DB, pass.id, pass.version),

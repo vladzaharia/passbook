@@ -984,6 +984,8 @@ __all__ = [
     "PassesPrintsListResponse",
     "PassesPrintsListResponsePrintsItem",
     "PassesPrintsListResult",
+    "PassesPrintsMarkDrawnResponse",
+    "PassesPrintsMarkDrawnResult",
     "PassesPrintsVoidResponse",
     "PassesPrintsVoidResult",
     "PassesRefreshResponse",
@@ -7995,6 +7997,8 @@ class PassesPrintsCreateResponse(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8008,6 +8012,19 @@ class PassesPrintsListResponsePrintsItem(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
+    createdAt: int
+    voidedAt: int | None
+    voidCause: str | None
+
+class PassesPrintsMarkDrawnResponse(_Model):
+    id: str
+    passId: str
+    generation: int
+    status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8017,6 +8034,8 @@ class PassesPrintsVoidResponse(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -9798,6 +9817,7 @@ class ScanRosterEntriesItem(_Model):
     status: _Literal["active", "voided", "removed"] | str
     state: _Literal["in", "out", None] | str
     day: bool | None = None
+    g: str | None = None
 
 class ScanSession(_Model):
     workspace: ScanWorkspace | None = None
@@ -9915,7 +9935,7 @@ class ScanSetupAnswer1ZonesItem(_Model):
 class ScanSetupAnswer2(_Model):
     mode: _Literal["live", "test"] | str
     timeZone: str
-    preset: _Literal["front_desk", "event_night", "venue", None] | str
+    preset: _Literal["front_desk", "event_night", "venue", "club", "conference", "gates", "counter", "pickup", "capacity", None] | str
     zones: _List[ScanSetupAnswer2ZonesItem]
     events: _List[ScanSetupAnswer2EventsItem]
     staff: _List[ScanSetupAnswer2StaffItem]
@@ -11205,7 +11225,7 @@ class ScanningSessionsOverrideHoursParams3(_Model):
 
 class ScanningSessionsSetupParams(_Model):
     orgId: str
-    preset: _Literal["front_desk", "event_night", "venue"] | str | None = None
+    preset: _Literal["front_desk", "event_night", "venue", "club", "conference", "gates", "counter", "pickup", "capacity"] | str | None = None
     timeZone: str | None = None
     places: _List[ScanningSessionsSetupParamsPlacesItem1 | ScanningSessionsSetupParamsPlacesItem2] | None = None
     events: _List[ScanningSessionsSetupParamsEventsItem1 | ScanningSessionsSetupParamsEventsItem2 | ScanningSessionsSetupParamsEventsItem3] | None = None
@@ -13322,7 +13342,7 @@ class WebhookEndpointsEnsureCaptureParams(_Model):
     eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
 
 class WebhookEndpointsRotateSecretParams(_Model):
-    overlapHours: _Literal[0] | _Literal[24] | _Literal[72] | None = None
+    overlapHours: _Literal[0] | _Literal[1] | _Literal[24] | _Literal[72] | _Literal[168] | None = None
 
 class WebhookEndpointsRotateSecretResponse(_Model):
     secret: str
@@ -13756,6 +13776,8 @@ PassesMemberPhotoUploadResult = PassesMemberPhotoUploadResponse
 PassesPrintsCreateResult = PassesPrintsCreateResponse
 
 PassesPrintsListResult = PassesPrintsListResponse
+
+PassesPrintsMarkDrawnResult = PassesPrintsMarkDrawnResponse
 
 PassesPrintsVoidResult = PassesPrintsVoidResponse
 

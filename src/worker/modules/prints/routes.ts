@@ -6,7 +6,7 @@ import {
   PassPrintsResponseSchema,
   PrintParamSchema,
 } from '../../../shared/contracts/index.ts';
-import { AppError } from '../../platform/errors.ts';
+import { AppError, NotFoundError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { renderErrorPage } from '../../ssr/error-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
@@ -17,10 +17,15 @@ import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts'
 import { openPublicAsset } from '../public/service.ts';
 import { printPageModel } from './page.ts';
 import { PDF_HEADERS, ticketPdf } from './pdf-service.ts';
-import * as repo from './repo.ts';
 import { adminWriter } from './repo-write.ts';
 import { registerBulkPrintRoutes } from './routes-bulk.ts';
-import { ADMIN_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
+import {
+  ADMIN_PRINTS_PER_HOUR,
+  listPassPrints,
+  mintPrint,
+  refreshActivePrint,
+  voidPrint,
+} from './service.ts';
 
 type Router = ReturnType<typeof createRouter>;
 
@@ -61,7 +66,7 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
     async (c) => {
       const { id } = c.req.valid('param');
       const { pass } = await tenantPassForRead(svc(c), authOf(c), id, passScopeOf(c));
-      return c.json({ prints: await repo.listPrints(svc(c).env.DB, pass.id) });
+      return c.json({ prints: await listPassPrints(svc(c), pass) });
     },
   );
 
@@ -100,12 +105,14 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
         const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
         const brand = await orgBrandOf(ctx, pass.orgId);
         const model = await printPageModel(ctx, pass, 'staff', brand, true);
+        const modeQuery = pass.mode === 'test' ? '?mode=test' : '';
         const html = renderPrintPage({
           model,
           audience: 'staff',
           nonce: c.var.nonce,
           brand,
-          pdfHref: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/pdf`,
+          modeQuery,
+          pdfHref: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/pdf${modeQuery}`,
           assetBase: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/assets/`,
           ...(theme ? { theme } : {}),
         });
@@ -136,8 +143,29 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
     async (c) => {
       const ctx = svc(c);
       const { id } = c.req.valid('param');
-      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
-      return new Response(await ticketPdf(ctx, pass, 'staff'), { headers: PDF_HEADERS });
+      const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const writer = adminWriter(authority, actorFor(c));
+      return new Response(await ticketPdf(ctx, pass, 'staff', writer), { headers: PDF_HEADERS });
+    },
+  );
+
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'post',
+      path: '/{id}/print/drawn',
+      summary: 'Record that the active print was drawn again from the pass as it is now',
+      params: IdParamSchema,
+      response: PassPrintSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const { id } = c.req.valid('param');
+      const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const print = await refreshActivePrint(ctx, adminWriter(authority, actorFor(c)), pass);
+      if (!print) throw new NotFoundError('No active print.', 'PRINT_NOT_FOUND');
+      return c.json(print);
     },
   );
 

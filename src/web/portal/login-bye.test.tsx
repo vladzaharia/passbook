@@ -49,7 +49,7 @@ describe('goodbye wave', () => {
 });
 
 describe('sign out to switch', () => {
-  it('asks the server to keep next and keeps it in the tab for the Pocket ID round trip', async () => {
+  it('asks the server to keep next and keeps it in the tab for the Polaris ID round trip', async () => {
     const fetch = answer({ ok: true, redirect: 'https://id.test/end-session' });
     vi.stubGlobal('fetch', fetch);
     await signOut('csrf', { next: '/admin/passes?q=1' });
@@ -89,7 +89,7 @@ describe('sign out to switch', () => {
     window.turnstile = undefined;
   });
 
-  it('reads, once, the next an SSR switch left in the cookie through Pocket ID', () => {
+  it('reads, once, the next an SSR switch left in the cookie through Polaris ID', () => {
     window.history.replaceState(null, '', '/login');
     try {
       // biome-ignore lint/suspicious/noDocumentCookie: the cookie the logout POST sets

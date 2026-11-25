@@ -37,6 +37,8 @@ const print = (over: Record<string, unknown> = {}) => ({
   passId: 'p1',
   generation: 2,
   status: 'active',
+  passVersion: 1,
+  stale: false,
   createdAt: 1_800_000_000_000,
   voidedAt: null,
   voidCause: null,
@@ -98,6 +100,49 @@ describe('Print card', () => {
     );
     await user.click(screen.getByRole('button', { name: PRINT_COPY.reprint, hidden: false }));
     await waitFor(() => expect(calls(fetchMock, 'POST', '/passes/p1/prints')).toHaveLength(1));
+  });
+
+  it('says so when the pass changed since the print', async () => {
+    renderTags(
+      <PrintCard pass={pass()} readOnly={false} />,
+      handlers(status(true), [print({ stale: true })]),
+    );
+    expect(await screen.findByText(PRINT_COPY.stale)).toBeInTheDocument();
+  });
+
+  it('asks to print again when the print ended with the pass', async () => {
+    renderTags(
+      <PrintCard pass={pass()} readOnly={false} />,
+      handlers(status(true), [print({ status: 'voided', voidCause: 'pass_voided', voidedAt: 1 })]),
+    );
+    expect(await screen.findByText(PRINT_COPY.againNote)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: PRINT_COPY.again })).toBeInTheDocument();
+  });
+
+  it.each(['transfer', 'new_code'])('asks to print again after a %s void', async (cause) => {
+    renderTags(
+      <PrintCard pass={pass()} readOnly={false} />,
+      handlers(status(true), [print({ status: 'voided', voidCause: cause, voidedAt: 1 })]),
+    );
+    expect(await screen.findByText(PRINT_COPY.againNote)).toBeInTheDocument();
+  });
+
+  it.each(['holder_change', 'manual'])('does not after a %s void', async (cause) => {
+    renderTags(
+      <PrintCard pass={pass()} readOnly={false} />,
+      handlers(status(true), [print({ status: 'voided', voidCause: cause, voidedAt: 1 })]),
+    );
+    expect(await screen.findByText(PRINT_COPY.cardEmpty)).toBeInTheDocument();
+    expect(screen.queryByText(PRINT_COPY.againNote)).toBeNull();
+  });
+
+  it('does not offer print again on a voided pass', async () => {
+    renderTags(
+      <PrintCard pass={pass({ status: 'voided' })} readOnly={false} />,
+      handlers(status(true), [print({ status: 'voided', voidCause: 'pass_voided', voidedAt: 1 })]),
+    );
+    expect(await screen.findByText(PRINT_COPY.cardEmpty)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: PRINT_COPY.again })).toBeNull();
   });
 
   it('voids after a confirm and says so', async () => {

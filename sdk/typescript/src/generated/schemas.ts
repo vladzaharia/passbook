@@ -6388,6 +6388,8 @@ export type PassesPrintsCreateResponse = {
   passId: string;
   generation: number;
   status: "active" | "voided" | "used";
+  passVersion: number | null;
+  stale: boolean;
   createdAt: number;
   voidedAt: number | null;
   voidCause: string | null;
@@ -6400,10 +6402,24 @@ export type PassesPrintsListResponse = {
     passId: string;
     generation: number;
     status: "active" | "voided" | "used";
+    passVersion: number | null;
+    stale: boolean;
     createdAt: number;
     voidedAt: number | null;
     voidCause: string | null;
   }>;
+};
+
+export type PassesPrintsMarkDrawnResponse = {
+  id: string;
+  passId: string;
+  generation: number;
+  status: "active" | "voided" | "used";
+  passVersion: number | null;
+  stale: boolean;
+  createdAt: number;
+  voidedAt: number | null;
+  voidCause: string | null;
 };
 
 export type PassesPrintsVoidResponse = {
@@ -6411,6 +6427,8 @@ export type PassesPrintsVoidResponse = {
   passId: string;
   generation: number;
   status: "active" | "voided" | "used";
+  passVersion: number | null;
+  stale: boolean;
   createdAt: number;
   voidedAt: number | null;
   voidCause: string | null;
@@ -8410,6 +8428,7 @@ export type ScanDeviceCapabilities = {
     connected: boolean | null;
     state: "ready" | "active" | "off" | "needs-permission" | "unavailable" | "error";
   }>;
+  draftFailures?: number;
   surfaces: Array<"phone" | "operator" | "desk" | "customer">;
   preferred: "phone" | "operator" | "desk" | "customer";
 } | null;
@@ -8912,6 +8931,7 @@ export type ScanRoster = {
     status: "active" | "voided" | "removed";
     state: "in" | "out" | null;
     day?: boolean;
+    g?: string;
   }>;
   cursor: string | null;
   asOf: number;
@@ -9052,7 +9072,7 @@ export type ScanSetupAnswer = {
 } | {
   mode: "live" | "test";
   timeZone: string;
-  preset: "front_desk" | "event_night" | "venue" | null;
+  preset: "front_desk" | "event_night" | "venue" | "club" | "conference" | "gates" | "counter" | "pickup" | "capacity" | null;
   zones: Array<{
     occupancy: "off" | "track" | "enforce";
     capacity: number | null;
@@ -10368,7 +10388,7 @@ export type ScanningSessionsOverrideHoursParams = {
 
 export type ScanningSessionsSetupParams = {
   orgId: string;
-  preset?: "front_desk" | "event_night" | "venue";
+  preset?: "front_desk" | "event_night" | "venue" | "club" | "conference" | "gates" | "counter" | "pickup" | "capacity";
   timeZone?: string;
   places?: Array<{
     zoneId: string;
@@ -12420,7 +12440,7 @@ export type WebhookEndpointsEnsureCaptureParams = {
 };
 
 export type WebhookEndpointsRotateSecretParams = {
-  overlapHours?: 0 | 24 | 72;
+  overlapHours?: 0 | 1 | 24 | 72 | 168;
 };
 
 export type WebhookEndpointsRotateSecretResponse = {

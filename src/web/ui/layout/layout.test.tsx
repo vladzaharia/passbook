@@ -856,6 +856,38 @@ describe('admin layout', () => {
   });
 });
 
+describe('developer sandboxes in admin lists', () => {
+  const sandbox = () => membershipFixture('sbx', { orgName: 'Sandbox X', testOnly: true });
+  const orgs = () => [
+    membershipFixture('o1', { orgName: 'Henrys' }),
+    membershipFixture('o2', { orgName: 'Harbor' }),
+    sandbox(),
+  ];
+
+  it('leaves them out of the scope switcher', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/o/o1', { session: 'user', memberships: orgs() });
+    await user.click(await screen.findByRole('combobox', { name: 'Scope: Henrys' }));
+    const options = within(await screen.findByRole('listbox')).getAllByRole('option');
+    expect(options.map((o) => o.textContent)).toEqual(['Henrys', 'Harbor']);
+  });
+
+  it('leaves them out of the /admin chooser', async () => {
+    await renderApp('/admin', { session: 'user', memberships: orgs() });
+    const list = await screen.findByRole('list', { name: 'Organizations' });
+    expect(
+      within(list)
+        .getAllByRole('link')
+        .map((a) => a.textContent),
+    ).toEqual(['Henrys', 'Harbor']);
+  });
+
+  it('shows the empty state when a sandbox is the only grant', async () => {
+    await renderApp('/admin', { session: 'user', memberships: [sandbox()] });
+    expect(await screen.findByText('No organizations')).toBeInTheDocument();
+  });
+});
+
 describe('scope switcher with a personal organization', () => {
   const personal = () => membershipFixture('p1', { orgName: 'Personal', personal: true });
 

@@ -3,7 +3,6 @@
  * left, the code on white at the right; the same boxes and words as the print page (ticket-strip.tsx).
  */
 import { paperBoxes } from '../../../passkit/template/paper-geometry.ts';
-import { passbookCredit } from '../../../shared/copy/passbook-credit.ts';
 import { groupPrintCode } from '../../../shared/copy/print.ts';
 import { codeLabel } from '../../../web/paper/ticket-parts.tsx';
 import { stripText, stripType } from '../../../web/paper/ticket-strip-text.ts';
@@ -56,7 +55,6 @@ export function drawStrip(pen: Pen, s: Sheet): void {
   const when: TextStyle = { size: ty.when, font: 'medium', color: fg };
   const venue: TextStyle = { size: ty.venue, font: 'regular', color: fg };
   const meta: TextStyle = { size: ty.foot, font: 'regular', color: label };
-  const metaBold: TextStyle = { ...meta, font: 'semibold' };
 
   if (t.compact) {
     pen.text(pen.wrap(`${t.brand} · ${t.kicker}`, w, kick, 1)[0] ?? '', x, y, kick);
@@ -92,18 +90,15 @@ export function drawStrip(pen: Pen, s: Sheet): void {
 
   // Bottom: footer line, then the typed code (compact) or the facts boxes.
   const footTop = panel.y + panel.h - ty.pad - pen.lineHeight(meta);
-  const credit = passbookCredit(s.mark);
-  const pbW = credit
-    ? pen.measure(credit.name ? `${credit.lead} ` : credit.lead, meta) +
-      (credit.name ? pen.measure(credit.name, metaBold) : 0)
-    : 0;
-  pen.text(
-    pen.wrap(footMeta(c, s.issued), w - pbW - (pbW ? 3 : 0), meta, 1)[0] ?? '',
-    x,
-    footTop,
-    meta,
+  const pbW = passbookLine(
+    pen,
+    s.mark,
+    x + w,
+    pen.baselineOf(meta, footTop),
+    meta.size,
+    meta.color,
   );
-  passbookLine(pen, s.mark, x + w, pen.baselineOf(meta, footTop), meta.size, meta.color);
+  pen.text(pen.wrap(footMeta(c, s.issued), w - pbW - 3, meta, 1)[0] ?? '', x, footTop, meta);
 
   if (t.compact) {
     const lineSt: TextStyle = { size: ty.typed, font: 'mono', color: fg, ls: 0.04, lh: 1.3 };

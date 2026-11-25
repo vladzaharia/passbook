@@ -54,7 +54,7 @@ export function registerManagedRoutes(identitiesRoutes: ReturnType<typeof create
     {
       method: 'post',
       path: '/{id}/revoke-certificate',
-      summary: 'Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in',
+      summary: 'Revoke a superseded certificate after a compromise; needs a Polaris ID sign-in',
       params: IdParamSchema,
       body: RevokeCertificateSchema,
       status: 202,

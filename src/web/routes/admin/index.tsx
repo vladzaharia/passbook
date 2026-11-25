@@ -35,7 +35,7 @@ function ScopeChooser() {
   if (scope.isError) {
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
   }
-  if (scope.memberships.length === 0) {
+  if (scope.choices.length === 0) {
     return (
       <EmptyState
         heading
@@ -58,7 +58,7 @@ function ScopeChooser() {
       <Card className="mx-auto mt-4 max-w-xl">
         <CardBody>
           <ListRows label="Organizations">
-            {scope.memberships.map((m) => {
+            {scope.choices.map((m) => {
               const wanted = orgPath(m.orgId, next ?? '');
               const to = canAccessAdminPath(wanted, false, m)
                 ? wanted

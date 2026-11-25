@@ -29,7 +29,7 @@ import { embedPixels, type PdfPicture, type PictureFit, readPng } from './pdf-pn
 import type { PdfImages, Sheet } from './pdf-sheet.ts';
 
 /** Part of every cache fingerprint: bump it when the drawing changes. */
-export const PDF_RENDER_VERSION = 'pt4-7';
+export const PDF_RENDER_VERSION = 'pt4-8';
 
 /** A PNG a sheet draws, with an id that names its content (an etag). */
 export interface ImageSource {

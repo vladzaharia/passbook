@@ -1,5 +1,5 @@
 import { sameOriginOnly } from '../../platform/csrf.ts';
-import { AppError } from '../../platform/errors.ts';
+import { AppError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter } from '../../platform/openapi.ts';
 import { ASSET_MISSES_PER_MINUTE, gateMisses, rateLimit } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
@@ -12,7 +12,7 @@ import { printPageModel } from './page.ts';
 import { assertHolderMayPrint } from './paper.ts';
 import { PDF_HEADERS, ticketPdf } from './pdf-service.ts';
 import { linkWriter } from './repo-write.ts';
-import { HOLDER_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
+import { HOLDER_PRINTS_PER_HOUR, mintPrint, refreshActivePrint, voidPrint } from './service.ts';
 
 /**
  * /p/:token/print: the holder's own print, by bearer link. POSTs only, no pass or page is read here:
@@ -80,6 +80,14 @@ holderPrintRoutes.post('/:token/print/reprint', async (c) => {
   return c.json(await mintPrint(call.ctx, call.caller, call.pass, true), 200, noStore);
 });
 
+/** The page's Print button: the active print is drawn again, so it matches the pass as it is now. */
+holderPrintRoutes.post('/:token/print/drawn', async (c) => {
+  const call = await holderCall(c);
+  const print = await refreshActivePrint(call.ctx, call.caller.writer, call.pass);
+  if (!print) throw new NotFoundError('No active print.', 'PRINT_NOT_FOUND');
+  return c.json(print, 200, noStore);
+});
+
 holderPrintRoutes.post('/:token/print/void', async (c) => {
   const call = await holderCall(c);
   return c.json(await voidPrint(call.ctx, call.caller, call.pass, 'holder'), 200, noStore);
@@ -89,5 +97,7 @@ holderPrintRoutes.post('/:token/print/void', async (c) => {
 holderPrintRoutes.get('/:token/print/pdf', async (c) => {
   const ctx = svc(c);
   const pass = await passForToken(ctx, c.req.param('token') ?? '');
-  return new Response(await ticketPdf(ctx, pass, 'holder'), { headers: PDF_HEADERS });
+  return new Response(await ticketPdf(ctx, pass, 'holder', linkWriter(pass)), {
+    headers: PDF_HEADERS,
+  });
 });

@@ -89,7 +89,7 @@ export function createScanApi(deps: ScanApiDeps) {
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
 
   async function once(
-    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     path: string,
     body: unknown,
     call: Call,
@@ -138,7 +138,7 @@ export function createScanApi(deps: ScanApiDeps) {
   }
 
   async function request<S extends z.ZodType>(
-    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     path: string,
     schema: S | null,
     body?: unknown,
