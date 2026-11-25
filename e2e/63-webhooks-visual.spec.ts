@@ -6,7 +6,7 @@ import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 
-const SHOTS = '.wrangler/agent-logs/wh5-shots';
+const SHOTS = '.wrangler/agent-logs/wh-recover-shots';
 const SIZES = [
   ['desktop', 1440, 900],
   ['tablet', 820, 1180],
@@ -28,7 +28,7 @@ test.describe('webhooks console, every size and theme', () => {
     const api = await apiAs('admin');
     const made = await api.send('POST', '/api/v1/webhook-endpoints', {
       orgId: readSeed().org.id,
-      url: `https://example.com/hooks/${uid('vis')}`,
+      url: `https://hooks.example.com/hooks/${uid('vis')}`,
       eventTypes: ['pass.issued', 'pass.scanned'],
       description: 'Orders',
     });
@@ -51,23 +51,23 @@ test.describe('webhooks console, every size and theme', () => {
         const pages: [string, string, () => Promise<void>][] = [
           [
             'list',
-            `/admin/connections?tab=webhooks&orgId=${org}`,
+            `/admin/o/${org}/connections?tab=webhooks`,
             async () => {
-              await expect(page.getByRole('table', { name: 'Webhook endpoints' })).toBeVisible();
+              await expect(page.getByRole('tabpanel', { name: 'Webhook endpoints' })).toBeVisible();
             },
           ],
           [
             'new',
-            `/admin/connections/webhooks/new?orgId=${org}`,
+            `/admin/o/${org}/connections/webhooks/new`,
             async () => {
               await expect(page.getByRole('textbox', { name: /URL/ })).toBeVisible();
             },
           ],
           [
             'detail',
-            `/admin/connections/webhooks/${endpointId}?orgId=${org}`,
+            `/admin/o/${org}/connections/webhooks/${endpointId}`,
             async () => {
-              await expect(page.getByRole('table', { name: 'Deliveries' })).toBeVisible();
+              await expect(page.getByRole('heading', { name: 'Deliveries' })).toBeVisible();
             },
           ],
         ];
