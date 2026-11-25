@@ -20,6 +20,7 @@ import { holdersRoutes } from './modules/holders/routes.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
 import { marketingRoutes } from './modules/marketing/routes.ts';
@@ -103,7 +104,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|assets|health|marketing)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -242,6 +243,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/b', bundlePublicRoutes);
   app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);
+  app.route('/scim/v2', scimRoutes);
   app.route('/developers', developerPortalRoutes);
   app.route('/access', marketingRoutes);
   app.route('/', marketingPageRoutes);

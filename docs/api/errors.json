@@ -4691,6 +4691,24 @@
       ]
     },
     {
+      "code": "SCIM_AUTH_FAILED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "SCIM_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "SCREEN_ONLY",
       "statuses": [
         403
