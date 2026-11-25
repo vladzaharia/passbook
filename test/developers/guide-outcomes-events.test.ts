@@ -110,7 +110,7 @@ describe('bulk import', () => {
     const made = await call(
       'POST',
       '/pass-imports',
-      fence('bulk-import', 'pass-imports.postPassImports'),
+      snippetBody('bulk-import'),
     );
     expect(made.status).toBe(201);
     const checked = await call(
