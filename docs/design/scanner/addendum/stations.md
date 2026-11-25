@@ -290,8 +290,8 @@ ScanCustomerViewSchema = z.object({
 | ok `set` | **Updated** | — |
 | milestone `reward` | **Reward ready** | "10 of 10" |
 | `ready` (desk card) | **Hi, Sam** (greet), else **Hello** | template name ("Prepaid card") |
-| `review` beat, money | **To pay $12.00** | **Balance after: $30.50** (client formatting from the ready view's money row) |
-| `review` beat, count | **Adding 2 stamps** | — |
+| draft, money `take` | **To pay $12.00** | **Balance after: $30.50** (computed by the server from the pass) |
+| draft, money `add` | **Adding $20.00** | **Balance after: $62.50** |
 | every `heads_up` and `refused`, every mode mismatch, not found | station `refusedLine` (**Please see the desk**) | — |
 | undone | back to idle | — |
 | socket unhealthy | idle stays; chip **Reconnecting** | — |
@@ -345,7 +345,7 @@ Changes to RT, decided here:
 | Terminals get a 60 s socket ticket | Not built, by design: `live-auth.ts:130` refuses a terminal's socket. A terminal is a bearer-token till (`kind: terminal`, no CSRF secret) that polls: every request re-reads its row, a lost credential is 401 `SCANNER_REPAIR` and any other config move is 409 `SCAN_CONFIG_CHANGED` (`authority-epochs.md`). Browser devices (`kind: device`) do listen, on the `as=device` socket (`routes-live.ts:36`, `web/scan/enroll/device-socket.ts`) with a poll fallback (`use-scan-session.ts`, 10 s). Closed 2026-11-22 | Terminals publish (their scans fan out) but never listen |
 | Audiences `customer, door, desk, manager` | `customer, door, desk` plus `scan` (scanners get presence only) | Monitors cap at desk (1.3) |
 | One ring buffer for all audiences, 15 min | Customer rows 30 s, replayed only if < 10 s old; staff rows 15 min / 500 | A customer screen must never show the previous customer after a reconnect (S11) |
-| `beat` with `reading`/`idle` | adds `review` (amount under review) and `cancel` | The designer's **To pay** state |
+| `beat` with `reading`/`idle` | An amount under review is `PUT /scan/draft` over HTTP (money `take` and `add` only); `DELETE` cancels. Sockets take no client messages | The hub is read-only; the desk already speaks HTTP, and the server checks the read |
 | Desk ready not published | `ready` published to the station's Customer screens only, ephemeral | **Hi, Sam · Balance** before the charge |
 | Station change and staff sign-out kick with 4403 | Config changes kick with **4409** (reconnect now); 4403 only for revoke, unpair, expiry and org suspension; staff sign-out kicks nothing | 4403 sends a device to the boot gate's block panel, wrong for a rename |
 | `scan` event carries a `ScanDisplay` | carries `body`: a `ScanCustomerView` or a `ScanMonitorRow` (3.3, 3.5) | The feed needs verdict, where, who and when, not only the display |
@@ -380,22 +380,22 @@ LiveEventSchema = z.discriminatedUnion('t', [
   z.object({ t: z.literal('scan'), epoch, seq, at, st, ref, body: z.union([ScanCustomerViewSchema, ScanMonitorRowSchema]) }),
   z.object({ t: z.literal('undo'), epoch, seq, at, st, ref: UuidV7Schema, scanId: IdSchema.nullable() }), // null to customers
   z.object({ t: z.literal('ready'), at, st, ref, body: ScanCustomerViewSchema }),            // ephemeral
-  z.object({ t: z.literal('beat'), st, dev: IdSchema, k: z.enum(['reading', 'idle', 'review', 'cancel']),
-             ref: UuidV7Schema.nullable(), amount: z.number().nullable(), actionId: z.string().nullable() }), // ephemeral
+  z.object({ t: z.literal('draft'), at, ref, body: z.union([ScanCustomerViewSchema, z.object({ cancelled: z.literal(true) })]) }), // ephemeral
   z.object({ t: z.literal('presence'), st: IdSchema.nullable(), devices: LivePresenceSchema.array() }),     // ephemeral
   z.object({ t: z.literal('reset'), epoch, seq }),
 ]);
 LivePresenceSchema = z.object({ id: IdSchema, name: z.string(), role: ScreenRoleSchema, online: z.boolean() });
-LiveClientMessageSchema = z.discriminatedUnion('t', [         // scanners only; anything else closes 1008
-  z.object({ t: z.literal('beat'), k: z.enum(['reading', 'idle', 'review', 'cancel']),
-             ref: UuidV7Schema.optional(), amount: z.number().finite().min(0).max(10_000_000).optional(),
-             actionId: z.string().max(32).optional() }),
-]);
 LIVE_CLOSE = { expired: 4401, revoked: 4403, replaced: 4408, reconfigure: 4409 } as const;
 ```
 
-`ping`/`pong` are raw strings answered by the auto-response. A beat is relayed only to the sender's station's
-Customer screens; the hub caps beats at 10 per second per socket (close 1008 past it).
+`ping`/`pong` are raw strings answered by the auto-response. Sockets are read-only: any client message closes 1008.
+
+**Draft.** `PUT /api/v1/scan/draft { ref, actionId, amount }` (`ref` is the resolve's idempotency key) answers
+`{ screens }`; `DELETE /api/v1/scan/draft?ref=` cancels. Paired scanner devices only. Money `take` and `add` only
+(`SCAN_DRAFT_INVALID`). It needs the scanner's own `ready` card, presented and under 60 s old, with the pass still
+current (`SCAN_DRAFT_STALE`). The server computes **Balance after**. Only Customer screens that follow the scanner
+and whose session shows drafts (`showDraft`) are told: never a monitor or a device socket, never the ring or a
+snapshot. A hub failure answers `{ screens: 0 }`; a draft never blocks the commit. `DELETE` also clears the ready card.
 
 ### 4.4 Ordering and dedupe
 
@@ -406,7 +406,7 @@ Customer screens; the hub caps beats at 10 per second per socket (close 1008 pas
 - Monitor feed order: `at` desc, then `seq`. A late arrival slots into place without moving the top row if it is
   older than the newest.
 - Customer screen: shows an event only if its `at` ≥ the shown event's `at`; an older one is dropped. A `ready` for a
-  `ref` is replaced by that `ref`'s `scan`. `review` and `cancel` beats apply only to the `ready` with the same `ref`.
+  `ref` is replaced by that `ref`'s `scan`. A `draft` applies only to the `ready` with the same `ref`; `cancelled` clears the draft and that `ready`.
 - `undo { ref, scanId }`: monitors mark the row undone by `scanId`; a Customer screen showing that `ref` returns to idle.
 
 ### 4.5 Reconnect and replay
@@ -461,7 +461,7 @@ unhealthy and steps down (2 s → 5 s), as RT warns.
    `SCAN_HUB.getByName(org:mode)`; the hub is not routable from outside and checks the attachment's org and mode
    against its own name. It keeps ≤ 3 sockets per device and closes the oldest with 4408.
 
-No CSRF on the socket: the only client message is a beat, which changes nothing stored.
+No CSRF on the socket: it takes no client messages.
 
 ### 4.9 Hibernation
 

@@ -24,6 +24,9 @@ export function clockedHub(ctx: ServiceContext, clock: ManualClock, orgId: strin
       now = clock.now(),
     ) => hub.snapshot(attachment, after, now),
     ringRow: (eventId: string): Promise<LiveRingRow | null> => hub.ringRow(eventId, clock.now()),
+    draft: (input: Parameters<Hub['draft']>[0]) => hub.draft({ now: clock.now(), ...input }),
+    clearDraft: (input: Parameters<Hub['clearDraft']>[0]) =>
+      hub.clearDraft({ now: clock.now(), ...input }),
     resolved: (input: Parameters<Hub['resolved']>[0]) => hub.resolved(input),
     enroll: (input: Parameters<Hub['enroll']>[0]) => hub.enroll({ now: clock.now(), ...input }),
     connected: (ids: string[]) => hub.connected(ids),

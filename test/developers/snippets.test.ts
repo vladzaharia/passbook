@@ -47,11 +47,19 @@ const reached = (c: Call) =>
 /** Zones belong to the org, not a mode: a test key may not write them, and the world's key is a test key. */
 const LIVE_ONLY = new Set(['scan-zones.postScanZones']);
 
+/** Google and Samsung ship dark: the reissue route answers WALLET_PROVIDER_DISABLED until a provider is released. */
+const DARK_PROVIDER = new Set(['wallet-providers.postWalletProvidersReissue']);
+
 /** One line per call the API refused. */
 function failures(id: string, calls: Call[]): string[] {
   if (calls.length === 0) return [`${id}: made no request`];
   return calls
-    .filter((c) => !reached(c) && !(LIVE_ONLY.has(id) && c.code === 'SCAN_ZONE_LIVE_ONLY'))
+    .filter(
+      (c) =>
+        !reached(c) &&
+        !(LIVE_ONLY.has(id) && c.code === 'SCAN_ZONE_LIVE_ONLY') &&
+        !(DARK_PROVIDER.has(id) && c.code === 'WALLET_PROVIDER_DISABLED'),
+    )
     .map((c) => `${id}: ${c.method} ${c.path} ${c.status} ${c.code} ${c.detail ?? ''}`);
 }
 

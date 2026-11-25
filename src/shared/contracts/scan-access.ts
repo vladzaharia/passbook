@@ -110,3 +110,6 @@ export type PassAccess = z.infer<typeof PassAccessSchema>;
 /** A guest's visit count was cleared: the next grant starts again at one. */
 export const ScanVisitsResetSchema = z.object({ passId: IdSchema, visits: z.literal(0) });
 export type ScanVisitsReset = z.infer<typeof ScanVisitsResetSchema>;
+
+/** Devices one scanning session holds; a screen can follow all of them. */
+export const SESSION_DEVICE_CAP = 64;

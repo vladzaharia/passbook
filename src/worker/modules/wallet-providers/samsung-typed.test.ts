@@ -17,14 +17,14 @@ import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { releaseCardType } from './repo-card-type.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
-import { samsungCardStateFresh } from './repo-samsung-card-state.ts';
-import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
+import { putSamsungCardState, samsungCardStateFresh } from './repo-samsung-card-state.ts';
 import { decryptCard } from './samsung-card-test-fixtures.ts';
 import { samsungCardId, samsungTypeHasCard } from './samsung-cards.ts';
 import { SAMSUNG_TOKEN_WINDOW_MS } from './samsung-limits.ts';
 import {
+  recheckSamsungCard,
+  refreshExpiringSamsungCards,
   refreshSamsungCardState,
-  refreshSamsungProjectionEvidence,
 } from './samsung-verification.ts';
 import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
@@ -32,6 +32,8 @@ beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
 });
 afterEach(() => vi.restoreAllMocks());
+
+const SAMSUNG_CARD_STATE_MS = 300_000;
 
 const cardOf = z.object({
   card: z.object({
@@ -65,7 +67,7 @@ async function getCard(t: Callbacks, signedQuery = '') {
 
 describe('Samsung Get Card Data from the compiler', () => {
   it('serves the card the compiler writes for the approved type, from the pass as it is now', async () => {
-    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const t = await setupSamsungCallbacks();
     const { card } = await getCard(t);
     expect(card.type).toBe('loyalty');
     expect(card.subType).toBe('others');
@@ -92,7 +94,7 @@ describe('Samsung Get Card Data from the compiler', () => {
   });
 
   it('does no template read, art cut or write before the token verifies', async () => {
-    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const t = await setupSamsungCallbacks();
     const put = vi.spyOn(t.kit.env.BUCKET, 'put');
     const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
     const before = await all(t.kit.env.DB, 'SELECT * FROM wallet_projection_art');
@@ -105,13 +107,13 @@ describe('Samsung Get Card Data from the compiler', () => {
   });
 
   it('narrows to the fields Samsung asks for', async () => {
-    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const t = await setupSamsungCallbacks();
     const { card } = await getCard(t, '?fields=title');
     expect(Object.keys(card.data[0]?.attributes ?? {})).toEqual(['title']);
   });
 
   it('answers with Samsung unreachable: nothing waits on stored evidence', async () => {
-    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const t = await setupSamsungCallbacks();
     // Past the five minutes a stored proof would have lived.
     t.kit.clock.advance(SAMSUNG_TOKEN_WINDOW_MS + 1);
     const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
@@ -123,7 +125,7 @@ describe('Samsung Get Card Data from the compiler', () => {
 
 describe('evidence outside queue predicates', () => {
   it('releases and reads a compiled card with no evidence row at all', async () => {
-    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
     expect(await all(db, 'SELECT 1 FROM wallet_provider_projection_evidence')).toEqual([]);
     expect(await all(db, 'SELECT 1 FROM wallet_provider_projection_evidence_history')).toEqual([]);
@@ -143,7 +145,7 @@ describe('evidence outside queue predicates', () => {
   });
 
   it('claims a revoke and writes its tombstone with no evidence history', async () => {
-    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
     const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...t.operation,
@@ -185,7 +187,7 @@ describe('evidence outside queue predicates', () => {
 
 describe('Samsung card ids per type', () => {
   it('pins a compiled release to the card of its type', async () => {
-    const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+    const t = await setupWalletOfferKit({ google: 'absent' });
     const release = t.samsungRelease;
     if (!release) throw new Error('Missing release fixture');
     const withTicket = { ...t.samsung, cardIds: { ticket: 'eventcard' } };
@@ -234,7 +236,7 @@ describe('the card state is a row, read live only by the paths that decide', () 
   }
 
   it('records the live read at publish and offers from the row without calling Samsung', async () => {
-    const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+    const t = await setupWalletOfferKit({ google: 'absent' });
     const row = await first<{ card_type: string; testing_mode_off: string }>(
       t.kit.env.DB,
       'SELECT card_type, testing_mode_off FROM wallet_samsung_card_state WHERE candidate_id = ?',
@@ -247,7 +249,7 @@ describe('the card state is a row, read live only by the paths that decide', () 
   });
 
   it('withholds the offer once the row is older than five minutes, still without calling Samsung', async () => {
-    const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+    const t = await setupWalletOfferKit({ google: 'absent' });
     t.kit.clock.advance(300_001);
     const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
     expect(await offered(t)).toBe(false);
@@ -255,25 +257,25 @@ describe('the card state is a row, read live only by the paths that decide', () 
   });
 
   it('the sync job reads the card again and the row makes the offer fresh', async () => {
-    const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+    const t = await setupWalletOfferKit({ google: 'absent' });
     t.kit.clock.advance(300_001);
     const spy = t.mockTemplateFetch(t.googleCertificate);
     try {
-      expect(await refreshExpiringSamsungEvidence(jobCtxOf(t.kit), 10)).toBe(1);
+      expect(await refreshExpiringSamsungCards(jobCtxOf(t.kit), 10)).toBe(1);
     } finally {
       spy.mockRestore();
     }
     expect(await offered(t)).toBe(true);
   });
 
-  it('a refused read removes the row: testing mode in Live, a blocked card, another type, no answer', async () => {
+  it('a refused read removes the row: testing mode in Live, a blocked card, another type', async () => {
     const refused: Record<string, string>[] = [
       { testingModeOff: 'N' },
       { state: 'BLOCKED', testingModeOff: 'N' },
       { cardType: 'ticket' },
     ];
     for (const template of refused) {
-      const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+      const t = await setupWalletOfferKit({ google: 'absent' });
       const spy = t.mockTemplateFetch(t.googleCertificate, template);
       const candidate = await candidateOf(t);
       try {
@@ -288,18 +290,30 @@ describe('the card state is a row, read live only by the paths that decide', () 
       ).toEqual([]);
       expect(await offered(t)).toBe(false);
     }
-    const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+  });
+
+  it('a read that got no answer keeps the row to its own expiry, and logs a code', async () => {
+    const t = await setupWalletOfferKit({ google: 'absent' });
+    expect(await offered(t)).toBe(true);
+    const warn = vi.spyOn(t.kit.ctx.log, 'warn');
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
     expect(await refreshSamsungCardState(t.kit.ctx, await candidateOf(t))).toBeNull();
+    expect(warn).toHaveBeenCalledWith('wallet.verification_failed', {
+      code: 'WALLET_VERIFY_FAILED',
+      reason: 'transient',
+    });
+    // One failed read does not withdraw the offer; the row lapses on its own.
+    expect(await offered(t)).toBe(true);
+    t.kit.clock.advance(SAMSUNG_CARD_STATE_MS + 1);
     expect(await offered(t)).toBe(false);
   });
 
   it('the admin recheck is a real read with real times, and replaces the row', async () => {
-    const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+    const t = await setupWalletOfferKit({ google: 'absent' });
     t.kit.clock.advance(120_000);
     const spy = t.mockTemplateFetch(t.googleCertificate);
     try {
-      const result = await refreshSamsungProjectionEvidence(t.kit.ctx, t.auth, {
+      const result = await recheckSamsungCard(t.kit.ctx, t.auth, {
         orgId: t.kit.org.id,
         mode: 'live',
         candidateId: t.samsungRelease?.candidateId ?? '',
@@ -317,8 +331,8 @@ describe('the card state is a row, read live only by the paths that decide', () 
   });
 
   it('keeps one row per candidate: another organization or mode is never read through it', async () => {
-    const a = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
-    const b = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+    const a = await setupWalletOfferKit({ google: 'absent' });
+    const b = await setupWalletOfferKit({ google: 'absent' });
     const candidate = await candidateOf(a);
     // A candidate of another organization, or the same one in another mode, finds no fresh row.
     expect(
@@ -369,5 +383,56 @@ describe('a type with no card of its own', () => {
     expect(samsungCardId(credentials, 'loyalty')).toBe('own');
     expect(samsungCardId(credentials, 'constructor')).toBe('default');
     expect(samsungCardId(credentials, 'ticket')).toBe('default');
+  });
+});
+
+describe('a Test-mode card at the candidate level', () => {
+  /** The candidate's row as a live read left it; the mode is the one the candidate is read in. */
+  async function rowFor(read: { state: string; testingModeOff: 'Y' | 'N' }) {
+    const t = await setupWalletOfferKit({ google: 'absent' });
+    const db = t.kit.env.DB;
+    const candidate = await getProjectionCandidate(db, t.samsungRelease?.candidateId ?? '');
+    if (candidate?.projection.schema !== 2) throw new Error('Missing candidate fixture');
+    const now = t.kit.clock.now();
+    const cardType = candidate.projection.type;
+    expect(
+      await putSamsungCardState(db, {
+        candidateId: candidate.id,
+        candidateHash: candidate.candidateHash,
+        accountId: candidate.accountId,
+        accountEpoch: candidate.accountEpoch,
+        cardType,
+        ...read,
+        verifiedAt: now,
+        expiresAt: now + 300_000,
+      }),
+    ).toBe(true);
+    const fresh = (mode: 'live' | 'test', margin = 0) =>
+      samsungCardStateFresh(db, { ...candidate, mode }, cardType, t.kit.clock.now(), margin);
+    return { fresh, clock: t.kit.clock };
+  }
+
+  it('takes a card still in testing mode in Test and never in Live', async () => {
+    const { fresh } = await rowFor({ state: 'ACTIVE', testingModeOff: 'N' });
+    expect(await fresh('test')).toBe(true);
+    expect(await fresh('live')).toBe(false);
+  });
+
+  it('never takes a blocked card, in either mode, whatever its testing flag says', async () => {
+    for (const testingModeOff of ['Y', 'N'] as const) {
+      const { fresh } = await rowFor({ state: 'BLOCKED', testingModeOff });
+      expect(await fresh('test')).toBe(false);
+      expect(await fresh('live')).toBe(false);
+    }
+  });
+
+  it('takes an active launched card in both, and asks for time left when a write follows', async () => {
+    const { fresh, clock } = await rowFor({ state: 'ACTIVE', testingModeOff: 'Y' });
+    expect(await fresh('live')).toBe(true);
+    expect(await fresh('test')).toBe(true);
+    clock.advance(250_000);
+    expect(await fresh('live')).toBe(true);
+    // Fifty seconds are left: enough to read, not enough to cut art and release.
+    expect(await fresh('live', 60_000)).toBe(false);
   });
 });

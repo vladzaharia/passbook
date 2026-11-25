@@ -32,7 +32,7 @@ import { samsungCallbackRoutes } from './routes-callbacks.ts';
 import { googleCallbackRoutes } from './routes-google-callbacks.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
 import { historicalGoogleRelease } from './runtime-integration-fixtures.ts';
-import { refreshSamsungProjectionEvidence } from './samsung-verification.ts';
+import { recheckSamsungCard } from './samsung-verification.ts';
 import { drainWalletProviderSync } from './sync.ts';
 
 const testEnv = installKeysetTestEnv();
@@ -148,7 +148,7 @@ describe('disabled providers', () => {
       "SELECT id, candidate_hash FROM template_candidates WHERE provider = 'samsung' LIMIT 1",
     );
     await expect(
-      refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, {
+      recheckSamsungCard(f.kit.ctx, f.auth, {
         orgId: f.pass.orgId,
         mode: 'live',
         candidateId: candidate?.id ?? '',

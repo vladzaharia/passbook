@@ -182,8 +182,6 @@ describe('0043 provider generation fences', () => {
       'template_candidates',
       'template_approvals',
       'template_releases',
-      'wallet_provider_projection_evidence',
-      'wallet_provider_projection_evidence_history',
     ]) {
       await expectCanonicalCommitmentChecks(db, table, commitment);
     }

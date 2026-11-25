@@ -8,6 +8,12 @@ import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 
 type Json = Record<string, unknown>;
 
+/** `follows` steers a screen's live watch; it is not a scanner setting. */
+function withoutFollows(overrides: Record<string, unknown>): Record<string, unknown> {
+  const { follows: _follows, ...rest } = overrides;
+  return rest;
+}
+
 /** RFC 7396 merge patch, as `json_patch` applies it: objects merge, null removes. */
 function mergePatch(base: unknown, patch: unknown): unknown {
   if (patch === null || typeof patch !== 'object' || Array.isArray(patch)) return patch;
@@ -55,7 +61,7 @@ export function addSessionPropagation(
     const set: Record<string, SetValue> = {};
     if (patch.settings)
       set.settings = JSON.stringify(
-        mergePatch(JSON.parse(session.settings), JSON.parse(device.overrides)),
+        mergePatch(JSON.parse(session.settings), withoutFollows(JSON.parse(device.overrides))),
       );
     if (patch.timeZone) set.time_zone = session.time_zone;
     if (patch.accepts !== undefined) set.event_id = patch.accepts.eventId;

@@ -1,12 +1,15 @@
 import { CircleCheck, CircleDashed } from 'lucide-react';
 import { useState } from 'react';
 import type { WalletCredential, WalletEnrolment } from '@/shared/contracts/wallet-providers.ts';
+import { reissueWalletPassesConfirm } from '@/web/lib/confirms-wallet.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import {
+  Button,
   Callout,
   Card,
   CardBody,
   CardHeader,
+  ConfirmDialog,
   SegmentedControl,
   StatusPill,
   toast,
@@ -45,16 +48,20 @@ export function OrgProviderCard({
   enrolment: e,
   own,
   canManage,
+  canReissue,
 }: {
   orgId: string;
   enrolment: WalletEnrolment;
   /** The organization's active own credential for this mode and provider. */
   own: WalletCredential | undefined;
   canManage: boolean;
+  /** passes:operate: sending every copy again is a pass action, not an account one. */
+  canReissue: boolean;
 }) {
   const mode = useMode();
   const actions = useWalletActions();
   const [busy, setBusy] = useState(false);
+  const [reissuing, setReissuing] = useState(false);
   const name = PROVIDER_NAME[e.provider];
   const on = e.state === 'on';
   const blocker = blockerOf(e);
@@ -153,6 +160,31 @@ export function OrgProviderCard({
             ))}
           </ul>
         </div>
+        {canReissue && on ? (
+          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+            <Button size="sm" variant="outline" onClick={() => setReissuing(true)}>
+              {COPY.reissue}
+            </Button>
+          </div>
+        ) : null}
+        <ConfirmDialog
+          open={reissuing}
+          onOpenChange={setReissuing}
+          {...reissueWalletPassesConfirm(name)}
+          onConfirm={async () => {
+            let result: { instances: number };
+            try {
+              result = await actions.reissue(orgId, e.provider);
+            } catch (cause) {
+              throw safeError(cause);
+            }
+            toast.success(
+              result.instances === 0
+                ? 'Nothing to update yet'
+                : `Updating ${result.instances} ${result.instances === 1 ? 'pass' : 'passes'}`,
+            );
+          }}
+        />
         {canManage ? null : <p className="text-sm text-fg-muted">{COPY.readOnly}</p>}
       </CardBody>
     </Card>

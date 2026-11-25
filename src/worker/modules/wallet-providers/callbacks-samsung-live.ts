@@ -6,7 +6,6 @@ import { filterSamsungCardFields } from './callbacks-fields.ts';
 import type { SamsungCallbackInput, SamsungCallbackResult } from './callbacks-samsung-types.ts';
 import { offerPassSnapshot } from './offers-eligibility.ts';
 import { getApprovedProjection } from './projection-service.ts';
-import { renderSamsungProjection } from './render-projection.ts';
 import { type SamsungFetchSnapshot, samsungFetchSnapshotCurrent } from './repo-callbacks.ts';
 import { claimSamsungFetch, claimSamsungReceipt } from './repo-callbacks-events.ts';
 import { samsungTokenRecorded } from './repo-callbacks-state.ts';
@@ -69,20 +68,9 @@ export async function serveSamsungLive(
   ) {
     return null;
   }
-  // A field-mapped (schema 1) card is a pure render; a compiled one is built after the token has
-  // verified, so an unauthenticated call does no template read or art cut.
+  // A card is built after the token has verified, so an unauthenticated call does no template read or art cut.
   const compiled = approved.projection.schema === 2 ? approved.projection : null;
-  const mapped =
-    method === 'GET' && !compiled
-      ? renderSamsungProjection(
-          approved.projection,
-          materialized.passJson,
-          refId,
-          snapshot.instanceCreatedAt,
-          materialized.pass.modifiedAt,
-        )
-      : null;
-  if (method === 'GET' && !compiled && !mapped) return null;
+  if (method === 'GET' && !compiled) return null;
   // The receipt id is minted now, but the body is sealed only once a token has verified.
   const receiptId = method === 'POST' ? ctx.ids.id() : null;
   let sealed: Envelope | null = null;
@@ -154,8 +142,11 @@ export async function serveSamsungLive(
     });
     return { kind: 'accepted' };
   }
-  let projection: SamsungCardProjection | null = mapped;
-  if (compiled) {
+  let projection: SamsungCardProjection | null = null;
+  const candidateId = approved.release.candidateId;
+  // A release without its candidate has no art to share; the cache key is never empty.
+  if (compiled && !candidateId) return { kind: 'missing' };
+  if (compiled && candidateId) {
     try {
       projection = await compileSamsungCard(ctx, {
         projection: compiled,
@@ -165,7 +156,7 @@ export async function serveSamsungLive(
         createdAt: snapshot.instanceCreatedAt,
         revisedAt: materialized.pass.modifiedAt,
         art: 'store',
-        candidateId: approved.release.candidateId ?? '',
+        candidateId,
       });
     } catch (error) {
       ctx.log.error('wallet.samsung_compile_failed', {

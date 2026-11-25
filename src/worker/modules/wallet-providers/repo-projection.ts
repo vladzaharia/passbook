@@ -11,7 +11,6 @@ import {
 import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
-import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
 
 /** Every argument is a trusted SQL expression, never untrusted request text. */
 export interface ProjectionReleaseScopeSql {
@@ -32,6 +31,7 @@ export interface ProjectionReleaseScopeSql {
 export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseScopeSql): string {
   if (!scope.nowSql || !scope.credentialKeysetCommitmentSql)
     throw new Error('A trusted projection evidence clock and credential keyset are required.');
+  // The caller's clock stays bound in this predicate: its statements pass the value in this position.
   const nowSql = scope.nowSql;
   const samsung = JSON.stringify(SAMSUNG_PROJECTION_POLICY.adapterCapabilities).replaceAll(
     "'",
@@ -98,10 +98,10 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
         AND pc.adapter_revision = ${GOOGLE_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${google}'
         AND pc.audience_policy_revision = ${GOOGLE_PROJECTION_POLICY.audiencePolicyRevision})
-      OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') IN (1, 2)
+      OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') = 2
         AND pc.adapter_revision = ${SAMSUNG_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${samsung}' AND pc.audience_policy_revision = ${SAMSUNG_PROJECTION_POLICY.audiencePolicyRevision}
-        AND (${samsungProjectionEvidencePredicateSql('pc', nowSql)})))`;
+        AND (${nowSql}) IS NOT NULL))`;
 }
 
 /** Reads the effective scoped Apple head without accepting it as native approval. */

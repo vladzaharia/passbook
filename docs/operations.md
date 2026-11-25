@@ -225,6 +225,18 @@ mode and provider; Test configuration is not Live readiness. See the
   and [developer terms](https://developer.samsung.com/terms?location=us) do not by themselves
   establish a redistribution license.
 
+### Before migration 0202 (Samsung schema 1)
+
+0202 refuses to run while any Samsung release was built from a schema 1 projection (it stops with a CHECK
+failure on `_cw11_no_samsung_schema1`, and nothing is applied). Check first:
+
+```sql
+SELECT r.id FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id
+WHERE r.provider = 'samsung' AND json_extract(c.projection_json, '$.schema') = 1;
+```
+
+No rows: apply. Samsung ships dark, so none are expected; if one exists, stop and ask the owner, as the code can no longer retire it.
+
 ### Google managed issuers and key rotation (owner steps)
 
 - **Aggregator access.** `issuer.insert` works only for a trusted aggregator's parent issuer. Until Google

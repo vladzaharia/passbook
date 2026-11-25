@@ -59,6 +59,7 @@
         "minimum": 0,
         "maximum": 1000000,
         "default": 0,
+        "x-format": "currency",
         "x-label": "Balance",
         "x-group": "Balance",
         "x-order": 40
