@@ -65,7 +65,7 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await page.goto('/developers/console');
   await expect(
     page.getByRole('navigation', { name: 'Sections' }).locator('[aria-current]'),
-  ).toHaveCount(0);
+  ).toHaveText('Workbench');
   await expect(page.locator('main').getByRole('link', { name: 'Sign in to try' })).toBeVisible();
   await shot(page, 'console-signed-out');
   await page.goto('/developers/playground');

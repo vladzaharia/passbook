@@ -128,7 +128,7 @@ export const appTwins = {
       `The API is described in the [reference](${twin(PATHS.reference)}).`,
     ),
   console: () =>
-    note(DEV_COPY.console.title, DEV_COPY.console.line, 'Sign in to run requests in your sandbox.'),
+    note(DEV_COPY.console.title, DEV_COPY.console.meta, 'Sign in to run requests in your sandbox.'),
   keys: () =>
     note(KEYS_COPY.title, 'Make, roll and revoke the keys of your sandbox.', KEYS_COPY.signedOut),
   logs: () => note(LOGS_COPY.title, LOGS_COPY.lede, 'Sign in to see your sandbox requests.'),

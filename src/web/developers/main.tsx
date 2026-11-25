@@ -7,6 +7,8 @@
 import './styles/dev-base.css';
 import '../../generated/menubar-kit.css';
 import './styles/dev-layout.css';
+import './styles/dev-frame.css';
+import './styles/dev-frame-page.css';
 import './styles/dev-controls.css';
 import './styles/dev-code.css';
 import './styles/dev-code-extras.css';
@@ -42,3 +44,5 @@ initMenu();
 initSearch();
 initTryBar();
 mountIslands();
+// "On this page" is only on long pages: the lit entry follows the reading (a chunk of its own).
+if (document.querySelector('[data-toc]')) void import('./shell/toc.ts').then((m) => m.initToc());

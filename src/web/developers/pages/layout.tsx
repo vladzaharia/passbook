@@ -1,24 +1,25 @@
 import { Menu } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useContext } from 'react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { Menubar, MenubarNav, MenubarSearch, SignInButton } from '../../ui/layout/menubar.tsx';
 import { Wordmark } from '../../ui/layout/wordmark.tsx';
-import { opPath, pagePath } from '../model/markdown.ts';
-import type { OpView, ResourcePage, Site } from '../model/types.ts';
-import { MethodPill } from '../ui/method-pill.tsx';
+import type { Site } from '../model/types.ts';
+import { Frame, SideNav } from './nav-tree.tsx';
+import { Crumbs, Pager, ToolsRow } from './toc.tsx';
 
 export const SIGN_IN = '/login?next=%2Fdevelopers';
 export type NavKey = (typeof DEV_COPY.nav)[number]['key'];
 
+/** Workbench links to the home's workbench until the bar's menu lands (the h0 hand-off). */
 export const NAV_PATH: Record<NavKey, string> = {
   quickstart: PATHS.quickstart,
   guides: PATHS.guides,
   reference: PATHS.reference,
-  webhooks: PATHS.webhooks,
-  logs: PATHS.logs,
+  playground: PATHS.playground,
+  workbench: `${PATHS.home}#workbench`,
 };
 
 export function TopBar({ active }: { active?: NavKey }) {
@@ -71,86 +72,30 @@ export function TopBar({ active }: { active?: NavKey }) {
 }
 
 /**
- * The menu sheet's top: the sections, then Sandbox and Spaces. Both are empty in the prerender and
- * filled for a signed-in reader (shell/menu-sheet.ts); signed out, the sheet ends in Sign in.
+ * The sheet's top, below 1181 px, where the bar's sections are not on screen: the five sections,
+ * then Sandbox and Spaces (empty in the prerender, filled for a signed-in reader by
+ * shell/menu-sheet.ts); signed out, the sheet ends the block with Sign in.
  */
-export function MenuSections() {
+function SheetTop({ active }: { active?: NavKey }) {
   return (
     <div className="menu-only stack">
-      <h4>{DEV_COPY.brand}</h4>
-      {DEV_COPY.nav.map((n) => (
-        <a key={n.key} href={NAV_PATH[n.key]}>
-          {n.label}
-        </a>
-      ))}
+      <div className="menu-sections">
+        {DEV_COPY.nav.map((n) => (
+          <a
+            key={n.key}
+            href={NAV_PATH[n.key]}
+            aria-current={n.key === active ? 'page' : undefined}
+          >
+            {n.label}
+          </a>
+        ))}
+      </div>
       <div className="menu-sandbox stack" data-menu-sandbox hidden />
       <div className="menu-spaces stack" data-menu-spaces hidden />
       <a className="menu-signin" href={SIGN_IN} data-menu-signin>
         {DEV_COPY.sheet.signIn}
       </a>
     </div>
-  );
-}
-
-/** Reference nav: groups by job; the open resource lists its operations. */
-export function SideNav({
-  site,
-  current,
-  ops,
-  op,
-}: {
-  site?: Site;
-  current?: ResourcePage;
-  ops?: boolean;
-  /** The operation on screen, when the page is one operation's. */
-  op?: OpView;
-}) {
-  return (
-    <nav
-      className={site ? 'sidenav' : 'sidenav drawer-only'}
-      id="dev-menu"
-      aria-label={site ? 'Reference' : 'Menu'}
-    >
-      <MenuSections />
-      {site?.groups.map((g) => (
-        <div key={g.label} className="stack">
-          <h4>{g.label}</h4>
-          {g.pages.map((p) => (
-            <div key={p.slug} className="stack">
-              <a
-                href={pagePath(p)}
-                aria-current={p === current && !(ops && op) ? 'page' : undefined}
-              >
-                {p.label}
-              </a>
-              {p === current && ops ? (
-                <div className="stack subnav">
-                  {p.ops.map((o) => (
-                    <a
-                      key={o.anchor}
-                      href={opPath(p, o)}
-                      aria-current={o === op ? 'page' : undefined}
-                    >
-                      <span>{o.title}</span>
-                      <MethodPill method={o.method} />
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ))}
-      {site ? (
-        <div className="stack">
-          <h4>More</h4>
-          <a href={PATHS.errors}>Errors</a>
-          <a href={PATHS.protocols}>Protocols</a>
-          <a href={PATHS.playground}>Playground</a>
-          <a href={PATHS.console}>Console</a>
-        </div>
-      ) : null}
-    </nav>
   );
 }
 
@@ -176,20 +121,34 @@ export function Footer({ site }: { site: Site }) {
   );
 }
 
+/**
+ * One frame for every page. Docs pages: the tree, the content, "On this page". `app` pages (console,
+ * logs) keep the full width with no tree from 1181 px; `bare` pages (home and the tools that lay
+ * themselves out) are the bar, their own content and the footer. Below 1181 px the tree is the sheet.
+ */
 export function Shell({
   site,
   active,
   children,
-  side,
+  app,
   bare,
 }: {
   site: Site;
   active?: NavKey;
   children: ReactNode;
-  side?: ReactNode;
-  /** The home page: full-width sections, no docs grid. */
+  /** A tool with its own full-width column. */
+  app?: boolean;
+  /** Home and the tools that lay themselves out: no docs grid. */
   bare?: boolean;
 }) {
+  const f = useContext(Frame);
+  const cls = ['docs', app ? 'no-side app' : '', f.toc ? 'has-toc' : ''].filter(Boolean).join(' ');
+  const around = (
+    <>
+      {f.tools ? <ToolsRow path={f.path} /> : null}
+      {f.crumbs ? <Crumbs items={f.crumbs} /> : null}
+    </>
+  );
   return (
     <>
       <a className="skip" href="#main">
@@ -198,15 +157,23 @@ export function Shell({
       <TopBar active={active} />
       {bare ? (
         <>
-          <SideNav />
-          <main id="main">{children}</main>
-        </>
-      ) : (
-        <div className={side ? 'docs' : 'docs no-side'}>
-          {side ?? <SideNav />}
-          <main id="main" className="main">
+          <SideNav site={site} drawer top={<SheetTop active={active} />} />
+          <main id="main">
+            {around}
             {children}
           </main>
+        </>
+      ) : (
+        <div className={cls}>
+          <SideNav site={site} drawer={app} top={<SheetTop active={active} />} />
+          <main id="main" className="main">
+            {around}
+            {children}
+            {f.pager ? <Pager {...f.pager} /> : null}
+          </main>
+          {f.toc ? (
+            <nav className="toc" aria-label={DEV_COPY.reference.onThisPage} data-toc />
+          ) : null}
         </div>
       )}
       <Footer site={site} />

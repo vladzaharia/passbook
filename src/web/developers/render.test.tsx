@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { PATHS } from '../../shared/developers.ts';
 import { loadInputs } from './model/load.ts';
 import { buildSite } from './model/site.ts';
+import { withToc } from './pages/toc.tsx';
 import { renderSite } from './render.tsx';
 
 const root = resolve(import.meta.dirname, '../../..');
@@ -15,6 +16,9 @@ const files = renderSite(
 );
 const byFile = new Map(files.map((f) => [f.file, f]));
 const body = (file: string) => byFile.get(file)?.body ?? '';
+/** A page by its URL (a directory page's file is its index). */
+const page = (url: string) =>
+  files.find((f) => f.url === url && f.file.endsWith('.html'))?.body ?? '';
 
 describe('the prerendered portal', () => {
   it('writes unique files, a page for each reference resource and its markdown twin', () => {
@@ -36,21 +40,66 @@ describe('the prerendered portal', () => {
     }
   });
 
-  it('marks no key for the console, Reference for the playground, and offers sign-in in place of an empty panel', () => {
-    const html = body(`${PATHS.console}.html`);
-    const bar = html.slice(html.indexOf('aria-label="Sections"'), html.indexOf('</nav>'));
-    expect(bar).not.toContain('aria-current');
-    expect(html).toContain('Sign in to try');
-    expect([...bar.matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1])).toEqual([
+  it('lights the section a page belongs to: Workbench for tools, Playground for itself, nothing for the console-less pages', () => {
+    const bar = (file: string) => {
+      const html = body(file);
+      return html.slice(html.indexOf('aria-label="Sections"'), html.indexOf('</nav>'));
+    };
+    const lit = (file: string) =>
+      [...bar(file).matchAll(/aria-current="page"[^>]*>([^<]+)<\/a>/g)].map((m) => m[1]);
+    expect([...bar(`${PATHS.console}.html`).matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1])).toEqual([
       'Quickstart',
       'Guides',
       'Reference',
-      'Webhooks',
-      'Logs',
+      'Playground',
+      'Workbench',
     ]);
-    expect(body(`${PATHS.playground}.html`)).toMatch(
-      /<a href="\/developers\/reference"[^>]*aria-current="page"[^>]*>Reference<\/a>/,
+    expect(lit(`${PATHS.console}.html`)).toEqual(['Workbench']);
+    for (const p of [PATHS.keys, PATHS.logs, PATHS.webhooks])
+      expect(lit(`${p}.html`), p).toEqual(['Workbench']);
+    expect(lit(`${PATHS.playground}.html`)).toEqual(['Playground']);
+    expect(lit(`${PATHS.errors}/index.html`).concat(lit(`${PATHS.protocols}.html`))).toEqual([
+      'Reference',
+      'Reference',
+    ]);
+    expect(lit(`${PATHS.changelog}.html`)).toEqual([]);
+    expect(body(`${PATHS.console}.html`)).toContain('Sign in to try');
+  });
+
+  it('puts one tree on every page, with the page lit and its group open', () => {
+    const tree = (url: string) => {
+      const html = page(url);
+      const at = html.indexOf('aria-label="Docs"');
+      return html.slice(at, html.indexOf('</nav>', at));
+    };
+    const res = site.pages[0];
+    const op = res?.ops[0];
+    if (!res || !op) throw new Error('no operation');
+    const opHref = `${PATHS.reference}/${res.slug}/${op.anchor.toLowerCase()}`;
+    expect(tree(opHref)).toContain(`<a href="${opHref}" aria-current="page"`);
+    expect(tree(opHref)).toContain('<details class="navg" open="">');
+    expect(tree(PATHS.quickstart)).toContain(`<a href="${PATHS.quickstart}" aria-current="page"`);
+    expect(tree(PATHS.changelog)).toContain(`<a href="${PATHS.changelog}" aria-current="page"`);
+    // The Workbench group is in every tree, the sheet's too.
+    for (const url of [PATHS.home, PATHS.keys, PATHS.console, PATHS.guides, PATHS.playground])
+      expect(tree(url), url).toContain('>Webhooks<');
+  });
+
+  it('adds crumbs, Previous and Next, and "On this page" where the page is long', () => {
+    const res = site.pages.find((p) =>
+      p.ops.some((o) => o.fields.length > 0 && o.errors.length > 0),
     );
+    const op = res?.ops.find((o) => o.fields.length > 0 && o.errors.length > 0);
+    if (!res || !op) throw new Error('no operation');
+    const html = page(`${PATHS.reference}/${res.slug}/${op.anchor.toLowerCase()}`);
+    expect(html).toContain('aria-label="Breadcrumb"');
+    expect(html).toContain('aria-label="Previous and next"');
+    expect(html).toMatch(/<nav class="toc" aria-label="On this page" data-toc>/);
+    expect(html).toContain('>Parameters<');
+    // Every entry points at an id on the page.
+    for (const m of html.matchAll(/<li><a href="#([^"]+)">/g))
+      expect(html, m[1]).toContain(`id="${m[1]}"`);
+    expect(page(PATHS.quickstart)).not.toContain('aria-label="Breadcrumb"');
   });
 
   it('prerenders the playground with a sample pass and its fields when the previews are known', () => {
@@ -115,5 +164,67 @@ describe('the prerendered portal', () => {
       )?.[0] ?? '';
     expect(bar).toContain(`href="${PATHS.reference}"`);
     expect(bar).not.toMatch(/href="\/(admin|account)?"/);
+  });
+});
+
+describe('"On this page" from a page\'s own headings', () => {
+  const doc = (inner: string) =>
+    `<nav class="toc" aria-label="On this page" data-toc="true"></nav><main id="main">${inner}</main>`;
+
+  it("gives each heading an id, once, and lists the guide's sections in order", () => {
+    const html = withToc(
+      doc(
+        '<h2 class="h2">First step</h2><h2 class="h2" id="x">Own id</h2><h2 class="h2">First step</h2>',
+      ),
+      'guide',
+    );
+    expect(html).toContain('<h2 class="h2" id="first-step">First step</h2>');
+    expect(html).toContain('<h2 class="h2" id="first-step-2">First step</h2>');
+    expect(html).toContain(
+      '<li><a href="#first-step">First step</a></li><li><a href="#x">Own id</a></li>',
+    );
+  });
+
+  it("folds an operation's Path, Query, Headers and Body into Parameters and links the Errors section by its own id", () => {
+    const html = withToc(
+      doc(
+        '<h2 class="h2">Headers</h2><h2 class="h2">Body</h2><h2 class="h2">Returns</h2><section id="errors"><h2 class="h2">Errors</h2></section><h3 class="h3">Examples</h3><h3>Response</h3>',
+      ),
+      'op',
+    );
+    const labels = [...html.matchAll(/<li><a href="#([^"]+)">([^<]+)</g)].map(
+      (m) => `${m[2]}>${m[1]}`,
+    );
+    expect(labels).toEqual([
+      'Parameters>headers',
+      'Returns>returns',
+      'Errors>errors',
+      'Examples>examples',
+    ]);
+  });
+
+  it('drops the column when there is nothing to jump between', () => {
+    const html = withToc(`<div class="docs has-toc">${doc('<h2>Only</h2>')}</div>`, 'guide');
+    expect(html).not.toContain('data-toc');
+    expect(html).not.toContain('has-toc');
+  });
+
+  it('lists the error letters and the changelog days by the ids they already carry', () => {
+    expect(
+      withToc(
+        doc(
+          '<details class="errs-group" id="errors-A"></details><details id="errors-B"></details>',
+        ),
+        'errors',
+      ),
+    ).toContain('<li><a href="#errors-A">A</a></li><li><a href="#errors-B">B</a></li>');
+    expect(
+      withToc(
+        doc(
+          '<section class="cl-day mt6" id="2026-11-20"></section><section class="cl-day mt6" id="2026-10-01"></section>',
+        ),
+        'changelog',
+      ),
+    ).toContain('<li><a href="#2026-11-20">2026-11-20</a></li>');
   });
 });
