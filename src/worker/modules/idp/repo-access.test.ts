@@ -18,7 +18,6 @@ import {
   openDrift,
   openDriftCounts,
   openDriftOf,
-  openDriftOf,
   openDriftOfSubject,
   recordDrift,
   resolveDrift,
