@@ -8,7 +8,7 @@ export function SessionCustomerFields({
   onChange,
   desk,
 }: {
-  /** Desk actions are on: the desk card and draft amounts only show for them. */
+  /** Desk actions are on: the desk card only shows for them. */
   desk: boolean;
   value: SessionCustomerSettings | undefined;
   onChange: (next: SessionCustomerSettings) => void;
@@ -54,12 +54,6 @@ export function SessionCustomerFields({
           help="While staff choose an action: “Hi, Sam · Balance $42.50”."
           checked={c.showReady ?? true}
           onCheckedChange={(showReady) => set({ showReady })}
-        />
-        <SwitchRow
-          label="Show amounts under review"
-          help="“To pay $12.00” before staff confirm."
-          checked={c.showDraft ?? true}
-          onCheckedChange={(showDraft) => set({ showDraft })}
         />
       </DependentSettings>
     </div>

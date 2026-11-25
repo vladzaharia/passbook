@@ -140,7 +140,7 @@ async function historicalSamsung(promoted = true) {
     ...scope,
     version: kit.template.version,
     sourceReleaseId: apple.id,
-    projection: f.projection('samsung'),
+    projection: await f.candidateProjection('samsung'),
   });
   const approval = await approveProjectionCandidate(
     kit.ctx,
@@ -152,7 +152,6 @@ async function historicalSamsung(promoted = true) {
       candidateHash: candidate.candidateHash,
     },
   );
-  await f.refreshSamsungEvidence(candidate.id, candidate.candidateHash);
   // As in historicalGoogleRelease, restore the guard in the same transaction: this models a
   // previously reviewed release, not a present-day Samsung issuance authorization.
   const guard = await first<{ sql: string }>(

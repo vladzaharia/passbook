@@ -17,6 +17,7 @@ describe('wallet accounts copy', () => {
           "ownSource": "Own account",
           "platformSource": "PassBook",
           "readOnly": "Read-only. Managing wallet accounts needs integrations:manage.",
+          "reissue": "Update passes",
           "release": "Release",
           "revoke": "Revoke",
           "rotate": "Rotate",

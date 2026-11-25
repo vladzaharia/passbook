@@ -133,6 +133,45 @@ describe('google check', () => {
     expect(await check(id)).toMatchObject({ ok: 0, code: 'unreachable' });
   });
 
+  it('rechecks within 15 minutes after any failure, but a failed recheck of a definitive fault waits for the daily run (Q6)', async () => {
+    stubProviders();
+    const sent: { body: unknown; options: unknown }[] = [];
+    const withJobs = () => {
+      const base = jobCtx();
+      return {
+        ...base,
+        env: {
+          ...base.env,
+          JOBS: {
+            send: async (body: unknown, options: unknown) => void sent.push({ body, options }),
+          },
+        },
+      } as unknown as typeof base;
+    };
+    mock.failNext({ status: 503, match: 'POST /token' });
+    const transient = await platformCred('google', 'live');
+    await runCredentialCheck(withJobs(), { credentialId: transient.id, checkId: uid() });
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.body).toMatchObject({
+      kind: 'wallet.credential_check',
+      credentialId: transient.id,
+    });
+    expect(sent[0]?.options).toEqual({ delaySeconds: 600 });
+    mock.failNext({ status: 401, match: 'POST /token' });
+    const definitive = await platformCred('google', 'live');
+    await runCredentialCheck(withJobs(), { credentialId: definitive.id, checkId: uid() });
+    expect(sent).toHaveLength(2);
+    expect(sent[1]?.body).toMatchObject({ credentialId: definitive.id });
+    expect(sent[1]?.options).toEqual({ delaySeconds: 600 });
+    // The recheck itself failing the same way is the second in a row: no third check this window.
+    mock.failNext({ status: 401, match: 'POST /token' });
+    await runCredentialCheck(withJobs(), {
+      credentialId: definitive.id,
+      checkId: `${definitive.id}:r7`,
+    });
+    expect(sent).toHaveLength(2);
+  });
+
   it('fails a secret whose identity is not the stored identity_hash', async () => {
     stubProviders();
     const admin = await k.admin();

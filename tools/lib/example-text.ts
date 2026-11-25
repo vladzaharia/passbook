@@ -84,6 +84,7 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
       'Paid for chalk at the desk; receipt given.',
     ],
     welcome: ['Welcome to Northwind'],
+    figure: ['$12.00'],
     refusedLine: ['Please see the front desk'],
     'chip.text': ['Day pass'],
     'line.text': ['Balance after: 7 visits'],
@@ -163,7 +164,7 @@ export const SENTENCE_HOME: Map<string, { family: Family; field: string }> = new
 
 /** Fields whose prose must come from the table above. */
 export const PROSE_KEYS =
-  /^(reason|message|note|body|welcome|refusedLine|detail|text|errorDetail)$/;
+  /^(reason|message|note|body|welcome|refusedLine|detail|text|errorDetail|figure)$/;
 
 /**
  * A sentence for a free-text field, from the operation's family. The entity is the nearest path word that names a

@@ -4,6 +4,7 @@ import { probeSamsungCards } from './account-check-samsung.ts';
 import { type CheckOutcome, DAY_MS } from './account-check-types.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { openSourceVersion, type SourceCredentials } from './account-credential-source.ts';
+import { isDefinitiveCheckFailure } from './repo-account-health.ts';
 import {
   type CheckTarget,
   findCheck,
@@ -63,12 +64,36 @@ export async function runCredentialCheck(
     ctx.log.warn('wallet.credential_check_unwritten', { code: 'WALLET_CHECK_UNWRITTEN', error });
     return;
   }
+  // Failing needs two definitive failures in a row, so any failure is rechecked once; only an unreachable
+  // provider keeps being retried, a recheck that fails definitively waits for the daily run.
+  const isRecheck = /:r\d+$/.test(job.checkId);
+  if (!outcome.ok && !(isRecheck && isDefinitiveCheckFailure(outcome.code)))
+    await queueRecheck(ctx, target);
   ctx.log.info('wallet.credential_check', {
     provider: target.provider,
     scope: target.scope,
     ok: outcome.ok,
     code: outcome.code,
   });
+}
+
+const RECHECK_AFTER_SECONDS = 600;
+const RECHECK_WINDOW_MS = 15 * 60_000;
+
+/** A failed check is tried again within 15 minutes (Q6), one job a window. */
+async function queueRecheck(ctx: ServiceContext, target: CheckTarget): Promise<void> {
+  try {
+    await ctx.env.JOBS.send(
+      {
+        kind: 'wallet.credential_check',
+        credentialId: target.credential_id,
+        checkId: `${target.credential_id}:r${Math.floor(ctx.clock.now() / RECHECK_WINDOW_MS)}`,
+      },
+      { delaySeconds: RECHECK_AFTER_SECONDS },
+    );
+  } catch (error) {
+    ctx.log.warn('wallet.credential_check_unqueued', { code: 'WALLET_CHECK_UNQUEUED', error });
+  }
 }
 
 const SEND_BATCH = 100;

@@ -4445,6 +4445,7 @@
             ],
             "milestone": null,
             "test": false,
+            "figure": "$12.00",
             "welcome": "Welcome to Northwind"
           }
         }
@@ -4492,6 +4493,21 @@
         }
       ],
       "nextCursor": "c1.4812"
+    }
+  },
+  "scan.putScanDraft": {
+    "request": {
+      "ref": "0193a1b2-7c00-7000-8000-0000000000aa",
+      "actionId": "pay",
+      "amount": 12
+    },
+    "response": {
+      "screens": 26
+    }
+  },
+  "scan.deleteScanDraft": {
+    "response": {
+      "screens": 26
     }
   }
 }

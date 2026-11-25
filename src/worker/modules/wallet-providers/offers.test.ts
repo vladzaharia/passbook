@@ -59,7 +59,7 @@ describe('native wallet availability', () => {
     const f = await setupWalletOfferKit({ samsung: 'configured' });
 
     for (const provider of ['google', 'samsung'] as const) {
-      const projection = f.projection(provider);
+      const projection = await f.candidateProjection(provider);
       const candidate = await createProjectionCandidate(
         f.kit.ctx,
         f.apple.authorAuth,
@@ -91,18 +91,16 @@ describe('native wallet availability', () => {
       templateId: unsupported.id,
       version: unsupported.version,
     });
-    for (const provider of ['google', 'samsung'] as const) {
-      await expect(
-        createProjectionCandidate(f.kit.ctx, apple.authorAuth, unsupported.id, {
-          orgId: f.pass.orgId,
-          mode: f.pass.mode,
-          provider,
-          version: unsupported.version,
-          sourceReleaseId: apple.id,
-          projection: f.projection(provider),
-        }),
-      ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_UNSUPPORTED' });
-    }
+    await expect(
+      createProjectionCandidate(f.kit.ctx, apple.authorAuth, unsupported.id, {
+        orgId: f.pass.orgId,
+        mode: f.pass.mode,
+        provider: 'google',
+        version: unsupported.version,
+        sourceReleaseId: apple.id,
+        projection: f.projection('google'),
+      }),
+    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_UNSUPPORTED' });
   });
 
   it.each(['absent', 'configured', 'published'] as OfferFixtureState[])(

@@ -3,7 +3,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession } from '../passes/http.ts';
 import {
-  refreshSamsungProjectionEvidence,
+  recheckSamsungCard,
   SamsungVerificationInputSchema,
   SamsungVerificationResultSchema,
 } from './samsung-verification.ts';
@@ -28,8 +28,6 @@ register(
   async (c) => {
     const auth = authOf(c);
     if (auth.kind !== 'session') throw new UnauthenticatedError();
-    return c.json(
-      await refreshSamsungProjectionEvidence(serviceContext(c), auth, c.req.valid('json')),
-    );
+    return c.json(await recheckSamsungCard(serviceContext(c), auth, c.req.valid('json')));
   },
 );
