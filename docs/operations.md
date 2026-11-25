@@ -14,8 +14,8 @@
   as production's static assets do.
 - Real Pass Type ID certificate: `P12_PASSWORD=… npm run credentials -- Pass.p12` writes
   `.secrets/platform-{certificate,key}.pem` and `.dev.vars`. Neither is committed.
-- Demo data: with the e2e server running (`WALLET_E2E_PREVIEW=1 E2E_PORT=5473 node tools/e2e-server.ts`; admin sign-in is mock OIDC), `SEED_BREAKGLASS_TOKEN=wbg_e2e-breakglass-token node tools/seed-demo.ts --url http://localhost:5473` (
-  `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys. It waits for the
+- Demo data: with the e2e server running (`WALLET_E2E_PREVIEW=1 E2E_PORT=5473 node tools/e2e-server.ts`; admin sign-in is mock OIDC), `SEED_BREAKGLASS_TOKEN=wbg_e2e-breakglass-token node tools/seed-demo.ts --url http://localhost:5473`
+  (`--url` and `--state` pick another port or database) adds 3 orgs, ~45 passes, portal users, connections and API keys. It waits for the
   baked blueprints, invites and signs in `demo.owner@example.com` (org_admin in every org; org work runs as
   them, since a platform admin without membership gets 404), and needs a valid signing identity in `.dev.vars`
   (the fixture one lasts 2 to 3 days; on "Incorrect or expired WWDR intermediate" delete its `SIGNER_PLATFORM_*` lines, run `npm run dev:vars`, restart).
