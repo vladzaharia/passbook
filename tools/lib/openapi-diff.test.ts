@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { breakingChanges, type Doc } from './openapi-diff.ts';
+import { breakingChanges, changes, type Doc } from './openapi-diff.ts';
 
 const op = (schema: unknown) => ({
   operationId: 'a.getA',
@@ -46,5 +46,43 @@ describe('breakingChanges', () => {
       'POST /a body.t: unknown keys now refused',
     ]);
     expect(breakingChanges(post(closed), post(closed))).toEqual([]);
+  });
+});
+
+describe('removal at a Sunset', () => {
+  const gone = (extra: object): Doc => ({
+    paths: { '/a': { get: { operationId: 'a.getA', ...extra } } },
+  });
+  const empty: Doc = { paths: {} };
+
+  it('refuses removing an operation that was not deprecated', () => {
+    expect(breakingChanges(gone({}), empty, '2030-01-01')).toEqual(['GET /a: operation removed']);
+    expect(breakingChanges(gone({ deprecated: true }), empty, '2030-01-01')).toEqual([
+      'GET /a: operation removed',
+    ]);
+  });
+
+  it('refuses removing a deprecated one before its x-sunset', () => {
+    const was = gone({ deprecated: true, 'x-deprecated': '2026-11-25', 'x-sunset': '2027-11-25' });
+    expect(breakingChanges(was, empty, '2027-11-24')[0]).toMatch(/removed before its Sunset/);
+  });
+
+  it('refuses a removal whose window was under 365 days or unknown', () => {
+    const short = gone({
+      deprecated: true,
+      'x-deprecated': '2027-01-01',
+      'x-sunset': '2027-11-25',
+    });
+    expect(breakingChanges(short, empty, '2027-12-01')[0]).toMatch(
+      /without 365 days.*on 2027-12-01/,
+    );
+    const bare = gone({ deprecated: true, 'x-sunset': '2027-11-25' });
+    expect(breakingChanges(bare, empty, '2027-12-01')[0]).toMatch(/without 365 days/);
+  });
+
+  it('names a removal on or after the x-sunset', () => {
+    const was = gone({ deprecated: true, 'x-deprecated': '2026-11-25', 'x-sunset': '2027-11-25' });
+    expect(breakingChanges(was, empty, '2027-11-25')[0]).toMatch(/operation removed at its Sunset/);
+    expect(changes(was, empty, '2028-01-01')).toMatchObject([{ class: 'breaking', op: 'GET /a' }]);
   });
 });

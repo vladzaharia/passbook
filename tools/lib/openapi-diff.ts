@@ -113,8 +113,27 @@ function compareOperation(a: Doc, b: Doc, id: string, oldOp: Json, newOp: Json, 
   }
 }
 
-/** Every way `next` breaks a client written against `prev`. */
-export function breakingChanges(prev: Doc, next: Doc): string[] {
+const today = (): string => new Date().toISOString().slice(0, 10);
+
+/** The `x-sunset` date of an operation the document marks deprecated; undefined for any other. */
+export function sunsetOf(op: unknown): string | undefined {
+  const o = obj(op);
+  return o.deprecated === true && typeof o['x-sunset'] === 'string' ? o['x-sunset'] : undefined;
+}
+
+const MIN_WINDOW_DAYS = 365;
+const dayOf = (d: string): number => Date.parse(`${d}T00:00:00Z`) / 86_400_000;
+/** The base marked the operation deprecated (`x-deprecated`) at least a year before its Sunset. */
+function windowKept(op: unknown, sunset: string): boolean {
+  const since = obj(op)['x-deprecated'];
+  return typeof since === 'string' && dayOf(sunset) - dayOf(since) >= MIN_WINDOW_DAYS;
+}
+
+/** The ending of a removal that needs no PassBook-Version: the base marked it deprecated and its Sunset has come. */
+export const SUNSET_REMOVAL = 'operation removed at its Sunset';
+
+/** Every way `next` breaks a client written against `prev`. `on` is today, `YYYY-MM-DD`. */
+export function breakingChanges(prev: Doc, next: Doc, on: string = today()): string[] {
   const out: string[] = [];
   for (const [path, item] of Object.entries(prev.paths ?? {})) {
     for (const method of METHODS) {
@@ -123,7 +142,15 @@ export function breakingChanges(prev: Doc, next: Doc): string[] {
       const id = `${method.toUpperCase()} ${path}`;
       const newOp = obj(obj(next.paths?.[path])[method]);
       if (!Object.keys(newOp).length) {
-        out.push(`${id}: operation removed`);
+        const sunset = sunsetOf(oldOp);
+        if (!sunset) out.push(`${id}: operation removed`);
+        else if (sunset > on)
+          out.push(`${id}: operation removed before its Sunset ${sunset} (on ${on})`);
+        else if (!windowKept(oldOp, sunset))
+          out.push(
+            `${id}: operation removed without ${MIN_WINDOW_DAYS} days of deprecation (Sunset ${sunset}, on ${on})`,
+          );
+        else out.push(`${id}: ${SUNSET_REMOVAL} ${sunset}`);
         continue;
       }
       const oid = obj(oldOp).operationId;
@@ -213,7 +240,7 @@ function addedInOperation(a: Doc, b: Doc, oldOp: Json, newOp: Json) {
 }
 
 /** Every change from `prev` to `next`, safe and breaking, each tied to an operation. */
-export function changes(prev: Doc, next: Doc): Change[] {
+export function changes(prev: Doc, next: Doc, on: string = today()): Change[] {
   const out: Change[] = [];
   const idOf = (doc: Doc, path: string, method: string) =>
     String(obj(obj(doc.paths?.[path])[method]).operationId ?? '');
@@ -230,7 +257,7 @@ export function changes(prev: Doc, next: Doc): Change[] {
         for (const c of addedInOperation(prev, next, oldOp, newOp))
           out.push({ operationId, op, ...c });
     }
-  for (const text of breakingChanges(prev, next)) {
+  for (const text of breakingChanges(prev, next, on)) {
     const op = /^([A-Z]+ \S+?)(?::| |$)/.exec(text)?.[1] ?? '';
     const [method = '', path = ''] = op.split(' ');
     out.push({

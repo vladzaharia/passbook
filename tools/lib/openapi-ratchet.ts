@@ -1,5 +1,5 @@
 // SDK-name and reference-coverage rules for the committed OpenAPI document. Pure: no I/O.
-import type { Doc } from './openapi-diff.ts';
+import { type Doc, sunsetOf } from './openapi-diff.ts';
 
 export interface SdkName {
   resource: string;
@@ -84,6 +84,14 @@ function opsOf(doc: Doc): OpInfo[] {
   );
 }
 
+function opsOfRaw(doc: Doc): [string, unknown][] {
+  return Object.values(doc.paths ?? {}).flatMap((item) =>
+    METHODS.flatMap((m) =>
+      item[m] ? [[String(obj(item[m]).operationId ?? ''), item[m]] as [string, unknown]] : [],
+    ),
+  );
+}
+
 function wellFormed(id: string, n: SdkName, op: OpInfo | undefined, out: string[]): void {
   const segs = n.resource.split('.');
   const rest = NAMESPACES.has(segs[0] ?? '') ? segs.slice(1) : segs;
@@ -107,8 +115,19 @@ export function ratchetFailures(input: {
   next: Doc;
   baseNames: SdkNames | null;
   nextNames: SdkNames;
+  /** Today, `YYYY-MM-DD`: a name may go with an operation the base deprecated once its `x-sunset` has come. */
+  on?: string;
 }): string[] {
   const { base, next, baseNames, nextNames } = input;
+  const on = input.on ?? new Date().toISOString().slice(0, 10);
+  const sunsetIds = new Set(
+    base
+      ? opsOfRaw(base).flatMap(([id, op]) => {
+          const sunset = sunsetOf(op);
+          return sunset && sunset <= on ? [id] : [];
+        })
+      : [],
+  );
   const out: string[] = [];
   const nextOps = opsOf(next);
   const byId = new Map(nextOps.map((o) => [o.id, o]));
@@ -116,8 +135,10 @@ export function ratchetFailures(input: {
   if (baseNames) {
     for (const [id, was] of Object.entries(baseNames)) {
       const now = nextNames[id];
-      if (!now) out.push(`${id}: name removed (names are frozen)`);
-      else if (now.resource !== was.resource || now.method !== was.method)
+      if (!now) {
+        if (!sunsetIds.has(id) || nextOps.some((o) => o.id === id))
+          out.push(`${id}: name removed (names are frozen)`);
+      } else if (now.resource !== was.resource || now.method !== was.method)
         out.push(
           `${id}: renamed ${was.resource}.${was.method} to ${now.resource}.${now.method} (names are frozen)`,
         );
