@@ -90,7 +90,11 @@ describe('key type, role and expiry', () => {
     expect(within(dialog).queryByRole('checkbox', { name: 'Read passes' })).toBeNull();
     await next(user, dialog);
     await next(user, dialog);
-    expect(await within(dialog).findByText('Pass operator')).toBeInTheDocument();
+    expect(
+      within(await within(dialog).findByRole('region', { name: 'Access' })).getByText(
+        'Pass operator',
+      ),
+    ).toBeInTheDocument();
     await createKey(user, dialog);
     await waitFor(() => expect(body.roles).toEqual(['pass_operator']));
     expect(body.scopes).toEqual([]);
@@ -107,7 +111,7 @@ describe('key type, role and expiry', () => {
     await user.clear(within(dialog).getByLabelText(/Name/));
     await user.type(within(dialog).getByLabelText(/Name/), '{Enter}');
     expect(within(dialog).getByRole('heading', { name: 'Name the key' })).toBeInTheDocument();
-    expect(within(dialog).getByText('Required.')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toBeDisabled();
   });
 
   it('allows going back only to done steps', async () => {

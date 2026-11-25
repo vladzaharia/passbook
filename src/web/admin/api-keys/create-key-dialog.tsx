@@ -194,6 +194,8 @@ export function CreateKeyDialog({
             onInvalid={check.form.onInvalid}
             onValid={() => (last ? submit() : go(step + 1))}
           >
+            {/* Enter in a field presses this; the footer button sits outside the form. */}
+            <button type="submit" hidden disabled={blocked} tabIndex={-1} aria-hidden />
             <div
               key={step}
               className={cn('flex flex-col gap-5', changed > 0 && 'wl-step')}
