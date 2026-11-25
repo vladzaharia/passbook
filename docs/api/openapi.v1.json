@@ -25382,6 +25382,13 @@
               "string",
               "null"
             ]
+          },
+          "guestPassesFrom": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
           }
         },
         "required": [
@@ -27883,6 +27890,13 @@
               "string",
               "null"
             ]
+          },
+          "guestPassesFrom": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
           }
         },
         "required": [

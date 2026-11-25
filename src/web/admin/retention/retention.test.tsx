@@ -28,13 +28,13 @@ const hold = (over: Record<string, unknown>) => ({
   ...over,
 });
 
-function setup(capabilities: string[], holds: unknown[]) {
+function setup(capabilities: string[], holds: unknown[], extra: Record<string, unknown> = {}) {
   return renderApp('/admin/o/o1/retention', {
     session: 'user',
     memberships: [membershipFixture('o1', { capabilities: capabilities as never })],
     handlers: {
       '/api/v1/orgs/o1': () => json(org),
-      '/api/v1/orgs/o1/retention/holds': () => json({ items: holds, nextCursor: null }),
+      '/api/v1/orgs/o1/retention/holds': () => json({ items: holds, nextCursor: null, ...extra }),
       '/api/v1/orgs/o1/retention/receipts': () =>
         json({
           items: [
@@ -58,6 +58,20 @@ function setup(capabilities: string[], holds: unknown[]) {
 }
 
 describe('retention page', () => {
+  it('says when guest-plan deletion starts while the grace runs, in the org time zone', async () => {
+    await setup(['org:read', 'audit:read'], [], { guestPassesFrom: Date.UTC(2026, 11, 2, 3, 0) });
+    // 03:00 UTC is still Dec 1 in Los Angeles.
+    expect(
+      await screen.findByText('Guest-plan passes are deleted from Dec 1, 2026.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows no grace line once deletion has begun', async () => {
+    await setup(['org:read', 'audit:read'], [{ ...hold({}), releasedAt: 5 }]);
+    expect(await screen.findByRole('heading', { name: 'Retention' })).toBeInTheDocument();
+    expect(screen.queryByText(/Guest-plan passes are deleted from/)).toBeNull();
+  });
+
   it('an org admin can place and release an org hold', async () => {
     await setup(['org:read', 'org:manage', 'audit:read'], [hold({})]);
     expect(await screen.findByRole('button', { name: 'Place hold' })).toBeInTheDocument();

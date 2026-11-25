@@ -261,6 +261,7 @@ describe('cron dispatcher', () => {
     expect(CRON_HOOKS[MINUTE_CRON]?.length).toBeGreaterThan(0);
     expect(CRON_HOOKS[DAILY_CRON]?.length).toBeGreaterThan(0);
     expect(CRON_HOOKS[DAILY_CRON]?.map((h) => h.name)).toContain('identities.apns_probe');
+    expect(CRON_HOOKS[DAILY_CRON]?.map((h) => h.name)).toContain('retention.guest_passes');
     expect(CRON_HOOKS[MINUTE_CRON]?.map((h) => h.name)).toContain('wallet.sync');
     expect(CRON_HOOKS[MINUTE_CRON]?.map((h) => h.name)).toContain('passes.credential_transfers');
     const appEnv = await makeEnv();

@@ -688,6 +688,14 @@
     "note": "Read an organization's brand, channels and accounts in one call, with the chain of levels that stops each channel. Needs org:read or brand:manage."
   },
   {
+    "key": "GET /api/v1/orgs/{orgId}/retention/holds 200.guestPassesFrom: field added",
+    "class": "additive",
+    "operationId": "retention.getOrgsByOrgIdRetentionHolds",
+    "op": "GET /api/v1/orgs/{orgId}/retention/holds",
+    "change": "200.guestPassesFrom: field added",
+    "note": "guestPassesFrom: the day guest-plan deletion starts, while its 7 day grace runs; absent after. Org route only."
+  },
+  {
     "key": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/managed new operation",
     "class": "additive",
     "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged",
@@ -846,6 +854,14 @@
     "op": "GET /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
+  },
+  {
+    "key": "GET /api/v1/platform/orgs/{orgId}/retention/holds 200.guestPassesFrom: field added",
+    "class": "additive",
+    "operationId": "retention.getPlatformOrgsByOrgIdRetentionHolds",
+    "op": "GET /api/v1/platform/orgs/{orgId}/retention/holds",
+    "change": "200.guestPassesFrom: field added",
+    "note": "guestPassesFrom: the day guest-plan deletion starts, while its 7 day grace runs; absent after. Org route only."
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",

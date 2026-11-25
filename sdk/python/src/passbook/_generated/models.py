@@ -4278,6 +4278,7 @@ class LegalHoldsCreateResponse(_Model):
 class LegalHoldsListResponse(_Model):
     items: _List[LegalHoldsListResponseItemsItem]
     nextCursor: str | None
+    guestPassesFrom: int | None = None
 
 class LegalHoldsListResponseItemsItem(_Model):
     id: str
@@ -8364,6 +8365,7 @@ class PlatformOrgsLegalHoldsCreateResponse(_Model):
 class PlatformOrgsLegalHoldsListResponse(_Model):
     items: _List[PlatformOrgsLegalHoldsListResponseItemsItem]
     nextCursor: str | None
+    guestPassesFrom: int | None = None
 
 class PlatformOrgsLegalHoldsListResponseItemsItem(_Model):
     id: str

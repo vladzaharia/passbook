@@ -19,7 +19,7 @@ import {
 } from './repo.ts';
 import { softDeletePassGranted } from './repo-pass-grants.ts';
 import { captureConnectionTransferPending, connectionForPass } from './repo-read-connection.ts';
-import { getPass, pendingPushId } from './repo-read-pass.ts';
+import { getPass, pendingPushId, retentionBlock } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
 import { setPassStatus } from './service-status.ts';
 import { stampMovePlan } from './stamps-keep.ts';
@@ -264,11 +264,22 @@ export async function deletePass(
   /** Retention only: a hold in force at the write refuses it (PASS_CONFLICT). */
   options: {
     unlessHeld?: boolean;
+    /** Retention: refuse when the pass changed since the candidate was read (`row_version`). */
+    expectRowVersion?: number;
     /** Retention: statements built for the delete's timestamp, committed in the same batch as the delete. */
     inBatch?: (now: number) => Promise<D1PreparedStatement[]>;
+    /** Retention: why the system deleted it, kept on the audit row. */
+    reason?: string;
   } = {},
 ): Promise<void> {
+  if (authority && options.inBatch)
+    throw new Error('deletePass: inBatch cannot be combined with authority');
   let pass = await getPassForWrite(ctx.env.DB, passId, scope);
+  if (options.expectRowVersion !== undefined && pass.rowVersion !== options.expectRowVersion)
+    throw new ConflictError('The pass changed. Retry.', 'PASS_CONFLICT');
+  // Before the void: a hold or a pending transfer that landed after the candidate was read keeps the pass whole.
+  if (options.unlessHeld && (await retentionBlock(ctx.env.DB, pass.orgId, passId)))
+    throw new ConflictError('The pass or authorization changed. Retry.', 'PASS_CONFLICT');
   if (pass.status === 'active') {
     pass = (
       await publishPass(ctx, {
@@ -303,5 +314,6 @@ export async function deletePass(
     action: 'pass.delete',
     targetType: 'pass',
     targetId: passId,
+    ...(options.reason ? { detail: { reason: options.reason } } : {}),
   });
 }

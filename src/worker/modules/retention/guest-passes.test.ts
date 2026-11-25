@@ -13,6 +13,8 @@ let tpl: string;
 beforeAll(async () => {
   await setupActionFixture();
   tpl = await accessTemplate();
+  // The first run starts the 7 day grace; every test below advances the clock past it.
+  await dailyGuestPasses(ctx());
 });
 const ctx = () => createJobContext(kit.env, 'visitors', { clock: kit.clock });
 
@@ -56,7 +58,8 @@ describe('guest-plan pass retention', () => {
     expect(found.at(-1)).toMatchObject({ deleted: 1, kind: 'visitor', policy_days: 90 });
     const audit = await first<{ n: number }>(
       kit.env.DB,
-      "SELECT count(*) AS n FROM audit_log WHERE action = 'pass.delete' AND target_id = ? AND actor_type = 'system'",
+      `SELECT count(*) AS n FROM audit_log WHERE action = 'pass.delete' AND target_id = ? AND actor_type = 'system'
+         AND json_extract(detail, '$.reason') = 'retention.guest_passes'`,
       [due.id],
     );
     expect(audit?.n).toBe(1);

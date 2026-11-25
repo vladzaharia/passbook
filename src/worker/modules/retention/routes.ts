@@ -16,6 +16,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { listHoldViews, listReceiptItems, receiptFile } from './console.ts';
+import { guestPassesFrom } from './guest-state.ts';
 import { type HoldBy, placeHold, releaseHold } from './holds.ts';
 
 type C = Parameters<typeof authOf>[0];
@@ -66,9 +67,11 @@ register(
   async (c) => {
     const { orgId } = c.req.valid('param');
     await orgBy(c, orgId, 'audit:read');
+    const ctx = serviceContext(c);
     return c.json({
-      items: await listHoldViews(serviceContext(c).env.DB, orgId, 'org'),
+      items: await listHoldViews(ctx.env.DB, orgId, 'org'),
       nextCursor: null,
+      guestPassesFrom: await guestPassesFrom(ctx.env.DB, ctx.clock.now()),
     });
   },
 );

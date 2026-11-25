@@ -135,8 +135,12 @@ export async function handleScheduled(
 ): Promise<void> {
   const hooks = CRON_HOOKS[controller.cron] ?? [];
   const base = createJobContext(env, 'cron', { ctx, base: { cron: controller.cron } });
-  const hookCtx = (env: AppEnv, hook: string) =>
-    createJobContext(env, 'cron', { ctx, base: { cron: controller.cron, hook } });
+  const hookCtx = (env: AppEnv, hook: string, queries?: () => number) =>
+    createJobContext(env, 'cron', {
+      ctx,
+      base: { cron: controller.cron, hook },
+      ...(queries ? { queries } : {}),
+    });
   const failed = (hook: string, error: unknown) =>
     base.log.error('cron.hook_failed', { hook, code: 'CRON_HOOK_FAILED', error });
   if (controller.cron === DAILY_CRON) {
@@ -152,7 +156,7 @@ export async function handleScheduled(
         continue;
       }
       try {
-        await hook.run(hookCtx(counter.env, hook.name));
+        await hook.run(hookCtx(counter.env, hook.name, counter.count));
       } catch (error) {
         failed(hook.name, error);
       }
