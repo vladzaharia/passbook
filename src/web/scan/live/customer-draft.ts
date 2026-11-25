@@ -8,6 +8,7 @@ export const DRAFT_HOLD_MS = 20_000;
 export interface CustomerDraft {
   ref: string;
   at: number;
+  scannerId: string;
   view: ScanCustomerView;
 }
 
@@ -22,8 +23,27 @@ export function nextDrafts(previous: Drafts, message: ScanLiveDraft, now: number
   }
   const held = next.get(message.ref);
   if (!held || held.at < message.at)
-    next.set(message.ref, { ref: message.ref, at: message.at, view: message.customer });
+    next.set(message.ref, {
+      ref: message.ref,
+      at: message.at,
+      scannerId: message.scannerId,
+      view: message.customer,
+    });
   return next;
+}
+
+/** A result of a desk ends its drafts: the read they were for is over, whatever the ready card did. */
+export function settledDrafts(
+  drafts: Drafts,
+  rows: readonly Pick<ScanLiveRow, 'kind' | 'scannerId' | 'at'>[],
+): Drafts {
+  const ended = rows.filter((row) => row.kind !== 'ready');
+  const next = new Map(
+    [...drafts].filter(
+      ([, d]) => !ended.some((row) => row.scannerId === d.scannerId && row.at >= d.at),
+    ),
+  );
+  return next.size === drafts.size ? drafts : next;
 }
 
 /**

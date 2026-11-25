@@ -83,6 +83,7 @@ export async function draftToScreens(
         draft = {
           ref: entry.row.id,
           at: now,
+          scannerId: entry.row.scannerId,
           customer: { ...draftView(recipient, entry, say), at: now },
         };
       }

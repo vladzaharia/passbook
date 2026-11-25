@@ -63,7 +63,12 @@ const ready = (id = READY): ScanLiveRow => ({
 });
 
 const draft = (ref: string, at: number, figure = '$12.00') => ({
-  draft: { ref, at, customer: view('review', 'To pay', 'Balance after: $30.50', figure) },
+  draft: {
+    ref,
+    at,
+    scannerId: READY,
+    customer: view('review', 'To pay', 'Balance after: $30.50', figure),
+  },
 });
 
 function screen() {
@@ -139,6 +144,16 @@ describe('customer screen draft', () => {
     // A draft that was on the wire when the receipt landed is older than it.
     act(() => socket.say(draft(READY, Date.now() + 1_000)));
     expect(queryByTestId('customer-draft')).toBeNull();
+  });
+
+  it('a result from the desk ends its draft for good, even after the ready card goes', async () => {
+    const { socket, queryByTestId } = screen();
+    act(() => socket.say({ cursor: READY, rows: [ready()] }));
+    act(() => socket.say(draft(READY, Date.now())));
+    const receipt = { ...ready(OTHER), kind: 'ok' as const, at: Date.now() + 1_000 };
+    act(() => socket.say({ cursor: OTHER, rows: [receipt] }));
+    act(() => socket.say({ draft: { ref: OTHER, at: Date.now() + 1_100, cancelled: true } }));
+    await waitFor(() => expect(queryByTestId('customer-draft')).toBeNull());
   });
 
   it('a draft-only cancel keeps the ready card, and a re-pick shows again', async () => {

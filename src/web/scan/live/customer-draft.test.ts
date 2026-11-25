@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { nextDrafts, reviewAmount, shownDraft, withoutReplacedReady } from './customer-draft.ts';
+import {
+  nextDrafts,
+  reviewAmount,
+  settledDrafts,
+  shownDraft,
+  withoutReplacedReady,
+} from './customer-draft.ts';
 
 const view = { band: { headline: 'To pay', sub: null }, figure: '$12.00' } as never;
-const say = (ref: string, at: number) => ({ ref, at, customer: view });
+const say = (ref: string, at: number, scannerId = 's1') => ({
+  ref,
+  at,
+  scannerId,
+  customer: view,
+});
 
 describe('customer draft', () => {
   it('reads the words and the figure from the view', () => {
@@ -30,6 +41,13 @@ describe('customer draft', () => {
     expect(shownDraft(a, { id: 'x', at: 800 }, 1500)?.ref).toBe('r');
     expect(shownDraft(a, { id: 'x', at: 1200 }, 1500)).toBeNull();
     expect(shownDraft(a, { id: 'r', at: 900 }, 1000 + 20_000)).toBeNull();
+  });
+
+  it("a desk's result ends its drafts, and no other desk's", () => {
+    const a = nextDrafts(nextDrafts(new Map(), say('r', 1000), 1000), say('t', 1000, 's2'), 1000);
+    const after = settledDrafts(a, [{ kind: 'ok', scannerId: 's1', at: 1500 }]);
+    expect([...after.keys()]).toEqual(['t']);
+    expect(settledDrafts(a, [{ kind: 'ready', scannerId: 's1', at: 1500 }])).toBe(a);
   });
 
   it('drops a ready card that a later result of the same scanner replaced', () => {

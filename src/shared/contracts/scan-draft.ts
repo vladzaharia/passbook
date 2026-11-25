@@ -27,7 +27,13 @@ export const ScanDraftResultSchema = z.object({ screens: z.number().int().nonneg
  * The latest `at` wins.
  */
 export const ScanLiveDraftSchema = z.union([
-  z.strictObject({ ref: IdSchema, at: TimestampSchema, customer: ScanCustomerViewSchema }),
+  z.strictObject({
+    ref: IdSchema,
+    at: TimestampSchema,
+    /** The desk that drafted: a later result from it ends the draft. Rows already carry it. */
+    scannerId: IdSchema,
+    customer: ScanCustomerViewSchema,
+  }),
   z.strictObject({
     ref: IdSchema,
     at: TimestampSchema,

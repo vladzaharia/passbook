@@ -97,6 +97,7 @@ describe('a draft over a ready card', () => {
     expect(c.screen.drafts()[0]).toMatchObject({
       draft: {
         ref: c.readyId,
+        scannerId: c.source.id,
         customer: {
           screen: 'review',
           band: { headline: 'To pay', sub: 'Balance after: $30.50' },

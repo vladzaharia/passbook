@@ -214,7 +214,7 @@ test('a followed screen shows the amount, then the receipt; a desk cancel keeps 
     await expect(draft).toHaveText('To pay $7.00');
     await r.deskPage.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect(draft).toHaveCount(0);
-    await expect(r.screen.getByText('Hi, Sam')).toBeVisible();
+    await expect(r.screen.getByRole('heading', { name: 'Hi, Sam' })).toBeVisible();
     await r.deskA.pick();
     await r.deskA.type('9.00');
     await expect(draft).toHaveText('To pay $9.00');

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
-import { type Drafts, nextDrafts } from './customer-draft.ts';
+import { type Drafts, nextDrafts, settledDrafts } from './customer-draft.ts';
 import { mergePlaces } from './monitor-model.ts';
 
 /** The live socket (polling while it is down): recent rows, counts, a welcome line. */
@@ -62,6 +62,7 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
       if ('resolved' in parsed.data || 'enroll' in parsed.data) return;
       const snapshot = parsed.data;
       cursor = snapshot.cursor;
+      setDrafts((previous) => settledDrafts(previous, snapshot.rows));
       if (snapshot.welcome !== undefined) setWelcome(snapshot.welcome);
       setPlaces((previous) =>
         mergePlaces(
