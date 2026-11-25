@@ -7,7 +7,6 @@ import type {
 import { ORG_LIFECYCLE_COPY as COPY } from '../../../shared/copy/org-lifecycle.ts';
 import { orgClosedEmail, orgReopenedEmail } from '../../email/org-closed.ts';
 import type { Actor } from '../../platform/context.ts';
-import { derivedHmacKey } from '../../platform/crypto.ts';
 import { baseUrl } from '../../platform/env.ts';
 import {
   ConflictError,
@@ -15,14 +14,14 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { safeEqual, toHex } from '../../platform/ids.ts';
+import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { requirePersonalClose } from '../orgs/personal-guard.ts';
 import { readOrgAdminEmails } from '../retention/repo.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
-import { exportKey, LINK_MS } from './export.ts';
+import { exportKey, LINK_MS, linkMac } from './export.ts';
 import { orgDay } from './org-day.ts';
 import {
   actorHolds,
@@ -265,16 +264,6 @@ export async function requestExport(
   const row = await exportRow(ctx.env.DB, orgId, id);
   if (!row) throw notFound();
   return exportDto(row);
-}
-
-async function linkMac(env: object, orgId: string, exportId: string, exp: number): Promise<string> {
-  const key = await derivedHmacKey(env, 'org-export-link.v1');
-  const mac = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    new TextEncoder().encode(`${orgId}|${exportId}|${exp}`),
-  );
-  return toHex(new Uint8Array(mac));
 }
 
 /** A download link for a ready archive, good for 1 hour and one download. Anyone holding it can download, so it is audited. */
