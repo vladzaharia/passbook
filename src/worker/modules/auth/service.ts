@@ -68,6 +68,15 @@ const groupKey = (name: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '_');
 
+const csv = (value: string | undefined) =>
+  (value ?? '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+/** The exact names a group variable holds (a comma list); empty when unset. */
+export const configuredNames = (env: object, variable: string) => csv(envString(env, variable));
+
 /**
  * A claim matches a configured group name exactly, case included. If Pocket ID normalises a group's
  * name in the claim (`passbook_developers`), set the variable to that name. Unset variables grant nothing.

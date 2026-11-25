@@ -67,15 +67,33 @@ describe('claim-existing is bounded per invitation', () => {
 });
 
 describe('the Polaris ID gate', () => {
+  const polaris = async (secret: string) =>
+    ((await (await post(r, '/preview', { token: secret })).json()) as { polaris: boolean }).polaris;
+
   it('needs the console group to be the one sign-in reads', async () => {
     const invite = await memberInvite(r, 'agent@agency.test');
-    expect(await (await post(r, '/preview', { token: invite.secret })).json()).toMatchObject({
-      polaris: true,
-    });
+    expect(await polaris(invite.secret)).toBe(true);
     r.h.env.OIDC_ADMIN_GROUP = 'someone_else';
-    expect(await (await post(r, '/preview', { token: invite.secret })).json()).toMatchObject({
-      polaris: false,
-    });
+    expect(await polaris(invite.secret)).toBe(false);
+  });
+
+  it('accepts the group when sign-in lists it among several names, as production does', async () => {
+    const member = await memberInvite(r, 'agent@agency.test');
+    const paired = await developerInvite(r, 'dev@agency.test', { roles: ['read_only'] });
+    // Production values: the admin group is a list holding the binding's console group.
+    r.h.env.OIDC_ADMIN_GROUP = 'wallet_org_admins,passbook_console';
+    r.h.env.OIDC_PLATFORM_ADMIN_GROUP = 'wallet_admins,passbook_admins';
+    r.h.env.OIDC_DEVELOPER_GROUP = 'wallet_developers, passbook_developers';
+    expect(await polaris(member.secret)).toBe(true);
+    expect(await polaris(paired.secret)).toBe(true);
+    // A list that does not name the binding's group is refused, near misses included.
+    r.h.env.OIDC_ADMIN_GROUP = 'wallet_org_admins,passbook_console_old';
+    expect(await polaris(member.secret)).toBe(false);
+    expect(await polaris(paired.secret)).toBe(false);
+    r.h.env.OIDC_ADMIN_GROUP = 'passbook_console';
+    r.h.env.OIDC_DEVELOPER_GROUP = 'wallet_developers,passbook_developers_old';
+    expect(await polaris(paired.secret)).toBe(false);
+    expect(await polaris(member.secret)).toBe(true);
   });
 });
 
