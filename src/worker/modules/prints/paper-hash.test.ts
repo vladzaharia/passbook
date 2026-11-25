@@ -42,7 +42,6 @@ describe('paperHash', () => {
       kicker: 'Entry pass',
       noun: 'Pass',
       bring: ['Something else'],
-      help: ['New help copy'],
       colors: { bg: '#000000', fg: '#ffffff', label: '#999999' },
     });
     other.design = { ...other.design, size: 'cr80' };
@@ -54,5 +53,11 @@ describe('paperHash', () => {
     expect(await paperHash(ticket({ holder: 'Grace Hopper' }))).not.toBe(base);
     expect(await paperHash(ticket({ start: '2026-12-02T19:00:00Z' }))).not.toBe(base);
     expect(await paperHash(ticket({ facts: [{ label: 'Seat', text: '13' }] }))).not.toBe(base);
+    expect(await paperHash(ticket({ help: ['Call 555-0100'] }))).not.toBe(base);
+  });
+
+  it('ignores a fact label, which is copy', async () => {
+    const base = await paperHash(ticket());
+    expect(await paperHash(ticket({ facts: [{ label: 'Place', text: '12' }] }))).toBe(base);
   });
 });

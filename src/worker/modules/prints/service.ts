@@ -138,7 +138,7 @@ export async function listPassPrints(ctx: ServiceContext, pass: Pass): Promise<P
   if (!active) return prints;
   // A ticket that cannot be drawn (the template version is gone) is not stale: the list never fails for it.
   const ticket = await paperTicket(ctx, pass).catch((error: unknown) => {
-    ctx.log.warn('prints.stale_unresolved', {
+    ctx.log.error('prints.stale_unresolved', {
       code: 'PRINT_STALE_UNRESOLVED',
       error: error instanceof Error ? error.name : 'unknown',
     });

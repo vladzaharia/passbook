@@ -5,6 +5,7 @@ import { channelReason } from '@/shared/copy/channels.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
 import { reprintConfirm, voidPrintConfirm } from '../../../lib/confirms.ts';
 import { formatDateTime } from '../../../lib/format.ts';
+import { useMode } from '../../../lib/mode.ts';
 import {
   Button,
   Callout,
@@ -25,8 +26,8 @@ import { printPageUrl, usePassPaper, usePassPrints, usePrintActions } from '../p
  * The staff print page opens in its own tab. The tab opens first, in the click, so a browser does
  * not take it for a pop-up; it moves to the page once the print exists.
  */
-function openPrintPage(passId: string, win: Window | null) {
-  const url = printPageUrl(passId);
+function openPrintPage(passId: string, mode: string, win: Window | null) {
+  const url = printPageUrl(passId, mode);
   if (win) {
     win.opener = null;
     win.location.href = url;
@@ -50,6 +51,7 @@ export function PrintCard({
   const channels = usePassPaper(pass.id);
   const prints = usePassPrints(pass.id);
   const actions = usePrintActions(pass.id);
+  const mode = useMode();
   const [ask, setAsk] = useState<'reprint' | 'void' | null>(null);
   const paper = channels.data?.effective.paper;
   const active = prints.data?.prints.find((p) => p.status === 'active');
@@ -68,7 +70,7 @@ export function PrintCard({
     try {
       if (replace || !active) await actions.mint.mutateAsync();
       else await actions.drawn.mutateAsync();
-      openPrintPage(pass.id, win);
+      openPrintPage(pass.id, mode, win);
       toast.success(replace ? PRINT_COPY.reprinted : PRINT_COPY.made);
     } catch (error) {
       win?.close();

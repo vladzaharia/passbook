@@ -79,7 +79,7 @@ const err=document.querySelector('[data-error]');
 const say=(m)=>{if(err){err.textContent=m;err.hidden=false}};
 const post=async(path)=>{if(err)err.hidden=true;try{const r=await fetch(location.pathname+path,{method:'POST',credentials:'same-origin',headers:{accept:'application/json'}});if(r.status===429)return say(${JSON.stringify(PRINT_COPY.limited)});if(!r.ok)return say(${JSON.stringify(PRINT_COPY.failed)});location.reload()}catch{say(${JSON.stringify(PRINT_COPY.failed)})}};
 // Records a redraw. A staff session also needs its CSRF token; a holder's link does not.
-const drawn=async(staff)=>{try{const h={};if(staff){const s=await (await fetch('/api/v1/session',{credentials:'same-origin'})).json();h['x-csrf-token']=s.csrfToken}await fetch(location.pathname+'/drawn',{method:'POST',credentials:'same-origin',headers:h,keepalive:true})}catch{}};
+const drawn=async(staff)=>{try{const h={};if(staff){const s=await (await fetch('/api/v1/session',{credentials:'same-origin'})).json();h['x-csrf-token']=s.csrfToken}await fetch(location.pathname+'/drawn'+location.search,{method:'POST',credentials:'same-origin',headers:h,keepalive:true})}catch{}};
 const ask=(which)=>{for(const c of document.querySelectorAll('[data-confirm]'))c.hidden=c.dataset.confirm!==which};
 document.addEventListener('click',(e)=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
 if(a==='print'){window.print();if(b.dataset.drawn)drawn(b.dataset.drawn==='staff')}
@@ -110,6 +110,8 @@ export interface PrintPageProps {
   pdfHref?: string;
   /** Where the template's images are served (ends in `/`): `/p/{token}/assets/` for a holder. */
   assetBase?: string;
+  /** Appended to staff URLs that a browser opens, so a Test pass is read in Test mode: `?mode=test`. */
+  modeQuery?: string;
   nonce: string;
   theme?: PageTheme;
   /** The org's brand kit (`orgBrandOf`): its logo leads the bar, its accent colours the page, its mark sets the foot. */
@@ -125,7 +127,9 @@ type Ready = Extract<PrintPageModel, { state: 'ready' }>;
 function sheetHtml(props: PrintPageProps, model: Ready) {
   const { assetBase } = props;
   const url = (name: string | undefined) =>
-    assetBase && name ? `${assetBase}${encodeURIComponent(name)}` : undefined;
+    assetBase && name
+      ? `${assetBase}${encodeURIComponent(name)}${props.modeQuery ?? ''}`
+      : undefined;
   return renderToStaticMarkup(
     <PaperTicket
       content={model.content}

@@ -19,7 +19,9 @@ const keys = {
 };
 
 /** The URL of the staff print page for a pass's active print. */
-export const printPageUrl = (passId: string) => `${base(passId)}/print`;
+/** A Test pass carries its mode in the URL: a browser tab cannot send the mode header. */
+export const printPageUrl = (passId: string, mode = 'live') =>
+  `${base(passId)}/print${mode === 'test' ? '?mode=test' : ''}`;
 
 /** The pass's effective channels; the Print card reads `paper` from it. */
 export function usePassPaper(passId: string) {
