@@ -63,8 +63,13 @@ export function signupApi(s: Shared): SignupApi {
           throw new IdpError('IDP_DRIFT', 'The signup token did not carry the expected groups.');
         }
         const createdAt = deps.now();
-        const parsed = Date.parse(str(t?.expiresAt) ?? '');
-        const expiresAt = Number.isNaN(parsed) ? createdAt + 3_600_000 : parsed;
+        const expiresAt = Date.parse(str(t?.expiresAt) ?? '');
+        // A token that lives past an hour, or says nothing about its end, is withdrawn.
+        if (Number.isNaN(expiresAt) || expiresAt > createdAt + 3_660_000) {
+          await req('DELETE', r.signupToken(tokenId));
+          alert('error', 'binding.drift', { tokenId });
+          throw new IdpError('IDP_DRIFT', 'The signup token did not expire as expected.');
+        }
         await rememberSignup(db, {
           tokenId,
           tokenSha256: await sha256Hex(value),

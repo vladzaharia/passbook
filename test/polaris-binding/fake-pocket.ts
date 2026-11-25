@@ -79,6 +79,10 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
     failWith: undefined as { match: RegExp; status: number; body?: unknown } | undefined,
     /** Rewrites the user DTO of GET user answers. */
     userDto: undefined as ((dto: Record<string, unknown>) => Record<string, unknown>) | undefined,
+    /** Runs at the start of every request, before it is answered (to interleave another call). */
+    hook: undefined as ((method: string, path: string) => Promise<void>) | undefined,
+    /** A body to answer a request with instead of the fake's own, or undefined. */
+    override: undefined as ((method: string, path: string) => unknown) | undefined,
     /** Group ids Polaris ID answers 404 for. */
     missing: new Set<string>(),
     seen: [] as Seen[],
@@ -114,6 +118,9 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
       redirect: init?.redirect,
       body,
     });
+    await s.hook?.(method, full);
+    const forced = s.override?.(method, full);
+    if (forced !== undefined) return json(forced);
     if (s.failWith?.match.test(`${method} ${full}`))
       return json(s.failWith.body ?? { message: 'nope' }, s.failWith.status);
 

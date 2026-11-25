@@ -76,6 +76,7 @@ export const BUCKETS = [
   'proveSignup',
   'deleteSignup',
   'lookup',
+  'preview',
 ] as const;
 export type Bucket = (typeof BUCKETS)[number];
 
@@ -181,7 +182,9 @@ export interface IdpRpc {
     disabled: boolean,
     ctx: WriteCtx,
   ): Promise<{ result: 'disabled' | 'enabled' | 'already'; dryRun: boolean }>;
-  snapshot(ctx: WriteCtx): Promise<Snapshot>;
+  /** `since` (epoch ms) widens `ended` to every grant ended for a missing member since then. */
+  snapshot(ctx: WriteCtx & { since?: number }): Promise<Snapshot>;
   freeze(reason: string, ctx: WriteCtx): Promise<'frozen' | 'already'>;
-  calls(since: number): Promise<CallRow[]>;
+  /** Ledger rows from `since`, 1,000 at a time; pass the last row's id as `afterId` for the next page. */
+  calls(since: number, afterId?: number): Promise<CallRow[]>;
 }

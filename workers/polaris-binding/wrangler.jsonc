@@ -31,5 +31,6 @@
     }
   ],
   "secrets": { "required": ["POCKET_ID_API_KEY"] },
-  "observability": { "enabled": true }
+  // Traces would record request attributes of calls that carry the key; logs are enough.
+  "observability": { "enabled": true, "traces": { "enabled": false } }
 }

@@ -53,6 +53,7 @@ const TABLES = [
   'idp_health',
   'idp_breaker',
   'idp_freezes',
+  'idp_locks',
 ];
 
 /** The binding's tables in the worker project's D1; each test recreates them (the setup drops triggers it did not migrate). */
@@ -122,9 +123,9 @@ export async function seedGrant(
     .bind(subject, NOW)
     .run();
   await env.DB.prepare(
-    'INSERT INTO idp_grants (subject, role, source, created_at) VALUES (?, ?, ?, ?)',
+    'INSERT INTO idp_grants (subject, role, source, created_at, confirmed_at) VALUES (?, ?, ?, ?, ?)',
   )
-    .bind(subject, role, source, NOW)
+    .bind(subject, role, source, NOW, NOW)
     .run();
 }
 

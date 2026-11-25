@@ -108,7 +108,11 @@ describe.each(MODES)('dry run when %s', (_n, patch, over) => {
   it('still counts against budgets, so a dry-run week shows the real load', async () => {
     const s = await seeded();
     await s.api.apply('u2', { add: ['console'] }, ctx(over));
-    expect((await s.api.health()).budget.apply_add_system?.day).toBe(1);
+    expect(
+      (await s.api.health()).budget[
+        (over as { dryRun?: boolean }).dryRun ? 'preview' : 'apply_add_system'
+      ]?.day,
+    ).toBe(1);
   });
 
   it('reports the mode in health and keeps the safe-config gate', async () => {

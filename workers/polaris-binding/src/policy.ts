@@ -53,6 +53,14 @@ export function assertEmail(value: unknown): string {
   return (value as string).toLowerCase();
 }
 
+/** An optional epoch-ms lower bound. */
+export function assertSince(value: unknown): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0)
+    refuse('Invalid since.');
+  return value as number;
+}
+
 export function assertKind(value: unknown): SignupKind {
   if (!SIGNUP_KINDS.includes(value as SignupKind)) refuse('Invalid signup kind.');
   return value as SignupKind;

@@ -29,6 +29,8 @@ CREATE TABLE idp_grants (
   ref TEXT,
   token_id TEXT REFERENCES idp_signups (token_id),
   created_at INTEGER NOT NULL,
+  -- Set once the write is read back. A grant without it is pending: a snapshot never ends it.
+  confirmed_at INTEGER,
   removed_at INTEGER,
   removed_reason TEXT
 ) STRICT;
@@ -100,3 +102,10 @@ CREATE TRIGGER idp_freezes_thaw_once BEFORE UPDATE ON idp_freezes
 WHEN OLD.thawed_at IS NOT NULL OR NEW.thawed_at IS NULL OR NEW.id != OLD.id OR NEW.at != OLD.at
   OR NEW.reason != OLD.reason OR NEW.actor != OLD.actor
 BEGIN SELECT RAISE(ABORT, 'idp_freezes: only thawed_at may be set, once'); END;
+
+-- One change per account at a time. A lease the holder releases; an expired one may be taken over.
+CREATE TABLE idp_locks (
+  subject TEXT PRIMARY KEY,
+  call_id TEXT NOT NULL,
+  until INTEGER NOT NULL
+) STRICT;

@@ -70,9 +70,9 @@ export async function recordProof(
     ...roles.map((role) =>
       db
         .prepare(
-          "INSERT OR IGNORE INTO idp_grants (subject, role, source, token_id, created_at) VALUES (?, ?, 'signup', ?, ?)",
+          "INSERT OR IGNORE INTO idp_grants (subject, role, source, token_id, created_at, confirmed_at) VALUES (?, ?, 'signup', ?, ?, ?)",
         )
-        .bind(subject, role, tokenId, at),
+        .bind(subject, role, tokenId, at, at),
     ),
   ]);
 }
@@ -93,15 +93,22 @@ export async function liveGrants(db: D1Database, subject: string): Promise<Writa
   return results.map((r) => r.role);
 }
 
-export async function grantsOfRole(db: D1Database, role: WritableRole): Promise<string[]> {
+/** Subjects with a confirmed grant made at or before `by`. Pending and newer grants are not for a snapshot to end. */
+export async function grantsOfRole(
+  db: D1Database,
+  role: WritableRole,
+  by: number,
+): Promise<string[]> {
   const { results } = await db
-    .prepare('SELECT subject FROM idp_grants WHERE role = ? AND removed_at IS NULL')
-    .bind(role)
+    .prepare(
+      'SELECT subject FROM idp_grants WHERE role = ? AND removed_at IS NULL AND confirmed_at IS NOT NULL AND confirmed_at <= ?',
+    )
+    .bind(role, by)
     .all<{ subject: string }>();
   return results.map((r) => r.subject);
 }
 
-/** Recorded before the write: a lost answer must not leave a role PassBook cannot take back. */
+/** Recorded before the write, pending until it is read back: a lost answer must not leave a role PassBook cannot take back. */
 export async function recordAdded(
   db: D1Database,
   subject: string,
@@ -124,6 +131,58 @@ export async function recordAdded(
         .bind(subject, role, ref, at),
     ),
   ]);
+}
+
+/** Everyone with a live grant for the role, pending ones included. */
+export async function liveGrantSubjects(db: D1Database, role: WritableRole): Promise<string[]> {
+  const { results } = await db
+    .prepare('SELECT subject FROM idp_grants WHERE role = ? AND removed_at IS NULL')
+    .bind(role)
+    .all<{ subject: string }>();
+  return results.map((r) => r.subject);
+}
+
+/** The write was read back: the grants are real. */
+export async function confirmGrants(
+  db: D1Database,
+  subject: string,
+  roles: WritableRole[],
+  at: number,
+): Promise<void> {
+  await db.batch(
+    roles.map((role) =>
+      db
+        .prepare(
+          'UPDATE idp_grants SET confirmed_at = ? WHERE subject = ? AND role = ? AND removed_at IS NULL AND confirmed_at IS NULL',
+        )
+        .bind(at, subject, role),
+    ),
+  );
+}
+
+/** Grants a snapshot ended because the member left the group, since `since`. */
+export async function endedSince(
+  db: D1Database,
+  since: number,
+): Promise<{ subject: string; role: WritableRole }[]> {
+  const { results } = await db
+    .prepare(
+      "SELECT subject, role FROM idp_grants WHERE removed_reason = 'idp_removed' AND removed_at >= ? ORDER BY id",
+    )
+    .bind(since)
+    .all<{ subject: string; role: WritableRole }>();
+  return results;
+}
+
+/** The account was seen enabled, so a disable mark of the binding's is stale. */
+export async function clearDisabledMarks(db: D1Database, subjects: string[]): Promise<void> {
+  if (!subjects.length) return;
+  await db
+    .prepare(
+      `UPDATE idp_subjects SET disabled_by_binding_at = NULL WHERE disabled_by_binding_at IS NOT NULL AND subject IN (${subjects.map(() => '?').join(',')})`,
+    )
+    .bind(...subjects)
+    .run();
 }
 
 export async function endGrants(

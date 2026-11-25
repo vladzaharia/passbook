@@ -35,6 +35,7 @@ describe('budgets fail closed', () => {
     setDisabled: (s) => s.api.setDisabled('u1', true, ctx()),
     snapshot: (s) => s.api.snapshot(ctx()),
     lookup: (s) => s.api.lookup('u1'),
+    preview: (s) => s.api.apply('u1', { remove: ['developer'] }, ctx({ dryRun: true })),
     proveSignup: (s) => s.api.proveSignup(['tok-id-1']),
     deleteSignup: (s) => s.api.deleteSignup('tok-id-1', ctx()),
   };

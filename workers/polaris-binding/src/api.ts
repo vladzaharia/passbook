@@ -28,6 +28,6 @@ export function createApi(env: BindingEnv, deps: Deps): IdpRpc {
     ...signupApi(shared),
     ...accountsApi(shared),
     ...directoryApi(shared),
-    calls: (since) => readCalls(env.DB, since),
+    calls: (since, afterId) => readCalls(env.DB, Number(since), Number(afterId ?? 0)),
   };
 }

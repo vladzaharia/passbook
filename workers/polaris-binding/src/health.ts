@@ -54,11 +54,13 @@ async function clientWarnings(env: BindingEnv, r: Routes, registry: Registry, re
 /** One read of every registry group, the settings, the key owner's keys and user, and the PassBook client. No writes. */
 async function probe(env: BindingEnv, r: Routes, registry: Registry, req: Req): Promise<Probe> {
   const groups: Partial<Record<Role, string | null>> = {};
+  const live: [Role, string | null, string][] = [];
   let missing = 0;
   for (const e of registry.entries) {
     const res = await req('GET', r.group(e.id));
     if (res.status === 404) {
-      groups[e.role] = null;
+      groups[e.role] ??= null;
+      live.push([e.role, null, e.name]);
       missing += 1;
       continue;
     }
@@ -66,11 +68,9 @@ async function probe(env: BindingEnv, r: Routes, registry: Registry, req: Req): 
     const name = str((res.body as { name?: unknown } | null)?.name);
     if (name === null)
       throw new IdpError('IDP_UPSTREAM', 'Polaris ID returned an unexpected group.');
-    groups[e.role] = name;
+    groups[e.role] = groups[e.role] ?? name;
+    live.push([e.role, name, e.name]);
   }
-  const live = registry.entries.map(
-    (e) => [e.role, groups[e.role] ?? null, e.name] as [Role, string | null, string],
-  );
   // Polaris ID answers 404 for every route of the other layout, so nothing past these reads can be trusted.
   if (missing === registry.entries.length)
     return {
@@ -91,14 +91,19 @@ async function probe(env: BindingEnv, r: Routes, registry: Registry, req: Req): 
   const expiries = list(keys.body)
     .map((k) => Date.parse(str((k as { expiresAt?: unknown } | null)?.expiresAt) ?? ''))
     .filter((t) => !Number.isNaN(t));
+  const keySubject = str((me.body as { id?: unknown } | null)?.id);
   return {
-    unsafe: configReasons(settings(config.body), live),
+    unsafe: [
+      ...configReasons(settings(config.body), live),
+      // Without the key user's id the binding cannot refuse to edit it.
+      ...(keySubject ? [] : ['key_user_unknown']),
+    ],
     warnings: await clientWarnings(env, r, registry, req),
     groups,
     layoutSuspect: false,
     // Every key of the binding's own user: the nearest expiry is the one to renew.
     keyExpiresAt: expiries.length ? Math.min(...expiries) : null,
-    keySubject: str((me.body as { id?: unknown } | null)?.id),
+    keySubject,
   };
 }
 

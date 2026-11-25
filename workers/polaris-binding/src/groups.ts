@@ -19,7 +19,11 @@ export async function readGroups(req: Req, r: Routes, subject: string): Promise<
   const res = await req('GET', r.userGroups(subject));
   if (!ok(res)) throw failure(res);
   if (!Array.isArray(res.body)) throw unexpected('groups answer');
-  return (res.body as { id?: unknown }[]).flatMap((g) => (typeof g?.id === 'string' ? [g.id] : []));
+  // A malformed entry fails the read: skipping it could hide a protected group and let a write through.
+  return (res.body as { id?: unknown }[]).map((g) => {
+    if (typeof g?.id !== 'string') throw unexpected('groups answer');
+    return g.id;
+  });
 }
 
 /** The user DTO. One without both flags is refused: unknown is not "not an admin". */
@@ -55,8 +59,8 @@ export function assertEditable(
 ): void {
   if (account.isAdmin) refuse('Polaris ID admin accounts cannot be changed here.');
   if (subject === keySubject) refuse('The binding key user cannot be changed here.');
-  if (account.groups.some((g) => registry.protectedIds.includes(g)))
-    refuse('Members of a protected group cannot be changed here.');
+  if (account.groups.some((g) => registry.adminIds.includes(g)))
+    refuse('Platform admins cannot be changed here.');
   if (adding && account.disabled) refuse('This Polaris ID account is disabled.');
 }
 

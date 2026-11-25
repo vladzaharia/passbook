@@ -15,7 +15,10 @@ export interface Entry {
 export interface Registry {
   entries: Entry[];
   writable: Entry[];
+  /** Groups the binding never writes. */
   protectedIds: string[];
+  /** Platform admin groups: their members are never edited. */
+  adminIds: string[];
   ids: string[];
   entry(role: Role): Entry | undefined;
   /** The group id of a role the caller may write, or undefined (unmapped, protected). */
@@ -42,19 +45,28 @@ export function parseRegistry(env: BindingEnv): { registry: Registry | null; rea
   if (!prefix) reasons.add('env_group_prefix');
   const entries: Entry[] = [];
   for (const [role, value] of Object.entries(raw)) {
-    const v = value as { id?: unknown; name?: unknown; protected?: unknown } | null;
-    if (!ROLES.includes(role as Role) || !v || typeof v !== 'object') return bad('env_groups');
-    if (typeof v.id !== 'string' || !ID.test(v.id) || typeof v.name !== 'string' || !v.name)
-      return bad('env_groups');
+    if (!ROLES.includes(role as Role)) return bad('env_groups');
     const isProtected = PROTECTED_ROLES.includes(role as Role);
-    // A protected role must say so, and a writable one must not: the flag cannot be argued away.
-    if ((v.protected === true) !== isProtected) return bad('env_groups');
-    if (!isProtected && prefix && !v.name.startsWith(prefix)) reasons.add('env_group_prefix');
-    entries.push({ role: role as Role, id: v.id, name: v.name, protected: isProtected });
+    // The protected roles may list several groups, for the window where a group is renamed.
+    const list = isProtected && Array.isArray(value) ? (value as unknown[]) : [value];
+    for (const item of list) {
+      const v = item as { id?: unknown; name?: unknown; protected?: unknown } | null;
+      if (!v || typeof v !== 'object') return bad('env_groups');
+      if (typeof v.id !== 'string' || !ID.test(v.id) || typeof v.name !== 'string' || !v.name)
+        return bad('env_groups');
+      // A protected role must say so, and a writable one must not: the flag cannot be argued away.
+      if ((v.protected === true) !== isProtected) return bad('env_groups');
+      if (!isProtected && prefix && !v.name.startsWith(prefix)) reasons.add('env_group_prefix');
+      // A writable name that reads as an admin group is a misconfigured admin group.
+      if (!isProtected && /admin/i.test(v.name)) reasons.add('group_admin_name');
+      entries.push({ role: role as Role, id: v.id, name: v.name, protected: isProtected });
+    }
   }
   const writable = entries.filter((e) => !e.protected);
   const ids = entries.map((e) => e.id);
   if (!writable.length || new Set(ids).size !== ids.length) return bad('env_groups');
+  // Without the admin group nothing can tell an admin from a member, so there is no write at all.
+  if (!entries.some((e) => e.role === 'platform_admin')) return bad('env_groups');
   const protectedNames = entries.filter((e) => e.protected).map((e) => e.name);
   if (writable.some((e) => protectedNames.includes(e.name))) reasons.add('group_protected');
   const registry: Registry = {
@@ -62,6 +74,7 @@ export function parseRegistry(env: BindingEnv): { registry: Registry | null; rea
     writable,
     ids,
     protectedIds: entries.filter((e) => e.protected).map((e) => e.id),
+    adminIds: entries.filter((e) => e.role === 'platform_admin').map((e) => e.id),
     entry: (role) => entries.find((e) => e.role === role),
     writableId: (role) => writable.find((e) => e.role === (role as WritableRole))?.id,
   };
