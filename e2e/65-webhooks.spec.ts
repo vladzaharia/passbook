@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, createPass, freshAdminApi, uid } from './helpers/api.ts';
-import { startOidcAs } from './helpers/auth.ts';
+import { saveState, startOidcAs } from './helpers/auth.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -18,6 +18,7 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
   // Adding an endpoint needs a recent sign-in; a long CI shard's stored session is stale.
   await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
   await page.waitForURL(/\/admin/);
+  await saveState(page, 'admin');
   const seed = readSeed();
   const org = encodeURIComponent(seed.org.id);
   const path = `/hooks/${uid('e2e')}`;
