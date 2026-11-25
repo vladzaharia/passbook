@@ -1,11 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fakeAuth } from '../../../../test/helpers/index.ts';
+import { fakeAuth, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { SetOrgEntitlementsInput } from '../../../shared/contracts/entitlement-admin.ts';
 import type { OrgPlanDto } from '../../../shared/contracts/org-plan.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
 import { clearSettingsCache } from '../settings/service.ts';
+import { ensurePersonalOrg } from './personal.ts';
+import { personalOrgIdOf } from './repo-personal.ts';
 
 const fake = fakeAuth();
 let rk: RetentionKit;
@@ -184,15 +188,20 @@ describe('what the platform lets through', () => {
   });
 
   it('shows one member for a personal org', async () => {
-    const p = await setup();
-    await moveTo(p, 'standard');
-    expect(limitOf(await plan(p), 'members')?.limit).toBe(25);
-    const owner = await rk.platform();
-    await run(rk.kit.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
-      owner.userId,
-      p.orgId,
-    ]);
-    expect(limitOf(await plan(p), 'members')?.limit).toBe(1);
+    const { fx, env, clock } = rk.kit;
+    const user = await makeUser(fx);
+    const session = await makeSession(fx, { userId: user.id, roles: ['admin', 'user'] });
+    await ensurePersonalOrg(createServiceContext(env, { clock }), {
+      userId: user.id,
+      sessionId: await sha256Hex(session.cookieValue),
+    });
+    const org = await personalOrgIdOf(env.DB, user.id);
+    const who = fake.user(user.id);
+    const res = await call('GET', planPath(org?.id ?? ''), who);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as OrgPlanDto;
+    expect(body.preset).toBe('standard');
+    expect(limitOf(body, 'members')?.limit).toBe(1);
   });
 
   it('refuses a member whose membership was revoked', async () => {

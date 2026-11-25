@@ -22573,10 +22573,8 @@
                     "print",
                     "nfc",
                     "api",
-                    "apps",
                     "webhooks",
                     "templates.uploads",
-                    "identity.own",
                     "identity.managed"
                   ]
                 },
@@ -80775,8 +80773,8 @@
                 },
                 "example": {
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "preset": "premium",
-                  "label": "Premium",
+                  "preset": "standard",
+                  "label": null,
                   "limits": [
                     {
                       "key": "passes.live",
@@ -80785,7 +80783,7 @@
                     },
                     {
                       "key": "members",
-                      "limit": null,
+                      "limit": 25,
                       "used": 2
                     },
                     {
