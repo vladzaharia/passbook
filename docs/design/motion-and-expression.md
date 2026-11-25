@@ -75,6 +75,7 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 | Row inserted | Accent-subtle overlay fades .8 → 0 over 1200 ms; no movement | Only rows new since the last render, never on first load |
 | Row removed | Item scales to .96 and fades in 160 ms; neighbours close up over 240 ms | Same-document View Transition with `row-<id>`; never animate layout |
 | Pass grids | Deal on the stage only: rise 24 px, −2°, .96, spring, 60 ms stagger; tile chrome rises 8 px after the card | Portal My passes, template gallery and pickers |
+| Org chooser badges | Swing in from the lanyard slot: 12 px drop, ∓3°, card spring, 60 ms stagger, once per mount; hover lifts 2 px and lights the windows one after another (opacity, 40 ms apart); the last used badge stays lit | Reduced motion: a fade; the buddy (M) nudges toward the badges, sorry when nothing matches |
 | Dialog, popover, menu, select | In: fade, .98 scale and 4 px from the trigger side, 200 ms; out: fade 120 ms | Radix `data-state` keyframes and `--radix-*-transform-origin` |
 | Bottom sheet (<640) | Slides up 260 ms, down 200 ms | Dialogs, confirms and menus on phones |
 | Sheet | Slide 260 ms in, 200 ms out; on touch it follows the finger and closes past 40% or 0.5 px/ms, else springs back in 200 ms | Overlay opacity tracks the drag |
@@ -87,7 +88,7 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 | Numbers | Count from the last value shown this session (first visit from 0), 600 ms ease-out, tabular-nums | `CountUp`; nothing counts 0 → 0 |
 | Status change | One ring pulse in the pill's tone (scale 1 → 1.6, fade, 640 ms) | Only when the value changes on screen |
 | Save bar | Slides up on spring 260 ms; on save the button shows a check for 400 ms, then the bar slides down 200 ms; Discard exits at once | Stays mounted while closing |
-| Wizard step | New step enters 16 px from the direction of travel plus opacity, 200 ms; old step fades in 90 ms; a done step fills with a bounce (.7 → 1, 320 ms) and its tick draws | Focus moves to the step heading |
+| Wizard step | New step enters 16 px from the direction of travel plus opacity, 200 ms; old step fades in 90 ms; a done step fills with a bounce (.7 → 1, 320 ms) and its tick draws | Focus moves to the step heading; the dialog body scrolls to the top |
 | Drop zone | A file dragged over lifts the art or upload arrow 4 px (200 ms spring) | Settles on leave or drop |
 | Theme change | Root crossfade 200 ms on every page; the menu's thumb slides to the choice | View Transition type `theme`; instant under reduced motion |
 | Offline bar | Slides down 200 ms under the top bar, up 160 ms when back online | |
@@ -479,7 +480,7 @@ tilt, the sheet drag). No motion library.
 | Online state | `src/web/lib/online.ts` |
 | Pass stage (glow, rim, tilt, flip, deal, mint, dip, sync rail) | `src/web/pass-card/stage.{tsx,css}` |
 | Sliding indicator | `src/web/ui/active-indicator.tsx` |
-| Wizard, stepper | `src/web/ui/wizard.tsx` |
+| Wizard, stepper | `src/web/ui/wizard.tsx` (page), `src/web/ui/wizard/*` and `src/web/ui/step-marker.tsx` (dialog, rail, markers) |
 | Route transition types, chunk-load errors (offline chunks: `lib/offline-routes.ts`) | `src/web/router.tsx` |
 | Sign-in scene | `src/web/portal/login-*.tsx` on `src/web/ui/art/wallet.tsx` |
 | SSR scene, error pages | `src/worker/ssr/{theme,hosted,hosted-art}.*`, `src/worker/ssr/error-page.tsx`, `src/worker/modules/auth/pages.ts` |
