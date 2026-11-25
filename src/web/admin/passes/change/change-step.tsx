@@ -28,7 +28,7 @@ export function ChangeStep({
       <div
         role="radiogroup"
         aria-label="Kind of change"
-        className="wl-deal grid gap-3 sm:grid-cols-3"
+        className="wl-deal grid gap-3 @[40rem]:grid-cols-3"
       >
         {KINDS.map(({ kind, icon }, i) => (
           <div key={kind} style={{ '--i': i } as CSSProperties} className="flex">
