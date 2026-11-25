@@ -8836,6 +8836,7 @@ export type ScanRoster = {
     status: "active" | "voided" | "removed";
     state: "in" | "out" | null;
     day?: boolean;
+    g?: string;
   }>;
   cursor: string | null;
   asOf: number;

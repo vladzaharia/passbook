@@ -17998,6 +17998,10 @@
                 },
                 "day": {
                   "type": "boolean"
+                },
+                "g": {
+                  "type": "string",
+                  "maxLength": 32
                 }
               },
               "required": [

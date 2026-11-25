@@ -9708,6 +9708,7 @@ class ScanRosterEntriesItem(_Model):
     status: _Literal["active", "voided", "removed"] | str
     state: _Literal["in", "out", None] | str
     day: bool | None = None
+    g: str | None = None
 
 class ScanSession(_Model):
     workspace: ScanWorkspace | None = None
