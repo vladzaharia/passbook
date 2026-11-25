@@ -1,11 +1,12 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, first } from '../../platform/db.ts';
+import { all } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { endBinding } from '../nfc/repo-tags-write.ts';
 import { triggerRefusal } from '../nfc/tags.ts';
 import type { ScanActor } from './guard.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
+import { scannerRefusal } from './scanner-credential-lost.ts';
 import { TABLES } from './tags-bind.ts';
 
 /** The loaner tags a pass holds now: active pass-scope bindings of a tag whose type is for visitors. */
@@ -24,22 +25,6 @@ export async function lentBindings(
     [orgId, mode, passId],
   );
   return rows.map((r) => ({ id: r.id, tagId: r.tag_id }));
-}
-
-/** What the desk did with the pass's lent tag at or after `since`: the replay of a sign-out answers from it. */
-export async function collectedSince(
-  db: D1Database,
-  passId: string,
-  since: number,
-): Promise<'returned' | 'not_returned' | 'none'> {
-  const row = await first<{ end_cause: string }>(
-    db,
-    `SELECT end_cause FROM tag_bindings
-     WHERE pass_id = ? AND scope = 'pass' AND ended_at >= ? AND end_cause IN ('visitor_out', 'lost')
-     ORDER BY ended_at DESC LIMIT 1`,
-    [passId, since],
-  );
-  return row ? (row.end_cause === 'lost' ? 'not_returned' : 'returned') : 'none';
 }
 
 /** Ends the pass's loaner bindings at the desk: handed back, or kept (the tag is reported lost, by this actor). */
@@ -69,13 +54,15 @@ export async function collectTags(
       orgId: actor.orgId,
       actorType: actor.actor.type === 'scanner' ? 'scanner' : 'user',
       actorId: actor.actor.id,
-      action: 'tag.unbind',
+      action: as === 'returned' ? 'tag.unbind' : 'tag.lost',
       targetType: 'tag',
       targetId: binding.tagId,
       detail: {
         cause,
         scope: 'pass',
         passId: pass.id,
+        bindingId: binding.id,
+        ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
         ...(actor.staff ? { staffId: actor.staff.id } : {}),
       },
     });
@@ -83,6 +70,6 @@ export async function collectTags(
   try {
     await g.commit();
   } catch (error) {
-    throw triggerRefusal(error) ?? error;
+    throw await scannerRefusal(ctx, actor, triggerRefusal(error) ?? error);
   }
 }

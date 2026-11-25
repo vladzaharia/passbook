@@ -5840,6 +5840,8 @@
   "scan post /sign-out": [
     "CONFLICT",
     "FORBIDDEN",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_REUSED",
     "INVALID_API_KEY",
     "NOT_INSIDE",
     "PASS_NOT_FOUND",

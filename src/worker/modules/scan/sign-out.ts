@@ -9,6 +9,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
+import { withIdempotency } from '../../platform/idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tagByRef, tagView } from '../nfc/repo-tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
@@ -17,9 +18,8 @@ import { policyActor } from './dto.ts';
 import type { ScanActor } from './guard.ts';
 import { passInScope } from './history-scope.ts';
 import { markOut } from './occupancy/mark-out.ts';
-import { scanByKey } from './repo-scans.ts';
-import { enteredAt, insidePlaces } from './repo-sign-out.ts';
-import { collectedSince, collectTags, lentBindings } from './repo-sign-out-tags.ts';
+import { insidePlaces } from './repo-sign-out.ts';
+import { collectTags, lentBindings } from './repo-sign-out-tags.ts';
 import { scanPolicy } from './rules.ts';
 import { notFound } from './tags-bind.ts';
 import { assertReadMatches, identifyRead } from './tags-sun.ts';
@@ -32,13 +32,12 @@ const skippable = (error: unknown): error is ConflictError | ValidationError =>
   (error instanceof ConflictError && error.code === 'NOT_INSIDE') ||
   (error instanceof ValidationError && error.code === 'SCAN_MARK_OUT_INVALID');
 
-/** The pass a tapped tag is lent to. A tag that is not lent, or whose pass this device cannot reach, is not lent here. */
-async function passOfLentTag(
+/** The pass and binding a tapped tag is lent to. A tag that is not lent is 409; an unknown one is 404. */
+async function lentBindingOf(
   ctx: ServiceContext,
   actor: ScanActor,
   read: NonNullable<SignOutRequest['read']>,
-): Promise<string> {
-  const notLent = () => new ConflictError("This tag isn't lent.", 'TAG_NOT_LENT');
+): Promise<{ passId: string; binding: { id: string; tagId: string } }> {
   const db = ctx.env.DB;
   await ensureCredentialRefKeyset(db, ctx.env);
   const identity = await identifyRead(ctx, actor, read);
@@ -46,14 +45,66 @@ async function passOfLentTag(
   await assertReadMatches(ctx, actor, identity, tag);
   if (!tag) throw notFound();
   const binding = (await tagView(db, actor.orgId, actor.mode, tag.id))?.binding;
-  if (!binding?.lent || binding.scope !== 'pass') throw notLent();
-  return binding.passId;
+  if (!binding?.lent || binding.scope !== 'pass')
+    throw new ConflictError("This tag isn't lent.", 'TAG_NOT_LENT');
+  return { passId: binding.passId, binding: { id: binding.id, tagId: tag.id } };
+}
+
+async function run(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  req: SignOutRequest,
+): Promise<SignOutResult> {
+  const db = ctx.env.DB;
+  const tapped = req.read ? await lentBindingOf(ctx, actor, req.read) : null;
+  const pass = await getPass(db, tapped?.passId ?? req.passId ?? '', actor.orgId);
+  // A tapped tag whose pass this device cannot reach is as unknown as another org's tag.
+  if (!pass || pass.mode !== actor.mode || !passInScope(actor, pass.templateId))
+    throw tapped ? notFound() : new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const want = req.tag ?? (req.read ? 'returned' : 'none');
+
+  let stay: number | null = null;
+  let marked = 0;
+  let skipped = 0;
+  for (const place of await insidePlaces(db, actor.orgId, pass.id)) {
+    try {
+      const outcome = await markOut(ctx, actor, {
+        idempotencyKey: ctx.ids.ordered(ctx.clock.now()),
+        passId: pass.id,
+        place,
+      });
+      marked += 1;
+      stay ??= outcome.occupancy?.stayMs ?? null;
+    } catch (error) {
+      if (!skippable(error)) throw error;
+      skipped += 1;
+      ctx.log.warn('scan.sign_out_place_skipped', { orgId: actor.orgId, code: error.code });
+    }
+  }
+
+  // A tap collects only the tapped tag; naming the pass collects every loaner it holds.
+  const lent = tapped
+    ? [tapped.binding]
+    : want === 'none'
+      ? []
+      : await lentBindings(db, actor.orgId, actor.mode, pass.id);
+  if (want !== 'none' && lent.length > 0) await collectTags(ctx, actor, pass, lent, want);
+  if (marked === 0 && skipped === 0 && lent.length === 0)
+    throw new ConflictError('They are already out.', 'NOT_INSIDE');
+  return {
+    passId: pass.id,
+    stayMs: stay,
+    stillInside: skipped,
+    tag: want !== 'none' && lent.length > 0 ? want : 'none',
+  };
 }
 
 /**
  * POST /scan/sign-out (Desk and above): marks the person out of every tracked place they are in and
  * collects a lent tag. No visit is recorded; a pass with nothing to mark out and no tag to collect is 409
- * NOT_INSIDE. The request key is the first place's mark-out key, so a repeat answers as the first did.
+ * NOT_INSIDE. The whole call runs under the request key (stored 24 h, per scanner), so a repeat answers as
+ * the first did, and the same key with another body is 409 SCAN_KEY_REUSED. A failed call releases the key;
+ * its retry marks out only the places still open.
  */
 export async function signOut(
   ctx: ServiceContext,
@@ -62,48 +113,24 @@ export async function signOut(
 ): Promise<SignOutResult> {
   if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
     throw new ForbiddenError('Only Desk and above can sign someone out.', 'FORBIDDEN');
-  const db = ctx.env.DB;
-  const passId = req.read ? await passOfLentTag(ctx, actor, req.read) : (req.passId ?? '');
-  const pass = await getPass(db, passId, actor.orgId);
-  if (!pass || pass.mode !== actor.mode || !passInScope(actor, pass.templateId))
-    throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  const want = req.tag ?? (req.read ? 'returned' : 'none');
-
-  const prior = await scanByKey(db, actor.actorKey, req.idempotencyKey);
-  if (prior && (prior.state !== 'done' || prior.passId !== pass.id))
-    throw new ConflictError('That request key was used for something else.', 'SCAN_KEY_REUSED');
-  let stay: number | null = null;
-  let marked = 0;
-  if (prior) {
-    const since = prior.presenceScope
-      ? await enteredAt(db, actor.orgId, pass.id, prior.presenceScope)
-      : null;
-    stay = since === null ? null : Math.max(0, prior.at - since);
-  } else {
-    let key: string | null = req.idempotencyKey;
-    for (const place of await insidePlaces(db, actor.orgId, pass.id)) {
-      try {
-        const outcome = await markOut(ctx, actor, {
-          idempotencyKey: key ?? ctx.ids.ordered(ctx.clock.now()),
-          passId: pass.id,
-          place,
-        });
-        marked += 1;
-        key = null;
-        stay ??= outcome.occupancy?.stayMs ?? null;
-      } catch (error) {
-        if (!skippable(error)) throw error;
-        ctx.log.warn('scan.sign_out_place_skipped', { orgId: actor.orgId, code: error.code });
-      }
-    }
+  const { idempotencyKey, ...body } = req;
+  try {
+    const out = await withIdempotency(
+      ctx,
+      {
+        orgId: actor.orgId,
+        mode: actor.mode,
+        principal: actor.scanner ? `scanner:${actor.scanner.id}` : `user:${actor.actor.id}`,
+        operation: 'POST /scan/sign-out',
+        key: idempotencyKey,
+        request: { method: 'POST', path: '/scan/sign-out', body },
+      },
+      async () => ({ status: 200, body: await run(ctx, actor, req) }),
+    );
+    return out.body as SignOutResult;
+  } catch (error) {
+    if (error instanceof ValidationError && error.code === 'IDEMPOTENCY_KEY_REUSED')
+      throw new ConflictError('That request key was used for something else.', 'SCAN_KEY_REUSED');
+    throw error;
   }
-
-  const lent = want === 'none' ? [] : await lentBindings(db, actor.orgId, actor.mode, pass.id);
-  if (want !== 'none' && lent.length > 0) await collectTags(ctx, actor, pass, lent, want);
-  if (!prior && marked === 0 && lent.length === 0) {
-    if (req.read) throw new ConflictError("This tag isn't lent.", 'TAG_NOT_LENT');
-    throw new ConflictError('They are already out.', 'NOT_INSIDE');
-  }
-  const tag = lent.length > 0 ? want : prior ? await collectedSince(db, pass.id, prior.at) : 'none';
-  return { passId: pass.id, stayMs: stay, tag };
 }

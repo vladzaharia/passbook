@@ -13244,32 +13244,6 @@ type TerminalScansUndoParamsScope struct {
 
 type TerminalScansUndoResult = ScanOutcome
 
-type TerminalSignOutEverywhereParams struct {
-	IdempotencyKey string                               `json:"idempotencyKey"`
-	PassID         *string                              `json:"passId,omitempty"`
-	Read           *TerminalSignOutEverywhereParamsRead `json:"read,omitempty"`
-	Tag            *string                              `json:"tag,omitempty"`
-}
-
-type TerminalSignOutEverywhereParamsRead struct {
-	Uid       *string                                  `json:"uid,omitempty"`
-	UidRandom *bool                                    `json:"uidRandom,omitempty"`
-	Tech      string                                   `json:"tech"`
-	Ndef      *TerminalSignOutEverywhereParamsReadNdef `json:"ndef,omitempty"`
-	Source    string                                   `json:"source"`
-}
-
-type TerminalSignOutEverywhereParamsReadNdef struct {
-	Type  string `json:"type"`
-	Value string `json:"value"`
-}
-
-type TerminalSignOutEverywhereResponse struct {
-	PassID string `json:"passId"`
-	StayMs *int64 `json:"stayMs"`
-	Tag    string `json:"tag"`
-}
-
 type TestEmailsListQuery struct {
 	Cursor *string `json:"cursor,omitempty"`
 	Limit  *int64  `json:"limit,omitempty"`

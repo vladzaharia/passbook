@@ -45,13 +45,19 @@ export const SignOutRequestSchema = z
   .refine((r) => (r.passId === undefined) !== (r.read === undefined), {
     message: 'Name the pass or tap its tag.',
   })
-  .refine((r) => r.read === undefined || r.tag !== 'none', {
-    message: 'A tag tap collects the tag.',
+  .refine((r) => r.read === undefined || r.tag === undefined || r.tag === 'returned', {
+    message: 'A tag tap hands the tag back.',
     path: ['tag'],
   });
 export const SignOutResultSchema = z.object({
   passId: IdSchema,
   stayMs: z.number().int().nonnegative().nullable(),
+  /** Places the person is still inside that this device cannot mark out. */
+  stillInside: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('Places the person is still inside that this device could not mark out.'),
   tag: SignOutTagSchema.describe(
     'What happened to the lent tag; `none` when the pass had none to collect.',
   ),

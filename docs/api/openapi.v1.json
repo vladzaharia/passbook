@@ -127033,6 +127033,11 @@
                       ],
                       "minimum": 0
                     },
+                    "stillInside": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Places the person is still inside that this device could not mark out."
+                    },
                     "tag": {
                       "type": "string",
                       "enum": [
@@ -127046,12 +127051,14 @@
                   "required": [
                     "passId",
                     "stayMs",
+                    "stillInside",
                     "tag"
                   ]
                 },
                 "example": {
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "stayMs": 1290,
+                  "stillInside": 20,
                   "tag": "returned"
                 }
               }
@@ -127083,6 +127090,8 @@
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_REUSED",
           "INVALID_API_KEY",
           "NOT_INSIDE",
           "PASS_NOT_FOUND",
