@@ -85,6 +85,7 @@ export const QS_COPY = {
     listening: 'Listening for',
     anyKey: 'Listening for a call from your sandbox',
     from: 'From your terminal',
+    made: 'Pass created',
     next: 'Next',
     timeout: 'Still listening? Check',
     timeoutCode: CHECK,

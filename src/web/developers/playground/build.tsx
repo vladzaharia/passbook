@@ -30,6 +30,7 @@ const NOW = new Date(Date.UTC(2026, 0, 1));
 /** A code of the print code's shape, so the ticket draws a real QR; never a real ticket's. */
 const SAMPLE_CODE = 'PSAMPLEABCDEFGHIJKLMNOPQRST';
 const PAPER_WIDTH = 520;
+const PAGE_GAP = 28;
 /** The sheet is XML inside the image, so its drawings need their namespace spelled out. */
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const behaviors = createBehaviorRegistry([...behaviorPlugins]);
@@ -98,15 +99,15 @@ function paperImage(root: string, t: ResolvedTemplate, slug: string, passJson: P
       }}
     />,
   );
-  // The pages stack as they print: one sheet, or a card's front and back (the sheet's own 12 px gap).
+  // The pages stack as they print: one sheet, or a card's front and back (a wider gap than the sheet's 12 px, so the faces read as two).
   const sheet = /data-size="[^"]*" style="--w:([\d.]+);--h:([\d.]+)/.exec(body);
   const ratio = sheet ? Number(sheet[2]) / Number(sheet[1]) : 297 / 210;
   const pages = body.split('<div class="pp-fit"').length - 1;
-  const height = Math.round(PAPER_WIDTH * ratio * pages + 12 * (pages - 1));
+  const height = Math.round(PAPER_WIDTH * ratio * pages + PAGE_GAP * (pages - 1));
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${PAPER_WIDTH}" height="${height}" viewBox="0 0 ${PAPER_WIDTH} ${height}">` +
     `<foreignObject width="${PAPER_WIDTH}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${PAPER_WIDTH}px">` +
-    `<style>${PAPER_CSS}</style>${body.replaceAll('<svg ', `<svg xmlns="${SVG_NS}" `)}</div></foreignObject></svg>`;
+    `<style>${PAPER_CSS}.pp-fit+.pp-fit{margin-top:${PAGE_GAP}px}</style>${body.replaceAll('<svg ', `<svg xmlns="${SVG_NS}" `)}</div></foreignObject></svg>`;
   return { svg, height };
 }
 

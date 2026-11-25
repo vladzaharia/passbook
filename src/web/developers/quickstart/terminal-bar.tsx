@@ -1,4 +1,4 @@
-import { CircleAlert, RotateCw, Terminal } from 'lucide-react';
+import { CircleAlert, Play, RotateCw, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
@@ -94,8 +94,12 @@ export function Stamped({ entry }: { entry: RequestLogEntry }) {
     <div className="row g3 wrap-row qs-heard">
       <span className={`stamp ${ok ? 'ok' : 'bad'}`}>{stamp(entry.status)}</span>
       <span className="chip-from xs">
-        <Terminal aria-hidden="true" className="lucide" />
-        {T.from}
+        {entry.via === 'try' ? (
+          <Play aria-hidden="true" className="lucide" />
+        ) : (
+          <Terminal aria-hidden="true" className="lucide" />
+        )}
+        {entry.via === 'try' ? T.here : T.from}
       </span>
       <span className="mono xs muted">
         {entry.client ? `${entry.client} · ` : ''}
@@ -126,7 +130,7 @@ export function TerminalBar({
   const { heard, over, quiet, again } = useListener(listening, cursor);
   // After a reload the call is still in the log: the done step shows it as it was.
   const prior = done
-    ? (q.home?.calls.find((e) => isPassCreate(e) && e.status < 400 && e.via === null) ?? null)
+    ? (q.home?.calls.find((e) => isPassCreate(e) && e.status < 400) ?? null)
     : null;
   const last = heard.at(-1) ?? prior;
   const since = useRef(Date.now());
@@ -160,6 +164,8 @@ export function TerminalBar({
                 </p>
               ) : null}
             </>
+          ) : done ? (
+            <span className="sm">{T.made}</span>
           ) : over ? (
             <span className="xs muted">
               {T.timeout} <code className="inline-code">{T.timeoutCode}</code>
