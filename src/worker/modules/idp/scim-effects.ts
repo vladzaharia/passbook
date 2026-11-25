@@ -12,6 +12,7 @@ import {
   breakerOpen,
   markManyQueued,
   pendingRevocations,
+  setRetry,
   setRevocation,
   subjectsOfScimIds,
 } from './repo-scim.ts';
@@ -48,6 +49,8 @@ const REGISTRY = new Set(['console', 'developer', 'support', 'platform_admin', '
 type Gate = 'live' | 'dry' | 'off';
 /** `revoked`: sessions ended. `none`: nothing to end. `pending`: owed, recorded on the mirror row. */
 export type Outcome = 'revoked' | 'none' | 'pending';
+/** Inside, two more: `breaker` (open: a sweep stops) and `retry` (Polaris ID could not confirm: a sweep backs off). */
+type Step = Outcome | 'breaker' | 'retry';
 
 /**
  * One health read per push that has an effect to decide. Unreachable, frozen or unsafe is `off`, the same gate as
@@ -100,7 +103,7 @@ interface Revoke {
  * revoked this hour, the breaker is closed, and Polaris ID confirms the account is off, gone or out of the
  * client's groups. Anything that stops it for now is `pending`.
  */
-async function revoke(ctx: ServiceContext, gate: Gate, r: Revoke): Promise<Outcome> {
+async function revoke(ctx: ServiceContext, gate: Gate, r: Revoke): Promise<Step> {
   if (gate !== 'live') {
     ctx.log.info('idp.scim.effect_skipped', { gate, reason: r.why });
     return 'pending';
@@ -109,10 +112,10 @@ async function revoke(ctx: ServiceContext, gate: Gate, r: Revoke): Promise<Outco
   const now = ctx.clock.now();
   const identity = await identityOfSubject(db, r.subject);
   if (!identity) return 'none';
-  if (r.lastRevokedAt !== null && now - r.lastRevokedAt < HOUR) return 'pending';
-  if (await breakerOpen(db, BREAKER_KEY, now, BREAKER_LATCH_MS)) return 'pending';
+  if (r.lastRevokedAt !== null && now - r.lastRevokedAt < HOUR) return 'retry';
+  if (await breakerOpen(db, BREAKER_KEY, now, BREAKER_LATCH_MS)) return 'breaker';
   const verdict = await confirmed(ctx, r.subject);
-  if (verdict === 'unknown') return 'pending';
+  if (verdict === 'unknown') return 'retry';
   if (verdict === 'no') {
     ctx.log.warn('idp.scim.unconfirmed', { code: 'IDP_SCIM_UNCONFIRMED', reason: r.why });
     return 'none';
@@ -121,8 +124,10 @@ async function revoke(ctx: ServiceContext, gate: Gate, r: Revoke): Promise<Outco
   const count = await bump(db, `idp:scim:revokes:${window}`, window);
   if (count > SCIM_BREAKER_LIMIT) {
     await bump(db, BREAKER_KEY, now);
+    // The window's count starts again from zero, so clearing the latch inside the window does not re-latch at once.
+    await bump(db, `idp:scim:revokes:${window}`, window, -count);
     ctx.log.error('idp.scim_breaker', { code: 'IDP_SCIM_BREAKER', limit: SCIM_BREAKER_LIMIT });
-    return 'pending';
+    return 'breaker';
   }
   const ended =
     r.before === null
@@ -161,17 +166,16 @@ export async function userDeactivated(
   why: 'inactive' | 'deleted',
   lastRevokedAt: number | null,
 ): Promise<Outcome> {
-  return revoke(ctx, await gateOf(ctx), {
-    subject,
-    why,
-    before: null,
-    lastRevokedAt,
-  });
+  const step = await revoke(ctx, await gateOf(ctx), { subject, why, before: null, lastRevokedAt });
+  return step === 'breaker' || step === 'retry' ? 'pending' : step;
 }
 
 /** True when a revocation is owed: the drain's minute hook then takes the lease and sweeps. */
 export const revocationsOwed = async (ctx: ServiceContext): Promise<boolean> =>
-  (await pendingRevocations(ctx.env.DB, 1)).length > 0;
+  (await pendingRevocations(ctx.env.DB, ctx.clock.now(), 1)).length > 0;
+
+/** A row the sweep could not settle waits 10 minutes, then 20, doubling up to about 5 hours. */
+const retryAfter = (tries: number): number => 600_000 * 2 ** Math.min(tries, 5);
 
 /**
  * Carries out the revocations the receiver could not (live gate only, under the breaker and the caps). A row
@@ -180,18 +184,26 @@ export const revocationsOwed = async (ctx: ServiceContext): Promise<boolean> =>
  */
 export async function sweepRevocations(ctx: ServiceContext): Promise<void> {
   const db = ctx.env.DB;
-  for (const row of await pendingRevocations(db, SWEEP_BATCH)) {
-    const outcome = await revoke(ctx, 'live', {
+  for (const row of await pendingRevocations(db, ctx.clock.now(), SWEEP_BATCH)) {
+    const step = await revoke(ctx, 'live', {
       subject: row.subject,
       why: row.deleted_at === null ? 'inactive' : 'deleted',
       before: row.last_modified,
       lastRevokedAt: row.revoked_at,
     });
-    if (outcome === 'pending') continue;
-    await setRevocation(db, row.scim_id, {
-      pending: false,
-      revokedAt: outcome === 'revoked' ? ctx.clock.now() : null,
-    });
+    if (step === 'breaker') return;
+    if (step === 'retry')
+      await setRetry(
+        db,
+        row.scim_id,
+        row.revoke_tries + 1,
+        ctx.clock.now() + retryAfter(row.revoke_tries),
+      );
+    else if (step !== 'pending')
+      await setRevocation(db, row.scim_id, {
+        pending: false,
+        revokedAt: step === 'revoked' ? ctx.clock.now() : null,
+      });
   }
 }
 

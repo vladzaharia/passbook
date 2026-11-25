@@ -244,7 +244,7 @@ Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (
 
 Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
 
-Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with `DELETE FROM counters WHERE key = 'idp:scim:breaker'` on the main D1; the next minute's sweep ends what is owed.
+Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with `DELETE FROM counters WHERE key = 'idp:scim:breaker'` on the main D1; the next minute's sweep ends what is owed (tripping it resets the ten-minute count, so clearing it in the same window does not latch it again). A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
 
 Rotate the token by putting a new secret and updating the service provider; between the two Polaris ID's pushes fail with 401 and retry on the next sync.
 

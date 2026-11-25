@@ -11,6 +11,9 @@ export interface DirectoryUser {
   revoke_pending: 0 | 1;
   /** When the receiver last ended this subject's sessions. */
   revoked_at: number | null;
+  /** Failed sweep attempts since the revocation became owed, and when the sweep may try again. */
+  revoke_tries: number;
+  revoke_next_at: number;
 }
 
 export interface DirectoryGroup {
@@ -22,7 +25,8 @@ export interface DirectoryGroup {
   deleted_at: number | null;
 }
 
-const USER = 'scim_id, subject, active, last_modified, deleted_at, revoke_pending, revoked_at';
+const USER =
+  'scim_id, subject, active, last_modified, deleted_at, revoke_pending, revoked_at, revoke_tries, revoke_next_at';
 const GROUP = 'scim_id, group_id, members, last_modified, deleted_at';
 
 export const userById = (db: D1Database, scimId: string) =>
@@ -80,25 +84,41 @@ export async function setRevocation(
 ): Promise<void> {
   const pending = r.pending ? 1 : 0;
   if (r.revokedAt === null)
-    await run(db, 'UPDATE idp_directory_users SET revoke_pending = ? WHERE scim_id = ?', [
-      pending,
-      scimId,
-    ]);
+    await run(
+      db,
+      'UPDATE idp_directory_users SET revoke_pending = ?, revoke_tries = 0, revoke_next_at = 0 WHERE scim_id = ?',
+      [pending, scimId],
+    );
   else
     await run(
       db,
-      'UPDATE idp_directory_users SET revoke_pending = ?, revoked_at = ? WHERE scim_id = ?',
+      'UPDATE idp_directory_users SET revoke_pending = ?, revoked_at = ?, revoke_tries = 0, revoke_next_at = 0 WHERE scim_id = ?',
       [pending, r.revokedAt, scimId],
     );
 }
 
-/** Users off in Polaris ID whose revocation is still owed, oldest first. */
-export const pendingRevocations = (db: D1Database, limit: number) =>
+/** The sweep could not settle a row (the confirming lookup failed): it tries again at `nextAt`, not before. */
+export async function setRetry(
+  db: D1Database,
+  scimId: string,
+  tries: number,
+  nextAt: number,
+): Promise<void> {
+  await run(
+    db,
+    'UPDATE idp_directory_users SET revoke_tries = ?, revoke_next_at = ? WHERE scim_id = ?',
+    [tries, nextAt, scimId],
+  );
+}
+
+/** Users off in Polaris ID whose revocation is owed and due, by next-try time, then oldest change. */
+export const pendingRevocations = (db: D1Database, now: number, limit: number) =>
   all<DirectoryUser>(
     db,
     `SELECT ${USER} FROM idp_directory_users
-     WHERE revoke_pending = 1 AND (active = 0 OR deleted_at IS NOT NULL) ORDER BY last_modified LIMIT ?`,
-    [limit],
+     WHERE revoke_pending = 1 AND (active = 0 OR deleted_at IS NOT NULL) AND revoke_next_at <= ?
+     ORDER BY revoke_next_at, last_modified, scim_id LIMIT ?`,
+    [now, limit],
   );
 
 /** True while a latched breaker is open: one counter row, opened at `window_start`, good for `ttl`. */

@@ -165,6 +165,49 @@ describe('SCIM effects: a revocation owed is not lost', () => {
   });
 });
 
+describe('SCIM effects: the sweep does not stall on a row it cannot settle', () => {
+  it('backs a failing row off, so newer rows are settled, and tries it again later', async () => {
+    const s = await scimRig({ mode: 'dry_run' });
+    const stuck: Person[] = [];
+    for (let i = 0; i < 20; i++) {
+      const a = await pushed(s);
+      ownerOff(s, a.p);
+      await off(s, a.scimId, a.p);
+      stuck.push(a.p);
+    }
+    s.r.f.clock.advance(1_000);
+    const newer = await pushed(s);
+    ownerOff(s, newer.p);
+    await off(s, newer.scimId, newer.p);
+    const failing = new Set(stuck.map((p) => p.subject));
+    const lookup = s.r.fake.lookup.bind(s.r.fake);
+    s.r.fake.lookup = async (subject) => {
+      if (failing.has(subject)) throw new Error('IDP_UPSTREAM: down');
+      return lookup(subject);
+    };
+    s.r.fake.mode = 'live';
+    await drainIdp(s.r.ctx);
+    expect(await mirror(newer.scimId), 'first batch is the 20 older rows').toMatchObject({
+      revoke_pending: 1,
+    });
+    const row = await first<{ revoke_tries: number; revoke_next_at: number }>(
+      env.DB,
+      'SELECT revoke_tries, revoke_next_at FROM idp_directory_users WHERE subject = ?',
+      [stuck[0]?.subject ?? ''],
+    );
+    expect(row?.revoke_tries).toBe(1);
+    expect(row?.revoke_next_at).toBeGreaterThan(s.r.f.clock.now());
+    await drainIdp(s.r.ctx);
+    expect(await mirror(newer.scimId)).toMatchObject({ revoke_pending: 0 });
+    expect(await liveSessions(newer.p.id)).toEqual([newer.link]);
+    // Past the backoff the failing rows are tried again, and settle once Polaris ID answers.
+    failing.clear();
+    s.r.f.clock.advance(11 * 60_000);
+    await drainIdp(s.r.ctx);
+    expect(await liveSessions(stuck[0]?.id ?? '')).toHaveLength(1);
+  });
+});
+
 describe('SCIM effects: the breaker latches', () => {
   it('stops after twenty in ten minutes, reports once, stays open past the window, and a sweep finishes once it closes', async () => {
     const s = await scimRig();
@@ -197,6 +240,23 @@ describe('SCIM effects: the breaker latches', () => {
     await drainIdp(s.r.ctx);
     expect(await liveSessions(late.id)).toEqual([]);
     expect(await live()).toHaveLength(0);
+  });
+
+  it('clearing the latch inside the same window ends what is owed and does not latch again', async () => {
+    const s = await scimRig();
+    const logged = captureConsole();
+    const people: Person[] = [];
+    for (let i = 0; i < SCIM_BREAKER_LIMIT + 2; i++) {
+      const p = await quietPerson(s.r);
+      s.r.fake.addAccount(p.subject, { disabled: true });
+      await session(s.r, p.id, ['user']);
+      people.push(p);
+      await scim(s, 'POST', '/Users', { externalId: p.subject, active: false });
+    }
+    await run(env.DB, "DELETE FROM counters WHERE key = 'idp:scim:breaker'");
+    await drainIdp(s.r.ctx);
+    for (const p of people) expect(await liveSessions(p.id)).toEqual([]);
+    expect(logged.filter((l) => l.includes('IDP_SCIM_BREAKER'))).toHaveLength(1);
   });
 
   it('closes by itself after a day', async () => {
