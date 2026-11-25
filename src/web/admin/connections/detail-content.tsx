@@ -39,7 +39,6 @@ import { HealthPanel } from './health-panel.tsx';
 import { sourceLine } from './labels.ts';
 import { MappingTab } from './mapping-tab.tsx';
 import type { ConnectionDetailSearch } from './search.ts';
-import { showLive, TestModeNote } from './test-mode-note.tsx';
 import { type TestOutcome, TestResult } from './test-result.tsx';
 import { WebhookPanel } from './webhook.tsx';
 import { WebhookFailures } from './webhook-failures.tsx';
@@ -207,7 +206,6 @@ export function ConnectionDetail({
           />
         </div>
       ) : null}
-      <TestModeNote className="mb-4" />
       <TwoPane
         aside={
           <Card>
@@ -224,7 +222,6 @@ export function ConnectionDetail({
                         icon={ENTITY.pass.icon}
                         to="/admin/passes"
                         search={{ connectionId: c.id }}
-                        onClick={showLive}
                       />
                     ),
                   },

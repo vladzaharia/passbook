@@ -69,7 +69,7 @@ export function AdminPalette({
     Boolean(orgId && canAccessAdminPath(orgPath(orgId, rest), isAdmin, membership));
   const canPasses = inOrg('/passes');
   const canTemplates = inOrg('/templates');
-  const canConnections = inOrg('/connections');
+  const canConnections = inOrg('/connections') && !membership?.testOnly;
   const passes = useRecentPassSearch(searching && canPasses ? term : '', orgId);
   const passItems =
     searching && canPasses && orgId

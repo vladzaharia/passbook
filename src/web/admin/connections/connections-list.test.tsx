@@ -2,7 +2,6 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { setMode } from '../../lib/mode.ts';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import { CONNECTOR, connection, ORG } from '../passes/test-fixtures.ts';
 
@@ -112,31 +111,6 @@ describe('connections list', () => {
       await reply.promise;
     });
     expect(await screen.findByRole('link', { name: 'Second' })).toBeVisible();
-  });
-
-  it('explains that Test view does not isolate connection operations', async () => {
-    const user = userEvent.setup();
-    setMode('test');
-    try {
-      await renderApp('/admin/connections', {
-        session: 'admin',
-        memberships: [membership],
-        selectedOrg: ORG.id,
-        handlers: {
-          '/api/v1/orgs': orgs,
-          '/api/v1/connectors': () => json({ items: [], nextCursor: null }),
-          '/api/v1/connections': () => json({ items: [], nextCursor: null }),
-        },
-      });
-      expect(
-        await screen.findByText(/Connections are shared between Live and Test/),
-      ).toHaveTextContent('Changes, tests and syncs can affect live data');
-      expect(screen.queryByText('Know what is connected')).toBeNull();
-      await user.click(screen.getByRole('button', { name: 'Turn off Test mode' }));
-      expect(screen.queryByText(/Connections are shared between Live and Test/)).toBeNull();
-    } finally {
-      setMode('live');
-    }
   });
 
   it('shows health with one muted line, the source column and a passes link', async () => {

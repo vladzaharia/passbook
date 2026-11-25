@@ -109,10 +109,16 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   // The same File tab in Test mode, and for a viewer who cannot manage connections.
   await page.getByRole('radio', { name: 'Test' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Test mode' })).toBeVisible();
-  // Stored connections have no Test environment: the page says so rather than showing Live data.
-  await expect(page.getByText('Connection not found')).toBeVisible();
-  await shots(page, 'file-tab-test-mode');
-  await page.getByRole('radio', { name: 'Live' }).click();
+  // Stored connections have no Test environment: the page says so, and Switch to Live is the way back.
+  await expect(page.getByText('Connections run in Live.')).toBeVisible();
+  await expect(page.getByText('Connection not found')).toHaveCount(0);
+  await shots(page, 'live-only-test-detail');
+  await page.goto(`${inOrg}/connections`);
+  await expect(page.getByText('Connections run in Live.')).toBeVisible();
+  await shots(page, 'live-only-test-list');
+  await page.getByRole('button', { name: 'Switch to Live' }).click();
+  await expect(page.getByText('Connections run in Live.')).toHaveCount(0);
+  await page.goto(`${inOrg}/connections/${id}`);
   const user = await apiAs('user');
   await addOrgMember(api, seed.org.id, user, ['read_only']);
   const viewer = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
@@ -217,7 +223,7 @@ test('file upload: a JSON file picks its records and ID from the tree', async ({
   await shots(page, 'file-wizard-json');
 });
 
-test('file upload: a developer sandbox is Test-only, so a connection page is not found there', async ({
+test('a developer sandbox has no Connections: hidden from the nav, a direct URL says Live only', async ({
   browser,
 }) => {
   const ctx = await browser.newContext({ storageState: 'e2e/.auth/developer.json' });
@@ -230,8 +236,16 @@ test('file upload: a developer sandbox is Test-only, so a connection page is not
     });
   await page.goto('/');
   const orgId = await sandboxOrgId(page);
-  await page.goto(`/admin/o/${encodeURIComponent(orgId)}/connections/${seedConnectionId()}`);
-  await expect(page.getByText('Connection not found')).toBeVisible();
-  await shots(page, 'file-tab-sandbox');
+  await page.goto(`/admin/o/${encodeURIComponent(orgId)}`);
+  const nav = page.getByRole('navigation', { name: 'Admin' });
+  await expect(nav.getByRole('link', { name: 'Passes' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Connections' })).toHaveCount(0);
+  await page.goto(`/admin/o/${encodeURIComponent(orgId)}/connections/${'c'.repeat(26)}`);
+  await expect(page.getByText('Connections run in Live.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Switch to Live' })).toHaveCount(0);
+  await shots(page, 'live-only-sandbox-detail');
+  await page.goto(`/admin/o/${encodeURIComponent(orgId)}/connections`);
+  await expect(page.getByText('Connections run in Live.')).toBeVisible();
+  await shots(page, 'live-only-sandbox-list');
   await ctx.close();
 });

@@ -84,7 +84,7 @@ export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
   ],
 ];
 
-/** The scope's sections the principal may open, with full paths. */
+/** The scope's sections the principal may open, with full paths. A developer sandbox has no Live, so no Connections. */
 export function adminNavGroups(
   scope: AdminScope | undefined,
   platformAdmin: boolean,
@@ -96,7 +96,8 @@ export function adminNavGroups(
     .map((group) =>
       group
         .map((item) => ({ ...item, to: scopePath(scope, item.section) }))
-        .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership)),
+        .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership))
+        .filter((item) => !(membership?.testOnly && item.section === '/connections')),
     )
     .filter((group) => group.length > 0);
 }

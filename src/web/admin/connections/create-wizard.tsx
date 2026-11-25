@@ -24,7 +24,6 @@ import { useUploadDraft } from './files/use-upload-draft.ts';
 import { takeConnectionPrefill, wizardStart } from './import-handoff.ts';
 import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
 import { useRestSample } from './rest/use-mapping-seed.ts';
-import { TestModeNote } from './test-mode-note.tsx';
 import { useConnectionCreation } from './use-connection-creation.ts';
 import { useWizardRecipe } from './use-wizard-recipe.ts';
 import { useWizardConfig } from './wizard-config.ts';
@@ -196,7 +195,6 @@ export function CreateConnectionWizard() {
   return (
     <>
       <PageHeader title="New connection" breadcrumbs={crumbs} />
-      <TestModeNote className="mb-4" />
       <Wizard
         steps={STEPS}
         current={step}
