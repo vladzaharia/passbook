@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs } from './helpers/api.ts';
+import { sandboxOrgId } from './helpers/sandbox.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 /** The builder gets the one sandbox a person can have, so this spec needs a fresh server (the default). */
@@ -147,8 +148,11 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   await expect(page.getByText(/PASSBOOK_KEY=pbp_test_/)).toBeVisible();
   expect((await api.get('/api/v1/passes', { headers: auth })).status()).toBe(401);
 
-  // In Admin the sandbox is Test only: there is no Test switch, and the Overview points back here.
+  // Admin does not list the sandbox; its own URL still opens it, Test only: no Test switch, and
+  // the Overview points back here.
   await page.goto('/admin');
+  await expect(page.getByText('No organizations')).toBeVisible();
+  await page.goto(`/admin/o/${await sandboxOrgId(page)}`);
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Mode' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
