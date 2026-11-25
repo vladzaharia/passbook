@@ -45,13 +45,15 @@ export function guideFailures(
     }
   const seen = new Set<string>();
   for (const { file, doc } of docs) {
-    const { id, title, status } = doc.meta;
+    const { id, title, line, status } = doc.meta;
     const named = DEV_GUIDES.find((g) => g.id === id);
     if (file.split('/').at(-1) !== `${id}.md`)
       out.push(`${file}: id ${id} must match the file name`);
     if (!named) out.push(`${file}: ${id} is not in DEV_GUIDES`);
     else if (named.title !== title)
       out.push(`${file}: title ${title} differs from DEV_GUIDES (${named.title})`);
+    else if (named.line !== line)
+      out.push(`${file}: line ${line} differs from DEV_GUIDES (${named.line})`);
     if (seen.has(id)) out.push(`${file}: duplicate id ${id}`);
     seen.add(id);
     if (id === 'nfc' && status !== 'preview')

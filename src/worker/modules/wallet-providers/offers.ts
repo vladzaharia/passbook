@@ -1,5 +1,6 @@
 import type { EffectiveChannels } from '../../../shared/contracts/channels.ts';
 import { revealToken } from '../../platform/capability-token.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordCopy } from '../channels/gate.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
@@ -23,6 +24,7 @@ import {
 import { googleSaveLocation } from './offers-google.ts';
 import {
   channelOffSuccessor,
+  instanceCanActivate,
   instanceMatches,
   walletOfferNotFound as notFound,
 } from './offers-instance.ts';
@@ -64,6 +66,7 @@ export async function listWalletOffers(
       provider,
       passId: snapshot.pass.id,
     });
+    if (!instanceCanActivate(instance, snapshot.credentialGeneration)) continue;
     const successor = instance && channelOffSuccessor(instance);
     if (successor) {
       if (successor.hold) continue;
@@ -105,6 +108,7 @@ export async function issueWalletOffer(
     provider,
     passId: pass.id,
   });
+  if (!instanceCanActivate(existing, snapshot.credentialGeneration)) throw notFound();
   const successor = existing && channelOffSuccessor(existing);
   if (successor) {
     if (successor.hold) throw notFound();
@@ -134,6 +138,12 @@ export async function issueWalletOffer(
     newId: () => ctx.ids.id(),
     // The stored value (the token's MAC): the bearer check compares it with the row at commit.
     authority: { kind: 'download', token: pass.downloadToken },
+  }).catch((error: unknown) => {
+    // A guard trigger or constraint that refuses the activation is "not available", never a 500.
+    const refused = classifyD1Error(error, { triggers: true });
+    if (!refused) throw error;
+    ctx.log.warn('wallet.offer_refused', { code: 'WALLET_OFFER_REFUSED', detail: refused.detail });
+    throw notFound();
   });
   if (!created) throw notFound();
   const { operation, ref, expiresAt } = created;
