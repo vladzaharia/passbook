@@ -541,6 +541,7 @@ export type ErrorCode =
   | 'TAG_LIMIT'
   | 'TAG_NOT_ASSIGNED'
   | 'TAG_NOT_FOUND'
+  | 'TAG_NOT_LENT'
   | 'TAG_NO_ACCOUNT'
   | 'TAG_PASS_EXPIRED'
   | 'TAG_PASS_NOT_ACCEPTED'

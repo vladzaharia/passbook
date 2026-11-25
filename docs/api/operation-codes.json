@@ -5819,6 +5819,7 @@
     "TEMPLATE_RELEASE_CHANGED"
   ],
   "scan post /sign-out": [
+    "CONFLICT",
     "FORBIDDEN",
     "INVALID_API_KEY",
     "NOT_INSIDE",
@@ -5830,7 +5831,14 @@
     "SCAN_MARK_OUT_INVALID",
     "SCAN_PASS_CHANGED",
     "SCAN_STAFF_CHANGED",
-    "SCAN_TOO_MANY_OVERRIDES"
+    "SCAN_TOO_MANY_OVERRIDES",
+    "TAG_CHECK_FAILED",
+    "TAG_NOT_FOUND",
+    "TAG_NOT_LENT",
+    "TAG_SUN_RATE_LIMITED",
+    "TAG_TYPE_NOT_FOUND",
+    "TAG_UID_RANDOM",
+    "TAG_UNREADABLE"
   ],
   "scan post /staff": [
     "IDENTITY_EXPIRED",

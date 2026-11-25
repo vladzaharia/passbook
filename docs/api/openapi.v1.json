@@ -60035,6 +60035,120 @@
           "templates"
         ]
       },
+      "TerminalSignOutEverywhereParams": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+          },
+          "passId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "The pass to sign out. Send this or `read`, not both."
+          },
+          "read": {
+            "type": "object",
+            "properties": {
+              "uid": {
+                "type": "string",
+                "pattern": "^(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{14}|[0-9a-fA-F]{20})$"
+              },
+              "uidRandom": {
+                "type": "boolean"
+              },
+              "tech": {
+                "type": "string",
+                "enum": [
+                  "a",
+                  "b",
+                  "isodep",
+                  "unknown"
+                ]
+              },
+              "ndef": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "U",
+                      "T"
+                    ]
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "additionalProperties": false
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "native",
+                  "webnfc"
+                ]
+              }
+            },
+            "required": [
+              "tech",
+              "source"
+            ],
+            "additionalProperties": false,
+            "description": "The lent tag, tapped instead of naming the pass. Its binding names the pass; a tag that is not lent is 409 TAG_NOT_LENT."
+          },
+          "tag": {
+            "type": "string",
+            "enum": [
+              "returned",
+              "not_returned",
+              "none"
+            ],
+            "description": "What happened to the pass's lent tag. Default `none` with `passId` (the tag stays lent), `returned` with `read`."
+          }
+        },
+        "required": [
+          "idempotencyKey"
+        ],
+        "additionalProperties": false
+      },
+      "TerminalSignOutEverywhereResponse": {
+        "type": "object",
+        "properties": {
+          "passId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "stayMs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "tag": {
+            "type": "string",
+            "enum": [
+              "returned",
+              "not_returned",
+              "none"
+            ],
+            "description": "What happened to the lent tag; `none` when the pass had none to collect."
+          }
+        },
+        "required": [
+          "passId",
+          "stayMs",
+          "tag"
+        ]
+      },
       "TerminalResolveParams": {
         "type": "object",
         "properties": {
@@ -126737,7 +126851,7 @@
     },
     "/api/v1/scan/sign-out": {
       "post": {
-        "summary": "Sign someone out: out of every place they are in",
+        "summary": "Sign someone out: out of every place, and collect a lent tag",
         "tags": [
           "scan"
         ],
@@ -126746,32 +126860,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "idempotencyKey": {
-                    "type": "string",
-                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
-                  },
-                  "passId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64
-                  },
-                  "tag": {
-                    "type": "string",
-                    "enum": [
-                      "returned",
-                      "not_returned",
-                      "none"
-                    ],
-                    "default": "none"
-                  }
-                },
-                "required": [
-                  "idempotencyKey",
-                  "passId"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/TerminalSignOutEverywhereParams"
               },
               "example": {
                 "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
@@ -126787,34 +126876,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "passId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "stayMs": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "tag": {
-                      "type": "string",
-                      "enum": [
-                        "returned",
-                        "not_returned",
-                        "none"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "passId",
-                    "stayMs",
-                    "tag"
-                  ]
+                  "$ref": "#/components/schemas/TerminalSignOutEverywhereResponse"
                 },
                 "example": {
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -126838,9 +126900,7 @@
         "operationId": "scan.postScanSignOut",
         "x-sdk": {
           "resource": "terminal",
-          "method": "signOutEverywhere",
-          "sdk": false,
-          "reason": "Scanner device protocol; needs a paired scanner session."
+          "method": "signOutEverywhere"
         },
         "security": [
           {
@@ -126848,6 +126908,7 @@
           }
         ],
         "x-codes": [
+          "CONFLICT",
           "FORBIDDEN",
           "INVALID_API_KEY",
           "NOT_INSIDE",
@@ -126861,6 +126922,13 @@
           "SCAN_PASS_CHANGED",
           "SCAN_STAFF_CHANGED",
           "SCAN_TOO_MANY_OVERRIDES",
+          "TAG_CHECK_FAILED",
+          "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
+          "TAG_SUN_RATE_LIMITED",
+          "TAG_TYPE_NOT_FOUND",
+          "TAG_UID_RANDOM",
+          "TAG_UNREADABLE",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -140451,6 +140519,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
@@ -140703,6 +140772,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
@@ -142302,6 +142372,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
@@ -142554,6 +142625,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",

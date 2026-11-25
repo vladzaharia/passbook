@@ -5011,6 +5011,15 @@
       ]
     },
     {
+      "code": "TAG_NOT_LENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "TAG_NO_ACCOUNT",
       "statuses": [
         422
