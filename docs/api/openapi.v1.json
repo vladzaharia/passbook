@@ -88327,6 +88327,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
