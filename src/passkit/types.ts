@@ -315,6 +315,8 @@ export type Personalization = Record<string, Json>;
 
 export interface BehaviorContext {
   now: Date;
+  /** The org's zone, for behaviors whose template names none. */
+  timeZone?: string;
   identity: PassIdentity;
   lookups: NonNullable<TemplateManifest['lookups']>;
 }

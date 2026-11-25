@@ -23,6 +23,7 @@ import { requirePersonalClose } from '../orgs/personal-guard.ts';
 import { readOrgAdminEmails } from '../retention/repo.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import { exportKey, LINK_MS } from './export.ts';
+import { orgDay } from './org-day.ts';
 import {
   actorHolds,
   closedOrgs,
@@ -47,7 +48,6 @@ type ExportDto = z.infer<typeof OrgExportSchema>;
 type ClosedDto = z.infer<typeof ClosedOrgSchema>;
 
 const notFound = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 function lifecycleDto(row: LifecycleRow, now: number): Lifecycle {
   const closed = row.status === 'deleted';
@@ -150,7 +150,8 @@ export async function closeOrg(
   await purgeOrgWalletArt(ctx, orgId);
   const after = await lifecycleRow(ctx.env.DB, orgId);
   if (after?.purge_after) {
-    const mail = orgClosedEmail(baseUrl(ctx.env), before.name, day(after.purge_after));
+    const purgeDay = await orgDay(ctx, orgId, after.purge_after);
+    const mail = orgClosedEmail(baseUrl(ctx.env), before.name, purgeDay);
     await mailAdmins(ctx, orgId, mail);
   }
   return lifecycleDto(after ?? before, ctx.clock.now());
@@ -325,6 +326,6 @@ export async function openExport(
   return {
     body: object.body,
     size: object.size,
-    name: `${org.slug}-export-${day(export_.created_at)}.zip`,
+    name: `${org.slug}-export-${await orgDay(ctx, orgId, export_.created_at)}.zip`,
   };
 }

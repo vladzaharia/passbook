@@ -2,6 +2,7 @@ import { PublicBundlePassParamSchema } from '../../../shared/contracts/bundles.t
 import { passDevice } from '../../../shared/device.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
@@ -47,7 +48,7 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
           assets: model.assets,
           locale: lang,
           now,
-          timeZone: zoneOf(c) ?? 'UTC',
+          timeZone: zoneOf(c) ?? DEFAULT_TIME_ZONE,
           ...stateWordOption(pass),
         });
         const base = `/b/${p.token}/${pass.id}`;

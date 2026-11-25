@@ -5,6 +5,7 @@ import {
   PublicTokenParamSchema,
 } from '../../../shared/contracts/public.ts';
 import { passDevice } from '../../../shared/device.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -72,7 +73,7 @@ async function formPage(
     try {
       card = await joinPreview(ctx, link, open, c.req.param('token') ?? '', {
         locale: langOf(c.req.header('accept-language')),
-        timeZone: zoneOf(c) ?? 'UTC',
+        timeZone: zoneOf(c) ?? DEFAULT_TIME_ZONE,
       });
     } catch (error) {
       if (error instanceof AppError && error.status < 500) {

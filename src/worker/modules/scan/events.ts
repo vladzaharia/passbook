@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanEventDto, ScanEventListQuerySchema } from '../../../shared/contracts/index.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import type { Grant } from '../../platform/authority.ts';
 import { AppError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -140,7 +141,7 @@ export async function captureEventAuthority(
     orgId: authority.orgId,
     event: null,
     templateIds: [],
-    timeZone: 'UTC',
+    timeZone: DEFAULT_TIME_ZONE,
   });
   actor.tenantAuthority = await captureScanTenantAuthority(ctx, session, authority);
   actor.platformSessionId = session.sessionId;

@@ -23,6 +23,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { currentPassBytes } from '../passes/timed-variant.ts';
 import { passImages } from '../public/service.ts';
 import { captureEmail } from '../sandbox/capture.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { loadManifests, manifestCacheKey } from '../scan/repo-template-manifests.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
@@ -175,7 +176,10 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     attached: attachApple,
     passTitle:
       pass.displayTitle ?? (typeof passJson.description === 'string' ? passJson.description : null),
-    summary: passSummary(passJson, { now: new Date(now) }),
+    summary: passSummary(passJson, {
+      now: new Date(now),
+      timeZone: await readOrgTimeZone(db, pass.orgId),
+    }),
     iconUrl,
     logo,
     logoText:

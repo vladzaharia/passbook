@@ -1,3 +1,5 @@
+import { DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
+
 /**
  * Dates on paper. Content carries ISO times and a zone; the page and the PDF format them here so
  * every time prints with its zone abbreviation and the two renderers cannot differ.
@@ -18,8 +20,9 @@ export function paperZoneOf(iso: string | undefined, named?: string): string | u
     }
   }
   const m = iso ? OFFSET.exec(iso) : null;
-  if (!m) return undefined;
-  return m[1] ? `${m[1]}${m[2]}:${m[3]}` : 'UTC';
+  // A `Z` is how the time was written, not a zone the template chose: the org zone applies.
+  if (!m?.[1]) return undefined;
+  return `${m[1]}${m[2]}:${m[3]}`;
 }
 
 /** The zone to print one time in: the template's named zone, else the offset that time carries. */
@@ -73,7 +76,7 @@ const lower = (s: string) => s.replace(/\s?([AP])M\b/g, (_, c: string) => ` ${c.
 export function paperDate(iso: string, zone: string | undefined, style: PaperDateStyle): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
-  const base = { timeZone: zone ?? 'UTC' };
+  const base = { timeZone: zone ?? DEFAULT_TIME_ZONE };
   const fmt = (o: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat('en-GB', { ...base, ...o });
   const abbr = zone ? paperZoneInfo(zone, iso)?.abbr : undefined;

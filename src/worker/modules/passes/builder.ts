@@ -21,6 +21,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
 import { appliedBranding, readBranding, type TenantBranding } from './branding.ts';
 import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
@@ -219,6 +220,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     await brandedOverrides(ctx.env.BUCKET, req.orgId, passOverrides, branding),
   );
   const now = new Date(ctx.clock.now());
+  const timeZone = (await getOrgSettings(ctx, req.orgId))['org.timeZone'];
   try {
     if (identity === null) {
       // A developer org: the same build, stopped before the signature. The stored object is the pass JSON.
@@ -236,6 +238,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
         },
         behaviors: deps.behaviors,
         now,
+        timeZone,
       });
       const { planned } = editPass(req, built.passJson);
       const { authenticationToken: _token, ...shown } = built.passJson;
@@ -267,6 +270,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       signing: identity.material,
       behaviors: deps.behaviors,
       now,
+      timeZone,
     });
     const { resign, planned } = editPass(req, built.passJson);
     let { signed } = built;

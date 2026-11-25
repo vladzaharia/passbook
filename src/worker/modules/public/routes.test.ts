@@ -264,7 +264,7 @@ describe('GET /p/:token', () => {
     expect(html).toContain('This pass has expired.');
   });
 
-  it('formats dates in the visitor zone from request.cf, UTC otherwise', async () => {
+  it('formats dates in the visitor zone from request.cf, Seattle time otherwise', async () => {
     const { resolved } = makeTemplate({ id: `tpl-tz-${kit.fx.ids.token(4)}` });
     const template = kit.registry.add({
       id: resolved.id,
@@ -308,8 +308,8 @@ describe('GET /p/:token', () => {
     const la = new Request(url, { cf: { timezone: 'America/Los_Angeles' } } as RequestInit);
     expect(await (await app.request(la, {}, kit.env)).text()).toMatch(/1:00\sAM/);
     const bad = new Request(url, { cf: { timezone: 'Not/AZone' } } as RequestInit);
-    expect(await (await app.request(bad, {}, kit.env)).text()).toMatch(/8:00\sAM/);
-    expect(await (await get(`/p/${await linkToken(kit.env, pass)}`)).text()).toMatch(/8:00\sAM/);
+    expect(await (await app.request(bad, {}, kit.env)).text()).toMatch(/1:00\sAM/);
+    expect(await (await get(`/p/${await linkToken(kit.env, pass)}`)).text()).toMatch(/1:00\sAM/);
   });
 
   it('has a heading, and its only inline styles are pass colour variables', async () => {

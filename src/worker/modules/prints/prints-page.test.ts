@@ -5,7 +5,14 @@ import { CODE, GROUPED, setup } from './prints-page-test-fixtures.ts';
 
 describe('holder print page', () => {
   it('shows a button first and the sheet after the POST; a GET never mints', async () => {
-    const { withPaper, token, holder, count } = await setup();
+    const { kit, withPaper, token, holder, count } = await setup();
+    // A zone outside the US keeps the A4 default; an org with no zone is on Seattle time, so Letter.
+    await run(
+      kit.env.DB,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_by, updated_at) VALUES (?, 'org.timeZone', '\"Europe/Berlin\"', 'test', 1)",
+      [`org:${kit.org.id}`],
+    );
+    clearSettingsCache(kit.env.DB);
     const pass = await withPaper();
     const t = await token(pass);
     const first = await holder(t);

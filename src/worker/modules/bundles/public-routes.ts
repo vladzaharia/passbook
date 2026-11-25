@@ -7,6 +7,7 @@ import {
 } from '../../../shared/contracts/bundles.ts';
 import { passDevice } from '../../../shared/device.ts';
 import { BUNDLE_DOOR_SCRIPT } from '../../../shared/pass-offline.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -87,7 +88,7 @@ register(
       const bundle = await bundleForToken(ctx, token);
       const members = await bundleMembers(ctx, bundle);
       const lang = langOf(c.req.header('accept-language'));
-      const zone = zoneOf(c) ?? 'UTC';
+      const zone = zoneOf(c) ?? DEFAULT_TIME_ZONE;
       const now = new Date(ctx.clock.now());
       const wallets = await Promise.all(
         members.map(({ pass }) => bundleWalletProviders(ctx, pass)),

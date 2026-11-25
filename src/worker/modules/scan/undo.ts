@@ -1,3 +1,4 @@
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { Grant } from '../../platform/authority.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
@@ -192,7 +193,7 @@ export const consoleUndo: ConsoleUndo = async (ctx, session, input) => {
       orgId: input.orgId,
       templateIds: [],
       event: null,
-      timeZone: 'UTC',
+      timeZone: DEFAULT_TIME_ZONE,
     }),
     platformSessionId: session.sessionId,
     role,

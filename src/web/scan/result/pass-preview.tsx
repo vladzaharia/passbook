@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { normalize } from '../../../shared/pass-view/normalize.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { modeHeaders } from '../../lib/mode.ts';
 import { PassCard, PassCardFlip } from '../../pass-card/PassCard.tsx';
 import { ScanAssetScope } from '../platform/asset-scope.ts';
@@ -35,7 +36,7 @@ export function PassPreview({
         const q = new URLSearchParams({ g: p.assetGrant });
         if (orgId) {
           q.set('orgId', orgId);
-          q.set('timeZone', timeZone ?? 'UTC');
+          q.set('timeZone', timeZone ?? DEFAULT_TIME_ZONE);
           if (setupId) q.set('setupId', setupId);
         }
         const response = await fetch(`${p.assetBaseUrl}${encodeURIComponent(name)}?${q}`, {

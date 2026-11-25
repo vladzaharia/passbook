@@ -101,7 +101,8 @@ describe("/p's details are the back of the pass, never its face", () => {
     };
     expect(detailsOf(passJson)).toMatch(/Expires\s+Jun 1, 2030, 4:30 PM GMT-4/);
     const utc = { ...passJson, expirationDate: '2030-06-01T16:30:00Z' };
-    expect(detailsOf(utc)).toMatch(/Expires\s+Jun 1, 2030, 4:30 PM UTC/);
+    // A `Z` is how the time was written, not a zone: it reads in Seattle time.
+    expect(detailsOf(utc)).toMatch(/Expires\s+Jun 1, 2030, 9:30 AM PDT/);
   });
 
   it('shows Expires in the visitor zone without a zone name when it is known', () => {

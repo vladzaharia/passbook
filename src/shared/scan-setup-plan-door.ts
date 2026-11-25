@@ -6,6 +6,7 @@ import { deviceName, isTracked, sessionHoursOf } from './scan-setup-plan-derive.
 import { type DoorPlanEnv, isRef } from './scan-setup-plan-types.ts';
 import { PRESET_SPECS } from './scan-setup-presets.ts';
 import { roleForSurface } from './scan-surfaces.ts';
+import { resolveOrgTimeZone } from './time-zone.ts';
 
 /** A session admits at most this many events. */
 const MAX_EVENTS = 10;
@@ -184,7 +185,7 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
   return {
     ref,
     name: door.name,
-    timeZone: env.intent.timeZone ?? env.ctx.orgTimeZone ?? 'UTC',
+    timeZone: env.intent.timeZone ?? resolveOrgTimeZone(env.ctx.orgTimeZone),
     accepts,
     zones: zone ? [zone] : [],
     hours: hours === 'empty' ? null : hours,

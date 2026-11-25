@@ -2,6 +2,7 @@ import {
   ScanDisplayPreviewQuerySchema,
   ScanDisplayPreviewSchema,
 } from '../../../shared/contracts/scan-display-preview.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import {
   ForbiddenError,
   NotFoundError,
@@ -71,7 +72,7 @@ register(
       orgId,
       event: null,
       templateIds: [templateId],
-      timeZone: 'UTC',
+      timeZone: DEFAULT_TIME_ZONE,
     });
     actor.tenantAuthority = capturedAuthority;
     actor.platformSessionId = auth.sessionId;
