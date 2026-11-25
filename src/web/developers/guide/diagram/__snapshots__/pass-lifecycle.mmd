@@ -1,0 +1,8 @@
+stateDiagram-v2
+  Active --> Voided: void
+  Voided --> Active: unvoid
+  Active --> Removed: remove
+  Removed --> Active: restore
+  Active --> Deleted: DELETE
+  Voided --> Deleted: DELETE
+  Removed --> Deleted: DELETE

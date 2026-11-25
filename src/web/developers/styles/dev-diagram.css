@@ -1,0 +1,215 @@
+/* Guide diagrams (guide/diagram/): inline SVG drawn at build, themed here with kit tokens only.
+   Wide containers show the drawing; narrow ones show the list. No colour is written in the SVG. */
+
+.dg-wrap {
+  container: dg / inline-size;
+  margin: 24px 0;
+}
+.dg {
+  --dg-ink: var(--pk-text-default);
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background:
+    radial-gradient(
+      circle at 1px 1px,
+      color-mix(in oklab, var(--pk-text-subtle) 22%, transparent) 1px,
+      transparent 1.5px
+    )
+    0 0 / 18px 18px,
+    var(--pk-surface-raised);
+}
+.dg-flow {
+  --dg-ink: var(--pk-text-muted);
+}
+
+/* Tones: one edge colour and one wash each. */
+.dg-tone-neutral {
+  --dg-edge: var(--pk-border-strong);
+  --dg-fill: var(--pk-surface-page);
+}
+.dg-tone-success {
+  --dg-edge: var(--pk-success);
+  --dg-fill: var(--pk-success-subtle);
+}
+.dg-tone-warning {
+  --dg-edge: var(--pk-warning);
+  --dg-fill: var(--pk-warning-subtle);
+}
+.dg-tone-info {
+  --dg-edge: var(--pk-info);
+  --dg-fill: var(--pk-info-subtle);
+}
+.dg-tone-danger {
+  --dg-edge: var(--pk-danger);
+  --dg-fill: var(--pk-danger-subtle);
+}
+.dg-tone-accent {
+  --dg-edge: var(--pk-accent);
+  --dg-fill: var(--pk-accent-subtle);
+}
+
+.dg-svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  font-family: var(--pk-font-sans);
+}
+
+/* Boxes and actors */
+.dg-box {
+  fill: var(--dg-fill);
+  stroke: var(--dg-edge);
+  stroke-width: 1.5;
+}
+.dg-dashed .dg-box {
+  stroke-dasharray: 5 4;
+}
+.dg-tone-accent .dg-box {
+  stroke-width: 2;
+}
+.dg-name {
+  fill: var(--pk-text-strong);
+  font-size: 15px;
+  font-weight: 600;
+}
+.dg-note {
+  fill: var(--pk-text-muted);
+  font-size: 12px;
+}
+.dg-call {
+  fill: var(--pk-text-default);
+  font: 500 13px var(--pk-font-mono);
+}
+
+/* Lines and heads */
+.dg-line {
+  stroke: var(--dg-ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.dg-dashed-line {
+  stroke-dasharray: 4 4;
+}
+.dg-reply .dg-line {
+  stroke: var(--pk-text-muted);
+}
+.dg-head {
+  fill: var(--dg-ink);
+}
+.dg-head-open {
+  fill: none;
+  stroke: var(--pk-text-muted);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sequence */
+.dg-life {
+  stroke: var(--pk-border-strong);
+  stroke-width: 1;
+  stroke-dasharray: 1 6;
+  stroke-linecap: round;
+}
+.dg-dot {
+  fill: var(--dg-ink);
+}
+.dg-reply .dg-dot {
+  fill: var(--pk-text-muted);
+}
+.dg-label {
+  fill: var(--pk-text-strong);
+  font-size: 13px;
+  font-weight: 500;
+}
+.dg-code {
+  font-family: var(--pk-font-mono);
+  font-size: 12px;
+}
+.dg-num-bg {
+  fill: var(--pk-surface-sunken);
+  stroke: var(--pk-border-subtle);
+}
+.dg-num {
+  fill: var(--pk-text-muted);
+  font: 600 11px var(--pk-font-mono);
+}
+.dg-notebox {
+  fill: var(--pk-info-subtle);
+  stroke: var(--pk-info-border);
+}
+.dg-notetext {
+  fill: var(--pk-text-default);
+  font-size: 12px;
+}
+.dg-frame {
+  fill: var(--pk-surface-sunken);
+  fill-opacity: 0.6;
+  stroke: var(--pk-border-strong);
+  stroke-dasharray: 5 4;
+}
+.dg-tab {
+  fill: var(--pk-surface-raised);
+  stroke: var(--pk-border-strong);
+}
+.dg-tabtext {
+  fill: var(--pk-text-default);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Motion: a short reveal on load, staggered with the kit's step. */
+@keyframes dg-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--pk-motion-distance-sm));
+  }
+}
+.dg-msg,
+.dg-node,
+.dg-actor,
+.dg-group,
+.dg-edge {
+  transform-box: fill-box;
+  animation: dg-in var(--pk-duration-moderate) var(--pk-ease-enter) both;
+}
+.dg-msgs > :nth-child(2),
+.dg-nodes > :nth-child(2) {
+  animation-delay: calc(var(--pk-stagger-step) * 1);
+}
+.dg-msgs > :nth-child(3),
+.dg-nodes > :nth-child(3) {
+  animation-delay: calc(var(--pk-stagger-step) * 2);
+}
+.dg-msgs > :nth-child(4),
+.dg-nodes > :nth-child(4) {
+  animation-delay: calc(var(--pk-stagger-step) * 3);
+}
+.dg-msgs > :nth-child(5),
+.dg-nodes > :nth-child(5) {
+  animation-delay: calc(var(--pk-stagger-step) * 4);
+}
+.dg-msgs > :nth-child(6),
+.dg-nodes > :nth-child(6) {
+  animation-delay: calc(var(--pk-stagger-step) * 5);
+}
+.dg-msgs > :nth-child(n + 7),
+.dg-nodes > :nth-child(n + 7) {
+  animation-delay: calc(var(--pk-stagger-step) * 6);
+}
+.dg-edges > .dg-edge {
+  animation-delay: calc(var(--pk-stagger-step) * 4);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dg-msg,
+  .dg-node,
+  .dg-actor,
+  .dg-group,
+  .dg-edge {
+    animation: none;
+  }
+}

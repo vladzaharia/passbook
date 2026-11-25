@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "desc": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "kind": {
+          "type": "string",
+          "const": "sequence"
+        },
+        "actors": {
+          "minItems": 2,
+          "maxItems": 6,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              "tone": {
+                "type": "string",
+                "enum": ["success", "warning", "info", "danger", "accent", "neutral"]
+              }
+            },
+            "required": ["id", "label"],
+            "additionalProperties": false
+          }
+        },
+        "steps": {
+          "minItems": 1,
+          "maxItems": 24,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]*$"
+                  },
+                  "to": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]*$"
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "reply": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": "boolean"
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                },
+                "required": ["from", "to", "label"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "group": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "steps": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "reply": {
+                          "type": "boolean"
+                        },
+                        "code": {
+                          "type": "boolean"
+                        },
+                        "note": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        }
+                      },
+                      "required": ["from", "to", "label"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": ["group", "steps"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "required": ["title", "desc", "kind", "actors", "steps"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "desc": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "kind": {
+          "type": "string",
+          "const": "flow"
+        },
+        "mermaid": {
+          "type": "string",
+          "enum": ["state", "flowchart"]
+        },
+        "nodes": {
+          "minItems": 2,
+          "maxItems": 24,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "tone": {
+                "type": "string",
+                "enum": ["success", "warning", "info", "danger", "accent", "neutral"]
+              },
+              "col": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              },
+              "row": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7
+              },
+              "span": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              },
+              "dashed": {
+                "type": "boolean"
+              }
+            },
+            "required": ["id", "label", "col", "row"],
+            "additionalProperties": false
+          }
+        },
+        "edges": {
+          "minItems": 1,
+          "maxItems": 40,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "to": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24
+              },
+              "quiet": {
+                "type": "boolean"
+              },
+              "dashed": {
+                "type": "boolean"
+              }
+            },
+            "required": ["from", "to", "label"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["title", "desc", "kind", "nodes", "edges"],
+      "additionalProperties": false
+    }
+  ]
+}
