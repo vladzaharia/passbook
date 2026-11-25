@@ -709,7 +709,7 @@
     "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentials",
     "op": "GET /api/v1/orgs/{orgId}/wallet-credentials",
     "change": "200.items[].lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
@@ -861,7 +861,7 @@
     "operationId": "wallet-platform.getPlatformWalletCredentials",
     "op": "GET /api/v1/platform/wallet-credentials",
     "change": "200.items[].lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -2594,7 +2594,7 @@
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
     "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
     "change": "200.credential.lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
@@ -2618,7 +2618,7 @@
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
     "change": "200.lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2786,7 +2786,7 @@
     "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
     "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
     "change": "200.lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -3794,7 +3794,7 @@
     "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
     "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
     "change": "200.lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
@@ -3866,7 +3866,7 @@
     "operationId": "wallet-platform.putPlatformWalletCredentials",
     "op": "PUT /api/v1/platform/wallet-credentials",
     "change": "200.lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
@@ -3882,7 +3882,7 @@
     "operationId": "wallet-platform.putPlatformWalletCredentialsByIdCards",
     "op": "PUT /api/v1/platform/wallet-credentials/{id}/cards",
     "change": "200.lastCheck: field added",
-    "note": "Wallet credentials carry lastCheck: the newest check of the current version ({ ok, code, at }), or null when never checked. Only the list responses fill it; other responses return null."
+    "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null. Only list responses fill it."
   },
   {
     "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards new operation",
