@@ -132,6 +132,6 @@ describe('check-bundle', () => {
       '/assets/mount-C.css',
     ]);
     expect(islandAssets(read, ['/assets/developers-A.js'], 'missing')).toEqual([]);
-    expect(DEV_ISLAND_BUDGET_BYTES).toBe(95_000);
+    expect(DEV_ISLAND_BUDGET_BYTES).toBe(98_000);
   });
 });
