@@ -5,6 +5,7 @@ import { axe } from 'vitest-axe';
 import { setCsrfProvider } from '../../../lib/api.ts';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, problem, stubFetch } from '../../../lib/test-utils.tsx';
+import { pickRowAction, releasesLoaded } from './row-actions.ts';
 import { TemplateReleasesPanel } from './template-releases-panel.tsx';
 import {
   approval,
