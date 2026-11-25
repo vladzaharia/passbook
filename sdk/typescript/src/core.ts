@@ -129,8 +129,9 @@ export class Core {
       accept: 'application/json',
       'user-agent': this.userAgent,
       'passbook-version': this.apiVersion,
-      ...options.headers,
     });
+    // `set`, not the constructor: header names are case-insensitive, so a per-call header replaces a default.
+    for (const [name, value] of Object.entries(options.headers ?? {})) headers.set(name, value);
     headers.set('authorization', `Bearer ${this.apiKey}`);
     const body = spec.contentType ? (spec.body as BodyInit) : jsonBody(spec.body);
     if (body !== undefined) headers.set('content-type', spec.contentType ?? 'application/json');

@@ -45,8 +45,23 @@ def test_calls_send_the_sdk_user_agent_and_the_newest_api_version(make_client):
     assert seen[1]["passbook-version"] == "2026-01-01"
 
 
+def test_a_per_call_header_replaces_the_default_in_any_case(make_client):
+    seen = []
+    pb = make_client(lambda r: (seen.append(r.headers), httpx.Response(200, json=PASS))[1], user_agent="mine/1")
+    pb.passes.retrieve("p1", headers={"PassBook-Version": "2026-01-01", "User-Agent": "call/2"})
+    assert seen[0].get_list("passbook-version") == ["2026-01-01"]
+    assert seen[0].get_list("user-agent") == ["call/2"]
+
+
+def test_user_agent_option(make_client):
+    seen = []
+    pb = make_client(lambda r: (seen.append(r.headers), httpx.Response(200, json=PASS))[1], user_agent="mine/1")
+    pb.passes.retrieve("p1")
+    assert seen[0]["user-agent"] == "mine/1"
+
+
 def test_the_package_version_matches_pyproject():
-    import tomllib
+    tomllib = pytest.importorskip("tomllib")
     from pathlib import Path
 
     from passbook._version import __version__

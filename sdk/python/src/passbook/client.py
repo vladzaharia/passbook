@@ -14,7 +14,10 @@ class PassBook(Resources):
     """The PassBook API client.
 
         pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
-        pass_ = pb.passes.create({"templateId": template_id, "input": {"name": "Ada"}})
+        pass_ = pb.passes.create({
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "input": {"eventName": "Harbor Night", "attendee": "Ada Example", "ticketId": "TICKET-0001", ...},
+        })
 
     A `pbp_test_` key works in test mode: sandboxes never issue real passes. Use it as a context manager,
     or call `close()`, to release the connection pool.
@@ -33,9 +36,10 @@ class PassBook(Resources):
         timeout: float = 60.0,
         retry_delay: float = 0.5,
         api_version: str | None = None,
+        user_agent: str | None = None,
     ) -> None:
         key = api_key if api_key is not None else os.environ.get("PASSBOOK_KEY", "")
-        self._core = Core(key, base_url, http_client, max_retries, timeout, retry_delay, api_version=api_version)
+        self._core = Core(key, base_url, http_client, max_retries, timeout, retry_delay, api_version=api_version, user_agent=user_agent)
         super().__init__(self._core)
         found = re.match(r"(?:pb|pbp|pbo)_(live|test)_", key)
         self.mode = found.group(1) if found else None  # type: ignore[assignment]

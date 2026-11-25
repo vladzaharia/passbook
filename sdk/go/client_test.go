@@ -342,3 +342,19 @@ func TestCallsSendTheUserAgentAndAPIVersion(t *testing.T) {
 		t.Fatalf("got %q", version[1])
 	}
 }
+
+func TestPerCallHeadersReplaceTheDefaultsInAnyCase(t *testing.T) {
+	var got http.Header
+	pb, _ := newFake(t, func(n int, w http.ResponseWriter, r *http.Request) {
+		got = r.Header
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("{}"))
+	})
+	_, _ = pb.Passes.Retrieve(context.Background(), "p1", WithHeader("passbook-version", "2026-01-01"), WithHeader("USER-AGENT", "call/2"))
+	if v := got.Values("PassBook-Version"); len(v) != 1 || v[0] != "2026-01-01" {
+		t.Fatalf("version %q", v)
+	}
+	if v := got.Values("User-Agent"); len(v) != 1 || v[0] != "call/2" {
+		t.Fatalf("agent %q", v)
+	}
+}

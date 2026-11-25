@@ -37,7 +37,7 @@ new PassBook({
   fetch,                     // your own fetch: a proxy, a test double, a service binding
   maxRetries: 2,
   timeoutMs: 60_000,         // per attempt
-  apiVersion: '2026-11-20',  // PassBook-Version; default: the newest version this SDK was generated against
+  // apiVersion: PassBook-Version; default: the newest version this SDK was generated against
 });
 ```
 

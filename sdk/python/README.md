@@ -33,10 +33,10 @@ A `pbp_test_` key only sees test data, and sandboxes never issue real passes. `p
 ## Options
 
 ```python
-PassBook(api_key, base_url="https://passbook.mobile", http_client=None, max_retries=2, timeout=60.0, api_version=None)
+PassBook(api_key, base_url="https://passbook.mobile", http_client=None, max_retries=2, timeout=60.0, api_version=None, user_agent=None)
 ```
 
-`api_version` is sent as `PassBook-Version`; default: the newest version this SDK was generated against. Every method also takes `idempotency_key`, `headers`, `max_retries` and `timeout`. Use the client as a context manager, or call `close()`.
+`api_version` is sent as `PassBook-Version` (default: the newest version this SDK was generated against); `user_agent` replaces the User-Agent. Every method also takes `idempotency_key`, `headers`, `max_retries` and `timeout`. Use the client as a context manager, or call `close()`.
 
 ## Idempotency and retries
 

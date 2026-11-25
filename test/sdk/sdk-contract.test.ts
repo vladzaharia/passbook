@@ -222,4 +222,13 @@ describe('identity headers', () => {
     expect(seen[0]?.get('passbook-version')).toBe(newest);
     expect(seen[1]?.get('passbook-version')).toBe('2026-01-01');
   });
+
+  it('lets a per-call header replace a default, in any case', async () => {
+    const { seen, fetch } = recorder();
+    await new PassBook({ apiKey: 'pbp_test_x', fetch }).passes.retrieve('p1', {
+      headers: { 'PassBook-Version': '2026-01-01', 'User-Agent': 'call/2' },
+    });
+    expect(seen[0]?.get('passbook-version')).toBe('2026-01-01');
+    expect(seen[0]?.get('user-agent')).toBe('call/2');
+  });
 });

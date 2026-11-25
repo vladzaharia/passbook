@@ -401,6 +401,10 @@ describe('versions', () => {
       (JSON.parse(readFileSync(resolve(root, p), 'utf8')) as { version: string }).version;
     expect(SDK_VERSION).toBe(version('sdk/typescript/package.json'));
     expect(CLI_VERSION).toBe(version('sdk/cli/package.json'));
+    const go = /const Version = "([^"]+)"/.exec(
+      readFileSync(resolve(root, 'sdk/go/core.go'), 'utf8'),
+    )?.[1];
+    expect(go).toBe(version('sdk/typescript/package.json'));
     const seen: Array<string | undefined> = [];
     await run(['passes', 'update', 'p1'], {
       env: { PASSBOOK_KEY: 'pbp_test_x' },
