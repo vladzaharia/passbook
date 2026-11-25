@@ -34,6 +34,11 @@
   color: var(--sd-muted);
   font: var(--sd-t3) var(--pk-font-sans);
 }
+.scan-picker-onscreen {
+  margin: 0;
+  color: var(--sd-muted);
+  font: var(--sd-t3) var(--pk-font-sans);
+}
 .scan-picker-actions {
   display: grid;
   grid-template-columns: 1fr 2fr;

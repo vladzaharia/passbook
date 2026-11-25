@@ -63,6 +63,12 @@ const cases: {
   { name: 'slug-1', value: 'wallet-completion-v1', reported: false },
   { name: 'slug-2', value: 'incompatible-v2', reported: false },
   { name: 'public-key', value: spki, reported: false },
+  {
+    name: 'sim-originality-scalar',
+    value: `0x${'1d2c3b4a59687786950a1b2c3d4e5f60'}${'718293a4b5c6d7e8f9011223'}n`,
+    reported: false,
+  },
+  { name: 'sim-scalar-with-tail', value: `0x1d2c3b4a5968778695${hex(40)}n`, reported: true },
   { name: 'real-key-with-demo-prefix', value: `pb_test_k3Qx9Zt2_${rand(43)}`, reported: true },
   { name: 'real-key-other-prefix', value: `pb_test_${rand(8)}_${rand(43)}`, reported: true },
   { name: 'rotation-type-with-tail', value: `ApiKeyRotationKey7${rand(24)}`, reported: true },
