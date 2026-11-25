@@ -4,7 +4,7 @@ import { RULE_COPY } from '@/shared/copy/message-rules.ts';
 import { useDebounced } from '../../lib/debounce.ts';
 import { useOrgOptions } from '../../lib/search.ts';
 import { localZone } from '../../lib/timezones.ts';
-import { Callout, toast, useWizard, WizardDialog } from '../../ui/index.ts';
+import { Button, Callout, toast, useWizard, WizardDialog } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
 import { useTemplateDetails } from './audience.tsx';
 import { commonFields } from './common-fields.ts';
@@ -20,18 +20,22 @@ import {
   whenSummary,
 } from './rule-steps.tsx';
 import { RuleWhen } from './rule-when.tsx';
-import { useRuleActions, useRulePreview } from './rules-api.ts';
+import { isRuleStale, useRuleActions, useRulePreview, useRules } from './rules-api.ts';
 
 /** Create (four steps) or edit (the same steps, any order) an automatic message. */
 export function RuleEditor({
   orgId,
-  rule,
+  rule: opened,
   onClose,
 }: {
   orgId: string;
   rule?: MessageRuleDto | undefined;
   onClose: () => void;
 }) {
+  // The rule as last read; Reload on a stale save replaces it without leaving the step.
+  const [rule, setRule] = useState(opened);
+  const [stale, setStale] = useState(false);
+  const rules = useRules(orgId);
   const initial = useMemo(
     () => (rule ? stateOfRule(rule) : { ...INITIAL_RULE, timeZone: localZone() }),
     [rule],
@@ -77,13 +81,34 @@ export function RuleEditor({
     dirty: changed || resuming,
     onFinish: async () => {
       if (!body) return;
-      if (rule)
-        await actions.update.mutateAsync({ id: rule.id, body: { ...body, version: rule.version } });
-      else await actions.create.mutateAsync(body);
+      if (rule) {
+        try {
+          await actions.update.mutateAsync({
+            id: rule.id,
+            body: { ...body, version: rule.version },
+          });
+        } catch (cause) {
+          // The notice says it; the wizard stays on its step.
+          if (!isRuleStale(cause)) throw cause;
+          setStale(true);
+          return;
+        }
+      } else await actions.create.mutateAsync(body);
       toast.success('Saved');
       onClose();
     },
   });
+  const reload = async () => {
+    const fresh = (await rules.refetch()).data?.items.find((r) => r.id === rule?.id);
+    if (!fresh) {
+      toast.error('This message was deleted.', 'Could not reload');
+      onClose();
+      return;
+    }
+    setRule(fresh);
+    setState(stateOfRule(fresh));
+    setStale(false);
+  };
   const change = (patch: Partial<RuleState>) => {
     setState((s) => ({ ...s, ...patch }));
     w.clearServer();
@@ -105,9 +130,29 @@ export function RuleEditor({
       finishLabel={rule ? (resuming ? 'Save and resume' : 'Save') : 'Create message'}
       busy={pending}
       notice={
-        rule?.pausedCode ? (
-          <Callout tone="warning">{RULE_COPY.paused[rule.pausedCode]}</Callout>
-        ) : null
+        <>
+          {stale ? (
+            <Callout
+              tone="warning"
+              actionsAside
+              actions={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  loading={rules.isFetching}
+                  onClick={() => void reload()}
+                >
+                  Reload
+                </Button>
+              }
+            >
+              {RULE_COPY.stale}
+            </Callout>
+          ) : null}
+          {rule?.pausedCode ? (
+            <Callout tone="warning">{RULE_COPY.paused[rule.pausedCode]}</Callout>
+          ) : null}
+        </>
       }
     >
       {w.id === 'passes' ? (

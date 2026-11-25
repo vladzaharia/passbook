@@ -50,8 +50,9 @@ const RULE = {
   version: 2,
 };
 
-function setup(refuse?: Response) {
+function setup(refuse?: () => Response) {
   const saved: unknown[] = [];
+  let listed = RULE;
   renderApp('/admin/messages?orgId=org1', {
     session: 'admin',
     memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
@@ -61,12 +62,17 @@ function setup(refuse?: Response) {
       '/api/v1/broadcasts': () => json({ items: [], nextCursor: null }),
       '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
       '/api/v1/templates/tpl1': () => json(DETAIL),
-      '/api/v1/message-rules': () => json({ items: [RULE], nextCursor: null }),
+      '/api/v1/message-rules': () => json({ items: [listed], nextCursor: null }),
       '/api/v1/message-rules/preview': () =>
         json({ days: [{ date: '2026-12-03', count: 4 }], total: 4, atLimit: 0 }),
       '/api/v1/message-rules/r1': (_u, init) => {
         saved.push(JSON.parse(String(init?.body)));
-        return refuse ?? json({ ...RULE, version: 3 });
+        const refused = refuse?.();
+        if (refused) {
+          listed = { ...RULE, version: 3, message: 'Theirs.' };
+          return refused;
+        }
+        return json({ ...RULE, version: 4 });
       },
     },
   });
@@ -104,7 +110,7 @@ describe('Automatic message editor', () => {
   });
 
   it('takes a refused field back to its step', async () => {
-    setup(
+    setup(() =>
       json(
         {
           type: 'about:blank',
@@ -125,5 +131,36 @@ describe('Automatic message editor', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     expect(await within(dialog).findByText('Too long for a lock screen.')).toBeInTheDocument();
     expect(within(dialog).getByRole('textbox', { name: /Text/ })).toBeInTheDocument();
+  });
+
+  it('says a stale save in the notice and reloads in place', async () => {
+    const saved = setup(() =>
+      json(
+        {
+          type: 'about:blank',
+          status: 409,
+          code: 'RULE_VERSION',
+          title: 'Conflict',
+          detail: 'Someone else changed this. Reload and try again.',
+        },
+        409,
+      ),
+    );
+    const { user, dialog } = await openEditor();
+    await user.click(within(dialog).getByRole('button', { name: 'Message' }));
+    await user.type(await within(dialog).findByRole('textbox', { name: /Text/ }), ' Bring it.');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog).findByText('Someone else saved this message.')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('alert')).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Reload' }));
+    await waitFor(() =>
+      expect(within(dialog).queryByText('Someone else saved this message.')).toBeNull(),
+    );
+    const text = within(dialog).getByRole('textbox', { name: /Text/ });
+    expect(text).toHaveValue('Theirs.');
+    await user.type(text, ' Ok.');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(saved).toHaveLength(2));
+    expect(saved[1]).toMatchObject({ message: 'Theirs. Ok.', version: 3 });
   });
 });
