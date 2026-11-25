@@ -1,9 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { json, membershipFixture, problem, renderApp } from '../../../lib/test-utils.tsx';
 import { connectionDetail, ORG } from '../../passes/test-fixtures.ts';
 import { revision, UPLOAD_CONNECTOR } from './files-fixtures.ts';
+import { forgetApplyStarts } from './use-apply-watch.ts';
 
 const membership = membershipFixture(ORG.id, {
   orgName: ORG.name,
@@ -48,6 +49,8 @@ function open(
 }
 
 describe('File tab', () => {
+  afterEach(forgetApplyStarts);
+
   it('previews a pending revision with what happens to the removed rows, then applies it', async () => {
     const user = userEvent.setup();
     let applied = false;
@@ -144,7 +147,7 @@ describe('File tab', () => {
     expect(await screen.findByText('The file could not be read.')).toBeInTheDocument();
   });
 
-  it('offers Sync now for a first file no run has applied, and shows the wait', async () => {
+  it('shows the wait whichever Sync now starts the run (the header one here)', async () => {
     const user = userEvent.setup();
     const syncs: string[] = [];
     await open(() => [current({ applied: false })], {
@@ -158,7 +161,7 @@ describe('File tab', () => {
       },
     });
     expect(await screen.findByText('Not applied yet')).toBeInTheDocument();
-    await user.click(screen.getAllByRole('button', { name: 'Sync now' }).at(-1) as HTMLElement);
+    await user.click(screen.getAllByRole('button', { name: 'Sync now' })[0] as HTMLElement);
     await waitFor(() => expect(syncs).toEqual(['/api/v1/connections/c1/sync']));
     expect(await screen.findByRole('list', { name: 'Applying the file' })).toBeInTheDocument();
   });

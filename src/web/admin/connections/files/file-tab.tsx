@@ -7,7 +7,7 @@ import type { OnMissing } from './diff-summary.tsx';
 import { useRevisions } from './files-api.ts';
 import { PendingRevision } from './pending-revision.tsx';
 import { RevisionHistory } from './revision-history.tsx';
-import { useApplyWatch } from './use-apply-watch.ts';
+import { markApplyStarted, useApplyWatch } from './use-apply-watch.ts';
 import { useRevisionUpload } from './use-revision-upload.ts';
 
 /** A file-upload connection's File tab: the version waiting to apply, the one in use, and the history. */
@@ -44,7 +44,7 @@ export function FileTab({
           revision={pending}
           onMissing={onMissing}
           canManage={canManage}
-          onApplied={watch.begin}
+          onApplied={() => markApplyStarted(connectionId)}
         />
       ) : null}
       {current ? (
@@ -59,7 +59,7 @@ export function FileTab({
             canManage && enabled
               ? () =>
                   sync.mutate(undefined, {
-                    onSuccess: watch.begin,
+                    onSuccess: () => markApplyStarted(connectionId),
                     onError: (error) => toast.error(error, 'Could not sync'),
                   })
               : undefined

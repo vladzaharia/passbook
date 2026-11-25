@@ -33,6 +33,7 @@ import { useConnectionActions, useConnector, useConnectorNames } from './api.ts'
 import { ConfigTab } from './config-tab.tsx';
 import { SettingsTab } from './detail-tabs.tsx';
 import { FileTab } from './files/file-tab.tsx';
+import { markApplyStarted } from './files/use-apply-watch.ts';
 import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
 import { sourceLine } from './labels.ts';
@@ -96,7 +97,10 @@ export function ConnectionDetail({
     if (!canManage) return;
     void actions.sync
       .mutateAsync()
-      .then(() => toast.success('Sync started'))
+      .then(() => {
+        markApplyStarted(connectionId);
+        toast.success('Sync started');
+      })
       .catch((error: unknown) => toast.error(error, 'Could not sync'));
   };
   const sample = test?.kind === 'result' ? test.result.sample : undefined;

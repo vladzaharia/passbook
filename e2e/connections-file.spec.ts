@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, requireActiveTemplateRelease, seedTemplateId, uid } from './helpers/api.ts';
-import { readSeed } from './helpers/seed.ts';
+import { sandboxOrgId } from './helpers/sandbox.ts';
+import { addOrgMember, readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -16,6 +17,7 @@ const file = (name: string, text: string) => ({
 
 test('file upload: create from a CSV, sync, upload a new version, review the removals, apply', async ({
   page,
+  browser,
 }) => {
   const seed = readSeed();
   const api = await apiAs('admin');
@@ -86,12 +88,9 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   await page.getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL((url) => url.pathname.startsWith(`${inOrg}/connections/`));
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
-  const id = new URL(page.url()).pathname.split('/').pop() as string;
 
-  // Revision 1 is the file in use, but no run has applied it yet.
-  await expect(page.getByText('Not applied yet')).toBeVisible();
-  await shots(page, 'file-detail-not-applied');
-  await page.getByRole('button', { name: 'Sync now' }).last().click();
+  // Create applied the first file: the page opens Applying, then Applied.
+  const id = new URL(page.url()).pathname.split('/').pop() as string;
   const passes = `/api/v1/passes?orgId=${encodeURIComponent(seed.org.id)}&connectionId=${encodeURIComponent(id)}`;
   await expect.poll(async () => (await api.get(passes)).items.length, { timeout: 60_000 }).toBe(3);
   await expect(page.getByText('Applied', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
@@ -106,7 +105,27 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   await shots(page, 'file-detail-pending');
   expect((await api.get(passes)).items.length).toBe(3);
 
+  // The same File tab in Test mode, and for a viewer who cannot manage connections.
+  await page.getByRole('radio', { name: 'Test' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Test mode' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Apply', exact: true })).toBeVisible();
+  await shots(page, 'file-tab-test-mode');
+  await page.getByRole('radio', { name: 'Live' }).click();
+  const user = await apiAs('user');
+  await addOrgMember(api, seed.org.id, user, ['read_only']);
+  const viewer = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
+  const vp = await viewer.newPage();
+  await vp.goto(`${inOrg}/connections/${id}`);
+  await expect(vp.getByText('New version · members-v2.csv')).toBeVisible();
+  await expect(vp.getByRole('button', { name: 'Apply', exact: true })).toHaveCount(0);
+  await expect(vp.getByRole('button', { name: 'Discard' })).toHaveCount(0);
+  await expect(vp.getByText('Upload new version')).toHaveCount(0);
+  await shots(vp, 'file-tab-viewer');
+  await viewer.close();
+
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
+  await expect(page.getByText('Applying', { exact: true }).first()).toBeVisible();
+  await shots(page, 'file-detail-history-applying');
   await expect
     .poll(
       async () => {
@@ -177,4 +196,32 @@ test('file upload: a JSON file picks its records and ID from the tree', async ({
   await page.getByRole('button', { name: 'Use as ID' }).click();
   await expect(page.getByLabel(/ID column/)).toContainText('number');
   await shots(page, 'file-wizard-json');
+});
+
+test('file upload: the File tab in a developer sandbox', async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: 'e2e/.auth/developer.json' });
+  const page = await ctx.newPage();
+  await page.goto('/admin');
+  const orgId = await sandboxOrgId(page);
+  const dev = await apiAs('developer');
+  const tag = uid('sb');
+  const draft = await dev.send('POST', `/api/v1/connections/uploads?orgId=${orgId}`, {
+    name: 'members.csv',
+    content: csv([[`${tag}-1`, 'Maya', `maya.${tag}@example.test`]]),
+    encoding: 'utf8',
+  });
+  const created = await dev.send('POST', '/api/v1/connections', {
+    orgId,
+    connectorType: 'file-upload',
+    name: `Sandbox file ${tag}`,
+    config: { idColumn: '/Member ID' },
+    fileId: draft.id,
+  });
+  await page.goto(`/admin/o/${encodeURIComponent(orgId)}/connections/${created.id}`);
+  await expect(
+    page.getByText('Not applied yet').or(page.getByText('Applied', { exact: true }).first()),
+  ).toBeVisible();
+  await expect(page.getByText('Upload new version')).toBeVisible();
+  await shots(page, 'file-tab-sandbox');
+  await ctx.close();
 });

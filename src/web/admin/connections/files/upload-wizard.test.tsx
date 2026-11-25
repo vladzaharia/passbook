@@ -40,6 +40,10 @@ function handlers(
       return json({ items: [], nextCursor: null });
     },
     '/api/v1/connections/c9': () => json(connectionDetail({ id: 'c9' })),
+    '/api/v1/connections/c9/sync': (u: URL) => {
+      posts.push({ synced: u.pathname });
+      return json({ runId: 'r1', workflowInstanceId: 'w1' });
+    },
   } satisfies Record<string, FetchHandler>;
 }
 
@@ -81,7 +85,9 @@ describe('file upload in the connection wizard', () => {
     expect(screen.queryByRole('radio', { name: 'Poll' })).toBeNull();
     await next(user);
     await next(user);
-    await waitFor(() => expect(posts).toHaveLength(1));
+    // Create applies the first file: the same sync a Sync now starts.
+    await waitFor(() => expect(posts).toHaveLength(2));
+    expect(posts[1]).toEqual({ synced: '/api/v1/connections/c9/sync' });
     expect(posts[0]).toMatchObject({
       connectorType: 'file-upload',
       name: 'members',
