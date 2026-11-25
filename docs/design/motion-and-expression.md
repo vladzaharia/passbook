@@ -75,6 +75,7 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 | Row inserted | Accent-subtle overlay fades .8 → 0 over 1200 ms; no movement | Only rows new since the last render, never on first load |
 | Row removed | Item scales to .96 and fades in 160 ms; neighbours close up over 240 ms | Same-document View Transition with `row-<id>`; never animate layout |
 | Pass grids | Deal on the stage only: rise 24 px, −2°, .96, spring, 60 ms stagger; tile chrome rises 8 px after the card | Portal My passes, template gallery and pickers |
+| Org chooser badges | Swing in from the lanyard slot: 12 px drop, ∓3°, card spring, 60 ms stagger, once per mount; hover lifts 2 px and lights the windows one after another (opacity, 40 ms apart); the last used badge stays lit | Reduced motion: a fade; the buddy (M) nudges toward the badges, sorry when nothing matches |
 | Dialog, popover, menu, select | In: fade, .98 scale and 4 px from the trigger side, 200 ms; out: fade 120 ms | Radix `data-state` keyframes and `--radix-*-transform-origin` |
 | Bottom sheet (<640) | Slides up 260 ms, down 200 ms | Dialogs, confirms and menus on phones |
 | Sheet | Slide 260 ms in, 200 ms out; on touch it follows the finger and closes past 40% or 0.5 px/ms, else springs back in 200 ms | Overlay opacity tracks the drag |
