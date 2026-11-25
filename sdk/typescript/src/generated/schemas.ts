@@ -11915,7 +11915,6 @@ export type TerminalScansUndoParams = {
   approval?: {
     staffId?: string;
     pin: string;
-    alone?: boolean;
   };
 };
 

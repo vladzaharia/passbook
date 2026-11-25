@@ -7,6 +7,7 @@ import { ScanAccessSchema } from './scan-access.ts';
 import { ScanActionInputSchema } from './scan-action-input.ts';
 import { ScanAdmitSchema, ScanTypeCountSchema } from './scan-admit.ts';
 import {
+  ScanActionApprovalSchema,
   ScanAdminScopeSchema,
   ScanApprovalSchema,
   ScanDirectionSchema,
@@ -104,7 +105,6 @@ export const ScanReasonSchema = z.enum([
   'choose',
 ]);
 export type ScanReason = z.infer<typeof ScanReasonSchema>;
-
 export const ScannerSettingsSchema = z.object({
   checkIn: CheckInPolicySchema.optional(),
   direction: SetupDirectionSchema.optional(),
@@ -167,7 +167,7 @@ export const ScanActRequestSchema = z.strictObject({
   /** For `set`: the card's version. */
   expectedVersion: z.number().int().optional(),
   group: z.literal('bundle').optional(),
-  approval: ScanApprovalSchema.optional(),
+  approval: ScanActionApprovalSchema.optional(),
 });
 /** An admin names the org in `scope`, as on any scan call. A scanner never sends it. */
 export const ScanUndoRequestSchema = z.strictObject({
