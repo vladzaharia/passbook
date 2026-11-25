@@ -5,7 +5,7 @@ import { roleAtLeast } from '@/passkit/template/scan-display/scope.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
-import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { ScanPreviewScreen } from '@/web/scan/preview-screen.tsx';
 import { CheckboxField, SegmentedControl, Select } from '@/web/ui/index.ts';
 import { type DesignDoc, styleOf } from '../model.ts';
@@ -37,6 +37,8 @@ interface ScanStageProps {
   onSelect: (id: string | null) => void;
   onAction?: (id: string, action: ScanStageAction) => void;
   phone: boolean;
+  /** The org's zone, for dates in the preview. */
+  timeZone?: string;
 }
 
 export function ScanStage({
@@ -47,6 +49,7 @@ export function ScanStage({
   mode,
   screen,
   onScreenChange,
+  timeZone = DEFAULT_TIME_ZONE,
   selected,
   onSelect,
   onAction,
@@ -64,7 +67,6 @@ export function ScanStage({
   const [overrides, setOverrides] = useState<Record<string, Json>>({});
   const [tabId, setTabId] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
-  const timeZone = useOrgTimeZone(orgId ?? undefined);
   const real = useRealPreview(
     orgId,
     templateId,
