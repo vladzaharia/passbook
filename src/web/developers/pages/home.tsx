@@ -13,6 +13,14 @@ import { Stamp } from '../ui/stamp.tsx';
 import { Ticket } from '../ui/ticket.tsx';
 import { SIGN_IN } from './layout.tsx';
 
+/** The guides the home page features, by id: one per step of the journey that matters first. */
+export const HOME_GUIDES = [
+  'issue-on-purchase',
+  'update-a-pass',
+  'check-in-at-the-door',
+  'react-to-events',
+] as const;
+
 const TILE_ICON = { quickstart: Zap, playground: LayoutTemplate, reference: Braces } as const;
 const TILE_HREF = {
   quickstart: PATHS.quickstart,
@@ -180,7 +188,7 @@ function Guides() {
         </a>
       </div>
       <div className="card-b recipes">
-        {DEV_GUIDES.slice(0, 4).map((g) => (
+        {HOME_GUIDES.flatMap((id) => DEV_GUIDES.filter((d) => d.id === id)).map((g) => (
           <a key={g.id} className="row g3" href={`${PATHS.guides}/${g.id}`}>
             <GuideTile id={g.id} />
             <span className="strong">{g.title}</span>
