@@ -61,7 +61,8 @@ try {
   rmSync(scratch, { recursive: true, force: true });
 }
 const changed = diffAgainstBase(root);
-failures.push(...changelogFailures(readPending(root), changed ?? []));
+const spec = JSON.parse(readFileSync(resolve(root, 'docs/api/openapi.v1.json'), 'utf8'));
+failures.push(...changelogFailures(readPending(root), changed ?? [], spec));
 failures.push(...versionFailures(readVersions(root), baseVersions(root)));
 if (failures.length) {
   console.error(`check-developers: ${failures.length} failure(s):`);

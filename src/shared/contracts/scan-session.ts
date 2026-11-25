@@ -230,6 +230,11 @@ export const ScanRosterSchema = z.object({
       state: z.enum(['in', 'out']).nullable(),
       /** `in` counts for one venue day (a daily check-in), not for good. */
       day: z.boolean().optional(),
+      /** Ordinal within this response, shared by the entries of one pass (phone code, paper code): a door admits them as one. */
+      g: z
+        .string()
+        .regex(/^[0-9]{1,6}$/)
+        .optional(),
     }),
   ),
   cursor: z.string().nullable(),

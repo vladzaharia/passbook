@@ -3,6 +3,7 @@ import { all, run } from '../../platform/db.ts';
 export interface RosterRow {
   id: string;
   template_id: string;
+  template_version: string;
   personalization: string;
   status: 'active' | 'voided';
   removed_at: number | null;
@@ -12,6 +13,11 @@ export interface RosterRow {
   print_hash: string | null;
   /** A check-in gate in the session's scope says the pass is in. */
   inside: 0 | 1;
+}
+
+export interface VoidedPrint {
+  pass_id: string;
+  roster_hash: string;
 }
 
 export interface RosterScope {
@@ -36,7 +42,7 @@ export const rosterPage = (
 ): Promise<RosterRow[]> =>
   all<RosterRow>(
     db,
-    `SELECT p.id, p.template_id, p.personalization, p.status, p.removed_at, p.deleted_at,
+    `SELECT p.id, p.template_id, p.template_version, p.personalization, p.status, p.removed_at, p.deleted_at,
             p.scan_code,
             (SELECT pp.roster_hash FROM pass_prints pp WHERE pp.pass_id = p.id AND pp.status = 'active') AS print_hash,
             EXISTS (SELECT 1 FROM scan_gates g
@@ -49,7 +55,9 @@ export const rosterPage = (
          scope.since === null
            ? ''
            : `AND (p.modified_at >= ?
-            OR EXISTS (SELECT 1 FROM scan_gates c WHERE c.pass_id = p.id AND c.kind = 'check_in' AND c.last_at >= ?))`
+            OR EXISTS (SELECT 1 FROM scan_gates c WHERE c.pass_id = p.id AND c.kind = 'check_in' AND c.last_at >= ?)
+            OR EXISTS (SELECT 1 FROM pass_channels ch WHERE ch.pass_id = p.id AND ch.set_at >= ?)
+            OR EXISTS (SELECT 1 FROM pass_prints x WHERE x.pass_id = p.id AND (x.created_at >= ? OR x.voided_at >= ?)))`
        }
      ORDER BY p.id LIMIT ?`,
     [
@@ -58,9 +66,24 @@ export const rosterPage = (
       scope.mode,
       after,
       JSON.stringify(scope.templateIds),
-      ...(scope.since === null ? [] : [scope.since, scope.since]),
+      ...(scope.since === null
+        ? []
+        : [scope.since, scope.since, scope.since, scope.since, scope.since]),
       limit,
     ],
+  );
+
+/** Prints that ended at or after `since` on the given passes: the device drops their hashes. */
+export const voidedPrintsSince = (
+  db: D1Database,
+  passIds: readonly string[],
+  since: number,
+): Promise<VoidedPrint[]> =>
+  all<VoidedPrint>(
+    db,
+    `SELECT pass_id, roster_hash FROM pass_prints
+     WHERE status = 'voided' AND voided_at >= ? AND pass_id IN (SELECT value FROM json_each(?))`,
+    [since, JSON.stringify(passIds)],
   );
 
 /** The scan a key already produced, so a replay after the session closed returns its first answer. */

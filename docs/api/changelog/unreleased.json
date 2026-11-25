@@ -840,6 +840,14 @@
     "note": "A customer body's screen can be review."
   },
   {
+    "key": "GET /api/v1/scan/roster 200.entries[].g: field added",
+    "class": "additive",
+    "operationId": "scan.getScanRoster",
+    "op": "GET /api/v1/scan/roster",
+    "change": "200.entries[].g: field added",
+    "note": "Roster entries of one pass share an opaque g; a door admits them as one."
+  },
+  {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
