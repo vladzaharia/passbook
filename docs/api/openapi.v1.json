@@ -80144,6 +80144,7 @@
                   "previewOnly": true,
                   "createdAt": 1794362400000,
                   "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
                     "name": "Sandbox key",
@@ -80353,7 +80354,8 @@
                     "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
                     "previewOnly": true,
                     "createdAt": 1794362400000,
-                    "closedAt": null
+                    "closedAt": null,
+                    "timeZone": "America/Los_Angeles"
                   },
                   "turnstileSiteKey": "0x4AAAAAAAdemoNorthwind"
                 }
@@ -80465,7 +80467,8 @@
                   "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
                   "previewOnly": true,
                   "createdAt": 1794362400000,
-                  "closedAt": 1795572000000
+                  "closedAt": 1795572000000,
+                  "timeZone": "America/Los_Angeles"
                 }
               }
             }
@@ -80584,7 +80587,8 @@
                   "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "previewOnly": true,
                   "createdAt": 1794362400000,
-                  "closedAt": 1795572000000
+                  "closedAt": 1795572000000,
+                  "timeZone": "America/Los_Angeles"
                 }
               }
             }
@@ -80785,6 +80789,7 @@
                   "previewOnly": true,
                   "createdAt": 1794362400000,
                   "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-000000000021",
                     "name": "Server integration",
@@ -81099,7 +81104,8 @@
                     "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
                     "previewOnly": true,
                     "createdAt": 1794362400000,
-                    "closedAt": null
+                    "closedAt": null,
+                    "timeZone": "America/Los_Angeles"
                   },
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
@@ -81355,6 +81361,7 @@
                   "previewOnly": true,
                   "createdAt": 1794362400000,
                   "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
                     "name": "Sandbox key",
