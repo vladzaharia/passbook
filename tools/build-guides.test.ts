@@ -35,6 +35,16 @@ describe('guide pages', () => {
     }
   });
 
+  it('groups the index by step and names the step above each guide', () => {
+    const index = read('developers/guides/index.html');
+    const heads = [...index.matchAll(/<h2 id="step-[a-z]+" class="h3 gsec-h">([^<]+)</g)].map(
+      (m) => m[1],
+    );
+    expect(heads).toEqual(['Start', 'Issue', 'Change', 'At the door', 'Connect', 'Launch']);
+    expect(page('go-live')).toMatch(/class="gkicker green">Launch</);
+    expect(read('developers/guides.md')).toContain('## At the door');
+  });
+
   it('opens the console prefilled from every runnable guide', () => {
     for (const g of DEV_GUIDES.filter((d) => d.id !== 'partner-apps')) {
       const links = [...page(g.id).matchAll(/href="(\/developers\/console#[^"]+)"/g)];

@@ -70,7 +70,7 @@ export async function matchesConnectionPass(
   if (!validConnectionPassContext(context)) return false;
   const row = await first<{ id: string }>(
     db,
-    `SELECT id FROM passes WHERE id = ? AND ${connectionPassPredicate} ${connectionPassFences(context)}`,
+    `SELECT id FROM passes WHERE id = ? AND ${connectionPassPredicate} AND (${connectionPassFences(context) || '1 = 1'})`,
     [context.passId, ...connectionPassParams(context)],
   );
   return row !== null;

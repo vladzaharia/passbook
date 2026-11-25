@@ -64,9 +64,12 @@ const refSql = `INSERT INTO wallet_samsung_fetch_refs
     r.credential_keyset_commitment, r.kek_version, r.iv, r.wrapped_dek, r.ciphertext, ?
   FROM wallet_samsung_fetch_refs r WHERE r.instance_id = ? AND r.id = (
     SELECT MIN(x.id) FROM wallet_samsung_fetch_refs x WHERE x.instance_id = r.instance_id)`;
+// The 0208 enrolment gate refuses a reference on an account that is not enabled; the pin guards are under test here.
 const insertRef = (instanceId: string, hash: string, pin: string | null) =>
-  withoutTrigger(db(), 'wallet_provider_generation_samsung_ref', () =>
-    run(db(), refSql, [uid(), hash, pin, instanceId]),
+  withoutTrigger(db(), 'wallet_enrolment_gate_samsung_ref_insert', () =>
+    withoutTrigger(db(), 'wallet_provider_generation_samsung_ref', () =>
+      run(db(), refSql, [uid(), hash, pin, instanceId]),
+    ),
   );
 
 const tombstoneSql = `INSERT INTO wallet_samsung_tombstones

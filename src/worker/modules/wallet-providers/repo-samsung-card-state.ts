@@ -1,4 +1,6 @@
 import { all, first, run } from '../../platform/db.ts';
+import { hasCredentialSql } from './account-presence.ts';
+import { walletEnrolmentIssuesSql } from './repo-enrolment-gate.ts';
 
 /** What a live read of one compiled card's template left behind. */
 export interface SamsungCardState {
@@ -88,10 +90,13 @@ export function selectSamsungCardsToRefresh(
     JOIN template_candidates c ON c.id = r.candidate_id
     JOIN orgs owner ON owner.id = r.org_id AND owner.status = 'active'
     JOIN wallet_provider_accounts account ON account.id = c.provider_account_id
-      AND account.authority_epoch = c.provider_account_epoch AND account.credential_id IS NOT NULL
+      AND account.authority_epoch = c.provider_account_epoch AND ${hasCredentialSql('account')}
       AND account.revoked_at IS NULL
+      AND (account.credential_source_id IS NULL OR EXISTS (SELECT 1 FROM wallet_credentials src
+        WHERE src.id = account.credential_source_id AND src.revoked_at IS NULL))
     LEFT JOIN wallet_samsung_card_state st ON st.candidate_id = c.id
     WHERE r.provider = 'samsung' AND r.source = 'approved' AND r.action IN ('release', 'rollback')
+      AND ${walletEnrolmentIssuesSql('r.org_id', 'r.mode', 'r.provider')}
       AND json_extract(c.projection_json, '$.schema') = 2
       AND (st.candidate_id IS NULL OR st.expires_at <= ?)
       AND NOT EXISTS (SELECT 1 FROM template_releases newer WHERE newer.template_id = r.template_id

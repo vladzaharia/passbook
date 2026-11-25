@@ -4,6 +4,7 @@ import type { WalletProvider } from './instance-types.ts';
 
 export interface EnrolmentGateRow {
   credential_id: string | null;
+  credential_source_id?: string | null;
   enabled_at?: number | null;
   platform_hold_at?: number | null;
   revoked_at: number | null;
@@ -17,7 +18,7 @@ export function findEnrolmentGateRow(
 ): Promise<EnrolmentGateRow | null> {
   return first<EnrolmentGateRow>(
     db,
-    `SELECT credential_id, enabled_at, platform_hold_at, revoked_at FROM wallet_provider_accounts
+    `SELECT credential_id, credential_source_id, enabled_at, platform_hold_at, revoked_at FROM wallet_provider_accounts
      WHERE org_id = ? AND mode = ? AND provider = ?`,
     [orgId, mode, provider],
   );
@@ -55,7 +56,7 @@ export function walletEnrolmentIssuesSql(
   return `EXISTS (SELECT 1 FROM wallet_provider_accounts gate_a WHERE gate_a.org_id = ${orgSql}
     AND gate_a.mode = ${modeSql} AND gate_a.provider = ${providerSql}
     AND gate_a.revoked_at IS NULL AND gate_a.platform_hold_at IS NULL
-    AND (gate_a.credential_id IS NOT NULL OR gate_a.enabled_at IS NOT NULL))
+    AND ((gate_a.credential_id IS NOT NULL AND gate_a.credential_source_id IS NULL) OR gate_a.enabled_at IS NOT NULL))
     AND EXISTS (SELECT 1 FROM org_entitlement_values gate_e WHERE gate_e.org_id = ${orgSql}
     AND gate_e.key = 'wallet.' || ${providerSql} AND gate_e.value = '1')
     AND ${notPreviewOnlySql(orgSql)}`;
