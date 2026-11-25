@@ -153,23 +153,6 @@ describe('guest-plan pass retention', () => {
     expect(await gone(moving.id)).toBe(false);
   });
 
-  it('keeps a pass until the end of an old visit row that runs later', async () => {
-    const p = await pass('guest');
-    const until = kit.clock.now() + 150 * DAY;
-    await run(
-      kit.env.DB,
-      `INSERT INTO visitors (id, org_id, mode, pass_id, name, host_name, host_email, window_from, window_until, created_at)
-       VALUES (?, ?, 'live', ?, 'Leo', 'Ana', 'ana@host.test', 1, ?, 1)`,
-      [kit.fx.ids.id(), kit.org.id, p.id, until],
-    );
-    kit.clock.advance(100 * DAY);
-    await dailyGuestPasses(ctx());
-    expect(await gone(p.id)).toBe(false);
-    kit.clock.advance(141 * DAY);
-    await dailyGuestPasses(ctx());
-    expect(await gone(p.id)).toBe(true);
-  });
-
   it('anonymises its scans when the pass is purged: counts and pass_ref stay, the pass link goes', async () => {
     const door = await makeDoor([tpl]);
     const p = await pass('guest', HOUR);

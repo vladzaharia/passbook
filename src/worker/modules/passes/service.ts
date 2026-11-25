@@ -262,7 +262,11 @@ export async function deletePass(
   scope: ScopeArg,
   authority?: TenantPassWrite,
   /** Retention only: a hold in force at the write refuses it (PASS_CONFLICT). */
-  options: { unlessHeld?: boolean } = {},
+  options: {
+    unlessHeld?: boolean;
+    /** Retention: statements built for the delete's timestamp, committed in the same batch as the delete. */
+    inBatch?: (now: number) => Promise<D1PreparedStatement[]>;
+  } = {},
 ): Promise<void> {
   let pass = await getPassForWrite(ctx.env.DB, passId, scope);
   if (pass.status === 'active') {
@@ -285,9 +289,11 @@ export async function deletePass(
       }
     }
   }
+  const now = ctx.clock.now();
+  const extra = authority || !options.inBatch ? [] : await options.inBatch(now);
   const deleted = authority
     ? await softDeletePassGranted(ctx, pass, authority)
-    : await softDeletePass(ctx.env.DB, pass, ctx.clock.now(), options.unlessHeld);
+    : await softDeletePass(ctx.env.DB, pass, now, options.unlessHeld, extra);
   if (!deleted)
     throw new ConflictError('The pass or authorization changed. Retry.', 'PASS_CONFLICT');
   await recordAudit(ctx, {

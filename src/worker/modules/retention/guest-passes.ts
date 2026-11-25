@@ -6,8 +6,19 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { deletePass } from '../passes/service.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { healHead } from './head-store.ts';
-import { writeReceipt } from './receipt-service.ts';
-import { type GuestCandidate, guestCandidates, passHeld } from './repo-guest-passes.ts';
+import {
+  type PreparedReceipt,
+  prepareReceipt,
+  type ReceiptInput,
+  recordHead,
+  writeReceipt,
+} from './receipt-service.ts';
+import {
+  type GuestCandidate,
+  guestCandidates,
+  passHeld,
+  receiptExists,
+} from './repo-guest-passes.ts';
 import { chainHead } from './repo-receipts.ts';
 import type { Scope } from './repo-sweep.ts';
 import { retentionTargets } from './targets.ts';
@@ -19,7 +30,7 @@ export const GUEST_LIMITS = { platform: 200, orgs: 200 };
 /** Candidates one run reads, so passes that keep being skipped cannot starve the job. */
 const READ_LIMIT = 2000;
 
-/** The pass's end: its own, else the plan's days from the start day; the later of any old visit row's. */
+/** The pass's end: its own, else the plan's days from the start day. */
 function endOf(c: GuestCandidate, timeZone: string): number | null {
   const access = JSON.parse(c.access) as AccessManifest;
   const inputs = applyDefaults(
@@ -28,23 +39,40 @@ function endOf(c: GuestCandidate, timeZone: string): number | null {
   );
   const plan = access.plans.find((p) => p.id === inputs[access.input.plan]);
   if (plan?.kind !== 'guest') return null;
-  const end = guestUntil(access, plan, inputs, c.created_at, timeZone);
-  return Math.max(end, c.visit_until ?? 0);
+  return guestUntil(access, plan, inputs, c.created_at, timeZone);
 }
 
-/** Soft-deletes the pass as the system; a hold that landed after the page was read refuses it in the write. */
-async function removePass(ctx: ServiceContext, c: GuestCandidate): Promise<boolean> {
+/**
+ * Soft-deletes the pass as the system with its receipt in the same batch: the receipt lands only while this
+ * delete did, so a crash cannot lose it. A hold that landed after the page was read refuses the delete itself.
+ */
+async function removePass(
+  ctx: ServiceContext,
+  c: GuestCandidate,
+  receipt: Omit<ReceiptInput, 'deleted'>,
+): Promise<boolean> {
+  const prepared: PreparedReceipt[] = [];
   try {
     await deletePass(ctx, { type: 'system', id: null }, c.id, c.org_id, undefined, {
       unlessHeld: true,
+      inBatch: async (at) => {
+        const r = await prepareReceipt(ctx, { ...receipt, deleted: 1 }, deletedGate(c.id, at));
+        prepared.push(r);
+        return [r.stmt];
+      },
     });
-    return true;
   } catch (error) {
     if (error instanceof NotFoundError) return false;
     if (error instanceof ConflictError && (await passHeld(ctx.env.DB, c.org_id, c.id)))
       return false;
     throw error;
   }
+  const done = prepared[0];
+  // A racing receipt on the same chain refuses the in-batch insert; the delete stands, so append it now.
+  if (done && (await receiptExists(ctx.env.DB, done.receipt.id)))
+    await recordHead(ctx, done.receipt);
+  else await writeReceipt(ctx, { ...receipt, deleted: 1 });
+  return true;
 }
 
 /**
@@ -86,17 +114,15 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
         try {
           const end = endOf(c, await zoneOf(c.org_id));
           if (end === null || end >= cutoff) continue;
-          if (!(await removePass(ctx, c))) continue;
-          budget.left--;
-          await writeReceipt(ctx, {
+          const gone = await removePass(ctx, c, {
             orgId,
             cls: 'visitors',
             kind: 'visitor',
             policyDays: days,
             cutoffAt: cutoff,
-            deleted: 1,
-            anonymised: 0,
           });
+          if (!gone) continue;
+          budget.left--;
           removed++;
         } catch (error) {
           ctx.log.error('retention.guest_pass_failed', {

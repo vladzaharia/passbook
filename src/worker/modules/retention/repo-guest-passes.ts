@@ -9,8 +9,6 @@ export interface GuestCandidate {
   /** `scan.access` and `inputs` of the pass's own template version. */
   access: string;
   inputs: string | null;
-  /** The latest end among the pass's old visit rows, while that table exists. */
-  visit_until: number | null;
 }
 
 /** An org-wide hold, or a hold on this pass. */
@@ -47,8 +45,7 @@ export function guestCandidates(
   return all<GuestCandidate>(
     db,
     `SELECT p.id, p.org_id, p.created_at, p.personalization,
-       json_extract(v.manifest, '$.scan.access') AS access, json_extract(v.manifest, '$.inputs') AS inputs,
-       (SELECT MAX(vi.window_until) FROM visitors vi WHERE vi.pass_id = p.id) AS visit_until
+       json_extract(v.manifest, '$.scan.access') AS access, json_extract(v.manifest, '$.inputs') AS inputs
      FROM passes p JOIN template_versions v ON v.template_id = p.template_id AND v.version = p.template_version
      WHERE p.deleted_at IS NULL AND p.created_at < ? AND p.id > ? AND ${where.sql}
        AND ${PLAN} IN (SELECT json_extract(pl.value, '$.id') FROM json_each(v.manifest, '$.scan.access.plans') pl
@@ -68,3 +65,14 @@ export async function passHeld(db: D1Database, orgId: string, passId: string): P
   ]);
   return row?.held === 1;
 }
+
+/** Whether the receipt row landed (its in-batch insert is refused when another writer took the chain slot). */
+export async function receiptExists(db: D1Database, id: string): Promise<boolean> {
+  return (await first(db, 'SELECT 1 AS x FROM retention_receipts WHERE id = ?', [id])) !== null;
+}
+
+/** A receipt gate: the receipt lands only while the pass carries this delete's timestamp. */
+export const deletedGate = (passId: string, at: number) => ({
+  sql: '(SELECT count(*) FROM passes WHERE id = ? AND deleted_at = ?) = ?',
+  params: [passId, at, 1],
+});
