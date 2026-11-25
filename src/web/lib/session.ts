@@ -148,7 +148,7 @@ export function signedOutJustNow(now = Date.now()): boolean {
   }
 }
 
-/** The next the logout POST left for a switch through Pocket ID (shared/next.ts). */
+/** The next the logout POST left for a switch through Polaris ID (shared/next.ts). */
 function cookieNext(): string | null {
   const raw = new RegExp(`(?:^|;\\s*)${NEXT_COOKIE}=([^;]*)`).exec(document.cookie)?.[1];
   if (!raw) return null;
@@ -161,7 +161,7 @@ function cookieNext(): string | null {
 }
 
 /**
- * The next a sign-out-to-switch asked for. Pocket ID's end-session returns to a bare /login, so
+ * The next a sign-out-to-switch asked for. Polaris ID's end-session returns to a bare /login, so
  * the server left it in a cookie, and this tab kept it for two minutes.
  */
 export function signedOutNext(now = Date.now()): string | null {
