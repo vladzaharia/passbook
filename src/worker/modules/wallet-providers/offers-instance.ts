@@ -67,5 +67,20 @@ export function channelOffSuccessor(instance: WalletInstance): {
   return { hold, epoch: instance.channelEpoch + 1 };
 }
 
+/**
+ * Whether tapping the badge can still activate this slot: the one check listing and issuing share. It mirrors
+ * the operation guard (0208): a ready placeholder (a transfer's successor, no operation yet) takes its first
+ * operation; a blocked one cannot; a live instance must be at the pass's credential generation. A pending transfer is already refused by the pass snapshot.
+ */
+export function instanceCanActivate(
+  instance: WalletInstance | null,
+  passCredentialGeneration: number,
+): boolean {
+  if (!instance || channelOffSuccessor(instance)) return true;
+  if (instance.lifecycle === 'blocked') return false;
+  if (instance.lifecycle === 'ready' && instance.desiredVersion !== 0) return false;
+  return instance.credentialGeneration === passCredentialGeneration;
+}
+
 export const walletOfferNotFound = () =>
   new NotFoundError('This wallet offer is not available.', 'WALLET_OFFER_NOT_FOUND');

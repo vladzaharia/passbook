@@ -181,7 +181,7 @@ export function receiptStatements(
       WHERE rc.id = ? AND rc.cc2 = ?
         AND NOT EXISTS (SELECT 1 FROM wallet_samsung_country_hints known
           WHERE known.ref_id = rc.ref_id AND known.country_code = ?)
-      ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1`,
+      ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0`,
         [receipt.id, receipt.countryHint, receipt.countryHint],
       ),
       stmt(

@@ -5,6 +5,9 @@ import {
 import { SAMSUNG_REQUEST_TIMEOUT_MS } from './samsung-limits.ts';
 import { createSamsungAuthorizationToken } from './samsung-token.ts';
 
+/** The states of a card still in testing mode that Test mode takes; the release trigger (0202) has the same list. */
+export const SANDBOX_CARD_STATES: readonly string[] = ['ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED'];
+
 const ORIGIN = 'https://tsapi-card.walletsvc.samsung.com';
 const PATH = '/partner/v1/card/template';
 const MAX_RESPONSE_BYTES = 64 * 1024;
@@ -189,7 +192,8 @@ export async function probeSamsungActiveTemplate(
   if (!template) throw new SamsungTemplateError('invalid_response');
   const { state, testingModeOff } = template;
   const launched = state === 'ACTIVE' && testingModeOff === 'Y';
-  const sandboxCard = typeof state === 'string' && state !== 'BLOCKED' && testingModeOff === 'N';
+  const sandboxCard =
+    typeof state === 'string' && SANDBOX_CARD_STATES.includes(state) && testingModeOff === 'N';
   if (
     template.cardId !== account.cardId ||
     template.cardType !== input.cardType ||

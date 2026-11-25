@@ -1,4 +1,6 @@
 import { all, first, run } from '../../platform/db.ts';
+import { hasCredentialSql } from './account-presence.ts';
+import { walletEnrolmentIssuesSql } from './repo-enrolment-gate.ts';
 
 /** What a live read of one compiled card's template left behind. */
 export interface SamsungCardState {
@@ -57,14 +59,17 @@ export async function samsungCardStateFresh(
   c: { id: string; candidateHash: string; accountId: string; accountEpoch: number; mode: string },
   cardType: string,
   now: number,
+  /** Time the row must still have, for a decision that is followed by a write (a publish). */
+  marginMs = 0,
 ): Promise<boolean> {
   const row = await first<{ ok: number }>(
     db,
     `SELECT 1 AS ok FROM wallet_samsung_card_state st
     WHERE st.candidate_id = ? AND st.candidate_hash = ? AND st.account_id = ? AND st.account_epoch = ?
-      AND st.card_type = ? AND (st.testing_mode_off = 'Y' OR ? = 'test')
+      AND st.card_type = ?
+      AND ((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (? = 'test' AND st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED')))
       AND st.verified_at <= ? AND ? < st.expires_at`,
-    [c.id, c.candidateHash, c.accountId, c.accountEpoch, cardType, c.mode, now, now],
+    [c.id, c.candidateHash, c.accountId, c.accountEpoch, cardType, c.mode, now, now + marginMs],
   );
   return row !== null;
 }
@@ -85,10 +90,13 @@ export function selectSamsungCardsToRefresh(
     JOIN template_candidates c ON c.id = r.candidate_id
     JOIN orgs owner ON owner.id = r.org_id AND owner.status = 'active'
     JOIN wallet_provider_accounts account ON account.id = c.provider_account_id
-      AND account.authority_epoch = c.provider_account_epoch AND account.credential_id IS NOT NULL
+      AND account.authority_epoch = c.provider_account_epoch AND ${hasCredentialSql('account')}
       AND account.revoked_at IS NULL
+      AND (account.credential_source_id IS NULL OR EXISTS (SELECT 1 FROM wallet_credentials src
+        WHERE src.id = account.credential_source_id AND src.revoked_at IS NULL))
     LEFT JOIN wallet_samsung_card_state st ON st.candidate_id = c.id
     WHERE r.provider = 'samsung' AND r.source = 'approved' AND r.action IN ('release', 'rollback')
+      AND ${walletEnrolmentIssuesSql('r.org_id', 'r.mode', 'r.provider')}
       AND json_extract(c.projection_json, '$.schema') = 2
       AND (st.candidate_id IS NULL OR st.expires_at <= ?)
       AND NOT EXISTS (SELECT 1 FROM template_releases newer WHERE newer.template_id = r.template_id
@@ -98,3 +106,6 @@ export function selectSamsungCardsToRefresh(
     [now + ahead, limit],
   );
 }
+
+/** The sync job's work: compiled cards whose row is missing or lapses within a minute. */
+export const CARD_STATE_AHEAD_MS = 60_000;

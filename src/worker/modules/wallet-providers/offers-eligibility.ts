@@ -14,6 +14,7 @@ import { offersPaused } from './projection-pause.ts';
 import { type ApprovedProjection, getApprovedProjection } from './projection-service.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
 import { canRenderProjection } from './render-projection.ts';
+import { accountCheckFailing } from './repo-account-health.ts';
 import { walletOfferSnapshotCurrent } from './repo-offers.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
 import {
@@ -26,7 +27,7 @@ import { samsungCardFresh } from './samsung-verification.ts';
 
 let runtimeAccountCheck = assertWalletRuntimeAccount;
 
-/** Tests only: Google's runtime account is deliberately unavailable until its typed runtime ships. */
+/** Tests only: replaces the runtime account check (Google's and Samsung's issuance currency). */
 export function setRuntimeAccountCheckForTest(
   replacement: typeof assertWalletRuntimeAccount,
 ): () => void {
@@ -225,6 +226,8 @@ export async function eligibleWalletProvider(
     providerReleaseId: approved.release.id,
     providerIdentityHash: approved.release.providerIdentityHash,
   };
+  // Q6: an account whose credential last failed its check shows no badge, until a check passes again.
+  if (await accountCheckFailing(ctx.env.DB, approved.release.accountId)) return null;
   if (!canRenderProjection(approved.projection, snapshot.passJson)) return null;
   if (approved.projection.schema === 2 && provider === 'samsung') {
     // Compiled cards: the pass must compile to the approved type and the stored card read must be

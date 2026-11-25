@@ -55,6 +55,8 @@ export type {
   WalletProviderRetirementProof,
 } from './repo-accounts.ts';
 
+import { hasCredential } from './account-presence.ts';
+
 const changed = () =>
   new ConflictError(
     'The wallet provider account changed. Reload and retry.',
@@ -95,8 +97,13 @@ async function validateCredentials(
   }
 }
 
+/**
+ * `configured` says a credential is present, on either model; whether the provider issues is the enrolment's
+ * on/off/held/revoked state (enrolment-read.ts), which the admin UI shows separately from this legacy route.
+ */
 function readiness(scope: WalletProviderScope, row: AccountRow | null): WalletProviderReadiness {
-  const state = !row?.credential_id ? 'absent' : row.revoked_at !== null ? 'revoked' : 'configured';
+  const state =
+    !row || !hasCredential(row) ? 'absent' : row.revoked_at !== null ? 'revoked' : 'configured';
   return {
     ...scope,
     accountId: row?.id ?? null,

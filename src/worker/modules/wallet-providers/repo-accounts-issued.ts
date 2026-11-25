@@ -30,7 +30,7 @@ export function findSamsungIssuedRefCredential(
 ): Promise<IssuedCredentialRow | null> {
   return first(
     db,
-    `SELECT a.id, a.org_id, a.mode, a.provider, e.revision, e.credential_id,
+    `SELECT a.id, a.org_id, a.mode, a.provider, e.revision, e.credential_id, NULL AS credential_source_id,
       a.revision AS current_revision, a.revoked_at AS account_revoked_at,
       NULL AS revoked_at, e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
       r.credential_version_id AS pin_version_id, i.card_type

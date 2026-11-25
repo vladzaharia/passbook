@@ -9,7 +9,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
+import { tenantAuthorityOf } from '../passes/http.ts';
 import { candidateHash } from '../templates/release-content.ts';
 import {
   readConfiguredWalletProviderCredentials,
@@ -28,21 +28,16 @@ import {
   projectionCandidateEnvelope,
 } from './repo-projection-store.ts';
 import {
+  CARD_STATE_AHEAD_MS,
   clearSamsungCardState,
   putSamsungCardState,
   samsungCardStateFresh,
+  selectSamsungCardsToRefresh,
 } from './repo-samsung-card-state.ts';
-import {
-  beginSamsungProjectionProbe,
-  completeSamsungProjectionProbe,
-  failSamsungProjectionProbe,
-  hasSamsungProjectionEvidence,
-} from './repo-samsung-verification.ts';
 import { validateSamsungCredentials } from './samsung-credentials.ts';
-import { probeSamsungActiveTemplate } from './samsung-template.ts';
+import { probeSamsungActiveTemplate, SamsungTemplateError } from './samsung-template.ts';
 
 const MAX_EVIDENCE_AGE_MS = 300_000;
-type Authority = Extract<TenantPassWrite, { kind: 'session' }>;
 
 /** A card template's reported state is not proof of recipient-market eligibility. */
 export const SamsungVerificationInputSchema = z.strictObject({
@@ -81,82 +76,8 @@ async function candidateForProbe(
   return candidate;
 }
 
-/** Only verified responses are retained; credentials, tokens, and response bodies are never logged. */
-async function probe(
-  ctx: ServiceContext,
-  candidate: ProjectionCandidate,
-  authority: Authority | null,
-): Promise<SamsungVerificationResult> {
-  if (
-    candidate.projection.provider !== 'samsung' ||
-    candidate.projection.schema !== 1 ||
-    !walletProviderEnabled('samsung', candidate.mode)
-  )
-    return unverified();
-  const probeId = ctx.ids.id();
-  if (!(await beginSamsungProjectionProbe(ctx, authority, candidate, probeId))) return unverified();
-  try {
-    const scope = { orgId: candidate.orgId, mode: candidate.mode, provider: 'samsung' as const };
-    const account = await readConfiguredWalletProviderCredentials(ctx, scope, {
-      accountId: candidate.accountId,
-      authorityEpoch: candidate.accountEpoch,
-    });
-    if (
-      account?.provider !== 'samsung' ||
-      account.accountId !== candidate.accountId ||
-      account.authorityEpoch !== candidate.accountEpoch ||
-      (await providerIdentityHash(account, identityCardType(candidate.projection))) !==
-        candidate.providerIdentityHash
-    )
-      throw new Error();
-    const startedAt = ctx.clock.now();
-    const credentials = await validateSamsungCredentials(
-      account.credentials,
-      startedAt,
-      candidate.projection.cardType,
-    );
-    const response = await probeSamsungActiveTemplate(
-      credentials,
-      {
-        cardType: candidate.projection.cardType,
-        subType: candidate.projection.cardSubType,
-        countryCode: candidate.projection.countryCode,
-        mode: candidate.mode,
-        now: startedAt,
-        requestId: ctx.ids.id().replaceAll('-', ''),
-      },
-      providerFetch(ctx.env),
-    );
-    if (
-      response.state !== 'ACTIVE' ||
-      response.testingModeOff !== 'Y' ||
-      response.cardId !== credentials.cardId ||
-      response.verifiedAt !== startedAt
-    )
-      throw new Error();
-    const expiresAt = Math.min(startedAt + MAX_EVIDENCE_AGE_MS, credentials.validUntil);
-    if (
-      (await completeSamsungProjectionProbe(
-        ctx,
-        authority,
-        candidate,
-        probeId,
-        startedAt,
-        expiresAt,
-      )) &&
-      (await hasSamsungProjectionEvidence(ctx, candidate))
-    )
-      return { verified: true, verifiedAt: startedAt, expiresAt };
-  } catch {
-    // Never log upstream errors, credentials, identifiers, tokens, or response bodies.
-    ctx.log.warn('wallet.verification_failed', { code: 'WALLET_VERIFY_FAILED' });
-  }
-  await failSamsungProjectionProbe(ctx, authority, candidate, probeId);
-  return unverified();
-}
-
-/** Authenticated administrative recheck of an independently reviewed immutable projection. */
-export async function refreshSamsungProjectionEvidence(
+/** Authenticated administrative recheck of a reviewed projection: a real read that replaces the card-state row. */
+export async function recheckSamsungCard(
   ctx: ServiceContext,
   auth: SessionAuth,
   input: SamsungVerificationInput,
@@ -179,48 +100,32 @@ export async function refreshSamsungProjectionEvidence(
       'Wallet projection candidate not found.',
       'WALLET_PROJECTION_NOT_FOUND',
     );
-  if (candidate.projection.schema === 2) {
-    const read = await refreshSamsungCardState(ctx, candidate);
-    return read ? { verified: true, ...read } : unverified();
-  }
-  const result = await probe(ctx, candidate, authority);
-  if (!result.verified && !(await hasSamsungProjectionEvidence(ctx, candidate))) return result;
-  if (!result.verified)
-    throw new ConflictError('A newer verification is in progress.', 'WALLET_VERIFICATION_CONFLICT');
-  return result;
-}
-
-/** The sync job's refresh: probes again although the cached proof still holds, so it does not lapse under readers. */
-export async function reprobeSamsungProjectionEvidence(
-  ctx: ServiceContext,
-  candidateId: string,
-  expectedHash: string,
-): Promise<boolean> {
-  ctx = snapshotWalletCredentialContext(ctx);
-  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
-  return candidate ? (await probe(ctx, candidate, null)).verified : false;
+  if (candidate.projection.schema !== 2)
+    throw new ConflictError(
+      'Samsung field mappings are retired. Review a compiled projection.',
+      'WALLET_PROJECTION_SCHEMA_RETIRED',
+    );
+  const read = await refreshSamsungCardState(ctx, candidate);
+  return read ? { verified: true, ...read } : unverified();
 }
 
 /**
- * Trusted issuance/publish callers may refresh an expired proof without an administrative session.
- * The candidate and separate human review are checked again at the database write. This establishes
- * card-state evidence only, not permission to issue or eligibility in a recipient's market.
+ * Trusted publish and update callers: the stored card read when it still has `marginMs` left, else a live
+ * read. Establishes the card's state only, not permission to issue or eligibility in a recipient's market.
  */
-export async function ensureSamsungProjectionEvidence(
+export async function ensureSamsungCard(
   ctx: ServiceContext,
   candidateId: string,
   expectedHash: string,
-  authority: Authority | null = null,
+  marginMs = 0,
 ): Promise<boolean> {
   ctx = snapshotWalletCredentialContext(ctx);
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
-  if (!candidate) return false;
-  if (candidate.projection.schema === 2) return ensureSamsungCardState(ctx, candidate);
-  if (await hasSamsungProjectionEvidence(ctx, candidate)) return true;
-  return (await probe(ctx, candidate, authority)).verified;
+  return candidate ? ensureSamsungCardState(ctx, candidate, marginMs) : false;
 }
+
+class IneligibleCard extends Error {}
 
 type CompiledCandidate = ProjectionCandidate & { projection: ProjectionV2 };
 const isCompiled = (c: ProjectionCandidate): c is CompiledCandidate =>
@@ -255,7 +160,7 @@ export async function refreshSamsungCardState(
       (await providerIdentityHash(account, identityCardType(projection))) !==
         candidate.providerIdentityHash
     )
-      throw new Error();
+      throw new IneligibleCard();
     const credentials = await validateSamsungCredentials(account.credentials, now, projection.type);
     const read = await probeSamsungActiveTemplate(
       credentials,
@@ -283,9 +188,18 @@ export async function refreshSamsungCardState(
       }))
     )
       return { verifiedAt: now, expiresAt };
-  } catch {
+  } catch (error) {
+    // Only a card Samsung says is unusable, or an account that no longer matches, withdraws offers now. A
+    // network, keyset or database failure keeps the row to its own expiry, so one bad read does not.
+    const ineligible =
+      error instanceof IneligibleCard ||
+      (error instanceof SamsungTemplateError && error.code === 'not_eligible');
     // Never log upstream errors, credentials, identifiers, tokens, or response bodies.
-    ctx.log.warn('wallet.verification_failed', { code: 'WALLET_VERIFY_FAILED' });
+    ctx.log.warn('wallet.verification_failed', {
+      code: 'WALLET_VERIFY_FAILED',
+      reason: ineligible ? 'ineligible' : 'transient',
+    });
+    if (!ineligible) return null;
   }
   await clearSamsungCardState(ctx.env.DB, candidate.id);
   return null;
@@ -295,19 +209,27 @@ export async function refreshSamsungCardState(
 export function samsungCardFresh(
   ctx: ServiceContext,
   candidate: ProjectionCandidate,
+  marginMs = 0,
 ): Promise<boolean> {
   if (!isCompiled(candidate) || !walletProviderEnabled('samsung', candidate.mode))
     return Promise.resolve(false);
-  return samsungCardStateFresh(ctx.env.DB, candidate, candidate.projection.type, ctx.clock.now());
+  return samsungCardStateFresh(
+    ctx.env.DB,
+    candidate,
+    candidate.projection.type,
+    ctx.clock.now(),
+    marginMs,
+  );
 }
 
 /** A fresh row, else a live read: the decision of a publish or an update. */
 export async function ensureSamsungCardState(
   ctx: ServiceContext,
   candidate: ProjectionCandidate,
+  marginMs = 0,
 ): Promise<boolean> {
   return (
-    (await samsungCardFresh(ctx, candidate)) ||
+    (await samsungCardFresh(ctx, candidate, marginMs)) ||
     (await refreshSamsungCardState(ctx, candidate)) !== null
   );
 }
@@ -324,4 +246,15 @@ export async function refreshSamsungCardStates(
       refreshed++;
   }
   return refreshed;
+}
+
+/** The sync job reads every current compiled card again before its row lapses, so request paths never must. */
+export async function refreshExpiringSamsungCards(
+  ctx: ServiceContext,
+  limit: number,
+): Promise<number> {
+  return refreshSamsungCardStates(
+    ctx,
+    await selectSamsungCardsToRefresh(ctx.env.DB, ctx.clock.now(), CARD_STATE_AHEAD_MS, limit),
+  );
 }

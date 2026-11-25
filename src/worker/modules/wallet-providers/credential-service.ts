@@ -30,8 +30,19 @@ import {
   revokeCredential,
   saveCredential,
 } from './repo-credentials.ts';
-import { samsungCardMap } from './samsung-cards.ts';
+import { DEFAULT_CARD_TYPE, samsungCardMap } from './samsung-cards.ts';
 import { validateSamsungCredentials } from './samsung-credentials.ts';
+
+/** The types that have a card: the default card serves loyalty, every other type has its own entry. */
+function cardTypesOf(row: CredentialRow): string[] {
+  if (row.provider !== 'samsung' || !row.card_map) return [];
+  try {
+    const keys = Object.keys(JSON.parse(row.card_map) as Record<string, string>);
+    return [...new Set(keys.map((key) => (key === DEFAULT_CARD_TYPE ? 'loyalty' : key)))].sort();
+  } catch {
+    return [];
+  }
+}
 
 export function credentialDto(row: CredentialRow): WalletCredential {
   return {
@@ -47,10 +58,11 @@ export function credentialDto(row: CredentialRow): WalletCredential {
     revokedAt: row.revoked_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    cardTypes: cardTypesOf(row),
   };
 }
 
-const changed = () =>
+export const changed = () =>
   new ConflictError('The wallet credential changed. Reload and retry.', 'WALLET_ACCOUNT_CONFLICT');
 
 function sessionOf(auth: SessionAuth): SessionAuth {
@@ -76,7 +88,7 @@ export async function orgWriter(
   };
 }
 
-function platformWriter(auth: SessionAuth, purpose: string): CredentialWriter {
+export function platformWriter(auth: SessionAuth, purpose: string): CredentialWriter {
   const session = sessionOf(auth);
   if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
   return {

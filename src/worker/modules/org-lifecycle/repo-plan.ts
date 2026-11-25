@@ -139,6 +139,7 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   counters: 'rate-limit windows',
   console_email_grace: 'users who keep the console by email until the cutover',
   credential_ref_keyset: 'platform keyset',
+  wallet_reissue_steps: 'reissue continuation dedupe, no tenant column, purged after 3 days',
   oidc_flows: 'sign-in flows',
   pass_transfer_asset_gc: 'retired storage keys, collected by the transfer asset sweep',
   entitlement_preset_meta: 'platform plan presets',

@@ -153,16 +153,23 @@ export async function casUpdate(
   return row?.version ?? null;
 }
 
-export type D1ErrorKind = 'unique' | 'foreign_key' | 'abort';
+export type D1ErrorKind = 'unique' | 'foreign_key' | 'abort' | 'trigger';
 
 export interface D1ErrorInfo {
   kind: D1ErrorKind;
-  /** `table.column` list for unique violations, the RAISE text for aborts, else the message. */
+  /** `table.column` list for unique violations, the RAISE text for aborts and triggers, else the message. */
   detail: string;
 }
 
-/** Maps D1's SQLite error text to a kind. Null for anything else, so callers rethrow. */
-export function classifyD1Error(error: unknown): D1ErrorInfo | null {
+/**
+ * Maps D1's SQLite error text to a kind. Null for anything else, so callers rethrow. A trigger's own
+ * RAISE(ABORT, text) is a `trigger` only when the caller opts in (`{ triggers: true }`): most callers
+ * must keep treating an unknown abort as a fault.
+ */
+export function classifyD1Error(
+  error: unknown,
+  options: { triggers?: boolean } = {},
+): D1ErrorInfo | null {
   const message = error instanceof Error ? error.message : '';
   const unique = /UNIQUE constraint failed: ([^:]+?)(?::|$| \()/.exec(message);
   if (unique?.[1]) return { kind: 'unique', detail: unique[1] };
@@ -170,5 +177,10 @@ export function classifyD1Error(error: unknown): D1ErrorInfo | null {
     return { kind: 'foreign_key', detail: message };
   const abort = /(?:^|: )(registration cap reached|authority_denied:[a-z]+)\b/.exec(message);
   if (abort?.[1]) return { kind: 'abort', detail: abort[1] };
+  if (options.triggers && !/constraint failed/i.test(message)) {
+    // `<RAISE text>: SQLITE_CONSTRAINT` with or without the `(extended: ...)` suffix, which only miniflare is proven to add.
+    const trigger = /^(?:D1_ERROR: )?(.*?): SQLITE_CONSTRAINT(?:$| \()/s.exec(message);
+    if (trigger) return { kind: 'trigger', detail: trigger[1] ?? message };
+  }
   return null;
 }

@@ -5,6 +5,7 @@
 //  - walletOpCurrentCheck is the grant check (reason `stale`): the same rule, the tenant of the actor row, the
 //    org status and the projection head.
 import type { Check } from '../../platform/authority-checks.ts';
+import { hasCredentialSql } from './account-presence.ts';
 
 function alias(value: string): string {
   if (!/^[a-z][a-z0-9_]*$/i.test(value)) throw new Error('Invalid trusted SQL alias');
@@ -64,7 +65,7 @@ export function walletOpCurrentSql(instanceAlias: string, operationAlias: string
     `EXISTS (SELECT 1 FROM wallet_provider_accounts account WHERE ${allOf([
       `account.id = ${i}.account_id`,
       `account.authority_epoch = ${op}.account_epoch`,
-      'account.credential_id IS NOT NULL',
+      hasCredentialSql('account'),
       'account.revoked_at IS NULL',
     ])})`,
   ]);
@@ -169,7 +170,7 @@ export function accountEpochCheck(accountId: string, epoch: number): Check {
       b,
     ) => `EXISTS (SELECT 1 FROM wallet_provider_accounts account WHERE account.id = ${b.bind(accountId)}
       AND account.org_id = a.org_id AND account.mode = a.mode AND account.authority_epoch = ${b.bind(epoch)}
-      AND account.credential_id IS NOT NULL AND account.revoked_at IS NULL)`,
+      AND ${hasCredentialSql('account')} AND account.revoked_at IS NULL)`,
   };
 }
 

@@ -5908,6 +5908,15 @@
       ]
     },
     {
+      "code": "WALLET_CARD_SET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "WALLET_CREDENTIALS_INVALID",
       "statuses": [
         422
@@ -6070,6 +6079,15 @@
       ]
     },
     {
+      "code": "WALLET_PROJECTION_SCHEMA_RETIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "WALLET_PROJECTION_UNSUPPORTED",
       "statuses": [
         409
@@ -6082,15 +6100,6 @@
       "code": "WALLET_RUN_BUSY",
       "statuses": [
         503
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_VERIFICATION_CONFLICT",
-      "statuses": [
-        409
       ],
       "modules": [
         "wallet-providers"

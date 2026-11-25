@@ -8,6 +8,7 @@ import {
   runtimeExecution,
   runtimeRetirementPurpose,
   runtimeSamsungAccount,
+  SAMSUNG_ISSUANCE,
   type SamsungRuntimeRefresh,
   type WalletRetirementClaim,
   WalletRuntimeError,
@@ -39,8 +40,15 @@ export async function createSamsungRuntimeOffer(
 ): Promise<string> {
   ctx = snapshotWalletCredentialContext(ctx);
   const scope = copyRuntimeScope(inputScope);
-  const account = await runtimeSamsungAccount(ctx, scope);
-  const call = runtimeExecution(ctx, scope, 'samsung', input.assertCurrent);
+  const account = await runtimeSamsungAccount(ctx, scope, SAMSUNG_ISSUANCE);
+  const call = runtimeExecution(
+    ctx,
+    scope,
+    'samsung',
+    input.assertCurrent,
+    undefined,
+    SAMSUNG_ISSUANCE,
+  );
   return call.finish(async () => {
     if (input.assertCurrent) await input.assertCurrent();
     return buildSamsungDataFetchLink(account, input.refId, ctx.clock.now());
@@ -52,9 +60,9 @@ type SamsungRuntimeUpdateInput = Omit<SamsungUpdateInput, 'now' | 'requestId'> &
   assertCurrent?: () => Promise<void>;
   /** Persist every raw provider response encrypted before resolving. */
   onProviderResponse: WalletRuntimeResponseSink;
-  /** Required only for DELETED and bound to the claimed revoke and exact reference. */
+  /** Required for a revoke's DELETED or CANCELED, bound to the claimed revoke and exact reference. */
   retirement?: WalletRetirementClaim;
-  /** Required for every other state: the current operation whose promoted reference is refreshed. */
+  /** Required for every update: the current operation whose promoted reference is refreshed. */
   refresh?: { instanceId: string; operationVersion: number };
 };
 
@@ -76,7 +84,10 @@ export async function sendSamsungRuntimeUpdate(
     ...update
   } = input;
   const claim = inputClaim ? { ...inputClaim } : undefined;
-  if ((update.state === 'DELETED') !== (claim !== undefined)) throw runtimeAccountUnavailable();
+  // Every revoke goes on the retirement path, a void (CANCELED) as much as a deletion: its operation is a
+  // claimed revoke, never an upsert, so a refresh purpose cannot name it.
+  const revoking = update.state === 'DELETED' || update.state === 'CANCELED';
+  if (revoking !== (claim !== undefined)) throw runtimeAccountUnavailable();
   if (typeof update.refId !== 'string' || !/^[A-Za-z0-9_-]{32}$/.test(update.refId))
     throw runtimeAccountUnavailable();
   const refHash = await sha256Hex(update.refId);

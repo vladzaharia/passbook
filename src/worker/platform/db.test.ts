@@ -147,6 +147,25 @@ describe('prefixMatch and containsMatch', () => {
 });
 
 describe('classifyD1Error', () => {
+  it('classifies a real trigger abort', async () => {
+    await run(env.DB, 'CREATE TABLE IF NOT EXISTS t_trg (a TEXT)');
+    await run(
+      env.DB,
+      "CREATE TRIGGER IF NOT EXISTS t_trg_guard BEFORE INSERT ON t_trg BEGIN SELECT RAISE(ABORT, 'not allowed here'); END",
+    );
+    try {
+      await run(env.DB, "INSERT INTO t_trg VALUES ('x')");
+    } catch (error) {
+      expect(classifyD1Error(error)).toBeNull();
+      expect(classifyD1Error(error, { triggers: true })).toEqual({
+        kind: 'trigger',
+        detail: 'not allowed here',
+      });
+      return;
+    }
+    throw new Error('statement did not fail');
+  });
+
   const failure = async (sql: string, params: string[] = []) => {
     try {
       await run(env.DB, sql, params);
@@ -179,6 +198,22 @@ describe('classifyD1Error', () => {
       kind: 'abort',
       detail: 'registration cap reached',
     });
+    for (const message of [
+      'D1_ERROR: provider operation is not authorized: SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_TRIGGER)',
+      'D1_ERROR: provider operation is not authorized: SQLITE_CONSTRAINT',
+    ]) {
+      expect(classifyD1Error(new Error(message))).toBeNull();
+      expect(classifyD1Error(new Error(message), { triggers: true })).toEqual({
+        kind: 'trigger',
+        detail: 'provider operation is not authorized',
+      });
+    }
+    // Constraint texts that are not a trigger's own stay unclassified.
+    expect(
+      classifyD1Error(new Error('D1_ERROR: NOT NULL constraint failed: t.a: SQLITE_CONSTRAINT'), {
+        triggers: true,
+      }),
+    ).toBeNull();
     expect(classifyD1Error(new Error('D1_ERROR: no such table: nope'))).toBeNull();
     expect(classifyD1Error('boom')).toBeNull();
   });

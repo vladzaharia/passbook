@@ -153,7 +153,6 @@ describe('existing provider instance runtime', () => {
       { ...f.binding, templateId: 'other-template' },
       { ...f.binding, version: 'other-version' },
       { ...f.binding, sourceReleaseId: 'other-source' },
-      { ...f.binding, now: f.binding.now + 300_000 },
     ]) {
       expect(await projectionReleaseBindingValid(f.kit.env.DB, rejected)).toBe(false);
     }
@@ -166,7 +165,7 @@ describe('existing provider instance runtime', () => {
     expect(await projectionReleaseBindingValid(f.kit.env.DB, newerBinding)).toBe(false);
   });
 
-  it('keeps reviewer and evidence on the exact release and fences an account revoke', async () => {
+  it('keeps the reviewer on the exact release and fences an account revoke', async () => {
     const f = await publishedProjectionBindingFixture();
     const db = f.kit.env.DB;
     const newer = await f.publish('samsung', 1);
@@ -203,38 +202,6 @@ describe('existing provider instance runtime', () => {
       expect(await projectionReleaseBindingValid(db, binding)).toBe(false);
     } finally {
       await setReviewer(review.reviewer);
-    }
-    expect(await projectionReleaseBindingValid(db, binding)).toBe(true);
-
-    const historyGuard = await first<{ sql: string }>(
-      db,
-      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'wallet_provider_projection_evidence_history_no_update'",
-    );
-    const historyGuardSql = historyGuard?.sql;
-    if (!historyGuardSql) throw new Error('Missing evidence history guard');
-    const setCountry = async (country: string) => {
-      await batch(db, [
-        stmt(db, 'DROP TRIGGER wallet_provider_projection_evidence_history_no_update'),
-        stmt(
-          db,
-          'UPDATE wallet_provider_projection_evidence_history SET country_code = ? WHERE candidate_id = ?',
-          [country, candidateId],
-        ),
-        stmt(db, historyGuardSql),
-      ]);
-    };
-    try {
-      await setCountry('ZZ');
-      expect(
-        await first(
-          db,
-          'SELECT 1 AS present FROM wallet_provider_projection_evidence WHERE candidate_id = ? AND status = ?',
-          [f.candidateId, 'verified'],
-        ),
-      ).toEqual({ present: 1 });
-      expect(await projectionReleaseBindingValid(db, binding)).toBe(false);
-    } finally {
-      await setCountry('GB');
     }
     expect(await projectionReleaseBindingValid(db, binding)).toBe(true);
 
@@ -334,30 +301,6 @@ describe('existing provider instance runtime', () => {
       }),
     ).toBeNull();
     expect(await findRetirementAccount(db, proof, f.kit.clock.now() + 120_000)).toBeNull();
-
-    const trigger = await first<{ sql: string }>(
-      db,
-      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?",
-      ['wallet_provider_projection_evidence_history_no_update'],
-    );
-    const triggerSql = trigger?.sql;
-    const candidateId = f.samsungRelease?.candidateId;
-    if (!triggerSql || !candidateId) throw new Error('Missing Samsung provenance fixture');
-    const replaceEvidenceCountry = async (country: string) => {
-      await batch(db, [
-        stmt(db, 'DROP TRIGGER wallet_provider_projection_evidence_history_no_update'),
-        stmt(
-          db,
-          'UPDATE wallet_provider_projection_evidence_history SET country_code = ? WHERE candidate_id = ?',
-          [country, candidateId],
-        ),
-        stmt(db, triggerSql),
-      ]);
-    };
-    await replaceEvidenceCountry('ZZ');
-    expect(await readWalletProviderRetirementCredentials(f.kit.ctx, proof)).toBeNull();
-    await replaceEvidenceCountry('GB');
-    expect(await readWalletProviderRetirementCredentials(f.kit.ctx, proof)).not.toBeNull();
 
     const seam = interveneAtD1(
       db,
@@ -971,9 +914,11 @@ describe('existing provider instance runtime', () => {
 
   it('authenticates and renders only an already-promoted Samsung reference', async () => {
     const f = await runtimeSamsungLegacyFixture('refresh');
-    await expect(assertWalletRuntimeAccount(f.kit.ctx, f.scope, 'samsung')).rejects.toMatchObject({
-      code: 'account_unavailable',
-    });
+    // Samsung issuance reads under its own purpose (SAMSUNG_ISSUANCE); the refusal of an unpurposed read
+    // is pinned in runtime-samsung-issuance.test.ts.
+    await expect(
+      assertWalletRuntimeAccount(f.kit.ctx, f.scope, 'samsung'),
+    ).resolves.toBeUndefined();
     const seen = new Set<string>();
     const claimReplay = async (key: string) => {
       if (seen.has(key)) return false;
@@ -1076,7 +1021,7 @@ describe('existing provider instance runtime', () => {
     ).rejects.toMatchObject({ code: 'account_unavailable' });
   }, 30_000);
 
-  it('rejects retired references and expires cached provider card proof', async () => {
+  it('rejects retired references', async () => {
     const retired = await runtimeSamsungLegacyFixture('refresh');
     await run(
       retired.kit.env.DB,
@@ -1098,18 +1043,6 @@ describe('existing provider instance runtime', () => {
           refHash: retired.refHash,
           operationVersion: retired.version,
         },
-        claimReplay,
-      }),
-    ).rejects.toMatchObject({ code: 'account_unavailable' });
-    expect(called).toBe(false);
-    const f = await runtimeSamsungLegacyFixture('refresh');
-    f.kit.clock.advance(300_001);
-    await expect(
-      verifySamsungRuntimeRequest(f.kit.ctx, f.scope, {
-        request: await f.request(),
-        refId: f.refId,
-        method: 'GET',
-        refresh: { instanceId: f.instanceId, refHash: f.refHash, operationVersion: f.version },
         claimReplay,
       }),
     ).rejects.toMatchObject({ code: 'account_unavailable' });

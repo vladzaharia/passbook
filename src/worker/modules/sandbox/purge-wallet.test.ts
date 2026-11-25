@@ -41,7 +41,7 @@ import {
   seedHistoricalProviderInstance,
   seedHistoricalSamsungRef,
 } from '../wallet-providers/runtime-historical-fixtures.ts';
-import { refreshSamsungProjectionEvidence } from '../wallet-providers/samsung-verification.ts';
+import { recheckSamsungCard } from '../wallet-providers/samsung-verification.ts';
 import { drainWalletProviderSync } from '../wallet-providers/sync.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
 import { purgeTestPasses } from './jobs.ts';
@@ -209,7 +209,7 @@ async function samsungProjection(kit: Kit, row: PassRow) {
       );
       try {
         expect(
-          await refreshSamsungProjectionEvidence(kit.ctx, auth, {
+          await recheckSamsungCard(kit.ctx, auth, {
             orgId: scope.orgId,
             mode: scope.mode,
             candidateId: candidate.id,
@@ -446,7 +446,7 @@ async function samsungFixture() {
   });
   try {
     expect(
-      await refreshSamsungProjectionEvidence(kit.ctx, auth, {
+      await recheckSamsungCard(kit.ctx, auth, {
         orgId: kit.org.id,
         mode: 'test',
         candidateId: candidate.id,

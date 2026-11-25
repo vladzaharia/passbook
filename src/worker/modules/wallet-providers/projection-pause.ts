@@ -7,7 +7,12 @@ import { pipelineRevision } from './projection-pipeline.ts';
 import type { ApprovedProjection } from './projection-service-support.ts';
 import { getPauseCheck, putPauseCheck } from './repo-projection-art.ts';
 
-type Probe = (ctx: ServiceContext, pinned: ProjectionV2, version: VersionRow) => Promise<boolean>;
+type Probe = (
+  ctx: ServiceContext,
+  pinned: ProjectionV2,
+  version: VersionRow,
+  orgId?: string,
+) => Promise<boolean>;
 let probe: Probe = pipelineAddsLoss;
 
 /** Tests only: replaces the check that recompiles under the current pipeline; returns a restorer. */
@@ -74,7 +79,9 @@ async function compute(
       approved.release.templateId,
       approved.release.version,
     );
-    const paused = version ? await probe(ctx, pinned, version) : true;
+    const paused = version
+      ? await probe(ctx, pinned, version, approved.release.orgId ?? undefined)
+      : true;
     await putPauseCheck(ctx.env.DB, { candidateId, pipeline, paused, now: ctx.clock.now() });
     return paused;
   } catch (error) {
