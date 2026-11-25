@@ -25,6 +25,20 @@ export function paperZoneOf(iso: string | undefined, named?: string): string | u
   return `${m[1]}${m[2]}:${m[3]}`;
 }
 
+/** The zone to print one time in: the template's named zone, else the offset that time carries. */
+export function paperZoneFor(
+  c: { zone?: string | undefined; zoneNamed?: boolean },
+  iso: string,
+): string | undefined {
+  return c.zoneNamed ? c.zone : paperZoneOf(iso);
+}
+
+/** A time written in UTC (`Z`). A validity at exactly midnight is a bare date, not a clock. */
+export const isUtcClock = (iso: string | undefined, validity = false): boolean =>
+  Boolean(iso) &&
+  /Z$/.test(iso as string) &&
+  !(validity && /T00:00:00(?:\.0+)?Z$/.test(iso as string));
+
 function zoneName(zone: string, at: Date, style: 'short' | 'longGeneric'): string | undefined {
   let fallback: string | undefined;
   for (const locale of ZONE_LOCALES) {

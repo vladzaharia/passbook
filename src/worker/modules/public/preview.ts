@@ -66,7 +66,7 @@ export async function previewFor(
   const [model, template, ticket] = await Promise.all([
     pageModel(ctx, pass),
     resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
-    paperTicket(ctx, pass),
+    paperTicket(ctx, pass, 'holder'),
   ]);
   const { mark } = await orgBrandOf(ctx, pass.orgId);
   const base = baseUrl(ctx.env);
