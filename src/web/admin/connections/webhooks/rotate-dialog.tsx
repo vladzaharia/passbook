@@ -93,7 +93,7 @@ export function RotateDialog({
             <p className="text-xs text-fg-muted">
               {overlap === '0'
                 ? 'The old secret stops working now. Update your receiver first.'
-                : 'Both secrets sign each request until the old one expires.'}
+                : 'Both secrets sign each request until the old one expires. If it leaked, choose Now.'}
             </p>
           </div>
         )}

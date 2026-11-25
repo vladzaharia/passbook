@@ -26,7 +26,7 @@ describe('minting a credential scope (scanning:admin)', () => {
     expect((await create(session.headers, body())).status).toBe(201);
   });
 
-  it('accepts every expiry the portal offers, 1 to 90 days', async () => {
+  it('takes a credential key at each developer-portal expiry (all within the 90-day cap)', async () => {
     const { session } = await member('org_admin');
     for (const days of KEY_EXPIRY_DAYS)
       expect(

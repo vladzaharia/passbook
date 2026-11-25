@@ -64,7 +64,7 @@ export async function releaseHeldPage(
           continue;
         }
         const pass = await getPassForWrite(db, row.pass_id, scope);
-        // Only the pass's current holder, while it is live: an address fixed during the hold is the one that counts.
+        // Only the address the row was imported with, while the pass is live: a changed address is refused, never mailed.
         if (
           pass.status !== 'active' ||
           pass.removedAt !== null ||
