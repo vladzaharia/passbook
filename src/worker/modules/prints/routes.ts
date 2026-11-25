@@ -17,7 +17,6 @@ import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts'
 import { openPublicAsset } from '../public/service.ts';
 import { printPageModel } from './page.ts';
 import { PDF_HEADERS, ticketPdf } from './pdf-service.ts';
-import * as repo from './repo.ts';
 import { adminWriter } from './repo-write.ts';
 import { registerBulkPrintRoutes } from './routes-bulk.ts';
 import {
