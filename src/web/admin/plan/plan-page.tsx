@@ -46,13 +46,13 @@ export function PlanPage({ orgId, membership }: { orgId: string; membership: Org
             ) : null}
             {plan.label}
           </h2>
-          <Card aria-labelledby="plan-limits">
+          <Card role="region" aria-labelledby="plan-limits">
             <CardHeader title={<span id="plan-limits">{PLAN_COPY.limits}</span>} />
             <CardBody>
               <LimitList rows={view.limits} />
             </CardBody>
           </Card>
-          <Card aria-labelledby="plan-features">
+          <Card role="region" aria-labelledby="plan-features">
             <CardHeader title={<span id="plan-features">{PLAN_COPY.features}</span>} />
             <CardBody className="flex flex-col gap-5">
               <FeatureChecklist items={view.features} />

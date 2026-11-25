@@ -26,28 +26,33 @@ export function LimitList({ rows }: { rows: readonly LimitRow[] }) {
         {rows.map((r) => {
           const meter = r.used !== null && r.limit !== null && r.limit > 0;
           return (
-            <div key={r.key} className="flex flex-col gap-1.5 py-1.5">
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="min-w-0 truncate text-sm text-fg-muted">{r.label}</dt>
-                <dd
+            <div
+              key={r.key}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1.5 py-1.5"
+            >
+              <dt className="truncate text-sm text-fg-muted">{r.label}</dt>
+              <dd className="contents">
+                <span
                   className={cn(
-                    'shrink-0 text-right text-sm tabular-nums',
+                    'text-right text-sm tabular-nums',
                     r.state === 'ok' ? 'font-medium text-fg-strong' : 'font-semibold text-warning',
                     r.limit === null || r.limit === 0 ? 'text-fg-muted' : undefined,
                   )}
                 >
                   {valueText(r)}
-                </dd>
-              </div>
-              {meter ? (
-                <ProgressBar
-                  label={r.label}
-                  value={r.used ?? 0}
-                  max={r.limit ?? 1}
-                  valueText={valueText(r)}
-                  tone={r.state === 'ok' ? 'accent' : 'warning'}
-                />
-              ) : null}
+                </span>
+                {meter ? (
+                  <span className="col-span-2">
+                    <ProgressBar
+                      label={r.label}
+                      value={r.used ?? 0}
+                      max={r.limit ?? 1}
+                      valueText={valueText(r)}
+                      tone={r.state === 'ok' ? 'accent' : 'warning'}
+                    />
+                  </span>
+                ) : null}
+              </dd>
             </div>
           );
         })}
@@ -75,9 +80,11 @@ export function FeatureChecklist({ items }: { items: readonly string[] }) {
 /** The footer rule, one row: what the smallest PassBook footer the plan allows reads as. */
 export function FooterRow({ level }: { level: FooterLevel }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3 text-sm">
+    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-t border-border pt-3 text-sm">
       <span className="text-fg-muted">{PLAN_COPY.footer}</span>
-      <span className="text-right font-medium text-fg-strong">{FOOTER_SAMPLE[level]}</span>
+      <span className="ml-auto whitespace-nowrap text-right font-medium text-fg-strong">
+        {FOOTER_SAMPLE[level]}
+      </span>
     </div>
   );
 }

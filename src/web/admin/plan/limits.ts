@@ -87,6 +87,27 @@ const OTHER_FEATURE: Partial<Record<PlanFeatureKey, string>> = {
   'identity.managed': ENTITLEMENT_LABEL['identity.managed'],
 };
 
+/** Limits as a person counts them: the things they hold first, then the daily caps. */
+const LIMIT_ORDER: readonly EntitlementKey[] = [
+  'passes.live',
+  'passes.test',
+  'templates',
+  'scanning.devices',
+  'members',
+  'api.keys',
+  'webhooks.endpoints',
+  'connections',
+  'domains',
+  'email.perDay',
+  'messages.perDay',
+  'passes.changesPerDay',
+  'join.perDay',
+];
+const rank = (key: EntitlementKey) => {
+  const at = LIMIT_ORDER.indexOf(key);
+  return at < 0 ? LIMIT_ORDER.length : at;
+};
+
 /** An organization's plan as the API reports it: every limit with use, and every feature it can use now. */
 export function viewOfOrgPlan(plan: OrgPlanDto): PlanView {
   const has = (k: PlanFeatureKey) => plan.features.find((f) => f.key === k);
@@ -103,13 +124,15 @@ export function viewOfOrgPlan(plan: OrgPlanDto): PlanView {
     return [f.key === 'api' && f.level === 'read' ? `${name}, read only` : name];
   });
   return {
-    limits: plan.limits.map(({ key, limit, used }) => ({
-      key,
-      label: limitLabel(key),
-      limit,
-      used,
-      state: stateOf(limit, used),
-    })),
+    limits: [...plan.limits]
+      .sort((a, b) => rank(a.key) - rank(b.key))
+      .map(({ key, limit, used }) => ({
+        key,
+        label: limitLabel(key),
+        limit,
+        used,
+        state: stateOf(limit, used),
+      })),
     features: [...channels, ...others],
     footer: plan.footer,
   };

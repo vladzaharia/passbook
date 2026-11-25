@@ -89,7 +89,14 @@ export function PlanTile({
             {plan.label}
           </label>
           {isCurrent ? (
-            <Badge id={currentId} tone="accent" className={popCurrent ? 'plan-pop' : undefined}>
+            <Badge
+              id={currentId}
+              tone="accent"
+              className={cn(
+                'absolute -top-2.5 right-3 bg-surface-raised',
+                popCurrent && 'plan-pop',
+              )}
+            >
               {PLAN_COPY.current}
             </Badge>
           ) : null}

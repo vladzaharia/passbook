@@ -76,7 +76,7 @@ test('Overview carries no plan card, and Plan lists limits, features and the foo
   const limits = page.getByRole('region', { name: 'Limits' });
   await expect(limits.getByText('0 of 5,000')).toBeVisible();
   const features = page.getByRole('region', { name: 'Features' });
-  await expect(features.getByText('Google Wallet')).toBeVisible();
+  await expect(features.getByText('Apple', { exact: true })).toBeVisible();
   await shoot(page, 'plan-standard');
   expect(await contrast(page)).toEqual([]);
 });
@@ -91,7 +91,7 @@ test('Overview names a limit at 80% or more and links to Plan', async ({ page })
   await expect(page).toHaveURL(new RegExp(`/admin/o/${id}/plan$`));
   await expect(page.getByRole('region', { name: 'Limits' }).getByText('1 of 1')).toBeVisible();
   await expect(
-    page.getByRole('region', { name: 'Features' }).getByText('Google Wallet'),
+    page.getByRole('region', { name: 'Features' }).getByText('Samsung', { exact: true }),
   ).toHaveCount(0);
   await shoot(page, 'plan-trial-at-limit');
 });
@@ -124,5 +124,6 @@ test('the plan picker shows five equal tiles, compares and confirms', async ({ p
   await page.waitForTimeout(400);
   await shoot(page, 'picker-confirm', [WIDTHS[0], WIDTHS[3]]);
   await confirm.getByRole('button', { name: 'Cancel' }).click();
+  await expect(confirm).toBeHidden();
   expect(await contrast(page)).toEqual([]);
 });
