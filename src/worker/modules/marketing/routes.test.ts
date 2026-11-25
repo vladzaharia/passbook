@@ -200,9 +200,10 @@ describe('POST /access', () => {
     expect(sent).toHaveLength(0);
   });
 
-  it('refuses a body over 4 KB and an unknown content type', async () => {
+  it('refuses a JSON body over 4 KB, a form over 12 KB and an unknown content type', async () => {
     const { post, env } = await setup();
-    expect((await post(form({ message: 'x'.repeat(5000) }))).status).toBe(413);
+    expect((await post({ ...VALID, message: 'x'.repeat(5000) }, { json: true })).status).toBe(413);
+    expect((await post(form({ message: 'x'.repeat(13000) }))).status).toBe(413);
     const res = await app.request(
       `${ORIGIN}/access`,
       { method: 'POST', headers: { 'content-type': 'text/plain', origin: ORIGIN }, body: 'x' },
