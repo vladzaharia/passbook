@@ -376,6 +376,38 @@
     "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|8.data.exit: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|8.data.exit: field added",
+    "note": "pass.scanned data carries exit when direction is out: scan for an exit tap, else desk, stay, clear, zone or forced."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|8.data.zoneId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|8.data.zoneId: field added",
+    "note": "pass.scanned data carries zoneId when the scan was at a zone."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|8.data.exit: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|8.data.exit: field added",
+    "note": "pass.scanned data carries exit when direction is out: scan for an exit tap, else desk, stay, clear, zone or forced."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|8.data.zoneId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|8.data.zoneId: field added",
+    "note": "pass.scanned data carries zoneId when the scan was at a zone."
+  },
+  {
     "key": "GET /api/v1/identities 200|0.items[].handle: field added",
     "class": "additive",
     "operationId": "identities.getIdentities",
@@ -1246,6 +1278,22 @@
     "op": "GET /api/v1/wallet-identities",
     "change": "new operation",
     "note": "Lists wallet identities across Apple and Google."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.data.exit: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|8.data.exit: field added",
+    "note": "pass.scanned data carries exit when direction is out: scan for an exit tap, else desk, stay, clear, zone or forced."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.data.zoneId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|8.data.zoneId: field added",
+    "note": "pass.scanned data carries zoneId when the scan was at a zone."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
