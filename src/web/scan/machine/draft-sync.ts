@@ -137,6 +137,19 @@ export function createDraftSync(deps: ScanDeps, health: DraftHealth = draftHealt
         if (!(loop.s === 'verdict' && loop.outcome.kind === 'ok')) clear(ref, false);
       }
       const want = wantOf(after);
+      // Any desk read may have a ready card up: leaving it without a result clears the card too.
+      if (
+        anchor === null &&
+        read &&
+        port &&
+        after.online &&
+        deps.scannerId() !== null &&
+        (loop.s === 'member' || loop.s === 'reviewing') &&
+        loop.input.passId === undefined &&
+        !loop.input.local &&
+        read.sig === loop.input.sig
+      )
+        anchor = read.key;
       if (anchor !== null) {
         const onRead = (loop.s === 'member' || loop.s === 'reviewing') && read?.key === anchor;
         if (loop.s === 'applying' && read?.key === anchor) {
