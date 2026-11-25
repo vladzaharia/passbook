@@ -167,6 +167,8 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
                     .replace(/[^a-z0-9]+/g, '-')}`,
     ],
     [/^confirmSlug$/, ORG_SLUG],
+    // A roster entry's pass ordinal within one response.
+    [/^g$/, '1'],
     [
       /^(version|templateVersion|activeVersion|baseVersion|fromVersion|toVersion|appVersion)$/,
       () => (k === 'appVersion' ? '1.4.2' : TEXT.version),

@@ -33,6 +33,10 @@ export function estimateQueries(job: Job): number {
       return 10 + 10 * job.passIds.length;
     case 'message_rule.check':
       return 14;
+    // Measured 7 with an in-memory registry: the row, the outbox check and commit, the dispatch.
+    // The D1 registry adds its template reads.
+    case 'pass.boundary_refresh':
+      return 10;
     default:
       return 15;
   }

@@ -39,7 +39,7 @@ export function KeyReview({
       <span className="block">
         {days === 'never'
           ? 'It will not expire.'
-          : `It expires after ${days === '365' ? '1 year' : `${days} days`}.`}
+          : `It expires after ${days === '180' ? '6 months' : days === '365' ? '1 year' : `${days} days`}.`}
       </span>
       <span className="mt-3 block">
         No secret has been issued yet. It will be shown once after creation.

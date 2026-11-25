@@ -54,6 +54,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   request_log_budget: BOOKKEEPING,
   pass_attach_blocks: 'holder mail preference',
   pass_auth_seals: SEALED,
+  pass_boundaries: 'timed keys of upcoming events, rebuilt from the pass and its template',
   pass_credential_tombstones: 'revocation evidence kept by the platform: refs only',
   pass_credential_transfer_payloads: SEALED,
   pass_credential_transfers: BOOKKEEPING,

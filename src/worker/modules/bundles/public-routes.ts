@@ -26,8 +26,8 @@ import {
 } from '../../ssr/presentation-page.tsx';
 import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
-import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
+import { serveCurrentPassFile } from '../passes/timed-variant.ts';
 import { presentationForPass } from '../public/presentation.ts';
 import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { isTokenShape, openPublicAsset, supportContacts } from '../public/service.ts';
@@ -180,7 +180,7 @@ register(
     const bundle = await bundleForToken(ctx, p.token);
     const pass = await addablePass(ctx, bundle, p.passId);
     await appleFileGate(ctx, pass);
-    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
+    const response = await serveCurrentPassFile(ctx, pass, c.req.raw);
     try {
       await assertBundleMember(ctx, bundle, pass);
       if (response.status === 200) {

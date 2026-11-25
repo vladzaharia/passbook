@@ -102,5 +102,7 @@ describe('GuidesIndex', () => {
     expect(screen.getByText('Guide one')).toBeInTheDocument();
     expect(screen.getByText('Soon')).toBeInTheDocument();
     expect(screen.getByText('Three')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Start' })).toBeInTheDocument();
+    expect(document.querySelectorAll('.gtile svg[aria-hidden="true"]')).toHaveLength(3);
   });
 });

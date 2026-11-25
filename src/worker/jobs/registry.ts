@@ -6,6 +6,7 @@ import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts'
 import { handleJoinResend } from '../modules/join/jobs.ts';
 import { handleHolderMail } from '../modules/me/jobs.ts';
 import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
+import { handleBoundaryRefresh } from '../modules/passes/event-boundaries.ts';
 import { handlePrintsBulk } from '../modules/prints/jobs.ts';
 import { handleRetentionNotice } from '../modules/retention/jobs.ts';
 import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
@@ -47,6 +48,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'wallet.google_reconcile': handleGoogleReconcile,
   'wallet.reissue': handleWalletReissue,
   'wallet.projection_system': handleProjectionSystem,
+  'pass.boundary_refresh': handleBoundaryRefresh,
   'channel.apple_bump': handleAppleBump,
   'channel.capability': handleCapabilityChange,
   'channel.entitlement': handleEntitlementApply,
@@ -94,6 +96,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'wallet.reissue':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.projection_system':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'pass.boundary_refresh':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.apple_bump':
       return JOB_HANDLERS[job.kind](job, ctx);
