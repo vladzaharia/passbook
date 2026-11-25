@@ -1209,12 +1209,13 @@ describe('organization settings authorization', () => {
               ]),
             ).toEqual({ changes: 1 });
           } else {
-            expect(
-              await run(appEnv.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
-                fx.clock.now(),
-                membershipId,
-              ]),
-            ).toEqual({ changes: 1 });
+            // D1 counts the rows a trigger writes: revoking a membership also marks the user's Polaris ID subject.
+            const revoked = await run(
+              appEnv.DB,
+              'UPDATE org_memberships SET revoked_at = ? WHERE id = ?',
+              [fx.clock.now(), membershipId],
+            );
+            expect(revoked.changes).toBeGreaterThanOrEqual(1);
             if (revocation === 'membership replacement') await addMembership(org.id);
           }
         },
