@@ -2366,7 +2366,6 @@ export type LegalHoldsListResponse = {
     canRelease: boolean;
   }>;
   nextCursor: string | null;
-  guestPassesFrom?: number | null;
 };
 
 export type LegalHoldsReleaseResponse = {
@@ -6786,7 +6785,6 @@ export type PlatformOrgsLegalHoldsListResponse = {
     canRelease: boolean;
   }>;
   nextCursor: string | null;
-  guestPassesFrom?: number | null;
 };
 
 export type PlatformOrgsLegalHoldsReleaseResponse = {

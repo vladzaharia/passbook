@@ -2971,9 +2971,8 @@ type LegalHoldsCreateResponse struct {
 }
 
 type LegalHoldsListResponse struct {
-	Items           []LegalHoldsListResponseItemsItem `json:"items"`
-	NextCursor      *string                           `json:"nextCursor"`
-	GuestPassesFrom *int64                            `json:"guestPassesFrom,omitempty"`
+	Items      []LegalHoldsListResponseItemsItem `json:"items"`
+	NextCursor *string                           `json:"nextCursor"`
 }
 
 type LegalHoldsListResponseItemsItem struct {
@@ -7923,9 +7922,8 @@ type PlatformOrgsLegalHoldsCreateResponse struct {
 }
 
 type PlatformOrgsLegalHoldsListResponse struct {
-	Items           []PlatformOrgsLegalHoldsListResponseItemsItem `json:"items"`
-	NextCursor      *string                                       `json:"nextCursor"`
-	GuestPassesFrom *int64                                        `json:"guestPassesFrom,omitempty"`
+	Items      []PlatformOrgsLegalHoldsListResponseItemsItem `json:"items"`
+	NextCursor *string                                       `json:"nextCursor"`
 }
 
 type PlatformOrgsLegalHoldsListResponseItemsItem struct {

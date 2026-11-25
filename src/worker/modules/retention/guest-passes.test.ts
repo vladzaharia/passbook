@@ -13,8 +13,6 @@ let tpl: string;
 beforeAll(async () => {
   await setupActionFixture();
   tpl = await accessTemplate();
-  // The first run starts the 7 day grace; every test below advances the clock past it.
-  await dailyGuestPasses(ctx());
 });
 const ctx = () => createJobContext(kit.env, 'visitors', { clock: kit.clock });
 

@@ -39,11 +39,6 @@ export function formatDateTime(ms: number | null | undefined, empty = 'Never'): 
   return ms == null || ms === 0 ? empty : `${DAY.format(ms)}, ${TIME.format(ms)}`;
 }
 
-/** Oct 31, 2026, as the calendar reads in `timeZone` (the org's). */
-export function formatDayIn(ms: number, timeZone: string): string {
-  return new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium', timeZone }).format(ms);
-}
-
 /** Oct 31, 2026. */
 export function formatDay(ms: number | null | undefined, empty = 'None'): string {
   return ms == null ? empty : DAY.format(ms);

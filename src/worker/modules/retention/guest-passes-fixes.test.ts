@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { CRON_HOOKS, DAILY_CRON, handleScheduled } from '../../jobs/cron.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -7,10 +7,9 @@ import { ACCESS, accessTemplate } from '../scan/access-test-fixtures.ts';
 import { kit, setupActionFixture } from '../scan/act-test-fixtures.ts';
 import { stageVersion } from '../scan/action-template-read-race-test-fixtures.ts';
 import { approveScanReleases } from '../scan/test-kit.ts';
-import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
+import { readSystemValue } from '../settings/repo.ts';
 import { dailyGuestPasses } from './guest-passes.ts';
 import { ctx, DAY, gone, hold, pass, raced, row } from './guest-passes-test-fixtures.ts';
-import { guestPassesFrom } from './guest-state.ts';
 import { writeReceipt } from './receipt-service.ts';
 import { GUEST_CANDIDATES_SQL } from './repo-guest-passes.ts';
 
@@ -18,27 +17,6 @@ let tpl: string;
 beforeAll(async () => {
   await setupActionFixture();
   tpl = await accessTemplate(ACCESS);
-  await dailyGuestPasses(ctx());
-});
-
-describe('grace period', () => {
-  it('deletes nothing for 7 days after the first run, logs the due count, then deletes', async () => {
-    const p = await pass(tpl);
-    kit.clock.advance(100 * DAY);
-    await writeSystemValue(kit.env.DB, 'retention.guestPassesSince', kit.clock.now(), 1);
-    const c = ctx();
-    const info = vi.spyOn(c.log, 'info');
-    await dailyGuestPasses(c);
-    expect(await gone(p.id)).toBe(false);
-    const pending = info.mock.calls.find(([name]) => name === 'retention.guest_passes.pending');
-    expect(pending?.[1]).toMatchObject({ count: 1 });
-    expect(JSON.stringify(pending)).not.toContain(p.id);
-    expect(await guestPassesFrom(kit.env.DB, kit.clock.now())).toBe(kit.clock.now() + 7 * DAY);
-    kit.clock.advance(7 * DAY + 1);
-    expect(await guestPassesFrom(kit.env.DB, kit.clock.now())).toBeNull();
-    await dailyGuestPasses(ctx());
-    expect(await gone(p.id)).toBe(true);
-  });
 });
 
 describe('what the door reads', () => {
@@ -164,7 +142,6 @@ describe('the daily budget', () => {
        WHERE id IN (${made.map(() => '?').join(',')})`,
       made.map((p) => p.id),
     );
-    await writeSystemValue(kit.env.DB, 'retention.guestPassesSince', 1, 1);
     let marker = 0;
     const hooks = CRON_HOOKS[DAILY_CRON] ?? [];
     hooks.push({ name: 'test.marker', run: async () => void marker++ });

@@ -22,7 +22,6 @@ export const RETENTION_COPY = {
   verified: 'Verified',
   unverified: 'Not verified',
   auditNote: (days: number) => `Kept ${days} days unless held.`,
-  guestGrace: (date: string) => `Guest-plan passes are deleted from ${date}.`,
   readOnlyWindows: 'Only an organization admin can change these.',
 } as const;
 

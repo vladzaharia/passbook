@@ -5,7 +5,7 @@ import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { deletePass } from '../passes/service.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
-import { graceEndsAt, readCursors, writeCursors } from './guest-state.ts';
+import { readCursors, writeCursors } from './guest-state.ts';
 import { healHead } from './head-store.ts';
 import {
   type PreparedReceipt,
@@ -106,13 +106,12 @@ async function removePass(
  * is deleted once its end is more days past than the `visitors` retention plan allows (the org's days, floors and
  * holds, else the platform's). It goes through `deletePass` (void, push, soft delete; scans keep their counts and
  * lose the pass link). A held pass or org, a pending credential transfer, a plan that is no longer guest and an
- * extended end all keep it. The first run only starts a 7 day grace: it logs what is due and deletes nothing.
+ * extended end all keep it.
  */
 export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
   const targets = await retentionTargets(ctx, ['visitors']);
   if (!targets) return;
   const now = ctx.clock.now();
-  const dry = now < (await graceEndsAt(ctx));
   const cursors = await readCursors(ctx);
   const startQueries = ctx.queries?.() ?? 0;
   let removed = 0;
@@ -120,7 +119,6 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
     ctx.queries
       ? ctx.queries() >= Math.min(startQueries + QUERY_ALLOWANCE, QUERY_CEILING)
       : removed >= DELETE_CAP;
-  const due = new Map<string | null, number>();
   const zones = new Map<string, string>();
   const zoneOf = async (orgId: string) => {
     const known = zones.get(orgId);
@@ -147,10 +145,6 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
         try {
           const end = endOf(c, await zoneOf(c.org_id));
           if (end === null || end >= cutoff) continue;
-          if (dry) {
-            due.set(orgId, (due.get(orgId) ?? 0) + 1);
-            continue;
-          }
           if (await removePass(ctx, c, { orgId, policyDays: days, cutoffAt: cutoff })) removed++;
         } catch (error) {
           ctx.log.error('retention.guest_pass_failed', {
@@ -188,8 +182,6 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
     visited++;
   }
   await targets.finish(visited);
-  if (!dry) await writeCursors(ctx, cursors);
-  for (const [orgId, count] of due)
-    ctx.log.info('retention.guest_passes.pending', { orgId, count });
+  await writeCursors(ctx, cursors);
   if (removed > 0) ctx.log.info('retention.guest_passes', { removed });
 }
