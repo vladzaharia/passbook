@@ -79,7 +79,7 @@ describe('response tree keys', () => {
     await user.keyboard('{ArrowLeft}');
     expect(item(/^\$, /)).toHaveFocus();
     await user.keyboard('{End}');
-    expect(item(/^next, /)).toHaveFocus();
+    expect(item(/^meta, /)).toHaveFocus();
     await user.keyboard('{Home}');
     expect(item(/^\$, /)).toHaveFocus();
   });
