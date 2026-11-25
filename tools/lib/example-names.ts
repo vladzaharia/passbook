@@ -53,6 +53,8 @@ export const TABLES: Record<string, string[]> = {
   field: ['Plan', 'Valid until', 'Holder email', 'Member ID', 'Visits left'],
   stat: ['Passes', 'Templates', 'Connections', 'Keys'],
   brand: [ORG],
+  operation: ['Delete sandbox', 'Sync connection', 'Update passes'],
+  operationStep: ['Remove Test passes', 'Revoke keys', 'Send pages'],
 };
 
 /** Words in a path segment, from camelCase and separators. */
@@ -66,6 +68,8 @@ const words = (seg: string): string[] =>
 
 /** Fields whose entity is told by the API area and the field, before any path word is read. */
 const KEYED: [RegExp, RegExp, string][] = [
+  [/^operations$/, /^title$/, 'operation'],
+  [/^operations$/, /^label$/, 'operationStep'],
   [/^status$/, /^title$/, 'incident'],
   [/^status$/, /^label$/, 'component'],
   [/^(scan|scans)$/, /^title$/, 'pass'],

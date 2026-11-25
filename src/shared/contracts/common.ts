@@ -41,6 +41,8 @@ export const ProblemSchema = z.object({
   used: z.number().int().optional(),
   /** IDP_SIGN_IN_REQUIRED: where to sign in with Polaris ID. */
   signInUrl: z.string().optional(),
+  /** OPERATION_RUNNING: the operation already doing this. */
+  operationId: z.string().optional(),
 });
 export type ProblemDto = z.infer<typeof ProblemSchema>;
 

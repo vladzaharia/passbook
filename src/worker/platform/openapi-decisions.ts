@@ -39,6 +39,7 @@ const IDEMPOTENT = [
   'post /api/v1/pass-imports',
   'post /api/v1/pass-imports/{id}/commit',
   'post /api/v1/templates/{id}/review-requests',
+  'post /api/v1/operations/{id}/retry',
 ];
 
 const toRegex = (path: string) =>

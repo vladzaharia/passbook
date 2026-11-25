@@ -54,6 +54,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_bulk_runs',
   'pass_bulk_locks',
   'pass_views',
+  'operations',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
@@ -85,6 +86,7 @@ export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_bulk_runs',
   'pass_bulk_locks',
   'pass_views',
+  'operations',
 ]);
 
 export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
