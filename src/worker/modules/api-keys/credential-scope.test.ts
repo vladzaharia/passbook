@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeSession } from '../../../../test/helpers/index.ts';
+import { KEY_EXPIRY_DAYS } from '../../../shared/developers-keys.ts';
 import { run } from '../../platform/db.ts';
 import { create, f, h, member, org, platformSession, setup, teardown } from './test-kit.ts';
 
@@ -23,6 +24,19 @@ describe('minting a credential scope (scanning:admin)', () => {
   it('is minted by an org_admin session with Polaris ID and a fresh step-up', async () => {
     const { session } = await member('org_admin');
     expect((await create(session.headers, body())).status).toBe(201);
+  });
+
+  it('takes a credential key at each developer-portal expiry (all within the 90-day cap)', async () => {
+    const { session } = await member('org_admin');
+    for (const days of KEY_EXPIRY_DAYS)
+      expect(
+        (
+          await create(
+            session.headers,
+            body({ name: `Door ${days}`, expiresAt: h.clock.now() + days * DAY }),
+          )
+        ).status,
+      ).toBe(201);
   });
 
   it('is refused for a member without scanning:manage', async () => {

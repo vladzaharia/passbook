@@ -55,6 +55,11 @@ export function SessionCustomerFields({
           checked={c.showReady ?? true}
           onCheckedChange={(showReady) => set({ showReady })}
         />
+        <SwitchRow
+          label="Show amounts"
+          checked={c.showDraft ?? true}
+          onCheckedChange={(showDraft) => set({ showDraft })}
+        />
       </DependentSettings>
     </div>
   );

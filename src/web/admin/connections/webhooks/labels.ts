@@ -85,8 +85,10 @@ export const TRIGGER_LABEL = {
 
 export const OVERLAP_OPTIONS = [
   { value: '0', label: 'Now' },
+  { value: '1', label: '1 hour' },
   { value: '24', label: '24 hours' },
   { value: '72', label: '3 days' },
+  { value: '168', label: '7 days' },
 ] as const;
 
 /** A failed delivery always reads as something: an unknown code is a plain "Failed". */

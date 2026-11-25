@@ -27,8 +27,10 @@ const DAY = 86_400_000;
 /** The least a key can do; more is ticked on purpose. */
 const DEFAULT_SCOPES = ['passes:read'];
 const EXPIRY = [
+  { value: '7', label: '7 days' },
   { value: '30', label: '30 days' },
   { value: '90', label: '90 days' },
+  { value: '180', label: '6 months' },
   { value: '365', label: '1 year' },
   { value: 'never', label: 'Never' },
 ];
@@ -70,7 +72,7 @@ export function CreateKeyDialog({
   const ipAllow = ips.split(/[\s,]+/).filter(Boolean);
   const short = orgId === null || kind === 'personal';
   // A short-lived kind falls back to 90 days when the longer choice was picked first.
-  const days = short && expiry !== '30' ? '90' : expiry;
+  const days = short && !SHORT_EXPIRY.some((o) => o.value === expiry) ? '90' : expiry;
   // An organization key takes the console's mode, shown without a choice. Platform pages ignore
   // mode, so a platform key's mode is chosen here.
   const [keyMode, setKeyMode] = useState<Mode>(getMode);

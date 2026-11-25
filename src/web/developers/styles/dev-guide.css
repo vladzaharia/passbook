@@ -143,3 +143,18 @@ svg.lifecycle {
 .gop code {
   overflow-wrap: anywhere;
 }
+
+/* The guides index: one section per step. */
+.gsec {
+  margin-top: 32px;
+}
+.gsec:first-of-type {
+  margin-top: 24px;
+}
+.gsec-h {
+  margin-bottom: 12px;
+}
+.gkicker {
+  color: var(--gt-fg, var(--pk-accent-fg));
+  font-weight: 600;
+}
