@@ -143,6 +143,7 @@ it('writes shots', async () => {
               content,
               code: CODE,
               issued: { generation: 1, at: '2030-01-01T10:00:00Z' },
+              mark: 'full',
               images: content.photo ? { photo: { id: 'p', bytes: PHOTO } } : {},
             },
           ],

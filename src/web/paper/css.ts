@@ -1,7 +1,13 @@
-import { PAPER_SPECS, type PaperSize } from '../../passkit/template/paper.ts';
+import {
+  PAPER_SPECS,
+  type PaperSheet,
+  type PaperSize,
+  sheetApplies,
+} from '../../passkit/template/paper.ts';
 import bandCss from '../pass-card/test-band.css?raw';
 import { BADGE_CSS } from './css-badge.ts';
 import { FULL_CSS, HALF_FULL_CSS } from './css-full.ts';
+import { SIZES_CSS } from './css-sizes.ts';
 import { SMALL_CSS } from './css-small.ts';
 import { FALLBACK_FAMILY, FALLBACK_FONT_CSS } from './fallback-font.ts';
 
@@ -51,10 +57,10 @@ const BASE_CSS = `${FALLBACK_FONT_CSS}
 .pp-sheet{--mm:1mm;border-radius:0;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }`;
 
-export const PAPER_CSS = `${BASE_CSS}\n${FULL_CSS}\n${HALF_FULL_CSS}\n${SMALL_CSS}\n${BADGE_CSS}\n${bandCss}`;
+export const PAPER_CSS = `${BASE_CSS}\n${FULL_CSS}\n${HALF_FULL_CSS}\n${SMALL_CSS}\n${BADGE_CSS}\n${SIZES_CSS}\n${bandCss}`;
 
-/** `@page` for one size; the sheet fills the page, so the margin is 0. */
-export function pageRule(size: PaperSize): string {
-  const s = PAPER_SPECS[size];
+/** `@page` for one size, or for the home sheet a card or strip prints on; the sheet fills the page, so the margin is 0. */
+export function pageRule(size: PaperSize, sheet?: PaperSheet): string {
+  const s = PAPER_SPECS[sheet && sheetApplies(size) ? sheet : size];
   return `@page{size:${s.widthMm}mm ${s.heightMm}mm;margin:0}`;
 }

@@ -209,7 +209,7 @@ function holderPage(props: PrintPageProps): string {
       </div>
     </div>,
   );
-  const page = model.state === 'ready' ? pageRule(model.design.size) : '';
+  const page = model.state === 'ready' ? pageRule(model.design.size, model.design.sheet) : '';
   const mark = renderToStaticMarkup(
     <div className="pp-noprint">
       <OrgMark brand={props.brand} />
@@ -231,7 +231,7 @@ export function renderPrintPage(props: PrintPageProps): string {
   const strip = renderToStaticMarkup(<TestRibbon mode={model.mode} what="pass" />);
   const ribbon = strip ? `<div class="pp-ribbon">${strip}</div>` : '';
   const { body, sheet } = stateBody(props);
-  const page = model.state === 'ready' ? pageRule(model.design.size) : '';
+  const page = model.state === 'ready' ? pageRule(model.design.size, model.design.sheet) : '';
   return hostedPage({
     nonce: props.nonce,
     ...(props.theme ? { theme: props.theme } : {}),

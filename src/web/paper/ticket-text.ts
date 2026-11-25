@@ -1,6 +1,6 @@
 /** The words on a ticket, per class and panel, from the renderer-neutral content. Pure. */
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
-import { paperDate, paperZoneFor, paperZoneInfo } from '../../passkit/template/paper-format.ts';
+import { paperDate, paperZoneInfo } from '../../passkit/template/paper-format.ts';
 import { PAPER_COPY } from '../../shared/copy/print.ts';
 import {
   beforeHeading,

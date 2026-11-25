@@ -58,7 +58,7 @@ export async function printPageModel(
     passChannels(ctx, pass),
     existingChannels(ctx, pass),
     getOrg(ctx.env.DB, pass.orgId),
-    paperTicket(ctx, pass),
+    paperTicket(ctx, pass, audience),
     known ?? orgBrandOf(ctx, pass.orgId),
   ]);
   const base = { orgName: org?.name ?? '', mode: pass.mode };

@@ -2,6 +2,7 @@ import { type PaperDesign, resolvePaper, withKind } from '../../../passkit/templ
 import { bestImage, imageSlots } from '../../../passkit/template/paper-assets.ts';
 import { type PaperContent, paperContent } from '../../../passkit/template/paper-content.ts';
 import { kindOf } from '../../../passkit/template/paper-kinds.ts';
+import { forAudience } from '../../../passkit/template/paper-region.ts';
 import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -10,19 +11,33 @@ import { parseStoredPassJson } from '../passes/detail.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import * as repo from './repo.ts';
 
-/** The paper design of the pass's pinned template version; derived when it has no `paper` block. */
-export async function paperDesign(ctx: ServiceContext, pass: Pass): Promise<PaperDesign> {
-  const manifest = await repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion);
-  const design = resolvePaper(manifest?.paper);
-  // No block: the class the template reads as decides who may print (an ID is staff-only).
-  return manifest && design.derived ? withKind(design, kindOf(manifest, undefined, {})) : design;
+const zones = new WeakMap<ServiceContext, Map<string, Promise<string | undefined>>>();
+
+/**
+ * The org's `org.timeZone`, which picks Letter over A4 and the holder's home sheet. Read once per
+ * org for a context (a bulk job builds one context for all its passes).
+ */
+function orgZone(ctx: ServiceContext, orgId: string): Promise<string | undefined> {
+  const byOrg = zones.get(ctx) ?? new Map<string, Promise<string | undefined>>();
+  zones.set(ctx, byOrg);
+  let hit = byOrg.get(orgId);
+  if (!hit) {
+    hit = getOrgSettings(ctx, orgId).then((s) => s['org.timeZone']);
+    byOrg.set(orgId, hit);
+  }
+  return hit;
 }
 
 /** `paper.holder: false` keeps printing with staff: the holder's link neither prints nor reprints nor voids. */
 export async function assertHolderMayPrint(ctx: ServiceContext, pass: Pass): Promise<void> {
-  if (!(await paperDesign(ctx, pass)).holder)
+  const manifest = await repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion);
+  const design = resolvePaper(manifest?.paper);
+  // No block: the class the template reads as decides who may print (an ID is staff-only).
+  const kind = manifest && design.derived ? kindOf(manifest, undefined, {}) : undefined;
+  if (!(kind ? withKind(design, kind) : design).holder)
     throw new ForbiddenError('Printing is available from the organizer.', 'PRINT_STAFF_ONLY');
 }
 
@@ -38,15 +53,18 @@ export interface PaperFiles {
 export async function paperTicket(
   ctx: ServiceContext,
   pass: Pass,
+  audience: 'holder' | 'staff',
 ): Promise<{ design: PaperDesign; content: PaperContent; files: PaperFiles } | null> {
-  const [manifest, raw, template] = await Promise.all([
+  const [manifest, raw, template, zone] = await Promise.all([
     repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion),
     passJsonAtVersion(ctx.env.DB, pass.id, pass.version),
     resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
+    orgZone(ctx, pass.orgId),
   ]);
   if (!raw) return null;
   const passJson: PassJson = parseStoredPassJson(raw);
-  const base = resolvePaper(manifest?.paper);
+  // A holder prints at home (the region's sheet); staff print the exact page.
+  const base = forAudience(resolvePaper(manifest?.paper), audience, zone);
   const images = imageSlots(template.assets);
   const content = paperContent({
     passJson,
