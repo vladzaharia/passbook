@@ -23,9 +23,6 @@ export function fitWidths(naturals: readonly number[], avail: number): number[] 
   return naturals.map((w) => Math.min(w, cap));
 }
 
-/** A character-count estimate of a text's width in mm (the page cannot measure; Rubik semibold). */
-export const estimateMm = (text: string, sizeMm: number): number => text.length * sizeMm * 0.58;
-
 /** The index of the box with the longest text: the one the page lets shrink. */
 export function widestIndex(texts: readonly string[]): number {
   let best = 0;
