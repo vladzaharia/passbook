@@ -68,33 +68,50 @@ const groupKey = (name: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '_');
 
+const csv = (value: string | undefined) =>
+  (value ?? '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
 /**
- * A claim matches a configured group name exactly, case included. If Pocket ID normalises a group's
- * name in the claim (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
+ * A claim matches a configured group name exactly, case included. Each `OIDC_*_GROUP` var holds one
+ * name or a comma list of exact names (the rename window: old and new name side by side); every
+ * alias grants the same role. If Polaris ID normalises a group's name in the claim
+ * (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
  *
  * Platform admins get everything. The admin group carries `console` (it opens the console where
- * `OIDC_CONSOLE_GROUP_REQUIRED` is on; which orgs is in-app membership).
+ * `OIDC_CONSOLE_GROUP_REQUIRED` is on; which orgs is in-app membership). While
+ * `OIDC_PLATFORM_ADMIN_SUBJECTS` is not empty, platform admin also needs `subject` on that list;
+ * a group member who is not listed gets no admin (and nothing it implies).
  */
 export function rolesFromGroups(
   env: object,
   groups: readonly string[],
   log?: Pick<Logger, 'warn'>,
+  subject?: string,
 ): Role[] {
   const has = (variable: string) => {
-    const name = envString(env, variable);
-    if (!name) return false;
-    if (groups.includes(name)) return true;
-    // Grants nothing: a group that matches only after the old normalising is a config mistake to fix.
-    const near = groups.find((group) => group !== name && groupKey(group) === groupKey(name));
-    if (near !== undefined)
-      log?.warn('auth.oidc_group_near_miss', {
-        code: 'GROUP_NEAR_MISS',
-        received: near,
-        configured: name,
-      });
-    return false;
+    let matched = false;
+    for (const name of csv(envString(env, variable))) {
+      if (groups.includes(name)) {
+        matched = true;
+        continue;
+      }
+      // Grants nothing: a group that matches only after the old normalising is a config mistake to fix.
+      const near = groups.find((group) => group !== name && groupKey(group) === groupKey(name));
+      if (near !== undefined)
+        log?.warn('auth.oidc_group_near_miss', {
+          code: 'GROUP_NEAR_MISS',
+          received: near,
+          configured: name,
+        });
+    }
+    return matched;
   };
-  const platform = has('OIDC_PLATFORM_ADMIN_GROUP');
+  const pinned = csv(envString(env, 'OIDC_PLATFORM_ADMIN_SUBJECTS'));
+  const pinOk = pinned.length === 0 || (subject !== undefined && pinned.includes(subject));
+  const platform = has('OIDC_PLATFORM_ADMIN_GROUP') && pinOk;
   const developer = platform || has('OIDC_DEVELOPER_GROUP');
   const console = platform || has('OIDC_ADMIN_GROUP');
   if (!(console || developer || has('OIDC_USER_GROUP'))) return [];

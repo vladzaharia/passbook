@@ -68,4 +68,80 @@ describe('rolesFromGroups', () => {
     expect(rolesFromGroups(env, ['wallet_admins'], { warn })).toHaveLength(4);
     expect(warn).not.toHaveBeenCalled();
   });
+
+  describe('rename window: comma lists of exact names', () => {
+    const both = {
+      OIDC_PLATFORM_ADMIN_GROUP: 'wallet_admins,passbook_platform_admins',
+      OIDC_ADMIN_GROUP: 'wallet_org_admins, passbook_console',
+      OIDC_DEVELOPER_GROUP: 'passbook_developers',
+      OIDC_USER_GROUP: 'wallet_users,passbook_users',
+    };
+
+    it('each alias grants its own variable role and no other', () => {
+      for (const name of ['wallet_admins', 'passbook_platform_admins'])
+        expect(rolesFromGroups(both, [name])).toEqual(['admin', 'user', 'developer', 'console']);
+      for (const name of ['wallet_org_admins', 'passbook_console'])
+        expect(rolesFromGroups(both, [name])).toEqual(['user', 'console']);
+      for (const name of ['wallet_users', 'passbook_users'])
+        expect(rolesFromGroups(both, [name])).toEqual(['user']);
+    });
+
+    it('matches each alias exactly and warns on a near miss of any alias', () => {
+      const warn = vi.fn();
+      expect(
+        rolesFromGroups(both, ['passbook-console', 'passbook_platform_admin', 'Passbook_Users'], {
+          warn,
+        }),
+      ).toEqual([]);
+      expect(warn).toHaveBeenCalledWith('auth.oidc_group_near_miss', {
+        code: 'GROUP_NEAR_MISS',
+        received: 'passbook-console',
+        configured: 'passbook_console',
+      });
+      expect(warn).toHaveBeenCalledWith('auth.oidc_group_near_miss', {
+        code: 'GROUP_NEAR_MISS',
+        received: 'Passbook_Users',
+        configured: 'passbook_users',
+      });
+    });
+
+    it('ignores empty entries; a lone comma grants nothing', () => {
+      expect(rolesFromGroups({ OIDC_USER_GROUP: ',wallet_users,' }, ['wallet_users'])).toEqual([
+        'user',
+      ]);
+      expect(rolesFromGroups({ OIDC_USER_GROUP: ',' }, [''])).toEqual([]);
+    });
+  });
+
+  describe('OIDC_PLATFORM_ADMIN_SUBJECTS', () => {
+    const pinned = { ...env, OIDC_PLATFORM_ADMIN_SUBJECTS: 'sub-a, sub-b' };
+
+    it('empty or unset keeps the group-only behaviour', () => {
+      expect(rolesFromGroups(env, ['wallet_admins'], undefined, 'anyone')).toContain('admin');
+      expect(
+        rolesFromGroups({ ...env, OIDC_PLATFORM_ADMIN_SUBJECTS: '' }, ['wallet_admins']),
+      ).toContain('admin');
+    });
+
+    it('a listed subject in the group is admin', () => {
+      expect(rolesFromGroups(pinned, ['wallet_admins'], undefined, 'sub-b')).toEqual([
+        'admin',
+        'user',
+        'developer',
+        'console',
+      ]);
+    });
+
+    it('a group member who is not listed (or has no subject) is not admin and gets nothing implied', () => {
+      expect(rolesFromGroups(pinned, ['wallet_admins'], undefined, 'sub-z')).toEqual([]);
+      expect(rolesFromGroups(pinned, ['wallet_admins'])).toEqual([]);
+      expect(
+        rolesFromGroups(pinned, ['wallet_admins', 'wallet_users'], undefined, 'sub-z'),
+      ).toEqual(['user']);
+    });
+
+    it('a listed subject outside the group is not admin', () => {
+      expect(rolesFromGroups(pinned, ['wallet_users'], undefined, 'sub-a')).toEqual(['user']);
+    });
+  });
 });
