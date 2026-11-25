@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
+import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { highlight, type Lang } from '../model/highlight.ts';
 import { exampleSamples } from '../model/samples.ts';
@@ -7,9 +7,11 @@ import type { Example } from '../model/types.ts';
 import { Head } from '../pages/more.tsx';
 import { CodeRegion, SampleTabs } from '../ui/code.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
+import { groupByStep, stepOf } from './group.ts';
 import { lifecycleSvg } from './lifecycle.ts';
 import { GUIDE_TWIN, type Guide, hrefOf } from './model.ts';
 import type { Block, GuideStatus } from './parse.ts';
+import { GuideTile } from './tile.tsx';
 
 const STATUS: Record<GuideStatus, string | null> = {
   ready: null,
@@ -190,21 +192,28 @@ export function GuidesIndex({ guides }: { guides: Guide[] }) {
   return (
     <>
       <Head title={s.title} line={s.line} />
-      <div className="recipes mt8">
-        {guides.map((g) => (
-          <a key={g.meta.id} className="row g3 card tile-row" href={g.url} id={g.meta.id}>
-            <span className={`sw ${DEV_GUIDES.find((d) => d.id === g.meta.id)?.tone ?? 'teal'}`} />
-            <span>
-              <span className="strong">{g.meta.title}</span>
-              {STATUS[g.meta.status] ? (
-                <span className="pill neutral gpill">{STATUS[g.meta.status]}</span>
-              ) : null}
-              <br />
-              <span className="xs muted">{g.meta.line}</span>
-            </span>
-          </a>
-        ))}
-      </div>
+      {groupByStep(guides, (g) => g.meta.id).map(({ step, items }) => (
+        <section key={step.id} className="gsec" aria-labelledby={`step-${step.id}`}>
+          <h2 id={`step-${step.id}`} className="h3 gsec-h">
+            {step.label}
+          </h2>
+          <div className="recipes">
+            {items.map((g) => (
+              <a key={g.meta.id} className="row g3 card tile-row" href={g.url} id={g.meta.id}>
+                <GuideTile id={g.meta.id} />
+                <span>
+                  <span className="strong">{g.meta.title}</span>
+                  {STATUS[g.meta.status] ? (
+                    <span className="pill neutral gpill">{STATUS[g.meta.status]}</span>
+                  ) : null}
+                  <br />
+                  <span className="xs muted">{g.meta.line}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))}
     </>
   );
 }
@@ -220,10 +229,13 @@ export function GuideView({
 }) {
   const byId = new Map(examples.map((e) => [e.id, e]));
   const status = STATUS[guide.meta.status];
+  const step = stepOf(guide.meta.id);
   return (
     <>
       <div className="eyebrow">
         <a href={PATHS.guides}>{DEV_COPY.guides.title}</a>
+        <span aria-hidden="true">/</span>
+        <span className={`gkicker ${step.tone}`}>{step.label}</span>
       </div>
       {/* The personalizing island: it has no size, and mounts when the page loads. */}
       <i data-island="snippets" aria-hidden="true" />
