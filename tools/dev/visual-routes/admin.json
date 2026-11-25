@@ -492,14 +492,14 @@
   },
   {
     "role": "org",
-    "path": "/admin/o/{northwindId}/passes/{paperPassId}",
+    "path": "/admin/o/{northwindId}/passes/{paperPassId}?tab=holder",
     "name": "admin-pass-print-card",
-    "click": "text=Print"
+    "waitFor": "button:has-text(\"Print\")"
   },
   {
     "role": "org",
     "path": "/admin/o/{northwindId}/passes",
     "name": "admin-passes-bulk-print",
-    "click": "input[aria-label^=\"Select \"]"
+    "click": "[role=checkbox][aria-label^=\"Select \"]:not([aria-label^=\"Select all\"])"
   }
 ]

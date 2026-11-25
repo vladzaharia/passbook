@@ -730,7 +730,7 @@
     "path": "/admin/scanning/sessions/{eveningSessionId}",
     "name": "scan-admin-session-dates",
     "filterOrg": "northwindId",
-    "click": ["button:has-text(\"Edit\")", "legend:text-is(\"Dates\")"]
+    "click": ["section[aria-label=\"When\"] button:has-text(\"Edit\")", "legend:text-is(\"Dates\")"]
   },
   {
     "role": "org",
@@ -772,14 +772,14 @@
     "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scan-row-detail",
     "filterOrg": "northwindId",
-    "click": "tbody tr a, tbody tr"
+    "click": "[data-row-id]"
   },
   {
     "role": "org",
     "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scan-customer-row",
     "filterOrg": "northwindId",
-    "click": "tbody tr:has-text(\"accepted\"), tbody tr"
+    "click": "[data-row-id]"
   },
   {
     "role": "org",
