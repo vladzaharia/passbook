@@ -111,3 +111,8 @@ BEGIN
       WHERE org_id = NEW.org_id AND user_id = NEW.user_id AND ended_at IS NULL)
     THEN RAISE(ABORT, 'UNIQUE constraint failed: developer_sponsors.org_id, developer_sponsors.user_id') END;
 END;
+
+-- Indexes for the foreign keys that no other index leads with.
+CREATE INDEX developer_invitations_accepted_user ON developer_invitations(accepted_user_id);
+CREATE INDEX developer_invitations_created_by_key ON developer_invitations(created_by_key);
+CREATE INDEX developer_invitations_created_by_user ON developer_invitations(created_by_user);

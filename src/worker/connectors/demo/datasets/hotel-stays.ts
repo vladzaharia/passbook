@@ -61,7 +61,7 @@ export const hotelStays: DatasetDef = {
         spa: included(r.chance(25)),
         plate: r.pattern('???-####'),
         wifiNetwork: `${hotel(x)}-Guest`,
-        wifiPassword: `${r.pick(x.words.adjective)}${r.pick(x.words.noun)}${r.range(10, 99)}`,
+        wifiPassword: `${r.pick(x.words.adjective)} ${r.pick(x.words.noun)} ${r.range(10, 99)}`,
         loyaltyTier: r.pick(TIERS),
         status: 'Confirmed',
       },
