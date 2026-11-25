@@ -1,4 +1,4 @@
-import { Hourglass, Inbox, LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
+import { Gauge, Hourglass, Inbox, LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { ENTITY, type EntityKind } from './entities.ts';
 import { canAccessAdminPath, isAdminPath } from './guards.ts';
@@ -36,6 +36,12 @@ const retention: NavSection = {
   icon: Hourglass,
   keywords: ['holds', 'legal hold', 'receipts', 'deletion', 'privacy'],
 };
+const plan: NavSection = {
+  label: 'Plan',
+  section: '/plan',
+  icon: Gauge,
+  keywords: ['limits', 'features', 'usage', 'quota'],
+};
 const apiKeys = page('API keys', '/api-keys', 'apiKey');
 
 /** An organization's console, in sidebar order; groups are separated by hairlines. */
@@ -64,6 +70,7 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
     apiKeys,
     audit,
     retention,
+    plan,
     { ...settings, keywords: ['organization', 'branding'] },
   ],
 ];

@@ -39,7 +39,7 @@ export async function readOrgPlan(ctx: ServiceContext, orgId: string): Promise<O
     limits.push({ key, limit, used: usageOf[key] ?? null });
   }
   const off = (channel: 'apple' | 'google' | 'samsung' | 'paper' | 'nfc') =>
-    blocked.platform[channel] !== undefined || blocked.entitlement[channel] !== undefined;
+    blocked.platform[channel] !== undefined || blocked.entitlement?.[channel] !== undefined;
   const feature = (key: PlanFeatureKey): boolean => {
     switch (key) {
       case 'apple':

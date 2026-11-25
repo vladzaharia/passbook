@@ -1243,6 +1243,12 @@
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
+  "entitlements get /{id}/plan": [
+    "FORBIDDEN",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
   "entitlements put /entitlement-presets": [
     "ENTITLEMENTS_CHANGED",
     "PRESET_MOVING",

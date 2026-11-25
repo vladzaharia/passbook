@@ -108,11 +108,11 @@ describe('GET /orgs/{id}/plan', () => {
     try {
       expect((await plan(p)).features.map((f) => f.key)).not.toContain('print');
     } finally {
-      clearSettingsCache(rk.kit.env.DB);
       await run(
         rk.kit.env.DB,
         "INSERT OR REPLACE INTO settings (scope, key, value, updated_by, updated_at) VALUES ('platform', 'print.enabled', 'true', 'test', 1)",
       );
+      clearSettingsCache(rk.kit.env.DB);
     }
   });
 

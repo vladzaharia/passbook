@@ -31,7 +31,7 @@ export function canAccessOrgSection(rest: string, membership: OrgMembership | un
   const path = rest.replace(/\/+$/, '');
   if (path === '') return canSeeOrgOverview(membership);
   if (path === '/settings') return hasCapability(membership, 'org:read');
-  if (path === '/retention') return hasCapability(membership, 'org:read');
+  if (path === '/retention' || path === '/plan') return hasCapability(membership, 'org:read');
   if (within(path, '/members')) return hasCapability(membership, 'members:manage');
   if (within(path, '/wallet-accounts') || within(path, '/brand'))
     return hasCapability(membership, 'org:read');
