@@ -105,6 +105,7 @@ export function StepAccess({
               />
             ))}
           </div>
+          {errors.roles ? <p className="mt-1 text-xs text-danger">{errors.roles}</p> : null}
         </fieldset>
       )}
     </>

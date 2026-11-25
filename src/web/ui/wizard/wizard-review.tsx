@@ -8,6 +8,8 @@ export interface WizardReviewSection<Id extends string = string> {
   /** The step's rail title. */
   title: string;
   items: KeyValueItem[];
+  /** False when the scope fixes it (the organization): no Edit. */
+  edit?: false;
 }
 
 /** Everything the wizard will do, by step, each with a way back to change it. */
@@ -32,14 +34,16 @@ export function WizardReview<Id extends string>({
           <section key={s.id} aria-label={s.title} className="p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h4 className="text-sm font-medium text-fg-strong">{s.title}</h4>
-              <Button
-                size="sm"
-                variant="ghost"
-                aria-label={`Edit ${s.title.toLowerCase()}`}
-                onClick={() => onEdit(s.id)}
-              >
-                Edit
-              </Button>
+              {s.edit === false ? null : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Edit ${s.title.toLowerCase()}`}
+                  onClick={() => onEdit(s.id)}
+                >
+                  Edit
+                </Button>
+              )}
             </div>
             <KeyValue items={s.items} />
           </section>

@@ -19,13 +19,11 @@ export function StepBasics({
   orgId,
   orgName,
   errors,
-  onEdit,
 }: {
   form: KeyForm;
   orgId: string | null;
   orgName: string;
   errors: Record<string, string | undefined>;
-  onEdit: () => void;
 }) {
   return (
     <>
@@ -37,10 +35,7 @@ export function StepBasics({
             autoComplete="off"
             placeholder="Box office sync"
             value={form.name}
-            onChange={(e) => {
-              form.setName(e.target.value);
-              onEdit();
-            }}
+            onChange={(e) => form.setName(e.target.value)}
           />
         )}
       </FormField>

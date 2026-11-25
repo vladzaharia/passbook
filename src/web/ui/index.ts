@@ -71,6 +71,7 @@ export * from './tooltip.tsx';
 export * from './two-pane.tsx';
 export * from './typed-confirm-dialog.tsx';
 export * from './week-grid/week-grid.tsx';
+export * from './wizard/step-context.ts';
 export * from './wizard/use-wizard.ts';
 export * from './wizard/wizard-actions.tsx';
 export * from './wizard/wizard-dialog.tsx';

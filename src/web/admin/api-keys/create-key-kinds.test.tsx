@@ -103,13 +103,16 @@ describe('key type, role and expiry', () => {
 
   it('Enter advances a valid step and stays put on an invalid one', async () => {
     const { user, dialog } = await openOrgDialog(() => created());
-    await user.type(within(dialog).getByLabelText(/Name/), '{Enter}');
+    // The footer's Next is the form's default button. user-event's Enter looks for a submit button
+    // inside the form only, so submit the way the browser does for it.
+    const enter = () => dialog.querySelector('form')?.requestSubmit();
+    enter();
     expect(
       await within(dialog).findByRole('heading', { name: 'What it can do' }),
     ).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Back' }));
     await user.clear(within(dialog).getByLabelText(/Name/));
-    await user.type(within(dialog).getByLabelText(/Name/), '{Enter}');
+    enter();
     expect(within(dialog).getByRole('heading', { name: 'Name the key' })).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
       'aria-disabled',

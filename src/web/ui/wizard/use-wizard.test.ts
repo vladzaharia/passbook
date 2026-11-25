@@ -164,7 +164,7 @@ describe('useWizard', () => {
     expect(result.current.formError).toBeUndefined();
   });
 
-  it('resets when the dialog closes', async () => {
+  it('keeps its step while closed and resets as it opens again', async () => {
     const { result, rerender } = renderHook(
       ({ open }) =>
         useWizard<Id>({
@@ -180,9 +180,110 @@ describe('useWizard', () => {
       await result.current.form.onValid();
     });
     expect(result.current.id).toBe('b');
+    const key = result.current.motion.key;
     rerender({ open: false });
+    expect(result.current.id).toBe('b');
+    rerender({ open: true });
     expect(result.current.id).toBe('a');
     expect(result.current.steps[1]?.state).toBe('todo');
+    expect(result.current.motion.key).toBe(key);
+  });
+
+  it('sends once when finish runs twice in the same tick', async () => {
+    let calls = 0;
+    const { result, rerender } = setup({
+      onFinish: async () => {
+        calls += 1;
+        await new Promise((done) => setTimeout(done, 10));
+      },
+    });
+    rerender(ok);
+    await submit(result);
+    await submit(result);
+    await submit(result);
+    await act(async () => {
+      await Promise.all([result.current.form.onValid(), result.current.form.onValid()]);
+    });
+    expect(calls).toBe(1);
+  });
+
+  it('lets the finishing step answer for an earlier step that turned invalid', async () => {
+    const { result, rerender } = setup();
+    rerender(ok);
+    await submit(result);
+    await submit(result);
+    await submit(result);
+    expect(result.current.id).toBe('review');
+    rerender({ bad: { a: true, b: false, c: false } });
+    expect(result.current.blocked).toBe(true);
+    expect(result.current.hint).toBe('A: Name it.');
+    act(() => result.current.form.onInvalid());
+    expect(result.current.id).toBe('a');
+    expect(result.current.errors).toEqual({ name: 'Required.' });
+  });
+
+  it('refuses a forward jump from a step with errors', async () => {
+    const { result, rerender } = setup();
+    rerender(ok);
+    await submit(result);
+    await submit(result);
+    await submit(result);
+    act(() => result.current.go('a'));
+    rerender({ bad: { a: true, b: false, c: false } });
+    act(() => result.current.go('c'));
+    expect(result.current.id).toBe('a');
+    expect(result.current.errors).toEqual({ name: 'Required.' });
+  });
+
+  it('starts on the first step that is not skipped and never lands on a skipped one', async () => {
+    const { result, rerender } = setup({ steps: STEPS.map((s) => ({ ...s, skip: s.id === 'a' })) });
+    expect(result.current.id).toBe('b');
+    expect(result.current.first).toBe(true);
+    rerender(ok);
+    act(() => result.current.back());
+    expect(result.current.id).toBe('b');
+    act(() => result.current.go('a'));
+    expect(result.current.id).toBe('b');
+  });
+
+  it('edit mode: skipped steps do not block, and Save waits for a change with "No changes."', () => {
+    const { result } = renderHook(() =>
+      useWizard<Id>({
+        steps: STEPS.map((s) => ({ ...s, skip: s.id === 'b' })),
+        errors: { b: { pick: 'Pick one.' } },
+        fieldStep: {},
+        onFinish: () => undefined,
+        mode: 'edit',
+        dirty: false,
+      }),
+    );
+    expect(result.current.blocked).toBe(true);
+    expect(result.current.hint).toBe('No changes.');
+    const dirty = renderHook(() =>
+      useWizard<Id>({
+        steps: STEPS.map((s) => ({ ...s, skip: s.id === 'b' })),
+        errors: { b: { pick: 'Pick one.' } },
+        fieldStep: {},
+        onFinish: () => undefined,
+        mode: 'edit',
+        dirty: true,
+      }),
+    );
+    expect(dirty.result.current.blocked).toBe(false);
+  });
+
+  it('prefixes an edit-mode hint with the step that owns the error', () => {
+    const { result } = renderHook(() =>
+      useWizard<Id>({
+        steps: STEPS,
+        errors: { c: { ips: 'Bad.' } },
+        hints: { c: 'Fix the IPs.' },
+        fieldStep: {},
+        onFinish: () => undefined,
+        mode: 'edit',
+      }),
+    );
+    expect(result.current.hint).toBe('C: Fix the IPs.');
   });
 
   it('edit mode reaches every step, shows Save, and jumps to the earliest invalid step', async () => {

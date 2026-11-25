@@ -1,19 +1,21 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 import { Button } from '../button.tsx';
+import { DialogContent } from '../dialog.tsx';
 
-export interface WizardResultProps {
+/** What a finish hands over: the dialog shows the title and icon in its header and the body under it. */
+export interface ResultSpec {
   /** The outcome: "Copy your key". */
   title: string;
   /** The entity's glyph doing its verb; it plays its done motion once. */
   icon?: ReactNode;
-  /** A Done button. Leave it out when the body has its own gate (SecretReveal). */
-  onDone?: () => void;
   /** A reveal (secret, link, QR, pairing) or a report. */
-  children: ReactNode;
+  body: ReactNode;
+  /** A Done button under the body. Leave it out when the body has its own gate (SecretReveal). */
+  onDone?: () => void;
 }
 
 /** The icon and title as the dialog's heading. */
-export function WizardResultTitle({ title, icon }: Pick<WizardResultProps, 'title' | 'icon'>) {
+export function WizardResultTitle({ title, icon }: Pick<ResultSpec, 'title' | 'icon'>) {
   return (
     <span className="inline-flex items-center gap-2">
       {icon ? (
@@ -27,18 +29,36 @@ export function WizardResultTitle({ title, icon }: Pick<WizardResultProps, 'titl
 }
 
 /**
- * What a wizard ends in when it has something to hand over. A WizardDialog takes this element as
- * its `result`, shows the title in its header and the children under it.
+ * The dialog panel both shells show in place of their form once a result arrives: md, the
+ * result's own title with focus on it, no X, and Esc and outside clicks ignored. Render it inside
+ * a `Dialog` whose onOpenChange does nothing.
  */
-export function WizardResult({ children, onDone }: WizardResultProps) {
+export function ResultDialogContent({ result }: { result: ResultSpec }) {
+  const title = useRef<HTMLSpanElement>(null);
   return (
-    <div className="flex flex-col gap-4">
-      {children}
-      {onDone ? (
-        <div className="flex justify-end">
-          <Button onClick={onDone}>Done</Button>
-        </div>
-      ) : null}
-    </div>
+    <DialogContent
+      size="md"
+      closeButton={false}
+      onOpenAutoFocus={(e) => {
+        e.preventDefault();
+        title.current?.focus({ preventScroll: true });
+      }}
+      title={
+        <span ref={title} tabIndex={-1} className="outline-none">
+          <WizardResultTitle title={result.title} icon={result.icon} />
+        </span>
+      }
+      onInteractOutside={(e) => e.preventDefault()}
+      onEscapeKeyDown={(e) => e.preventDefault()}
+    >
+      <div className="flex flex-col gap-4">
+        {result.body}
+        {result.onDone ? (
+          <div className="flex justify-end">
+            <Button onClick={result.onDone}>Done</Button>
+          </div>
+        ) : null}
+      </div>
+    </DialogContent>
   );
 }

@@ -1,9 +1,10 @@
-import { type ReactElement, type ReactNode, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { Dialog, DialogContent } from '../dialog.tsx';
+import { useOnClose } from '../dialog-close.ts';
 import { Form } from '../form.tsx';
 import type { WizardModel } from './use-wizard.ts';
 import { WizardActions } from './wizard-actions.tsx';
-import { type WizardResultProps, WizardResultTitle } from './wizard-result.tsx';
+import { ResultDialogContent, type ResultSpec } from './wizard-result.tsx';
 import { WizardStep } from './wizard-step.tsx';
 import { WizardStepper } from './wizard-stepper.tsx';
 
@@ -20,13 +21,15 @@ export interface WizardDialogProps<Id extends string> {
   /** The finish is hard to take back. */
   finishTone?: 'danger';
   busy?: boolean;
-  /** Runs on every close, after the wizard has reset. */
+  /** At the top of the current step: a warning Callout (a stale revision). */
+  notice?: ReactNode;
+  /** Runs each time the dialog closes, however it closed. */
   onClose?: () => void;
   /**
    * What the finish handed back. The dialog narrows to md, takes the result's title, drops the X,
-   * and ignores Esc and outside clicks until the result's own Done.
+   * and ignores Esc and outside clicks until the body's own Done.
    */
-  result?: ReactElement<WizardResultProps>;
+  result?: ResultSpec | undefined;
   /** The current step's body. */
   children: ReactNode;
 }
@@ -44,40 +47,21 @@ export function WizardDialog<Id extends string>({
   finishLabel,
   finishTone,
   busy,
+  notice,
   onClose,
   result,
   children,
 }: WizardDialogProps<Id>) {
-  const heading = useRef<HTMLSpanElement>(null);
-  const showing = Boolean(result);
   const working = Boolean(busy) || wizard.finishing;
-  useEffect(() => {
-    if (showing) heading.current?.focus({ preventScroll: true });
-  }, [showing]);
-  function close() {
-    onOpenChange(false);
-    wizard.reset();
-    onClose?.();
-  }
+  useOnClose(open, onClose);
   if (result) {
     return (
       <Dialog open={open} onOpenChange={() => undefined}>
-        <DialogContent
-          size="md"
-          closeButton={false}
-          title={
-            <span ref={heading} tabIndex={-1} className="outline-none">
-              <WizardResultTitle title={result.props.title} icon={result.props.icon} />
-            </span>
-          }
-          onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          {result}
-        </DialogContent>
+        <ResultDialogContent result={result} />
       </Dialog>
     );
   }
+  const close = () => onOpenChange(false);
   return (
     <Dialog
       open={open}
@@ -102,10 +86,11 @@ export function WizardDialog<Id extends string>({
             <div className="@[43.5rem]:sticky @[43.5rem]:top-0 @[43.5rem]:self-start">
               <WizardStepper wizard={wizard} />
             </div>
+            {/* Enter in a field presses the footer's Next: it is the form's default button. */}
             <Form {...wizard.form} className="@container min-w-0 flex-1 @[43.5rem]:min-h-[24rem]">
-              {/* Enter in a field presses this; the footer button sits outside the form. */}
-              <button type="submit" hidden tabIndex={-1} aria-hidden />
-              <WizardStep wizard={wizard}>{children}</WizardStep>
+              <WizardStep wizard={wizard} notice={notice}>
+                {children}
+              </WizardStep>
             </Form>
           </div>
         </div>

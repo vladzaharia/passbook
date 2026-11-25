@@ -256,7 +256,8 @@ health items):
 
 #### Wizard dialogs (`WizardDialog`, `useWizard`)
 
-One kit family in `ui/wizard/*` and `ui/step-marker.tsx`; the New API key dialog is the reference.
+One kit family in `ui/wizard/*` and `ui/step-marker.tsx`; the New API key dialog is the reference
+adopter.
 
 - Frame: `xl` dialog, constant title. A frame 43.5rem wide or more (a container query on the
   dialog body, not the viewport) shows the rail: markers down the side, what was chosen under a
@@ -265,17 +266,30 @@ One kit family in `ui/wizard/*` and `ui/step-marker.tsx`; the New API key dialog
   hint on a blocked Next is four words or fewer with a period. Finish label is a verb and a noun.
 - Next is never hard-disabled for an incomplete step: `aria-disabled`, focusable, hint as its
   description. A press (or Enter) shows the step's errors, focuses the first and announces the
-  count, or the hint when no field is at fault. `disabled` is for busy only.
+  count, or the hint when no field is at fault. `disabled` is for busy only. There is no hidden
+  submit button: the footer's primary is the form's default button, and Enter cannot send twice.
+- The step that finishes answers for every step. If an earlier step has turned invalid, Create
+  refuses, jumps to the first one and shows its errors. A forward jump (rail, `go`) from a step
+  with errors is refused the same way.
 - A passed step stays done. After `Edit` from Review the primary reads `Review` and goes straight
   back while every later step is still valid.
 - A step change scrolls the dialog body to the top and focuses the heading.
-- Server field errors jump to the earliest step that owns a field (`fieldStep`) and mark it
-  invalid; a field no step owns shows as one line at the foot of the step.
-- Review (`WizardReview`) comes before the finish, with a note only for a consequence. A reveal
-  (secret, link, QR) is the `result`: the dialog narrows to `md`, takes the result's title, drops
-  the X and ignores Esc and outside clicks.
+- Server errors: field errors jump to the earliest step that owns a field (`fieldStep`) and mark
+  it invalid. A field no step owns, or one the step draws no control for, shows as one line at the
+  foot of the step. Typing in the form clears the server errors of the fields the step owns (and of
+  the input's `name`); call `clearServer(field)` only from a custom control that fires no input event.
+- Review (`WizardReview`) comes before the finish, with a note only for a consequence; a section
+  takes `edit: false` when the scope fixes it. A reveal (secret, link, QR) is the `result`
+  (`{ title, icon, body }`): the dialog narrows to `md`, takes the title, drops the X, focuses the
+  title and ignores Esc and outside clicks. Both shells use `ResultDialogContent`.
+- Edit mode (`mode: 'edit'`): every step is reachable, Save is blocked with `No changes.` until
+  `dirty`, and a blocked hint names the step that owns the error ("Limits: Fix the IPs."). `notice`
+  puts a warning Callout at the top of the step.
+- `onClose` runs each time the dialog closes, however it closed (Cancel, X, Esc, a Done button, the
+  parent). The wizard resets as the dialog opens again, so the closing frames keep their step.
 - `FormDialog` is the shell for one-form dialogs (`sm`, `md`, `lg`; never `xl`): Cancel and the
-  primary in the footer, field errors under their fields, one line for the rest, reset on close.
+  primary in the footer, field errors under their fields, one line for the rest, `onClose` and a
+  reset on close. It takes the same `result` and `notice`.
 
 ## Status pills
 

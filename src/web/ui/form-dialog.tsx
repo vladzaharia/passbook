@@ -1,10 +1,11 @@
-import { type ReactElement, type ReactNode, useEffect, useId, useState } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { errorMessage, isApiError } from '../lib/errors.ts';
 import { Button } from './button.tsx';
 import { Dialog, DialogContent } from './dialog.tsx';
+import { useOnClose } from './dialog-close.ts';
 import { Form, useServerFields } from './form.tsx';
 import type { SaveResult } from './save-bar.tsx';
-import { type WizardResultProps, WizardResultTitle } from './wizard/wizard-result.tsx';
+import { ResultDialogContent, type ResultSpec } from './wizard/wizard-result.tsx';
 
 /** What the dialog's body gets: the server's field errors, and a way to clear one as it is fixed. */
 export interface FormDialogFields {
@@ -39,10 +40,10 @@ export interface FormDialogProps {
   /** Left of Cancel: a secondary action ("Email new link to holder"). */
   extra?: ReactNode;
   /** What the submit handed back, shown in place of the form (a bundle link, a rotated key). */
-  result?: ReactElement<WizardResultProps>;
+  result?: ResultSpec | undefined;
   /** False: no X, and Esc and outside clicks do nothing (a reveal in progress). */
   dismissible?: boolean;
-  /** Runs on every close, after the errors reset: clear the draft here. */
+  /** Runs each time the dialog closes, however it closed: clear the draft here. */
   onClose?: () => void;
   children: ReactNode | ((fields: FormDialogFields) => ReactNode);
 }
@@ -74,20 +75,30 @@ export function FormDialog({
   const server = useServerFields();
   const [formError, setFormError] = useState<string>();
   const [pending, setPending] = useState(false);
-  const { reset: resetServer } = server;
-  const resetCheck = check?.reset;
+  const [refused, setRefused] = useState(0);
   const working = Boolean(busy) || pending;
-
-  function close() {
-    onOpenChange(false);
-    onClose?.();
-  }
-  useEffect(() => {
-    if (open) return;
-    resetServer();
-    resetCheck?.();
+  const reset = useRef(() => {});
+  reset.current = () => {
+    server.reset();
+    check?.reset();
     setFormError(undefined);
-  }, [open, resetServer, resetCheck]);
+  };
+  const fields = useRef(server.fields);
+  fields.current = server.fields;
+
+  const close = () => onOpenChange(false);
+  useOnClose(open, onClose);
+  useEffect(() => {
+    if (!open) reset.current();
+  }, [open]);
+  // A refused submit whose errors no control shows (a field the form does not draw) says so.
+  useEffect(() => {
+    if (refused === 0) return;
+    const form = document.getElementById(id);
+    if (!form || form.querySelector('[aria-invalid="true"]')) return;
+    const first = Object.values(fields.current)[0];
+    if (first) setFormError(first);
+  }, [refused, id]);
 
   async function submit(): Promise<SaveResult> {
     setFormError(undefined);
@@ -99,6 +110,7 @@ export function FormDialog({
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) {
         server.set(cause.fields);
+        setRefused((n) => n + 1);
         return 'refused';
       }
       setFormError(errorMessage(cause));
@@ -111,15 +123,7 @@ export function FormDialog({
   if (result) {
     return (
       <Dialog open={open} onOpenChange={() => undefined}>
-        <DialogContent
-          size="md"
-          closeButton={false}
-          title={<WizardResultTitle title={result.props.title} icon={result.props.icon} />}
-          onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          {result}
-        </DialogContent>
+        <ResultDialogContent result={result} />
       </Dialog>
     );
   }
@@ -166,6 +170,7 @@ export function FormDialog({
           invalid={check?.form.invalid ?? false}
           {...(check ? { onInvalid: check.form.onInvalid } : {})}
           onValid={submit}
+          onInput={(e) => server.clear((e.target as HTMLInputElement).name || undefined)}
           className="flex flex-col gap-4"
         >
           {notice}

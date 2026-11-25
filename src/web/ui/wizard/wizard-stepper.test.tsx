@@ -65,7 +65,56 @@ describe('WizardStepper', () => {
   });
 });
 
+describe('WizardStepper pop', () => {
+  it('pops only a step that became done after mounting, and not one done from the start', () => {
+    const { container, rerender } = render(
+      <WizardStepper wizard={model(['done', 'current', 'todo'])} />,
+    );
+    expect(container.querySelector('.wl-step-done')).toBeNull();
+    rerender(<WizardStepper wizard={model(['done', 'done', 'current'])} />);
+    expect(container.querySelectorAll('.wl-step-done')).toHaveLength(1);
+    rerender(<WizardStepper wizard={model(['done', 'done', 'current'])} />);
+    expect(container.querySelectorAll('.wl-step-done')).toHaveLength(1);
+  });
+
+  it('starts an edit rail with every step done and nothing popping', () => {
+    const { container } = render(
+      <WizardStepper wizard={model(['current', 'done', 'done'], { mode: 'edit' })} />,
+    );
+    expect(container.querySelector('.wl-step-done')).toBeNull();
+  });
+
+  it('shows hover on the title through the button group, not a descendant selector', () => {
+    render(<WizardStepper wizard={model(['done', 'current'])} />);
+    const button = screen.getByRole('button', { name: 'Step 1' });
+    expect(button.className).toContain('group');
+    expect(button.innerHTML).toContain('group-hover:text-fg-strong');
+  });
+});
+
 describe('StepMarker and StepList', () => {
+  it('says in words what a marker cannot', () => {
+    render(
+      <StepList
+        label="Setup"
+        items={[
+          { id: 'a', label: 'One', state: 'invalid' },
+          { id: 'b', label: 'Two', state: 'working' },
+          { id: 'c', label: 'Three', state: 'current' },
+        ]}
+      />,
+    );
+    const list = screen.getByRole('list', { name: 'Setup' });
+    expect(within(list).getByText('One')).toHaveTextContent('(needs attention)');
+    expect(within(list).getByText('Two')).toHaveTextContent('(in progress)');
+    expect(within(list).getByText('Three')).toHaveTextContent('(current)');
+  });
+
+  it('sizes the spinner with the marker', () => {
+    const { container } = render(<StepMarker state="working" n={1} size="lg" />);
+    expect(container.querySelector('svg')).toHaveClass('size-4');
+  });
+
   it('pops and draws only when fresh', () => {
     const { container, rerender } = render(<StepMarker state="done" n={1} />);
     expect(container.querySelector('.wl-step-done')).toBeNull();

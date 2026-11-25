@@ -8,7 +8,6 @@ import { FormField } from './field.tsx';
 import { useFormErrors } from './form.tsx';
 import { FormDialog, type FormDialogProps } from './form-dialog.tsx';
 import { Input } from './input.tsx';
-import { WizardResult } from './wizard/wizard-result.tsx';
 
 function Harness({
   onSubmit,
@@ -151,15 +150,53 @@ describe('FormDialog', () => {
     render(
       <Harness
         onSubmit={() => undefined}
-        result={
-          <WizardResult title="New signing secret">
-            <p>whsec</p>
-          </WizardResult>
-        }
+        result={{ title: 'New signing secret', body: <p>whsec</p> }}
       />,
     );
     const dialog = await screen.findByRole('dialog', { name: /New signing secret/ });
     expect(within(dialog).getByText('whsec')).toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: 'Close' })).toBeNull();
+    await waitFor(() => expect(dialog.querySelector('h2 [tabindex="-1"]')).toHaveFocus());
+  });
+
+  it('says so when a refused field has no control to show it', async () => {
+    const user = userEvent.setup();
+    const onSubmit = () => {
+      throw new ApiError({ status: 422, code: 'x', fields: { other: 'Not allowed here.' } });
+    };
+    render(<Harness onSubmit={onSubmit} />);
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText(/Reason/), 'Legal');
+    await user.click(within(dialog).getByRole('button', { name: 'Place hold' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Not allowed here.');
+  });
+
+  it('runs onClose when the parent closes it', async () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <FormDialog
+        open
+        onOpenChange={() => undefined}
+        title="T"
+        onSubmit={() => undefined}
+        submitLabel="Go"
+        onClose={onClose}
+      >
+        <p>x</p>
+      </FormDialog>,
+    );
+    rerender(
+      <FormDialog
+        open={false}
+        onOpenChange={() => undefined}
+        title="T"
+        onSubmit={() => undefined}
+        submitLabel="Go"
+        onClose={onClose}
+      >
+        <p>x</p>
+      </FormDialog>,
+    );
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 });

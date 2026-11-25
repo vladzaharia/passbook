@@ -1,7 +1,7 @@
 import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
-import { useWizard, WizardDialog, WizardResult } from '@/web/ui/index.ts';
+import { useWizard, WizardDialog } from '@/web/ui/index.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
 import { KeyReview } from './key-review.tsx';
 import { type ApiKey, useCreateKey } from './queries.ts';
@@ -57,10 +57,6 @@ export function CreateKeyDialog({
         }),
       ),
   });
-  const reset = () => {
-    form.reset();
-    setCreated(undefined);
-  };
   const organization =
     created?.orgId === null ? 'Platform' : created?.orgId === orgId ? orgName : created?.orgId;
 
@@ -73,30 +69,28 @@ export function CreateKeyDialog({
       dirty={form.dirty}
       finishLabel="Create key"
       busy={create.isPending}
-      onClose={reset}
+      onClose={() => {
+        form.reset();
+        setCreated(undefined);
+      }}
       result={
-        created ? (
-          <WizardResult title="Copy your key" icon={<KeyRound aria-hidden />}>
-            <KeyDisclosure
-              created={created}
-              organization={organization ?? ''}
-              onDone={() => {
-                onOpenChange(false);
-                reset();
-              }}
-            />
-          </WizardResult>
-        ) : undefined
+        created
+          ? {
+              title: 'Copy your key',
+              icon: <KeyRound aria-hidden />,
+              body: (
+                <KeyDisclosure
+                  created={created}
+                  organization={organization ?? ''}
+                  onDone={() => onOpenChange(false)}
+                />
+              ),
+            }
+          : undefined
       }
     >
       {w.id === 'basics' ? (
-        <StepBasics
-          form={form}
-          orgId={orgId}
-          orgName={orgName}
-          errors={w.errors}
-          onEdit={() => w.clearServer()}
-        />
+        <StepBasics form={form} orgId={orgId} orgName={orgName} errors={w.errors} />
       ) : null}
       {w.id === 'access' ? (
         <StepAccess

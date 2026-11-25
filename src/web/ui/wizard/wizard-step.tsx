@@ -1,26 +1,8 @@
-import {
-  type CSSProperties,
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-} from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
+import { useChangeCount } from '../../lib/change-count.ts';
 import { cn } from '../../lib/cn.ts';
-import { useChangeCount } from '../../lib/motion.ts';
+import { WizardStepContext } from './step-context.ts';
 import type { WizardModel } from './use-wizard.ts';
-
-interface StepContext {
-  id: string;
-  /** Next finishes on this step. */
-  last: boolean;
-  finishing: boolean;
-}
-
-const WizardStepContext = createContext<StepContext | null>(null);
-
-/** The step being drawn, or null outside a wizard: fields read it for their Enter key hint. */
-export const useWizardStep = () => useContext(WizardStepContext);
 
 /**
  * The step body: its heading, the slide from the direction of travel, and the one line a refused
@@ -31,10 +13,13 @@ export const useWizardStep = () => useContext(WizardStepContext);
 export function WizardStep<Id extends string>({
   wizard,
   level = 3,
+  notice,
   children,
 }: {
   wizard: WizardModel<Id>;
   level?: 2 | 3;
+  /** At the top of the step, above the heading. */
+  notice?: ReactNode;
   children: ReactNode;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -58,6 +43,7 @@ export function WizardStep<Id extends string>({
         className={cn('flex flex-col gap-5', changed > 0 && 'wl-step')}
         style={{ '--wl-step-x': `${wizard.motion.direction * 16}px` } as CSSProperties}
       >
+        {notice}
         <Heading
           ref={heading}
           tabIndex={-1}

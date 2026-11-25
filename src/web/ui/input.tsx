@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, Ref, TextareaHTMLAttributes } from 'react';
 import { cn } from '../lib/cn.ts';
-import { useWizardStep } from './wizard/wizard-step.tsx';
+import { useWizardStep } from './wizard/step-context.ts';
 
 /**
  * Shared control look: 3:1 border that darkens on hover, the raised field surface, visible focus ring, danger edge when invalid. Read-only and disabled text fields

@@ -17,6 +17,14 @@ const SIZE = {
   md: 'size-6 text-xs',
   lg: 'size-9 text-sm',
 } as const;
+const WORD: Partial<Record<StepMarkerState, string>> = {
+  done: 'done',
+  current: 'current',
+  working: 'in progress',
+  failed: 'failed',
+  invalid: 'needs attention',
+  skipped: 'skipped',
+};
 const TICK = { sm: 'size-3', md: 'size-3.5', lg: 'size-4' } as const;
 
 export interface StepMarkerProps {
@@ -59,7 +67,7 @@ export function StepMarker({ state, n, size = 'md', fresh }: StepMarkerProps) {
       ) : state === 'invalid' ? (
         '!'
       ) : state === 'working' ? (
-        <Loader2 aria-hidden className="wl-spin wl-essential size-3.5" />
+        <Loader2 aria-hidden className={cn('wl-spin wl-essential', TICK[size])} />
       ) : state === 'failed' ? (
         <X aria-hidden className={TICK[size]} />
       ) : (
@@ -127,9 +135,7 @@ export function StepList({
                 )}
               >
                 {item.label}
-                {item.state === 'done' ? <span className="sr-only"> (done)</span> : null}
-                {item.state === 'failed' ? <span className="sr-only"> (failed)</span> : null}
-                {item.state === 'skipped' ? <span className="sr-only"> (skipped)</span> : null}
+                {WORD[item.state] ? <span className="sr-only"> ({WORD[item.state]})</span> : null}
               </span>
               {item.detail ? <span className="text-xs text-fg-muted">{item.detail}</span> : null}
             </span>

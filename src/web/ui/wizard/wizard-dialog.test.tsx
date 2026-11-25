@@ -1,14 +1,13 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { type ReactNode, useState } from 'react';
+import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../../lib/errors.ts';
 import '../../lib/test-utils.tsx';
 import { FormField } from '../field.tsx';
 import { Input } from '../input.tsx';
 import { useWizard } from './use-wizard.ts';
 import { WizardDialog } from './wizard-dialog.tsx';
-import { WizardResult } from './wizard-result.tsx';
 import { WizardReview } from './wizard-review.tsx';
 
 type Id = 'name' | 'ips' | 'review';
@@ -18,7 +17,15 @@ const STEPS = [
   { id: 'review', title: 'Review', heading: 'Check and create' },
 ] as const;
 
-function Harness({ failWith }: { failWith?: ApiError }) {
+function Harness({
+  failWith,
+  onFinish,
+  notice,
+}: {
+  failWith?: ApiError;
+  onFinish?: () => unknown;
+  notice?: ReactNode;
+}) {
   const [name, setName] = useState('');
   const [ips, setIps] = useState('');
   const [done, setDone] = useState(false);
@@ -30,9 +37,10 @@ function Harness({ failWith }: { failWith?: ApiError }) {
       ips: ips ? undefined : { ips: 'Required.' },
     },
     hints: { name: 'Name it.' },
-    fieldStep: { name: 'name', ips: 'ips' },
-    onFinish: () => {
+    fieldStep: { name: 'name', ips: 'ips', extra: 'ips' },
+    onFinish: async () => {
       if (failWith) throw failWith;
+      await onFinish?.();
       setDone(true);
     },
   });
@@ -43,12 +51,9 @@ function Harness({ failWith }: { failWith?: ApiError }) {
       title="New thing"
       wizard={w}
       finishLabel="Create thing"
+      notice={notice}
       result={
-        done ? (
-          <WizardResult title="Copy it">
-            <p>The secret</p>
-          </WizardResult>
-        ) : undefined
+        done ? { title: 'Copy it', body: <p>The secret</p>, onDone: () => undefined } : undefined
       }
     >
       {w.id === 'name' ? (
@@ -193,8 +198,121 @@ describe('WizardDialog', () => {
     expect(reveal.className).toContain('sm:max-w-lg');
     expect(within(reveal).queryByRole('button', { name: 'Close' })).toBeNull();
     expect(within(reveal).getByText('The secret')).toBeInTheDocument();
+    expect(within(reveal).getByRole('button', { name: 'Done' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
     expect(screen.getByRole('dialog', { name: /Copy it/ })).toBeInTheDocument();
     await waitFor(() => expect(reveal.querySelector('h2 [tabindex="-1"]')).toHaveFocus());
+  });
+
+  it('has no hidden submit: the footer button is the form default, so Enter cannot send twice', async () => {
+    const user = userEvent.setup();
+    let calls = 0;
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    render(
+      <Harness
+        onFinish={() => {
+          calls += 1;
+          return gate;
+        }}
+      />,
+    );
+    expect(dialog().querySelector('button[hidden]')).toBeNull();
+    await through(user);
+    await user.click(button('Create thing'));
+    await waitFor(() => expect(calls).toBe(1));
+    expect(button('Create thing')).toBeDisabled();
+    const form = dialog().querySelector('form');
+    form?.requestSubmit();
+    form?.requestSubmit();
+    await user.keyboard('{Enter}');
+    expect(calls).toBe(1);
+    release();
+    await screen.findByRole('dialog', { name: /Copy it/ });
+    expect(calls).toBe(1);
+  });
+
+  it('stops forward on a step with errors, even from the rail', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await through(user);
+    await user.click(button('Edit basics'));
+    await user.clear(within(dialog()).getByLabelText(/Name/));
+    const rail = within(dialog()).getByRole('navigation', { name: 'Steps' });
+    await user.click(within(rail).getByRole('button', { name: 'Limits' }));
+    expect(await within(dialog()).findByText('Required.')).toBeInTheDocument();
+    expect(within(dialog()).getByRole('heading', { name: 'Name it' })).toBeInTheDocument();
+  });
+
+  it('clears a server error as the field is typed in, with no wiring in the step', async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness
+        failWith={new ApiError({ status: 422, code: 'x', fields: { ips: 'Blocked range.' } })}
+      />,
+    );
+    await through(user);
+    await user.click(button('Create thing'));
+    expect(await within(dialog()).findByText('Blocked range.')).toBeInTheDocument();
+    await user.type(within(dialog()).getByLabelText(/IPs/), '1');
+    expect(within(dialog()).queryByText('Blocked range.')).toBeNull();
+  });
+
+  it('says so when a refused field has no control to show it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness
+        failWith={new ApiError({ status: 422, code: 'x', fields: { extra: 'Not allowed here.' } })}
+      />,
+    );
+    await through(user);
+    await user.click(button('Create thing'));
+    expect(await within(dialog()).findByRole('alert')).toHaveTextContent('Not allowed here.');
+    expect(within(dialog()).getByRole('heading', { name: 'Where it works' })).toBeInTheDocument();
+  });
+
+  it('puts the notice at the top of the step', async () => {
+    render(<Harness notice={<p>Stale copy.</p>} />);
+    const step = dialog().querySelector('[data-step]');
+    expect(step?.firstElementChild).toHaveTextContent('Stale copy.');
+  });
+
+  it('runs onClose when it closes, whether Cancel or the parent closed it', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    let setOpenFromOutside: (open: boolean) => void = () => {};
+    function Parent() {
+      const [open, setOpen] = useState(true);
+      setOpenFromOutside = setOpen;
+      const w = useWizard<Id>({
+        open,
+        steps: STEPS,
+        errors: {},
+        fieldStep: {},
+        onFinish: () => undefined,
+      });
+      return (
+        <WizardDialog
+          open={open}
+          onOpenChange={setOpen}
+          title="New thing"
+          wizard={w}
+          finishLabel="Create thing"
+          onClose={onClose}
+        >
+          <p>Body</p>
+        </WizardDialog>
+      );
+    }
+    render(<Parent />);
+    await user.click(button('Cancel'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(onClose).toHaveBeenCalledTimes(1);
+    act(() => setOpenFromOutside(true));
+    await screen.findByRole('dialog');
+    act(() => setOpenFromOutside(false));
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(2));
   });
 });

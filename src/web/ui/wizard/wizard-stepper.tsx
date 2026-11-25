@@ -1,4 +1,4 @@
-import { type CSSProperties, useId } from 'react';
+import { type CSSProperties, useId, useRef } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { StepMarker } from '../step-marker.tsx';
 import type { WizardModel } from './use-wizard.ts';
@@ -11,6 +11,16 @@ import type { WizardModel } from './use-wizard.ts';
 export function WizardStepper<Id extends string>({ wizard }: { wizard: WizardModel<Id> }) {
   const { steps, index } = wizard;
   const base = useId();
+  // A marker pops only for a step that became done after this rail mounted, and keeps the class
+  // until it leaves done (dropping it mid-animation would cut the pop short).
+  const before = useRef(new Map<string, string>());
+  const popped = useRef(new Set<string>());
+  for (const s of steps) {
+    const was = before.current.get(s.id);
+    if (s.state !== 'done') popped.current.delete(s.id);
+    else if (was !== undefined && was !== 'done') popped.current.add(s.id);
+    before.current.set(s.id, s.state);
+  }
   const live = steps.filter((s) => !s.skip);
   const at = steps.slice(0, index + 1).filter((s) => !s.skip).length;
   const step = steps[index];
@@ -33,7 +43,10 @@ export function WizardStepper<Id extends string>({ wizard }: { wizard: WizardMod
           const last = i === steps.length - 1;
           const n = steps.slice(0, i + 1).filter((x) => !x.skip).length;
           const here = s.state === 'current';
-          const jump = s.state === 'done' || s.state === 'invalid';
+          const jump =
+            s.state === 'done' ||
+            s.state === 'invalid' ||
+            (wizard.mode === 'edit' && !here && s.state !== 'skipped');
           const summary = s.state === 'done' && s.summary ? s.summary : undefined;
           const word =
             s.state === 'invalid' ? 'needs attention' : s.state === 'skipped' ? 'skipped' : '';
@@ -41,7 +54,7 @@ export function WizardStepper<Id extends string>({ wizard }: { wizard: WizardMod
           const described = [summary && ids.detail, word && ids.word].filter(Boolean).join(' ');
           const body = (
             <>
-              <StepMarker state={s.state} n={n} fresh={wizard.mode === 'create'} />
+              <StepMarker state={s.state} n={n} fresh={popped.current.has(s.id)} />
               <span className="flex min-w-0 flex-col pt-0.5 text-left">
                 <span
                   id={ids.title}
@@ -54,6 +67,7 @@ export function WizardStepper<Id extends string>({ wizard }: { wizard: WizardMod
                         : 'text-fg-muted',
                     s.state === 'skipped' && 'line-through',
                     s.state === 'invalid' && 'text-fg-strong',
+                    jump && 'group-hover:text-fg-strong',
                   )}
                 >
                   {s.title}
@@ -84,13 +98,13 @@ export function WizardStepper<Id extends string>({ wizard }: { wizard: WizardMod
                   />
                 </span>
               )}
-              {jump || (wizard.mode === 'edit' && !here && s.state !== 'skipped') ? (
+              {jump ? (
                 <button
                   type="button"
                   aria-labelledby={ids.title}
                   aria-describedby={described || undefined}
                   onClick={() => wizard.go(s.id)}
-                  className="flex w-full items-start gap-3 rounded-md hover:[&_span:last-child>span:first-child]:text-fg-strong"
+                  className="group flex w-full items-start gap-3 rounded-md"
                 >
                   {body}
                 </button>
