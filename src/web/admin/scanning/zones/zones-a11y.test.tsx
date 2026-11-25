@@ -53,7 +53,13 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
     expect((await axe(document.body)).violations).toEqual([]);
     await user.click(screen.getByRole('button', { name: 'New zone' }));
     const dialog = await screen.findByRole('dialog', { name: 'New zone' });
-    await user.click(within(dialog).getByRole('switch', { name: 'Track who’s inside' }));
+    expect((await axe(document.body)).violations).toEqual([]);
+    await user.type(within(dialog).getByRole('textbox', { name: /^Name/ }), 'Pool');
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await user.click(await within(dialog).findByRole('switch', { name: 'Track who’s inside' }));
+    expect((await axe(document.body)).violations).toEqual([]);
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await within(dialog).findByRole('heading', { name: 'Check and create' });
     expect((await axe(document.body)).violations).toEqual([]);
   });
 
