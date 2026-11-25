@@ -12,11 +12,13 @@ import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import { getDeps } from './deps.ts';
+import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { filesPort } from './files-port.ts';
 import { recordConnectionAudit } from './repo-sync.ts';
 import { classify } from './runtime.ts';
 import { auditActor } from './service.ts';
 import {
+  assertFileIdAllowed,
   assertOrg,
   assertSafeUrls,
   orgZoneOf,
@@ -111,10 +113,12 @@ export async function openUnsaved(
 ) {
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
+  assertFileIdAllowed(def, input.fileId);
   const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
     now: sctx.clock.now(),
     timeZone: await orgZoneOf(sctx, input.orgId),
   });
+  await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema
     ? parseWith(def.secretSchema, input.secrets ?? {}, 'secrets')
     : undefined;
@@ -139,10 +143,12 @@ export async function testConfig(
   await assertConnectionAuthority(sctx, authority);
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
+  assertFileIdAllowed(def, input.fileId);
   const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
     now: sctx.clock.now(),
     timeZone: await orgZoneOf(sctx, input.orgId),
   });
+  await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema
     ? parseWith(def.secretSchema, input.secrets ?? {}, 'secrets')
     : undefined;

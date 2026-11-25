@@ -104,6 +104,7 @@ const CSV_CONNECTOR = {
   outputFields: {},
   defaults: { intervalSeconds: 900, maxConcurrency: 1, requestsPerMinute: 6, timeoutMs: 15_000 },
   recipes: [],
+  entitled: true,
 };
 /** Two saved list views of the passes. */
 const VIEWS = [
@@ -797,6 +798,15 @@ export const SEEDS: Record<string, unknown> = {
       createdAt: T.now,
     },
     secret: WEBHOOK_SECRET,
+  },
+  'passes.postPassesByIdPrintDrawn response': {
+    id: IDS.print,
+    passId: IDS.pass,
+    generation: 1,
+    status: 'active',
+    createdAt: T.updated,
+    voidedAt: null,
+    voidCause: null,
   },
   'passes.postPassesByIdPrintsByPrintIdVoid response': {
     id: IDS.print,

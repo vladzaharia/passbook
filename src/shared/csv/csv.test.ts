@@ -117,4 +117,16 @@ describe('parseCsv', () => {
     expect(r.rows).toHaveLength(rows);
     expect(ms).toBeLessThan(300);
   });
+
+  it('does not count blank or comma-only rows against the row cap', () => {
+    const rows = (n: number) => Array.from({ length: n }, (_, i) => `v${i}`);
+    const full = rows(2000).join('\n');
+    expect(parseCsv(`a\n${full}\n`).rows).toHaveLength(2000);
+    expect(parseCsv(`a\r\n${rows(2000).join('\r\n')}\r\n\r\n`).rows).toHaveLength(2000);
+    expect(parseCsv(`a,b\n${full.replace(/\n/g, ',x\n')},x\n,\n,\n,\n`).rows).toHaveLength(2000);
+    const mixed = rows(1000).join('\n\n');
+    expect(parseCsv(`a\n${mixed}\n`).rows).toHaveLength(1000);
+    expect(code(() => parseCsv(`a\n${rows(2001).join('\n')}`))).toBe('IMPORT_TOO_MANY_ROWS');
+    expect(code(() => parseCsv(`a\n${'\n'.repeat(30_000)}x`))).toBe('IMPORT_TOO_MANY_ROWS');
+  });
 });

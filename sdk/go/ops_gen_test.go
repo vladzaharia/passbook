@@ -406,14 +406,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connectors.list", "GET", "/api/v1/connectors", false,
-		"", `{"items":[{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0}}],"nextCursor":null}`,
+		"", `{"items":[{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0},"entitled":false}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connectors.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"connectors.retrieve", "GET", "/api/v1/connectors/id1", false,
-		"", `{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0}}`,
+		"", `{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0},"entitled":false}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connectors.Retrieve(ctx, "id1")
 		},
@@ -1184,6 +1184,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"passes.prints.markDrawn", "POST", "/api/v1/passes/id1/print/drawn", false,
+		"", `{"id":"x","passId":"x","generation":0,"status":"active","passVersion":0,"stale":false,"createdAt":0,"voidedAt":0,"voidCause":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Passes.Prints.MarkDrawn(ctx, "id1")
+		},
+	},
+	{
 		"passes.prints.downloadPdf", "GET", "/api/v1/passes/id1/print/pdf", false,
 		"", "",
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1192,21 +1199,21 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.prints.list", "GET", "/api/v1/passes/id1/prints", false,
-		"", `{"prints":[{"id":"x","passId":"x","generation":0,"status":"active","createdAt":0,"voidedAt":0,"voidCause":"x"}]}`,
+		"", `{"prints":[{"id":"x","passId":"x","generation":0,"status":"active","passVersion":0,"stale":false,"createdAt":0,"voidedAt":0,"voidCause":"x"}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Passes.Prints.List(ctx, "id1")
 		},
 	},
 	{
 		"passes.prints.create", "POST", "/api/v1/passes/id1/prints", false,
-		"", `{"id":"x","passId":"x","generation":0,"status":"active","createdAt":0,"voidedAt":0,"voidCause":"x","code":"x"}`,
+		"", `{"id":"x","passId":"x","generation":0,"status":"active","passVersion":0,"stale":false,"createdAt":0,"voidedAt":0,"voidCause":"x","code":"x"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Passes.Prints.Create(ctx, "id1")
 		},
 	},
 	{
 		"passes.prints.void", "POST", "/api/v1/passes/id1/prints/id2/void", false,
-		"", `{"id":"x","passId":"x","generation":0,"status":"active","createdAt":0,"voidedAt":0,"voidCause":"x"}`,
+		"", `{"id":"x","passId":"x","generation":0,"status":"active","passVersion":0,"stale":false,"createdAt":0,"voidedAt":0,"voidCause":"x"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Passes.Prints.Void(ctx, "id1", "id2")
 		},

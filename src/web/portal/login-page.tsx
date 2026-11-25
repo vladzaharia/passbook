@@ -31,7 +31,7 @@ export function LoginPage({
   const { session, isPending, isError, error: loadError, refetch } = useSession();
   bye ??= signedOutJustNow();
   byeNext ??= signedOutNext();
-  // A switch through Pocket ID's end-session comes back without ?next=; this tab kept it.
+  // A switch through Polaris ID's end-session comes back without ?next=; this tab kept it.
   const next = safeNextPath(rawNext) ?? byeNext;
   const [scene, sceneActions] = useLoginScene();
   useEffect(clearSignedOut, []);

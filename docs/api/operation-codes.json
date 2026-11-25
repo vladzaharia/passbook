@@ -1841,6 +1841,10 @@
     "BUNDLE_EMPTY",
     "BUNDLE_SNAPSHOT_INVALID",
     "BUNDLE_TOO_LARGE",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "PASS_FILE_MISSING",
     "PASS_NOT_FOUND",
     "UNAUTHENTICATED"
@@ -3299,8 +3303,13 @@
   ],
   "passes get /{id}/prints": [
     "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "ORG_FORBIDDEN",
     "PASS_NOT_FOUND",
+    "TEMPLATE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "passes get /{id}/versions/{version}": [
@@ -3546,6 +3555,10 @@
   ],
   "passes post /bulk-print": [
     "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "PASS_NOT_ACTIVE",
@@ -3553,6 +3566,7 @@
     "PRINTING_OFF",
     "PRINT_CODE_UNAVAILABLE",
     "PRINT_CONFLICT",
+    "TEMPLATE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "passes post /bulk-reissue": [
@@ -3706,8 +3720,27 @@
     "VERSION_CONFLICT",
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
+  "passes post /{id}/print/drawn": [
+    "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "MODE_MISMATCH",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "PASS_NOT_FOUND",
+    "PRINT_NOT_FOUND",
+    "TEMPLATE_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
   "passes post /{id}/prints": [
     "FORBIDDEN",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "MODE_MISMATCH",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
@@ -3717,6 +3750,7 @@
     "PRINTING_OFF",
     "PRINT_CODE_UNAVAILABLE",
     "PRINT_CONFLICT",
+    "TEMPLATE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "passes post /{id}/prints/{printId}/void": [
@@ -4202,6 +4236,10 @@
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
   "public get /wallet/samsung/{offer}": [
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "TEMPLATE_NOT_FOUND",
     "TEMPLATE_VERSION_CONTENT_CONFLICT",
     "TEMPLATE_VERSION_NOT_FOUND",
@@ -4253,6 +4291,10 @@
   ],
   "public get /{token}/pass.pkpass": [
     "CHANNEL_OFF",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "LINK_NOT_FOUND",
     "PASS_FILE_MISSING",
     "PASS_NOT_FOUND"
@@ -4260,6 +4302,10 @@
   "public get /{token}/passes.pkpasses": [
     "BUNDLE_EMPTY",
     "BUNDLE_TOO_LARGE",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "LINK_NOT_FOUND",
     "PASS_FILE_MISSING"
   ],
@@ -4312,6 +4358,10 @@
   ],
   "public get /{token}/{passId}/pass.pkpass": [
     "CHANNEL_OFF",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "LINK_NOT_FOUND",
     "PASS_FILE_MISSING"
   ],
@@ -4719,6 +4769,10 @@
   ],
   "samsung get /cards/{cardId}/{refId}": [
     "BAD_REQUEST",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "PAYLOAD_TOO_LARGE",
     "SAMSUNG_FIELDS_INVALID",
     "SAMSUNG_UNAUTHENTICATED",
@@ -4731,6 +4785,10 @@
   ],
   "samsung post /cards/{cardId}/{refId}": [
     "BAD_REQUEST",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "PAYLOAD_TOO_LARGE",
     "SAMSUNG_FIELDS_INVALID",
     "SAMSUNG_UNAUTHENTICATED",
@@ -4779,6 +4837,7 @@
     "NO_VERIFIED_EMAIL",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
+    "PASS_FILE_MISSING",
     "SESSION_REQUIRED",
     "TEST_FORWARD_ALREADY_ATTEMPTED",
     "TEST_FORWARD_CHANGED",

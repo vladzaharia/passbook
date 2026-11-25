@@ -1861,6 +1861,7 @@ type ConnectorsListItem struct {
 	OutputFields map[string]ConnectorsListItemOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsListItemDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsListItemRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                           `json:"entitled"`
 }
 
 type ConnectorsListItemCapabilities struct {
@@ -1889,6 +1890,7 @@ type ConnectorsListItemRecipesItem struct {
 	Label            string                                                    `json:"label"`
 	Category         *string                                                   `json:"category,omitempty"`
 	PasteSecret      bool                                                      `json:"pasteSecret"`
+	Entitled         bool                                                      `json:"entitled"`
 	OutputFields     map[string]ConnectorsListItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListItemRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                    `json:"holderEmailField"`
@@ -1938,6 +1940,7 @@ type ConnectorsListResponseItemsItem struct {
 	OutputFields map[string]ConnectorsListResponseItemsItemOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsListResponseItemsItemDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsListResponseItemsItemRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                                        `json:"entitled"`
 }
 
 type ConnectorsListResponseItemsItemCapabilities struct {
@@ -1966,6 +1969,7 @@ type ConnectorsListResponseItemsItemRecipesItem struct {
 	Label            string                                                                 `json:"label"`
 	Category         *string                                                                `json:"category,omitempty"`
 	PasteSecret      bool                                                                   `json:"pasteSecret"`
+	Entitled         bool                                                                   `json:"entitled"`
 	OutputFields     map[string]ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListResponseItemsItemRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                                 `json:"holderEmailField"`
@@ -2006,6 +2010,7 @@ type ConnectorsRetrieveResponse struct {
 	OutputFields map[string]ConnectorsRetrieveResponseOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsRetrieveResponseDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsRetrieveResponseRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                                   `json:"entitled"`
 }
 
 type ConnectorsRetrieveResponseCapabilities struct {
@@ -2034,6 +2039,7 @@ type ConnectorsRetrieveResponseRecipesItem struct {
 	Label            string                                                            `json:"label"`
 	Category         *string                                                           `json:"category,omitempty"`
 	PasteSecret      bool                                                              `json:"pasteSecret"`
+	Entitled         bool                                                              `json:"entitled"`
 	OutputFields     map[string]ConnectorsRetrieveResponseRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsRetrieveResponseRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                            `json:"holderEmailField"`
@@ -7423,14 +7429,16 @@ type PassesMemberPhotoUploadResponse struct {
 type PassesMemberPhotoUploadResult = PassesMemberPhotoUploadResponse
 
 type PassesPrintsCreateResponse struct {
-	ID         string  `json:"id"`
-	PassID     string  `json:"passId"`
-	Generation int64   `json:"generation"`
-	Status     string  `json:"status"`
-	CreatedAt  int64   `json:"createdAt"`
-	VoidedAt   *int64  `json:"voidedAt"`
-	VoidCause  *string `json:"voidCause"`
-	Code       string  `json:"code"`
+	ID          string  `json:"id"`
+	PassID      string  `json:"passId"`
+	Generation  int64   `json:"generation"`
+	Status      string  `json:"status"`
+	PassVersion *int64  `json:"passVersion"`
+	Stale       bool    `json:"stale"`
+	CreatedAt   int64   `json:"createdAt"`
+	VoidedAt    *int64  `json:"voidedAt"`
+	VoidCause   *string `json:"voidCause"`
+	Code        string  `json:"code"`
 }
 
 type PassesPrintsCreateResult = PassesPrintsCreateResponse
@@ -7440,25 +7448,43 @@ type PassesPrintsListResponse struct {
 }
 
 type PassesPrintsListResponsePrintsItem struct {
-	ID         string  `json:"id"`
-	PassID     string  `json:"passId"`
-	Generation int64   `json:"generation"`
-	Status     string  `json:"status"`
-	CreatedAt  int64   `json:"createdAt"`
-	VoidedAt   *int64  `json:"voidedAt"`
-	VoidCause  *string `json:"voidCause"`
+	ID          string  `json:"id"`
+	PassID      string  `json:"passId"`
+	Generation  int64   `json:"generation"`
+	Status      string  `json:"status"`
+	PassVersion *int64  `json:"passVersion"`
+	Stale       bool    `json:"stale"`
+	CreatedAt   int64   `json:"createdAt"`
+	VoidedAt    *int64  `json:"voidedAt"`
+	VoidCause   *string `json:"voidCause"`
 }
 
 type PassesPrintsListResult = PassesPrintsListResponse
 
+type PassesPrintsMarkDrawnResponse struct {
+	ID          string  `json:"id"`
+	PassID      string  `json:"passId"`
+	Generation  int64   `json:"generation"`
+	Status      string  `json:"status"`
+	PassVersion *int64  `json:"passVersion"`
+	Stale       bool    `json:"stale"`
+	CreatedAt   int64   `json:"createdAt"`
+	VoidedAt    *int64  `json:"voidedAt"`
+	VoidCause   *string `json:"voidCause"`
+}
+
+type PassesPrintsMarkDrawnResult = PassesPrintsMarkDrawnResponse
+
 type PassesPrintsVoidResponse struct {
-	ID         string  `json:"id"`
-	PassID     string  `json:"passId"`
-	Generation int64   `json:"generation"`
-	Status     string  `json:"status"`
-	CreatedAt  int64   `json:"createdAt"`
-	VoidedAt   *int64  `json:"voidedAt"`
-	VoidCause  *string `json:"voidCause"`
+	ID          string  `json:"id"`
+	PassID      string  `json:"passId"`
+	Generation  int64   `json:"generation"`
+	Status      string  `json:"status"`
+	PassVersion *int64  `json:"passVersion"`
+	Stale       bool    `json:"stale"`
+	CreatedAt   int64   `json:"createdAt"`
+	VoidedAt    *int64  `json:"voidedAt"`
+	VoidCause   *string `json:"voidCause"`
 }
 
 type PassesPrintsVoidResult = PassesPrintsVoidResponse
@@ -9611,6 +9637,7 @@ type ScanRosterEntriesItem struct {
 	Status string  `json:"status"`
 	State  *string `json:"state"`
 	Day    *bool   `json:"day,omitempty"`
+	G      *string `json:"g,omitempty"`
 }
 
 type ScanSession struct {

@@ -9,6 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
 import { percentile, toDto } from './dto.ts';
+import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { schedules } from './health.ts';
 import { assertMayIssue, createIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
@@ -32,6 +33,7 @@ import {
   secretsFor,
 } from './service-shared.ts';
 import {
+  assertFileIdAllowed,
   assertModeSupported,
   assertOrg,
   assertPointer,
@@ -61,7 +63,10 @@ export async function listAll(
     page.map((r) => r.id),
   );
   return {
-    items: page.map((r) => ({ ...toDto(sctx.env, r), passCount: counts.get(r.id) ?? 0 })),
+    items: page.map((r) => ({
+      ...toDto(sctx.env, r, (code) => logShownAsStored(sctx, r, code)),
+      passCount: counts.get(r.id) ?? 0,
+    })),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }
@@ -78,7 +83,7 @@ export async function getDetail(
     .sort((a, b) => a - b);
   const errors = stats.rows.filter((r) => r.outcome === 'error').length;
   return {
-    ...toDto(sctx.env, conn),
+    ...toDto(sctx.env, conn, (code) => logShownAsStored(sctx, conn, code)),
     runs,
     metrics: {
       p50Ms: percentile(durations, 0.5),
@@ -87,6 +92,15 @@ export async function getDetail(
       passCount: stats.passCount,
     },
   };
+}
+
+function logShownAsStored(sctx: ServiceContext, c: ConnectionRow, code: string): void {
+  sctx.log.error('connection.config_shown_as_stored', {
+    orgId: c.orgId,
+    connectionId: c.id,
+    connectorType: c.connectorType,
+    code,
+  });
 }
 
 export async function create(
@@ -100,11 +114,13 @@ export async function create(
   if (issues) assertMayIssue(authority);
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
+  assertFileIdAllowed(def, input.fileId);
   const now = sctx.clock.now();
   const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
     now,
     timeZone: await orgZoneOf(sctx, input.orgId),
   });
+  await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const mode =
     input.mode ??
     (def.capabilities.poll ? 'poll' : def.capabilities.webhook ? 'webhook' : 'manual');

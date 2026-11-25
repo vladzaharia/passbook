@@ -148,7 +148,7 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   /** Config keys that cannot change once the connection exists. */
   fixedConfig?: readonly string[];
   /** Sender recipes offered to the console; empty or absent for most connectors. */
-  recipes?: readonly RecipeInfo[];
+  recipes?: readonly Omit<RecipeInfo, 'entitled'>[];
   migrate?(oldVersion: number, config: unknown): C;
   /** Every URL the connector will fetch; checked against the SSRF rules at save time. */
   urls?(config: C): string[];
