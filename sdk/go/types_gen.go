@@ -1267,37 +1267,65 @@ type ConnectionsFilesDeleteResponse struct {
 
 type ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
 
-type ConnectionsFilesRetrieveRevisionsResponse struct {
-	Items      []ConnectionsFilesRetrieveRevisionsResponseItemsItem `json:"items"`
-	NextCursor *string                                              `json:"nextCursor"`
+type ConnectionsFilesListItem struct {
+	ID            string                          `json:"id"`
+	ConnectionID  string                          `json:"connectionId"`
+	Revision      int64                           `json:"revision"`
+	State         string                          `json:"state"`
+	Name          string                          `json:"name"`
+	Format        string                          `json:"format"`
+	Sheet         *string                         `json:"sheet"`
+	Bytes         int64                           `json:"bytes"`
+	Rows          int64                           `json:"rows"`
+	Skipped       ConnectionsFilesListItemSkipped `json:"skipped"`
+	Diff          map[string]any                  `json:"diff"`
+	Applied       bool                            `json:"applied"`
+	CreatedBy     *string                         `json:"createdBy"`
+	CreatedByName *string                         `json:"createdByName"`
+	CreatedAt     int64                           `json:"createdAt"`
+	ExpiresAt     *int64                          `json:"expiresAt"`
+	SupersededAt  *int64                          `json:"supersededAt"`
 }
 
-type ConnectionsFilesRetrieveRevisionsResponseItemsItem struct {
-	ID            string                                                    `json:"id"`
-	ConnectionID  string                                                    `json:"connectionId"`
-	Revision      int64                                                     `json:"revision"`
-	State         string                                                    `json:"state"`
-	Name          string                                                    `json:"name"`
-	Format        string                                                    `json:"format"`
-	Sheet         *string                                                   `json:"sheet"`
-	Bytes         int64                                                     `json:"bytes"`
-	Rows          int64                                                     `json:"rows"`
-	Skipped       ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped `json:"skipped"`
-	Diff          map[string]any                                            `json:"diff"`
-	Applied       bool                                                      `json:"applied"`
-	CreatedBy     *string                                                   `json:"createdBy"`
-	CreatedByName *string                                                   `json:"createdByName"`
-	CreatedAt     int64                                                     `json:"createdAt"`
-	ExpiresAt     *int64                                                    `json:"expiresAt"`
-	SupersededAt  *int64                                                    `json:"supersededAt"`
-}
-
-type ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped struct {
+type ConnectionsFilesListItemSkipped struct {
 	NoID      int64 `json:"noId"`
 	Duplicate int64 `json:"duplicate"`
 }
 
-type ConnectionsFilesRetrieveRevisionsResult = ConnectionsFilesRetrieveRevisionsResponse
+type ConnectionsFilesListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
+type ConnectionsFilesListResponse struct {
+	Items      []ConnectionsFilesListResponseItemsItem `json:"items"`
+	NextCursor *string                                 `json:"nextCursor"`
+}
+
+type ConnectionsFilesListResponseItemsItem struct {
+	ID            string                                       `json:"id"`
+	ConnectionID  string                                       `json:"connectionId"`
+	Revision      int64                                        `json:"revision"`
+	State         string                                       `json:"state"`
+	Name          string                                       `json:"name"`
+	Format        string                                       `json:"format"`
+	Sheet         *string                                      `json:"sheet"`
+	Bytes         int64                                        `json:"bytes"`
+	Rows          int64                                        `json:"rows"`
+	Skipped       ConnectionsFilesListResponseItemsItemSkipped `json:"skipped"`
+	Diff          map[string]any                               `json:"diff"`
+	Applied       bool                                         `json:"applied"`
+	CreatedBy     *string                                      `json:"createdBy"`
+	CreatedByName *string                                      `json:"createdByName"`
+	CreatedAt     int64                                        `json:"createdAt"`
+	ExpiresAt     *int64                                       `json:"expiresAt"`
+	SupersededAt  *int64                                       `json:"supersededAt"`
+}
+
+type ConnectionsFilesListResponseItemsItemSkipped struct {
+	NoID      int64 `json:"noId"`
+	Duplicate int64 `json:"duplicate"`
+}
 
 type ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
 

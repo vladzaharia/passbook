@@ -117,17 +117,19 @@ export async function getFile(db: D1Database, orgId: string, id: string): Promis
   return r ? toRow(r) : null;
 }
 
-/** Revisions of one connection, newest first. */
+/** Revisions of one connection, newest first: up to `limit` older than `before` (a revision number). */
 export async function listRevisions(
   db: D1Database,
   orgId: string,
   connectionId: string,
+  limit: number,
+  before: number,
 ): Promise<FileRow[]> {
   const rows = await all<Sql>(
     db,
-    `SELECT * FROM connection_files WHERE org_id = ? AND connection_id = ? AND revision IS NOT NULL
-     ORDER BY revision DESC`,
-    [orgId, connectionId],
+    `SELECT * FROM connection_files WHERE org_id = ? AND connection_id = ? AND revision < ?
+     ORDER BY revision DESC LIMIT ?`,
+    [orgId, connectionId, before, limit],
   );
   return rows.map(toRow);
 }

@@ -431,13 +431,9 @@ func (r *ConnectionsFilesResource) Delete(ctx context.Context, id string, fileId
 	return &out, nil
 }
 
-// RetrieveRevisions Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`
-func (r *ConnectionsFilesResource) RetrieveRevisions(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsFilesRetrieveRevisionsResult, error) {
-	var out ConnectionsFilesRetrieveRevisionsResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/files"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
+// List Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`
+func (r *ConnectionsFilesResource) List(ctx context.Context, id string, query *ConnectionsFilesListQuery, opts ...RequestOption) *Pager[ConnectionsFilesListItem] {
+	return newPager[ConnectionsFilesListItem](r.c, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/files", query: queryValues(query)}, "cursor", opts)
 }
 
 // Upload Upload a new revision of a connection file `POST /api/v1/connections/{id}/files`

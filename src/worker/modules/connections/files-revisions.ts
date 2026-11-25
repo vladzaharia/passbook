@@ -122,23 +122,29 @@ export async function uploadRevision(
   return { unchanged: false, ...applied.file, runId: applied.runId };
 }
 
-/** Revisions, newest first. `applied` follows the cursor the connector left. */
+/** Revisions, newest first, a page at a time (the cursor is the last revision number). `applied` follows the cursor the connector left. */
 export async function listFiles(
   ctx: ServiceContext,
   authority: ConnectionAuthority,
   connectionId: string,
+  query: { cursor?: string | undefined; limit: number },
 ): Promise<RevisionList> {
   const conn = await requireUploadConnection(ctx, authority, connectionId);
+  const before = query.cursor === undefined ? Number.MAX_SAFE_INTEGER : Number(query.cursor);
+  if (!Number.isInteger(before) || before < 1)
+    throw new ValidationError('Invalid cursor.', [{ path: 'cursor', message: 'Invalid cursor.' }]);
   const [rows, cursor] = await Promise.all([
-    listRevisions(ctx.env.DB, conn.orgId, connectionId),
+    listRevisions(ctx.env.DB, conn.orgId, connectionId, query.limit + 1, before),
     cursorOf(ctx.env.DB, conn.orgId, connectionId),
   ]);
+  const page = rows.slice(0, query.limit);
   const names = await userNames(ctx.env.DB, [
-    ...new Set(rows.flatMap((r) => (r.createdBy ? [r.createdBy] : []))),
+    ...new Set(page.flatMap((r) => (r.createdBy ? [r.createdBy] : []))),
   ]);
+  const last = page.at(-1);
   return {
-    items: rows.map((r) => revisionDto(r, cursor === doneCursor(r.id), names)),
-    nextCursor: null,
+    items: page.map((r) => revisionDto(r, cursor === doneCursor(r.id), names)),
+    nextCursor: rows.length > query.limit && last?.revision ? String(last.revision) : null,
   };
 }
 

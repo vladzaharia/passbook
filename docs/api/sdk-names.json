@@ -2469,7 +2469,7 @@
   },
   "connections.getConnectionsByIdFiles": {
     "resource": "connections.files",
-    "method": "retrieveRevisions"
+    "method": "list"
   },
   "connections.postConnectionsByIdFilesByFileIdApply": {
     "resource": "connections.files",

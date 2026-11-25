@@ -188,10 +188,12 @@ __all__ = [
     "ConnectionsFilesApplyResult",
     "ConnectionsFilesDeleteResponse",
     "ConnectionsFilesDeleteResult",
-    "ConnectionsFilesRetrieveRevisionsResponse",
-    "ConnectionsFilesRetrieveRevisionsResponseItemsItem",
-    "ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped",
-    "ConnectionsFilesRetrieveRevisionsResult",
+    "ConnectionsFilesListItem",
+    "ConnectionsFilesListItemSkipped",
+    "ConnectionsFilesListResponse",
+    "ConnectionsFilesListResponseItemsItem",
+    "ConnectionsFilesListResponseItemsItemSkipped",
+    "ConnectionsFilesListResult",
     "ConnectionsFilesUploadBody",
     "ConnectionsFilesUploadParams",
     "ConnectionsFilesUploadResponse",
@@ -2892,11 +2894,7 @@ class ConnectionsFilesApplyResponseFileSkipped(_Model):
 class ConnectionsFilesDeleteResponse(_Model):
     ok: _Literal[True]
 
-class ConnectionsFilesRetrieveRevisionsResponse(_Model):
-    items: _List[ConnectionsFilesRetrieveRevisionsResponseItemsItem]
-    nextCursor: str | None
-
-class ConnectionsFilesRetrieveRevisionsResponseItemsItem(_Model):
+class ConnectionsFilesListItem(_Model):
     id: str
     connectionId: str
     revision: int
@@ -2906,7 +2904,7 @@ class ConnectionsFilesRetrieveRevisionsResponseItemsItem(_Model):
     sheet: str | None
     bytes: int
     rows: int
-    skipped: ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped
+    skipped: ConnectionsFilesListItemSkipped
     diff: _Dict[str, _Any] | None
     applied: bool
     createdBy: str | None
@@ -2915,7 +2913,34 @@ class ConnectionsFilesRetrieveRevisionsResponseItemsItem(_Model):
     expiresAt: int | None
     supersededAt: int | None
 
-class ConnectionsFilesRetrieveRevisionsResponseItemsItemSkipped(_Model):
+class ConnectionsFilesListItemSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesListResponse(_Model):
+    items: _List[ConnectionsFilesListResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsFilesListResponseItemsItem(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesListResponseItemsItemSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesListResponseItemsItemSkipped(_Model):
     noId: int
     duplicate: int
 
@@ -13747,7 +13772,7 @@ ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
 
 ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
 
-ConnectionsFilesRetrieveRevisionsResult = ConnectionsFilesRetrieveRevisionsResponse
+ConnectionsFilesListResult = ConnectionsFilesListResponse
 
 ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
 

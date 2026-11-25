@@ -378,10 +378,10 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"connections.files.retrieveRevisions", "GET", "/api/v1/connections/id1/files", false,
-		"", `{"items":[{"id":"x","connectionId":"x","revision":0,"state":"draft","name":"x","format":"csv","sheet":"x","bytes":0,"rows":0,"skipped":{"noId":0,"duplicate":0},"diff":{"added":0,"changed":0,"removed":0,"examples":{"added":["x"],"changed":["x"],"removed":["x"]}},"applied":false,"createdBy":"x","createdByName":"x","createdAt":0,"expiresAt":0,"supersededAt":0}],"nextCursor":"x"}`,
+		"connections.files.list", "GET", "/api/v1/connections/id1/files", false,
+		"", `{"items":[{"id":"x","connectionId":"x","revision":0,"state":"draft","name":"x","format":"csv","sheet":"x","bytes":0,"rows":0,"skipped":{"noId":0,"duplicate":0},"diff":{"added":0,"changed":0,"removed":0,"examples":{"added":["x"],"changed":["x"],"removed":["x"]}},"applied":false,"createdBy":"x","createdByName":"x","createdAt":0,"expiresAt":0,"supersededAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Connections.Files.RetrieveRevisions(ctx, "id1")
+			return c.Connections.Files.List(ctx, "id1", nil).All(ctx)
 		},
 	},
 	{

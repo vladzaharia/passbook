@@ -5,6 +5,7 @@ import { IdParamSchema, IdSchema, OkSchema } from '../../../shared/contracts/com
 import {
   ApplyConnectionFileResponseSchema,
   ConnectionFileRevisionListSchema,
+  ConnectionFileRevisionsQuerySchema,
   ConnectionFileSchema,
   ConnectionFileUploadResultSchema,
   UpdateConnectionFileSchema,
@@ -196,13 +197,16 @@ export function registerConnectionFileRoutes(router: Router): void {
       path: '/{id}/files',
       summary: 'Revisions of a connection file, newest first',
       params: IdParamSchema,
+      query: ConnectionFileRevisionsQuerySchema,
       response: ConnectionFileRevisionListSchema,
     },
     async (c) => {
       assertLive(c);
       const id = c.req.valid('param').id;
       const authority = await connectionAuthority(c, id, 'integrations:read');
-      return c.json(await revisions.listFiles(serviceContext(c), authority, id));
+      return c.json(
+        await revisions.listFiles(serviceContext(c), authority, id, c.req.valid('query')),
+      );
     },
   );
   register(

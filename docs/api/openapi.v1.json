@@ -49369,7 +49369,7 @@
           }
         ]
       },
-      "ConnectionsFilesRetrieveRevisionsResponse": {
+      "ConnectionsFilesListResponse": {
         "type": "object",
         "properties": {
           "items": {
@@ -113176,6 +113176,26 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -113184,7 +113204,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectionsFilesRetrieveRevisionsResponse"
+                  "$ref": "#/components/schemas/ConnectionsFilesListResponse"
                 },
                 "example": {
                   "items": [
@@ -113243,7 +113263,7 @@
         "operationId": "connections.getConnectionsByIdFiles",
         "x-sdk": {
           "resource": "connections.files",
-          "method": "retrieveRevisions"
+          "method": "list"
         },
         "description": "Lists the connection's file revisions, newest first.",
         "security": [

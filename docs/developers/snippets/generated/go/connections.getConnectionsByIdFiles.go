@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -15,9 +16,18 @@ func main() {
 		panic(err)
 	}
 
-	result, err := pb.Connections.Files.RetrieveRevisions(ctx, "0193a1b2-7c00-7000-8000-0000000000e1")
-	if err != nil {
+	var query passbook.ConnectionsFilesListQuery
+	if err := json.Unmarshal([]byte(`{
+  "limit": 25
+}`), &query); err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", result)
+
+	pager := pb.Connections.Files.List(ctx, "0193a1b2-7c00-7000-8000-0000000000e1", &query)
+	for pager.Next(ctx) {
+		fmt.Printf("%+v\n", pager.Item())
+	}
+	if err := pager.Err(); err != nil {
+		panic(err)
+	}
 }

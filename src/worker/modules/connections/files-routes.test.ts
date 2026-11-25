@@ -157,6 +157,18 @@ describe('revisions', () => {
     });
   });
 
+  it('pages revisions newest first by cursor', async () => {
+    const { id } = await connection();
+    await call('POST', files(id), csvBody(NEXT));
+    const one = await call('GET', files(id, '?limit=1'));
+    expect(one.json.items.map((r: { revision: number }) => r.revision)).toEqual([2]);
+    expect(one.json.nextCursor).toBe('2');
+    const rest = await call('GET', files(id, `?limit=1&cursor=${one.json.nextCursor}`));
+    expect(rest.json.items.map((r: { revision: number }) => r.revision)).toEqual([1]);
+    expect(rest.json.nextCursor).toBeNull();
+    expect((await call('GET', files(id, '?cursor=abc'))).status).toBe(422);
+  });
+
   it('stores a new revision as pending with a diff, and returns unchanged for the same bytes', async () => {
     const { id } = await connection();
     const same = await call('POST', files(id), csvBody(MEMBERS));

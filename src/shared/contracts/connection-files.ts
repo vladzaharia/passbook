@@ -147,6 +147,11 @@ export const ConnectionFileRevisionSchema = z.object({
   expiresAt: TimestampSchema.nullable(),
   supersededAt: TimestampSchema.nullable(),
 });
+/** The cursor is the `nextCursor` of the page before. */
+export const ConnectionFileRevisionsQuerySchema = z.object({
+  cursor: z.string().max(512).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
 /** Newest first. */
 export const ConnectionFileRevisionListSchema = pageOf(ConnectionFileRevisionSchema);
 

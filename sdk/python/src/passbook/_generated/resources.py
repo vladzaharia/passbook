@@ -417,13 +417,16 @@ class ConnectionsFilesResource:
         """Discard a pending revision `DELETE /api/v1/connections/{id}/files/{fileId}`"""
         return self._core.request("DELETE", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}", result=m.ConnectionsFilesDeleteResult, **opts)
 
-    def retrieve_revisions(
+    def list(
         self,
         id: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> m.ConnectionsFilesRetrieveRevisionsResult:
+    ) -> Page[m.ConnectionsFilesListItem]:
         """Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`"""
-        return self._core.request("GET", f"/api/v1/connections/{_p(id)}/files", result=m.ConnectionsFilesRetrieveRevisionsResult, **opts)
+        return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/files", query={"cursor": cursor, "limit": limit}, result=m.ConnectionsFilesListResult, cursor_param="cursor", **opts)
 
     def upload(
         self,
