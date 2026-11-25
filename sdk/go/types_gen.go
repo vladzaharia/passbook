@@ -9599,6 +9599,7 @@ type ScanRosterEntriesItem struct {
 	Status string  `json:"status"`
 	State  *string `json:"state"`
 	Day    *bool   `json:"day,omitempty"`
+	G      *string `json:"g,omitempty"`
 }
 
 type ScanSession struct {

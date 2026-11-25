@@ -1,4 +1,12 @@
-import type { BehaviorPlugin, Json, JsonSchemaObject, PassJson } from '../../types.ts';
+import { DEFAULT_EVENT_MINUTES } from '../../boundaries.ts';
+import type {
+  BehaviorContext,
+  BehaviorPlugin,
+  Json,
+  JsonSchemaObject,
+  PassJson,
+  Personalization,
+} from '../../types.ts';
 
 export interface UpcomingEventsConfig {
   /** Input holding the array of events. */
@@ -106,19 +114,33 @@ function remoteImage(
   } as Json;
 }
 
-interface Listed {
+/** An event the pass lists: its entry, when it starts and when it is over (end or fallback). */
+export interface Listed {
+  entry: Row;
   start: number | undefined;
   until: number | undefined;
 }
 
-/** One relevance interval per event and an expiry after the last one. Wallet caps an interval at a day. */
-function schedule(pass: PassJson, events: readonly Listed[], leadMinutes: number): void {
-  const windows = events.flatMap((e) => {
+/** The relevance interval of each event that starts; Wallet caps an interval at a day. */
+export function eventWindows(
+  events: readonly Pick<Listed, 'start' | 'until'>[],
+  leadMinutes: number,
+): { startDate: string; endDate: string }[] {
+  return events.flatMap((e) => {
     if (e.start === undefined) return [];
     const from = e.start - leadMinutes * MINUTE;
     const until = Math.min(Math.max(e.until ?? e.start, e.start), from + DAY);
     return [{ startDate: iso(from), endDate: iso(until) }];
   });
+}
+
+/** One relevance interval per event and an expiry after the last one. */
+export function schedule(
+  pass: PassJson,
+  events: readonly Pick<Listed, 'start' | 'until'>[],
+  leadMinutes: number,
+): void {
+  const windows = eventWindows(events, leadMinutes);
   if (windows.length > 0) {
     // The pass's own window (a ticket's event) stays; listed events fill the rest of the cap.
     const own = pass.relevantDates ?? [];
@@ -142,113 +164,131 @@ function schedule(pass: PassJson, events: readonly Listed[], leadMinutes: number
 }
 
 /**
- * Maps an array input of events to `upcomingPassInformation`: sorted by start, past events
- * dropped, the running one marked active. An event with no start shows as to be determined.
- * The list is a snapshot of build time: past events and the active mark only update when the
- * pass is next published.
+ * The events a pass lists at `now`: sorted by start, past events dropped, capped, the running one
+ * marked active. Null when the input holds no list at all.
+ */
+export function listEvents(
+  input: Personalization,
+  config: UpcomingEventsConfig,
+  lookups: BehaviorContext['lookups'],
+  now: number,
+  cap = config.max ?? MAX_EVENTS,
+): Listed[] | null {
+  const supplied = input[config.input];
+  if (supplied === undefined || supplied === null) return null;
+  if (!Array.isArray(supplied)) throw new Error(`${config.input} is not a list.`);
+  const fallback = (config.fallbackMinutes ?? DEFAULT_EVENT_MINUTES) * MINUTE;
+  const images = config.images ? lookups[config.images] : undefined;
+  const ids = new Set<string>();
+
+  const events = supplied.flatMap((raw, i) => {
+    const label = `Event ${i + 1}`;
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+      throw new Error(`${label} is not an event.`);
+    const row = raw as Row;
+    const name = text(row, 'name');
+    if (!name) throw new Error(`${label} needs a name.`);
+    const start = date(row, 'startsAt', label);
+    const end = date(row, 'endsAt', label);
+    if (start && end && end.ms < start.ms) throw new Error(`${label}: endsAt is before startsAt.`);
+    const until = end?.ms ?? (start ? start.ms + fallback : undefined);
+    if (until !== undefined && until < now) return [];
+
+    const base =
+      text(row, 'id') ??
+      `${slug(name)}-${start ? start.iso.replace(/\D/g, '').slice(0, 12) : 'tbd'}`;
+    let identifier = base;
+    for (let n = 2; ids.has(identifier); n++) {
+      if (text(row, 'id')) throw new Error(`${label}: id ${base} is used twice.`);
+      identifier = `${base}-${n}`;
+    }
+    ids.add(identifier);
+
+    const venueName = text(row, 'venueName');
+    const region = text(row, 'venueRegion');
+    const lat = row.venueLat;
+    const lng = row.venueLng;
+    const semantics: Row = { eventName: name };
+    if (start) semantics.eventStartDate = start.iso;
+    if (end) semantics.eventEndDate = end.iso;
+    if (venueName) semantics.venueName = venueName;
+    if (region) semantics.venueRegionName = region;
+    if (typeof lat === 'number' && typeof lng === 'number')
+      semantics.venueLocation = { latitude: lat, longitude: lng };
+
+    const backFields: Row[] = [];
+    const venue = [venueName, region].filter(Boolean).join(', ');
+    if (venue) backFields.push({ key: 'venue', label: 'Venue', value: venue });
+    const note = text(row, 'note');
+    if (note) backFields.push({ key: 'note', label: 'Note', value: note });
+    if (backFields.length === 0) backFields.push({ key: 'event', label: 'Event', value: name });
+
+    const urls: Row = {};
+    for (const [from, to] of Object.entries(URL_KEYS)) {
+      const url = text(row, from);
+      if (!url) continue;
+      if (!httpsUrl(url)) throw new Error(`${label}: ${from} needs an https link.`);
+      urls[to] = url;
+    }
+    const pictures: Row = {};
+    for (const key of ['headerImage', 'venueMap'] as const) {
+      const ref = text(row, key);
+      if (ref) pictures[key] = remoteImage(images, ref, label);
+    }
+
+    const zone =
+      text(row, 'timeZone') ??
+      (config.timeZoneInput && typeof input[config.timeZoneInput] === 'string'
+        ? (input[config.timeZoneInput] as string)
+        : undefined);
+    const entry: Row = {
+      identifier,
+      name,
+      type: 'event',
+      dateInformation: start
+        ? { date: start.iso, ...(zone ? { timeZone: zone } : {}) }
+        : { isUndetermined: true },
+      isActive: start !== undefined && start.ms <= now && now <= (until ?? start.ms),
+      semantics,
+      backFields,
+      ...(Object.keys(urls).length ? { URLs: urls } : {}),
+      ...(Object.keys(pictures).length ? { images: pictures } : {}),
+    };
+    return [{ entry, at: start?.ms ?? Number.POSITIVE_INFINITY, start: start?.ms, until }];
+  });
+
+  return events
+    .map((e, i) => ({ ...e, i }))
+    .sort((a, b) => (a.at === b.at ? a.i - b.i : a.at < b.at ? -1 : 1))
+    .slice(0, cap)
+    .map(({ entry, start, until }) => ({ entry, start, until }));
+}
+
+/** Writes the listed events; none listed removes the key. */
+export function writeEvents(pass: PassJson, list: readonly Listed[]): void {
+  if (list.length > 0)
+    pass.upcomingPassInformation = list.map(
+      (e) => e.entry,
+    ) as unknown as PassJson['upcomingPassInformation'];
+  else delete pass.upcomingPassInformation;
+}
+
+/**
+ * Maps an array input of events to `upcomingPassInformation` (`listEvents` at build time). The
+ * active mark and the past events move with the clock: `timed.ts` re-derives them at each event's
+ * start and end without a new version (docs/design/event-boundaries.md).
  */
 export const upcomingEvents: BehaviorPlugin<UpcomingEventsConfig> = {
   id: 'upcoming-events',
   version: 1,
   configSchema,
   apply(pass, input, config, ctx) {
-    const supplied = input[config.input];
-    if (supplied === undefined || supplied === null) {
+    const list = listEvents(input, config, ctx.lookups, ctx.now.getTime());
+    if (list === null) {
       delete pass.upcomingPassInformation;
       return;
     }
-    if (!Array.isArray(supplied)) throw new Error(`${config.input} is not a list.`);
-    const now = ctx.now.getTime();
-    const fallback = (config.fallbackMinutes ?? 180) * MINUTE;
-    const images = config.images ? ctx.lookups[config.images] : undefined;
-    const ids = new Set<string>();
-
-    const events = supplied.flatMap((raw, i) => {
-      const label = `Event ${i + 1}`;
-      if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
-        throw new Error(`${label} is not an event.`);
-      const row = raw as Row;
-      const name = text(row, 'name');
-      if (!name) throw new Error(`${label} needs a name.`);
-      const start = date(row, 'startsAt', label);
-      const end = date(row, 'endsAt', label);
-      if (start && end && end.ms < start.ms)
-        throw new Error(`${label}: endsAt is before startsAt.`);
-      const until = end?.ms ?? (start ? start.ms + fallback : undefined);
-      if (until !== undefined && until < now) return [];
-
-      const base =
-        text(row, 'id') ??
-        `${slug(name)}-${start ? start.iso.replace(/\D/g, '').slice(0, 12) : 'tbd'}`;
-      let identifier = base;
-      for (let n = 2; ids.has(identifier); n++) {
-        if (text(row, 'id')) throw new Error(`${label}: id ${base} is used twice.`);
-        identifier = `${base}-${n}`;
-      }
-      ids.add(identifier);
-
-      const venueName = text(row, 'venueName');
-      const region = text(row, 'venueRegion');
-      const lat = row.venueLat;
-      const lng = row.venueLng;
-      const semantics: Row = { eventName: name };
-      if (start) semantics.eventStartDate = start.iso;
-      if (end) semantics.eventEndDate = end.iso;
-      if (venueName) semantics.venueName = venueName;
-      if (region) semantics.venueRegionName = region;
-      if (typeof lat === 'number' && typeof lng === 'number')
-        semantics.venueLocation = { latitude: lat, longitude: lng };
-
-      const backFields: Row[] = [];
-      const venue = [venueName, region].filter(Boolean).join(', ');
-      if (venue) backFields.push({ key: 'venue', label: 'Venue', value: venue });
-      const note = text(row, 'note');
-      if (note) backFields.push({ key: 'note', label: 'Note', value: note });
-      if (backFields.length === 0) backFields.push({ key: 'event', label: 'Event', value: name });
-
-      const urls: Row = {};
-      for (const [from, to] of Object.entries(URL_KEYS)) {
-        const url = text(row, from);
-        if (!url) continue;
-        if (!httpsUrl(url)) throw new Error(`${label}: ${from} needs an https link.`);
-        urls[to] = url;
-      }
-      const pictures: Row = {};
-      for (const key of ['headerImage', 'venueMap'] as const) {
-        const ref = text(row, key);
-        if (ref) pictures[key] = remoteImage(images, ref, label);
-      }
-
-      const zone =
-        text(row, 'timeZone') ??
-        (config.timeZoneInput && typeof input[config.timeZoneInput] === 'string'
-          ? (input[config.timeZoneInput] as string)
-          : undefined);
-      const entry: Row = {
-        identifier,
-        name,
-        type: 'event',
-        dateInformation: start
-          ? { date: start.iso, ...(zone ? { timeZone: zone } : {}) }
-          : { isUndetermined: true },
-        isActive: start !== undefined && start.ms <= now && now <= (until ?? start.ms),
-        semantics,
-        backFields,
-        ...(Object.keys(urls).length ? { URLs: urls } : {}),
-        ...(Object.keys(pictures).length ? { images: pictures } : {}),
-      };
-      return [{ entry, at: start?.ms ?? Number.POSITIVE_INFINITY, start: start?.ms, until }];
-    });
-
-    const list = events
-      .map((e, i) => ({ ...e, i }))
-      .sort((a, b) => (a.at === b.at ? a.i - b.i : a.at < b.at ? -1 : 1))
-      .slice(0, config.max ?? MAX_EVENTS);
-    if (list.length > 0)
-      pass.upcomingPassInformation = list.map(
-        (e) => e.entry,
-      ) as unknown as PassJson['upcomingPassInformation'];
-    else delete pass.upcomingPassInformation;
+    writeEvents(pass, list);
     if (config.schedule && list.length > 0) schedule(pass, list, config.schedule.leadMinutes ?? 0);
   },
 };

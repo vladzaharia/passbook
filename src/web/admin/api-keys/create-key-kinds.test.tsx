@@ -48,6 +48,14 @@ describe('key type, role and expiry', () => {
       return created({ kind: 'personal' });
     });
     await user.click(within(dialog).getByRole('combobox', { name: /Expires/ }));
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
+      '7 days',
+      '30 days',
+      '90 days',
+      '6 months',
+      '1 year',
+      'Never',
+    ]);
     expect(screen.getByRole('option', { name: 'Never' })).toBeInTheDocument();
     await user.click(screen.getByRole('option', { name: '1 year' }));
     await user.click(within(dialog).getByRole('combobox', { name: 'Type' }));
@@ -55,6 +63,11 @@ describe('key type, role and expiry', () => {
     await user.click(within(dialog).getByRole('combobox', { name: /Expires/ }));
     expect(screen.queryByRole('option', { name: 'Never' })).toBeNull();
     expect(screen.queryByRole('option', { name: '1 year' })).toBeNull();
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
+      '7 days',
+      '30 days',
+      '90 days',
+    ]);
     await user.click(screen.getByRole('option', { name: '30 days' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     const review = await screen.findByRole('alertdialog', { name: 'Review personal key' });

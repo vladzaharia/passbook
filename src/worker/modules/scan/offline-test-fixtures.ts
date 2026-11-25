@@ -6,7 +6,7 @@ export const LIST = { offline: true, whenOffline: 'list' } as const;
 export const hashOf = async (code: string) => (await sha256Hex(code)).slice(0, 32);
 
 export interface RosterBody {
-  entries: { h: string; status: string; state: string | null }[];
+  entries: { h: string; status: string; state: string | null; g?: string }[];
   cursor: string | null;
   asOf: number;
   validUntil: number;
