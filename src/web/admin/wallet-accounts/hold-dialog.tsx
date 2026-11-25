@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { PlatformWalletEnrolment } from '@/shared/contracts/wallet-providers.ts';
-import { holdConfirm } from '@/web/lib/confirms.ts';
+import { holdConfirm } from '@/web/lib/confirms-wallet.ts';
 import { Button, Dialog, DialogContent, FormField, Textarea, toast } from '@/web/ui/index.ts';
 import { PROVIDER_NAME, safeError } from './copy.ts';
 import { useWalletActions } from './queries.ts';

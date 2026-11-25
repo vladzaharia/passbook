@@ -325,4 +325,3 @@ export function bulkChannelsOffConfirm(channels: readonly string[], count: numbe
     typed: false,
   };
 }
-export { holdConfirm } from './confirms-wallet.ts';
