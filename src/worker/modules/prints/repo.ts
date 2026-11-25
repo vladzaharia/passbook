@@ -1,5 +1,5 @@
 import type { PassPrint } from '../../../shared/contracts/prints.ts';
-import { all, first, run } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 
 interface Row {
   id: string;
@@ -82,20 +82,6 @@ export async function endedForHolder(db: D1Database, passId: string): Promise<bo
   );
   return (
     r?.void_cause === 'pass_voided' || r?.void_cause === 'transfer' || r?.void_cause === 'new_code'
-  );
-}
-
-/** Refresh: the active print was drawn again from the pass as it is now. The only update of these columns after a mint. */
-export async function refreshPrint(
-  db: D1Database,
-  printId: string,
-  passVersion: number,
-  hash: string,
-): Promise<void> {
-  await run(
-    db,
-    "UPDATE pass_prints SET pass_version = ?, paper_hash = ? WHERE id = ? AND status = 'active' AND (paper_hash IS NOT ? OR pass_version IS NOT ?)",
-    [passVersion, hash, printId, hash, passVersion],
   );
 }
 

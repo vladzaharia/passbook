@@ -8,7 +8,7 @@ import { type ImageCache, loadImages, logImageProblem } from './pdf-images.ts';
 import { type PrintSheet, renderPdf } from './pdf-render.ts';
 import { sheetOf } from './pdf-service.ts';
 import { bulkKey, putPdf } from './pdf-store.ts';
-import { activePrintIds, refreshPrint } from './repo.ts';
+import { activePrintIds } from './repo.ts';
 
 /**
  * Renders the combined PDF of a bulk Print, one page per ticket. A pass whose print ended
@@ -20,7 +20,6 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
   if (stored?.state !== 'pending') return;
   const sheets: PrintSheet[] = [];
   const printIds: string[] = [];
-  const refreshes: [string, number, string][] = [];
   const imageCache: ImageCache = new Map();
   let skipped = 0;
   const skip = (passId: string, code: string) => {
@@ -45,7 +44,6 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
           images: await loadImages(ctx, pass, model.files, imageCache),
         });
         printIds.push(model.printId);
-        refreshes.push([model.printId, pass.version, model.paperHash]);
       } else skip(passId, `PRINT_${model.state.toUpperCase()}`);
     } catch (error) {
       if (!(error instanceof AppError) || error.status >= 500) throw error;
@@ -86,8 +84,6 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     });
     return;
   }
-  for (const [printId, version, hash] of refreshes)
-    await refreshPrint(ctx.env.DB, printId, version, hash);
   await writeBulkStatus(bucket, job.orgId, job.jobId, {
     ...done,
     state: 'ready',

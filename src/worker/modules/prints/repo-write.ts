@@ -164,3 +164,23 @@ export async function writeVoid(
   const results = await g.commit();
   return results[g.indexOf(voided)]?.results?.length ?? 0;
 }
+
+/**
+ * Refresh: the active print was drawn again from the pass as it is now (its page, PDF or a bulk render). The
+ * only write of `pass_version` and `paper_hash` after a mint. Not audited: nothing about the ticket changes.
+ */
+export async function writeRefresh(
+  ctx: ServiceContext,
+  w: PrintWriter,
+  passId: string,
+  printId: string,
+  passVersion: number,
+  hash: string,
+): Promise<void> {
+  const g = newGrant(ctx, w, passId);
+  g.update('pass_prints', {
+    set: { pass_version: passVersion, paper_hash: hash },
+    where: { id: printId, pass_id: passId, status: 'active' },
+  });
+  await g.commit();
+}

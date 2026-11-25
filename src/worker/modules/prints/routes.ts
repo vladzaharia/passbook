@@ -140,8 +140,9 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
     async (c) => {
       const ctx = svc(c);
       const { id } = c.req.valid('param');
-      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
-      return new Response(await ticketPdf(ctx, pass, 'staff'), { headers: PDF_HEADERS });
+      const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const writer = adminWriter(authority, actorFor(c));
+      return new Response(await ticketPdf(ctx, pass, 'staff', writer), { headers: PDF_HEADERS });
     },
   );
 
@@ -158,8 +159,8 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
     async (c) => {
       const ctx = svc(c);
       const { id } = c.req.valid('param');
-      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
-      const print = await refreshActivePrint(ctx, pass);
+      const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const print = await refreshActivePrint(ctx, adminWriter(authority, actorFor(c)), pass);
       if (!print) throw new NotFoundError('No active print.', 'PRINT_NOT_FOUND');
       return c.json(print);
     },

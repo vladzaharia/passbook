@@ -82,7 +82,7 @@ holderPrintRoutes.post('/:token/print/reprint', async (c) => {
 /** The page's Print button: the active print is drawn again, so it matches the pass as it is now. */
 holderPrintRoutes.post('/:token/print/drawn', async (c) => {
   const call = await holderCall(c);
-  const print = await refreshActivePrint(call.ctx, call.pass);
+  const print = await refreshActivePrint(call.ctx, call.caller.writer, call.pass);
   if (!print) throw new NotFoundError('No active print.', 'PRINT_NOT_FOUND');
   return c.json(print, 200, noStore);
 });
@@ -96,5 +96,7 @@ holderPrintRoutes.post('/:token/print/void', async (c) => {
 holderPrintRoutes.get('/:token/print/pdf', async (c) => {
   const ctx = svc(c);
   const pass = await passForToken(ctx, c.req.param('token') ?? '');
-  return new Response(await ticketPdf(ctx, pass, 'holder'), { headers: PDF_HEADERS });
+  return new Response(await ticketPdf(ctx, pass, 'holder', linkWriter(pass)), {
+    headers: PDF_HEADERS,
+  });
 });

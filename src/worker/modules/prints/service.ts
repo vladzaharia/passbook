@@ -17,7 +17,7 @@ import { paperTicket } from './paper.ts';
 import { paperHash } from './paper-hash.ts';
 import { dropPrintPdfs } from './pdf-drop.ts';
 import * as repo from './repo.ts';
-import { type PrintWriter, writeMint, writeVoid } from './repo-write.ts';
+import { type PrintWriter, writeMint, writeRefresh, writeVoid } from './repo-write.ts';
 
 const HOUR = 3_600_000;
 const PRINT_UNAVAILABLE = 'Printing is not available for this ticket.';
@@ -58,7 +58,11 @@ export async function mintPrint(
   if (!(await existingChannels(ctx, pass)).paper.on)
     throw new ConflictError('Printing is off for this ticket.', 'PRINTING_OFF');
   const existing = await repo.activePrint(ctx.env.DB, pass.id);
-  if (existing && !replace) return { ...existing, code: await codeOf(ctx, pass, existing) };
+  if (existing && !replace) {
+    // The holder or staff opens the print again: it is drawn from the pass as it is now.
+    await refreshActivePrint(ctx, caller.writer, pass);
+    return { ...existing, stale: false, code: await codeOf(ctx, pass, existing) };
+  }
   // A new print needs the plan; the holder is not told to ask PassBook.
   if ((await passChannels(ctx, pass)).effective.paper.reason === 'not_included')
     throw new FeatureNotIncludedError(
@@ -139,12 +143,13 @@ export async function listPassPrints(ctx: ServiceContext, pass: Pass): Promise<P
  */
 export async function refreshActivePrint(
   ctx: ServiceContext,
+  writer: PrintWriter,
   pass: Pass,
 ): Promise<PassPrint | null> {
   const ticket = await paperTicket(ctx, pass);
   const active = await repo.activePrint(ctx.env.DB, pass.id);
   if (!ticket || !active) return null;
   const hash = await paperHash(ticket);
-  await repo.refreshPrint(ctx.env.DB, active.id, pass.version, hash);
+  await writeRefresh(ctx, writer, pass.id, active.id, pass.version, hash);
   return repo.activePrint(ctx.env.DB, pass.id, hash);
 }

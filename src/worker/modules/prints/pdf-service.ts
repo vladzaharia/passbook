@@ -6,7 +6,7 @@ import { pdfFingerprint } from './pdf-cache.ts';
 import { imageIds, loadImages, logImageProblem } from './pdf-images.ts';
 import { type PrintSheet, renderPdf } from './pdf-render.ts';
 import { cachedPdf, pdfKey, putPdf } from './pdf-store.ts';
-import { refreshPrint } from './repo.ts';
+import { type PrintWriter, writeRefresh } from './repo-write.ts';
 
 export const PDF_HEADERS = {
   'content-type': 'application/pdf',
@@ -37,10 +37,11 @@ export async function ticketPdf(
   ctx: ServiceContext,
   pass: Pass,
   audience: PrintAudience,
+  writer: PrintWriter,
 ): Promise<Uint8Array | ReadableStream> {
   const model = await printPageModel(ctx, pass, audience);
   if (model.state !== 'ready') throw new NotFoundError('No active print.', 'PRINT_NOT_FOUND');
-  await refreshPrint(ctx.env.DB, model.printId, pass.version, model.paperHash);
+  await writeRefresh(ctx, writer, pass.id, model.printId, pass.version, model.paperHash);
   const key = pdfKey(pass.orgId, pass.id, model.printId);
   const fingerprint = await pdfFingerprint({
     sheet: sheetOf(model),
