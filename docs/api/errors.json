@@ -92,6 +92,15 @@
       ]
     },
     {
+      "code": "API_KEY_MISSING",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "API_KEY_MODE_MISMATCH",
       "statuses": [
         403
@@ -397,6 +406,10 @@
     {
       "code": "ASSET_SIZE",
       "statuses": [
+        413,
+        422
+      ],
+      "primary": [
         413,
         422
       ],
@@ -1191,6 +1204,10 @@
         403,
         409
       ],
+      "primary": [
+        403,
+        409
+      ],
       "modules": [
         "auth",
         "users"
@@ -1539,8 +1556,8 @@
     {
       "code": "IDEMPOTENCY_KEY_REUSED",
       "statuses": [
-        409,
-        422
+        422,
+        409
       ],
       "modules": [
         "delivery",
@@ -2459,6 +2476,15 @@
       ]
     },
     {
+      "code": "MEMBERSHIP_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "MEMBER_PHOTO_CHANGED",
       "statuses": [
         409
@@ -2684,8 +2710,8 @@
     {
       "code": "NO_RECIPIENT",
       "statuses": [
-        409,
-        422
+        422,
+        409
       ],
       "modules": [
         "bundles",
@@ -2803,6 +2829,10 @@
         403,
         409
       ],
+      "primary": [
+        403,
+        409
+      ],
       "modules": [
         "connections",
         "scan"
@@ -2880,8 +2910,8 @@
     {
       "code": "ORG_REQUIRED",
       "statuses": [
-        403,
-        422
+        422,
+        403
       ],
       "modules": [
         "bundles",
@@ -3909,6 +3939,10 @@
         401,
         409
       ],
+      "primary": [
+        401,
+        409
+      ],
       "modules": [
         "scan"
       ]
@@ -4036,6 +4070,10 @@
         403,
         409
       ],
+      "primary": [
+        403,
+        409
+      ],
       "modules": [
         "scan"
       ]
@@ -4088,8 +4126,8 @@
     {
       "code": "SCANNING_SESSION_PAUSED",
       "statuses": [
-        403,
-        409
+        409,
+        403
       ],
       "modules": [
         "scan"
@@ -4116,8 +4154,8 @@
     {
       "code": "SCANNING_SESSION_SETTINGS_INVALID",
       "statuses": [
-        403,
-        422
+        422,
+        403
       ],
       "modules": [
         "scan"
@@ -4307,6 +4345,10 @@
     {
       "code": "SCAN_MODE_MISMATCH",
       "statuses": [
+        403,
+        422
+      ],
+      "primary": [
         403,
         422
       ],
@@ -5838,7 +5880,6 @@
     {
       "code": "UPSTREAM",
       "statuses": [
-        429,
         502
       ],
       "modules": [
@@ -5859,8 +5900,7 @@
     {
       "code": "VALIDATION",
       "statuses": [
-        422,
-        500
+        422
       ],
       "modules": [
         "platform",
@@ -6339,6 +6379,10 @@
     {
       "code": "WEBHOOK_STALE_CONTEXT",
       "statuses": [
+        503,
+        409
+      ],
+      "primary": [
         409,
         503
       ],
@@ -6376,8 +6420,8 @@
     {
       "code": "WORKFLOW_START",
       "statuses": [
-        502,
-        503
+        503,
+        502
       ],
       "modules": [
         "passes",

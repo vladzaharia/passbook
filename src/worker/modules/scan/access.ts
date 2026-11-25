@@ -7,6 +7,7 @@ import {
 import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import type { AccessManifest, AccessPlan, Json } from '../../../passkit/types.ts';
 import type { ScanAccess } from '../../../shared/contracts/scan.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { FoundAccess } from './access-types.ts';
 import { scopeSessionId } from './actor.ts';
@@ -58,7 +59,7 @@ interface LoadedAccess {
   visitAt: number | null;
   /** The same zones with their occupancy settings, and the pass's rows at them. */
   occupancy: { zones: OccZone[]; rows: PlaceRow[] };
-  orgTimeZone: string | null;
+  orgTimeZone: string;
 }
 export interface AccessReads extends EvaluationReadPlan {
   loaded(): LoadedAccess | null;
@@ -182,7 +183,7 @@ export function accessStop(
         gate: null,
         visitAt: null,
         occupancy: { zones: [], rows: [] },
-        orgTimeZone: null,
+        orgTimeZone: DEFAULT_TIME_ZONE,
       }
     : reads?.loaded();
   // The read did not land: nothing is let in on a guess.
@@ -196,7 +197,7 @@ export function accessStop(
     now,
     zones: loaded.zones,
     scannerZoneIds: loaded.zoneIds,
-    timeZone: loaded.orgTimeZone ?? actor.timeZone,
+    timeZone: loaded.orgTimeZone,
   });
   if (d.planUnknown && !event)
     ctx.log.warn('scan.access.plan_unknown', {

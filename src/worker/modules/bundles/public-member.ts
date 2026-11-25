@@ -10,8 +10,9 @@ import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { voidedAt } from '../events/repo-voided.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { svc } from '../passes/http.ts';
+import { holderZone } from '../public/holder-zone.ts';
 import { canPresent } from '../public/presentation.ts';
-import { endedFor, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
+import { endedFor, langOf, PAGE_HEADERS } from '../public/routes.ts';
 import { supportContacts } from '../public/service.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { assertBundleMember, bundleForToken, bundleMember, bundlePass } from './public-service.ts';
@@ -42,12 +43,14 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
         const pass = await bundlePass(ctx, bundle, p.passId);
         const { model } = await bundleMember(ctx, p.token, pass);
         const now = new Date(ctx.clock.now());
+        const zone = await holderZone(ctx, pass.orgId);
         const lang = langOf(c.req.header('accept-language'));
         const view = normalize(model.passJson, {
           assets: model.assets,
           locale: lang,
           now,
-          timeZone: zoneOf(c) ?? 'UTC',
+          timeZone: zone,
+          showZone: true,
           ...stateWordOption(pass),
         });
         const base = `/b/${p.token}/${pass.id}`;
@@ -57,7 +60,7 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
           view,
           passJson: model.passJson,
           now,
-          ...(zoneOf(c) ? { timeZone: zoneOf(c) as string } : {}),
+          timeZone: zone,
           nonce: c.var.nonce,
           theme,
           orgName: view.organizationName || model.orgName,
@@ -85,7 +88,7 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
             pass,
             pass.status === 'voided' ? await voidedAt(ctx.env.DB, pass.orgId, pass.id) : null,
             model.passJson,
-            zoneOf(c),
+            zone,
             lang,
           ),
         });

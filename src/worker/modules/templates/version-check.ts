@@ -9,6 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { appliedBranding, readBranding, tenantPassJson } from '../passes/branding.ts';
 import { withBackContacts } from '../passes/contacts.ts';
 import { getOrg as getPassOrg } from '../passes/repo-read-issuance.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { behaviors, previewPass } from './build-check.ts';
 import { dryRunReport, dryRunTemplate } from './dry-run-report.ts';
 import { type Analysis, analyzePackage } from './package/analyze.ts';
@@ -88,6 +89,7 @@ export async function checkVersion(
     analysis.manifest.sample,
     org?.name ?? 'Organization',
     new Date(ctx.clock.now()),
+    orgId ? (await getOrgSettings(ctx, orgId))['org.timeZone'] : undefined,
   );
   // The organization's colours and name apply as they do in a build, unless the manifest keeps its own.
   const tenant = orgId ? await getPassOrg(ctx.env.DB, orgId) : null;

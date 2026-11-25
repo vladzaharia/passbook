@@ -75,6 +75,9 @@ function schedule(retryIn?: number): void {
   }, wait);
 }
 
+/** True when a token is held, so a read can use it without minting one. */
+export const tokenHeld = (): boolean => held !== null && Date.now() < held.refreshAt;
+
 /** The current token, minted first when there is none or it is due. */
 export function token(csrf: string): Promise<string> {
   if (held && Date.now() < held.refreshAt) return Promise.resolve(held.value);

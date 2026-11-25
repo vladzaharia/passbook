@@ -24,7 +24,6 @@ test('a blueprint previews Apple, Google, Samsung, Mobile and Paper from sample 
 
   await stage.getByRole('radio', { name: 'Google', exact: true }).click();
   await expect(stage.getByTestId('google-preview')).toContainText('Sample Event');
-  await expect(stage.getByText('Google Wallet draws the real card.')).toBeVisible();
   await expect(stage.getByTestId('fidelity-notes')).toBeVisible();
 
   await stage.getByRole('radio', { name: 'Samsung', exact: true }).click();

@@ -8,7 +8,7 @@ import {
   ResolvedSchema,
   ResolveQuerySchema,
 } from '../../../shared/contracts/index.ts';
-import { keyCaller, requireSession } from '../../platform/auth.ts';
+import { apiKeyMissing, bearerOf, keyCaller, requireSession } from '../../platform/auth.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { noteKeyRefused } from '../../platform/denied.ts';
@@ -26,7 +26,9 @@ import { resolveId } from './resolve-service.ts';
  */
 const logCaller = declareKeyAccess(
   createMiddleware<AppBindings>(async (c, next) => {
-    const token = /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1];
+    const sent = bearerOf(c);
+    if (sent === 'empty') throw apiKeyMissing();
+    const token = sent?.token;
     if (token?.startsWith(TRY_TOKEN_PREFIX)) {
       const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
       if (key?.via !== 'try' || key.orgId === null) {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import { useSeededZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
@@ -65,6 +66,9 @@ export function NewSessionDialog({
     if (scope.isLoading || scope.isError) return { ...base, orgId: '' };
     return withOrganization(base, selectedScope ?? '');
   });
+  useSeededZone(initial ? undefined : draft.orgId || undefined, (from, to) =>
+    setDraft((d) => (d.timeZone === from ? { ...d, timeZone: to } : d)),
+  );
   const initialized = useRef(!scope.isLoading && !scope.isError);
   useEffect(() => {
     if (initialized.current || scope.isLoading || scope.isError) return;

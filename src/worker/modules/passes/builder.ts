@@ -21,11 +21,13 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
 import { appliedBranding, readBranding, type TenantBranding } from './branding.ts';
 import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
 import { type BuildInputs, readBuildInputs } from './build-reads.ts';
 import { artifactOf, editPass, tenantOf } from './builder-finish.ts';
+import { buildIssue } from './builder-issues.ts';
 import { backContactsFor } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import type { Removal } from './remove-build.ts';
@@ -219,6 +221,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     await brandedOverrides(ctx.env.BUCKET, req.orgId, passOverrides, branding),
   );
   const now = new Date(ctx.clock.now());
+  const timeZone = (await getOrgSettings(ctx, req.orgId))['org.timeZone'];
   try {
     if (identity === null) {
       // A developer org: the same build, stopped before the signature. The stored object is the pass JSON.
@@ -236,6 +239,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
         },
         behaviors: deps.behaviors,
         now,
+        timeZone,
       });
       const { planned } = editPass(req, built.passJson);
       const { authenticationToken: _token, ...shown } = built.passJson;
@@ -267,6 +271,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       signing: identity.material,
       behaviors: deps.behaviors,
       now,
+      timeZone,
     });
     const { resign, planned } = editPass(req, built.passJson);
     let { signed } = built;
@@ -295,7 +300,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     if (error instanceof PassBuildError) {
       const issues: FieldIssue[] = error.report.issues
         .filter((i) => i.severity === 'error')
-        .map((i) => ({ path: i.path ?? '', message: i.message, code: i.code }));
+        .map(buildIssue);
       throw new ValidationError(
         error.code === 'INVALID_INPUT'
           ? 'The pass input is invalid.'

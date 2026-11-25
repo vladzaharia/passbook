@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import { BROADCAST_MESSAGE_MAX } from '@/shared/contracts/broadcasts.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
-import { localZone, zoneLabel } from '../../lib/timezones.ts';
+import { zoneLabel } from '../../lib/timezones.ts';
 import {
   CheckboxField,
   DateTimeField,
@@ -152,12 +152,14 @@ export function WhenSection({
   state,
   onChange,
   error,
+  timeZone,
 }: {
   state: ComposerState;
   onChange: Patch;
   error?: string | undefined;
+  timeZone: string;
 }) {
-  const zone = state.at?.zone ?? localZone();
+  const zone = state.at?.zone ?? timeZone;
   return (
     <div className="flex flex-col gap-3">
       <SegmentedControl

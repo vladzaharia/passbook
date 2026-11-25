@@ -47,12 +47,13 @@ export default function LivePaper({ source }: { source: PreviewSource }) {
         personalization: source.input,
         design,
         holderName: 'Sample holder',
+        orgTimeZone: zone,
         images: imageSlots(source.assets),
       });
     } catch {
       return null;
     }
-  }, [source, manifest, design]);
+  }, [source, manifest, design, zone]);
   if (!content)
     return (
       <p role="alert" className="pg-bad">

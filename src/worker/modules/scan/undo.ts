@@ -14,6 +14,7 @@ import type { ConsoleUndo } from './feed.ts';
 import { refuseKeyApproval } from './guard-api-key.ts';
 import { isDeskMarkOut, undoDeskMarkOut } from './occupancy/undo-mark-out.ts';
 import { undoWindowMinutes } from './outcome.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { scanByKey } from './repo-scans.ts';
 import { commitUndo, UNDO_CODES } from './repo-undo.ts';
 import { guardMiss, undoApprovalGuard } from './repo-undo-approval-guard.ts';
@@ -192,7 +193,7 @@ export const consoleUndo: ConsoleUndo = async (ctx, session, input) => {
       orgId: input.orgId,
       templateIds: [],
       event: null,
-      timeZone: 'UTC',
+      timeZone: await readOrgTimeZone(ctx.env.DB, input.orgId),
     }),
     platformSessionId: session.sessionId,
     role,

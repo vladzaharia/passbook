@@ -13,11 +13,13 @@ export function FieldRows({
   rows,
   onChange,
   showErrors,
+  timeZone,
 }: {
   fields: readonly FieldDef[];
   rows: readonly FieldRow[];
   onChange: (rows: FieldRow[]) => void;
   showErrors: boolean;
+  timeZone: string;
 }) {
   const errors = rowErrors(rows);
   const free = fields.filter((f) => !rows.some((r) => r.key === f.key));
@@ -70,6 +72,7 @@ export function FieldRows({
                       value={row.value}
                       onChange={(value) => patch(row.id, { value })}
                       control={control}
+                      timeZone={timeZone}
                     />
                   )}
                 </FormField>

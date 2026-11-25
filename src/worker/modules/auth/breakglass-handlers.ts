@@ -8,11 +8,11 @@ import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { clientIp, clientRatePrefix, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
+import { recordBreakglassFailure, signInBreakglass } from './breakglass-service.ts';
 import { ipPrefix, readCookie, setSessionCookie } from './cookies.ts';
 import { landingFor } from './landing.ts';
 import { safeNext } from './next.ts';
 import { breakglassPage } from './pages.ts';
-import { recordBreakglassFailure, signInBreakglass } from './service.ts';
 
 const HASH = /^[0-9a-f]{64}$/;
 

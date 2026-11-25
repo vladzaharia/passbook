@@ -1,0 +1,28 @@
+[
+  {
+    "id": "rotate-secret",
+    "title": "Rotate a webhook secret",
+    "guide": "go-live",
+    "ops": [
+      "webhooks.postWebhookEndpointsByIdSecret"
+    ],
+    "files": {
+      "ts": "rotate-secret.ts",
+      "curl": "rotate-secret.sh"
+    },
+    "sandbox": "WEBHOOK_ENDPOINT_NOT_FOUND"
+  },
+  {
+    "id": "create-webhook-endpoint",
+    "title": "Add a webhook endpoint",
+    "guide": "go-live",
+    "ops": [
+      "webhooks.postWebhookEndpoints"
+    ],
+    "files": {
+      "ts": "create-webhook-endpoint.ts",
+      "curl": "create-webhook-endpoint.sh"
+    },
+    "sandbox": "DNS_FAILED"
+  }
+]

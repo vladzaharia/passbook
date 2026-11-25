@@ -6,6 +6,7 @@ import { renewedStart, stampInput, type TermConfig, term } from './index.ts';
 
 const ctx = (now = '2030-01-01T00:00:00Z'): BehaviorContext => ({
   now: new Date(now),
+  timeZone: 'UTC',
   identity: { passTypeIdentifier: 'p', teamIdentifier: 't' },
   lookups: {},
 });
@@ -23,6 +24,17 @@ const months = (length: number): TermConfig => ({ start: 's', unit: 'months', le
 const ms = (iso: string) => Date.parse(iso);
 
 describe('term', () => {
+  it('uses the org zone, and Seattle time when the context has none', () => {
+    const c: TermConfig = { start: 's', unit: 'month-end', length: 1 };
+    const pass = {} as PassJson;
+    term.apply(pass, { s: '2030-04-10T08:00:00Z' } as never, c, {
+      ...ctx(),
+      timeZone: undefined as never,
+    });
+    expect(pass.expirationDate).toBe('2030-05-01T06:59:59Z');
+    expect(run({ s: '2030-04-10T08:00:00Z' }, c).expirationDate).toBe('2030-04-30T23:59:59Z');
+  });
+
   it('adds calendar months', () => {
     expect(run({ s: '2030-03-15T10:00:00Z' }, months(12)).expirationDate).toBe(
       '2031-03-15T10:00:00Z',
@@ -178,14 +190,14 @@ describe('term', () => {
       ).voided,
     ).toBeUndefined();
     // A day-end term starts the next one at the following midnight.
-    const eom: TermConfig = { start: 's', unit: 'month-end', length: 1 };
+    const eom: TermConfig = { start: 's', unit: 'month-end', length: 1, timeZone: 'UTC' };
     expect(renewedStart(ms('2030-04-10T08:00:00Z'), eom, ms('2030-04-12T00:00:00Z')).start).toBe(
       ms('2030-05-01T00:00:00Z'),
     );
   });
 
   it('keeps the day of the month through consecutive renewals', () => {
-    const c: TermConfig = { start: 's', anchor: 'a', unit: 'months', length: 1 };
+    const c: TermConfig = { start: 's', anchor: 'a', unit: 'months', length: 1, timeZone: 'UTC' };
     const endOf = (start: number, anchor?: number) =>
       run(
         {
@@ -211,7 +223,7 @@ describe('term', () => {
   });
 
   it('re-anchors on a lapsed renewal', () => {
-    const c: TermConfig = { start: 's', anchor: 'a', unit: 'months', length: 1 };
+    const c: TermConfig = { start: 's', anchor: 'a', unit: 'months', length: 1, timeZone: 'UTC' };
     const lapsedAt = ms('2030-06-15T09:00:00Z');
     const r = renewedStart(ms('2030-01-31T10:00:00Z'), c, lapsedAt, ms('2030-01-31T10:00:00Z'));
     expect(r).toEqual({ start: lapsedAt, anchor: lapsedAt });
@@ -223,7 +235,7 @@ describe('term', () => {
 
   it('caps one term at ten years, not the span of renewals', () => {
     const start = ms('2030-03-15T10:00:00Z');
-    const yearly: TermConfig = { start: 's', unit: 'years', length: 1 };
+    const yearly: TermConfig = { start: 's', unit: 'years', length: 1, timeZone: 'UTC' };
     let at = start;
     for (let i = 0; i < 12; i++) at = renewedStart(at, yearly, 0).start;
     expect(run({ s: new Date(at).toISOString() }, yearly).expirationDate).toBe(

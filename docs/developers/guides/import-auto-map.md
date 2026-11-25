@@ -15,7 +15,7 @@ The template makes its own sample: its field labels as headers, plus Holder emai
 
 ## Create the import
 
-`mapping: "auto"` maps the headers and checks the file in the same call. Send an `Idempotency-Key` so a retry returns the same import. Row 3 has a bad date on purpose.
+`POST /pass-imports` with `mapping: "auto"` maps the headers and checks the file in the same call. Send an `Idempotency-Key` so a retry returns the same import. Row 3 has a bad date on purpose.
 
 ```json run=pass-imports.postPassImports
 {
@@ -29,7 +29,7 @@ The template makes its own sample: its field labels as headers, plus Holder emai
 }
 ```
 
-Keep the import id. These fields of the answer matter:
+Keep the answer's `id`. In a shell, `export IMPORT_ID=<id>`. In the console, paste it into the path of the later steps. The answer, trimmed to the fields that matter:
 
 ```json
 {
@@ -69,71 +69,19 @@ An unknown option in an enum column fails the row with the labels to pick from, 
 
 ## Fix a cell
 
-Put the corrected value under the spreadsheet row and the column pointer in `overrides`. The file stays as it is; check runs again with the fix. Up to 200 cells.
+Send the answer's `plan` back to `POST /pass-imports/{id}/check` with the corrected value under the spreadsheet row and the column pointer in `overrides`. The file stays as it is; check runs again with the fix. Up to 200 cells.
 
-```json run=pass-imports.postPassImportsByIdCheck
-{
-  "plan": {
-    "mapping": {
-      "eventName": {
-        "from": "/Event"
-      },
-      "venueName": {
-        "from": "/Venue"
-      },
-      "venueRegion": {
-        "from": "/City"
-      },
-      "startsAt": {
-        "from": "/Starts",
-        "transform": {
-          "kind": "date",
-          "options": {
-            "input": "iso",
-            "output": "iso",
-            "keepOffset": true
-          }
-        }
-      },
-      "endsAt": {
-        "from": "/Ends",
-        "transform": {
-          "kind": "date",
-          "options": {
-            "input": "iso",
-            "output": "iso",
-            "keepOffset": true
-          }
-        }
-      },
-      "attendee": {
-        "from": "/Attendee"
-      },
-      "ticketId": {
-        "from": "/Ticket ID"
-      }
-    },
-    "holderEmail": {
-      "from": "/Holder email"
-    },
-    "externalId": {
-      "from": "/Ticket ID"
-    },
-    "match": "externalId",
-    "overrides": {
-      "3": {
-        "/Starts": "2030-06-01T19:00:00-07:00"
-      }
-    }
-  }
-}
+```json
+"overrides": { "3": { "/Starts": "2030-06-01T19:00:00-07:00" } }
 ```
+
+{{run import-fix-cells}}
 
 `errors` is now 0 and `create` is 3. Cell fixes are not kept. To reuse the mapping, save it under a name with `PUT /pass-imports/mappings`: the next file with at least 80% of its headers maps itself from it.
 
 ## Commit
 
-Commit makes the passes in the background. `skipInvalid: true` skips error rows instead of refusing them. Email is off unless you ask: `true` sends at once, and `{ "send": "held" }` holds the mail for `holdMs` (60000 to 86400000, 5 minutes by default) so an undo cancels it.
+`POST /pass-imports/{id}/commit` makes the passes in the background. `skipInvalid: true` skips error rows instead of refusing them. Email is off unless you ask: `true` sends at once, and `{ "send": "held" }` holds the mail for `holdMs` (60000 to 86400000, 5 minutes by default) so an undo cancels it.
 
 ```json run=pass-imports.postPassImportsByIdCommit
 {
@@ -149,31 +97,24 @@ One import of a template commits at a time: a second commit meanwhile is 409 [IM
 
 ## Watch
 
+`GET /pass-imports/{id}`.
+
 {{run import-status}}
 
 `state` is `committing` until `done`. `progress` counts `created`, `updated`, `unchanged`, `failed` and `skipped`. For each row, read `GET /pass-imports/{id}/rows`: an update lists its `changes` as label, from and to.
 
 ## Undo
 
-For 24 hours after the import ends, `POST /pass-imports/{id}/undo` removes the passes it created and puts back the ones it updated. A pass edited or scanned since stays and is listed in `kept` with a code: `IMPORT_PASS_CHANGED`, `IMPORT_PASS_SCANNED` or `IMPORT_PASS_GONE`. Held mail is cancelled; mail already sent is not recalled. While the commit runs the answer is 409 [IMPORT_BUSY](/developers/errors/IMPORT_BUSY).
+For 24 hours after the import ends, `POST /pass-imports/{id}/undo` removes the passes it created and puts back the ones it updated. A pass edited or scanned since stays and is listed in `kept` with a code: `IMPORT_PASS_CHANGED`, `IMPORT_PASS_SCANNED` or `IMPORT_PASS_GONE`. Held mail is cancelled; mail already sent is not recalled. While the commit runs the answer is `409` [IMPORT_BUSY](/developers/errors/IMPORT_BUSY). After 24 hours it is `409` [IMPORT_UNDO_EXPIRED](/developers/errors/IMPORT_UNDO_EXPIRED).
 
-{{show import-undo}}
+{{run import-undo}}
 
-The answer starts the undo. Read the import until its `undo.state` is `done`:
+The answer starts the undo, and asking again returns the same one. Read the import until its `undo.state` is `done`. This is the undo of a clean import:
 
 ```json
-{
-  "state": "done",
-  "removed": 2,
-  "restored": 0,
-  "keptTotal": 1,
-  "kept": [{ "passId": "0193a1b2-7c00-7000-8000-0000000000c1", "code": "IMPORT_PASS_SCANNED" }],
-  "emailsCancelled": 2
-}
+{ "state": "done", "removed": 3, "restored": 0, "keptTotal": 0, "kept": [], "emailsCancelled": 3 }
 ```
-
-Asking again returns the same undo. After 24 hours it is 409 [IMPORT_UNDO_EXPIRED](/developers/errors/IMPORT_UNDO_EXPIRED).
 
 ## Result
 
-Read the import: state is `done` with the counts. [List the passes](console:passes.getPasses); each has a downloadUrl to its test preview. `results.csv` and `errors.csv` list what each row did.
+Read the import: `state` is `done` with `progress.created` at 3. [List the passes](console:passes.getPasses) with `importId=<id>` to see them. `GET /pass-imports/{id}/results.csv` lists what each row did, with each pass's link and test preview. After the undo, `undo.state` is `done` and the passes are voided.

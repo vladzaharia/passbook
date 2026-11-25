@@ -40,6 +40,34 @@ export function KeyValue({
   );
 }
 
+/** KeyValue where a string item marked `copy` gets a Copy ID button, mono by default. */
+export function CopyKeyValue({
+  items,
+  className,
+}: {
+  items: readonly KeyValueItem[];
+  className?: string;
+}) {
+  return (
+    <KeyValue
+      {...(className ? { className } : {})}
+      items={items.map((item) => ({
+        ...item,
+        mono: item.mono ?? true,
+        value:
+          item.copy && typeof item.value === 'string' ? (
+            <span className="flex min-w-0 items-center gap-1">
+              <span className="min-w-0 break-all">{item.value}</span>
+              <CopyButton value={item.value} label="Copy ID" />
+            </span>
+          ) : (
+            item.value
+          ),
+      }))}
+    />
+  );
+}
+
 /** Raw ids and hashes live here, closed by default; names and labels go in the visible list. */
 export function TechnicalDetails({
   items,
@@ -53,22 +81,7 @@ export function TechnicalDetails({
       <summary className="cursor-pointer text-fg-muted min-h-6 pointer-coarse:min-h-11">
         Technical details
       </summary>
-      <KeyValue
-        className="pt-3"
-        items={items.map((item) => ({
-          ...item,
-          mono: item.mono ?? true,
-          value:
-            item.copy && typeof item.value === 'string' ? (
-              <span className="flex min-w-0 items-center gap-1">
-                <span className="min-w-0 break-all">{item.value}</span>
-                <CopyButton value={item.value} label="Copy ID" />
-              </span>
-            ) : (
-              item.value
-            ),
-        }))}
-      />
+      <CopyKeyValue className="pt-3" items={items} />
     </details>
   );
 }

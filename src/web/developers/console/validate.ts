@@ -8,7 +8,18 @@ export interface Issue {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// RFC 3339: a date, a time, and an offset, on a real calendar day.
+function dateTime(v: string): boolean {
+  if (!DATE_TIME.test(v)) return false;
+  const [y, m, d] = v.slice(0, 10).split('-').map(Number) as [number, number, number];
+  const day = new Date(Date.UTC(y, m - 1, d));
+  const [h, min, sec] = v.slice(11, 19).split(':').map(Number) as [number, number, number];
+  return day.getUTCMonth() === m - 1 && day.getUTCDate() === d && h < 24 && min < 60 && sec < 60;
+}
+
+const DATE_TIME = /^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(\.\d+)?([Zz]|[+-]\d{2}:\d{2})$/;
 const FORMATS: Record<string, [(v: string) => boolean, string]> = {
+  'date-time': [dateTime, 'must be a date and time, like 2026-12-04T18:00:00-08:00'],
   uuid: [(v) => UUID.test(v), 'must be a uuid'],
   email: [(v) => strictEmail(v) !== null, 'must be an email address'],
 };
@@ -83,6 +94,11 @@ export function validate(schema: RunSchema, value: Json, path = ''): Issue[] {
       if (!(key in value)) out.push({ path: join(path, key), message: 'is required' });
     for (const [key, sub] of Object.entries(schema.properties ?? {}))
       if (key in value) out.push(...validate(sub, value[key] as Json, join(path, key)));
+    // A schema that closes its object (`additionalProperties: false`) names what it does not take.
+    if (schema.additionalProperties === false)
+      for (const key of Object.keys(value))
+        if (!(key in (schema.properties ?? {})))
+          out.push({ path: join(path, key), message: 'is not a field of this schema' });
   }
   return out;
 }

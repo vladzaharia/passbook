@@ -6,7 +6,7 @@
           "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
           "key": "org.timeZone",
           "value": "America/Los_Angeles",
-          "default": "UTC",
+          "default": "America/Los_Angeles",
           "source": "org",
           "updatedAt": 1794362400000,
           "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
@@ -39,7 +39,7 @@
           "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
           "key": "org.timeZone",
           "value": "America/Los_Angeles",
-          "default": "UTC",
+          "default": "America/Los_Angeles",
           "source": "org",
           "updatedAt": 1795572000000,
           "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"

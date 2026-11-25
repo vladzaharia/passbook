@@ -1,0 +1,14 @@
+[
+  {
+    "id": "current-key",
+    "title": "Check which key you use",
+    "guide": "quickstart",
+    "ops": [
+      "api-keys.getApiKeysMe"
+    ],
+    "files": {
+      "ts": "current-key.ts",
+      "curl": "current-key.sh"
+    }
+  }
+]

@@ -20,6 +20,8 @@ export interface NormalizeOptions {
   target?: PassTarget;
   /** IANA zone for dates; defaults to the runtime's. */
   timeZone?: string;
+  /** Name the zone after each time. */
+  showZone?: boolean;
   /** The holder's state word ("Removed") when the record is ahead of the pass file. */
   stateWord?: string;
 }
@@ -41,6 +43,7 @@ export function normalize(source: PassJson, options: NormalizeOptions): PassView
     warnings,
     ...(options.strings ? { strings: options.strings } : {}),
     ...(options.timeZone ? { timeZone: options.timeZone } : {}),
+    ...(options.showZone ? { showZone: true } : {}),
   };
   const build = (target: PassTarget): LayoutView => {
     const choice = chooseStyle(pass, target) ?? {

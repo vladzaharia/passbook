@@ -61,10 +61,11 @@ const settings = () =>
     items: [],
     oidc: {
       issuer: 'https://id.example',
-      platformAdminGroup: null,
-      adminGroup: null,
-      developerGroup: null,
-      userGroup: null,
+      platformAdminGroup: [],
+      adminGroup: [],
+      developerGroup: [],
+      userGroup: [],
+      platformAdminPinned: 0,
       consoleGroupRequired: false,
     },
   });

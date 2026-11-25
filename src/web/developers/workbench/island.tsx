@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
-import { publishClock } from '../console/run-clock.ts';
+import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { loadSession, updateSession } from '../console/session.ts';
 import { fetchCalls, fetchHome, HomeError } from './api.ts';
 import { Workbench, type WorkbenchLinks } from './workbench.tsx';
@@ -19,9 +19,8 @@ function firstVisit(): boolean {
   }
 }
 
-/** The header chip reads the session and the run clock: one read of the home updates both. */
+/** The header chip reads the session: one read of the home updates it. */
 export async function syncChip(home: DeveloperHome): Promise<void> {
-  publishClock(home);
   const session = await loadSession();
   if (session.kind === 'out' || !home.sandbox) return;
   const siteKey = session.kind === 'none' || session.kind === 'ready' ? session.siteKey : '';
@@ -37,7 +36,7 @@ export async function syncChip(home: DeveloperHome): Promise<void> {
             templateId: home.sandbox.templateId,
           },
         }
-      : { kind: 'closed', csrf: session.csrf },
+      : { kind: 'closed', csrf: session.csrf, siteKey },
   );
 }
 
@@ -91,7 +90,7 @@ export function WorkbenchIsland({
   if (load.kind === 'failed')
     return load.out ? (
       <p className="wb-loading sm muted">
-        No developer access. Ask an administrator for developer access.
+        {QS_COPY.gate.noaccess.title}. {QS_COPY.gate.noaccess.line}
       </p>
     ) : (
       <p className="wb-loading sm muted">

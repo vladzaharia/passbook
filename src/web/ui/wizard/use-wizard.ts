@@ -1,79 +1,9 @@
-import { type FormEvent, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { attentionLine, useServerFields } from '../form.tsx';
 import type { SaveResult } from '../save-bar.tsx';
+import { useWizardNav } from './wizard-nav.ts';
 import { mapServerError } from './wizard-server.ts';
-
-export interface WizardStepDef<Id extends string = string> {
-  id: Id;
-  /** Rail label: a noun, one or two words ("Basics", "Who gets in"). */
-  title: string;
-  /** The visible heading, an instruction of four words or fewer ("Name the key"). Without it the title is the heading, for screen readers only. */
-  heading?: string;
-  /** What was chosen, under a done step on the rail ("Box office sync", "3 scopes"). */
-  summary?: string | undefined;
-  /** Not needed this run because of an earlier choice: hopped by Next and Back, no Review section. */
-  skip?: boolean;
-}
-
-export type WizardStepState = 'done' | 'current' | 'todo' | 'skipped' | 'invalid';
-
-export interface WizardOptions<Id extends string> {
-  /** Computed each render: summaries change with the draft. */
-  steps: readonly WizardStepDef<Id>[];
-  /** Blocking problems per step, a pure function of the draft: field to message. */
-  errors: Partial<Record<Id, Partial<Record<string, string>> | undefined>>;
-  /** Why Next is off, four words or fewer with a period ("Name the key."). Falls back to the count. */
-  hints?: Partial<Record<Id, string>>;
-  /** Server field to the step that fixes it. */
-  fieldStep: Partial<Record<string, Id>>;
-  /** The last step's Next. Throw the ApiError; the hook maps it. */
-  onFinish: () => Promise<unknown> | unknown;
-  /** Create is linear and ends in a Review; edit reaches every step and ends in Save. */
-  mode?: 'create' | 'edit';
-  /** Dialogs pass `open`: the wizard resets when it opens again. */
-  open?: boolean;
-  /** Edit mode: the draft differs from what was loaded. Save is blocked with "No changes." until it does. */
-  dirty?: boolean;
-}
-
-export interface WizardModel<Id extends string = string> {
-  steps: (WizardStepDef<Id> & { state: WizardStepState })[];
-  mode: 'create' | 'edit';
-  index: number;
-  id: Id;
-  first: boolean;
-  /** No later step is left to do: Next finishes. */
-  last: boolean;
-  /** Create: a step that was passed, or any step behind. Edit: any step. */
-  go(to: number | Id): void;
-  /** Same as pressing Next: a blocked step shows its errors instead. */
-  next(): void;
-  back(): void;
-  blocked: boolean;
-  /** Why the step is blocked, while it is. */
-  hint: string | undefined;
-  /** What the step's fields render: shown client errors, then the server's. */
-  errors: Record<string, string | undefined>;
-  /** One line at the foot of the step. */
-  formError: string | undefined;
-  /** Call from a field's onChange. */
-  clearServer(field?: string): void;
-  /** 'review' jumps back to Review when every step after this one is still done. */
-  primary: 'next' | 'review' | 'finish';
-  finishing: boolean;
-  form: {
-    id: string;
-    invalid: boolean;
-    blockedHint: string | undefined;
-    onInvalid(): void;
-    onValid(): Promise<SaveResult | undefined> | undefined;
-    /** Typing clears the server's errors on the fields this step owns. */
-    onInput(event: FormEvent<HTMLFormElement>): void;
-  };
-  /** The step changed `key` times; WizardStep animates from `direction`. */
-  motion: { key: number; direction: 1 | -1 };
-  reset(): void;
-}
+import type { WizardModel, WizardOptions, WizardStepState } from './wizard-types.ts';
 
 const has = (found: Partial<Record<string, string>> | undefined) =>
   Boolean(found && Object.values(found).some(Boolean));
@@ -90,17 +20,13 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
     0,
     steps.findIndex((s) => !s.skip),
   );
-  const [index, setIndex] = useState(firstIndex);
-  const [reached, setReached] = useState(0);
   const [passed, setPassed] = useState<ReadonlySet<Id>>(new Set());
   const [shown, setShown] = useState<ReadonlySet<Id>>(new Set());
   const [formError, setFormError] = useState<string>();
   const [finishing, setFinishing] = useState(false);
   const [refused, setRefused] = useState(0);
-  const [motion, setMotion] = useState<{ key: number; direction: 1 | -1 }>({
-    key: 0,
-    direction: 1,
-  });
+  const nav = useWizardNav(steps, firstIndex, () => setFormError(undefined));
+  const { index, reached, motion, move, hop } = nav;
   const running = useRef(false);
   const server = useServerFields();
 
@@ -148,22 +74,6 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
       ? 'review'
       : 'next';
 
-  function move(to: number) {
-    if (!steps[to] || steps[to]?.skip) return;
-    const direction = to >= index ? 1 : -1;
-    setMotion((m) => ({ key: m.key + 1, direction }));
-    setFormError(undefined);
-    setReached((r) => Math.max(r, to));
-    setIndex(to);
-  }
-
-  /** The nearest step that is not skipped, or -1. */
-  function hop(from: number, step: 1 | -1) {
-    let at = from + step;
-    while (steps[at]?.skip) at += step;
-    return steps[at] ? at : -1;
-  }
-
   function pass() {
     if (current) setPassed((p) => new Set(p).add(current.id));
   }
@@ -185,6 +95,11 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
       if (stateOf(at) !== 'done' && stateOf(at) !== 'invalid') return;
     }
     move(at);
+  }
+
+  function back() {
+    const to = hop(index, -1);
+    if (to >= 0) move(to);
   }
 
   async function finish(): Promise<SaveResult | undefined> {
@@ -235,8 +150,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
 
   function reset() {
     running.current = false;
-    setIndex(firstIndex);
-    setReached(0);
+    nav.reset();
     setPassed(new Set());
     setShown(new Set());
     setFormError(undefined);
@@ -271,10 +185,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
       else if (blocked) refuse();
       else void onValid();
     },
-    back() {
-      const to = hop(index, -1);
-      if (to >= 0) move(to);
-    },
+    back,
     blocked,
     hint,
     errors: visible,
@@ -294,6 +205,17 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
           if (field === name || (current && fieldStep[field] === current.id)) server.clear(field);
         }
       },
+    },
+    frame: {
+      steps,
+      current: index,
+      onStep: go,
+      skipped: steps.filter((s) => s.skip).map((s) => s.id),
+      onBack: index <= firstIndex ? undefined : back,
+      formId,
+      nextDisabled: blocked,
+      nextHint: hint,
+      busy: finishing,
     },
     motion,
     reset,

@@ -35,6 +35,12 @@
     "fix": "Send an earlier expiresAt.",
     "retryable": false
   },
+  "API_KEY_MISSING": {
+    "title": "No API key",
+    "when": "The Authorization header names the Bearer scheme but carries no key.",
+    "fix": "Set PASSBOOK_KEY to your key, export it, and send Authorization: Bearer $PASSBOOK_KEY.",
+    "retryable": false
+  },
   "API_KEY_MODE_MISMATCH": {
     "title": "Key mode mismatch",
     "when": "You tried to rotate a key from the other mode (live or test).",
@@ -1305,6 +1311,12 @@
     "title": "Membership conflict",
     "when": "The membership changed while the request ran.",
     "fix": "Fetch it with GET /api/v1/orgs/{id}/memberships and send the change again.",
+    "retryable": false
+  },
+  "MEMBERSHIP_NOT_FOUND": {
+    "title": "Member not found",
+    "when": "The membership is not an active member of this organization.",
+    "fix": "List the members again and use the current membership id.",
     "retryable": false
   },
   "MEMBER_PHOTO_CHANGED": {

@@ -115,7 +115,7 @@ describe('try token revocation', () => {
   it('stops when the sandbox closes', async () => {
     const d = await developer();
     const { token } = await mint(d.browser);
-    expect((await send('DELETE', '/developer/sandbox', d.browser)).status).toBe(200);
+    expect((await send('POST', '/developer/sandbox/close', d.browser)).status).toBe(200);
     expect((await send('GET', '/passes', page(d, token))).status).toBe(401);
   });
 

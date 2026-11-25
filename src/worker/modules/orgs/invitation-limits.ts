@@ -12,9 +12,13 @@ export const ORG_DAILY_INVITES = 100;
 export async function checkInviteAllowed(
   ctx: ServiceContext,
   input: { actorId: string; orgId: string; email: string },
+  /** A resend retires the pending invitation it replaces, so only the mail ceilings apply. */
+  replacing = false,
 ): Promise<void> {
   const now = ctx.clock.now();
-  const pending = await pendingInvitationFor(ctx.env.DB, input.orgId, input.email, now);
+  const pending = replacing
+    ? null
+    : await pendingInvitationFor(ctx.env.DB, input.orgId, input.email, now);
   if (pending)
     throw new ConflictError(
       'This address already has a pending invitation. Revoke it to send a new one.',

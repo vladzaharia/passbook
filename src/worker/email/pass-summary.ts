@@ -18,7 +18,7 @@ const MAX_FIELDS = 4;
 /** What the pass email shows before the badge: the pass's key fields in its colours. */
 export function passSummary(
   passJson: Record<string, unknown>,
-  ctx: { locale?: string; now: Date; timeZone?: string },
+  ctx: { locale?: string; now: Date; timeZone: string },
 ): PassSummary {
   const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
   const block = (style ? passJson[style] : {}) as Record<string, unknown>;
@@ -35,7 +35,7 @@ export function passSummary(
       const text = formatValue(value as Json, spec, {
         locale: ctx.locale ?? 'en',
         now: ctx.now,
-        ...(ctx.timeZone ? { timeZone: ctx.timeZone } : {}),
+        timeZone: ctx.timeZone,
       }).text;
       const label = typeof spec.label === 'string' ? spec.label : '';
       if (text) fields.push({ label, value: text });

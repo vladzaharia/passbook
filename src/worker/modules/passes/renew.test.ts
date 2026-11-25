@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeTemplate } from '../../../../test/helpers/index.ts';
+import { makeTemplate, saveOrgSettings, TEST_NOW } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema } from '../../../shared/contracts/passes.ts';
 import { createApp } from '../../app.ts';
 import { all } from '../../platform/db.ts';
@@ -32,6 +32,7 @@ beforeAll(async () => {
       return t;
     },
   });
+  await saveOrgSettings(kit.env.DB, kit.org.id, { 'org.timeZone': 'UTC' }, TEST_NOW);
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
 });

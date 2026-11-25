@@ -150,7 +150,8 @@
   position: fixed;
   top: calc(3.5rem + env(safe-area-inset-top));
   right: 0;
-  bottom: 0;
+  /* Ends above the wizard bar (about 4.5rem), so its content scrolls clear of it. */
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
   z-index: 10;
   display: flex;
   flex-direction: column;

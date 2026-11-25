@@ -5,6 +5,7 @@ import { axe } from 'vitest-axe';
 import { setCsrfProvider } from '../../../lib/api.ts';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, problem, stubFetch } from '../../../lib/test-utils.tsx';
+import { pickRowAction, releasesLoaded } from './row-actions.ts';
 import { TemplateReleasesPanel } from './template-releases-panel.tsx';
 import {
   approval,
@@ -160,9 +161,8 @@ describe('template release panel', () => {
     });
     releaseServer({ active: system, history: [system] });
     mountPanel({ templateOrigin: 'baked', templateOrgId: null });
-    expect(
-      await screen.findByText(/Built-in releases are managed by the system/),
-    ).toBeInTheDocument();
+    await screen.findByRole('list', { name: 'Versions' });
+    expect(screen.queryByText(/managed by the system/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create candidate' })).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', {
@@ -183,8 +183,11 @@ describe('template release panel', () => {
     });
     releaseServer({ active: head, history: [head, system] });
     mountPanel();
-    await screen.findByRole('list', { name: 'Releases' });
-    expect(screen.queryByRole('button', { name: /^Restore/ })).not.toBeInTheDocument();
+    const user = userEvent.setup();
+    await screen.findByRole('list', { name: 'Versions' });
+    await releasesLoaded();
+    await user.click(screen.getByRole('button', { name: 'Actions for v1' }));
+    expect(screen.queryByRole('menuitem', { name: 'Restore' })).not.toBeInTheDocument();
   });
 
   it('displays scoped list failures instead of presenting an empty release history', async () => {
@@ -206,14 +209,14 @@ describe('template release panel', () => {
     vi.stubGlobal('innerHeight', 844);
     const user = userEvent.setup();
     const previous = release({ id: 'previous', generation: 1 });
-    const head = release({ id: 'head', generation: 2 });
+    const head = release({ id: 'head', generation: 2, version: 'version-2' });
     releaseServer({ active: head, history: [head, previous] });
     mountPanel();
-    const trigger = await screen.findByRole('button', {
-      name: 'Restore v1',
-    });
+    await releasesLoaded();
+    const trigger = await screen.findByRole('button', { name: 'Actions for v1' });
     trigger.focus();
     await user.keyboard('{Enter}');
+    await user.click(await screen.findByRole('menuitem', { name: 'Restore' }));
     const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     expect(dialog.contains(document.activeElement)).toBe(true);
     expect(within(dialog).getByRole('textbox', { name: /Reason/ })).toBeInTheDocument();
@@ -236,7 +239,10 @@ describe('self-approval and promote', () => {
       history: [release({ approvalId: 'approval-1', candidateId: 'candidate-1' })],
     });
     mountPanel();
-    const history = await screen.findByRole('list', { name: 'Releases' });
-    expect(within(history).getByText('Self-approved')).toBeInTheDocument();
+    const user = userEvent.setup();
+    await screen.findByRole('list', { name: 'Versions' });
+    await pickRowAction(user, 'v1', 'Technical details');
+    const sheet = await screen.findByRole('dialog', { name: 'v1 details' });
+    expect(within(sheet).getByText('Self-approved')).toBeInTheDocument();
   });
 });

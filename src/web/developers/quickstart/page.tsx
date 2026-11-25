@@ -1,37 +1,10 @@
-import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { MenuSections } from '../pages/layout.tsx';
 import { EmptyStage, Layout, Progress, Step, Tag } from './parts.tsx';
 
 const C = QS_COPY.steps;
 /** Straight to Polaris ID: the sandbox step is where the page picks up. */
 const POLARIS_HERE = `/auth/oidc/start?next=${encodeURIComponent(`${PATHS.quickstart}#sandbox`)}`;
-
-/** Left nav for the page: where to go next, and the guides. On a phone it is the drawer, with the sections first. */
-export function QuickstartSide() {
-  return (
-    <nav className="sidenav" id="dev-menu" aria-label="Quickstart">
-      <MenuSections />
-      <div className="stack">
-        <h4>Start</h4>
-        <a href={PATHS.quickstart} aria-current="page">
-          {QS_COPY.nav}
-        </a>
-        <a href={PATHS.playground}>Playground</a>
-        <a href={PATHS.webhooks}>Webhook tester</a>
-      </div>
-      <div className="stack">
-        <h4>Guides</h4>
-        {DEV_GUIDES.slice(0, 6).map((g) => (
-          <a key={g.id} href={`${PATHS.guides}#${g.id}`}>
-            {g.title}
-          </a>
-        ))}
-      </div>
-    </nav>
-  );
-}
 
 /**
  * What a signed-out visitor, or a browser without script, sees: the five steps with the first one to do. The

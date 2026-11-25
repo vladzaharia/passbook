@@ -48,6 +48,9 @@ import './scenes/nudge.css';
 import './scenes/tuck.css';
 import './scenes/stow.css';
 import './scenes/count.css';
+import './scenes/listen.css';
+import './scenes/catch.css';
+import './scenes/explain.css';
 import './scenes/face.css';
 
 /** Every entity art by name; loaded beside the app (index.ts), not in its first chunk. */

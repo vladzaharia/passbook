@@ -48,7 +48,9 @@ describe('playground, anonymous', () => {
 
     await user.selectOptions(screen.getByLabelText('Template'), 'baked:starter-event-ticket');
     await user.click(screen.getByRole('radio', { name: 'Google' }));
-    await user.click(screen.getByRole('radio', { name: 'Back' }));
+    // The wallet pane loads lazily; its Front / Back toggle is the one place the face is chosen.
+    await user.click(await screen.findByRole('radio', { name: 'Back' }));
+    expect(location.hash).toContain('f=back');
     await user.click(screen.getByRole('radio', { name: 'JSON' }));
     await user.click(screen.getByRole('radio', { name: 'Form' }));
     await user.click(screen.getByRole('tab', { name: 'Python' }));

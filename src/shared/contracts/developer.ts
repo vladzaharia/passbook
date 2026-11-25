@@ -158,7 +158,15 @@ export const ApiRailSchema = z.object({
   scopes: z.array(ApiScopeSchema),
   tier: z.enum(['standard', 'high', 'bulk']),
   limitPerMinute: z.number().int().positive(),
-  callsLastHour: z.number().int().nonnegative(),
+  callsLastHour: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Calls in the last hour, without the portal's own background reads."),
+  series: z
+    .array(z.number().int().nonnegative())
+    .length(12)
+    .describe('The same calls in five-minute buckets, oldest first.'),
   key: z.object({ id: IdSchema, name: z.string(), prefix: z.string() }).nullable(),
 });
 export type ApiRail = z.infer<typeof ApiRailSchema>;

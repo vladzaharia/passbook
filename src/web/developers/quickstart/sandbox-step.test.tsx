@@ -21,6 +21,21 @@ const quickstart = (home: Quickstart['home']): Quickstart =>
   }) as unknown as Quickstart;
 
 describe('the sandbox step', () => {
+  it('offers Start over and Delete on a closed sandbox', () => {
+    const closed = {
+      session: { kind: 'closed', csrf: 'c', siteKey: 'k' },
+      sandbox: null,
+      secret: null,
+      templateId: null,
+      csrf: 'c',
+      home: null,
+      sandboxMade: () => undefined,
+    } as unknown as Quickstart;
+    render(<SandboxStep q={closed} state="current" onNext={() => undefined} />);
+    expect(screen.getByRole('button', { name: /Start over/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Delete sandbox/ })).toBeTruthy();
+  });
+
   it('shows Retry, not a spinner, when the home has no capture endpoint', () => {
     const home = { ...homeFresh, endpoints: [] };
     const { container } = render(

@@ -36,10 +36,11 @@ const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
     })),
     oidc: {
       issuer: 'https://id.plrs.im',
-      platformAdminGroup: 'wallet_admins',
-      adminGroup: null,
-      developerGroup: null,
-      userGroup: null,
+      platformAdminGroup: ['wallet_admins', 'passbook_platform_admins'],
+      platformAdminPinned: 0,
+      adminGroup: [],
+      developerGroup: [],
+      userGroup: [],
       consoleGroupRequired: false,
     },
     released: { google: false, samsung: false },
@@ -80,7 +81,7 @@ describe('settings page', () => {
     expect(screen.getByRole('switch', { name: 'Magic-link sign-in' })).toBeChecked();
     expect(screen.getByRole('heading', { name: 'Access and sign-in' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Polaris ID/ })).toBeInTheDocument();
-    expect(await screen.findByText('wallet_admins')).toBeInTheDocument();
+    expect(await screen.findByText('wallet_admins, passbook_platform_admins')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -144,10 +145,11 @@ describe('settings page', () => {
             ...entries(),
             oidc: {
               issuer: 'https://id.staging.test',
-              platformAdminGroup: null,
-              adminGroup: null,
-              developerGroup: null,
-              userGroup: null,
+              platformAdminGroup: [],
+              platformAdminPinned: 0,
+              adminGroup: [],
+              developerGroup: [],
+              userGroup: [],
               consoleGroupRequired: false,
             },
           }),

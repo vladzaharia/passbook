@@ -2,7 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '../../lib/errors.ts';
 import '../../lib/test-utils.tsx';
-import { useWizard, type WizardOptions } from './use-wizard.ts';
+import { useWizard } from './use-wizard.ts';
+import type { WizardOptions } from './wizard-types.ts';
 
 type Id = 'a' | 'b' | 'c' | 'review';
 const STEPS = [
@@ -300,5 +301,25 @@ describe('useWizard', () => {
     act(() => result.current.form.onInvalid());
     expect(result.current.id).toBe('a');
     expect(result.current.errors).toEqual({ name: 'Required.' });
+  });
+
+  it('hands the page Wizard its frame: index, soft-disabled Next, Back from step two', async () => {
+    const { result, rerender } = setup();
+    expect(result.current.frame).toMatchObject({
+      current: 0,
+      nextDisabled: true,
+      nextHint: 'Name it.',
+      onBack: undefined,
+      skipped: [],
+    });
+    rerender(ok);
+    expect(result.current.frame.nextDisabled).toBe(false);
+    await submit(result);
+    expect(result.current.frame.current).toBe(1);
+    act(() => result.current.frame.onBack?.());
+    expect(result.current.frame.current).toBe(0);
+    await submit(result);
+    act(() => result.current.frame.onStep(0));
+    expect(result.current.id).toBe('a');
   });
 });

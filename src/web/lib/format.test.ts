@@ -7,6 +7,7 @@ import {
   formatDay,
   formatEndedOn,
   formatExpiry,
+  formatMaybeDate,
   formatRelative,
   formatShortDate,
   formatShortDateHour,
@@ -55,10 +56,10 @@ describe('formatEndedOn', () => {
   const at = Date.UTC(2026, 10, 19, 1, 50);
   const pass = { modifiedAt: at, voidedAt: at };
 
-  it('is the day in the holder zone, UTC when none is given', () => {
+  it('is the day in the holder zone, Seattle when none is given', () => {
     expect(formatEndedOn('voided', pass, 'America/New_York')).toBe('Nov 18, 2026');
     expect(formatEndedOn('voided', pass, 'UTC')).toBe('Nov 19, 2026');
-    expect(formatEndedOn('voided', pass)).toBe('Nov 19, 2026');
+    expect(formatEndedOn('voided', pass)).toBe('Nov 18, 2026');
   });
 
   it('falls back to the last change, and an expired pass names its expiry', () => {
@@ -67,6 +68,19 @@ describe('formatEndedOn', () => {
       'Oct 1, 2026',
     );
     expect(formatEndedOn('voided', { modifiedAt: Number.NaN })).toBeNull();
+  });
+});
+
+describe('formatExpiry and formatMaybeDate in the org zone', () => {
+  it('reads a Z time in Seattle time unless a zone is given', () => {
+    expect(formatExpiry('2026-12-01T03:00:00Z')).toBe('Nov 30, 2026, 7:00 PM PST');
+    expect(formatExpiry('2026-12-01T03:00:00Z', 'Asia/Tokyo')).toBe('Dec 1, 2026, 12:00 PM');
+    expect(formatMaybeDate('2026-12-01T03:00:00Z')).toBe('Nov 30, 2026');
+    expect(formatMaybeDate('2026-12-01T03:00:00Z', 'Asia/Tokyo')).toBe('Dec 1, 2026');
+    expect(formatMaybeDate('2026-12-01', 'Asia/Tokyo')).toBe('Dec 1, 2026');
+    // Midnight UTC is a stored calendar date: the same day in every zone.
+    expect(formatMaybeDate('2026-12-01T00:00:00Z')).toBe('Dec 1, 2026');
+    expect(formatExpiry('2026-12-01T00:00:00.000Z')).toBe('Dec 1, 2026');
   });
 });
 

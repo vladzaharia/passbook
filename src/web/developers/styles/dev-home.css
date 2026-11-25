@@ -79,9 +79,26 @@
 }
 .tile {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 12px 14px;
+}
+.tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.tile-time {
+  flex: none;
+}
+.tile .tile-go {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--pk-text-muted);
 }
 .tile.slim {
   gap: 4px;

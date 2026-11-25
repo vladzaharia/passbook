@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { verifyWebhook } from '../../sdk/typescript/src/index.ts';
 import { fence, guideApi, snippetBody } from './guide-api.ts';
+
+const verifyCapture = import.meta.glob('../../docs/developers/snippets/guides/verify-capture.ts');
 
 /** The sandbox claims of the door, events, go-live and bulk guides, each proven by the API. */
 describe('check in at the door', () => {
@@ -36,24 +38,23 @@ describe('check in at the door', () => {
 
 describe('react to events and go live', () => {
   it('shows the secret once, captures a signed test event that verifies, replays it, and signs twice while a rotation overlaps', async () => {
-    const { call } = await guideApi();
-    const made = await call(
-      'POST',
-      '/webhook-endpoints/capture',
-      fence('react-to-events', 'webhooks.postWebhookEndpointsCapture'),
-    );
+    const { call, world } = await guideApi();
+    const made = await call('POST', '/webhook-endpoints/capture', snippetBody('capture-endpoint'));
     expect(made.status).toBe(201);
     const secret = made.json.secret as string;
     expect(typeof secret).toBe('string');
     const id = made.json.endpoint.id as string;
-    const later = await call('POST', '/webhook-endpoints/capture', { eventTypes: ['pass.issued'] });
+    const later = await call('POST', '/webhook-endpoints/capture', snippetBody('capture-endpoint'));
     expect(later.json.secret).toBeNull();
     expect(later.json.endpoint.id).toBe(id);
+    // The guide reads the secret back from the endpoint.
+    const revealed = await call('POST', `/webhook-endpoints/${id}/captures/secret`);
+    expect([revealed.status, revealed.json.secret]).toEqual([200, secret]);
 
     const test = await call(
       'POST',
       `/webhook-endpoints/${id}/test`,
-      fence('react-to-events', 'webhooks.postWebhookEndpointsByIdTest'),
+      snippetBody('send-test-event'),
     );
     expect(test.status).toBe(200);
     expect(test.json.ok).toBe(true);
@@ -68,15 +69,27 @@ describe('react to events and go live', () => {
     const sentAt = Number(headers.get('x-passbook-timestamp'));
     const event = await verifyWebhook(raw, headers, secret, { now: sentAt });
     expect(event.type).toBe('pass.issued');
+    // The guide's terminal check: the stored capture verifies with the revealed secret.
+    vi.stubGlobal('fetch', world.fetch);
+    vi.stubEnv('PASSBOOK_KEY', world.secret);
+    vi.stubEnv('PASSBOOK_ENDPOINT_ID', id);
+    vi.stubEnv('PASSBOOK_CAPTURE_ID', captureId);
+    vi.stubEnv('PASSBOOK_WEBHOOK_SECRET', revealed.json.secret as string);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await Object.values(verifyCapture)[0]?.();
+    expect(log).toHaveBeenCalledWith('verified');
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    log.mockRestore();
     expect(
       (await call('POST', `/webhook-endpoints/${id}/captures/${captureId}/replay`)).status,
-    ).toBeLessThan(300);
+    ).toBe(201);
 
     // Go live: rotate with the guide's overlap, and the next request carries one v1= per live secret.
     const rotated = await call(
       'POST',
       `/webhook-endpoints/${id}/secret`,
-      fence('go-live', 'webhooks.postWebhookEndpointsByIdSecret'),
+      snippetBody('rotate-secret'),
     );
     expect(rotated.status).toBe(200);
     expect(rotated.json.secret).not.toBe(secret);
@@ -94,11 +107,7 @@ describe('react to events and go live', () => {
 describe('bulk import', () => {
   it('checks five rows, starts the commit, and refuses more than 100 passes in a bulk call', async () => {
     const { call, makePass } = await guideApi();
-    const made = await call(
-      'POST',
-      '/pass-imports',
-      fence('bulk-import', 'pass-imports.postPassImports'),
-    );
+    const made = await call('POST', '/pass-imports', snippetBody('bulk-import'));
     expect(made.status).toBe(201);
     const checked = await call(
       'POST',

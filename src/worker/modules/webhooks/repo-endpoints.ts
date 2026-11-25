@@ -7,7 +7,7 @@ import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { all, first } from '../../platform/db.ts';
-import { withinLimit } from '../../platform/entitlements.ts';
+import { entitled, withinLimit } from '../../platform/entitlements.ts';
 import type { FeedFence } from './repo-feed.ts';
 
 export interface EndpointRow {
@@ -130,6 +130,9 @@ export function assertOrgModeGrant(g: Grant): void {
   if (g.scope !== 'org_mode')
     throw new AuthorityError('GRANT_BAD_PURPOSE', 'Webhook writes need an org_mode grant.');
 }
+
+/** Endpoints need the plan's webhooks feature. */
+export const webhooksIncluded = (): Check => entitled('webhooks');
 
 /** An endpoint takes a slot of the `webhooks.endpoints` limit, counted across the org's modes. */
 export const endpointSlot = (): Check =>

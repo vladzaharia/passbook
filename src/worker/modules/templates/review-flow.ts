@@ -24,7 +24,7 @@ import { newestRequestedVersion } from './repo-reviews.ts';
 /**
  * A peer's review of a version: approves its open candidate in each mode that has one (Test and
  * Live for a person, Test for a Test key) and, with `release`, releases it when the caller may publish.
- * Approving one's own work is refused. Every refusal is decided before the first approval is written.
+ * Approving one's own work is refused, except in a sandbox. Every refusal is decided before the first approval is written.
  */
 export async function reviewTemplate(
   ctx: ServiceContext,
@@ -94,12 +94,13 @@ export async function reviewTemplate(
     ready.push(mode);
     if (
       open.some((c, i) =>
-        (approvals[i] ?? []).some((a) => a.kind === 'peer' && approvalMatches(a, c)),
+        (approvals[i] ?? []).some((a) => (sandbox || a.kind === 'peer') && approvalMatches(a, c)),
       )
     )
       continue;
+    // A sandbox has one member, so the author may approve their own work there (Self-approved).
     const target = open.find(
-      (c) => c.authorId !== authority.userId && c.versionAuthorId !== authority.userId,
+      (c) => sandbox || (c.authorId !== authority.userId && c.versionAuthorId !== authority.userId),
     );
     if (!target)
       throw new ForbiddenError(
@@ -121,6 +122,7 @@ export async function reviewTemplate(
       mode,
       provider: 'apple',
       candidateHash: target.candidateHash,
+      ...(sandbox ? { alone: true } : {}),
     });
     approved.push(mode);
   }

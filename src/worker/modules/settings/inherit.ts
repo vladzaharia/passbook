@@ -25,7 +25,7 @@ export interface SettingEntry {
 const clamp = (n: number, max: number) => Math.min(n, max);
 
 /** The platform's daily email maximum, lowered to the plan's `email.perDay`; a missing value allows none, as at send. */
-function emailCeiling(platform: PlatformSettings, entitlements: Entitlements): number {
+export function emailCeiling(platform: PlatformSettings, entitlements: Entitlements): number {
   const plan = entitlements['email.perDay'];
   const max = platform['email.orgCapPerDayMax'];
   return plan === null ? max : Math.min(max, typeof plan === 'number' ? plan : 0);

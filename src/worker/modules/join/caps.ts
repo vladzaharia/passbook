@@ -14,7 +14,7 @@ export const PREFIX_HOURLY_CAP = 60;
 /** Join mails (new or re-sent) one address gets per 24 hours, platform-wide. */
 export const MAIL_DAILY_CAP = 3;
 /** Test links hold fewer cards a day than live ones. */
-const TEST_ORG_CAP = 200;
+export const TEST_ORG_CAP = 200;
 
 const windowOf = (now: number, size: number) => now - (now % size);
 

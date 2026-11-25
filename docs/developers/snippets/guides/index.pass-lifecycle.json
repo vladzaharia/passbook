@@ -1,0 +1,51 @@
+[
+  {
+    "id": "remove-pass",
+    "title": "Remove a pass from Wallet",
+    "guide": "pass-lifecycle",
+    "ops": [
+      "passes.postPassesByIdRemove"
+    ],
+    "files": {
+      "ts": "remove-pass.ts",
+      "curl": "remove-pass.sh"
+    }
+  },
+  {
+    "id": "restore-pass",
+    "title": "Restore a removed pass",
+    "guide": "pass-lifecycle",
+    "ops": [
+      "passes.postPassesByIdRestore"
+    ],
+    "files": {
+      "ts": "restore-pass.ts",
+      "curl": "restore-pass.sh"
+    }
+  },
+  {
+    "id": "rotate-link",
+    "title": "Replace a pass link",
+    "guide": "pass-lifecycle",
+    "ops": [
+      "passes.postPassesByIdRotateLink"
+    ],
+    "files": {
+      "ts": "rotate-link.ts",
+      "curl": "rotate-link.sh"
+    }
+  },
+  {
+    "id": "delete-pass",
+    "title": "Delete a pass",
+    "guide": "pass-lifecycle",
+    "ops": [
+      "passes.deletePassesById"
+    ],
+    "files": {
+      "ts": "delete-pass.ts",
+      "curl": "delete-pass.sh"
+    },
+    "expect": "handler"
+  }
+]

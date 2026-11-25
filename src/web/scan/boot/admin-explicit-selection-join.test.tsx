@@ -50,7 +50,7 @@ describe('scanner admin session writes', () => {
     expect(JSON.parse(String(create[0]?.[1]?.body))).toMatchObject({
       orgId: 'o1',
       name: 'Member entrance',
-      timeZone: expect.any(String),
+      timeZone: 'Asia/Tokyo',
     });
     expect(JSON.parse(String(join[0]?.[1]?.body))).toMatchObject({ sessionId: 'session-1' });
     expectCsrf(create[0]?.[1]);

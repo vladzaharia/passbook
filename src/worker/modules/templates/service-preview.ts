@@ -21,6 +21,7 @@ import {
 import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
 import { issuerName } from '../passes/issuer.ts';
 import { getOrg as getPassOrg } from '../passes/repo-read-issuance.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { previewPass } from './build-check.ts';
 import { createTemplateRegistry } from './registry.ts';
 import { getOrgName, latestVersionName } from './repo.ts';
@@ -100,6 +101,7 @@ export async function preview(
         ? issuerName(tenant.name, tenant.personal, resolved.passJson)
         : (org?.name ?? 'Organization'),
       new Date(ctx.clock.now()),
+      tenant ? (await getOrgSettings(ctx, tenant.id))['org.timeZone'] : undefined,
     );
     // A stamp card shows the strip drawn for the input's count under the plain strip name.
     const input = body.input ?? template.manifest.sample;

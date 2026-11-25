@@ -29,59 +29,64 @@ export function GoogleCard({
   classBody,
   objectBody,
   testBand,
+  face = 'both',
 }: {
   type: string;
   classBody: unknown;
   objectBody: unknown;
   /** A sandbox pass: the TEST PREVIEW band across the card's top. */
   testBand?: boolean;
+  /** One face of the pair (FacePair): the card, or the details a tap opens. */
+  face?: 'front' | 'back' | 'both';
 }) {
   const m = googleModel(type, classBody, objectBody);
   const tone = m.bg ? (isDarkBackground(m.bg) ? 'dark' : 'light') : 'plain';
   const inactive = m.state !== 'ACTIVE';
   return (
-    <div className="wp wp-g" data-testid="google-preview">
-      <article
-        className="wp-g-card"
-        data-tone={tone}
-        data-inactive={inactive || undefined}
-        style={m.bg ? { background: m.bg } : undefined}
-        aria-label={`${m.kind} card`}
-      >
-        {testBand ? <TestBand /> : null}
-        <header className="wp-g-top">
-          <Logo src={m.logo} name={m.issuer} />
-          <span className="wp-g-issuer">{m.issuer}</span>
-        </header>
-        <div className="wp-g-title">
-          {m.subheader ? <p className="wp-g-sub">{m.subheader}</p> : null}
-          <p className="wp-g-heading">{m.heading}</p>
-        </div>
-        {m.facts.length > 0 ? (
-          <dl className="wp-g-facts">
-            {m.facts.map((f) => (
-              <div key={f.label}>
-                <dt>{f.label}</dt>
-                <dd>{f.value}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-        {m.barcode ? (
-          <div className="wp-g-code">
-            <div className="wp-tile">
-              <WalletCode
-                bcid={m.barcode.bcid}
-                message={m.barcode.message}
-                label="Google Wallet barcode"
-              />
-            </div>
-            {m.barcode.alt ? <p className="wp-g-alt">{m.barcode.alt}</p> : null}
+    <div className="wp wp-g" data-testid={face === 'back' ? undefined : 'google-preview'}>
+      {face === 'back' ? null : (
+        <article
+          className="wp-g-card"
+          data-tone={tone}
+          data-inactive={inactive || undefined}
+          style={m.bg ? { background: m.bg } : undefined}
+          aria-label={`${m.kind} card`}
+        >
+          {testBand ? <TestBand /> : null}
+          <header className="wp-g-top">
+            <Logo src={m.logo} name={m.issuer} />
+            <span className="wp-g-issuer">{m.issuer}</span>
+          </header>
+          <div className="wp-g-title">
+            {m.subheader ? <p className="wp-g-sub">{m.subheader}</p> : null}
+            <p className="wp-g-heading">{m.heading}</p>
           </div>
-        ) : null}
-        {m.hero ? <Hero src={m.hero} /> : null}
-      </article>
-      {m.modules.length + m.links.length + m.messages.length > 0 ? (
+          {m.facts.length > 0 ? (
+            <dl className="wp-g-facts">
+              {m.facts.map((f) => (
+                <div key={f.label}>
+                  <dt>{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          {m.barcode ? (
+            <div className="wp-g-code">
+              <div className="wp-tile">
+                <WalletCode
+                  bcid={m.barcode.bcid}
+                  message={m.barcode.message}
+                  label="Google Wallet barcode"
+                />
+              </div>
+              {m.barcode.alt ? <p className="wp-g-alt">{m.barcode.alt}</p> : null}
+            </div>
+          ) : null}
+          {m.hero ? <Hero src={m.hero} /> : null}
+        </article>
+      )}
+      {face === 'front' ? null : m.modules.length + m.links.length + m.messages.length > 0 ? (
         <section className="wp-g-details" aria-label="Details">
           {m.messages.map((x) => (
             <div key={x.body} className="wp-g-msg">
@@ -101,6 +106,8 @@ export function GoogleCard({
             </p>
           ))}
         </section>
+      ) : face === 'back' ? (
+        <p className="wp-empty">No details.</p>
       ) : null}
     </div>
   );

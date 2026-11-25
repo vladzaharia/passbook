@@ -516,7 +516,8 @@ the system stack.
 - Truthful: real colours, Wallet's field limits per style, one line per front field with an
   ellipsis, a barcode that is never clipped, front links as plain text, labels at least 11px. See
   ux-principles.md "Truthful previews".
-- Side toggle: `Front` / `Details` (`SegmentedControl`). Target toggle: `iOS 27` /
+- Wallet previews (playground, channel panes, designer card): `FacePair` shows front and back side by side when its container is 27.5rem wide, else one face with a `Front` / `Back` toggle (`label` names it where several share a page, "Apple side"). `FitBox` scales a printed page whole.
+- Pass detail (`PassPreviewPanel`) is the remaining exception: it keeps the `Front` / `Details` toggle (`SegmentedControl`). Target toggle: `iOS 27` /
   `iOS 26 and earlier`, only when the faces differ.
 - Teal is the only interactive accent. The foil gradient is reserved for the mint sweep, art hero
   edges, celebration sparks, the login cards and the sign-in card and email top edge.

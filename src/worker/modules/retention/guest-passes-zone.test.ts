@@ -27,6 +27,10 @@ describe('the zone a guest pass ends in', () => {
       "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'org.timeZone', '\"UTC\"', 1)",
       [`org:${other.id}`],
     );
+    // The scan fixtures pin the kit org to UTC; this org must be the unset one.
+    await run(kit.env.DB, "DELETE FROM settings WHERE scope = ? AND key = 'org.timeZone'", [
+      `org:${kit.org.id}`,
+    ]);
     clearSettingsCache(kit.env.DB);
     // No own end: the pass ends at local midnight after its start day (June 1, 12:00 UTC).
     const unzoned = await kit.scanPass(tpl, { plan: 'guest' });

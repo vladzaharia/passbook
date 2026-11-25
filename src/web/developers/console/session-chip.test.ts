@@ -68,7 +68,7 @@ describe('the session lookup', () => {
       '/api/v1/session': json(authed),
       '/api/v1/developer/sandbox': json({ sandbox: { id: 's', closedAt: 5 } }),
     });
-    expect(await load()).toEqual({ kind: 'closed', csrf: 'csrf-1' });
+    expect(await load()).toEqual({ kind: 'closed', csrf: 'csrf-1', siteKey: '' });
     vi.resetModules();
     const mock = route({
       '/api/v1/session': json(authed),
@@ -148,13 +148,14 @@ describe('the top bar chip', () => {
       '/api/v1/developer/sandbox': json({ sandbox: null }),
     });
     expect(none.textContent).toBe('Create sandbox');
+    expect(none.querySelector('a')?.getAttribute('href')).toBe('/developers/quickstart#sandbox');
     vi.resetModules();
     const closed = await mountWith({
       '/api/v1/session': authed,
       '/api/v1/developer/sandbox': json({ sandbox: { id: 's', closedAt: 1 } }),
     });
     expect(closed.textContent).toBe('Sandbox closed');
-    expect(closed.querySelector('a')?.getAttribute('href')).toBe('/developers/reference');
+    expect(closed.querySelector('a')?.getAttribute('href')).toBe('/developers/quickstart#sandbox');
   });
 
   it('shows the sandbox org and the runs left, repainting as runs are spent', async () => {
@@ -163,7 +164,20 @@ describe('the top bar chip', () => {
       '/api/v1/developer/sandbox': json({ sandbox: { id: 's', orgSlug: 'acme' } }),
     });
     expect(host.querySelector('.orgchip-dot')?.textContent).toBe('A');
-    expect(host.querySelector('.orgchip-name')?.textContent).toBe('acme');
+    expect(host.querySelector('.orgchip-name')?.textContent).toBe('Sandbox');
+    expect(host.querySelector('.orgchip')?.getAttribute('title')).toBe(
+      'Your test sandbox: acme. New emails go to the Test inbox.',
+    );
+    expect(host.querySelector('.orgchip-clock')).toBeNull();
+    const items = [...host.querySelectorAll('.orgchip-item')].map((a) => [
+      a.textContent,
+      a.getAttribute('href'),
+    ]);
+    expect(items).toEqual([
+      ['Quickstart', '/developers/quickstart#sandbox'],
+      ['Start over', '/developers/quickstart#start-over'],
+      ['Delete sandbox', '/developers/quickstart#delete-sandbox'],
+    ]);
     const meter = host.querySelector<HTMLElement>('[role="meter"]');
     expect(meter?.getAttribute('aria-valuenow')).toBe('60');
     expect(meter?.dataset.low).toBe('false');

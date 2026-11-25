@@ -1,0 +1,85 @@
+[
+  {
+    "id": "create-pass",
+    "title": "Create a pass",
+    "guide": "quickstart",
+    "ops": [
+      "passes.postPasses"
+    ],
+    "files": {
+      "ts": "create-pass.ts",
+      "curl": "create-pass.sh"
+    }
+  },
+  {
+    "id": "retrieve-pass",
+    "title": "Read a pass",
+    "guide": "quickstart",
+    "ops": [
+      "passes.getPassesById"
+    ],
+    "files": {
+      "ts": "retrieve-pass.ts",
+      "curl": "retrieve-pass.sh"
+    }
+  },
+  {
+    "id": "list-passes",
+    "title": "List passes, every page",
+    "guide": "quickstart",
+    "ops": [
+      "passes.getPasses"
+    ],
+    "files": {
+      "ts": "list-passes.ts",
+      "curl": "list-passes.sh"
+    }
+  },
+  {
+    "id": "list-templates",
+    "title": "List templates",
+    "guide": "quickstart",
+    "ops": [
+      "templates.getTemplates"
+    ],
+    "files": {
+      "ts": "list-templates.ts",
+      "curl": "list-templates.sh"
+    }
+  },
+  {
+    "id": "preview-template",
+    "title": "Preview a template",
+    "guide": "quickstart",
+    "ops": [
+      "templates.postTemplatesByIdPreview"
+    ],
+    "files": {
+      "ts": "preview-template.ts",
+      "curl": "preview-template.sh"
+    }
+  },
+  {
+    "id": "handle-errors",
+    "title": "Handle an API error",
+    "guide": "quickstart",
+    "ops": [
+      "passes.postPasses"
+    ],
+    "files": {
+      "ts": "handle-errors.ts"
+    },
+    "expect": "fails"
+  },
+  {
+    "id": "release-blueprint-in-test",
+    "title": "Release a blueprint in test mode",
+    "guide": "quickstart",
+    "ops": [
+      "templates.postTemplatesByIdUse"
+    ],
+    "files": {
+      "ts": "release-blueprint-in-test.ts"
+    }
+  }
+]

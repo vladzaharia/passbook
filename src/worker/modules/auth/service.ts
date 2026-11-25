@@ -11,12 +11,10 @@ import {
   accountProvenByMail,
   announceLiftedLink,
   checkPrimaryOwner,
-  createUser,
   linkLifted,
   releaseClaimOtherThan,
 } from './account-claims.ts';
 import * as repo from './repo.ts';
-import { bumpCounter } from './repo-magic.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';
 
 export const OIDC_PROVIDER = 'pocketid';
@@ -68,33 +66,74 @@ const groupKey = (name: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '_');
 
+const csv = (value: string | undefined) =>
+  (value ?? '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+/** The exact names a group variable holds (a comma list); empty when unset. */
+export const configuredNames = (env: object, variable: string) => csv(envString(env, variable));
+
+/** Lowest role first: a name configured twice grants only the lowest of its variables. */
+const GROUP_VARIABLES = [
+  'OIDC_USER_GROUP',
+  'OIDC_DEVELOPER_GROUP',
+  'OIDC_ADMIN_GROUP',
+  'OIDC_PLATFORM_ADMIN_GROUP',
+] as const;
+
 /**
- * A claim matches a configured group name exactly, case included. If Pocket ID normalises a group's
- * name in the claim (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
+ * A claim matches a configured group name exactly, case included. Each `OIDC_*_GROUP` var holds one
+ * name or a comma list of exact names (the rename window: old and new name side by side); every
+ * alias grants the same role. A name configured in more than one variable grants only the lowest
+ * role among them and logs `GROUP_CONFIGURED_TWICE`. If Polaris ID normalises a group's name in the
+ * claim (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
  *
  * Platform admins get everything. The admin group carries `console` (it opens the console where
- * `OIDC_CONSOLE_GROUP_REQUIRED` is on; which orgs is in-app membership).
+ * `OIDC_CONSOLE_GROUP_REQUIRED` is on; which orgs is in-app membership). While
+ * `OIDC_PLATFORM_ADMIN_SUBJECTS` is not empty, platform admin also needs `subject` on that list;
+ * a group member who is not listed gets no admin (and nothing it implies).
  */
 export function rolesFromGroups(
   env: object,
   groups: readonly string[],
   log?: Pick<Logger, 'warn'>,
+  subject?: string,
 ): Role[] {
+  const lowest = new Map<string, string>();
+  for (const variable of GROUP_VARIABLES)
+    for (const name of configuredNames(env, variable)) {
+      const first = lowest.get(name);
+      if (first === undefined) lowest.set(name, variable);
+      else if (first !== variable && groups.includes(name))
+        log?.warn('auth.oidc_group_duplicate', {
+          code: 'GROUP_CONFIGURED_TWICE',
+          configured: name,
+          variables: [first, variable],
+        });
+    }
   const has = (variable: string) => {
-    const name = envString(env, variable);
-    if (!name) return false;
-    if (groups.includes(name)) return true;
-    // Grants nothing: a group that matches only after the old normalising is a config mistake to fix.
-    const near = groups.find((group) => group !== name && groupKey(group) === groupKey(name));
-    if (near !== undefined)
-      log?.warn('auth.oidc_group_near_miss', {
-        code: 'GROUP_NEAR_MISS',
-        received: near,
-        configured: name,
-      });
-    return false;
+    let matched = false;
+    for (const name of configuredNames(env, variable)) {
+      if (groups.includes(name)) {
+        if (lowest.get(name) === variable) matched = true;
+        continue;
+      }
+      // Grants nothing: a group that matches only after the old normalising is a config mistake to fix.
+      const near = groups.find((group) => group !== name && groupKey(group) === groupKey(name));
+      if (near !== undefined)
+        log?.warn('auth.oidc_group_near_miss', {
+          code: 'GROUP_NEAR_MISS',
+          received: near,
+          configured: name,
+        });
+    }
+    return matched;
   };
-  const platform = has('OIDC_PLATFORM_ADMIN_GROUP');
+  const pinned = csv(envString(env, 'OIDC_PLATFORM_ADMIN_SUBJECTS'));
+  const pinOk = pinned.length === 0 || (subject !== undefined && pinned.includes(subject));
+  const platform = has('OIDC_PLATFORM_ADMIN_GROUP') && pinOk;
   const developer = platform || has('OIDC_DEVELOPER_GROUP');
   const console = platform || has('OIDC_ADMIN_GROUP');
   if (!(console || developer || has('OIDC_USER_GROUP'))) return [];
@@ -233,75 +272,6 @@ export async function verifyEmailForUser(
     targetId: userId,
   });
   await attachWaitingPassesForEmail(ctx, userId, email);
-}
-
-export const BREAKGLASS_PROVIDER = 'breakglass';
-const BREAKGLASS_EMAIL = 'breakglass@wallet.invalid';
-
-/**
- * Admin sign-in that does not depend on Pocket ID. The token itself is checked by the handler;
- * this only resolves the dedicated user, refusing it when an admin has disabled it.
- */
-export async function signInBreakglass(
-  ctx: ServiceContext,
-  sign: SignInContext,
-): Promise<SignInResult> {
-  const linked = await repo.findIdentity(ctx.env.DB, BREAKGLASS_PROVIDER, BREAKGLASS_PROVIDER);
-  let userId = linked?.user_id;
-  if (!userId) {
-    const user =
-      (await repo.findUserByPrimaryEmail(ctx.env.DB, BREAKGLASS_EMAIL)) ??
-      (await createUser(ctx, BREAKGLASS_EMAIL, 'Break-glass admin'));
-    await repo.insertIdentity(ctx.env.DB, {
-      provider: BREAKGLASS_PROVIDER,
-      subject: BREAKGLASS_PROVIDER,
-      userId: user.id,
-      emailClaim: null,
-      emailVerified: false,
-      groups: [],
-      now: ctx.clock.now(),
-    });
-    userId = user.id;
-  }
-  const user = await repo.getUser(ctx.env.DB, userId);
-  if (user?.status !== 'active') {
-    throw new ForbiddenError('Break-glass sign-in is disabled.', 'BREAKGLASS_DISABLED');
-  }
-  const result = await startSession(ctx, user.id, ['admin', 'user'], 'breakglass', user.name, sign);
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: user.id,
-    action: 'auth.breakglass_used',
-    targetType: 'user',
-    targetId: user.id,
-    ipPrefix: sign.ipPrefix,
-  });
-  return result;
-}
-
-const HOUR = 3_600_000;
-const DAY = 24 * HOUR;
-const FAILURE_ROWS_PER_HOUR = 100;
-
-/** Audits a wrong token, capped per hour so guessing cannot flood the log; the day count is exact. */
-export async function recordBreakglassFailure(
-  ctx: ServiceContext,
-  prefix: string | null,
-): Promise<void> {
-  const now = ctx.clock.now();
-  await bumpCounter(ctx.env.DB, 'breakglass:fail', now - (now % DAY));
-  const rows = await bumpCounter(ctx.env.DB, 'audit:breakglass_failed', now - (now % HOUR));
-  if (rows > FAILURE_ROWS_PER_HOUR + 1) return;
-  if (rows === FAILURE_ROWS_PER_HOUR + 1) {
-    ctx.log.error('auth.breakglass_failed_capped', { code: 'BREAKGLASS_FAILURE_CAP' });
-    return;
-  }
-  await recordAudit(ctx, {
-    actorType: 'system',
-    action: 'auth.breakglass_failed',
-    ipPrefix: prefix,
-    detail: { reason: 'wrong_token' },
-  });
 }
 
 export type NewOidcFlow = Parameters<typeof repo.insertFlow>[1];

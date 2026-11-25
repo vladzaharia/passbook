@@ -13,7 +13,7 @@ const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 /** Any 12+ hex run: full hashes and the short prefixes of them. */
 const HASH = /\b[0-9a-f]{12,}\b/;
 
-/** Rendered text only: a closed Technical details disclosure does not count. */
+/** Rendered text only: a closed Technical details sheet does not count. */
 const shown = { useInnerText: true } as const;
 
 /** Moves the new-pass wizard to the details step, choosing the org first when it is not already chosen. */

@@ -1,4 +1,6 @@
 import { NO_EMAIL_LABEL } from '../../shared/email.ts';
+import { formatDayIn } from '../../shared/format-date.ts';
+import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shared/time-zone.ts';
 
 export { formatEndedOn } from '../../shared/format-date.ts';
 
@@ -23,12 +25,12 @@ const UTC_DAY = new Intl.DateTimeFormat(LOCALE, {
   month: 'short',
   day: 'numeric',
   year: 'numeric',
-  timeZone: 'UTC',
+  timeZone: CALENDAR_ZONE,
 });
 const UTC_TIME = new Intl.DateTimeFormat(LOCALE, {
   hour: 'numeric',
   minute: '2-digit',
-  timeZone: 'UTC',
+  timeZone: CALENDAR_ZONE,
 });
 const COUNT = new Intl.NumberFormat(LOCALE);
 const MONEY = new Map<string, Intl.NumberFormat>();
@@ -45,7 +47,7 @@ export function formatDay(ms: number | null | undefined, empty = 'None'): string
 }
 
 const CALENDAR_DATE = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: 'UTC',
+  timeZone: CALENDAR_ZONE,
   weekday: 'short',
   month: 'short',
   day: 'numeric',
@@ -94,22 +96,23 @@ const EXPIRY = new Map<string, Intl.DateTimeFormat>();
 
 /**
  * "Nov 21, 2030, 11:30 AM" for a pass's expiry (ISO string; '' when it is not a date). In
- * `timeZone` when it is known; otherwise in the zone the timestamp itself carries (its offset, or
- * UTC for Z), with that zone named so nobody reads it as local time. No DOM: /p renders it.
+ * `timeZone` when it is known; otherwise in the zone the timestamp itself carries (its explicit
+ * offset), else Seattle time (a Z is how it was written, not a zone), with that zone named so nobody
+ * reads it as local time. No DOM: /p renders it.
  */
 export function formatExpiry(iso: string, timeZone?: string): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
   // A date with no time is a calendar day: formatted in UTC it never moves to the day before.
-  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso) || isCalendarMidnight(iso)) {
     return new Intl.DateTimeFormat(LOCALE, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-      timeZone: 'UTC',
+      timeZone: CALENDAR_ZONE,
     }).format(at);
   }
-  const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? 'UTC';
+  const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? DEFAULT_TIME_ZONE;
   const named = timeZone === undefined;
   const key = `${zone}|${named}`;
   let formatter = EXPIRY.get(key);
@@ -275,11 +278,13 @@ export function formatColor(css: string): string {
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/;
 
 /** A bare ISO date or date-time as a day (Jan 1, 2026); any other text as it came. */
-export function formatMaybeDate(text: string): string {
+export function formatMaybeDate(text: string, timeZone: string = DEFAULT_TIME_ZONE): string {
   if (!ISO_DATE.test(text)) return text;
-  // A date or a Z time names a UTC day: the zone of the reader must not move it.
-  return /(?:Z|^\d{4}-\d{2}-\d{2})$/.test(text)
-    ? UTC_DAY.format(Date.parse(text))
+  // A bare date is a calendar day: the reader's zone must not move it. A Z time reads in the org zone.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text) || isCalendarMidnight(text))
+    return UTC_DAY.format(Date.parse(text));
+  return text.endsWith('Z')
+    ? formatDayIn(Date.parse(text), timeZone, LOCALE)
     : formatDay(Date.parse(text));
 }
 

@@ -3,6 +3,7 @@ import { copyAs } from './copy-as.ts';
 import {
   buildSent,
   initialDraft,
+  inputUnchecked,
   problems,
   skeleton,
   swapTemplate,
@@ -12,6 +13,54 @@ import {
 import { passesCreate, passesVoid } from './test-support.ts';
 
 describe('request', () => {
+  it("fills `input` from the template's sample wherever it swaps the template", () => {
+    const d = initialDraft(passesCreate, 'tpl_sandbox', { eventName: 'Gala' });
+    expect(JSON.parse(d.body)).toEqual({ templateId: 'tpl_sandbox', input: { eventName: 'Gala' } });
+    // No template named: an `input` is not the sandbox's to replace.
+    expect(swapTemplate({ input: { a: 1 } }, 'tpl', { b: 2 })).toEqual({ input: { a: 1 } });
+  });
+  it("checks `input` against the template's schema, or says it did not", () => {
+    const check = {
+      templateId: 'tpl_1',
+      schema: {
+        type: 'object',
+        required: ['eventName'],
+        properties: { eventName: { type: 'string' } },
+      },
+    };
+    const d = initialDraft(passesCreate);
+    expect(inputUnchecked(passesCreate, d)).toBe(true);
+    expect(problems(passesCreate, d, check).map((i) => i.path)).toEqual(['input.eventName']);
+    expect(inputUnchecked(passesCreate, d, check)).toBe(false);
+    expect(inputUnchecked(passesCreate, d, { ...check, templateId: 'other' })).toBe(true);
+    expect(problems(passesCreate, d, { ...check, templateId: 'other' })).toEqual([]);
+    expect(inputUnchecked(passesVoid, initialDraft(passesVoid), check)).toBe(false);
+  });
+  it("checks a preview's `input` when its path names the sandbox template", () => {
+    const preview = {
+      ...passesCreate,
+      id: 'templates.postTemplatesByIdPreview',
+      path: '/api/v1/templates/{id}/preview',
+      params: [
+        {
+          name: 'id',
+          where: 'path' as const,
+          required: true,
+          schema: { type: 'string' },
+          description: '',
+        },
+      ],
+      body: { type: 'object', properties: { input: { type: 'object' } } },
+      example: { input: {} },
+    };
+    const check = { templateId: 'tpl_1', schema: { type: 'object', required: ['eventName'] } };
+    const d = initialDraft(preview);
+    d.path.id = 'tpl_1';
+    expect(problems(preview, d, check).map((i) => i.path)).toEqual(['input.eventName']);
+    d.path.id = 'tpl_2';
+    expect(problems(preview, d, check)).toEqual([]);
+    expect(inputUnchecked(preview, d, check)).toBe(true);
+  });
   it('starts from the document example with the sandbox template swapped in', () => {
     const d = initialDraft(passesCreate, 'tpl_sandbox');
     expect(JSON.parse(d.body)).toEqual({ templateId: 'tpl_sandbox', input: { name: 'Ada' } });

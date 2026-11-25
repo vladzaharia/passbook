@@ -1,11 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import versions from '../../docs/api/versions.json';
 import {
   ConnectionError,
   NotFoundError,
+  PassBook,
   RateLimitError,
   ServerError,
   ValidationError,
 } from '../../sdk/typescript/src/index.ts';
+import { SDK_VERSION } from '../../sdk/typescript/src/version.ts';
 import { type SdkRig, setupSdkRig } from './sdk-test-kit.ts';
 
 let rig: SdkRig;
@@ -183,5 +186,49 @@ describe('retries', () => {
     expect(error).toBeInstanceOf(ValidationError);
     expect((error as ValidationError).status).toBe(422);
     expect((error as ValidationError).issues.length).toBeGreaterThan(0);
+  });
+});
+
+describe('identity headers', () => {
+  const recorder = () => {
+    const seen: Headers[] = [];
+    const fetch: typeof globalThis.fetch = (_input, init) => {
+      seen.push(new Headers(init?.headers));
+      return Promise.resolve(
+        new Response('{}', { headers: { 'content-type': 'application/json' } }),
+      );
+    };
+    return { seen, fetch };
+  };
+
+  it('reports test mode for pb_, pbp_ and pbo_ keys', () => {
+    for (const prefix of ['pb', 'pbp', 'pbo'])
+      expect(new PassBook({ apiKey: `${prefix}_test_x` }).mode).toBe('test');
+    expect(new PassBook({ apiKey: 'pbp_live_x' }).mode).toBe('live');
+    expect(new PassBook({ apiKey: 'other' }).mode).toBeUndefined();
+  });
+
+  it('sends the SDK User-Agent and the newest API version, which apiVersion overrides', async () => {
+    const newest = versions.versions
+      .map((v) => v.date)
+      .sort()
+      .at(-1);
+    const { seen, fetch } = recorder();
+    await new PassBook({ apiKey: 'pbp_test_x', fetch }).passes.retrieve('p1');
+    await new PassBook({ apiKey: 'pbp_test_x', fetch, apiVersion: '2026-01-01' }).passes.retrieve(
+      'p1',
+    );
+    expect(seen[0]?.get('user-agent')).toBe(`passbook-sdk-js/${SDK_VERSION}`);
+    expect(seen[0]?.get('passbook-version')).toBe(newest);
+    expect(seen[1]?.get('passbook-version')).toBe('2026-01-01');
+  });
+
+  it('lets a per-call header replace a default, in any case', async () => {
+    const { seen, fetch } = recorder();
+    await new PassBook({ apiKey: 'pbp_test_x', fetch }).passes.retrieve('p1', {
+      headers: { 'PassBook-Version': '2026-01-01', 'User-Agent': 'call/2' },
+    });
+    expect(seen[0]?.get('passbook-version')).toBe('2026-01-01');
+    expect(seen[0]?.get('user-agent')).toBe('call/2');
   });
 });

@@ -247,7 +247,7 @@ describe('Features tab', () => {
     // The tab reloaded behind the dialog: Standard is stored now, and the pick is measured against it.
     expect((await screen.findAllByText('Trial instead of Standard'))[0]).toBeVisible();
     await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
-    expect(screen.getByText('Current').closest('label')).toHaveTextContent('Standard');
+    expect(screen.getByText('Current').closest('[data-plan-tile]')).toHaveTextContent('Standard');
   });
 
   it('shows an error with Retry when the features cannot be read', async () => {

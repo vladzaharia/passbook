@@ -127,9 +127,9 @@ describe('check', () => {
     await user.click(await screen.findByRole('button', { name: /^(Create|Update) \d+/ }));
     expect(await screen.findByText('This import was undone.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
-    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveProperty(
-      'disabled',
-      true,
+    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
     );
   });
 
@@ -207,9 +207,9 @@ describe('check', () => {
       },
     });
     expect(await screen.findByText('The template changed. Check again to finish.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveProperty(
-      'disabled',
-      true,
+    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
     );
     await user.click(screen.getByRole('button', { name: 'Check again' }));
     await waitFor(() => expect(posts).toHaveLength(1));
@@ -245,9 +245,9 @@ describe('check', () => {
     await screen.findByRole('button', { name: /Needs a fix/ });
     expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Fix / })).toBeNull();
-    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveProperty(
-      'disabled',
-      true,
+    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
     );
   });
 });

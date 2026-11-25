@@ -8,8 +8,16 @@ import { PassBook } from '@passbook/sdk';
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY });
 
 const pass = await pb.passes.create({
-  templateId: 'tpl_...',
-  input: { name: 'Ada Example' },
+  templateId: '0193a1b2-7c00-7000-8000-0000000000b1',
+  input: {
+    eventName: 'Harbor Night',
+    venueName: 'Harbor Hall',
+    venueRegion: 'Cupertino, CA',
+    startsAt: '2030-06-01T19:00:00-07:00',
+    endsAt: '2030-06-01T22:00:00-07:00',
+    attendee: 'Ada Example',
+    ticketId: 'TICKET-0001',
+  },
   holderEmail: 'ada@example.com',
 });
 ```
@@ -18,7 +26,7 @@ Resources and methods are named as in the API reference: `pb.passes.create`, `pb
 
 ## Test mode
 
-A `pb_test_` key only sees test data, and sandboxes never issue real passes. Develop with a test key; switch to `pb_live_` when you ship. `pb.mode` reports which one the client holds.
+A `pbp_test_` key only sees test data, and sandboxes never issue real passes. Develop with a test key; switch to a `pbp_live_` key when you ship. `pb.mode` reports which one the client holds.
 
 ## Options
 
@@ -29,6 +37,7 @@ new PassBook({
   fetch,                     // your own fetch: a proxy, a test double, a service binding
   maxRetries: 2,
   timeoutMs: 60_000,         // per attempt
+  // apiVersion: PassBook-Version; default: the newest version this SDK was generated against
 });
 ```
 

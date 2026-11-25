@@ -1,5 +1,5 @@
 import { ApiKeyMeSchema } from '../../../shared/contracts/index.ts';
-import { keyCaller } from '../../platform/auth.ts';
+import { apiKeyMissing, bearerOf, keyCaller } from '../../platform/auth.ts';
 import { noteKeyRefused } from '../../platform/denied.ts';
 import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -14,7 +14,9 @@ apiKeyMeRoutes.get(
   '/',
   declareKeyAccess(
     async (c, next) => {
-      const bearer = /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1];
+      const sent = bearerOf(c);
+      if (sent === 'empty') throw apiKeyMissing();
+      const bearer = sent?.token;
       const auth = bearer
         ? await c.var.stores.apiKeys.resolve(bearer, keyCaller(c), { limited: 'ok' })
         : null;

@@ -1,10 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 
-const l = vi.hoisted(() => ({ heard: [] as unknown[], over: false, again: vi.fn() }));
+const l = vi.hoisted(() => ({
+  heard: [] as unknown[],
+  over: false,
+  quiet: false,
+  again: vi.fn(),
+}));
 vi.mock('./use-listener.ts', () => ({
-  useListener: () => ({ heard: l.heard, over: l.over, again: l.again }),
+  useListener: () => ({ heard: l.heard, over: l.over, quiet: l.quiet, again: l.again }),
 }));
 
 import { Stamped, TerminalBar } from './terminal-bar.tsx';
@@ -34,10 +40,26 @@ const qOf = (over: Record<string, unknown> = {}) =>
 beforeEach(() => {
   l.heard = [];
   l.over = false;
+  l.quiet = false;
 });
 afterEach(() => vi.unstubAllGlobals());
 
 describe('TerminalBar', () => {
+  it('names the three causes once it has been quiet, and offers Run here', async () => {
+    l.quiet = true;
+    const onHere = vi.fn();
+    render(<TerminalBar q={qOf()} active done={false} onHere={onHere} />);
+    expect(screen.getByText('Quiet so far.')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    await userEvent.click(screen.getByRole('button', { name: 'Run here instead' }));
+    expect(onHere).toHaveBeenCalled();
+  });
+
+  it('shows no hint before it is quiet', () => {
+    render(<TerminalBar q={qOf()} active done={false} />);
+    expect(screen.queryByText('Quiet so far.')).toBeNull();
+  });
+
   it('waits for any key, then names the key it listens for', () => {
     const { rerender } = render(<TerminalBar q={qOf()} active done={false} />);
     expect(screen.getByText(/Listening for a call from your sandbox/)).toBeInTheDocument();
@@ -56,7 +78,7 @@ describe('TerminalBar', () => {
   it('says how to check the key after ten quiet minutes, and listens again', async () => {
     l.over = true;
     render(<TerminalBar q={qOf()} active done={false} />);
-    expect(screen.getByText('echo $PASSBOOK_KEY')).toBeInTheDocument();
+    expect(screen.getByText(QS_COPY.made.checkLine)).toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: 'Listen again' }));
     expect(l.again).toHaveBeenCalled();
   });

@@ -12,8 +12,9 @@ import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { parseJsonArray, parseRoles } from '../../platform/json-column.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { BREAKGLASS_PROVIDER } from '../auth/breakglass-service.ts';
 import { emailsOf } from '../auth/repo.ts';
-import { BREAKGLASS_PROVIDER, OIDC_PROVIDER } from '../auth/service.ts';
+import { OIDC_PROVIDER } from '../auth/service.ts';
 import { suspendPersonalOrgOf } from '../orgs/personal-suspend.ts';
 import * as repo from './repo.ts';
 

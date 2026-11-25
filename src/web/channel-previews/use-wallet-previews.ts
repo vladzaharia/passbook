@@ -34,8 +34,17 @@ export function useWalletPreviews(source: PreviewSource | null, enabled = true):
       live = false;
     };
   }, [enabled, kit]);
-  const { passJson, assetBaseUrl, assetNames, assetUrls, manifest, assets, input, website } =
-    source ?? {};
+  const {
+    passJson,
+    assetBaseUrl,
+    assetNames,
+    assetUrls,
+    manifest,
+    assets,
+    input,
+    website,
+    timeZone,
+  } = source ?? {};
   return useMemo<WalletPreviews>(() => {
     if (failed) return { state: 'error' };
     if (!kit || !passJson || !assetBaseUrl || !assetNames || !manifest || !assets || !input)
@@ -53,7 +62,7 @@ export function useWalletPreviews(source: PreviewSource | null, enabled = true):
             assets,
             input,
           },
-          website ? { website } : {},
+          { ...(website ? { website } : {}), ...(timeZone ? { timeZone } : {}) },
         ),
       };
     } catch {
@@ -71,5 +80,6 @@ export function useWalletPreviews(source: PreviewSource | null, enabled = true):
     assets,
     input,
     website,
+    timeZone,
   ]);
 }

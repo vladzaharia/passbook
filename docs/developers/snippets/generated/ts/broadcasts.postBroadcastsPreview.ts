@@ -10,7 +10,7 @@ const result = await pb.broadcasts.countRecipients({
     ],
   },
   patch: {
-    validUntil: '2027-01-31',
+    endsAt: '2026-12-04T23:00:00-08:00',
   },
   notify: true,
 });

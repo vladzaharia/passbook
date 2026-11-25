@@ -5,9 +5,12 @@ import { codeSymbolMm } from '../../passkit/template/paper-geometry-sizes.ts';
 import type { BrandMark } from '../../shared/contracts/orgs.ts';
 import { passbookCredit } from '../../shared/copy/passbook-credit.ts';
 import { groupPrintCode, PAPER_COPY, PRINT_COPY } from '../../shared/copy/print.ts';
+import { codeLabelOf } from '../../shared/copy/print-kinds.ts';
 import type { PaperDrawing } from './drawing.ts';
 import { buddyPose, TicketBuddy } from './ticket-buddy.tsx';
 import { footMeta, type Issued } from './ticket-text.ts';
+import { initialsOf } from './ticket-text-base.ts';
+import { widestIndex } from './ticket-widths.ts';
 
 export interface TicketProps {
   content: PaperContent;
@@ -23,17 +26,15 @@ export interface TicketProps {
   /** A sandbox pass: the TEST PREVIEW band across the top of every page. */
   testBand?: boolean | undefined;
   /** URLs of the template's logo and the art slot `content.art` names. */
-  assets?: { logo?: string | undefined; art?: string | undefined } | undefined;
+  assets?:
+    | { logo?: string | undefined; art?: string | undefined; photo?: string | undefined }
+    | undefined;
 }
 
 const LABEL = { qr: 'QR code', code128: 'Code 128 barcode' } as const;
 
 export const codeLabel = (c: PaperContent): string =>
-  c.kind === 'admission'
-    ? c.noun === 'pass'
-      ? PAPER_COPY.codeLabel.day
-      : PAPER_COPY.codeLabel.admission
-    : PAPER_COPY.codeLabel[c.kind];
+  codeLabelOf(c.kind, c.noun, Boolean(c.info.pack));
 
 /** The code's size in mm: the symbol alone is `qrMm` (QR) or `barMm` (Code 128) wide. */
 function codeStyle(design: PaperDesign, drawing: PaperDrawing): CSSProperties {
@@ -133,6 +134,34 @@ export function Plate({ p, style }: { p: TicketProps; style?: CSSProperties }) {
   );
 }
 
+/**
+ * The holder's photo, cropped to a square from the upper middle (faces sit high); without one, the
+ * holder's initials on the pass colour, so the badge never carries a stock silhouette.
+ */
+export function Photo({
+  p,
+  className = '',
+  size,
+}: {
+  p: TicketProps;
+  className?: string;
+  size: number;
+}) {
+  const { content: c, assets } = p;
+  const box = { width: `calc(var(--mm) * ${size})`, height: `calc(var(--mm) * ${size})` };
+  return assets?.photo ? (
+    <img className={`pp-photo ${className}`.trim()} src={assets.photo} alt="" style={box} />
+  ) : (
+    <span
+      className={`pp-photo pp-initials ${className}`.trim()}
+      style={{ ...box, fontSize: `calc(var(--mm) * ${size * 0.4})` }}
+      aria-hidden="true"
+    >
+      {initialsOf(c.holder ?? c.title)}
+    </span>
+  );
+}
+
 /** The buddy cameo when the template turns it on and the class and size have a pose. */
 export function BuddyCameo({ p }: { p: TicketProps }) {
   const { content: c, design } = p;
@@ -215,7 +244,7 @@ export function sheetProps(p: TicketProps, extra: string, vars: CSSProperties = 
   return {
     className: cls,
     style,
-    'aria-label': `Ticket for ${c.title}`,
+    'aria-label': `${c.noun.charAt(0).toUpperCase()}${c.noun.slice(1)} for ${c.title}`,
     'data-kind': c.kind,
   } as const;
 }
@@ -223,8 +252,13 @@ export function sheetProps(p: TicketProps, extra: string, vars: CSSProperties = 
 export const Rows = ({ rows }: { rows: { label: string; text: string }[] }): ReactNode =>
   rows.length ? (
     <div className="pp-door-rows">
-      {rows.map((r) => (
-        <div key={r.label}>
+      {rows.map((r, i) => (
+        <div
+          key={r.label}
+          className={
+            i === widestIndex(rows.map((x) => `${x.label}${x.text}`)) ? 'pp-wide' : undefined
+          }
+        >
           <div className="pp-lbl">{r.label}</div>
           <div className="pp-v">{r.text}</div>
         </div>

@@ -450,7 +450,10 @@ describe('create connection wizard', () => {
     await next(user);
     expect(await screen.findByText('No mappings')).toBeInTheDocument();
     expect(screen.getByText(/Passes cannot be created without mappings/)).toBeVisible();
-    expect(screen.getByRole('button', { name: /^Create/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Create/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   it('warns on Mapping that nothing is mapped, and labels Create to match', async () => {
