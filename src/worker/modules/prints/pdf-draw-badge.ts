@@ -87,10 +87,10 @@ export function drawBadgeBack(pen: Pen, s: Sheet): void {
   const p: TextStyle = { size: 2.1167, font: 'regular', color: COLORS.text, lh: 1.3 };
   for (const t of [line, c.help.slice(0, 2).join(' · ')])
     if (t) y += pen.para(t, n.x, y, n.w, p, { maxLines: 2 }) + 1.4;
-  const top = n.y + n.h - (0.2 + 1 + (L.portrait ? 2 : 1) * pen.lineHeight(META));
+  const top = n.y + n.h - (0.2 + 1 + 2 * pen.lineHeight(META));
   pen.line(n.x, top, n.x + n.w, top, COLORS.hair, 0.2);
   pen.text(pen.wrap(footMeta(c, s.issued), n.w, META, 1)[0] ?? '', n.x, top + 1.2, META);
-  const second = top + 1.2 + (L.portrait ? pen.lineHeight(META) + 0.4 : 0);
+  const second = top + 1.2 + pen.lineHeight(META) + 0.4;
   passbookLine(pen, s.mark, n.x + n.w, pen.baselineOf(META, second), 1.905);
   if (s.mode === 'test')
     watermark(

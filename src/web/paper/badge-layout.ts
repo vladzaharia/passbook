@@ -32,7 +32,7 @@ export function badgeLayout(w: number, h: number): BadgeLayout {
       photo: { x: (w - 36) / 2, y: 15, w: 36, h: 36 },
       name: { x: 4, y: 55, w: w - 8, h: 10, lines: 2, size: 4.4 },
       role: { x: 4, y: 66, w: w - 8, h: 4 },
-      details: { x: 4, y: 71, w: w - 8, h: 11, lines: 3 },
+      details: { x: 4, y: 71, w: w - 8, h: 11.6, lines: 4 },
       code: { x: 4, y: 4, w: w - 8, h: 46 },
       note: { x: 4, y: 52, w: w - 8, h: h - 56 },
     };

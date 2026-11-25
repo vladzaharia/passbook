@@ -95,8 +95,7 @@ describe('badge and credential paper', () => {
       'Host: Priya Shah',
       'Company: Acme Ltd',
       'Go to: Floor 3, Oslo',
-      'Arrives:',
-      'Valid until',
+      'Valid: Mon 18 Nov · 9:30 am – 5:00 pm',
     ])
       expect(t).toContain(s);
     expect(h.match(/data-face=/g)).toHaveLength(2);

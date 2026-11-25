@@ -58,6 +58,25 @@ export function tripWhen(c: PaperContent): string | undefined {
   return `${at(c, c.start, 'short')} · ${at(c, c.start, 'timeZone')}`;
 }
 
+/** The one line a strip carries under the time: what a trip, booking or stay adds to its door facts. */
+export function stripNote(c: PaperContent): string | undefined {
+  if (c.kind === 'journey')
+    return (
+      join(
+        named(c.info.vehicleLabel, c.info.vehicle),
+        c.info.boards && `${c.info.boardsLabel ?? L.boards} ${at(c, c.info.boards, 'time')}`,
+        arrival(c),
+        c.info.included,
+      ) || undefined
+    );
+  if (c.kind === 'booking') return join(c.venue, c.info.with && `With ${c.info.with}`) || undefined;
+  if (c.kind === 'stay')
+    return (
+      join(c.room && `Room ${c.room}`, c.end && `${L.checkOut} ${clockAt(c, c.end)}`) || undefined
+    );
+  return undefined;
+}
+
 /** The facts staff check under the door panel's code. */
 export function tripRows(c: PaperContent): Row[] {
   const seat = c.seat && [c.seat.section, c.seat.row, c.seat.seat].filter(Boolean).join(' · ');
@@ -170,12 +189,17 @@ export function tripColumns(c: PaperContent, bring: Column): Column[] {
 
 /** `Valid: 18 Nov – 20 Nov 2030` from a start, else `Valid until ...`. */
 const validity = (c: PaperContent): { label: string; text: string | undefined } =>
-  c.validFrom && c.validUntil
+  c.info.arrives && c.validUntil
     ? {
         label: 'Valid',
-        text: `${noYear(at(c, c.validFrom, 'short'))} – ${at(c, c.validUntil, 'short')}`,
+        text: `${noYear(at(c, c.info.arrives, 'short'))} · ${at(c, c.info.arrives, 'time')} – ${at(c, c.validUntil, 'time')}`,
       }
-    : { label: L.validUntil, text: c.validUntil && at(c, c.validUntil, 'short') };
+    : c.validFrom && c.validUntil
+      ? {
+          label: 'Valid',
+          text: `${noYear(at(c, c.validFrom, 'short'))} – ${at(c, c.validUntil, 'short')}`,
+        }
+      : { label: L.validUntil, text: c.validUntil && at(c, c.validUntil, 'short') };
 
 /** The details a badge or credential prints, in order; the card faces and the page read this one list. */
 export function idDetails(c: PaperContent): Row[] {
@@ -190,12 +214,11 @@ export function idDetails(c: PaperContent): Row[] {
     ]);
   return rowsOf([
     { label: 'Role', text: role },
+    validity(c),
     { label: L.company, text: c.info.company },
     { label: L.host, text: c.info.host },
     { label: L.goTo, text: c.info.goTo },
     { label: L.zone, text: c.info.zone },
-    { label: L.arrives, text: c.info.arrives && at(c, c.info.arrives, 'timeZone') },
-    validity(c),
   ]);
 }
 
