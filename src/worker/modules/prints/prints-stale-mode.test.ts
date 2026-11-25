@@ -63,7 +63,9 @@ describe('staff print page of a Test pass', () => {
     const key = await kit.auth.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] });
     const asKey = (method: string, path: string) =>
       kit.api(path, { method, headers: { ...key, ...json } });
-    expect((await asKey('GET', `${base}?mode=test`)).status).toBe(404);
+    // The page and its PDF are session-only for a key; /drawn is key-callable and answers 404.
+    expect((await asKey('GET', `${base}?mode=test`)).status).toBe(403);
+    expect((await asKey('GET', `${base}/pdf?mode=test`)).status).toBe(403);
     expect((await asKey('POST', `${base}/drawn?mode=test`)).status).toBe(404);
     // Only the print paths read the query: a pass route does not.
     expect((await send('POST', `/passes/${pass.id}/prints?mode=test`)).status).toBe(409);
