@@ -205,6 +205,11 @@ describe('robots.txt', () => {
     '/favicon.ico',
     '/og-image.png',
     '/icons/icon-192.png',
+    '/door',
+    '/blueprints',
+    '/build',
+    '/access',
+    '/sitemap.xml',
   ])('lets crawlers read %s', (path) => expect(crawlable(robots, path)).toBe(true));
 
   it.each([
@@ -217,6 +222,8 @@ describe('robots.txt', () => {
     '/wallet/v1/log',
     '/hooks/x',
     '/somewhere-new',
+    '/access/sent',
+    '/door/extra',
   ])('keeps %s out', (path) => expect(crawlable(robots, path)).toBe(false));
 
   it.each(['Googlebot', 'Google-Valuables'])('allows only the Wallet callback for %s', (agent) => {
@@ -240,6 +247,12 @@ describe('robots.txt', () => {
       expect(/^Sitemap:\s*\S+\/developers\/sitemap\.xml$/m.test(robots)).toBe(DEVELOPERS_INDEXABLE);
     },
   );
+
+  it('points at the sitemap the Worker serves', () => {
+    expect(robots).toMatch(
+      new RegExp(`^Sitemap: ${BASE.replace(/\./g, '\\.')}/sitemap\\.xml$`, 'm'),
+    );
+  });
 
   it('names every file it allows', () => {
     for (const [, path] of robots.matchAll(/^Allow: (\/[\w.-]+\.\w+)$/gm))
@@ -286,5 +299,29 @@ describe('_headers for the site files', () => {
 
   it('lets the manifest load under the CSP', () => {
     expect(rules.get('/*')?.join('\n')).toContain("manifest-src 'self'");
+  });
+});
+
+describe('marketing page heads', () => {
+  const pages = ['index', 'door', 'blueprints', 'build', 'access'];
+  const paths: Record<string, string> = {
+    index: '/',
+    door: '/door',
+    blueprints: '/blueprints',
+    build: '/build',
+    access: '/access',
+  };
+
+  it.each(pages)('%s names itself, its address and the preview image', (name) => {
+    const page = read(`marketing/${name}.html`).toString();
+    const path = paths[name];
+    expect(links(page, 'canonical')).toEqual([`${ORIGIN_TOKEN}${path}`]);
+    expect(meta(page, 'og:url')).toEqual([`${ORIGIN_TOKEN}${path}`]);
+    expect(meta(page, 'og:image')).toEqual([`${ORIGIN_TOKEN}/og-image.png`]);
+    expect(meta(page, 'description')).toHaveLength(1);
+    expect(meta(page, 'color-scheme')).toEqual(['dark light']);
+    expect(meta(page, 'theme-color')).toEqual(['#f6f8ff', ICON_COLORS.page]);
+    expect(links(page, 'icon')).toEqual(['/favicon.ico', '/favicon.svg']);
+    expect(page).not.toMatch(/https?:\/\//);
   });
 });

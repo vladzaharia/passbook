@@ -47,6 +47,20 @@ export const SCAN_FORBIDDEN = [...FORBIDDEN, 'routeTree', '__passbookScan'] as c
 export const DEV_FORBIDDEN = [...FORBIDDEN, 'routeTree'] as const;
 
 /**
+ * A marketing page's initial load (marketing/*.html), scripts and stylesheets, in gzip bytes. The
+ * heaviest page (the door, with its CSS) measured 25.0 kB (gzip, 24,960 B); the budget is that plus about 10 %. No React, router or
+ * console code belongs in them: they are plain pages with the Buddy drawing kit.
+ */
+export const MARKETING_BUDGET_BYTES = 27_500;
+/** Literal strings: React's element symbol and the router tree mark a bundle that pulled either in. */
+export const MARKETING_FORBIDDEN = [
+  ...DEV_FORBIDDEN,
+  'react.transitional.element',
+  'react.element',
+  '@tanstack',
+] as const;
+
+/**
  * The playground island: what it loads on top of the portal's initial load (its entry, the page it
  * opens, their static imports and styles), in gzip bytes. The wallet compilers and the barcode
  * encoder are dynamic imports and stay out; react, the card renderers and the kit pieces are in.
@@ -155,6 +169,13 @@ if (import.meta.main) {
       forbidden: DEV_FORBIDDEN,
       stylesheets: true,
     },
+    ...['index', 'door', 'blueprints', 'build', 'access'].map((page) => ({
+      name: `marketing ${page}`,
+      page: `marketing/${page}.html`,
+      budget: MARKETING_BUDGET_BYTES,
+      forbidden: MARKETING_FORBIDDEN,
+      stylesheets: true,
+    })),
   ];
   let failed = false;
   for (const run of runs) {

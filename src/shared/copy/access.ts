@@ -4,8 +4,10 @@ export const ACCESS_COPY = {
   email: 'Enter a valid email address.',
   org: 'Enter your organization.',
   purpose: 'Choose what the pass is for.',
-  message: 'Keep the message under 600 characters.',
+  message: 'Keep the message under 600 characters, in plain text.',
+  back: 'Back to the form',
   invalid: 'Check the form and try again.',
+  tooLarge: 'That request is too long. Shorten it and try again.',
   tooMany: 'Too many requests. Try again in a minute.',
   unavailable: 'Your request was not sent. Email support@passbook.mobile.',
 } as const;
