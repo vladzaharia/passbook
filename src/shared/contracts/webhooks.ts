@@ -1,13 +1,6 @@
 import { z } from 'zod';
 import { ChannelSchema, ChannelSourceSchema } from './channels.ts';
-import {
-  IdSchema,
-  ModeSchema,
-  PageQuerySchema,
-  PlainLineSchema,
-  pageOf,
-  TimestampSchema,
-} from './common.ts';
+import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 
 /** Closed list: a new type is added here, with its data schema, label and group. */
 export const WEBHOOK_EVENT_TYPES = [
@@ -143,9 +136,6 @@ export const WebhookPassRefSchema = z.object({
   externalId: z.string().nullable(),
   templateId: IdSchema,
 });
-
-/** A Cloudflare ray or a UUID, as `x-request-id` carries it. */
-export const RequestIdFilterSchema = z.string().trim().min(1).max(64);
 
 const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass: P) =>
   z.object({
@@ -288,15 +278,6 @@ export const WebhookAttemptSchema = z.object({
 export const WebhookDeliveryDetailSchema = WebhookDeliverySchema.extend({
   attemptLog: z.array(WebhookAttemptSchema),
   payload: WebhookEventSchema,
-});
-
-export const WebhookDeliveryListQuerySchema = PageQuerySchema.extend({
-  state: WebhookDeliveryStateSchema.optional(),
-  type: WebhookEventTypeSchema.optional(),
-  /** Only events caused by this API request (`x-request-id`). */
-  requestId: RequestIdFilterSchema.optional(),
-  /** Only events of this pass. */
-  passId: IdSchema.optional(),
 });
 
 export const WebhookReplaySchema = z

@@ -1,8 +1,6 @@
 import type { z } from 'zod';
-import type {
-  WebhookDeliveryListQuerySchema,
-  WebhookReplaySchema,
-} from '../../../shared/contracts/webhooks.ts';
+import type { WebhookDeliveryListQuerySchema } from '../../../shared/contracts/webhook-captures.ts';
+import type { WebhookReplaySchema } from '../../../shared/contracts/webhooks.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Actor } from '../../platform/context.ts';
 import {
