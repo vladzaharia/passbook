@@ -13,5 +13,6 @@
 
 - The key is `$PASSBOOK_KEY` or `process.env.PASSBOOK_KEY`, never a value.
 - TypeScript, Python and Go use their SDKs: `@passbook/sdk`, `passbook-sdk` (`sdk/python`) and `sdk/go`. A Go body or query is JSON decoded into the SDK's type. `sdk/python` runs every Python sample against a stub of the contract; `sdk/go` builds every Go sample.
+- A curl snippet takes ids from the reader's earlier answers as shell variables: `$PASS_ID` in a path, `$VERSION` in `If-Match`. The tests fill them with the world's pass and its current version. Bodies keep the example ids, which a signed-in reader sees as their own.
 - A comment only where a step is not obvious.
 - Every call a snippet makes must answer 2xx in the tests. A row whose call a sandbox refuses names the code it gets: `"sandbox": "FEATURE_NOT_INCLUDED"`. `"expect": "fails"` is for a snippet that shows an error; `"expect": "handler"` for one the tests run another way.
