@@ -74,7 +74,7 @@ describe('what each class prints', () => {
 
   it('a transit ticket shows the lane, party and board-by', async () => {
     const { c } = await content('starter-transit-ticket');
-    expect(c.title).toBe('Newport → Harbor Point');
+    expect(c.title).toBe('Newport – Harbor Point');
     expect(c.info).toMatchObject({
       gate: '4',
       gateLabel: 'Lane',

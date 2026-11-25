@@ -9,6 +9,7 @@ import {
   clockAt,
   join,
   type Line,
+  splitZones,
   startAt,
   zoneAbbr,
 } from './ticket-text-base.ts';
@@ -39,6 +40,7 @@ const arrival = (c: PaperContent): string | undefined =>
     : undefined;
 
 const zoneLine = (c: PaperContent): string | undefined => {
+  if (splitZones(c)) return undefined;
   const iso = c.start ?? c.validUntil;
   const info = c.zone && iso ? paperZoneInfo(c.zone, iso) : undefined;
   return info ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined;

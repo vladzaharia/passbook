@@ -58,7 +58,7 @@ describe('journey paper', () => {
 
   it('a transit ticket reads lane and party', async () => {
     const t = text(await html('starter-transit-ticket', 'half', { kind: 'journey' }));
-    for (const s of ['Newport → Harbor Point', 'Lane', 'Admits 3', 'Board by 6:55 am'])
+    for (const s of ['Newport – Harbor Point', 'Lane', 'Admits 3', 'Board by 6:55 am'])
       expect(t).toContain(s);
   });
 });

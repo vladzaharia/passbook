@@ -143,7 +143,9 @@ describe('split zones read inline', () => {
       checkIn: '2030-11-02T15:00:00-07:00',
       checkOut: '2030-11-04T11:00:00-08:00',
     });
-    expect(out.text).toContain('Starts 3:00 pm GMT-7 · Ends Mon 4 Nov 2030, 11:00 am GMT-8');
+    expect(out.text).toContain('Check-in Sat 2 Nov · 3:00 pm GMT-7');
+    expect(out.text).toContain('Check-out Mon 4 Nov · 11:00 am GMT-8');
+    expect(out.text).not.toContain('Times are');
     expect(out.text).not.toMatch(/\(GMT/);
   });
 });
