@@ -1,5 +1,4 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
 import './fit-box.css';
 
@@ -35,7 +34,11 @@ export function FitBox({
   }, []);
   const scale = avail > 0 && natural > 0 ? Math.min(avail / layoutWidth, maxHeight / natural) : 0;
   return (
-    <div ref={measure} className={cn('fit', className)} data-fit={scale > 0 ? '' : undefined}>
+    <div
+      ref={measure}
+      className={className ? `fit ${className}` : 'fit'}
+      data-fit={scale > 0 ? '' : undefined}
+    >
       <div
         className="fit-sized"
         style={scale > 0 ? { width: layoutWidth * scale, height: natural * scale } : undefined}

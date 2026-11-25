@@ -1,5 +1,4 @@
 import { lazy, type ReactNode, Suspense, useState } from 'react';
-import { cn } from '../lib/cn.ts';
 import './face-pair.css';
 
 /** Only a narrow container shows the toggle, so the control (and its tooltip) loads after the faces. */
@@ -40,7 +39,7 @@ export function FacePair({
     onFace?.(next);
   };
   return (
-    <div className={cn('fp', className)} data-face={shown}>
+    <div className={className ? `fp ${className}` : 'fp'} data-face={shown}>
       <div className="fp-faces">
         <div className="fp-face" data-side="front">
           {front}
