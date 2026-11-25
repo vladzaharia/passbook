@@ -98,4 +98,35 @@ describe('serving a timed render', () => {
     // A real change still publishes.
     expect((await tierEdit(pass.id, 'Silver')).changed).toBe(true);
   });
+
+  it('an input-only change after a render keeps the artifact hash, so the next render still matches', async () => {
+    const pass = await running();
+    const hashOf = async () =>
+      (
+        await kit.env.DB.prepare('SELECT content_hash FROM passes WHERE id = ?')
+          .bind(pass.id)
+          .first<{ content_hash: string }>()
+      )?.content_hash;
+    const artifactHash = await hashOf();
+    const sync = (note: string) =>
+      publishPass(jobCtxOf(kit), {
+        passId: pass.id,
+        cause: 'connection',
+        actor: system,
+        // An input no field binds: the build is the same pass.
+        mutate: (current) => ({ personalization: { ...current.personalization, note } }),
+      });
+    const before = await fenced(kit, pass.id);
+    expect((await sync('first')).changed).toBe(false);
+    expect(await hashOf()).toBe(artifactHash);
+    // A's end renders again; a sync after it is still the render, with no version or push.
+    kit.clock.set(kit.clock.now() + HOUR + 1);
+    await tick(kit);
+    await clearPushes(kit, pass.id);
+    expect((await sync('second')).changed).toBe(false);
+    await kit.settle();
+    expect(await hashOf()).toBe(artifactHash);
+    expect((await fenced(kit, pass.id))?.versions).toBe(before?.versions);
+    expect(await pendingPushes(kit, pass.id)).toBe(0);
+  });
 });
