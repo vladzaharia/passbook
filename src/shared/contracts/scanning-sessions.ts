@@ -23,7 +23,6 @@ import { AdmitsSchema } from './scanners.ts';
 export const ScanSurfaceSchema = z.enum(['phone', 'operator', 'desk', 'customer']);
 export type ScanSurface = z.infer<typeof ScanSurfaceSchema>;
 export const ScanSurfaceChoiceSchema = z.enum(['auto', 'phone', 'operator', 'desk', 'customer']);
-/** Native platform capabilities supplement browser-observable device inputs. */
 export const NativeScannerCapabilitiesSchema = z.strictObject({
   platform: z.enum(['ios', 'android']),
   appVersion: z.string().max(32),
@@ -86,8 +85,9 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
   keyboard: z.boolean(),
   nativeBarcode: z.boolean(),
   native: NativeScannerCapabilitiesSchema.omit({ hardware: true }).optional(),
-  /** Found hardware by kind and state. Optional: older devices send none. */
+  /** Found hardware by kind and state; failed customer-screen drafts (`scan.draft_failed`). Optional. */
   hardware: z.array(ReportedHardwareSchema).max(16).optional(),
+  draftFailures: z.number().int().min(1).max(1_000_000).optional(),
   surfaces: z.array(ScanSurfaceSchema).min(1).max(4),
   preferred: ScanSurfaceSchema,
 });

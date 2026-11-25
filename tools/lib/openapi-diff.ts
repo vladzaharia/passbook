@@ -260,3 +260,58 @@ export function changes(prev: Doc, next: Doc): Change[] {
   }
   return out;
 }
+
+/** The schema a change's `where` path names in an operation: `200.items[].key`, `body.x|1.y`, `param query:n`. */
+function schemaAt(doc: Doc, op: Json, where: string): Json | null {
+  const head = /^(body|param \S+|\d{3})/.exec(where)?.[1];
+  if (!head) return null;
+  let node: unknown;
+  if (head === 'body') node = obj(obj(obj(op.requestBody).content)['application/json']).schema;
+  else if (head.startsWith('param ')) node = paramMap(doc, op).get(head.slice(6))?.schema;
+  else node = obj(obj(obj(obj(op.responses)[head]).content)['application/json']).schema;
+  let cur = deref(doc, node);
+  for (const [, name, index] of where.slice(head.length).matchAll(/\.([^.[|]+)|\[\]|\|(\d+)/g)) {
+    const next =
+      name !== undefined
+        ? obj(cur.properties)[name]
+        : index !== undefined
+          ? (['anyOf', 'oneOf', 'allOf'] as const).flatMap((k) =>
+              Array.isArray(cur[k]) ? [cur[k]] : [],
+            )[0]?.[Number(index)]
+          : cur.items;
+    if (next === undefined) return null;
+    cur = deref(doc, next);
+  }
+  return cur;
+}
+
+/**
+ * Whether what an "added" or "removed" change says still holds in `doc`: the operation, field or enum
+ * value is there (or, for a removal, gone). False marks a pending entry the spec has since left behind;
+ * a change this cannot read counts as holding.
+ */
+export function changeHolds(doc: Doc, op: string, text: string): boolean {
+  // Webhook entries ('webhook pass.voided') have no path to look up.
+  if (!/^[A-Z]+ \//.test(op)) return true;
+  const [method = '', path = ''] = op.split(' ');
+  const here = obj(obj(doc.paths?.[path])[method.toLowerCase()]);
+  const present = Object.keys(here).length > 0;
+  if (text === 'operation removed') return !present;
+  if (!present) return false;
+  if (text === 'new operation') return true;
+  const field = /^(.+)\.([^.[|]+): (?:optional input )?field added$/.exec(text);
+  if (field) {
+    const parent = schemaAt(doc, here, field[1] as string);
+    return parent === null || (field[2] as string) in obj(parent.properties);
+  }
+  const value = /^(.+): enum value (.+) added$/.exec(text);
+  if (value) {
+    const node = schemaAt(doc, here, value[1] as string);
+    return (
+      node === null ||
+      !Array.isArray(node.enum) ||
+      node.enum.includes(JSON.parse(value[2] as string))
+    );
+  }
+  return true;
+}

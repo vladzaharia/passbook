@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { OverlapHours } from '@/shared/contracts/webhook-secrets.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import {
   Button,
@@ -27,7 +28,7 @@ export function RotateDialog({
 }) {
   const { rotate } = useSecretCalls();
   const [busy, setBusy] = useState(false);
-  const [overlap, setOverlap] = useState<'0' | '24' | '72'>('24');
+  const [overlap, setOverlap] = useState<`${OverlapHours}`>('24');
   const [secret, setSecret] = useState<string>();
   const [error, setError] = useState<string>();
 
@@ -35,7 +36,7 @@ export function RotateDialog({
     setError(undefined);
     setBusy(true);
     try {
-      setSecret((await rotate(endpointId, Number(overlap) as 0 | 24 | 72)).secret);
+      setSecret((await rotate(endpointId, Number(overlap) as OverlapHours)).secret);
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -85,12 +86,14 @@ export function RotateDialog({
               orientation="horizontal"
               options={OVERLAP_OPTIONS}
               value={overlap}
-              onValueChange={(v) => setOverlap(v === '0' || v === '72' ? v : '24')}
+              onValueChange={(v) =>
+                setOverlap(OVERLAP_OPTIONS.find((o) => o.value === v)?.value ?? '24')
+              }
             />
             <p className="text-xs text-fg-muted">
               {overlap === '0'
                 ? 'The old secret stops working now. Update your receiver first.'
-                : 'Both secrets sign each request until the old one expires.'}
+                : 'Both secrets sign each request until the old one expires. If it leaked, choose Now.'}
             </p>
           </div>
         )}
