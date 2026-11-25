@@ -9,6 +9,7 @@ import { markClaimSwept, unsettledClaims } from './repo-invite-claims.ts';
 import { dropLease, renewLease, SYNC_LEASE, takeLease } from './repo-lease.ts';
 import { deferDirty } from './repo-sync.ts';
 import type { RunEnv } from './run-env.ts';
+import { revocationsOwed, sweepRevocations } from './scim-effects.ts';
 import type { IdpRpc } from './types.ts';
 
 /** Subjects one minute run takes (design 1 section 3.4). */
@@ -99,7 +100,7 @@ async function sweepClaims(
 }
 
 /**
- * Minute hook `idp.drain`: up to 20 due subjects, oldest due first, one `apply` each at most. A breaker, a
+ * Minute hook `idp.drain`: first the SCIM revocations owed (live only), then up to 20 due subjects, oldest due first, one `apply` each at most. A breaker, a
  * freeze or a spent budget stops the run; a failed subject backs off (1 m, 5 m, 30 m, 6 h); a mark that
  * arrived meanwhile stays due. With nothing due, or no binding, it costs a query or two and no call. It never
  * overlaps another sync run (the `idp-sync` lease).
@@ -114,12 +115,18 @@ export async function drainIdp(
   const counted: ServiceContext = { ...ctx, env: counter.env };
   const db = counter.env.DB;
   const claims = await unsettledClaims(db, ctx.clock.now(), SWEEP_LIMIT);
-  if (claims.length === 0 && (await dueDirty(db, ctx.clock.now(), 1)).length === 0) return;
+  if (
+    claims.length === 0 &&
+    (await dueDirty(db, ctx.clock.now(), 1)).length === 0 &&
+    !(await revocationsOwed(counted))
+  )
+    return;
   await leased(ctx, db, 'idp.drain', async (renew) => {
     const rpc = idpClient(counter.env, ctx.log);
     const gate = await openGate(ctx, rpc, 'idp.drain');
     if (!gate) return;
     if (!gate.dry) await sweepClaims(db, claims, ctx.clock.now());
+    if (!gate.dry) await sweepRevocations(counted);
     const due = await dueDirty(db, ctx.clock.now(), DRAIN_BATCH);
     const env: RunEnv = {
       ctx: counted,

@@ -7,6 +7,10 @@ export interface DirectoryUser {
   active: 0 | 1;
   last_modified: number;
   deleted_at: number | null;
+  /** A revocation that could not be carried out yet: the sweep ends the sessions while the user is still off. */
+  revoke_pending: 0 | 1;
+  /** When the receiver last ended this subject's sessions. */
+  revoked_at: number | null;
 }
 
 export interface DirectoryGroup {
@@ -18,7 +22,7 @@ export interface DirectoryGroup {
   deleted_at: number | null;
 }
 
-const USER = 'scim_id, subject, active, last_modified, deleted_at';
+const USER = 'scim_id, subject, active, last_modified, deleted_at, revoke_pending, revoked_at';
 const GROUP = 'scim_id, group_id, members, last_modified, deleted_at';
 
 export const userById = (db: D1Database, scimId: string) =>
@@ -35,7 +39,8 @@ export async function upsertUser(
   return first<DirectoryUser>(
     db,
     `INSERT INTO idp_directory_users (scim_id, subject, active, last_modified) VALUES (?, ?, ?, ?)
-     ON CONFLICT (subject) DO UPDATE SET active = excluded.active, last_modified = excluded.last_modified, deleted_at = NULL
+     ON CONFLICT (subject) DO UPDATE SET active = excluded.active, last_modified = excluded.last_modified, deleted_at = NULL,
+       revoke_pending = CASE WHEN excluded.active = 1 THEN 0 ELSE revoke_pending END
      RETURNING ${USER}`,
     [u.scimId, u.subject, u.active ? 1 : 0, u.now],
   );
@@ -47,15 +52,11 @@ export async function setUserActive(
   active: boolean,
   now: number,
 ): Promise<boolean> {
-  return (
-    (
-      await run(
-        db,
-        'UPDATE idp_directory_users SET active = ?, last_modified = ? WHERE scim_id = ? AND deleted_at IS NULL',
-        [active ? 1 : 0, now, scimId],
-      )
-    ).changes > 0
-  );
+  // Switching a user back on settles any revocation still owed.
+  const sql = active
+    ? 'UPDATE idp_directory_users SET active = 1, revoke_pending = 0, last_modified = ? WHERE scim_id = ? AND deleted_at IS NULL'
+    : 'UPDATE idp_directory_users SET active = 0, last_modified = ? WHERE scim_id = ? AND deleted_at IS NULL';
+  return (await run(db, sql, [now, scimId])).changes > 0;
 }
 
 /** Keeps the row as a tombstone so a repeat DELETE answers the same and a later POST finds its id. */
@@ -69,6 +70,64 @@ export async function deleteUser(db: D1Database, scimId: string, now: number): P
       )
     ).changes > 0
   );
+}
+
+/** Records what became of a revocation: `pending` leaves it for the sweep; `revokedAt` starts the per-subject hour. */
+export async function setRevocation(
+  db: D1Database,
+  scimId: string,
+  r: { pending: boolean; revokedAt: number | null },
+): Promise<void> {
+  const pending = r.pending ? 1 : 0;
+  if (r.revokedAt === null)
+    await run(db, 'UPDATE idp_directory_users SET revoke_pending = ? WHERE scim_id = ?', [
+      pending,
+      scimId,
+    ]);
+  else
+    await run(
+      db,
+      'UPDATE idp_directory_users SET revoke_pending = ?, revoked_at = ? WHERE scim_id = ?',
+      [pending, r.revokedAt, scimId],
+    );
+}
+
+/** Users off in Polaris ID whose revocation is still owed, oldest first. */
+export const pendingRevocations = (db: D1Database, limit: number) =>
+  all<DirectoryUser>(
+    db,
+    `SELECT ${USER} FROM idp_directory_users
+     WHERE revoke_pending = 1 AND (active = 0 OR deleted_at IS NOT NULL) ORDER BY last_modified LIMIT ?`,
+    [limit],
+  );
+
+/** True while a latched breaker is open: one counter row, opened at `window_start`, good for `ttl`. */
+export async function breakerOpen(
+  db: D1Database,
+  key: string,
+  now: number,
+  ttl: number,
+): Promise<boolean> {
+  return (
+    (await first(db, 'SELECT 1 AS open FROM counters WHERE key = ? AND window_start > ? LIMIT 1', [
+      key,
+      now - ttl,
+    ])) !== null
+  );
+}
+
+/**
+ * Marks subjects for the next drain without touching the backoff of ones that are failing: the version moves, so
+ * the mark is not lost, and `attempts` and `next_at` stay.
+ */
+export async function markManyQueued(db: D1Database, subjects: readonly string[]): Promise<void> {
+  for (const part of chunk(subjects, 40))
+    await run(
+      db,
+      `INSERT INTO idp_dirty (subject) VALUES ${part.map(() => '(?)').join(',')}
+       ON CONFLICT (subject) DO UPDATE SET version = version + 1`,
+      part,
+    );
 }
 
 export const listUsers = (db: D1Database, offset: number, limit: number) =>

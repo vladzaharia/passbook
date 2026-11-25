@@ -4,7 +4,7 @@ import type { z } from 'zod';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { BadRequestError, NotFoundError } from '../../platform/errors.ts';
-import { serviceContext } from '../../platform/service-context.ts';
+import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import {
   countGroups,
   countUsers,
@@ -16,6 +16,7 @@ import {
   listUsers,
   membersOf,
   setGroupMembers,
+  setRevocation,
   setUserActive,
   upsertGroup,
   upsertUser,
@@ -23,14 +24,17 @@ import {
   userBySubject,
 } from './repo-scim.ts';
 import { scimAuth } from './scim-auth.ts';
-import { membersRemoved, userDeactivated } from './scim-effects.ts';
+import { membersRemoved, type Outcome, userDeactivated } from './scim-effects.ts';
 import {
   groupResource,
   listResponse,
+  MAX_GROUP_PAGE,
+  MAX_PAGE,
   PageQuery,
   pageOf,
   SCIM_BODY_BYTES,
   ScimGroupBody,
+  ScimId,
   ScimUserBody,
   scimJson,
   userResource,
@@ -65,13 +69,33 @@ async function bodyOf<T extends z.ZodType>(c: C, schema: T): Promise<z.output<T>
   return parsed.data;
 }
 
-const page = (c: C) => {
+/** A path id that cannot be one of ours is a 404 before any query. */
+function idOf(c: C): string {
+  const id = ScimId.safeParse(c.req.param('id'));
+  if (!id.success) throw new NotFoundError();
+  return id.data;
+}
+
+const page = (c: C, max = MAX_PAGE) => {
   const query = PageQuery.parse({
     startIndex: c.req.query('startIndex'),
     count: c.req.query('count'),
   });
-  return { ...pageOf(query), startIndex: query.startIndex };
+  return { ...pageOf(query, max), startIndex: query.startIndex };
 };
+
+/** What became of a revocation goes on the mirror row: owed ones are swept later, done ones start the subject's hour. */
+async function recorded(
+  ctx: ServiceContext,
+  scimId: string,
+  outcome: Outcome | null,
+): Promise<void> {
+  if (outcome === null) return;
+  await setRevocation(ctx.env.DB, scimId, {
+    pending: outcome === 'pending',
+    revokedAt: outcome === 'revoked' ? ctx.clock.now() : null,
+  });
+}
 
 const empty = () =>
   new Response(null, { status: 204, headers: { 'cache-control': 'private, no-store' } });
@@ -84,7 +108,7 @@ scimRoutes.get('/Users', async (c) => {
 });
 
 scimRoutes.get('/Users/:id', async (c) => {
-  const row = await userById(c.env.DB, c.req.param('id'));
+  const row = await userById(c.env.DB, idOf(c));
   if (!row || row.deleted_at !== null) throw new NotFoundError('No such user.');
   return scimJson(userResource(row));
 });
@@ -94,8 +118,10 @@ scimRoutes.post('/Users', async (c) => {
   const body = await bodyOf(c, ScimUserBody);
   const before = await userBySubject(ctx.env.DB, body.externalId);
   // The effect goes first: if it fails the mirror is unchanged and the next push finds the change again.
-  if (!body.active && (!before || before.deleted_at !== null || before.active === 1))
-    await userDeactivated(ctx, body.externalId, 'inactive');
+  const outcome =
+    !body.active && (!before || before.deleted_at !== null || before.active === 1)
+      ? await userDeactivated(ctx, body.externalId, 'inactive', before?.revoked_at ?? null)
+      : null;
   const row = await upsertUser(ctx.env.DB, {
     scimId: ctx.ids.id(),
     subject: body.externalId,
@@ -103,18 +129,23 @@ scimRoutes.post('/Users', async (c) => {
     now: ctx.clock.now(),
   });
   if (!row) throw new Error('SCIM user upsert returned no row');
+  await recorded(ctx, row.scim_id, outcome);
   return scimJson(userResource(row), before ? 200 : 201);
 });
 
 scimRoutes.put('/Users/:id', async (c) => {
   const ctx = serviceContext(c);
-  const before = await userById(ctx.env.DB, c.req.param('id'));
+  const before = await userById(ctx.env.DB, idOf(c));
   if (!before || before.deleted_at !== null) throw new NotFoundError('No such user.');
   const body = await bodyOf(c, ScimUserBody);
   if (body.externalId !== before.subject)
     throw new BadRequestError('The user id cannot change.', 'SCIM_INVALID');
-  if (!body.active && before.active === 1) await userDeactivated(ctx, before.subject, 'inactive');
+  const outcome =
+    !body.active && before.active === 1
+      ? await userDeactivated(ctx, before.subject, 'inactive', before.revoked_at)
+      : null;
   await setUserActive(ctx.env.DB, before.scim_id, body.active, ctx.clock.now());
+  await recorded(ctx, before.scim_id, outcome);
   const row = await userById(ctx.env.DB, before.scim_id);
   if (!row) throw new NotFoundError('No such user.');
   return scimJson(userResource(row));
@@ -122,22 +153,27 @@ scimRoutes.put('/Users/:id', async (c) => {
 
 scimRoutes.delete('/Users/:id', async (c) => {
   const ctx = serviceContext(c);
-  const row = await userById(ctx.env.DB, c.req.param('id'));
+  const row = await userById(ctx.env.DB, idOf(c));
   if (!row || row.deleted_at !== null) throw new NotFoundError('No such user.');
-  await userDeactivated(ctx, row.subject, 'deleted');
+  // An account already off had its sessions ended then (or is still owed): a second firing only spends the breaker.
+  const outcome =
+    row.active === 1 || row.revoke_pending === 1
+      ? await userDeactivated(ctx, row.subject, 'deleted', row.revoked_at)
+      : null;
   await deleteUser(ctx.env.DB, row.scim_id, ctx.clock.now());
+  await recorded(ctx, row.scim_id, outcome);
   return empty();
 });
 
 scimRoutes.get('/Groups', async (c) => {
-  const { offset, limit, startIndex } = page(c);
+  const { offset, limit, startIndex } = page(c, MAX_GROUP_PAGE);
   const db = c.env.DB;
   const rows = await listGroups(db, offset, limit);
   return scimJson(listResponse(rows.map(groupResource), await countGroups(db), startIndex));
 });
 
 scimRoutes.get('/Groups/:id', async (c) => {
-  const row = await groupById(c.env.DB, c.req.param('id'));
+  const row = await groupById(c.env.DB, idOf(c));
   if (!row || row.deleted_at !== null) throw new NotFoundError('No such group.');
   return scimJson(groupResource(row));
 });
@@ -166,7 +202,7 @@ scimRoutes.post('/Groups', async (c) => {
 
 scimRoutes.put('/Groups/:id', async (c) => {
   const ctx = serviceContext(c);
-  const before = await groupById(ctx.env.DB, c.req.param('id'));
+  const before = await groupById(ctx.env.DB, idOf(c));
   if (!before || before.deleted_at !== null) throw new NotFoundError('No such group.');
   const body = await bodyOf(c, ScimGroupBody);
   if (body.externalId !== before.group_id)
@@ -181,7 +217,7 @@ scimRoutes.put('/Groups/:id', async (c) => {
 
 scimRoutes.delete('/Groups/:id', async (c) => {
   const ctx = serviceContext(c);
-  const row = await groupById(ctx.env.DB, c.req.param('id'));
+  const row = await groupById(ctx.env.DB, idOf(c));
   if (!row || row.deleted_at !== null) throw new NotFoundError('No such group.');
   await membersRemoved(ctx, membersOf(row));
   await deleteGroup(ctx.env.DB, row.scim_id, ctx.clock.now());

@@ -8,7 +8,7 @@ const LIST_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:ListResponse';
 const SCIM_CONTENT_TYPE = 'application/scim+json; charset=utf-8';
 
 /** Polaris ID's user and group ids, and our own SCIM ids. */
-const ID = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
+export const ScimId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
 
 /** Members one group may carry. A body that gets past this is not a directory this app serves. */
 export const MAX_MEMBERS = 5000;
@@ -17,13 +17,13 @@ export const MAX_MEMBERS = 5000;
  * What the receiver reads of a pushed user: the id (our subject) and whether it is active. The name, display name
  * and address in the body are never read, so they cannot be stored or logged; unknown keys are dropped.
  */
-export const ScimUserBody = z.object({ externalId: ID, active: z.boolean().default(true) });
+export const ScimUserBody = z.object({ externalId: ScimId, active: z.boolean().default(true) });
 
 /** What it reads of a pushed group: its id and the SCIM ids of its members. The display name is dropped. */
 export const ScimGroupBody = z.object({
-  externalId: ID,
+  externalId: ScimId,
   members: z
-    .array(z.object({ value: ID }))
+    .array(z.object({ value: ScimId }))
     .max(MAX_MEMBERS)
     .default([]),
 });
@@ -33,19 +33,24 @@ export const SCIM_BODY_BYTES = { user: 16 * 1024, group: 256 * 1024 };
 
 /** Largest page `count` may ask for (Polaris ID asks for 1000). */
 export const MAX_PAGE = 1000;
+/** A group carries up to `MAX_MEMBERS` ids, so its pages are smaller: a page stays within the Worker's memory. */
+export const MAX_GROUP_PAGE = 100;
 
 export const PageQuery = z.object({
   startIndex: z.coerce.number().int().catch(1),
   count: z.coerce.number().int().catch(100),
 });
 
-export function pageOf(query: { startIndex: number; count: number }): {
+export function pageOf(
+  query: { startIndex: number; count: number },
+  max = MAX_PAGE,
+): {
   offset: number;
   limit: number;
 } {
   return {
     offset: Math.max(query.startIndex, 1) - 1,
-    limit: Math.min(Math.max(query.count, 0), MAX_PAGE),
+    limit: Math.min(Math.max(query.count, 0), max),
   };
 }
 

@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:workers';
+import { vi } from 'vitest';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { rig } from './sync-test-fixtures.ts';
@@ -145,4 +146,12 @@ export async function polarisSync(
       stats.deleted++;
     }
   return stats;
+}
+
+/** Everything the request path writes to the console, as lines. */
+export function captureConsole(): string[] {
+  const lines: string[] = [];
+  for (const level of ['log', 'info', 'warn', 'error'] as const)
+    vi.spyOn(console, level).mockImplementation((...args) => void lines.push(args.join(' ')));
+  return lines;
 }

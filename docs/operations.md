@@ -232,13 +232,21 @@ Compromise: the key is a Polaris ID admin key on v2.19.3, so treat it as identit
 
 ### SCIM receiver
 
-Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (Users and Groups: list, create, replace, delete) with a bearer token. The receiver ends Polaris ID sessions when the owner switches an account off or takes it out of the PassBook client's groups, and queues members removed from a group for the drain. It never adds a role, session, membership or user, and keeps ids and flags only (`idp_directory_users`, `idp_directory_groups`): no names, addresses or group names.
+Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (Users and Groups: list, create, replace, delete) with a bearer token. The receiver never adds a role, session, membership or user, and keeps ids and flags only (`idp_directory_users`, `idp_directory_groups`): no names, addresses or group names. What it does:
+
+- A user switched off, or taken out of every group the PassBook client allows (Polaris ID sends that as a DELETE): after a `lookup` confirms the account is off, gone or in none of PassBook's groups, that subject's Polaris ID sessions end (email-link sessions stay). If it cannot now (binding dry run, frozen or unreachable, breaker open, `lookup` failing or over its 60 an hour, or the subject already revoked this hour), the mirror row gets `revoke_pending` and the minute drain hook ends the sessions once the binding is live. Sessions started after the change stay. Switching the user back on clears it. Ending sessions is per PassBook user, so another Polaris ID account of the same person signs out too.
+- A member removed from a group, or in a deleted group: queued for the drain (at most 100 a push and 300 an hour; a subject already backing off keeps its backoff). The drain reads the account and decides.
+- A platform admin removed from a group: Polaris ID is asked about each of their accounts (`lookup`); with none in the admin group their admin sessions end within the push and `admin_changed` is filed. More than five at once, a failed lookup or dry run changes nothing here; the daily reconcile decides.
 
 1. `openssl rand -base64 32`, then `npx wrangler secret put SCIM_BEARER_TOKEN` (main Worker; at least 32 characters, or the route answers 404).
-2. Set the PassBook client's allowed groups first (step 3 above), or Polaris ID pushes every user.
+2. Set the PassBook client's allowed groups first (step 3 above), or Polaris ID pushes every user, and the mirror keeps the ids of every group it pushes (`client_open` in `health()` warns). Fix that before SCIM.
 3. In Polaris ID add a SCIM service provider on the PassBook client (a Client ID Metadata Document client is a client row like any other, but it exists in Polaris ID only after its first sign-in; read from v2.19.3 source, not yet tried live; if Polaris ID refuses it, use a plain registered client for SCIM): endpoint `https://<host>/scim/v2`, that token. Run Sync now and check `idp_directory_users` fills.
 
-Limits: a wrong token costs its network prefix a count (30 a minute, then 429); a right token gets 600 requests a minute; user bodies 16 KB, group bodies 256 KB. More than 20 account switch-offs in ten minutes stop ending sessions and log `IDP_SCIM_BREAKER`; the daily reconcile finds the rest. In dry run, or while the binding is frozen or unreachable, the mirror updates and nothing else changes. Rotate the token by putting a new secret and updating the service provider; between the two Polaris ID's pushes fail with 401 and retry on the next sync.
+Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
+
+Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with `DELETE FROM counters WHERE key = 'idp:scim:breaker'` on the main D1; the next minute's sweep ends what is owed.
+
+Rotate the token by putting a new secret and updating the service provider; between the two Polaris ID's pushes fail with 401 and retry on the next sync.
 
 ## Managed identity runs
 

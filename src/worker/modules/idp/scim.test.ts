@@ -2,7 +2,7 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { bump } from '../../platform/counters.ts';
 import { all } from '../../platform/db.ts';
-import { SCIM_REJECTS_PER_MINUTE, SCIM_REQUESTS_PER_MINUTE } from './scim-auth.ts';
+import { SCIM_REQUESTS_PER_MINUTE } from './scim-auth.ts';
 import { polarisSync, scim, scimRig, TOKEN } from './scim-test-fixtures.ts';
 import { MAX_MEMBERS } from './scim-wire.ts';
 
@@ -113,17 +113,19 @@ describe('SCIM receiver: the token', () => {
     }
   });
 
-  it('turns a prefix away without a compare once it sent too many wrong tokens', async () => {
+  it('charges wrong tokens to the limiter by prefix, and never turns the right token away for them', async () => {
     const s = await scimRig();
     const ip = '203.0.113.7';
-    for (let i = 0; i < SCIM_REJECTS_PER_MINUTE; i++)
-      expect((await scim(s, 'GET', '/Users', undefined, { token: 'bad', ip })).status).toBe(401);
-    const limited = await scim(s, 'GET', '/Users', undefined, { token: TOKEN, ip });
-    expect(limited.status).toBe(429);
-    expect(limited.headers.get('retry-after')).toBeTruthy();
-    expect((await scim(s, 'GET', '/Users', undefined, { ip: '198.51.100.9' })).status).toBe(200);
-    s.r.f.clock.advance(60_000);
-    expect((await scim(s, 'GET', '/Users', undefined, { ip })).status).toBe(200);
+    let status = 401;
+    for (let i = 0; i < 200 && status === 401; i++)
+      status = (await scim(s, 'GET', '/Users', undefined, { token: 'bad', ip })).status;
+    expect(status).toBe(429);
+    // The prefix is over its miss limit; a right token from it (Polaris ID shares addresses) still gets through.
+    expect((await scim(s, 'GET', '/Users', undefined, { token: TOKEN, ip })).status).toBe(200);
+    expect((await scim(s, 'GET', '/Users', undefined, { token: 'bad', ip })).status).toBe(429);
+    expect(await all(env.DB, "SELECT key FROM counters WHERE key LIKE 'idp:scim:miss%'")).toEqual(
+      [],
+    );
   });
 
   it('limits a holder of the token to a request budget a minute', async () => {
@@ -163,5 +165,26 @@ describe('SCIM receiver: body caps and shape', () => {
       expect(reply.status).toBe(400);
       expect(JSON.stringify(reply.body)).not.toContain(secret);
     }
+  });
+});
+
+describe('SCIM receiver: paths and pages', () => {
+  it('answers 404 to an id that cannot be ours, before any query', async () => {
+    const s = await scimRig();
+    for (const id of ['a%20b', 'x'.repeat(65), 'a.b'])
+      for (const [method, path] of [
+        ['GET', `/Users/${id}`],
+        ['DELETE', `/Groups/${id}`],
+      ] as const)
+        expect((await scim(s, method, path)).status, `${method} ${path}`).toBe(404);
+  });
+
+  it('pages groups at most 100 at a time', async () => {
+    const s = await scimRig();
+    for (let i = 0; i < 101; i++) await scim(s, 'POST', '/Groups', { externalId: `grp-${i}` });
+    const page = await scim(s, 'GET', '/Groups?startIndex=1&count=1000');
+    expect(page.body).toMatchObject({ totalResults: 101, itemsPerPage: 100 });
+    const rest = await scim(s, 'GET', '/Groups?startIndex=101&count=1000');
+    expect(rest.body.Resources).toHaveLength(1);
   });
 });
