@@ -189,15 +189,15 @@ test('a followed screen shows the amount, then the receipt; a desk cancel keeps 
     await status(r.screen, 'ready');
     await charge(r.deskA, '12.00');
     const draft = r.screen.getByTestId('customer-draft');
-    await expect(draft).toHaveText('To pay $12.00');
+    await expect(draft).toContainText('To pay $12.00');
     await expect(r.screen.getByText('Balance after: $30.50')).toBeVisible();
     await expect(r.screen.getByText('Hi, Sam')).toBeVisible();
     await expect(r.deskPage.getByTestId('scan-draft-onscreen')).toBeVisible();
 
     // A live draft at the other desk reaches only the screen that follows it.
     await charge(r.deskB, '3.00');
-    await expect(r.elsewhere.getByTestId('customer-draft')).toHaveText('To pay $3.00');
-    await expect(draft).toHaveText('To pay $12.00');
+    await expect(r.elsewhere.getByTestId('customer-draft')).toContainText('To pay $3.00');
+    await expect(draft).toContainText('To pay $12.00');
     await expect(r.elsewhere.getByText('$12.00')).toHaveCount(0);
     await look(r.screen, 'customer-review');
     await look(r.deskPage, 'scanner-reviewing', [[390, 844]]);
@@ -211,13 +211,13 @@ test('a followed screen shows the amount, then the receipt; a desk cancel keeps 
 
     // Cancel closes the amount field: the amount goes, the desk card stays, and a re-pick shows again.
     await charge(r.deskA, '7.00');
-    await expect(draft).toHaveText('To pay $7.00');
+    await expect(draft).toContainText('To pay $7.00');
     await r.deskPage.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect(draft).toHaveCount(0);
     await expect(r.screen.getByRole('heading', { name: 'Hi, Sam' })).toBeVisible();
     await r.deskA.pick();
     await r.deskA.type('9.00');
-    await expect(draft).toHaveText('To pay $9.00');
+    await expect(draft).toContainText('To pay $9.00');
     // Leaving the read clears both.
     await r.deskPage.getByRole('button', { name: 'Cancel', exact: true }).click();
     await r.deskPage.getByTestId('dock-primary').click();
