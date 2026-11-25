@@ -126,8 +126,6 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   await viewer.close();
 
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
-  await expect(page.getByText('Applying', { exact: true }).first()).toBeVisible();
-  await shots(page, 'file-detail-history-applying');
   await expect
     .poll(
       async () => {
@@ -141,6 +139,25 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   await expect(page.getByText('Revision 2')).toBeVisible();
   await expect(page.getByText('Revision 1')).toBeVisible();
   await shots(page, 'file-detail-history');
+
+  // The run still going, as a slow sync shows it: the card and the history row both say Applying.
+  await page.route(`**/api/v1/connections/${id}`, async (route) => {
+    const res = await route.fetch();
+    const body = await res.json();
+    const run = { ...body.runs[0], outcome: 'running', finishedAt: null, startedAt: Date.now() };
+    await route.fulfill({ response: res, json: { ...body, runs: [run, ...body.runs] } });
+  });
+  await page.route(`**/api/v1/connections/${id}/files**`, async (route) => {
+    const res = await route.fetch();
+    const body = await res.json();
+    for (const r of body.items) if (r.revision === 2) r.applied = false;
+    await route.fulfill({ response: res, json: body });
+  });
+  await page.reload();
+  await expect(page.getByText('Applying', { exact: true })).toHaveCount(2);
+  await shots(page, 'file-detail-history-applying');
+  await page.unroute(`**/api/v1/connections/${id}`);
+  await page.unroute(`**/api/v1/connections/${id}/files**`);
   const list = (await api.get(passes)).items as unknown[];
   expect(list.length).toBe(4);
 
