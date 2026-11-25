@@ -100883,6 +100883,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PassesPrintsMarkDrawnResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000053",
+                  "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                  "generation": 1,
+                  "status": "active",
+                  "passVersion": 3,
+                  "stale": false,
+                  "createdAt": 1795399200000,
+                  "voidedAt": null,
+                  "voidCause": null
                 }
               }
             }
@@ -100903,6 +100914,7 @@
           "resource": "passes.prints",
           "method": "markDrawn"
         },
+        "description": "Records that the active print was drawn again from the pass as it is now, so it is no longer stale.",
         "security": [
           {
             "apiKey": [
