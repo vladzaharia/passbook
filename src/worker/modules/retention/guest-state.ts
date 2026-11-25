@@ -3,8 +3,11 @@ import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 
 const CURSORS = 'retention.guestPassesCursors';
 
-/** Where each scan stopped last run (`''` is the platform pass, else an org id), so a backlog cannot starve later passes. */
-export type Cursors = Record<string, string>;
+/**
+ * Where each scan stopped last run (`''` is the platform pass, else an org id) as [template id, pass id], so a
+ * backlog cannot starve later passes.
+ */
+export type Cursors = Record<string, [string, string]>;
 
 export async function readCursors(ctx: ServiceContext): Promise<Cursors> {
   const stored = await readSystemValue(ctx.env.DB, CURSORS);

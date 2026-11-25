@@ -100,7 +100,6 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'idempotency.sweep', run: sweepIdempotency },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
     { name: 'passes.import_retention', run: dailyImports },
-    { name: 'retention.guest_passes', run: dailyGuestPasses },
     { name: 'connections.retention', run: dailyConnections },
     { name: 'delivery.retention', run: dailyDelivery },
     { name: 'auth.retention', run: dailyAuth },
@@ -123,6 +122,8 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'org_lifecycle.sweep', run: dailyOrgLifecycle },
     { name: 'developer.idle_close', run: dailyDeveloperSandbox },
     { name: 'retention.receipts', run: dailyReceipts },
+    // Near the end: it spends what the other daily hooks left of the query budget.
+    { name: 'retention.guest_passes', run: dailyGuestPasses },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],

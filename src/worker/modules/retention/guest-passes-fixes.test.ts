@@ -44,12 +44,11 @@ describe('what the door reads', () => {
     const plan = await all<{ detail: string }>(
       kit.env.DB,
       `EXPLAIN QUERY PLAN ${GUEST_CANDIDATES_SQL('org')}`,
-      [0, '', kit.org.id, 10],
+      [tpl, '', 0, kit.org.id, 10],
     );
     const text = plan.map((r) => r.detail).join('\n');
-    expect(text).toMatch(/SCAN v\b/);
-    expect(text).toMatch(/SEARCH p USING INDEX passes_template/);
-    expect(text).not.toMatch(/SCAN p\b|SCAN passes/);
+    expect(text).toMatch(/SEARCH p USING INDEX passes_template_list \(template_id=\? AND id>\?\)/);
+    expect(text).not.toMatch(/SCAN p\b|SCAN passes|TEMP B-TREE/);
   });
 });
 

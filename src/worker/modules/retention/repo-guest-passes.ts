@@ -34,24 +34,36 @@ const guestIds = (v: string) =>
      WHERE json_extract(pl.value, '$.kind') = 'guest'`;
 const isGuest = (v: string) => `${planOf(v)} IN (${guestIds(v)})`;
 
+/** Templates with at least one version that has a guest plan, in id order. */
+export async function guestTemplates(db: D1Database): Promise<string[]> {
+  const rows = await all<{ template_id: string }>(
+    db,
+    `SELECT DISTINCT v.template_id FROM template_versions v
+     WHERE EXISTS (SELECT 1 FROM json_each(v.manifest, '$.scan.access.plans') g
+       WHERE json_extract(g.value, '$.kind') = 'guest')
+     ORDER BY v.template_id`,
+  );
+  return rows.map((r) => r.template_id);
+}
+
 /**
- * Live, undeleted passes created before `before`, found template-first: template versions that have a guest plan
- * (CROSS JOIN keeps them as the outer loop, so passes come from `passes_template`, never a scan of every pass).
- * The plan input must name a guest plan under the pinned version and under the release the door reads now
- * (`effectiveReleaseIdSql`, as the scan lookup); no hold and no pending credential transfer. Id order after the
- * cursor. The end is decided by the caller: it needs the time zone the door uses.
+ * Live, undeleted passes of one guest template created before `before`, in id order after the cursor, walked on
+ * `passes_template_list` (template, id) with no sort, so a page costs its own size. The plan input must name a
+ * guest plan under the pinned version and under the release the door reads now (`effectiveReleaseIdSql`, as the
+ * scan lookup); no hold and no pending credential transfer. The end is decided by the caller: it needs the time
+ * zone the door uses.
  */
 export const GUEST_CANDIDATES_SQL = (
   scope: Scope['kind'],
 ) => `SELECT p.id, p.org_id, p.row_version, p.created_at,
     p.personalization, json_extract(v.manifest, '$.scan.access') AS access, json_extract(v.manifest, '$.inputs') AS inputs,
     json_extract(av.manifest, '$.scan.access') AS active_access, json_extract(av.manifest, '$.inputs') AS active_inputs
-  FROM template_versions v
-  CROSS JOIN passes p ON p.template_id = v.template_id AND p.template_version = v.version
+  FROM passes p
+  JOIN template_versions v ON v.template_id = p.template_id AND v.version = p.template_version
   LEFT JOIN template_releases ar ON ar.id = ${effectiveReleaseIdSql('p')}
   JOIN template_versions av ON av.template_id = p.template_id AND av.version = COALESCE(ar.version, p.template_version)
-  WHERE EXISTS (SELECT 1 FROM json_each(v.manifest, '$.scan.access.plans') g WHERE json_extract(g.value, '$.kind') = 'guest')
-    AND p.mode = 'live' AND p.deleted_at IS NULL AND p.created_at < ? AND p.id > ?
+  WHERE p.template_id = ? AND p.id > ?
+    AND p.mode = 'live' AND p.deleted_at IS NULL AND p.created_at < ?
     AND ${scope === 'org' ? 'p.org_id = ?' : 'p.org_id NOT IN (SELECT value FROM json_each(?))'}
     AND ${isGuest('v')} AND ${isGuest('av')}
     AND NOT ${heldSql('p.org_id', 'p.id')}
@@ -60,13 +72,20 @@ export const GUEST_CANDIDATES_SQL = (
 
 export function guestCandidates(
   db: D1Database,
+  templateId: string,
   before: number,
   after: string,
   limit: number,
   scope: Scope,
 ) {
   const param = scope.kind === 'org' ? scope.orgId : JSON.stringify(scope.exclude);
-  return all<GuestCandidate>(db, GUEST_CANDIDATES_SQL(scope.kind), [before, after, param, limit]);
+  return all<GuestCandidate>(db, GUEST_CANDIDATES_SQL(scope.kind), [
+    templateId,
+    after,
+    before,
+    param,
+    limit,
+  ]);
 }
 
 /** Whether the receipt row landed (its in-batch insert is refused when another writer took the chain slot). */

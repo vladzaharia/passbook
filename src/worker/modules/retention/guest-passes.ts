@@ -17,6 +17,7 @@ import {
   deletedGate,
   type GuestCandidate,
   guestCandidates,
+  guestTemplates,
   receiptExists,
 } from './repo-guest-passes.ts';
 import { chainHead } from './repo-receipts.ts';
@@ -127,45 +128,56 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
     zones.set(orgId, zone);
     return zone;
   };
+  const templates = await guestTemplates(ctx.env.DB);
   const run = async (orgId: string | null, days: number, scope: Scope) => {
     await healHead(ctx, orgId, 'visitors', await chainHead(ctx.env.DB, orgId, 'visitors'));
     const cutoff = now - days * DAY;
     const key = orgId ?? '';
-    let after = cursors[key] ?? '';
+    const [from = '', resume = ''] = cursors[key] ?? [];
     let reads = READ_LIMIT;
-    let finished = false;
-    while (reads > 0 && !spent()) {
-      const limit = Math.min(BATCH, reads);
-      // The pass is created before its end, so a pass created after the cutoff by `created_at` is skipped here.
-      const page = await guestCandidates(ctx.env.DB, cutoff, after, limit, scope);
-      reads -= page.length;
-      let stopped = false;
-      for (const c of page) {
-        if (spent()) {
-          stopped = true;
+    let at: [string, string] | null = null;
+    for (const templateId of templates) {
+      if (templateId < from) continue;
+      let after = templateId === from ? resume : '';
+      for (;;) {
+        if (reads <= 0 || spent()) {
+          at ??= [templateId, after];
           break;
         }
-        after = c.id;
-        try {
-          const end = endOf(c, await zoneOf(c.org_id));
-          if (end === null || end >= cutoff) continue;
-          if (await removePass(ctx, c, { orgId, policyDays: days, cutoffAt: cutoff })) removed++;
-        } catch (error) {
-          ctx.log.error('retention.guest_pass_failed', {
-            orgId: c.org_id,
-            code: 'GUEST_PASS_RETENTION',
-            error,
-          });
+        const limit = Math.min(BATCH, reads);
+        // The pass is created before its end, so a pass created after the cutoff by `created_at` is skipped here.
+        const page = await guestCandidates(ctx.env.DB, templateId, cutoff, after, limit, scope);
+        reads -= page.length;
+        let stopped = false;
+        for (const c of page) {
+          if (spent()) {
+            stopped = true;
+            break;
+          }
+          after = c.id;
+          try {
+            const end = endOf(c, await zoneOf(c.org_id));
+            if (end === null || end >= cutoff) continue;
+            if (await removePass(ctx, c, { orgId, policyDays: days, cutoffAt: cutoff })) removed++;
+          } catch (error) {
+            ctx.log.error('retention.guest_pass_failed', {
+              orgId: c.org_id,
+              code: 'GUEST_PASS_RETENTION',
+              error,
+            });
+          }
         }
+        if (stopped) {
+          at ??= [templateId, after];
+          break;
+        }
+        if (page.length < limit) break;
       }
-      if (page.length < limit && !stopped) {
-        finished = true;
-        break;
-      }
+      if (at) break;
     }
-    // A scan that read to the end starts over next run; one that stopped early resumes after its last pass.
-    if (finished) delete cursors[key];
-    else cursors[key] = after;
+    // A scan that read to the end starts over next run; one that stopped early resumes where it was.
+    if (at) cursors[key] = at;
+    else delete cursors[key];
   };
   const guarded = async (orgId: string | null, days: number, scope: Scope) => {
     try {
@@ -186,6 +198,8 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
     visited++;
   }
   await targets.finish(visited);
+  const live = new Set(targets.orgs.map((o) => o.orgId));
+  for (const key of Object.keys(cursors)) if (key !== '' && !live.has(key)) delete cursors[key];
   await writeCursors(ctx, cursors);
   if (removed > 0) ctx.log.info('retention.guest_passes', { removed });
 }
