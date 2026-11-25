@@ -8578,6 +8578,19 @@ type PlatformWalletCredentialsListResponseItemsItem struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsListResponseItemsItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsListResponseItemsItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletCredentialsMigrateResponse struct {
@@ -8637,6 +8650,19 @@ type PlatformWalletCredentialsRevokeResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsRevokeResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsRevokeResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletCredentialsRotateKeyResponse struct {
@@ -8663,6 +8689,19 @@ type PlatformWalletCredentialsSetSamsungCardResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsSetSamsungCardResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsSetSamsungCardResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletCredentialsUpsertParams = any
@@ -8712,6 +8751,19 @@ type PlatformWalletCredentialsUpsertResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsUpsertResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsUpsertResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type PlatformWalletEnrollmentsListResponse struct {
@@ -13364,6 +13416,19 @@ type WalletAccountsGoogleSharedCreateResponseCredential struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletAccountsGoogleSharedRetrieveResponse struct {
@@ -13401,6 +13466,19 @@ type WalletCredentialsListResponseItemsItem struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletCredentialsListResponseItemsItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletCredentialsListResponseItemsItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletCredentialsRevokeParams struct {
@@ -13421,6 +13499,19 @@ type WalletCredentialsRevokeResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletCredentialsRevokeResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletCredentialsRevokeResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletCredentialsUpsertParams = any
@@ -13468,6 +13559,19 @@ type WalletCredentialsUpsertResponse struct {
 	CreatedAt    int64    `json:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
 	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type WalletCredentialsUpsertResponseLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type WalletCredentialsUpsertResponseLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
 }
 
 type WalletEnrollmentsDisableParams struct {

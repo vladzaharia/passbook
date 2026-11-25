@@ -459,6 +459,10 @@ The Worker does not receive mail. In Cloudflare, Email Routing on `passbook.mobi
 destination verified. Changing the address is an edit to `SUPPORT_EMAIL` and a deploy. Issued
 passes keep the old one until a template change or Identities, Re-sign all rebuilds them.
 
+### Request access inbox
+
+`vars.ACCESS_REQUEST_EMAIL` in `wrangler.jsonc` (`support@passbook.mobile`) receives the site's Request access form. Mail goes out through the `EMAIL` binding from `EMAIL_FROM`, with reply-to set to the person who asked, so replying answers them. `npm run deploy:check` refuses an empty or invalid value. If the form reports "Your request was not sent", check the logs for `marketing.access_unconfigured` (binding or address missing) or `marketing.access_failed` (send refused). Spam is limited by a hidden field and two rate limits (`RL_ACCESS`, `RL_ACCESS_ALL`); `marketing.access_limited` shows a burst.
+
 ## Cutover from schema 0024
 
 **Completed 2026-11-18 00:05 UTC.** Production moved from schema 0024 to 0069 on `main` `bfd64602` (Worker version `0afc3a51`). The Time Travel bookmark taken before the migrations is `0000005e-0000009a-00005126-8ff012e6e3d130a41b99342697a584b6` (2026-11-17 23:58:17 UTC). The pre-checks, the temporary WAF rule and the bootstrap are done; the token seal sweep finished with no plain pass or bundle token and no stored `pass_json` carrying a device token. Design decisions: `docs/design/authority-epochs.md` §6.

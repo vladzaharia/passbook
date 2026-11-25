@@ -9,6 +9,7 @@
     "REDIRECT_HOSTS": "old.wallet.test",
     "EMAIL_FROM": "delivery@example.test",
     "SUPPORT_EMAIL": "support@passbook.mobile",
+    "ACCESS_REQUEST_EMAIL": "support@passbook.mobile",
     "OIDC_ISSUER": "https://id.plrs.im",
     "OIDC_CLIENT_ID": "wallet-placeholder-client-id",
     "OIDC_PLATFORM_ADMIN_GROUP": "wallet_admins",
@@ -146,7 +147,9 @@
       "namespace_id": "2024",
       "simple": { "limit": 60, "period": 60 }
     },
-    { "name": "RL_SESSION", "namespace_id": "2025", "simple": { "limit": 1200, "period": 60 } }
+    { "name": "RL_SESSION", "namespace_id": "2025", "simple": { "limit": 1200, "period": 60 } },
+    { "name": "RL_ACCESS", "namespace_id": "2027", "simple": { "limit": 5, "period": 60 } },
+    { "name": "RL_ACCESS_ALL", "namespace_id": "2028", "simple": { "limit": 30, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_vitest_events" }],
   "version_metadata": { "binding": "CF_VERSION" }
