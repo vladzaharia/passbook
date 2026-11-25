@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { clearSettingsCache } from '../settings/service.ts';
-import { CODE, GROUPED, setup } from './prints-page-fixtures.ts';
+import { CODE, GROUPED, setup } from './prints-page-test-fixtures.ts';
 
 describe('holder print page', () => {
   it('shows a button first and the sheet after the POST; a GET never mints', async () => {

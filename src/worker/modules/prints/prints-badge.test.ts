@@ -6,7 +6,7 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handlePrintsBulk } from './jobs.ts';
 import { imageIds } from './pdf-images.ts';
 import { makePng } from './pdf-png-fixtures.ts';
-import { setup } from './prints-page-fixtures.ts';
+import { setup } from './prints-page-test-fixtures.ts';
 
 const BADGE_PASS = {
   formatVersion: 1,
