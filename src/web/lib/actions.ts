@@ -76,6 +76,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'connection.breaker_open': a('Connection paused after failures', Pause, 'warning'),
   'connection.create': a('Connection created', ENTITY.connection.icon, 'success'),
   'connection.delete': a('Connection deleted', I.delete, 'danger'),
+  'connection.probe': a('REST API probed', I.test, 'info'),
   'connection.sync': a('Connection synced', I.refresh, 'success'),
   'connection.test': a('Connection tested', I.test, 'info'),
   'connection.update': a('Connection updated', I.edit, 'info'),

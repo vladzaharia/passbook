@@ -16,6 +16,8 @@ import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
 import { recipeHidden } from './recipe-copy.ts';
 import { RecipePicker, SigningSecretField } from './recipe-picker.tsx';
+import type { SampleField } from './rest/mapping-seed.ts';
+import { WizardRest } from './rest/wizard-rest.tsx';
 import { secretSchema } from './secret-schema.ts';
 import type { TestOutcome } from './test-result.tsx';
 import { WizardTest } from './wizard-test.tsx';
@@ -137,12 +139,13 @@ export function ConfigStep({
   test,
   onTest,
   onRecipe,
+  onSample,
   secretError,
 }: {
   connector: Connector;
   orgId: string;
   draft: ConfigDraft;
-  onChange: (next: ConfigDraft) => void;
+  onChange: (next: ConfigDraft | ((d: ConfigDraft) => ConfigDraft)) => void;
   showErrors: boolean;
   serverErrors: {
     config?: Record<string, string>;
@@ -154,9 +157,12 @@ export function ConfigStep({
   onTest: (outcome: TestOutcome) => void;
   /** Picks a sender: the wizard seeds the mapping and void rules from it. */
   onRecipe: (id: RecipeId) => void;
+  /** The REST sample's fields, for the Mapping step. */
+  onSample?: (fields: SampleField[]) => void;
   secretError?: string | undefined;
 }) {
   const flat = useMemo(() => flattenSchema(connector.configSchema), [connector.configSchema]);
+  const rest = connector.type === 'http-json';
   const auth = authOptions(flat);
   const authType = String(draft.config['auth.type'] ?? 'none');
   const recipe = (draft.config.recipe as RecipeId | undefined) ?? 'custom';
@@ -168,8 +174,13 @@ export function ConfigStep({
     if (offered && !customEntitled && recipe === 'custom' && firstEntitled) onRecipe(firstEntitled);
   }, [offered, customEntitled, recipe, firstEntitled, onRecipe]);
   const hidden = useMemo(
-    () => new Set([...WIZARD_HIDDEN(flat, authType), ...recipeHidden(recipe, offered)]),
-    [flat, authType, recipe, offered],
+    () =>
+      new Set([
+        ...WIZARD_HIDDEN(flat, authType),
+        ...recipeHidden(recipe, offered),
+        ...(rest ? ['holderEmailPointer'] : []),
+      ]),
+    [flat, authType, recipe, offered, rest],
   );
   const keys = Object.keys((flat?.properties as object | undefined) ?? {});
   const mainHidden = useMemo(
@@ -278,29 +289,40 @@ export function ConfigStep({
             idPrefix="secret-"
           />
         ) : null}
-        <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <WizardTest
-            connector={connector}
+        {rest ? (
+          <WizardRest
             orgId={orgId}
-            config={draft.config}
-            secrets={draft.secrets}
-            test={test}
-            onTest={onTest}
+            draft={draft}
+            onChange={onChange}
+            hiddenSecrets={hiddenSecrets}
+            showErrors={showErrors}
+            onSample={onSample}
           />
-          {test?.kind === 'result' && test.result.sample?.length ? (
-            <ul aria-label="Fields in the first record" className="flex flex-wrap gap-1.5">
-              {test.result.sample.map((f) => (
-                <li
-                  key={f.pointer}
-                  title={f.preview}
-                  className="rounded-md border border-border bg-surface-sunken px-2 py-0.5 font-mono text-xs text-fg"
-                >
-                  {f.pointer}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
+        ) : (
+          <div className="flex flex-col gap-3 border-t border-border pt-4">
+            <WizardTest
+              connector={connector}
+              orgId={orgId}
+              config={draft.config}
+              secrets={draft.secrets}
+              test={test}
+              onTest={onTest}
+            />
+            {test?.kind === 'result' && test.result.sample?.length ? (
+              <ul aria-label="Fields in the first record" className="flex flex-wrap gap-1.5">
+                {test.result.sample.map((f) => (
+                  <li
+                    key={f.pointer}
+                    title={f.preview}
+                    className="rounded-md border border-border bg-surface-sunken px-2 py-0.5 font-mono text-xs text-fg"
+                  >
+                    {f.pointer}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        )}
       </CardBody>
     </Card>
   );
