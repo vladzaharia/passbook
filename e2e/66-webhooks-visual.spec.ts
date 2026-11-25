@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { apiAs, uid } from './helpers/api.ts';
+import { freshAdminApi, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -24,8 +24,8 @@ async function serious(page: Page) {
 
 test.describe('webhooks console, every size and theme', () => {
   let endpointId = '';
-  test.beforeAll(async () => {
-    const api = await apiAs('admin');
+  test.beforeAll(async ({ browser }) => {
+    const api = await freshAdminApi(browser);
     const made = await api.send('POST', '/api/v1/webhook-endpoints', {
       orgId: readSeed().org.id,
       url: `https://hooks.example.com/hooks/${uid('vis')}`,
@@ -35,8 +35,8 @@ test.describe('webhooks console, every size and theme', () => {
     endpointId = made.endpoint.id;
     await api.dispose();
   });
-  test.afterAll(async () => {
-    const api = await apiAs('admin');
+  test.afterAll(async ({ browser }) => {
+    const api = await freshAdminApi(browser);
     await api.send('DELETE', `/api/v1/webhook-endpoints/${endpointId}`);
     await api.dispose();
   });

@@ -1,7 +1,8 @@
 import { mkdirSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { apiAs, uid } from './helpers/api.ts';
+import { apiAs, apiFrom, uid } from './helpers/api.ts';
+import { startOidcAs } from './helpers/auth.ts';
 
 // Set MT3_SHOTS to a folder to save the visual sweep: 3 widths x 2 themes per screen.
 const SHOTS = process.env.MT3_SHOTS;
@@ -187,7 +188,10 @@ test.describe('org features', () => {
   test('a platform admin edits a preset: it moves the orgs on it, and the dialog passes axe', async ({
     page,
   }) => {
-    const api = await apiAs('admin');
+    // Changing a preset that has orgs on it needs a recent sign-in; a long CI shard's session is stale.
+    await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
+    await page.waitForURL(/\/admin/);
+    const api = { ...(await apiFrom(page.context().request)), dispose: async () => {} };
     const name = uid('Presets');
     const org = await api.send<{ id: string }>('POST', '/api/v1/orgs', {
       name,
