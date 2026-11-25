@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, stubFetch } from '../../lib/test-utils.tsx';
+import { PLAN } from './releases/test-fixtures.tsx';
 import type { VersionReleases } from './releases/version-info.ts';
 import { VersionList, visibleVersions } from './version-list.tsx';
 
@@ -132,26 +133,7 @@ describe('version list', () => {
     const user = userEvent.setup();
     stubFetch({
       '/api/v1/templates/t1/release': () =>
-        json({
-          version: hash(3),
-          modes: { live: { outcome: 'released', from: hash(2), impact: null } },
-          diff: [
-            {
-              group: 'colors',
-              more: 0,
-              rows: [
-                {
-                  kind: 'changed',
-                  label: 'Background',
-                  from: { type: 'color', color: '#111111' },
-                  to: { type: 'color', color: '#222222' },
-                },
-              ],
-            },
-          ],
-          fromVersion: hash(2),
-          state: {},
-        }),
+        json({ ...PLAN, version: hash(3), fromVersion: hash(2) }),
     });
     mount(template(3), info());
     await user.click(screen.getByRole('button', { name: 'Actions for v3' }));

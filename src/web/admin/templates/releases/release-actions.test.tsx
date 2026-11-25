@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setCsrfProvider } from '../../../lib/api.ts';
@@ -67,7 +67,7 @@ describe('template release actions', () => {
     await user.type(reason, '  Barcode regression  ');
     await user.click(confirm);
 
-    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
+    await waitFor(() => expect(server.active?.id).toBe('release-rollback'));
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );
@@ -140,7 +140,7 @@ describe('template release actions', () => {
       'Restore the archived template',
     );
     await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
-    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
+    await waitFor(() => expect(server.active?.id).toBe('release-rollback'));
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );
