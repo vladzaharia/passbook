@@ -79956,12 +79956,17 @@
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration. The name predates the delete; the route now deletes."
         },
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "SANDBOX_NOT_FOUND",
           "SANDBOX_RESET_LIMIT",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED"
         ]
       }
@@ -80265,11 +80270,15 @@
         },
         "x-sdk": {
           "resource": "developer.sandbox",
-          "method": "recreate",
+          "method": "replace",
           "sdk": false,
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "ACTOR_CHANGED",
           "API_KEY_CHILD_CANNOT_MINT",
@@ -80318,6 +80327,7 @@
           "STALE",
           "STAMPS_ABOVE_MAX",
           "STAMPS_QUERY",
+          "STEP_UP_REQUIRED",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_ASSET_CONFLICT",
           "TEMPLATE_BAKED",
