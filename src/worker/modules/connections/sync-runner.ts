@@ -220,6 +220,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
                 mode: start.mode,
                 credentialKeysetCommitment: p.credentialKeysetCommitment,
                 cursor: fetched.cursor,
+                instanceId: p.instanceId,
               }),
             );
             if (moved?.stale !== false || moved.staleCode) {

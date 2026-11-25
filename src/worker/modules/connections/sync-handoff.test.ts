@@ -5,7 +5,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { ConnectionSync } from '../../workflows/connection-sync.ts';
 import { emptyTotals } from './records.ts';
 import { getConnection } from './repo.ts';
-import { setWorkflowStatus } from './repo-sync.ts';
+import { advanceConnectionCursor, setWorkflowStatus } from './repo-sync.ts';
+import { closeLostRun } from './run-lost.ts';
 import { inlineStep, seedConnectionWorkflow } from './runtime-fixtures.ts';
 import { reconcileConnections, startSync } from './schedule.ts';
 import { continuationId, handOff, MAX_HANDOFFS, type SyncChain } from './sync-chain.ts';
@@ -333,6 +334,59 @@ describe('sync hand-off', () => {
     await executeSync(wf.sctx, step, p);
     expect(kit.seams.created).toEqual([]);
     expect(await runRow()).toMatchObject({ outcome: 'skipped', error_code: 'STALE_CONTEXT' });
+  });
+
+  describe('a superseded run', () => {
+    const supersede = async (connectionId: string) =>
+      closeLostRun(kit.sctx, {
+        orgId: kit.org.id,
+        connectionId,
+        runId: RUN,
+        superseded: true,
+      });
+    const trackingRow = () =>
+      first<{ status: string; error_code: string | null }>(
+        kit.env.DB,
+        'SELECT status, error_code FROM workflow_runs WHERE instance_id = ?',
+        [RUN],
+      );
+
+    it('keeps its SUPERSEDED tracking row when its finish tries to complete it', async () => {
+      const dto = await demo(5);
+      await base(dto.id);
+      await supersede(dto.id);
+      const done = await setWorkflowStatus(
+        kit.env.DB,
+        RUN,
+        'complete',
+        kit.clock.now(),
+        null,
+        undefined,
+        kit.credentialKeysetCommitment,
+        { orgId: kit.org.id, connectionId: dto.id },
+      );
+      expect(done).toBe(false);
+      expect(await trackingRow()).toEqual({ status: 'errored', error_code: 'SUPERSEDED' });
+    });
+
+    it('cannot move the cursor, though a live run can', async () => {
+      const dto = await demo(5);
+      const p = await base(dto.id);
+      const write = (cursor: string) =>
+        advanceConnectionCursor(kit.sctx, {
+          connectionId: dto.id,
+          orgId: kit.org.id,
+          generation: p.generation,
+          mode: 'poll',
+          cursor,
+          credentialKeysetCommitment: kit.credentialKeysetCommitment,
+          instanceId: RUN,
+        });
+      expect(await write('live')).toBe(true);
+      await supersede(dto.id);
+      expect(await write('replaced')).toBe(false);
+      expect((await getConnection(kit.env.DB, dto.id))?.cursor).toBe('live');
+    });
   });
 
   it('adopts a run in flight instead of starting a second one', async () => {

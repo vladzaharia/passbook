@@ -64,6 +64,7 @@ export async function setWorkflowStatus(
     `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ?
      WHERE instance_id = ? AND kind = 'connection_sync'
      ${status === 'running' ? "AND status IN ('queued', 'running')" : ''}
+     AND NOT (status = 'errored' AND COALESCE(error_code, '') = 'SUPERSEDED')
      AND org_id = ? AND target_id = ? AND credential_keyset_commitment = ?
      ${
        runnable
@@ -179,6 +180,8 @@ export async function advanceConnectionCursor(
     mode: ConnectionMode;
     cursor: string | null;
     credentialKeysetCommitment: string;
+    /** The run writing it: a replaced run's write is refused in the same statement. */
+    instanceId?: string;
   },
 ): Promise<boolean> {
   if (!validCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
@@ -191,6 +194,9 @@ export async function advanceConnectionCursor(
       generation: p.generation,
       syncMode: p.mode,
       enabled: true,
+      ...(p.instanceId
+        ? { keyset: { commitment: p.credentialKeysetCommitment, instanceId: p.instanceId } }
+        : {}),
     },
   );
   return updated !== 0;

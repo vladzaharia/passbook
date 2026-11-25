@@ -270,6 +270,7 @@ export async function advanceCursor(
     mode: ConnectionRow['mode'];
     cursor: string | null;
     credentialKeysetCommitment: string;
+    instanceId?: string;
   },
 ): Promise<{ stale: boolean; staleCode?: StaleCode }> {
   if (!(await syncKeysetCurrent(sctx, p.credentialKeysetCommitment)))
