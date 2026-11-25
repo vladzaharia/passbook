@@ -70,13 +70,14 @@ html {
   font-family: var(--pk-font-sans);
   background: var(--pk-surface-page);
   color: var(--pk-text-default);
-  font-size: 14px;
-  line-height: 1.43;
+  font-size: 100%;
   -webkit-font-smoothing: antialiased;
   scroll-padding-top: 80px;
 }
 body {
   margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   min-height: 100dvh;
   background: var(--pk-surface-page);
 }
@@ -125,10 +126,14 @@ h3 {
 }
 svg.lucide,
 .iconbtn svg,
-.btn svg,
-.pill svg {
+.btn svg {
   width: 16px;
   height: 16px;
+  flex: none;
+}
+.pill svg {
+  width: 14px;
+  height: 14px;
   flex: none;
 }
 .sr {
@@ -162,10 +167,15 @@ svg.lucide,
 :root {
   --dev-bar: calc(56px + env(safe-area-inset-top, 0px));
 }
+/* dev-run.css sizes the account slot at 5rem, which was 70 px under the old 14 px root: keep the bar as it was. */
+[data-menubar] [data-island="account"] {
+  min-inline-size: 70px;
+}
 
 .iconbtn {
   width: 36px;
   height: 36px;
+  flex: none;
   display: inline-grid;
   place-items: center;
   border-radius: var(--pk-radius-md);
