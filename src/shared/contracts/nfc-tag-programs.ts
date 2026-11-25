@@ -112,8 +112,8 @@ export const TagProgramDoneSchema = z.object({
   state: TagProgramStateSchema,
   tag: z.object({ id: IdSchema, hint: z.string().regex(/^[0-9A-F]{4}$/) }).nullable(),
   binding: TagBindingSchema.nullable(),
-  /** Why the tag was set up but not assigned. */
-  refusal: TagProgramErrorCodeSchema.nullable(),
+  /** Why the tag was set up but not assigned: the code of the bind refusal (a pass that is gone, an account that is missing). */
+  refusal: z.string().max(64).nullable(),
 });
 
 export const TagProgramAbortWhySchema = z.enum(['lost', 'cancelled', 'timeout']);

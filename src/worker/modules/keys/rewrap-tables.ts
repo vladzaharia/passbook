@@ -1,5 +1,6 @@
 import { credentialAad } from '../../platform/crypto.ts';
 import { tagKeyKind, versionKind } from '../nfc/keyset-seal.ts';
+import { adminKind, programKind } from '../nfc/program-seal.ts';
 import { googleMessageAad } from '../wallet-providers/google-message-aad.ts';
 
 export type PlaceTable =
@@ -23,7 +24,9 @@ export type PlaceTable =
   | 'wallet_credential_versions'
   | 'wallet_provider_accounts'
   | 'nfc_tag_keys'
-  | 'nfc_tag_sun';
+  | 'nfc_tag_sun'
+  | 'nfc_tag_programs'
+  | 'nfc_tag_admin_keys';
 
 /** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
 export interface Raw {
@@ -135,6 +138,16 @@ export const PLACES: readonly Place[] = [
     // A supplier's per-tag file key: x1 org, x2 mode, x3 keyset; the tag id is the AAD id.
     table: 'nfc_tag_sun',
     aad: (r) => credentialAad(r.pk, text(r.x1), tagKeyKind(String(r.x2), String(r.x3))),
+  },
+  {
+    // The intended keys of a tag being programmed (nfc/program-seal.ts): x1 org, x2 mode, x3 keyset; the row id is the AAD id.
+    table: 'nfc_tag_programs',
+    aad: (r) => credentialAad(r.pk, text(r.x1), programKind(String(r.x2), String(r.x3))),
+  },
+  {
+    // The admin keys of a programmed tag: x1 org, x2 mode, x3 keyset; the tag id is the AAD id.
+    table: 'nfc_tag_admin_keys',
+    aad: (r) => credentialAad(r.pk, text(r.x1), adminKind(String(r.x2), String(r.x3))),
   },
 ];
 

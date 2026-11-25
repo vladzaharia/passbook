@@ -128,6 +128,9 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   nfc_tag_keysets: { org: 'org_id', mode: 'mode' },
   nfc_tag_keys: { org: null, edges: [edge('keyset_id', 'nfc_tag_keysets')] },
   nfc_tag_sun: { org: null, edges: [edge('tag_id', 'nfc_tags')] },
+  // Programming a blank tag (0210): a program row per tag trip, and the admin keys a programmed tag keeps.
+  nfc_tag_programs: { org: 'org_id', mode: 'mode' },
+  nfc_tag_admin_keys: { org: null, edges: [edge('tag_id', 'nfc_tags')] },
   // Outbound webhooks (0090): endpoints and secrets via grants, delivery bookkeeping via the raw-write allowlist, event_feed by the pass_events trigger.
   webhook_endpoints: { org: 'org_id', mode: 'mode' },
   webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
