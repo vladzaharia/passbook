@@ -41,8 +41,10 @@ const bytesOf = async (body: ReadableStream<Uint8Array>) =>
 // Every path that hands a holder a .pkpass gives the current render (docs/design/event-boundaries.md).
 describe('holder files after an event boundary', () => {
   it('portal Add all bundles the render, with no stale size', async () => {
-    const user = await makeUser(kit.fx);
-    const pass = await rendered();
+    const email = 'portal-holder@example.com';
+    const user = await makeUser(kit.fx, { primaryEmail: email });
+    const pass = await rendered({ holderEmail: email });
+    // A first owner attaches without a transfer when the holder email is theirs.
     await run(kit.env.DB, 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [user.id, pass.id]);
     const { body } = await myPassesBundle(kit.ctx, user.id, 1);
     expect(passJsonIn(await bytesOf(body), pass.id).relevantDate).toBe(RENDERED.relevantDate);

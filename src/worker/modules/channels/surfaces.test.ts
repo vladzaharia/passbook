@@ -16,7 +16,7 @@ const SOURCES = Object.fromEntries(
     ]),
 );
 const ARTIFACT =
-  /servePassFile\(|\/pass\.pkpass|passes\.pkpasses|BUCKET\.get\([^)]*(?:objectKey|object_key)|packagePassObjects\(|packagePasses\(|listWalletOffers\(|issueWalletOffer\(/i;
+  /servePassFile\(|serveCurrentPassFile\(|currentPassBytes\(|\/pass\.pkpass|passes\.pkpasses|BUCKET\.get\([^)]*(?:objectKey|object_key)|packagePassObjects\(|packagePasses\(|listWalletOffers\(|issueWalletOffer\(/i;
 const GATE =
   /channelGate\(|appleFileGate\(|channelOn\(|holderChannels\(|holderChannelsMany\(|appleVariant\(|eligibleWalletProvider\(|channels\.effective\.(?:apple|mobile)\.on/;
 
