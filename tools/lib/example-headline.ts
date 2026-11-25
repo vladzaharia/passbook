@@ -32,8 +32,21 @@ const create = {
 
 const importSource = { kind: 'file', name: 'members.csv', csv: MEMBERS_CSV };
 
+const CLAIMS_VIEW = {
+  claims: { passbook_tier: { type: 'text', value: 'gold' } },
+  otherKeys: 2,
+};
+const CLAIMS_SET = { set: { passbook_tier: { type: 'text', value: 'gold' }, passbook_old: null } };
+const CLAIMS_DONE = { set: ['passbook_tier'], removed: ['passbook_old'], dryRun: false };
+
 /** `<operationId> <request|response>` to its example. */
 export const HEADLINE: Record<string, unknown> = {
+  'polaris-claims.getUsersByIdClaims response': CLAIMS_VIEW,
+  'polaris-claims.patchUsersByIdClaims request': CLAIMS_SET,
+  'polaris-claims.patchUsersByIdClaims response': CLAIMS_DONE,
+  'polaris-claims.getPlatformIdpGroupsByKeyClaims response': CLAIMS_VIEW,
+  'polaris-claims.patchPlatformIdpGroupsByKeyClaims request': CLAIMS_SET,
+  'polaris-claims.patchPlatformIdpGroupsByKeyClaims response': CLAIMS_DONE,
   'passes.postPasses request': create,
   'passes.postPasses response': {
     ...PASS,
