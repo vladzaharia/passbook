@@ -1,4 +1,6 @@
 /** Words on the developer quickstart. Shared by the prerendered page and its island. Terse. */
+const CHECK = 'printenv PASSBOOK_KEY | cut -c1-9';
+
 export const QS_COPY = {
   nav: 'Quickstart',
   eyebrow: 'Quickstart · 5 min',
@@ -62,6 +64,16 @@ export const QS_COPY = {
     lost: 'Lost it? Roll it in',
     keys: 'Keys',
     masked: 'Key hidden',
+    load: 'Load it in your shell',
+    bash: 'bash, zsh',
+    bashLine: 'set -a; . ./.env; set +a',
+    ps: 'PowerShell',
+    psLine:
+      'Get-Content .env | ForEach-Object { $k, $v = $_ -split \'=\', 2; Set-Item "env:$k" $v }',
+    check: 'Check',
+    checkLine: CHECK,
+    checkPs: "$env:PASSBOOK_KEY -replace '^(.{9}).*','$1'",
+    checkOut: 'Prints pbp_test_',
   },
   /** Step 3: the call from your terminal, or from this page. */
   call: {
@@ -73,7 +85,21 @@ export const QS_COPY = {
     from: 'From your terminal',
     next: 'Next',
     timeout: 'Still listening? Check',
-    timeoutCode: 'echo $PASSBOOK_KEY',
+    timeoutCode: CHECK,
+    quiet: {
+      title: 'Quiet so far.',
+      line: 'No call has reached your sandbox. Usual causes:',
+      causes: [
+        {
+          text: 'The key is not loaded. Run',
+          code: CHECK,
+          after: 'It prints pbp_test_.',
+        },
+        { text: 'The URL is not this site. Copy the sample as is.' },
+        { text: 'Another key is set. Use the one from .env.' },
+      ],
+      here: 'Run here instead',
+    },
     again: 'Listen again',
     other: (method: string, path: string, status: number) =>
       `Heard ${method} ${path} · ${status}. Now POST /api/v1/passes.`,
@@ -138,7 +164,8 @@ export const QS_COPY = {
   },
   fail: {
     generic: 'The request failed.',
-    addField: (field: string, value: string) => `Add -d input[${field}]=${value} and run again.`,
+    addField: (field: string, value: string) =>
+      `Add "${field}": "${value}" to input and run again.`,
     required: (field: string) => `${field} is required.`,
     checkField: (path: string) => `Check ${path}, then run again.`,
     network: 'PassBook did not answer. Check your connection and run again.',
@@ -160,11 +187,17 @@ export const QS_COPY = {
     },
     noaccess: {
       title: 'No developer access',
-      line: 'Ask an administrator for developer access.',
+      line: 'Ask your Polaris ID admin to add you to the passbook_developers group.',
+      copy: 'Copy request',
+      copied: 'Copied',
+      request: (email: string) =>
+        `Please add ${email} to the passbook_developers group so I can use the PassBook developer portal.`,
       cta: 'Use another Polaris ID',
       passes: 'My passes',
       signedInAs: (email: string) => `Signed in as ${email}`,
     },
   },
+  /** The landing's primary button once a developer is signed in. */
+  runInConsole: 'Run in console',
   signedOutStage: 'Sign in to see your pass here.',
 } as const;

@@ -55,7 +55,7 @@ const pass = await pb.passes.create({
 const HERO_CODE = SDK_STATUS.typescript ? HERO_SDK : HERO_FETCH;
 
 const SANDBOX_ROWS = [
-  ['Secret key', 'A pb_test_ key, shown once. Copy it as .env.'],
+  ['Secret key', 'A pbp_test_ key, shown once. Copy it as .env.'],
   ['Limits', '500 test passes, 10 templates, 3 webhook endpoints'],
   ['Webhooks', 'A capture endpoint. Deliveries are stored, never sent.'],
 ] as const;
@@ -72,7 +72,7 @@ function Hero() {
           {h.title} <em>{h.titleFoil}</em>
         </h1>
         <div className="wrap-row g2 mt2">
-          <a className="btn" href={PATHS.quickstart}>
+          <a className="btn" href={PATHS.quickstart} data-hero-start data-island="hero-start">
             {h.start}
             <ArrowRight aria-hidden="true" />
           </a>

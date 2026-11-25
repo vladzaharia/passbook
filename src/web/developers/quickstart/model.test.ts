@@ -134,7 +134,7 @@ describe('fixOfCall', () => {
     expect(fix).toMatchObject({
       title: 'ticketId is required.',
       path: 'input.ticketId',
-      line: 'Add -d input[ticketId]=QS-1042 and run again.',
+      line: 'Add "ticketId": "QS-1042" to input and run again.',
       code: 'PASS_INPUT_INVALID',
     });
   });

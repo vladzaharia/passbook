@@ -50,7 +50,7 @@ function curl(op: SampleOp, base: string): string {
     `curl -X ${op.method.toUpperCase()} ${shWord(target(op, base))}`,
     `  -H "Authorization: Bearer $${KEY}"`,
   ];
-  if (op.idempotent) parts.push('  -H "Idempotency-Key: $(uuidgen)"');
+  if (op.idempotent) parts.push('  -H "Idempotency-Key: qs-$(date +%s)-$RANDOM"');
   for (const [k, v] of Object.entries(op.sample.headers))
     parts.push(`  -H ${shWord(`${k}: ${v}`)}`);
   if (op.binary) {

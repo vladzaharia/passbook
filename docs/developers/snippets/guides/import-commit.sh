@@ -1,6 +1,6 @@
 curl -X POST "https://passbook.mobile/api/v1/pass-imports/$IMPORT_ID/commit" \
   -H "Authorization: Bearer $PASSBOOK_KEY" \
-  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Idempotency-Key: qs-$(date +%s)-$RANDOM" \
   -H "Content-Type: application/json" \
   -d '{
   "skipInvalid": false,
