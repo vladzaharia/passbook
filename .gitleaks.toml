@@ -5,7 +5,9 @@
 #  - the demo values our API examples use (tools/lib/example-world.ts): they cannot authenticate (the example key's
 #    tail is 42 characters, the real one 43);
 #  - three false positives of the key rule: `p12.privateKeyPem`, `KEY_ALG_RSA_2048` and two version slugs;
-#  - a public P-256 key (SPKI, 124 base64 characters ending ==), public by definition.
+#  - a public P-256 key (SPKI, 124 base64 characters ending ==), public by definition;
+#  - the NTAG 424 simulator's test-only originality scalar (src/worker/modules/nfc/ntag424/sim/tag.ts), a stand-in for
+#    NXP's key that signs nothing outside tests.
 # tools/check-gitleaks-allowlist.ts proves the boundary: CI runs it with the pinned binary.
 title = "PassBook"
 
@@ -55,4 +57,5 @@ regexes = [
   '''^KEY_ALG_RSA_2048$''',
   '''^(?:wallet-completion-v1|incompatible-v2)$''',
   '''^MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE[A-Za-z0-9+/]{86}==$''',
+  '''^0x1d2c3b4a59687786950a1b2c3d4e5f60718293a4b5c6d7e8f9011223n$''',
 ]

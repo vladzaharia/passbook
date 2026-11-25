@@ -1,3 +1,4 @@
+import type { TimedKeys } from '../../../passkit/behaviors/upcoming-events/timed.ts';
 import { PassBuildError } from '../../../passkit/build.ts';
 import {
   buildPass,
@@ -31,6 +32,7 @@ import { depsOf } from './deps.ts';
 import type { Removal } from './remove-build.ts';
 import type { PassStatus } from './repo.ts';
 import type { AssetRow } from './repo-history-assets.ts';
+import { resolveTemplate } from './template-resolve.ts';
 
 export { displayOf } from './builder-finish.ts';
 
@@ -86,6 +88,8 @@ export interface Artifact {
   subtitle: string | null;
   /** Pass.json plus asset digests; equal hashes mean identical content. */
   contentHash: string;
+  /** The `contentHash` this build has with these timed keys (an event boundary's render) put in. */
+  contentHashWith(keys: TimedKeys): Promise<string>;
   /** SHA-256 hex of the primary barcode message; null without a barcode. */
   barcodeHash: string | null;
   /** SHA-256 hex of the normalized `scan.lookup` input; null without `scan.lookup` or a value. */
@@ -93,29 +97,7 @@ export interface Artifact {
   warnings: ValidationIssue[];
 }
 
-export const isNotFound = (error: unknown): boolean =>
-  error instanceof NotFoundError || (error as { status?: number } | null)?.status === 404;
-
-export async function resolveTemplate(
-  ctx: ServiceContext,
-  orgId: string,
-  templateId: string,
-  version?: string,
-): Promise<ResolvedTemplate> {
-  let template: ResolvedTemplate;
-  try {
-    template = await depsOf(ctx.env).registry.resolve(templateId, version);
-  } catch (error) {
-    // Only a missing template is a 404; infrastructure errors must surface and retry.
-    if (!isNotFound(error)) throw error;
-    ctx.log.warn('pass.template_unresolved', { orgId, templateId, error });
-    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
-  }
-  // Platform templates (orgId null) are usable by every org; org templates only by their own.
-  if (template.orgId !== null && template.orgId !== orgId)
-    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
-  return template;
-}
+export { isNotFound, resolveTemplate } from './template-resolve.ts';
 
 async function withOverrides(
   template: ResolvedTemplate,
@@ -256,12 +238,13 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
         behaviors: deps.behaviors,
         now,
       });
-      editPass(req, built.passJson);
+      const { planned } = editPass(req, built.passJson);
       const { authenticationToken: _token, ...shown } = built.passJson;
       return await artifactOf({
         bytes: new TextEncoder().encode(JSON.stringify(shown)),
         previewOnly: true,
         built,
+        planned,
         req,
         resolved,
         template,
@@ -286,7 +269,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       behaviors: deps.behaviors,
       now,
     });
-    const resign = editPass(req, built.passJson);
+    const { resign, planned } = editPass(req, built.passJson);
     let { signed } = built;
     if (resign) {
       const {
@@ -301,6 +284,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       bytes: packagePassBytes(signed),
       previewOnly: false,
       built,
+      planned,
       req,
       resolved,
       template,

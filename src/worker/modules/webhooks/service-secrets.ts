@@ -10,7 +10,7 @@ import { hostOf } from './url.ts';
 const HOUR = 3_600_000;
 
 /**
- * A new current secret, shown once. The old one signs alongside it for `overlapHours` (0, 24 or 72);
+ * A new current secret, shown once. The old one signs alongside it for `overlapHours` (0, 1, 24, 72 or 168);
  * an older expiring one is cut to now. A foreign or just-deleted endpoint aborts the batch, so no
  * secret that was never stored is returned.
  */

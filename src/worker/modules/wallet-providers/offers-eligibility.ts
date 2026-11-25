@@ -1,11 +1,14 @@
+import type { PassJson } from '../../../passkit/types.ts';
 import type { EffectiveChannels, OfferHold } from '../../../shared/contracts/channels.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelOn } from '../channels/gate.ts';
+import { resolveTemplate } from '../passes/builder.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { getPassLifecycle } from '../passes/repo-remove.ts';
+import { timedOrBuilt } from '../passes/timed-source.ts';
 import { canPresent } from '../public/presentation.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
 import { readWalletPassSnapshot } from './instance.ts';
@@ -112,19 +115,28 @@ export async function offerPassSnapshot(
   } catch {
     return null;
   }
-  if (
-    !decoded ||
-    typeof decoded !== 'object' ||
-    Array.isArray(decoded) ||
-    !canPresent(pass, decoded as Record<string, unknown>, ctx.clock.now())
-  )
-    return null;
+  if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) return null;
+  let passJson = decoded as Record<string, unknown>;
+  // The card shows the event running now, as Apple's timed render does; the fences keep the stored text.
+  if ('upcomingPassInformation' in passJson) {
+    const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
+    const now = ctx.clock.now();
+    passJson = timedOrBuilt(
+      ctx,
+      pass.id,
+      passJson as PassJson,
+      pass.personalization,
+      template,
+      now,
+    ) as Record<string, unknown>;
+  }
+  if (!canPresent(pass, passJson, ctx.clock.now())) return null;
   return {
     pass,
     lifecycleGeneration: lifecycle.generation,
     credentialGeneration: walletPass.credentialGeneration,
     rawPassJson,
-    passJson: decoded as Record<string, unknown>,
+    passJson,
   };
 }
 
