@@ -56,9 +56,9 @@ describe('document ops', () => {
     const doc = run(
       sampleDoc(),
       { op: 'field-add', group: 'secondaryFields', key: 'x' },
-      { op: 'style', style: 'posterGeneric' },
+      { op: 'style', style: 'storeCard' },
     );
-    expect(styleOf(doc.passJson)).toBe('posterGeneric');
+    expect(styleOf(doc.passJson)).toBe('storeCard');
     expect(doc.passJson.generic).toBeUndefined();
     expect(keys(doc, 'secondaryFields')).toContain('x');
     const boarding = run(doc, { op: 'style', style: 'boardingPass' });

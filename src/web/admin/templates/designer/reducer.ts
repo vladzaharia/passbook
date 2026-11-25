@@ -135,7 +135,7 @@ export function validSelection(state: DesignerState): Selection {
   if (
     select.section.endsWith('Fields') &&
     select.key &&
-    !allKeys(doc.passJson).includes(select.key)
+    !allKeys(doc.passJson, doc.target).includes(select.key)
   )
     return { section: select.section };
   return select;
