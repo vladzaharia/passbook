@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 import type { Target } from './types.ts';
 
 export type DriftKind =
@@ -43,16 +43,19 @@ export const openDriftOf = (db: D1Database, subject: string, target: Target, kin
     [subject, target, kind],
   );
 
-/** Records a difference once: a repeat of an open one is a no-op. True when a row was written. */
-export async function recordDrift(db: D1Database, d: NewDrift): Promise<boolean> {
-  const result = await run(
+/** The write of a difference, for callers that batch it. A repeat of an open one writes nothing. */
+export const driftStmt = (db: D1Database, d: NewDrift) =>
+  stmt(
     db,
     `INSERT INTO idp_drift (id, run_id, user_id, subject, target, kind, found_at)
      SELECT ?, ?, ?, ?, ?, ?, ?
      WHERE NOT EXISTS (SELECT 1 FROM idp_drift WHERE subject = ? AND target = ? AND kind = ? AND resolved_at IS NULL)`,
     [d.id, d.runId, d.userId, d.subject, d.target, d.kind, d.now, d.subject, d.target, d.kind],
   );
-  return result.changes > 0;
+
+/** Records a difference once: a repeat of an open one is a no-op. True when a row was written. */
+export async function recordDrift(db: D1Database, d: NewDrift): Promise<boolean> {
+  return (await driftStmt(db, d).run()).meta.changes > 0;
 }
 
 /** Closes an open difference with a short resolution (`applied`, `restored`, `gone`). True when one closed. */

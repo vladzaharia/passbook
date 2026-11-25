@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 import type { Target } from './types.ts';
 
 /** `passbook`: PassBook added it (a live grant in the binding). `external`: found in Polaris ID without a grant. */
@@ -49,9 +49,9 @@ export interface Observation {
   now: number;
 }
 
-/** What `lookup`, `snapshot` or an `apply` read back. Clears the last error and never touches a hold. */
-export async function recordObserved(db: D1Database, o: Observation): Promise<void> {
-  await run(
+/** The write of an observation, for callers that batch it. */
+export const observedStmt = (db: D1Database, o: Observation) =>
+  stmt(
     db,
     `INSERT INTO idp_target_state (subject, target, user_id, observed, presence, observed_at)
      VALUES (?, ?, ?, ?, ?, ?)
@@ -60,6 +60,10 @@ export async function recordObserved(db: D1Database, o: Observation): Promise<vo
        presence = excluded.presence, observed_at = excluded.observed_at, error_code = NULL`,
     [o.subject, o.target, o.userId, o.observed ? 1 : 0, o.presence, o.now],
   );
+
+/** What `lookup`, `snapshot` or an `apply` read back. Clears the last error and never touches a hold. */
+export async function recordObserved(db: D1Database, o: Observation): Promise<void> {
+  await observedStmt(db, o).run();
 }
 
 /** An `apply` that changed the target: the observation plus the time PassBook applied it. */
