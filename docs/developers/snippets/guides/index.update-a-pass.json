@@ -1,0 +1,62 @@
+[
+  {
+    "id": "update-field",
+    "title": "Change a field on a pass",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.patchPassesById"
+    ],
+    "files": {
+      "ts": "update-field.ts",
+      "curl": "update-field.sh"
+    }
+  },
+  {
+    "id": "void-pass",
+    "title": "Void a pass",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.postPassesByIdVoid"
+    ],
+    "files": {
+      "ts": "void-pass.ts",
+      "curl": "void-pass.sh"
+    }
+  },
+  {
+    "id": "unvoid-pass",
+    "title": "Undo a void",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.postPassesByIdUnvoid"
+    ],
+    "files": {
+      "ts": "unvoid-pass.ts",
+      "curl": "unvoid-pass.sh"
+    }
+  },
+  {
+    "id": "remove-pass",
+    "title": "Remove a pass from Wallet",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.postPassesByIdRemove"
+    ],
+    "files": {
+      "ts": "remove-pass.ts",
+      "curl": "remove-pass.sh"
+    }
+  },
+  {
+    "id": "bulk-void",
+    "title": "Void many passes",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.postPassesBulk"
+    ],
+    "files": {
+      "ts": "bulk-void.ts",
+      "curl": "bulk-void.sh"
+    }
+  }
+]

@@ -1,0 +1,65 @@
+[
+  {
+    "id": "change-count",
+    "title": "Count the passes a filter matches",
+    "guide": "change-many-passes",
+    "ops": [
+      "passes.getPasses"
+    ],
+    "files": {
+      "ts": "change-count.ts",
+      "curl": "change-count.sh"
+    }
+  },
+  {
+    "id": "change-preview",
+    "title": "Preview a change",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.postBroadcastsPreview"
+    ],
+    "files": {
+      "ts": "change-preview.ts",
+      "curl": "change-preview.sh"
+    }
+  },
+  {
+    "id": "change-run",
+    "title": "Run a change",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.postBroadcasts"
+    ],
+    "files": {
+      "ts": "change-run.ts",
+      "curl": "change-run.sh"
+    }
+  },
+  {
+    "id": "change-watch",
+    "title": "Watch a change run",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.getBroadcastsById"
+    ],
+    "files": {
+      "ts": "change-watch.ts",
+      "curl": "change-watch.sh"
+    },
+    "sandbox": "BROADCAST_NOT_FOUND"
+  },
+  {
+    "id": "change-undo",
+    "title": "Undo a change",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.postBroadcastsByIdUndo",
+      "broadcasts.postBroadcastsByIdStop"
+    ],
+    "files": {
+      "ts": "change-undo.ts",
+      "curl": "change-undo.sh"
+    },
+    "sandbox": "BROADCAST_NOT_FOUND"
+  }
+]

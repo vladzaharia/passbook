@@ -1,0 +1,13 @@
+[
+  {
+    "id": "bulk-import",
+    "title": "Import passes from a CSV",
+    "guide": "bulk-import",
+    "ops": [
+      "pass-imports.postPassImports"
+    ],
+    "files": {
+      "ts": "bulk-import.ts"
+    }
+  }
+]

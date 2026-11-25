@@ -1,0 +1,48 @@
+[
+  {
+    "id": "release-dry-run",
+    "title": "Preview a release",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdRelease"
+    ],
+    "files": {
+      "ts": "release-dry-run.ts"
+    }
+  },
+  {
+    "id": "release-try",
+    "title": "Try a version in Test",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdRelease"
+    ],
+    "files": {
+      "ts": "release-try.ts"
+    }
+  },
+  {
+    "id": "request-review",
+    "title": "Request a review",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdReviewRequests"
+    ],
+    "files": {
+      "ts": "request-review.ts"
+    }
+  },
+  {
+    "id": "approve-review",
+    "title": "Approve and release",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.getTemplateReviews",
+      "templates.postTemplatesByIdReview"
+    ],
+    "files": {
+      "ts": "approve-review.ts"
+    },
+    "sandbox": "TEMPLATE_REVIEW_NOT_FOUND"
+  }
+]
