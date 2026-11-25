@@ -213,7 +213,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"scan-setup:read\" added",
-    "note": "A key can hold scan-setup:read to read the org\u2019s managed scanner and screen setups."
+    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
