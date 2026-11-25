@@ -1,7 +1,8 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { OrgInvitation, OrgMember } from '@/shared/contracts/org-membership.ts';
-import { removeMemberConfirm, revokeAccessConfirm } from '@/web/lib/confirms.ts';
+import { revokeAccessConfirm } from '@/web/lib/confirms.ts';
+import { removeMemberConfirm } from '@/web/lib/confirms-members.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { useSession } from '@/web/lib/session.ts';
 import { Button, ConfirmDialog, EmptyState, ErrorState, toast } from '@/web/ui/index.ts';
