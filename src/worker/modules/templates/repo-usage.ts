@@ -52,7 +52,7 @@ export async function listRecentImports(
 ): Promise<RecentImport[]> {
   const where =
     filter.orgId === undefined
-      ? ''
+      ? 'WHERE (i.org_id IS NULL OR NOT EXISTS (SELECT 1 FROM orgs po WHERE po.id = i.org_id AND po.personal_user_id IS NOT NULL))'
       : filter.orgId === null
         ? 'WHERE i.org_id IS NULL'
         : filter.includeGlobal

@@ -1,5 +1,14 @@
 import { OrgRoleSchema } from '../../../shared/contracts/org-membership.ts';
-import { all, prefixMatch, run, type SqlValue, stmt } from '../../platform/db.ts';
+import { personalOrgLabel } from '../../../shared/copy/personal-org.ts';
+import {
+  all,
+  chunk,
+  placeholders,
+  prefixMatch,
+  run,
+  type SqlValue,
+  stmt,
+} from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
@@ -214,4 +223,22 @@ export function auditStmtWhere(
       ...conditionParams,
     ],
   );
+}
+
+/** For the platform view: org id to "Personal org of <owner>" for the personal orgs among `orgIds`. */
+export async function personalOrgLabels(
+  db: D1Database,
+  orgIds: string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const ids of chunk(orgIds)) {
+    const rows = await all<{ id: string; name: string | null }>(
+      db,
+      `SELECT o.id, u.name FROM orgs o JOIN users u ON u.id = o.personal_user_id
+       WHERE o.id IN (${placeholders(ids.length)})`,
+      ids,
+    );
+    for (const r of rows) out.set(r.id, personalOrgLabel(r.name));
+  }
+  return out;
 }

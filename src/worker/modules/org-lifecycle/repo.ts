@@ -25,11 +25,11 @@ const SELECT = `SELECT id, slug, name, status, default_identity_id, closed_at, p
 export const lifecycleRow = (db: D1Database, id: string) =>
   first<LifecycleRow>(db, `${SELECT} WHERE id = ?`, [id]);
 
-/** Closed orgs, soonest purge first. */
+/** Closed orgs, soonest purge first; personal orgs are not listed. */
 export const closedOrgs = (db: D1Database, limit: number) =>
   all<LifecycleRow>(
     db,
-    `${SELECT} WHERE status = 'deleted' AND closed_at IS NOT NULL AND purged_at IS NULL
+    `${SELECT} WHERE status = 'deleted' AND closed_at IS NOT NULL AND purged_at IS NULL AND personal_user_id IS NULL
      ORDER BY purge_after, id LIMIT ?`,
     [limit],
   );

@@ -61,6 +61,19 @@ export async function orgStatus(db: D1Database, orgId: string): Promise<string |
 }
 
 /** The highest event revision, which a hold or release steps past (a stray event cannot block it). */
+/** Who placed the newest hold on an account (its newest `hold` event). */
+export async function lastHoldActor(db: D1Database, accountId: string): Promise<string | null> {
+  return (
+    (
+      await first<{ a: string | null }>(
+        db,
+        "SELECT actor_id AS a FROM wallet_enrolment_events WHERE account_id = ? AND kind = 'hold' ORDER BY enrolment_revision DESC LIMIT 1",
+        [accountId],
+      )
+    )?.a ?? null
+  );
+}
+
 export async function maxEventRevision(db: D1Database, accountId: string): Promise<number> {
   return (
     (

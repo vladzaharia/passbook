@@ -45,7 +45,7 @@ describe('platform.org.personal', () => {
     const { g, user, orgId } = await personalGrant('personal-ok', ['admin', 'user']);
     const slug = `personal-${orgId.slice(0, 8)}`;
     g.insertSelect('orgs', ORG_COLUMNS, [orgId, slug, 'Ada', 1, 1, user.id]);
-    g.insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], [orgId, 'standard', 1]);
+    g.insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], [orgId, 'legacy', 1]);
     const [cols, vals] = invitation('inv-ok', orgId, '["org_admin"]', user.primaryEmail);
     g.insertSelect('org_invitations', cols as string[], vals as never);
     g.insertSelect(
@@ -59,7 +59,7 @@ describe('platform.org.personal', () => {
     ).toMatchObject({ id: orgId });
   });
 
-  it('refuses children of an org this grant did not insert, an open invitation and a non-standard preset', async () => {
+  it('refuses children of an org this grant did not insert, an open invitation and a plan other than Unlimited', async () => {
     const { g, user, orgId } = await personalGrant('personal-children', ['admin', 'user']);
     const [cols, vals] = invitation('inv-c', orgId);
     expect(() => g.insertSelect('org_invitations', cols as string[], vals as never)).toThrow(
@@ -75,7 +75,7 @@ describe('platform.org.personal', () => {
     g.insertSelect('orgs', ORG_COLUMNS, [orgId, 'personal-c', 'C', 1, 1, user.id]);
     expect(() =>
       g.insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], [orgId, 'trial', 1]),
-    ).toThrow(/standard preset/);
+    ).toThrow(/unlimited preset/);
     const open = [...(vals as unknown[])];
     open[7] = null;
     expect(() => g.insertSelect('org_invitations', cols as string[], open as never)).toThrow(

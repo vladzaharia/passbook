@@ -17,6 +17,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
+import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import type { LifecycleActor } from './repo.ts';
 import {
@@ -44,6 +45,14 @@ function callerOf(c: C): LifecycleActor {
   return auth.roles.includes('admin') ? { kind: 'platform', ...base } : { kind: 'owner', ...base };
 }
 
+/** A platform admin reads or reopens a personal org only if it is hers. */
+async function platformCallerOwnsPersonal(c: C, next: () => Promise<void>) {
+  const caller = callerOf(c);
+  if (caller.kind === 'platform')
+    await requireNotPersonalFor(c.env.DB, c.req.param('orgId') ?? '', caller.userId);
+  await next();
+}
+
 /** Mount at /api/v1/orgs. Platform: close, reopen, read, export. Org admin: close with the slug, read, export. */
 export const orgLifecycleRoutes = createRouter();
 guard(orgLifecycleRoutes, requireTenantSession);
@@ -52,6 +61,8 @@ orgLifecycleRoutes.use('*', async (c, next) => {
   c.header('cache-control', 'no-store');
 });
 orgLifecycleRoutes.use('/:orgId/reopen', requireAdmin);
+orgLifecycleRoutes.use('/:orgId/reopen', platformCallerOwnsPersonal);
+orgLifecycleRoutes.use('/:orgId/lifecycle', platformCallerOwnsPersonal);
 // Closing an org is a strong sign-in with no email-link grace, so the refusal names Polaris ID.
 orgLifecycleRoutes.use('/:orgId/close', requireStrictSession);
 // Close, reopen and export are the actions that end or empty an org: a recent sign-in.

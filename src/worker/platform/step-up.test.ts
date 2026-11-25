@@ -251,6 +251,7 @@ describe('step-up route inventory', () => {
         "POST /api/v1/nfc/keysets/:id/import",
         "POST /api/v1/nfc/keysets/:id/rotate",
         "POST /api/v1/orgs/:id/invitations",
+        "POST /api/v1/orgs/:id/status",
         "POST /api/v1/orgs/:orgId/close",
         "POST /api/v1/orgs/:orgId/exports",
         "POST /api/v1/orgs/:orgId/exports/:exportId/link",
