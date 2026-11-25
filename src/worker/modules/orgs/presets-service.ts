@@ -59,7 +59,7 @@ export async function listPresets(ctx: ServiceContext): Promise<EntitlementPrese
       label: p.label,
       revision: p.revision,
       updatedAt: p.updated_at,
-      orgCount: p.org_count,
+      orgCount: p.shown_count,
       pendingOrgs: pending.get(p.preset) ?? 0,
       values: (values.get(p.preset) ?? {}) as Record<string, EntitlementValue>,
     }));

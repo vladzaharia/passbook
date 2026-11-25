@@ -1082,6 +1082,8 @@ __all__ = [
     "PlatformOrgsListResponse",
     "PlatformOrgsListResponseItemsItem",
     "PlatformOrgsListResponseItemsItemCounts",
+    "PlatformOrgsPersonalLabelsListResponse",
+    "PlatformOrgsPersonalLabelsListResponseItemsItem",
     "PlatformOrgsRetentionReceiptsDownloadResponse",
     "PlatformOrgsRetentionReceiptsDownloadResponseReceipt",
     "PlatformOrgsRetentionReceiptsListResponse",
@@ -2139,6 +2141,7 @@ class AuditEntriesListItem(_Model):
     id: int
     at: int
     orgId: str | None
+    orgLabel: str | None = None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
     actorId: str | None
     actorLabel: str | None = None
@@ -2157,6 +2160,7 @@ class AuditEntriesListResponseItemsItem(_Model):
     id: int
     at: int
     orgId: str | None
+    orgLabel: str | None = None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
     actorId: str | None
     actorLabel: str | None = None
@@ -8157,6 +8161,7 @@ class PlatformAuditEntriesListResponseItemsItem(_Model):
     id: int
     at: int
     orgId: str | None
+    orgLabel: str | None = None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
     actorId: str | None
     actorLabel: str | None = None
@@ -8453,6 +8458,14 @@ class PlatformOrgsListResponseItemsItemCounts(_Model):
     connections: int
     apiKeys: int
     members: int | None = None
+
+class PlatformOrgsPersonalLabelsListResponse(_Model):
+    items: _List[PlatformOrgsPersonalLabelsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformOrgsPersonalLabelsListResponseItemsItem(_Model):
+    orgId: str
+    label: str
 
 class PlatformOrgsRetentionReceiptsDownloadResponse(_Model):
     receipt: PlatformOrgsRetentionReceiptsDownloadResponseReceipt

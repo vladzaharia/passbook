@@ -21,6 +21,7 @@ import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
 import { closeOrg } from '../org-lifecycle/service.ts';
 import { markPassesStale } from './branding-stale.ts';
 import { toDto } from './org-dto.ts';
+import { requirePersonalOwner, requirePersonalStatusMove } from './personal-guard.ts';
 import {
   countsFor,
   getOrgRow,
@@ -104,9 +105,11 @@ export async function getOrg(
   ctx: ServiceContext,
   id: string,
   mode: Mode = 'live',
-  platform = false,
+  platform?: { userId: string; afterStatus?: true },
 ): Promise<Summary> {
   const row = await requireOrg(ctx, id);
+  if (platform && !platform.afterStatus)
+    requirePersonalOwner(row.personal_user_id, platform.userId);
   return summarize(
     row,
     (await countsFor(ctx.env.DB, [id], mode)).get(id),
@@ -258,8 +261,31 @@ export async function setOrgStatus(
   admin: OrgAdmin,
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
-  if (before.status === status) return toDto(before);
-  const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
+  await requirePersonalStatusMove(ctx.env.DB, before, status, admin.userId);
+  const entry = {
+    ...auditActor(actor),
+    orgId: id,
+    action: statusAction(status),
+    targetType: 'org',
+    targetId: id,
+    detail: {
+      changes: { status: { from: before.status, to: status } },
+      ...(before.personal_user_id
+        ? { personal: true, override: before.personal_user_id !== admin.userId }
+        : {}),
+    },
+  };
+  if (before.status === status) {
+    // An admin's suspend of an org the owner already suspended is still recorded: the owner cannot lift it after.
+    if (
+      status === 'suspended' &&
+      before.personal_user_id &&
+      before.personal_user_id !== admin.userId
+    )
+      await recordAudit(ctx, entry);
+    return toDto(before);
+  }
+  const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin, entry))
     ? await getOrgRow(ctx.env.DB, id)
     : null;
   if (!saved) {
@@ -269,14 +295,6 @@ export async function setOrgStatus(
       throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
     throw new ConflictError('The organization changed. Reload and retry.', 'ORG_CONFLICT');
   }
-  await recordAudit(ctx, {
-    ...auditActor(actor),
-    orgId: id,
-    action: statusAction(status),
-    targetType: 'org',
-    targetId: id,
-    detail: { changes: { status: { from: before.status, to: status } } },
-  });
   return toDto(saved);
 }
 

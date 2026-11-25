@@ -16,6 +16,8 @@ export const PERSONAL_ORG_TABLES = [
   'org_invitations',
   'org_memberships',
 ] as const;
+/** Unlimited: the plan id `legacy`. A personal org never changes plan. */
+const PERSONAL_PRESET = 'legacy';
 const ADMIN_ROLES = '["org_admin"]';
 
 /** The part of a `Principal` this purpose reads; a narrow shape keeps the tooling's import graph free of db types. */
@@ -72,10 +74,10 @@ export function personalOrgInsert(
   }
   if (
     t === 'org_entitlements' &&
-    (personal ? at('preset') !== 'standard' : at('preset') === 'developer')
+    (personal ? at('preset') !== PERSONAL_PRESET : at('preset') === 'developer')
   )
     throw refuse(
-      personal ? 'A personal org has the standard preset.' : 'A sandbox is not made here.',
+      personal ? 'A personal org has the unlimited preset.' : 'A sandbox is not made here.',
     );
   if (t === 'org_invitations') {
     if (typeof at('accepted_at') !== 'number')

@@ -1090,6 +1090,7 @@
     "ORG_ACCESS_CHANGED",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "RETENTION_CHANGED",
@@ -1274,6 +1275,7 @@
     "ORG_FORBIDDEN",
     "ORG_HELD",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "SANDBOX_CLOSED",
@@ -1319,7 +1321,9 @@
   ],
   "entitlements get /entitlement-presets": [],
   "entitlements get /orgs/{id}/entitlements": [
-    "ORG_NOT_FOUND"
+    "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
   ],
   "entitlements get /{id}/entitlements": [
     "FORBIDDEN",
@@ -1337,6 +1341,7 @@
   "entitlements put /orgs/{id}/entitlements": [
     "ENTITLEMENTS_CHANGED",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
@@ -1638,6 +1643,7 @@
     "IDENTITY_NOT_FOUND",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
@@ -1686,6 +1692,7 @@
   "identity runs get /": [
     "FORBIDDEN",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1695,6 +1702,7 @@
     "IDENTITY_RUN_NOT_FOUND",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
@@ -1719,6 +1727,7 @@
     "ORG_ACCESS_CHANGED",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "RETENTION_CHANGED",
     "SCANNER_REPAIR",
@@ -1745,6 +1754,7 @@
     "ORG_ACCESS_CHANGED",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "RETENTION_CHANGED",
     "SCANNER_REPAIR",
@@ -2180,7 +2190,8 @@
   "metrics get /platform/developer": [],
   "metrics get /platform/overview": [
     "METRICS_NOT_FOUND",
-    "ORG_NOT_FOUND"
+    "ORG_NOT_FOUND",
+    "ORG_PERSONAL"
   ],
   "nfc get /{slug}": [],
   "nfc-keysets get /keysets": [
@@ -2606,6 +2617,7 @@
     "ORG_FORBIDDEN",
     "ORG_HELD",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED",
     "VALIDATION"
@@ -2676,6 +2688,7 @@
     "ORG_CONFLICT",
     "ORG_HELD",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
@@ -2688,8 +2701,11 @@
     "UNAUTHENTICATED"
   ],
   "orgs get /": [],
+  "orgs get /personal-org-labels": [],
   "orgs get /{id}": [
-    "ORG_NOT_FOUND"
+    "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
   ],
   "orgs get /{id}/branding/{slot}/{scale}": [
     "FORBIDDEN",
@@ -2717,6 +2733,7 @@
     "FORBIDDEN",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
@@ -2726,6 +2743,7 @@
     "ORG_CONFLICT",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_SLUG_RESERVED",
     "ORG_SLUG_TAKEN",
     "ORG_STATUS_ALONE",
@@ -2742,6 +2760,7 @@
   "orgs post /{id}/status": [
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED"
   ],
   "orgs put /{id}/branding/{slot}": [
@@ -6884,6 +6903,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_BAKED",
@@ -6898,6 +6918,7 @@
     "INVALID_CURSOR",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_VERSION_CONTENT_CONFLICT",
@@ -6917,6 +6938,7 @@
     "INVALID_INPUT",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_NOT_FOUND",
@@ -6929,6 +6951,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -6937,6 +6960,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED",
     "UPLOAD_NOT_FOUND"
@@ -6948,6 +6972,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_NOT_FOUND",
@@ -6958,6 +6983,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_MODE_MISMATCH",
@@ -6985,6 +7011,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_NOT_FOUND",
@@ -6996,6 +7023,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_CONTENT_CHANGED",
@@ -7008,6 +7036,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_CONTENT_CHANGED",
@@ -7023,6 +7052,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_CONTENT_CHANGED",
@@ -7039,6 +7069,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_CONTENT_CHANGED",
@@ -7057,6 +7088,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_NOT_FOUND",
@@ -7067,6 +7099,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "STAMPS_NONE",
@@ -7080,6 +7113,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_NOT_FOUND",
@@ -7092,6 +7126,7 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_CONTENT_CHANGED",
@@ -7108,6 +7143,7 @@
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_CONFLICT",
@@ -7141,6 +7177,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_BAKED",
@@ -7157,6 +7194,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_ARCHIVED",
@@ -7185,6 +7223,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_ARCHIVED",
@@ -7214,6 +7253,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_ARCHIVED",
@@ -7298,6 +7338,7 @@
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_ASSET_CONFLICT",
@@ -7319,6 +7360,7 @@
     "INVALID_INPUT",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_NOT_FOUND",
@@ -7334,6 +7376,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "STAMPS_ABOVE_MAX",
@@ -7364,6 +7407,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "STAMPS_ABOVE_MAX",
@@ -7395,6 +7439,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_BAKED",
@@ -7411,6 +7456,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "STAMPS_ABOVE_MAX",
@@ -7499,6 +7545,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_CONFLICT",
@@ -7521,6 +7568,7 @@
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_ASSET_CONFLICT",
@@ -7551,6 +7599,7 @@
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_BAKED",
@@ -7577,6 +7626,7 @@
     "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "TEMPLATE_ARCHIVED",
@@ -7616,6 +7666,7 @@
     "MANIFEST_INVALID",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "STAMPS_REDRAW",
@@ -7645,6 +7696,9 @@
     "USER_NOT_FOUND"
   ],
   "users patch /{id}": [
+    "ORG_CONFLICT",
+    "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "SELF_DISABLE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
@@ -7777,6 +7831,7 @@
   "wallet identities get /": [
     "FORBIDDEN",
     "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -7829,6 +7884,7 @@
     "CONFLICT",
     "FORBIDDEN",
     "NOT_FOUND",
+    "ORG_PERSONAL",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_ENROLMENT_PREREQUISITE"

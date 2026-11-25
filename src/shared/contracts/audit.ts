@@ -5,6 +5,8 @@ export const AuditEntrySchema = z.object({
   id: z.number().int(),
   at: TimestampSchema,
   orgId: IdSchema.nullable(),
+  /** "Personal org of <owner>" when the entry is in a personal org (platform reads only); such an org has no directory page. */
+  orgLabel: z.string().nullable().optional(),
   actorType: z.enum(['user', 'api_key', 'system', 'connection', 'device', 'scanner']),
   actorId: z.string().nullable(),
   /** Display name for the actor (user name or email, key name); null when unknown or deleted. */
