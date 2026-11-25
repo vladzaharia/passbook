@@ -120,7 +120,7 @@ export function drawCardBack(pen: Pen, s: Sheet): void {
     ls: 0.06,
     upper: true,
   };
-  const label = c.kind === 'membership' ? 'Membership card' : c.kicker;
+  const label = c.kicker;
   pen.text(label, x, y + (6 - pen.lineHeight(org)) / 2, org, 'right', w);
   y += 6 + 1.4;
   y +=
