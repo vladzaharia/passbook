@@ -5,7 +5,7 @@ import { failure, ok, type Req } from './pocket-http.ts';
 import { assertCtx, assertSubject, assertTarget, refuse } from './policy.ts';
 import type { Registry } from './registry.ts';
 import type { Shared } from './shared.ts';
-import { subjectClass } from './store.ts';
+import { subjectClass } from './store-grants.ts';
 import { type Bucket, type ClaimView, IdpError, type IdpRpc } from './types.ts';
 
 type ClaimsApi = Pick<IdpRpc, 'claims' | 'setClaims'>;
@@ -107,7 +107,7 @@ export function claimsApi(s: Shared): ClaimsApi {
       const target = o.kind === 'subject' ? o.subject : o.target;
       const { registry, settings, keySubject } = await gate.requireWrite({ ...m0, target });
       const ch = await call.guard({ ...m0, target }, () =>
-        assertChanges(changes, settings.claimKeys, true),
+        assertChanges(changes, settings.claimKeys, o.kind === 'subject'),
       );
       // Key names and value lengths only: never a value.
       const label = Object.entries(ch).map(([k, v]) =>
@@ -127,7 +127,11 @@ export function claimsApi(s: Shared): ClaimsApi {
       return call.ledgered(bucket, m, (req) =>
         withLock(
           db,
-          o.kind === 'subject' ? o.subject : `g:claims:${o.target}`,
+          o.kind === 'subject'
+            ? `s:${o.subject}`
+            : o.target.startsWith('g:')
+              ? o.target
+              : `role:${o.target}`,
           deps.now,
           async () => {
             const { body, put, read } = await load(req, o, registry);

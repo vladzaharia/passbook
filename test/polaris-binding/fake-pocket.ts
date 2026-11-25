@@ -337,6 +337,11 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
   return {
     s,
     fetch,
+    /** A group Polaris ID already has, made at `createdAt` (default: now). */
+    addGroup(id: string, name: string, friendly = name, createdAt = clock.now) {
+      groups.set(id, name);
+      meta.set(id, { friendly, createdAt, claims: [], clients: [] });
+    },
     addUser(id: string, o: Partial<User> = {}) {
       s.users.set(id, { ...userFields(id), groups: ['g-other'], ...o });
     },

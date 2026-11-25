@@ -34,6 +34,8 @@ export interface Custom {
   /** The recorded name: writes need the live name to equal it. */
   name: string;
   kind: 'custom' | 'adopted';
+  /** A delete is under way: nothing may be added to it. */
+  deleting?: boolean;
 }
 
 export interface Registry {
@@ -55,7 +57,7 @@ export interface Registry {
   /** The group id of a role the caller may write, or undefined (unmapped, protected). */
   writableId(role: string): string | undefined;
   /** The id of a role or `g:<key>` target, or undefined when it is not managed. */
-  targetId(target: string): string | undefined;
+  targetId(target: string, adding?: boolean): string | undefined;
 }
 
 export interface Settings {
@@ -83,8 +85,11 @@ function build(entries: Entry[], unplaced: Unplaced[], custom: Custom[]): Regist
     allIds: [...ids, ...custom.map((c) => c.id)],
     entry: (role) => entries.find((e) => e.role === role),
     writableId: (role) => writable.find((e) => e.role === (role as WritableRole))?.id,
-    targetId(target) {
-      if (target.startsWith('g:')) return custom.find((c) => `g:${c.key}` === target)?.id;
+    targetId(target, adding = false) {
+      if (target.startsWith('g:')) {
+        const c = custom.find((x) => `g:${x.key}` === target);
+        return adding && c?.deleting ? undefined : c?.id;
+      }
       return writable.find((e) => e.role === (target as WritableRole))?.id;
     },
   };
@@ -110,10 +115,21 @@ export function withRecorded(
   );
 }
 
-function parseSettings(env: BindingEnv, reasons: Set<string>, registryIds: string[]): Settings {
+function parseSettings(
+  env: BindingEnv,
+  reasons: Set<string>,
+  registryIds: string[],
+  names: string[],
+): Settings {
   const customPrefix = env.CUSTOM_GROUP_PREFIX ?? 'passbook_g_';
   const prefix = text(env.GROUP_PREFIX);
-  if (!customPrefix.startsWith(prefix) || !prefix || !/^[a-z0-9_]+$/.test(customPrefix))
+  if (
+    !customPrefix.startsWith(prefix) ||
+    !prefix ||
+    customPrefix === prefix ||
+    names.some((n) => n.startsWith(customPrefix)) ||
+    !/^[a-z0-9_]+$/.test(customPrefix)
+  )
     reasons.add('env_custom_prefix');
   const limit = Number(env.CUSTOM_GROUP_LIMIT ?? '50');
   if (!Number.isInteger(limit) || limit < 0 || limit > 500) reasons.add('env_custom_limit');
@@ -218,7 +234,7 @@ export function parseRegistry(env: BindingEnv): {
     reasons.add('group_protected');
   if (new Set(names).size !== names.length && !reasons.has('group_protected'))
     return bad('env_groups');
-  const settings = parseSettings(env, reasons, ids);
+  const settings = parseSettings(env, reasons, ids, names);
   return { registry: build(entries, unplaced, []), settings, reasons: [...reasons] };
 }
 

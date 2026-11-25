@@ -11,6 +11,8 @@ export function routes(layout: Layout) {
     groupSearch: (name: string) =>
       `${base}/user-groups?search=${encodeURIComponent(name)}&pagination[limit]=100`,
     groups: `${base}/user-groups`,
+    groupPage: (page: number) =>
+      `${base}/user-groups?pagination[limit]=100&pagination[page]=${page}`,
     groupClients: (gid: string) =>
       `${base}/user-groups/${id('group id', gid)}/allowed-oidc-clients`,
     userClaims: (s: string) => `${base}/custom-claims/user/${sub(s)}`,

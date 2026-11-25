@@ -117,6 +117,8 @@ export interface Health {
   unsafe: string[];
   /** Findings that do not block writes (`client_open`). */
   warnings: string[];
+  /** Custom or adopted targets (`g:<key>`) refused on their own: the group is renamed, gone or not allowed. */
+  blocked: string[];
   /** Live group name per registry role, or null when the group was not found. */
   groups: Record<string, string | null>;
   layout: string;

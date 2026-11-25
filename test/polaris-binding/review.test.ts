@@ -31,7 +31,7 @@ describe('H1 per-subject lease', () => {
   it('answers IDP_CONFLICT while another change holds the account, with no write', async () => {
     const { api, pocket } = setup();
     pocket.addUser('u1');
-    await env.DB.prepare("INSERT INTO idp_locks (subject, call_id, until) VALUES ('u1', 'x', ?)")
+    await env.DB.prepare("INSERT INTO idp_locks (subject, call_id, until) VALUES ('s:u1', 'x', ?)")
       .bind(NOW + 30_000)
       .run();
     await expect(api.apply('u1', { add: ['developer'] }, ctx())).rejects.toThrow(/^IDP_CONFLICT/);
@@ -41,7 +41,7 @@ describe('H1 per-subject lease', () => {
   it('takes over an expired lease and releases its own', async () => {
     const { api, pocket } = setup();
     pocket.addUser('u1');
-    await env.DB.prepare("INSERT INTO idp_locks (subject, call_id, until) VALUES ('u1', 'x', ?)")
+    await env.DB.prepare("INSERT INTO idp_locks (subject, call_id, until) VALUES ('s:u1', 'x', ?)")
       .bind(NOW - 1)
       .run();
     await api.apply('u1', { add: ['developer'] }, ctx());
@@ -71,7 +71,7 @@ describe('H1 per-subject lease', () => {
     pocket.s.failWith = { match: /^PUT /, status: 500 };
     await expect(api.setDisabled('c1', true, ctx())).rejects.toThrow(/^IDP_UPSTREAM/);
     expect(await rows('idp_locks')).toEqual([]);
-    await env.DB.prepare("INSERT INTO idp_locks (subject, call_id, until) VALUES ('c1', 'x', ?)")
+    await env.DB.prepare("INSERT INTO idp_locks (subject, call_id, until) VALUES ('s:c1', 'x', ?)")
       .bind(NOW + 30_000)
       .run();
     pocket.s.failWith = undefined;

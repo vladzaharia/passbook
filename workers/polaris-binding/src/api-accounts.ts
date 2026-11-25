@@ -15,7 +15,7 @@ import {
   recordAdded,
   recordOverride,
   subjectClass,
-} from './store.ts';
+} from './store-grants.ts';
 import { type ApplyResult, type Bucket, IdpError, type IdpRpc, type Target } from './types.ts';
 import { putDisabled } from './user-put.ts';
 
@@ -74,7 +74,8 @@ export function accountsApi(s: Shared): AccountsApi {
       );
       if (peeked) await call.guard(m, () => mappedIds(roleTargets, peeked));
       const { registry, keySubject } = await gate.requireWrite(m);
-      await call.guard(m, () => mappedIds([...change.add, ...change.remove], registry));
+      await call.guard(m, () => mappedIds(change.add, registry, true));
+      await call.guard(m, () => mappedIds(change.remove, registry));
 
       // Roles PassBook did not add are left alone without a call, unless an override says otherwise.
       const ours = await liveGrants(db, sub);
@@ -100,7 +101,7 @@ export function accountsApi(s: Shared): AccountsApi {
       const dry = s.dry(c.dryRun);
 
       return call.ledgered(buckets, m, (req) =>
-        withLock(db, sub, deps.now, () => applyLocked(req)),
+        withLock(db, `s:${sub}`, deps.now, () => applyLocked(req)),
       );
 
       async function applyLocked(req: Req): Promise<ApplyResult> {
@@ -140,7 +141,13 @@ export function accountsApi(s: Shared): AccountsApi {
           if (
             added.length &&
             error instanceof IdpError &&
-            ['IDP_CONFLICT', 'IDP_AUTH', 'IDP_NOT_FOUND'].includes(error.code)
+            [
+              'IDP_CONFLICT',
+              'IDP_AUTH',
+              'IDP_NOT_FOUND',
+              'IDP_FROZEN',
+              'IDP_MISCONFIGURED',
+            ].includes(error.code)
           )
             await endGrants(db, sub, added, 'write_failed', deps.now());
           throw error;
@@ -168,8 +175,14 @@ export function accountsApi(s: Shared): AccountsApi {
         await logRefusal(db, m, deps.now(), 'IDP_NOT_MANAGED');
         throw new IdpError('IDP_NOT_MANAGED', 'PassBook does not manage this Polaris ID account.');
       }
+      // Role and custom groups only: an adopted group is someone else's access.
+      const managedForDisable = [
+        ...registry.ids,
+        ...registry.custom.filter((c) => c.kind === 'custom').map((c) => c.id),
+      ];
+
       return call.ledgered(c.dryRun ? 'preview' : 'setDisabled', m, (req) =>
-        withLock(db, sub, deps.now, () => disableLocked(req)),
+        withLock(db, `s:${sub}`, deps.now, () => disableLocked(req)),
       );
 
       async function disableLocked(req: Req) {
@@ -183,7 +196,7 @@ export function accountsApi(s: Shared): AccountsApi {
           false,
         );
         // An account with a group outside the registry belongs to someone else's access too.
-        if (groups.some((g) => !registry.allIds.includes(g)))
+        if (groups.some((g) => !managedForDisable.includes(g)))
           throw new IdpError(
             'IDP_NOT_MANAGED',
             'PassBook does not manage this Polaris ID account.',

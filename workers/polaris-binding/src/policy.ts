@@ -113,6 +113,7 @@ export function assertGroupKey(value: unknown): string {
   if (
     typeof value !== 'string' ||
     !GROUP_KEY.test(value) ||
+    /admin/i.test(value) ||
     WRITABLE_ROLES.includes(value as WritableRole)
   )
     refuse('Invalid group key.');
@@ -162,10 +163,10 @@ export function assertSpec(value: unknown): { kind: SignupKind; groups: string[]
 }
 
 /** The group ids for targets the registry manages. Unmapped, unmanaged and protected targets are refused. */
-export function mappedIds(targets: Target[], registry: Registry): string[] {
+export function mappedIds(targets: Target[], registry: Registry, adding = false): string[] {
   return targets.map(
     (t) =>
-      registry.targetId(t) ??
+      registry.targetId(t, adding) ??
       refuse(t.startsWith('g:') ? `Group ${t} is not managed.` : `Role ${t} is not mapped.`),
   );
 }
