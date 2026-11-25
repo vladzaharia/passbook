@@ -8,11 +8,12 @@ import type {
 } from '../../../shared/contracts/template-releases.ts';
 import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { FeatureNotIncludedError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { FeatureNotIncludedError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
+import { approvalKind } from '../templates/sole-reviewer.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import {
   candidateDto,
@@ -118,17 +119,21 @@ export async function approveProjectionCandidate(
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:review');
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await scopedCandidate(ctx, scope, candidateId, body.candidateHash);
-  if (
-    authority.userId === candidate.authorId ||
-    (authority.userId === candidate.versionAuthorId && !isSystemAuthored(candidate))
-  )
-    throw new ForbiddenError('The author cannot approve this candidate.', 'TEMPLATE_SELF_APPROVAL');
+  const kind = await approvalKind(ctx, {
+    orgId: scope.orgId,
+    mode: scope.mode,
+    provider: scope.provider,
+    selfAuthored:
+      authority.userId === candidate.authorId ||
+      (authority.userId === candidate.versionAuthorId && !isSystemAuthored(candidate)),
+    alone: body.alone,
+  });
   const approval: ApprovalRow = {
     id: ctx.ids.id(),
     candidateId,
     candidateHash: candidate.candidateHash,
     reviewerId: authority.userId,
-    kind: 'peer',
+    kind,
     createdAt: ctx.clock.now(),
   };
   const written = await writeProjectionApproval(ctx, approval, candidate, authority, {

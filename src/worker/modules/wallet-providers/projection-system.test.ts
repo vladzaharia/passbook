@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { groupOf } from '../../../passkit/wallets/fidelity.ts';
 import type { CompileResult, FidelityItem } from '../../../passkit/wallets/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { getLatestRelease } from '../templates/repo-releases.ts';
 import { offersPaused } from './projection-pause.ts';
@@ -26,6 +26,7 @@ import {
   jobCtx,
   type Kit,
   lookup,
+  member,
   pinsOf,
   request,
   S,
@@ -173,6 +174,64 @@ describe('system-authored provider candidates (CW7b)', () => {
         candidateHash: other.candidateHash,
       }),
     ).rejects.toMatchObject({ code: 'TEMPLATE_SELF_APPROVAL' });
+  });
+
+  it('lets the only reviewer approve and publish their own class once they confirm', async () => {
+    const kit = await setup();
+    const candidate = await candidateOf(kit, request());
+    await run(
+      S.env.DB,
+      'UPDATE org_memberships SET revoked_at = ? WHERE org_id = ? AND user_id = ?',
+      [S.clock.now(), kit.orgId, kit.reviewer.userId],
+    );
+    const approve = (alone?: boolean) =>
+      approveProjectionCandidate(kit.ctx, kit.author, kit.templateId, candidate.id, {
+        ...kit.scope,
+        candidateHash: candidate.candidateHash,
+        ...(alone === undefined ? {} : { alone }),
+      });
+    await expect(approve()).rejects.toMatchObject({ code: 'TEMPLATE_SELF_APPROVAL' });
+    const approval = await approve(true);
+    expect(approval).toMatchObject({ kind: 'sole', reviewerId: kit.author.userId });
+    const release = await publishProjectionRelease(kit.ctx, kit.author, kit.templateId, {
+      ...kit.scope,
+      candidateId: candidate.id,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      expectedGeneration: 0,
+    });
+    expect(release).toMatchObject({ generation: 1, approvalId: approval.id });
+  });
+
+  it('voids a sole class approval when a reviewer joins before release', async () => {
+    const kit = await setup();
+    const candidate = await candidateOf(kit, request());
+    await run(
+      S.env.DB,
+      'UPDATE org_memberships SET revoked_at = ? WHERE org_id = ? AND user_id = ?',
+      [S.clock.now(), kit.orgId, kit.reviewer.userId],
+    );
+    const approval = await approveProjectionCandidate(
+      kit.ctx,
+      kit.author,
+      kit.templateId,
+      candidate.id,
+      { ...kit.scope, candidateHash: candidate.candidateHash, alone: true },
+    );
+    S.clock.advance(1000);
+    await member(kit.orgId);
+    await expect(
+      publishProjectionRelease(kit.ctx, kit.author, kit.templateId, {
+        ...kit.scope,
+        candidateId: candidate.id,
+        approvalId: approval.id,
+        candidateHash: candidate.candidateHash,
+        expectedGeneration: 0,
+      }),
+    ).rejects.toBeDefined();
+    expect(
+      await getLatestRelease(S.env.DB, { ...kit.scope, templateId: kit.templateId }),
+    ).toBeNull();
   });
 
   it('refuses the platform reviewer on a candidate that loses something, in the database', async () => {

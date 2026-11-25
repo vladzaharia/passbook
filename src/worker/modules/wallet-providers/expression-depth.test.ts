@@ -67,10 +67,12 @@ describe('expression depth of the largest wallet-provider predicates', () => {
   // CW10b raised three on purpose: a compiled Samsung card (schema 2) bypasses stored evidence with
   // one `OR schema = 2` per evidence predicate (upsert terms 248 -> 252, revoke depth 25 -> 26 and
   // terms 55 -> 56, binding terms 159 -> 162). All stay far below remote D1's limit of 100.
+  // 0222 (sole approval for wallet classes) put `approval.kind = 'sole' OR` in front of each independence
+  // predicate: revoke depth 26 -> 27 and terms 56 -> 58; the three triggers below grew the same way.
   // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32, CTE 25 -> 26.
   it.each([
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
-    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 26, 56],
+    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 27, 58],
     ['release binding', bindingSql, 49, 162],
     ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 25, 32],
     ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 27, 50],
@@ -111,14 +113,14 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       wallet_provider_instances_settle: [4, 2],
       wallet_provider_generation_ready_guard: [15, 16],
       pass_credential_transfer_complete_guard: [48, 59],
-      template_provider_approvals_insert: [33, 37],
+      template_provider_approvals_insert: [33, 39],
       template_approvals_insert: [19, 29],
       // 0199: the schema 2 branch (two evidence bypasses and the card-state row requirement) took the
       // release trigger from 46/113 to 50/131. Remote D1's limit is 100.
-      template_provider_releases_insert: [45, 92],
+      template_provider_releases_insert: [47, 99],
       // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
       wallet_samsung_tombstones_approved_insert: [37, 33],
-      wallet_samsung_tombstone_keyset_insert: [39, 35],
+      wallet_samsung_tombstone_keyset_insert: [39, 37],
     };
     for (const t of triggers) {
       const [depth, n] = ceiling[t.name] ?? [0, 0];
