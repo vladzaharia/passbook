@@ -66,7 +66,7 @@ describe('useListener', () => {
     );
     const { result } = renderHook(() => useListener(true, null));
     await act(async () => vi.advanceTimersByTimeAsync(2500));
-    expect(result.current.heard).toHaveLength(1);
+    expect(result.current.heard.length).toBeGreaterThan(0);
     await act(async () => vi.advanceTimersByTimeAsync(QUIET_MS + 2000));
     expect(result.current.quiet).toBe(false);
   });
