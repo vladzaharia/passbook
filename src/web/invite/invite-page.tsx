@@ -1,4 +1,3 @@
-import { Lock } from 'lucide-react';
 import { useEffect } from 'react';
 import { INVITATION_COPY as copy } from '@/shared/copy/invitation.ts';
 import { TURNSTILE_INVITE_ACTION } from '@/shared/turnstile.ts';
@@ -43,10 +42,6 @@ export function InvitePage() {
             <Body invite={invite} />
           )}
         </div>
-        <p className="flex items-start gap-2 border-t border-border px-5 py-4 text-sm text-fg-muted sm:px-6">
-          <Lock aria-hidden className="mt-0.5 size-4 shrink-0" />
-          This link is private to you.
-        </p>
       </section>
       {invite.siteKey ? (
         <div className="h-0 overflow-hidden">
@@ -126,6 +121,12 @@ function Choices({
   weak: boolean;
   orgName: string;
 }) {
+  // Already signed in (by email link, or as someone else): signing in again leads. A stranger starts with an account.
+  const signIn = (
+    <Button asChild variant={weak || !polaris ? 'primary' : 'outline'}>
+      <a href={SIGN_IN_HREF}>{copy.signIn}</a>
+    </Button>
+  );
   return (
     <div className="flex flex-col gap-3">
       {weak ? (
@@ -133,8 +134,10 @@ function Choices({
           {copy.signInLine.replace('{org}', orgName)}
         </p>
       ) : null}
+      {weak ? signIn : null}
       {polaris ? (
         <Button
+          variant={weak ? 'outline' : 'primary'}
           loading={invite.working === 'create'}
           disabled={invite.working !== null}
           onClick={() => void invite.create()}
@@ -142,9 +145,7 @@ function Choices({
           {copy.create}
         </Button>
       ) : null}
-      <Button asChild variant={polaris ? 'outline' : 'primary'}>
-        <a href={SIGN_IN_HREF}>{copy.signIn}</a>
-      </Button>
+      {weak ? null : signIn}
       {polaris ? (
         <Button
           variant="outline"
