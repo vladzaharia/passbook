@@ -1,5 +1,6 @@
 // Seeds for the IdP-only operations: the console's metrics, the developer portal, wallet accounts and org members.
 // Same contract as example-seeds.ts: a partial value the sampler fits to the schema.
+import { DEFAULT_TIME_ZONE } from '../../src/shared/time-zone.ts';
 import {
   CHANNELS,
   IDENTITY_RUN,
@@ -125,7 +126,7 @@ const SETTINGS = [
     scope: SCOPE,
     key: 'org.timeZone',
     value: 'America/Los_Angeles',
-    default: 'UTC',
+    default: DEFAULT_TIME_ZONE,
     source: 'org',
     updatedAt: T.created,
     updatedBy: IDS.user,

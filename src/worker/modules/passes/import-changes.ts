@@ -70,12 +70,9 @@ export async function rowChanges(
         .filter((p) => p.code === 'IMPORT_MANUAL_KEPT')
         .map((p) => p.field),
     );
-    const changes = fieldChanges(
-      schema,
-      before,
-      { ...before, ...input },
-      timeZone ? { timeZone } : {},
-    ).filter((c) => !kept.has(c.key));
+    const changes = fieldChanges(schema, before, { ...before, ...input }, { timeZone }).filter(
+      (c) => !kept.has(c.key),
+    );
     if (changes.length > 0) out.set(r.row_no, changes);
   }
   return out;

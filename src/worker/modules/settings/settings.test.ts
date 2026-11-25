@@ -428,6 +428,28 @@ describe('settings api', () => {
     expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBe('America/Los_Angeles');
   });
 
+  it('audits an explicit save of the default zone', async () => {
+    const org = await makeOrg(fx);
+    await addMembership(org.id);
+    const res = await call(
+      'PUT',
+      '',
+      { scope: `org:${org.id}`, values: { 'org.timeZone': 'America/Los_Angeles' } },
+      tenantUser.headers,
+    );
+    expect(res.status).toBe(200);
+    const rows = await all<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'settings.update' AND org_id = ?",
+      [org.id],
+    );
+    expect(JSON.parse(rows[0]?.detail ?? '{}')).toEqual({
+      changes: {
+        'org.timeZone': { from: 'America/Los_Angeles', to: 'America/Los_Angeles' },
+      },
+    });
+  });
+
   it('requires a platform admin for platform settings', async () => {
     await expectProblem(await call('GET', '', undefined, tenantUser.headers), 403, 'FORBIDDEN');
     await expectProblem(

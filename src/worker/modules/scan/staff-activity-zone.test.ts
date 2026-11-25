@@ -36,11 +36,11 @@ describe('staff "today" count', () => {
        VALUES ('s-1', ?, 'live', ?, ?, 'user', 'u', 'k', ?, 'i-1', 'h', 'manual', 'done', 'ok', 'check_in', ?)`,
       [kit.org.id, pass.id, tpl, staff.id, Date.UTC(2026, 4, 31, 20)],
     );
-    const today = async (zone?: string) =>
+    const today = async (zone: string) =>
       (await readStaffActivity(kit.env.DB, auth, [], now, PAGE, zone)).find(
         (r) => r.m_id === staff.id,
       )?.m_today;
-    expect(await today()).toBe(1);
+    expect(await today('America/Los_Angeles')).toBe(1);
     expect(await today('UTC')).toBe(0);
   });
 });

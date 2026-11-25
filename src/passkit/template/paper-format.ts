@@ -1,4 +1,4 @@
-import { CALENDAR_ZONE, DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
+import { DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
 
 /**
  * Dates on paper. Content carries ISO times and a zone; the page and the PDF format them here so
@@ -20,8 +20,9 @@ export function paperZoneOf(iso: string | undefined, named?: string): string | u
     }
   }
   const m = iso ? OFFSET.exec(iso) : null;
-  if (!m) return undefined;
-  return m[1] ? `${m[1]}${m[2]}:${m[3]}` : CALENDAR_ZONE;
+  // A `Z` is how the time was written, not a zone the template chose: the org zone applies.
+  if (!m?.[1]) return undefined;
+  return `${m[1]}${m[2]}:${m[3]}`;
 }
 
 function zoneName(zone: string, at: Date, style: 'short' | 'longGeneric'): string | undefined {

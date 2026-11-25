@@ -1,4 +1,3 @@
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { dayStartMs } from './dto-console.ts';
 import { scanLedgerScopeSql } from './repo-feed.ts';
@@ -37,7 +36,7 @@ export async function readStaffActivity(
   zones: readonly string[],
   now: number,
   page: StaffPage,
-  orgZone: string = DEFAULT_TIME_ZONE,
+  orgZone: string,
 ): Promise<StaffActivityRaw[]> {
   const name = staffNameMatch(page.q);
   const cursor = afterCursorSql(page.cursor);

@@ -14,3 +14,6 @@ export const DEFAULT_TIME_ZONE_LABEL = 'Pacific Time (Seattle)';
 export function resolveOrgTimeZone(setting: string | null | undefined): string {
   return setting || DEFAULT_TIME_ZONE;
 }
+
+/** The name shown for a `Z` offset. */
+export const UTC_LABEL = 'UTC';

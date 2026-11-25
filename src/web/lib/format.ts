@@ -1,5 +1,6 @@
 import { NO_EMAIL_LABEL } from '../../shared/email.ts';
-import { CALENDAR_ZONE } from '../../shared/time-zone.ts';
+import { formatDayIn } from '../../shared/format-date.ts';
+import { CALENDAR_ZONE, DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
 
 export { formatEndedOn } from '../../shared/format-date.ts';
 
@@ -95,8 +96,9 @@ const EXPIRY = new Map<string, Intl.DateTimeFormat>();
 
 /**
  * "Nov 21, 2030, 11:30 AM" for a pass's expiry (ISO string; '' when it is not a date). In
- * `timeZone` when it is known; otherwise in the zone the timestamp itself carries (its offset, or
- * UTC for Z), with that zone named so nobody reads it as local time. No DOM: /p renders it.
+ * `timeZone` when it is known; otherwise in the zone the timestamp itself carries (its explicit
+ * offset), else Seattle time (a Z is how it was written, not a zone), with that zone named so nobody
+ * reads it as local time. No DOM: /p renders it.
  */
 export function formatExpiry(iso: string, timeZone?: string): string {
   const at = new Date(iso);
@@ -110,7 +112,7 @@ export function formatExpiry(iso: string, timeZone?: string): string {
       timeZone: CALENDAR_ZONE,
     }).format(at);
   }
-  const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? CALENDAR_ZONE;
+  const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? DEFAULT_TIME_ZONE;
   const named = timeZone === undefined;
   const key = `${zone}|${named}`;
   let formatter = EXPIRY.get(key);
@@ -276,11 +278,12 @@ export function formatColor(css: string): string {
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/;
 
 /** A bare ISO date or date-time as a day (Jan 1, 2026); any other text as it came. */
-export function formatMaybeDate(text: string): string {
+export function formatMaybeDate(text: string, timeZone: string = DEFAULT_TIME_ZONE): string {
   if (!ISO_DATE.test(text)) return text;
-  // A date or a Z time names a UTC day: the zone of the reader must not move it.
-  return /(?:Z|^\d{4}-\d{2}-\d{2})$/.test(text)
-    ? UTC_DAY.format(Date.parse(text))
+  // A bare date is a calendar day: the reader's zone must not move it. A Z time reads in the org zone.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return UTC_DAY.format(Date.parse(text));
+  return text.endsWith('Z')
+    ? formatDayIn(Date.parse(text), timeZone, LOCALE)
     : formatDay(Date.parse(text));
 }
 

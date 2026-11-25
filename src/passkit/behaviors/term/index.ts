@@ -34,7 +34,7 @@ export interface TermConfig {
    */
   unit: TermUnit;
   length: number;
-  /** IANA zone the calendar and the end-of-day are read in. Default UTC. */
+  /** IANA zone the calendar and the end-of-day are read in. Default: the org's zone, else Seattle time. */
   timeZone?: string;
   /** End at 23:59:59 local on the last day instead of at the start's time of day. Always on for `month-end`. */
   endOfDay?: boolean;

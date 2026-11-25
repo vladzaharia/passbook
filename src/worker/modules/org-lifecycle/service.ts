@@ -5,6 +5,7 @@ import type {
   OrgLifecycleSchema,
 } from '../../../shared/contracts/org-lifecycle.ts';
 import { ORG_LIFECYCLE_COPY as COPY } from '../../../shared/copy/org-lifecycle.ts';
+import { localDate } from '../../../shared/zoned.ts';
 import { orgClosedEmail, orgReopenedEmail } from '../../email/org-closed.ts';
 import type { Actor } from '../../platform/context.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
@@ -20,6 +21,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { readOrgAdminEmails } from '../retention/repo.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import { exportKey, LINK_MS } from './export.ts';
 import {
@@ -46,7 +48,6 @@ type ExportDto = z.infer<typeof OrgExportSchema>;
 type ClosedDto = z.infer<typeof ClosedOrgSchema>;
 
 const notFound = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 function lifecycleDto(row: LifecycleRow, now: number): Lifecycle {
   const closed = row.status === 'deleted';
@@ -149,7 +150,11 @@ export async function closeOrg(
   await purgeOrgWalletArt(ctx, orgId);
   const after = await lifecycleRow(ctx.env.DB, orgId);
   if (after?.purge_after) {
-    const mail = orgClosedEmail(baseUrl(ctx.env), before.name, day(after.purge_after));
+    const mail = orgClosedEmail(
+      baseUrl(ctx.env),
+      before.name,
+      localDate(after.purge_after, await readOrgTimeZone(ctx.env.DB, orgId)),
+    );
     await mailAdmins(ctx, orgId, mail);
   }
   return lifecycleDto(after ?? before, ctx.clock.now());
@@ -324,6 +329,6 @@ export async function openExport(
   return {
     body: object.body,
     size: object.size,
-    name: `${org.slug}-export-${day(export_.created_at)}.zip`,
+    name: `${org.slug}-export-${localDate(export_.created_at, await readOrgTimeZone(ctx.env.DB, orgId))}.zip`,
   };
 }

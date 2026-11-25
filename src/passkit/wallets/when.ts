@@ -1,4 +1,4 @@
-import { CALENDAR_ZONE } from '../../shared/time-zone.ts';
+import { UTC_LABEL } from '../../shared/time-zone.ts';
 
 /**
  * A date or time as text, the way Apple's own styles read it in English, from the pass's own wall
@@ -52,7 +52,7 @@ function dateText(y: number, mo: number, d: number, style: string | undefined): 
 }
 
 function zoneText(zone: string): string {
-  if (zone === 'Z') return CALENDAR_ZONE;
+  if (zone === 'Z') return UTC_LABEL;
   const m = /^([+-])(\d{2}):?(\d{2})$/u.exec(zone);
   if (!m) return '';
   const hours = Number(m[2]);

@@ -70,6 +70,16 @@ describe('formatEndedOn', () => {
   });
 });
 
+describe('formatExpiry and formatMaybeDate in the org zone', () => {
+  it('reads a Z time in Seattle time unless a zone is given', () => {
+    expect(formatExpiry('2026-12-01T03:00:00Z')).toBe('Nov 30, 2026, 7:00 PM PST');
+    expect(formatExpiry('2026-12-01T03:00:00Z', 'Asia/Tokyo')).toBe('Dec 1, 2026, 12:00 PM');
+    expect(formatMaybeDate('2026-12-01T03:00:00Z')).toBe('Nov 30, 2026');
+    expect(formatMaybeDate('2026-12-01T03:00:00Z', 'Asia/Tokyo')).toBe('Dec 1, 2026');
+    expect(formatMaybeDate('2026-12-01', 'Asia/Tokyo')).toBe('Dec 1, 2026');
+  });
+});
+
 describe('formatExpiry date-only', () => {
   it('shows the written day in a western zone', () => {
     expect(formatExpiry('2026-12-01', 'America/Los_Angeles')).toBe('Dec 1, 2026');
