@@ -39,7 +39,7 @@ export async function openCommand(
   if (!constantTimeEqual(mac, want)) return { ok: false, sw: SW_INTEGRITY, drop: true };
   const header = covered.slice(0, headerLength);
   const rest = covered.slice(headerLength);
-  let data = rest;
+  let data: Uint8Array = rest;
   if (full) {
     if (rest.length === 0 || rest.length % 16 !== 0)
       return { ok: false, sw: SW_LENGTH, drop: false };

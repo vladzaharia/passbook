@@ -74,7 +74,7 @@ async function changeKey(tag: SimTag, s: Ev2Session, keyNo: number, data: Uint8A
   if (s.keyNo !== 0) return status(NO_PERMISSION);
   const own = keyNo === s.keyNo;
   if (data.length !== (own ? 17 : 21)) return status(0x917e);
-  let next = data.slice(0, 16);
+  let next: Uint8Array = data.slice(0, 16);
   if (!own) {
     next = xor(next, tag.keys[keyNo] as Uint8Array);
     const crc = crc32Nk(next);
