@@ -2288,6 +2288,7 @@ type HoldersOffboardResponse struct {
 	Holders int64 `json:"holders"`
 	Passes  int64 `json:"passes"`
 	Tags    int64 `json:"tags"`
+	More    bool  `json:"more"`
 }
 
 type HoldersOffboardResult = HoldersOffboardResponse

@@ -701,7 +701,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"holders.offboard", "POST", "/api/v1/offboard", false,
-		`{}`, `{"dryRun":false,"holders":0,"passes":0,"tags":0}`,
+		`{}`, `{"dryRun":false,"holders":0,"passes":0,"tags":0,"more":false}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b HoldersOffboardBody
 			if err := json.Unmarshal(body, &b); err != nil {

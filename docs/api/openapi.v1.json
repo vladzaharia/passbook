@@ -46994,13 +46994,17 @@
           },
           "tags": {
             "type": "integer"
+          },
+          "more": {
+            "type": "boolean"
           }
         },
         "required": [
           "dryRun",
           "holders",
           "passes",
-          "tags"
+          "tags",
+          "more"
         ]
       },
       "DeliveriesListResponse": {
