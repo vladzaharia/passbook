@@ -6,7 +6,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { doneCursor } from './files-dto.ts';
-import { csvBody, MEMBERS, useUploadConnector } from './files-test-kit.ts';
+import { csvBody, MEMBERS, useUploadConnector } from './files-fixtures.ts';
 import { addMembership, type Kit, makeKit, withWorkflow } from './test-kit.ts';
 
 let kit: Kit;

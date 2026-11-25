@@ -5,7 +5,7 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import { entitled, withinLimit } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectorItem } from './entitlement.ts';
-import { addBind, type Bind, bindChecks } from './repo-files.ts';
+import { addBind, type Bind, bindChecks } from './repo-files-writes.ts';
 import {
   type ConnectionActor,
   commitOrNull,

@@ -943,7 +943,8 @@
     "SCAN_STAFF_CHANGED",
     "STALE",
     "TEMPLATE_RELEASE_CHANGED",
-    "UNAUTHENTICATED"
+    "UNAUTHENTICATED",
+    "VALIDATION"
   ],
   "connections post /{id}/files": [
     "ACTOR_CHANGED",

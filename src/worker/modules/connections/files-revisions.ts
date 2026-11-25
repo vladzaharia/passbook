@@ -25,16 +25,14 @@ import { auditFile, bytesOf, rowOf, takeUpload, zoneOf } from './files-service.t
 import { deleteFileObjects, putSource, readRefs, writeRows } from './files-store.ts';
 import {
   cursorOf,
-  discardFile,
   type FileRow,
   fileInState,
   getFile,
-  insertPending,
   listRevisions,
   nextRevision,
-  promotePending,
   userNames,
 } from './repo-files.ts';
+import { discardFile, insertPending, promotePending } from './repo-files-writes.ts';
 import { auditActor, requireConnection } from './service-shared.ts';
 import { requireConnector } from './validate.ts';
 

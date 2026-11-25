@@ -39,15 +39,8 @@ import {
   writeRows,
 } from './files-store.ts';
 import { usableZone } from './files-values.ts';
-import {
-  type Bind,
-  discardFile,
-  type FileRow,
-  getFile,
-  insertDraft,
-  openDrafts,
-  updateDraft,
-} from './repo-files.ts';
+import { type FileRow, getFile, openDrafts } from './repo-files.ts';
+import { type Bind, discardFile, insertDraft, updateDraft } from './repo-files-writes.ts';
 import { auditActor } from './service-shared.ts';
 
 type Upload = z.infer<typeof UploadConnectionFileSchema>;

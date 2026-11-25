@@ -6,10 +6,10 @@ import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { authorizeConnection, type ConnectionAuthority } from './access.ts';
 import { rejectFile } from './files-errors.ts';
+import { createUpload, csvBody, MEMBERS, useUploadConnector } from './files-fixtures.ts';
 import { filesPort } from './files-port.ts';
 import { createDraft, discardDraft, readDraft, reparseDraft, takeUpload } from './files-service.ts';
 import * as store from './files-store.ts';
-import { createUpload, csvBody, MEMBERS, useUploadConnector } from './files-test-kit.ts';
 import { getFile } from './repo-files.ts';
 import { addMembership, createDemo, type Kit, makeKit } from './test-kit.ts';
 

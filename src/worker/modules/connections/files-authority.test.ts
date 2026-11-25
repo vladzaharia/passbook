@@ -10,7 +10,7 @@ import { denyAllStores } from '../../platform/auth.ts';
 import { all, first } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { csvBody, MEMBERS, useUploadConnector } from './files-test-kit.ts';
+import { csvBody, MEMBERS, useUploadConnector } from './files-fixtures.ts';
 import { insertConnection } from './repo.ts';
 import { addMembership, type Kit, makeKit, withWorkflow } from './test-kit.ts';
 

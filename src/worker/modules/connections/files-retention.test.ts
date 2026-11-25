@@ -4,9 +4,9 @@ import type { SessionAuth } from '../../platform/auth.ts';
 import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { authorizeConnection } from './access.ts';
+import { createUpload, csvBody, MEMBERS, useUploadConnector } from './files-fixtures.ts';
 import { dailyConnectionFiles, FILE_LIMITS, sweepOrphans } from './files-retention.ts';
 import { createDraft } from './files-service.ts';
-import { createUpload, csvBody, MEMBERS, useUploadConnector } from './files-test-kit.ts';
 import { addMembership, type Kit, makeKit } from './test-kit.ts';
 
 const HOUR = 3_600_000;
