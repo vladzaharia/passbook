@@ -7,6 +7,7 @@ import { TemplateListSchema } from '@/shared/contracts/templates.ts';
 import { UserListSchema } from '@/shared/contracts/users.ts';
 import { api } from './api.ts';
 import { useOrgScope } from './org-filter.tsx';
+import { isSandbox } from './org-lists.ts';
 import { membershipsQuery, useSession } from './session.ts';
 
 const MIN_QUERY = 2;
@@ -66,7 +67,10 @@ export function useOrgOptions(enabled = true) {
   const select = useCallback(
     ({ items }: { items: OrgMembership[] }) => ({
       items: items
-        .filter((membership) => membership.userId === userId && membership.revokedAt === null)
+        .filter(
+          (membership) =>
+            membership.userId === userId && membership.revokedAt === null && !isSandbox(membership),
+        )
         .map((membership) => ({
           id: membership.orgId,
           name: membership.orgName,

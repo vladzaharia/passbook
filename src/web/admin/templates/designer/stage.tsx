@@ -52,9 +52,10 @@ export function DesignerStage({
     return out;
   }, [org, manifest]);
   // The Samsung app link is the organization's website when it has one: the preview shows what a pass gets.
-  const website = useSettings(`org:${orgId}`, Boolean(orgId)).data?.items.find(
-    (i) => i.key === 'org.website',
-  )?.value;
+  const orgSettings = useSettings(`org:${orgId}`, Boolean(orgId)).data?.items;
+  const website = orgSettings?.find((i) => i.key === 'org.website')?.value;
+  const zone = orgSettings?.find((i) => i.key === 'org.timeZone')?.value;
+  const timeZone = typeof zone === 'string' && zone ? zone : undefined;
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
@@ -89,9 +90,10 @@ export function DesignerStage({
             assets,
             input: (manifest.sample as PreviewSource['input'] | undefined) ?? NO_INPUT,
             ...(typeof website === 'string' && website ? { website } : {}),
+            ...(timeZone ? { timeZone } : {}),
           }
         : null,
-    [passJson, assets, assetBase, manifest, website],
+    [passJson, assets, assetBase, manifest, website, timeZone],
   );
   return (
     <ChannelPreviews
@@ -105,6 +107,7 @@ export function DesignerStage({
           manifest={manifest}
           templateId={templateId}
           orgId={orgId}
+          timeZone={timeZone}
           assets={card.assets}
           assetBase={card.assetBase}
           onEdit={onPaper}

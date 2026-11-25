@@ -8,12 +8,18 @@ export interface PrintHit {
   cause: string | null;
 }
 
-/** A print code that no longer admits: replaced by a reprint, or voided. Active and used prints go on to the pass's own rules. */
+/**
+ * A print code that no longer admits: replaced by a reprint, or voided. An active print goes on to
+ * the pass's own rules, and so does one voided with its pass while the pass is still void: the
+ * door then says why the pass is refused.
+ */
 export function printRefusal(candidate: {
   print?: PrintHit;
+  pass: Pick<Pass, 'status'>;
 }): { reason: 'print_replaced' | 'print_voided'; at: number | null } | null {
   const print = candidate.print;
   if (print?.status !== 'voided') return null;
+  if (print.cause === 'pass_voided' && candidate.pass.status === 'voided') return null;
   return {
     reason: print.cause === 'replaced' ? 'print_replaced' : 'print_voided',
     at: print.voidedAt,
