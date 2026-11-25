@@ -29,7 +29,9 @@ import {
   assertPointer,
   assertSafeUrls,
   assertTemplateUsable,
+  orgZoneOf,
   parseWith,
+  prepare,
   requireConnector,
 } from './validate.ts';
 import { validateVoidWhen } from './void-when.ts';
@@ -122,7 +124,11 @@ export async function update(
 
   if (input.name !== undefined) set('name', input.name);
   if (input.config !== undefined) {
-    const config = parseWith(def.configSchema, input.config, 'config');
+    const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
+      now,
+      timeZone: await orgZoneOf(sctx, conn.orgId),
+      previous: def.prepareConfig ? storedConfig(def, conn) : undefined,
+    });
     assertFixedConfig(def, conn, config);
     await assertOriginMoveEntitled(sctx, def, conn, config as Record<string, unknown>);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);

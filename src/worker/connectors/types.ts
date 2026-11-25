@@ -158,7 +158,16 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
    */
   egress?(config: C): string[];
   /** Fills create-time values (such as a date anchor) once, before a new connection's config is stored. */
-  prepareConfig?(config: C, context: { now: number }): C;
+  prepareConfig?(
+    config: C,
+    context: {
+      now: number;
+      /** The org's zone, so a stamped date is the org's local date. */
+      timeZone: string;
+      /** The stored config on an update: a value the caller left out keeps it. */
+      previous?: C;
+    },
+  ): C;
   /** False when listChanges is not usable for this config; the core then fetches per pass. Default: true if listChanges exists. */
   hasList?(config: C): boolean;
 

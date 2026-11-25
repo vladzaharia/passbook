@@ -42,7 +42,9 @@ import {
   assertPointer,
   assertSafeUrls,
   assertTemplateUsable,
+  orgZoneOf,
   parseWith,
+  prepare,
   requireConnector,
 } from './validate.ts';
 import { validateVoidWhen } from './void-when.ts';
@@ -116,7 +118,11 @@ export async function create(
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   assertFileIdAllowed(def, input.fileId);
-  const config = parseWith(def.configSchema, input.config, 'config');
+  const now = sctx.clock.now();
+  const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
+    now,
+    timeZone: await orgZoneOf(sctx, input.orgId),
+  });
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   assertFileInput(def, input.fileId, true);
   const mode =
@@ -141,7 +147,6 @@ export async function create(
   await assertSafeUrls(sctx, def.urls?.(config) ?? []);
   const secretsJson = input.secrets ? secretsFor(def, input.secrets) : null;
 
-  const now = sctx.clock.now();
   const id = sctx.ids.id();
   const wantsWebhook = mode === 'webhook' || mode === 'hybrid';
   const webhookSecret =

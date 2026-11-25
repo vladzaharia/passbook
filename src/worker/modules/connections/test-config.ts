@@ -21,7 +21,9 @@ import {
   assertFileIdAllowed,
   assertOrg,
   assertSafeUrls,
+  orgZoneOf,
   parseWith,
+  prepare,
   requireConnector,
 } from './validate.ts';
 
@@ -117,7 +119,10 @@ export async function openUnsaved(
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   assertFileIdAllowed(def, input.fileId);
-  const config = parseWith(def.configSchema, input.config, 'config');
+  const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
+    now: sctx.clock.now(),
+    timeZone: await orgZoneOf(sctx, input.orgId),
+  });
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema
     ? parseWith(def.secretSchema, input.secrets ?? {}, 'secrets')
@@ -144,7 +149,10 @@ export async function testConfig(
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   assertFileIdAllowed(def, input.fileId);
-  const config = parseWith(def.configSchema, input.config, 'config');
+  const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
+    now: sctx.clock.now(),
+    timeZone: await orgZoneOf(sctx, input.orgId),
+  });
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema
     ? parseWith(def.secretSchema, input.secrets ?? {}, 'secrets')
