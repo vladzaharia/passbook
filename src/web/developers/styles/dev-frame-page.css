@@ -213,7 +213,6 @@ main:not(.main):has(.wh) > .tools {
   }
 }
 
-
 /* The page's crumbs stand where the operation's rule and gap began. */
 .main > .crumbs ~ .op:first-of-type {
   margin-top: 0;
