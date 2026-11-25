@@ -10,8 +10,11 @@ import { asBrowserPage } from '../../ssr/error-response.ts';
 type Ctx = Context<AppBindings>;
 type Address = keyof typeof MARKETING_ASSETS;
 
-/** Every built page loads its hashed entry from here; the app's shell never does. */
-const BUILT_MARK = '/assets/marketing-';
+/**
+ * Every site page loads its own entry: the hashed /assets/marketing-* file in a build, the module
+ * under src/web/marketing/pages in `vite dev`. The app's shell loads neither.
+ */
+const PAGE_MARKS = ['/assets/marketing-', '/src/web/marketing/pages/'];
 
 /**
  * The built page for an address, or null when the build has none. A missing file would come back
@@ -25,7 +28,9 @@ async function builtPage(
   const res = await c.env.ASSETS.fetch(new Request(asset));
   if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('text/html')) return null;
   const html = await res.text();
-  return html.includes(BUILT_MARK) ? { html, etag: res.headers.get('etag') } : null;
+  return PAGE_MARKS.some((mark) => html.includes(mark))
+    ? { html, etag: res.headers.get('etag') }
+    : null;
 }
 
 function pageResponse(
@@ -38,7 +43,6 @@ function pageResponse(
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'content-security-policy': marketingContentSecurityPolicy(),
-      // The edge must not inject Cloudflare's analytics beacon, which the CSP refuses.
       'x-robots-tag': 'index, follow',
       ...headers,
     },
@@ -63,16 +67,18 @@ export async function marketingPage(c: Ctx, address: Address): Promise<Response>
  * cookie gets the shell, whose root guard sends it to /login). Presence only, no session read.
  */
 export async function homePage(c: Ctx): Promise<Response> {
-  const headers = { 'cache-control': 'private, no-cache', vary: 'Cookie' };
+  // no-transform keeps the zone from injecting Cloudflare's analytics beacon, which the marketing CSP refuses.
+  const cacheControl = 'private, no-cache, no-transform';
   if (getCookie(c, SESSION_COOKIE)) {
     const shell = await c.env.ASSETS.fetch(c.req.raw);
     const out = new Response(c.req.method === 'HEAD' ? null : shell.body, shell);
-    for (const [name, value] of Object.entries(headers)) out.headers.set(name, value);
+    out.headers.set('cache-control', cacheControl);
+    out.headers.append('vary', 'Cookie');
     return staticAsset(out);
   }
   const page = await builtPage(c, MARKETING_PATHS.home);
   if (!page) return await notBuilt(c);
-  return pageResponse(c, page, headers);
+  return pageResponse(c, page, { 'cache-control': cacheControl, vary: 'Cookie' });
 }
 
 /**
@@ -108,7 +114,8 @@ export async function accessSentPage(c: Ctx): Promise<Response> {
     c,
     { html: rewritten.body ?? '', etag: null },
     {
-      'cache-control': 'no-store',
+      // no-transform: as for Home, the zone must not inject the analytics beacon.
+      'cache-control': 'no-store, no-transform',
       'x-robots-tag': 'noindex, nofollow',
     },
   );

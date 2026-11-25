@@ -31,7 +31,9 @@ function appEnv(pages: Record<string, string> = PAGES): AppEnv {
         return new Response(page, {
           headers: { 'content-type': 'text/html; charset=utf-8', etag: '"v1"' },
         });
-      return new Response(SPA, { headers: { 'content-type': 'text/html', 'x-shell': '1' } });
+      return new Response(SPA, {
+        headers: { 'content-type': 'text/html', 'x-shell': '1', vary: 'Accept-Encoding' },
+      });
     },
   };
   return { ...env, ASSETS } as unknown as AppEnv;
@@ -97,7 +99,7 @@ describe('marketing pages', () => {
     expect(html).toMatch(/<div id="acc-done"\s+tabindex="-1">/);
     expect(html).toContain('class="panel acc-ticket sent"');
     expect(html).toContain('data-buddy="tuck"');
-    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('cache-control')).toBe('no-store, no-transform');
     expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
     expect(res.headers.get('content-security-policy')).toContain('passbook-marketing');
   });
@@ -108,12 +110,24 @@ describe('marketing pages', () => {
   });
 });
 
+describe('dev server pages', () => {
+  it('serves a page whose entry is the source module', async () => {
+    const dev = {
+      '/marketing/door':
+        '<!doctype html><script type="module" src="/src/web/marketing/pages/door.ts"></script>',
+    };
+    const res = await call('/door', {}, appEnv(dev));
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('pages/door.ts');
+  });
+});
+
 describe('home', () => {
   it('with no session cookie is Home, varying by cookie', async () => {
     const res = await call('/');
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('<title>Home</title>');
-    expect(res.headers.get('cache-control')).toBe('private, no-cache');
+    expect(res.headers.get('cache-control')).toBe('private, no-cache, no-transform');
     expect(res.headers.get('vary')).toContain('Cookie');
     expect(res.headers.get('x-robots-tag')).toBe('index, follow');
     expect(res.headers.get('content-security-policy')).toContain('passbook-marketing');
@@ -124,8 +138,9 @@ describe('home', () => {
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(SPA);
     expect(res.headers.get('x-shell')).toBe('1');
-    expect(res.headers.get('cache-control')).toBe('private, no-cache');
+    expect(res.headers.get('cache-control')).toBe('private, no-cache, no-transform');
     expect(res.headers.get('vary')).toContain('Cookie');
+    expect(res.headers.get('vary')).toContain('Accept-Encoding');
     expect(res.headers.get('content-security-policy') ?? '').not.toContain('passbook-marketing');
   });
 
