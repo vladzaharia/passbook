@@ -237,7 +237,8 @@ export function paperContent(input: PaperContentInput): PaperContent {
     ),
   ].slice(0, MAX_HELP);
   const { zone, zoneNamed } = printZone(
-    [parts.start, parts.validUntil, parts.end, parts.validFrom],
+    { start: parts.start, end: parts.end, doors: parts.doors },
+    [parts.validUntil, parts.validFrom],
     named,
     input.orgTimeZone,
   );

@@ -88,7 +88,7 @@ describe('times keep their own zone', () => {
       checkIn: '2030-11-02T15:00:00-07:00',
       checkOut: '2030-11-04T11:00:00-08:00',
     });
-    expect(text).toContain('Starts 3:00 pm · Ends Mon 4 Nov 2030, 11:00 am GMT-8');
+    expect(text).toContain('Ends Mon 4 Nov 2030, 11:00 am GMT-8');
   });
 
   it('a New York day that springs forward labels the end EDT', async () => {
@@ -96,7 +96,7 @@ describe('times keep their own zone', () => {
       startsAt: '2030-03-10T01:00:00-05:00',
       endsAt: '2030-03-10T03:30:00-04:00',
     });
-    expect(text).toContain('Starts 1:00 am · Ends 3:30 am EDT (EST)');
+    expect(text).toContain('Starts 1:00 am EST · Ends 3:30 am EDT');
   });
 
   it('a time written in UTC reads in the org zone, and says so', async () => {
@@ -110,6 +110,40 @@ describe('times keep their own zone', () => {
   it('a template zone wins over the org zone', async () => {
     const { content } = await printed('starter-timed-ticket', {}, 'Asia/Tokyo');
     expect(content.zone).toBe('America/New_York');
+  });
+});
+
+describe('a start at midnight UTC is a clock, not a bare date', () => {
+  it.each([
+    [
+      'starter-hotel-stay',
+      { checkIn: '2030-11-19T00:00:00Z' },
+      'America/Los_Angeles',
+      '4:00 pm PST',
+    ],
+    ['starter-booking', { startsAt: '2030-07-02T00:00:00Z' }, 'America/Los_Angeles', '5:00 pm PDT'],
+    ['starter-booking', { startsAt: '2030-11-25T00:00:00Z' }, 'America/New_York', '7:00 pm EST'],
+  ])('%s %j in %s prints %s', async (slug, late, zone, want) => {
+    const { content, start } = await printed(slug, {}, zone, late);
+    expect(content).toMatchObject({ zone, zoneNamed: true });
+    expect(start).toBe(want);
+  });
+
+  it('a bare-date validity stays on its own date', async () => {
+    const { content } = await printed('starter-permit', {}, 'America/Los_Angeles');
+    expect(content.validUntil).toBe('2030-12-31T00:00:00Z');
+    expect(content.zoneNamed).toBe(false);
+  });
+});
+
+describe('split zones read inline', () => {
+  it('names each abbreviation and drops the line-level note', async () => {
+    const out = await printed('starter-hotel-stay', {
+      checkIn: '2030-11-02T15:00:00-07:00',
+      checkOut: '2030-11-04T11:00:00-08:00',
+    });
+    expect(out.text).toContain('Starts 3:00 pm GMT-7 · Ends Mon 4 Nov 2030, 11:00 am GMT-8');
+    expect(out.text).not.toMatch(/\(GMT/);
   });
 });
 

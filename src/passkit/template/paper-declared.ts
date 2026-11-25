@@ -45,14 +45,16 @@ export function declaredTimes(manifest: Manifest, personalization: Personalizati
  * with a clock reads in the org's zone; otherwise every time keeps its own offset.
  */
 export function printZone(
-  times: (string | undefined)[],
+  times: { start?: string | undefined; end?: string | undefined; doors?: string | undefined },
+  validity: (string | undefined)[],
   named: string | undefined,
   orgZone: string | null | undefined,
 ): { zone?: string; zoneNamed: boolean } {
-  const ref = times.find(Boolean);
+  const event = times.start ?? times.end ?? times.doors;
+  const ref = event ?? validity.find(Boolean);
   const own = paperZoneOf(ref, named);
   if (named && own === named) return { zone: own, zoneNamed: true };
-  if (orgZone && isUtcClock(ref) && paperZoneOf(undefined, orgZone) === orgZone)
+  if (orgZone && isUtcClock(ref, !event) && paperZoneOf(undefined, orgZone) === orgZone)
     return { zone: orgZone, zoneNamed: true };
   return { ...(own ? { zone: own } : {}), zoneNamed: false };
 }

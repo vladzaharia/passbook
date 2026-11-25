@@ -28,6 +28,11 @@ const abbrAt = (c: PaperContent, iso: string) => {
   const zone = paperZoneFor(c, iso);
   return zone ? paperZoneInfo(zone, iso)?.abbr : undefined;
 };
+/** The start and the end read in different zones: each carries its own abbreviation. */
+const splitZones = (c: PaperContent) =>
+  Boolean(c.start && c.end && abbrAt(c, c.start) !== abbrAt(c, c.end));
+const startAt = (c: PaperContent, start: string) =>
+  splitZones(c) ? `${at(c, start, 'timeZone')}` : at(c, start, 'time');
 /** The end's clock: its day when it is another day, its own zone when that differs from the start's. */
 const endAt = (c: PaperContent, end: string) => {
   const clock =
@@ -77,11 +82,11 @@ export function doorRows(c: PaperContent): { label: string; text: string }[] {
 const timesLine = (c: PaperContent): string | undefined => {
   const parts = [
     c.doors && `Doors ${at(c, c.doors, 'time')}`,
-    c.start && `Starts ${at(c, c.start, 'time')}`,
+    c.start && `Starts ${startAt(c, c.start)}`,
     c.end && `Ends ${endAt(c, c.end)}`,
   ].filter(Boolean);
   if (!parts.length) return undefined;
-  const abbr = zoneAbbr(c);
+  const abbr = splitZones(c) ? undefined : zoneAbbr(c);
   return `${parts.join(' · ')}${abbr ? ` (${abbr})` : ''}`;
 };
 
@@ -164,9 +169,9 @@ export function infoColumns(c: PaperContent): Column[] {
         ...strong(at(c, c.start, 'long')),
         lines: [
           c.doors && `Doors open ${at(c, c.doors, 'time')}`,
-          `Show starts ${at(c, c.start, 'time')}`,
+          `Show starts ${startAt(c, c.start)}`,
           c.end && `Ends about ${endAt(c, c.end)}`,
-          abbr && info ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined,
+          abbr && info && !splitZones(c) ? PAPER_COPY.zoneNote(info.abbr, info.name) : undefined,
         ].filter((x): x is string => Boolean(x)),
       }
     : {
