@@ -21,6 +21,7 @@ import { identityProvisionRoutes, identityRunsRoutes } from './modules/identitie
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
+import { marketingRoutes } from './modules/marketing/routes.ts';
 import { meRoutes } from './modules/me/routes.ts';
 import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
@@ -241,6 +242,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);
   app.route('/developers', developerPortalRoutes);
+  app.route('/access', marketingRoutes);
 
   // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
   // operations an API key can call; signed-in platform admins get the whole document.

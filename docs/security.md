@@ -108,6 +108,8 @@ Each shows on the admin status page.
 | KEK | Secrets cannot be read or written | `build`, probe errors |
 | Magic-link daily cap | Sends dropped, `auth.magic_daily_cap` logged | `email` (degraded at 80 %, failing at cap) |
 
+The Request access form (`POST /access`) mails PassBook's own inbox (`ACCESS_REQUEST_EMAIL`). A missing `EMAIL` binding, an invalid recipient or a failed send answers 503 `ACCESS_MAIL_UNAVAILABLE` and logs `marketing.access_unconfigured` or `marketing.access_failed`; it never answers success without sending. The one exception is the honeypot field, which answers success and sends nothing (`marketing.access_trap`).
+
 Magic-link sends are also capped per address (5/h), per network (30/day) and, for verification mail, per signed-in user (10/day).
 
 ## Hosts
@@ -115,6 +117,7 @@ Magic-link sends are also capped per address (5/h), per network (30/day) and, fo
 - Only `PUBLIC_BASE_URL`'s origin (`passbook.mobile`) serves the app and sets cookies. Sessions and sign-in bindings are host-only `__Host-` cookies there.
 - A `REDIRECT_HOSTS` host (`wallet.plrs.im`) only answers 308 to the same path and query on the canonical origin, uncached. It runs no route, so it sets no cookie and serves no API.
 - Any other host gets 421 and logs `host.refused`, so a stray route or a `workers.dev` URL cannot serve the app under another origin. Plain http on the canonical host gets a 308 to https.
+- The public site's pages (`/`, `/door`, `/blueprints`, `/build`, `/access`) carry their own CSP (`marketingContentSecurityPolicy`): no inline script or style element, same-origin only, Trusted Types limited to the `passbook-marketing` policy. `POST /access` is same-origin only, capped at 4 KB, and limited per network (5 a minute, `RL_ACCESS`) and overall (30 a minute, `RL_ACCESS_ALL`). It takes no Turnstile: the only recipient is our own inbox. Logs hold the purpose and field paths, never a name, address, organization or message.
 - Files `public/` ships are served by the asset layer on every attached host. They are public by design.
 
 ## Personalization
