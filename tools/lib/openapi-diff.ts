@@ -121,6 +121,14 @@ export function sunsetOf(op: unknown): string | undefined {
   return o.deprecated === true && typeof o['x-sunset'] === 'string' ? o['x-sunset'] : undefined;
 }
 
+const MIN_WINDOW_DAYS = 365;
+const dayOf = (d: string): number => Date.parse(`${d}T00:00:00Z`) / 86_400_000;
+/** The base marked the operation deprecated (`x-deprecated`) at least a year before its Sunset. */
+function windowKept(op: unknown, sunset: string): boolean {
+  const since = obj(op)['x-deprecated'];
+  return typeof since === 'string' && dayOf(sunset) - dayOf(since) >= MIN_WINDOW_DAYS;
+}
+
 /** The ending of a removal that needs no PassBook-Version: the base marked it deprecated and its Sunset has come. */
 export const SUNSET_REMOVAL = 'operation removed at its Sunset';
 
@@ -136,7 +144,12 @@ export function breakingChanges(prev: Doc, next: Doc, on: string = today()): str
       if (!Object.keys(newOp).length) {
         const sunset = sunsetOf(oldOp);
         if (!sunset) out.push(`${id}: operation removed`);
-        else if (sunset > on) out.push(`${id}: operation removed before its Sunset ${sunset}`);
+        else if (sunset > on)
+          out.push(`${id}: operation removed before its Sunset ${sunset} (on ${on})`);
+        else if (!windowKept(oldOp, sunset))
+          out.push(
+            `${id}: operation removed without ${MIN_WINDOW_DAYS} days of deprecation (Sunset ${sunset}, on ${on})`,
+          );
         else out.push(`${id}: ${SUNSET_REMOVAL} ${sunset}`);
         continue;
       }

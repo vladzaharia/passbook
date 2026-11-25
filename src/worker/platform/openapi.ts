@@ -158,7 +158,9 @@ export function register<S extends RouteSpec>(
       : spec.xFeature === undefined
         ? {}
         : { 'x-feature': spec.xFeature }),
-    ...(retired ? { deprecated: true, 'x-sunset': retired.sunset } : {}),
+    ...(retired
+      ? { deprecated: true, 'x-deprecated': retired.since, 'x-sunset': retired.sunset }
+      : {}),
     method: spec.method,
     path: spec.path,
     summary: spec.summary,

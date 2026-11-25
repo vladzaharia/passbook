@@ -10,22 +10,29 @@ export interface RouteDeprecation {
   guide: string;
 }
 
+/** Calendar dates are shown in the default zone (`src/shared/time-zone.ts` has no such constant on main yet). */
+const CALENDAR_ZONE = 'America/Los_Angeles';
+const DAY = 86_400_000;
+/** The shortest support window: one year, as docs/api.md promises. */
+const MIN_WINDOW_DAYS = 365;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const ms = (date: string): number => Date.parse(`${date}T00:00:00Z`);
 
 /** `x-sunset` and the description prefix use the same date text. */
 export const sunsetLabel = (sunset: string): string =>
-  new Date(ms(sunset)).toLocaleDateString('en-GB', {
+  new Date(ms(sunset) + DAY / 2).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-    timeZone: 'UTC',
+    timeZone: CALENDAR_ZONE,
   });
 
 export function checkDeprecation(where: string, d: RouteDeprecation): void {
   if (![d.since, d.sunset].every((x) => DATE.test(x) && !Number.isNaN(ms(x))))
     throw new Error(`${where}: deprecated dates are YYYY-MM-DD`);
   if (ms(d.sunset) <= ms(d.since)) throw new Error(`${where}: sunset must follow since`);
+  if (ms(d.sunset) < ms(d.since) + MIN_WINDOW_DAYS * DAY)
+    throw new Error(`${where}: sunset must be at least ${MIN_WINDOW_DAYS} days after since`);
   if (!/^[a-z0-9-]+$/.test(d.guide)) throw new Error(`${where}: deprecated guide is a slug`);
 }
 

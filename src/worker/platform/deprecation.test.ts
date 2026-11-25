@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { deprecationHeaders } from './deprecation.ts';
+import { checkDeprecation, deprecationHeaders } from './deprecation.ts';
 import { handleError } from './error-handler.ts';
 import { AppError } from './errors.ts';
 import { createRouter, register } from './openapi.ts';
@@ -129,5 +129,14 @@ describe('deprecated operation', () => {
         (c) => c.json({}),
       ),
     ).toThrow(/sunset must follow since/);
+  });
+});
+
+describe('checkDeprecation', () => {
+  it('needs a year between since and sunset', () => {
+    expect(() => checkDeprecation('x', DEPRECATED)).not.toThrow();
+    expect(() => checkDeprecation('x', { ...DEPRECATED, sunset: '2027-11-24' })).toThrow(
+      /at least 365 days/,
+    );
   });
 });

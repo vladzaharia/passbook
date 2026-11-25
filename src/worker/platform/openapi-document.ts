@@ -16,6 +16,7 @@ type Op = {
   description?: string;
   deprecated?: boolean;
   'x-sunset'?: string;
+  'x-deprecated'?: string;
   'x-operation-key'?: string;
   parameters?: Param[];
   requestBody?: { content?: Record<string, { schema?: { properties?: Record<string, object> } }> };
