@@ -82263,7 +82263,6 @@
                       "name": "Northwind Climbing",
                       "status": "active",
                       "personal": false,
-                      "personalOwner": null,
                       "createdAt": 1772560800000,
                       "counts": {
                         "passes": 128,
@@ -82272,7 +82271,8 @@
                         "apiKeys": 2,
                         "members": 4
                       },
-                      "countsCapped": false
+                      "countsCapped": false,
+                      "personalOwner": null
                     }
                   ],
                   "nextCursor": "c1.4812"
@@ -82452,7 +82452,6 @@
                   "name": "Northwind Climbing",
                   "status": "active",
                   "personal": false,
-                  "personalOwner": null,
                   "createdAt": 1772560800000,
                   "counts": {
                     "passes": 128,
@@ -82461,7 +82460,8 @@
                     "apiKeys": 2,
                     "members": 4
                   },
-                  "countsCapped": false
+                  "countsCapped": false,
+                  "personalOwner": null
                 }
               }
             }
@@ -82842,7 +82842,6 @@
                   "name": "Northwind Climbing",
                   "status": "active",
                   "personal": false,
-                  "personalOwner": null,
                   "createdAt": 1772560800000,
                   "counts": {
                     "passes": 128,
@@ -82851,7 +82850,8 @@
                     "apiKeys": 2,
                     "members": 4
                   },
-                  "countsCapped": false
+                  "countsCapped": false,
+                  "personalOwner": null
                 }
               }
             }
