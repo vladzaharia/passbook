@@ -132,6 +132,7 @@ export async function createTagType(
   input: z.infer<typeof CreateTagTypeSchema>,
 ): Promise<TagType> {
   const { orgId } = authority;
+  assertLoanerScope(input.use, input.scopes, 'scopes');
   const templateIds = await checkTemplates(ctx, orgId, input.templateIds);
   if (!(await systemEnabled(ctx.env.DB, input.system)))
     throw new ConflictError('This tag system is not available.', 'TAG_SYSTEM_DISABLED');
@@ -159,6 +160,16 @@ export async function createTagType(
   return created;
 }
 
+/** A loaner is lent to a pass, never to a person: its type takes pass scope only. */
+function assertLoanerScope(use: string, scopes: string, path: 'scopes' | 'use') {
+  if (use === 'visitor' && scopes !== 'pass')
+    throw new ValidationError(
+      'A visitor tag type is assigned to a pass only.',
+      [{ path, message: 'Visitor tag types take pass scope only.', code: 'custom' }],
+      'TAG_TYPE_LOANER_SCOPE',
+    );
+}
+
 const COLUMNS = {
   name: 'name',
   use: 'use',
@@ -183,6 +194,12 @@ export async function updateType(
     throw new ValidationError('Secure tags cannot be typed.', [
       { path: 'typed', message: 'Secure tags cannot be typed.', code: 'custom' },
     ]);
+  if (input.use !== undefined || input.scopes !== undefined)
+    assertLoanerScope(
+      input.use ?? current.use,
+      input.scopes ?? current.scopes,
+      input.scopes === undefined ? 'use' : 'scopes',
+    );
   const templateIds =
     input.templateIds === undefined
       ? undefined

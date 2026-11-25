@@ -18,6 +18,7 @@ interface Raw {
   holder_name: string | null;
   bound_by_name: string | null;
   scanner_name: string | null;
+  type_use: string | null;
 }
 
 /** A binding with the names a person reads; ended ones too. The tag's org keeps every name in its tenant. */
@@ -27,8 +28,10 @@ const SELECT = `SELECT b.id, b.tag_id, b.scope, b.pass_id, b.user_id, b.source, 
       WHEN 'user' THEN (SELECT u.name FROM users u WHERE u.id = b.bound_by)
       WHEN 'staff' THEN (SELECT s.name FROM scan_staff s WHERE s.id = b.bound_by AND s.org_id = t.org_id)
       ELSE (SELECT s.name FROM scanners s WHERE s.id = b.bound_by AND s.org_id = t.org_id) END AS bound_by_name,
-    (SELECT s.name FROM scanners s WHERE s.id = b.scanner_id AND s.org_id = t.org_id) AS scanner_name
+    (SELECT s.name FROM scanners s WHERE s.id = b.scanner_id AND s.org_id = t.org_id) AS scanner_name,
+    y.use AS type_use
   FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id
+  LEFT JOIN nfc_tag_types y ON y.id = t.type_id AND y.org_id = t.org_id
   LEFT JOIN passes p ON p.id = b.pass_id AND p.org_id = t.org_id AND p.mode = t.mode
   LEFT JOIN users hu ON hu.id = b.user_id`;
 
@@ -41,7 +44,7 @@ const toBinding = (r: Raw): TagBinding => ({
   userId: r.user_id,
   holderName: r.scope === 'user' ? r.holder_name : null,
   source: r.source,
-  lent: false,
+  lent: r.type_use === 'visitor',
   boundAt: r.bound_at,
   boundByName: r.bound_by_name,
   scannerName: r.scanner_name,
