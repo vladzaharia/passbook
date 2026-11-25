@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { OkSchema } from '@/shared/contracts/common.ts';
+import type { OverlapHours } from '@/shared/contracts/webhook-secrets.ts';
 import { WebhookTestAttemptListSchema } from '@/shared/contracts/webhook-tests.ts';
 import {
   type CreateWebhookEndpointSchema,
@@ -124,7 +125,7 @@ export function useSecretCalls() {
       await refresh(qc);
       return created;
     },
-    rotate: (id: string, overlapHours: 0 | 24 | 72) =>
+    rotate: (id: string, overlapHours: OverlapHours) =>
       api.post(`${BASE}/${id}/secret`, WebhookSecretSchema, { overlapHours }),
   };
 }

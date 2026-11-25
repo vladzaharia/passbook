@@ -161,21 +161,29 @@ describe('6.1 both: expiry and upcoming events', () => {
   });
   const at = (iso: string) => Date.parse(iso);
 
+  // The calculation Apple's timed renders use (src/passkit/boundaries.ts): each start, each end (an
+  // event without one runs the template's fallbackMinutes) and, for a wallet card, the expiry.
+  const end = (iso: string) => at(iso) + 90 * 60_000 + 1;
+  const options = { expiry: true, fallbackMinutes: 90 };
+
   it('lists the moments a card changes with no edit, in order', () => {
-    expect(passBoundaries(pass)).toEqual([
+    expect(passBoundaries(pass, options)).toEqual([
       at('2026-03-01T00:00:00Z'),
+      end('2026-03-01T00:00:00Z'),
       at('2026-05-01T00:00:00Z'),
+      end('2026-05-01T00:00:00Z'),
       at('2026-06-01T00:00:00Z'),
     ]);
-    expect(passBoundaries(null)).toEqual([]);
-    expect(passBoundaries('not json')).toEqual([]);
+    expect(passBoundaries(null, options)).toEqual([]);
+    expect(passBoundaries('not json', options)).toEqual([]);
   });
 
   it('counts the boundaries behind now, so crossing one is a new operation', () => {
-    const boundaries = passBoundaries(pass);
+    const boundaries = passBoundaries(pass, options);
     expect(boundaryPhase(boundaries, at('2026-02-01T00:00:00Z'))).toBe(0);
     expect(boundaryPhase(boundaries, at('2026-03-01T00:00:00Z'))).toBe(1);
-    expect(boundaryPhase(boundaries, at('2026-07-01T00:00:00Z'))).toBe(3);
+    expect(boundaryPhase(boundaries, end('2026-03-01T00:00:00Z'))).toBe(2);
+    expect(boundaryPhase(boundaries, at('2026-07-01T00:00:00Z'))).toBe(5);
     expect(nextBoundary(boundaries, at('2026-03-02T00:00:00Z'))).toBe(at('2026-05-01T00:00:00Z'));
     expect(nextBoundary(boundaries, at('2026-07-01T00:00:00Z'))).toBeNull();
   });

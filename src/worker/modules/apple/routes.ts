@@ -8,6 +8,7 @@ import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
+import { currentFile } from '../passes/timed-variant.ts';
 import { recordPassFetch } from './log-events.ts';
 import { personalize } from './personalize.ts';
 import {
@@ -127,8 +128,11 @@ register(
       c.req.header('authorization'),
     );
     await assertNotPreviewOnly(ctx.env.DB, pass.orgId);
-    const variant = await appleVariant(ctx, pass);
-    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw, {}, variant ?? undefined);
+    // Apple turned off wins; else the live pass as its last event boundary left it.
+    const voided = await appleVariant(ctx, pass);
+    const current = await currentFile(ctx, pass);
+    const variant = voided ?? current.variant;
+    const response = await servePassFile(c.env.BUCKET, current.pass, c.req.raw, {}, variant);
     try {
       await assertAppleCredential(ctx, pass);
     } catch (error) {

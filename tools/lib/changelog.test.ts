@@ -125,6 +125,70 @@ describe('changelog notes', () => {
       ]),
     ).toEqual(new Set(['a']));
   });
+
+  it('a covering entry in a release the base already has covers nothing', () => {
+    const files = [
+      {
+        date: '2026-11-20',
+        entries: [{ kind: 'Added' as const, text: 'x', ops: ['a'], covers: true }],
+      },
+      {
+        date: '2026-12-01',
+        entries: [{ kind: 'Added' as const, text: 'y', ops: ['b'], covers: true }],
+      },
+    ];
+    expect(coveredOps(files, new Set(['2026-11-20']))).toEqual(new Set(['b']));
+  });
+});
+
+describe('stale pending entries', () => {
+  const spec = {
+    paths: {
+      '/a': {
+        get: {
+          operationId: 'a.getA',
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      kind: { type: 'string', enum: ['x', 'y'] },
+                      items: { type: 'array', items: { type: 'object', properties: { id: {} } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+  const entry = (change: string, op = 'GET /a') => ({
+    key: `${op} ${change}`,
+    class: 'additive' as const,
+    operationId: 'a.getA',
+    op,
+    change,
+    note: 'A note.',
+  });
+  const stale = (change: string, op?: string) =>
+    changelogFailures([entry(change, op)], [], spec).filter((f) => /no longer in the spec/.test(f));
+
+  it('passes entries the spec still has', () => {
+    expect(stale('200.kind: enum value "y" added')).toEqual([]);
+    expect(stale('200.items[].id: field added')).toEqual([]);
+    expect(stale('new operation')).toEqual([]);
+    expect(stale('200.x: field removed')).toEqual([]);
+  });
+
+  it('fails an enum value, a field or an operation the spec lost', () => {
+    expect(stale('200.kind: enum value "timed" added')).toHaveLength(1);
+    expect(stale('200.items[].gone: field added')).toHaveLength(1);
+    expect(stale('new operation', 'GET /b')).toHaveLength(1);
+  });
 });
 
 describe('versions', () => {

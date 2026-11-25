@@ -25,6 +25,7 @@ import { commonFields } from './common-fields.ts';
 import { CLEAR_CHOICES } from './labels.ts';
 import { LockScreenNotice } from './lock-screen.tsx';
 import { MatchEditor } from './match-editor.tsx';
+import { QuickMessages } from './quick-messages.tsx';
 import { RulePreview } from './rule-preview.tsx';
 import { bodyOf, INITIAL_RULE, type RuleState, stateOfRule } from './rule-state.ts';
 import { RuleWhen } from './rule-when.tsx';
@@ -177,6 +178,7 @@ export function RuleEditor({
                 />
               )}
             </FormField>
+            <QuickMessages value={state.message} onPick={(message) => change({ message })} />
             <FormField label="Clear after">
               {(c) => (
                 <Select
