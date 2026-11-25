@@ -62,7 +62,7 @@ describe('members per scope', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Members', level: 1 })).toBeVisible();
-    expect(await screen.findByText('No active members.')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Invite member' })).toBeInTheDocument();
   });
 
   it('refuses the Members page without members:manage and makes no member request', async () => {
@@ -80,6 +80,6 @@ describe('members per scope', () => {
         ([url]) => String(url).includes('/orgs/o1/') && !String(url).includes('pass-setup'),
       ),
     ).toBe(false);
-    expect(within(document.body).queryByText('No active members.')).toBeNull();
+    expect(within(document.body).queryByRole('button', { name: 'Invite member' })).toBeNull();
   });
 });

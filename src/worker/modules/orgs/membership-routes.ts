@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import {
   AcceptOrgInvitationSchema,
+  ChangeOrgMemberRolesSchema,
   CursorQuerySchema,
   IdParamSchema,
   InviteOrgMemberSchema,
@@ -10,6 +11,7 @@ import {
   OrgInvitationPreviewSchema,
   OrgInvitationSchema,
   OrgMemberListSchema,
+  OrgMemberSchema,
   OrgMembershipListSchema,
   OrgMembershipParamSchema,
   OrgMembershipSchema,
@@ -27,17 +29,20 @@ import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
-import { listMyOrgMemberships } from './access.ts';
+import { listMyOrgMemberships, parseRoles } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
+import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
 import {
   acceptOrgInvitation,
   inviteOrgMember,
+  isOrgManager,
   listOrgInvitations,
   listOrgMembers,
   previewOrgInvitation,
   revokeOrgInvitation,
   revokeOrgMembership,
 } from './membership-service.ts';
+import { invitationById } from './repo-members.ts';
 
 const session = (c: Context<AppBindings>): SessionAuth => {
   const auth = c.var.auth;
@@ -67,7 +72,37 @@ membershipRoutes.post(
     );
   }),
 );
+// Giving a member a role that administers the org hands over its credentials, as inviting does.
+membershipRoutes.patch(
+  '/:id/memberships/:membershipId',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const { roles } = await peekBody(c);
+    return (
+      Array.isArray(roles) &&
+      roles.some((role) => (ADMINISTERING_ROLES as readonly unknown[]).includes(role))
+    );
+  }),
+);
 membershipRoutes.use('/:id/invitations/:invitationId', requireConsoleSession);
+membershipRoutes.use('/:id/invitations/:invitationId/resend', requireConsoleSession);
+// A resend mails a fresh credential link: for an invitation into an administering role it asks as inviting did.
+membershipRoutes.post(
+  '/:id/invitations/:invitationId/resend',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const orgId = c.req.param('id') ?? '';
+    // Only a manager of the org learns anything from whether this asks.
+    if (!(await isOrgManager(serviceContext(c), session(c), orgId))) return false;
+    const found = await invitationById(c.env.DB, orgId, c.req.param('invitationId') ?? '');
+    if (!found) return false;
+    try {
+      return parseRoles(found.roles).some((role) =>
+        (ADMINISTERING_ROLES as readonly unknown[]).includes(role),
+      );
+    } catch {
+      return true;
+    }
+  }),
+);
 
 register(
   membershipRoutes,
@@ -207,5 +242,49 @@ register(
     const { id, membershipId } = c.req.valid('param');
     await revokeOrgMembership(serviceContext(c), session(c), id, membershipId);
     return c.json({ ok: true });
+  },
+);
+register(
+  membershipRoutes,
+  'organization memberships',
+  {
+    method: 'patch',
+    path: '/{id}/memberships/{membershipId}',
+    summary: "Change an organization member's roles",
+    description:
+      'Replaces the roles. The member keeps one active membership, but its id changes: personal API keys tied to the old membership stop working (keys of kind service, which no membership owns, keep working). Scheduled broadcasts of the member stay scheduled. Organization admin and Read only stand alone. The last org admin cannot lose the role (`LAST_ORG_ADMIN`).',
+    params: OrgMembershipParamSchema,
+    body: ChangeOrgMemberRolesSchema,
+    response: OrgMemberSchema,
+  },
+  async (c) => {
+    const { id, membershipId } = c.req.valid('param');
+    return c.json(
+      await changeOrgMemberRoles(
+        serviceContext(c),
+        session(c),
+        id,
+        membershipId,
+        c.req.valid('json').roles,
+      ),
+    );
+  },
+);
+register(
+  membershipRoutes,
+  'organization memberships',
+  {
+    method: 'post',
+    path: '/{id}/invitations/{invitationId}/resend',
+    summary: 'Resend an organization invitation',
+    description:
+      'Revokes the pending invitation and issues a new one for the same address and roles, with a fresh link and seven days, and mails it. The answer is the new invitation, with a new id. Counts against the hourly and daily invite limits.',
+    params: OrgInvitationParamSchema,
+    status: 201,
+    response: OrgInvitationSchema,
+  },
+  async (c) => {
+    const { id, invitationId } = c.req.valid('param');
+    return c.json(await resendOrgInvitation(serviceContext(c), session(c), id, invitationId), 201);
   },
 );

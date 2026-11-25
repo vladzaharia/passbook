@@ -2219,6 +2219,17 @@ export type InvitationsListResponse = {
   nextCursor: string | null;
 };
 
+export type InvitationsResendResponse = {
+  id: string;
+  orgId: string;
+  email: string;
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  createdAt: number;
+  expiresAt: number;
+  revokedAt: number | null;
+  acceptedAt: number | null;
+};
+
 export type InvitationsRevokeResponse = {
   ok: true;
 };
@@ -2395,6 +2406,26 @@ export type MembershipsListResponse = {
 
 export type MembershipsRevokeResponse = {
   ok: true;
+};
+
+export type MembershipsUpdateRolesParams = {
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+};
+
+export type MembershipsUpdateRolesResponse = {
+  id: string;
+  orgId: string;
+  orgName: string;
+  orgSlug: string;
+  personal?: boolean;
+  testOnly?: boolean;
+  userId: string;
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read">;
+  createdAt: number;
+  revokedAt: number | null;
+  userName: string | null;
+  userEmail: string | null;
 };
 
 export type MessageRulesCountDueParams = {

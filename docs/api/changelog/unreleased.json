@@ -1631,6 +1631,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",
+    "class": "additive",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "new operation",
+    "note": "Changes a member's roles. The membership id changes; personal API keys tied to the old membership stop working. Service keys are unaffected."
+  },
+  {
     "key": "PATCH /api/v1/orgs/{orgId}/pass-setup new operation",
     "class": "additive",
     "operationId": "pass-setup.patchOrgsByOrgIdPassSetup",
@@ -2683,6 +2691,14 @@
     "op": "POST /api/v1/orgs",
     "change": "body.preset: enum value \"starter\" added",
     "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/invitations/{invitationId}/resend new operation",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend",
+    "op": "POST /api/v1/orgs/{id}/invitations/{invitationId}/resend",
+    "change": "new operation",
+    "note": "Resends a pending invitation with a fresh link; the new invitation has a new id."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",

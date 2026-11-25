@@ -913,9 +913,17 @@
     "sdk": false,
     "reason": "Acts on the signed-in person's own account; needs a person's session."
   },
+  "organization-memberships.patchOrgsByIdMembershipsByMembershipId": {
+    "resource": "memberships",
+    "method": "updateRoles"
+  },
   "organization-memberships.postOrgsByIdInvitations": {
     "resource": "invitations",
     "method": "create"
+  },
+  "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend": {
+    "resource": "invitations",
+    "method": "resend"
   },
   "organization-memberships.postOrgsInvitationsAccept": {
     "resource": "invitations",
