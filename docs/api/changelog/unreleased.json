@@ -1392,6 +1392,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/users/{id}/passes new operation",
+    "class": "additive",
+    "operationId": "users.getUsersByIdPasses",
+    "op": "GET /api/v1/users/{id}/passes",
+    "change": "new operation",
+    "note": "Platform admins read a person's passes across organizations, newest first: matched by owner or a verified address while unclaimed. No holder personalization."
+  },
+  {
     "key": "GET /api/v1/visitors operation removed",
     "class": "breaking",
     "operationId": "visitors.getVisitors",

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChannelSchema } from './channels.ts';
 import { IdSchema, pageOf, RoleSchema, TimestampSchema } from './common.ts';
 import { PassStatusSchema } from './passes.ts';
 
@@ -84,3 +85,25 @@ export const UserDetailSchema = UserSchema.extend({
 });
 export const UpdateUserSchema = z.object({ status: z.enum(['active', 'disabled']) });
 export const AddUserEmailSchema = z.object({ email: z.string().max(254) });
+
+export const UserPassesQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+/** One pass of a person, in any organization. No holder personalization, title or link. */
+export const UserPassSchema = z.object({
+  id: IdSchema,
+  orgId: IdSchema,
+  orgName: z.string(),
+  /** Passes of a deleted organization are left out. */
+  orgStatus: z.enum(['active', 'suspended']),
+  /** The organization's own zone, for the dates below. */
+  timeZone: z.string(),
+  templateName: z.string(),
+  status: PassStatusSchema,
+  /** Wallets that hold a copy. */
+  channels: z.array(ChannelSchema),
+  issuedAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+});
+export const UserPassListSchema = pageOf(UserPassSchema);

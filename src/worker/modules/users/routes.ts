@@ -9,6 +9,8 @@ import {
   UserDetailSchema,
   UserListQuerySchema,
   UserListSchema,
+  UserPassesQuerySchema,
+  UserPassListSchema,
   UserSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, requireAdmin } from '../../platform/auth.ts';
@@ -21,6 +23,7 @@ import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts'
 import { makePrimaryEmail, removeEmail, requestEmailProof } from './emails.ts';
 import { getUserDetail, listUsers, setUserStatus } from './service.ts';
 import { revokeUserSession, revokeUserSessions } from './sessions.ts';
+import { listPassesOfUser } from './user-passes.ts';
 
 type C = Context<AppBindings>;
 /** The requester's own session id hash, so the detail can mark "This device". */
@@ -56,6 +59,27 @@ register(
   },
   async (c) =>
     c.json(await getUserDetail(serviceContext(c), c.req.valid('param').id, ownSession(c))),
+);
+register(
+  usersRoutes,
+  'users',
+  {
+    method: 'get',
+    path: '/{id}/passes',
+    summary: "List a user's passes in every organization",
+    params: IdParamSchema,
+    query: UserPassesQuerySchema,
+    response: UserPassListSchema,
+  },
+  async (c) =>
+    c.json(
+      await listPassesOfUser(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').id,
+        c.req.valid('query'),
+      ),
+    ),
 );
 register(
   usersRoutes,

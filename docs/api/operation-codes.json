@@ -7712,6 +7712,10 @@
   "users get /{id}": [
     "USER_NOT_FOUND"
   ],
+  "users get /{id}/passes": [
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
+  ],
   "users patch /{id}": [
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
