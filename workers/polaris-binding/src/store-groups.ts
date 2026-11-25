@@ -7,9 +7,10 @@ export interface GroupRow {
   friendlyName: string | null;
   createdByBinding: boolean;
   createdAt: number;
+  missingSince: number | null;
 }
 
-const GROUP = `key, kind, state, group_id AS groupId, name, friendly_name AS friendlyName, created_by_binding AS createdByBinding, created_at AS createdAt`;
+const GROUP = `key, kind, state, group_id AS groupId, name, friendly_name AS friendlyName, created_by_binding AS createdByBinding, created_at AS createdAt, missing_since AS missingSince`;
 
 export async function listGroupRows(db: D1Database): Promise<GroupRow[]> {
   const { results } = await db
@@ -98,6 +99,25 @@ export async function setGroupGone(db: D1Database, key: string): Promise<void> {
 export async function setGroupLiveAgain(db: D1Database, key: string): Promise<void> {
   await db
     .prepare("UPDATE idp_groups SET state = 'live' WHERE key = ? AND state = 'deleting'")
+    .bind(key)
+    .run();
+}
+
+/** Records the first miss, or clears it when the group is found. */
+export async function setMissingSince(
+  db: D1Database,
+  key: string,
+  at: number | null,
+): Promise<void> {
+  await db.prepare('UPDATE idp_groups SET missing_since = ? WHERE key = ?').bind(at, key).run();
+}
+
+/** A group marked gone was found again under its id. */
+export async function setGroupBack(db: D1Database, key: string): Promise<void> {
+  await db
+    .prepare(
+      "UPDATE idp_groups SET state = 'live', missing_since = NULL WHERE key = ? AND state = 'gone'",
+    )
     .bind(key)
     .run();
 }

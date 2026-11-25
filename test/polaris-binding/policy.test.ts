@@ -173,7 +173,7 @@ describe('IDP_UNSAFE_CONFIG refuses every write', () => {
     const health = await api.health();
     expect(health).toMatchObject({ ok: false, layoutSuspect: true });
     expect(health.unsafe).toContain('group_not_found:developer');
-    expect(pocket.s.seen).toHaveLength(4);
+    expect(pocket.s.seen).toHaveLength(8);
   });
 
   it('reports a wrong route layout as a 404 on the group read', async () => {
@@ -276,9 +276,9 @@ describe('health cache', () => {
     const v2 = setup('v2');
     await v2.api.health();
     expect(v2.pocket.s.seen.map((s) => s.path)).toEqual([
-      '/api/user-groups/g-console',
-      '/api/user-groups/g-dev',
-      '/api/user-groups/g-admins',
+      '/api/user-groups?search=passbook_console&pagination[limit]=100',
+      '/api/user-groups?search=passbook_developers&pagination[limit]=100',
+      '/api/user-groups?search=passbook_platform_admins&pagination[limit]=100',
       '/api/user-groups?search=passbook_users&pagination[limit]=100',
       '/api/application-configuration/all',
       '/api/api-keys',
@@ -289,9 +289,9 @@ describe('health cache', () => {
     const admin = setup('admin');
     await admin.api.health();
     expect(admin.pocket.s.seen.map((s) => s.path)).toEqual([
-      '/api/admin/user-groups/g-console',
-      '/api/admin/user-groups/g-dev',
-      '/api/admin/user-groups/g-admins',
+      '/api/admin/user-groups?search=passbook_console&pagination[limit]=100',
+      '/api/admin/user-groups?search=passbook_developers&pagination[limit]=100',
+      '/api/admin/user-groups?search=passbook_platform_admins&pagination[limit]=100',
       '/api/admin/user-groups?search=passbook_users&pagination[limit]=100',
       '/api/admin/application-configuration',
       '/api/api-keys',

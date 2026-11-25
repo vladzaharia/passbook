@@ -24,7 +24,7 @@ describe('H2 one custom group does not stop every write', () => {
     );
   });
 
-  it('a custom group the owner deleted drops out, and its key stays used', async () => {
+  it('a custom group missing once is blocked for that probe only; a second miss a TTL later makes it gone', async () => {
     const s = setup();
     await s.api.createGroup('agency_a', 'Agency A', ctx({ ref: 'mk' }));
     s.pocket.addUser('u1', { groups: ['g-dev'] });
@@ -32,15 +32,66 @@ describe('H2 one custom group does not stop every write', () => {
     s.pocket.s.missing.add('g-new-7');
     s.clock.now += 11 * 60_000;
     expect(await s.api.health()).toMatchObject({ ok: true, unsafe: [], blocked: ['g:agency_a'] });
-    expect(await rows('idp_groups')).toMatchObject([{ key: 'agency_a', state: 'gone' }]);
+    expect(await rows('idp_groups')).toMatchObject([
+      { state: 'live', missing_since: expect.any(Number) },
+    ]);
     await expect(s.api.apply('u1', { remove: ['developer'] }, ctx())).resolves.toMatchObject({
       removed: ['developer'],
     });
     s.clock.now += 11 * 60_000;
+    await s.api.health();
+    expect(await rows('idp_groups')).toMatchObject([{ key: 'agency_a', state: 'gone' }]);
+    // found again under the same id: live again
+    s.pocket.s.missing.delete('g-new-7');
+    s.clock.now += 11 * 60_000;
     expect((await s.api.health()).blocked).toEqual([]);
+    expect(await rows('idp_groups')).toMatchObject([{ state: 'live', missing_since: null }]);
     await expect(s.api.createGroup('agency_a', 'Agency A', ctx({ ref: 'r3' }))).rejects.toThrow(
       /^IDP_REFUSED/,
     );
+  });
+
+  it('N18 a transient miss that is found next time leaves the group live and clears the mark', async () => {
+    const s = setup();
+    await s.api.createGroup('agency_a', 'Agency A', ctx({ ref: 'mk' }));
+    s.pocket.s.missing.add('g-new-7');
+    s.clock.now += 11 * 60_000;
+    await s.api.health();
+    s.pocket.s.missing.delete('g-new-7');
+    s.clock.now += 11 * 60_000;
+    expect((await s.api.health()).blocked).toEqual([]);
+    expect(await rows('idp_groups')).toMatchObject([{ state: 'live', missing_since: null }]);
+  });
+
+  it('N18 a wrong layout changes no custom group', async () => {
+    const s = setup();
+    await s.api.createGroup('agency_a', 'Agency A', ctx({ ref: 'mk' }));
+    for (const id of ['g-console', 'g-dev', 'g-admins', 'g-users', 'g-new-7'])
+      s.pocket.s.missing.add(id);
+    s.clock.now += 11 * 60_000;
+    expect(await s.api.health()).toMatchObject({ layoutSuspect: true, blocked: [] });
+    s.clock.now += 11 * 60_000;
+    await s.api.health();
+    expect(await rows('idp_groups')).toMatchObject([{ state: 'live', missing_since: null }]);
+  });
+
+  it('N19 reads role groups through the list, and N20 pages it', async () => {
+    const s = setup();
+    s.pocket.s.override = (m, p) =>
+      m === 'GET' && p.includes('search=passbook_console') && !p.includes('pagination[page]')
+        ? {
+            data: Array.from({ length: 100 }, (_, i) => ({
+              id: `x${i}`,
+              name: 'passbook_console',
+            })),
+          }
+        : undefined;
+    await s.api.health();
+    const paths = s.pocket.s.seen.map((r) => r.path);
+    expect(paths).toContain(
+      '/api/user-groups?search=passbook_console&pagination[limit]=100&pagination[page]=2',
+    );
+    expect(paths.some((p) => /\/user-groups\/g-console$/.test(p))).toBe(false);
   });
 
   it('health reads no member list: the user group and adopted groups come from the list', async () => {
@@ -49,11 +100,7 @@ describe('H2 one custom group does not stop every write', () => {
     const byId = s.pocket.s.seen
       .filter((r) => /\/user-groups\/[^/?]+$/.test(r.path))
       .map((r) => r.path);
-    expect(byId).toEqual([
-      '/api/user-groups/g-console',
-      '/api/user-groups/g-dev',
-      '/api/user-groups/g-admins',
-    ]);
+    expect(byId).toEqual([]);
   });
 });
 

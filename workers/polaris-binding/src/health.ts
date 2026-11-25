@@ -83,7 +83,7 @@ async function probe(
     deps.now(),
   );
   const registry = await compose();
-  const read = await readTargets(env.DB, r, registry, req);
+  const read = await readTargets(env.DB, r, registry, req, deps.now());
   const { groups, roles: live } = read;
   const blocked = [...new Set([...read.blocked, ...refused])];
   // Polaris ID answers 404 for every route of the other layout, so nothing past these reads can be trusted.
