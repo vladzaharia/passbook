@@ -3,6 +3,7 @@ import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handleLentWindow } from '../nfc/lent-window.ts';
+import { publishPass } from '../passes/publish.ts';
 import { updatePass } from '../passes/service.ts';
 import { addType, clearTypes } from './tags-policy-test-fixtures.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
@@ -72,5 +73,61 @@ describe('a guest pass window that changes', () => {
     const earlier = f.kit.clock.now() + HOUR / 2;
     await move(pass, earlier);
     expect(await expiry(bindingId)).toBe(earlier);
+  });
+
+  /** A job context whose queue records what it is sent. */
+  const recording = () => {
+    const sent: { kind?: string }[] = [];
+    const base = jobCtxOf(f.kit);
+    const ctx = {
+      ...base,
+      env: { ...f.kit.env, JOBS: { send: async (m: { kind?: string }) => void sent.push(m) } },
+    } as unknown as typeof base;
+    return { ctx, queued: () => sent.filter((m) => m.kind === 'tags.lent_window') };
+  };
+
+  it('queues the recompute only when the pass holds a lent tag', async () => {
+    const tpl = await f.kit.scanTemplate('Visitor', guest as never);
+    const bare = await f.pass({
+      template: tpl,
+      input: {
+        memberName: 'No Tag',
+        tier: 'guest',
+        endsAt: new Date(TEST_NOW + HOUR).toISOString(),
+      },
+    });
+    const { ctx, queued } = recording();
+    const edit = (id: string) =>
+      updatePass(
+        ctx,
+        { type: 'system', id: null },
+        id,
+        { input: { endsAt: new Date(TEST_NOW + 3 * HOUR).toISOString() } },
+        { scope: null },
+      );
+    await edit(bare.pass.id);
+    expect(queued()).toHaveLength(0);
+    const { pass } = await lent();
+    await edit(pass.id);
+    expect(queued()).toEqual([{ kind: 'tags.lent_window', passId: pass.id, orgId: pass.orgId }]);
+  });
+
+  it('queues it from any publish, as an import or a sync does', async () => {
+    const { pass } = await lent();
+    const { ctx, queued } = recording();
+    await publishPass(ctx, {
+      orgScope: null,
+      passId: pass.id,
+      cause: 'api',
+      actor: { type: 'system', id: null },
+      dispatch: false,
+      mutate: (current) => ({
+        personalization: {
+          ...current.personalization,
+          endsAt: new Date(TEST_NOW + 4 * HOUR).toISOString(),
+        },
+      }),
+    });
+    expect(queued()).toHaveLength(1);
   });
 });

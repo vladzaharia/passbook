@@ -3,7 +3,6 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
-import { queueLentWindow } from '../nfc/lent-window.ts';
 import type { RunWrite } from './bulk-write.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
@@ -185,8 +184,6 @@ export async function updatePass(
       published: result.changed,
     },
   });
-  if (changedKeys.length > 0 || patch.templateVersion !== undefined)
-    await queueLentWindow(ctx, result.pass);
   if (patch.resetToConnection?.length && result.pass.connectionId)
     await requestRefresh(
       ctx,

@@ -5,6 +5,7 @@ import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { onChannelsMaybeChanged } from '../channels/capability.ts';
+import { queueLentWindow } from '../nfc/lent-window.ts';
 import { ensureCredentialRefKeysetWith, requireCredentialRefKeyset } from './credential-keyset.ts';
 import type { TenantPassWrite } from './http.ts';
 import { publishChangedAttempt } from './publish-flow-changed.ts';
@@ -174,6 +175,15 @@ export async function publishPass(
       : await publishChangedAttempt(ctx, options, prepared, credentialEnv, attempt);
     if (result) {
       await onChannelsMaybeChanged(ctx, result.pass, snapshotState.original?.templateVersion);
+      // Every path that moves a guest window (update, import, bulk change, sync) ends here. A window input may
+      // not show on the pass file, so this does not wait for that file to change.
+      const was = snapshotState.original;
+      if (
+        was &&
+        (was.templateVersion !== result.pass.templateVersion ||
+          JSON.stringify(was.personalization) !== JSON.stringify(result.pass.personalization))
+      )
+        await queueLentWindow(ctx, result.pass);
       return result;
     }
   }
