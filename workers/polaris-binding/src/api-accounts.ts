@@ -48,7 +48,9 @@ export function accountsApi(s: Shared): AccountsApi {
           isAdmin: account.isAdmin,
           class: (await subjectClass(db, sub)) ?? 'external',
           grants: rows.map((g) => g.role),
-          confirmedGrants: rows.filter((g) => g.confirmed).map((g) => g.role),
+          confirmedGrants: rows.flatMap((g) =>
+            g.confirmedAt === null ? [] : [{ target: g.role, confirmedAt: g.confirmedAt }],
+          ),
         };
       });
     },

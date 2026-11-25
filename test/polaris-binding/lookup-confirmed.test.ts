@@ -14,7 +14,7 @@ describe('lookup confirmedGrants (R1e)', () => {
     ).run();
     const l = await api.lookup('u1');
     expect([...l.grants].sort()).toEqual(['console', 'developer']);
-    expect(l.confirmedGrants).toEqual(['developer']);
+    expect(l.confirmedGrants).toEqual([{ target: 'developer', confirmedAt: expect.any(Number) }]);
   });
 
   it('leaves a removed grant out of both', async () => {

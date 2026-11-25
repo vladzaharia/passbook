@@ -91,7 +91,7 @@ export interface IdpLookup {
   class: AccountClass;
   grants: Target[];
   /** The subset of `grants` the binding read back (R1e). */
-  confirmedGrants: Target[];
+  confirmedGrants: { target: Target; confirmedAt: number }[];
 }
 export interface SnapshotMember {
   subject: string;

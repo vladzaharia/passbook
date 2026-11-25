@@ -52,6 +52,9 @@ export async function drainSubject(env: RunEnv, row: DirtyRow): Promise<DrainOut
 }
 
 /** Returns how many targets it looked at. */
+const confirmedAfter = (at: number | undefined, observedAt: number | null | undefined) =>
+  at !== undefined && (observedAt == null || at > observedAt);
+
 async function plan(env: RunEnv, subject: string, touched: Touched): Promise<number> {
   const { ctx, rpc, runId, dry } = env;
   const db = ctx.env.DB;
@@ -67,7 +70,7 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
   const wantsNothing = desired.skip === 'disabled';
   const present = new Set(lookup.roles.filter(isManaged));
   const grants = new Set(lookup.grants);
-  const confirmed = new Set(lookup.confirmedGrants);
+  const confirmedAt = new Map(lookup.confirmedGrants.map((g) => [g.target, g.confirmedAt]));
   const everyTarget = new Set<Target>([
     ...desired.targets.keys(),
     ...present,
@@ -100,9 +103,9 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
       grant: grants.has(target),
       wanted: !wantsNothing && desired.targets.has(target),
       held: s?.held_at != null,
-      // A read-back grant stands in for an observation only until PassBook has observed the target once: after
-      // an observed absence (a hold, then Restore) the grant outlives the role and must not block the re-add.
-      seen: s?.observed === 1 || (s?.observed == null && confirmed.has(target)),
+      // A grant read back after PassBook last looked stands in for an observation. One confirmed before a
+      // later observed absence (a hold, then Restore) outlived the role and must not block the re-add.
+      seen: s?.observed === 1 || confirmedAfter(confirmedAt.get(target), s?.observed_at),
     };
     const presence = presenceOf(facts);
     switch (classify(facts)) {
