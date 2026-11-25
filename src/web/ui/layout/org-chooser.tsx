@@ -142,7 +142,8 @@ export function OrgChooser({ next, title = C.choose, inline = false }: OrgChoose
           // biome-ignore lint/a11y/noStaticElementInteractions: the keys come from the search field inside; Down enters the badges, Enter opens the first.
           <div ref={find} onKeyDown={onFindKey} className="min-w-0 max-sm:basis-full">
             <FilterBar
-              className="mb-0"
+              // Phones: the field and its Clear share one row, as they do wider.
+              className="mb-0 max-sm:flex max-sm:flex-nowrap max-sm:[&>div]:min-w-0 max-sm:[&>div]:flex-1"
               filters={[]}
               onClear={() => setQuery('')}
               search={{ value: query, onChange: setQuery, placeholder: C.find }}
