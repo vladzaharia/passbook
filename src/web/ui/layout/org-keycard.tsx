@@ -54,18 +54,22 @@ export function OrgKeycard({ choice, index }: { choice: Choice; index: number })
               to={choice.to}
               data-choice=""
               title={choice.name}
-              aria-describedby={`${id}-m`}
+              aria-describedby={choice.last ? `${id}-r ${id}-l` : `${id}-r`}
               className="wl-kc-link min-w-0 flex-1 truncate text-base font-semibold text-fg-strong"
             >
               {choice.name}
             </Link>
             <ArrowRight aria-hidden className="wl-kc-go size-4 shrink-0 text-fg-muted" />
           </span>
-          <span id={`${id}-m`} className="flex min-w-0 flex-col gap-2">
-            <span className="truncate text-xs text-fg-muted">{meta}</span>
+          <span className="flex min-w-0 flex-col gap-2">
+            <span id={`${id}-r`} className="truncate text-xs text-fg-muted">
+              {meta}
+            </span>
             {choice.last ? (
               <span className="flex flex-wrap gap-1.5">
-                <Badge tone="accent">Last used</Badge>
+                <Badge id={`${id}-l`} tone="accent">
+                  Last used
+                </Badge>
               </span>
             ) : null}
           </span>
