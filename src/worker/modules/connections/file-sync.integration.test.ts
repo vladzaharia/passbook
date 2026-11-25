@@ -199,7 +199,7 @@ describe('file-upload through the sync engine', () => {
     expect(kit.seams.missing).toHaveLength(4);
   });
 
-  it('picks up a revision applied while the last page was applying, and never voids a restored row', async () => {
+  it('fences the run listing the old file when a revision is applied, and the next run lists the new one', async () => {
     const dto = await connect(SIX, { onMissing: 'void' });
     const kept = await linkedPass(kit, dto.id, 'm-6');
     await sync(dto.id);
@@ -218,9 +218,15 @@ describe('file-upload through the sync engine', () => {
         return inner.do(name, fn);
       },
     };
-    const cursor = await sync(dto.id, step);
-    const current = (await listFiles(kit.sctx, authority, dto.id, { limit: 1 })).items[0];
+    const before = (await getConnection(kit.env.DB, dto.id))?.generation ?? 0;
+    await sync(dto.id, step);
     expect(restored).toBe(true);
+    // Apply moved the generation: the first run stopped without voiding anything.
+    expect((await getConnection(kit.env.DB, dto.id))?.generation).toBe(before + 1);
+    expect(kit.seams.missing).toEqual([]);
+    // The run Apply starts (mocked here) begins after the promote and lists the new file.
+    const cursor = await sync(dto.id);
+    const current = (await listFiles(kit.sctx, authority, dto.id, { limit: 1 })).items[0];
     expect(current).toMatchObject({ rows: 6, applied: true });
     expect(cursor).toBe(`fu1:${current?.id}:-:done:0`);
     expect(kit.seams.missing).toEqual([]);

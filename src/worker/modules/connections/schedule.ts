@@ -90,10 +90,13 @@ export async function startSync(
   await assertConnectionAuthority(sctx, authority);
   const retry = await syncEnqueueExists(sctx.env.DB, instanceId);
   if (!retry) {
-    // Two runs would page the same cursor: adopt the open one while its instance is alive.
+    // Two runs would page the same cursor: adopt the open one while its instance is alive and current.
     const open = await openRunOf(sctx.env.DB, { connectionId: conn.id, instanceId });
     if (open) {
+      // A run enqueued under an older generation is fenced out: it cannot do this request's work.
+      const current = open.generation === null || open.generation >= conn.generation;
       const alive =
+        current &&
         (open.status === 'queued' || open.status === 'running') &&
         (sctx.clock.now() - open.startedAt < STUCK_MS ||
           !(await instanceLost(sctx, open.id, open.tipSeq)));

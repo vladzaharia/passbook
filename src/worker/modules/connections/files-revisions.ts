@@ -176,7 +176,14 @@ export async function applyRevision(
   if ((row.expiresAt ?? 0) <= ctx.clock.now()) throw new FileExpiredError();
   if (!conn.enabled) throw new ConflictError('The connection is disabled.', 'CONNECTION_DISABLED');
   try {
-    await promotePending(ctx, { orgId: conn.orgId, authority }, connectionId, row, ctx.clock.now());
+    await promotePending(
+      ctx,
+      { orgId: conn.orgId, authority },
+      connectionId,
+      row,
+      ctx.clock.now(),
+      conn.generation,
+    );
   } catch (error) {
     if (error instanceof ConflictError)
       throw new FileStateError('The revision changed. Reload and retry.');

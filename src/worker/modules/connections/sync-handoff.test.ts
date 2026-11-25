@@ -472,7 +472,7 @@ describe('sync hand-off', () => {
     expect(ok.created[0]?.params).toMatchObject({ runId: 'sync-q-1', trigger: 'admin' });
   });
 
-  it('launches an adopted run under the generation it was enqueued with', async () => {
+  it('does not adopt a run enqueued under an older generation', async () => {
     const dto = await demo(5);
     const conn = await getConnection(kit.env.DB, dto.id);
     if (!conn) throw new Error('no connection');
@@ -487,9 +487,34 @@ describe('sync hand-off', () => {
     ]);
     const bumped = await getConnection(kit.env.DB, dto.id);
     if (!bumped) throw new Error('no connection');
-    const ok = withWorkflow(kit);
-    await startSync(ok.sctx, bumped, 'admin', 'sync-g-2');
-    expect(ok.created[0]?.params).toMatchObject({ runId: 'sync-g-1', generation: conn.generation });
+    const ok = withWorkflow(kit, undefined, () => 'running');
+    const started = await startSync(ok.sctx, bumped, 'admin', 'sync-g-2');
+    // The fenced run is closed, and the new one launches under the current generation.
+    expect(started.runId).toBe('sync-g-2');
+    expect(ok.created[0]?.params).toMatchObject({
+      runId: 'sync-g-2',
+      generation: bumped.generation,
+    });
+    expect(
+      (
+        await first<{ outcome: string }>(
+          kit.env.DB,
+          'SELECT outcome FROM connection_runs WHERE id = ?',
+          ['sync-g-1'],
+        )
+      )?.outcome,
+    ).toBe('error');
+  });
+
+  it('still adopts a run enqueued under the current generation', async () => {
+    const dto = await demo(5);
+    const conn = await getConnection(kit.env.DB, dto.id);
+    if (!conn) throw new Error('no connection');
+    const { sctx, created } = withWorkflow(kit, undefined, () => 'running');
+    await startSync(sctx, conn, 'admin', 'sync-h-1');
+    const again = await startSync(sctx, conn, 'admin', 'sync-h-2');
+    expect(again.runId).toBe('sync-h-1');
+    expect(created.map((c) => c.id)).toEqual(['sync-h-1']);
   });
 
   describe('pass refreshes are not sync runs', () => {
