@@ -2621,6 +2621,12 @@
     "fix": "Retry once; if it persists, send the requestId to support.",
     "retryable": true
   },
+  "TAG_LENT": {
+    "title": "Tag is on loan",
+    "when": "A holder tried to report a loaner tag lost. A loaner belongs to the desk.",
+    "fix": "Hand the tag back at the desk.",
+    "retryable": false
+  },
   "TAG_LIMIT": {
     "title": "Tag limit reached",
     "when": "The organization already has the most tags its plan allows.",
@@ -2727,6 +2733,12 @@
     "title": "Pass has this tag type",
     "when": "The pass already holds as many tags of this type as the type allows.",
     "fix": "Remove the pass's current tag of this type first, or use another type.",
+    "retryable": false
+  },
+  "TAG_TYPE_LOANER_SCOPE": {
+    "title": "Visitor tag type is pass-only",
+    "when": "A tag type with use `visitor` was created or changed to a scope other than `pass`.",
+    "fix": "Set `scopes` to `pass`.",
     "retryable": false
   },
   "TAG_TYPE_MISMATCH": {

@@ -119,6 +119,36 @@ describe('tag type CRUD', () => {
     ).toBe(422);
   });
 
+  it('a visitor type takes pass scope only, on create and on update', async () => {
+    const { org, admin } = await setup();
+    const q = `?orgId=${org.id}`;
+    const bad = await call(admin, 'POST', q, { name: 'Loaner', use: 'visitor' });
+    expect(bad.status).toBe(422);
+    expect(await bad.json()).toMatchObject({ code: 'TAG_TYPE_LOANER_SCOPE' });
+    const made = await call(admin, 'POST', q, { name: 'Loaner', use: 'visitor', scopes: 'pass' });
+    expect(made.status).toBe(201);
+    const type = (await made.json()) as TagType;
+    const wide = await call(admin, 'PATCH', `/${type.id}${q}`, { version: 1, scopes: 'both' });
+    expect(wide.status).toBe(422);
+    expect(await wide.json()).toMatchObject({ code: 'TAG_TYPE_LOANER_SCOPE' });
+    const rename = await call(admin, 'PATCH', `/${type.id}${q}`, { version: 1, name: 'Loan' });
+    expect(rename.status).toBe(200);
+    const member = await call(admin, 'POST', q, { name: 'Badge', use: 'member' });
+    const other = (await member.json()) as TagType;
+    const turned = await call(admin, 'PATCH', `/${other.id}${q}`, { version: 1, use: 'visitor' });
+    expect(turned.status).toBe(422);
+    expect(await turned.json()).toMatchObject({ code: 'TAG_TYPE_LOANER_SCOPE' });
+    expect(
+      (
+        await call(admin, 'PATCH', `/${other.id}${q}`, {
+          version: 1,
+          use: 'visitor',
+          scopes: 'pass',
+        })
+      ).status,
+    ).toBe(200);
+  });
+
   it('pages the list by cursor', async () => {
     const { org, admin } = await setup();
     for (const name of ['A', 'B', 'C'])

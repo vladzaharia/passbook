@@ -4975,6 +4975,15 @@
       ]
     },
     {
+      "code": "TAG_LENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
       "code": "TAG_LIMIT",
       "statuses": [
         409
@@ -5012,6 +5021,15 @@
       "modules": [
         "nfc",
         "scan"
+      ]
+    },
+    {
+      "code": "TAG_PASS_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {
@@ -5136,6 +5154,15 @@
       "code": "TAG_TYPE_LIMIT",
       "statuses": [
         409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_LOANER_SCOPE",
+      "statuses": [
+        422
       ],
       "modules": [
         "nfc"

@@ -51,7 +51,7 @@ export const TagConfirmSchema = z.enum(['none', 'staff', 'manager']);
 export const TagScopeSchema = z.enum(['pass', 'user']);
 export const TagSourceKindSchema = z.enum(['scanner', 'remote', 'admin']);
 export const TagStatusSchema = z.enum(['active', 'retired']);
-/** What a list shows: `lent` is a pool tag on a visitor, `lost` has no binding and was reported. */
+/** What a list shows: `lent` is a loaner (a `visitor` type tag) on a pass; `assigned` excludes it; `lost` has no binding and was reported. */
 export const TagStateSchema = z.enum(['assigned', 'spare', 'lent', 'lost', 'retired']);
 export const TagEndCauseSchema = z.enum([
   'admin',
@@ -129,7 +129,7 @@ export const TagBindingSchema = z.object({
   /** The holder's display name, for a user binding. */
   holderName: z.string().nullable(),
   source: TagSourceKindSchema,
-  /** A loaner on a visitor pass. Always pass scope; check-out ends it. */
+  /** True for a tag of a `visitor` type: a loaner, pass scope only. It ends at the desk return, the pass's end, or void or remove. */
   lent: z.boolean().default(false),
   boundAt: TimestampSchema,
   boundByName: z.string().nullable(),
@@ -156,6 +156,7 @@ export const TagSchema = z.object({
   /** The first four hex digits of the tag reference, never part of the UID. */
   hint: z.string().regex(/^[0-9A-F]{4}$/),
   label: z.string().nullable(),
+  /** True when the tag's type has use `visitor`: a loaner. Set it through the type. */
   pool: z.boolean(),
   status: TagStatusSchema,
   state: TagStateSchema,
@@ -179,6 +180,7 @@ export const TagListSchema = pageOf(TagSchema);
 
 export const UpdateTagSchema = z.strictObject({
   label: PlainLineSchema(40).nullable().optional(),
+  /** Refused (`TAG_POOL_UNSUPPORTED`): a loaner is a tag with a `visitor` type. */
   pool: z.boolean().optional(),
 });
 
@@ -223,7 +225,7 @@ export const ScanTagBindRequestSchema = z.strictObject({
   typeId: IdSchema.optional(),
   /** Move the tag from another holder. Needs a Manager PIN. */
   move: z.boolean().optional(),
-  /** A loaner on a visitor pass; pass scope only. */
+  /** Refused (`TAG_POOL_UNSUPPORTED`): choose a `visitor` tag type with `typeId` instead. */
   pool: z.boolean().optional(),
   label: PlainLineSchema(40).optional(),
   approval: TagApprovalSchema.optional(),
