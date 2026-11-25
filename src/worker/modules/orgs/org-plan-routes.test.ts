@@ -187,7 +187,7 @@ describe('what the platform lets through', () => {
     expect(limitOf(await plan(p), 'domains')).toBeUndefined();
   });
 
-  it('shows one member for a personal org', async () => {
+  it('lists no members limit for a personal org: one person by design, never a full slot', async () => {
     const { fx, env, clock } = rk.kit;
     const user = await makeUser(fx);
     const session = await makeSession(fx, { userId: user.id, roles: ['admin', 'user'] });
@@ -200,9 +200,10 @@ describe('what the platform lets through', () => {
     const res = await call('GET', planPath(org?.id ?? ''), who);
     expect(res.status).toBe(200);
     const body = (await res.json()) as OrgPlanDto;
-    // Personal orgs are on Unlimited (`legacy`) and stay private: one member whatever the plan says.
+    // Personal orgs are on Unlimited (`legacy`) and stay private: a members row would read as 1 of 1, full.
     expect(body.preset).toBe('legacy');
-    expect(limitOf(body, 'members')?.limit).toBe(1);
+    expect(limitOf(body, 'members')).toBeUndefined();
+    expect(limitOf(body, 'templates')).toBeDefined();
   });
 
   it('refuses a member whose membership was revoked', async () => {
