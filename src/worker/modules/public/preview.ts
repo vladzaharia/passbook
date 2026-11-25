@@ -2,6 +2,7 @@ import type { PassJson } from '../../../passkit/types.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { compileWallets } from '../../../web/channel-previews/wallet-kit.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -82,7 +83,7 @@ export async function previewFor(
     assets,
     locale,
     now,
-    timeZone: 'UTC',
+    timeZone: DEFAULT_TIME_ZONE,
     ...stateWordOption(pass),
   });
   let wallets: PreviewPageProps['wallets'] = null;

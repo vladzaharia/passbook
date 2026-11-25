@@ -1,5 +1,6 @@
 import type { ScanActionKind, ScanRole } from '../../../passkit/types.ts';
 import { type ResolvedScanAction, scanOf } from '../../../shared/scan-defaults.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { ScanActor } from './guard.ts';
 import type { Found } from './resolve.ts';
 import { ROLE_RANK } from './rules.ts';
@@ -16,7 +17,7 @@ export function sourceActor(actor: ScanActor, role: ScanRole): ScanActor {
     scanner: null,
     event: null,
     templateIds: [],
-    timeZone: 'UTC',
+    timeZone: DEFAULT_TIME_ZONE,
     role,
     staff: null,
     settings: {

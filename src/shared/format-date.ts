@@ -1,5 +1,7 @@
 // Dates a holder reads about their pass, in the holder's zone. In shared/ so the Worker (/p, /b) and
 // the SPA use one implementation; web/lib/format.ts re-exports both.
+import { DEFAULT_TIME_ZONE } from './time-zone.ts';
+
 const cache = new Map<string, Intl.DateTimeFormat>();
 
 /** Oct 31, 2026 in `timeZone`: the day a holder sees something happened, in the holder's own zone. */
@@ -27,7 +29,7 @@ export function formatDayIn(ms: number, timeZone: string, locale = 'en-US'): str
 export function formatEndedOn(
   state: 'voided' | 'expired',
   pass: { modifiedAt: number; voidedAt?: number | null; expirationDate?: unknown },
-  timeZone = 'UTC',
+  timeZone = DEFAULT_TIME_ZONE,
   locale = 'en-US',
 ): string | null {
   const expiry = typeof pass.expirationDate === 'string' ? Date.parse(pass.expirationDate) : NaN;

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { whenIn } from '../../../shared/session-window.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
@@ -61,7 +62,7 @@ export function ClosedCard({
   }
   const line = opensAt
     ? scanLine(SCAN_COPY.closed.opens, {
-        when: whenIn(opensAt, workspace?.timeZone ?? 'UTC', Date.now()),
+        when: whenIn(opensAt, workspace?.timeZone ?? DEFAULT_TIME_ZONE, Date.now()),
       })
     : SCAN_COPY.closed.noOpening;
   // A live region fills after it mounts, so a screen reader hears the change.

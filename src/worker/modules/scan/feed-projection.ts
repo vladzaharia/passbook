@@ -5,6 +5,7 @@ import {
   type ScanRecordDto,
   ScanRecordKindSchema,
 } from '../../../shared/contracts/index.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -117,7 +118,7 @@ export async function consoleFeedActor(
     orgId: authority.orgId,
     event: null,
     templateIds: [],
-    timeZone: 'UTC',
+    timeZone: DEFAULT_TIME_ZONE,
   });
   actor.tenantAuthority = await captureScanTenantAuthority(ctx, session, authority);
   actor.platformSessionId = session.sessionId;

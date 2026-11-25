@@ -3,6 +3,7 @@ import { passDevice } from '../../../shared/device.ts';
 import { formatEndedOn } from '../../../shared/format-date.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -139,7 +140,7 @@ register(
         assets: model.assets,
         locale: lang,
         now: new Date(svcCtx.clock.now()),
-        timeZone: zoneOf(c) ?? 'UTC',
+        timeZone: zoneOf(c) ?? DEFAULT_TIME_ZONE,
         ...stateWordOption(pass),
       });
       const html = renderPassPage({

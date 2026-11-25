@@ -13,6 +13,7 @@ import {
   VisitorQuerySchema,
   VisitorSchema,
 } from '../../../shared/contracts/visitors.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { methodScope } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { NotFoundError } from '../../platform/errors.ts';
@@ -158,7 +159,7 @@ register(
     summary: 'Send the host their arrival email again',
     params: VisitorParamsSchema,
     query: VisitorOrgQuerySchema,
-    body: z.strictObject({ timeZone: z.string().min(1).max(64).default('UTC') }),
+    body: z.strictObject({ timeZone: z.string().min(1).max(64).default(DEFAULT_TIME_ZONE) }),
     response: OkSchema,
   },
   async (c) => {
