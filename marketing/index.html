@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <title>PassBook</title>
+    <meta name="description" content="Memberships, tickets and loyalty cards for phone wallets, paper and tap cards. Made, sent and scanned in one place." />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="theme-color" content="#f6f8ff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#060912" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="%PUBLIC_BASE_URL%/" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:site_name" content="PassBook" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%PUBLIC_BASE_URL%/" />
+    <meta property="og:title" content="PassBook" />
+    <meta property="og:description" content="Memberships, tickets and loyalty cards for phone wallets, paper and tap cards. Made, sent and scanned in one place." />
+    <meta property="og:image" content="%PUBLIC_BASE_URL%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The PassBook buddy, a smiling pocket holding three passes, beside the name." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="module" src="/src/web/marketing/pages/home.ts"></script>
+  </head>
+  <body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- top bar: copy this block onto every page; set aria-current on the page's own link -->
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="/"><svg viewBox="0 0 20 20" aria-hidden="true"><svg y="-3" width="20" height="10" viewBox="0 -3 20 10" overflow="hidden"><rect transform="rotate(-18 6 10)" fill="#2dd4bf" x="3" y="1" width="6" height="9" rx="1.25"/><rect transform="rotate(18 14 10)" fill="#ffc24d" x="11" y="1" width="6" height="9" rx="1.25"/><rect fill="#9a5cff" x="7" width="6" height="9" rx="1.25"/></svg><rect x="1" y="7" width="18" height="12" rx="3.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="12.5" r="1.5" fill="currentColor"/><circle cx="13" cy="12.5" r="1.5" fill="currentColor"/><path d="M8 15.25q2 1.5 4 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>PassBook</a>
+    <nav class="nav" aria-label="Main"><a href="/" aria-current="page">Product</a><a href="/blueprints">Blueprints</a><a href="/door">At the door</a><a href="/build">Developers</a></nav>
+    <a class="btn btn-outline btn-sm" href="/login">Sign in</a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu"><i></i></button>
+  </div>
+  <div class="menu-panel" id="menu">
+    <nav aria-label="Main, small screens"><a href="/" aria-current="page">Product</a><a href="/blueprints">Blueprints</a><a href="/door">At the door</a><a href="/build">Developers</a></nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero wrap" data-act aria-labelledby="hero-h">
+    <div class="hero-stage even lifted">
+      <h1 class="h-hero four land" id="hero-h"><span><span class="w" style="--i:0">Memberships.</span></span><span><span class="w" style="--i:1">Tickets.</span></span><span><span class="w" style="--i:2">Loyalty</span> <span class="w" style="--i:3">cards.</span></span><span class="gold"><span class="w" style="--i:4">All</span> <span class="w" style="--i:5">in</span> <span class="w" style="--i:6">one</span> <span class="w" style="--i:7">place.</span></span></h1>
+      <div class="hero-scene bleed" data-scene="door-pass"></div>
+    </div>
+    <div class="panel tone-teal notched ticket slim">
+      <div class="ticket-main">
+        <div class="btn-row stack"><a class="btn btn-ink" href="/access">Request access</a><a class="btn btn-secondary" href="/developers">Visit developer portal</a></div>
+      </div>
+      <div class="ticket-stub perf"><span class="kinds-line">Phone wallets · Paper · Mobile · Tap</span><span class="opt">23 blueprints</span><svg class="barcode" viewBox="0 0 150 24" aria-hidden="true"><path d="M0 12h150" stroke="#04201c" stroke-width="24" stroke-dasharray="3 2 1 2 5 1 2 3 1 1 4 2 2 1 3 3"/></svg></div>
+    </div>
+  </section>
+
+  <section class="section tight wrap" id="stops" aria-labelledby="stops-h">
+    <h2 class="sr-only" id="stops-h">Design it. Send it. Update it. Scan it.</h2>
+    <ol class="stops named">
+      <li class="stop panel tone-violet notched lift"><div class="art-box" data-scene="design"></div><div class="stop-body perf"><span class="num">01</span><h3 class="h-card">Design it.</h3><p>23 blueprints. A visual designer.</p><a class="link" href="/blueprints">See all blueprints</a></div></li>
+      <li class="stop panel tone-gold notched lift"><div class="art-box" data-scene="send"></div><div class="stop-body perf"><span class="num">02</span><h3 class="h-card">Send it.</h3><p>Email, link, QR code or a sign.</p></div></li>
+      <li class="stop panel tone-teal notched lift"><div class="art-box" data-scene="update"></div><div class="stop-body perf"><span class="num">03</span><h3 class="h-card">Update it.</h3><p>Edit once. Every phone updates.</p></div></li>
+      <li class="stop panel tone-rose notched lift"><div class="art-box" data-scene="scan"></div><div class="stop-body perf"><span class="num">04</span><h3 class="h-card">Scan it.</h3><p>Camera, reader or tap.</p><a class="link" href="/door">See the door</a></div></li>
+    </ol>
+  </section>
+
+  <section class="section wrap" id="jobs" aria-labelledby="jobs-h">
+    <div class="section-head"><h2 class="h-section" id="jobs-h">One pass, many jobs.</h2><a class="chip" href="/blueprints" style="text-decoration:none">23 blueprints</a></div>
+    <ul class="jobs">
+      <li class="job panel tone-gold notched lift"><div class="art-box" data-scene="job-checkin"></div><p class="job-label perf"><b>Check-in</b><small>Gym desk</small></p></li>
+      <li class="job panel tone-violet notched lift"><div class="art-box" data-scene="job-tickets"></div><p class="job-label perf"><b>Tickets</b><small>Concert door</small></p></li>
+      <li class="job panel tone-rose notched lift"><div class="art-box" data-scene="job-stamp"></div><p class="job-label perf"><b>Stamp cards</b><small>Coffee counter</small></p></li>
+      <li class="job panel tone-teal notched lift"><div class="art-box" data-scene="job-visitors"></div><p class="job-label perf"><b>Visitors</b><small>Front desk</small></p></li>
+      <li class="job panel tone-raised notched lift"><div class="art-box" data-scene="job-parking"></div><p class="job-label perf"><b>Parking</b><small>Car park</small></p></li>
+      <li class="job panel tone-gold notched lift"><div class="art-box" data-scene="job-classes"></div><p class="job-label perf"><b>Class packs</b><small>Climbing wall</small></p></li>
+    </ul>
+  </section>
+
+  <section class="section wrap" id="kinds" aria-labelledby="kinds-h" data-act>
+    <div class="section-head"><h2 class="h-section" id="kinds-h">Every kind of pass.</h2><div data-scene="kinds-guide" style="width:clamp(140px,17vw,210px)"></div></div>
+    <ul class="kinds kinds-sync">
+      <li class="kind panel tone-teal notched lift" style="--k:0"><div class="art-box" data-scene="kind-wallet"></div><p class="kind-label perf">Phone wallets</p></li>
+      <li class="kind panel tone-gold notched lift" style="--k:1"><div class="art-box" data-scene="kind-paper"></div><p class="kind-label perf">Paper tickets</p></li>
+      <li class="kind panel tone-violet notched lift" style="--k:2"><div class="art-box" data-scene="kind-mobile"></div><p class="kind-label perf">Mobile tickets</p></li>
+      <li class="kind panel tone-rose notched lift" style="--k:3"><div class="art-box" data-scene="kind-tap"></div><p class="kind-label perf">Tap cards</p></li>
+      <li class="more"><b>Coming soon</b><span>Google Wallet</span><span>Samsung Wallet</span><span>Apple Wallet tap</span></li>
+    </ul>
+  </section>
+
+  <section class="section wrap" id="update" aria-labelledby="update-h">
+    <div class="section-head"><h2 class="h-section h-lines" id="update-h"><span>Change it here.</span> <span>It changes on their phone.</span></h2></div>
+    <div class="demo panel tone-gold notched" data-act>
+      <div class="demo-head"><h3 class="h-card">Try it.</h3><span class="chip chip-ink">Sample pass</span></div>
+      <div class="demo-line perf" data-demo>
+        <div class="demo-col">
+          <div class="editor">
+            <div class="editor-head"><span>Membership</span><span class="editor-state" aria-live="polite"><i></i><span data-st>On their phone</span></span></div>
+            <label class="field"><span class="field-label">Member name</span><input data-i="name" value="Alex Morgan" maxlength="22" autocomplete="off" spellcheck="false"></label>
+            <div class="field-two">
+              <div class="field"><span class="field-label" id="st-l">Status</span><span class="control"><button type="button" role="switch" aria-checked="true" aria-labelledby="st-l" class="switch" data-i="status"></button><b data-sv>Active</b></span></div>
+              <div class="field" role="group" aria-labelledby="cr-l"><span class="field-label" id="cr-l">Credits</span><span class="control stepper"><button type="button" data-d="-1" aria-label="One fewer credit">&minus;</button><output data-i="credits" aria-live="polite">8</output><button type="button" data-d="1" aria-label="One more credit">+</button></span></div>
+            </div>
+          </div>
+          <p class="cap">In PassBook</p>
+        </div>
+        <div class="wire" aria-hidden="true"><i></i></div>
+        <div class="demo-col">
+          <div class="device"><div class="device-screen">
+            <div class="pass"><i class="pass-sweep"></i>
+              <div class="pass-head"><span class="pass-logo"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 10L5 4l2 3 1.2-1.8L10.5 10z" fill="#ffc24d"/></svg></span><span class="pass-org">Northside Climbing</span><span class="pass-field end"><small>Credits</small><b data-o="credits">8</b></span></div>
+              <div class="pass-strip"></div>
+              <div class="pass-field"><small>Member</small><b class="big" data-o="name">Alex Morgan</b></div>
+              <div class="pass-row"><span class="pass-field"><small>Status</small><b data-o="status">Active</b></span><span class="pass-field end"><small>Member no.</small><b>NC 2048</b></span></div>
+              <div class="pass-qr"><svg viewBox="0 0 21 21" aria-hidden="true"><use href="#pb-qr" fill="#0d1322"/></svg></div>
+            </div>
+          </div></div>
+          <p class="cap">On their phone</p>
+        </div>
+        <div class="wire late" aria-hidden="true"><i></i></div>
+        <div class="demo-col end">
+          <div class="verdict" aria-live="polite">
+            <div class="verdict-buddy" data-scene="verdict"></div>
+            <div class="verdict-head"><span>Main door</span></div>
+            <div class="result"><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="currentColor"/><path class="ok" d="M7.8 13.6l3.5 3.4 7-7.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path class="x" d="M9 9l8 8M17 9l-8 8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg><span data-r>Checked in</span></div>
+            <span class="verdict-name" data-rn>Alex Morgan</span><span class="verdict-note" data-rd>8 credits left</span>
+          </div>
+          <p class="cap">At the door</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="scan" aria-labelledby="scan-h">
+    <div class="section-head"><h2 class="h-section" id="scan-h">A scanner in any browser.</h2><a class="link" href="/door">See the door</a></div>
+    <div class="answers once">
+      <button type="button" class="answer panel tone-teal notched lift" data-replay style="--d:0s" aria-label="Replay: checked in"><span class="art-box" data-scene="ans-yes"></span><span class="answer-body perf"><span class="label">Yes</span><b>Checked in</b></span></button>
+      <button type="button" class="answer panel tone-gold notched lift" data-replay style="--d:.9s" aria-label="Replay: already in"><span class="art-box" data-scene="ans-already"></span><span class="answer-body perf"><span class="label">Already in</span><b>In since 18:02</b></span></button>
+      <button type="button" class="answer panel tone-rose notched lift" data-replay style="--d:1.8s" aria-label="Replay: not valid"><span class="art-box" data-scene="ans-no"></span><span class="answer-body perf"><span class="label">No</span><b>Not valid</b></span></button>
+      <button type="button" class="answer panel tone-violet notched lift" data-replay style="--d:2.7s" aria-label="Replay: our fault"><span class="art-box" data-scene="ans-sorry"></span><span class="answer-body perf"><span class="label">Our fault</span><b>Scan again</b></span></button>
+    </div>
+  </section>
+
+  <section class="section wrap" id="tap" aria-labelledby="tap-h">
+    <div class="panel tone-rose split">
+      <div><h2 class="h-section h-lines" id="tap-h"><span>No phone out?</span> <span>Tap a card.</span></h2><p class="lede">Cards, fobs, stickers or wristbands.</p></div>
+      <div class="art-box" data-scene="tap-sync"></div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="developers" aria-labelledby="dev-h">
+    <div class="panel tone-raised split" data-act>
+      <div><h2 class="h-section" id="dev-h">Everything here is in the API.</h2><p class="lede">SDKs, webhooks and a sandbox.</p><div class="btn-row"><a class="btn btn-primary" href="/developers">Visit developer portal</a></div></div>
+      <div class="dev-art">
+        <div class="terminal" role="img" aria-label="Terminal: npm i @passbook/sdk">
+          <div class="terminal-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="terminal-body" aria-hidden="true"><div><span class="prompt">$ </span><span class="typed">npm i @passbook/sdk</span></div><div class="out">added @passbook/sdk</div><div class="dim">TypeScript · Python · Go</div></div>
+        </div>
+        <div class="art-box art-plate tone-teal" data-scene="dev"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="close-h">
+    <div class="panel tone-violet notched close">
+      <div data-scene="close"></div>
+      <h2 class="h-section" id="close-h">Bring PassBook to your door.</h2>
+      <a class="btn btn-ink" href="/access">Request access</a>
+    </div>
+  </section>
+
+</main>
+
+<!-- footer: copy this block onto every page -->
+<footer class="footer">
+  <div class="wrap footer-in">
+    <div>
+      <a class="brand" href="/"><svg viewBox="0 0 20 20" aria-hidden="true"><svg y="-3" width="20" height="10" viewBox="0 -3 20 10" overflow="hidden"><rect transform="rotate(-18 6 10)" fill="#2dd4bf" x="3" y="1" width="6" height="9" rx="1.25"/><rect transform="rotate(18 14 10)" fill="#ffc24d" x="11" y="1" width="6" height="9" rx="1.25"/><rect fill="#9a5cff" x="7" width="6" height="9" rx="1.25"/></svg><rect x="1" y="7" width="18" height="12" rx="3.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="12.5" r="1.5" fill="currentColor"/><circle cx="13" cy="12.5" r="1.5" fill="currentColor"/><path d="M8 15.25q2 1.5 4 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>PassBook</a>
+    </div>
+    <nav class="footer-links" aria-label="Footer"><a href="/">Product</a><a href="/blueprints">Blueprints</a><a href="/door">At the door</a><a href="/build">Developers</a></nav>
+    <div class="footer-meta"><span>© 2026 PassBook</span><span>passbook.mobile</span></div>
+  </div>
+</footer>
+  </body>
+</html>
