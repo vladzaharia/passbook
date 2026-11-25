@@ -103,6 +103,7 @@ describe('style specifics', () => {
       const { container } = render(<PassCard view={view(pass)} />);
       const block = container.querySelector('.pc-poster-primary') as HTMLElement;
       const [title, row, ...extra] = [...block.children];
+      if (!row) throw new Error('no primary row');
       expect(title).toHaveClass('pc-title');
       expect(row).toHaveClass('pc-primary');
       expect(extra).toHaveLength(0);
