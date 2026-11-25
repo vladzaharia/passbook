@@ -175,8 +175,20 @@ describe('tenant audit access', () => {
       capability: 'audit:read',
       mode: 'live',
     };
-    const filter = { orgId: north.id, tenant: { authority, now: f.clock.now() } };
+    const filter = { orgId: north.id, tenant: { authority, now: systemClock.now() } };
     expect(await listAuditRows(appEnv.DB, filter, 10)).toHaveLength(2);
+    await run(appEnv.DB, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
+      f.clock.now(),
+      authority.sessionId,
+    ]);
+    expect(await listAuditRows(appEnv.DB, filter, 10)).toEqual([]);
+    await run(appEnv.DB, 'UPDATE sessions SET revoked_at = NULL WHERE id_hash = ?', [
+      authority.sessionId,
+    ]);
+    expect(await listAuditRows(appEnv.DB, filter, 10)).toHaveLength(2);
+    await run(appEnv.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [north.id]);
+    await run(appEnv.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [north.id]);
+    expect(await listAuditRows(appEnv.DB, filter, 10)).toEqual([]);
 
     await run(appEnv.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
       f.clock.now(),

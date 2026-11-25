@@ -5,6 +5,7 @@ import type { Actor } from '../../platform/context.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIdOf, type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
+import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import { redactForRead, safeLabel } from './redact.ts';
 import { REKEYED_ACTION, rekeyedDetail } from './rekeyed-detail.ts';
 import {
@@ -137,7 +138,12 @@ export async function listTenantAudit(
   reader?: TenantAuditReader,
 ) {
   const { orgId, authority } = reader ?? (await tenantAuditReader(ctx, auth, query));
-  return listAudit(ctx, query, { kind: 'tenant', orgId, authority });
+  const page = await listAudit(ctx, query, { kind: 'tenant', orgId, authority });
+  // An empty page past the first may be authority lost mid-export: refuse rather than end the file short.
+  if (reader && query.cursor && page.items.length === 0)
+    if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
+      throw new ForbiddenError();
+  return page;
 }
 
 export async function listPlatformAudit(ctx: ServiceContext, query: Query) {
