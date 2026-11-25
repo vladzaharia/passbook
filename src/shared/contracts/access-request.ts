@@ -17,7 +17,10 @@ export const ACCESS_ORG_MAX = 160;
 export const ACCESS_MESSAGE_MAX = 600;
 export const ACCESS_FORM_MAX_BYTES = 4096;
 
-const CONTROL = /\p{Cc}/u;
+/** Controls and invisible formatting (bidi overrides, zero-width marks) never belong in a name or organization. */
+const HIDDEN = /[\p{Cc}\p{Cf}]/u;
+/** A message may break lines and indent, nothing else invisible. */
+const HIDDEN_IN_MESSAGE = /[\p{Cf}\p{Cc}]/u;
 
 /** A browser posts a textarea's line breaks as CRLF; count and store them as one character. */
 const lines = (value: string) => value.replace(/\r\n?/g, '\n');
@@ -25,14 +28,10 @@ const lines = (value: string) => value.replace(/\r\n?/g, '\n');
 const oneLine = (max: number, message: string) =>
   z
     .string({ error: message })
+    // Before the spaces collapse: a line break or tab inside the value is refused, not flattened.
+    .refine((value) => !HIDDEN.test(value), message)
     .transform((value) => value.normalize('NFC').replace(/\s+/gu, ' ').trim())
-    .pipe(
-      z
-        .string()
-        .min(1, message)
-        .max(max, message)
-        .refine((value) => !CONTROL.test(value), message),
-    );
+    .pipe(z.string().min(1, message).max(max, message));
 
 export const AccessRequestSchema = z.object({
   name: oneLine(ACCESS_NAME_MAX, ACCESS_COPY.name),
@@ -47,7 +46,15 @@ export const AccessRequestSchema = z.object({
     .string()
     .optional()
     .transform((value) => lines(value ?? '').trim())
-    .pipe(z.string().max(ACCESS_MESSAGE_MAX, ACCESS_COPY.message)),
+    .pipe(
+      z
+        .string()
+        .max(ACCESS_MESSAGE_MAX, ACCESS_COPY.message)
+        .refine(
+          (value) => !HIDDEN_IN_MESSAGE.test(value.replace(/[\n\t]/g, '')),
+          ACCESS_COPY.message,
+        ),
+    ),
 });
 
 export type AccessRequest = z.infer<typeof AccessRequestSchema>;

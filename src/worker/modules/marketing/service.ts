@@ -23,12 +23,13 @@ const trapped = (input: Record<string, unknown>) =>
 export async function submitAccessRequest(
   ctx: ServiceContext,
   input: Record<string, unknown>,
-  mailer?: Mailer,
+  options: {
+    mailer?: Mailer;
+    /** Runs once the request is valid and real, just before the send (the site-wide limit). */
+    beforeSend?: () => Promise<void>;
+  } = {},
 ): Promise<void> {
-  if (trapped(input)) {
-    ctx.log.info('marketing.access_trap', { code: 'ACCESS_TRAP' });
-    return;
-  }
+  const { mailer, beforeSend } = options;
   const parsed = AccessRequestSchema.safeParse(input);
   if (!parsed.success) {
     const issues = zodIssues(parsed.error);
@@ -38,6 +39,11 @@ export async function submitAccessRequest(
     });
     throw new ValidationError(issues[0]?.message ?? ACCESS_COPY.invalid, issues);
   }
+  // After validation, so a trap and a bad field answer alike: a script cannot tell the trap from a check.
+  if (trapped(input)) {
+    ctx.log.info('marketing.access_trap', { code: 'ACCESS_TRAP' });
+    return;
+  }
   const request: AccessRequest = parsed.data;
   const to = strictEmail((ctx.env as { ACCESS_REQUEST_EMAIL?: unknown }).ACCESS_REQUEST_EMAIL);
   const binding = (ctx.env as { EMAIL?: { send?: unknown } }).EMAIL;
@@ -45,6 +51,7 @@ export async function submitAccessRequest(
     ctx.log.error('marketing.access_unconfigured', { code: 'ACCESS_MAIL_UNCONFIGURED' });
     throw unavailable();
   }
+  await beforeSend?.();
   const mail = accessRequestEmail(request);
   try {
     await (mailer ?? createEmailBindingMailer(ctx.env)).send({
