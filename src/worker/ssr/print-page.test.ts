@@ -27,6 +27,7 @@ const ready = (d: PaperDesign): PrintPageModel => ({
   generation: 1,
   printedAt: Date.UTC(2026, 10, 19, 1, 2),
   files: { logo: 'logo@3x.png', art: 'artwork@3x.png' },
+  stale: false,
 });
 
 describe('print page document', () => {
@@ -85,7 +86,7 @@ describe('print page document', () => {
   it('asks the holder to make the ticket when no print exists, and says why when it cannot', () => {
     const empty = renderPrintPage({
       ...props,
-      model: { state: 'empty', orgName: 'Northwind Hall', mode: 'live' },
+      model: { state: 'empty', again: false, orgName: 'Northwind Hall', mode: 'live' },
     });
     expect(empty).toContain('data-act="make"');
     expect(empty).not.toContain('class="pp-sheet');
@@ -158,9 +159,19 @@ describe('print page for a holder', () => {
     expect(html).toContain('TEST · NOT VALID');
   });
 
+  it('says when the print predates the pass, and when the earlier print ended', () => {
+    expect(page(ready(design()))).not.toContain('data-stale');
+    const stale = page({ ...ready(design()), stale: true });
+    expect(stale).toContain('data-stale');
+    expect(stale).toContain('Printed before the last change. Reprint to update.');
+    const again = page({ state: 'empty', again: true, orgName: 'Northwind Hall', mode: 'live' });
+    expect(again).toContain('The earlier print ended. Print again.');
+    expect(again).toContain('Print again</button>');
+  });
+
   it('shows the buddy only in the empty and unavailable states', () => {
     expect(page(ready(design()))).not.toContain('wl-buddy');
-    const empty = page({ state: 'empty', orgName: 'Northwind Hall', mode: 'live' });
+    const empty = page({ state: 'empty', again: false, orgName: 'Northwind Hall', mode: 'live' });
     expect(empty).toContain('data-scene="inspect"');
     const off = page({ state: 'unavailable', orgName: 'Northwind Hall', mode: 'live' });
     expect(off).toContain('data-scene="tug"');
