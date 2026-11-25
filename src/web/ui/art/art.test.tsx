@@ -305,8 +305,9 @@ describe('entity art', () => {
   // Then to 15.5 kB for the broadcast and bundle arts (a broadcast no longer borrows the wallet),
   // and the scenes to 9 kB for the stow scene (tuck's keyframes, a shorter run). Then to 16.25 kB
   // (16,417 B measured) for the scanner's beat API, the xl-scan tier, the card notch and the
-  // scanner, stub and badge arts.
-  it('fits the 16.25 kB gzip budget; the lazy scenes fit 9 kB; the state parts 2.5 kB', () => {
+  // scanner, stub and badge arts. Then to 16.5 kB (16,846 B measured) for the portal buddy kit
+  // (BX1): the catch scene's envelope, the face's brows, look group and hop.
+  it('fits the 16.5 kB gzip budget; the lazy scenes fit 9 kB; the state parts 2.5 kB', () => {
     // css.ts is SSR glue: the browser bundle never loads it. The state parts and compositions load
     // with the sign-in page and on SSR pages only.
     const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx'];
@@ -318,7 +319,7 @@ describe('entity art', () => {
     const kit = [...files, join(DIR, 'scenes/rest.css')];
     const gz = (paths: string[]) =>
       gzipSync(paths.map((f) => readFileSync(f, 'utf8')).join('\n'), { level: 9 }).length;
-    expect(gz(kit)).toBeLessThanOrEqual(16.25 * 1024);
+    expect(gz(kit)).toBeLessThanOrEqual(16.5 * 1024);
     expect(gz(states.map((f) => join(DIR, f)))).toBeLessThanOrEqual(2.5 * 1024);
     // Nothing in the kit's entry pulls them in.
     for (const f of ['index.ts', 'buddy.tsx', 'buddy-art.tsx', 'wallet.tsx'])
