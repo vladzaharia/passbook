@@ -86,14 +86,8 @@ describe('devices and views', () => {
     );
     expect(deviceState(dev({}), 10).text).toBe('Offline');
   });
-  it('gives Who’s in a counted place and Visitors a Desk role', () => {
-    expect(viewsFor({ tracks: true, desk: true })).toEqual([
-      'activity',
-      'problems',
-      'inside',
-      'visitors',
-    ]);
-    expect(viewsFor({ tracks: false, desk: true })).toEqual(['activity', 'problems', 'visitors']);
-    expect(viewsFor({ tracks: false, desk: false })).toEqual(['activity', 'problems']);
+  it('gives Who’s in a counted place only', () => {
+    expect(viewsFor({ tracks: true })).toEqual(['activity', 'problems', 'inside']);
+    expect(viewsFor({ tracks: false })).toEqual(['activity', 'problems']);
   });
 });

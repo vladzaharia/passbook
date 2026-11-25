@@ -311,7 +311,6 @@ describe('createScanApi', () => {
         'tagPending',
         'tagUndo',
         'undo',
-        'visitors',
       ].sort(),
     );
   });

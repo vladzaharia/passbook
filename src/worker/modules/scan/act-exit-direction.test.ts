@@ -32,6 +32,12 @@ describe('an exit under Track in / out', () => {
       [exit.scanId],
     );
     expect(row).toEqual({ direction: 'out', action_kind: 'check_in' });
+    const ev = await first<{ data: string }>(
+      kit.env.DB,
+      "SELECT data FROM pass_events WHERE pass_id=? AND kind='scan.checked_out'",
+      [pass.id],
+    );
+    expect(JSON.parse(ev?.data ?? '{}')).toMatchObject({ direction: 'out', exit: 'scan' });
     const recent = (await (await kit.get(scanner.headers, '/scans')).json()) as {
       items: { scanId: string; actionLabel: string }[];
     };

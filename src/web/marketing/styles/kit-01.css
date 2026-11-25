@@ -1,0 +1,292 @@
+/* PassBook marketing kit. Dark first; light follows the device. See KIT.md. */
+
+/* ---------- tokens ---------- */
+:root {
+  color-scheme: dark;
+  --ground: #060912;
+  --raised: #0d111b;
+  --sunken: #020408;
+  --strong: #fff;
+  --text: #dbe4ff;
+  --muted: #b5bed3;
+  --border: #212633;
+  --border-strong: #61697b;
+  --accent: #2dd4bf;
+  --accent-ink: #04201c;
+  --chip: #ffc24d;
+  --pb-leg: #dbe4ff;
+  --teal: #2dd4bf;
+  --violet: #9a5cff;
+  --gold: #ffc24d;
+  --rose: #ff6fa6;
+  --blue: #60a5fa;
+  --ok: #56d57b;
+  --ink-teal: #04201c;
+  --ink-gold: #2a1a00;
+  --ink-rose: #33091d;
+  --sans: "Rubik", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --wrap: 1200px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --r-panel: 24px;
+  --r-tile: 20px;
+  --r-card: 16px;
+  --spring: cubic-bezier(0.3, 1.5, 0.5, 1);
+  --section: clamp(72px, 9vw, 120px);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --ground: #f6f8ff;
+    --raised: #fff;
+    --sunken: #ebeef8;
+    --strong: #060912;
+    --text: #262d40;
+    --muted: #48536b;
+    --border: #dadee9;
+    --border-strong: #7e8699;
+    --accent: #0f766e;
+    --accent-ink: #fff;
+    --chip: #8a5200;
+    --pb-leg: #262d40;
+  }
+}
+
+/* ---------- base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+}
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font: 400 16px / 1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+a {
+  color: inherit;
+}
+svg {
+  max-width: 100%;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 100;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip:focus {
+  top: 12px;
+}
+
+/* ---------- layout and type ---------- */
+.wrap {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.section {
+  padding-top: var(--section);
+}
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-bottom: 26px;
+}
+.section-head .lede {
+  margin-top: 12px;
+}
+.h-display {
+  font-weight: 700;
+  font-size: clamp(48px, 7.2vw, 100px);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  color: var(--strong);
+}
+.h-display > span {
+  display: block;
+  white-space: nowrap;
+}
+.h-display .gold {
+  color: var(--gold);
+}
+.h-section {
+  font-weight: 700;
+  font-size: clamp(32px, 5vw, 60px);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: var(--strong);
+  text-wrap: balance;
+}
+.h-card {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+.lede {
+  font-size: clamp(17px, 1.6vw, 21px);
+  line-height: 1.4;
+  max-width: 40ch;
+  text-wrap: pretty;
+}
+.section-head .lede {
+  color: var(--muted);
+}
+.label {
+  font: 500 12px / 1.2 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font: 500 12px / 1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chip);
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+.chip-ink {
+  color: inherit;
+}
+.link {
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 2px solid currentColor;
+  padding-bottom: 1px;
+  transition: opacity 0.15s;
+}
+.link:hover {
+  opacity: 0.75;
+}
+.code {
+  font: 500 14px / 1 var(--mono);
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  font: 600 16px / 1 var(--sans);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  transition:
+    transform 0.18s var(--spring),
+    box-shadow 0.18s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.btn:hover {
+  transform: translateY(-3px);
+}
+.btn:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary:hover {
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 45%, #000);
+}
+.btn-ink {
+  background: #060912;
+  color: #fff;
+  border-color: #060912;
+}
+.btn-ink:hover {
+  box-shadow: 0 5px 0 rgb(0 0 0 / 0.3);
+}
+.btn-secondary {
+  border-color: currentColor;
+  color: inherit;
+}
+.btn-secondary:hover {
+  box-shadow: 0 5px 0 color-mix(in srgb, currentColor 30%, transparent);
+}
+.btn-outline {
+  border-color: var(--border-strong);
+  color: var(--strong);
+  border-width: 1.5px;
+}
+.btn-outline:hover {
+  border-color: var(--strong);
+}
+.btn-sm {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 14.5px;
+}
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

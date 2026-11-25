@@ -177,9 +177,9 @@ describe('fitFailures', () => {
       }),
     ).toEqual([]);
     expect(
-      run('visitors.getVisitorsHosts', { hostName: 'Sam Rivera', hostEmail: 'priya@example.com' }),
+      run('scan-staff.getScanStaff', { hostName: 'Sam Rivera', hostEmail: 'priya@example.com' }),
     ).toEqual([
-      "visitors.getVisitorsHosts response.hostEmail: Sam Rivera has the email priya@example.com; a person's email is their own",
+      "scan-staff.getScanStaff response.hostEmail: Sam Rivera has the email priya@example.com; a person's email is their own",
     ]);
     expect(
       run('retention.getOrgsByOrgIdRetentionReceipts', { cls: 'ok', verified: false }),

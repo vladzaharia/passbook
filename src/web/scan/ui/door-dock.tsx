@@ -19,7 +19,6 @@ export function DoorDock({
   open,
   onError,
   inside,
-  visitors,
   tags,
   approval,
   approving = false,
@@ -35,7 +34,6 @@ export function DoorDock({
   open: (sheet: boolean) => void;
   onError: (message: string) => void;
   inside?: { count: number; onOpen: () => void };
-  visitors?: { onOpen: () => void };
   /** A handheld: a `needs_approval` hold offers the Manager PIN tray here, not on the card. */
   approval?: DockApproval | undefined;
   /** The PIN is with the server. */
@@ -59,7 +57,6 @@ export function DoorDock({
     return (
       <DoorThumbRow
         {...(inside ? { inside } : {})}
-        {...(visitors ? { visitors } : {})}
         {...(tags?.tapToRead ? { tapToRead: tags.tapToRead } : {})}
         {...(handheld && direction?.onCycle
           ? { direction: <DirectionButton value={direction.value} onCycle={direction.onCycle} /> }

@@ -1,4 +1,4 @@
-/* Who's in, Visitors and the roll call: a row with a button of its own at the end */
+/* Who's in and the roll call: a row with a button of its own at the end */
 .op-row[data-trail] {
   display: flex;
   align-items: center;

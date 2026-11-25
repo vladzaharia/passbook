@@ -23,6 +23,8 @@ export interface ServiceContext {
   jobName?: string;
   /** The request's key came as a developer try token: its audit rows carry `via: 'try'`. */
   via?: 'try';
+  /** A cron invocation's D1 queries so far (D1 allows 1,000); only the daily cron sets it. */
+  queries?: () => number;
   waitUntil(promise: Promise<unknown>): void;
 }
 
@@ -55,6 +57,7 @@ interface ContextOptions {
   log?: Logger;
   ctx?: ExecutionContext;
   base?: Record<string, unknown>;
+  queries?: () => number;
 }
 
 /** No request and no job brand: a Durable Object, a store or a cache. It cannot mint a `system:` grant. */
@@ -67,6 +70,7 @@ export function createDetachedContext(env: AppEnv, options: ContextOptions = {})
     ids: createIds(clock),
     log,
     requestId: null,
+    ...(options.queries ? { queries: options.queries } : {}),
     waitUntil: (promise) => {
       const reported = reportFailure(promise, log);
       options.ctx?.waitUntil(reported);
