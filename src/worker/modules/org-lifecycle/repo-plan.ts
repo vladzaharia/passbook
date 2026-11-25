@@ -37,7 +37,14 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('scan_zones'),
   inOrg('webhook_endpoints'),
   inOrg('webhook_capture_hours'),
-  // Before the keys and the org invitations they point at.
+  // Before the keys and the org invitations they point at. A claim points at both kinds of invitation, and a
+  // rule ends with its org.
+  inOrg('idp_group_rules'),
+  {
+    table: 'idp_invite_claims',
+    where:
+      'org_invitation_id IN (SELECT id FROM org_invitations WHERE org_id = ?1) OR developer_invitation_id IN (SELECT id FROM developer_invitations WHERE org_id = ?1)',
+  },
   inOrg('developer_sponsors'),
   {
     table: 'developer_invite_setups',
@@ -86,6 +93,10 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('credentials'),
   {
     table: 'magic_links',
+    where: 'invitation_id IN (SELECT id FROM org_invitations WHERE org_id = ?1)',
+  },
+  {
+    table: 'org_invitation_setups',
     where: 'invitation_id IN (SELECT id FROM org_invitations WHERE org_id = ?1)',
   },
   inOrg('org_memberships'),
@@ -148,7 +159,17 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   credential_ref_keyset: 'platform keyset',
   wallet_reissue_steps: 'reissue continuation dedupe, no tenant column, purged after 3 days',
   oidc_flows: 'sign-in flows',
+  platform_invitation_setups: 'platform invitation signup token ids, no org',
+  platform_invitations: 'platform invitations to Polaris ID groups, no org',
+  platform_role_grants: 'platform admin grants of developer or support, no org',
   pass_transfer_asset_gc: 'retired storage keys, collected by the transfer asset sweep',
+  idp_dirty: 'Polaris ID drain queue, keyed by subject',
+  idp_directory_groups: 'Polaris ID SCIM mirror: opaque ids and flags',
+  idp_directory_users: 'Polaris ID SCIM mirror: opaque ids and flags',
+  idp_drift: 'Polaris ID differences by subject and target',
+  idp_group_members: 'Polaris ID group members by subject, no org',
+  idp_groups: 'Polaris ID custom groups, platform level',
+  idp_target_state: 'Polaris ID projection cache by subject and target',
   entitlement_preset_meta: 'platform plan presets',
   entitlement_presets: 'platform plan presets',
   nfc_tag_systems: 'platform tag system registry',
