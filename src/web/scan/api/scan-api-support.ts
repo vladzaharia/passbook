@@ -47,3 +47,12 @@ export const rosterQuery = (cursor: string | undefined, since: number | undefine
   if (since !== undefined) q.set('since', String(since));
   return q.size > 0 ? `?${q}` : '';
 };
+
+/** The device's one request function: the credential, the retries and the typed answer. */
+export type ScanRequest = <S extends z.ZodType>(
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  path: string,
+  schema: S | null,
+  body?: unknown,
+  call?: Call,
+) => Promise<z.infer<S>>;

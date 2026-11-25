@@ -19,6 +19,7 @@ import type { Pass } from './repo-map.ts';
 import type { PublishReads } from './repo-read-publish-bundle.ts';
 import type { PublishRemovalSnapshot } from './repo-write-publish-snapshot.ts';
 import { newScanCode, primaryBarcodeMessage } from './scan-code.ts';
+import { sameAsRender } from './timed-variant.ts';
 
 export interface PublishReleaseState {
   capturedRelease: AppleRelease | undefined;
@@ -41,6 +42,8 @@ export interface PreparedPublishAttempt extends PublishAttempt {
   passJson: string;
   removal: PublishRemovalSnapshot | null;
   identical: boolean;
+  /** Identical only through the current timed render: the artifact's `contentHash` stays. */
+  asRendered: boolean;
   /** A new scan code: the keyed hash of the code it replaces. */
   rotation: { oldCodeHash: string } | undefined;
 }
@@ -197,7 +200,10 @@ export async function preparePublishAttempt(
     current.contentHash !== null
       ? current.contentHash === artifact.contentHash
       : next.templateVersion === current.templateVersion && previousJson === passJson;
-  const identical = !options.force && next.status === current.status && sameContent;
+  const same = !options.force && next.status === current.status;
+  const asRendered =
+    same && !sameContent && (await sameAsRender(ctx, current, artifact, previousParsed));
+  const identical = same && (sameContent || asRendered);
   return {
     current,
     next,
@@ -213,6 +219,7 @@ export async function preparePublishAttempt(
     passJson,
     removal,
     identical,
+    asRendered,
     rotation,
   };
 }

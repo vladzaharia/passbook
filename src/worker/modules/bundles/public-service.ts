@@ -164,10 +164,7 @@ export async function bundleArchive(ctx: ServiceContext, bundle: BundleRow) {
   const passes = live.filter((_, i) => apple[i]);
   if (passes.length === 0) throw new NotFoundError('No passes to add.', 'BUNDLE_EMPTY');
   await assertBundleMembers(ctx, bundle, passes);
-  const body = packagePassObjects(
-    ctx.env.BUCKET,
-    passes.map((pass) => ({ id: pass.id, objectKey: pass.objectKey, objectSize: pass.objectSize })),
-  );
+  const body = await packagePassObjects(ctx, passes);
   return {
     body: fenceBundleStream(ctx, bundle, passes, body, true),
     passIds: passes.map((pass) => pass.id),

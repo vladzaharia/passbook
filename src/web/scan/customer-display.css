@@ -155,6 +155,47 @@
   color: var(--pk-text-muted);
   font-size: clamp(14px, 1.2vw, 26px);
 }
+/* An amount under review: the figure slides up once, and each digit rolls when it changes. */
+.cstage-copy h1.cstage-draft {
+  max-width: none;
+  animation: cstage-amount-in 180ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.cstage-draft-label {
+  display: block;
+  font-size: 0.5em;
+  font-weight: 700;
+  line-height: 1.1;
+  color: color-mix(in oklab, var(--signal) 40%, var(--pk-text-strong));
+}
+.cstage-draft-figure {
+  display: inline-flex;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cstage-digit {
+  display: inline-block;
+  animation: cstage-roll 120ms ease-out both;
+}
+@keyframes cstage-amount-out {
+  to {
+    opacity: 0;
+  }
+}
+.cstage-copy h1.cstage-draft[data-leaving] {
+  animation: cstage-amount-out 150ms ease-in forwards;
+}
+@keyframes cstage-amount-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes cstage-roll {
+  from {
+    opacity: 0;
+    transform: translateY(0.3em);
+  }
+}
 @keyframes cstage-in {
   from {
     opacity: 0;
@@ -162,7 +203,10 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cstage-copy {
+  .cstage-copy,
+  .cstage-copy h1.cstage-draft,
+  .cstage-copy h1.cstage-draft[data-leaving],
+  .cstage-digit {
     animation: none;
   }
 }

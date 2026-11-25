@@ -1,5 +1,5 @@
 // The changelog's machine part and its rules. Pure: no I/O. See tools/gen-changelog.ts.
-import type { Change } from './openapi-diff.ts';
+import { type Change, changeHolds, type Doc } from './openapi-diff.ts';
 
 export type Kind = 'Added' | 'Changed' | 'Fixed' | 'Removed';
 
@@ -60,9 +60,16 @@ export function mergePending(existing: Pending[], changed: Change[]): Pending[] 
   return [...have.values()].sort((a, b) => a.key.localeCompare(b.key));
 }
 
-/** A change missing from the file, or an entry with no note, or a note that is not one line. */
-export function changelogFailures(existing: Pending[], changed: Change[]): string[] {
+/**
+ * A change missing from the file, an entry with no note, a note that is not one line, or (given the
+ * current spec) an entry for a field, enum value or operation the spec no longer has.
+ */
+export function changelogFailures(existing: Pending[], changed: Change[], spec?: Doc): string[] {
   const out: string[] = [];
+  if (spec)
+    for (const p of existing)
+      if (!changeHolds(spec, p.op, p.change))
+        out.push(`${p.key}: no longer in the spec; remove it from unreleased.json`);
   const have = new Set(existing.map((p) => p.key));
   for (const c of changed)
     if (!have.has(pendingKey(c)))
@@ -117,6 +124,16 @@ export function stamp(pending: Pending[], date: string, into?: DatedFile): Dated
   return { date, entries: [...(into?.entries ?? []), ...entries] };
 }
 
-/** The operations whose changes a released entry already describes. */
-export const coveredOps = (files: DatedFile[]): Set<string> =>
-  new Set(files.flatMap((f) => f.entries.filter((e) => e.covers).flatMap((e) => e.ops ?? [])));
+/**
+ * The operations whose changes a released entry already describes. A file the base already carries
+ * (`atBase`) was released before the changes being checked, so it covers none of them.
+ */
+export const coveredOps = (
+  files: DatedFile[],
+  atBase: ReadonlySet<string> = new Set(),
+): Set<string> =>
+  new Set(
+    files
+      .filter((f) => !atBase.has(f.date))
+      .flatMap((f) => f.entries.filter((e) => e.covers).flatMap((e) => e.ops ?? [])),
+  );

@@ -55,6 +55,30 @@ describe('add endpoint', () => {
     ).toBeVisible();
   });
 
+  it('ticks a set of events from a quick pick and keeps the ticks editable', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    await open('/admin/connections/webhooks/new', calls);
+    const picks = await screen.findByRole('group', { name: 'Quick picks' });
+    expect(within(picks).getAllByRole('button')).toHaveLength(6);
+    await user.click(within(picks).getByRole('button', { name: 'Scans' }));
+    expect(within(picks).getByRole('button', { name: 'Scans' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('checkbox', { name: 'Scanned' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Refused' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Issued' })).not.toBeChecked();
+    await user.click(screen.getByRole('checkbox', { name: 'Refused' }));
+    expect(within(picks).getByRole('button', { name: 'Scans' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    await user.click(within(picks).getByRole('button', { name: 'All' }));
+    expect(screen.getByRole('checkbox', { name: 'Issued' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Print voided' })).toBeChecked();
+  });
+
   it('blocks an empty URL and no events, and names the problem', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
@@ -163,6 +187,7 @@ describe('endpoint actions', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Rotate secret' }));
     const dialog = await screen.findByRole('dialog', { name: 'Rotate secret' });
     expect(within(dialog).getByRole('radio', { name: '24 hours' })).toBeChecked();
+    expect(within(dialog).getAllByRole('radio')).toHaveLength(5);
     await user.click(within(dialog).getByRole('radio', { name: '3 days' }));
     await user.click(within(dialog).getByRole('button', { name: 'Rotate' }));
     expect(await screen.findByRole('dialog', { name: 'New signing secret' })).toBeVisible();

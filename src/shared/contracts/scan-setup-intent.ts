@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SCAN_SETUP_PRESET_IDS } from '../scan-setup-preset-ids.ts';
 import { IdSchema, ModeSchema, PlainLineSchema, TimestampSchema } from './common.ts';
 import { ScanRoleSchema, TimeZoneSchema } from './scan.ts';
 import { HoursSpanSchema, ZoneKeySchema } from './scan-access.ts';
@@ -109,7 +110,7 @@ export const SetupDoorSchema = z.strictObject({
 });
 export type SetupDoor = z.infer<typeof SetupDoorSchema>;
 
-export const ScanSetupPresetSchema = z.enum(['front_desk', 'event_night', 'venue']);
+export const ScanSetupPresetSchema = z.enum(SCAN_SETUP_PRESET_IDS);
 export type ScanSetupPreset = z.infer<typeof ScanSetupPresetSchema>;
 
 /** `POST /scanning-sessions/setup`: the five answers. The mode is the caller's. */
