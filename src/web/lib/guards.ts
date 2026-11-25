@@ -94,9 +94,9 @@ export function canAccessAdminPath(
   return membership?.orgId === scope.orgId && canAccessOrgSection(rest, membership);
 }
 
-/** Routes the session guard skips: the sign-in page. */
+/** Routes the session guard skips: the sign-in page, and the invitation page (the secret is its credential). */
 export function isPublicPath(pathname: string): boolean {
-  return pathname === '/login';
+  return pathname === '/login' || pathname === '/invite';
 }
 
 /** Holder pages that exist; any other URL is a 404 the signed-out visitor may see. */
