@@ -214,10 +214,12 @@ export async function scanWorkspace(
     session: current
       ? session
       : { ...session, accepts: null, settings: { ...session.settings, acceptAllTemplates: false } },
-    device: deviceDto(
-      observed.device,
-      ctx.clock.now(),
-      current ? actor.settings : { ...actor.settings, acceptAllTemplates: false },
+    device: withoutFollows(
+      deviceDto(
+        observed.device,
+        ctx.clock.now(),
+        current ? actor.settings : { ...actor.settings, acceptAllTemplates: false },
+      ),
     ),
   };
 }
@@ -241,4 +243,10 @@ export async function reportScanDevice(
   const capabilities = reportedCapabilities(raw);
   await commitReportedDevice(ctx, actor, observed, capabilities, bindScanningSession);
   return scanWorkspace(ctx, actor, scanSessionCountAuthority(actor));
+}
+
+/** The scanner app never reads `follows`: it is the admin's choice of what a screen shows. */
+function withoutFollows<T extends { overrides: { follows?: unknown } }>(device: T): T {
+  const { follows: _follows, ...overrides } = device.overrides;
+  return { ...device, overrides };
 }

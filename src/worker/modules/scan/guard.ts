@@ -42,6 +42,7 @@ import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { API_KEY_TOKEN, type KeyTerminal, keyActor, keyTerminalOf } from './guard-api-key.ts';
 import { pinResetExempt, pinResetRequired } from './guard-pin-reset.ts';
+import { assertSessionAdmits } from './guard-session-admits.ts';
 import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
@@ -52,8 +53,6 @@ import {
   restoreObservedScanningSession,
 } from './scanning-workspace-observation.ts';
 import { rawScopeOf, resolveAdminScope } from './scope.ts';
-import { retriesCommitted } from './session-closed-retry.ts';
-import { assertSessionOpen, sessionWindow } from './session-hours.ts';
 import { bindingExpired, boundStaff } from './staff-binding.ts';
 
 export type { ScanActor } from './actor.ts';
@@ -119,12 +118,20 @@ export interface GuardOptions {
   screenActions?: boolean;
   /** Tenant capability required of user sessions; configuration management is the safe default. */
   capability?: 'scanning:read' | 'scanning:manage' | 'passes:operate';
+  /** `draft`: count against `RL_SCAN_DRAFT` (key `d:<scanner>`) only, so drafts never use the commit's budget. */
+  rateNamespace?: 'draft';
 }
 
 /** Org active, then the two rate limits (SA 2.5 steps 2 and 3). */
-async function admit(c: Context<AppBindings>, orgId: string, actorKey: string): Promise<void> {
+async function admit(
+  c: Context<AppBindings>,
+  orgId: string,
+  actorKey: string,
+  draftKey?: string,
+): Promise<void> {
   if (!(await isOrgActive(serviceContext(c), orgId)))
     throw new ForbiddenError('This organization is suspended.', 'ORG_INACTIVE');
+  if (draftKey) return enforceRateLimit(c.env, 'RL_SCAN_DRAFT', draftKey);
   await enforceRateLimit(c.env, 'RL_SCAN_ORG', `org:${orgId}`);
   await enforceRateLimit(c.env, 'RL_SCAN', actorKey);
 }
@@ -165,6 +172,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         c,
         auth.orgId,
         key ? `k:${key.keyId}:s:${auth.scannerId}` : `s:${auth.scannerId}`,
+        options.rateNamespace === 'draft' ? `d:${auth.scannerId}` : undefined,
       );
       const actsFromMonitor = !!options.screenActions && auth.deviceRole === 'monitor';
       if (auth.deviceRole !== 'scan' && !options.screens && !actsFromMonitor) {
@@ -210,7 +218,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
           ? (rawScope as { setupId?: string }).setupId
           : undefined;
       // Rate limit and membership come before any id is read: a non-member learns nothing.
-      await enforceRateLimit(c.env, 'RL_SCAN', `a:${session.userId}`);
+      if (!options.rateNamespace) await enforceRateLimit(c.env, 'RL_SCAN', `a:${session.userId}`);
       const claimedOrg =
         rawScope && typeof rawScope === 'object' && 'orgId' in rawScope
           ? (rawScope as { orgId?: unknown }).orgId
@@ -243,7 +251,12 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       actor.platformSessionId = session.sessionId;
       actor.role = role;
       actor.tenantAuthority = await captureScanTenantAuthority(ctx, session, authority);
-      await admit(c, actor.orgId, actor.actorKey);
+      await admit(
+        c,
+        actor.orgId,
+        actor.actorKey,
+        options.rateNamespace === 'draft' ? `d:${session.userId}` : undefined,
+      );
       if (actor.scanner && actor.scanner.deviceRole !== 'scan' && !options.screens)
         throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
       c.set('scanActor', actor);
@@ -298,30 +311,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       !options.staffOptional
     )
       throw new ForbiddenError('Sign in to act.', 'STAFF_REQUIRED');
-    if (
-      actor.scanningSession &&
-      (c.req.method === 'POST' ||
-        (/^(PATCH|DELETE)$/.test(c.req.method) && /\/notes\/[^/]+$/.test(c.req.path))) &&
-      !/\/(device|mark-out|unpair|open-now|batch)$/.test(c.req.path)
-    ) {
-      if (actor.scanningSession.status !== 'active')
-        throw new ForbiddenError(
-          'This scanning session is paused. Resume it in Scanning.',
-          'SCANNING_SESSION_PAUSED',
-        );
-      // Decided now, from the row this request observed: a missed cron never admits a late scan.
-      const parent = captureObservedScanningSession(actor)?.parent;
-      if (!parent) throw unauthenticated();
-      // A manager signs in while closed, to open early.
-      if (
-        !/\/staff(?:\/pin)?$/.test(c.req.path) &&
-        !(
-          sessionWindow(parent, ctx.clock.now()).open ||
-          (await retriesCommitted(c, ctx.env.DB, actor))
-        )
-      )
-        assertSessionOpen(parent, ctx.clock.now());
-    }
+    await assertSessionAdmits(c, ctx, actor);
     await next();
   });
 }

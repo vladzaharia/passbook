@@ -2064,11 +2064,12 @@ type CreatedScanningDevice struct {
 }
 
 type CreatedScanningDeviceOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type CurrentBulkRun struct {
@@ -7433,6 +7434,16 @@ type PassesRenewParams struct{}
 
 type PassesRenewResult = PassDetail
 
+type PassesResendProviderCopiesBody = PassesResendProviderCopiesParams
+
+type PassesResendProviderCopiesParams struct {
+	OrgID      *string `json:"orgId,omitempty"`
+	Provider   string  `json:"provider"`
+	TemplateID *string `json:"templateId,omitempty"`
+}
+
+type PassesResendProviderCopiesResult = WalletReissue
+
 type PassesRestoreResult = PassSummary
 
 type PassesRetrieveProviderStatusResponse struct {
@@ -8460,18 +8471,19 @@ type PlatformWalletCredentialsListResponse struct {
 }
 
 type PlatformWalletCredentialsListResponseItemsItem struct {
-	ID           string  `json:"id"`
-	Scope        string  `json:"scope"`
-	OrgID        *string `json:"orgId"`
-	Mode         string  `json:"mode"`
-	Provider     string  `json:"provider"`
-	IdentityHint string  `json:"identityHint"`
-	Provenance   string  `json:"provenance"`
-	Revision     int64   `json:"revision"`
-	VerifiedAt   *int64  `json:"verifiedAt"`
-	RevokedAt    *int64  `json:"revokedAt"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type PlatformWalletCredentialsMigrateResponse struct {
@@ -8518,22 +8530,45 @@ type PlatformWalletCredentialsRevokeParams struct {
 }
 
 type PlatformWalletCredentialsRevokeResponse struct {
-	ID           string  `json:"id"`
-	Scope        string  `json:"scope"`
-	OrgID        *string `json:"orgId"`
-	Mode         string  `json:"mode"`
-	Provider     string  `json:"provider"`
-	IdentityHint string  `json:"identityHint"`
-	Provenance   string  `json:"provenance"`
-	Revision     int64   `json:"revision"`
-	VerifiedAt   *int64  `json:"verifiedAt"`
-	RevokedAt    *int64  `json:"revokedAt"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type PlatformWalletCredentialsRotateKeyResponse struct {
 	RunID string `json:"runId"`
+}
+
+type PlatformWalletCredentialsSetSamsungCardParams struct {
+	Type             string `json:"type"`
+	CardID           string `json:"cardId"`
+	ExpectedRevision int64  `json:"expectedRevision"`
+}
+
+type PlatformWalletCredentialsSetSamsungCardResponse struct {
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type PlatformWalletCredentialsUpsertParams = any
@@ -8570,18 +8605,19 @@ type PlatformWalletCredentialsUpsertParams2Credentials struct {
 }
 
 type PlatformWalletCredentialsUpsertResponse struct {
-	ID           string  `json:"id"`
-	Scope        string  `json:"scope"`
-	OrgID        *string `json:"orgId"`
-	Mode         string  `json:"mode"`
-	Provider     string  `json:"provider"`
-	IdentityHint string  `json:"identityHint"`
-	Provenance   string  `json:"provenance"`
-	Revision     int64   `json:"revision"`
-	VerifiedAt   *int64  `json:"verifiedAt"`
-	RevokedAt    *int64  `json:"revokedAt"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type PlatformWalletEnrollmentsListResponse struct {
@@ -9712,11 +9748,12 @@ type ScanSetupAnswer2SessionsItemDevicesItem struct {
 }
 
 type ScanSetupAnswer2SessionsItemDevicesItemOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanSetupAnswer2SessionsItemSettings struct {
@@ -10820,11 +10857,12 @@ type ScanningDevice struct {
 }
 
 type ScanningDeviceOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanningSession struct {
@@ -11106,11 +11144,12 @@ type ScanningSessionsDevicesCreateParams struct {
 }
 
 type ScanningSessionsDevicesCreateParamsOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanningSessionsDevicesCreateResult = CreatedScanningDevice
@@ -11125,11 +11164,12 @@ type ScanningSessionsDevicesUpdateParams struct {
 }
 
 type ScanningSessionsDevicesUpdateParamsOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanningSessionsDevicesUpdateResult = ScanningDevice
@@ -13216,18 +13256,19 @@ type WalletAccountsGoogleSharedCreateResponse struct {
 }
 
 type WalletAccountsGoogleSharedCreateResponseCredential struct {
-	ID           string  `json:"id"`
-	Scope        string  `json:"scope"`
-	OrgID        *string `json:"orgId"`
-	Mode         string  `json:"mode"`
-	Provider     string  `json:"provider"`
-	IdentityHint string  `json:"identityHint"`
-	Provenance   string  `json:"provenance"`
-	Revision     int64   `json:"revision"`
-	VerifiedAt   *int64  `json:"verifiedAt"`
-	RevokedAt    *int64  `json:"revokedAt"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type WalletAccountsGoogleSharedRetrieveResponse struct {
@@ -13252,18 +13293,19 @@ type WalletCredentialsListResponse struct {
 }
 
 type WalletCredentialsListResponseItemsItem struct {
-	ID           string  `json:"id"`
-	Scope        string  `json:"scope"`
-	OrgID        *string `json:"orgId"`
-	Mode         string  `json:"mode"`
-	Provider     string  `json:"provider"`
-	IdentityHint string  `json:"identityHint"`
-	Provenance   string  `json:"provenance"`
-	Revision     int64   `json:"revision"`
-	VerifiedAt   *int64  `json:"verifiedAt"`
-	RevokedAt    *int64  `json:"revokedAt"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type WalletCredentialsRevokeParams struct {
@@ -13271,18 +13313,19 @@ type WalletCredentialsRevokeParams struct {
 }
 
 type WalletCredentialsRevokeResponse struct {
-	ID           string  `json:"id"`
-	Scope        string  `json:"scope"`
-	OrgID        *string `json:"orgId"`
-	Mode         string  `json:"mode"`
-	Provider     string  `json:"provider"`
-	IdentityHint string  `json:"identityHint"`
-	Provenance   string  `json:"provenance"`
-	Revision     int64   `json:"revision"`
-	VerifiedAt   *int64  `json:"verifiedAt"`
-	RevokedAt    *int64  `json:"revokedAt"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type WalletCredentialsUpsertParams = any
@@ -13317,18 +13360,19 @@ type WalletCredentialsUpsertParams2Credentials struct {
 }
 
 type WalletCredentialsUpsertResponse struct {
-	ID           string  `json:"id"`
-	Scope        string  `json:"scope"`
-	OrgID        *string `json:"orgId"`
-	Mode         string  `json:"mode"`
-	Provider     string  `json:"provider"`
-	IdentityHint string  `json:"identityHint"`
-	Provenance   string  `json:"provenance"`
-	Revision     int64   `json:"revision"`
-	VerifiedAt   *int64  `json:"verifiedAt"`
-	RevokedAt    *int64  `json:"revokedAt"`
-	CreatedAt    int64   `json:"createdAt"`
-	UpdatedAt    int64   `json:"updatedAt"`
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
 }
 
 type WalletEnrollmentsDisableParams struct {
@@ -13627,6 +13671,11 @@ type WalletProviderAccountsVerifyResponse struct {
 	Verified   bool   `json:"verified"`
 	VerifiedAt *int64 `json:"verifiedAt"`
 	ExpiresAt  *int64 `json:"expiresAt"`
+}
+
+type WalletReissue struct {
+	ReissueID string `json:"reissueId"`
+	Instances int64  `json:"instances"`
 }
 
 type WebhookCapture struct {

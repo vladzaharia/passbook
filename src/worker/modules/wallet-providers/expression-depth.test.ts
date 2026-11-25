@@ -114,7 +114,7 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       template_approvals_insert: [19, 29],
       // 0199: the schema 2 branch (two evidence bypasses and the card-state row requirement) took the
       // release trigger from 46/113 to 50/131. Remote D1's limit is 100.
-      template_provider_releases_insert: [50, 131],
+      template_provider_releases_insert: [45, 92],
       // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
       wallet_samsung_tombstones_approved_insert: [37, 33],
       wallet_samsung_tombstone_keyset_insert: [39, 35],

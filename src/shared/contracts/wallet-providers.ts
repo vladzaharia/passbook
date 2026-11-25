@@ -25,7 +25,7 @@ export const GoogleWalletCredentialsSchema = z.strictObject({
 export type GoogleWalletCredentials = z.infer<typeof GoogleWalletCredentialsSchema>;
 
 /** Card types a Samsung projection supports; the form offers a card row for each. */
-export const SAMSUNG_CARD_TYPES = ['loyalty'] as const;
+export const SAMSUNG_CARD_TYPES = ['loyalty', 'ticket', 'coupon'] as const;
 
 /** Samsung card type (`loyalty`, `ticket`, ...) as the provider names it. */
 export const SamsungCardTypeSchema = z.string().regex(/^[a-z]{1,16}$/);
@@ -130,15 +130,13 @@ export const WalletCredentialSchema = z.strictObject({
   revokedAt: TimestampSchema.nullable(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
+  /** Samsung: the card types that have a card (the default card serves loyalty). Empty for Google. */
+  cardTypes: z.array(SamsungCardTypeSchema),
 });
 export type WalletCredential = z.infer<typeof WalletCredentialSchema>;
 
 export const WalletCredentialListSchema = pageOf(WalletCredentialSchema);
 export type WalletCredentialList = z.infer<typeof WalletCredentialListSchema>;
-
-export const WalletCredentialListQuerySchema = z.strictObject({
-  provider: WalletProviderSchema.optional(),
-});
 
 export const WalletCredentialParamsSchema = z.strictObject({ orgId: IdSchema, id: IdSchema });
 export const WalletEnrolmentParamsSchema = z.strictObject({

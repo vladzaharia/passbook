@@ -10323,6 +10323,25 @@
   }
  },
  {
+  "id": "wallet-providers.postWalletProvidersReissue",
+  "call": "passes.resend_provider_copies",
+  "http": "POST",
+  "path": "/api/v1/wallet-providers/reissue",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "provider": "google"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "reissueId": "x",
+   "instances": 0
+  }
+ },
+ {
   "id": "webhooks.getWebhookEndpoints",
   "call": "webhook_endpoints.list",
   "http": "GET",
