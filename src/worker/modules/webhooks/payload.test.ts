@@ -142,6 +142,18 @@ describe('payload allowlist', () => {
     expect(at('scan.checked_in')).not.toHaveProperty('direction');
   });
 
+  it('carries zoneId and exit on an out scan, and drops an unknown exit', () => {
+    const at = (kind: string, data: object) =>
+      buildEnvelope(row({ type: 'pass.scanned', kind, data: JSON.stringify(data) })).data;
+    expect(at('scan.checked_out', { direction: 'out', zoneId: 'z1', exit: 'stay' })).toMatchObject({
+      direction: 'out',
+      zoneId: 'z1',
+      exit: 'stay',
+    });
+    expect(at('scan.checked_out', { direction: 'out', exit: 'bogus' })).not.toHaveProperty('exit');
+    expect(at('scan.checked_in', { direction: 'in', exit: 'scan' })).not.toHaveProperty('exit');
+  });
+
   it('drops a field of the wrong type instead of coercing it', () => {
     const event = buildEnvelope(
       row({ type: 'pass.updated', kind: 'pass.updated', data: '{"version":"2","notified":"yes"}' }),

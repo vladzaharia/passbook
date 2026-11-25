@@ -4,6 +4,7 @@ import type {
   TemplateDetailSchema,
   TemplateVersionDetailSchema,
 } from '@/shared/contracts/templates.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { isApiError } from '../../../lib/errors.ts';
 import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
 import { orgPath } from '../../../lib/scope.ts';
@@ -112,7 +113,7 @@ function TemplateDesignerResource({ templateId }: { templateId: string }) {
       isApiError(template.error) &&
       template.error.isForbidden)
   ) {
-    return <EmptyState heading art="building" title="Choose an organization" />;
+    return <OrgChooser />;
   }
   if (template.isError && (scope.hasExplicitOrg || template.isFetchedAfterMount)) {
     return detailError(template, {

@@ -170,6 +170,7 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     holderOwner: last.holderOwner,
     clearsLost: true,
     expiryDays: policy.expiryDays,
+    endsAt: policy.endsAt,
     endLapsed: policy.lapsed,
     audited: true,
     source: 'admin' as const,
@@ -193,7 +194,11 @@ export async function updateTag(
   input: { label?: string | null | undefined; pool?: boolean | undefined },
 ): Promise<Tag> {
   if (input.pool)
-    throw new ValidationError('Loaner tags are not available.', [], 'TAG_POOL_UNSUPPORTED');
+    throw new ValidationError(
+      'A loaner is a visitor tag type. Set that type instead.',
+      [],
+      'TAG_POOL_UNSUPPORTED',
+    );
   await tagIn(ctx, a, id);
   if (input.label === undefined) return shown(ctx, a, id);
   const g = tagGrant(ctx, 'org_mode.nfc.tag.update', a);

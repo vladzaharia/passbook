@@ -76,6 +76,11 @@ describe('desk mark-out proof', () => {
       "SELECT data FROM pass_events WHERE pass_id = ? AND kind = 'scan.checked_out'",
       [a.id],
     );
+    expect(JSON.parse(consoleEvent?.data ?? '{}')).toMatchObject({
+      direction: 'out',
+      exit: 'desk',
+      zoneId: gym.id,
+    });
     expect(JSON.parse(consoleEvent?.data ?? '{}').authority).toEqual({
       kind: 'console',
       purpose: 'org_mode.scan.mark_out',

@@ -1,9 +1,8 @@
 import type { ScanCounts } from '../../../../shared/contracts/scan.ts';
-import type { Visitor } from '../../../../shared/contracts/visitors.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { allConfirmed } from '../../roll-call/roll-call-model.ts';
 import { inNowOf } from '../workspace/session-state.ts';
-import { DevicesCard, InNowCard, ShiftCard, VisitorsCard } from './floor-cards.tsx';
+import { DevicesCard, InNowCard, ShiftCard } from './floor-cards.tsx';
 import { ByZoneCard, OnCallCard, RollCallActions } from './roll-call-cards.tsx';
 import type { RollControls } from './roll-call-dialogs.tsx';
 import type { Floor as FloorData } from './use-floor.ts';
@@ -21,8 +20,6 @@ export function Floor({
   now,
   timeZone,
   controls,
-  onCheckIn,
-  onOpenVisitor,
 }: {
   floor: FloorData;
   online: boolean;
@@ -31,10 +28,8 @@ export function Floor({
   now: number;
   timeZone?: string | undefined;
   controls: RollControls;
-  onCheckIn: (visitor: Visitor) => void;
-  onOpenVisitor: (visitor: Visitor) => void;
 }) {
-  const { roll, inside, visitors, devices, shift, hub, desk } = floor;
+  const { roll, inside, devices, shift, hub, desk } = floor;
   const call = roll.call;
   if (call)
     return (
@@ -82,18 +77,7 @@ export function Floor({
         timeZone={timeZone}
         failed={shift.failed}
       />
-      {desk ? (
-        <>
-          <VisitorsCard
-            items={visitors.items}
-            failed={visitors.failed}
-            timeZone={timeZone}
-            onCheckIn={onCheckIn}
-            onOpen={onOpenVisitor}
-          />
-          <DevicesCard items={devices.items} failed={devices.failed} now={now} />
-        </>
-      ) : null}
+      {desk ? <DevicesCard items={devices.items} failed={devices.failed} now={now} /> : null}
     </aside>
   );
 }

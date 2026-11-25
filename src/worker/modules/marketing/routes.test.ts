@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { makeEnv } from '../../../../test/helpers/env.ts';
 import { fakeAuth } from '../../../../test/helpers/fake-auth.ts';
 import { fakeRateLimiter } from '../../../../test/helpers/fakes.ts';
+import { ACCESS_COPY } from '../../../shared/copy/access.ts';
 import { createApp } from '../../app.ts';
 import type { AppEnv } from '../../platform/env.ts';
 
@@ -58,7 +59,7 @@ const form = (over: Record<string, string> = {}) => ({
   name: VALID.name,
   email: VALID.email,
   org: VALID.org,
-  for: VALID.purpose,
+  purpose: VALID.purpose,
   message: VALID.message,
   ...over,
 });
@@ -134,10 +135,35 @@ describe('POST /access', () => {
     expect(sent).toHaveLength(0);
   });
 
-  it('the select posts as "for"', async () => {
+  it('the select posts as "purpose"', async () => {
     const { sent, post } = await setup();
-    expect((await post(form({ for: 'Something else' }))).status).toBe(303);
+    expect((await post(form({ purpose: 'Something else' }))).status).toBe(303);
     expect(sent[0]?.text).toContain('For: Something else');
+  });
+
+  it('a long valid entry in Cyrillic posts as a form but not as JSON over 4 KB', async () => {
+    const { sent, post } = await setup();
+    const long = {
+      name: 'Я'.repeat(120),
+      org: 'Я'.repeat(160),
+      message: 'Я'.repeat(600),
+    };
+    // Percent-encoded, this is far over 4 KB.
+    expect((await post(form(long))).status).toBe(303);
+    expect(sent).toHaveLength(1);
+    expect((await post({ ...VALID, junk: 'x'.repeat(5000) }, { json: true })).status).toBe(413);
+  });
+
+  it('a form post over 12 KB gets the error page with a link back', async () => {
+    const { sent, post } = await setup();
+    const res = await post(form({ junk: 'x'.repeat(13000) }), {
+      headers: { accept: 'text/html' },
+    });
+    expect(res.status).toBe(413);
+    const html = await res.text();
+    expect(html).toContain(ACCESS_COPY.tooLarge);
+    expect(html).toContain('href="/access"');
+    expect(sent).toHaveLength(0);
   });
 
   it('a filled honeypot answers success and sends nothing', async () => {
@@ -174,9 +200,10 @@ describe('POST /access', () => {
     expect(sent).toHaveLength(0);
   });
 
-  it('refuses a body over 4 KB and an unknown content type', async () => {
+  it('refuses a JSON body over 4 KB, a form over 12 KB and an unknown content type', async () => {
     const { post, env } = await setup();
-    expect((await post(form({ message: 'x'.repeat(5000) }))).status).toBe(413);
+    expect((await post({ ...VALID, message: 'x'.repeat(5000) }, { json: true })).status).toBe(413);
+    expect((await post(form({ message: 'x'.repeat(13000) }))).status).toBe(413);
     const res = await app.request(
       `${ORIGIN}/access`,
       { method: 'POST', headers: { 'content-type': 'text/plain', origin: ORIGIN }, body: 'x' },
@@ -242,5 +269,120 @@ describe('POST /access', () => {
       hasMessage: true,
     });
     expect(out).not.toMatch(/Maya|studio|Line one/i);
+  });
+
+  const rawPost = (env: AppEnv, headers: Record<string, string>, body = form()) =>
+    app.request(
+      `${ORIGIN}/access`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers },
+        body: new URLSearchParams(body).toString(),
+      },
+      env,
+    );
+
+  it('refuses a post with no Origin and no Sec-Fetch-Site, and one from same-site', async () => {
+    const { sent, env } = await setup();
+    expect((await rawPost(env, {})).status).toBe(403);
+    expect((await rawPost(env, { 'sec-fetch-site': 'same-site' })).status).toBe(403);
+    expect((await rawPost(env, { 'sec-fetch-site': 'same-origin' })).status).toBe(303);
+    expect(sent).toHaveLength(1);
+  });
+
+  it('a missing RL_ACCESS binding answers 503', async () => {
+    const { sent, post } = await setup({ RL_ACCESS: undefined as never });
+    expect((await post(VALID, { json: true })).status).toBe(503);
+    expect(sent).toHaveLength(0);
+  });
+
+  it('an oversized declared Content-Length answers 413', async () => {
+    const { post } = await setup();
+    const res = await post(form(), { headers: { 'content-length': '99999' } });
+    expect(res.status).toBe(413);
+  });
+
+  it.each(['A\rB', 'A\nB', 'A\u0000B', 'A\u202eB', 'A\u200bB'])(
+    'a hidden character in organization or name is refused: %j',
+    async (value) => {
+      const { sent, post } = await setup();
+      expect((await post({ ...VALID, org: value }, { json: true })).status).toBe(422);
+      expect((await post({ ...VALID, name: value }, { json: true })).status).toBe(422);
+      expect(sent).toHaveLength(0);
+    },
+  );
+
+  it('a message keeps line breaks and tabs but not invisible marks', async () => {
+    const { sent, post } = await setup();
+    expect((await post({ ...VALID, message: 'a\n\tb' }, { json: true })).status).toBe(204);
+    for (const bad of ['a\u0000b', 'a\u202eb', 'a\u200bb']) {
+      expect((await post({ ...VALID, message: bad }, { json: true })).status).toBe(422);
+    }
+    expect(sent).toHaveLength(1);
+  });
+
+  it('ignores a __proto__ key', async () => {
+    const { sent, env } = await setup();
+    const body = JSON.stringify({ ...VALID, message: '' }).replace(
+      '{',
+      '{"__proto__":{"purpose":"Spam"},',
+    );
+    const res = await app.request(
+      `${ORIGIN}/access`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin: ORIGIN },
+        body,
+      },
+      env,
+    );
+    expect(res.status).toBe(204);
+    expect(sent[0]?.text).toContain('For: Memberships');
+  });
+
+  it('does not read a "for" field', async () => {
+    const { sent, post } = await setup();
+    const { purpose: _purpose, ...rest } = form();
+    expect((await post({ ...rest, for: 'Memberships' }, { json: true })).status).toBe(422);
+    expect(sent).toHaveLength(0);
+  });
+
+  it('junk requests do not use the site-wide limit', async () => {
+    const all = fakeRateLimiter({ limit: 100 });
+    const { post, env } = await setup({ RL_ACCESS_ALL: all });
+    await post({ ...VALID, email: 'bad' }, { json: true });
+    await post({ ...VALID, website: 'x' }, { json: true });
+    await app.request(
+      `${ORIGIN}/access`,
+      { method: 'POST', headers: { 'content-type': 'text/plain', origin: ORIGIN }, body: 'x' },
+      env,
+    );
+    expect(all.counts.size).toBe(0);
+    await post(VALID, { json: true });
+    expect(all.counts.get('access:all')).toBe(1);
+  });
+
+  it('a filled honeypot with a bad email answers 422 like any bad email', async () => {
+    const { sent, post } = await setup();
+    const res = await post({ ...VALID, email: 'bad', website: 'x' }, { json: true });
+    expect(res.status).toBe(422);
+    expect(sent).toHaveLength(0);
+  });
+
+  it('a form post that could not send says so and links back to /access', async () => {
+    const { post } = await setup({ ACCESS_REQUEST_EMAIL: '' });
+    const res = await post(form(), { headers: { accept: 'text/html' } });
+    expect(res.status).toBe(503);
+    const html = await res.text();
+    expect(html).toContain('Your request was not sent. Email support@passbook.mobile.');
+    expect(html).toContain('href="/access"');
+    expect(html).not.toContain('My passes');
+    const limited = await setup({ RL_ACCESS: fakeRateLimiter({ limit: 0 }) });
+    const res2 = await limited.post(form(), { headers: { accept: 'text/html' } });
+    expect(res2.status).toBe(429);
+    const html2 = await res2.text();
+    expect(html2).toContain('Too many requests. Try again in a minute.');
+    expect(html2).toContain('href="/access"');
+    expect(res2.headers.get('retry-after')).toMatch(/^\d+$/);
   });
 });

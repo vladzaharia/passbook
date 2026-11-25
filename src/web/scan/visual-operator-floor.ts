@@ -1,10 +1,10 @@
-/** The floor, Who's in, Visitors and the roll call for the operator gallery. One clock with the lists and the record. */
+/** The floor, Who's in and the roll call for the operator gallery. One clock with the lists and the record. */
 import type { RollCall, RollCallPerson } from '../../shared/contracts/scan-roll-call.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import type { InsideRow } from './inside/inside-types.ts';
 import { GALLERY_NOW } from './visual-operator-record.ts';
 
-export const FLOOR_CASES = ['floor', 'inside', 'visitors', 'rollcall', 'rollcall-record'] as const;
+export const FLOOR_CASES = ['floor', 'inside', 'rollcall', 'rollcall-record'] as const;
 
 const NOW = GALLERY_NOW;
 const MIN = 60_000;
@@ -43,12 +43,6 @@ const insideRows = (): InsideRow[] =>
     dueAt: null,
     host: null,
   }));
-
-const VISITORS = [
-  ['Hana Sato', 'Ana R.', 'expected', 6],
-  ['Lukas Brandt', 'Jonas W.', 'in', -86],
-  ['Sofia Rossi', 'Ana R.', 'expected', 38],
-] as const;
 
 const person = (
   i: number,
@@ -127,22 +121,6 @@ export function floorApi(scenario: string): Partial<ScanApi> {
       total: 42,
       nextCursor: null,
       asOf: NOW,
-    }),
-    visitors: async () => ({
-      items: VISITORS.map(([name, hostName, status, min], i) => ({
-        id: id(60 + i),
-        passId: id(70 + i),
-        name,
-        hostName,
-        windowFrom: NOW + min * MIN,
-        windowUntil: NOW + (min + 120) * MIN,
-        note: null,
-        status,
-        statusAt: status === 'in' ? NOW + min * MIN : null,
-        autoOut: false,
-        hasEmail: true,
-      })),
-      nextCursor: null,
     }),
     devices: async () => ({
       items: [

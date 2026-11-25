@@ -674,21 +674,6 @@ export const SCAN_EVENT = {
   scanners: 2,
 };
 
-/** A trial visitor, booked by a coach and here now. */
-export const VISITOR = {
-  id: IDS.visitor,
-  passId: uuid('pass-visitor'),
-  name: 'Jordan Lee',
-  hostName: 'Sam Rivera',
-  windowFrom: localHour(17),
-  windowUntil: localHour(19),
-  note: 'Trial session with a coach',
-  status: 'in',
-  statusAt: localHour(17) + 5 * MIN,
-  autoOut: true,
-  hasEmail: true,
-};
-
 /** The import's rows, as committed: Ada and Grace created, Alan updated, Mei unchanged, Chris left out. */
 export const IMPORT_ROWS = {
   items: [
@@ -1184,5 +1169,4 @@ export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
   { has: ['generation', 'candidateHash', 'previousReleaseId'], value: RELEASE_ROW },
   { has: ['assets', 'report', 'displayOnly', 'passJson'], value: TEMPLATE_VERSION },
   { has: ['opensAt', 'closesAt', 'reentry', 'arrived'], value: SCAN_EVENT },
-  { has: ['hostName', 'windowFrom', 'windowUntil'], value: VISITOR },
 ];

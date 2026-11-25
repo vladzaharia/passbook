@@ -200,8 +200,7 @@ describe('export', () => {
     ).toBe(true);
     const counts = JSON.parse(done?.entities ?? '{}') as Record<string, number>;
     expect(counts.passes).toBe(3);
-    // The wave's tables: visitors with their host, roll calls, tag metadata (a hint, never the tag or a key).
-    expect(rows('visitors').map((v) => v.host_email)).toEqual(['host-exp-a@example.test']);
+    // The wave's tables: roll calls, tag metadata (a hint, never the tag or a key).
     expect(rows('roll_calls')).toHaveLength(1);
     expect(rows('roll_call_marks')).toHaveLength(1);
     expect(rows('scan_group_members')).toHaveLength(1);

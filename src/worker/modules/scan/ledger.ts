@@ -19,6 +19,10 @@ export interface LedgerFacts {
   override: boolean;
   approvedBy: string | null;
   direction?: 'in' | 'out';
+  /** The presence scope (`zone:<id>` or `event:<id>`) the scan was at. */
+  place?: string | null;
+  /** How an out scan ended the stay; an exit tap by default. */
+  exit?: 'scan' | 'desk';
 }
 
 const KIND: Record<LedgerFacts['outcome'], EventKind> = {
@@ -45,6 +49,8 @@ export function ledgerRow(ctx: ServiceContext, actor: ScanActor, f: LedgerFacts)
     offline: false,
     notified: false,
     ...(f.direction ? { direction: f.direction } : {}),
+    ...(f.outcome === 'ok' && f.direction === 'out' ? { exit: f.exit ?? 'scan' } : {}),
+    ...(f.place?.startsWith('zone:') ? { zoneId: f.place.slice(5) } : {}),
     ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
   };
   return {

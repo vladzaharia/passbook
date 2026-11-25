@@ -1,0 +1,272 @@
+@media (prefers-reduced-motion: no-preference) {
+  .in .s-r2 {
+    animation-delay: 0.25s;
+  }
+  .in .s-r3 {
+    animation-delay: 0.5s;
+  }
+  .in .s-sp {
+    animation: pb-press 5.2s ease-in-out infinite;
+  }
+  .in .s-nw {
+    animation: pb-new 5.2s var(--spring) infinite;
+  }
+  .in .s-w2 {
+    animation: pb-w2 6.4s ease-in-out infinite;
+  }
+  .in .s-c2 {
+    animation: pb-c2 6.4s var(--spring) infinite;
+  }
+  .in .s-ly {
+    animation: pb-swing 4.6s ease-in-out infinite;
+  }
+  .in .s-car {
+    animation: pb-car 8.4s infinite;
+  }
+  .in .s-bar {
+    animation: pb-bar 8.4s ease-in-out infinite;
+  }
+  .in .b-dance {
+    animation: pb-dance 1.2s ease-in-out infinite;
+  }
+  .in .s-spot {
+    animation: pb-fade 2.4s ease-in-out infinite;
+  }
+  .in .s-pop {
+    animation: pb-pop 5s var(--spring) infinite;
+  }
+  .in .s-n8 {
+    animation: pb-vo 5s ease-in-out infinite;
+  }
+  .in .s-n7 {
+    animation: pb-vn 5s ease-in-out infinite;
+  }
+  .in .terminal .typed {
+    animation: pb-type 1.4s steps(19) 0.3s both;
+  }
+  .in .terminal .out {
+    animation: pb-show 0.3s 1.9s both;
+  }
+  .in .s-ck1 {
+    animation: pb-ck1 0.7s var(--spring) 0.5s both;
+  }
+  .in .b-f1 {
+    animation: pb-f1 2.8s steps(1) both;
+  }
+  .in .b-f2 {
+    animation: pb-f2 2.8s steps(1) both;
+  }
+  .in .b-wave2 {
+    animation: pb-wave2 2.8s ease-in-out both;
+  }
+  .in .s-spark {
+    animation: pb-spark 0.9s var(--spring) both;
+    animation-delay: calc(var(--i, 0) * 90ms + 0.3s);
+  }
+
+  /* demo */
+  .in .wire i {
+    animation: pb-dot 1.8s linear infinite;
+  }
+  .in .wire.late i {
+    animation-delay: -0.9s;
+  }
+  .hit::after {
+    animation: pb-flash 1s ease-out both;
+  }
+  .pass.go .pass-sweep {
+    animation: pb-pass-sweep 0.9s cubic-bezier(0.45, 0, 0.3, 1) both;
+  }
+  .verdict.pop .result {
+    animation: pb-pop1 0.45s var(--spring) both;
+  }
+  .verdict.pop .b-react {
+    animation: pb-hop 0.5s ease-out both;
+  }
+  .verdict.pop.bad .b-react {
+    animation: pb-shake1 0.7s ease-in-out both;
+  }
+
+  /* one-shot acts (scan answers): play in turn, replay on click */
+  .once .in * {
+    animation-iteration-count: 1 !important;
+    animation-delay: var(--d, 0s) !important;
+    animation-fill-mode: both !important;
+  }
+}
+/* additions: Home opening (two-sentence hero) */
+.h-hero {
+  font-weight: 700;
+  font-size: clamp(34px, 4.1vw, 56px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  color: var(--strong);
+  text-wrap: balance;
+}
+.h-hero > span {
+  display: block;
+}
+.h-hero .gold {
+  color: var(--gold);
+}
+.h-hero.four {
+  font-size: clamp(40px, 4.6vw, 64px);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+}
+.h-hero.four > span {
+  white-space: nowrap;
+}
+.hero-stage.even {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+}
+.hero-stage.even .h-hero {
+  margin-bottom: -0.12em;
+  position: relative;
+  z-index: 1;
+  padding-bottom: 6px;
+}
+.ticket.slim .ticket-main {
+  padding-block: 22px;
+}
+.section.tight {
+  padding-top: clamp(40px, 5vw, 60px);
+}
+@media (max-width: 760px) {
+  .hero-stage.even .h-hero {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+/* additions: Home review (gap above the ticket, named stops, sentence lines) */
+.hero-stage.even.lifted {
+  margin-bottom: 0;
+}
+.hero-stage.even.lifted .h-hero {
+  margin-bottom: -0.13em;
+  padding-bottom: 0;
+}
+.stops.named .h-card {
+  font-size: clamp(28px, 2.9vw, 40px);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+}
+.stops.named .stop-body {
+  gap: 8px;
+}
+.h-lines > span {
+  display: block;
+}
+
+/* additions: synced acts (Home polish) */
+.b-seq,
+.b-wavetap {
+  transform-box: view-box;
+  transform-origin: 48px 64px;
+}
+.s-ring2 {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.art-plate {
+  border-radius: var(--r-tile);
+  padding: 8px 6px 0;
+}
+@media (max-width: 760px) {
+  .hero-scene.bleed {
+    width: auto;
+    align-self: stretch;
+    margin-inline: calc(var(--gutter) * -1);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-act].in .b-seq {
+    animation: pb-seq 6s ease-in-out infinite;
+  }
+  [data-act].in .kinds-sync > li .art {
+    animation: pb-arrive 6s var(--spring) infinite;
+    animation-delay: calc(var(--k, 0) * 1.2s);
+  }
+  .in .s-ring2 {
+    animation: pb-ring2 6s ease-out infinite;
+  }
+  .in .s-ring2.s-r2 {
+    animation-delay: 0.12s;
+  }
+  .in .s-ring2.s-r3 {
+    animation-delay: 0.24s;
+  }
+  .in .b-wavetap {
+    animation: pb-wavetap 6s ease-in-out infinite;
+  }
+}
+@keyframes pb-seq {
+  0%,
+  16% {
+    transform: none;
+  }
+  20%,
+  36% {
+    transform: rotate(-18deg);
+  }
+  40%,
+  56% {
+    transform: rotate(-36deg);
+  }
+  60%,
+  76% {
+    transform: rotate(-56deg);
+  }
+  80%,
+  100% {
+    transform: none;
+  }
+}
+@keyframes pb-arrive {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+  12%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes pb-ring2 {
+  0%,
+  20% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  24% {
+    opacity: 1;
+  }
+  38% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  39%,
+  68% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  72% {
+    opacity: 1;
+  }
+  86%,
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}

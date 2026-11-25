@@ -70,7 +70,11 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   const db = ctx.env.DB;
   const scannerId = rights.scannerId;
   if (req.pool)
-    throw new ValidationError('Loaner tags are not available yet.', [], 'TAG_POOL_UNSUPPORTED');
+    throw new ValidationError(
+      'A loaner is a visitor tag type. Pick that type instead.',
+      [],
+      'TAG_POOL_UNSUPPORTED',
+    );
   const off = await tagsRefusal(ctx, orgId);
   if (off) throw off;
   await bumpTagCap(db, req.preview ? 'preview' : 'bind', scannerId, ctx.clock.now());
@@ -236,6 +240,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
             typeId: policy?.type?.id ?? null,
           },
       expiryDays: policy?.expiryDays ?? null,
+      endsAt: policy?.endsAt ?? null,
       endLapsed: policy?.lapsed ?? [],
       sun: identity.sun,
       bindingId: ctx.ids.id(),

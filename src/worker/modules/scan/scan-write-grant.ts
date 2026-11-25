@@ -11,7 +11,7 @@ import { tagBindingCheck } from './repo-tags-resolve.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
 
 export interface ScanWriteInput {
-  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo' | 'tag.bind' | 'tag.unbind' | 'tag.enroll' | 'hold' | 'visit_out' | 'roll_call' | 'note'}`;
+  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo' | 'tag.bind' | 'tag.unbind' | 'tag.enroll' | 'hold' | 'roll_call' | 'note'}`;
   now: number;
   /** The operation's event when it is not the actor's. */
   event?: ScanEventRow | null;

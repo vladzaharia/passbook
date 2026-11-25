@@ -1,6 +1,7 @@
 import { FlaskConical } from 'lucide-react';
 import { setMode, useMode } from '../../lib/mode.ts';
 import { SegmentedControl } from '../segmented-control.tsx';
+import { TEST_NOTE } from './mode-copy.ts';
 
 /** Live or Test, in the top bar. Test-only orgs never render it. */
 export function ModeSwitch() {
@@ -14,7 +15,12 @@ export function ModeSwitch() {
       className="max-[28rem]:[&_svg]:hidden max-[28rem]:[&>[role=radio]]:px-2!"
       options={[
         { value: 'live', label: 'Live' },
-        { value: 'test', label: 'Test', icon: FlaskConical },
+        {
+          value: 'test',
+          label: 'Test',
+          icon: FlaskConical,
+          description: TEST_NOTE,
+        },
       ]}
     />
   );

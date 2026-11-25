@@ -26,7 +26,7 @@ const mayAct = (by: HoldBy, orgId: string): boolean =>
   (by.authority.orgId === orgId && by.authority.capability === 'org:manage');
 
 /**
- * Places a hold on an org (`passId` null) or one pass. A hold pauses retention deletes, visitor deletion and
+ * Places a hold on an org (`passId` null) or one pass. A hold pauses retention deletes, guest-plan pass deletion and
  * erasure in its scope. An org admin (`org:manage`) places org holds; a platform admin places holds the org
  * cannot release. Every `org:manage` member is emailed.
  */

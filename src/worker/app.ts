@@ -16,12 +16,14 @@ import { developerPortalRoutes } from './modules/developer/portal.ts';
 import { requestLog } from './modules/developer/request-log.ts';
 import { developerRoutes } from './modules/developer/routes.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
+import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
 import { marketingRoutes } from './modules/marketing/routes.ts';
+import { marketingPageRoutes } from './modules/marketing/routes-pages.ts';
 import { meRoutes } from './modules/me/routes.ts';
 import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
@@ -65,7 +67,6 @@ import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
 import { templateReviewsRoutes } from './modules/templates/routes-reviews.ts';
 import { usersRoutes } from './modules/users/routes.ts';
-import { offboardRoutes, visitorsRoutes } from './modules/visitors/routes.ts';
 import { walletProviderAccountRoutes } from './modules/wallet-providers/routes-accounts.ts';
 import { walletImageRoutes } from './modules/wallet-providers/routes-assets.ts';
 import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbacks.ts';
@@ -101,7 +102,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|assets|health)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|assets|health|marketing)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -191,7 +192,6 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/broadcasts', broadcastsRoutes);
   app.route('/api/v1/message-rules', messageRulesRoutes);
   app.route('/api/v1/holders', holdersRoutes);
-  app.route('/api/v1/visitors', visitorsRoutes);
   app.route('/api/v1/offboard', offboardRoutes);
   app.route('/api/v1/delivery', deliveryRoutes);
   app.route('/api/v1/connections', connectionsRoutes);
@@ -241,6 +241,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/hooks', hooksRoutes);
   app.route('/developers', developerPortalRoutes);
   app.route('/access', marketingRoutes);
+  app.route('/', marketingPageRoutes);
 
   // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
   // operations an API key can call; signed-in platform admins get the whole document.
