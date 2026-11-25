@@ -4,18 +4,14 @@ import { useState } from 'react';
 import type { BundleDto } from '@/shared/contracts/bundles.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { strictEmail } from '@/shared/email.ts';
-import { ACTION_ICON } from '../../lib/action-icons.ts';
-import { errorMessage, isApiError } from '../../lib/errors.ts';
+import { ENTITY } from '../../lib/entities.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import { Scan } from '../../portal/add/scan.tsx';
 import {
   Buddy,
-  Button,
   Callout,
   CopyButton,
-  Dialog,
-  DialogContent,
-  Form,
+  FormDialog,
   FormField,
   Input,
   useFormErrors,
@@ -108,31 +104,19 @@ export function BundleDialog({
   const client = useQueryClient();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string>();
   const [made, setMade] = useState<{ bundle: BundleDto; emailRequested: string | null } | null>(
     null,
   );
   const check = useFormErrors(validate(name, email));
-  const errors = { ...serverErrors, ...check.errors };
-
-  function close() {
-    const finished = made !== null;
-    onOpenChange(false);
-    setName('');
-    setEmail('');
-    setMade(null);
-    setServerErrors({});
-    setFormError(undefined);
-    check.reset();
-    if (finished) onDone();
-  }
 
   async function submit() {
     const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
     if (!before?.authenticated) return;
     const userId = before.user.id;
-    setFormError(undefined);
+    const current = () => {
+      const now = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+      return now?.authenticated === true && now.user.id === userId;
+    };
     const address = email.trim();
     try {
       const bundle = await create.mutateAsync({
@@ -141,90 +125,77 @@ export function BundleDialog({
         name: name.trim(),
         ...(address ? { holderEmail: address, sendEmail: true } : {}),
       });
-      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-      if (!current?.authenticated || current.user.id !== userId) return;
-      setMade({ bundle, emailRequested: address || null });
+      if (current()) setMade({ bundle, emailRequested: address || null });
     } catch (cause) {
-      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-      if (!current?.authenticated || current.user.id !== userId) return;
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServerErrors(cause.fields);
-      setFormError(errorMessage(cause));
+      // A different person's session never sees this one's refusal.
+      if (current()) throw cause;
     }
   }
 
+  const done = () => {
+    onOpenChange(false);
+    onDone();
+  };
   return (
-    <Dialog
+    <FormDialog
       open={open}
-      dirty={made === null && (name.trim() !== '' || email.trim() !== '')}
-      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+      onOpenChange={onOpenChange}
+      title="Share as bundle"
+      description={plural(passIds.length)}
+      dirty={name.trim() !== '' || email.trim() !== ''}
+      check={check}
+      onSubmit={submit}
+      submitLabel={email.trim() ? 'Create and email' : 'Create link'}
+      busy={create.isPending}
+      onClose={() => {
+        setName('');
+        setEmail('');
+        setMade(null);
+      }}
+      result={
+        made
+          ? {
+              title: made.bundle.name,
+              icon: <ENTITY.bundle.icon aria-hidden />,
+              body: <Result bundle={made.bundle} emailRequested={made.emailRequested} />,
+              onDone: done,
+            }
+          : undefined
+      }
     >
-      <DialogContent
-        size="md"
-        title={made ? made.bundle.name : 'Share as bundle'}
-        description={made ? undefined : plural(passIds.length)}
-        footer={
-          made ? (
-            <Button onClick={close}>Done</Button>
-          ) : (
-            <>
-              <Button variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="new-bundle"
-                loading={create.isPending}
-                iconStart={email.trim() ? <ACTION_ICON.sendEmail aria-hidden /> : undefined}
-              >
-                {email.trim() ? 'Create and email' : 'Create link'}
-              </Button>
-            </>
-          )
-        }
-      >
-        {made ? (
-          <Result bundle={made.bundle} emailRequested={made.emailRequested} />
-        ) : (
-          <Form
-            id="new-bundle"
-            className="flex flex-col gap-4"
-            {...check.form}
-            onValid={() => void submit()}
+      {({ errors: server }) => (
+        <>
+          <FormField label="Name" required error={check.errors.name ?? server.name}>
+            {(p) => (
+              <Input
+                {...p}
+                name="name"
+                data-autofocus
+                autoComplete="off"
+                maxLength={80}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            )}
+          </FormField>
+          <FormField
+            label="Email"
+            error={check.errors.email ?? server.email}
+            help="Optional. Requests an email with the link."
           >
-            <FormField label="Name" required error={errors.name}>
-              {(p) => (
-                <Input
-                  {...p}
-                  data-autofocus
-                  autoComplete="off"
-                  maxLength={80}
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setServerErrors(({ name: _gone, ...rest }) => rest);
-                  }}
-                />
-              )}
-            </FormField>
-            <FormField
-              label="Email"
-              error={errors.email}
-              help="Optional. Requests an email with the link."
-            >
-              {(p) => (
-                <Input
-                  {...p}
-                  type="email"
-                  autoComplete="off"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              )}
-            </FormField>
-            {formError ? <p className="text-sm text-danger">{formError}</p> : null}
-          </Form>
-        )}
-      </DialogContent>
-    </Dialog>
+            {(p) => (
+              <Input
+                {...p}
+                name="email"
+                type="email"
+                autoComplete="off"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            )}
+          </FormField>
+        </>
+      )}
+    </FormDialog>
   );
 }
