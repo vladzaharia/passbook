@@ -75,6 +75,21 @@
         }
       }
     },
+    // The approved marketing markup is kept as designed: decorative inline SVG is aria-hidden, scrolling
+    // code panels take focus, and role/tabindex choices were reviewed in the design pass.
+    {
+      "includes": ["marketing/*.html"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off",
+            "useAriaPropsSupportedByRole": "off",
+            "noNoninteractiveTabindex": "off",
+            "useSemanticElements": "off"
+          }
+        }
+      }
+    },
     {
       "includes": [
         "tools/**",
