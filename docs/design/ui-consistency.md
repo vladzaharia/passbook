@@ -109,7 +109,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Detail (org, user, identity, connection, status) | `TwoPane`: main column + 20rem aside at ≥1280 (summary, counts, danger actions); stacked below |
 | Wizard (new pass, new connection) | Full width, Stepper on top, same width on every step; aside (live preview or summary) at ≥1024; `WizardBar` sticky at the bottom |
 | Upload template | Full width; drop zone and fields left, checklist and report right at ≥1024 |
-| Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors, `xl` 896 multi-step dialogs with a side stepper (full screen <640); bottom sheets <640 |
+| Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors, `xl` 896 multi-step dialogs with a side rail (`WizardDialog` only; full screen <640); bottom sheets <640 |
 | Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024, the pass sticky at the left; account cards cap at 48rem |
 | Login and SSR auth pages | `max-w-sm` card, centred |
 | Public pass page | `max-w-5xl` like the portal; the portal's header and pass view (`HolderHeading`, `HolderPassView`): one column, two at ≥1024 (pass left; right: notice, the one lead card, the other ways as a quiet list, the details, help). No section labels, one card per job, no card flip (the details list is the one details) |
@@ -253,6 +253,29 @@ health items):
 - The scope prefills the org; a step with one choice is skipped.
 - Choices are `OptionTile`s (icon, name, one-line description). Enter or double-click advances.
 - Review is a key-value summary with an `Edit` link per section.
+
+#### Wizard dialogs (`WizardDialog`, `useWizard`)
+
+One kit family in `ui/wizard/*` and `ui/step-marker.tsx`; the New API key dialog is the reference.
+
+- Frame: `xl` dialog, constant title. A frame 43.5rem wide or more (a container query on the
+  dialog body, not the viewport) shows the rail: markers down the side, what was chosen under a
+  done step. Narrower: `Step 2 of 4 · Access` over a 2px bar. Full screen under 640.
+- Step: rail title is a noun; the heading is an instruction of four words or fewer, no period; the
+  hint on a blocked Next is four words or fewer with a period. Finish label is a verb and a noun.
+- Next is never hard-disabled for an incomplete step: `aria-disabled`, focusable, hint as its
+  description. A press (or Enter) shows the step's errors, focuses the first and announces the
+  count, or the hint when no field is at fault. `disabled` is for busy only.
+- A passed step stays done. After `Edit` from Review the primary reads `Review` and goes straight
+  back while every later step is still valid.
+- A step change scrolls the dialog body to the top and focuses the heading.
+- Server field errors jump to the earliest step that owns a field (`fieldStep`) and mark it
+  invalid; a field no step owns shows as one line at the foot of the step.
+- Review (`WizardReview`) comes before the finish, with a note only for a consequence. A reveal
+  (secret, link, QR) is the `result`: the dialog narrows to `md`, takes the result's title, drops
+  the X and ignores Esc and outside clicks.
+- `FormDialog` is the shell for one-form dialogs (`sm`, `md`, `lg`; never `xl`): Cancel and the
+  primary in the footer, field errors under their fields, one line for the rest, reset on close.
 
 ## Status pills
 
@@ -494,7 +517,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Layout | `TwoPane aside asideFrom='xl'\|'lg' stickyAside`; `FormGrid` + `FormSpan full`; `FieldGroup title onlyFieldLabel` |
 | Forms | `useFormErrors(found)` + `Form id {...check.form} onValid` (errors on submit, then live; blocked submit: focus, scroll, one polite summary); `FormField label required error help`; `NumberField unit`; `DateTimeField clearLabel defaultZone` |
 | Choices | `SegmentedControl label options value onValueChange`; `OptionTile` (Enter or double-click commits); `EntityPicker kind` |
-| Wizards | `Wizard steps current onStep aside onCancel onBack onNext formId nextLabel busy`; the page owns `useUnsavedChangesGuard` |
+| Wizards | Page: `Wizard steps current onStep aside onCancel onBack onNext formId nextLabel busy`; the page owns `useUnsavedChangesGuard`. Dialog: `useWizard({ steps, errors, hints, fieldStep, onFinish, open })` + `WizardDialog wizard title finishLabel result`; `WizardReview sections onEdit note`; `WizardResult title icon`; `StepMarker` / `StepList`; `FormDialog title onSubmit submitLabel check` |
 | Confirms | `ConfirmDialog`; `DiscardDialog` (unsaved changes); `Dialog dirty`; `TypedConfirmDialog word={confirmWord({ title, slug })}`; `SecretReveal fields onDone` |
 | Notes | `Callout tone title items actions` |
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |

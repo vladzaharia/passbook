@@ -115,7 +115,9 @@ export function DialogContent({
             </DialogPrimitive.Close>
           ) : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-auto px-5 py-4">{children}</div>
+        <div data-dialog-body="" className="min-h-0 flex-1 overflow-auto px-5 py-4">
+          {children}
+        </div>
         {footer ? (
           <div className={cn(DIALOG_ACTIONS, 'border-t border-border px-5 py-3')}>{footer}</div>
         ) : null}
