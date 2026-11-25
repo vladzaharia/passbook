@@ -77,7 +77,7 @@ export function ImportDialog({
   const w = useWizard({
     open: true,
     steps: [
-      { id: 'file', title: 'File', heading: 'Add the file' },
+      { id: 'file', title: 'File', heading: 'Add the file', summary: name || undefined },
       { id: 'check', title: 'Check', heading: 'Check the rows' },
     ],
     errors: {
