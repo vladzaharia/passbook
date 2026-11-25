@@ -113,7 +113,7 @@ export async function update(
     const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
       now,
       timeZone: await orgZoneOf(sctx, conn.orgId),
-      previous: storedConfig(def, conn),
+      previous: def.prepareConfig ? storedConfig(def, conn) : undefined,
     });
     assertFixedConfig(def, conn, config);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
