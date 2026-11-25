@@ -1,41 +1,35 @@
+import {
+  DEFAULT_EVENT_MINUTES,
+  nextBoundary,
+  passBoundaries,
+} from '../../../passkit/boundaries.ts';
+import type { PassJson } from '../../../passkit/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { currentPassJson } from '../passes/repo-read-pass.ts';
+import { eventMinutes, walletBoundaryPass } from '../passes/timed-pass.ts';
+import { readTimedSource } from '../passes/timed-source.ts';
+
+export { boundaryPhase, nextBoundary, passBoundaries } from '../../../passkit/boundaries.ts';
 
 /**
- * Moments at which a compiled wallet card changes with no pass edit: the pass expires, or an upcoming event's
- * date passes and the next one becomes the card's event (architecture 6.1). Apple's wallet does both on the
- * device; Google and Samsung only know what was last sent.
+ * Moments a compiled wallet card changes with no pass edit (architecture 6.1): the pass expires, or an
+ * upcoming event starts or ends. The calculation Apple's timed renders use, over every input event (an event
+ * past the cap of 10 moves up when an earlier one ends) and the expiry the last of them leaves, so a boundary
+ * is one operation and the card it sends is the timed one (docs/design/event-boundaries.md).
  */
-export function passBoundaries(raw: string | null): number[] {
-  if (raw === null) return [];
-  let pass: {
-    expirationDate?: unknown;
-    upcomingPassInformation?: { dateInformation?: { date?: unknown } }[];
-  };
-  try {
-    pass = JSON.parse(raw);
-  } catch {
-    return [];
-  }
-  const dates = [
-    pass.expirationDate,
-    ...(Array.isArray(pass.upcomingPassInformation)
-      ? pass.upcomingPassInformation.map((event) => event?.dateInformation?.date)
-      : []),
-  ];
-  const times = dates
-    .map((date) => (typeof date === 'string' ? Date.parse(date) : Number.NaN))
-    .filter(Number.isFinite);
-  return [...new Set(times)].sort((a, b) => a - b);
-}
-
-/** How many boundaries are behind `now`: part of an operation's identity, so crossing one queues a new one. */
-export function boundaryPhase(boundaries: readonly number[], now: number): number {
-  return boundaries.filter((at) => at <= now).length;
-}
-
-export function nextBoundary(boundaries: readonly number[], now: number): number | null {
-  return boundaries.find((at) => at > now) ?? null;
+export async function walletBoundaries(ctx: ServiceContext, passId: string): Promise<number[]> {
+  const source = await readTimedSource(ctx, passId);
+  if (!source) return [];
+  const { built, personalization, template } = source;
+  let pass: PassJson = built;
+  if (template)
+    try {
+      pass = walletBoundaryPass(built, personalization, template);
+    } catch (error) {
+      // The behavior refuses the input now: the boundaries of the pass as built.
+      ctx.log.warn('wallet.boundary_input_invalid', { passId, code: 'TIMED_PASS_INVALID', error });
+    }
+  const fallbackMinutes = template ? eventMinutes(template) : DEFAULT_EVENT_MINUTES;
+  return passBoundaries(pass, { expiry: true, fallbackMinutes });
 }
 
 /** When the instance's card next changes by itself: the drain parks the instance's dirty row until then. */
@@ -43,5 +37,5 @@ export async function nextInstanceBoundary(
   ctx: ServiceContext,
   passId: string,
 ): Promise<number | null> {
-  return nextBoundary(passBoundaries(await currentPassJson(ctx.env.DB, passId)), ctx.clock.now());
+  return nextBoundary(await walletBoundaries(ctx, passId), ctx.clock.now());
 }

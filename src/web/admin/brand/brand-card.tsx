@@ -18,6 +18,7 @@ import {
 import { HEX } from '../orgs/branding.ts';
 import { ColorField } from '../orgs/color-field.tsx';
 import { brandingUrl } from '../orgs/queries.ts';
+import { AccentChips } from './accent-chips.tsx';
 import { useWebLogoUrl } from './api.ts';
 import { AssetTile } from './asset-tile.tsx';
 import { colorErrors, type Draft, type ImageSlot, type StagedImage, shownValues } from './draft.ts';
@@ -252,16 +253,21 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
           <ContrastLine bg={v.background} fg={v.foreground} label={v.label} />
         </div>
         <FormGrid>
-          <ColorField
-            label={COPY.accent}
-            value={v.accent}
-            fallback="#0f766e"
-            empty="Default"
-            error={errors.accent}
-            help={COPY.accentHelp}
-            tag={<SourceTag source={v.accent ? 'org' : 'passbook'} />}
-            onChange={(accent) => edit({ accent })}
-          />
+          <div className="flex flex-col gap-3">
+            <ColorField
+              label={COPY.accent}
+              value={v.accent}
+              fallback="#0f766e"
+              empty="Default"
+              error={errors.accent}
+              help={COPY.accentHelp}
+              tag={<SourceTag source={v.accent ? 'org' : 'passbook'} />}
+              onChange={(accent) => edit({ accent })}
+            />
+            {canEdit ? (
+              <AccentChips value={v.accent} onPick={(accent) => edit({ accent })} />
+            ) : null}
+          </div>
           {markOptions.length > 1 ? (
             <div className="flex flex-col gap-2">
               <div className="flex min-h-6 items-center justify-between gap-2">

@@ -1,5 +1,6 @@
 import { STAGE, type StageTone } from './customer-tone.ts';
 import { CustomerBuddy, type CustomerBuddyStatus } from './live/customer-buddy.tsx';
+import { figureSlots } from './live/customer-draft.ts';
 import { ScanOrgLogo } from './platform/scan-branding.tsx';
 import './customer-display.css';
 
@@ -25,6 +26,8 @@ export function CustomerStage({
   brandName,
   logoUrl,
   title,
+  amount,
+  leaving,
   eyebrow,
   hint,
   notice,
@@ -35,6 +38,10 @@ export function CustomerStage({
   brandName: string;
   logoUrl: string | null;
   title?: string;
+  /** An amount under review: the words and the figure, which rolls when it changes. */
+  amount?: { label: string; value: string };
+  /** The amount is fading out: the draft was cancelled. */
+  leaving?: boolean;
   eyebrow?: string;
   hint?: string;
   /** A short line for a connection problem, shown small at the bottom. */
@@ -67,7 +74,30 @@ export function CustomerStage({
           <Icon strokeWidth={2.5} />
         </span>
         <p className="cstage-eyebrow">{eyebrow || look.eyebrow}</p>
-        <h1>{title || look.title}</h1>
+        {amount ? (
+          <h1
+            className="cstage-draft"
+            data-testid="customer-draft"
+            aria-atomic="true"
+            {...(leaving ? { 'data-leaving': '' } : {})}
+          >
+            {amount.label ? (
+              <span className="cstage-draft-label" aria-hidden="true">
+                {amount.label}{' '}
+              </span>
+            ) : null}
+            <span className="sr-only">{`${amount.label} ${amount.value}`.trim()}</span>
+            <span className="cstage-draft-figure" aria-hidden="true">
+              {figureSlots(amount.value).map(({ char, slot }) => (
+                <span key={`${slot}-${char}`} className="cstage-digit">
+                  {char}
+                </span>
+              ))}
+            </span>
+          </h1>
+        ) : (
+          <h1>{title || look.title}</h1>
+        )}
         {hint || look.hint ? <p className="cstage-hint">{hint || look.hint}</p> : null}
       </section>
       <div aria-hidden="true" className="cstage-buddy">

@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { DEV_GUIDE_STEPS, DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import type { CommandGroup, CommandItem } from '../../ui/command-palette.tsx';
 import { goTo, openTab } from './nav.ts';
@@ -88,13 +89,20 @@ export const opItem = (o: OpDoc, words: readonly string[]) =>
     hint: <span className="mono srch-path">{o.path}</span>,
   });
 
+/** The step a guide sits in, as its search hint: the grouping the guides page shows. */
+const stepLabel = (id: string): string => {
+  const step = DEV_GUIDES.find((g) => g.id === id)?.step;
+  return DEV_GUIDE_STEPS.find((s) => s.id === step)?.label ?? SEARCH_COPY.hints.guide;
+};
+
 export const guideItem = (g: GuideDoc, words: readonly string[]) =>
   item(`guide:${g.id}`, g.title, g.href, {
     icon: iconOf(g.kind),
     content: <Marked text={g.title} words={words} />,
-    hint: SEARCH_COPY.hints[
-      g.kind === 'guide' ? 'guide' : g.kind === 'page' ? 'page' : 'reference'
-    ],
+    hint:
+      g.kind === 'guide'
+        ? stepLabel(g.id)
+        : SEARCH_COPY.hints[g.kind === 'page' ? 'page' : 'reference'],
   });
 
 export const eventItem = (e: EventDoc, words: readonly string[]) =>

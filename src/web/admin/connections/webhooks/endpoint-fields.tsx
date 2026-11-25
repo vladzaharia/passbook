@@ -4,8 +4,9 @@ import {
   type WebhookEndpointDto,
 } from '@/shared/contracts/webhooks.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
-import { CheckboxField, FormField, Input, RadioGroup } from '../../../ui/index.ts';
+import { Button, CheckboxField, FormField, Input, RadioGroup } from '../../../ui/index.ts';
 import { useTemplates } from '../../templates/api.ts';
+import { EVENT_SETS, setOf } from './event-sets.ts';
 import type { FormErrors, FormState, SubscribableEventType } from './form-state.ts';
 import { EVENT_GROUP, EVENT_GROUPS, EVENT_LABEL } from './labels.ts';
 
@@ -85,6 +86,24 @@ export function EndpointFields({
         aria-describedby={errors.eventTypes ? 'events-error' : undefined}
       >
         <legend className="mb-2 text-sm font-medium text-fg-strong">Events</legend>
+        {disabled ? null : (
+          <fieldset className="m-0 mb-3 flex min-w-0 flex-wrap gap-2 border-0 p-0">
+            <legend className="sr-only">Quick picks</legend>
+            {EVENT_SETS.map((s) => (
+              <Button
+                key={s.id}
+                type="button"
+                size="sm"
+                variant="outline"
+                className="aria-pressed:border-accent aria-pressed:bg-state-hover-tint aria-pressed:text-fg-strong"
+                aria-pressed={setOf(value.eventTypes)?.id === s.id}
+                onClick={() => onChange({ eventTypes: [...s.types] })}
+              >
+                {s.label}
+              </Button>
+            ))}
+          </fieldset>
+        )}
         <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           {EVENT_GROUPS.map((group) => (
             <fieldset key={group} className="flex min-w-0 flex-col">

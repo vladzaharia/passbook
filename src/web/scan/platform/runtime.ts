@@ -25,6 +25,7 @@ import { cameraDisabledFor } from './camera-disabled.ts';
 import { chipText } from './chip-text.ts';
 import { customerBrandingOf } from './customer-branding.ts';
 import { loadDevicePrefs } from './device-prefs.ts';
+import { draftPortOf } from './draft-port.ts';
 import { focusTarget } from './focus-target.ts';
 import { scanId } from './id.ts';
 import { openLocalStores } from './local-stores.ts';
@@ -96,6 +97,7 @@ export async function createRuntime(
   const store = createScanStore(
     {
       api,
+      draft: draftPortOf(session, api),
       tags: tagsPortOf(api),
       toFail,
       camera,

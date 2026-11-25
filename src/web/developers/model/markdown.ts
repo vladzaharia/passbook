@@ -1,5 +1,6 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { opUrl, PATHS, twin } from '../../../shared/developers.ts';
+import { groupByStep } from '../guide/group.ts';
 import type { Guide } from '../guide/model.ts';
 import { operations } from './dates.ts';
 import { samplesFor } from './samples.ts';
@@ -113,8 +114,12 @@ export function homeMarkdown(site: Site): string {
 
 export function guidesIndexMarkdown(guides: Guide[]): string {
   const out = [`# ${DEV_COPY.slots.guides.title}`, '', DEV_COPY.slots.guides.line, ''];
-  for (const g of guides) out.push(`- [${g.meta.title}](${twin(g.url)}): ${g.meta.line}`);
-  return `${out.join('\n')}\n`;
+  for (const { step, items } of groupByStep(guides, (g) => g.meta.id)) {
+    out.push(`## ${step.label}`, '');
+    for (const g of items) out.push(`- [${g.meta.title}](${twin(g.url)}): ${g.meta.line}`);
+    out.push('');
+  }
+  return `${out.join('\n').trimEnd()}\n`;
 }
 
 /** https://llmstxt.org: a title, a summary and links to the markdown twins. */
