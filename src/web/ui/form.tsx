@@ -32,6 +32,7 @@ export function useBlockedSubmit<T extends HTMLElement = HTMLElement>() {
   const ref = useRef<T>(null);
   const [tick, setTick] = useState(0);
   const [summary, setSummary] = useState('');
+  const fallback = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (tick === 0) return;
     const invalid = [...(ref.current?.querySelectorAll<HTMLElement>(INVALID) ?? [])];
@@ -46,14 +47,20 @@ export function useBlockedSubmit<T extends HTMLElement = HTMLElement>() {
     // Clear first so the same count is announced again.
     setSummary('');
     const frame = requestAnimationFrame(() =>
-      setSummary(roots.length ? attentionLine(roots.length) : ''),
+      setSummary(roots.length ? attentionLine(roots.length) : (fallback.current ?? '')),
     );
     return () => cancelAnimationFrame(frame);
   }, [tick]);
   return {
     ref,
-    /** Call when a submit is refused; runs after the errors render. */
-    block: () => setTick((t) => t + 1),
+    /**
+     * Call when a submit is refused; runs after the errors render. `hint` is announced when no
+     * control is invalid (the step is blocked for a reason no field shows).
+     */
+    block: (hint?: string) => {
+      fallback.current = hint;
+      setTick((t) => t + 1);
+    },
     live: (
       <p role="status" className="sr-only">
         {summary}
@@ -91,7 +98,29 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
   onValid: SaveHandler;
   /** Show every field's error (set the caller's showErrors). */
   onInvalid?: () => void;
+  /** Announced when a blocked submit finds no invalid control ("Name the key."). */
+  blockedHint?: string | undefined;
   children: ReactNode;
+}
+
+/**
+ * Field errors the server sent back (an ApiError's `fields`), by field name. Clear one from the
+ * field's onChange so the message goes on the keystroke that fixes it; `reset` on the next attempt.
+ */
+export function useServerFields() {
+  const [fields, setFields] = useState<Record<string, string>>({});
+  return {
+    fields,
+    set: setFields,
+    clear: (field?: string) =>
+      setFields((current) => {
+        if (field === undefined) return Object.keys(current).length ? {} : current;
+        if (!(field in current)) return current;
+        const { [field]: _gone, ...rest } = current;
+        return rest;
+      }),
+    reset: () => setFields((current) => (Object.keys(current).length ? {} : current)),
+  };
 }
 
 /**
@@ -100,7 +129,15 @@ export interface FormProps extends Omit<FormHTMLAttributes<HTMLFormElement>, 'on
  * (SaveBar and Wizard take a formId). In a SaveBarGroup the page's Save submits it, and Enter
  * saves the page.
  */
-export function Form({ id, invalid, onValid, onInvalid, children, ...props }: FormProps) {
+export function Form({
+  id,
+  invalid,
+  onValid,
+  onInvalid,
+  blockedHint,
+  children,
+  ...props
+}: FormProps) {
   const blocked = useBlockedSubmit<HTMLFormElement>();
   const group = useContext(SaveBarGroupContext);
   const self = useRef<GroupedForm>({ invalid, onValid, onInvalid, block: blocked.block });
@@ -115,7 +152,7 @@ export function Form({ id, invalid, onValid, onInvalid, children, ...props }: Fo
     if (group && id && group.has(id)) return group.save();
     if (invalid) {
       onInvalid?.();
-      blocked.block();
+      blocked.block(blockedHint);
       return;
     }
     const saving = onValid();

@@ -86,6 +86,10 @@ export interface NewPrint {
   codeHash: string;
   rosterHash: string;
   generation: number;
+  /** The pass version the print is made from. */
+  passVersion: number;
+  /** Hash of the drawing the print is made from; null when the ticket could not be drawn. */
+  paperHash: string | null;
 }
 
 /**
@@ -116,11 +120,24 @@ export async function writeMint(
       'print_code_hash',
       'roster_hash',
       'generation',
+      'pass_version',
+      'paper_hash',
       'status',
       'created_by',
       'created_at',
     ],
-    [print.id, passId, print.codeHash, print.rosterHash, print.generation, 'active', w.by, now],
+    [
+      print.id,
+      passId,
+      print.codeHash,
+      print.rosterHash,
+      print.generation,
+      print.passVersion,
+      print.paperHash,
+      'active',
+      w.by,
+      now,
+    ],
   );
   g.audit(
     auditRow(ctx, w, passId, 'pass.print', { printId: print.id, generation: print.generation }),
@@ -146,4 +163,24 @@ export async function writeVoid(
   g.audit(auditRow(ctx, w, passId, 'pass.print_void', { printId: printId ?? null, cause }));
   const results = await g.commit();
   return results[g.indexOf(voided)]?.results?.length ?? 0;
+}
+
+/**
+ * Refresh: the active print was drawn again from the pass as it is now (its page, PDF or a bulk render). The
+ * only write of `pass_version` and `paper_hash` after a mint. Not audited: nothing about the ticket changes.
+ */
+export async function writeRefresh(
+  ctx: ServiceContext,
+  w: PrintWriter,
+  passId: string,
+  printId: string,
+  passVersion: number,
+  hash: string,
+): Promise<void> {
+  const g = newGrant(ctx, w, passId);
+  g.update('pass_prints', {
+    set: { pass_version: passVersion, paper_hash: hash },
+    where: { id: printId, pass_id: passId, status: 'active' },
+  });
+  await g.commit();
 }

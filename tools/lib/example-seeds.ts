@@ -798,6 +798,15 @@ export const SEEDS: Record<string, unknown> = {
     },
     secret: WEBHOOK_SECRET,
   },
+  'passes.postPassesByIdPrintDrawn response': {
+    id: IDS.print,
+    passId: IDS.pass,
+    generation: 1,
+    status: 'active',
+    createdAt: T.updated,
+    voidedAt: null,
+    voidCause: null,
+  },
   'passes.postPassesByIdPrintsByPrintIdVoid response': {
     id: IDS.print,
     passId: IDS.pass,
