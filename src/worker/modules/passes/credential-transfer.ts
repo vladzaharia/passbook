@@ -307,7 +307,7 @@ export async function finishCredentialTransfer(
   } catch (error) {
     // A reported SQLite constraint rolled the batch back. Transport errors are ambiguous: keep
     // the object until independent GC proves it unreferenced rather than deleting a committed pass.
-    if (classifyD1Error(error)) await ctx.env.BUCKET.delete(objectKey);
+    if (classifyD1Error(error, { triggers: true })) await ctx.env.BUCKET.delete(objectKey);
     ctx.log.error('pass.transfer_publish_failed', {
       transferId,
       passId: transfer.pass_id,

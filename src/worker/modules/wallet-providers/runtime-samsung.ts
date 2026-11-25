@@ -8,6 +8,7 @@ import {
   runtimeExecution,
   runtimeRetirementPurpose,
   runtimeSamsungAccount,
+  SAMSUNG_ISSUANCE,
   type SamsungRuntimeRefresh,
   type WalletRetirementClaim,
   WalletRuntimeError,
@@ -39,8 +40,15 @@ export async function createSamsungRuntimeOffer(
 ): Promise<string> {
   ctx = snapshotWalletCredentialContext(ctx);
   const scope = copyRuntimeScope(inputScope);
-  const account = await runtimeSamsungAccount(ctx, scope);
-  const call = runtimeExecution(ctx, scope, 'samsung', input.assertCurrent);
+  const account = await runtimeSamsungAccount(ctx, scope, SAMSUNG_ISSUANCE);
+  const call = runtimeExecution(
+    ctx,
+    scope,
+    'samsung',
+    input.assertCurrent,
+    undefined,
+    SAMSUNG_ISSUANCE,
+  );
   return call.finish(async () => {
     if (input.assertCurrent) await input.assertCurrent();
     return buildSamsungDataFetchLink(account, input.refId, ctx.clock.now());
