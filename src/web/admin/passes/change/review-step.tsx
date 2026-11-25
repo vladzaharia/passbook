@@ -4,20 +4,19 @@ import type { ChangeRunPreviewSchema } from '@/shared/contracts/broadcasts-chang
 import { formatCount, formatDateTime } from '../../../lib/format.ts';
 import {
   Buddy,
-  Button,
   Callout,
-  Card,
-  CardBody,
-  CardHeader,
   CountUp,
   LoadingRail,
   Skeleton,
   useDelayed,
+  WizardReview,
+  type WizardReviewSection,
 } from '../../../ui/index.ts';
 import { CHANGE_COPY as C } from './copy.ts';
 import { Estimate } from './estimate.tsx';
 import { refusalText } from './refusal.ts';
 import { SampleDiffs } from './sample-diffs.tsx';
+import type { ChangeStepId } from './steps.ts';
 import type { ChangeWizard } from './use-change-wizard.ts';
 
 type Preview = z.infer<typeof ChangeRunPreviewSchema>;
@@ -52,8 +51,11 @@ export function ReviewStep({
   w,
   which,
   picked,
+  onEdit,
 }: {
   w: ChangeWizard;
+  /** A section's Edit: back to that step. */
+  onEdit: (id: ChangeStepId) => void;
   which: string;
   /** For Select all matching: the count the person selected. */
   picked: number | undefined;
@@ -75,16 +77,35 @@ export function ReviewStep({
   const estimated = p.estimated === true && p.targeted > SAMPLED_PASSES;
   const void_ = w.kind === 'void';
   const startAt = w.startMs !== null ? formatDateTime(w.startMs) : null;
-  const rows: [string, string, number][] = [
-    [C.review.which, which, -1],
-    [
-      C.review.change,
-      w.kind === 'fields' ? `${C.kinds.fields}: ${w.rows.length}` : C.kinds[w.kind],
-      0,
-    ],
-    [C.review.holders, tells ? C.review.notifyLine : C.review.silentLine, void_ ? -1 : 1],
-    [C.review.start, startAt ?? C.review.startNow, void_ ? -1 : 1],
-    [C.review.undo, w.kind === 'design' ? C.run.notUndoable : C.review.undoLine, -1],
+  const sections: WizardReviewSection<ChangeStepId>[] = [
+    {
+      id: 'change',
+      title: C.review.change,
+      items: [
+        { label: C.review.which, value: which },
+        {
+          label: C.review.change,
+          value: w.kind === 'fields' ? `${C.kinds.fields}: ${w.rows.length}` : C.kinds[w.kind],
+        },
+        {
+          label: C.review.undo,
+          value: w.kind === 'design' ? C.run.notUndoable : C.review.undoLine,
+        },
+      ],
+    },
+    // A void has no holders step: nobody is told and it starts now.
+    ...(void_
+      ? []
+      : [
+          {
+            id: 'holders' as const,
+            title: C.review.holders,
+            items: [
+              { label: C.review.holders, value: tells ? C.review.notifyLine : C.review.silentLine },
+              { label: C.review.start, value: startAt ?? C.review.startNow },
+            ],
+          },
+        ]),
   ];
   return (
     <div className="relative flex flex-col gap-6" aria-busy={w.preview.isFetching}>
@@ -122,35 +143,10 @@ export function ReviewStep({
         <h3 className="text-sm font-semibold text-fg-strong">{C.review.samples}</h3>
         <SampleDiffs samples={p.samples.slice(0, 5)} />
       </section>
-      <Card data-art-host="" className="wl-buddy-room relative">
+      <div data-art-host="" className="wl-buddy-room relative">
         <Buddy scene="peek" size="sm" at="end" />
-        <CardHeader title={C.review.summary} />
-        <CardBody>
-          <dl className="grid gap-3 text-sm">
-            {rows.map(([label, value, to]) => (
-              <div
-                key={label}
-                className="grid grid-cols-[6rem_minmax(0,1fr)_3.5rem] items-baseline gap-x-3"
-              >
-                <dt className="text-fg-muted">{label}</dt>
-                <dd className="min-w-0 break-words text-right text-fg-strong">{value}</dd>
-                <dd className="text-right">
-                  {to >= 0 ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      aria-label={`${C.review.edit} ${label.toLowerCase()}`}
-                      onClick={() => w.setStep(to)}
-                    >
-                      {C.review.edit}
-                    </Button>
-                  ) : null}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </CardBody>
-      </Card>
+        <WizardReview sections={sections} onEdit={onEdit} level={3} />
+      </div>
     </div>
   );
 }
