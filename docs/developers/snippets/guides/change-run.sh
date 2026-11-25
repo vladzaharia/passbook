@@ -16,7 +16,7 @@ curl -X POST "https://passbook.mobile/api/v1/broadcasts" \
       {
         "input": "venueName",
         "values": [
-          "Sample Hall"
+          "Harbor Hall"
         ]
       }
     ],
