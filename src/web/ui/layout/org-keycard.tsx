@@ -23,8 +23,9 @@ function bandStyle(choice: Choice, index: number): CSSProperties {
 /**
  * An organization as an access badge: its colour band with the lanyard slot and the building's
  * windows, the mark over the band's edge, then the name, your roles and what sets it apart. The
- * whole card is the link, named by the organization; the rest describes it. The windows light up
- * on hover and focus, and stay lit on the one you used last.
+ * name is the link and its overlay makes the whole card the target, so the link reads as the
+ * organization and the rest describes it (WCAG 2.5.3). The windows light up on hover and focus,
+ * and stay lit on the one you used last.
  */
 export function OrgKeycard({ choice, index }: { choice: Choice; index: number }) {
   const id = useId();
@@ -32,13 +33,9 @@ export function OrgKeycard({ choice, index }: { choice: Choice; index: number })
   const meta = org ? rolesLine(org.roles) : 'Platform admin';
   return (
     <li style={bandStyle(choice, index)} className="wl-kc-item flex min-w-0">
-      <Link
-        to={choice.to}
-        data-choice=""
+      <div
         data-lit={choice.last ? '' : undefined}
-        aria-labelledby={`${id}-n`}
-        aria-describedby={`${id}-m`}
-        className="wl-kc group relative flex min-w-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface-raised text-fg shadow-elevation-1 max-sm:flex-row sm:flex-col"
+        className="wl-kc relative flex min-w-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface-raised text-fg shadow-elevation-1 max-sm:flex-row sm:flex-col"
       >
         <span aria-hidden className="wl-kc-band">
           <span className="wl-kc-slot" />
@@ -53,13 +50,15 @@ export function OrgKeycard({ choice, index }: { choice: Choice; index: number })
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1 px-4 pb-4 max-sm:py-3 sm:pt-7">
           <span className="flex min-w-0 items-center gap-2">
-            <span
-              id={`${id}-n`}
+            <Link
+              to={choice.to}
+              data-choice=""
               title={choice.name}
-              className="min-w-0 flex-1 truncate text-base font-semibold text-fg-strong"
+              aria-describedby={`${id}-m`}
+              className="wl-kc-link min-w-0 flex-1 truncate text-base font-semibold text-fg-strong"
             >
               {choice.name}
-            </span>
+            </Link>
             <ArrowRight aria-hidden className="wl-kc-go size-4 shrink-0 text-fg-muted" />
           </span>
           <span id={`${id}-m`} className="flex min-w-0 flex-col gap-2">
@@ -71,7 +70,7 @@ export function OrgKeycard({ choice, index }: { choice: Choice; index: number })
             ) : null}
           </span>
         </span>
-      </Link>
+      </div>
     </li>
   );
 }

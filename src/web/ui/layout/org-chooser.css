@@ -21,6 +21,7 @@
 }
 
 .wl-kc {
+  isolation: isolate;
   --kc-l1: 0.36;
   --kc-l2: 0.22;
   --kc-ink: white;
@@ -100,40 +101,59 @@
   i:is(:nth-child(1), :nth-child(3), :nth-child(6), :nth-child(8), :nth-child(11))::after {
   --lit: 1;
 }
-.wl-kc:is(:hover, :focus-visible, [data-lit]) .wl-kc-windows i::after {
+.wl-kc:is(:hover, :has(.wl-kc-link:focus-visible), [data-lit]) .wl-kc-windows i::after {
   opacity: var(--lit, 0);
 }
 .wl-kc-go {
   opacity: 0.6;
 }
-.wl-kc:is(:hover, :focus-visible) {
+.wl-kc:is(:hover, :has(.wl-kc-link:focus-visible)) {
   border-color: var(--pk-border-strong);
 }
-.wl-kc:is(:hover, :focus-visible) .wl-kc-go {
+.wl-kc:is(:hover, :has(.wl-kc-link:focus-visible)) .wl-kc-go {
   opacity: 1;
   color: var(--pk-accent-fg);
 }
-/* The lift's shadow is its own layer, so only its opacity changes. */
-.wl-kc::after {
+/* The badge lifts as a whole; its shadow is a layer under it (the card clips its own), so only
+   the layer's opacity changes. */
+.wl-kc-item {
+  position: relative;
+}
+.wl-kc-item::before {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  border-radius: var(--pk-radius-lg);
   box-shadow: var(--pk-elevation-2);
   opacity: 0;
   pointer-events: none;
 }
-.wl-kc:is(:hover, :focus-visible)::after {
+.wl-kc-item:is(:hover, :has(.wl-kc-link:focus-visible))::before {
   opacity: 1;
+}
+/* The name is the link; its overlay spans the card, and the card wears the focus ring. */
+.wl-kc-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.wl-kc-link:focus-visible {
+  outline: none;
+}
+html:not([data-modality="pointer"]) .wl-kc:has(.wl-kc-link:focus-visible) {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .wl-kc {
-    transition:
-      transform var(--wl-dur-hover) var(--wl-ease-out),
-      border-color var(--wl-dur-hover) var(--wl-ease-out);
+  .wl-kc-item {
+    transition: transform var(--wl-dur-hover) var(--wl-ease-out);
   }
-  .wl-kc::after,
+  .wl-kc {
+    transition: border-color var(--wl-dur-hover) var(--wl-ease-out);
+  }
+  .wl-kc-item::before,
   .wl-kc-go {
     transition:
       opacity var(--wl-dur-hover) var(--wl-ease-out),
@@ -156,14 +176,14 @@
     --w: 4;
   }
   @media (hover: hover) {
-    .wl-kc:hover {
+    .wl-kc-item:hover {
       transform: translateY(-2px);
     }
-    .wl-kc:hover .wl-kc-go {
+    .wl-kc-item:hover .wl-kc-go {
       translate: 2px 0;
     }
   }
-  .wl-kc:active {
+  .wl-kc-item:active {
     transform: scale(0.98);
     transition-duration: var(--wl-dur-press);
   }
