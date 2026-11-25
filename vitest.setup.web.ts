@@ -6,6 +6,8 @@ import { afterAll, afterEach, expect } from 'vitest';
 import * as axeMatchers from 'vitest-axe/matchers';
 
 expect.extend(axeMatchers);
+// jsdom has no layout: scrolling is a no-op, not a "not implemented" error on every step change.
+if (typeof window !== 'undefined') window.scrollTo = () => undefined;
 // The default 1 s findBy/waitFor window is shorter than a lazy route chunk takes to transform when
 // workerd and jsdom run side by side. A passing test never waits this long.
 configure({ asyncUtilTimeout: 10_000 });

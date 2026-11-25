@@ -132,6 +132,10 @@ const EXEMPT: Record<string, Exempt> = {
   'src/worker/modules/auth/magic-service.ts': {
     reason: 'a sign-in link to the person who asked for it: no org is involved',
   },
+  'src/worker/modules/marketing/service.ts': {
+    reason:
+      "an access request from the public site to PassBook's own inbox: the recipient is fixed and no org or pass is involved",
+  },
   'src/worker/modules/org-lifecycle/service.ts': {
     reason:
       "a closure notice to the org's own admins, from the platform: no pass and no third party",

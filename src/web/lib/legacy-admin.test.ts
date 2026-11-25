@@ -115,6 +115,24 @@ describe('legacy admin URLs', () => {
     );
   });
 
+  it('never reopens a remembered or lone sandbox in admin, but opens one a link names', () => {
+    const sandbox = membershipFixture('sbx', { testOnly: true });
+    const only: LegacyContext = { platformAdmin: false, memberships: [sandbox] };
+    expect(go('/admin/passes', {}, { ...only, remembered: { kind: 'org', orgId: 'sbx' } })).toEqual(
+      { to: '/admin', search: { next: '/passes' } },
+    );
+    expect(go('/admin/passes', {}, only).to).toBe('/admin');
+    const withSandbox: LegacyContext = { ...one, memberships: [membershipFixture('o1'), sandbox] };
+    expect(go('/admin/passes', {}, { ...withSandbox, tab: { kind: 'org', orgId: 'sbx' } }).to).toBe(
+      '/admin/o/o1/passes',
+    );
+    expect(go('/admin/passes', { orgId: 'sbx' }, only).to).toBe('/admin/o/sbx/passes');
+    const platform: LegacyContext = { ...only, platformAdmin: true };
+    expect(
+      go('/admin/passes', {}, { ...platform, remembered: { kind: 'org', orgId: 'sbx' } }).to,
+    ).not.toContain('/o/sbx');
+  });
+
   it('asks which organization when several could open the section', () => {
     expect(go('/admin/passes', {}, two)).toEqual({ to: '/admin', search: { next: '/passes' } });
     expect(go('/admin', {}, two)).toEqual({ to: '/admin', search: {} });

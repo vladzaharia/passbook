@@ -32,6 +32,7 @@ export const credential = (over: Partial<WalletCredential> = {}): WalletCredenti
   provider: 'google',
   identityHint: '4321',
   cardTypes: [],
+  lastCheck: null,
   provenance: 'own',
   revision: 1,
   verifiedAt: null,

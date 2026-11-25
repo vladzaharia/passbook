@@ -16,6 +16,8 @@ export interface Kinded {
   holderName?: string | undefined;
   /** The lookup value, when the template declares it public: a permit prints it as the plate. */
   publicLookup?: string | undefined;
+  /** The template's own start and end times (ISO), read from its inputs; never the lock-screen date. */
+  declared?: { start?: string | undefined; end?: string | undefined } | undefined;
 }
 
 export interface KindParts {
@@ -44,7 +46,9 @@ const iso = (v: RoleValue | undefined): string | undefined =>
   v?.kind === 'date' ? v.iso : undefined;
 const str = (v: unknown): string | undefined =>
   typeof v === 'string' && v.trim() ? v.trim() : undefined;
-const ISO = /^\d{4}-\d{2}-\d{2}T/;
+export const ISO = /^\d{4}-\d{2}-\d{2}T/;
+/** A title is never a timestamp. */
+const named = (v: string | undefined) => (v && !ISO.test(v) ? v : undefined);
 
 type Slice = Pick<TemplateManifest, 'display' | 'scan'>;
 
@@ -83,10 +87,12 @@ export function kindContent(c: Kinded): KindParts {
     text(roles.memberName) ??
     field('attendee', 'holder', 'memberName', 'name') ??
     (c.kind === 'coupon' || c.kind === 'permit' ? undefined : c.holderName);
+  const start = when(c, roles.eventStart, 'date', 'time') ?? c.declared?.start;
+  // An event's own start is its validity; a template's start input leaves its validity alone.
   const timed = c.kind === 'admission' && Boolean(iso(roles.eventStart));
   const parts: KindParts = {
-    start: when(c, roles.eventStart, 'date', 'time'),
-    end: iso(roles.eventEnd),
+    start,
+    end: iso(roles.eventEnd) ?? c.declared?.end,
     doors: when(c, roles.doorsOpen, 'doors'),
     // An event's own times are its validity; the wallet's relevance dates are not a validity range.
     validFrom: when(c, timed ? undefined : roles.validFrom, 'validFrom'),
@@ -126,7 +132,9 @@ export function kindContent(c: Kinded): KindParts {
     drop(key);
 
   if (c.kind === 'admission') {
-    parts.title = text(roles.eventName) ?? text(roles.title);
+    // A booking's primary field is its time: a timestamp is never a title.
+    const lead = text(roles.title);
+    parts.title = named(text(roles.eventName)) ?? named(lead) ?? field('what', 'service');
     // A template with one seat input has no section, row and number: the text is the seat.
     const loose = Object.keys(seat).length ? undefined : field('seat');
     if (loose) seat.seat = loose;
@@ -138,7 +146,7 @@ export function kindContent(c: Kinded): KindParts {
     ] as const)
       if (seat[key]) parts.facts.push({ label, text: seat[key] });
   } else if (c.kind === 'membership') {
-    parts.title = holder ?? text(roles.title);
+    parts.title = holder ?? named(text(roles.title));
     parts.type = text(roles.tier) ?? field('membership', 'plan', 'tier', 'role');
     parts.venue = field('homeClub', 'club', 'unit') ?? parts.venue;
     delete parts.address;

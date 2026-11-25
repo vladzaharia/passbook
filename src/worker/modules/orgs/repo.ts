@@ -52,13 +52,20 @@ export async function slugTaken(db: D1Database, slug: string, exceptId?: string)
  * Newest first; `before` is the exclusive id bound (UUIDv7 ids sort by creation time). `q` matches
  * the name or slug.
  */
-export function listOrgRows(db: D1Database, before: string | undefined, limit: number, q?: string) {
+export function listOrgRows(
+  db: D1Database,
+  before: string | undefined,
+  limit: number,
+  q?: string,
+  sandboxes: 'hide' | 'show' | 'only' = 'hide',
+) {
   const term = q?.trim().toLowerCase();
   const name = term ? containsMatch('lower(name)', term) : null;
   const slug = term ? containsMatch('slug', term) : null;
   return all<OrgRow>(
     db,
     `SELECT ${COLUMNS} FROM orgs WHERE status != 'deleted' AND id < ?
+       ${sandboxes === 'hide' ? "AND kind != 'developer'" : sandboxes === 'only' ? "AND kind = 'developer'" : ''}
        ${name && slug ? `AND (${name.sql} OR ${slug.sql})` : ''}
      ORDER BY id DESC LIMIT ?`,
     name && slug ? [before ?? '￿', ...name.params, ...slug.params, limit] : [before ?? '￿', limit],

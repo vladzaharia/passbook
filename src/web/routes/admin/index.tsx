@@ -1,20 +1,11 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import { z } from 'zod';
 import { canAccessAdminPath } from '../../lib/guards.ts';
 import { carryOrgScope, legacyAdminTarget } from '../../lib/legacy-admin.ts';
-import { firstAllowedPath } from '../../lib/nav.ts';
-import { useOrgScope } from '../../lib/org-filter.tsx';
-import { orgPath, parseAdminPath, platformPath } from '../../lib/scope.ts';
+import { parseAdminPath, platformPath } from '../../lib/scope.ts';
 import { readRemembered, readTabScope } from '../../lib/scope-store.ts';
-import { isAdmin, membershipsQuery, sessionQuery, useSession } from '../../lib/session.ts';
-import { Button } from '../../ui/button.tsx';
-import { Card, CardBody } from '../../ui/card.tsx';
-import { EmptyState } from '../../ui/empty-state.tsx';
-import { ErrorState } from '../../ui/error-state.tsx';
-import { OrgMark } from '../../ui/layout/scope-switcher.tsx';
-import { ListRow, ListRows } from '../../ui/list-row.tsx';
-import { RowLink } from '../../ui/row-link.tsx';
-import { SkeletonRows } from '../../ui/skeleton.tsx';
+import { isAdmin, membershipsQuery, sessionQuery } from '../../lib/session.ts';
+import { OrgChooser } from '../../ui/layout/org-chooser.tsx';
 
 /** A section to open in the chosen organization ("/passes"), from a legacy link. */
 const searchSchema = z.object({
@@ -29,53 +20,7 @@ const searchSchema = z.object({
 /** Several organizations and none remembered: the principal picks one. */
 function ScopeChooser() {
   const { next } = Route.useSearch();
-  const scope = useOrgScope();
-  const { isAdmin } = useSession();
-  if (scope.isLoading) return <SkeletonRows label="Loading organizations" />;
-  if (scope.isError) {
-    return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  }
-  if (scope.memberships.length === 0) {
-    return (
-      <EmptyState
-        heading
-        art="building"
-        title="No organizations"
-        description="This page belongs to an organization you are not a member of."
-        action={
-          isAdmin ? (
-            <Button variant="outline" asChild>
-              <Link to={platformPath('/orgs')}>Go to Organizations</Link>
-            </Button>
-          ) : undefined
-        }
-      />
-    );
-  }
-  return (
-    <>
-      <EmptyState heading art="building" title="Choose an organization" />
-      <Card className="mx-auto mt-4 max-w-xl">
-        <CardBody>
-          <ListRows label="Organizations">
-            {scope.memberships.map((m) => {
-              const wanted = orgPath(m.orgId, next ?? '');
-              const to = canAccessAdminPath(wanted, false, m)
-                ? wanted
-                : (firstAllowedPath({ kind: 'org', orgId: m.orgId }, false, m) ?? orgPath(m.orgId));
-              return (
-                <ListRow
-                  key={m.orgId}
-                  leading={<OrgMark org={m} />}
-                  title={<RowLink to={to}>{m.orgName}</RowLink>}
-                />
-              );
-            })}
-          </ListRows>
-        </CardBody>
-      </Card>
-    </>
-  );
+  return <OrgChooser next={next ?? ''} />;
 }
 
 export const Route = createFileRoute('/admin/')({
