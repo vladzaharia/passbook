@@ -83,4 +83,21 @@ describe('programming a blank simulated tag', () => {
       new Uint8Array([0x91, 0x40]),
     );
   });
+
+  it('the server refuses a read-back that names another host or slug than its template', async () => {
+    for (const swap of [
+      (u: string) => u.replace('passbook.mobile', 'evil.example'),
+      (u: string) => u.replace(testPlan().slug, 'other001'),
+    ]) {
+      class Tampered extends RelayServer {
+        override result(id: string, req: { responses: string[]; url: string }) {
+          return super.result(id, { ...req, url: swap(req.url) });
+        }
+      }
+      const sim = new Ntag424Sim({ random: countingRandom() });
+      await expect(programTag(sendOf(sim), new Tampered(testPlan()))).rejects.toMatchObject({
+        code: 'NTAG_COMMAND_FAILED',
+      });
+    }
+  });
 });
