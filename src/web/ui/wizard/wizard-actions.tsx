@@ -55,7 +55,7 @@ export function WizardButtons({
           {why}
         </span>
       ) : null}
-      <div className="flex gap-2 max-sm:[&>*]:flex-1">
+      <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
         {first ? null : (
           <Button variant="outline" disabled={working} onClick={onBack}>
             Back
