@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, membershipFixture, renderApp, sessionFixture } from '@/web/lib/test-utils.tsx';
+import { toReview } from './wizard-test-utils.ts';
 
 const reader = membershipFixture('o1', {
   orgName: 'North',
@@ -170,7 +171,7 @@ describe('API key platform and membership authority', () => {
     expect(reads).not.toContain('o2');
   });
 
-  it('closes a pending review if organization manage authority is removed', async () => {
+  it('closes the wizard on its review step if organization manage authority is removed', async () => {
     const requests = vi.fn((_url: URL, _init: RequestInit | undefined) =>
       page([key('north', 'o1', 'North key')]),
     );
@@ -183,16 +184,12 @@ describe('API key platform and membership authority', () => {
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog', { name: 'New API key' });
     await user.type(within(dialog).getByLabelText(/Name/), 'Pending key');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    expect(
-      await screen.findByRole('alertdialog', { name: 'Review service key' }),
-    ).toBeInTheDocument();
+    await toReview(user, dialog);
+    expect(within(dialog).getByRole('button', { name: 'Create key' })).toBeInTheDocument();
     act(() => {
       queryClient.setQueryData(['org-memberships', 'me'], { items: [reader] });
     });
-    await waitFor(() =>
-      expect(screen.queryByRole('alertdialog', { name: 'Review service key' })).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull());
     expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
     expect(requests.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
   });
