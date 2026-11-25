@@ -22,12 +22,6 @@ export const marketingRoutes = new Hono<AppBindings>();
 const FORM = 'application/x-www-form-urlencoded';
 const JSON_TYPE = 'application/json';
 
-/** The select is named `for` in the markup; the contract says `purpose`. */
-function withPurpose(fields: Record<string, unknown>): Record<string, unknown> {
-  const { for: chosen, ...rest } = fields;
-  return rest.purpose === undefined ? { ...rest, purpose: chosen } : rest;
-}
-
 function parseJson(text: string): Record<string, unknown> {
   let value: unknown;
   try {
@@ -85,7 +79,7 @@ async function accept(c: Context<AppBindings>, type: string, json: boolean): Pro
     throw new AppError('UNSUPPORTED_MEDIA_TYPE', 415, 'Send the form as a plain form post.');
   const text = await c.req.text();
   const fields = json ? parseJson(text) : Object.fromEntries(new URLSearchParams(text));
-  await submitAccessRequest(ctx, withPurpose(fields), {
+  await submitAccessRequest(ctx, fields, {
     // The site-wide cap is charged only by requests that will send mail.
     beforeSend: async () => {
       if (!(await checkRateLimit(c.env, 'RL_ACCESS_ALL', 'access:all'))) throw limited();

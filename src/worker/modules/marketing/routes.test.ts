@@ -58,7 +58,7 @@ const form = (over: Record<string, string> = {}) => ({
   name: VALID.name,
   email: VALID.email,
   org: VALID.org,
-  for: VALID.purpose,
+  purpose: VALID.purpose,
   message: VALID.message,
   ...over,
 });
@@ -134,9 +134,9 @@ describe('POST /access', () => {
     expect(sent).toHaveLength(0);
   });
 
-  it('the select posts as "for"', async () => {
+  it('the select posts as "purpose"', async () => {
     const { sent, post } = await setup();
-    expect((await post(form({ for: 'Something else' }))).status).toBe(303);
+    expect((await post(form({ purpose: 'Something else' }))).status).toBe(303);
     expect(sent[0]?.text).toContain('For: Something else');
   });
 
@@ -313,10 +313,11 @@ describe('POST /access', () => {
     expect(sent[0]?.text).toContain('For: Memberships');
   });
 
-  it('purpose wins over for', async () => {
+  it('does not read a "for" field', async () => {
     const { sent, post } = await setup();
-    await post(form({ purpose: 'Memberships', for: 'Something else' }));
-    expect(sent[0]?.text).toContain('For: Memberships');
+    const { purpose: _purpose, ...rest } = form();
+    expect((await post({ ...rest, for: 'Memberships' }, { json: true })).status).toBe(422);
+    expect(sent).toHaveLength(0);
   });
 
   it('junk requests do not use the site-wide limit', async () => {
