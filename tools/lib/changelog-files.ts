@@ -1,4 +1,5 @@
 // Reads and writes docs/api/changelog/. Shared by gen-changelog, check-developers and deploy.
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { DatedFile, Pending, Versions } from './changelog.ts';
@@ -34,12 +35,26 @@ export const readDated = (root: string): DatedFile[] =>
       (f) => JSON.parse(readFileSync(resolve(root, 'docs/api/changelog', f), 'utf8')) as DatedFile,
     );
 
+/** The dates of the dated files the base ref already carries. */
+const datesAtBase = (root: string): Set<string> => {
+  try {
+    const names = execFileSync('git', ['ls-tree', '--name-only', BASE, 'docs/api/changelog/'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return new Set(names.match(/\d{4}-\d{2}-\d{2}(?=\.json)/g) ?? []);
+  } catch {
+    return new Set();
+  }
+};
+
 /** The changes from the base ref to this tree that no released entry covers, or null when the base has no snapshot. */
 export function diffAgainstBase(root: string): Change[] | null {
   const prev = showAt(root, BASE, SNAPSHOT);
   if (prev === null) return null;
   const next = JSON.parse(readFileSync(resolve(root, SNAPSHOT), 'utf8')) as Doc;
-  const covered = coveredOps(readDated(root));
+  const covered = coveredOps(readDated(root), datesAtBase(root));
   return changes(JSON.parse(prev) as Doc, next).filter((c) => !covered.has(c.operationId));
 }
 

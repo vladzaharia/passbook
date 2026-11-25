@@ -3,6 +3,7 @@ import { all, run } from '../../platform/db.ts';
 export interface RosterRow {
   id: string;
   template_id: string;
+  template_version: string;
   personalization: string;
   status: 'active' | 'voided';
   removed_at: number | null;
@@ -41,7 +42,7 @@ export const rosterPage = (
 ): Promise<RosterRow[]> =>
   all<RosterRow>(
     db,
-    `SELECT p.id, p.template_id, p.personalization, p.status, p.removed_at, p.deleted_at,
+    `SELECT p.id, p.template_id, p.template_version, p.personalization, p.status, p.removed_at, p.deleted_at,
             p.scan_code,
             (SELECT pp.roster_hash FROM pass_prints pp WHERE pp.pass_id = p.id AND pp.status = 'active') AS print_hash,
             EXISTS (SELECT 1 FROM scan_gates g

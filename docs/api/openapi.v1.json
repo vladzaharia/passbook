@@ -18001,7 +18001,7 @@
                 },
                 "g": {
                   "type": "string",
-                  "maxLength": 32
+                  "pattern": "^[0-9]{1,6}$"
                 }
               },
               "required": [
@@ -128186,7 +128186,8 @@
                       "h": "8893d06a3faf43681946ec0a8b3936e7",
                       "status": "active",
                       "state": "in",
-                      "day": false
+                      "day": false,
+                      "g": "1"
                     }
                   ],
                   "cursor": "c1.4812",
