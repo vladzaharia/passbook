@@ -103,7 +103,11 @@ export async function writeEntitlementTransition(
     g.update('channel_apply_runs', {
       set: {
         reconcile_all: 1,
-        from_blocked: before,
+        // A recorded start (an entitlement run) keeps its known flips; a template-save run has none.
+        from_blocked:
+          pending.fromRev !== null && pending.fromBlocked !== null
+            ? JSON.stringify(pending.fromBlocked)
+            : before,
         // An older full job arriving late keeps the newer end the run already has.
         to_blocked:
           pending.toBlocked !== null && (pending.toRev ?? 0) > t.revision

@@ -20,3 +20,5 @@ END;
 
 -- The journal sweep reads the orgs changed in a short window.
 CREATE INDEX org_entitlements_updated ON org_entitlements (updated_at, org_id);
+-- Its per-template coverage test: a run covering a revision for one (org, mode, template).
+CREATE INDEX channel_apply_runs_cover ON channel_apply_runs (org_id, mode, template_id, from_rev);

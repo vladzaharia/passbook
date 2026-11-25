@@ -139,8 +139,9 @@ async function checkWalletSheet(page: Page, surface: Surface, pass: string) {
 }
 
 // One test per size, and one per surface for the wallet sheet: each stays well inside the default
-// timeout, and a failure names its size.
-for (const viewport of viewports) {
+// timeout, and a failure names its size. A phone on its side is only for the scanner: the customer display stacks and scrolls under 700 px.
+const sideways = { width: 667, height: 375, scheme: 'dark' as const };
+for (const viewport of [...viewports, sideways]) {
   test(`scanner and operator pass layouts stay readable at ${viewport.width}x${viewport.height}`, async ({
     page,
   }) => {
