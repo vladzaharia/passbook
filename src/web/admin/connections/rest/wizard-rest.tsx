@@ -1,6 +1,7 @@
 import { cleanValues } from '../../passes/schema-form/index.ts';
 import { nestValues } from '../config-schema.ts';
 import type { ConfigDraft } from '../wizard-steps.tsx';
+import type { SampleField } from './mapping-seed.ts';
 import { RestSlot } from './rest-slot.tsx';
 
 /** The wizard's REST step: the explorer over the draft. Only secrets the chosen auth uses are sent. */
@@ -17,7 +18,7 @@ export function WizardRest({
   onChange: (next: (d: ConfigDraft) => ConfigDraft) => void;
   hiddenSecrets: ReadonlySet<string>;
   showErrors: boolean;
-  onSample?: ((fields: { pointer: string; preview: string }[]) => void) | undefined;
+  onSample?: ((fields: SampleField[]) => void) | undefined;
 }) {
   return (
     <RestSlot

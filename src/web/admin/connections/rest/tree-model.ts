@@ -114,3 +114,17 @@ export function ancestors(pointer: string): string[] {
   }
   return out;
 }
+
+/** Every node open, up to a limit: a single record is small enough to read whole. */
+export function openAll(body: unknown, limit = 300): Set<string> {
+  const open = new Set<string>();
+  const walk = (value: unknown, pointer: string) => {
+    if (open.size >= limit) return;
+    const kids = entriesOf(value);
+    if (kids.length === 0) return;
+    open.add(pointer);
+    for (const [k, v] of kids) walk(v, child(pointer, k));
+  };
+  walk(body, '');
+  return open.size > 0 ? open : new Set(['']);
+}

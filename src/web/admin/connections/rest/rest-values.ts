@@ -4,7 +4,7 @@ import type { FormValues } from '../../passes/schema-form/index.ts';
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
-const str = (v: unknown) => (typeof v === 'string' ? v : '');
+export const str = (v: unknown, fallback = '') => (typeof v === 'string' ? v : fallback);
 
 /** The flat config keys the explorer owns on top of the schema form. */
 export const KEY = {

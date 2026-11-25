@@ -22,6 +22,7 @@ import { prefixed } from './config-schema.ts';
 import { CreatedStep } from './created-step.tsx';
 import { takeConnectionPrefill, wizardStart } from './import-handoff.ts';
 import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
+import { useRestSample } from './rest/use-mapping-seed.ts';
 import { TemplateSelect } from './template-select.tsx';
 import { TestModeNote } from './test-mode-note.tsx';
 import { useConnectionCreation } from './use-connection-creation.ts';
@@ -73,7 +74,6 @@ export function CreateConnectionWizard() {
     draft,
   });
   const [rows, setRows] = useState<MappingRow[]>(start.rows);
-  const [restSample, setRestSample] = useState<{ pointer: string; preview: string }[]>([]);
   const [life, setLife] = useState<Lifecycle>(start.life);
   const [showErrors, setShowErrors] = useState(false);
   const [createdResult, setCreated] = useState<{
@@ -96,6 +96,7 @@ export function CreateConnectionWizard() {
       ? template.data
       : undefined;
 
+  const [restSample, setRestSample] = useRestSample(selectedTemplate, rows, setRows, setLife);
   const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
   const info = connector.data;
@@ -117,7 +118,6 @@ export function CreateConnectionWizard() {
     if (!caps) return;
     setLife((l) => ({ ...l, mode: caps.poll ? 'poll' : caps.webhook ? 'webhook' : 'manual' }));
   }, [info]);
-
   const create = useConnectionCreation({
     currentScope,
     life,

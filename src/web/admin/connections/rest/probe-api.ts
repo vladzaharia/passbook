@@ -13,6 +13,8 @@ export interface ProbeRequest {
   secrets?: Record<string, string> | undefined;
   /** The previous result's `page.next`. */
   next?: string | undefined;
+  /** `record`: one record by its ref, through the per-record path. */
+  record?: string | undefined;
 }
 
 /** One list page of the REST API through the server, as a sync would read it. Nothing is stored. */
@@ -22,7 +24,8 @@ export function useRestProbe({ orgId, connectionId }: { orgId: string; connectio
       const body = {
         config: req.config,
         ...(req.secrets && Object.keys(req.secrets).length > 0 ? { secrets: req.secrets } : {}),
-        target: 'list' as const,
+        target: req.record ? ('record' as const) : ('list' as const),
+        ...(req.record ? { ref: req.record } : {}),
         ...(req.next ? { next: req.next } : {}),
       };
       return connectionId

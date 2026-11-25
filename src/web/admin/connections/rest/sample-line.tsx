@@ -1,11 +1,20 @@
 import type { z } from 'zod';
 import type { ProbeDetectionsSchema } from '@/shared/contracts/connection-probe.ts';
 import { Badge } from '../../../ui/index.ts';
+import { ExplorerBuddy, moodOf } from './explorer-buddy.tsx';
 import type { ProbeFailure, ProbeResult } from './probe-api.ts';
 
 const kib = (n: number) => (n < 1024 ? `${n} B` : `${Math.round(n / 1024)} KB`);
 
-/** The sample's one status line: what came back, or the single sentence of what went wrong. */
+/** "Found 25 records": the whole list when the sample cut it, else what the page holds. */
+function found(result: ProbeResult, detections: z.infer<typeof ProbeDetectionsSchema> | null) {
+  const lead = detections?.records[0];
+  const total = result.pruned?.arrays.find((a) => a.pointer === lead?.pointer)?.total;
+  const n = total ?? lead?.count ?? 0;
+  return `Found ${n} ${n === 1 ? 'record' : 'records'}`;
+}
+
+/** The sample's status: a buddy with what came back, or the single sentence of what went wrong. */
 export function SampleLine({
   result,
   failure,
@@ -26,28 +35,26 @@ export function SampleLine({
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       {failure ? (
-        <p
-          role="alert"
-          className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm text-danger"
-        >
-          <span>{failure.line}</span>
-          <code className="font-mono text-xs">{failure.code}</code>
-        </p>
+        <ExplorerBuddy mood={moodOf(failure.code)}>
+          <p
+            role="alert"
+            className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm text-danger"
+          >
+            <span>{failure.line}</span>
+            <code className="font-mono text-xs">{failure.code}</code>
+          </p>
+        </ExplorerBuddy>
       ) : req && result ? (
-        <p
-          role="status"
-          className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-fg-muted"
-        >
-          <Badge tone="success">{req.status}</Badge>
-          <span>
-            {result.durationMs} ms · {kib(req.bytes)}
-          </span>
-          {perMinute ? (
-            <span>
-              Limit {limit?.limit}. Try {perMinute} requests per minute.
+        <ExplorerBuddy mood="happy">
+          <p role="status" className="flex min-w-0 flex-col gap-0.5 text-sm text-fg-muted">
+            <span className="font-medium text-fg-strong">{found(result, detections)}</span>
+            <span className="flex min-w-0 flex-wrap items-center gap-2">
+              <Badge tone="success">{req.status}</Badge>
+              {result.durationMs} ms · {kib(req.bytes)}
+              {perMinute ? ` · Limit ${limit?.limit}. Try ${perMinute} requests per minute.` : ''}
             </span>
-          ) : null}
-        </p>
+          </p>
+        </ExplorerBuddy>
       ) : (
         <p className="text-sm text-fg-muted">
           {ready

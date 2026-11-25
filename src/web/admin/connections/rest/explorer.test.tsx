@@ -16,6 +16,8 @@ const REST = {
     properties: {
       baseUrl: { type: 'string', format: 'uri', 'x-label': 'Base URL' },
       holderEmailPointer: lbl('Holder email'),
+      recordPath: lbl('Record path'),
+      recordPointer: lbl('Record location'),
       list: {
         type: 'object',
         'x-label': 'List endpoint',
@@ -109,6 +111,8 @@ async function open(
   answers: unknown[],
   patches: Record<string, unknown>[] = [],
   posts: Record<string, unknown>[] = [],
+  config: Record<string, unknown> = stored,
+  record?: unknown,
 ) {
   let n = 0;
   await renderApp('/admin/connections/c1?tab=config', {
@@ -119,13 +123,15 @@ async function open(
       '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
       '/api/v1/connectors/http-json': () => json(REST),
       '/api/v1/connections/c1/probe': (_u: URL, init?: RequestInit) => {
-        posts.push(JSON.parse(String(init?.body)));
+        const body = JSON.parse(String(init?.body));
+        posts.push(body);
+        if (body.target === 'record') return json(record);
         return json(answers[Math.min(n++, answers.length - 1)]);
       },
       '/api/v1/connections/c1': (_u: URL, init?: RequestInit) => {
         if ((init?.method ?? 'GET').toUpperCase() === 'PATCH')
           patches.push(JSON.parse(String(init?.body)));
-        return json(connectionDetail({ config: stored }));
+        return json(connectionDetail({ config }));
       },
     } satisfies Record<string, FetchHandler>,
   });
@@ -170,6 +176,8 @@ describe('REST explorer', () => {
     await waitFor(() => expect(posts).toHaveLength(3));
     expect(posts[2]?.next).toBe('tok');
     expect(await screen.findByText(/1–2 · 3–4 · no repeats/)).toBeVisible();
+    expect(screen.getByText('Found 2 records')).toBeVisible();
+    expect(document.querySelector('[data-mood="happy"]')).not.toBeNull();
   });
 
   it('warns when page 2 repeats records', async () => {
@@ -219,6 +227,7 @@ describe('REST explorer', () => {
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(line);
     expect(alert).toHaveTextContent(code);
+    expect(document.querySelector('[data-mood="sad"]')).not.toBeNull();
   });
 
   it('offers the candidates when there are no records', async () => {
@@ -230,6 +239,7 @@ describe('REST explorer', () => {
       'No list at this path. Pick the records array in the response.',
     );
     expect(screen.getByRole('button', { name: /Records.*\/data/ })).toBeVisible();
+    expect(document.querySelector('[data-mood="curious"]')).not.toBeNull();
   });
 
   it('saves the pagination it shows with the rest of the configuration', async () => {
@@ -255,5 +265,51 @@ describe('REST explorer', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Name the query parameter.')).toBeVisible();
     expect(patches).toHaveLength(0);
+  });
+
+  describe('holder email on the single record', () => {
+    const withPath = { ...stored, recordPath: '/members/{ref}' };
+    const one = (body: unknown) => ({
+      ...ok(),
+      body,
+      page: null,
+      detections: { ...DETECT, fields: [] },
+    });
+
+    async function pickEmail(user: ReturnType<typeof userEvent.setup>) {
+      await fetchSample(user);
+      await user.click(await screen.findByRole('treeitem', { name: /^email, "a@x.com"/ }));
+      await user.click(screen.getByRole('button', { name: 'Use as holder email' }));
+    }
+
+    it('checks one record and passes when the pointer reads there', async () => {
+      const user = userEvent.setup();
+      const posts: Record<string, unknown>[] = [];
+      await open([ok()], [], posts, withPath, one({ email: 'a@x.com' }));
+      await pickEmail(user);
+      expect(await screen.findByText('On the single record.')).toBeVisible();
+      const check = posts.find((p) => p.target === 'record');
+      expect(check).toMatchObject({ target: 'record', ref: 'm_1' });
+    });
+
+    it('says so when it is not there, and shows the record to pick it from', async () => {
+      const user = userEvent.setup();
+      await open([ok()], [], [], withPath, one({ contact: { email: 'a@x.com' } }));
+      await pickEmail(user);
+      expect(await screen.findByText('Not on the single record. Pick it there.')).toBeVisible();
+      await user.click(screen.getByRole('button', { name: 'Show the record' }));
+      await user.click(await screen.findByRole('treeitem', { name: /^email, "a@x.com"/ }));
+      await user.click(screen.getByRole('button', { name: 'Use as holder email' }));
+      expect(screen.getByLabelText('Holder email')).toHaveValue('/contact/email');
+      expect(await screen.findByText('On the single record.')).toBeVisible();
+    });
+
+    it('does not check without a per-record path', async () => {
+      const user = userEvent.setup();
+      const posts: Record<string, unknown>[] = [];
+      await open([ok()], [], posts);
+      await pickEmail(user);
+      expect(posts.some((p) => p.target === 'record')).toBe(false);
+    });
   });
 });

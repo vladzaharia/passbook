@@ -99,6 +99,7 @@ test('connection page: fetch a sample, click through it, prove page 2, save', as
   );
   await expect(page.getByRole('radio', { name: 'Cursor' })).toBeChecked();
   await expect(page.getByRole('tree', { name: 'Response' })).toBeVisible();
+  await expect(page.getByText('Found 2 records')).toBeVisible();
   // Detections applied, then fetched again with them.
   await expect.poll(() => posts.length).toBe(2);
   await shots(page, 'rest-config-sample');
@@ -177,7 +178,59 @@ test('wizard: fetch a sample on the configuration step and carry its fields to M
   await expect(page.getByRole('radio', { name: 'Cursor' })).toBeChecked();
   await shots(page, 'rest-wizard-sample');
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Add mapping' }).click();
-  await page.getByRole('combobox', { name: 'Source field' }).click();
-  await expect(page.getByRole('option', { name: '/email', exact: true })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Template', exact: true }).click();
+  await page.getByRole('option', { name: seed.template.name }).click();
+  // The sample's fields are matched to the template's, so Mapping opens with rows.
+  const rows = page.getByRole('list', { name: 'Mappings' }).getByRole('listitem');
+  await expect(rows.first()).toBeVisible();
+  await shots(page, 'rest-wizard-mapping');
+});
+
+test('connection page: no list is a curious question, and a missing holder email is one line', async ({
+  page,
+}) => {
+  const seed = readSeed();
+  const api = await apiAs('admin');
+  const created = await api.send('POST', '/api/v1/connections', {
+    orgId: seed.org.id,
+    connectorType: 'http-json',
+    name: `E2E REST ${uid('r')}`,
+    config: {
+      baseUrl: 'https://api.github.com/v1',
+      recordPath: '/members/{ref}',
+      list: { path: '/members' },
+    },
+    secrets: { token: 'e2e-not-a-real-token' },
+  });
+  let noList = true;
+  await page.route('**/api/v1/connections/*/probe', async (route) => {
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    if (body.target === 'record') {
+      await route.fulfill({
+        json: { ...sample(false), page: null, body: { contact: { mail: 'x' } }, detections: null },
+      });
+      return;
+    }
+    const first = sample(false);
+    await route.fulfill({
+      json: noList ? { ...first, ok: false, errorCode: 'NO_RECORDS', page: null } : first,
+    });
+  });
+  await page.goto(
+    `/admin/o/${encodeURIComponent(seed.org.id)}/connections/${created.id}?tab=config`,
+  );
+  await page.getByRole('button', { name: 'Fetch sample' }).click();
+  await expect(page.getByRole('alert')).toContainText('No list at this path.');
+  await shots(page, 'rest-config-curious');
+
+  noList = false;
+  await page.getByRole('button', { name: 'Fetch again' }).click();
+  await page.getByRole('treeitem', { name: /^email, / }).click();
+  await page.getByRole('button', { name: 'Use as holder email' }).click();
+  await expect(page.getByText('Not on the single record. Pick it there.')).toBeVisible();
+  await shots(page, 'rest-config-email-missing');
+  await page.getByRole('button', { name: 'Show the record' }).click();
+  await expect(page.getByText('Single record', { exact: true })).toBeVisible();
+  await shots(page, 'rest-config-record');
+  await api.dispose();
 });

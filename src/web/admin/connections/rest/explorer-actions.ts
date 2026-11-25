@@ -108,3 +108,18 @@ export function actionsFor(row: TreeRow, records: string, v: FormValues): NodeAc
   }
   return out;
 }
+
+/** On the single record a pick can only be the holder email, relative to where the record starts. */
+export function recordActions(row: TreeRow, recordAt: string): NodeAction[] {
+  if (row.kind === 'object' || row.kind === 'array') return [];
+  if (!row.pointer.startsWith(recordAt)) return [];
+  const rel = row.pointer.slice(recordAt.length);
+  return [
+    {
+      id: 'email',
+      label: 'Use as holder email',
+      said: `Holder email: ${path(rel)}`,
+      effect: { patch: { [KEY.email]: rel } },
+    },
+  ];
+}

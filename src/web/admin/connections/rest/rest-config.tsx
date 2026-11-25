@@ -1,25 +1,37 @@
 import { Play } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { resolvePointer } from '@/shared/records/fields.ts';
 import { detectResponse } from '@/shared/rest/detect.ts';
-import { Button, Card, CardBody, CardHeader } from '../../../ui/index.ts';
+import { Button } from '../../../ui/index.ts';
 import type { FormValues } from '../../passes/schema-form/index.ts';
-import { actionsFor, type Effect, type Format, type NodeAction } from './explorer-actions.ts';
+import { EmailCheckLine } from './email-check.tsx';
+import {
+  actionsFor,
+  type Effect,
+  type Format,
+  type NodeAction,
+  recordActions,
+} from './explorer-actions.ts';
 import { IncrementalPanel } from './incremental-panel.tsx';
+import type { SampleField } from './mapping-seed.ts';
 import { NodeActions } from './node-actions.tsx';
 import { PageProof } from './page-proof.tsx';
 import { PaginationPanel } from './pagination-panel.tsx';
 import { Picks } from './picks.tsx';
 import { ResponseTree } from './response-tree.tsx';
+import { RestShell } from './rest-shell.tsx';
 import {
   DEFAULT_ID,
   DEFAULT_RECORDS,
   KEY,
   readIncremental,
   readPagination,
+  str,
 } from './rest-values.ts';
+import { rolesOf } from './roles.ts';
 import { SampleLine } from './sample-line.tsx';
 import { Suggestions } from './suggestions.tsx';
-import { ancestors, buildRows, defaultOpen, type TreeRow } from './tree-model.ts';
+import { ancestors, buildRows, defaultOpen, openAll, type TreeRow } from './tree-model.ts';
 import { type ExplorerArgs, useExplorer } from './use-explorer.ts';
 import './rest.css';
 
@@ -31,67 +43,16 @@ export interface RestConfigProps extends Omit<ExplorerArgs, 'value' | 'onChange'
   /** Inside a card already (the wizard step): a heading and a rule, not a card of its own. */
   bare?: boolean;
   /** The sample's fields, for the Mapping step's source list. */
-  onSample?: (fields: { pointer: string; preview: string }[]) => void;
-}
-
-function Shell({
-  bare,
-  action,
-  children,
-}: {
-  bare: boolean | undefined;
-  action: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  if (!bare)
-    return (
-      <Card>
-        <CardHeader title="Response" actions={action} />
-        <CardBody className="flex min-w-0 flex-col gap-5">{children}</CardBody>
-      </Card>
-    );
-  return (
-    <section
-      aria-label="Response"
-      className="flex min-w-0 flex-col gap-5 border-t border-border pt-4"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-medium text-fg-strong">Response</h3>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-const str = (v: unknown, fallback = '') => (typeof v === 'string' ? v : fallback);
-
-/** The roles a node has been picked for: the first record stands for all of them. */
-function rolesOf(v: FormValues, updated: string | undefined): Map<string, string[]> {
-  const map = new Map<string, string[]>();
-  const add = (p: string, role: string) => map.set(p, [...(map.get(p) ?? []), role]);
-  const records = str(v[KEY.records], DEFAULT_RECORDS);
-  add(records, 'Records');
-  const first = `${records}/0`;
-  add(`${first}${str(v[KEY.id], DEFAULT_ID)}`, 'ID');
-  if (updated) add(`${first}${updated}`, 'Updated');
-  if (v[KEY.email]) add(`${first}${str(v[KEY.email])}`, 'Email');
-  const p = readPagination(v);
-  if (p.style === 'cursor') {
-    if (p.from === 'body' && p.cursorPointer) add(p.cursorPointer, 'Cursor');
-    if (p.hasMorePointer) add(p.hasMorePointer, 'Has more');
-  }
-  if (p.style === 'next-link' && p.nextPointer) add(p.nextPointer, 'Next link');
-  if (p.style === 'page' && p.totalPagesPointer) add(p.totalPagesPointer, 'Total');
-  if (p.style === 'offset' && p.totalPointer) add(p.totalPointer, 'Total');
-  return map;
+  onSample?: (fields: SampleField[]) => void;
 }
 
 /** The REST explorer: fetch a sample, pick the records, ID and paging by clicking the response. */
 export default function RestConfig(props: RestConfigProps) {
   const { value, onChange, showErrors = false, disabled, bare, onSample } = props;
   const ex = useExplorer({ ...props, onChange });
-  const body = ex.first?.body;
+  const [view, setView] = useState<'list' | 'record'>('list');
+  const shown = view === 'record' && ex.record ? ex.record : ex.first;
+  const body = shown?.body;
   const records = str(value[KEY.records], DEFAULT_RECORDS);
   const inc = readIncremental(value);
   const [pickedUpdate, setPickedUpdate] = useState<{ field: string; format: Format }>();
@@ -105,10 +66,10 @@ export default function RestConfig(props: RestConfigProps) {
   // A new sample opens the way to its records.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only a new sample resets the tree
   useEffect(() => {
-    setOpenSet(defaultOpen(records));
+    setOpenSet(view === 'record' ? openAll(shown?.body) : defaultOpen(records));
     setFocus('');
     setSelected(null);
-  }, [ex.first]);
+  }, [shown]);
   useEffect(() => {
     if (found === null) return;
     const t = setTimeout(() => setFound(null), 900);
@@ -116,8 +77,8 @@ export default function RestConfig(props: RestConfigProps) {
   }, [found]);
 
   const totals = useMemo(
-    () => new Map((ex.first?.pruned?.arrays ?? []).map((a) => [a.pointer, a.total])),
-    [ex.first],
+    () => new Map((shown?.pruned?.arrays ?? []).map((a) => [a.pointer, a.total])),
+    [shown],
   );
   const rows = useMemo(
     () => (body === undefined ? [] : buildRows(body, open, totals)),
@@ -125,19 +86,27 @@ export default function RestConfig(props: RestConfigProps) {
   );
   const server = ex.first?.detections ?? null;
   const detections = useMemo(() => {
-    if (!ex.first || body === undefined || !server) return null;
+    const listBody = ex.first?.body;
+    if (!ex.first || listBody === undefined || !server) return null;
     if (server.records[0]?.pointer === records || !ex.first.request) return server;
     return detectResponse({
-      body,
+      body: listBody,
       headers: ex.first.headers,
       url: ex.first.request.url,
       recordsPointer: records,
       idPointer: str(value[KEY.id], DEFAULT_ID),
     });
-  }, [ex.first, body, server, records, value]);
+  }, [ex.first, server, records, value]);
 
   const updatedField = inc?.field || pickedUpdate?.field || detections?.updatedAt[0]?.pointer;
-  const roles = useMemo(() => rolesOf(value, updatedField), [value, updatedField]);
+  const recordAt = str(value.recordPointer);
+  const roles = useMemo(
+    () =>
+      view === 'record'
+        ? new Map(value[KEY.email] ? [[`${recordAt}${str(value[KEY.email])}`, ['Email']]] : [])
+        : rolesOf(value, updatedField),
+    [view, value, updatedField, recordAt],
+  );
   const suggested = useMemo(() => {
     const set = new Set<string>();
     for (const r of detections?.records ?? []) if (r.pointer !== records) set.add(r.pointer);
@@ -152,8 +121,19 @@ export default function RestConfig(props: RestConfigProps) {
       return next;
     });
 
+  /** A holder email is read from the single record by a sync: check one ref there. */
+  function verifyEmail(pointer: string) {
+    const list = ex.first?.body;
+    if (!value.recordPath || list === undefined) return;
+    const id = resolvePointer(list, `${records}/0${str(value[KEY.id], DEFAULT_ID)}`);
+    if (id.found && (typeof id.value === 'string' || typeof id.value === 'number'))
+      void ex.checkEmail(pointer, String(id.value));
+  }
+
   function take(effect: Effect, line: string, reveal?: string) {
     if (effect.patch) onChange(effect.patch);
+    const email = effect.patch?.[KEY.email];
+    if (typeof email === 'string' && email) verifyEmail(email);
     if (effect.updated) {
       setPickedUpdate(effect.updated);
       if (inc) onChange({ [KEY.incremental]: { ...inc, ...effect.updated } });
@@ -166,13 +146,17 @@ export default function RestConfig(props: RestConfigProps) {
   }
 
   const selectedRow = rows.find((r) => r.pointer === selected);
-  const nodeActions = selectedRow ? actionsFor(selectedRow, records, value) : [];
+  const nodeActions = !selectedRow
+    ? []
+    : view === 'record'
+      ? recordActions(selectedRow, recordAt)
+      : actionsFor(selectedRow, records, value);
   const run = (a: NodeAction) => take(a.effect, a.said, selectedRow?.pointer);
 
   function pick(row: TreeRow) {
     setSelected(row.pointer);
     setFocus(row.pointer);
-    const first = actionsFor(row, records, value)[0];
+    const first = view === 'record' ? undefined : actionsFor(row, records, value)[0];
     if (row.records && first) take(first.effect, first.said, row.pointer);
     if (row.expandable) setOpen(row.pointer, !open.has(row.pointer) || Boolean(row.records));
   }
@@ -183,10 +167,17 @@ export default function RestConfig(props: RestConfigProps) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: tell the wizard once per sample
   useEffect(() => {
     if (sample)
-      onSample?.(sample.map((f) => ({ pointer: f.pointer, preview: f.samples[0] ?? '' })));
+      onSample?.(
+        sample.map((f) => ({
+          pointer: f.pointer,
+          label: f.label,
+          samples: f.samples,
+          preview: f.samples[0] ?? '',
+        })),
+      );
   }, [sample]);
   return (
-    <Shell
+    <RestShell
       bare={bare}
       action={
         <Button
@@ -210,6 +201,14 @@ export default function RestConfig(props: RestConfigProps) {
           updatedField={updatedField}
           onTake={take}
         />
+      ) : null}
+      {view === 'record' ? (
+        <div className="flex flex-wrap items-center gap-3 text-sm text-fg-muted">
+          <span>Single record</span>
+          <Button variant="outline" size="sm" onClick={() => setView('list')}>
+            Back to the list
+          </Button>
+        </div>
       ) : null}
       {body !== undefined ? (
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -244,7 +243,17 @@ export default function RestConfig(props: RestConfigProps) {
       <p role="status" className="sr-only">
         {said}
       </p>
-      <Picks value={value} onChange={onChange} disabled={disabled} />
+      <Picks
+        value={value}
+        onChange={(patch) => {
+          if (KEY.email in patch) ex.clearEmail();
+          onChange(patch);
+        }}
+        disabled={disabled}
+      />
+      {ex.email.state !== 'idle' ? (
+        <EmailCheckLine check={ex.email} onShow={() => setView('record')} />
+      ) : null}
       <PaginationPanel
         value={readPagination(value)}
         onChange={(p) => onChange({ [KEY.pagination]: p })}
@@ -271,6 +280,6 @@ export default function RestConfig(props: RestConfigProps) {
         showErrors={showErrors}
         disabled={disabled}
       />
-    </Shell>
+    </RestShell>
   );
 }

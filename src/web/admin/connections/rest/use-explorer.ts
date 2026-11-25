@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { ProbeDetectionsSchema } from '@/shared/contracts/connection-probe.ts';
+import { resolvePointer } from '@/shared/records/fields.ts';
 import type { FormValues } from '../../passes/schema-form/index.ts';
 import {
   hostOf,
@@ -41,6 +42,11 @@ const keyOf = (v: FormValues) =>
     v['list.query'],
   ]);
 
+/** Whether a holder email pointer reads on the single record, which is what a sync fetches it from. */
+export type EmailCheck =
+  | { state: 'idle' | 'checking' | 'ok' | 'missing' }
+  | { state: 'failed'; failure: ProbeFailure };
+
 export interface ExplorerArgs {
   orgId: string;
   connectionId?: string | undefined;
@@ -57,6 +63,8 @@ export function useExplorer(a: ExplorerArgs) {
   const [failure, setFailure] = useState<ProbeFailure>();
   const [probed, setProbed] = useState<string>();
   const [firstTime, setFirstTime] = useState(true);
+  const [record, setRecord] = useState<ProbeResult>();
+  const [email, setEmail] = useState<EmailCheck>({ state: 'idle' });
   const latest = useRef(a);
   latest.current = a;
   const host = hostOf(a.value.baseUrl);
@@ -77,6 +85,7 @@ export function useExplorer(a: ExplorerArgs) {
       const res = await probe.mutateAsync({ config: cur.toConfig(v), secrets: cur.secrets });
       take(res, 1);
       setProbed(keyOf(v));
+      if (auto && res.ok) setFirstTime(false);
       if (auto && res.ok && res.detections) {
         const patch = preselect(v, res.detections);
         if (Object.keys(patch).length > 0) {
@@ -93,7 +102,6 @@ export function useExplorer(a: ExplorerArgs) {
 
   const fetchFirst = async () => {
     const auto = firstTime;
-    setFirstTime(false);
     await run(latest.current.value, auto);
   };
 
@@ -111,7 +119,37 @@ export function useExplorer(a: ExplorerArgs) {
     }
   }
 
+  /** Fetches one record by ref and reads the pointer on it. */
+  async function checkEmail(pointer: string, ref: string) {
+    const cur = latest.current;
+    setEmail({ state: 'checking' });
+    try {
+      const res = await probe.mutateAsync({
+        config: cur.toConfig(cur.value),
+        secrets: cur.secrets,
+        record: ref,
+      });
+      const fail = probeFailure(res, host);
+      if (fail || res.body === undefined) {
+        setEmail({
+          state: 'failed',
+          failure: fail ?? { code: 'NO_RECORDS', line: 'Nothing came back.' },
+        });
+        return;
+      }
+      setRecord(res);
+      const base = String(cur.value.recordPointer ?? '');
+      setEmail({ state: resolvePointer(res.body, `${base}${pointer}`).found ? 'ok' : 'missing' });
+    } catch (error) {
+      setEmail({ state: 'failed', failure: requestFailure(error) });
+    }
+  }
+
   return {
+    record,
+    email,
+    checkEmail,
+    clearEmail: () => setEmail({ state: 'idle' }),
     first,
     second,
     failure,

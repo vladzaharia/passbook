@@ -16,6 +16,7 @@ import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
 import { recipeHidden } from './recipe-copy.ts';
 import { RecipePicker, SigningSecretField } from './recipe-picker.tsx';
+import type { SampleField } from './rest/mapping-seed.ts';
 import { WizardRest } from './rest/wizard-rest.tsx';
 import { secretSchema } from './secret-schema.ts';
 import type { TestOutcome } from './test-result.tsx';
@@ -157,7 +158,7 @@ export function ConfigStep({
   /** Picks a sender: the wizard seeds the mapping and void rules from it. */
   onRecipe: (id: RecipeId) => void;
   /** The REST sample's fields, for the Mapping step. */
-  onSample?: (fields: { pointer: string; preview: string }[]) => void;
+  onSample?: (fields: SampleField[]) => void;
   secretError?: string | undefined;
 }) {
   const flat = useMemo(() => flattenSchema(connector.configSchema), [connector.configSchema]);
