@@ -1,15 +1,37 @@
-/* The Test mode band slides in from under the bar. Opacity and transform only. */
-@keyframes wl-mode-in {
-  from {
-    opacity: 0;
-    transform: translateY(-100%);
+/* Test mode tints the whole top bar amber (Menubar tone="test"): fill, border and the controls on
+   it, from the kit's warning tokens. Colour only, so it crossfades; reduced motion swaps at once. */
+:root {
+  --wl-test-bar: color-mix(in srgb, var(--pk-warning) 28%, var(--pk-surface-page));
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --wl-test-bar: var(--pk-warning-subtle);
   }
 }
-.wl-mode-band {
-  animation: wl-mode-in 200ms var(--wl-ease-out) backwards;
+[data-theme="light"] {
+  --wl-test-bar: var(--pk-warning-subtle);
+}
+[data-menubar],
+[data-bar-start] {
+  transition:
+    background-color 200ms var(--wl-ease-out),
+    border-color 200ms var(--wl-ease-out);
+}
+[data-menubar][data-tone="test"],
+[data-bar-start][data-tone="test"] {
+  background-color: var(--wl-test-bar);
+  border-bottom-color: var(--pk-warning-border);
+}
+/* The switch's track takes the amber too, so no cool grey sits on it. */
+[data-menubar][data-tone="test"] [role="radiogroup"] {
+  background-color: color-mix(in srgb, var(--pk-warning-border) 18%, transparent);
+}
+[data-menubar][data-tone="test"] [role="radio"][aria-checked="false"]:not(:hover) {
+  color: var(--pk-text-default);
 }
 @media (prefers-reduced-motion: reduce) {
-  .wl-mode-band {
-    animation: wl-fade-in 120ms linear backwards;
+  [data-menubar],
+  [data-bar-start] {
+    transition: none;
   }
 }

@@ -1,5 +1,4 @@
-/* The Test strip: the one amber band for Test mode, in the console (ModeBand) and on /p and /b
-   (TestRibbon). In flow; its own height, never over the page. Plain CSS so SSR inlines it. */
+/* The Test strip: the one amber band for Test mode, on /p and /b (TestRibbon). In flow; its own height, never over the page. Plain CSS so SSR inlines it. */
 .wl-test-strip {
   display: flex;
   align-items: center;
