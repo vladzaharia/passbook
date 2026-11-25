@@ -8,24 +8,15 @@ Turn a spreadsheet into passes in three calls: create the import, check it, comm
 
 ## Create the import
 
-The file is sent as text. Map its columns in the next step.
+The file goes in as text. You map its columns in the next step.
 
-```json run=pass-imports.postPassImports
-{
-  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-  "source": {
-    "kind": "file",
-    "name": "guests.csv",
-    "csv": "attendee,ticket,email\nAda Example,TICKET-1001,ada@example.com\nGrace Host,TICKET-1002,grace@example.com\nAlan Guest,TICKET-1003,alan@example.com\nEdsger Visitor,TICKET-1004,edsger@example.com\nBarbara Member,TICKET-1005,barbara@example.com"
-  }
-}
-```
+{{run bulk-import}}
 
-Keep the import `id`.
+Keep the answer's `id`. In a shell, `export IMPORT_ID=<id>`. In the console, paste it into the path of the next two steps.
 
 ## Check the rows
 
-Map each template field to a column or a constant. Paste the import `id` into the path.
+Map each template field to a column or a constant. A constant ignores its column, so point it at any column; here, `attendee`. Bad rows come back with the reason.
 
 ```json run=pass-imports.postPassImportsByIdCheck
 {
@@ -46,26 +37,31 @@ Map each template field to a column or a constant. Paste the import `id` into th
 }
 ```
 
-Bad rows come back with the reason. Fix the sheet or commit with `skipInvalid`.
+Send it to `POST /pass-imports/{id}/check`. Check as often as you like: nothing is made until commit. Fix the sheet, or commit with `skipInvalid`.
 
 ## Commit
+
+Send it to `POST /pass-imports/{id}/commit`.
 
 ```json run=pass-imports.postPassImportsByIdCommit
 { "skipInvalid": true }
 ```
 
-Commit runs in the background. Read the import until `state` is done. One import of a template commits at a time: a second commit meanwhile is `409 IMPORT_BUSY`.
+Commit runs in the background. One import of a template commits at a time: a second commit meanwhile is `409` [IMPORT_BUSY](/developers/errors/IMPORT_BUSY).
 
-## In code
+## Watch it finish
 
-{{show bulk-import}}
+Read the import until `state` is `done`.
 
-## Act on up to 100 passes at once
+{{run import-status}}
 
-Void, email or remove passes by id.
+## If it fails
 
-{{run bulk-void}}
+| Code | Cause | Fix |
+| --- | --- | --- |
+| `404` [IMPORT_NOT_FOUND](/developers/errors/IMPORT_NOT_FOUND) | The id is not an import of this organization. | Use the `id` from the create answer. |
+| `409` [IMPORT_BUSY](/developers/errors/IMPORT_BUSY) | Another import of the template is committing. | Wait for it to be `done`, then send again. |
 
 ## Result
 
-Read the import: `state` is `committing` while it runs and `done` after, with the counts. Then [list the passes](console:passes.getPasses); each has a `downloadUrl` to its test preview. When it is done, `results.csv` and `errors.csv` list what each row did.
+`state` is `done` and `progress.created` is 5. [List the passes](console:passes.getPasses): add `importId=<id>` to see only these. `GET /pass-imports/{id}/results.csv` lists what each row did, and `errors.csv` the rows that failed.
