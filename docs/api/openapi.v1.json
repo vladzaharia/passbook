@@ -56764,6 +56764,96 @@
           "lastLoginAt"
         ]
       },
+      "PlatformUsersPassesListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgName": {
+                  "type": "string"
+                },
+                "orgStatus": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "suspended"
+                  ]
+                },
+                "timeZone": {
+                  "type": "string"
+                },
+                "templateName": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "voided"
+                  ]
+                },
+                "channels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "mobile",
+                      "apple",
+                      "google",
+                      "samsung",
+                      "paper",
+                      "nfc"
+                    ]
+                  }
+                },
+                "issuedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "orgId",
+                "orgName",
+                "orgStatus",
+                "timeZone",
+                "templateName",
+                "status",
+                "channels",
+                "issuedAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "PlatformUsersEmailsCreateParams": {
         "type": "object",
         "properties": {
@@ -119410,94 +119500,26 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "orgId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "orgName": {
-                            "type": "string"
-                          },
-                          "orgStatus": {
-                            "type": "string",
-                            "enum": [
-                              "active",
-                              "suspended"
-                            ]
-                          },
-                          "timeZone": {
-                            "type": "string"
-                          },
-                          "templateName": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "active",
-                              "voided"
-                            ]
-                          },
-                          "channels": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "mobile",
-                                "apple",
-                                "google",
-                                "samsung",
-                                "paper",
-                                "nfc"
-                              ]
-                            }
-                          },
-                          "issuedAt": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "updatedAt": {
-                            "type": "integer",
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "orgId",
-                          "orgName",
-                          "orgStatus",
-                          "timeZone",
-                          "templateName",
-                          "status",
-                          "channels",
-                          "issuedAt",
-                          "updatedAt"
-                        ]
-                      }
-                    },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                  "$ref": "#/components/schemas/PlatformUsersPassesListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-a97e2c9eb615",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "orgName": "Northwind Climbing",
+                      "orgStatus": "active",
+                      "timeZone": "America/Los_Angeles",
+                      "templateName": "Monthly membership",
+                      "status": "active",
+                      "channels": [
+                        "mobile"
+                      ],
+                      "issuedAt": 1795570500000,
+                      "updatedAt": 1795399200000
                     }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ]
+                  ],
+                  "nextCursor": "c1.4812"
                 }
               }
             }
@@ -119514,6 +119536,10 @@
           }
         },
         "operationId": "users.getUsersByIdPasses",
+        "x-sdk": {
+          "resource": "platform.users.passes",
+          "method": "list"
+        },
         "security": [
           {
             "session": []
