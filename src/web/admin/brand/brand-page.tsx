@@ -240,6 +240,7 @@ function BrandForm({
           edit={edit}
           canEdit={canEdit}
           canManageApple={canEdit}
+          canOperatePasses={caps.includes('passes:operate')}
           accounts={
             caps.includes('integrations:manage')
               ? 'manage'

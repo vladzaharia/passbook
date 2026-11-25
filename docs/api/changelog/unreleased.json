@@ -88,12 +88,12 @@
     "note": "Deletes a saved column mapping by name."
   },
   {
-    "key": "DELETE /api/v1/scan/draft operation removed",
-    "class": "breaking",
+    "key": "DELETE /api/v1/scan/draft new operation",
+    "class": "additive",
     "operationId": "scan.deleteScanDraft",
     "op": "DELETE /api/v1/scan/draft",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "New: clears the customer screen's draft and ready card for a read. Paired scanner devices only."
   },
   {
     "key": "DELETE /api/v1/scan/staff 200.staff.pinResetRequired: field added",
@@ -717,7 +717,7 @@
     "operationId": "passes.getPassesByIdEvents",
     "op": "GET /api/v1/passes/{id}/events",
     "change": "200.items[].kind: enum value \"wallet.messaged\" added",
-    "note": "A Google Wallet change message settled: notified, shown on the card only, refused or not confirmed."
+    "note": "wallet.messaged records what a wallet did with a change message: notified, updated only (the card changed, no alert) or not accepted."
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
@@ -824,20 +824,20 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
-    "key": "GET /api/v1/scan/live 200.rows[].customer.figure: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/scan/live 200.rows[].customer.figure: field added",
+    "class": "additive",
     "operationId": "scan.getScanLive",
     "op": "GET /api/v1/scan/live",
-    "change": "200.rows[].customer.figure: field removed",
-    "note": ""
+    "change": "200.rows[].customer.figure: field added",
+    "note": "A customer body can carry figure, the amount of a review. The session's showDraft also governs a receipt's balance line."
   },
   {
-    "key": "GET /api/v1/scan/live 200.rows[].customer.screen: enum value \"review\" removed",
-    "class": "breaking",
+    "key": "GET /api/v1/scan/live 200.rows[].customer.screen: enum value \"review\" added",
+    "class": "notable",
     "operationId": "scan.getScanLive",
     "op": "GET /api/v1/scan/live",
-    "change": "200.rows[].customer.screen: enum value \"review\" removed",
-    "note": ""
+    "change": "200.rows[].customer.screen: enum value \"review\" added",
+    "note": "A customer body's screen can be review."
   },
   {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
@@ -888,12 +888,12 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
-    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
+    "class": "additive",
     "operationId": "scanners.getScanningSessionsById",
     "op": "GET /api/v1/scanning-sessions/{id}",
-    "change": "200.devices[].overrides.follows: field removed",
-    "note": ""
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "GET /api/v1/scans/{id} 200.late: field added",
@@ -902,6 +902,14 @@
     "op": "GET /api/v1/scans/{id}",
     "change": "200.late: field added",
     "note": "Scans report late: an offline read dated before its scanner's last contact or list, counted at the time it synced."
+  },
+  {
+    "key": "GET /api/v1/scans/{id} 200.passState: field added",
+    "class": "additive",
+    "operationId": "scans.getScansById",
+    "op": "GET /api/v1/scans/{id}",
+    "change": "200.passState: field added",
+    "note": "Scans report passState (voided, expired or suspended) when a tap-out was recorded for a pass in that state."
   },
   {
     "key": "GET /api/v1/session 200|0.consoleGroupRequired: field added",
@@ -1439,12 +1447,12 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
-    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field removed",
-    "class": "breaking",
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
+    "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
     "op": "PATCH /api/v1/scanning-sessions/{id}",
-    "change": "200.devices[].overrides.follows: field removed",
-    "note": ""
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
@@ -1471,20 +1479,20 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
-    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field removed",
-    "class": "breaking",
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
+    "class": "additive",
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
-    "change": "200.overrides.follows: field removed",
-    "note": ""
+    "change": "200.overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
-    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.overrides.follows: input field removed",
-    "class": "breaking",
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.overrides.follows: optional input field added",
+    "class": "additive",
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
-    "change": "body.overrides.follows: input field removed",
-    "note": ""
+    "change": "body.overrides.follows: optional input field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "PATCH /api/v1/templates/{id} 200.openReview: field added",
@@ -2381,12 +2389,12 @@
     "note": "Starts provisioning a managed Google issuer."
   },
   {
-    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared 200.credential.cardTypes: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared 200.credential.cardTypes: field added",
+    "class": "additive",
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
     "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
-    "change": "200.credential.cardTypes: field removed",
-    "note": ""
+    "change": "200.credential.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
@@ -2397,12 +2405,12 @@
     "note": "Attaches an existing Google issuer shared with the platform."
   },
   {
-    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.cardTypes: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.cardTypes: field added",
+    "class": "additive",
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
-    "change": "200.cardTypes: field removed",
-    "note": ""
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2557,12 +2565,12 @@
     "note": "Completes a managed Google issuer once Google has approved it."
   },
   {
-    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.cardTypes: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.cardTypes: field added",
+    "class": "additive",
     "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
     "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
-    "change": "200.cardTypes: field removed",
-    "note": ""
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
     "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2661,6 +2669,22 @@
     "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
   },
   {
+    "key": "POST /api/v1/scan/actions 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanBatch",
+    "op": "POST /api/v1/scan/batch",
+    "change": "200.items[].outcome.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -2675,6 +2699,22 @@
     "op": "POST /api/v1/scan/device",
     "change": "body.capabilities.hardware: optional input field added",
     "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
+  },
+  {
+    "key": "POST /api/v1/scan/mark-out 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanMarkOut",
+    "op": "POST /api/v1/scan/mark-out",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/overrides 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanOverrides",
+    "op": "POST /api/v1/scan/overrides",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
     "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
@@ -2701,6 +2741,14 @@
     "note": "The pairing preview names the session the device joins."
   },
   {
+    "key": "POST /api/v1/scan/resolve 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanResolve",
+    "op": "POST /api/v1/scan/resolve",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
     "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
@@ -2715,6 +2763,14 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/scans/{scanId}/undo 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanScansByScanIdUndo",
+    "op": "POST /api/v1/scan/scans/{scanId}/undo",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
     "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
@@ -2845,12 +2901,12 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
-    "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
+    "class": "additive",
     "operationId": "scanners.postScanningSessions",
     "op": "POST /api/v1/scanning-sessions",
-    "change": "201.devices[].overrides.follows: field removed",
-    "note": ""
+    "change": "201.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "POST /api/v1/scanning-sessions 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
@@ -2869,20 +2925,20 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
+    "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "201.overrides.follows: field removed",
-    "note": ""
+    "change": "201.overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: input field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: optional input field added",
+    "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "body.overrides.follows: input field removed",
-    "note": ""
+    "change": "body.overrides.follows: optional input field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
@@ -2901,20 +2957,20 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
-    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
+    "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdHold",
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
-    "change": "200.devices[].overrides.follows: field removed",
-    "note": ""
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
-    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].overrides.follows: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].overrides.follows: field added",
+    "class": "additive",
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
-    "change": "200|1.sessions[].devices[].overrides.follows: field removed",
-    "note": ""
+    "change": "200|1.sessions[].devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup new operation",
@@ -2923,6 +2979,14 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "new operation",
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
+    "key": "POST /api/v1/scans/{id}/undo 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scans.postScansByIdUndo",
+    "op": "POST /api/v1/scans/{id}/undo",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
     "key": "POST /api/v1/status/incidents new operation",
@@ -3237,12 +3301,12 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
-    "key": "POST /api/v1/wallet-providers/reissue operation removed",
-    "class": "breaking",
+    "key": "POST /api/v1/wallet-providers/reissue new operation",
+    "class": "additive",
     "operationId": "wallet-providers.postWalletProvidersReissue",
     "op": "POST /api/v1/wallet-providers/reissue",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "POST /wallet-providers/reissue sends every active Google or Samsung copy of an org's passes again. A key needs passes:write."
   },
   {
     "key": "POST /api/v1/webhook-endpoints/{id}/secret body.overlapHours: values 1 and 168 added",
@@ -3333,12 +3397,12 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
-    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.cardTypes: field removed",
-    "class": "breaking",
+    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.cardTypes: field added",
+    "class": "additive",
     "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
     "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
-    "change": "200.cardTypes: field removed",
-    "note": ""
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
     "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
@@ -3389,12 +3453,12 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
-    "key": "PUT /api/v1/platform/wallet-credentials 200.cardTypes: field removed",
-    "class": "breaking",
+    "key": "PUT /api/v1/platform/wallet-credentials 200.cardTypes: field added",
+    "class": "additive",
     "operationId": "wallet-platform.putPlatformWalletCredentials",
     "op": "PUT /api/v1/platform/wallet-credentials",
-    "change": "200.cardTypes: field removed",
-    "note": ""
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
     "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
@@ -3405,20 +3469,20 @@
     "note": "Wallet credentials report provenance."
   },
   {
-    "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards operation removed",
-    "class": "breaking",
+    "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards new operation",
+    "class": "additive",
     "operationId": "wallet-platform.putPlatformWalletCredentialsByIdCards",
     "op": "PUT /api/v1/platform/wallet-credentials/{id}/cards",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "PUT /platform/wallet-credentials/{id}/cards names the Samsung card of one more type on a platform credential, without sending the partner secrets again."
   },
   {
-    "key": "PUT /api/v1/scan/draft operation removed",
-    "class": "breaking",
+    "key": "PUT /api/v1/scan/draft new operation",
+    "class": "additive",
     "operationId": "scan.putScanDraft",
     "op": "PUT /api/v1/scan/draft",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "New: shows a money take or add under review on the customer screens that follow the scanner. Paired scanner devices only."
   },
   {
     "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field added",

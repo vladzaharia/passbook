@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
+import { WalletReissueResponseSchema } from '@/shared/contracts/wallet-provider-actions.ts';
 import {
   PlatformWalletEnrolmentListSchema,
   type ResolveWalletMigration,
@@ -102,6 +103,20 @@ export function useWalletActions() {
           { expectedRevision: credential.revision },
         ),
       ),
+    /** A card id is not a secret: it goes in a plain call and the answer is the credential. */
+    setCard: (credential: WalletCredential, type: string, cardId: string) =>
+      done(
+        api.put(
+          `/api/v1/platform/wallet-credentials/${credential.id}/cards`,
+          WalletCredentialSchema,
+          { type, cardId, expectedRevision: credential.revision },
+        ),
+      ),
+    reissue: (orgId: string, provider: WalletProvider) =>
+      api.post('/api/v1/wallet-providers/reissue', WalletReissueResponseSchema, {
+        orgId,
+        provider,
+      }),
     setSource: (
       orgId: string,
       e: WalletEnrolment,

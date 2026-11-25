@@ -11,7 +11,6 @@ import { captureOfferContext, offerPassSnapshot } from './offers-eligibility.ts'
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { type WalletOfferFence, walletOfferSnapshotCurrent } from './repo-offers.ts';
-import { projectionReleaseBindingValid } from './repo-projection.ts';
 import {
   seedHistoricalOfferRef,
   seedHistoricalProviderInstance,
@@ -183,56 +182,6 @@ describe('native offer authority fences', () => {
     ).rejects.toMatchObject({ status: 403, code: 'WALLET_PROVIDER_DISABLED' });
   });
 
-  it('uses the captured service clock to expire Samsung evidence at the final fence', async () => {
-    const f = await setupWalletOfferKit({ google: 'absent' });
-    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
-    if (!snapshot?.pass.releaseId || !f.samsungRelease)
-      throw new Error('Missing approved fixture.');
-    const release = f.samsungRelease;
-    const scope = {
-      releaseId: release.id,
-      orgId: f.pass.orgId,
-      mode: f.pass.mode,
-      provider: 'samsung' as const,
-      templateId: f.pass.templateId,
-      version: f.pass.templateVersion,
-      sourceReleaseId: snapshot.pass.releaseId,
-    };
-    const initially = f.kit.clock.now();
-    expect(await projectionReleaseBindingValid(f.kit.env.DB, { ...scope, now: initially })).toBe(
-      true,
-    );
-    expect(
-      await walletOfferSnapshotCurrent(
-        f.kit.env.DB,
-        snapshot.pass,
-        snapshot.lifecycleGeneration,
-        snapshot.credentialGeneration,
-        snapshot.rawPassJson,
-        'samsung',
-        release.id,
-        initially,
-      ),
-    ).toBe(false);
-    f.kit.clock.advance(300_001);
-    const expired = f.kit.clock.now();
-    expect(await projectionReleaseBindingValid(f.kit.env.DB, { ...scope, now: expired })).toBe(
-      false,
-    );
-    expect(
-      await walletOfferSnapshotCurrent(
-        f.kit.env.DB,
-        snapshot.pass,
-        snapshot.lifecycleGeneration,
-        snapshot.credentialGeneration,
-        snapshot.rawPassJson,
-        'samsung',
-        release.id,
-        expired,
-      ),
-    ).toBe(false);
-    expect(await listWalletOffers(f.kit.ctx, f.pass.id)).toEqual([]);
-  });
   it('pins empty and consumed-reference output fences across a missing or rekeyed sentinel', async () => {
     const f = await setupWalletOfferKit({ google: 'absent' });
     const db = f.kit.env.DB;

@@ -85,6 +85,7 @@ const PUBLIC = [
 
 /** Scanner principal or pairing code, checked by modules/scan/guard*.ts. */
 const SCANNER = [
+  'DELETE /api/v1/scan/draft',
   'DELETE /api/v1/scan/passes/:passId/notes/:noteId',
   'DELETE /api/v1/scan/staff',
   'GET /api/v1/scan/activity',
@@ -134,6 +135,7 @@ const SCANNER = [
   'POST /api/v1/scan/tags/bindings/:bindingId/undo',
   'POST /api/v1/scan/tags/inspect',
   'POST /api/v1/scan/unpair',
+  'PUT /api/v1/scan/draft',
 ];
 
 /** Guarded inside the handler or by a dispatching guard this test cannot see; migrate each to `auth`. */

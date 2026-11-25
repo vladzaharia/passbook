@@ -140,19 +140,7 @@ export function walletInstanceProofSql(
               AND original.credential_keyset_commitment = ${op}.credential_keyset_commitment
               AND candidate.credential_keyset_commitment = ${op}.credential_keyset_commitment
               AND approval.credential_keyset_commitment = ${op}.credential_keyset_commitment))
-            AND ((${i}.provider != 'samsung' OR json_extract(candidate.projection_json, '$.schema') = 2 OR EXISTS (
-              SELECT 1 FROM wallet_provider_projection_evidence_history evidence
-              WHERE ((evidence.candidate_id = candidate.id AND evidence.org_id = ${i}.org_id
-                  AND evidence.mode = ${i}.mode AND evidence.account_id = ${i}.account_id)
-                AND (evidence.account_revision = candidate.provider_account_revision
-                  AND evidence.provider_identity_hash = candidate.provider_identity_hash
-                  AND evidence.candidate_hash = candidate.candidate_hash
-                  AND evidence.credential_keyset_commitment = ${op}.credential_keyset_commitment))
-                AND ((evidence.card_type = json_extract(candidate.projection_json, '$.cardType')
-                  AND evidence.card_sub_type = json_extract(candidate.projection_json, '$.cardSubType')
-                  AND evidence.country_code = json_extract(candidate.projection_json, '$.countryCode'))
-                AND (evidence.testing_mode_off = 'Y' AND evidence.verified_at <= original.created_at
-                  AND original.created_at < evidence.expires_at))))
+            AND ((${i}.provider != 'samsung' OR json_extract(candidate.projection_json, '$.schema') = 2)
               AND (approval.reviewer_id != candidate.author_id
                 AND ${versionAuthorIndependentSql('candidate', 'approval.reviewer_id')}
                 AND original.adapter_revision = ${op}.adapter_revision

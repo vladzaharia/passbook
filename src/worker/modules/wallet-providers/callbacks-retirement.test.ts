@@ -176,7 +176,6 @@ describe('Samsung unpromoted reference retirement', () => {
       passId: t.pass.id,
     });
     if (!pass) throw new Error('Missing restored pass');
-    await t.renewEvidence();
     const restored = await queueWalletOperation(walletJobCtx(db), {
       ...initial,
       kind: 'upsert',

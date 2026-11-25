@@ -191,12 +191,73 @@
     width: min(100%, 60vw, 520px);
   }
 }
-@media (max-height: 520px) and (min-width: 701px) {
+/* A short landscape screen (a phone on a stand): verdict on the left, buddy on the right, never scrolls. */
+@media (orientation: landscape) and (max-height: 640px) {
+  .cstage {
+    --pad: clamp(12px, 4.5dvh, 32px);
+    height: 100dvh;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: var(--pad);
+    padding: var(--pad) calc(var(--pad) * 1.4);
+  }
+  .cstage-brand {
+    gap: 10px;
+  }
+  .cstage-brand-mark {
+    width: clamp(64px, 20dvh, 120px);
+    height: clamp(32px, 10dvh, 60px);
+    border-radius: 12px;
+    font-size: clamp(18px, 5dvh, 30px);
+  }
+  .cstage-brand > p {
+    font-size: clamp(15px, 4.4dvh, 28px);
+  }
+  .cstage-copy {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+    padding-block: 0;
+  }
   .cstage-badge {
-    width: 56px;
+    width: clamp(40px, 15dvh, 96px);
+    margin-bottom: clamp(6px, 2.4dvh, 16px);
+    box-shadow: 0 0 0 clamp(4px, 1.2dvh, 10px) color-mix(in oklab, var(--signal) 22%, transparent);
+  }
+  .cstage-eyebrow {
+    font-size: clamp(14px, 3.8dvh, 22px);
+  }
+  .cstage-copy h1 {
+    max-width: 14ch;
+    font-size: clamp(26px, min(5.6vw, 12dvh), 88px);
+  }
+  .cstage-hint {
+    font-size: clamp(14px, 4.4dvh, 30px);
   }
   .cstage-buddy {
-    width: min(44vw, 60dvh);
+    position: relative;
+    inset: auto;
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    justify-self: center;
+    width: auto;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    aspect-ratio: 1;
+    max-width: 100%;
+  }
+  .cstage-buddy .wl-buddy,
+  .cstage-buddy-art .wl-art {
+    width: 100%;
+    height: 100%;
+  }
+  .cstage-notice {
+    top: 6px;
+    padding: 2px 10px;
+    font-size: 12px;
   }
 }
 

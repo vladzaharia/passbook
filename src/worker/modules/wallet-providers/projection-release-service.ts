@@ -28,7 +28,13 @@ import {
 import { isSystemAuthored, type ProjectionAuthority } from './projection-system-authority.ts';
 import { writeProjectionRelease } from './repo-projection-release-write.ts';
 import type { ProjectionCandidate, ProjectionScope } from './repo-projection-store.ts';
-import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
+import { ensureSamsungCard } from './samsung-verification.ts';
+
+/**
+ * A publish cuts art before it writes, and the release trigger reads the card-state row at the write: the row
+ * must outlast that work, or the publish reads the card again.
+ */
+const CARD_STATE_MARGIN_MS = 60_000;
 
 export async function publish(
   ctx: ServiceContext,
@@ -54,12 +60,7 @@ export async function publish(
     throw schemaRefused(candidate.provider);
   if (
     candidate.provider === 'samsung' &&
-    !(await ensureSamsungProjectionEvidence(
-      ctx,
-      candidate.id,
-      candidate.candidateHash,
-      authority.kind === 'session' ? authority : null,
-    ))
+    !(await ensureSamsungCard(ctx, candidate.id, candidate.candidateHash, CARD_STATE_MARGIN_MS))
   )
     throw changed();
   await storeReleaseArt(ctx, candidate, action === 'rollback' ? 'carry' : 'exact');

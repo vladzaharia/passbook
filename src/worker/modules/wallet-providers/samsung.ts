@@ -274,7 +274,7 @@ export async function sendSamsungUpdate(
       cc2: input.cc2,
       action: 'updates',
       body: { card: { type: input.type, data: [item] } },
-      retirement: input.state === 'DELETED',
+      retirement: input.state === 'DELETED' || input.state === 'CANCELED',
       attempt: input.attempt,
       now: input.now,
       requestId: input.requestId,
