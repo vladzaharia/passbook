@@ -178,7 +178,7 @@ describe('designer Paper tab', () => {
     await user.click(await screen.findByRole('radio', { name: 'Code 128' }));
     expect(onPaper).toHaveBeenLastCalledWith({ barcode: 'code128' });
     await user.click(screen.getByRole('checkbox', { name: 'Holders can print' }));
-    expect(onPaper).toHaveBeenLastCalledWith({ holder: false });
+    expect(onPaper).toHaveBeenLastCalledWith({ holder: false, effectiveKind: 'admission' });
     await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
     await user.click(await screen.findByRole('option', { name: 'Letter' }));
     expect(onPaper).toHaveBeenLastCalledWith({ size: 'letter' });
