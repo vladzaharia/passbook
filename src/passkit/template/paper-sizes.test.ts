@@ -122,7 +122,8 @@ describe('home sheet', () => {
     if (landscape) expect(back.box.y).toBeCloseTo(front.box.y + front.box.h, 6);
     else expect(back.box.x).toBeCloseTo(front.box.x + front.box.w, 6);
     expect(front.rotated).toBe(false);
-    expect(back.rotated).toBe(true);
+    // A landscape card folds on a horizontal edge: its back is turned. A portrait card turns like a page: upright.
+    expect(back.rotated).toBe(landscape);
     expect(Object.values(back.bleed).every((v) => v === 0)).toBe(true);
     // 1.5 mm past the cut on the three outer sides, none across the fold.
     expect(Object.values(front.bleed).sort()).toEqual([0, 1.5, 1.5, 1.5]);

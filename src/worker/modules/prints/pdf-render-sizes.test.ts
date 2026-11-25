@@ -80,13 +80,15 @@ describe('new sizes render', () => {
   );
 
   it.each(['cr80', 'cr80p'] as const)(
-    '%s on a sheet folds: the back is turned, the fold line is dashed',
+    '%s on a sheet folds: the fold line is dashed, the landscape back is turned',
     async (size) => {
       const read = await readPdf(
         await render(sheet('membership', size, { paper: { sheet: 'a4' } })),
       );
       const content = read[0]?.content ?? '';
-      expect(content).toMatch(/-1 0 0 -1 [\d.]+ [\d.]+ cm/);
+      // A landscape card's back is turned; a portrait card's turns like a page and stays upright.
+      if (size === 'cr80') expect(content).toMatch(/-1 0 0 -1 [\d.]+ [\d.]+ cm/);
+      else expect(content).not.toMatch(/-1 0 0 -1 [\d.]+ [\d.]+ cm/);
       expect(content).toMatch(/\[[\d. ]+\] 0 d/);
     },
   );

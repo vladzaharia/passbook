@@ -115,7 +115,7 @@ type Segment = [number, number, number, number];
 export interface SheetFace {
   /** The face's cut line on the sheet. */
   box: Box;
-  /** Turned half a turn, so folded on the shared edge it reads upright. */
+  /** Turned half a turn: a landscape card folds on a horizontal edge, so its back must read upside down. A portrait card folds on a vertical edge, like a page turning, and stays upright. */
   rotated: boolean;
   /** Bleed past the cut line, per side. Only a full-colour face has any. */
   bleed: { top: number; right: number; bottom: number; left: number };
@@ -152,7 +152,7 @@ function corners(page: Box, r: Box, gap: number): Segment[] {
 /**
  * A holder's print on an A4 or Letter sheet at true size, with cut marks. A strip is one face at
  * the top centre. A card is a fold: the faces meet on the long edge (stacked for a landscape card,
- * side by side for a portrait one), the back turned half a turn so it reads upright once folded,
+ * side by side for a portrait one), a landscape card's back turned half a turn (a portrait card's stays upright, as it turns on a vertical edge),
  * with a dashed fold line and a bleed on the full-colour front.
  */
 export function sheetLayout(size: PaperSize, sheet: PaperSheet): SheetLayout {
@@ -183,7 +183,7 @@ export function sheetLayout(size: PaperSize, sheet: PaperSheet): SheetLayout {
     page,
     faces: [
       { box: front, rotated: false, bleed },
-      { box: back, rotated: true, bleed: NO_BLEED },
+      { box: back, rotated: stacked, bleed: NO_BLEED },
     ],
     cuts: corners(page, { x, y: SHEET_TOP, w, h }, MARK_GAP + BLEED),
     fold,

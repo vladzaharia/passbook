@@ -66,7 +66,8 @@ describe('new sizes on the print page', () => {
       />,
     );
     expect(out).not.toContain('pp-bleed');
-    expect(out).toContain('pp-turned');
+    // A portrait card turns like a page: its back stays upright.
+    expect(out).not.toContain('pp-turned');
   });
 
   it.each(['stub', 'atb', 'a6', 'dl'] as const)(

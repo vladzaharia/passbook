@@ -7,7 +7,7 @@ import { TicketStrip } from './ticket-strip.tsx';
 
 /**
  * A holder's print on an A4 or Letter sheet at true size with cut marks. A strip is one face. A card
- * is a fold: the faces meet on the long edge, the back turned half a turn so it reads upright once
+ * is a fold: the faces meet on the long edge; a landscape card's back is turned half a turn (a portrait card's is not: it turns on a vertical edge) so it reads upright once
  * folded, with a dashed fold line and a bleed past the cut line on the full-colour front.
  */
 export function OnSheet({ p }: { p: TicketProps }) {

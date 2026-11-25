@@ -39,7 +39,7 @@ export async function ticketPdf(
 ): Promise<Uint8Array | ReadableStream> {
   const model = await printPageModel(ctx, pass, audience);
   if (model.state !== 'ready') throw new NotFoundError('No active print.', 'PRINT_NOT_FOUND');
-  const key = pdfKey(pass.orgId, pass.id, model.printId);
+  const key = pdfKey(pass.orgId, pass.id, model.printId, audience);
   const fingerprint = await pdfFingerprint({
     sheet: sheetOf(model),
     images: await imageIds(ctx, pass, model.files),
