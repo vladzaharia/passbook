@@ -83150,6 +83150,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -83158,6 +83162,7 @@
           "NOT_FOUND",
           "ORG_PERSONAL_SINGLE_MEMBER",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
