@@ -40,13 +40,6 @@ export const invitationByHash = (db: D1Database, hash: string) =>
     [hash],
   );
 
-export const invitationById = (db: D1Database, orgId: string, id: string) =>
-  first<DeveloperInvitationRow>(
-    db,
-    `SELECT ${COLUMNS} FROM developer_invitations WHERE org_id = ? AND id = ?`,
-    [orgId, id],
-  );
-
 export const orgInvitations = (db: D1Database, orgId: string) =>
   all<DeveloperInvitationRow>(
     db,

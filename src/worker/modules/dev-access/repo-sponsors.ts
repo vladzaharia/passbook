@@ -26,13 +26,6 @@ export interface SponsorRow {
 const COLUMNS = `id, org_id, user_id, invitation_id, idp_subject, group_source, created_at, ended_at,
   end_reason, settled_at`;
 
-export const orgSponsors = (db: D1Database, orgId: string) =>
-  all<SponsorRow>(
-    db,
-    `SELECT ${COLUMNS} FROM developer_sponsors WHERE org_id = ? ORDER BY created_at, id`,
-    [orgId],
-  );
-
 export const liveSponsorOf = (db: D1Database, orgId: string, userId: string) =>
   first<SponsorRow>(
     db,
