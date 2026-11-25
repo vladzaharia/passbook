@@ -236,6 +236,8 @@ export const SCAN_STATUS = {
   pin_locked: { label: 'Locked', tone: 'warning', icon: Lock },
 } as const satisfies Record<string, StatusEntry>;
 
+export { isOperationActive, OPERATION_STATUS, type OperationStatus } from './status-operations.ts';
+
 export const STATUS_VOCAB = {
   ...HEALTH_STATUS,
   ...PASS_STATUS,

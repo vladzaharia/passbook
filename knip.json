@@ -7,6 +7,7 @@
     "src/web/marketing/pages/*.ts!",
     "src/web/developers/render.tsx!",
     "src/web/scan/camera/decode-worker.ts!",
+    "src/web/ui/operation/story-main.tsx",
     "tools/*.ts",
     "tools/dev/visual-sweep.ts",
     "tools/dev/visual-scan-devices.ts",
@@ -40,6 +41,7 @@
     "tools/dev/lib/**": ["exports", "types"],
     "src/web/ui/{dropdown-menu,dialog,sheet,popover}.tsx": ["exports"],
     "src/web/ui/art/index.ts": ["types"],
+    "src/web/ui/operation/**": ["exports", "types"],
     "src/web/pass-card/index.tsx": ["types"],
     "src/web/admin/passes/schema-form/index.ts": ["types"]
   }
