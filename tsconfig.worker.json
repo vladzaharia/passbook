@@ -12,7 +12,7 @@
     "src/generated",
     "src/web/pass-card",
     "workers/apple-provisioner/src",
-    "workers/idp-provisioner/src",
+    "workers/polaris-binding/src",
     "test",
     "worker-configuration.d.ts"
   ],
