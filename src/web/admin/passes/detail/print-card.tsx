@@ -53,16 +53,21 @@ export function PrintCard({
   const [ask, setAsk] = useState<'reprint' | 'void' | null>(null);
   const paper = channels.data?.effective.paper;
   const active = prints.data?.prints.find((p) => p.status === 'active');
-  const ended = !active && prints.data?.prints[0]?.voidCause === 'pass_voided';
   const voided = pass.status === 'voided' || pass.removedAt != null;
   if (channels.isPending || prints.isPending) return null;
   if (paper && !paper.on && !active && prints.data?.prints.length === 0) return null;
   const canPrint = !readOnly && !voided && paper?.on === true;
+  const lastCause = prints.data?.prints[0]?.voidCause;
+  const ended =
+    canPrint &&
+    !active &&
+    (lastCause === 'pass_voided' || lastCause === 'transfer' || lastCause === 'new_code');
 
   async function print(replace: boolean) {
     const win = window.open('about:blank', '_blank');
     try {
       if (replace || !active) await actions.mint.mutateAsync();
+      else await actions.drawn.mutateAsync();
       openPrintPage(pass.id, win);
       toast.success(replace ? PRINT_COPY.reprinted : PRINT_COPY.made);
     } catch (error) {

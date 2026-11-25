@@ -13,6 +13,8 @@ import { passChannels } from '../channels/service.ts';
 import { recordPassEvents } from '../events/record.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { printCodeOf, printCodeRef, printRosterHash } from './codes.ts';
+import { paperTicket } from './paper.ts';
+import { paperHash } from './paper-hash.ts';
 import { dropPrintPdfs } from './pdf-drop.ts';
 import * as repo from './repo.ts';
 import { type PrintWriter, writeMint, writeVoid } from './repo-write.ts';
@@ -74,6 +76,7 @@ export async function mintPrint(
   });
   const codeHash = await printCodeRef(ctx.env, pass.orgId, pass.mode, code);
   if (!codeHash) throw new ConflictError('Print codes are unavailable.', 'PRINT_CODE_UNAVAILABLE');
+  const ticket = await paperTicket(ctx, pass);
   const voided = await writeMint(
     ctx,
     caller.writer,
@@ -84,6 +87,7 @@ export async function mintPrint(
       rosterHash: await printRosterHash(code),
       generation,
       passVersion: pass.version,
+      paperHash: ticket ? await paperHash(ticket) : null,
     },
     replace,
   );
@@ -121,4 +125,26 @@ export async function voidPrint(
   await writeVoid(ctx, caller.writer, pass.id, cause, target.id);
   await dropPrintPdfs(ctx, pass, target.id);
   return (await repo.printById(ctx.env.DB, pass.id, target.id)) ?? target;
+}
+
+/** The pass's prints, newest first; the active one is stale when the pass now draws something else. */
+export async function listPassPrints(ctx: ServiceContext, pass: Pass): Promise<PassPrint[]> {
+  const ticket = await paperTicket(ctx, pass);
+  return repo.listPrints(ctx.env.DB, pass.id, ticket ? await paperHash(ticket) : null);
+}
+
+/**
+ * The active print was drawn again (the page's Print, a PDF, a bulk render): it now matches the pass as it
+ * is. Returns the print, or null when there is none or the pass cannot be drawn.
+ */
+export async function refreshActivePrint(
+  ctx: ServiceContext,
+  pass: Pass,
+): Promise<PassPrint | null> {
+  const ticket = await paperTicket(ctx, pass);
+  const active = await repo.activePrint(ctx.env.DB, pass.id);
+  if (!ticket || !active) return null;
+  const hash = await paperHash(ticket);
+  await repo.refreshPrint(ctx.env.DB, active.id, pass.version, hash);
+  return repo.activePrint(ctx.env.DB, pass.id, hash);
 }

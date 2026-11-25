@@ -50,6 +50,11 @@ export function usePrintActions(passId: string) {
       mutationFn: () => api.post(`${base(passId)}/prints`, MintedPrintSchema),
       onSuccess: refresh,
     }),
+    /** The active print was printed again from the pass as it is now. */
+    drawn: useMutation({
+      mutationFn: () => api.post(`${base(passId)}/print/drawn`, PassPrintSchema),
+      onSuccess: refresh,
+    }),
     void: useMutation({
       mutationFn: (printId: string) =>
         api.post(`${base(passId)}/prints/${encodeURIComponent(printId)}/void`, PassPrintSchema),

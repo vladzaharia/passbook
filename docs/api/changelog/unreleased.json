@@ -733,7 +733,7 @@
     "operationId": "passes.getPassesByIdPrints",
     "op": "GET /api/v1/passes/{id}/prints",
     "change": "200.prints[].stale: field added",
-    "note": "Prints report stale: true when the pass changed after an active print was made."
+    "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now (stamps, balances, messages and re-signs do not count)."
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
@@ -2509,6 +2509,14 @@
     "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
   },
   {
+    "key": "POST /api/v1/passes/{id}/print/drawn new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrintDrawn",
+    "op": "POST /api/v1/passes/{id}/print/drawn",
+    "change": "new operation",
+    "note": "POST /passes/{id}/print/drawn records that the active print was drawn again from the pass as it is now, clearing stale."
+  },
+  {
     "key": "POST /api/v1/passes/{id}/prints 200.passVersion: field added",
     "class": "additive",
     "operationId": "passes.postPassesByIdPrints",
@@ -2522,7 +2530,7 @@
     "operationId": "passes.postPassesByIdPrints",
     "op": "POST /api/v1/passes/{id}/prints",
     "change": "200.stale: field added",
-    "note": "Prints report stale: true when the pass changed after an active print was made."
+    "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now (stamps, balances, messages and re-signs do not count)."
   },
   {
     "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.passVersion: field added",
@@ -2538,7 +2546,7 @@
     "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
     "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
     "change": "200.stale: field added",
-    "note": "Prints report stale: true when the pass changed after an active print was made."
+    "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now (stamps, balances, messages and re-signs do not count)."
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",

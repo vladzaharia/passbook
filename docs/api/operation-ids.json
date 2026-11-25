@@ -259,6 +259,7 @@
   "passes.postPassesBulkRuns",
   "passes.postPassesBulkRunsByIdStop",
   "passes.postPassesByIdNewCode",
+  "passes.postPassesByIdPrintDrawn",
   "passes.postPassesByIdPrints",
   "passes.postPassesByIdPrintsByPrintIdVoid",
   "passes.postPassesByIdRefresh",

@@ -1,7 +1,7 @@
 import { PDF_RENDER_VERSION } from './pdf-render.ts';
 
 /** JSON with sorted keys, so the same value always makes the same text. */
-function canonical(value: unknown): string {
+export function canonical(value: unknown): string {
   return JSON.stringify(value, (_key, v: unknown) =>
     v && typeof v === 'object' && !Array.isArray(v)
       ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : 1)))

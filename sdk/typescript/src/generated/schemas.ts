@@ -6409,6 +6409,18 @@ export type PassesPrintsListResponse = {
   }>;
 };
 
+export type PassesPrintsMarkDrawnResponse = {
+  id: string;
+  passId: string;
+  generation: number;
+  status: "active" | "voided" | "used";
+  passVersion: number | null;
+  stale: boolean;
+  createdAt: number;
+  voidedAt: number | null;
+  voidCause: string | null;
+};
+
 export type PassesPrintsVoidResponse = {
   id: string;
   passId: string;

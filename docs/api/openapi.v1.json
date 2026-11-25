@@ -36718,6 +36718,71 @@
           "voidCause"
         ]
       },
+      "PassesPrintsMarkDrawnResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "passId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "voided",
+              "used"
+            ]
+          },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "voidedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "voidCause": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "passId",
+          "generation",
+          "status",
+          "passVersion",
+          "stale",
+          "createdAt",
+          "voidedAt",
+          "voidCause"
+        ]
+      },
       "PassesActivityListResponse": {
         "type": "object",
         "properties": {
@@ -100181,6 +100246,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100192,6 +100261,7 @@
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100435,6 +100505,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100448,6 +100522,7 @@
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100525,6 +100600,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -100532,6 +100611,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100757,6 +100837,84 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "PASS_NOT_FOUND",
+          "PRINT_NOT_FOUND",
+          "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/passes/{id}/print/drawn": {
+      "post": {
+        "summary": "Record that the active print was drawn again from the pass as it is now",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassesPrintsMarkDrawnResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesByIdPrintDrawn",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "markDrawn"
+        },
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",

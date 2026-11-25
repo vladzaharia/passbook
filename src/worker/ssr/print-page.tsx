@@ -80,7 +80,7 @@ const say=(m)=>{if(err){err.textContent=m;err.hidden=false}};
 const post=async(path)=>{if(err)err.hidden=true;try{const r=await fetch(location.pathname+path,{method:'POST',credentials:'same-origin',headers:{accept:'application/json'}});if(r.status===429)return say(${JSON.stringify(PRINT_COPY.limited)});if(!r.ok)return say(${JSON.stringify(PRINT_COPY.failed)});location.reload()}catch{say(${JSON.stringify(PRINT_COPY.failed)})}};
 const ask=(which)=>{for(const c of document.querySelectorAll('[data-confirm]'))c.hidden=c.dataset.confirm!==which};
 document.addEventListener('click',(e)=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
-if(a==='print')window.print();
+if(a==='print'){window.print();if(b.dataset.drawn)fetch(location.pathname+'/drawn',{method:'POST',credentials:'same-origin',keepalive:true}).catch(()=>{})}
 else if(a==='make')post('');
 else if(a==='reprint'||a==='void')ask(a);
 else if(a==='cancel')ask('');
@@ -92,8 +92,9 @@ const button = (
   label: string,
   icon: Parameters<typeof iconHtml>[0],
   primary = false,
+  extra = '',
 ) =>
-  `<button class="btn${primary ? '' : ' outline'}" type="button" data-act="${act}">${iconHtml(icon)}${escapeHtml(label)}</button>`;
+  `<button class="btn${primary ? '' : ' outline'}" type="button" data-act="${act}"${extra}>${iconHtml(icon)}${escapeHtml(label)}</button>`;
 
 const confirm = (which: 'reprint' | 'void', text: string, path: string) =>
   `<div class="pp-confirm" data-confirm="${which}" role="group" aria-label="${escapeHtml(text)}" hidden><p>${escapeHtml(text)}</p><button class="btn" type="button" data-act="yes" data-path="${path}">${escapeHtml(PRINT_COPY.confirmYes)}</button><button class="btn outline" type="button" data-act="cancel">${escapeHtml(PRINT_COPY.cancel)}</button></div>`;
@@ -140,7 +141,7 @@ function sheetHtml(props: PrintPageProps, model: Ready) {
 function actionsHtml(props: PrintPageProps) {
   const holder = props.audience === 'holder';
   const actions = [
-    button('print', PRINT_COPY.print, Printer, true),
+    button('print', PRINT_COPY.print, Printer, true, holder ? ' data-drawn' : ''),
     ...(props.pdfHref
       ? [
           `<a class="btn outline" href="${escapeHtml(props.pdfHref)}" download>${iconHtml(Download)}${escapeHtml(PRINT_COPY.download)}</a>`,

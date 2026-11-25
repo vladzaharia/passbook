@@ -28,11 +28,14 @@ export interface PaperFiles {
   art?: string;
 }
 
+export interface PaperTicket {
+  design: PaperDesign;
+  content: PaperContent;
+  files: PaperFiles;
+}
+
 /** The ticket's words for this pass, from its stored pass.json at the current version. */
-export async function paperTicket(
-  ctx: ServiceContext,
-  pass: Pass,
-): Promise<{ design: PaperDesign; content: PaperContent; files: PaperFiles } | null> {
+export async function paperTicket(ctx: ServiceContext, pass: Pass): Promise<PaperTicket | null> {
   const [manifest, raw, template] = await Promise.all([
     repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion),
     passJsonAtVersion(ctx.env.DB, pass.id, pass.version),

@@ -28,6 +28,7 @@ const ready = (d: PaperDesign): PrintPageModel => ({
   printedAt: Date.UTC(2026, 10, 19, 1, 2),
   files: { logo: 'logo@3x.png', art: 'artwork@3x.png' },
   stale: false,
+  paperHash: 'a'.repeat(64),
 });
 
 describe('print page document', () => {
@@ -166,9 +167,9 @@ describe('print page for a holder', () => {
       stale: true,
     });
     expect(stale).toContain('data-stale');
-    expect(stale).toContain('Printed before the last change. Reprint to update.');
+    expect(stale).toContain('Details changed. Print this page again.');
     const again = page({ state: 'empty', again: true, orgName: 'Northwind Hall', mode: 'live' });
-    expect(again).toContain('The earlier print ended. Print again.');
+    expect(again).toContain('The earlier print ended.');
     expect(again).toContain('Print again</button>');
   });
 

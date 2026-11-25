@@ -1,5 +1,5 @@
 import type { PassPrint } from '../../../shared/contracts/prints.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 
 interface Row {
   id: string;
@@ -7,68 +7,96 @@ interface Row {
   generation: number;
   status: PassPrint['status'];
   pass_version: number | null;
-  stale: number;
+  paper_hash: string | null;
   created_at: number;
   voided_at: number | null;
   void_cause: string | null;
 }
 
-const COLUMNS = `id, pass_id, generation, status, pass_version, created_at, voided_at, void_cause,
-  (status = 'active' AND pass_version IS NOT NULL
-    AND pass_version < (SELECT p.version FROM passes p WHERE p.id = pass_prints.pass_id)) AS stale`;
+const COLUMNS =
+  'id, pass_id, generation, status, pass_version, paper_hash, created_at, voided_at, void_cause';
 
-const toPrint = (r: Row): PassPrint => ({
+/** Stale: active, made from a known drawing, and the pass now draws something else. `hash` is the current drawing's. */
+const toPrint = (r: Row, hash: string | null): PassPrint => ({
   id: r.id,
   passId: r.pass_id,
   generation: r.generation,
   status: r.status,
   passVersion: r.pass_version,
-  stale: r.stale === 1,
+  stale: r.status === 'active' && r.paper_hash !== null && hash !== null && r.paper_hash !== hash,
   createdAt: r.created_at,
   voidedAt: r.voided_at,
   voidCause: r.void_cause,
 });
 
 /** A pass's prints, newest first. Never carries a code or its hash. */
-export async function listPrints(db: D1Database, passId: string): Promise<PassPrint[]> {
+export async function listPrints(
+  db: D1Database,
+  passId: string,
+  hash: string | null = null,
+): Promise<PassPrint[]> {
   const rows = await all<Row>(
     db,
     `SELECT ${COLUMNS} FROM pass_prints WHERE pass_id = ? ORDER BY generation DESC LIMIT 200`,
     [passId],
   );
-  return rows.map(toPrint);
+  return rows.map((r) => toPrint(r, hash));
 }
 
-export async function activePrint(db: D1Database, passId: string): Promise<PassPrint | null> {
+export async function activePrint(
+  db: D1Database,
+  passId: string,
+  hash: string | null = null,
+): Promise<PassPrint | null> {
   const r = await first<Row>(
     db,
     `SELECT ${COLUMNS} FROM pass_prints WHERE pass_id = ? AND status = 'active'`,
     [passId],
   );
-  return r ? toPrint(r) : null;
+  return r ? toPrint(r, hash) : null;
 }
 
 export async function printById(
   db: D1Database,
   passId: string,
   id: string,
+  hash: string | null = null,
 ): Promise<PassPrint | null> {
   const r = await first<Row>(
     db,
     `SELECT ${COLUMNS} FROM pass_prints WHERE pass_id = ? AND id = ?`,
     [passId, id],
   );
-  return r ? toPrint(r) : null;
+  return r ? toPrint(r, hash) : null;
 }
 
-/** Whether the pass's newest print ended with the pass (voided), so it needs a new one once restored. */
-export async function endedWithPass(db: D1Database, passId: string): Promise<boolean> {
+/**
+ * Whether the pass's newest print ended without a reprint or a void by someone: the pass was voided, or the
+ * credential moved (transfer, new code), so it needs a new print for the same holder. `holder_change` stays out.
+ */
+export async function endedForHolder(db: D1Database, passId: string): Promise<boolean> {
   const r = await first<{ void_cause: string | null }>(
     db,
     'SELECT void_cause FROM pass_prints WHERE pass_id = ? ORDER BY generation DESC LIMIT 1',
     [passId],
   );
-  return r?.void_cause === 'pass_voided';
+  return (
+    r?.void_cause === 'pass_voided' || r?.void_cause === 'transfer' || r?.void_cause === 'new_code'
+  );
+}
+
+/** Refresh: the active print was drawn again from the pass as it is now. The only update of these columns after a mint. */
+export async function refreshPrint(
+  db: D1Database,
+  printId: string,
+  passVersion: number,
+  hash: string,
+): Promise<void> {
+  await run(
+    db,
+    "UPDATE pass_prints SET pass_version = ?, paper_hash = ? WHERE id = ? AND status = 'active' AND (paper_hash IS NOT ? OR pass_version IS NOT ?)",
+    [passVersion, hash, printId, hash, passVersion],
+  );
 }
 
 export async function nextGeneration(db: D1Database, passId: string): Promise<number> {

@@ -130,6 +130,7 @@ describe('the print feature', () => {
           rosterHash: 'b'.repeat(32),
           generation: 1,
           passVersion: 1,
+          paperHash: null,
         },
         false,
       );

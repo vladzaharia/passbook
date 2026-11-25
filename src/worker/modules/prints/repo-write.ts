@@ -88,6 +88,8 @@ export interface NewPrint {
   generation: number;
   /** The pass version the print is made from. */
   passVersion: number;
+  /** Hash of the drawing the print is made from; null when the ticket could not be drawn. */
+  paperHash: string | null;
 }
 
 /**
@@ -119,6 +121,7 @@ export async function writeMint(
       'roster_hash',
       'generation',
       'pass_version',
+      'paper_hash',
       'status',
       'created_by',
       'created_at',
@@ -130,6 +133,7 @@ export async function writeMint(
       print.rosterHash,
       print.generation,
       print.passVersion,
+      print.paperHash,
       'active',
       w.by,
       now,

@@ -9,6 +9,7 @@ import { getOrg } from '../passes/repo-read-issuance.ts';
 import { assertPassSnapshot, capturePassSnapshot } from '../public/snapshot.ts';
 import { printCodeOf } from './codes.ts';
 import { type PaperFiles, paperTicket } from './paper.ts';
+import { paperHash } from './paper-hash.ts';
 import * as repo from './repo.ts';
 
 export type PrintAudience = 'holder' | 'staff';
@@ -29,8 +30,10 @@ export type PrintPageModel = { orgName: string; mode: Pass['mode'] } & (
       code: string;
       generation: number;
       printId: string;
-      /** The pass changed after this print was made. */
+      /** The pass draws something else than this print did. */
       stale: boolean;
+      /** Hash of what the page draws now; a refresh stores it on the print. */
+      paperHash: string;
     }
 );
 
@@ -57,7 +60,8 @@ export async function printPageModel(
   let model: PrintPageModel = { ...base, state: 'unavailable' };
   // A printed ticket stays viewable after a downgrade (the plan is set aside); a new one is not offered.
   if (existing.paper.on && ticket && (audience === 'staff' || ticket.design.holder)) {
-    const print = await repo.activePrint(ctx.env.DB, pass.id);
+    const hash = await paperHash(ticket);
+    const print = await repo.activePrint(ctx.env.DB, pass.id, hash);
     model = print
       ? {
           ...base,
@@ -69,6 +73,7 @@ export async function printPageModel(
           generation: print.generation,
           printId: print.id,
           stale: print.stale,
+          paperHash: hash,
           code: await printCodeOf(ctx.env, {
             id: print.id,
             passId: pass.id,
@@ -77,7 +82,7 @@ export async function printPageModel(
           }),
         }
       : channels.effective.paper.on
-        ? { ...base, state: 'empty', again: await repo.endedWithPass(ctx.env.DB, pass.id) }
+        ? { ...base, state: 'empty', again: await repo.endedForHolder(ctx.env.DB, pass.id) }
         : model;
   }
   if (snapshot) await assertPassSnapshot(ctx, snapshot);

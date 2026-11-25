@@ -7399,6 +7399,20 @@ type PassesPrintsListResponsePrintsItem struct {
 
 type PassesPrintsListResult = PassesPrintsListResponse
 
+type PassesPrintsMarkDrawnResponse struct {
+	ID          string  `json:"id"`
+	PassID      string  `json:"passId"`
+	Generation  int64   `json:"generation"`
+	Status      string  `json:"status"`
+	PassVersion *int64  `json:"passVersion"`
+	Stale       bool    `json:"stale"`
+	CreatedAt   int64   `json:"createdAt"`
+	VoidedAt    *int64  `json:"voidedAt"`
+	VoidCause   *string `json:"voidCause"`
+}
+
+type PassesPrintsMarkDrawnResult = PassesPrintsMarkDrawnResponse
+
 type PassesPrintsVoidResponse struct {
 	ID          string  `json:"id"`
 	PassID      string  `json:"passId"`

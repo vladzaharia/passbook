@@ -1170,6 +1170,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"passes.prints.markDrawn", "POST", "/api/v1/passes/id1/print/drawn", false,
+		"", `{"id":"x","passId":"x","generation":0,"status":"active","passVersion":0,"stale":false,"createdAt":0,"voidedAt":0,"voidCause":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Passes.Prints.MarkDrawn(ctx, "id1")
+		},
+	},
+	{
 		"passes.prints.downloadPdf", "GET", "/api/v1/passes/id1/print/pdf", false,
 		"", "",
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
