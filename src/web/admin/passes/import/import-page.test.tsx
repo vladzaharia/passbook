@@ -64,7 +64,7 @@ describe('import page', () => {
     const input = container.querySelector('input[type=file]') as HTMLInputElement;
     await user.upload(input, new File(['x'], 'people.xlsx'));
     expect(await screen.findByText('Save the sheet as CSV first.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(t.posts).toHaveLength(0);
   });
 
@@ -90,7 +90,7 @@ describe('import page', () => {
     await user.click(screen.getByRole('radio', { name: 'Paste' }));
     fireEvent.change(screen.getByLabelText('Rows'), { target: { value: 'x'.repeat(2_000_001) } });
     expect(await screen.findByText('The file is larger than 2 MB.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('posts a sheet link as a url source', async () => {
@@ -137,7 +137,7 @@ describe('import page', () => {
     });
     await t.render();
     expect(await screen.findByText('No released templates in this mode.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('notes Test mode', async () => {
