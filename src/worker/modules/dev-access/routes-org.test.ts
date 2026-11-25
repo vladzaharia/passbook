@@ -162,7 +162,8 @@ describe('POST /orgs/{id}/developer-invitations', () => {
       503,
       'IDP_UNAVAILABLE',
     );
-    const wrong = createFakeIdp({ groupName: 'someone_else' });
+    const wrong = createFakeIdp();
+    wrong.frozen = true;
     installFakeIdp(h.env, wrong);
     await expectProblem(
       await invite(session.headers, { email: 'd@a.test' }),

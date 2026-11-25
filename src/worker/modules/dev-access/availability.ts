@@ -1,7 +1,7 @@
 import { entitlementsOf } from '../../platform/entitlements.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { idpClient, idpConfigured } from './idp-client.ts';
+import { idpClient, idpConfigured } from '../idp/client.ts';
 
 /** The org's `members.developers` allowance: a count, null for no limit, 0 for none. */
 export async function developerLimit(ctx: ServiceContext, orgId: string): Promise<number | null> {
@@ -9,12 +9,13 @@ export async function developerLimit(ctx: ServiceContext, orgId: string): Promis
   return value === null ? null : typeof value === 'number' ? value : 0;
 }
 
-/** Polaris ID is reachable, safe to write and the group it manages is the one sign-in reads. */
+/** Polaris ID is reachable, safe to write and the developer group is configured. */
 export async function idpReady(ctx: ServiceContext): Promise<boolean> {
-  if (!idpConfigured(ctx.env)) return false;
+  const env = ctx.env as { IDP?: unknown };
+  if (!idpConfigured(env)) return false;
   try {
-    const health = await idpClient(ctx.env).health();
-    return health.unsafe.length === 0 && health.groupName === ctx.env.OIDC_DEVELOPER_GROUP;
+    const health = await idpClient(env).health();
+    return health.ok && health.unsafe.length === 0 && !!health.groups.developer;
   } catch {
     ctx.log.warn('developer_access.idp_unhealthy', { code: 'IDP_UNAVAILABLE' });
     return false;
