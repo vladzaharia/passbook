@@ -69,6 +69,8 @@ export const DEV_COPY = {
       },
     ],
     sandbox: 'Your sandbox',
+    sandboxCreate: 'Create sandbox',
+    sandboxClosed: 'Sandbox closed',
     guides: 'Guides',
     changelog: 'Changelog',
   },

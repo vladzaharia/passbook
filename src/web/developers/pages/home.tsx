@@ -28,16 +28,16 @@ const TILE_HREF = {
   reference: PATHS.reference,
 } as const;
 
-/** The hero's request, plain HTTP until the SDK is published. The key is read from the environment. */
-const HERO_FETCH = `const res = await fetch('https://passbook.mobile/api/v1/passes', {
+/** The hero's request, plain HTTP until the SDK is published. The key is read from the environment. Short lines: no scrolling at 820. */
+const HERO_FETCH = `await fetch('/api/v1/passes', {
   method: 'POST',
   headers: {
-    Authorization: \`Bearer \${process.env.PASSBOOK_KEY}\`,
+    Authorization: \`Bearer \${KEY}\`,
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    templateId: '0193a2f4-7c1e-7b20…',
-    input: { name: 'Casey River', points: 120 },
+    templateId: 'tpl_loyalty',
+    input: { name: 'Casey', points: 120 },
   }),
 })`;
 
@@ -45,11 +45,8 @@ const HERO_FETCH = `const res = await fetch('https://passbook.mobile/api/v1/pass
 const HERO_SDK = `const pb = new PassBook() // $PASSBOOK_KEY
 
 const pass = await pb.passes.create({
-  templateId: '0193a2f4-7c1e-7b20…',
-  input: {
-    name: 'Casey River',
-    points: 120,
-  },
+  templateId: 'tpl_loyalty',
+  input: { name: 'Casey', points: 120 },
 })`;
 
 const HERO_CODE = SDK_STATUS.typescript ? HERO_SDK : HERO_FETCH;
@@ -105,19 +102,13 @@ function Hero() {
           body={
             <div className="row g3 try-foot">
               <Stamp status="201 Created" />
-              <a className="btn sm push" href={SIGN_IN}>
+              <a className="btn push" href={SIGN_IN} data-hero-try>
                 {DEV_COPY.reference.signInToTry}
               </a>
             </div>
           }
         />
         <div className="pv">
-          <div className="seg compact" aria-hidden="true">
-            <span data-on="true">Apple</span>
-            <span>Google</span>
-            <span>Samsung</span>
-            <span>Paper</span>
-          </div>
           <div className="preview">
             <PassStub />
           </div>
@@ -138,11 +129,12 @@ function Tiles() {
               <span className="glyph">
                 <Icon aria-hidden="true" />
               </span>
-              <div className="h3">{t.title}</div>
-              <span className="xs muted row g1">
-                {t.foot}
-                <ArrowRight aria-hidden="true" />
+              <span className="tile-text">
+                <span className="h3">{t.title}</span>
+                <span className="sm muted">{t.line}</span>
               </span>
+              {t.foot ? <span className="pill neutral mono tile-time">{t.foot}</span> : null}
+              <ArrowRight aria-hidden="true" className="tile-go" />
             </a>
           );
         })}
@@ -169,7 +161,7 @@ function Sandbox() {
           </div>
         ))}
         <div className="kv cta">
-          <a className="btn sm" href={SIGN_IN}>
+          <a className="btn" href={SIGN_IN}>
             {DEV_COPY.signIn}
           </a>
         </div>

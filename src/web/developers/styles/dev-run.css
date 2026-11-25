@@ -4,13 +4,13 @@
 /* One size from signed-out to ready, so the island arriving moves nothing. */
 @media (min-width: 721px) {
   .try .stub {
-    block-size: 24rem;
+    block-size: 21rem;
     display: flex;
     flex-direction: column;
     min-block-size: 0;
   }
   .try .body {
-    min-block-size: 14rem;
+    min-block-size: 12.25rem;
   }
   .try .stub > .code {
     flex: 1;
@@ -24,7 +24,7 @@
     overflow: auto;
   }
   .console-slot .stub {
-    block-size: 28rem;
+    block-size: 24.5rem;
   }
 }
 /* The console page: the ticket plus the operation's heading row. */
@@ -33,7 +33,7 @@
   min-block-size: clamp(24rem, calc(100dvh - 27rem), 45rem);
   margin-top: 24px;
 }
-/* A state card (no sandbox, failed) is not a ticket: no blank 45rem under it. */
+/* A state card (no sandbox, failed) is not a ticket: no blank min-height under it. */
 .console-slot:has(.pstate) {
   min-block-size: 0;
 }
@@ -90,7 +90,7 @@
 [data-island="org-chip"] {
   display: inline-flex;
   justify-content: flex-end;
-  min-inline-size: 12.5rem;
+  min-inline-size: 11rem;
 }
 [data-island="org-chip"][hidden] {
   display: none;
@@ -130,18 +130,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* The run clock: a foil ring on the chip while the quickstart is open, the time inside. */
-.orgchip-clock {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--pk-text-strong);
-}
-.orgchip[data-running="true"] {
-  border-color: transparent;
-  background:
-    linear-gradient(var(--pk-surface-raised), var(--pk-surface-raised)) padding-box,
-    var(--wl-foil) border-box;
-}
 .budget {
   display: inline-flex;
   align-items: center;
@@ -177,7 +165,7 @@
     display: none;
   }
   [data-island="org-chip"] {
-    min-inline-size: 7rem;
+    min-inline-size: 6rem;
   }
 }
 @media (max-width: 720px) {
@@ -186,9 +174,6 @@
   }
   .orgchip {
     padding-right: 6px;
-  }
-  .orgchip .budget {
-    display: none;
   }
   /* The text button (Create sandbox, Sandbox closed) is the sandbox card's job on a phone: it overlapped the search. */
   [data-island="org-chip"] > .btn {
@@ -204,7 +189,7 @@ dialog.sheet {
   padding: 0;
   width: 100%;
   max-width: none;
-  height: min(92dvh, 52rem);
+  height: min(92dvh, 45.5rem);
   max-height: none;
   border: 0;
   border-top: 1px solid var(--pk-border-strong);
@@ -265,9 +250,13 @@ dialog.sheet::backdrop {
    boxes and are not shown, from the first paint: a signed-in page never flashes the signed-out markup, and the page
    never shows Sign in, the avatar, Sign in again. Without script nothing would ever set it, so they show. */
 @media (scripting: enabled) {
-  :is([data-island="account"], [data-island="workbench"], [data-island="hero-start"]):not(
-    [data-ready]
-  ) {
+  :is(
+    [data-island="account"],
+    [data-island="workbench"],
+    [data-island="hero-start"],
+    .hero [data-hero-try],
+    .hero [data-buddy]
+  ):not([data-ready]) {
     visibility: hidden;
   }
 }
@@ -275,7 +264,7 @@ dialog.sheet::backdrop {
 [data-island="account"] {
   display: inline-flex;
   justify-content: flex-end;
-  min-inline-size: 5rem;
+  min-inline-size: 4.5rem;
 }
 /* The quickstart and the console page hold their signed-out markup the same way. */
 [data-island="quickstart"][data-hydrating],
