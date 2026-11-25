@@ -5,7 +5,9 @@ const n = (c: number, one: string, many: string) => `${formatCount(c)} ${c === 1
 /** Words of the change wizard and its run page. */
 export const CHANGE_COPY = {
   title: 'Change passes',
-  steps: { change: 'Change', holders: 'Tell holders', review: 'Review' },
+  steps: { change: 'Change', holders: 'Holders', review: 'Review' },
+  headings: { change: 'Pick the change', holders: 'Tell holders', review: 'Check and run' },
+  needChange: 'Pick what changes.',
   passes: (c: number) => n(c, 'pass', 'passes'),
   noSelection: 'Pick passes to change first.',
   loadingSample: 'Loading a sample pass',
