@@ -60,6 +60,16 @@ const moveTo = async (
 const plan = async (p: Setup): Promise<OrgPlanDto> =>
   (await (await call('GET', planPath(p.orgId), p.admin)).json()) as OrgPlanDto;
 
+const platformSetting = async (key: string, value: unknown) => {
+  await run(
+    rk.kit.env.DB,
+    "INSERT OR REPLACE INTO settings (scope, key, value, updated_by, updated_at) VALUES ('platform', ?, ?, 'test', 1)",
+    [key, JSON.stringify(value)],
+  );
+  clearSettingsCache(rk.kit.env.DB);
+};
+const limitOf = (body: OrgPlanDto, key: string) => body.limits.find((l) => l.key === key);
+
 describe('GET /orgs/{id}/plan', () => {
   it('lists the limits above zero with use, and the features the plan has', async () => {
     const p = await setup();
@@ -125,5 +135,71 @@ describe('GET /orgs/{id}/plan', () => {
     expect((await call('GET', planPath(p.orgId), allowed)).status).toBe(200);
     const lacking = fake.apiKey({ orgId: p.orgId, scopes: ['passes:read'] });
     expect((await call('GET', planPath(p.orgId), lacking)).status).toBe(403);
+  });
+});
+
+describe('what the platform lets through', () => {
+  it('lowers the daily caps to the platform maximums, and drops join when it is off', async () => {
+    const p = await setup();
+    await moveTo(p, 'legacy');
+    await platformSetting('email.orgCapPerDayMax', 120);
+    await platformSetting('join.orgDailyCap', 40);
+    try {
+      const body = await plan(p);
+      expect(limitOf(body, 'email.perDay')?.limit).toBe(120);
+      expect(limitOf(body, 'join.perDay')?.limit).toBe(40);
+      await moveTo(p, 'trial');
+      const trial = await plan(p);
+      // The plan's own cap stands where it is lower: trial sends 100 a day, joins 100.
+      expect(limitOf(trial, 'email.perDay')?.limit).toBe(100);
+      expect(limitOf(trial, 'join.perDay')?.limit).toBe(40);
+      await platformSetting('join.enabled', false);
+      expect(limitOf(await plan(p), 'join.perDay')).toBeUndefined();
+    } finally {
+      await platformSetting('email.orgCapPerDayMax', 1000);
+      await platformSetting('join.orgDailyCap', 1000);
+      await platformSetting('join.enabled', true);
+    }
+  });
+
+  it('reads the request mode: Test joins stop at the Test cap', async () => {
+    const p = await setup();
+    await moveTo(p, 'legacy');
+    const res = await call('GET', planPath(p.orgId), { ...p.admin, 'x-passbook-mode': 'test' });
+    expect(limitOf((await res.json()) as OrgPlanDto, 'join.perDay')?.limit).toBe(200);
+  });
+
+  it('leaves out a limit whose feature is off, and limits nothing enforces', async () => {
+    const p = await setup();
+    await moveTo(p, 'trial');
+    const trial = await plan(p);
+    expect(limitOf(trial, 'webhooks.endpoints')).toBeUndefined();
+    expect(limitOf(trial, 'api.keys')).toBeDefined();
+    expect(trial.limits.map((l) => l.key)).not.toContain('domains');
+    expect(trial.features.map((f) => f.key)).not.toContain('apps');
+    expect(trial.features.map((f) => f.key)).not.toContain('identity.own');
+    await moveTo(p, 'standard');
+    expect(limitOf(await plan(p), 'webhooks.endpoints')).toBeDefined();
+    expect(limitOf(await plan(p), 'domains')).toBeUndefined();
+  });
+
+  it('shows one member for a personal org', async () => {
+    const p = await setup();
+    await moveTo(p, 'standard');
+    expect(limitOf(await plan(p), 'members')?.limit).toBe(25);
+    const owner = await rk.platform();
+    await run(rk.kit.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
+      owner.userId,
+      p.orgId,
+    ]);
+    expect(limitOf(await plan(p), 'members')?.limit).toBe(1);
+  });
+
+  it('refuses a member whose membership was revoked', async () => {
+    const p = await setup();
+    await run(rk.kit.env.DB, 'UPDATE org_memberships SET revoked_at = 1 WHERE org_id = ?', [
+      p.orgId,
+    ]);
+    expect((await call('GET', planPath(p.orgId), p.admin)).status).toBe(403);
   });
 });

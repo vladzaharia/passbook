@@ -711,11 +711,11 @@ export const SEEDS: Record<string, unknown> = {
   },
   'entitlements.getOrgsByIdPlan response': {
     orgId: IDS.org,
-    preset: 'premium',
-    label: 'Premium',
+    preset: 'standard',
+    label: null,
     limits: [
       { key: 'passes.live', limit: 5000, used: 3214 },
-      { key: 'members', limit: null, used: 2 },
+      { key: 'members', limit: 25, used: 2 },
       { key: 'email.perDay', limit: 500, used: null },
     ],
     features: [

@@ -31,8 +31,8 @@
     "description": "The organization's plan: each limit with how much is used, the features it can use now, and the smallest PassBook footer the plan allows.",
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "preset": "premium",
-      "label": "Premium",
+      "preset": "standard",
+      "label": null,
       "limits": [
         {
           "key": "passes.live",
@@ -41,7 +41,7 @@
         },
         {
           "key": "members",
-          "limit": null,
+          "limit": 25,
           "used": 2
         },
         {

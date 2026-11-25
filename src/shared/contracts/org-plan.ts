@@ -10,10 +10,8 @@ export const PLAN_FEATURE_KEYS = [
   'print',
   'nfc',
   'api',
-  'apps',
   'webhooks',
   'templates.uploads',
-  'identity.own',
   'identity.managed',
 ] as const;
 export const PlanFeatureKeySchema = z.enum(PLAN_FEATURE_KEYS);

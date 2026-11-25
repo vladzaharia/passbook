@@ -77,14 +77,12 @@ export function FeatureChecklist({ items }: { items: readonly string[] }) {
   );
 }
 
-/** The footer rule, one row: what the smallest PassBook footer the plan allows reads as. */
+/** The footer rule: what the smallest PassBook footer the plan allows reads as. Label over value, so tiles line up. */
 export function FooterRow({ level }: { level: FooterLevel }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-t border-border pt-3 text-sm">
-      <span className="text-fg-muted">{PLAN_COPY.footer}</span>
-      <span className="ml-auto whitespace-nowrap text-right font-medium text-fg-strong">
-        {FOOTER_SAMPLE[level]}
-      </span>
+    <div className="flex flex-col gap-0.5 border-t border-border pt-3">
+      <span className="text-xs text-fg-muted">{PLAN_COPY.footer}</span>
+      <span className="text-sm font-medium text-fg-strong">{FOOTER_SAMPLE[level]}</span>
     </div>
   );
 }

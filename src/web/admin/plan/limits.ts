@@ -80,10 +80,8 @@ export function viewOfValues(values: Record<string, unknown>): PlanView {
 
 const OTHER_FEATURE: Partial<Record<PlanFeatureKey, string>> = {
   api: ENTITLEMENT_LABEL.api,
-  apps: ENTITLEMENT_LABEL.apps,
   webhooks: ENTITLEMENT_LABEL.webhooks,
   'templates.uploads': ENTITLEMENT_LABEL['templates.uploads'],
-  'identity.own': ENTITLEMENT_LABEL['identity.own'],
   'identity.managed': ENTITLEMENT_LABEL['identity.managed'],
 };
 
@@ -97,7 +95,6 @@ const LIMIT_ORDER: readonly EntitlementKey[] = [
   'api.keys',
   'webhooks.endpoints',
   'connections',
-  'domains',
   'email.perDay',
   'messages.perDay',
   'passes.changesPerDay',

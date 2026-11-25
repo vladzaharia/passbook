@@ -3,12 +3,8 @@ import type { PresetOptionDto } from '@/shared/contracts/entitlement-admin.ts';
 import { PLAN_COPY } from '@/shared/copy/plans.ts';
 import { PlanTile } from './plan-tile.tsx';
 
-/** More plans than this stay a scrolling row at any width. */
-const ROW_MAX = 5;
-
 /**
- * The plan tiles, one radio group: one row of equal tiles where there is room, a snapping row you scroll
- * sideways below that, one column on a phone. `current` is the org's plan (null before it has one);
+ * The plan tiles, one radio group: a wrapping grid of equal tiles, five across where there is room. `current` is the org's plan (null before it has one);
  * `picked` the choice. The same picker serves the Features tab and its empty state.
  */
 export function PlanPicker({
@@ -33,9 +29,7 @@ export function PlanPicker({
         role="radiogroup"
         aria-label={PLAN_COPY.title}
         className={`plan-row ${arrival ? 'wl-stagger' : ''}`}
-        data-many={plans.length > ROW_MAX || undefined}
         data-quiet={arrival === 'quiet' || undefined}
-        style={{ '--plans': plans.length } as CSSProperties}
       >
         {plans.map((p, i) => (
           <PlanTile

@@ -10,6 +10,7 @@ import {
   SetEntitlementPresetSchema,
 } from '../../../shared/contracts/entitlement-presets.ts';
 import { OrgPlanParamsSchema, OrgPlanSchema } from '../../../shared/contracts/org-plan.ts';
+import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -171,6 +172,6 @@ register(
     const ctx = serviceContext(c);
     const authority = await tenantAuthorityOf(ctx, authOf(c), id, 'org:read');
     if (authority.orgId !== id) throw new ForbiddenError();
-    return c.json(await readOrgPlan(ctx, id));
+    return c.json(await readOrgPlan(ctx, id, modeOf(authOf(c))));
   },
 );

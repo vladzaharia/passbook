@@ -16,40 +16,15 @@
   opacity: 1;
 }
 
-/* One column on a phone; a snapping row to scroll from 36rem; every plan side by side from 62rem. */
+/* A wrapping grid: as many equal tiles per row as fit, never fewer than 13rem wide. */
 .plan-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: 0.75rem;
+  padding-top: 0.5rem;
 }
 .plan-row > .plan-tile {
   min-width: 0;
-}
-@container (min-width: 36rem) {
-  .plan-row {
-    display: flex;
-    overflow-x: auto;
-    padding: 0.25rem 0.25rem 0.75rem;
-    margin: -0.25rem;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: 0.25rem;
-    overscroll-behavior-x: contain;
-  }
-  .plan-row > .plan-tile {
-    flex: 0 0 15.5rem;
-    scroll-snap-align: start;
-  }
-}
-@container (min-width: 62rem) {
-  .plan-row:not([data-many]) {
-    display: grid;
-    grid-template-columns: repeat(var(--plans), minmax(0, 1fr));
-    overflow: visible;
-    padding-bottom: 0.25rem;
-  }
-  .plan-row:not([data-many]) > .plan-tile {
-    flex: none;
-  }
 }
 
 .plan-face {
