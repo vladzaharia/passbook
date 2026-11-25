@@ -3,7 +3,7 @@
 import type { Json } from '../contracts/common.ts';
 import type { FieldChange } from '../contracts/issuing.ts';
 import { formatDayIn } from '../format-date.ts';
-import { CALENDAR_ZONE, DEFAULT_TIME_ZONE } from '../time-zone.ts';
+import { CALENDAR_ZONE } from '../time-zone.ts';
 import { type InputField, inputFields, isDateField } from './fields.ts';
 
 export interface DiffOptions {
@@ -32,7 +32,7 @@ const empty = (v: Json | undefined): boolean =>
   v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
 
 /** A date-time at midnight in the zone reads as a day; any other time adds the time of day. */
-function formatDate(value: string, f: InputField, o: Required<DiffOptions>): string {
+function formatDate(value: string, o: Required<DiffOptions>): string {
   const dayOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const ms = Date.parse(dayOnly ? `${value}T00:00:00Z` : value);
   if (!Number.isFinite(ms)) return value;
@@ -55,7 +55,7 @@ export function formatValue(
   if (typeof value === 'string') {
     const option = f.options?.find((x) => x.value === value);
     if (option) return option.label;
-    return isDateField(f) ? formatDate(value, f, o) : value;
+    return isDateField(f) ? formatDate(value, o) : value;
   }
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (typeof value === 'number') return value.toLocaleString(o.locale);

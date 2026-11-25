@@ -74,7 +74,19 @@ describe('passSummary', () => {
     expect(event.fields[2]?.value).toBe('6:00 PM');
     // The same time reads in the org zone it is given.
     const seattle = passSummary(
-      { eventTicket: { secondaryFields: [{ key: 't', label: 'Starts', value: '2026-11-16T18:00:00Z', dateStyle: 'PKDateStyleNone', timeStyle: 'PKDateStyleShort' }] } },
+      {
+        eventTicket: {
+          secondaryFields: [
+            {
+              key: 't',
+              label: 'Starts',
+              value: '2026-11-16T18:00:00Z',
+              dateStyle: 'PKDateStyleNone',
+              timeStyle: 'PKDateStyleShort',
+            },
+          ],
+        },
+      },
       { ...ctx, timeZone: 'America/Los_Angeles' },
     );
     expect(seattle.fields[0]?.value).toBe('10:00 AM');
