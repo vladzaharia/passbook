@@ -6654,6 +6654,27 @@ export type PlatformEntitlementPresetsUpdateResponse = {
   moved: number;
 };
 
+export type PlatformGroupsClaimsRetrieveResponse = {
+  claims: Record<string, {
+    type: "text" | "number" | "boolean" | "json";
+    value?: unknown;
+  }>;
+  otherKeys: number;
+};
+
+export type PlatformGroupsClaimsUpdateParams = {
+  set: Record<string, {
+    type: "text" | "number" | "boolean" | "json";
+    value: string | number | boolean | Array<unknown> | Record<string, unknown>;
+  } | null>;
+};
+
+export type PlatformGroupsClaimsUpdateResponse = {
+  set: Array<string>;
+  removed: Array<string>;
+  dryRun: boolean;
+};
+
 export type PlatformMetricsRetrieveOverviewResponse = {
   source: "analytics_engine" | "d1";
   range: "24h" | "7d" | "30d";
@@ -7119,6 +7140,27 @@ export type PlatformTemplatesAssignParams = {
 
 export type PlatformTemplatesShareParams = {
   shared: boolean;
+};
+
+export type PlatformUsersClaimsRetrieveResponse = {
+  claims: Record<string, {
+    type: "text" | "number" | "boolean" | "json";
+    value?: unknown;
+  }>;
+  otherKeys: number;
+};
+
+export type PlatformUsersClaimsUpdateParams = {
+  set: Record<string, {
+    type: "text" | "number" | "boolean" | "json";
+    value: string | number | boolean | Array<unknown> | Record<string, unknown>;
+  } | null>;
+};
+
+export type PlatformUsersClaimsUpdateResponse = {
+  set: Array<string>;
+  removed: Array<string>;
+  dryRun: boolean;
 };
 
 export type PlatformUsersEmailsCreateParams = {
