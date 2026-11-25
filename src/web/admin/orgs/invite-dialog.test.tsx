@@ -19,7 +19,7 @@ describe('invite dialog', () => {
     await renderMembers({ handlers: handlers() });
     const dialog = await openDialog(userEvent.setup());
     expect(within(dialog).getAllByRole('checkbox')).toHaveLength(7);
-    expect(await axe(dialog)).toHaveNoViolations();
+    expect((await axe(dialog)).violations).toEqual([]);
   });
 
   it('turns comma and newline separated addresses into chips and invites each', async () => {
@@ -141,10 +141,8 @@ describe('invite dialog', () => {
     if (!next.authenticated) throw new Error('Expected an authenticated fixture.');
     currentUser = 'u2';
     act(() => {
-      queryClient.setQueryData(sessionQuery.queryKey, {
-        ...next,
-        user: { ...next.user, id: 'u2' },
-      });
+      const updated: typeof next = { ...next, user: { ...next.user, id: 'u2' } };
+      queryClient.setQueryData(sessionQuery.queryKey, updated);
       queryClient.setQueryData(membershipsQuery.queryKey, {
         items: [membershipFixture('o1', { userId: 'u2' })],
       });

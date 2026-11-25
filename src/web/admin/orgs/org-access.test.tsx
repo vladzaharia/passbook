@@ -54,7 +54,7 @@ describe('Members page', () => {
     expect(within(section).queryByText('accepted@example.test')).toBeNull();
     expect(within(section).queryByText('revoked@example.test')).toBeNull();
     expect(section).toHaveTextContent('Read only · Sent');
-    expect(await axe(container)).toHaveNoViolations();
+    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('offers no Remove on your own row or the last organization admin', async () => {

@@ -57,6 +57,6 @@ describe('RolePicker', () => {
 
   it('has no axe violations', async () => {
     const { container } = render(<Harness start={['org_admin']} />);
-    expect(await axe(container)).toHaveNoViolations();
+    expect((await axe(container)).violations).toEqual([]);
   });
 });

@@ -15,7 +15,7 @@ describe('ChangeRolesDialog', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Change roles for Ada Lovelace' });
     expect(within(dialog).getByRole('checkbox', { name: 'Template author' })).toBeChecked();
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
-    expect(await axe(dialog)).toHaveNoViolations();
+    expect((await axe(dialog)).violations).toEqual([]);
     const user = userEvent.setup();
     await user.click(within(dialog).getByRole('checkbox', { name: 'Pass operator' }));
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
