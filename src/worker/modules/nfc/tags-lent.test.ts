@@ -225,22 +225,3 @@ describe('tenant isolation', () => {
     );
   });
 });
-
-describe('the expiry trigger matches the type by org', () => {
-  const moveExpiry = (tagId: string) =>
-    run(f.kit.env.DB, 'UPDATE tag_bindings SET expires_at = 1 WHERE tag_id = ?', [tagId]);
-
-  it("a loaner's expiry may move", async () => {
-    const s = await setup();
-    const tag = await lend(s);
-    await expect(moveExpiry(tag.id)).resolves.toBeDefined();
-  });
-
-  it("a tag pointing at another org's visitor type stays fixed", async () => {
-    const a = await setup();
-    const b = await setup();
-    const tag = await lend(a);
-    await run(f.kit.env.DB, 'UPDATE nfc_tags SET type_id = ? WHERE id = ?', [b.visitor, tag.id]);
-    await expect(moveExpiry(tag.id)).rejects.toThrow(/tag_binding_immutable/);
-  });
-});

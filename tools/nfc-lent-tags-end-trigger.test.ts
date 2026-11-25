@@ -104,3 +104,28 @@ describe('passes_lent_tags_end', () => {
     });
   });
 });
+
+describe('tag_bindings_expiry_fixed', () => {
+  const move = () => sql("UPDATE tag_bindings SET expires_at = 99999999999999 WHERE id = 'b-lv'");
+
+  it("moves a loaner's expiry, and fixes every other binding's", () => {
+    rolledBack(() => {
+      world();
+      move();
+      expect(() =>
+        sql("UPDATE tag_bindings SET expires_at = 99999999999999 WHERE id = 'b-mv'"),
+      ).toThrow(/tag_binding_immutable/);
+    });
+  });
+
+  it("matches the type by org: a tag on another org's visitor type stays fixed", () => {
+    rolledBack(() => {
+      world();
+      type('v-other', { org_id: 'o2', use: 'visitor', scopes: 'pass' });
+      // The tenant trigger already refuses this row; drop it to prove the expiry rule holds alone.
+      sql('DROP TRIGGER nfc_tags_type_update');
+      sql("UPDATE nfc_tags SET type_id = 'v-other' WHERE id = 'lv'");
+      expect(move).toThrow(/tag_binding_immutable/);
+    });
+  });
+});
