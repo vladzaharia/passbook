@@ -3922,14 +3922,6 @@ export type OrgSummary = {
     members?: number;
   };
   countsCapped: boolean;
-  personalOwner?: {
-    id: string;
-    name: string | null;
-  } | null;
-  plan?: {
-    preset: string;
-    label: string;
-  } | null;
 };
 
 export type OrgsCloseParams = {
@@ -6808,14 +6800,6 @@ export type PlatformOrgsListResponse = {
     name: string;
     status: "active" | "suspended" | "deleted";
     personal?: boolean;
-    personalOwner?: {
-      id: string;
-      name: string | null;
-    } | null;
-    plan?: {
-      preset: string;
-      label: string;
-    } | null;
     createdAt: number;
     counts: {
       passes: number;
@@ -6825,6 +6809,14 @@ export type PlatformOrgsListResponse = {
       members?: number;
     };
     countsCapped: boolean;
+    personalOwner?: {
+      id: string;
+      name: string | null;
+    } | null;
+    plan?: {
+      preset: string;
+      label: string;
+    } | null;
   }>;
   nextCursor: string | null;
 };
@@ -6870,14 +6862,6 @@ export type PlatformOrgsRetrieveResponse = {
   name: string;
   status: "active" | "suspended" | "deleted";
   personal?: boolean;
-  personalOwner?: {
-    id: string;
-    name: string | null;
-  } | null;
-  plan?: {
-    preset: string;
-    label: string;
-  } | null;
   createdAt: number;
   counts: {
     passes: number;
@@ -6887,6 +6871,14 @@ export type PlatformOrgsRetrieveResponse = {
     members?: number;
   };
   countsCapped: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
+  plan?: {
+    preset: string;
+    label: string;
+  } | null;
 };
 
 export type PlatformOrgsSetStatusParams = {
@@ -6899,14 +6891,6 @@ export type PlatformOrgsSetStatusResponse = {
   name: string;
   status: "active" | "suspended" | "deleted";
   personal?: boolean;
-  personalOwner?: {
-    id: string;
-    name: string | null;
-  } | null;
-  plan?: {
-    preset: string;
-    label: string;
-  } | null;
   createdAt: number;
   counts: {
     passes: number;
@@ -6916,6 +6900,14 @@ export type PlatformOrgsSetStatusResponse = {
     members?: number;
   };
   countsCapped: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
+  plan?: {
+    preset: string;
+    label: string;
+  } | null;
 };
 
 export type PlatformOrgsWalletEnrollmentsHoldParams = {

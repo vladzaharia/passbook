@@ -1,11 +1,14 @@
 import type { z } from 'zod';
-import type { OrgSummarySchema } from '../../../shared/contracts/orgs.ts';
+import type { OrgSummarySchema, PlatformOrgSummarySchema } from '../../../shared/contracts/orgs.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { toDto } from './org-dto.ts';
 import { COUNT_CAP, type OrgRow } from './repo.ts';
 import { personalOwners } from './repo-personal.ts';
 
-type Summary = z.infer<typeof OrgSummarySchema>;
+type Platform = z.infer<typeof PlatformOrgSummarySchema>;
+/** The summary, with the platform-only fields when a platform view asks for them. */
+export type Summary = z.infer<typeof OrgSummarySchema> &
+  Partial<Pick<Platform, 'personalOwner' | 'plan'>>;
 
 /** Names of the owners of the personal orgs among `rows`: for platform views only. */
 export const ownersOf = async (ctx: ServiceContext, rows: OrgRow[]) =>

@@ -7,7 +7,11 @@ import { OrgPlanCard } from './org-plan-card.tsx';
 
 installDomShims();
 
-function show(preset: 'standard' | 'legacy', usage: Record<string, number>, label = 'Standard') {
+function show(
+  preset: 'standard' | 'legacy' | 'developer',
+  usage: Record<string, number>,
+  label = 'Standard',
+) {
   const values = presetValues(preset);
   stubFetch({
     '/api/v1/orgs/o1/entitlements': () =>
@@ -67,5 +71,19 @@ describe('OrgPlanCard', () => {
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByText('Ask PassBook for more.')).toBeNull();
     expect(screen.getByText('No PassBook footer')).toBeVisible();
+  });
+
+  it('has no row for a limit of 0, so never "0 of 0"', async () => {
+    show(
+      'developer',
+      { 'passes.live': 0, templates: 2, 'scanning.devices': 0, members: 1 },
+      'Developer sandbox',
+    );
+    expect(await screen.findByRole('heading', { name: 'Developer sandbox' })).toBeVisible();
+    expect(screen.getByText('2 of 10')).toBeVisible();
+    expect(screen.getByText('1 of 1')).toBeVisible();
+    expect(screen.queryByText(/0 of 0/)).toBeNull();
+    expect(screen.queryByText('Passes')).toBeNull();
+    expect(screen.queryByText('Scanners')).toBeNull();
   });
 });

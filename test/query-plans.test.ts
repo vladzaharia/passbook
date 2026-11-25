@@ -12,6 +12,7 @@ import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
 import { portfolioSnapshot } from '../src/worker/modules/me/repo.ts';
 import { activeBinding, lostBinding } from '../src/worker/modules/nfc/repo-tag-bindings.ts';
 import { listTags, passTagViews, tagByRef } from '../src/worker/modules/nfc/repo-tags.ts';
+import { orgUsage, plansOf } from '../src/worker/modules/orgs/repo-usage.ts';
 import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
 import { livePassesBy } from '../src/worker/modules/passes/repo-import-lookup.ts';
@@ -541,5 +542,24 @@ describe('entitlement journal sweep query plans', () => {
       'org_entitlement_overrides',
     ])
       expect(fullScans(lines, table), `${table}\n${plan}`).toEqual([]);
+  });
+});
+
+describe('org usage query plans', () => {
+  it('counts each limit through an index: no subquery scans a table', async () => {
+    const lines = await plans((db) => orgUsage(db, 'o', 1));
+    const plan = lines.join('\n');
+    // The plan names tables by their alias in the statement; each of the eight counts is an index search.
+    for (const alias of ['p', 't', 'sc', 'm', 'i', 'k', 'we', 'cn'])
+      expect(plan, alias).toMatch(new RegExp(`SEARCH ${alias} USING (COVERING )?INDEX`));
+    expect(
+      lines.filter((l) => /^SCAN /.test(l) && !/USING/.test(l)),
+      plan,
+    ).toEqual([]);
+  });
+
+  it('reads an org list plans by the org key', async () => {
+    const lines = await plans((db) => plansOf(db, ['a', 'b']));
+    expect(fullScans(lines, 'org_entitlements')).toEqual([]);
   });
 });

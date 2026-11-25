@@ -69,14 +69,23 @@ UPDATE entitlement_preset_meta SET is_plan = 1 WHERE preset IN ('trial', 'standa
 UPDATE entitlement_presets SET value = '"none"' WHERE preset = 'legacy' AND key = 'brand.mark';
 UPDATE entitlement_presets SET value = 'null' WHERE preset = 'legacy' AND key = 'domains';
 
--- An org whose plan keeps the full footer but whose stored choice is the small one keeps it, so enforcing
--- `brand.mark` takes nothing away. The revision bump makes a Features tab opened before this 409.
-INSERT OR IGNORE INTO org_entitlement_overrides (org_id, key, value, note, expires_at, updated_at, updated_by)
+-- An org whose effective footer allowance is `full` (its plan's, or a standing override's, read at the fixed
+-- time below) but whose stored choice is the small one keeps it, so enforcing `brand.mark` takes nothing away.
+-- The org's override is set to `quiet`: an existing one (a standing `full`, or an expired one) is replaced, never
+-- skipped. The revision bump makes a Features tab opened before this 409.
+INSERT INTO org_entitlement_overrides (org_id, key, value, note, expires_at, updated_at, updated_by)
   SELECT e.org_id, 'brand.mark', '"quiet"', 'Kept the small footer when plans changed', NULL, 1795392000000, NULL
   FROM org_entitlements e
   JOIN orgs o ON o.id = e.org_id
   JOIN entitlement_presets p ON p.preset = e.preset AND p.key = 'brand.mark'
-  WHERE p.value = '"full"' AND json_valid(o.branding) AND json_extract(o.branding, '$.mark') = 'small';
+  WHERE json_valid(o.branding) AND json_extract(o.branding, '$.mark') = 'small'
+    AND COALESCE(
+      (SELECT x.value FROM org_entitlement_overrides x
+        WHERE x.org_id = e.org_id AND x.key = 'brand.mark' AND (x.expires_at IS NULL OR x.expires_at > 1795392000000)),
+      p.value) = '"full"'
+  ON CONFLICT (org_id, key) DO UPDATE SET
+    value = excluded.value, note = excluded.note, expires_at = NULL,
+    updated_at = excluded.updated_at, updated_by = NULL;
 UPDATE org_entitlements SET revision = revision + 1, updated_at = 1795392000000
   WHERE org_id IN (
     SELECT org_id FROM org_entitlement_overrides

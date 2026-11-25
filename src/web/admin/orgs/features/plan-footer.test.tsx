@@ -39,4 +39,19 @@ describe('plan footer', () => {
     expect(within(box).getByText('The org picks its footer in Brand.')).toBeVisible();
     expect(picks).toEqual([]);
   });
+
+  it('names the org on the email sender row where it is known', async () => {
+    const user = userEvent.setup();
+    render(
+      <PlanPicker
+        plans={plans}
+        current="trial"
+        picked="trial"
+        onPick={() => {}}
+        orgName="Acme Gym"
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Where PassBook shows on Standard' }));
+    expect(await screen.findByText('Acme Gym via PassBook')).toBeVisible();
+  });
 });

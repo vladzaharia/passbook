@@ -4628,47 +4628,6 @@
           },
           "countsCapped": {
             "type": "boolean"
-          },
-          "personalOwner": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
-              },
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "id",
-              "name"
-            ]
-          },
-          "plan": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "preset": {
-                "type": "string"
-              },
-              "label": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "preset",
-              "label"
-            ]
           }
         },
         "required": [
@@ -22919,6 +22878,39 @@
                   "type": "boolean",
                   "default": false
                 },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "counts": {
+                  "type": "object",
+                  "properties": {
+                    "passes": {
+                      "type": "integer"
+                    },
+                    "templates": {
+                      "type": "integer"
+                    },
+                    "connections": {
+                      "type": "integer"
+                    },
+                    "apiKeys": {
+                      "type": "integer"
+                    },
+                    "members": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "passes",
+                    "templates",
+                    "connections",
+                    "apiKeys"
+                  ]
+                },
+                "countsCapped": {
+                  "type": "boolean"
+                },
                 "personalOwner": {
                   "type": [
                     "object",
@@ -22959,39 +22951,6 @@
                     "preset",
                     "label"
                   ]
-                },
-                "createdAt": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "counts": {
-                  "type": "object",
-                  "properties": {
-                    "passes": {
-                      "type": "integer"
-                    },
-                    "templates": {
-                      "type": "integer"
-                    },
-                    "connections": {
-                      "type": "integer"
-                    },
-                    "apiKeys": {
-                      "type": "integer"
-                    },
-                    "members": {
-                      "type": "integer"
-                    }
-                  },
-                  "required": [
-                    "passes",
-                    "templates",
-                    "connections",
-                    "apiKeys"
-                  ]
-                },
-                "countsCapped": {
-                  "type": "boolean"
                 }
               },
               "required": [
@@ -23085,6 +23044,39 @@
             "type": "boolean",
             "default": false
           },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "passes": {
+                "type": "integer"
+              },
+              "templates": {
+                "type": "integer"
+              },
+              "connections": {
+                "type": "integer"
+              },
+              "apiKeys": {
+                "type": "integer"
+              },
+              "members": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "passes",
+              "templates",
+              "connections",
+              "apiKeys"
+            ]
+          },
+          "countsCapped": {
+            "type": "boolean"
+          },
           "personalOwner": {
             "type": [
               "object",
@@ -23125,39 +23117,6 @@
               "preset",
               "label"
             ]
-          },
-          "createdAt": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "counts": {
-            "type": "object",
-            "properties": {
-              "passes": {
-                "type": "integer"
-              },
-              "templates": {
-                "type": "integer"
-              },
-              "connections": {
-                "type": "integer"
-              },
-              "apiKeys": {
-                "type": "integer"
-              },
-              "members": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "passes",
-              "templates",
-              "connections",
-              "apiKeys"
-            ]
-          },
-          "countsCapped": {
-            "type": "boolean"
           }
         },
         "required": [
@@ -23260,6 +23219,39 @@
             "type": "boolean",
             "default": false
           },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "passes": {
+                "type": "integer"
+              },
+              "templates": {
+                "type": "integer"
+              },
+              "connections": {
+                "type": "integer"
+              },
+              "apiKeys": {
+                "type": "integer"
+              },
+              "members": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "passes",
+              "templates",
+              "connections",
+              "apiKeys"
+            ]
+          },
+          "countsCapped": {
+            "type": "boolean"
+          },
           "personalOwner": {
             "type": [
               "object",
@@ -23300,39 +23292,6 @@
               "preset",
               "label"
             ]
-          },
-          "createdAt": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "counts": {
-            "type": "object",
-            "properties": {
-              "passes": {
-                "type": "integer"
-              },
-              "templates": {
-                "type": "integer"
-              },
-              "connections": {
-                "type": "integer"
-              },
-              "apiKeys": {
-                "type": "integer"
-              },
-              "members": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "passes",
-              "templates",
-              "connections",
-              "apiKeys"
-            ]
-          },
-          "countsCapped": {
-            "type": "boolean"
           }
         },
         "required": [

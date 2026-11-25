@@ -19,6 +19,15 @@ export const ENTITLEMENT_PRESETS = [
 export const EntitlementPresetSchema = z.enum(ENTITLEMENT_PRESETS);
 export type EntitlementPreset = z.infer<typeof EntitlementPresetSchema>;
 
+/** Orders preset ids as the registry lists them (the ladder); an id it does not know sorts last, then by id. */
+export function presetOrder(a: string, b: string): number {
+  const rank = (id: string) => {
+    const at = (ENTITLEMENT_PRESETS as readonly string[]).indexOf(id);
+    return at < 0 ? ENTITLEMENT_PRESETS.length : at;
+  };
+  return rank(a) - rank(b) || a.localeCompare(b);
+}
+
 /** 1 on, 0 off. */
 type FlagValue = 0 | 1;
 /** `null` is no limit; `0` is off. */

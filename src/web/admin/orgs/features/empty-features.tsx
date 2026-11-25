@@ -36,6 +36,7 @@ export function EmptyFeatures({
           picked={picked}
           onPick={setPicked}
           arrival={arrival}
+          orgName={orgName}
         />
         <div>
           <Button disabled={!target} onClick={() => setConfirming(true)}>

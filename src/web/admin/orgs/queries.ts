@@ -5,7 +5,7 @@ import {
   type CreateOrgSchema,
   OrgListSchema,
   OrgSchema,
-  OrgSummarySchema,
+  PlatformOrgSummarySchema,
   type UpdateOrgSchema,
 } from '@/shared/contracts/orgs.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
@@ -21,12 +21,7 @@ export const PlatformOrgSchema = OrgSchema.pick({
   personal: true,
   createdAt: true,
 });
-export const PlatformOrgSummarySchema = PlatformOrgSchema.extend({
-  counts: OrgSummarySchema.shape.counts,
-  countsCapped: OrgSummarySchema.shape.countsCapped,
-  personalOwner: OrgSummarySchema.shape.personalOwner,
-  plan: OrgSummarySchema.shape.plan,
-});
+export { PlatformOrgSummarySchema };
 export const PlatformOrgListSchema = OrgListSchema.extend({
   items: z.array(PlatformOrgSummarySchema),
 });

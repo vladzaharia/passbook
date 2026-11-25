@@ -28,26 +28,28 @@ const useOwnPlan = (orgId: string) =>
       api.get(`/api/v1/orgs/${encodeURIComponent(orgId)}/entitlements`, OrgOwnEntitlementsSchema, {
         signal,
       }),
-    staleTime: 30_000,
+    // A plan changes by hand and use moves slowly; the 80% warning can be minutes late.
+    staleTime: 5 * 60_000,
   });
 
 /**
  * The organization's plan: its name, what it has used of each limit, its channels and the PassBook footer
  * it may show. Facts only; there is no billing to link to, so a full meter says to ask PassBook.
  */
-export function OrgPlanCard({ orgId }: { orgId: string }) {
+export function OrgPlanCard({ orgId, orgName }: { orgId: string; orgName?: string }) {
   const plan = useOwnPlan(orgId);
   const data = plan.data;
   if (!data || data.preset === null || data.label === null) return null;
   const values = Object.fromEntries(data.items.map((i) => [i.key, i.value]));
   const facts = planFacts(values);
   const Icon = planIcon(data.preset);
+  // A limit of 0 is a feature the plan does not have: no row, never "0 of 0".
   const limits = METERS.map(({ key, label }) => {
     const limit = values[key];
     const used = data.usage[key] ?? 0;
     const cap = typeof limit === 'number' ? limit : null;
     return { key, label, used, cap, near: cap !== null && cap > 0 && used / cap >= WARN };
-  });
+  }).filter((m) => m.cap !== 0);
   return (
     <Card aria-label={PLAN_COPY.title}>
       <CardHeader
@@ -89,7 +91,7 @@ export function OrgPlanCard({ orgId }: { orgId: string }) {
             <span className="sr-only">{PLAN_COPY.footerLead} </span>
             <FooterSample level={facts.footer} />
           </span>
-          <PlanFooterInfo plan={data.label} level={facts.footer} />
+          <PlanFooterInfo plan={data.label} level={facts.footer} orgName={orgName} audience="org" />
         </div>
       </CardBody>
     </Card>

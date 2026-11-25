@@ -66,9 +66,23 @@ export const OrgSummarySchema = OrgSchema.extend({
   }),
   /** Counts stop at 100000 so a large org never costs a scan. */
   countsCapped: z.boolean(),
-  /** Platform views only: who a personal org belongs to. */
+});
+
+/**
+ * What a platform admin sees in the org directory: the summary without tenant data, plus who owns a personal
+ * org and which plan the org is on (null when it has no features row).
+ */
+export const PlatformOrgSummarySchema = OrgSummarySchema.pick({
+  id: true,
+  slug: true,
+  name: true,
+  status: true,
+  personal: true,
+  createdAt: true,
+  counts: true,
+  countsCapped: true,
+}).extend({
   personalOwner: z.object({ id: IdSchema, name: z.string().nullable() }).nullable().optional(),
-  /** Platform views only: the org's plan; null when it has no features row. */
   plan: z.object({ preset: z.string(), label: z.string() }).nullable().optional(),
 });
 

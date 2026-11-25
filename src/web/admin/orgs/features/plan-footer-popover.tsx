@@ -18,7 +18,19 @@ export function FooterSample({ level }: { level: FooterLevel }) {
 }
 
 /** Where PassBook shows for a plan, one row per place. A button beside the footer sample opens it. */
-export function PlanFooterInfo({ plan, level }: { plan: string; level: FooterLevel }) {
+export function PlanFooterInfo({
+  plan,
+  level,
+  orgName,
+  audience = 'platform',
+}: {
+  plan: string;
+  level: FooterLevel;
+  /** The org's name where it is known; the email sender row reads it. */
+  orgName?: string | undefined;
+  /** Who reads it: the org itself is told to pick its footer, a platform admin that the org does. */
+  audience?: 'platform' | 'org';
+}) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -31,7 +43,7 @@ export function PlanFooterInfo({ plan, level }: { plan: string; level: FooterLev
             <div key={row.place} className="grid grid-cols-[6.5rem_1fr] gap-x-3">
               <dt className="text-fg-muted">{row.place}</dt>
               <dd className="text-fg-strong">
-                {row.by[level].replace('{Org}', 'Org name')}
+                {row.by[level].replace('{Org}', orgName || 'Org name')}
                 {row.hint ? <span className="block text-fg-muted">{row.hint}</span> : null}
               </dd>
             </div>
@@ -39,7 +51,7 @@ export function PlanFooterInfo({ plan, level }: { plan: string; level: FooterLev
         </dl>
         {level === 'full' ? null : (
           <p className="mt-3 border-t border-border pt-2 text-xs text-fg-muted">
-            {PLAN_COPY.placesNote}
+            {audience === 'org' ? PLAN_COPY.placesNoteOrg : PLAN_COPY.placesNote}
           </p>
         )}
       </PopoverContent>

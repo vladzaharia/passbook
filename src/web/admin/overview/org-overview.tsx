@@ -161,7 +161,9 @@ export function OrgOverviewPage({
         {orgId && !path && !(empty && setup.isPending && !dismissed && !sandbox) ? (
           <OrgCounts orgId={orgId} caps={caps} />
         ) : null}
-        {orgId && caps.includes('org:read') && !sandbox ? <OrgPlanCard orgId={orgId} /> : null}
+        {orgId && caps.includes('org:read') && !sandbox ? (
+          <OrgPlanCard orgId={orgId} orgName={membership?.orgName} />
+        ) : null}
         {activity.isPending ? (
           <OrgSkeleton />
         ) : activity.isError || !data ? (

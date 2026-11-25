@@ -4583,8 +4583,6 @@ type OrgSummary struct {
 	PassesToUpdate    *int64           `json:"passesToUpdate,omitempty"`
 	Counts            OrgSummaryCounts `json:"counts"`
 	CountsCapped      bool             `json:"countsCapped"`
-	PersonalOwner     map[string]any   `json:"personalOwner,omitempty"`
-	Plan              map[string]any   `json:"plan,omitempty"`
 }
 
 type OrgSummaryCounts struct {
@@ -7918,11 +7916,11 @@ type PlatformOrgsListResponseItemsItem struct {
 	Name          string                                  `json:"name"`
 	Status        string                                  `json:"status"`
 	Personal      *bool                                   `json:"personal,omitempty"`
-	PersonalOwner map[string]any                          `json:"personalOwner,omitempty"`
-	Plan          map[string]any                          `json:"plan,omitempty"`
 	CreatedAt     int64                                   `json:"createdAt"`
 	Counts        PlatformOrgsListResponseItemsItemCounts `json:"counts"`
 	CountsCapped  bool                                    `json:"countsCapped"`
+	PersonalOwner map[string]any                          `json:"personalOwner,omitempty"`
+	Plan          map[string]any                          `json:"plan,omitempty"`
 }
 
 type PlatformOrgsListResponseItemsItemCounts struct {
@@ -7978,11 +7976,11 @@ type PlatformOrgsRetrieveResponse struct {
 	Name          string                             `json:"name"`
 	Status        string                             `json:"status"`
 	Personal      *bool                              `json:"personal,omitempty"`
-	PersonalOwner map[string]any                     `json:"personalOwner,omitempty"`
-	Plan          map[string]any                     `json:"plan,omitempty"`
 	CreatedAt     int64                              `json:"createdAt"`
 	Counts        PlatformOrgsRetrieveResponseCounts `json:"counts"`
 	CountsCapped  bool                               `json:"countsCapped"`
+	PersonalOwner map[string]any                     `json:"personalOwner,omitempty"`
+	Plan          map[string]any                     `json:"plan,omitempty"`
 }
 
 type PlatformOrgsRetrieveResponseCounts struct {
@@ -8003,11 +8001,11 @@ type PlatformOrgsSetStatusResponse struct {
 	Name          string                              `json:"name"`
 	Status        string                              `json:"status"`
 	Personal      *bool                               `json:"personal,omitempty"`
-	PersonalOwner map[string]any                      `json:"personalOwner,omitempty"`
-	Plan          map[string]any                      `json:"plan,omitempty"`
 	CreatedAt     int64                               `json:"createdAt"`
 	Counts        PlatformOrgsSetStatusResponseCounts `json:"counts"`
 	CountsCapped  bool                                `json:"countsCapped"`
+	PersonalOwner map[string]any                      `json:"personalOwner,omitempty"`
+	Plan          map[string]any                      `json:"plan,omitempty"`
 }
 
 type PlatformOrgsSetStatusResponseCounts struct {

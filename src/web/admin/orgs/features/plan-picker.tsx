@@ -32,6 +32,7 @@ export function PlanPicker({
   picked,
   onPick,
   arrival,
+  orgName,
 }: {
   plans: readonly PresetOptionDto[];
   current: string | null;
@@ -39,6 +40,8 @@ export function PlanPicker({
   onPick: (preset: string) => void;
   /** How the cards enter (see useArrivalMode); false once they are in. */
   arrival?: false | 'rise' | 'quiet';
+  /** The org the plans are for, where it is known. */
+  orgName?: string;
 }) {
   const facts = new Map<string, PlanFacts>(plans.map((p) => [p.preset, planFacts(p.values)]));
   const from = current ? facts.get(current) : undefined;
@@ -63,6 +66,7 @@ export function PlanPicker({
               popCurrent={current !== first.current}
               checked={picked === p.preset}
               playKey={plays[p.preset] ?? 0}
+              orgName={orgName}
               className={i === plans.length - 1 ? `${span} self-start`.trim() : undefined}
               style={{ '--i': i } as CSSProperties}
               onSelect={(id) => {

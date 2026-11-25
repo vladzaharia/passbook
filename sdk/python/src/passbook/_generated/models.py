@@ -5668,8 +5668,6 @@ class OrgSummary(_Model):
     passesToUpdate: int | None = None
     counts: OrgSummaryCounts
     countsCapped: bool
-    personalOwner: _Dict[str, _Any] | None = None
-    plan: _Dict[str, _Any] | None = None
 
 class OrgSummaryCounts(_Model):
     passes: int
@@ -8396,11 +8394,11 @@ class PlatformOrgsListResponseItemsItem(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
-    plan: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsListResponseItemsItemCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsListResponseItemsItemCounts(_Model):
     passes: int
@@ -8450,11 +8448,11 @@ class PlatformOrgsRetrieveResponse(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
-    plan: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsRetrieveResponseCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsRetrieveResponseCounts(_Model):
     passes: int
@@ -8472,11 +8470,11 @@ class PlatformOrgsSetStatusResponse(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
-    plan: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsSetStatusResponseCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsSetStatusResponseCounts(_Model):
     passes: int

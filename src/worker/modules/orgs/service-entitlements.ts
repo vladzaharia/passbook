@@ -1,13 +1,12 @@
 import type { z } from 'zod';
 import type {
   OrgEntitlementsDto,
-  OrgOwnEntitlementsSchema,
   SetOrgEntitlementsSchema,
 } from '../../../shared/contracts/entitlement-admin.ts';
 import {
   ENTITLEMENT_KEYS,
-  ENTITLEMENT_PRESETS,
   type EntitlementValue,
+  presetOrder,
   presetValues,
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
@@ -28,10 +27,8 @@ import {
   storedOverrides,
   writeEntitlements,
 } from './repo-entitlements.ts';
-import { orgUsage } from './repo-usage.ts';
 
 type Input = z.output<typeof SetOrgEntitlementsSchema>;
-type Own = z.infer<typeof OrgOwnEntitlementsSchema>;
 type Override = NonNullable<Input['overrides'][string]>;
 
 const notFound = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
@@ -81,10 +78,6 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
     if (known === undefined || value === undefined) continue;
     byPreset.set(v.preset, { ...byPreset.get(v.preset), [known]: value });
   }
-  const order = (p: string) => {
-    const at = (ENTITLEMENT_PRESETS as readonly string[]).indexOf(p);
-    return at < 0 ? ENTITLEMENT_PRESETS.length : at;
-  };
   const list = presets
     .map((p) => ({
       preset: p.preset,
@@ -93,7 +86,7 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
       orgCount: p.org_count,
       values: byPreset.get(p.preset) ?? {},
     }))
-    .sort((a, b) => order(a.preset) - order(b.preset) || a.preset.localeCompare(b.preset));
+    .sort((a, b) => presetOrder(a.preset, b.preset));
   const current = row ? list.find((p) => p.preset === row.preset) : undefined;
   const overrides = new Map<
     string,
@@ -167,18 +160,6 @@ export async function readOrgEntitlements(
       ...p,
       values: p.values as Record<string, EntitlementValue>,
     })),
-  };
-}
-
-/** The org's own admins: what the org has and whether it is the preset's or a custom value. No notes. */
-export async function readOwnEntitlements(ctx: ServiceContext, orgId: string): Promise<Own> {
-  const full = await readOrgEntitlements(ctx, orgId);
-  return {
-    orgId,
-    preset: full.preset,
-    label: full.presetLabel,
-    items: full.items.map(({ key, value, source }) => ({ key, value, source })),
-    usage: await orgUsage(ctx.env.DB, orgId, ctx.clock.now()),
   };
 }
 

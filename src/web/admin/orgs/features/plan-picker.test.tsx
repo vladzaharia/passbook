@@ -87,6 +87,20 @@ describe('PlanPicker', () => {
   });
 });
 
+describe('PlanPicker units', () => {
+  it('says "1 pass" and "1 template" for a plan of one', () => {
+    const one: PresetOptionDto = {
+      preset: 'solo',
+      label: 'Solo',
+      orgCount: 0,
+      values: { ...presetValues('trial'), 'passes.live': 1, templates: 1 },
+    };
+    render(<PlanPicker plans={[one]} current={null} picked={null} onPick={() => {}} />);
+    expect(screen.getByText('pass')).toBeVisible();
+    expect(screen.getByText('template')).toBeVisible();
+  });
+});
+
 describe('lastSpan', () => {
   it('lets the last card fill a short row at two and three columns', () => {
     expect(lastSpan(4)).toBe('@[54rem]:col-span-3');

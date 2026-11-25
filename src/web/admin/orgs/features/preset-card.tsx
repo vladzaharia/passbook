@@ -71,6 +71,7 @@ export function PresetCard({
           picked={picked}
           onPick={setPicked}
           arrival={arrival}
+          orgName={orgName}
         />
         {moving && target && impact ? (
           <Callout

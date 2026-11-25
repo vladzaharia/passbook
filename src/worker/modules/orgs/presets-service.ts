@@ -5,8 +5,8 @@ import type {
 } from '../../../shared/contracts/entitlement-presets.ts';
 import {
   ENTITLEMENT_KEYS,
-  ENTITLEMENT_PRESETS,
   type EntitlementValue,
+  presetOrder,
   presetValues,
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
@@ -45,13 +45,6 @@ export async function loadPresetValues(
   return byPreset;
 }
 
-const rank = (p: string) => {
-  const at = (ENTITLEMENT_PRESETS as readonly string[]).indexOf(p);
-  return at < 0 ? ENTITLEMENT_PRESETS.length : at;
-};
-const byRegistry = (a: { preset: string }, b: { preset: string }) =>
-  rank(a.preset) - rank(b.preset) || a.preset.localeCompare(b.preset);
-
 /** Platform: every preset with its values and how many organizations are on it. */
 export async function listPresets(ctx: ServiceContext): Promise<EntitlementPresetDto[]> {
   const [rows, values, pending] = await Promise.all([
@@ -59,15 +52,17 @@ export async function listPresets(ctx: ServiceContext): Promise<EntitlementPrese
     loadPresetValues(ctx),
     pendingCounts(ctx.env.DB),
   ]);
-  return [...rows].sort(byRegistry).map((p) => ({
-    preset: p.preset,
-    label: p.label,
-    revision: p.revision,
-    updatedAt: p.updated_at,
-    orgCount: p.org_count,
-    pendingOrgs: pending.get(p.preset) ?? 0,
-    values: (values.get(p.preset) ?? {}) as Record<string, EntitlementValue>,
-  }));
+  return [...rows]
+    .sort((a, b) => presetOrder(a.preset, b.preset))
+    .map((p) => ({
+      preset: p.preset,
+      label: p.label,
+      revision: p.revision,
+      updatedAt: p.updated_at,
+      orgCount: p.org_count,
+      pendingOrgs: pending.get(p.preset) ?? 0,
+      values: (values.get(p.preset) ?? {}) as Record<string, EntitlementValue>,
+    }));
 }
 
 /** One organization moves with its preset: its revision, an audit row, and the channel runs the plan change asks for. */

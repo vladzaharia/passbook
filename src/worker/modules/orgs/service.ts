@@ -4,7 +4,6 @@ import type {
   CreateOrgSchema,
   OrgBrandingSchema,
   OrgDto,
-  OrgSummarySchema,
   UpdateOrgSchema,
 } from '../../../shared/contracts/orgs.ts';
 import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
@@ -39,12 +38,11 @@ import {
 } from './repo-org-writes.ts';
 import { getPersonalUser, insertOrgWithCreator } from './repo-personal.ts';
 import { plansOf } from './repo-usage.ts';
-import { ownersOf, summarize } from './service-summary.ts';
+import { ownersOf, type Summary, summarize } from './service-summary.ts';
 
 export { toDto };
 
 type Branding = z.infer<typeof OrgBrandingSchema>;
-type Summary = z.infer<typeof OrgSummarySchema>;
 
 /** Adds the count of live passes a save will rebuild; absent when none. */
 export const withUpdates = (dto: OrgDto, passes: number | undefined): OrgDto =>

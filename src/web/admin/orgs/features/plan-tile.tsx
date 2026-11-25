@@ -21,6 +21,8 @@ export interface PlanTileProps {
   checked: boolean;
   /** Counts picks of this tile; each one replays the icon and the numbers. */
   playKey: number;
+  /** The org's name where it is known: the email sender row reads it. */
+  orgName?: string;
   className?: string;
   style?: CSSProperties;
   onSelect: (preset: string) => void;
@@ -67,6 +69,7 @@ export function PlanTile({
   popCurrent,
   checked,
   playKey,
+  orgName,
   className,
   style,
   onSelect,
@@ -135,7 +138,7 @@ export function PlanTile({
               value={facts.passes}
               from={from?.passes}
               playKey={playKey}
-              unit={PLAN_COPY.passes}
+              unit={PLAN_COPY.passesUnit(facts.passes)}
               none={PLAN_COPY.noPasses}
               noLimit={PLAN_COPY.noLimitPasses}
             />
@@ -143,7 +146,7 @@ export function PlanTile({
               value={facts.templates}
               from={from?.templates}
               playKey={playKey}
-              unit={PLAN_COPY.templates}
+              unit={PLAN_COPY.templatesUnit(facts.templates)}
               none={PLAN_COPY.noTemplates}
               noLimit={PLAN_COPY.noLimitTemplates}
             />
@@ -156,7 +159,7 @@ export function PlanTile({
         </span>
       </label>
       <span className="absolute right-3 bottom-4.5 pointer-coarse:bottom-4">
-        <PlanFooterInfo plan={plan.label} level={facts.footer} />
+        <PlanFooterInfo plan={plan.label} level={facts.footer} orgName={orgName} />
       </span>
     </div>
   );

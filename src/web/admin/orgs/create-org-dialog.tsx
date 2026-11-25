@@ -34,7 +34,7 @@ type PlanId = NonNullable<z.input<typeof CreateOrgSchema>['preset']>;
 /** What a new org starts on when nothing is picked; the server's own default. */
 const DEFAULT_PLAN = 'standard';
 
-/** The plans as cards, once they load. A failed read leaves the field out: the server picks the default. */
+/** The plans as cards, once they load. A failed read leaves the field out; the create still sends the default plan. */
 function PlanField({ value, onChange }: { value: string; onChange: (preset: string) => void }) {
   const presets = usePresets();
   const plans = (presets.data?.presets ?? []).filter((p) => p.preset !== 'developer');

@@ -17,11 +17,8 @@ import { requestActor } from '../audit/http.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
 import { listPresets, setPreset } from './presets-service.ts';
 import { orgsOnPreset } from './repo-presets.ts';
-import {
-  readOrgEntitlements,
-  readOwnEntitlements,
-  setOrgEntitlements,
-} from './service-entitlements.ts';
+import { readOrgEntitlements, setOrgEntitlements } from './service-entitlements.ts';
+import { readOwnEntitlements } from './service-own-entitlements.ts';
 
 const noStore = async (
   c: { header: (name: string, value: string) => void },
