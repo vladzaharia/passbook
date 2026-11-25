@@ -87,9 +87,8 @@ async function desk(opts: { manual?: boolean; passId?: string; outcome?: object 
     }),
   });
   await flush();
-  const resolveKey = (fake.api.resolve.mock.calls[0]?.[0] as { idempotencyKey: string })
-    .idempotencyKey;
-  return { clock, store, api: fake.api, ...draft, key: resolveKey };
+  const sent = (fake.api.resolve.mock.calls[0]?.[0] ?? {}) as { idempotencyKey: string };
+  return { clock, store, api: fake.api, ...draft, key: sent.idempotencyKey };
 }
 
 const open = (d: Awaited<ReturnType<typeof desk>>) =>
