@@ -14,7 +14,7 @@ import { prepare } from './runtime.ts';
 import { inlineStep, seedConnectionWorkflow } from './runtime-fixtures.ts';
 import * as service from './service.ts';
 import { executeSync } from './sync-runner.ts';
-import { addMembership, type Kit, linkedPass, makeKit } from './test-kit.ts';
+import { addMembership, createDemo, type Kit, linkedPass, makeKit } from './test-kit.ts';
 
 let kit: Kit;
 let authority: ConnectionAuthority;
@@ -150,6 +150,39 @@ describe('file-upload through the sync engine', () => {
     });
     await sync(dto.id);
     expect(appliedRefs().sort()).toEqual(SIX.slice(1).map((r) => `Name ${r[0]}`));
+  });
+
+  it('re-applies every row after a mapping change, and not after a rename', async () => {
+    const dto = await connect(SIX);
+    for (const [id] of SIX.slice(1)) await linkedPass(kit, dto.id, id as string);
+    await sync(dto.id);
+    reset();
+    await service.update(kit.sctx, kit.actor, dto.id, { name: 'Renamed' });
+    await sync(dto.id);
+    expect(kit.seams.applied).toEqual([]);
+    await service.update(kit.sctx, kit.actor, dto.id, {
+      mapping: { memberName: { from: '/name', transform: { kind: 'upper' } } },
+    });
+    await sync(dto.id);
+    expect(appliedRefs().sort()).toEqual(SIX.slice(1).map((r) => `NAME ${r[0]?.toUpperCase()}`));
+  });
+
+  it('does the same for a polling connector', async () => {
+    const dto = await createDemo(kit, {
+      config: { count: 3 },
+      mapping: { memberName: { from: '/memberName' } },
+    });
+    for (const ref of ['m-001', 'm-002', 'm-003']) await linkedPass(kit, dto.id, ref);
+    await sync(dto.id);
+    reset();
+    await service.update(kit.sctx, kit.actor, dto.id, { name: 'Renamed' });
+    await sync(dto.id);
+    const afterRename = kit.seams.applied.length;
+    await service.update(kit.sctx, kit.actor, dto.id, {
+      mapping: { memberName: { from: '/memberName', transform: { kind: 'upper' } } },
+    });
+    await sync(dto.id);
+    expect([afterRename, kit.seams.applied.length - afterRename]).toEqual([0, 3]);
   });
 
   it('unions the bases when a revision lands before the last one finished', async () => {

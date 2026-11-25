@@ -274,7 +274,7 @@ describe('update', () => {
 
     await service.update(kit.sctx, kit.actor, dto.id, { mapping: { memberName: { from: '/n' } } });
     row = await getConnection(kit.env.DB, dto.id);
-    expect(row?.generation).toBe(2);
+    expect([row?.generation, row?.cursor]).toEqual([2, null]);
 
     await service.update(kit.sctx, kit.actor, dto.id, {
       secrets: { token: 'rotated-token-value' },
@@ -290,6 +290,15 @@ describe('update', () => {
     });
     row = await getConnection(kit.env.DB, dto.id);
     expect(row?.generation).toBe(4);
+  });
+
+  it('resets the cursor when the holder email field changes', async () => {
+    const dto = await service.create(kit.sctx, kit.actor, httpJson());
+    await kit.env.DB.prepare("UPDATE connections SET cursor = 'abc' WHERE id = ?")
+      .bind(dto.id)
+      .run();
+    await service.update(kit.sctx, kit.actor, dto.id, { holderEmailField: '/email' });
+    expect((await getConnection(kit.env.DB, dto.id))?.cursor).toBeNull();
   });
 
   it('replaces credentials without leaving the old row behind', async () => {

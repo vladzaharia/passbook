@@ -143,17 +143,21 @@ export async function update(
   if (input.mapping !== undefined) {
     validateMapping(input.mapping);
     patch.mapping = input.mapping;
+    // What a record means changed: list the source again so every pass is re-applied.
+    patch.cursor = null;
     changed.add('mapping');
   }
   if (input.holderEmailField !== undefined) {
     assertPointer(input.holderEmailField, 'holderEmailField');
     patch.holderEmailField = input.holderEmailField;
+    patch.cursor = null;
     changed.add('holderEmailField');
   }
   const templateId = input.defaultTemplateId ?? conn.defaultTemplateId;
   if (input.defaultTemplateId !== undefined) {
     await assertTemplateUsable(sctx, conn.orgId, input.defaultTemplateId);
     patch.defaultTemplateId = input.defaultTemplateId;
+    patch.cursor = null;
     changed.add('defaultTemplateId');
   }
   const autoCreate = input.autoCreate ?? conn.autoCreate;
