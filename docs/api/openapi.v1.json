@@ -50650,6 +50650,9 @@
                       "pasteSecret": {
                         "type": "boolean"
                       },
+                      "entitled": {
+                        "type": "boolean"
+                      },
                       "outputFields": {
                         "type": "object",
                         "additionalProperties": {
@@ -50765,6 +50768,7 @@
                       "id",
                       "label",
                       "pasteSecret",
+                      "entitled",
                       "outputFields",
                       "mapping",
                       "holderEmailField",
@@ -50772,6 +50776,9 @@
                     ]
                   },
                   "default": []
+                },
+                "entitled": {
+                  "type": "boolean"
                 }
               },
               "required": [
@@ -50780,7 +50787,8 @@
                 "displayName",
                 "capabilities",
                 "outputFields",
-                "defaults"
+                "defaults",
+                "entitled"
               ]
             }
           },
@@ -50941,6 +50949,9 @@
                 "pasteSecret": {
                   "type": "boolean"
                 },
+                "entitled": {
+                  "type": "boolean"
+                },
                 "outputFields": {
                   "type": "object",
                   "additionalProperties": {
@@ -51056,6 +51067,7 @@
                 "id",
                 "label",
                 "pasteSecret",
+                "entitled",
                 "outputFields",
                 "mapping",
                 "holderEmailField",
@@ -51063,6 +51075,9 @@
               ]
             },
             "default": []
+          },
+          "entitled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -51071,7 +51086,8 @@
           "displayName",
           "capabilities",
           "outputFields",
-          "defaults"
+          "defaults",
+          "entitled"
         ]
       },
       "WebhookEndpointsCreateParams": {
@@ -112295,7 +112311,8 @@
                         "requestsPerMinute": 6,
                         "timeoutMs": 15000
                       },
-                      "recipes": []
+                      "recipes": [],
+                      "entitled": true
                     }
                   ],
                   "nextCursor": null
@@ -112417,7 +112434,8 @@
                     "requestsPerMinute": 6,
                     "timeoutMs": 15000
                   },
-                  "recipes": []
+                  "recipes": [],
+                  "entitled": true
                 }
               }
             }

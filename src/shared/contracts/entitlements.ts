@@ -71,7 +71,7 @@ const block = (r: Row<string[]>): EntitlementDef => ({
 });
 const limit = (r: Row<LimitValue>): EntitlementDef => ({ kind: 'limit', presets: col(r) });
 
-const CSV: string[] = ['csv-url', 'webhook-push/*'];
+const BASIC_CONNECTORS: string[] = ['csv-url', 'webhook-push/*', 'file-upload', 'demo'];
 const ALL: string[] = ['*'];
 const BOARDING: string[] = ['boardingPass'];
 const NONE: string[] = [];
@@ -91,7 +91,7 @@ export const ENTITLEMENTS = {
   webhooks: flag([0, 1, 1, 1, 1, 1]),
   'webhooks.endpoints': limit([1, 2, 10, 50, null, 3]),
   connections: limit([1, 2, 10, 50, null, 0]),
-  connectors: allow([CSV, CSV, ALL, ALL, ALL, NONE]),
+  connectors: allow([BASIC_CONNECTORS, BASIC_CONNECTORS, ALL, ALL, ALL, NONE]),
   'wallet.google': flag([0, 1, 1, 1, 1, 0]),
   'wallet.samsung': flag([0, 0, 1, 1, 1, 0]),
   print: flag([0, 1, 1, 1, 1, 0]),
@@ -166,12 +166,12 @@ export function levelsAtLeast(key: EntitlementKey, min: string): string[] {
 }
 
 /**
- * The list entries that match `item` (`type` or `type/recipe`): `*`, the item, and `type/*`. A block-list
- * also matches the bare `type`, so blocking a type blocks its recipes.
+ * The list entries that match `item` (`type` or `type/recipe`): `*`, the item, `type/*` and the bare `type`,
+ * so listing a type covers its recipes, and blocking a type blocks them.
  */
-export function listMatches(item: string, blockList = false): string[] {
+export function listMatches(item: string): string[] {
   const type = item.split('/')[0] ?? item;
-  return ['*', item, `${type}/*`, ...(blockList ? [type] : [])];
+  return [...new Set(['*', item, `${type}/*`, type])];
 }
 
 /** Whether `used` more fits under a limit value. `null` has no cap; anything not a count denies. */
@@ -197,7 +197,7 @@ export function entitledValue(
       return want !== undefined && levelsAtLeast(key, want).includes(value as string);
     case 'list': {
       if (want === undefined || want.includes('*')) return false;
-      const hit = listMatches(want, def.block).some((m) => (value as string[]).includes(m));
+      const hit = listMatches(want).some((m) => (value as string[]).includes(m));
       return def.block ? !hit : hit;
     }
     case 'limit':

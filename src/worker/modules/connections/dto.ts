@@ -117,7 +117,8 @@ export function connectorInfo(def: AnyConnector): z.infer<typeof ConnectorInfoSc
     secretSchema: def.secretSchema ? jsonSchemaOf(def.secretSchema) : null,
     outputFields: def.outputFields,
     defaults: def.defaults,
-    recipes: [...(def.recipes ?? [])],
+    recipes: (def.recipes ?? []).map((r) => ({ ...r, entitled: true })),
+    entitled: true,
   };
 }
 

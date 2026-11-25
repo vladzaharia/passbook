@@ -360,6 +360,38 @@
     "note": "Sender recipes carry the picker category of their tile."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].entitled: field added",
+    "note": "With an org, the list shows only what its plan allows. POST /connections gives 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].entitled: field added",
+    "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.entitled: field added",
+    "note": "The detail is never filtered; entitled says whether the plan includes it for new connections. Always true without an org."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].entitled: field added",
+    "note": "Each recipe lists whether the plan allows it for new connections. Always true without an org."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
