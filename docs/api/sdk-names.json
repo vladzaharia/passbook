@@ -1211,6 +1211,22 @@
     "resource": "passes.memberPhoto",
     "method": "upload"
   },
+  "polaris-claims.getPlatformIdpGroupsByKeyClaims": {
+    "resource": "platform.idp.groups.claims",
+    "method": "retrieve"
+  },
+  "polaris-claims.getUsersByIdClaims": {
+    "resource": "platform.users.claims",
+    "method": "retrieve"
+  },
+  "polaris-claims.patchPlatformIdpGroupsByKeyClaims": {
+    "resource": "platform.idp.groups.claims",
+    "method": "update"
+  },
+  "polaris-claims.patchUsersByIdClaims": {
+    "resource": "platform.users.claims",
+    "method": "update"
+  },
   "public.getBByToken": {
     "resource": "public.bundles",
     "method": "retrievePage",

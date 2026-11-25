@@ -44,8 +44,12 @@ describe('access', () => {
     const t = await target();
     const admin = await person();
     expect((await h.call(url(t.user.id))).status).toBe(401);
-    for (const who of [await person(['user']), await person(['user'], 'magic_link')])
-      await expectProblem(await h.call(url(t.user.id), { headers: who.headers }), 403);
+    const cases = [
+      [await person(['user']), 'FORBIDDEN'],
+      [await person(['admin', 'user'], 'magic_link'), 'IDP_SIGN_IN_REQUIRED'],
+    ] as const;
+    for (const [who, code] of cases)
+      await expectProblem(await h.call(url(t.user.id), { headers: who.headers }), 403, code);
     const key = await makeApiKey(f());
     expect((await h.call(url(t.user.id), { headers: key.headers })).status).toBe(401);
     expect((await h.call(url(t.user.id), { headers: admin.headers })).status).toBe(200);
@@ -56,6 +60,7 @@ describe('access', () => {
         headers: (await person(['user'])).headers,
       }),
       403,
+      'FORBIDDEN',
     );
   });
 
@@ -117,7 +122,11 @@ describe('user claims', () => {
     const t = await target();
     const { headers } = await person();
     for (const key of ['email', 'groups', 'sub', 'picture', 'other_app_key'])
-      await expectProblem(await patch(url(t.user.id), headers, { [key]: text('x') }), 403);
+      await expectProblem(
+        await patch(url(t.user.id), headers, { [key]: text('x') }),
+        403,
+        'IDP_REFUSED',
+      );
     idp.addAccount('sub-admin', { isAdmin: true });
     const adminUser = await makeUser(f());
     await run(
@@ -125,7 +134,11 @@ describe('user claims', () => {
       "INSERT INTO auth_identities (provider, subject, user_id, created_at) VALUES ('pocketid', 'sub-admin', ?, 0)",
       [adminUser.id],
     );
-    await expectProblem(await patch(url(adminUser.id), headers, { passbook_a: text('x') }), 403);
+    await expectProblem(
+      await patch(url(adminUser.id), headers, { passbook_a: text('x') }),
+      403,
+      'IDP_REFUSED',
+    );
     expect(idp.writes).toBe(0);
   });
 
@@ -140,7 +153,8 @@ describe('user claims', () => {
       { 'bad key!': text('x') },
       Object.fromEntries(Array.from({ length: 21 }, (_, i) => [`passbook_k${i}`, text('x')])),
     ];
-    for (const set of bad) await expectProblem(await patch(url(t.user.id), headers, set), 422);
+    for (const set of bad)
+      await expectProblem(await patch(url(t.user.id), headers, set), 422, 'VALIDATION');
     expect(idp.log).not.toContain('setClaims');
   });
 
@@ -159,7 +173,7 @@ describe('user claims', () => {
     const res = await patch(url(t.user.id), headers, { passbook_a: text('x') });
     expect(await res.json()).toMatchObject({ dryRun: true });
     expect(idp.writes).toBe(0);
-    expect(await audit()).toEqual([]);
+    expect(await audit(t.user.id)).toEqual([]);
   });
 
   it('answers 503 without the binding', async () => {
@@ -187,7 +201,11 @@ describe('group claims', () => {
         otherKeys: 0,
       });
     }
-    await expectProblem(await h.call('/api/v1/platform/idp/groups/nope/claims', { headers }), 403);
+    await expectProblem(
+      await h.call('/api/v1/platform/idp/groups/nope/claims', { headers }),
+      403,
+      'IDP_REFUSED',
+    );
   });
 });
 
@@ -205,7 +223,7 @@ describe('values stay out of records', () => {
       await patch(url(t.user.id), headers, { passbook_secret: text('x'.repeat(5000)) });
       const logged = spies.flatMap((s) => s.mock.calls.map((c) => c.map(String).join(' ')));
       expect(logged.join('\n')).not.toContain(SECRET);
-      const rows = await audit();
+      const rows = await audit(t.user.id);
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({
         actor_type: 'user',
@@ -227,7 +245,7 @@ describe('values stay out of records', () => {
   });
 });
 
-const audit = () =>
+const audit = (targetId: string) =>
   all<{
     actor_type: string;
     actor_id: string;
@@ -236,5 +254,6 @@ const audit = () =>
     detail: string;
   }>(
     h.env.DB,
-    "SELECT actor_type, actor_id, target_type, target_id, detail FROM audit_log WHERE action = 'idp.claims_set'",
+    "SELECT actor_type, actor_id, target_type, target_id, detail FROM audit_log WHERE action = 'idp.claims_set' AND target_id = ?",
+    [targetId],
   );

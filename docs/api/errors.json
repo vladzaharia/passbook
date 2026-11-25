@@ -1888,7 +1888,25 @@
       ]
     },
     {
+      "code": "IDP_MULTIPLE_ACCOUNTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NO_ACCOUNT",
       "statuses": [
         409
       ],

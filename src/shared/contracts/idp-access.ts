@@ -54,7 +54,7 @@ export type ClaimValue = z.infer<typeof ClaimValueSchema>;
 
 /** Only the claims PassBook manages. `otherKeys` counts the claims other apps or the owner set; they are never listed. */
 export const ClaimsViewSchema = z.object({
-  claims: z.record(z.string(), ClaimValueSchema),
+  claims: z.record(z.string(), z.object({ type: ClaimTypeSchema, value: z.unknown() })),
   otherKeys: z.number().int().min(0),
 });
 export type ClaimsView = z.infer<typeof ClaimsViewSchema>;
