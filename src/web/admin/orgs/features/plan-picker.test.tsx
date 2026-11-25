@@ -6,7 +6,7 @@ import type { PresetOptionDto } from '@/shared/contracts/entitlement-admin.ts';
 import { ENTITLEMENT_PRESETS, presetValues } from '@/shared/contracts/entitlements.ts';
 import { PRESET_LABEL } from '@/shared/copy/entitlements.ts';
 import { installDomShims } from '@/web/lib/test-utils.tsx';
-import { lastSpan, PlanPicker } from './plan-picker.tsx';
+import { PlanPicker } from './plan-picker.tsx';
 
 installDomShims();
 
@@ -22,11 +22,13 @@ function Harness({ current }: { current: string | null }) {
   return <PlanPicker plans={plans} current={current} picked={picked} onPick={setPicked} />;
 }
 
+const tile = (name: string) =>
+  within(screen.getByRole('radio', { name }).closest('[data-plan-tile]') as HTMLElement);
+
 describe('PlanPicker', () => {
-  it('lists the plans in order as radios named by the plan, never the developer sandbox', () => {
+  it('lists the plans in order as one radio group, never the developer sandbox', () => {
     render(<Harness current="standard" />);
-    const names = screen.getAllByRole('radio').map((r) => r.getAttribute('aria-labelledby'));
-    expect(names).toHaveLength(5);
+    expect(screen.getByRole('radiogroup', { name: 'Plan' })).toBeVisible();
     expect(screen.getAllByRole('radio').map((r) => (r as HTMLInputElement).value)).toEqual([
       'trial',
       'starter',
@@ -34,39 +36,43 @@ describe('PlanPicker', () => {
       'premium',
       'legacy',
     ]);
-    expect(screen.getByRole('radio', { name: 'Unlimited' })).toBeInTheDocument();
     expect(screen.queryByText('Developer sandbox')).toBeNull();
     expect(screen.getByRole('radio', { name: 'Standard' })).toBeChecked();
   });
 
-  it('shows four facts computed from values, with no notes and no org counts', () => {
+  it('shows each plan as aligned limits, what it includes and one footer row', () => {
     render(<Harness current="standard" />);
-    const standard = screen
-      .getByRole('radio', { name: 'Standard' })
-      .closest('label') as HTMLElement;
-    expect(within(standard).getByText('5,000')).toBeVisible();
-    expect(within(standard).getByText('25')).toBeVisible();
-    const chips = within(within(standard).getByRole('list', { name: 'Channels' }));
-    expect(chips.getAllByRole('listitem').map((c) => c.textContent)).toEqual([
+    const standard = tile('Standard');
+    const rows = Object.fromEntries(
+      standard.getAllByRole('term').map((t) => [t.textContent, t.nextElementSibling?.textContent]),
+    );
+    expect(rows).toEqual({
+      Passes: '5,000',
+      Templates: '25',
+      Scanners: '20',
+      Members: '25',
+      'API keys': '10',
+    });
+    expect(standard.getAllByRole('listitem').map((i) => i.textContent)).toEqual([
       'Apple',
       'Google',
       'Samsung',
-      'Print',
+      'Paper',
       'NFC tags',
     ]);
-    const trial = screen.getByRole('radio', { name: 'Trial' }).closest('label') as HTMLElement;
-    const off = within(trial).getAllByText('not included', { exact: false });
-    expect(off.map((e) => e.parentElement?.textContent?.trim())).toEqual([
-      'Google not included',
-      'Samsung not included',
-      'Print not included',
-      'NFC not included',
-    ]);
-    const unlimited = screen
-      .getByRole('radio', { name: 'Unlimited' })
-      .closest('label') as HTMLElement;
-    expect(within(unlimited).getByText('No limit on passes')).toBeInTheDocument();
-    expect(within(unlimited).getByText('Copy-proof NFC')).toBeInTheDocument();
+    expect(standard.getByText('Footer')).toBeVisible();
+    expect(standard.getByText('Powered by PassBook')).toBeVisible();
+    // What a plan lacks is left out, not shown dashed.
+    expect(tile('Trial').queryByText('Google')).toBeNull();
+    expect(tile('Trial').getByText('Issued with PassBook')).toBeVisible();
+    expect(tile('Premium').getByText('Footer').nextElementSibling).toHaveTextContent('None');
+    expect(tile('Unlimited').getAllByText('No limit').length).toBe(5);
+    expect(
+      tile('Unlimited')
+        .getAllByRole('listitem')
+        .map((i) => i.textContent),
+    ).toEqual(['Apple', 'Google', 'Samsung', 'Paper', 'NFC tags', 'Copy-proof NFC']);
+    expect(screen.queryByRole('button', { name: /Where PassBook shows/ })).toBeNull();
     expect(screen.queryByText(/organization/)).toBeNull();
   });
 
@@ -74,37 +80,23 @@ describe('PlanPicker', () => {
     const user = userEvent.setup();
     render(<Harness current="standard" />);
     expect(screen.getAllByText('Current')).toHaveLength(1);
-    await user.click(screen.getByRole('radio', { name: 'Premium' }));
+    await user.click(screen.getByText('Premium'));
     expect(screen.getByRole('radio', { name: 'Premium' })).toBeChecked();
     expect(screen.getAllByText('Current')).toHaveLength(1);
     expect(screen.getByRole('radio', { name: 'Standard' })).toHaveAccessibleDescription(/Current/);
+  });
+
+  it('moves the pick with the arrow keys', async () => {
+    const user = userEvent.setup();
+    render(<Harness current="standard" />);
+    screen.getByRole('radio', { name: 'Standard' }).focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('radio', { name: 'Premium' })).toBeChecked();
   });
 
   it('has nothing picked and no badge before an org has a plan', () => {
     render(<Harness current={null} />);
     expect(screen.queryByText('Current')).toBeNull();
     for (const r of screen.getAllByRole('radio')) expect(r).not.toBeChecked();
-  });
-});
-
-describe('PlanPicker units', () => {
-  it('says "1 pass" and "1 template" for a plan of one', () => {
-    const one: PresetOptionDto = {
-      preset: 'solo',
-      label: 'Solo',
-      orgCount: 0,
-      values: { ...presetValues('trial'), 'passes.live': 1, templates: 1 },
-    };
-    render(<PlanPicker plans={[one]} current={null} picked={null} onPick={() => {}} />);
-    expect(screen.getByText('pass')).toBeVisible();
-    expect(screen.getByText('template')).toBeVisible();
-  });
-});
-
-describe('lastSpan', () => {
-  it('lets the last card fill a short row at two and three columns', () => {
-    expect(lastSpan(4)).toBe('@[54rem]:col-span-3');
-    expect(lastSpan(5)).toBe('@[36rem]:col-span-2 @[54rem]:col-span-2');
-    expect(lastSpan(6)).toBe('');
   });
 });

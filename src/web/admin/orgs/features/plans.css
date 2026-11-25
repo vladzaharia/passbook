@@ -1,6 +1,6 @@
 /*
- * Plan cards (plan-tile.tsx). Only transform and opacity animate. A pick replays the plan's icon once,
- * by a React key, never on load. Reduced motion drops the verbs; the ring and the fades stay.
+ * Plan tiles (plan-tile.tsx, plan-picker.tsx). Only transform and opacity animate. A pick replays the plan's
+ * icon once, by a React key, never on load. Reduced motion drops the verbs and the lift; the ring stays.
  */
 .plan-ring {
   position: absolute;
@@ -14,6 +14,54 @@
 }
 .plan-ring[data-on] {
   opacity: 1;
+}
+
+/* One column on a phone; a snapping row to scroll from 36rem; every plan side by side from 62rem. */
+.plan-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+.plan-row > .plan-tile {
+  min-width: 0;
+}
+@container (min-width: 36rem) {
+  .plan-row {
+    display: flex;
+    overflow-x: auto;
+    padding: 0.25rem 0.25rem 0.75rem;
+    margin: -0.25rem;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0.25rem;
+    overscroll-behavior-x: contain;
+  }
+  .plan-row > .plan-tile {
+    flex: 0 0 15.5rem;
+    scroll-snap-align: start;
+  }
+}
+@container (min-width: 62rem) {
+  .plan-row:not([data-many]) {
+    display: grid;
+    grid-template-columns: repeat(var(--plans), minmax(0, 1fr));
+    overflow: visible;
+    padding-bottom: 0.25rem;
+  }
+  .plan-row:not([data-many]) > .plan-tile {
+    flex: none;
+  }
+}
+
+.plan-face {
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: var(--wl-dur-hover);
+  transition-timing-function: var(--wl-ease-move);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .plan-face:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--wl-glow-accent);
+  }
 }
 
 @keyframes plan-turn {
