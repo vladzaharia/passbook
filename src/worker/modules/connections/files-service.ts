@@ -16,7 +16,6 @@ import {
   FileExpiredError,
   FileIdColumnMissingError,
   FileNotFoundError,
-  FileStateError,
   rejectFile,
 } from './files-errors.ts';
 import {
@@ -290,10 +289,6 @@ export async function prepareBind(
     now: ctx.clock.now(),
   };
 }
-
-/** A stale draft at commit (expired, discarded or bound in the meantime) reads as the state it is in. */
-export const staleDraft = (): FileStateError =>
-  new FileStateError('The upload changed. Upload the file again.');
 
 /** A draft file rides only on a connector that reads uploads, and such a connector needs one to be created. */
 export function assertFileInput(

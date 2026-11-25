@@ -20,7 +20,7 @@ type C = Context<AppBindings>;
 const ConnectionOrgQuerySchema = z.object({ orgId: IdSchema.optional() });
 
 /** Lists are always scoped; only an org-bound key may omit the organization. */
-function connectionListOrg(c: C, requestedOrgId: string | undefined): string {
+export function connectionListOrg(c: C, requestedOrgId: string | undefined): string {
   const auth = c.var.auth;
   if (auth?.kind === 'api_key' && auth.orgId !== null) {
     if (requestedOrgId !== undefined) assertOrgAccess(auth, requestedOrgId);

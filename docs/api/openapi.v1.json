@@ -112426,7 +112426,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true

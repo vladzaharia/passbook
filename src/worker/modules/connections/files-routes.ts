@@ -24,6 +24,7 @@ import { authorizeConnection, authorizeStoredConnection } from './access.ts';
 import { FileNotFoundError } from './files-errors.ts';
 import * as revisions from './files-revisions.ts';
 import * as files from './files-service.ts';
+import { connectionListOrg } from './list-routes.ts';
 import { fileOrgOf } from './repo-files.ts';
 import { requireConnection } from './service-shared.ts';
 
@@ -87,7 +88,7 @@ export function registerConnectionFileRoutes(router: Router): void {
       const authority = await authorizeConnection(
         ctx,
         c.var.auth,
-        c.req.valid('query').orgId,
+        connectionListOrg(c, c.req.valid('query').orgId),
         'integrations:manage',
       );
       return idempotentJson(

@@ -119,10 +119,6 @@ async function deleteUnder(ctx: ServiceContext, prefix: string): Promise<number>
 export const deleteFileObjects = (ctx: ServiceContext, orgId: string, fileId: string) =>
   deleteUnder(ctx, prefixOf(orgId, fileId));
 
-/** Every object of an org's files. */
-export const deleteOrgObjects = (ctx: ServiceContext, orgId: string) =>
-  deleteUnder(ctx, `${ROOT}${orgId}/`);
-
 /** One page of the files bucket: each file id seen, with its newest object's upload time. */
 export async function listFileIds(
   ctx: ServiceContext,
