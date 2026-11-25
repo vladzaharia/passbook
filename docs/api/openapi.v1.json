@@ -40771,7 +40771,7 @@
                   "holdMs": {
                     "type": "integer",
                     "minimum": 60000,
-                    "maximum": 3600000,
+                    "maximum": 86400000,
                     "default": 300000
                   }
                 },
@@ -50901,6 +50901,12 @@
               {
                 "type": "number",
                 "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
                   24
                 ]
               },
@@ -50908,6 +50914,12 @@
                 "type": "number",
                 "enum": [
                   72
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  168
                 ]
               }
             ],

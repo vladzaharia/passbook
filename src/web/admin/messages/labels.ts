@@ -18,6 +18,7 @@ export const STATE_FILTERS: readonly [BroadcastState, string][] = [
 
 export const CLEAR_CHOICES: readonly { value: string; label: string; ms: number | null }[] = [
   { value: 'never', label: 'Never', ms: null },
+  { value: '15m', label: 'After 15 min', ms: 15 * 60_000 },
   { value: '1h', label: 'After 1 hour', ms: 3_600_000 },
   { value: '6h', label: 'After 6 hours', ms: 6 * 3_600_000 },
   { value: '1d', label: 'After 1 day', ms: 24 * 3_600_000 },

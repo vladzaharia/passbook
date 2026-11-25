@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ACCENT_PRESETS } from '@/shared/accent-presets.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
 import { cn } from '../../lib/cn.ts';
 import { Button, FileDrop, FormField, IconButton, Select } from '../../ui/index.ts';
@@ -16,15 +17,11 @@ const objectUrl = (file: Blob) =>
 
 const COPY = TEMPLATE_BRAND_COPY.designer;
 
-/** Offered until a logo brings its own: teal, violet, crimson, orange, blue, ink. */
-export const PRESETS: { name: string; rgb: Rgb }[] = [
-  { name: 'Teal', rgb: { r: 15, g: 118, b: 110 } },
-  { name: 'Violet', rgb: { r: 67, g: 56, b: 202 } },
-  { name: 'Crimson', rgb: { r: 190, g: 18, b: 60 } },
-  { name: 'Orange', rgb: { r: 194, g: 65, b: 12 } },
-  { name: 'Blue', rgb: { r: 29, g: 78, b: 216 } },
-  { name: 'Ink', rgb: { r: 15, g: 23, b: 42 } },
-];
+/** Offered until a logo brings its own. */
+export const PRESETS: { name: string; rgb: Rgb }[] = ACCENT_PRESETS.map((p) => ({
+  name: p.name,
+  rgb: parseColor(p.hex) as Rgb,
+}));
 const presetName = (c: Rgb) => PRESETS.find((p) => toHex(p.rgb) === toHex(c))?.name;
 
 /** What the organization already sets, and whether this person may write the organization's brand. */

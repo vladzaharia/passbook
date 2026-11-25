@@ -17,6 +17,7 @@ import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { commonFields } from './common-fields.ts';
 import type { ComposerState } from './composer-state.ts';
 import { CLEAR_CHOICES } from './labels.ts';
+import { QuickMessages } from './quick-messages.tsx';
 
 type TemplateDetailDto = z.infer<typeof TemplateDetailSchema>;
 type Patch = (patch: Partial<ComposerState>) => void;
@@ -53,6 +54,9 @@ export function MessageSection({
             />
           )}
         </FormField>
+      )}
+      {state.clearing ? null : (
+        <QuickMessages value={state.message} onPick={(message) => onChange({ message })} />
       )}
       <CheckboxField
         label="Only clear the current message"

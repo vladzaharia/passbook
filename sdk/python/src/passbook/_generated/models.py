@@ -13267,7 +13267,7 @@ class WebhookEndpointsEnsureCaptureParams(_Model):
     eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
 
 class WebhookEndpointsRotateSecretParams(_Model):
-    overlapHours: _Literal[0] | _Literal[24] | _Literal[72] | None = None
+    overlapHours: _Literal[0] | _Literal[1] | _Literal[24] | _Literal[72] | _Literal[168] | None = None
 
 class WebhookEndpointsRotateSecretResponse(_Model):
     secret: str

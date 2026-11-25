@@ -12376,7 +12376,7 @@ export type WebhookEndpointsEnsureCaptureParams = {
 };
 
 export type WebhookEndpointsRotateSecretParams = {
-  overlapHours?: 0 | 24 | 72;
+  overlapHours?: 0 | 1 | 24 | 72 | 168;
 };
 
 export type WebhookEndpointsRotateSecretResponse = {

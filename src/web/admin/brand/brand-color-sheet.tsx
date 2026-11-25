@@ -5,6 +5,7 @@ import { Button, Dialog, DialogContent, ErrorState, SkeletonRows, toast } from '
 import { HEX } from '../orgs/branding.ts';
 import { ColorField } from '../orgs/color-field.tsx';
 import { brandingUrl } from '../orgs/queries.ts';
+import { AccentChips } from './accent-chips.tsx';
 import { isSetupChanged, usePassSetup, useSavePassSetup } from './api.ts';
 import { ContrastLine } from './brand-card.tsx';
 import { valuesOf } from './draft.ts';
@@ -117,15 +118,18 @@ export function BrandColorSheet({
             onRetry={() => setup.refetch()}
           />
         ) : kind === 'accent' ? (
-          <ColorField
-            label={BRAND.accent}
-            value={v.accent ?? ''}
-            fallback="#0f766e"
-            empty="Default"
-            error={err(v.accent)}
-            help={BRAND.accentHelp}
-            onChange={(accent) => setEdit({ ...edit, accent })}
-          />
+          <div className="flex flex-col gap-3">
+            <ColorField
+              label={BRAND.accent}
+              value={v.accent ?? ''}
+              fallback="#0f766e"
+              empty="Default"
+              error={err(v.accent)}
+              help={BRAND.accentHelp}
+              onChange={(accent) => setEdit({ ...edit, accent })}
+            />
+            <AccentChips value={v.accent ?? ''} onPick={(accent) => setEdit({ ...edit, accent })} />
+          </div>
         ) : (
           <div className="flex flex-col gap-4">
             {(['background', 'foreground', 'label'] as const).map((key) => (

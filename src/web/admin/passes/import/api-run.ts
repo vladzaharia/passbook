@@ -36,7 +36,10 @@ export type EmailSend = false | { send: 'now' } | { send: 'held'; holdMs: number
 export const HOLD_CHOICES = [
   { value: 'now', label: 'Now', holdMs: 0 },
   { value: '5m', label: 'After 5 min', holdMs: 5 * 60_000 },
+  { value: '15m', label: 'After 15 min', holdMs: 15 * 60_000 },
   { value: '1h', label: 'After 1 hour', holdMs: 60 * 60_000 },
+  { value: '4h', label: 'After 4 hours', holdMs: 4 * 60 * 60_000 },
+  { value: '24h', label: 'After 24 hours', holdMs: 24 * 60 * 60_000 },
 ] as const;
 
 /** Commit once per click: the key makes a repeat of the same click harmless. */

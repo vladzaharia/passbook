@@ -117,6 +117,7 @@ async function releaseHeld(
 ): Promise<void> {
   const imp = await getImport(ctx.env.DB, params.orgId, params.mode, params.importId);
   if (end.state !== 'done' || !imp?.email_hold_ms || !step.sleep) return;
+  // Step names `hold` and `release-N`, and their order, must not change while instances may be sleeping: a renamed step replays.
   await step.sleep('hold', imp.email_hold_ms);
   let after = 0;
   for (let n = 0; n < MAX_CHUNKS; n++) {

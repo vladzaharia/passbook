@@ -2453,6 +2453,14 @@
     "note": "A plan can carry overrides: cell fixes by row and column, at most 200."
   },
   {
+    "key": "POST /api/v1/pass-imports/{id}/commit body.email.holdMs: maximum raised to 86400000",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdCommit",
+    "op": "POST /api/v1/pass-imports/{id}/commit",
+    "change": "body.email.holdMs: maximum raised to 86400000",
+    "note": "An import's email hold may now be up to 24 hours (86400000 ms); it was 1 hour. The minimum stays 60000."
+  },
+  {
     "key": "POST /api/v1/pass-imports/{id}/commit request.email: union added",
     "class": "additive",
     "operationId": "pass-imports.postPassImportsByIdCommit",
@@ -3299,6 +3307,14 @@
     "op": "POST /api/v1/wallet-providers/reissue",
     "change": "new operation",
     "note": "POST /wallet-providers/reissue sends every active Google or Samsung copy of an org's passes again. A key needs passes:write."
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/{id}/secret body.overlapHours: values 1 and 168 added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpointsByIdSecret",
+    "op": "POST /api/v1/webhook-endpoints/{id}/secret",
+    "change": "body.overlapHours: values 1 and 168 added",
+    "note": "The old signing secret may now stay valid for 1 hour or 7 days (168) as well as 0, 24 or 72 hours."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",

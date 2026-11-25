@@ -6,9 +6,9 @@ import {
   OkSchema,
 } from '../../../shared/contracts/common.ts';
 import { SendTestEventSchema } from '../../../shared/contracts/webhook-captures.ts';
+import { RotateWebhookSecretSchema } from '../../../shared/contracts/webhook-secrets.ts';
 import {
   CreateWebhookEndpointSchema,
-  RotateWebhookSecretSchema,
   UpdateWebhookEndpointSchema,
   WebhookEndpointCreatedSchema,
   WebhookEndpointListSchema,
