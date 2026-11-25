@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { getMode } from '@/web/lib/mode.ts';
-import { ROLES } from '../orgs/org-roles.ts';
+import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { isIpOrCidr, splitIps } from './cidr.ts';
 import { SHORT_EXPIRY } from './key-kind-fields.ts';
 import { useKeyScopes } from './use-key-scopes.ts';
@@ -11,12 +11,19 @@ import { useKeyScopes } from './use-key-scopes.ts';
 const DEFAULT_SCOPES = ['passes:read'];
 
 export const STEPS = [
-  { id: 'basics', title: 'Basics' },
-  { id: 'access', title: 'Access' },
-  { id: 'limits', title: 'Limits' },
-  { id: 'review', title: 'Review' },
+  { id: 'basics', title: 'Basics', heading: 'Name the key' },
+  { id: 'access', title: 'Access', heading: 'What it can do' },
+  { id: 'limits', title: 'Limits', heading: 'Where it works' },
+  { id: 'review', title: 'Review', heading: 'Check and create' },
 ] as const;
 export type StepId = (typeof STEPS)[number]['id'];
+
+/** Why Next is off, by step. */
+export const HINTS: Partial<Record<StepId, string>> = {
+  basics: 'Name the key.',
+  access: 'Pick access.',
+  limits: 'Fix the IPs.',
+};
 
 /** Where a server field error is fixed. */
 export const FIELD_STEP: Record<string, StepId> = {
@@ -135,3 +142,17 @@ export function useKeyForm(
   };
 }
 export type KeyForm = ReturnType<typeof useKeyForm>;
+
+/** What was chosen, under a done step on the rail. */
+export function keySummaries(form: KeyForm): Record<StepId, string | undefined> {
+  return {
+    basics: form.name.trim(),
+    access: form.role
+      ? ROLE_LABELS[form.role]
+      : `${form.scopes.length} scope${form.scopes.length === 1 ? '' : 's'}`,
+    limits: form.ipAllow.length
+      ? `${form.ipAllow.length} IP${form.ipAllow.length === 1 ? '' : 's'}`
+      : 'Any IP',
+    review: undefined,
+  };
+}

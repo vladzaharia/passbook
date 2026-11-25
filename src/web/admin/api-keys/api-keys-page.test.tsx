@@ -125,7 +125,10 @@ describe('api keys page', () => {
     await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
     expect(dialog.className).toContain('sm:max-w-4xl');
-    expect(within(dialog).getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     expect(within(dialog).getByRole('heading', { name: 'Name the key' })).toBeInTheDocument();
     expect(within(dialog).getByText('Platform')).toBeInTheDocument();
 
@@ -139,7 +142,10 @@ describe('api keys page', () => {
     expect(
       await within(dialog).findByRole('heading', { name: 'Where it works' }),
     ).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24{Enter}');
     expect(
       within(dialog).getByRole('button', { name: 'Remove 203.0.113.0/24' }),
@@ -240,7 +246,10 @@ describe('api keys page', () => {
     await user.type(within(dialog).getByLabelText(/Name/), 'Org integration');
     await next(user, dialog);
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Scan as a terminal' }));
-    expect(within(dialog).getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     expect(within(dialog).queryByRole('checkbox', { name: 'Old till' })).toBeNull();
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Front till' }));
     await next(user, dialog);
@@ -433,7 +442,10 @@ describe('api keys page', () => {
     expect(await within(dialog).findByText('A key with this name exists.')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Edit basics' }));
     expect(within(dialog).getByLabelText(/Name/)).toHaveValue('x');
+    // Every later step is still valid: the primary goes straight back to Review.
     await next(user, dialog);
+    await within(dialog).findByRole('heading', { name: 'Check and create' });
+    await user.click(within(dialog).getByRole('button', { name: 'Edit access' }));
     expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
   });
 

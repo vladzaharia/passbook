@@ -1,4 +1,4 @@
-import { Button, KeyValue, type KeyValueItem } from '@/web/ui/index.ts';
+import { WizardReview, type WizardReviewSection } from '@/web/ui/index.ts';
 import { ROLE_LABELS } from '../orgs/org-roles.ts';
 import { EXPIRY } from './key-kind-fields.ts';
 import { SCOPE_LABEL } from './queries.ts';
@@ -17,7 +17,7 @@ export function KeyReview({
   onEdit: (step: StepId) => void;
 }) {
   const modeName = form.keyMode === 'test' ? 'Test' : 'Live';
-  const sections: { id: StepId; title: string; items: KeyValueItem[] }[] = [
+  const sections: WizardReviewSection<StepId>[] = [
     {
       id: 'basics',
       title: 'Basics',
@@ -67,26 +67,10 @@ export function KeyReview({
     },
   ];
   return (
-    <div className="flex flex-col gap-3">
-      <div className="divide-y divide-border rounded-lg border border-border-strong bg-surface-raised">
-        {sections.map((s) => (
-          <section key={s.id} aria-label={s.title} className="p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h4 className="text-sm font-medium text-fg-strong">{s.title}</h4>
-              <Button
-                size="sm"
-                variant="ghost"
-                aria-label={`Edit ${s.title.toLowerCase()}`}
-                onClick={() => onEdit(s.id)}
-              >
-                Edit
-              </Button>
-            </div>
-            <KeyValue items={s.items} />
-          </section>
-        ))}
-      </div>
-      <p className="text-xs text-fg-muted">The key is shown once, after you create it.</p>
-    </div>
+    <WizardReview
+      sections={sections}
+      onEdit={onEdit}
+      note="The key is shown once, after you create it."
+    />
   );
 }

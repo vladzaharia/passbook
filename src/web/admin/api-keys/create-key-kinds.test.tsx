@@ -111,7 +111,10 @@ describe('key type, role and expiry', () => {
     await user.clear(within(dialog).getByLabelText(/Name/));
     await user.type(within(dialog).getByLabelText(/Name/), '{Enter}');
     expect(within(dialog).getByRole('heading', { name: 'Name the key' })).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   it('allows going back only to done steps', async () => {
