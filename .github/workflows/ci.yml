@@ -73,8 +73,26 @@ jobs:
         with:
           go-version-file: sdk/go/go.mod
           cache-dependency-path: sdk/go/go.mod
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
       - run: pip install -e 'sdk/python[test]'
       - run: npm run test:sdk
+      # Release checks from docs/operations.md "SDK release checks". The Python build is unverified locally.
+      - run: npm ci
+      - name: TypeScript SDK builds and packs
+        run: |
+          npx tsc -p sdk/typescript/tsconfig.build.json
+          (cd sdk/typescript && npm pack --dry-run)
+      - name: CLI builds against the linked SDK
+        run: |
+          (cd sdk/typescript && npm link)
+          (cd sdk/cli && npm link @passbook/sdk && npx tsc -p tsconfig.build.json && npm pack --dry-run)
+      - name: Python SDK builds
+        run: pip install build && (cd sdk/python && python -m build)
+      - name: Go SDK vets and tests
+        run: (cd sdk/go && go vet ./... && go test ./...)
 
   e2e:
     # Draft PRs skip CI; marking a PR ready runs it.
