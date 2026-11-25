@@ -7,6 +7,7 @@ import { shots } from './helpers/shots.ts';
 test.use({ storageState: 'e2e/.auth/admin.json' });
 test.setTimeout(360_000);
 
+const seedConnectionId = () => 'c'.repeat(26);
 const csv = (rows: string[][]) =>
   ['Member ID,Name,Email', ...rows.map((r) => r.join(','))].join('\n');
 const file = (name: string, text: string) => ({
@@ -108,7 +109,8 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   // The same File tab in Test mode, and for a viewer who cannot manage connections.
   await page.getByRole('radio', { name: 'Test' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Test mode' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Apply', exact: true })).toBeVisible();
+  // Stored connections have no Test environment: the page says so rather than showing Live data.
+  await expect(page.getByText('Connection not found')).toBeVisible();
   await shots(page, 'file-tab-test-mode');
   await page.getByRole('radio', { name: 'Live' }).click();
   const user = await apiAs('user');
@@ -198,30 +200,21 @@ test('file upload: a JSON file picks its records and ID from the tree', async ({
   await shots(page, 'file-wizard-json');
 });
 
-test('file upload: the File tab in a developer sandbox', async ({ browser }) => {
+test('file upload: a developer sandbox is Test-only, so a connection page is not found there', async ({
+  browser,
+}) => {
   const ctx = await browser.newContext({ storageState: 'e2e/.auth/developer.json' });
   const page = await ctx.newPage();
-  await page.goto('/admin');
-  const orgId = await sandboxOrgId(page);
   const dev = await apiAs('developer');
-  const tag = uid('sb');
-  const draft = await dev.send('POST', `/api/v1/connections/uploads?orgId=${orgId}`, {
-    name: 'members.csv',
-    content: csv([[`${tag}-1`, 'Maya', `maya.${tag}@example.test`]]),
-    encoding: 'utf8',
-  });
-  const created = await dev.send('POST', '/api/v1/connections', {
-    orgId,
-    connectorType: 'file-upload',
-    name: `Sandbox file ${tag}`,
-    config: { idColumn: '/Member ID' },
-    fileId: draft.id,
-  });
-  await page.goto(`/admin/o/${encodeURIComponent(orgId)}/connections/${created.id}`);
-  await expect(
-    page.getByText('Not applied yet').or(page.getByText('Applied', { exact: true }).first()),
-  ).toBeVisible();
-  await expect(page.getByText('Upload new version')).toBeVisible();
+  const made = await dev.get('/api/v1/developer/sandbox');
+  if (!made.sandbox)
+    await dev.send('POST', '/api/v1/developer/sandbox', {
+      turnstileToken: 'XXXX.DUMMY.TOKEN.XXXX',
+    });
+  await page.goto('/');
+  const orgId = await sandboxOrgId(page);
+  await page.goto(`/admin/o/${encodeURIComponent(orgId)}/connections/${seedConnectionId()}`);
+  await expect(page.getByText('Connection not found')).toBeVisible();
   await shots(page, 'file-tab-sandbox');
   await ctx.close();
 });
