@@ -55,7 +55,7 @@ export function AdminPalette({
   const { isAdmin, isFetching: sessionFetching, isError: sessionError, authed } = useSession();
   const platformReady = isAdmin && !sessionFetching && !sessionError;
   const ready = !scope.isLoading && !scope.isError;
-  const memberships = ready ? scope.memberships : [];
+  const memberships = ready ? scope.choices : [];
   const membership = ready ? scope.membership : undefined;
   const orgId = membership?.orgId;
   const { switchScope } = scope;

@@ -5,7 +5,7 @@ import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { openSourceVersion } from './account-credential-source.ts';
-import { changed, credentialDto, platformWriter, save } from './credential-service.ts';
+import { changed, platformWriter, save, withLastCheck } from './credential-service.ts';
 import { findCheckTarget } from './repo-credential-checks.ts';
 import { findCredential } from './repo-credentials.ts';
 
@@ -35,7 +35,7 @@ export async function setPlatformSamsungCard(
   );
   if (opened.provider !== 'samsung') throw new NotFoundError();
   const held = opened.credentials.cardIds?.[input.type];
-  if (held === input.cardId) return credentialDto(row);
+  if (held === input.cardId) return withLastCheck(ctx, null, row);
   if (
     held !== undefined ||
     (input.type === 'loyalty' && opened.credentials.cardId !== input.cardId)
@@ -54,5 +54,5 @@ export async function setPlatformSamsungCard(
       },
     },
   );
-  return credentialDto(saved);
+  return withLastCheck(ctx, null, saved);
 }
