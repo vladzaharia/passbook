@@ -368,6 +368,14 @@
     "note": "hide leaves out the portal's own background reads."
   },
   {
+    "key": "GET /api/v1/developer/rail 200.series: field added",
+    "class": "additive",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.series: field added",
+    "note": "The rail carries the last hour in five-minute buckets; callsLastHour leaves out the portal's own background reads."
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",

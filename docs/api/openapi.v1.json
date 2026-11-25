@@ -78173,7 +78173,16 @@
                     },
                     "callsLastHour": {
                       "type": "integer",
-                      "minimum": 0
+                      "minimum": 0,
+                      "description": "Calls in the last hour, without the portal's own background reads."
+                    },
+                    "series": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "description": "The same calls in five-minute buckets, oldest first."
                     },
                     "key": {
                       "type": [
@@ -78206,6 +78215,7 @@
                     "tier",
                     "limitPerMinute",
                     "callsLastHour",
+                    "series",
                     "key"
                   ]
                 },
