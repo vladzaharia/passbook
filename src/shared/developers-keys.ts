@@ -116,6 +116,8 @@ export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number],
   'nfc:keys': 'scanning:manage',
   'api-keys:write': 'integrations:manage',
   'audit:read': 'audit:read',
+  'members:read': 'members:read',
+  'members:write': 'members:manage',
 };
 
 /**

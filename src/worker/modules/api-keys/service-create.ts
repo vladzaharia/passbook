@@ -48,12 +48,12 @@ export function assertCredentialKey(
   if (!scopes.some((s) => (CREDENTIAL_SCOPES as readonly string[]).includes(s))) return;
   if (kind === 'platform' || mode !== 'live')
     throw new ValidationError(
-      'Credential scopes (scanning:admin, nfc:keys) are for live keys of one organization.',
+      'Credential scopes (scanning:admin, nfc:keys, members:write) are for live keys of one organization.',
       [
         {
           path: 'scopes',
           message:
-            'Credential scopes (scanning:admin, nfc:keys) are for live keys of one organization.',
+            'Credential scopes (scanning:admin, nfc:keys, members:write) are for live keys of one organization.',
         },
       ],
       'API_KEY_CREDENTIAL_LIVE_ORG',
