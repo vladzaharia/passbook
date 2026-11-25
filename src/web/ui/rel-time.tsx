@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { formatDateTime, formatRelative } from '../lib/format.ts';
+import { formatAgo, formatDateTime } from '../lib/format.ts';
 
 /**
  * Re-renders every `ms` so relative times and countdowns stay true while a tab is open. While
@@ -20,7 +20,7 @@ export function useNow(ms = 30_000, active = true): number {
 export function RelTime({ at, now }: { at: number; now: number }) {
   return (
     <time dateTime={new Date(at).toISOString()} title={formatDateTime(at)}>
-      {Math.abs(now - at) < 45_000 ? 'just now' : formatRelative(at, now)}
+      {formatAgo(at, now)}
     </time>
   );
 }

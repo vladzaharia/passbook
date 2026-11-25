@@ -20,6 +20,7 @@ import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
 import { DOOR_CASES, DoorVisual } from './visual-door.tsx';
 import { lookFromUrl, recentRows, TINT, withCard, withKind } from './visual-handheld.ts';
+import { VisualLookup } from './visual-lookup.tsx';
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { OPERATOR_CASES, OperatorVisual } from './visual-operator.tsx';
@@ -217,6 +218,7 @@ function ScanResultVisual({
       ? { ...withCard(withKind(selected, params)), live: true, tab: sheet }
       : null,
   );
+  const [looking, setLooking] = useState(false);
   const [api] = useState(() => ({ resolve: async () => selected.outcome }) as unknown as ScanApi);
   const outcome = withGroup(withKind(selected, params), params.get('group'));
   return (
@@ -231,8 +233,10 @@ function ScanResultVisual({
       look={lookFromUrl(params)}
       chips={<CountChip count={312} capacity={500} />}
       menu={<MenuTrigger />}
+      onLookup={() => setLooking(true)}
       onPass={(_card, shown) => setInspection({ ...withCard(shown), live: true })}
     >
+      <VisualLookup open={looking} onClose={() => setLooking(false)} />
       {inspection ? (
         <PassInspector
           inspection={inspection}

@@ -179,6 +179,11 @@ export function formatRelative(ms: number, now: number): string {
   return RELATIVE.format(0, 'minute');
 }
 
+/** formatRelative, but under 45 seconds either way reads "just now": the one wording for a time that is nearly now. */
+export function formatAgo(ms: number, now: number): string {
+  return Math.abs(now - ms) < 45_000 ? 'just now' : formatRelative(ms, now);
+}
+
 /** "Active now", "Today 3:05 PM", "Yesterday", "Nov 15": one short line for a last-seen time. */
 export function formatLastActive(ms: number, now: number): string {
   if (now - ms < 5 * 60_000) return 'Active now';

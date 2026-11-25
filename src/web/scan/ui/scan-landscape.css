@@ -60,4 +60,12 @@
   .scan-assign:has(.scan-approval, .scan-assign-banner, .scan-assign-note) .scan-assign-art {
     display: none;
   }
+  /* The headline is the instruction: the art shrinks so the dock never cuts it. */
+  .scan-assign .scan-assign-art {
+    min-height: 0;
+  }
+  .scan-assign .scan-assign-art svg {
+    width: auto;
+    height: 64px;
+  }
 }
