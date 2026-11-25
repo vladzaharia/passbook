@@ -322,7 +322,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     action,
     claim,
     originalCandidate,
-    approver,
+    approver: approver && { ...approver, sole: undefined },
   });
   return outcome;
 }

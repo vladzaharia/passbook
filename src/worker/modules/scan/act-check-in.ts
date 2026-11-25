@@ -280,7 +280,17 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       onFailureCommitted,
     });
     if (outcome.kind === 'ok' && !outcome.replay)
-      deferTermStart({ ctx, actor, found, req, action, claim, originalCandidate, approver });
+      // The term stamp is its own grant: the sole audit row belongs to the scan's commit alone.
+      deferTermStart({
+        ctx,
+        actor,
+        found,
+        req,
+        action,
+        claim,
+        originalCandidate,
+        approver: approver && { ...approver, sole: undefined },
+      });
     return outcome;
   }
   return commitCheckInSuccess({
