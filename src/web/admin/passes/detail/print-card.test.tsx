@@ -102,7 +102,7 @@ describe('Print card', () => {
     await waitFor(() => expect(calls(fetchMock, 'POST', '/passes/p1/prints')).toHaveLength(1));
   });
 
-  it('says so when the pass changed since the print, with a Reprint action', async () => {
+  it('says so when the pass changed since the print', async () => {
     renderTags(
       <PrintCard pass={pass()} readOnly={false} />,
       handlers(status(true), [print({ stale: true })]),

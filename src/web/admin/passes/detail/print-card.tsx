@@ -84,20 +84,7 @@ export function PrintCard({
           {paper && !paper.on && paper.reason ? (
             <Callout tone="info">{channelReason('paper', paper.reason)}</Callout>
           ) : null}
-          {active?.stale ? (
-            <Callout
-              tone="warning"
-              actions={
-                canPrint ? (
-                  <Button variant="outline" size="sm" onClick={() => setAsk('reprint')}>
-                    {PRINT_COPY.reprint}
-                  </Button>
-                ) : undefined
-              }
-            >
-              {PRINT_COPY.stale}
-            </Callout>
-          ) : null}
+          {active?.stale ? <Callout tone="warning">{PRINT_COPY.stale}</Callout> : null}
           {active ? (
             <ListRows label={PRINT_COPY.card}>
               <ListRow
