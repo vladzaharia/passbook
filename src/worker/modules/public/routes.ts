@@ -25,8 +25,8 @@ import { codesReplacedNotice } from '../channels/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
-import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
+import { serveCurrentPassFile } from '../passes/timed-variant.ts';
 import { holderPrintRoutes } from '../prints/routes-holder.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
@@ -257,7 +257,7 @@ register(
     // bump it causes trips the snapshot check below.
     await appleFileGate(ctx, pass);
     const snapshot = await capturePassSnapshot(ctx, pass);
-    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
+    const response = await serveCurrentPassFile(ctx, pass, c.req.raw);
     try {
       await assertPassSnapshot(ctx, snapshot);
     } catch (error) {

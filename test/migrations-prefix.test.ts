@@ -119,25 +119,47 @@ const matches = (k: Known, f: Failure, n: number) =>
   n <= k.to;
 
 describe('migration prefixes', () => {
-  it('compile every write on every table after each migration, but the listed ones', async () => {
-    const db = databases.KEYSET_TEST_DB_0;
-    if (!db) throw new Error('No isolated D1 binding');
-    const bad: string[] = [];
-    const hit = new Set<Known>();
-    for (const migration of migrations) {
-      await applyD1Migrations(db, [migration]);
-      for (const f of await probe(db)) {
-        const known = KNOWN.find((k) => matches(k, f, number(migration)));
-        if (known) hit.add(known);
-        else
-          bad.push(
-            `after ${migration.name}: ${f.statement} ${f.table}${f.column ? `.${f.column}` : ''}: ${f.message}`,
-          );
+  // One database walks the chain; each chunk probes its own slice with its own time budget.
+  // A chunk run alone first applies the migrations before it, unprobed.
+  const CHUNK = 30;
+  const chunks = Array.from({ length: Math.ceil(migrations.length / CHUNK) }, (_, i) => i);
+  const bad: string[] = [];
+  const hit = new Set<Known>();
+  let applied = 0;
+  let probed = 0;
+
+  it.each(chunks)(
+    'compile every write on every table after each migration, but the listed ones (part %i)',
+    async (part) => {
+      const db = databases.KEYSET_TEST_DB_0;
+      if (!db) throw new Error('No isolated D1 binding');
+      const start = part * CHUNK;
+      if (applied < start) await applyD1Migrations(db, migrations.slice(applied, start));
+      applied = Math.max(applied, start);
+      const before = bad.length;
+      for (const migration of migrations.slice(start, start + CHUNK)) {
+        await applyD1Migrations(db, [migration]);
+        applied += 1;
+        for (const f of await probe(db)) {
+          const known = KNOWN.find((k) => matches(k, f, number(migration)));
+          if (known) hit.add(known);
+          else
+            bad.push(
+              `after ${migration.name}: ${f.statement} ${f.table}${f.column ? `.${f.column}` : ''}: ${f.message}`,
+            );
+        }
+        probed += 1;
       }
-    }
-    expect(bad).toEqual([]);
+      expect(bad.slice(before)).toEqual([]);
+    },
+    300_000,
+  );
+
+  it('every listed failure was hit by some migration', () => {
+    // Only meaningful once every chunk has run in this file.
+    if (probed < migrations.length) return;
     expect(KNOWN.filter((k) => !hit.has(k)).map((k) => `${k.statement} ${k.table}`)).toEqual([]);
-  }, 300_000);
+  });
 
   it('the probe fails on a trigger that reads a missing column, for each statement', async () => {
     const db = databases.KEYSET_TEST_DB_1;

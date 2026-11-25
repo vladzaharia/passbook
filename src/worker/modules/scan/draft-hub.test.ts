@@ -97,6 +97,7 @@ describe('a draft over a ready card', () => {
     expect(c.screen.drafts()[0]).toMatchObject({
       draft: {
         ref: c.readyId,
+        scannerId: c.source.id,
         customer: {
           screen: 'review',
           band: { headline: 'To pay', sub: 'Balance after: $30.50' },
@@ -178,6 +179,44 @@ describe('a draft over a ready card', () => {
     expect(c.monitor.drafts()).toEqual([]);
     const other = await f.child(c.session.id, 'Draft cancel other');
     expect(await hub().clearDraft({ ...c.input, scannerId: other.id })).toBe(0);
+    for (const s of [c.screen, c.monitor]) s.close();
+  });
+
+  it('a draft-only cancel says keep, and a result after the read makes a later draft stale', async () => {
+    const c = await counter('Draft keep');
+    const entry = await c.ready();
+    expect(await hub().draft({ ...c.input, say })).toBe(1);
+    expect(await hub().clearDraft({ ...c.input, keep: 'ready' })).toBe(1);
+    await settle();
+    expect(c.screen.drafts().at(-1)).toMatchObject({
+      draft: { ref: c.readyId, cancelled: true, keep: 'ready' },
+    });
+    // The desk committed: its receipt row is newer than the ready card.
+    f.kit.clock.advance(1_000);
+    const receipt = await f.withSourceProof({
+      ...f.row(c.source.id),
+      id: key(),
+      kind: 'ok',
+      at: entry.row.at + 500,
+    });
+    expect(await hub().publish({ orgId: f.kit.org.id, mode: 'live', row: receipt })).toBe(true);
+    expect(await hub().draft({ ...c.input, say })).toBeNull();
+    for (const s of [c.screen, c.monitor]) s.close();
+  });
+
+  it("is stale once the same desk's next read has a ready card, but not for another desk", async () => {
+    const c = await counter('Draft next read');
+    const entry = await c.ready();
+    expect(await hub().draft({ ...c.input, say })).toBe(1);
+    const next = await f.withSourceProof({
+      ...f.row(c.source.id),
+      id: key(),
+      kind: 'ready',
+      passId: c.pass.id,
+      at: entry.row.at + 500,
+    });
+    expect(await hub().publish({ orgId: f.kit.org.id, mode: 'live', row: next })).toBe(true);
+    expect(await hub().draft({ ...c.input, say })).toBeNull();
     for (const s of [c.screen, c.monitor]) s.close();
   });
 });
