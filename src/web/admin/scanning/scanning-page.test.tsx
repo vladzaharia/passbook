@@ -66,7 +66,7 @@ describe('Scanning nav and entities', () => {
     const item = ORG_NAV.flat().find((i) => i.section === '/scanning');
     expect(item).toMatchObject({ label: 'Scanning', entity: 'scanner' });
     const group = ORG_NAV.find((g) => g.some((i) => i.section === '/scanning'));
-    expect(group?.map((i) => i.label)).toEqual(['Messages', 'Scanning', 'Visitors', 'Test inbox']);
+    expect(group?.map((i) => i.label)).toEqual(['Messages', 'Scanning', 'Test inbox']);
     expect(PLATFORM_NAV.flat().some((i) => i.section === '/scanning')).toBe(false);
   });
 
