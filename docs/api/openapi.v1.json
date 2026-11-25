@@ -115593,6 +115593,37 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ConnectionsProbeConfigParams"
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "connectorType": "http-json",
+                "config": {
+                  "baseUrl": "https://api.northwind.example/v1",
+                  "auth": {
+                    "type": "bearer"
+                  },
+                  "list": {
+                    "path": "/customers",
+                    "query": [
+                      {
+                        "name": "limit",
+                        "value": "2"
+                      }
+                    ],
+                    "recordsPointer": "/data",
+                    "idPointer": "/id",
+                    "pagination": {
+                      "style": "cursor",
+                      "param": "starting_after",
+                      "from": "last-id",
+                      "hasMorePointer": "/has_more"
+                    }
+                  }
+                },
+                "secrets": {
+                  "token": "nw_live_••••3f9c"
+                },
+                "target": "list"
               }
             }
           }
@@ -115604,6 +115635,145 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsProbeConfigResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "durationMs": 312,
+                  "request": {
+                    "method": "GET",
+                    "url": "https://api.northwind.example/v1/customers?limit=2",
+                    "status": 200,
+                    "bytes": 1184,
+                    "contentType": "application/json"
+                  },
+                  "headers": {
+                    "content-type": "application/json",
+                    "x-ratelimit-limit": "100",
+                    "x-ratelimit-remaining": "99"
+                  },
+                  "body": {
+                    "object": "list",
+                    "has_more": true,
+                    "data": [
+                      {
+                        "id": "cus_1001",
+                        "email": "ada@example.com",
+                        "full_name": "Ada Example",
+                        "created": "2026-02-03T10:00:00Z"
+                      },
+                      {
+                        "id": "cus_1002",
+                        "email": "grace@example.com",
+                        "full_name": "Grace Okafor",
+                        "created": "2026-02-04T09:30:00Z"
+                      }
+                    ]
+                  },
+                  "pruned": {
+                    "arrays": [],
+                    "strings": 0,
+                    "depthCut": false,
+                    "nodesCut": false
+                  },
+                  "detections": {
+                    "records": [
+                      {
+                        "pointer": "/data",
+                        "jsonPath": "$.data[*]",
+                        "count": 2,
+                        "score": 0.75,
+                        "reason": "name"
+                      }
+                    ],
+                    "pagination": [
+                      {
+                        "confidence": "high",
+                        "config": {
+                          "style": "cursor",
+                          "param": "starting_after",
+                          "from": "last-id",
+                          "hasMorePointer": "/has_more",
+                          "cursorPointer": ""
+                        },
+                        "evidence": "field:/has_more"
+                      }
+                    ],
+                    "id": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "unique": true,
+                        "score": 0.95
+                      }
+                    ],
+                    "updatedAt": [
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "format": "iso",
+                        "score": 0.5
+                      }
+                    ],
+                    "holderEmail": [
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email"
+                      }
+                    ],
+                    "fields": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "label": "id",
+                        "type": "text",
+                        "samples": [
+                          "cus_1001",
+                          "cus_1002"
+                        ]
+                      },
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email",
+                        "label": "email",
+                        "type": "email",
+                        "samples": [
+                          "ada@example.com",
+                          "grace@example.com"
+                        ]
+                      },
+                      {
+                        "pointer": "/name",
+                        "jsonPath": "$.data[*].name",
+                        "label": "name",
+                        "type": "text",
+                        "samples": [
+                          "Ada Example",
+                          "Grace Okafor"
+                        ]
+                      },
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "label": "created",
+                        "type": "date",
+                        "samples": [
+                          "2026-02-03T10:00:00Z",
+                          "2026-02-04T09:30:00Z"
+                        ]
+                      }
+                    ],
+                    "rateLimit": {
+                      "limit": 100,
+                      "remaining": 99
+                    }
+                  },
+                  "page": {
+                    "index": 1,
+                    "from": 1,
+                    "to": 2,
+                    "overlap": 0,
+                    "next": "p1.eyJwIjp7ImMiOiJjdXNfMTAwMiJ9LCJrIjoxLCJuIjoyLCJpZHMiOlsiMXN6Il19"
+                  }
                 }
               }
             }
@@ -115624,6 +115794,7 @@
           "resource": "connections",
           "method": "probeConfig"
         },
+        "description": "Fetches one sample page or record from a REST API with an unsaved configuration, through the same request and pagination code as a sync, and returns it with the detected records array, ID and updated-at fields, pagination style and JSONPath candidates. Secrets are used once and never stored; error bodies are never returned. Send the previous answer's page.next as next to prove page 2. Limits: 10 a minute per caller, 60 an hour per organization.",
         "security": [
           {
             "apiKey": [
@@ -115679,6 +115850,10 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ConnectionsProbeParams"
+              },
+              "example": {
+                "target": "list",
+                "next": "p1.eyJwIjp7ImMiOiJjdXNfMTAwMiJ9LCJrIjoxLCJuIjoyLCJpZHMiOlsiMXN6Il19"
               }
             }
           }
@@ -115690,6 +115865,145 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsProbeResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "durationMs": 312,
+                  "request": {
+                    "method": "GET",
+                    "url": "https://api.northwind.example/v1/customers?limit=2",
+                    "status": 200,
+                    "bytes": 1184,
+                    "contentType": "application/json"
+                  },
+                  "headers": {
+                    "content-type": "application/json",
+                    "x-ratelimit-limit": "100",
+                    "x-ratelimit-remaining": "99"
+                  },
+                  "body": {
+                    "object": "list",
+                    "has_more": true,
+                    "data": [
+                      {
+                        "id": "cus_1001",
+                        "email": "ada@example.com",
+                        "full_name": "Ada Example",
+                        "created": "2026-02-03T10:00:00Z"
+                      },
+                      {
+                        "id": "cus_1002",
+                        "email": "grace@example.com",
+                        "full_name": "Grace Okafor",
+                        "created": "2026-02-04T09:30:00Z"
+                      }
+                    ]
+                  },
+                  "pruned": {
+                    "arrays": [],
+                    "strings": 0,
+                    "depthCut": false,
+                    "nodesCut": false
+                  },
+                  "detections": {
+                    "records": [
+                      {
+                        "pointer": "/data",
+                        "jsonPath": "$.data[*]",
+                        "count": 2,
+                        "score": 0.75,
+                        "reason": "name"
+                      }
+                    ],
+                    "pagination": [
+                      {
+                        "confidence": "high",
+                        "config": {
+                          "style": "cursor",
+                          "param": "starting_after",
+                          "from": "last-id",
+                          "hasMorePointer": "/has_more",
+                          "cursorPointer": ""
+                        },
+                        "evidence": "field:/has_more"
+                      }
+                    ],
+                    "id": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "unique": true,
+                        "score": 0.95
+                      }
+                    ],
+                    "updatedAt": [
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "format": "iso",
+                        "score": 0.5
+                      }
+                    ],
+                    "holderEmail": [
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email"
+                      }
+                    ],
+                    "fields": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "label": "id",
+                        "type": "text",
+                        "samples": [
+                          "cus_1001",
+                          "cus_1002"
+                        ]
+                      },
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email",
+                        "label": "email",
+                        "type": "email",
+                        "samples": [
+                          "ada@example.com",
+                          "grace@example.com"
+                        ]
+                      },
+                      {
+                        "pointer": "/name",
+                        "jsonPath": "$.data[*].name",
+                        "label": "name",
+                        "type": "text",
+                        "samples": [
+                          "Ada Example",
+                          "Grace Okafor"
+                        ]
+                      },
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "label": "created",
+                        "type": "date",
+                        "samples": [
+                          "2026-02-03T10:00:00Z",
+                          "2026-02-04T09:30:00Z"
+                        ]
+                      }
+                    ],
+                    "rateLimit": {
+                      "limit": 100,
+                      "remaining": 99
+                    }
+                  },
+                  "page": {
+                    "index": 2,
+                    "from": 3,
+                    "to": 3,
+                    "overlap": 0,
+                    "next": null
+                  }
                 }
               }
             }
@@ -115710,6 +116024,7 @@
           "resource": "connections",
           "method": "probe"
         },
+        "description": "Probes a saved REST connection with its stored configuration and secrets, or with the config and secrets in the request. Stored secrets are never sent to a new host: a config on another origin needs new secrets. Same answer and limits as the unsaved probe.",
         "security": [
           {
             "apiKey": [

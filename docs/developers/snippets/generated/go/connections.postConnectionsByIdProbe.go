@@ -18,7 +18,8 @@ func main() {
 
 	var body passbook.ConnectionsProbeBody
 	if err := json.Unmarshal([]byte(`{
-  "target": "list"
+  "target": "list",
+  "next": "p1.eyJwIjp7ImMiOiJjdXNfMTAwMiJ9LCJrIjoxLCJuIjoyLCJpZHMiOlsiMXN6Il19"
 }`), &body); err != nil {
 		panic(err)
 	}
