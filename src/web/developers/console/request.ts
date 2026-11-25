@@ -88,7 +88,20 @@ export interface InputCheck {
   schema: RunSchema;
 }
 
-/** The `input` of a body that names `templateId`, when the operation's `input` is free-form. */
+/** True when the body takes a template: it declares `templateId` or a free-form `input`. */
+export function takesTemplate(op: RunOp): boolean {
+  const props = op.body?.properties;
+  return Boolean(props?.templateId || (props?.input && !props.input.properties));
+}
+
+/** The template the request is about: the body's `templateId`, or the `{id}` of a `/templates/{id}` path. */
+function namedTemplate(op: RunOp, draft: Draft): Json | undefined {
+  const parsed = parseBody(draft.body);
+  const named = parsed.ok && isObject(parsed.value) ? parsed.value.templateId : undefined;
+  return named ?? (op.path.includes('/templates/{id}') ? draft.path.id : undefined);
+}
+
+/** The body's `input` object, when the operation's own `input` is free-form (a template's fields, not a fixed shape). */
 function inputOf(op: RunOp, draft: Draft): Record<string, Json> | undefined {
   const own = op.body?.properties?.input;
   if (!own || own.properties) return undefined;
@@ -98,12 +111,9 @@ function inputOf(op: RunOp, draft: Draft): Record<string, Json> | undefined {
     : undefined;
 }
 
-/** True when the body holds a free-form `input` that no template schema has checked. */
+/** True when the body holds a free-form `input` that the sandbox template's schema has not checked. */
 export function inputUnchecked(op: RunOp, draft: Draft, check?: InputCheck): boolean {
-  if (!inputOf(op, draft)) return false;
-  const parsed = parseBody(draft.body);
-  const named = parsed.ok && isObject(parsed.value) ? parsed.value.templateId : undefined;
-  return !check || named !== check.templateId;
+  return Boolean(inputOf(op, draft)) && (!check || namedTemplate(op, draft) !== check.templateId);
 }
 
 /** Everything wrong before sending: missing parameters and the body against the schema. */

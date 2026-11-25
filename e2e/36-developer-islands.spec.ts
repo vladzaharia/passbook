@@ -105,12 +105,14 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   const tryRun = page.locator('.try').getByRole('button', { name: 'Run', exact: true });
   await expect(tryRun).toBeVisible();
   // R1: the example fits the sandbox's Quickstart ticket, so the first Run creates a pass.
-  await expect(page.locator('.try')).toContainText('Valid against the schema');
+  await expect(page.locator('.try')).toContainText('Body shape valid');
   const created = page.waitForResponse(
     (r) => r.url().endsWith('/api/v1/passes') && r.request().method() === 'POST',
   );
   await tryRun.click();
   expect((await created).status()).toBe(201);
+  // The Run read the template; now `input` is checked against its schema.
+  await expect(page.locator('.try')).toContainText('Valid against the schema');
 
   // D1: the webhook tester renders, with no Trusted Types error.
   await page.goto('/developers/webhooks');

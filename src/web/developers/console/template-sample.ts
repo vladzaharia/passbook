@@ -1,4 +1,6 @@
-import { token } from './token.ts';
+import { PORTAL_READ } from '../playground/live.ts';
+import { spend } from './budget.ts';
+import { drop, token } from './token.ts';
 import type { Json, RunSchema } from './types.ts';
 
 /** What the sandbox template says about its own `input`: a sample that passes, and the schema it is held to. */
@@ -8,32 +10,48 @@ export interface TemplateInput {
 }
 
 const loaded = new Map<string, Promise<TemplateInput>>();
+const NONE: TemplateInput = { sample: undefined, schema: undefined };
 
-async function read(path: string, bearer: string): Promise<Json | undefined> {
-  const res = await fetch(path, {
-    headers: { accept: 'application/json', authorization: `Bearer ${bearer}` },
+async function get(path: string, csrf: string): Promise<Response> {
+  const bearer = await token(csrf);
+  // A read counts against the same per-minute limit as a Run, so it counts in the gauge too.
+  spend();
+  return fetch(path, {
+    redirect: 'error',
+    headers: { accept: 'application/json', ...PORTAL_READ, authorization: `Bearer ${bearer}` },
   });
-  return res.ok ? ((await res.json()) as Json) : undefined;
 }
 
-/** The template's `sample` and input schema, read once. A read that fails leaves both out: the example stays as written. */
+async function read(templateId: string, csrf: string): Promise<TemplateInput> {
+  const path = `/api/v1/templates/${encodeURIComponent(templateId)}`;
+  let res = await get(path, csrf);
+  // A stale token is refused as UNAUTHENTICATED: forget it and ask once more.
+  if (res.status === 401) {
+    drop();
+    res = await get(path, csrf);
+  }
+  if (!res.ok) return NONE;
+  const detail = (await res.json()) as Json;
+  if (detail === null || typeof detail !== 'object' || Array.isArray(detail)) return NONE;
+  const schema = detail.inputSchema;
+  return {
+    sample: detail.sample,
+    schema:
+      schema !== null && typeof schema === 'object' && !Array.isArray(schema)
+        ? (schema as RunSchema)
+        : undefined,
+  };
+}
+
+/**
+ * The template's `sample` and input schema from one read, kept for the page. A read that fails leaves both out
+ * and is not kept: the example stays as written and a later call asks again.
+ */
 export function loadTemplateInput(templateId: string, csrf: string): Promise<TemplateInput> {
   let p = loaded.get(templateId);
   if (!p) {
-    const id = encodeURIComponent(templateId);
-    p = token(csrf)
-      .then(async (bearer) => {
-        const [detail, schema] = await Promise.all([
-          read(`/api/v1/templates/${id}`, bearer),
-          read(`/api/v1/templates/${id}/input-schema`, bearer),
-        ]);
-        const sample =
-          detail !== null && typeof detail === 'object' && !Array.isArray(detail)
-            ? detail.sample
-            : undefined;
-        return { sample, schema: schema as RunSchema | undefined };
-      })
-      .catch((): TemplateInput => ({ sample: undefined, schema: undefined }))
+    p = read(templateId, csrf)
+      .catch(() => NONE)
       .then((got) => {
         if (got.sample === undefined && got.schema === undefined) loaded.delete(templateId);
         return got;
@@ -43,7 +61,7 @@ export function loadTemplateInput(templateId: string, csrf: string): Promise<Tem
   return p;
 }
 
-/** Forgets what was read, for tests and for a sandbox that was reset. */
+/** Forgets every read (used by tests; a page reload does the same). */
 export function resetTemplateInput(): void {
   loaded.clear();
 }

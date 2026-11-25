@@ -19,7 +19,7 @@ func main() {
 	var body passbook.BlueprintsUseBody
 	if err := json.Unmarshal([]byte(`{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "name": "Day pass"
+  "name": "Quickstart ticket"
 }`), &body); err != nil {
 		panic(err)
 	}

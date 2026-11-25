@@ -30,7 +30,16 @@ const curls = import.meta.glob<string>('../../docs/developers/snippets/generated
 type Dict = Record<string, unknown>;
 const isDict = (v: unknown): v is Dict => !!v && typeof v === 'object' && !Array.isArray(v);
 
-/** Every POST and PATCH whose example body names a template or carries template `input`. */
+/** True when `key` appears anywhere in the example, at any depth. */
+const deep = (v: unknown, test: (key: string, value: unknown) => boolean): boolean =>
+  Array.isArray(v)
+    ? v.some((x) => deep(x, test))
+    : isDict(v) && Object.entries(v).some(([k, x]) => test(k, x) || deep(x, test));
+
+/** The scanner's `input` is a scanned code, not template input. */
+const SCAN_INPUT = new Set(['scan.postScanResolve', 'scan.postScanActions']);
+
+/** Every POST and PATCH whose example names a template (`templateId`, `templateIds`) or carries an `input` object. */
 const examples: { id: string; method: string; path: string; body: Dict }[] = [];
 const requests = new Map<string, Dict>();
 for (const file of Object.values(refs))
@@ -40,20 +49,44 @@ for (const [path, item] of Object.entries(openapi.paths as Record<string, Dict>)
   for (const [method, op] of Object.entries(item)) {
     const id = isDict(op) ? op.operationId : undefined;
     const body = typeof id === 'string' ? requests.get(id) : undefined;
-    if (!body || (method !== 'post' && method !== 'patch')) continue;
-    const input = body.input;
-    // The scanner's `input` is a scanned code, not template input.
-    const templated =
-      body.templateId === EXAMPLE_IDS.templateId || (isDict(input) && !('code' in input));
-    if (templated) examples.push({ id: id as string, method: method.toUpperCase(), path, body });
+    if (!body || (method !== 'post' && method !== 'patch') || SCAN_INPUT.has(id as string))
+      continue;
+    if (
+      deep(
+        body,
+        (k, v) => k === 'templateId' || k === 'templateIds' || (k === 'input' && isDict(v)),
+      )
+    )
+      examples.push({ id: id as string, method: method.toUpperCase(), path, body });
   }
 // Posting a pass comes first: the pass it makes is the one the others change.
 examples.sort(
   (a, b) => Number(b.id === 'passes.postPasses') - Number(a.id === 'passes.postPasses'),
 );
 
-/** Google and Samsung ship dark: the reissue route answers WALLET_PROVIDER_DISABLED until a provider is released. */
-const DARK = new Set(['wallet-providers.postWalletProvidersReissue']);
+/**
+ * Examples that do not fit a fresh sandbox: written for the gym's Day pass (name, tier, validUntil), or needing setup
+ * a sandbox lacks. The Day pass ones are R13's to move into the ticket world; until then each is listed here with what it does today, and
+ * the test fails when one starts to work, so the entry is removed rather than forgotten.
+ */
+const KNOWN_R13: Record<string, string> = {
+  'message-rules.postMessageRules': 'the rule anchors on the Day pass input `validUntil`',
+  'message-rules.postMessageRulesPreview': 'the rule anchors on the Day pass input `validUntil`',
+  'passes.postPassesBulkRuns':
+    'the example selects 128 passes (`expectCount`); a sandbox has fewer',
+  'pass-imports.postPassImports':
+    'queues at once, but the CSV columns map to Day pass inputs, so no row imports into the ticket',
+  'broadcasts.postBroadcasts':
+    'the change is a Day pass `validUntil` patch with a message: the API refuses that mix (VALIDATION)',
+  'broadcasts.patchBroadcastsById':
+    'the change is a Day pass `validUntil` patch with a message: the API refuses that mix (VALIDATION)',
+  'webhooks.postWebhookEndpoints': 'the endpoint URL needs a DNS lookup the test cannot make (500)',
+  'scanners.postScanningSessions': 'needs a credential key, which a sandbox key cannot be (401)',
+  'scan-events.postScanEvents':
+    'scanner devices are not in the sandbox plan (FEATURE_NOT_INCLUDED)',
+  'wallet-providers.postWalletProvidersReissue':
+    'Google and Samsung ship dark: it answers WALLET_PROVIDER_DISABLED',
+};
 
 let kit: BlueprintKit;
 let app: ReturnType<typeof createApp>;
@@ -66,9 +99,6 @@ const realFetch = globalThis.fetch;
 beforeAll(async () => {
   kit = await blueprintKit();
   kit.env.TURNSTILE_SECRET = TURNSTILE_TEST_SECRET;
-  Object.assign(kit.env, {
-    PASS_IMPORT: { create: async (o: { id: string }) => ({ id: o.id }) },
-  });
   app = createApp({
     stores: {
       ...denyAllStores,
@@ -130,14 +160,37 @@ const call = (method: string, path: string, body: string) =>
     kit.env,
   );
 
+/** The examples this test selects: a new one must be added here (and made to work, or listed in KNOWN_R13). */
+const PINNED = [
+  'broadcasts.patchBroadcastsById',
+  'broadcasts.postBroadcasts',
+  'broadcasts.postBroadcastsPreview',
+  'message-rules.postMessageRules',
+  'message-rules.postMessageRulesPreview',
+  'pass-imports.postPassImports',
+  'passes.patchPassesById',
+  'passes.postPasses',
+  'passes.postPassesBulkReissue',
+  'passes.postPassesBulkRuns',
+  'scan-events.postScanEvents',
+  'scanners.postScanningSessions',
+  'templates.postTemplatesByIdPreview',
+  'wallet-providers.postWalletProvidersReissue',
+  'webhooks.postWebhookEndpoints',
+];
+
+/** What the API says of an example that still does not fit the sandbox: refused, or an import that did not map. */
+const stillBroken = (status: number, body: Dict): boolean =>
+  status >= 400 ||
+  body.state === 'mapping' ||
+  (Array.isArray(body.problems) && body.problems.length > 0);
+
 describe('reference examples in a fresh sandbox', () => {
-  it('finds the examples that take a template or its input', () => {
-    expect(examples.map((e) => e.id)).toEqual(
-      expect.arrayContaining(['passes.postPasses', 'passes.patchPassesById']),
-    );
+  it('selects exactly these examples', () => {
+    expect(examples.map((e) => e.id).sort()).toEqual(PINNED);
   });
 
-  it.each(examples.filter((e) => !DARK.has(e.id)))('$id answers 2xx', async (e) => {
+  it.each(examples.filter((e) => !(e.id in KNOWN_R13)))('$id answers 2xx', async (e) => {
     const path = e.path.replace('{id}', e.id.startsWith('templates.') ? templateId : passId);
     const res = await call(e.method, path, JSON.stringify(e.body));
     const text = await res.text();
@@ -147,6 +200,20 @@ describe('reference examples in a fresh sandbox', () => {
       expect(res.status).toBe(201);
       passId = (JSON.parse(text) as { id: string }).id;
     }
+  });
+
+  it.each(examples.filter((e) => e.id in KNOWN_R13).map((e) => [e.id, KNOWN_R13[e.id]] as const))(
+    'known gap %s: %s',
+    async (id) => {
+      const e = examples.find((x) => x.id === id) as (typeof examples)[number];
+      const res = await call(e.method, e.path.replace('{id}', passId), JSON.stringify(e.body));
+      const body = (await res.json().catch(() => ({}))) as Dict;
+      expect(stillBroken(res.status, body), `${id} now works: remove it from KNOWN_R13`).toBe(true);
+    },
+  );
+
+  it('keeps every known gap tied to a selected example', () => {
+    expect(Object.keys(KNOWN_R13).filter((id) => !examples.some((e) => e.id === id))).toEqual([]);
   });
 
   it('the copied curl for Create a pass answers 201', async () => {

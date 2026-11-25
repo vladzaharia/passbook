@@ -1,5 +1,7 @@
 // The fictional world the reference examples describe: one org, one id table, one template. Pure data.
 
+import { TICKET, TICKET_INPUT } from './example-ticket.ts';
+
 /** `0193a1b2-7c00-7000-8000-0000000000xx`: a fixed UUIDv7 per resource, shared by every example that names it. */
 const id = (n: number): string => `0193a1b2-7c00-7000-8000-${n.toString(16).padStart(12, '0')}`;
 
@@ -102,46 +104,11 @@ export const NAMES: Record<string, string> = {
   user: 'Sam Rivera',
   holder: 'Ada Example',
   tag: 'Wristband 14',
-  pass: 'Day pass',
+  pass: TICKET.title,
 };
 
-/** The one template every pass example draws from. */
-export const TEMPLATE = {
-  slug: 'day-pass',
-  name: 'Day pass',
-  description: 'A day pass for the climbing gym, scanned at the front desk.',
-  sample: { name: 'Ada Example', tier: 'Day pass', validUntil: '2026-12-31' },
-  fieldSources: { name: 'manual', tier: 'manual', validUntil: 'manual' },
-  passJson: {
-    formatVersion: 1,
-    passTypeIdentifier: 'pass.mobile.passbook.northwind',
-    serialNumber: IDS.serial,
-    organizationName: ORG,
-    description: 'Day pass',
-    backgroundColor: 'rgb(17, 42, 74)',
-    foregroundColor: 'rgb(255, 255, 255)',
-    labelColor: 'rgb(255, 196, 0)',
-    generic: {
-      primaryFields: [{ key: 'name', label: 'Guest', value: 'Ada Example' }],
-      secondaryFields: [{ key: 'tier', label: 'Pass', value: 'Day pass' }],
-      auxiliaryFields: [{ key: 'validUntil', label: 'Valid until', value: '2026-12-31' }],
-    },
-  },
-};
-
-/**
- * `input` for the sandbox's Quickstart ticket (templates/starter-event-ticket) with Northwind values: the sample every
- * `input` example sends, so a reader's first Run and copied sample pass the template's own input schema.
- */
-export const TICKET_INPUT = {
-  eventName: 'Friday Night Bouldering',
-  venueName: 'Northwind Climbing',
-  venueRegion: 'Seattle, WA',
-  startsAt: '2026-12-04T18:00:00-08:00',
-  endsAt: '2026-12-04T22:00:00-08:00',
-  attendee: 'Ada Example',
-  ticketId: 'NW-1001',
-};
+/** The one template every pass example draws from: the sandbox's Quickstart ticket (example-ticket.ts). */
+export const TEMPLATE = TICKET;
 
 /** Now: 18:00 on 24 November 2026 at the gym (Pacific time), the evening rush. */
 const BASE = Date.UTC(2026, 10, 25, 2, 0, 0);
@@ -211,8 +178,8 @@ export const PASS = {
   templateVersion: '3',
   identityId: IDS.identity,
   serial: IDS.serial,
-  title: 'Day pass',
-  subtitle: 'Ada Example',
+  title: TICKET.title,
+  subtitle: TICKET_INPUT.attendee,
   externalId: 'booking_8841',
   status: 'active',
   mode: 'live',
@@ -272,6 +239,7 @@ export const TEMPLATE_DETAIL = {
   createdAt: T.created,
   updatedAt: T.updated,
   sample: TEMPLATE.sample,
+  inputSchema: TEMPLATE.inputSchema,
   versions: [
     {
       version: '3',

@@ -7,9 +7,9 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "orgName": "Northwind Climbing",
-          "slug": "day-pass",
-          "name": "Day pass",
-          "description": "A day pass for the climbing gym, scanned at the front desk.",
+          "slug": "quickstart-ticket",
+          "name": "Quickstart ticket",
+          "description": "A ticket for a climbing night, scanned at the front desk.",
           "origin": "uploaded",
           "status": "active",
           "activeVersion": "3",
@@ -28,9 +28,9 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-ticket",
+      "name": "Quickstart ticket",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
@@ -38,10 +38,91 @@
       "passCount": 128,
       "createdAt": 1794362400000,
       "updatedAt": 1795399200000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {
@@ -64,24 +145,80 @@
     "description": "Returns the JSON Schema that `input` must satisfy in `POST /passes` for this template's active version. Field labels, groups and order are in the `x-label`, `x-group` and `x-order` keywords. Use it to build a form or generate types.",
     "response": {
       "type": "object",
+      "required": [
+        "eventName",
+        "venueName",
+        "venueRegion",
+        "startsAt",
+        "endsAt",
+        "attendee",
+        "ticketId"
+      ],
+      "additionalProperties": false,
       "properties": {
-        "name": {
+        "eventName": {
           "type": "string",
-          "title": "Guest",
+          "title": "Event",
+          "minLength": 1,
           "maxLength": 80
         },
-        "tier": {
+        "venueName": {
           "type": "string",
-          "title": "Pass",
-          "enum": ["Day pass", "Ten-visit card"]
+          "title": "Venue",
+          "minLength": 1,
+          "maxLength": 80
         },
-        "validUntil": {
+        "venueRegion": {
           "type": "string",
-          "title": "Valid until",
-          "format": "date"
+          "title": "City",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "venueRoom": {
+          "type": "string",
+          "title": "Room",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "startsAt": {
+          "type": "string",
+          "title": "Starts",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "title": "Ends",
+          "format": "date-time"
+        },
+        "doorsAt": {
+          "type": "string",
+          "title": "Doors",
+          "format": "date-time"
+        },
+        "attendee": {
+          "type": "string",
+          "title": "Attendee",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "admission": {
+          "type": "string",
+          "title": "Admission",
+          "maxLength": 40,
+          "default": "General"
+        },
+        "seat": {
+          "type": "string",
+          "title": "Seat",
+          "maxLength": 40
+        },
+        "ticketId": {
+          "type": "string",
+          "title": "Ticket ID",
+          "minLength": 1,
+          "maxLength": 64
         }
-      },
-      "required": ["name"]
+      }
     }
   },
   "templates.getTemplatesByIdRollout": {
@@ -103,7 +240,7 @@
       "failed": [
         {
           "passId": "0193a1b2-7c00-7000-8000-f3f85c24ee38",
-          "title": "Day pass",
+          "title": "Friday Night Bouldering",
           "reason": "The pass changed. Retry."
         },
         {
@@ -361,30 +498,35 @@
             "passTypeIdentifier": "pass.mobile.passbook.northwind",
             "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
             "organizationName": "Northwind Climbing",
-            "description": "Day pass",
+            "description": "Quickstart ticket",
             "backgroundColor": "rgb(17, 42, 74)",
             "foregroundColor": "rgb(255, 255, 255)",
             "labelColor": "rgb(255, 196, 0)",
-            "generic": {
+            "eventTicket": {
               "primaryFields": [
                 {
-                  "key": "name",
-                  "label": "Guest",
-                  "value": "Ada Example"
+                  "key": "event",
+                  "label": "Event",
+                  "value": "Friday Night Bouldering"
                 }
               ],
               "secondaryFields": [
                 {
-                  "key": "tier",
-                  "label": "Pass",
-                  "value": "Day pass"
+                  "key": "venue",
+                  "label": "Venue",
+                  "value": "Northwind Climbing"
+                },
+                {
+                  "key": "starts",
+                  "label": "Starts",
+                  "value": "2026-12-04T18:00:00-08:00"
                 }
               ],
               "auxiliaryFields": [
                 {
-                  "key": "validUntil",
-                  "label": "Valid until",
-                  "value": "2026-12-31"
+                  "key": "attendee",
+                  "label": "Attendee",
+                  "value": "Ada Example"
                 }
               ]
             }
@@ -403,7 +545,7 @@
       "items": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "name": "Day pass",
+          "name": "Quickstart ticket",
           "templateOrgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "origin": "uploaded",
           "releaseId": "0193a1b2-7c00-7000-8000-94a2c275b5eb",
@@ -443,30 +585,35 @@
         "passTypeIdentifier": "pass.mobile.passbook.northwind",
         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
         "organizationName": "Northwind Climbing",
-        "description": "Day pass",
+        "description": "Quickstart ticket",
         "backgroundColor": "rgb(17, 42, 74)",
         "foregroundColor": "rgb(255, 255, 255)",
         "labelColor": "rgb(255, 196, 0)",
-        "generic": {
+        "eventTicket": {
           "primaryFields": [
             {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
+              "key": "event",
+              "label": "Event",
+              "value": "Friday Night Bouldering"
             }
           ],
           "secondaryFields": [
             {
-              "key": "tier",
-              "label": "Pass",
-              "value": "Day pass"
+              "key": "venue",
+              "label": "Venue",
+              "value": "Northwind Climbing"
+            },
+            {
+              "key": "starts",
+              "label": "Starts",
+              "value": "2026-12-04T18:00:00-08:00"
             }
           ],
           "auxiliaryFields": [
             {
-              "key": "validUntil",
-              "label": "Valid until",
-              "value": "2026-12-31"
+              "key": "attendee",
+              "label": "Attendee",
+              "value": "Ada Example"
             }
           ]
         }
@@ -557,30 +704,35 @@
         "passTypeIdentifier": "pass.mobile.passbook.northwind",
         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
         "organizationName": "Northwind Climbing",
-        "description": "Day pass",
+        "description": "Quickstart ticket",
         "backgroundColor": "rgb(17, 42, 74)",
         "foregroundColor": "rgb(255, 255, 255)",
         "labelColor": "rgb(255, 196, 0)",
-        "generic": {
+        "eventTicket": {
           "primaryFields": [
             {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
+              "key": "event",
+              "label": "Event",
+              "value": "Friday Night Bouldering"
             }
           ],
           "secondaryFields": [
             {
-              "key": "tier",
-              "label": "Pass",
-              "value": "Day pass"
+              "key": "venue",
+              "label": "Venue",
+              "value": "Northwind Climbing"
+            },
+            {
+              "key": "starts",
+              "label": "Starts",
+              "value": "2026-12-04T18:00:00-08:00"
             }
           ],
           "auxiliaryFields": [
             {
-              "key": "validUntil",
-              "label": "Valid until",
-              "value": "2026-12-31"
+              "key": "attendee",
+              "label": "Attendee",
+              "value": "Ada Example"
             }
           ]
         }
@@ -844,9 +996,9 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-ticket",
+      "name": "Quickstart ticket",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
@@ -854,10 +1006,91 @@
       "passCount": 128,
       "createdAt": 1794362400000,
       "updatedAt": 1795399200000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {
@@ -877,7 +1110,7 @@
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass"
+      "name": "Quickstart ticket"
     }
   },
   "templates.postTemplatesByIdScanSetup": {
@@ -1128,9 +1361,9 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-ticket",
+      "name": "Quickstart ticket",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
@@ -1138,10 +1371,91 @@
       "passCount": 128,
       "createdAt": 1794362400000,
       "updatedAt": 1795399200000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {
@@ -1168,9 +1482,9 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-ticket",
+      "name": "Quickstart ticket",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
@@ -1178,10 +1492,91 @@
       "passCount": 128,
       "createdAt": 1794362400000,
       "updatedAt": 1795399200000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {
@@ -1209,15 +1604,15 @@
   "templates.postTemplatesByIdClone": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass (kids)"
+      "name": "Quickstart ticket (kids)"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-1379b97f73dc",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass-kids",
-      "name": "Day pass (kids)",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-kids",
+      "name": "Quickstart ticket (kids)",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
@@ -1225,10 +1620,91 @@
       "passCount": 0,
       "createdAt": 1795572000000,
       "updatedAt": 1795572000000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {
@@ -1271,9 +1747,9 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-ticket",
+      "name": "Quickstart ticket",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
@@ -1281,10 +1757,91 @@
       "passCount": 128,
       "createdAt": 1794362400000,
       "updatedAt": 1795399200000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {
@@ -1624,30 +2181,35 @@
         "passTypeIdentifier": "pass.mobile.passbook.northwind",
         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
         "organizationName": "Northwind Climbing",
-        "description": "Day pass",
+        "description": "Quickstart ticket",
         "backgroundColor": "rgb(17, 42, 74)",
         "foregroundColor": "rgb(255, 255, 255)",
         "labelColor": "rgb(255, 196, 0)",
-        "generic": {
+        "eventTicket": {
           "primaryFields": [
             {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
+              "key": "event",
+              "label": "Event",
+              "value": "Friday Night Bouldering"
             }
           ],
           "secondaryFields": [
             {
-              "key": "tier",
-              "label": "Pass",
-              "value": "Day pass"
+              "key": "venue",
+              "label": "Venue",
+              "value": "Northwind Climbing"
+            },
+            {
+              "key": "starts",
+              "label": "Starts",
+              "value": "2026-12-04T18:00:00-08:00"
             }
           ],
           "auxiliaryFields": [
             {
-              "key": "validUntil",
-              "label": "Valid until",
-              "value": "2026-12-31"
+              "key": "attendee",
+              "label": "Attendee",
+              "value": "Ada Example"
             }
           ]
         }
@@ -1656,9 +2218,9 @@
         "id": "0193a1b2-7c00-7000-8000-0000000000b1",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "orgName": "Northwind Climbing",
-        "slug": "day-pass",
-        "name": "Day pass",
-        "description": "A day pass for the climbing gym, scanned at the front desk.",
+        "slug": "quickstart-ticket",
+        "name": "Quickstart ticket",
+        "description": "A ticket for a climbing night, scanned at the front desk.",
         "origin": "uploaded",
         "status": "active",
         "activeVersion": "3",
@@ -1666,10 +2228,91 @@
         "passCount": 128,
         "createdAt": 1794362400000,
         "updatedAt": 1795399200000,
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "eventName",
+            "venueName",
+            "venueRegion",
+            "startsAt",
+            "endsAt",
+            "attendee",
+            "ticketId"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "eventName": {
+              "type": "string",
+              "title": "Event",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "venueName": {
+              "type": "string",
+              "title": "Venue",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "venueRegion": {
+              "type": "string",
+              "title": "City",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "venueRoom": {
+              "type": "string",
+              "title": "Room",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "startsAt": {
+              "type": "string",
+              "title": "Starts",
+              "format": "date-time"
+            },
+            "endsAt": {
+              "type": "string",
+              "title": "Ends",
+              "format": "date-time"
+            },
+            "doorsAt": {
+              "type": "string",
+              "title": "Doors",
+              "format": "date-time"
+            },
+            "attendee": {
+              "type": "string",
+              "title": "Attendee",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "admission": {
+              "type": "string",
+              "title": "Admission",
+              "maxLength": 40,
+              "default": "General"
+            },
+            "seat": {
+              "type": "string",
+              "title": "Seat",
+              "maxLength": 40
+            },
+            "ticketId": {
+              "type": "string",
+              "title": "Ticket ID",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        },
         "sample": {
-          "name": "Ada Example",
-          "tier": "Day pass",
-          "validUntil": "2026-12-31"
+          "eventName": "Friday Night Bouldering",
+          "venueName": "Northwind Climbing",
+          "venueRegion": "Seattle, WA",
+          "startsAt": "2026-12-04T18:00:00-08:00",
+          "endsAt": "2026-12-04T22:00:00-08:00",
+          "attendee": "Ada Example",
+          "ticketId": "NW-1001"
         },
         "versions": [
           {
@@ -1694,30 +2337,35 @@
         "passTypeIdentifier": "pass.mobile.passbook.northwind",
         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
         "organizationName": "Northwind Climbing",
-        "description": "Day pass",
+        "description": "Quickstart ticket",
         "backgroundColor": "rgb(17, 42, 74)",
         "foregroundColor": "rgb(255, 255, 255)",
         "labelColor": "rgb(255, 196, 0)",
-        "generic": {
+        "eventTicket": {
           "primaryFields": [
             {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
+              "key": "event",
+              "label": "Event",
+              "value": "Friday Night Bouldering"
             }
           ],
           "secondaryFields": [
             {
-              "key": "tier",
-              "label": "Pass",
-              "value": "Day pass"
+              "key": "venue",
+              "label": "Venue",
+              "value": "Northwind Climbing"
+            },
+            {
+              "key": "starts",
+              "label": "Starts",
+              "value": "2026-12-04T18:00:00-08:00"
             }
           ],
           "auxiliaryFields": [
             {
-              "key": "validUntil",
-              "label": "Valid until",
-              "value": "2026-12-31"
+              "key": "attendee",
+              "label": "Attendee",
+              "value": "Ada Example"
             }
           ]
         }
@@ -1811,30 +2459,35 @@
         "passTypeIdentifier": "pass.mobile.passbook.northwind",
         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
         "organizationName": "Northwind Climbing",
-        "description": "Day pass",
+        "description": "Quickstart ticket",
         "backgroundColor": "rgb(17, 42, 74)",
         "foregroundColor": "rgb(255, 255, 255)",
         "labelColor": "rgb(255, 196, 0)",
-        "generic": {
+        "eventTicket": {
           "primaryFields": [
             {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
+              "key": "event",
+              "label": "Event",
+              "value": "Friday Night Bouldering"
             }
           ],
           "secondaryFields": [
             {
-              "key": "tier",
-              "label": "Pass",
-              "value": "Day pass"
+              "key": "venue",
+              "label": "Venue",
+              "value": "Northwind Climbing"
+            },
+            {
+              "key": "starts",
+              "label": "Starts",
+              "value": "2026-12-04T18:00:00-08:00"
             }
           ],
           "auxiliaryFields": [
             {
-              "key": "validUntil",
-              "label": "Valid until",
-              "value": "2026-12-31"
+              "key": "attendee",
+              "label": "Attendee",
+              "value": "Ada Example"
             }
           ]
         }
@@ -1843,9 +2496,9 @@
         "id": "0193a1b2-7c00-7000-8000-0000000000b1",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "orgName": "Northwind Climbing",
-        "slug": "day-pass",
-        "name": "Day pass",
-        "description": "A day pass for the climbing gym, scanned at the front desk.",
+        "slug": "quickstart-ticket",
+        "name": "Quickstart ticket",
+        "description": "A ticket for a climbing night, scanned at the front desk.",
         "origin": "uploaded",
         "status": "active",
         "activeVersion": "3",
@@ -1853,10 +2506,91 @@
         "passCount": 128,
         "createdAt": 1794362400000,
         "updatedAt": 1795399200000,
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "eventName",
+            "venueName",
+            "venueRegion",
+            "startsAt",
+            "endsAt",
+            "attendee",
+            "ticketId"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "eventName": {
+              "type": "string",
+              "title": "Event",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "venueName": {
+              "type": "string",
+              "title": "Venue",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "venueRegion": {
+              "type": "string",
+              "title": "City",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "venueRoom": {
+              "type": "string",
+              "title": "Room",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "startsAt": {
+              "type": "string",
+              "title": "Starts",
+              "format": "date-time"
+            },
+            "endsAt": {
+              "type": "string",
+              "title": "Ends",
+              "format": "date-time"
+            },
+            "doorsAt": {
+              "type": "string",
+              "title": "Doors",
+              "format": "date-time"
+            },
+            "attendee": {
+              "type": "string",
+              "title": "Attendee",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "admission": {
+              "type": "string",
+              "title": "Admission",
+              "maxLength": 40,
+              "default": "General"
+            },
+            "seat": {
+              "type": "string",
+              "title": "Seat",
+              "maxLength": 40
+            },
+            "ticketId": {
+              "type": "string",
+              "title": "Ticket ID",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        },
         "sample": {
-          "name": "Ada Example",
-          "tier": "Day pass",
-          "validUntil": "2026-12-31"
+          "eventName": "Friday Night Bouldering",
+          "venueName": "Northwind Climbing",
+          "venueRegion": "Seattle, WA",
+          "startsAt": "2026-12-04T18:00:00-08:00",
+          "endsAt": "2026-12-04T22:00:00-08:00",
+          "attendee": "Ada Example",
+          "ticketId": "NW-1001"
         },
         "versions": [
           {
@@ -1877,37 +2611,42 @@
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Quickstart ticket",
       "version": {
         "passJson": {
           "formatVersion": 1,
           "passTypeIdentifier": "pass.mobile.passbook.northwind",
           "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
           "organizationName": "Northwind Climbing",
-          "description": "Day pass",
+          "description": "Quickstart ticket",
           "backgroundColor": "rgb(17, 42, 74)",
           "foregroundColor": "rgb(255, 255, 255)",
           "labelColor": "rgb(255, 196, 0)",
-          "generic": {
+          "eventTicket": {
             "primaryFields": [
               {
-                "key": "name",
-                "label": "Guest",
-                "value": "Ada Example"
+                "key": "event",
+                "label": "Event",
+                "value": "Friday Night Bouldering"
               }
             ],
             "secondaryFields": [
               {
-                "key": "tier",
-                "label": "Pass",
-                "value": "Day pass"
+                "key": "venue",
+                "label": "Venue",
+                "value": "Northwind Climbing"
+              },
+              {
+                "key": "starts",
+                "label": "Starts",
+                "value": "2026-12-04T18:00:00-08:00"
               }
             ],
             "auxiliaryFields": [
               {
-                "key": "validUntil",
-                "label": "Valid until",
-                "value": "2026-12-31"
+                "key": "attendee",
+                "label": "Attendee",
+                "value": "Ada Example"
               }
             ]
           }
@@ -1952,9 +2691,9 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-ticket",
+      "name": "Quickstart ticket",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "archived",
       "activeVersion": "3",
@@ -1962,10 +2701,91 @@
       "passCount": 128,
       "createdAt": 1794362400000,
       "updatedAt": 1795572000000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {
@@ -1989,9 +2809,9 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "slug": "quickstart-ticket",
+      "name": "Quickstart ticket",
+      "description": "A ticket for a climbing night, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
@@ -1999,10 +2819,91 @@
       "passCount": 128,
       "createdAt": 1794362400000,
       "updatedAt": 1795572000000,
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "venueName",
+          "venueRegion",
+          "startsAt",
+          "endsAt",
+          "attendee",
+          "ticketId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "title": "Event",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueName": {
+            "type": "string",
+            "title": "Venue",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRegion": {
+            "type": "string",
+            "title": "City",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "venueRoom": {
+            "type": "string",
+            "title": "Room",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "startsAt": {
+            "type": "string",
+            "title": "Starts",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Ends",
+            "format": "date-time"
+          },
+          "doorsAt": {
+            "type": "string",
+            "title": "Doors",
+            "format": "date-time"
+          },
+          "attendee": {
+            "type": "string",
+            "title": "Attendee",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "admission": {
+            "type": "string",
+            "title": "Admission",
+            "maxLength": 40,
+            "default": "General"
+          },
+          "seat": {
+            "type": "string",
+            "title": "Seat",
+            "maxLength": 40
+          },
+          "ticketId": {
+            "type": "string",
+            "title": "Ticket ID",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "sample": {
-        "name": "Ada Example",
-        "tier": "Day pass",
-        "validUntil": "2026-12-31"
+        "eventName": "Friday Night Bouldering",
+        "venueName": "Northwind Climbing",
+        "venueRegion": "Seattle, WA",
+        "startsAt": "2026-12-04T18:00:00-08:00",
+        "endsAt": "2026-12-04T22:00:00-08:00",
+        "attendee": "Ada Example",
+        "ticketId": "NW-1001"
       },
       "versions": [
         {

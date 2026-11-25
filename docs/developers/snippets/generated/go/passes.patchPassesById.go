@@ -19,13 +19,7 @@ func main() {
 	var body passbook.PassesUpdateBody
 	if err := json.Unmarshal([]byte(`{
   "input": {
-    "eventName": "Friday Night Bouldering",
-    "venueName": "Northwind Climbing",
-    "venueRegion": "Seattle, WA",
-    "startsAt": "2026-12-04T18:00:00-08:00",
-    "endsAt": "2026-12-04T23:00:00-08:00",
-    "attendee": "Ada Example",
-    "ticketId": "NW-1001"
+    "endsAt": "2026-12-04T23:00:00-08:00"
   },
   "notify": true
 }`), &body); err != nil {

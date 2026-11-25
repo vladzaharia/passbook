@@ -1,4 +1,5 @@
 // Examples written by hand for the operations people read first. The generator applies them over the sampled ones.
+import { TICKET_INPUT } from './example-ticket.ts';
 import {
   API,
   IDS,
@@ -9,7 +10,6 @@ import {
   NEW_KEY_PREFIX,
   PASS,
   T,
-  TICKET_INPUT,
 } from './example-world.ts';
 
 const INCIDENT = {
@@ -49,7 +49,7 @@ export const HEADLINE: Record<string, unknown> = {
     email: { outcome: 'queued', cap: 'org' },
   },
   'passes.patchPassesById request': {
-    input: { ...TICKET_INPUT, endsAt: '2026-12-04T23:00:00-08:00' },
+    input: { endsAt: '2026-12-04T23:00:00-08:00' },
     notify: true,
   },
   'templates.postTemplatesByIdPreview request': { input: TICKET_INPUT },

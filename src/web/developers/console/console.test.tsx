@@ -284,30 +284,46 @@ describe('the sandbox template', () => {
   const schema = {
     type: 'object',
     required: ['eventName'],
-    properties: { eventName: { type: 'string' } },
+    additionalProperties: false,
+    properties: { eventName: { type: 'string' }, attendee: { type: 'string' } },
   };
   const answer = (call: { path: string }) =>
-    call.path.endsWith('/input-schema')
-      ? json(schema)
-      : call.path === '/api/v1/templates/tpl_mine'
-        ? json({ sample: ticket })
-        : json({ id: 'p1' }, { status: 201 });
+    call.path === '/api/v1/templates/tpl_mine'
+      ? json({ sample: ticket, inputSchema: schema })
+      : json({ id: 'p1' }, { status: 201 });
+  const reads = (net: { calls: { path: string; headers: Record<string, string> }[] }) =>
+    net.calls.filter((c) => c.path.startsWith('/api/v1/templates/'));
 
-  it('fills input from its sample and sends that', async () => {
+  it('reads nothing and mints nothing until the first Run', async () => {
     const net = fakeNetwork(answer);
     render(<OpConsole op={passesCreate} mode="op" {...props} templateId="tpl_mine" />);
-    await screen.findByText('Valid against the schema');
-    await run();
-    await screen.findByText('201 Created');
-    const sent = net.calls.find((c) => c.path === '/api/v1/passes');
-    expect(JSON.parse(sent?.body ?? '{}')).toEqual({ templateId: 'tpl_mine', input: ticket });
+    expect(await screen.findByText('Body shape valid')).toBeInTheDocument();
+    expect(net.calls).toEqual([]);
   });
 
-  it('says only that the body shape is valid until the template has been read', async () => {
+  it('then reads the template once, fills input from its sample and checks it', async () => {
+    const net = fakeNetwork(answer);
+    render(<OpConsole op={passesCreate} mode="op" {...props} templateId="tpl_mine" />);
+    await run();
+    await screen.findByText('201 Created');
+    await screen.findByText('Valid against the schema');
+    expect(reads(net)).toHaveLength(1);
+    expect(reads(net)[0]?.headers['x-passbook-client']).toBe('portal');
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    await waitFor(() =>
+      expect(net.calls.filter((c) => c.path === '/api/v1/passes')).toHaveLength(2),
+    );
+    const second = net.calls.filter((c) => c.path === '/api/v1/passes')[1];
+    expect(JSON.parse(second?.body ?? '{}')).toEqual({ templateId: 'tpl_mine', input: ticket });
+  });
+
+  it('says only that the body shape is valid when the template cannot be read', async () => {
     fakeNetwork((call) =>
       call.path.startsWith('/api/v1/templates/') ? json({}, { status: 500 }) : answer(call),
     );
     render(<OpConsole op={passesCreate} mode="op" {...props} templateId="tpl_mine" />);
+    await run();
+    await screen.findByText('201 Created');
     expect(await screen.findByText('Body shape valid')).toBeInTheDocument();
   });
 });
