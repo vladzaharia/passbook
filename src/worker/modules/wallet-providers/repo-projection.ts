@@ -2,6 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { first } from '../../platform/db.ts';
 import { candidateHash } from '../templates/release-content.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
+import { hasCredentialSql } from './account-presence.ts';
 import {
   GOOGLE_PROJECTION_POLICY,
   type NativeProjection,
@@ -56,7 +57,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
     JOIN template_versions pv ON pv.template_id = pc.template_id AND pv.version = pc.version
     JOIN wallet_provider_accounts paccount ON paccount.id = pc.provider_account_id
       AND paccount.org_id = pc.org_id AND paccount.mode = pc.mode AND paccount.provider = pc.provider
-      AND paccount.authority_epoch = pc.provider_account_epoch AND paccount.credential_id IS NOT NULL
+      AND paccount.authority_epoch = pc.provider_account_epoch AND ${hasCredentialSql('paccount')}
       AND paccount.revoked_at IS NULL
     WHERE (pr.org_id = (${scope.orgIdSql}) AND pr.mode = (${scope.modeSql})
       AND pr.provider = (${scope.providerSql}))
