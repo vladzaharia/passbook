@@ -1,12 +1,12 @@
 # @passbook/cli
 
 ```sh
-export PASSBOOK_KEY=pb_test_...
+export PASSBOOK_KEY=pbp_test_...
 npx @passbook/cli listen --forward-to localhost:3000/hooks
 npx @passbook/cli types <templateId> > passbook-types.ts
 ```
 
-Needs Node 20+ and a `pb_test_` key. `PASSBOOK_BASE_URL` overrides `https://passbook.mobile`.
+Needs Node 20+ and a `pbp_test_` key. `PASSBOOK_BASE_URL` overrides `https://passbook.mobile`.
 
 ## listen
 
@@ -35,7 +35,7 @@ await pb.passes.create({ templateId, input });
 
 Issues or changes a pass. The key comes from PASSBOOK_KEY only. The body is a JSON object from `--file <path>`, or `--file -` for stdin; flags are laid over it. It prints the pass as JSON. A failure prints `CODE: detail` and exits 1.
 
-    passbook passes create --template <templateId> --set name="Ada" --email ada@example.com
+    passbook passes create --template <templateId> --set attendee="Ada Example" --email ada@example.com
     cat pass.json | passbook passes create --file - --idempotency-key order-1042
     passbook passes update <passId> --set seat=B12 --notify
 

@@ -17,6 +17,9 @@ import (
 	"time"
 )
 
+// Version is this SDK's version, sent in the User-Agent. Keep equal to the module tag.
+const Version = "0.1.0"
+
 const maxRetryAfter = 60 * time.Second
 const maxBackoff = 8 * time.Second
 
@@ -71,6 +74,7 @@ type core struct {
 	maxRetries int
 	timeout    time.Duration
 	retryDelay time.Duration
+	apiVersion string
 	sleep      func(context.Context, time.Duration) error
 }
 
@@ -209,6 +213,8 @@ func (c *core) send(ctx context.Context, cl call, opts []RequestOption) (*http.R
 			return nil, err
 		}
 		req.Header.Set("Accept", "application/json")
+		req.Header.Set("User-Agent", "passbook-sdk-go/"+Version)
+		req.Header.Set("PassBook-Version", c.apiVersion)
 		for name, values := range o.header {
 			req.Header[name] = values
 		}

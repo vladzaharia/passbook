@@ -25,6 +25,36 @@ def test_mode_comes_from_the_key():
     assert PassBook(api_key="other").mode is None
 
 
+@pytest.mark.parametrize("prefix", ["pb", "pbp", "pbo"])
+def test_mode_reads_every_key_label(prefix):
+    assert PassBook(api_key=f"{prefix}_test_x").mode == "test"
+    assert PassBook(api_key=f"{prefix}_live_x").mode == "live"
+
+
+def test_calls_send_the_sdk_user_agent_and_the_newest_api_version(make_client):
+    from passbook._generated.api_version import API_VERSION
+    from passbook._version import __version__
+
+    seen = []
+    pb = make_client(lambda r: (seen.append(r.headers), httpx.Response(200, json=PASS))[1])
+    pb.passes.retrieve("p1")
+    assert seen[0]["user-agent"] == f"passbook-sdk-python/{__version__}"
+    assert seen[0]["passbook-version"] == API_VERSION
+    pb = make_client(lambda r: (seen.append(r.headers), httpx.Response(200, json=PASS))[1], api_version="2026-01-01")
+    pb.passes.retrieve("p1")
+    assert seen[1]["passbook-version"] == "2026-01-01"
+
+
+def test_the_package_version_matches_pyproject():
+    import tomllib
+    from pathlib import Path
+
+    from passbook._version import __version__
+
+    text = (Path(__file__).parent.parent / "pyproject.toml").read_text()
+    assert tomllib.loads(text)["project"]["version"] == __version__
+
+
 def test_the_key_defaults_to_the_environment(monkeypatch):
     monkeypatch.setenv("PASSBOOK_KEY", "pb_test_env")
     assert PassBook().mode == "test"

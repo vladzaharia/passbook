@@ -16,11 +16,11 @@ class PassBook(Resources):
         pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
         pass_ = pb.passes.create({"templateId": template_id, "input": {"name": "Ada"}})
 
-    A `pb_test_` key works in test mode: sandboxes never issue real passes. Use it as a context manager,
+    A `pbp_test_` key works in test mode: sandboxes never issue real passes. Use it as a context manager,
     or call `close()`, to release the connection pool.
     """
 
-    #: From the key's prefix; None for a key that does not follow the `pb_<mode>_` format.
+    #: From the key's prefix; None for a key that does not follow the `pb[p|o]_<mode>_` format.
     mode: Literal["live", "test"] | None
 
     def __init__(
@@ -32,11 +32,12 @@ class PassBook(Resources):
         max_retries: int = 2,
         timeout: float = 60.0,
         retry_delay: float = 0.5,
+        api_version: str | None = None,
     ) -> None:
         key = api_key if api_key is not None else os.environ.get("PASSBOOK_KEY", "")
-        self._core = Core(key, base_url, http_client, max_retries, timeout, retry_delay)
+        self._core = Core(key, base_url, http_client, max_retries, timeout, retry_delay, api_version=api_version)
         super().__init__(self._core)
-        found = re.match(r"pb_(live|test)_", key)
+        found = re.match(r"(?:pb|pbp|pbo)_(live|test)_", key)
         self.mode = found.group(1) if found else None  # type: ignore[assignment]
 
     def close(self) -> None:

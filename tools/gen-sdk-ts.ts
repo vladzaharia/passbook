@@ -2,6 +2,7 @@
 // `node tools/gen-sdk-ts.ts` writes; `--check` fails when the committed files differ (run in `npm run check:rules`).
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { newestApiVersion, tsApiVersionFile } from './lib/sdk-api-version.ts';
 import {
   errorCodesFile,
   operationTypesFile,
@@ -25,6 +26,7 @@ export function generate(doc: OpenApiDoc, names: SdkNames, codes: string[]): Map
   const files = new Map<string, string>([
     ['schemas.ts', schemasFile(doc.components.schemas)],
     ['error-codes.ts', errorCodesFile(codes)],
+    ['api-version.ts', tsApiVersionFile(newestApiVersion())],
     ['operation-types.ts', operationTypesFile(ops, new Set(Object.keys(doc.components.schemas)))],
   ]);
   const tree = resourceTree(ops);

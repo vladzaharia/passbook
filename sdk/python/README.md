@@ -8,7 +8,18 @@ from passbook import PassBook
 
 pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 
-pass_ = pb.passes.create({"templateId": template_id, "input": {"name": "Ada Example"}})
+pass_ = pb.passes.create({
+    "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+    "input": {
+        "eventName": "Harbor Night",
+        "venueName": "Harbor Hall",
+        "venueRegion": "Cupertino, CA",
+        "startsAt": "2030-06-01T19:00:00-07:00",
+        "endsAt": "2030-06-01T22:00:00-07:00",
+        "attendee": "Ada Example",
+        "ticketId": "TICKET-0001",
+    },
+})
 ```
 
 Resources and methods are named as in the API reference, in snake_case: `pb.passes.create`, `pb.passes.channels.update`, `pb.webhook_endpoints.rotate_secret`. Path parameters come first, then the body (a dict or a model from `passbook`), then the query as keyword arguments, then the options.
@@ -17,15 +28,15 @@ Responses are pydantic models with the API's own field names (`pass_.publicUrl`)
 
 ## Test mode
 
-A `pb_test_` key only sees test data, and sandboxes never issue real passes. `pb.mode` reports `"live"` or `"test"` from the key.
+A `pbp_test_` key only sees test data, and sandboxes never issue real passes. `pb.mode` reports `"live"` or `"test"` from the key.
 
 ## Options
 
 ```python
-PassBook(api_key, base_url="https://passbook.mobile", http_client=None, max_retries=2, timeout=60.0)
+PassBook(api_key, base_url="https://passbook.mobile", http_client=None, max_retries=2, timeout=60.0, api_version=None)
 ```
 
-Every method also takes `idempotency_key`, `headers`, `max_retries` and `timeout`. Use the client as a context manager, or call `close()`.
+`api_version` is sent as `PassBook-Version`; default: the newest version this SDK was generated against. Every method also takes `idempotency_key`, `headers`, `max_retries` and `timeout`. Use the client as a context manager, or call `close()`.
 
 ## Idempotency and retries
 

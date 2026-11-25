@@ -306,3 +306,39 @@ func TestBackoffGrowsAndIsCapped(t *testing.T) {
 		t.Error("cap")
 	}
 }
+
+func TestModeReadsEveryKeyLabel(t *testing.T) {
+	for _, p := range []string{"pb", "pbp", "pbo"} {
+		c, _ := NewClient(p + "_test_x")
+		if c.Mode != "test" {
+			t.Fatalf("%s_test_: mode %q", p, c.Mode)
+		}
+		c, _ = NewClient(p + "_live_x")
+		if c.Mode != "live" {
+			t.Fatalf("%s_live_: mode %q", p, c.Mode)
+		}
+	}
+}
+
+func TestCallsSendTheUserAgentAndAPIVersion(t *testing.T) {
+	var agent, version []string
+	pb, _ := newFake(t, func(n int, w http.ResponseWriter, r *http.Request) {
+		agent = append(agent, r.Header.Get("User-Agent"))
+		version = append(version, r.Header.Get("PassBook-Version"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("{}"))
+	})
+	_, _ = pb.Passes.Retrieve(context.Background(), "p1")
+	if agent[0] != "passbook-sdk-go/"+Version || version[0] != apiVersion {
+		t.Fatalf("got %q %q", agent[0], version[0])
+	}
+	pb2, _ := newFake(t, func(n int, w http.ResponseWriter, r *http.Request) {
+		version = append(version, r.Header.Get("PassBook-Version"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("{}"))
+	}, WithAPIVersion("2026-01-01"))
+	_, _ = pb2.Passes.Retrieve(context.Background(), "p1")
+	if version[1] != "2026-01-01" {
+		t.Fatalf("got %q", version[1])
+	}
+}
