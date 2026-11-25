@@ -7,7 +7,6 @@ import { shots } from './helpers/shots.ts';
 test.use({ storageState: 'e2e/.auth/admin.json' });
 test.setTimeout(360_000);
 
-const seedConnectionId = () => 'c'.repeat(26);
 const csv = (rows: string[][]) =>
   ['Member ID,Name,Email', ...rows.map((r) => r.join(','))].join('\n');
 const file = (name: string, text: string) => ({
