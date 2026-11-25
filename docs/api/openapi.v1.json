@@ -121384,6 +121384,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -121821,6 +121822,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -122342,6 +122344,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -122716,6 +122719,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123102,6 +123106,7 @@
                               "state": "active"
                             }
                           ],
+                          "draftFailures": 1,
                           "surfaces": [
                             "phone"
                           ],
@@ -126736,6 +126741,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -130621,6 +130627,7 @@
                           "state": "active"
                         }
                       ],
+                      "draftFailures": 1,
                       "surfaces": [
                         "phone"
                       ],
@@ -135301,6 +135308,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -135579,6 +135587,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -135844,6 +135853,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136135,6 +136145,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136357,6 +136368,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],
@@ -136572,6 +136584,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],

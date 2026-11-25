@@ -210,7 +210,9 @@ describe('the money picker', () => {
     fireEvent.change(screen.getByTestId('scan-money-input'), { target: { value: '4.505' } });
     expect(screen.getByTestId('scan-money-error')).toHaveTextContent('Use at most 2 decimals.');
     expect(screen.getByTestId('scan-picker-commit')).toBeDisabled();
-    expect(d.onAmount).not.toHaveBeenCalled();
+    // No amount: the machine drops it, so the customer screen stops showing the last one.
+    expect(d.onAmount).toHaveBeenCalledOnce();
+    expect(d.onAmount).toHaveBeenCalledWith(null);
   });
 
   it('holds the button when the balance is short', () => {
