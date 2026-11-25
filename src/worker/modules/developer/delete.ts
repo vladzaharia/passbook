@@ -6,13 +6,13 @@ import { SANDBOX_TEMPLATE_NAME } from '../../../shared/copy/developer.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { orgDay } from '../org-lifecycle/org-day.ts';
 import { quickstartTemplateOf, sandboxOfUser } from './repo.ts';
 import { deletesSince } from './repo-grants-delete.ts';
 import { DELETES_PER_DAY, deleteSandbox } from './repo-grants-reset.ts';
 import { createSandbox, dto } from './service.ts';
 
 const DAY_MS = 86_400_000;
-const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 /** Three a day: the wait is until enough of them leave the window. */
 function limited(times: number[], now: number): AppError {
@@ -52,7 +52,7 @@ export async function deleteOwnSandbox(
   const gone = dto({ ...row, closed_at: row.closed_at ?? now }, templateId);
   try {
     await ctx.env.ORG_PURGE?.create({
-      id: `org-purge-${row.org_id}-${day(now)}`,
+      id: `org-purge-${row.org_id}-${await orgDay(ctx, row.org_id, now)}`,
       params: { orgId: row.org_id },
     });
   } catch (error) {

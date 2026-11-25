@@ -24,20 +24,13 @@ const ids = (html: string) => new Set([...html.matchAll(/ id="([^"]+)"/g)].map((
 const hrefs = (html: string) => [...html.matchAll(/ href="([^"]+)"/g)].map((m) => m[1] ?? '');
 
 beforeAll(async () => {
-  // PX4 has not landed: give two operations x-codes and the catalog files to prove the table renders.
+  // Give one operation x-codes and two guide entries to prove the table renders. errors.json stays the real catalog: the guides link to its codes.
   mkdirSync(api, { recursive: true });
   cpSync(join(root, 'docs/api'), api, { recursive: true });
   const docPath = join(api, 'openapi.v1.json');
   const doc = JSON.parse(readFileSync(docPath, 'utf8'));
   doc.paths['/api/v1/passes'].post['x-codes'] = ['VALIDATION', 'PASS_CONFLICT'];
   writeFileSync(docPath, JSON.stringify(doc));
-  writeFileSync(
-    join(api, 'errors.json'),
-    JSON.stringify([
-      { code: 'VALIDATION', status: 422 },
-      { code: 'PASS_CONFLICT', status: 409 },
-    ]),
-  );
   writeFileSync(
     join(api, 'error-guide.json'),
     JSON.stringify({

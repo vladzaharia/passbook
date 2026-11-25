@@ -44,6 +44,7 @@ function adminStart(creating: boolean) {
   stubFetch({
     '/api/v1/session': () => json(platformSession('user')),
     '/api/v1/orgs/memberships/me': () => json({ items: [membership] }),
+    '/api/v1/settings': () => json({ items: [] }),
     '/api/v1/scanning-sessions': (url, init) => {
       if (init?.method === 'POST') {
         bodies.push({ path: url.pathname, body: JSON.parse(String(init.body)) });
@@ -98,7 +99,11 @@ describe('scanner entry flows', () => {
       '/api/v1/scanning-sessions',
       '/api/v1/scanning-sessions/join',
     ]);
-    expect(s.bodies[0]?.body).toMatchObject({ orgId: 'o1', name: 'Member entrance' });
+    expect(s.bodies[0]?.body).toMatchObject({
+      orgId: 'o1',
+      name: 'Member entrance',
+      timeZone: 'America/Los_Angeles',
+    });
   });
   it('signs staff in with a PIN and leaves failed sign-in retryable', async () => {
     const signIn = vi
