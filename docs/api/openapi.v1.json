@@ -81728,6 +81728,11 @@
         "x-codes": [
           "DEVELOPER_INVITE_CONFLICT",
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -84471,6 +84476,11 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "MEMBERSHIP_CONFLICT",
           "NOT_FOUND",

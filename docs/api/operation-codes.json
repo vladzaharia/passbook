@@ -1056,6 +1056,11 @@
   "developer invitations delete /{id}/developer-invitations/{invitationId}": [
     "DEVELOPER_INVITE_CONFLICT",
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
@@ -2639,6 +2644,11 @@
   ],
   "organization memberships delete /{id}/invitations/{invitationId}": [
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "MEMBERSHIP_CONFLICT",
     "UNAUTHENTICATED"
   ],
