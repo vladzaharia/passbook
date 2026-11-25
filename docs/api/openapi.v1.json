@@ -78331,6 +78331,20 @@
                   "tier": "standard",
                   "limitPerMinute": 60,
                   "callsLastHour": 11,
+                  "series": [
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    2,
+                    3,
+                    1,
+                    0,
+                    0,
+                    2,
+                    2
+                  ],
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
                     "name": "Sandbox key",
