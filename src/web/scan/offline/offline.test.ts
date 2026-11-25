@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { z } from 'zod';
+import { ScanRosterSchema } from '../../../shared/contracts/scan-session.ts';
 import type { ClockPort } from '../machine/ports.ts';
 import type { ScanOutcome } from '../machine/types.ts';
 import { createOfflineController, type OfflineEmit } from './controller.ts';
@@ -179,7 +181,7 @@ describe('queue and sync', () => {
 
 function harness(
   mode: 'list' | 'decide',
-  rosterEntries: { h: string; status: 'active' | 'voided'; state: 'in' | null }[],
+  rosterEntries: z.input<typeof ScanRosterSchema>['entries'],
 ) {
   const queueKv = createMemoryKeyValue<QueueRow>();
   const rosterKv = createMemoryKeyValue<RosterEntry>();
@@ -201,13 +203,15 @@ function harness(
   let online = false;
   let scope = 'S:1';
   const api = {
-    roster: vi.fn(async () => ({
-      entries: rosterEntries,
-      cursor: null,
-      asOf: NOW - 1000,
-      validUntil: NOW + 86_400_000,
-      sig: 'sig',
-    })),
+    roster: vi.fn(async () =>
+      ScanRosterSchema.parse({
+        entries: rosterEntries,
+        cursor: null,
+        asOf: NOW - 1000,
+        validUntil: NOW + 86_400_000,
+        sig: 'sig',
+      }),
+    ),
     batch: vi.fn(async (body: { items: { idempotencyKey: string }[] }) => ({
       items: body.items.map((i) => ({
         idempotencyKey: i.idempotencyKey,
@@ -382,6 +386,103 @@ describe('controller', () => {
     expect(t.outcomes.at(-1)?.[1]).toMatchObject({ reason: 'already_done' });
     t.setNow(NOW + 23 * 3_600_000);
     await c.decide('k3', input('TICKET-0004'), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
+  });
+});
+
+describe('prints offline', () => {
+  const PRINT = 'P3QXW7ABCDEFGHIJKLMNOPQRST2';
+
+  it('admits a pass once across its phone code and its paper code', async () => {
+    const phone = await rosterHash('PHONECODE');
+    const paper = await rosterHash(PRINT);
+    const t = harness('list', [
+      { h: phone, status: 'active', state: null, g: '1' },
+      { h: paper, status: 'active', state: null, g: '1' },
+    ]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    t.setOnline(false);
+    await c.decide('k1', input('PHONECODE'), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
+    await c.decide('k2', input(PRINT), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'heads_up', reason: 'already_done' });
+  });
+
+  it('matches a print code typed with spaces and lower case', async () => {
+    const paper = await rosterHash(PRINT);
+    const t = harness('list', [{ h: paper, status: 'active', state: null }]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    t.setOnline(false);
+    const typed = `${PRINT.slice(0, 5)} ${PRINT.slice(5).toLowerCase()}`;
+    await c.decide('k1', input(typed), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
+  });
+
+  it('a delta after a reprint replaces the siblings of the phone entry', async () => {
+    const phone = await rosterHash('PHONECODE');
+    const oldPaper = await rosterHash(PRINT);
+    const newPrint = 'PNEWNEWNEWNEWNEWNEWNEWNEWN2';
+    const newPaper = await rosterHash(newPrint);
+    const store = createRosterStore(
+      createMemoryKeyValue<RosterEntry>(),
+      createMemoryKeyValue<RosterMeta>(),
+    );
+    const api = (entries: z.input<typeof ScanRosterSchema>['entries']) => ({
+      roster: async () =>
+        ScanRosterSchema.parse({
+          entries,
+          cursor: null,
+          asOf: NOW,
+          validUntil: NOW + 1e6,
+          sig: 's',
+        }),
+    });
+    await store.refresh(
+      api([
+        { h: phone, status: 'active', state: null, g: '1' },
+        { h: oldPaper, status: 'active', state: null, g: '1' },
+      ]),
+      NOW,
+      'S:1',
+      DAY_OF,
+    );
+    await store.refresh(
+      api([
+        { h: phone, status: 'active', state: null, g: '1' },
+        { h: newPaper, status: 'active', state: null, g: '1' },
+        { h: oldPaper, status: 'voided', state: null },
+      ]),
+      NOW + 1000,
+      'S:1',
+      DAY_OF,
+    );
+    expect((await store.find([phone]))?.sib).toEqual([newPaper]);
+    expect((await store.find([oldPaper]))?.sib).toBeUndefined();
+    await store.markIn(phone, '2026-01-01');
+    expect((await store.find([newPaper]))?.state).toBe('in');
+    expect((await store.find([oldPaper]))?.state).toBeNull();
+  });
+
+  it('a daily pass admits again through its sibling on the next venue day', async () => {
+    const phone = await rosterHash('PHONECODE');
+    const paper = await rosterHash(PRINT);
+    const t = harness('list', [
+      { h: phone, status: 'active', state: null, day: true, g: '1' },
+      { h: paper, status: 'active', state: null, day: true, g: '1' },
+    ]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    t.setOnline(false);
+    await c.decide('k1', input('PHONECODE'), false);
+    await c.decide('k2', input(PRINT), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ reason: 'already_done' });
+    t.setNow(NOW + 17 * 3_600_000);
+    await c.decide('k3', input(PRINT), false);
     expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
   });
 });
