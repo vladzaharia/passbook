@@ -1,7 +1,8 @@
 import { OrgRoleSchema } from '../../../shared/contracts/org-membership.ts';
 import { all, prefixMatch, run, type SqlValue, stmt } from '../../platform/db.ts';
-import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
 import { redactDetail, safeLabel } from './redact.ts';
 import type { AuditEntry } from './types.ts';
 
@@ -20,8 +21,8 @@ export interface AuditRow {
 
 export interface AuditFilter {
   orgId?: string;
-  /** Present only for a tenant read, after checking the capabilities: a member's membership, or a key (checked again here). */
-  tenant?: { userId: string; membershipId: string } | { keyId: string; now: number };
+  /** Present only for a tenant read: the authority `tenantAuthorityOf` proved, checked again here. */
+  tenant?: { authority: TenantPassWrite; now: number };
   actorId?: string;
   /** Prefix match. */
   action?: string;
@@ -48,28 +49,9 @@ export async function listAuditRows(
   };
   if (filter.orgId) add('org_id = ?', filter.orgId);
   if (filter.tenant) {
-    if ('keyId' in filter.tenant) {
-      // The key must still be live in this org and hold audit:read (a personal key stops with its member's role).
-      const live = keyLive('k', filter.tenant.now);
-      const holds = keyHoldsScope('k', 'audit:read');
-      where.push(`EXISTS (
-      SELECT 1 FROM api_keys k
-      WHERE k.id = ? AND k.org_id = audit_log.org_id
-        AND EXISTS (SELECT 1 FROM orgs ko WHERE ko.id = k.org_id AND ko.status = 'active')
-        AND ${live.sql} AND ${holds.sql}
-    )`);
-      params.push(filter.tenant.keyId, ...live.params, ...holds.params);
-    } else {
-      // Membership roles are immutable; recheck this exact authorization at the row read.
-      where.push(`EXISTS (
-      SELECT 1 FROM org_memberships reader
-      JOIN users reader_user ON reader_user.id = reader.user_id AND reader_user.status = 'active'
-      JOIN orgs reader_org ON reader_org.id = reader.org_id AND reader_org.status = 'active'
-      WHERE reader.id = ? AND reader.user_id = ? AND reader.org_id = audit_log.org_id
-        AND reader.revoked_at IS NULL
-    )`);
-      params.push(filter.tenant.membershipId, filter.tenant.userId);
-    }
+    // The authority captured for this request, repeated at the row read (session row, org epoch, role, sandbox Test-only).
+    where.push(tenantPassAuthoritySql(filter.tenant.authority, 'audit_log'));
+    params.push(...tenantPassAuthorityParams(filter.tenant.authority, filter.tenant.now));
     if (filter.actorId) where.push(tenantRefPredicate('actor_type', 'actor_id'));
     if (filter.targetId) where.push(tenantRefPredicate('target_type', 'target_id'));
   }

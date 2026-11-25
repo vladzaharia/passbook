@@ -546,6 +546,7 @@ Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed h
 - `broadcasts/repo.ts`
 - `holders/{repo,repo-blocks}.ts`
 - `identities/repo-runs.ts`
+- `audit/repo.ts` (the tenant read repeats the captured authority)
 
 **WP-T:** `templates/{repo-authority,repo-eligible,repo-imports,repo-release-write,repo-releases,repo-source,repo-stale,repo-sync-release,repo-sync,repo-upload}.ts`
 

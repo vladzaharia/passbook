@@ -17,9 +17,10 @@ import { AuditListSchema } from '../../../shared/contracts/audit.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import { createApp } from '../../app.ts';
 import { systemClock } from '../../platform/clock.ts';
-import { run } from '../../platform/db.ts';
+import { first as firstRow, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { listAuditRows } from './repo.ts';
 import { recordAudit } from './service.ts';
 
@@ -148,7 +149,33 @@ describe('tenant audit access', () => {
     await expectProblem(await get(`?orgId=${north.id}`, headers), 403, 'FORBIDDEN');
     await run(appEnv.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [north.id]);
 
-    const filter = { orgId: north.id, tenant: { userId: reader.id, membershipId } };
+    const authority: TenantPassWrite = {
+      kind: 'session',
+      orgId: north.id,
+      orgAccessRevision:
+        (
+          await firstRow<{ access_revision: number }>(
+            appEnv.DB,
+            'SELECT access_revision FROM orgs WHERE id = ?',
+            [north.id],
+          )
+        )?.access_revision ?? 0,
+      userId: reader.id,
+      sessionId: (
+        await firstRow<{ id_hash: string }>(
+          appEnv.DB,
+          'SELECT id_hash FROM sessions WHERE user_id = ?',
+          [reader.id],
+        )
+      )?.id_hash as string,
+      sessionRoles: ['user'],
+      amr: 'oidc',
+      membershipId,
+      roles: ['read_only'],
+      capability: 'audit:read',
+      mode: 'live',
+    };
+    const filter = { orgId: north.id, tenant: { authority, now: f.clock.now() } };
     expect(await listAuditRows(appEnv.DB, filter, 10)).toHaveLength(2);
 
     await run(appEnv.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
@@ -157,6 +184,22 @@ describe('tenant audit access', () => {
     ]);
     await expectProblem(await get(`?orgId=${north.id}`, headers), 403, 'FORBIDDEN');
     expect(await listAuditRows(appEnv.DB, filter, 10)).toEqual([]);
+  });
+
+  it('refuses a sandbox member in Live (409) and reads in Test, and refuses a revoked session row', async () => {
+    const f = fixtures(appEnv);
+    const sandbox = await makeOrg(f, { kind: 'developer' });
+    const user = await makeUser(f);
+    await addMember(f, sandbox.id, user.id);
+    const live = fake.user(user.id);
+    await expectProblem(await get(`?orgId=${sandbox.id}`, live), 409, 'ORG_TEST_ONLY');
+    const test = fake.session({ userId: user.id, mode: 'test' });
+    expect((await get(`?orgId=${sandbox.id}`, test)).status).toBe(200);
+    await run(appEnv.DB, 'UPDATE sessions SET revoked_at = ? WHERE user_id = ?', [
+      f.clock.now(),
+      user.id,
+    ]);
+    await expectProblem(await get(`?orgId=${sandbox.id}`, test), 403, 'FORBIDDEN');
   });
 
   it('shows organization names and request ids to members, and refuses roles without audit:read', async () => {
