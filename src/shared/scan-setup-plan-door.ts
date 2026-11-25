@@ -4,6 +4,7 @@ import type { ScanDeviceOverrides } from './contracts/scanning-sessions.ts';
 import { settingsOfflineVerdict } from './scan-offline.ts';
 import { deviceName, isTracked, sessionHoursOf } from './scan-setup-plan-derive.ts';
 import { type DoorPlanEnv, isRef } from './scan-setup-plan-types.ts';
+import { PRESET_SPECS } from './scan-setup-presets.ts';
 import { roleForSurface } from './scan-surfaces.ts';
 
 /** A session admits at most this many events. */
@@ -130,10 +131,11 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
   const directed = direction !== undefined || devices.some((d) => d.overrides.direction);
   if ((directed || reentry) && more.checkIn?.mode === undefined)
     settings.checkIn = { ...more.checkIn, mode: 'in_out' };
-  // event_night keeps the line moving offline, but only for a door that needs no exits.
+  // event_night and gates keep the line moving offline, but only for a door that needs no exits.
   const desk = devices.some((d) => d.surface === 'operator');
   if (
-    env.intent.preset === 'event_night' &&
+    env.intent.preset !== undefined &&
+    PRESET_SPECS[env.intent.preset].offlineList === true &&
     !desk &&
     more.offline === undefined &&
     more.whenOffline === undefined &&

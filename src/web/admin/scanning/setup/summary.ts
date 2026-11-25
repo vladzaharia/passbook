@@ -11,6 +11,7 @@ import {
   LAYOUT_LABEL,
   type StepId,
   skipsWhen,
+  whereOf,
 } from './draft.ts';
 import { hoursOf } from './intent.ts';
 
@@ -65,9 +66,9 @@ export function doorLines(
   const admitted = d.templateIds.map(nameOf);
   const eventCap = d.events.find((e) => e.max)?.max;
   const place =
-    d.preset === 'venue'
+    whereOf(d.preset) === 'areas'
       ? d.areas.find((a) => a.ref === d.doorArea)
-      : d.preset === 'front_desk' && d.count
+      : whereOf(d.preset) === 'count' && d.count
         ? { name: d.area, max: d.max }
         : undefined;
   const where = place?.name

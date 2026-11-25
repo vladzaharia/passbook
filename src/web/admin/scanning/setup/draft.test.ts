@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { planScanSetup } from '@/shared/scan-setup-plan.ts';
 import type { SetupPlanContext } from '@/shared/scan-setup-plan-types.ts';
-import { type Draft, initialDraft, newEvent, skipsWhen, stepAfter, stepProblem } from './draft.ts';
+import {
+  type Draft,
+  initialDraft,
+  newEvent,
+  PRESETS,
+  skipsWhen,
+  stepAfter,
+  stepProblem,
+} from './draft.ts';
 import { applyFix, toIntent } from './intent.ts';
 
 const ctx: SetupPlanContext = {
@@ -22,6 +30,41 @@ const plan = (d: Draft) => {
 };
 
 describe('presets pre-fill', () => {
+  it('every preset starts a draft that plans once it admits any pass type', () => {
+    for (const preset of PRESETS) {
+      const d = { ...initialDraft(preset, 'UTC'), any: true };
+      expect(stepProblem(d, 'where')).toBeUndefined();
+      expect(plan(d).sessions).toHaveLength(1);
+    }
+  });
+  it('Club entry: an in phone, an out phone, the inside counted', () => {
+    const d = initialDraft('club', 'UTC');
+    expect(d).toMatchObject({ name: 'Entrance', count: true, area: 'Inside', scanners: 'anyone' });
+    expect(d.devices.map((v) => [v.layout, v.direction])).toEqual([
+      ['phone', 'in'],
+      ['phone', 'out'],
+    ]);
+  });
+  it('Conference and Timed entry start with their hours; Always open sends always', () => {
+    const c = initialDraft('conference', 'UTC');
+    expect(c.hours).toMatchObject({ mode: 'set', from: '08:00', to: '18:00' });
+    expect(toIntent(c, 'o1').doors[0]?.hours).toEqual({ every: ['08:00-18:00'] });
+    const open = { ...c, hours: { ...c.hours, mode: 'always' as const } };
+    expect(toIntent(open, 'o1').doors[0]?.hours).toBe('always');
+    expect(initialDraft('timed', 'UTC').hours).toMatchObject({ from: '09:00', to: '17:00' });
+  });
+  it('Ticket gates keep a barcode reader; Counter keeps a customer screen', () => {
+    expect(initialDraft('gates', 'UTC').devices.map((v) => v.layout)).toEqual([
+      'phone',
+      'phone',
+      'barcode',
+    ]);
+    expect(initialDraft('counter', 'UTC')).toMatchObject({ as: 'desk' });
+    expect(initialDraft('counter', 'UTC').devices.map((v) => v.layout)).toEqual([
+      'operator',
+      'customer',
+    ]);
+  });
   it('Front desk: staff PIN, a tablet and a phone', () => {
     const d = initialDraft('front_desk', 'UTC');
     expect(d).toMatchObject({ name: 'Front desk', scanners: 'staff', count: false });

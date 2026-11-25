@@ -4,9 +4,18 @@ import { stateFile } from './helpers/auth.ts';
 import { pairScanner } from './helpers/pair.ts';
 import { readSeed } from './helpers/seed.ts';
 
-const PRESETS = ['front_desk', 'event_night', 'venue'] as const;
+/** The preset, and the device the test pairs: a phone that checks in (not a customer screen or an out phone). */
+const PRESETS = [
+  ['front_desk', -1],
+  ['event_night', -1],
+  ['venue', -1],
+  ['club', 0],
+  ['conference', 1],
+  ['gates', 0],
+  ['timed', 0],
+] as const;
 
-for (const preset of PRESETS) {
+for (const [preset, at] of PRESETS) {
   test(`${preset}: wizard, Done, pairing link, PIN, scan, replay`, async ({ browser }) => {
     const api = await apiAs('admin');
     const orgId = readSeed().org.id;
@@ -27,8 +36,11 @@ for (const preset of PRESETS) {
       // Who gets in: any pass type keeps the run short.
       await page.getByRole('switch', { name: 'Any pass type' }).click();
       await page.getByRole('button', { name: 'Next', exact: true }).click();
-      if (await page.getByRole('radio', { name: 'Always open' }).isVisible())
+      // Hours from a preset would refuse the scan outside them.
+      if (await page.getByRole('radio', { name: 'Always open' }).isVisible()) {
+        await page.getByRole('radio', { name: 'Always open' }).click();
         await page.getByRole('button', { name: 'Next', exact: true }).click();
+      }
       // Who scans: staff with a PIN.
       await page.getByRole('radio', { name: 'Staff sign in with a PIN' }).click();
       if ((await page.getByRole('textbox', { name: 'Name', exact: true }).count()) === 0)
@@ -56,7 +68,7 @@ for (const preset of PRESETS) {
       const pin = made.staff[0].pin as string;
       expect(pin).toMatch(/^\d{6}$/);
       const devices = made.sessions[0].devices as { pairing: { code: string } | null }[];
-      const code = devices.at(-1)?.pairing?.code;
+      const code = devices.at(at)?.pairing?.code;
       expect(code).toBeTruthy();
 
       const scanner = await device.newPage();

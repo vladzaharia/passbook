@@ -7,8 +7,9 @@ import type {
   SetupHours,
   SetupPlace,
 } from '@/shared/contracts/scan-setup-intent.ts';
+import { PRESET_SPECS } from '@/shared/scan-setup-presets.ts';
 import { localToIso } from '../../passes/schema-form/datetime.ts';
-import { type Draft, type EventDraft, eventCount, skipsWhen, uid } from './draft.ts';
+import { type Draft, type EventDraft, eventCount, skipsWhen, uid, whereOf } from './draft.ts';
 
 const DAYS: readonly AccessDay[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const FRONT_AREA = 'area-1';
@@ -19,7 +20,7 @@ const whole = (v: string): number | undefined => {
 };
 
 function placesOf(d: Draft): SetupPlace[] {
-  if (d.preset === 'venue')
+  if (whereOf(d.preset) === 'areas')
     return d.areas.map((a) => {
       const max = whole(a.max);
       return {
@@ -29,14 +30,18 @@ function placesOf(d: Draft): SetupPlace[] {
         ...(max ? { max } : { count: true }),
       };
     });
-  if (d.preset === 'front_desk' && d.count) {
+  if (whereOf(d.preset) === 'count' && d.count) {
     const max = whole(d.max);
     return [{ ref: FRONT_AREA, name: d.area.trim(), ...(max ? { max } : { count: true }) }];
   }
   return [];
 }
 const placeOf = (d: Draft): string | null =>
-  d.preset === 'venue' ? d.doorArea : d.preset === 'front_desk' && d.count ? FRONT_AREA : null;
+  whereOf(d.preset) === 'areas'
+    ? d.doorArea
+    : whereOf(d.preset) === 'count' && d.count
+      ? FRONT_AREA
+      : null;
 
 function eventsOf(d: Draft): SetupEvent[] {
   const made = d.events.map((e: EventDraft): SetupEvent => {
@@ -74,7 +79,10 @@ export function hoursOf(d: Draft): SetupHours | undefined {
 }
 
 function doorOf(d: Draft): SetupDoor {
-  const hours = skipsWhen(d) ? undefined : hoursOf(d);
+  // A preset with its own hours fills them unless the answer says always.
+  const hours = skipsWhen(d)
+    ? undefined
+    : (hoursOf(d) ?? (PRESET_SPECS[d.preset].hours ? ('always' as const) : undefined));
   const events = [...d.events.map((e) => e.ref), ...d.eventIds];
   if (d.fromIssued && d.fromTemplate) events.push(TEMPLATE_EVENTS);
   const viaEvents = d.preset === 'event_night' && eventCount(d) > 0;
@@ -139,7 +147,12 @@ export function applyFix(d: Draft, fix: ScanSetupFix): Draft {
       };
     }
     case 'remove_place':
-      return { ...d, count: false, doorArea: null, areas: d.preset === 'venue' ? [] : d.areas };
+      return {
+        ...d,
+        count: false,
+        doorArea: null,
+        areas: whereOf(d.preset) === 'areas' ? [] : d.areas,
+      };
     case 'track_in_out':
     case 'open_template':
       return d;

@@ -19608,6 +19608,12 @@
                   "front_desk",
                   "event_night",
                   "venue",
+                  "club",
+                  "conference",
+                  "gates",
+                  "counter",
+                  "pickup",
+                  "timed",
                   null
                 ]
               },
@@ -62231,7 +62237,13 @@
             "enum": [
               "front_desk",
               "event_night",
-              "venue"
+              "venue",
+              "club",
+              "conference",
+              "gates",
+              "counter",
+              "pickup",
+              "timed"
             ]
           },
           "timeZone": {

@@ -23,9 +23,21 @@ Without `scanning:admin` the answer has no PINs and no pairing codes. Pair devic
 
 {{show scan-setup-preview}}
 
-## The three presets
+## The presets
 
-`preset` picks the defaults; send only what differs.
+`preset` picks the defaults; send only what differs. A door's own value always wins; `hours: "always"` overrides a preset's hours.
+
+| Preset | For | Fills |
+| --- | --- | --- |
+| `front_desk` | A staffed desk | Staff PIN; tablet and phone; lookup, photo, desk actions |
+| `event_night` | Doors for an event | Anyone as Door; offline list when no exits |
+| `venue` | Several areas | Nothing; one session per door |
+| `club` | Self-serve members' door | Anyone as Door; in phone and out phone; in and out |
+| `conference` | Badge desk and rooms, several days | Staff PIN; tablet and phone; once a day; 08:00-18:00 |
+| `gates` | Ticket gates | Anyone as Door; two phones and a barcode reader; one entry; offline list |
+| `counter` | Café or loyalty counter | Anyone as Desk; tablet and customer screen; unlimited; the operator chooses the action |
+| `pickup` | Pickup or will-call | Staff PIN; one tablet; one pickup per pass |
+| `timed` | Timed entry with a capacity | Anyone as Door; two phones; in and out; hard limit; 09:00-17:00 |
 
 Front desk: one door, a counted place, staff with PINs.
 
