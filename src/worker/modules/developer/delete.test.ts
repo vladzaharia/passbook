@@ -1,7 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { CreatedDeveloperSandboxSchema } from '../../../shared/contracts/developer.ts';
+import {
+  CreatedDeveloperSandboxSchema,
+  DeveloperSandboxSchema,
+} from '../../../shared/contracts/developer.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { all, first } from '../../platform/db.ts';
@@ -79,7 +82,8 @@ describe('DELETE /developer/sandbox', () => {
     const s = await sandboxOf();
     const other = await sandboxOf();
     const res = await send('DELETE', '/developer/sandbox', s.headers);
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(200);
+    expect(DeveloperSandboxSchema.parse(await res.json()).closedAt).toBe(kit.clock.now());
 
     expect(await orgRow(s.made.orgId)).toEqual({ status: 'deleted', purge_after: kit.clock.now() });
     const keys = await all<{ revoked_at: number | null }>(
@@ -118,7 +122,7 @@ describe('DELETE /developer/sandbox', () => {
   it('removes a closed sandbox too, and a missing one is a 404', async () => {
     const s = await sandboxOf();
     expect((await send('POST', '/developer/sandbox/close', s.headers)).status).toBe(200);
-    expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(204);
+    expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(200);
     expect((await orgRow(s.made.orgId))?.purge_after).toBe(kit.clock.now());
     await expectProblem(
       await send('DELETE', '/developer/sandbox', s.headers),
@@ -146,7 +150,7 @@ describe('DELETE /developer/sandbox', () => {
   it('limits a person to three deletes in a rolling day', async () => {
     const s = await sandboxOf();
     for (let i = 0; i < 3; i++) {
-      expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(204);
+      expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(200);
       const next = await send('POST', '/developer/sandbox', s.headers, { turnstileToken: 'ok' });
       expect(next.status).toBe(201);
     }
@@ -154,7 +158,7 @@ describe('DELETE /developer/sandbox', () => {
     await expectProblem(res, 429, 'SANDBOX_RESET_LIMIT');
     expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0);
     kit.clock.advance(86_400_001);
-    expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(204);
+    expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(200);
   });
 });
 

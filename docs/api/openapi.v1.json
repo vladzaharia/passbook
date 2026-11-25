@@ -79870,8 +79870,73 @@
           "developer"
         ],
         "responses": {
-          "204": {
-            "description": "Success"
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgSlug": {
+                      "type": "string"
+                    },
+                    "templateId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "previewOnly": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "closedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "orgSlug",
+                    "templateId",
+                    "previewOnly",
+                    "createdAt",
+                    "closedAt"
+                  ]
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+                  "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+                  "orgSlug": "northwind-sandbox",
+                  "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+                  "previewOnly": true,
+                  "createdAt": 1794362400000,
+                  "closedAt": 1795572000000
+                }
+              }
+            }
           },
           "default": {
             "description": "Error",
@@ -79888,7 +79953,7 @@
           "resource": "developer.sandbox",
           "method": "close",
           "sdk": false,
-          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration. The name predates the delete; the route now deletes."
         },
         "x-sign-in": "idp",
         "x-codes": [
@@ -79970,6 +80035,15 @@
                     "createdAt",
                     "closedAt"
                   ]
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-6ba690879abc",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "orgSlug": "northwind-climbing",
+                  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                  "previewOnly": true,
+                  "createdAt": 1794362400000,
+                  "closedAt": 1795572000000
                 }
               }
             }
@@ -79984,6 +80058,12 @@
               }
             }
           }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "end",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-sign-in": "idp",
         "x-codes": [
@@ -80029,6 +80109,10 @@
                 "required": [
                   "turnstileToken"
                 ]
+              },
+              "example": {
+                "turnstileToken": "0.demo-turnstile-response-northwind",
+                "viewedAt": 1795570500000
               }
             }
           }
@@ -80147,6 +80231,23 @@
                     "key",
                     "previousKey"
                   ]
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-ba4dfb1a0ac6",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "orgSlug": "northwind-climbing",
+                  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                  "previewOnly": true,
+                  "createdAt": 1794362400000,
+                  "closedAt": null,
+                  "key": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
+                    "name": "Server integration",
+                    "secret": "whsec_demo_northwind_53ec29",
+                    "mode": "test",
+                    "expiresAt": 1798790399999
+                  },
+                  "previousKey": null
                 }
               }
             }
@@ -80161,6 +80262,12 @@
               }
             }
           }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "recreate",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-sign-in": "idp",
         "x-codes": [

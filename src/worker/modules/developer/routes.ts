@@ -162,13 +162,12 @@ register(
       'Delete your developer sandbox, open or closed: keys, passes, webhooks, logs and templates go, and you can make a new one. Three a day.',
     operationId: 'developer.deleteSandbox',
     auth: { human: true, signIn: 'strict', developer: true },
-    status: 204,
+    response: DeveloperSandboxSchema,
   },
   async (c) => {
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
-    await deleteOwnSandbox(serviceContext(c), auth);
-    return new Response(null, { status: 204 });
+    return c.json(await deleteOwnSandbox(serviceContext(c), auth));
   },
 );
 
