@@ -1,6 +1,8 @@
 import { Check, CircleAlert, CircleMinus, CircleX } from 'lucide-react';
 import type { PublicStatus } from '../../../shared/contracts/status.ts';
 import { STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
+import { BuddyFace } from '../../ui/art/face.tsx';
+import '../../ui/art/scenes/face.css';
 import { shortDate } from '../model/dates.ts';
 
 /** Placeholder in the prerendered page: the Worker swaps it for the live body (modules/status/public-page.tsx). */
@@ -14,16 +16,23 @@ const PILL = {
   off: 'neutral',
 } as const;
 
+/** The page header's face: smiling when all is well, flat when degraded, sad when down. */
+const FACE = { operational: 'happy', degraded: 'flat', outage: 'sad', off: 'flat' } as const;
+
 const clock = (ms: number) => new Date(ms).toISOString().replace('T', ' ').slice(0, 16);
 
 /** The status page body. Same markup at build (no data) and at request time (live), so no script is needed. */
 export function StatusBody({ status }: { status: PublicStatus | null }) {
   if (!status) return <p className="muted mt8">{STATUS_COPY.unavailable}</p>;
-  const Overall = ICON[status.overall];
   return (
     <>
       <div className={`status-banner ${PILL[status.overall]}`} role="status">
-        <Overall aria-hidden="true" />
+        <BuddyFace
+          className="status-face"
+          size="sm"
+          scene={status.overall === 'operational' ? 'cheer' : 'wink'}
+          mood={FACE[status.overall]}
+        />
         <strong>{STATUS_COPY.overall[status.overall]}</strong>
         <time className="push xs" dateTime={new Date(status.checkedAt).toISOString()}>
           {STATUS_COPY.checked} {clock(status.checkedAt)} UTC
