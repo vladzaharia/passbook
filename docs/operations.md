@@ -619,6 +619,15 @@ endpoints. Set the platform setting `events.feed` to `"off"` to skip it without 
 while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
 gap; turning it back on does not backfill.
 
+### Outbound webhooks
+
+- **Kill switches.** `events.feed` = `"off"` (above) stops journaling and fan-out for everyone. To stop one endpoint, pause or delete it in Connections, Webhooks; to stop a tenant, disable the endpoint through its API.
+- **Disabled endpoints.** After 72 hours of failures with at least 10 failed attempts in a row an endpoint is disabled by the platform: pending deliveries are cancelled (`ENDPOINT_DISABLED`), an audit row `webhook.endpoint_disabled` is written and the log carries `WEBHOOK_ENDPOINT_DISABLED`. The console shows a callout with Resume and Replay failed; there is no email in v1. Resume clears the counters.
+- **Limits.** `RL_WEBHOOK_OUT` (10 a minute) covers test sends (key `test:<org>:<mode>`) and single replays (`replay1:`); per-host sends are paced by `RL_WEBHOOK_HOST_ORG` (120 a minute per org) and `RL_WEBHOOK_HOST` (600 a minute across orgs): a delivery over its share waits, uncounted. Bulk replay is one a minute per org and mode, enforced in the first chunk's own batch from its audit row, at most 10,000 deliveries; a failed first chunk answers `503 REPLAY_NOT_QUEUED` and spends nothing. Creates are capped at 20 an hour per org and 10 endpoints per org and mode.
+- **Deploy.** Create the queue `wallet-webhooks` (wrangler `queues`) before the first deploy of the delivery engine; the rate limit bindings come from `wrangler.jsonc`.
+- **Retention.** Daily `webhooks.retention`: feed rows older than `min(30 d, events retention)`; delivered deliveries after 7 days; failed and cancelled with their feed row; attempts 30 days (test sends 7); secrets a day after expiry.
+- **Watching.** Log codes `WEBHOOK_ENDPOINT_DISABLED`, `WEBHOOK_REPLAY_PARTIAL`, `REPLAY_NOT_QUEUED`, `SECRET_UNAVAILABLE` (a secret that no longer opens: check the KEK ring) and `WEBHOOK_TENANT_MISMATCH` (should never appear; treat it as a bug).
+
 ### Request log and status notes
 
 `request_log` holds one row per Test call of a developer org (sandboxes only; Live and real orgs write nothing): metadata for 7 days, request and response bodies for 24 hours (a trigger refuses a body or a query value anywhere else). A sandbox keeps at most 2,000 rows an hour and 20,000 in all (`request_log_budget`). The minute cron hook `developer.request_log_purge` purges on a 20-second budget every minute, so a backlog is caught up; reads already hide bodies older than 24 hours and rows older than 7 days.
