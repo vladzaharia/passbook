@@ -4,6 +4,7 @@ import type {
   TestConfigResponseSchema,
   TestConfigSchema,
 } from '../../../shared/contracts/index.ts';
+import { egressFetch } from '../../connectors/lib/egress.ts';
 import type { AnyConnector, ConnectorContext, UpstreamRecord } from '../../connectors/types.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
@@ -11,6 +12,7 @@ import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import { getDeps } from './deps.ts';
+import { filesPort } from './files-port.ts';
 import { recordConnectionAudit } from './repo-sync.ts';
 import { classify } from './runtime.ts';
 import { auditActor } from './service.ts';
@@ -59,27 +61,35 @@ export async function firstRecord(
   return fetched.status === 'ok' ? fetched.record : null;
 }
 
-/** The connector context of an unsaved configuration: the platform safe fetch, secrets for this request only. */
+/**
+ * The connector context of an unsaved configuration: the platform safe fetch pinned to the connector's
+ * egress, secrets for this request only, and an upload connector's files bound to the draft `fileId`.
+ */
 export function unsavedContext(
   sctx: ServiceContext,
   def: AnyConnector,
   orgId: string,
   config: unknown,
   secrets: unknown,
+  fileId?: string,
 ): ConnectorContext<unknown, unknown> {
   const deps = getDeps();
+  const safeFetch = createSafeFetch({
+    platformHosts: platformHostsOf(sctx.env),
+    timeoutMs: def.defaults.timeoutMs,
+    ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
+    ...(def.defaults.maxRedirects ? { maxRedirects: def.defaults.maxRedirects } : {}),
+    ...(deps.resolver ? { resolver: deps.resolver } : {}),
+    ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
+  });
   return {
     connection: { id: 'test', orgId, generation: 0, config },
     secrets,
     now: () => sctx.clock.now(),
-    fetch: createSafeFetch({
-      platformHosts: platformHostsOf(sctx.env),
-      timeoutMs: def.defaults.timeoutMs,
-      ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
-      ...(def.defaults.maxRedirects ? { maxRedirects: def.defaults.maxRedirects } : {}),
-      ...(deps.resolver ? { resolver: deps.resolver } : {}),
-      ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
-    }),
+    fetch: egressFetch(def, config, safeFetch),
+    ...(def.capabilities.upload
+      ? { files: filesPort(sctx, { orgId, draftId: fileId ?? null }) }
+      : {}),
     signal: AbortSignal.timeout(30_000),
     log: (event, data) =>
       sctx.log.info(`connector.${event}`, { orgId, connectorType: def.type, ...data }),
@@ -102,7 +112,7 @@ export async function openUnsaved(
     await assertConnectionAuthority(sctx, authority);
     await assertSafeUrls(sctx, def.urls(config));
   }
-  return { def, cc: unsavedContext(sctx, def, input.orgId, config, secrets) };
+  return { def, cc: unsavedContext(sctx, def, input.orgId, config, secrets, input.fileId) };
 }
 
 /**
@@ -133,7 +143,7 @@ export async function testConfig(
     // Push-only connectors fetch nothing; records arrive in signed webhooks.
     return { ok: true, detail: 'Records arrive by webhook.', durationMs: 0 };
   }
-  const cc = unsavedContext(sctx, def, input.orgId, config, secrets);
+  const cc = unsavedContext(sctx, def, input.orgId, config, secrets, input.fileId);
   let result: Result;
   try {
     await assertConnectionAuthority(sctx, authority);
