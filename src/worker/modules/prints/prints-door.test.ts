@@ -48,8 +48,12 @@ const call = (method: string, path: string, body?: unknown) =>
     },
     kit.env,
   );
-const printable = async (holderEmail?: string) => {
-  const pass = await kit.scanPass(tpl, {}, holderEmail ? { holderEmail } : {});
+const printable = async (holderEmail?: string, mode?: 'live' | 'test') => {
+  const pass = await kit.scanPass(
+    tpl,
+    {},
+    { ...(holderEmail ? { holderEmail } : {}), ...(mode ? { mode } : {}) },
+  );
   expect(
     (await call('PUT', `/passes/${pass.id}/channels`, { channels: { paper: 'on' } })).status,
   ).toBe(200);
@@ -194,6 +198,25 @@ describe('what ends a print', () => {
     expect(await status(pass.id)).toEqual([{ status: 'voided', void_cause: 'new_code' }]);
     const s = await kit.scanner({ templateIds: [tpl] });
     expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'print_voided' });
+  });
+});
+
+describe('a print whose pass cannot admit', () => {
+  it('a voided pass answers with the pass, not a voided print', async () => {
+    const pass = await printable();
+    const p = await mint(pass.id);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    const s = await kit.scanner({ templateIds: [tpl] });
+    const out = await resolve(s, p.code);
+    expect(out.kind).toBe('refused');
+    expect(out).not.toMatchObject({ reason: 'print_voided' });
+  });
+
+  it('a test print on a live scanner says test_pass', async () => {
+    const pass = await printable(undefined, 'test');
+    const p = await mint(pass.id);
+    const s = await kit.scanner({ templateIds: [tpl] });
+    expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'test_pass' });
   });
 });
 
