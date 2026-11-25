@@ -75761,7 +75761,7 @@
                       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
                       "title": "Day pass",
                       "subtitle": "Ada Example",
-                      "templateName": "Day pass",
+                      "templateName": "Quickstart ticket",
                       "orgName": "Northwind Climbing",
                       "status": "active",
                       "mode": "live",
@@ -75778,30 +75778,35 @@
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -76609,7 +76614,7 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "title": "Day pass",
                   "subtitle": "Ada Example",
-                  "templateName": "Day pass",
+                  "templateName": "Quickstart ticket",
                   "orgName": "Northwind Climbing",
                   "status": "active",
                   "mode": "live",
@@ -76626,30 +76631,35 @@
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -78708,7 +78718,16 @@
                     },
                     "callsLastHour": {
                       "type": "integer",
-                      "minimum": 0
+                      "minimum": 0,
+                      "description": "Calls in the last hour, without the portal's own background reads."
+                    },
+                    "series": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "description": "The same calls in five-minute buckets, oldest first."
                     },
                     "key": {
                       "type": [
@@ -78741,6 +78760,7 @@
                     "tier",
                     "limitPerMinute",
                     "callsLastHour",
+                    "series",
                     "key"
                   ]
                 },
@@ -78755,6 +78775,20 @@
                   "tier": "standard",
                   "limitPerMinute": 60,
                   "callsLastHour": 11,
+                  "series": [
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    2,
+                    3,
+                    1,
+                    0,
+                    0,
+                    2,
+                    2
+                  ],
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
                     "name": "Sandbox key",
@@ -80749,6 +80783,7 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -81525,6 +81560,7 @@
         "description": "The features and limits of the organization's plan, and how much of each it has used.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -81630,6 +81666,7 @@
         "description": "The organization's plan: each limit with how much is used, the features it can use now, and the smallest PassBook footer the plan allows.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -82097,6 +82134,7 @@
         "description": "An organization's brand, channels and accounts in the caller's mode. Each channel carries its chain of levels (PassBook, Plan, Organization, Template), the first of which that is not ok stops it. checks lists what to fix, each with a stable fix action. Send revision back as expectedRevision.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -82625,6 +82663,7 @@
         "description": "Change the brand, support, email and which channels the organization allows, in one write against the revision you read. ?dryRun=true answers with the same shape and writes nothing. Absent leaves a value, null clears it. Name an image by the sha POST /orgs/{orgId}/brand-assets answered. Allowing Google or Samsung also turns on the enrollment when the platform has released the provider and the account is ready; blocking never removes copies. A stale expectedRevision is 409 PASS_SETUP_CHANGED.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BRAND_ASSET_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "CONFLICT",
@@ -82745,6 +82784,7 @@
         "description": "Stage a PNG for a logo, icon or web logo. Nothing about the organization changes: a pass-setup save that names the sha keeps the file, and an unused one is deleted after 24 hours. The logo and icon are the @3x; send the @2x as x2 or let it be derived.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
@@ -85129,6 +85169,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -85254,6 +85295,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BRAND_MARK_NOT_ALLOWED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -85382,6 +85424,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -85504,6 +85547,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -90497,9 +90541,9 @@
                       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                       "orgName": "Northwind Climbing",
-                      "slug": "day-pass",
-                      "name": "Day pass",
-                      "description": "A day pass for the climbing gym, scanned at the front desk.",
+                      "slug": "quickstart-ticket",
+                      "name": "Quickstart ticket",
+                      "description": "A ticket for a climbing night, scanned at the front desk.",
                       "origin": "uploaded",
                       "status": "active",
                       "activeVersion": "3",
@@ -90545,6 +90589,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -90739,6 +90784,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -90841,6 +90887,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -90899,9 +90946,9 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass",
-                  "name": "Day pass",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-ticket",
+                  "name": "Quickstart ticket",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "active",
                   "activeVersion": "3",
@@ -90911,10 +90958,91 @@
                   "passCount": 128,
                   "createdAt": 1794362400000,
                   "updatedAt": 1795399200000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -91022,30 +91150,35 @@
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -91093,6 +91226,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91201,7 +91335,7 @@
                   "items": [
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "templateOrgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                       "origin": "uploaded",
                       "releaseId": "0193a1b2-7c00-7000-8000-94a2c275b5eb",
@@ -91255,6 +91389,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91311,9 +91446,9 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass",
-                  "name": "Day pass",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-ticket",
+                  "name": "Quickstart ticket",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "active",
                   "activeVersion": "3",
@@ -91323,10 +91458,91 @@
                   "passCount": 128,
                   "createdAt": 1794362400000,
                   "updatedAt": 1795399200000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -91376,6 +91592,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91437,9 +91654,9 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass",
-                  "name": "Day pass",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-ticket",
+                  "name": "Quickstart ticket",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "active",
                   "activeVersion": "3",
@@ -91449,10 +91666,91 @@
                   "passCount": 128,
                   "createdAt": 1794362400000,
                   "updatedAt": 1795399200000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -91625,7 +91923,7 @@
               },
               "example": {
                 "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                "name": "Day pass (kids)"
+                "name": "Quickstart ticket (kids)"
               }
             }
           }
@@ -91642,9 +91940,9 @@
                   "id": "0193a1b2-7c00-7000-8000-1379b97f73dc",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass-kids",
-                  "name": "Day pass (kids)",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-kids",
+                  "name": "Quickstart ticket (kids)",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "active",
                   "activeVersion": "3",
@@ -91654,10 +91952,91 @@
                   "passCount": 0,
                   "createdAt": 1795572000000,
                   "updatedAt": 1795572000000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -91796,9 +92175,9 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass",
-                  "name": "Day pass",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-ticket",
+                  "name": "Quickstart ticket",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "active",
                   "activeVersion": "3",
@@ -91808,10 +92187,91 @@
                   "passCount": 128,
                   "createdAt": 1794362400000,
                   "updatedAt": 1795399200000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -91932,11 +92392,14 @@
                 "$ref": "#/components/schemas/TemplatesPreviewParams"
               },
               "example": {
-                "version": "3",
                 "input": {
-                  "name": "Ada Example",
-                  "tier": "Day pass",
-                  "validUntil": "2026-12-31"
+                  "eventName": "Friday Night Bouldering",
+                  "venueName": "Northwind Climbing",
+                  "venueRegion": "Seattle, WA",
+                  "startsAt": "2026-12-04T18:00:00-08:00",
+                  "endsAt": "2026-12-04T22:00:00-08:00",
+                  "attendee": "Ada Example",
+                  "ticketId": "NW-1001"
                 }
               }
             }
@@ -91956,30 +92419,35 @@
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -92021,6 +92489,7 @@
         "description": "Renders the pass.json a template would produce for `input`, without issuing a pass.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -92089,29 +92558,80 @@
                 },
                 "example": {
                   "type": "object",
+                  "required": [
+                    "eventName",
+                    "venueName",
+                    "venueRegion",
+                    "startsAt",
+                    "endsAt",
+                    "attendee",
+                    "ticketId"
+                  ],
+                  "additionalProperties": false,
                   "properties": {
-                    "name": {
+                    "eventName": {
                       "type": "string",
-                      "title": "Guest",
+                      "title": "Event",
+                      "minLength": 1,
                       "maxLength": 80
                     },
-                    "tier": {
+                    "venueName": {
                       "type": "string",
-                      "title": "Pass",
-                      "enum": [
-                        "Day pass",
-                        "Ten-visit card"
-                      ]
+                      "title": "Venue",
+                      "minLength": 1,
+                      "maxLength": 80
                     },
-                    "validUntil": {
+                    "venueRegion": {
                       "type": "string",
-                      "title": "Valid until",
-                      "format": "date"
+                      "title": "City",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "venueRoom": {
+                      "type": "string",
+                      "title": "Room",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "startsAt": {
+                      "type": "string",
+                      "title": "Starts",
+                      "format": "date-time"
+                    },
+                    "endsAt": {
+                      "type": "string",
+                      "title": "Ends",
+                      "format": "date-time"
+                    },
+                    "doorsAt": {
+                      "type": "string",
+                      "title": "Doors",
+                      "format": "date-time"
+                    },
+                    "attendee": {
+                      "type": "string",
+                      "title": "Attendee",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "admission": {
+                      "type": "string",
+                      "title": "Admission",
+                      "maxLength": 40,
+                      "default": "General"
+                    },
+                    "seat": {
+                      "type": "string",
+                      "title": "Seat",
+                      "maxLength": 40
+                    },
+                    "ticketId": {
+                      "type": "string",
+                      "title": "Ticket ID",
+                      "minLength": 1,
+                      "maxLength": 64
                     }
-                  },
-                  "required": [
-                    "name"
-                  ]
+                  }
                 }
               }
             }
@@ -92135,6 +92655,7 @@
         "description": "Returns the JSON Schema that `input` must satisfy in `POST /passes` for this template's active version. Field labels, groups and order are in the `x-label`, `x-group` and `x-order` keywords. Use it to build a form or generate types.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -92217,6 +92738,7 @@
         "description": "Downloads a sample import file for the template: one column per field, labeled as in the pass form, and Holder email, with one valid row. Importing it with mapping auto maps every column and checks without errors.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -92356,30 +92878,35 @@
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -92417,6 +92944,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -92530,6 +93058,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -92836,6 +93365,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -93260,6 +93790,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -93431,30 +93962,35 @@
                   "passTypeIdentifier": "pass.mobile.passbook.northwind",
                   "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                   "organizationName": "Northwind Climbing",
-                  "description": "Day pass",
+                  "description": "Quickstart ticket",
                   "backgroundColor": "rgb(17, 42, 74)",
                   "foregroundColor": "rgb(255, 255, 255)",
                   "labelColor": "rgb(255, 196, 0)",
-                  "generic": {
+                  "eventTicket": {
                     "primaryFields": [
                       {
-                        "key": "name",
-                        "label": "Guest",
-                        "value": "Ada Example"
+                        "key": "event",
+                        "label": "Event",
+                        "value": "Friday Night Bouldering"
                       }
                     ],
                     "secondaryFields": [
                       {
-                        "key": "tier",
-                        "label": "Pass",
-                        "value": "Day pass"
+                        "key": "venue",
+                        "label": "Venue",
+                        "value": "Northwind Climbing"
+                      },
+                      {
+                        "key": "starts",
+                        "label": "Starts",
+                        "value": "2026-12-04T18:00:00-08:00"
                       }
                     ],
                     "auxiliaryFields": [
                       {
-                        "key": "validUntil",
-                        "label": "Valid until",
-                        "value": "2026-12-31"
+                        "key": "attendee",
+                        "label": "Attendee",
+                        "value": "Ada Example"
                       }
                     ]
                   }
@@ -93557,30 +94093,35 @@
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -93589,9 +94130,9 @@
                     "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                     "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                     "orgName": "Northwind Climbing",
-                    "slug": "day-pass",
-                    "name": "Day pass",
-                    "description": "A day pass for the climbing gym, scanned at the front desk.",
+                    "slug": "quickstart-ticket",
+                    "name": "Quickstart ticket",
+                    "description": "A ticket for a climbing night, scanned at the front desk.",
                     "origin": "uploaded",
                     "status": "active",
                     "activeVersion": "3",
@@ -93601,10 +94142,91 @@
                     "passCount": 128,
                     "createdAt": 1794362400000,
                     "updatedAt": 1795399200000,
+                    "inputSchema": {
+                      "type": "object",
+                      "required": [
+                        "eventName",
+                        "venueName",
+                        "venueRegion",
+                        "startsAt",
+                        "endsAt",
+                        "attendee",
+                        "ticketId"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "eventName": {
+                          "type": "string",
+                          "title": "Event",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "venueName": {
+                          "type": "string",
+                          "title": "Venue",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "venueRegion": {
+                          "type": "string",
+                          "title": "City",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "venueRoom": {
+                          "type": "string",
+                          "title": "Room",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "startsAt": {
+                          "type": "string",
+                          "title": "Starts",
+                          "format": "date-time"
+                        },
+                        "endsAt": {
+                          "type": "string",
+                          "title": "Ends",
+                          "format": "date-time"
+                        },
+                        "doorsAt": {
+                          "type": "string",
+                          "title": "Doors",
+                          "format": "date-time"
+                        },
+                        "attendee": {
+                          "type": "string",
+                          "title": "Attendee",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "admission": {
+                          "type": "string",
+                          "title": "Admission",
+                          "maxLength": 40,
+                          "default": "General"
+                        },
+                        "seat": {
+                          "type": "string",
+                          "title": "Seat",
+                          "maxLength": 40
+                        },
+                        "ticketId": {
+                          "type": "string",
+                          "title": "Ticket ID",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      }
+                    },
                     "sample": {
-                      "name": "Ada Example",
-                      "tier": "Day pass",
-                      "validUntil": "2026-12-31"
+                      "eventName": "Friday Night Bouldering",
+                      "venueName": "Northwind Climbing",
+                      "venueRegion": "Seattle, WA",
+                      "startsAt": "2026-12-04T18:00:00-08:00",
+                      "endsAt": "2026-12-04T22:00:00-08:00",
+                      "attendee": "Ada Example",
+                      "ticketId": "NW-1001"
                     },
                     "versions": [
                       {
@@ -93769,6 +94391,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -93826,7 +94449,7 @@
               },
               "example": {
                 "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                "name": "Day pass"
+                "name": "Quickstart ticket"
               }
             }
           }
@@ -93843,9 +94466,9 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass",
-                  "name": "Day pass",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-ticket",
+                  "name": "Quickstart ticket",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "active",
                   "activeVersion": "3",
@@ -93855,10 +94478,91 @@
                   "passCount": 128,
                   "createdAt": 1794362400000,
                   "updatedAt": 1795399200000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -93898,6 +94602,7 @@
         "description": "Makes a template in an organization from a blueprint. The blueprint is not changed.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
@@ -93962,37 +94667,42 @@
               },
               "example": {
                 "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                "name": "Day pass",
+                "name": "Quickstart ticket",
                 "version": {
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -94095,30 +94805,35 @@
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -94127,9 +94842,9 @@
                     "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                     "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                     "orgName": "Northwind Climbing",
-                    "slug": "day-pass",
-                    "name": "Day pass",
-                    "description": "A day pass for the climbing gym, scanned at the front desk.",
+                    "slug": "quickstart-ticket",
+                    "name": "Quickstart ticket",
+                    "description": "A ticket for a climbing night, scanned at the front desk.",
                     "origin": "uploaded",
                     "status": "active",
                     "activeVersion": "3",
@@ -94139,10 +94854,91 @@
                     "passCount": 128,
                     "createdAt": 1794362400000,
                     "updatedAt": 1795399200000,
+                    "inputSchema": {
+                      "type": "object",
+                      "required": [
+                        "eventName",
+                        "venueName",
+                        "venueRegion",
+                        "startsAt",
+                        "endsAt",
+                        "attendee",
+                        "ticketId"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "eventName": {
+                          "type": "string",
+                          "title": "Event",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "venueName": {
+                          "type": "string",
+                          "title": "Venue",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "venueRegion": {
+                          "type": "string",
+                          "title": "City",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "venueRoom": {
+                          "type": "string",
+                          "title": "Room",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "startsAt": {
+                          "type": "string",
+                          "title": "Starts",
+                          "format": "date-time"
+                        },
+                        "endsAt": {
+                          "type": "string",
+                          "title": "Ends",
+                          "format": "date-time"
+                        },
+                        "doorsAt": {
+                          "type": "string",
+                          "title": "Doors",
+                          "format": "date-time"
+                        },
+                        "attendee": {
+                          "type": "string",
+                          "title": "Attendee",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "admission": {
+                          "type": "string",
+                          "title": "Admission",
+                          "maxLength": 40,
+                          "default": "General"
+                        },
+                        "seat": {
+                          "type": "string",
+                          "title": "Seat",
+                          "maxLength": 40
+                        },
+                        "ticketId": {
+                          "type": "string",
+                          "title": "Ticket ID",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      }
+                    },
                     "sample": {
-                      "name": "Ada Example",
-                      "tier": "Day pass",
-                      "validUntil": "2026-12-31"
+                      "eventName": "Friday Night Bouldering",
+                      "venueName": "Northwind Climbing",
+                      "venueRegion": "Seattle, WA",
+                      "startsAt": "2026-12-04T18:00:00-08:00",
+                      "endsAt": "2026-12-04T22:00:00-08:00",
+                      "attendee": "Ada Example",
+                      "ticketId": "NW-1001"
                     },
                     "versions": [
                       {
@@ -94310,6 +95106,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "BLUEPRINT_NOT_SCANNABLE",
           "EVENT_IN_USE",
           "EVENT_MATCH_INPUT",
@@ -94397,9 +95194,9 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass",
-                  "name": "Day pass",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-ticket",
+                  "name": "Quickstart ticket",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "archived",
                   "activeVersion": "3",
@@ -94409,10 +95206,91 @@
                   "passCount": 128,
                   "createdAt": 1794362400000,
                   "updatedAt": 1795572000000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -94508,9 +95386,9 @@
                   "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "orgName": "Northwind Climbing",
-                  "slug": "day-pass",
-                  "name": "Day pass",
-                  "description": "A day pass for the climbing gym, scanned at the front desk.",
+                  "slug": "quickstart-ticket",
+                  "name": "Quickstart ticket",
+                  "description": "A ticket for a climbing night, scanned at the front desk.",
                   "origin": "uploaded",
                   "status": "active",
                   "activeVersion": "3",
@@ -94520,10 +95398,91 @@
                   "passCount": 128,
                   "createdAt": 1794362400000,
                   "updatedAt": 1795572000000,
+                  "inputSchema": {
+                    "type": "object",
+                    "required": [
+                      "eventName",
+                      "venueName",
+                      "venueRegion",
+                      "startsAt",
+                      "endsAt",
+                      "attendee",
+                      "ticketId"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "title": "Event",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueName": {
+                        "type": "string",
+                        "title": "Venue",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRegion": {
+                        "type": "string",
+                        "title": "City",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "venueRoom": {
+                        "type": "string",
+                        "title": "Room",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      "startsAt": {
+                        "type": "string",
+                        "title": "Starts",
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "type": "string",
+                        "title": "Ends",
+                        "format": "date-time"
+                      },
+                      "doorsAt": {
+                        "type": "string",
+                        "title": "Doors",
+                        "format": "date-time"
+                      },
+                      "attendee": {
+                        "type": "string",
+                        "title": "Attendee",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "admission": {
+                        "type": "string",
+                        "title": "Admission",
+                        "maxLength": 40,
+                        "default": "General"
+                      },
+                      "seat": {
+                        "type": "string",
+                        "title": "Seat",
+                        "maxLength": 40
+                      },
+                      "ticketId": {
+                        "type": "string",
+                        "title": "Ticket ID",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  },
                   "sample": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "versions": [
                     {
@@ -94651,6 +95610,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -94811,6 +95771,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -94924,6 +95885,7 @@
         "description": "Creates a release candidate from the template's current draft.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95186,6 +96148,7 @@
         "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95364,6 +96327,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95478,6 +96442,7 @@
         "description": "Publishes an approved release. A key can publish only in Test.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95665,6 +96630,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95753,7 +96719,7 @@
                   "failed": [
                     {
                       "passId": "0193a1b2-7c00-7000-8000-f3f85c24ee38",
-                      "title": "Day pass",
+                      "title": "Friday Night Bouldering",
                       "reason": "The pass changed. Retry."
                     },
                     {
@@ -95842,6 +96808,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96111,6 +97078,7 @@
         "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`: the same key and body replays the stored answer with `Idempotent-Replayed: true`. `expected` is the generation each head must still be at, `0` before a first release. A Test key may name only `test`; a Live key cannot release.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
@@ -96305,6 +97273,7 @@
         "description": "Create or reuse the Test and Live candidates of a saved version without approving them, and email the org's other reviewers. A newer request replaces an older open one. Send `Idempotency-Key`.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
@@ -96484,6 +97453,7 @@
         "description": "Approve a requested version in Test and Live as a peer. A Test key approves Test only. Set `release` to also release it when you can publish. You cannot approve your own work.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96629,6 +97599,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96827,7 +97798,7 @@
                       "templateVersion": "3",
                       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                       "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                      "title": "Day pass",
+                      "title": "Friday Night Bouldering",
                       "subtitle": "Ada Example",
                       "externalId": "booking_8841",
                       "status": "active",
@@ -96880,6 +97851,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96908,9 +97880,13 @@
               "example": {
                 "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
                 "input": {
-                  "name": "Ada Example",
-                  "tier": "Day pass",
-                  "validUntil": "2026-12-31"
+                  "eventName": "Friday Night Bouldering",
+                  "venueName": "Northwind Climbing",
+                  "venueRegion": "Seattle, WA",
+                  "startsAt": "2026-12-04T18:00:00-08:00",
+                  "endsAt": "2026-12-04T22:00:00-08:00",
+                  "attendee": "Ada Example",
+                  "ticketId": "NW-1001"
                 },
                 "holderEmail": "ada@example.com",
                 "externalId": "booking_8841",
@@ -96934,11 +97910,11 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
-                  "mode": "live",
+                  "mode": "test",
                   "version": 1,
                   "connectionId": null,
                   "externalRef": null,
@@ -96954,14 +97930,22 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "tier": "manual",
-                    "validUntil": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "registrations": 0,
                   "lastRefreshedAt": null,
@@ -96984,30 +97968,35 @@
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -97072,6 +98061,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -97213,6 +98203,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -97319,6 +98310,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -97414,6 +98406,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_ACTIVE",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -97515,6 +98508,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -97612,6 +98606,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -97711,6 +98706,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_ENDED",
           "BULK_RUN_NOT_FOUND",
           "FORBIDDEN",
@@ -97760,7 +98756,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -97780,44 +98776,57 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "tier": "manual",
-                    "validUntil": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -97880,6 +98889,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -97963,6 +98973,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -98039,9 +99050,7 @@
               },
               "example": {
                 "input": {
-                  "name": "Ada Example",
-                  "tier": "Day pass",
-                  "validUntil": "2027-01-31"
+                  "endsAt": "2026-12-04T23:00:00-08:00"
                 },
                 "notify": true
               }
@@ -98063,7 +99072,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -98083,44 +99092,57 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2027-01-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T23:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "tier": "manual",
-                    "validUntil": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -98184,6 +99206,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -98288,7 +99311,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -98308,44 +99331,57 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "tier": "manual",
-                    "validUntil": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -98408,6 +99444,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "CONNECTION_ORG",
           "FORBIDDEN",
@@ -98469,7 +99506,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "voided",
@@ -98518,6 +99555,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98566,7 +99604,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -98615,6 +99653,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98692,6 +99731,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98771,6 +99811,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98833,7 +99874,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -98853,44 +99894,57 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "tier": "manual",
-                    "validUntil": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -98953,6 +100007,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -99029,9 +100084,9 @@
                 "example": {
                   "changes": [
                     {
-                      "path": "input.validUntil",
-                      "from": "2026-12-31",
-                      "to": "2027-01-31"
+                      "path": "input.endsAt",
+                      "from": "2026-12-04T22:00:00-08:00",
+                      "to": "2026-12-04T23:00:00-08:00"
                     }
                   ]
                 }
@@ -99067,6 +100122,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -99147,6 +100203,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -99278,6 +100335,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "DELIVERY_STALE",
           "EMAIL_INVALID",
@@ -99394,6 +100452,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -99483,6 +100542,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
           "ASSET_NOT_PNG",
@@ -99606,6 +100666,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -99723,6 +100784,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -99820,6 +100882,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
           "ASSET_NOT_PNG",
@@ -99956,6 +101019,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -100075,6 +101139,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -100179,6 +101244,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -100269,6 +101335,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -100358,6 +101425,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -100465,6 +101533,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -100535,7 +101604,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -100555,44 +101624,57 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2026-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-04T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "tier": "manual",
-                    "validUntil": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -100656,6 +101738,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -100755,7 +101838,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -100775,44 +101858,57 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "tier": "Day pass",
-                    "validUntil": "2027-12-31"
+                    "eventName": "Friday Night Bouldering",
+                    "venueName": "Northwind Climbing",
+                    "venueRegion": "Seattle, WA",
+                    "startsAt": "2026-12-04T18:00:00-08:00",
+                    "endsAt": "2026-12-05T22:00:00-08:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "NW-1001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "tier": "manual",
-                    "validUntil": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
                     "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
                     "organizationName": "Northwind Climbing",
-                    "description": "Day pass",
+                    "description": "Quickstart ticket",
                     "backgroundColor": "rgb(17, 42, 74)",
                     "foregroundColor": "rgb(255, 255, 255)",
                     "labelColor": "rgb(255, 196, 0)",
-                    "generic": {
+                    "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Friday Night Bouldering"
                         }
                       ],
                       "secondaryFields": [
                         {
-                          "key": "tier",
-                          "label": "Pass",
-                          "value": "Day pass"
+                          "key": "venue",
+                          "label": "Venue",
+                          "value": "Northwind Climbing"
+                        },
+                        {
+                          "key": "starts",
+                          "label": "Starts",
+                          "value": "2026-12-04T18:00:00-08:00"
                         }
                       ],
                       "auxiliaryFields": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "value": "2026-12-31"
+                          "key": "attendee",
+                          "label": "Attendee",
+                          "value": "Ada Example"
                         }
                       ]
                     }
@@ -100876,6 +101972,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -101009,6 +102106,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -101090,8 +102188,7 @@
                 "$ref": "#/components/schemas/PassesBulkReissueParams"
               },
               "example": {
-                "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                "version": "4"
+                "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
               }
             }
           }
@@ -101139,6 +102236,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_ACTIVE",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -101259,6 +102357,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -101578,6 +102677,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -101879,6 +102979,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -101969,7 +103070,7 @@
                     {
                       "id": "0193a1b2-7c00-7000-8000-8c3634195564",
                       "code": "PRINTING_OFF",
-                      "reason": "Paper is off for Day pass"
+                      "reason": "Paper is off for Quickstart ticket"
                     }
                   ]
                 }
@@ -102005,6 +103106,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -102102,6 +103204,7 @@
         "description": "The state of a bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -102178,6 +103281,7 @@
         "description": "The combined PDF of a finished bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -102264,6 +103368,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -102359,6 +103464,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -102456,6 +103562,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -102524,6 +103631,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -102596,6 +103704,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -102688,6 +103797,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -102769,6 +103879,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -102870,7 +103981,7 @@
                       "actorType": "user",
                       "actorId": "0193a1b2-7c00-7000-8000-000000000011",
                       "data": {
-                        "tier": "Day pass"
+                        "tier": null
                       },
                       "at": 1795570500000
                     }
@@ -102909,6 +104020,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -103014,6 +104126,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -103074,7 +104187,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "voided",
@@ -103124,6 +104237,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -103210,7 +104324,7 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
-                  "title": "Day pass",
+                  "title": "Friday Night Bouldering",
                   "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
@@ -103260,6 +104374,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -103426,6 +104541,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -103592,6 +104708,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_MAPPINGS_FULL",
@@ -103686,6 +104803,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -103793,6 +104911,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_BUSY",
@@ -104117,6 +105236,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -104146,7 +105266,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -104413,6 +105532,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_HEADER_TOO_LONG",
@@ -104675,6 +105795,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -104774,6 +105895,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_BUSY",
@@ -105072,6 +106194,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -105371,6 +106494,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -105555,6 +106679,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -105637,6 +106762,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_FILE_GONE",
@@ -105716,6 +106842,7 @@
         "description": "What happened to each row, as CSV with the pass and its links.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_NOT_FOUND",
@@ -105965,6 +107092,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "DELIVERY_STALE",
           "EMAIL_INVALID",
@@ -106121,6 +107249,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -106224,6 +107353,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_MODE_MISMATCH",
@@ -106341,6 +107471,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BUNDLE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -106415,6 +107546,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BUNDLE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -106508,6 +107640,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "BUNDLE_NOT_FOUND",
           "DELIVERY_STALE",
@@ -106627,6 +107760,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BUNDLE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -107144,6 +108278,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -107219,8 +108354,8 @@
                   "subject": "Your Northwind Climbing pass",
                   "attached": false,
                   "createdAt": 1795570500000,
-                  "html": "<p>Your pass is ready.</p><p>Day pass for Ada Example.</p>",
-                  "text": "Your pass is ready. Day pass for Ada Example.",
+                  "html": "<p>Your pass is ready.</p><p>Friday Night Bouldering for Ada Example.</p>",
+                  "text": "Your pass is ready. Friday Night Bouldering for Ada Example.",
                   "forwarding": "none"
                 }
               }
@@ -107255,6 +108390,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -107631,6 +108767,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -107749,6 +108886,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_INVALID_OP",
@@ -107816,7 +108954,7 @@
                   ]
                 },
                 "patch": {
-                  "validUntil": "2027-01-31"
+                  "endsAt": "2026-12-04T23:00:00-08:00"
                 },
                 "notify": true
               }
@@ -107839,13 +108977,13 @@
                   "samples": [
                     {
                       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-                      "title": "Day pass",
+                      "title": "Friday Night Bouldering",
                       "changes": [
                         {
-                          "key": "validUntil",
-                          "label": "Valid until",
-                          "from": "2026-12-31",
-                          "to": "2027-01-31"
+                          "key": "endsAt",
+                          "label": "Ends",
+                          "from": "2026-12-04T22:00:00-08:00",
+                          "to": "2026-12-04T23:00:00-08:00"
                         }
                       ]
                     }
@@ -107887,6 +109025,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_NO_RELEASE",
           "BROADCAST_TOO_MANY_TEMPLATES",
@@ -108007,6 +109146,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -108131,6 +109271,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_INVALID_OP",
@@ -108276,6 +109417,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_PAST",
@@ -108384,6 +109526,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
@@ -108502,6 +109645,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_INVALID_OP",
@@ -108607,7 +109751,7 @@
                   "items": [
                     {
                       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-                      "title": "Day pass",
+                      "title": "Friday Night Bouldering",
                       "holderEmail": "ada@example.com",
                       "outcome": "updated",
                       "silent": false
@@ -108647,6 +109791,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -108725,6 +109870,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_UNDO_EXPIRED",
@@ -108830,6 +109976,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_SENDING",
           "FORBIDDEN",
@@ -108972,6 +110119,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109089,6 +110237,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -109207,6 +110356,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109340,6 +110490,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -109428,6 +110579,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109532,6 +110684,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109661,6 +110814,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109769,6 +110923,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -109897,6 +111052,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -110042,6 +111198,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -110124,6 +111281,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -110210,6 +111368,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110358,6 +111517,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110482,6 +111642,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110604,6 +111765,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110719,6 +111881,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110852,6 +112015,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110990,6 +112154,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111123,6 +112288,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -111138,7 +112304,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -111227,6 +112392,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -111313,6 +112479,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -111425,6 +112592,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_NOT_FOUND",
           "FEATURE_LIMIT_REACHED",
@@ -111611,6 +112779,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111752,6 +112921,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
@@ -111849,6 +113019,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111990,6 +113161,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -112125,6 +113297,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -112217,6 +113390,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -112400,6 +113574,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
           "FORBIDDEN",
@@ -112416,7 +113591,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -112492,6 +113666,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -112515,7 +113690,6 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION"
         ]
       }
@@ -112583,6 +113757,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -112710,6 +113885,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -112846,6 +114022,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -112981,6 +114158,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -113119,6 +114297,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113238,6 +114417,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTOR_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -113352,6 +114532,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113476,6 +114657,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -113588,6 +114770,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113707,6 +114890,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_URL_FIXED",
           "FEATURE_LIMIT_REACHED",
@@ -113797,6 +114981,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -113902,6 +115087,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -114008,6 +115194,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -114034,7 +115221,6 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
@@ -114131,6 +115317,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "FEATURE_LIMIT_REACHED",
@@ -114285,6 +115472,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114386,6 +115574,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114489,6 +115678,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -114587,6 +115777,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "FEATURE_LIMIT_REACHED",
@@ -114755,6 +115946,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114841,6 +116033,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114964,6 +116157,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -115050,6 +116244,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "DELIVERY_PENDING",
           "FEATURE_LIMIT_REACHED",
@@ -115155,6 +116350,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -115315,6 +116511,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -115426,6 +116623,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -117747,6 +118945,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -117826,6 +119025,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -118800,6 +120000,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -118936,6 +120137,7 @@
           "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_MISSING",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
@@ -119094,6 +120296,7 @@
           "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_MISSING",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
@@ -119226,6 +120429,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119321,6 +120525,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119474,6 +120679,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119633,6 +120839,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119749,6 +120956,7 @@
           "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_MISSING",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
           "API_KEY_SCAN_ORG_REQUIRED",
@@ -119849,6 +121057,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "API_KEY_RETIRE_SET",
           "FORBIDDEN",
@@ -120510,6 +121719,7 @@
         "description": "The organization's audit log, newest first. A key needs audit:read and reads its own organization; send from (at most 90 days before to) and a limit of at most 100.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "AUDIT_LIMIT_TOO_HIGH",
           "AUDIT_WINDOW_REQUIRED",
           "AUDIT_WINDOW_TOO_WIDE",
@@ -120863,6 +122073,7 @@
         "description": "The same entries as CSV, at most 10,000 rows; 2 an hour per key and 6 an hour across the organization's keys. Each export is recorded as audit.export.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "AUDIT_LIMIT_TOO_HIGH",
           "AUDIT_WINDOW_REQUIRED",
           "AUDIT_WINDOW_TOO_WIDE",
@@ -123296,7 +124507,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -123734,7 +124945,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -124256,7 +125467,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -124631,7 +125842,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -125018,7 +126229,7 @@
                         },
                         {
                           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                          "name": "Day pass",
+                          "name": "Quickstart ticket",
                           "count": 35
                         }
                       ],
@@ -127133,11 +128344,11 @@
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "version": 1,
                     "mode": "live",
-                    "title": "Day pass",
+                    "title": "Friday Night Bouldering",
                     "subtitle": "Ada Example",
                     "template": {
                       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "style": "generic"
                     },
                     "status": "active",
@@ -127230,30 +128441,35 @@
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -127269,7 +128485,7 @@
                   },
                   "previous": null,
                   "template": {
-                    "name": "Day pass",
+                    "name": "Quickstart ticket",
                     "style": "generic"
                   },
                   "at": 1795570500000,
@@ -127297,7 +128513,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -127550,11 +128766,11 @@
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "version": 1,
                     "mode": "live",
-                    "title": "Day pass",
+                    "title": "Friday Night Bouldering",
                     "subtitle": "Ada Example",
                     "template": {
                       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "style": "generic"
                     },
                     "status": "active",
@@ -127647,30 +128863,35 @@
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -127686,7 +128907,7 @@
                   },
                   "previous": null,
                   "template": {
-                    "name": "Day pass",
+                    "name": "Quickstart ticket",
                     "style": "generic"
                   },
                   "at": 1795570500000,
@@ -127714,7 +128935,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -128464,7 +129685,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -129331,9 +130552,9 @@
                   "bindingId": null,
                   "card": {
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-                    "title": "Day pass",
+                    "title": "Friday Night Bouldering",
                     "subtitle": "Ada Example",
-                    "templateName": "Day pass",
+                    "templateName": "Quickstart ticket",
                     "holderName": "Ada Example",
                     "photoUrl": "/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/member-photo/image?v=1"
                   },
@@ -130361,11 +131582,11 @@
                           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                           "version": 1,
                           "mode": "live",
-                          "title": "Day pass",
+                          "title": "Friday Night Bouldering",
                           "subtitle": "Ada Example",
                           "template": {
                             "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-                            "name": "Day pass",
+                            "name": "Quickstart ticket",
                             "style": "generic"
                           },
                           "status": "active",
@@ -130458,30 +131679,35 @@
                               "formatVersion": 1,
                               "passTypeIdentifier": "pass.mobile.passbook.northwind",
                               "organizationName": "Northwind Climbing",
-                              "description": "Day pass",
+                              "description": "Quickstart ticket",
                               "backgroundColor": "rgb(17, 42, 74)",
                               "foregroundColor": "rgb(255, 255, 255)",
                               "labelColor": "rgb(255, 196, 0)",
-                              "generic": {
+                              "eventTicket": {
                                 "primaryFields": [
                                   {
-                                    "key": "name",
-                                    "label": "Guest",
-                                    "value": "Ada Example"
+                                    "key": "event",
+                                    "label": "Event",
+                                    "value": "Friday Night Bouldering"
                                   }
                                 ],
                                 "secondaryFields": [
                                   {
-                                    "key": "tier",
-                                    "label": "Pass",
-                                    "value": "Day pass"
+                                    "key": "venue",
+                                    "label": "Venue",
+                                    "value": "Northwind Climbing"
+                                  },
+                                  {
+                                    "key": "starts",
+                                    "label": "Starts",
+                                    "value": "2026-12-04T18:00:00-08:00"
                                   }
                                 ],
                                 "auxiliaryFields": [
                                   {
-                                    "key": "validUntil",
-                                    "label": "Valid until",
-                                    "value": "2026-12-31"
+                                    "key": "attendee",
+                                    "label": "Attendee",
+                                    "value": "Ada Example"
                                   }
                                 ]
                               }
@@ -130497,7 +131723,7 @@
                         },
                         "previous": null,
                         "template": {
-                          "name": "Day pass",
+                          "name": "Quickstart ticket",
                           "style": "generic"
                         },
                         "at": 1795570500000,
@@ -130525,7 +131751,7 @@
                             },
                             {
                               "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                              "name": "Day pass",
+                              "name": "Quickstart ticket",
                               "count": 35
                             }
                           ],
@@ -132335,11 +133561,11 @@
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "version": 1,
                     "mode": "live",
-                    "title": "Day pass",
+                    "title": "Friday Night Bouldering",
                     "subtitle": "Ada Example",
                     "template": {
                       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "style": "generic"
                     },
                     "status": "active",
@@ -132432,30 +133658,35 @@
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -132471,7 +133702,7 @@
                   },
                   "previous": null,
                   "template": {
-                    "name": "Day pass",
+                    "name": "Quickstart ticket",
                     "style": "generic"
                   },
                   "at": 1795570500000,
@@ -132499,7 +133730,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -132599,6 +133830,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -132684,11 +133916,11 @@
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "version": 1,
                     "mode": "live",
-                    "title": "Day pass",
+                    "title": "Friday Night Bouldering",
                     "subtitle": "Ada Example",
                     "template": {
                       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "style": "generic"
                     },
                     "status": "active",
@@ -132781,30 +134013,35 @@
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -132820,7 +134057,7 @@
                   },
                   "previous": null,
                   "template": {
-                    "name": "Day pass",
+                    "name": "Quickstart ticket",
                     "style": "generic"
                   },
                   "at": 1795570500000,
@@ -132848,7 +134085,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -132948,6 +134185,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -133238,7 +134476,7 @@
                     },
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "count": 35
                     }
                   ],
@@ -133365,7 +134603,7 @@
                     },
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "count": 35
                     }
                   ],
@@ -133711,11 +134949,11 @@
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "version": 1,
                     "mode": "live",
-                    "title": "Day pass",
+                    "title": "Friday Night Bouldering",
                     "subtitle": "Ada Example",
                     "template": {
                       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "style": "generic"
                     },
                     "status": "active",
@@ -133808,30 +135046,35 @@
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -133847,7 +135090,7 @@
                   },
                   "previous": null,
                   "template": {
-                    "name": "Day pass",
+                    "name": "Quickstart ticket",
                     "style": "generic"
                   },
                   "at": 1795570500000,
@@ -133875,7 +135118,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -133975,6 +135218,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -134165,6 +135409,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -134437,6 +135682,7 @@
         "description": "Removes a scanner from use.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -134583,6 +135829,7 @@
         "description": "Moves a scanner live, or to test mode.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -134734,6 +135981,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -135027,6 +136275,7 @@
         "description": "Makes a new pairing code. It replaces any live one.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -135113,6 +136362,7 @@
         "description": "Polls a pairing to see whether the device has paired.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -135202,6 +136452,7 @@
         "description": "Makes a till token, shown once. It replaces the old one.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -135670,6 +136921,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -136127,6 +137379,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -136472,6 +137725,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_MATCH_INPUT",
           "EVENT_NEEDS_CAPACITY",
           "EVENT_NOT_FOUND",
@@ -136672,6 +137926,7 @@
         "description": "Lists scanning sessions.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -137214,6 +138469,7 @@
         "description": "A session's rules and devices.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -137481,6 +138737,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -137772,6 +139029,7 @@
         "description": "Closes the session now, opens it now, or goes back to the session hours.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -137993,6 +139251,7 @@
         "description": "Configures one device of a session.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -138215,6 +139474,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -138513,7 +139773,7 @@
                     },
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "count": 35
                     }
                   ],
@@ -140832,6 +142092,7 @@
         "description": "Lists scan events.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -140935,6 +142196,7 @@
         "description": "Creates a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_MATCH_INPUT",
           "EVENT_NEEDS_CAPACITY",
           "EVENT_NOT_FOUND",
@@ -141039,6 +142301,7 @@
         "description": "One scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -141146,6 +142409,7 @@
         "description": "Edits a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_MATCH_INPUT",
           "EVENT_NEEDS_CAPACITY",
           "EVENT_NOT_FOUND",
@@ -141251,6 +142515,7 @@
         "description": "Archives a scan event. Its scanners are detached.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_IN_USE",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -141365,6 +142630,7 @@
         "description": "Moves scanners onto a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_ARCHIVED",
           "EVENT_MATCH_INPUT",
           "EVENT_NOT_FOUND",
@@ -142073,6 +143339,7 @@
         "description": "Lists an organization's scanner staff.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -142164,6 +143431,7 @@
         "description": "Creates a staff member and reveals their PIN once.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -142287,6 +143555,7 @@
         "description": "Updates or disables a staff member.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -142382,6 +143651,7 @@
         "description": "Replaces a staff PIN and reveals the new one once.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -142660,7 +143930,7 @@
                       "plans": [
                         {
                           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                          "templateName": "Day pass",
+                          "templateName": "Quickstart ticket",
                           "planId": "always",
                           "label": "Always open"
                         }
@@ -142693,6 +143963,7 @@
         "description": "Lists zones.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -142766,7 +144037,7 @@
                   "plans": [
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "templateName": "Day pass",
+                      "templateName": "Quickstart ticket",
                       "planId": "always",
                       "label": "Always open"
                     }
@@ -142796,6 +144067,7 @@
         "description": "Creates a zone.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -142891,7 +144163,7 @@
                   "plans": [
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "templateName": "Day pass",
+                      "templateName": "Quickstart ticket",
                       "planId": "always",
                       "label": "Always open"
                     }
@@ -142921,6 +144193,7 @@
         "description": "Edits a zone.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143003,7 +144276,7 @@
                   "plans": [
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "templateName": "Day pass",
+                      "templateName": "Quickstart ticket",
                       "planId": "always",
                       "label": "Always open"
                     }
@@ -143033,6 +144306,7 @@
         "description": "Archives a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143115,7 +144389,7 @@
                   "plans": [
                     {
                       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "templateName": "Day pass",
+                      "templateName": "Quickstart ticket",
                       "planId": "always",
                       "label": "Always open"
                     }
@@ -143145,6 +144419,7 @@
         "description": "Restores a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143228,6 +144503,7 @@
         "description": "Resets a pass's visits to a zone.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -144106,6 +145382,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -144507,11 +145784,11 @@
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "version": 1,
                     "mode": "live",
-                    "title": "Day pass",
+                    "title": "Friday Night Bouldering",
                     "subtitle": "Ada Example",
                     "template": {
                       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-                      "name": "Day pass",
+                      "name": "Quickstart ticket",
                       "style": "generic"
                     },
                     "status": "active",
@@ -144604,30 +145881,35 @@
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
                         "organizationName": "Northwind Climbing",
-                        "description": "Day pass",
+                        "description": "Quickstart ticket",
                         "backgroundColor": "rgb(17, 42, 74)",
                         "foregroundColor": "rgb(255, 255, 255)",
                         "labelColor": "rgb(255, 196, 0)",
-                        "generic": {
+                        "eventTicket": {
                           "primaryFields": [
                             {
-                              "key": "name",
-                              "label": "Guest",
-                              "value": "Ada Example"
+                              "key": "event",
+                              "label": "Event",
+                              "value": "Friday Night Bouldering"
                             }
                           ],
                           "secondaryFields": [
                             {
-                              "key": "tier",
-                              "label": "Pass",
-                              "value": "Day pass"
+                              "key": "venue",
+                              "label": "Venue",
+                              "value": "Northwind Climbing"
+                            },
+                            {
+                              "key": "starts",
+                              "label": "Starts",
+                              "value": "2026-12-04T18:00:00-08:00"
                             }
                           ],
                           "auxiliaryFields": [
                             {
-                              "key": "validUntil",
-                              "label": "Valid until",
-                              "value": "2026-12-31"
+                              "key": "attendee",
+                              "label": "Attendee",
+                              "value": "Ada Example"
                             }
                           ]
                         }
@@ -144643,7 +145925,7 @@
                   },
                   "previous": null,
                   "template": {
-                    "name": "Day pass",
+                    "name": "Quickstart ticket",
                     "style": "generic"
                   },
                   "at": 1795570500000,
@@ -144671,7 +145953,7 @@
                       },
                       {
                         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "name": "Day pass",
+                        "name": "Quickstart ticket",
                         "count": 35
                       }
                     ],
@@ -144892,6 +146174,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -145064,6 +146347,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "API_VERSION_UNKNOWN",
           "ASSET_NOT_FOUND",
@@ -145255,6 +146539,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -145470,6 +146755,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -145659,6 +146945,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -145799,7 +147086,7 @@
                 },
                 "example": {
                   "scope": {
-                    "tier": "Day pass"
+                    "tier": null
                   }
                 }
               }
@@ -148055,6 +149342,7 @@
         "description": "The tag types of an organization.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -148160,6 +149448,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -148283,6 +149572,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -148406,6 +149696,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -148530,6 +149821,7 @@
         "description": "Lists tag keysets.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -148644,6 +149936,7 @@
         "description": "Creates a tag keyset.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -148772,6 +150065,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -148882,6 +150176,7 @@
         "description": "Retires an old key version.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -148986,6 +150281,7 @@
         "description": "Revokes a key version. Tags on it must be written again.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -149097,6 +150393,7 @@
         "description": "Moves the tags of a keyset to another keyset.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -149203,6 +150500,7 @@
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -149300,6 +150598,7 @@
         "description": "Disables a keyset.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -151389,7 +152688,6 @@
           "TEMPLATE_RELEASE_REQUIRED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WEBHOOK_PAYLOAD",
