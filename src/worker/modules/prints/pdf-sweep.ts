@@ -6,7 +6,7 @@ const PAGES = 20;
 const IN_LIMIT = 90;
 /** Where the next run starts: outside `prints/`, so the sweep never lists it. */
 const CURSOR_KEY = 'sweep/prints-cursor';
-const KEY = /^prints\/[^/]+\/([^/]+)\/([^/]+)\.pdf$/;
+const KEY = /^prints\/[^/]+\/([^/]+)\/([^/.]+)(?:\.holder)?\.pdf$/;
 
 /**
  * Daily: deletes PDFs whose print is no longer active (a void, holder change, New code or a purge

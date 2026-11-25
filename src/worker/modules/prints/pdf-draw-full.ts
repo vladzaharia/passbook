@@ -3,7 +3,13 @@ import type { PaperKind } from '../../../passkit/template/paper.ts';
 import { HALF_FOOT, paperBoxes } from '../../../passkit/template/paper-geometry.ts';
 import { PAPER_COPY } from '../../../shared/copy/print.ts';
 import { buddyPose } from '../../../web/paper/ticket-buddy.tsx';
-import { compactBefore, doorRows, doorWhen, faceLines } from '../../../web/paper/ticket-text.ts';
+import {
+  compactBefore,
+  doorRows,
+  doorWhen,
+  faceLines,
+  faceNotesFit,
+} from '../../../web/paper/ticket-text.ts';
 import { drawBuddy } from './pdf-buddy.ts';
 import { drawInfo } from './pdf-draw-info.ts';
 import { ART_POS, codeMark, footRow, LBL, plate, specOf, typedCode } from './pdf-draw-parts.ts';
@@ -85,19 +91,27 @@ function faceBody(pen: Pen, s: Sheet, face: Box, top: number, bottom: number, ha
   const c = s.content;
   const x = face.x + 6.5;
   const w = face.w - 13;
+  const value: TextStyle = { size: 5.2917, font: 'semibold', color: COLORS.ink, lh: 1.1 };
+  const factsH = c.facts.length ? 0.6 + 3.6 + pen.lineHeight(LBL) + 0.6 + pen.lineHeight(value) : 0;
+  // Nothing runs into the fact boxes or the foot of the panel; a paragraph that does not fit is left out.
+  const limit = bottom - 5.5 - (factsH ? factsH + 3.2 : 0);
   let y = top + 5;
-  for (const l of faceLines(c, half)) {
-    y += pen.para(l.text, x, y, w, l.big ? BIG : SUB, { maxLines: 3 }) + 3.2;
-  }
-  if (half) {
+  const put = (text: string, st: TextStyle) => {
+    if (y + pen.paraHeight(text, w, st, 3) > limit) return;
+    y += pen.para(text, x, y, w, st, { maxLines: 3 }) + 3.2;
+  };
+  const lines = faceLines(c, half);
+  for (const l of lines) put(l.text, l.big ? BIG : SUB);
+  if (half && faceNotesFit(lines)) {
     const before = compactBefore(c);
-    if (before) y += pen.labelled(PAPER_COPY.before, NOTE_B, before, NOTE, x, y, w, 2) + 3.2;
-    if (c.bring.length)
+    const room = y + 2 * pen.lineHeight(NOTE) <= limit;
+    if (before && room)
+      y += pen.labelled(PAPER_COPY.before, NOTE_B, before, NOTE, x, y, w, 2) + 3.2;
+    if (c.bring.length && y + 2 * pen.lineHeight(NOTE) <= limit)
       y += pen.labelled('Bring', NOTE_B, c.bring.join(' · '), NOTE, x, y, w, 2) + 3.2;
   }
   if (!c.facts.length) return;
-  const value: TextStyle = { size: 5.2917, font: 'semibold', color: COLORS.ink, lh: 1.1 };
-  const h = 0.6 + 3.6 + pen.lineHeight(LBL) + 0.6 + pen.lineHeight(value);
+  const h = factsH;
   const n = c.facts.length;
   const fw = (w - 2 * (n - 1)) / n;
   for (const [i, f] of c.facts.entries()) {

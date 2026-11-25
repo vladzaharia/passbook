@@ -1345,6 +1345,14 @@ class PassesPrintsResource:
         """A pass's prints, newest first; codes are never listed `GET /api/v1/passes/{id}/prints`"""
         return self._core.request("GET", f"/api/v1/passes/{_p(id)}/prints", result=m.PassesPrintsListResult, **opts)
 
+    def mark_drawn(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesPrintsMarkDrawnResult:
+        """Record that the active print was drawn again from the pass as it is now `POST /api/v1/passes/{id}/print/drawn`"""
+        return self._core.request("POST", f"/api/v1/passes/{_p(id)}/print/drawn", result=m.PassesPrintsMarkDrawnResult, **opts)
+
     def retrieve_page(
         self,
         id: str,

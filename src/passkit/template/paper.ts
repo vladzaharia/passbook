@@ -6,12 +6,33 @@
  */
 import { z } from 'zod';
 import type { Expr, PassJson, TemplateManifest, ValidationIssue } from '../types.ts';
+import { styleOf } from '../wallets/view-fields.ts';
 import { checkExpr, exprReferences } from './expr.ts';
 import { paperInk } from './paper-ink.ts';
+import { kindOf } from './paper-kinds.ts';
+import {
+  PAPER_SHEETS,
+  PAPER_SIZES,
+  type PaperSheet,
+  type PaperSize,
+  sheetApplies,
+  supportsCode128,
+} from './paper-sizes.ts';
 
 export const PAPER_SCHEMA = 1;
-export const PAPER_SIZES = ['a4', 'letter', 'half', 'cr80'] as const;
-export type PaperSize = (typeof PAPER_SIZES)[number];
+export {
+  CODE128_MIN_MM,
+  PAPER_SHEETS,
+  PAPER_SIZES,
+  PAPER_SPECS,
+  type PaperLayout,
+  type PaperSheet,
+  type PaperSize,
+  type PaperSpec,
+  pageSizeOf,
+  sheetApplies,
+  supportsCode128,
+} from './paper-sizes.ts';
 export const PAPER_BARCODES = ['qr', 'code128'] as const;
 export type PaperBarcode = (typeof PAPER_BARCODES)[number];
 /** The layout family: what the door panel leads with. Absent in the manifest means derived. */
@@ -19,24 +40,6 @@ export const PAPER_KINDS = ['admission', 'membership', 'permit', 'coupon', 'pick
 export type PaperKind = (typeof PAPER_KINDS)[number];
 export const PAPER_INKS = ['colour', 'mono'] as const;
 export type PaperInk = (typeof PAPER_INKS)[number];
-
-export interface PaperSpec {
-  label: string;
-  widthMm: number;
-  heightMm: number;
-  /** The QR symbol's side, without its quiet zone. At least 30 mm everywhere. */
-  qrMm: number;
-  /** Code 128 width in mm, with 0.2 mm or wider bars. */
-  barMm: number;
-}
-
-/** Page sizes in mm. `half` is a half sheet, landscape; `cr80` is a card. */
-export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
-  a4: { label: 'A4', widthMm: 210, heightMm: 297, qrMm: 45, barMm: 100 },
-  letter: { label: 'Letter', widthMm: 215.9, heightMm: 279.4, qrMm: 45, barMm: 100 },
-  half: { label: 'Half sheet', widthMm: 210, heightMm: 148, qrMm: 38, barMm: 90 },
-  cr80: { label: 'Card', widthMm: 85.6, heightMm: 54, qrMm: 30, barMm: 66 },
-};
 
 export const MAX_PAPER_FIELDS = 8;
 const MAX_PAPER_EXPR = 1000;
@@ -49,6 +52,8 @@ const expr = z.union([z.string().min(1).max(MAX_PAPER_EXPR), z.strictObject({ co
 export const PaperManifestSchema = z.strictObject({
   schema: z.literal(PAPER_SCHEMA),
   size: z.enum(PAPER_SIZES),
+  /** Card and strip sizes: a holder's print on an A4 or Letter sheet with cut marks. Overrides the region's sheet. */
+  sheet: z.enum(PAPER_SHEETS).optional(),
   barcode: z.enum(PAPER_BARCODES),
   fields: z
     .array(z.string().min(1).max(64).regex(FIELD_REF))
@@ -73,6 +78,8 @@ export type PaperManifest = z.infer<typeof PaperManifestSchema>;
 /** What the print page draws: the block with its defaults filled in. */
 export interface PaperDesign {
   size: PaperSize;
+  /** Card or strip on a home sheet; absent prints at its own size. */
+  sheet?: PaperSheet;
   barcode: PaperBarcode;
   fields: string[];
   terms?: Expr;
@@ -103,11 +110,13 @@ export function resolvePaper(raw: unknown): PaperDesign {
   if (raw === undefined || raw === null) return DERIVED_PAPER;
   const parsed = PaperManifestSchema.safeParse(raw);
   if (!parsed.success) return DERIVED_PAPER;
-  const { size, barcode, fields, terms, holder, kind, ink, fold, bring, buddy } = parsed.data;
+  const { size, sheet, barcode, fields, terms, holder, kind, ink, fold, bring, buddy } =
+    parsed.data;
   return {
     size,
-    // A card has no room for Code 128 (a validation error); it draws QR.
-    barcode: size === 'cr80' ? 'qr' : barcode,
+    ...(sheet && sheetApplies(size) ? { sheet } : {}),
+    // A card or a small strip has no room for Code 128 (a validation error); it draws QR.
+    barcode: supportsCode128(size) ? barcode : 'qr',
     fields: fields ?? [],
     ...(terms === undefined ? {} : { terms }),
     holder: holder !== false,
@@ -139,6 +148,9 @@ function shapeIssues(error: z.ZodError): ValidationIssue[] {
     } else if (raw.path[0] === 'size') {
       code = 'PAPER_SIZE';
       message = `size is one of ${PAPER_SIZES.join(', ')}.`;
+    } else if (raw.path[0] === 'sheet') {
+      code = 'PAPER_SHEET';
+      message = `sheet is one of ${PAPER_SHEETS.join(', ')}.`;
     } else if (raw.path[0] === 'barcode') {
       code = 'PAPER_BARCODE';
       message = 'barcode is qr or code128.';
@@ -241,8 +253,16 @@ export function paperManifestIssues(
         error('PAPER_LOOKUP_FIELD', 'This field carries the scan lookup value.', path);
     }
   }
-  if (paper.size === 'cr80' && paper.barcode === 'code128')
-    error('PAPER_BARCODE', 'Code 128 does not fit a card. Use QR.', 'paper.barcode');
+  // A card, strip, permit or coupon draws no extra fields; the kind is the declared one or the derived one.
+  const kind =
+    paper.kind ??
+    kindOf(manifest, options.passJson ? styleOf(options.passJson as PassJson) : undefined, {});
+  if (paper.fields?.length && (sheetApplies(paper.size) || kind === 'permit' || kind === 'coupon'))
+    warn('PAPER_FIELD_UNDRAWN', 'Extra fields are not printed on this layout.', 'paper.fields');
+  if (paper.barcode === 'code128' && !supportsCode128(paper.size))
+    error('PAPER_BARCODE', 'Code 128 does not fit this size. Use QR.', 'paper.barcode');
+  if (paper.sheet && !sheetApplies(paper.size))
+    warn('PAPER_SHEET', 'sheet applies to card and strip sizes only.', 'paper.sheet');
   if (paper.ink !== 'mono' && options.passJson && !paperInk(options.passJson as PassJson).colour)
     warn(
       'PAPER_INK',
