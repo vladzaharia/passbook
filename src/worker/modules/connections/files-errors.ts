@@ -17,23 +17,23 @@ const statusOf = (code: TabularErrorCode): number =>
       : 422;
 
 export class FileIdColumnMissingError extends AppError {
-  constructor(message = 'The ID column is not in the file.') {
-    super('FILE_ID_COLUMN_MISSING', 422, message);
+  constructor(message = 'The ID column is not in the file.', code = 'FILE_ID_COLUMN_MISSING') {
+    super(code, 422, message);
   }
 }
 export class FileExpiredError extends AppError {
-  constructor(message = 'The upload expired. Upload the file again.') {
-    super('FILE_EXPIRED', 410, message);
+  constructor(message = 'The upload expired. Upload the file again.', code = 'FILE_EXPIRED') {
+    super(code, 410, message);
   }
 }
 export class FileStateError extends AppError {
-  constructor(message = 'The file is not in a state that allows this.') {
-    super('FILE_STATE', 409, message);
+  constructor(message = 'The file is not in a state that allows this.', code = 'FILE_STATE') {
+    super(code, 409, message);
   }
 }
 export class FileNotFoundError extends AppError {
-  constructor() {
-    super('FILE_NOT_FOUND', 404, 'File not found.');
+  constructor(message = 'File not found.', code = 'FILE_NOT_FOUND') {
+    super(code, 404, message);
   }
 }
 

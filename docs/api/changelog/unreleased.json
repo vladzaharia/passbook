@@ -2282,7 +2282,7 @@
     "operationId": "connections.postConnectionsByIdFiles",
     "op": "POST /api/v1/connections/{id}/files",
     "change": "new operation",
-    "note": "Upload a new revision of a connection file; apply=true applies it and starts a sync. Identical bytes return unchanged: true and store nothing. Takes Idempotency-Key."
+    "note": "Upload a new revision of a connection file. apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true."
   },
   {
     "key": "POST /api/v1/connections/{id}/files/{fileId}/apply new operation",

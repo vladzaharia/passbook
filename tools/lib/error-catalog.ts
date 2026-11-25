@@ -36,6 +36,36 @@ const DECLARED: Record<string, { status: number; module: string }> = {
   RATE_LIMITED: { status: 429, module: 'platform' },
 };
 
+/** What the file parser refuses (`src/shared/tabular`): the connection file routes answer with its code (files-errors.ts). */
+const FILE_PARSER_CODES: Record<string, number> = {
+  FILE_TOO_LARGE: 413,
+  FILE_BAD_POINTER: 400,
+  FILE_SHEET_NOT_FOUND: 400,
+  ...Object.fromEntries(
+    [
+      'FILE_FORMAT_UNSUPPORTED',
+      'FILE_MACRO',
+      'FILE_ENCODING',
+      'FILE_EMPTY',
+      'FILE_DAMAGED',
+      'FILE_ARCHIVE_LIMIT',
+      'FILE_XML_UNSAFE',
+      'FILE_TOO_MANY_ROWS',
+      'FILE_TOO_MANY_COLUMNS',
+      'FILE_TOO_MANY_CELLS',
+      'FILE_CELL_TOO_LONG',
+      'FILE_LINE_TOO_LONG',
+      'FILE_HEADER_MISSING',
+      'FILE_HEADER_TOO_LONG',
+      'FILE_HEADER_DUPLICATE',
+      'FILE_ROW_SHAPE',
+      'FILE_JSON_TOO_DEEP',
+      'FILE_NOT_RECORDS',
+      'FILE_RECORDS_NOT_FOUND',
+    ].map((code) => [code, 422]),
+  ),
+};
+
 /** `authorityDenied` reason to status, for `codes: { stale: 'X' }` overrides. */
 const REASON_STATUS: Record<string, number> = {
   org: 403,
@@ -112,6 +142,7 @@ export function buildErrorCatalog(): ErrorCatalog {
     found.set(code, e);
   };
   for (const [code, d] of Object.entries(DECLARED)) add(code, d.status, d.module);
+  for (const [code, status] of Object.entries(FILE_PARSER_CODES)) add(code, status, 'connections');
   paths.forEach((file, i) => {
     const src = sources[i] ?? '';
     const mod = moduleOf(file);
