@@ -914,9 +914,11 @@ describe('existing provider instance runtime', () => {
 
   it('authenticates and renders only an already-promoted Samsung reference', async () => {
     const f = await runtimeSamsungLegacyFixture('refresh');
-    await expect(assertWalletRuntimeAccount(f.kit.ctx, f.scope, 'samsung')).rejects.toMatchObject({
-      code: 'account_unavailable',
-    });
+    // Samsung issuance reads under its own purpose (SAMSUNG_ISSUANCE); the refusal of an unpurposed read
+    // is pinned in runtime-samsung-issuance.test.ts.
+    await expect(
+      assertWalletRuntimeAccount(f.kit.ctx, f.scope, 'samsung'),
+    ).resolves.toBeUndefined();
     const seen = new Set<string>();
     const claimReplay = async (key: string) => {
       if (seen.has(key)) return false;

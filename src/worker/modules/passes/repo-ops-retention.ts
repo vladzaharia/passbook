@@ -83,7 +83,7 @@ export async function deletePassRows(
       AND credential_generation = ? AND lifecycle_generation = ?
       AND removed_at IS ? AND deleted_at IS ? AND test_data_quarantined = ?
       AND NOT ${purgeBlockedSql}
-      AND ${providerRetirementCompleteSql('passes.id')}
+      AND (${providerRetirementCompleteSql('passes.id')})
       ${guard ? "AND mode = 'test' AND created_at < ? AND lifecycle_generation = ?" : ''}
       ${guard?.claim ? 'AND EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.org_id = passes.org_id AND d.user_id = ? AND d.closed_at IS NULL AND d.track_started_at = ?)' : ''} RETURNING id`,
       [
@@ -134,7 +134,7 @@ export async function expiredDeletedPasses(
   const rows = await all<Parameters<typeof mapPass>[0]>(
     db,
     `SELECT * FROM passes WHERE deleted_at IS NOT NULL AND deleted_at < ? AND id > ?
-      AND NOT ${purgeBlockedSql} AND ${providerRetirementCompleteSql('passes.id')}
+      AND NOT ${purgeBlockedSql} AND (${providerRetirementCompleteSql('passes.id')})
      ORDER BY id LIMIT ?`,
     [before, afterId, limit],
   );
@@ -150,7 +150,7 @@ export function blockedDeletedPasses(
   return all<{ id: string; org_id: string }>(
     db,
     `SELECT id, org_id FROM passes WHERE deleted_at IS NOT NULL AND deleted_at < ?
-      AND (${purgeBlockedSql} OR NOT ${providerRetirementCompleteSql('passes.id')})
+      AND (${purgeBlockedSql} OR NOT (${providerRetirementCompleteSql('passes.id')}))
      ORDER BY id LIMIT ?`,
     [before, limit],
   );

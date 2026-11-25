@@ -222,7 +222,14 @@ describe('holder changes and native wallet retirement', () => {
       { provider: 'google', lifecycle: 'ready', account_id: null, desired_operation_id: null },
       { provider: 'samsung', lifecycle: 'ready', account_id: null, desired_operation_id: null },
     ]);
-    expect(await listWalletOffers(jobCtxOf(t.kit), t.pass.id)).toEqual([]);
+    // The transfer finished, so the new holder can add the pass: the ready placeholder takes its first operation (0208).
+    expect(await listWalletOffers(jobCtxOf(t.kit), t.pass.id)).toEqual([
+      {
+        provider: 'samsung',
+        href: expect.stringContaining('/wallet/samsung'),
+        installation: 'unknown',
+      },
+    ]);
   });
 
   it.each([
