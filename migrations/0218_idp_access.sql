@@ -523,3 +523,17 @@ BEGIN
   UNION SELECT NEW.accepted_subject WHERE NEW.accepted_subject IS NOT NULL
   ON CONFLICT (subject) DO UPDATE SET version = version + 1, attempts = 0, next_at = 0;
 END;
+
+-- Indexes for the foreign keys that no other index leads with.
+CREATE INDEX platform_role_grants_revoked_by ON platform_role_grants(revoked_by);
+CREATE INDEX platform_role_grants_granted_by ON platform_role_grants(granted_by);
+CREATE INDEX idp_groups_created_by ON idp_groups(created_by);
+CREATE INDEX idp_group_rules_ended_by ON idp_group_rules(ended_by);
+CREATE INDEX idp_group_rules_created_by ON idp_group_rules(created_by);
+CREATE INDEX platform_invitations_created_by_key ON platform_invitations(created_by_key);
+CREATE INDEX platform_invitations_created_by_user ON platform_invitations(created_by_user);
+CREATE INDEX idp_group_members_removed_by ON idp_group_members(removed_by);
+CREATE INDEX idp_group_members_added_by ON idp_group_members(added_by);
+CREATE INDEX idp_group_members_platform_invitation ON idp_group_members(platform_invitation_id);
+CREATE INDEX idp_group_members_user ON idp_group_members(user_id);
+CREATE INDEX idp_drift_user ON idp_drift(user_id);

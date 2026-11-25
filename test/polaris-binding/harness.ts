@@ -12,7 +12,7 @@ import { CLIENT_ID, type FakePocket, fakePocket, GROUPS } from './fake-pocket.ts
 import type { Layout } from './fixtures.ts';
 
 export const NOW = Date.UTC(2026, 10, 24, 12, 0, 0);
-export const API_KEY = 'pid-KEYSECRET-0123456789';
+export const API_KEY = 'test-api-key';
 export const ORIGIN = 'https://id.test';
 
 /** The GROUPS var: console, developer and the two protected entries; `support` is opt in. */
