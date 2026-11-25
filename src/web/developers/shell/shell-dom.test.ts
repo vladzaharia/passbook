@@ -156,7 +156,7 @@ describe('islands', () => {
     else delete ISLANDS['test-island'];
   });
 
-  it('hides the account slot until its island has mounted', async () => {
+  it('holds the account slot until its island has mounted', async () => {
     const original = ISLANDS.account;
     let release: () => void = () => {};
     ISLANDS.account = async () => ({
@@ -170,12 +170,12 @@ describe('islands', () => {
       '<span data-island="account" id="a"><a href="/login">Sign in</a></span>';
     const slot = document.getElementById('a') as HTMLElement;
     mountIslands();
-    expect(slot.hasAttribute('data-hydrating')).toBe(true);
+    expect(slot.hasAttribute('data-ready')).toBe(false);
     await vi.waitFor(() => expect(release).not.toBe(undefined));
     await new Promise((r) => setTimeout(r, 0));
-    expect(slot.hasAttribute('data-hydrating')).toBe(true);
+    expect(slot.hasAttribute('data-ready')).toBe(false);
     release();
-    await vi.waitFor(() => expect(slot.hasAttribute('data-hydrating')).toBe(false));
+    await vi.waitFor(() => expect(slot.hasAttribute('data-ready')).toBe(true));
     ISLANDS.account = original as NonNullable<typeof original>;
   });
 
@@ -200,8 +200,8 @@ describe('islands', () => {
       document.body.innerHTML = '<span data-island="account"><a href="/login">Sign in</a></span>';
       const slot = document.querySelector<HTMLElement>('[data-island="account"]') as HTMLElement;
       mountIslands();
-      expect(slot.hasAttribute('data-hydrating')).toBe(true);
-      await vi.waitFor(() => expect(slot.hasAttribute('data-hydrating')).toBe(false));
+      expect(slot.hasAttribute('data-ready')).toBe(false);
+      await vi.waitFor(() => expect(slot.hasAttribute('data-ready')).toBe(true));
       expect(slot.querySelector('a')?.textContent).toBe('Sign in');
     }
     expect(reported.map((e) => (e as Error).message)).toEqual(['chunk failed', 'mount failed']);
