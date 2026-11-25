@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import {
   Badge,
@@ -7,11 +6,9 @@ import {
   Card,
   CardBody,
   CardHeader,
-  Dialog,
-  DialogContent,
   EmptyState,
   ErrorState,
-  Form,
+  FormDialog,
   FormField,
   Input,
   Select,
@@ -51,58 +48,35 @@ function OpenIncidentDialog({
 }) {
   const create = useOpenIncident();
   const [f, setF] = useState(EMPTY);
-  const [server, setServer] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string>();
   const check = useFormErrors({
     ...(f.title.trim() ? {} : { title: 'Required.' }),
     ...(f.note.trim() ? {} : { note: 'Required.' }),
   });
-  const errors: Record<string, string | undefined> = { ...server, ...check.errors };
-  const close = () => {
-    onOpenChange(false);
-    setServer({});
-    setFormError(undefined);
-    check.reset();
-  };
   async function submit() {
-    setServer({});
-    setFormError(undefined);
-    try {
-      await create.mutateAsync({
-        title: f.title.trim(),
-        note: f.note.trim(),
-        component: f.component === 'all' ? null : (f.component as never),
-        impact: f.impact,
-      });
-      toast.success('Note published. The public page updates within 30 s');
-      setF(EMPTY);
-      close();
-    } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
-      else setFormError(errorMessage(cause));
-    }
+    await create.mutateAsync({
+      title: f.title.trim(),
+      note: f.note.trim(),
+      component: f.component === 'all' ? null : (f.component as never),
+      impact: f.impact,
+    });
+    toast.success('Note published. The public page updates within 30 s');
+    onOpenChange(false);
   }
   return (
-    <Dialog
+    <FormDialog
       open={open}
-      dirty={f.title.trim() !== ''}
-      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+      onOpenChange={onOpenChange}
+      title="Open incident note"
+      dirty={f.title.trim() !== '' || f.note.trim() !== ''}
+      check={check}
+      onSubmit={submit}
+      submitLabel="Publish"
+      busy={create.isPending}
+      onClose={() => setF(EMPTY)}
     >
-      <DialogContent
-        title="Open incident note"
-        footer={
-          <>
-            <Button variant="outline" onClick={close}>
-              Cancel
-            </Button>
-            <Button type="submit" form="open-incident" loading={create.isPending}>
-              Publish
-            </Button>
-          </>
-        }
-      >
-        <Form id="open-incident" className="flex flex-col gap-4" {...check.form} onValid={submit}>
-          <FormField label="Title" required error={errors.title}>
+      {({ errors: server }) => (
+        <>
+          <FormField label="Title" required error={check.errors.title ?? server.title}>
             {(p) => (
               <Input
                 {...p}
@@ -114,7 +88,7 @@ function OpenIncidentDialog({
               />
             )}
           </FormField>
-          <FormField label="Note" required error={errors.note}>
+          <FormField label="Note" required error={check.errors.note ?? server.note}>
             {(p) => (
               <Textarea
                 {...p}
@@ -145,14 +119,9 @@ function OpenIncidentDialog({
               />
             )}
           </FormField>
-          {formError ? (
-            <p role="alert" className="text-sm text-danger">
-              {formError}
-            </p>
-          ) : null}
-        </Form>
-      </DialogContent>
-    </Dialog>
+        </>
+      )}
+    </FormDialog>
   );
 }
 
