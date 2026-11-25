@@ -1,32 +1,31 @@
-import { LOGS_COPY, RAIL_COPY } from '../../../shared/copy/developers-ops.ts';
-import { SIGN_IN } from './layout.tsx';
+import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
+import { BuddyArt } from '../../ui/art/buddy-art.tsx';
 
 /**
  * The request log's prerendered page: the signed-out state. The islands replace it once the session reads the
- * sandbox's log (`/api/v1/developer/logs`); a signed-out visitor loads neither.
+ * sandbox's log (`/api/v1/developer/logs`); a signed-out visitor loads neither. The header keeps a slot for the
+ * listener's mark, and the "Your API" strip's slot stays empty until it has something to show.
  */
 export function LogsView() {
   return (
     <>
-      <h1 className="h1 page-h">{LOGS_COPY.title}</h1>
-      <p className="lede muted mt2 prose">{LOGS_COPY.lede}</p>
-      <div className="logs-grid mt6">
-        <aside
-          className="card card-b logs-rail"
-          data-island="api-rail"
-          aria-label={RAIL_COPY.title}
-        >
-          <h3 className="h3">{RAIL_COPY.title}</h3>
-          <p className="sm muted mt2">{RAIL_COPY.signedOut}</p>
-        </aside>
-        <div className="logs-main" data-island="logs">
-          <div className="card card-b">
-            <p className="muted">{LOGS_COPY.signedOut}</p>
-            <a className="btn outline sm mt4" href={SIGN_IN}>
-              Sign in
+      <div className="logs-h">
+        <h1 className="h1 page-h">{LOGS_COPY.title}</h1>
+        <div className="logs-live-slot" data-logs-live="" />
+      </div>
+      <div className="logs-api" data-island="api-rail" />
+      <div className="logs-main" data-island="logs">
+        <section className="card pstate" data-kind="empty" aria-labelledby="logs-gate-t">
+          <BuddyArt size="sm" at="end" still />
+          <h2 id="logs-gate-t" className="h2 pstate-t">
+            {LOGS_COPY.signedOut}
+          </h2>
+          <div className="pstate-a">
+            <a className="btn" href="/login?next=%2Fdevelopers%2Flogs">
+              {LOGS_COPY.signIn}
             </a>
           </div>
-        </div>
+        </section>
       </div>
     </>
   );

@@ -90,8 +90,10 @@ describe('the log opened from search', () => {
     const urls = stub(['a']);
     window.location.hash = '#code=pass_conflict';
     const el = await mount();
-    expect(el.querySelector<HTMLInputElement>('input[name="code"]')?.value).toBe('PASS_CONFLICT');
-    await vi.waitFor(() => expect(urls.some((u) => u.includes('code=PASS_CONFLICT'))).toBe(true));
+    expect(el.querySelector<HTMLSelectElement>('select[name="code"]')?.value).toBe('PASS_CONFLICT');
+    // The first read already carries it: no second read for the same filter.
+    expect(urls[0]).toContain('code=PASS_CONFLICT');
+    expect(urls.filter((u) => u.includes('code=PASS_CONFLICT'))).toHaveLength(1);
   });
 
   it('opens the list as it is on a hash that does not decode', async () => {

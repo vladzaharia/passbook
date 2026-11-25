@@ -23,6 +23,7 @@ describe('the signed-out markup of the quickstart and console', () => {
           release = done;
         }),
     });
+    ISLANDS.logs = async () => ({ mount: () => new Promise<void>(() => {}) });
     class Seen {
       fn: (e: unknown[]) => void;
       constructor(fn: (e: unknown[]) => void) {
@@ -35,10 +36,11 @@ describe('the signed-out markup of the quickstart and console', () => {
     }
     vi.stubGlobal('IntersectionObserver', Seen);
     document.body.innerHTML =
-      '<div data-island="quickstart" id="q"></div><div data-island="run" data-mode="console" id="r"></div><div data-island="run" id="o"></div>';
+      '<div data-island="quickstart" id="q"></div><div data-island="run" data-mode="console" id="r"></div><div data-island="run" id="o"></div><div data-island="logs" id="l"></div>';
     mountIslands();
     const q = document.getElementById('q') as HTMLElement;
     expect(q.hasAttribute('data-hydrating')).toBe(true);
+    expect(document.getElementById('l')?.hasAttribute('data-hydrating')).toBe(true);
     expect(document.getElementById('r')?.hasAttribute('data-hydrating')).toBe(true);
     expect(document.getElementById('o')?.hasAttribute('data-hydrating')).toBe(false);
     await vi.waitFor(() => expect(release).not.toBe(undefined));
