@@ -6,16 +6,15 @@ import { errorMessage } from '@/web/lib/errors.ts';
 import { pluralize } from '@/web/lib/format.ts';
 import { isStepUp } from '@/web/lib/step-up.ts';
 import {
-  Button,
   Callout,
   CheckboxField,
-  ConfirmDialog,
-  Dialog,
-  DialogContent,
   FileDrop,
   toast,
+  useWizard,
+  WizardDialog,
 } from '@/web/ui/index.ts';
 import type { ImportResult, Keyset } from './api.ts';
+import { Findings } from './import-findings.tsx';
 import { fill } from './words.ts';
 
 const C = KEYSET_COPY.import;
@@ -23,8 +22,9 @@ const C = KEYSET_COPY.import;
 type Run = (body: { csv: string; dryRun: boolean; replace?: boolean }) => Promise<ImportResult>;
 
 /**
- * Import supplier-personalised tags: pick the CSV, see what a dry run finds (rows ready, then each bad or
- * repeated row), then import the ready ones. The file is read here and sent; keys are never shown back.
+ * Import supplier-personalised tags in two steps: File (the CSV and whether to replace keys), then
+ * Check (what a dry run finds; the finish imports the ready rows). The file is read here and sent;
+ * keys are never shown back.
  */
 export function ImportDialog({
   keyset,
@@ -38,13 +38,12 @@ export function ImportDialog({
   const [csv, setCsv] = useState('');
   const [name, setName] = useState('');
   const [result, setResult] = useState<ImportResult>();
-  const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
   const [replace, setReplace] = useState(false);
-  const [confirming, setConfirming] = useState(false);
 
   async function dryRun(text: string, on: boolean) {
-    setBusy(true);
+    setChecking(true);
     setError('');
     setResult(undefined);
     try {
@@ -52,143 +51,89 @@ export function ImportDialog({
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
-      setBusy(false);
+      setChecking(false);
     }
   }
-  async function toggle(on: boolean) {
-    setReplace(on);
-    if (csv) await dryRun(csv, on);
-  }
-  async function check(file: File) {
-    setBusy(true);
+  async function pick(file: File) {
     setError('');
     setResult(undefined);
     try {
       const text = await file.text();
       setCsv(text);
       setName(file.name);
-      setBusy(false);
       await dryRun(text, replace);
-      return;
     } catch (cause) {
       setCsv('');
+      setName('');
       setError(errorMessage(cause));
     }
-    setBusy(false);
   }
-  async function add() {
-    setBusy(true);
-    setError('');
-    try {
-      const done = await run({ csv, dryRun: false, ...(replace ? { replace: true } : {}) });
-      toast.success(fill(replace ? C.replaced : C.added, { tags: pluralize(done.added, 'tag') }));
-      onClose();
-    } catch (cause) {
-      // The step-up prompt says it; a second "no access" line would contradict it.
-      if (!isStepUp(cause)) setError(errorMessage(cause));
-      setBusy(false);
-    }
+  async function toggle(on: boolean) {
+    setReplace(on);
+    if (csv) await dryRun(csv, on);
   }
 
+  const ok = result?.ok ?? 0;
+  const w = useWizard({
+    open: true,
+    steps: [
+      { id: 'file', title: 'File', heading: 'Add the file' },
+      { id: 'check', title: 'Check', heading: 'Check the rows' },
+    ],
+    errors: {
+      file: checking || !result ? { file: 'Add a file.' } : undefined,
+      check: ok === 0 ? { rows: 'No rows are ready.' } : undefined,
+    },
+    hints: { file: checking ? 'Checking the file.' : 'Add a file.', check: 'No rows are ready.' },
+    fieldStep: {},
+    onFinish: async () => {
+      try {
+        const done = await run({ csv, dryRun: false, ...(replace ? { replace: true } : {}) });
+        toast.success(fill(replace ? C.replaced : C.added, { tags: pluralize(done.added, 'tag') }));
+        onClose();
+      } catch (cause) {
+        // The step-up prompt says it; a second "no access" line would contradict it.
+        if (!isStepUp(cause)) throw cause;
+      }
+    },
+  });
+
   return (
-    <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
-      <DialogContent
-        title={`${C.title} to ${keyset.name}`}
-        description={C.help}
-        size="lg"
-        closeButton={!busy}
-        footer={
-          <>
-            <Button variant="outline" disabled={busy} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              loading={busy}
-              disabled={!result || result.ok === 0}
-              onClick={() => (replace ? setConfirming(true) : void add())}
-            >
-              {fill(replace ? C.replaceGo : C.go, { tags: pluralize(result?.ok ?? 0, 'tag') })}
-            </Button>
-          </>
-        }
-      >
-        <div className="grid gap-4">
+    <WizardDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      title={`${C.title} to ${keyset.name}`}
+      wizard={w}
+      dirty={csv !== ''}
+      finishLabel={fill(replace ? C.replaceGo : C.go, { tags: pluralize(ok, 'tag') })}
+      {...(replace ? { finishTone: 'danger' as const } : {})}
+      busy={checking}
+    >
+      {w.id === 'file' ? (
+        <>
           {error ? <Callout tone="danger">{error}</Callout> : null}
           <FileDrop
             accept=".csv,.txt,text/csv,text/plain"
             maxBytes={TAG_IMPORT_MAX_CHARS}
             label={name || C.drop}
-            disabled={busy}
-            onFiles={([file]) => file && void check(file)}
+            disabled={checking}
+            onFiles={([file]) => file && void pick(file)}
           />
+          <p className="text-xs text-fg-muted">{C.help}</p>
           <CheckboxField
             label={C.replace}
             checked={replace}
-            disabled={busy}
+            disabled={checking}
             onCheckedChange={(on) => void toggle(on === true)}
           />
-          {result ? <Findings result={result} replace={replace} /> : null}
-        </div>
-      </DialogContent>
-      {confirming ? (
-        <ConfirmDialog
-          open
-          onOpenChange={(open) => !open && setConfirming(false)}
-          {...rekeyTagsConfirm(result?.ok ?? 0)}
-          destructive
-          onConfirm={async () => {
-            await add();
-          }}
-        />
+        </>
       ) : null}
-    </Dialog>
-  );
-}
-
-function Findings({ result, replace }: { result: ImportResult; replace: boolean }) {
-  const bad = result.problems.length + result.moreProblems;
-  return (
-    <div className="grid gap-3" aria-live="polite">
-      <p className="text-sm font-medium text-fg-strong">
-        {fill(replace ? C.replaceReady : C.ready, {
-          ok: result.ok,
-          rows: pluralize(result.rows, 'row'),
-        })}
-      </p>
-      {bad > 0 ? (
-        <div className="max-h-64 overflow-auto rounded-md border border-border">
-          <table className="w-full text-left text-sm">
-            <caption className="sr-only">Rows that will be skipped</caption>
-            <thead className="bg-surface-sunken text-fg-muted">
-              <tr>
-                <th scope="col" className="px-3 py-2 font-normal">
-                  Line
-                </th>
-                <th scope="col" className="px-3 py-2 font-normal">
-                  Tag ID
-                </th>
-                <th scope="col" className="px-3 py-2 font-normal">
-                  Skipped because
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.problems.map((p) => (
-                <tr key={`${p.line}-${p.reason}`} className="border-t border-border">
-                  <td className="px-3 py-2 tabular-nums">{p.line}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{p.uid ?? '—'}</td>
-                  <td className="px-3 py-2">{KEYSET_COPY.problem[p.reason]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {result.moreProblems > 0 ? (
-            <p className="border-t border-border px-3 py-2 text-sm text-fg-muted">
-              and {result.moreProblems} more
-            </p>
-          ) : null}
-        </div>
+      {w.id === 'check' && result ? (
+        <>
+          {replace ? <Callout tone="warning">{rekeyTagsConfirm(ok).description}</Callout> : null}
+          <Findings result={result} replace={replace} />
+        </>
       ) : null}
-    </div>
+    </WizardDialog>
   );
 }
