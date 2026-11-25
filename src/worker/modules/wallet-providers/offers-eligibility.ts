@@ -8,7 +8,7 @@ import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { getPassLifecycle } from '../passes/repo-remove.ts';
-import { timedPassJson } from '../passes/timed-pass.ts';
+import { timedOrBuilt } from '../passes/timed-source.ts';
 import { canPresent } from '../public/presentation.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
 import { readWalletPassSnapshot } from './instance.ts';
@@ -121,10 +121,14 @@ export async function offerPassSnapshot(
   if ('upcomingPassInformation' in passJson) {
     const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
     const now = ctx.clock.now();
-    passJson = timedPassJson(passJson as PassJson, pass.personalization, template, now) as Record<
-      string,
-      unknown
-    >;
+    passJson = timedOrBuilt(
+      ctx,
+      pass.id,
+      passJson as PassJson,
+      pass.personalization,
+      template,
+      now,
+    ) as Record<string, unknown>;
   }
   if (!canPresent(pass, passJson, ctx.clock.now())) return null;
   return {

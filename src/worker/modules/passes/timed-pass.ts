@@ -1,4 +1,7 @@
-import type { UpcomingEventsConfig } from '../../../passkit/behaviors/upcoming-events/index.ts';
+import {
+  listEvents,
+  type UpcomingEventsConfig,
+} from '../../../passkit/behaviors/upcoming-events/index.ts';
 import { retimePass } from '../../../passkit/behaviors/upcoming-events/timed.ts';
 import { DEFAULT_EVENT_MINUTES } from '../../../passkit/boundaries.ts';
 import { applyDefaults } from '../../../passkit/template/manifest.ts';
@@ -31,4 +34,30 @@ export function timedPassJson(
   if (!config) return built;
   const input = applyDefaults(template.manifest, personalization);
   return retimePass(built, input, config, template.manifest.lookups ?? {}, at);
+}
+
+/**
+ * The pass a wallet card's boundaries are read from: every input event, none dropped and none capped, and
+ * the expiry the last of them leaves. It does not move with the clock, so the phase counted on it only grows.
+ */
+export function walletBoundaryPass(
+  built: PassJson,
+  personalization: Personalization,
+  template: ResolvedTemplate,
+): PassJson {
+  const config = eventsConfig(template);
+  if (!config) return built;
+  const input = applyDefaults(template.manifest, personalization);
+  const lookups = template.manifest.lookups ?? {};
+  const all = listEvents(input, config, lookups, Number.NEGATIVE_INFINITY, Infinity) ?? [];
+  const last = retimePass(built, input, config, lookups, Infinity);
+  const pass = { ...built } as PassJson;
+  delete pass.expirationDate;
+  delete pass.upcomingPassInformation;
+  if (last.expirationDate) pass.expirationDate = last.expirationDate;
+  if (all.length > 0)
+    pass.upcomingPassInformation = all.map(
+      (e) => e.entry,
+    ) as unknown as PassJson['upcomingPassInformation'];
+  return pass;
 }

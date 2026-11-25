@@ -12,7 +12,9 @@ import {
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 import { currentPassJson } from '../passes/repo-read-pass.ts';
 import { timedPassJson } from '../passes/timed-pass.ts';
+import type { WalletOperation } from './instance-types.ts';
 import { nextInstanceBoundary, walletBoundaries } from './lifecycle-boundary.ts';
+import { samsungOperationState } from './sync-samsung-state.ts';
 
 let kit: Kit;
 beforeAll(async () => {
@@ -61,5 +63,39 @@ describe('wallet card boundaries', () => {
     expect(at(now)).toEqual(['A', 'B']);
     expect(at(now + HOUR)).toEqual(['A*', 'B']);
     expect(at(now + 2 * HOUR + 1)).toEqual(['B']);
+  });
+});
+
+describe('a season past the cap of 10', () => {
+  let season: Kit;
+  beforeAll(async () => {
+    season = await seasonKit({ schedule: { leadMinutes: 0 } });
+  });
+
+  it('keeps every event as a boundary and expires the card after the last one', async () => {
+    const now = season.clock.now();
+    const games = Array.from({ length: 12 }, (_, i): [string, number, number] => [
+      `Game ${i + 1}`,
+      now + (i + 1) * 2 * HOUR,
+      now + (i + 1) * 2 * HOUR + HOUR,
+    ]);
+    const pass = await seasonPass(season, events(...games));
+    const ctx = jobCtxOf(season);
+    const boundaries = await walletBoundaries(ctx, pass.id);
+    // The 11th and 12th games are past the built list's cap and still count.
+    for (const [, start, end] of games)
+      expect(boundaries).toEqual(expect.arrayContaining([start, end + 1]));
+    expect(boundaries.at(-2)).toBe(now + 25 * HOUR);
+    const op = {
+      kind: 'upsert',
+      passId: pass.id,
+      instanceId: 'none',
+      version: 1,
+    } as WalletOperation;
+    // Past the built expiry (the 10th game's end) the timed card is still live.
+    season.clock.set(now + 22 * HOUR);
+    expect(await samsungOperationState(ctx, op)).toBe('UPDATED');
+    season.clock.set(now + 26 * HOUR);
+    expect(await samsungOperationState(ctx, op)).toBe('EXPIRED');
   });
 });

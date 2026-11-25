@@ -12,7 +12,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { currentPassJson } from '../passes/repo-read-pass.ts';
-import { timedPassJson } from '../passes/timed-pass.ts';
+import { timedOrBuilt } from '../passes/timed-source.ts';
 import { walletArtExists } from './assets.ts';
 import { GoogleWalletError } from './google-errors.ts';
 import { googleClassKeyDigest } from './google-ids.ts';
@@ -93,7 +93,14 @@ export async function compileGooglePass(
   if (passJson === null || typeof passJson !== 'object') return 'unreadable';
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   // The card shows the event running now, as Apple's timed render does.
-  passJson = timedPassJson(passJson as PassJson, pass.personalization, template, ctx.clock.now());
+  passJson = timedOrBuilt(
+    ctx,
+    pass.id,
+    passJson as PassJson,
+    pass.personalization,
+    template,
+    ctx.clock.now(),
+  );
   const previewOnly = new Set(template.manifest.previewOnlyAssets ?? []);
   const shipped: ShippedAsset[] = template.assets
     .filter((asset) => !previewOnly.has(asset.name))

@@ -1,36 +1,35 @@
-import { nextBoundary, passBoundaries } from '../../../passkit/boundaries.ts';
+import {
+  DEFAULT_EVENT_MINUTES,
+  nextBoundary,
+  passBoundaries,
+} from '../../../passkit/boundaries.ts';
+import type { PassJson } from '../../../passkit/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { isNotFound, resolveTemplate } from '../passes/builder.ts';
-import { boundarySource } from '../passes/repo-boundaries.ts';
-import { eventMinutes } from '../passes/timed-pass.ts';
+import { eventMinutes, walletBoundaryPass } from '../passes/timed-pass.ts';
+import { readTimedSource } from '../passes/timed-source.ts';
 
 export { boundaryPhase, nextBoundary, passBoundaries } from '../../../passkit/boundaries.ts';
 
 /**
  * Moments a compiled wallet card changes with no pass edit (architecture 6.1): the pass expires, or an
- * upcoming event starts or ends. The calculation Apple's timed renders use, with the template's event
- * length, so a boundary is one operation, and the card it sends is the timed one (docs/design/event-boundaries.md).
+ * upcoming event starts or ends. The calculation Apple's timed renders use, over every input event (an event
+ * past the cap of 10 moves up when an earlier one ends) and the expiry the last of them leaves, so a boundary
+ * is one operation and the card it sends is the timed one (docs/design/event-boundaries.md).
  */
 export async function walletBoundaries(ctx: ServiceContext, passId: string): Promise<number[]> {
-  const source = await boundarySource(ctx.env.DB, passId);
-  const raw = source?.passJson ?? null;
-  if (!source || raw === null || !raw.includes('"upcomingPassInformation"'))
-    return passBoundaries(raw, { expiry: true });
-  let fallbackMinutes: number | undefined;
-  try {
-    const template = await resolveTemplate(
-      ctx,
-      source.orgId,
-      source.templateId,
-      source.templateVersion,
-    );
-    fallbackMinutes = eventMinutes(template);
-  } catch (error) {
-    // A template that is gone keeps the default event length; anything else retries the drain.
-    if (!isNotFound(error)) throw error;
-    ctx.log.warn('wallet.boundary_template_missing', { passId, code: 'TEMPLATE_NOT_FOUND' });
-  }
-  return passBoundaries(raw, { expiry: true, ...(fallbackMinutes ? { fallbackMinutes } : {}) });
+  const source = await readTimedSource(ctx, passId);
+  if (!source) return [];
+  const { built, personalization, template } = source;
+  let pass: PassJson = built;
+  if (template)
+    try {
+      pass = walletBoundaryPass(built, personalization, template);
+    } catch (error) {
+      // The behavior refuses the input now: the boundaries of the pass as built.
+      ctx.log.warn('wallet.boundary_input_invalid', { passId, code: 'TIMED_PASS_INVALID', error });
+    }
+  const fallbackMinutes = template ? eventMinutes(template) : DEFAULT_EVENT_MINUTES;
+  return passBoundaries(pass, { expiry: true, fallbackMinutes });
 }
 
 /** When the instance's card next changes by itself: the drain parks the instance's dirty row until then. */
