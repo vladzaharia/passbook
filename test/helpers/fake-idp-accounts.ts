@@ -14,6 +14,10 @@ export interface AccountEnv extends GroupEnv {
   assertTargets(targets: readonly Target[], adds?: readonly Target[]): void;
   /** Adopted groups are not PassBook's: an account in one is not managed for disable. */
   isAdopted(target: string): boolean;
+  /** Grants the owner's removals ended, as the binding's `idp_removed` rows. */
+  endedLog: { subject: string; role: Target; at: number }[];
+  now(): number;
+  isDry(): boolean;
 }
 
 export function accountMethods(
@@ -67,8 +71,11 @@ export function accountMethods(
         else result.added.push(role);
       }
       for (const role of delta.remove ?? []) {
-        if (!a.roles.has(role)) result.skipped.push({ role, reason: 'absent' });
-        else if (!a.grants.has(role) && !ctx.override)
+        if (!a.roles.has(role)) {
+          result.skipped.push({ role, reason: 'absent' });
+          // The binding ends a grant for a role that is gone, without a group write.
+          if (a.grants.has(role) && !isDry) a.grants.delete(role);
+        } else if (!a.grants.has(role) && !ctx.override)
           result.skipped.push({ role, reason: 'not_ours' });
         else result.removed.push(role);
       }
@@ -102,8 +109,19 @@ export function accountMethods(
       }
       return { result: disabled ? 'disabled' : 'enabled', dryRun: isDry };
     },
-    async snapshot() {
+    async snapshot(ctx) {
       env.enter('snapshot', true);
+      // The owner took a role PassBook added: the snapshot ends the grant (unless dry) and reports it since `since`.
+      const dryRun = ctx.dryRun === true || env.isDry();
+      for (const [subject, a] of accounts)
+        for (const role of [...a.grants])
+          if (!a.roles.has(role) && !dryRun) {
+            a.grants.delete(role);
+            env.endedLog.push({ subject, role: role as Target, at: env.now() });
+          }
+      const ended = env.endedLog
+        .filter((e) => e.at >= (ctx.since ?? 0))
+        .map(({ subject, role }) => ({ subject, role }));
       const roles: Record<string, { name: string; members: SnapshotMember[] }> = {};
       for (const [subject, a] of accounts)
         for (const role of a.roles) {
@@ -116,7 +134,7 @@ export function accountMethods(
             grant: a.grants.has(role),
           });
         }
-      return { roles: roles as IdpSnapshot['roles'], ended: [] };
+      return { roles: roles as IdpSnapshot['roles'], ended };
     },
   };
 }

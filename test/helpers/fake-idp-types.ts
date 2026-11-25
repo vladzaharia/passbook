@@ -28,6 +28,8 @@ export interface FakeIdp extends IdpRpc {
   failNext(code: string, method?: string): void;
   /** Another write holds `s:<subject>`, `role:<role>` or `g:<key>`; writes that need it answer `IDP_CONFLICT`. */
   holdLease(key: string): void;
+  /** The other write finished: the lease is free again. */
+  releaseLease(key: string): void;
   /** The owner changed a group in Polaris ID: `state: 'gone'`, `renamed: true` or a half-finished `deleting`. */
   setGroupState(key: string, state: Pick<FakeGroup, 'state' | 'renamed'>): void;
   /** The person finished signup with this token: `proveSignup` now finds them. */

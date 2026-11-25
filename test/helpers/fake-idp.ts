@@ -155,6 +155,9 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
   const accountsApi = accountMethods({
     ...groupEnv,
     disabledByUs,
+    endedLog: [] as { subject: string; role: Target; at: number }[],
+    now,
+    isDry: () => idp.mode !== 'live',
     assertTargets: groupsApi.assertTargets,
     isAdopted: (t) => groups.get(t.replace(/^g:/, ''))?.kind === 'adopted' && t.startsWith('g:'),
   });
@@ -169,6 +172,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     frozen: false,
     mode: options.mode ?? 'live',
     holdLease: (key) => void leases.add(key),
+    releaseLease: (key) => void leases.delete(key),
     setGroupState: (key, state) => {
       const g = groups.get(key);
       if (!g) throw new Error(`No group ${key}`);
