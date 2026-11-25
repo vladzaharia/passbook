@@ -283,6 +283,7 @@ export const CONNECTOR = {
   },
   outputFields: { name: { type: 'string' }, email: { type: 'string' } },
   defaults: { intervalSeconds: 3600, maxConcurrency: 2, requestsPerMinute: 60, timeoutMs: 15000 },
+  entitled: true,
 };
 
 /** GET /templates/previews: the sample preview for every requested id. */

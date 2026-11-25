@@ -133,7 +133,10 @@ describe('console undo tenant authority', () => {
                 ? 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?'
                 : 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?';
               const id = sessionRevoked ? adminSessionId : adminMembershipId;
-              expect(await run(db, sql, [kit.clock.now(), id])).toEqual({ changes: 1 });
+              // A membership revoke also marks the user's Polaris ID subject, and D1 counts trigger writes.
+              const { changes } = await run(db, sql, [kit.clock.now(), id]);
+              if (sessionRevoked) expect(changes).toBe(1);
+              else expect(changes).toBeGreaterThanOrEqual(1);
               if (change === 'membership replaced' || change === 'role downgraded') {
                 await grantScanMembership(
                   kit.fx,

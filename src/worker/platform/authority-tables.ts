@@ -68,6 +68,7 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   sandbox_forwards: { org: 'org_id' },
   connections: { org: 'org_id' },
   connection_runs: { org: null, edges: [edge('connection_id', 'connections')] },
+  connection_files: { org: 'org_id' },
   connection_ref_versions: { org: 'org_id', conflict: ['connection_id', 'ref'] },
   connection_webhook_retention: { org: 'org_id' },
   connection_webhook_items: {
@@ -128,6 +129,9 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   nfc_tag_keysets: { org: 'org_id', mode: 'mode' },
   nfc_tag_keys: { org: null, edges: [edge('keyset_id', 'nfc_tag_keysets')] },
   nfc_tag_sun: { org: null, edges: [edge('tag_id', 'nfc_tags')] },
+  // Programming a blank tag (0210): a program row per tag trip, and the admin keys a programmed tag keeps.
+  nfc_tag_programs: { org: 'org_id', mode: 'mode' },
+  nfc_tag_admin_keys: { org: null, edges: [edge('tag_id', 'nfc_tags')] },
   // Outbound webhooks (0090): endpoints and secrets via grants, delivery bookkeeping via the raw-write allowlist, event_feed by the pass_events trigger.
   webhook_endpoints: { org: 'org_id', mode: 'mode' },
   webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
@@ -192,6 +196,10 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   org_entitlements: { org: 'org_id' },
   // A person's developer sandbox (0156): made once with its org, closed by the idle sweep; funnel columns are set once.
   developer_sandboxes: { org: 'org_id' },
+  // Developer invitations (0214): written with the org's manager grant; a setup row is reached through its invitation.
+  developer_invitations: { org: 'org_id' },
+  developer_invite_setups: { org: null, edges: [edge('invitation_id', 'developer_invitations')] },
+  developer_sponsors: { org: 'org_id' },
   org_entitlement_overrides: { org: 'org_id', conflict: ['org_id', 'key'] },
   entitlement_preset_meta: {
     org: null,

@@ -360,7 +360,7 @@ async function expectEverythingOpens(r: Rotated) {
       ciphertext: ArrayBuffer;
     }>(
       db,
-      `SELECT ${hmacColumns(p.table)} FROM ${p.table} WHERE ${p.table === 'pass_personalizations' ? 'pass_id' : p.table === 'pass_credential_transfer_payloads' ? 'transfer_id' : p.table === 'nfc_tag_sun' ? 'tag_id' : 'id'} = ?`,
+      `SELECT ${hmacColumns(p.table)} FROM ${p.table} WHERE ${p.table === 'pass_personalizations' ? 'pass_id' : p.table === 'pass_credential_transfer_payloads' ? 'transfer_id' : p.table === 'nfc_tag_sun' || p.table === 'nfc_tag_admin_keys' ? 'tag_id' : 'id'} = ?`,
       [p.id],
     );
     expect(row?.kek_version, p.table).toBe(2);

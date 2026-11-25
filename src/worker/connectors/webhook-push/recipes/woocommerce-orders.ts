@@ -34,6 +34,7 @@ function refundedLines(lines: Record<string, unknown>[], refunds: unknown): Set<
 export const woocommerceOrders: Recipe = {
   id: 'woocommerce-orders',
   label: 'WooCommerce orders',
+  category: 'commerce',
   verifier: 'woocommerce',
   topicHeader: 'x-wc-webhook-topic',
   idPrefix: 'woocommerce',

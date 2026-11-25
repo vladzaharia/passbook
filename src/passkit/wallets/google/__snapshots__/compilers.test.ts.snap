@@ -1674,7 +1674,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     "textModulesData": [
       {
-        "body": "WA100",
+        "body": "ZA1100",
         "header": "Flight",
         "id": "headerFields.flight",
       },
@@ -1860,7 +1860,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     "textModulesData": [
       {
-        "body": "WA100",
+        "body": "ZA1100",
         "header": "Flight",
         "id": "headerFields.flight",
       },

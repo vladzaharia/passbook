@@ -36,6 +36,10 @@ const UTC_DAY = new Set([
   'worker/modules/org-lifecycle/jobs.ts',
   'worker/platform/browser-signals.ts',
   'worker/modules/wallet-providers/projection-class-rule.ts',
+  // The demo world is a synthetic wall clock (`ms` read with UTC fields): its days are calendar arithmetic.
+  'worker/connectors/demo/people.ts',
+  'worker/connectors/demo/world.ts',
+  'worker/connectors/demo/datasets/transit-tickets.ts',
 ]);
 
 const NAME = /['"`](?:UTC|Etc\/UTC|GMT)['"`]/;
