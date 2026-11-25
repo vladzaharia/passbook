@@ -73,6 +73,16 @@ describe('the filter row', () => {
       'PASS_VOIDED',
     ]);
   });
+
+  it('asks nothing for a filter change that lands after the log left the page', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const { el, calls } = await open([page([entry(1)])]);
+    const before = calls.length;
+    choose(el, 'status', '4xx');
+    el.remove();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(calls).toHaveLength(before);
+  });
 });
 
 describe('an empty log', () => {

@@ -156,6 +156,8 @@ export async function mountLogs(
   }
 
   async function load(append: boolean) {
+    // A filter change that lands after the log left the page asks nothing.
+    if (!el.isConnected) return;
     const mine = ++run;
     const extra: Record<string, string> = append && cursor ? { cursor } : {};
     // A refetch keeps the old rows; after 150 ms they dim and the card's top edge runs the loading rail.
