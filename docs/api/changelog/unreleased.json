@@ -2330,7 +2330,7 @@
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
     "change": "body.preset: enum value \"premium\" added",
-    "note": "Presets starter and premium join trial, standard and legacy. legacy is labelled Unlimited: the label fields (label, presetLabel) now read \"Unlimited\" for it; its id is unchanged."
+    "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
     "key": "POST /api/v1/orgs body.preset: enum value \"starter\" added",
@@ -2338,7 +2338,7 @@
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
     "change": "body.preset: enum value \"starter\" added",
-    "note": "Presets starter and premium join trial, standard and legacy. legacy is labelled Unlimited: the label fields (label, presetLabel) now read \"Unlimited\" for it; its id is unchanged."
+    "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
