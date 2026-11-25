@@ -1798,7 +1798,7 @@
  },
  {
   "id": "connections.deleteConnectionsByIdFilesByFileId",
-  "call": "connections.files.discard",
+  "call": "connections.files.delete",
   "http": "DELETE",
   "path": "/api/v1/connections/{id}/files/{fileId}",
   "pathParams": [

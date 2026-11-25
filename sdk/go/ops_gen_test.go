@@ -396,10 +396,10 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"connections.files.discard", "DELETE", "/api/v1/connections/id1/files/id2", false,
+		"connections.files.delete", "DELETE", "/api/v1/connections/id1/files/id2", false,
 		"", `{"ok":true}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Connections.Files.Discard(ctx, "id1", "id2")
+			return c.Connections.Files.Delete(ctx, "id1", "id2")
 		},
 	},
 	{

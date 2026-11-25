@@ -422,9 +422,9 @@ func (r *ConnectionsFilesResource) Apply(ctx context.Context, id string, fileId 
 	return &out, nil
 }
 
-// Discard Discard a pending revision `DELETE /api/v1/connections/{id}/files/{fileId}`
-func (r *ConnectionsFilesResource) Discard(ctx context.Context, id string, fileId string, opts ...RequestOption) (*ConnectionsFilesDiscardResult, error) {
-	var out ConnectionsFilesDiscardResult
+// Delete Discard a pending revision `DELETE /api/v1/connections/{id}/files/{fileId}`
+func (r *ConnectionsFilesResource) Delete(ctx context.Context, id string, fileId string, opts ...RequestOption) (*ConnectionsFilesDeleteResult, error) {
+	var out ConnectionsFilesDeleteResult
 	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/connections/" + pathEscape(id) + "/files/" + pathEscape(fileId)}, &out, opts); err != nil {
 		return nil, err
 	}

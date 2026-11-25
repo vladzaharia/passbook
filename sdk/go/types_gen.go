@@ -1261,11 +1261,11 @@ type ConnectionsFilesApplyResponseFileSkipped struct {
 
 type ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
 
-type ConnectionsFilesDiscardResponse struct {
+type ConnectionsFilesDeleteResponse struct {
 	Ok bool `json:"ok"`
 }
 
-type ConnectionsFilesDiscardResult = ConnectionsFilesDiscardResponse
+type ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
 
 type ConnectionsFilesListResponse struct {
 	Items      []ConnectionsFilesListResponseItemsItem `json:"items"`

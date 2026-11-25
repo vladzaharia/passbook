@@ -911,7 +911,7 @@ export type ConnectionsFilesApplyResponse = {
   workflowInstanceId: string;
 };
 
-export type ConnectionsFilesDiscardResponse = {
+export type ConnectionsFilesDeleteResponse = {
   ok: true;
 };
 

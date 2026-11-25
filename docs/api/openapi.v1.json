@@ -49785,7 +49785,7 @@
           "workflowInstanceId"
         ]
       },
-      "ConnectionsFilesDiscardResponse": {
+      "ConnectionsFilesDeleteResponse": {
         "type": "object",
         "properties": {
           "ok": {
@@ -112438,6 +112438,11 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ConnectionsUploadsCreateParams"
+              },
+              "example": {
+                "name": "members.csv",
+                "content": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n",
+                "encoding": "utf8"
               }
             }
           }
@@ -112449,6 +112454,79 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsUploadsCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000014",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "state": "draft",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheets": [],
+                  "sheet": null,
+                  "recordsPointer": null,
+                  "bytes": 330,
+                  "rows": 5,
+                  "columns": [
+                    {
+                      "pointer": "/Holder email",
+                      "label": "Holder email",
+                      "type": "email",
+                      "samples": [
+                        "ada@example.com",
+                        "grace@example.com"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Name",
+                      "label": "Name",
+                      "type": "text",
+                      "samples": [
+                        "Ada Example",
+                        "Grace Okafor"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Member ID",
+                      "label": "Member ID",
+                      "type": "text",
+                      "samples": [
+                        "NW-1001",
+                        "NW-1002"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    }
+                  ],
+                  "preview": {
+                    "header": [
+                      "Holder email",
+                      "Name",
+                      "Member ID"
+                    ],
+                    "rows": [
+                      [
+                        "ada@example.com",
+                        "Ada Example",
+                        "NW-1001"
+                      ],
+                      [
+                        "grace@example.com",
+                        "Grace Okafor",
+                        "NW-1002"
+                      ]
+                    ]
+                  },
+                  "idCandidates": [
+                    "/Member ID",
+                    "/Holder email",
+                    "/Name"
+                  ],
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000
                 }
               }
             }
@@ -112469,6 +112547,7 @@
           "resource": "connections.uploads",
           "method": "create"
         },
+        "description": "Uploads a CSV, Excel or JSON file as a draft: columns, a preview and ID column candidates. Create the connection with its fileId within 23 hours.",
         "security": [
           {
             "apiKey": [
@@ -112533,6 +112612,79 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsUploadsRetrieveResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000014",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "state": "draft",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheets": [],
+                  "sheet": null,
+                  "recordsPointer": null,
+                  "bytes": 330,
+                  "rows": 5,
+                  "columns": [
+                    {
+                      "pointer": "/Holder email",
+                      "label": "Holder email",
+                      "type": "email",
+                      "samples": [
+                        "ada@example.com",
+                        "grace@example.com"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Name",
+                      "label": "Name",
+                      "type": "text",
+                      "samples": [
+                        "Ada Example",
+                        "Grace Okafor"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Member ID",
+                      "label": "Member ID",
+                      "type": "text",
+                      "samples": [
+                        "NW-1001",
+                        "NW-1002"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    }
+                  ],
+                  "preview": {
+                    "header": [
+                      "Holder email",
+                      "Name",
+                      "Member ID"
+                    ],
+                    "rows": [
+                      [
+                        "ada@example.com",
+                        "Ada Example",
+                        "NW-1001"
+                      ],
+                      [
+                        "grace@example.com",
+                        "Grace Okafor",
+                        "NW-1002"
+                      ]
+                    ]
+                  },
+                  "idCandidates": [
+                    "/Member ID",
+                    "/Holder email",
+                    "/Name"
+                  ],
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000
                 }
               }
             }
@@ -112553,6 +112705,7 @@
           "resource": "connections.uploads",
           "method": "retrieve"
         },
+        "description": "Reads a draft upload.",
         "security": [
           {
             "apiKey": [
@@ -112601,6 +112754,9 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ConnectionsUploadsUpdateParams"
+              },
+              "example": {
+                "sheet": "Members"
               }
             }
           }
@@ -112612,6 +112768,79 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsUploadsUpdateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000014",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "state": "draft",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheets": [],
+                  "sheet": null,
+                  "recordsPointer": null,
+                  "bytes": 330,
+                  "rows": 5,
+                  "columns": [
+                    {
+                      "pointer": "/Holder email",
+                      "label": "Holder email",
+                      "type": "email",
+                      "samples": [
+                        "ada@example.com",
+                        "grace@example.com"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Name",
+                      "label": "Name",
+                      "type": "text",
+                      "samples": [
+                        "Ada Example",
+                        "Grace Okafor"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    },
+                    {
+                      "pointer": "/Member ID",
+                      "label": "Member ID",
+                      "type": "text",
+                      "samples": [
+                        "NW-1001",
+                        "NW-1002"
+                      ],
+                      "blanks": 0,
+                      "duplicates": 0
+                    }
+                  ],
+                  "preview": {
+                    "header": [
+                      "Holder email",
+                      "Name",
+                      "Member ID"
+                    ],
+                    "rows": [
+                      [
+                        "ada@example.com",
+                        "Ada Example",
+                        "NW-1001"
+                      ],
+                      [
+                        "grace@example.com",
+                        "Grace Okafor",
+                        "NW-1002"
+                      ]
+                    ]
+                  },
+                  "idCandidates": [
+                    "/Member ID",
+                    "/Holder email",
+                    "/Name"
+                  ],
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000
                 }
               }
             }
@@ -112632,6 +112861,7 @@
           "resource": "connections.uploads",
           "method": "update"
         },
+        "description": "Reads a draft again from its stored file with another sheet or records path.",
         "security": [
           {
             "apiKey": [
@@ -112693,6 +112923,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsUploadsDeleteResponse"
+                },
+                "example": {
+                  "ok": true
                 }
               }
             }
@@ -112713,6 +112946,7 @@
           "resource": "connections.uploads",
           "method": "delete"
         },
+        "description": "Discards a draft upload and its stored file.",
         "security": [
           {
             "apiKey": [
@@ -112787,6 +113021,11 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ConnectionsFilesUploadParams"
+              },
+              "example": {
+                "name": "members.csv",
+                "content": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n",
+                "encoding": "utf8"
               }
             }
           }
@@ -112798,6 +113037,42 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsFilesUploadResponse"
+                },
+                "example": {
+                  "unchanged": false,
+                  "id": "0193a1b2-7c00-7000-8000-000000000034",
+                  "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                  "revision": 2,
+                  "state": "pending",
+                  "name": "members.csv",
+                  "format": "csv",
+                  "sheet": null,
+                  "bytes": 370,
+                  "rows": 6,
+                  "skipped": {
+                    "noId": 0,
+                    "duplicate": 0
+                  },
+                  "diff": {
+                    "added": 1,
+                    "changed": 1,
+                    "removed": 0,
+                    "examples": {
+                      "added": [
+                        "NW-1006"
+                      ],
+                      "changed": [
+                        "NW-1001"
+                      ],
+                      "removed": []
+                    }
+                  },
+                  "applied": false,
+                  "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+                  "createdByName": "Mei Tanaka",
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1795654800000,
+                  "supersededAt": null
                 }
               }
             }
@@ -112818,6 +113093,7 @@
           "resource": "connections.files",
           "method": "upload"
         },
+        "description": "Uploads a new revision of the connection's file. It stays pending until applied; apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true and store nothing.",
         "security": [
           {
             "apiKey": [
@@ -112887,6 +113163,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsFilesListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-000000000034",
+                      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                      "revision": 2,
+                      "state": "pending",
+                      "name": "members.csv",
+                      "format": "csv",
+                      "sheet": null,
+                      "bytes": 370,
+                      "rows": 6,
+                      "skipped": {
+                        "noId": 0,
+                        "duplicate": 0
+                      },
+                      "diff": {
+                        "added": 1,
+                        "changed": 1,
+                        "removed": 0,
+                        "examples": {
+                          "added": [
+                            "NW-1006"
+                          ],
+                          "changed": [
+                            "NW-1001"
+                          ],
+                          "removed": []
+                        }
+                      },
+                      "applied": false,
+                      "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+                      "createdByName": "Mei Tanaka",
+                      "createdAt": 1795572000000,
+                      "expiresAt": 1795654800000,
+                      "supersededAt": null
+                    }
+                  ],
+                  "nextCursor": null
                 }
               }
             }
@@ -112907,6 +113223,7 @@
           "resource": "connections.files",
           "method": "list"
         },
+        "description": "Lists the connection's file revisions, newest first.",
         "security": [
           {
             "apiKey": [
@@ -112969,6 +113286,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionsFilesApplyResponse"
+                },
+                "example": {
+                  "file": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000034",
+                    "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                    "revision": 2,
+                    "state": "current",
+                    "name": "members.csv",
+                    "format": "csv",
+                    "sheet": null,
+                    "bytes": 370,
+                    "rows": 6,
+                    "skipped": {
+                      "noId": 0,
+                      "duplicate": 0
+                    },
+                    "diff": {
+                      "added": 1,
+                      "changed": 1,
+                      "removed": 0,
+                      "examples": {
+                        "added": [
+                          "NW-1006"
+                        ],
+                        "changed": [
+                          "NW-1001"
+                        ],
+                        "removed": []
+                      }
+                    },
+                    "applied": false,
+                    "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+                    "createdByName": "Mei Tanaka",
+                    "createdAt": 1795572000000,
+                    "expiresAt": null,
+                    "supersededAt": null
+                  },
+                  "runId": "0193a1b2-7c00-7000-8000-000000000023",
+                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
                 }
               }
             }
@@ -112989,6 +113345,7 @@
           "resource": "connections.files",
           "method": "apply"
         },
+        "description": "Makes a pending revision current and syncs now.",
         "security": [
           {
             "apiKey": [
@@ -113065,7 +113422,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectionsFilesDiscardResponse"
+                  "$ref": "#/components/schemas/ConnectionsFilesDeleteResponse"
+                },
+                "example": {
+                  "ok": true
                 }
               }
             }
@@ -113084,8 +113444,9 @@
         "operationId": "connections.deleteConnectionsByIdFilesByFileId",
         "x-sdk": {
           "resource": "connections.files",
-          "method": "discard"
+          "method": "delete"
         },
+        "description": "Discards a pending revision and its stored file.",
         "security": [
           {
             "apiKey": [

@@ -2477,6 +2477,6 @@
   },
   "connections.deleteConnectionsByIdFilesByFileId": {
     "resource": "connections.files",
-    "method": "discard"
+    "method": "delete"
   }
 }

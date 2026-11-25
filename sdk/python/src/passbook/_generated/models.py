@@ -186,8 +186,8 @@ __all__ = [
     "ConnectionsFilesApplyResponseFile",
     "ConnectionsFilesApplyResponseFileSkipped",
     "ConnectionsFilesApplyResult",
-    "ConnectionsFilesDiscardResponse",
-    "ConnectionsFilesDiscardResult",
+    "ConnectionsFilesDeleteResponse",
+    "ConnectionsFilesDeleteResult",
     "ConnectionsFilesListResponse",
     "ConnectionsFilesListResponseItemsItem",
     "ConnectionsFilesListResponseItemsItemSkipped",
@@ -2889,7 +2889,7 @@ class ConnectionsFilesApplyResponseFileSkipped(_Model):
     noId: int
     duplicate: int
 
-class ConnectionsFilesDiscardResponse(_Model):
+class ConnectionsFilesDeleteResponse(_Model):
     ok: _Literal[True]
 
 class ConnectionsFilesListResponse(_Model):
@@ -13745,7 +13745,7 @@ ConnectionsDeleteResult = ConnectionsDeleteResponse
 
 ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
 
-ConnectionsFilesDiscardResult = ConnectionsFilesDiscardResponse
+ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
 
 ConnectionsFilesListResult = ConnectionsFilesListResponse
 

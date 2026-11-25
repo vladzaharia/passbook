@@ -408,14 +408,14 @@ class ConnectionsFilesResource:
         """Apply a pending revision and sync `POST /api/v1/connections/{id}/files/{fileId}/apply`"""
         return self._core.request("POST", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}/apply", result=m.ConnectionsFilesApplyResult, **opts)
 
-    def discard(
+    def delete(
         self,
         id: str,
         file_id: str,
         **opts: _Unpack[RequestOptions],
-    ) -> m.ConnectionsFilesDiscardResult:
+    ) -> m.ConnectionsFilesDeleteResult:
         """Discard a pending revision `DELETE /api/v1/connections/{id}/files/{fileId}`"""
-        return self._core.request("DELETE", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}", result=m.ConnectionsFilesDiscardResult, **opts)
+        return self._core.request("DELETE", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}", result=m.ConnectionsFilesDeleteResult, **opts)
 
     def list(
         self,
