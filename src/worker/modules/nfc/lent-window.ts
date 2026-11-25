@@ -1,3 +1,5 @@
+import { applyDefaults } from '../../../passkit/template/manifest.ts';
+import type { Personalization, TemplateManifest } from '../../../passkit/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -6,6 +8,14 @@ import { guestEnd } from './guest-end.ts';
 import { lentBindings } from './repo-lent-window.ts';
 
 const DAY_MS = 86_400_000;
+
+/** Only a pass on a guest plan can hold a lent tag; read from the manifest the publish already has. */
+export function onGuestPlan(manifest: TemplateManifest, personalization: Personalization): boolean {
+  const access = manifest.scan?.access;
+  if (!access) return false;
+  const inputs = applyDefaults(manifest, personalization);
+  return access.plans.find((p) => p.id === inputs[access.input.plan])?.kind === 'guest';
+}
 
 /** Queues a recompute; the job looks for lent tags, so the publish itself adds no D1 round trip. */
 export async function queueLentWindow(

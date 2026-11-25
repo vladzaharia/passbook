@@ -137,3 +137,45 @@ describe('a guest pass window that changes', () => {
     expect(queued()).toHaveLength(1);
   });
 });
+
+describe('the lent-window job is queued for guest plans only', () => {
+  const both = {
+    ...guest,
+    access: {
+      input: { plan: 'tier', until: 'endsAt' },
+      plans: [
+        { id: 'guest', label: 'Guest', kind: 'guest', zones: [{ zone: '*' }] },
+        { id: 'member', label: 'Member', kind: 'always', zones: [{ zone: '*' }] },
+      ],
+    },
+  } as const;
+
+  it('a member-plan pass change queues nothing; a guest-plan one queues', async () => {
+    const tpl = await f.kit.scanTemplate('Visitor and member', both as never);
+    const sent: { kind?: string }[] = [];
+    const base = jobCtxOf(f.kit);
+    const ctx = {
+      ...base,
+      env: { ...f.kit.env, JOBS: { send: async (m: { kind?: string }) => void sent.push(m) } },
+    } as unknown as typeof base;
+    const edit = (id: string) =>
+      updatePass(
+        ctx,
+        { type: 'system', id: null },
+        id,
+        { input: { endsAt: new Date(TEST_NOW + 3 * HOUR).toISOString() } },
+        { scope: null },
+      );
+    const make = (tier: string) =>
+      f.pass({
+        template: tpl,
+        input: { memberName: tier, tier, endsAt: new Date(TEST_NOW + HOUR).toISOString() },
+      });
+    const member = await make('member');
+    await edit(member.pass.id);
+    expect(sent.filter((m) => m.kind === 'tags.lent_window')).toHaveLength(0);
+    const visitor = await make('guest');
+    await edit(visitor.pass.id);
+    expect(sent.filter((m) => m.kind === 'tags.lent_window')).toHaveLength(1);
+  });
+});
