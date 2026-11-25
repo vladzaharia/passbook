@@ -36,7 +36,6 @@ import { AUTH_ACTIONS } from './actions-auth.ts';
 import { BROADCAST_RUN_ACTIONS } from './actions-broadcast.ts';
 import { DEVELOPER_ACTIONS } from './actions-developer.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
-import { IDP_ACTIONS } from './actions-idp.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
 import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { TAG_KEY_ACTIONS } from './actions-tag-keys.ts';
@@ -274,7 +273,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   ...TAG_KEY_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,
   ...DEVELOPER_ACTIONS,
-  ...IDP_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),
   'bundle.rotate_link': a('Bundle link rotated', I.rotate, 'info'),

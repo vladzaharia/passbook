@@ -31,12 +31,13 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/auth/repo-sessions.ts': {
     reason:
-      "sign-in creates the session (no principal exists yet); idle slide is on the allowlist; sign-out revokes the caller's own session",
+      "sign-in creates the session (no principal exists yet); idle slide is on the allowlist; sign-out revokes the caller's own session; the Polaris ID sync ends sessions whose role the owner took away (a system job, no principal)",
     writes: [
       'sessions:52e6852de8c6',
       'sessions:b0a06a56c10d',
       'sessions:2c6fe2b1d5d5',
       'sessions:d0c2564ed9b5',
+      'sessions:d1f3be895ab6',
     ],
   },
   'src/worker/modules/auth/repo.ts': {

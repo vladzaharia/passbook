@@ -1,4 +1,7 @@
+import { jobGrant } from '../../platform/authority.ts';
+import { isNotNull } from '../../platform/authority-expr.ts';
 import { all, batch, chunk, placeholders, run } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 import type { IdentityRow } from './repo-sources.ts';
 import type { TargetStateRow } from './repo-state.ts';
 
@@ -74,20 +77,15 @@ export async function actionableDriftSubjects(db: D1Database, limit: number): Pr
   return rows.map((r) => r.subject);
 }
 
-/** Ended sponsorships of a user whose group effect is settled. Returns how many settled. */
-export async function settleEndedSponsors(
-  db: D1Database,
-  userId: string,
-  now: number,
-): Promise<number> {
-  return (
-    await run(
-      db,
-      `UPDATE developer_sponsors SET settled_at = MAX(?, ended_at)
-       WHERE user_id = ? AND ended_at IS NOT NULL AND settled_at IS NULL`,
-      [now, userId],
-    )
-  ).changes;
+/** Ended sponsorships of a user whose group effect is settled: a platform job grant, since no org is acting. */
+export async function settleEndedSponsors(ctx: ServiceContext, userId: string): Promise<number> {
+  const g = jobGrant(ctx, { job: 'idp-sync', purpose: 'platform.job.idp.settle_sponsorship' });
+  g.update('developer_sponsors', {
+    set: { settled_at: ctx.clock.now() },
+    where: { user_id: userId, ended_at: isNotNull(), settled_at: null },
+  });
+  const [result] = await g.commit();
+  return result?.meta.changes ?? 0;
 }
 
 /** Marks subjects for the next drain in one statement per chunk; a mark resets the backoff, like `markDirty`. */

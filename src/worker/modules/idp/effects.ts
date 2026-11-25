@@ -164,6 +164,6 @@ export const failTarget = (ctx: ServiceContext, who: Who, target: Target, code: 
 /** The ended sponsorships of the user are settled once their developer group effect is done. */
 export async function settleSponsorships(ctx: ServiceContext, who: Who): Promise<void> {
   if (!who.userId) return;
-  const settled = await settleEndedSponsors(ctx.env.DB, who.userId, ctx.clock.now());
+  const settled = await settleEndedSponsors(ctx, who.userId);
   if (settled > 0) ctx.log.info('idp.sponsorships_settled', { userId: who.userId, count: settled });
 }
