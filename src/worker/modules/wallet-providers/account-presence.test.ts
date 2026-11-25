@@ -23,9 +23,9 @@ const sqlPresent = async (orgId: string, mode: string) =>
 
 describe('credential presence on either model', () => {
   it('hasCredential reads both columns', () => {
-    expect(hasCredential({ credential_id: null })).toBe(false);
     expect(hasCredential({ credential_id: null, credential_source_id: null })).toBe(false);
-    expect(hasCredential({ credential_id: 'a' })).toBe(true);
+    expect(hasCredential({ credential_id: null, credential_source_id: null })).toBe(false);
+    expect(hasCredential({ credential_id: 'a', credential_source_id: null })).toBe(true);
     expect(hasCredential({ credential_id: null, credential_source_id: 's' })).toBe(true);
     expect(hasCredential({ credential_id: 'a', credential_source_id: 's' })).toBe(true);
   });

@@ -215,7 +215,7 @@ export function runtimeExecution(
   };
 }
 
-/** New issuance remains unavailable without provider-verifiable eligibility and replay guarantees. */
+/** Whether the scope's account may issue now: Google by its release alone, Samsung by a credential read under SAMSUNG_ISSUANCE. */
 export async function assertWalletRuntimeAccount(
   ctx: ServiceContext,
   input: WalletRuntimeScope,

@@ -51,8 +51,8 @@ export interface AccountRow {
   provider: WalletProviderScope['provider'];
   revision: number;
   credential_id: string | null;
-  /** The new model's source; absent from selects that do not need presence. */
-  credential_source_id?: string | null;
+  /** The new model's source; with `credential_id` it decides presence (account-presence.ts). */
+  credential_source_id: string | null;
   revoked_at: number | null;
   updated_at: number;
   /** Moves on a revoke or an identity change, not on a rotation under the same identity. */
@@ -153,7 +153,7 @@ export function findRetirementAccount(
     db,
     `WITH clock(now_ms) AS (SELECT ?)
     SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision, a.credential_id,
-      a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
+      a.credential_source_id, a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
     FROM wallet_provider_accounts a LEFT JOIN wallet_provider_credentials c
       ON c.id = a.credential_id AND c.account_id = a.id AND c.org_id = a.org_id
       AND c.mode = a.mode AND c.provider = a.provider
@@ -199,7 +199,7 @@ export function findSamsungPromotedRefreshAccount(
     db,
     `WITH clock(now_ms) AS (SELECT ?)
     SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision, a.credential_id,
-      a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
+      a.credential_source_id, a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
     FROM wallet_provider_accounts a LEFT JOIN wallet_provider_credentials c
       ON c.id = a.credential_id AND c.account_id = a.id AND c.org_id = a.org_id
       AND c.mode = a.mode AND c.provider = a.provider
@@ -252,7 +252,7 @@ export function findSamsungTombstoneCredential(
   return first(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, t.account_revision AS revision,
-      e.credential_id, NULL AS revoked_at,
+      e.credential_id, NULL AS credential_source_id, NULL AS revoked_at,
       e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
       t.provider_identity_hash, t.credential_version_id AS pin_version_id,
       COALESCE(json_extract(candidate.projection_json, '$.cardType'), json_extract(candidate.projection_json, '$.type')) AS card_type

@@ -27,7 +27,7 @@ import { samsungCardFresh } from './samsung-verification.ts';
 
 let runtimeAccountCheck = assertWalletRuntimeAccount;
 
-/** Tests only: Google's runtime account is deliberately unavailable until its typed runtime ships. */
+/** Tests only: replaces the runtime account check (Google's and Samsung's issuance currency). */
 export function setRuntimeAccountCheckForTest(
   replacement: typeof assertWalletRuntimeAccount,
 ): () => void {

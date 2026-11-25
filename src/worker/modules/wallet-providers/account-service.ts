@@ -97,6 +97,10 @@ async function validateCredentials(
   }
 }
 
+/**
+ * `configured` says a credential is present, on either model; whether the provider issues is the enrolment's
+ * on/off/held/revoked state (enrolment-read.ts), which the admin UI shows separately from this legacy route.
+ */
 function readiness(scope: WalletProviderScope, row: AccountRow | null): WalletProviderReadiness {
   const state =
     !row || !hasCredential(row) ? 'absent' : row.revoked_at !== null ? 'revoked' : 'configured';

@@ -52,7 +52,7 @@ export async function countAccounts(
 export function findPending(db: D1Database, id: string): Promise<AccountRow | null> {
   return first<AccountRow>(
     db,
-    `SELECT a.id, a.org_id, a.mode, a.provider, a.revision, a.credential_id, a.revoked_at, a.updated_at,
+    `SELECT a.id, a.org_id, a.mode, a.provider, a.revision, a.credential_id, a.credential_source_id, a.revoked_at, a.updated_at,
        c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
      FROM wallet_provider_accounts a
      JOIN wallet_provider_credentials c ON c.id = a.credential_id AND c.account_id = a.id
@@ -71,7 +71,7 @@ export function findLegacy(
 ): Promise<AccountRow | null> {
   return first<AccountRow>(
     db,
-    `SELECT a.id, a.org_id, a.mode, a.provider, a.revision, a.credential_id, a.revoked_at, a.updated_at,
+    `SELECT a.id, a.org_id, a.mode, a.provider, a.revision, a.credential_id, a.credential_source_id, a.revoked_at, a.updated_at,
        c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
      FROM wallet_provider_accounts a
      JOIN wallet_provider_credentials c ON c.id = a.credential_id AND c.account_id = a.id

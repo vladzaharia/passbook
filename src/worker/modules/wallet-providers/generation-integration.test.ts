@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { revealToken } from '../../platform/capability-token.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -29,7 +30,7 @@ import {
   retireWalletInstance,
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
-import { issueWalletOffer } from './offers.ts';
+import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
@@ -289,9 +290,18 @@ describe('provider credential generation transitions', () => {
         now: f.kit.clock.now(),
       }),
     ).toBeNull();
-    await expect(
-      issueWalletOffer(f.kit.ctx, currentPass.downloadToken, 'samsung'),
-    ).rejects.toMatchObject({ status: 404 });
+    // The plain capability token, as the holder's link carries it (downloadToken is its stored MAC).
+    const plainToken = await revealToken(
+      f.kit.env,
+      'pass',
+      currentPass.id,
+      currentPass.orgId,
+      currentPass.downloadToken,
+    );
+    expect(await listWalletOffers(f.kit.ctx, currentPass.id)).toEqual([]);
+    await expect(issueWalletOffer(f.kit.ctx, plainToken, 'samsung')).rejects.toMatchObject({
+      status: 404,
+    });
 
     // Demonstrate the post-retirement structural binding without authorizing any real offer.
     const operationId = await seedReadyActivation({
