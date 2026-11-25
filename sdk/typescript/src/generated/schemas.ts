@@ -3966,7 +3966,7 @@ export type OrgsPlanRetrieveResponse = {
     used: number | null;
   }>;
   features: Array<{
-    key: "apple" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "api" | "apps" | "webhooks" | "templates.uploads" | "identity.own" | "identity.managed";
+    key: "apple" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "api" | "webhooks" | "templates.uploads" | "identity.managed";
     level: string | null;
   }>;
   footer: "full" | "quiet" | "none";

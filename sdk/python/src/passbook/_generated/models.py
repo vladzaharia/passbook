@@ -5738,7 +5738,7 @@ class OrgsPlanRetrieveResponse(_Model):
     footer: _Literal["full", "quiet", "none"] | str
 
 class OrgsPlanRetrieveResponseFeaturesItem(_Model):
-    key: _Literal["apple", "wallet.google", "wallet.samsung", "print", "nfc", "api", "apps", "webhooks", "templates.uploads", "identity.own", "identity.managed"] | str
+    key: _Literal["apple", "wallet.google", "wallet.samsung", "print", "nfc", "api", "webhooks", "templates.uploads", "identity.managed"] | str
     level: str | None
 
 class OrgsPlanRetrieveResponseLimitsItem(_Model):
