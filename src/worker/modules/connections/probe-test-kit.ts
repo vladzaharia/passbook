@@ -63,6 +63,7 @@ export async function probeApp() {
     );
     return {
       status: res.status,
+      // biome-ignore lint/suspicious/noExplicitAny: tests read nested fields of the answer
       json: (await res.json()) as Record<string, any>,
       headers: res.headers,
     };

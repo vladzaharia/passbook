@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { all } from '../../platform/db.ts';
 import { resetDeps, setDeps } from './deps.ts';
 import { BASE, probeApp, reply, upstream } from './probe-test-kit.ts';
 import { publicResolver } from './test-kit.ts';

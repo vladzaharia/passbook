@@ -15,8 +15,8 @@ import { masker } from './probe-mask.ts';
 import { type ProbeRequest, type ProbeResult, runProbe } from './probe-run.ts';
 import { recordConnectionAudit } from './repo-sync.ts';
 import { readConnectorSecrets } from './secrets.ts';
-import { assertCredentialOrigin, storedConfig } from './service-update.ts';
 import { auditActor, requireConnection } from './service-shared.ts';
+import { assertCredentialOrigin, storedConfig } from './service-update.ts';
 import { openUnsaved, unsavedContext } from './test-config.ts';
 import { assertOrg, assertSafeUrls, parseWith, requireConnector } from './validate.ts';
 
