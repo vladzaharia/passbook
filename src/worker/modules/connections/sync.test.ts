@@ -1814,7 +1814,8 @@ describe('generation fence', () => {
     const { run: r, conn } = await sync(dto.id, { generation: 1 }, step);
     expect(r?.outcome).toBe('skipped');
     expect(conn?.generation).toBe(2);
-    expect(conn?.cursor).toBe('0:10');
+    // The mapping change cleared the cursor; the stale run did not move it again.
+    expect(conn?.cursor).toBeNull();
     expect(conn?.health).toBe('unknown');
     expect(kit.seams.applied).toHaveLength(1);
   });
