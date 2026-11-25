@@ -124,7 +124,7 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/ntag424/sim/**"],
+                    "group": ["**/ntag424/sim/**", "./sim/**"],
                     "message": "The NTAG 424 simulator is test-only."
                   }
                 ]

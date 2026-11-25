@@ -149,6 +149,9 @@ export class RelayServer {
     }
     const tap = parseSunUrl(req.url);
     if (!tap) throw new Ntag424Error('NTAG_COMMAND_FAILED', 'The read-back is not a tap.');
+    // The Plain write has no MAC, so the read-back is the proof of what the tag holds.
+    if (tap.host !== this.plan.host || tap.slug !== this.plan.slug)
+      throw new Ntag424Error('NTAG_COMMAND_FAILED', 'The read-back names another URL.');
     const read = await verifySun(
       {
         metaKey: this.plan.keys[1] as Uint8Array,
