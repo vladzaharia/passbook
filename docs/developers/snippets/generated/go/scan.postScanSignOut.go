@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	result, err := pb.Terminal.SignOutEverywhere(ctx, &body)
+	result, err := pb.Terminal.SignOutEverywhere(ctx, &body, passbook.WithHeader("x-passbook-device", "door-1"))
 	if err != nil {
 		panic(err)
 	}

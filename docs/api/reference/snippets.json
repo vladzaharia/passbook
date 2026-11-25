@@ -13,7 +13,9 @@
       "request": {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "name": "CI",
-        "scopes": ["passes:read"],
+        "scopes": [
+          "passes:read"
+        ],
         "mode": "test"
       }
     }
@@ -25,7 +27,9 @@
         "kind": "message",
         "name": "Doors open",
         "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+          "templateIds": [
+            "0193a1b2-7c00-7000-8000-0000000000b1"
+          ]
         },
         "patch": {
           "message": "Doors open at 6 PM."
@@ -40,7 +44,9 @@
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "kind": "message",
         "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+          "templateIds": [
+            "0193a1b2-7c00-7000-8000-0000000000b1"
+          ]
         },
         "patch": {
           "message": "Doors open at 6:30 PM."
@@ -53,7 +59,9 @@
       "request": {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "name": "Day-before reminder",
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "anchor": {
           "kind": "input",
           "input": "startsAt"
@@ -149,7 +157,9 @@
       "request": {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "name": "Saturday gala",
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "opensAt": 1795129200000,
         "closesAt": 1795212000000,
         "timeZone": "Europe/Berlin"
@@ -198,6 +208,18 @@
     "snippet": {
       "query": {
         "from": 1794000000000
+      }
+    }
+  },
+  "scan.postScanSignOut": {
+    "snippet": {
+      "headers": {
+        "x-passbook-device": "door-1"
+      },
+      "request": {
+        "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "tag": "returned"
       }
     }
   }

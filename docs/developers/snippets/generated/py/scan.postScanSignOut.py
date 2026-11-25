@@ -10,5 +10,8 @@ result = pb.terminal.sign_out_everywhere(
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "tag": "returned",
     },
+    headers={
+        "x-passbook-device": "door-1",
+    },
 )
 print(result)
