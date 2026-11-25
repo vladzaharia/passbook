@@ -414,11 +414,11 @@ describe('designer', () => {
     expect(await screen.findByRole('button', { name: 'Save version' })).toBeInTheDocument();
   });
 
-  it('shows structure, the card with its flip, and issues, with no axe violations', async () => {
+  it('shows structure, the card with its front and back, and issues, with no axe violations', async () => {
     const s = setup();
     const { container } = await open(s);
     expect(await screen.findByRole('navigation', { name: 'Structure' })).toBeInTheDocument();
-    expect(await screen.findByRole('radio', { name: 'Details' })).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: 'Back' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Issues' })).toBeInTheDocument();
     await screen.findByText('Ready to save.');
     await userEvent.click(screen.getByRole('button', { name: 'Colors' }));
@@ -774,7 +774,7 @@ describe('designer', () => {
     await open(s);
     expect(await screen.findByText('Preview only')).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Structure' })).toBeNull();
-    expect(await screen.findByRole('radio', { name: 'Details' })).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: 'Back' })).toBeInTheDocument();
   });
 
   it('keeps the two selections and shares undo across mode switches', async () => {
