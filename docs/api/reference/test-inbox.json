@@ -30,8 +30,8 @@
       "subject": "Your Northwind Climbing pass",
       "attached": false,
       "createdAt": 1795570500000,
-      "html": "<p>Your pass is ready.</p><p>Day pass for Ada Example.</p>",
-      "text": "Your pass is ready. Day pass for Ada Example.",
+      "html": "<p>Your pass is ready.</p><p>Friday Night Bouldering for Ada Example.</p>",
+      "text": "Your pass is ready. Friday Night Bouldering for Ada Example.",
       "forwarding": "none"
     }
   }

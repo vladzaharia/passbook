@@ -38,7 +38,7 @@ describe('the logs islands are gated on the session', () => {
   });
 
   it('says a closed sandbox is closed, with no Create link', async () => {
-    const { list, rail } = await mountBoth({ kind: 'closed', csrf: 'c' });
+    const { list, rail } = await mountBoth({ kind: 'closed', csrf: 'c', siteKey: '' });
     expect(rail.isConnected).toBe(false);
     expect(list.textContent).toContain(LOGS_COPY.closed);
     expect(list.querySelector('a.btn')).toBeNull();

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { BuddyArt } from '../../ui/art/buddy-art.tsx';
 import { duration } from '../workbench/model.ts';
 import { fixOfCall, maskKey, shortId, stamp } from './model.ts';
 import { useElapsed } from './use-clock.ts';
@@ -10,6 +11,7 @@ import { useListener } from './use-listener.ts';
 import type { Quickstart } from './use-quickstart.ts';
 
 const T = QS_COPY.call;
+const Q = T.quiet;
 const isPassCreate = (e: RequestLogEntry) => e.method === 'POST' && e.path.endsWith('/passes');
 
 /** What the sandbox's keys are called on this page: the whole one while it is shown, else the start the server keeps. */
@@ -52,6 +54,39 @@ function useCallFix(entry: RequestLogEntry | null, q: Quickstart) {
   );
 }
 
+/** After 45 quiet seconds: the buddy and the three usual causes. The art is decoration; the words are the hint. */
+function Quiet({ onHere }: { onHere: (() => void) | undefined }) {
+  return (
+    <section className="qs-quiet" role="status" aria-labelledby="qs-quiet-t">
+      <BuddyArt mood="curious" size="sm" still />
+      <div className="stack g2">
+        <h3 className="h3" id="qs-quiet-t">
+          {Q.title}
+        </h3>
+        <p className="sm muted">{Q.line}</p>
+        <ul className="sm qs-quiet-l">
+          {Q.causes.map((c) => (
+            <li key={c.text}>
+              {c.text}
+              {'code' in c ? (
+                <>
+                  {' '}
+                  <code className="inline-code">{c.code}</code>. {c.after}
+                </>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        {onHere ? (
+          <button type="button" className="btn sm outline qs-quiet-a" onClick={onHere}>
+            {Q.here}
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 /** The stamp, who made the call and how long it took. */
 export function Stamped({ entry }: { entry: RequestLogEntry }) {
   const ok = entry.status < 400;
@@ -78,14 +113,17 @@ export function TerminalBar({
   q,
   active,
   done,
+  onHere,
 }: {
   q: Quickstart;
   active: boolean;
   done: boolean;
+  /** Switches the step to Run here. */
+  onHere?: () => void;
 }) {
   const cursor = q.home?.calls[0]?.id ?? null;
   const listening = active && q.home !== null;
-  const { heard, over, again } = useListener(listening, cursor);
+  const { heard, over, quiet, again } = useListener(listening, cursor);
   // After a reload the call is still in the log: the done step shows it as it was.
   const prior = done
     ? (q.home?.calls.find((e) => isPassCreate(e) && e.status < 400 && e.via === null) ?? null)
@@ -149,6 +187,7 @@ export function TerminalBar({
           </button>
         ) : null}
       </div>
+      {quiet && !over && !last ? <Quiet onHere={onHere} /> : null}
       {fix ? (
         <section className="qs-fix" role="alert">
           <h3 className="h3 row g2">

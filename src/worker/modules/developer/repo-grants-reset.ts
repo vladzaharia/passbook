@@ -11,6 +11,9 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 export const RESETS_PER_DAY = 3;
 const DAY_MS = 86_400_000;
 export const RESET_ACTION = 'developer_sandbox.reset';
+/** Deletes a person may make in a rolling day. */
+export const DELETES_PER_DAY = 3;
+export const DELETE_ACTION = 'developer_sandbox.delete';
 
 /** The person's live, strong session: the same check every owner action in this file makes. */
 const liveSession = (by: { userId: string; sessionIdHash: string }, now: number) =>
@@ -229,6 +232,72 @@ export async function reserveKey(
     targetType: 'org',
     targetId: sandbox.orgId,
     detail: { stamp },
+  });
+  await g.commit();
+}
+
+/**
+ * `platform.job.developer_sandbox.delete`: closes the sandbox's org so the org purge takes it from here (purge due
+ * now), revokes its keys and drops the person's sandbox record, in one batch. It commits only for the person's live
+ * session and their own sandbox. The audit row names the org and the person, never a name or an email.
+ */
+export async function deleteSandbox(
+  ctx: ServiceContext,
+  sandbox: { id: string; orgId: string },
+  by: { userId: string; sessionIdHash: string },
+): Promise<void> {
+  const { orgId } = sandbox;
+  const now = ctx.clock.now();
+  const live = rawCheck(
+    'actor',
+    `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
+      WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
+        AND s.expires_at > ? AND s.idle_expires_at > ? AND s.amr IN ${STRONG_AMR_SQL})`,
+    [by.sessionIdHash, by.userId, now, now],
+  );
+  const owner = rawCheck(
+    'config',
+    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ?)',
+    [sandbox.id, by.userId],
+  );
+  // The day's limit, in the write: two racing deletes cannot both take the last of the three.
+  const room = rawCheck(
+    'config',
+    '(SELECT COUNT(*) FROM audit_log WHERE actor_id = ? AND action = ? AND at > ?) < ?',
+    [by.userId, DELETE_ACTION, now - DAY_MS, DELETES_PER_DAY],
+  );
+  // No org on the grant, as in reopen: a closed org is not "active", and the owner check names the sandbox.
+  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.delete', [
+    live,
+    owner,
+    room,
+  ]);
+  // An open sandbox closes now; one the person closed earlier has its 30-day window cut to now.
+  g.update('orgs', {
+    set: {
+      status: 'deleted',
+      default_identity_id: null,
+      closed_at: now,
+      purge_after: now,
+      updated_at: maxNow(now),
+    },
+    where: { id: orgId, status: 'active', kind: 'developer' },
+  });
+  g.update('orgs', {
+    set: { purge_after: now, updated_at: maxNow(now) },
+    where: { id: orgId, status: 'deleted', kind: 'developer', purge_started_at: null },
+  });
+  g.update('api_keys', { set: { revoked_at: now }, where: { org_id: orgId, revoked_at: null } });
+  g.delete('developer_sandboxes', {
+    where: { id: sandbox.id, org_id: orgId, user_id: by.userId },
+    when: [exists('orgs', { id: orgId, status: 'deleted' })],
+  });
+  grantedAudit(g, ctx, {
+    actorType: 'user',
+    actorId: by.userId,
+    action: DELETE_ACTION,
+    targetType: 'org',
+    targetId: orgId,
   });
   await g.commit();
 }

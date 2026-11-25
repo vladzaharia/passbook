@@ -1,0 +1,21 @@
+/* FitBox: the content is laid out at its own width and scaled from the top left corner. */
+.fit {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+}
+.fit-sized {
+  position: relative;
+  flex: none;
+}
+.fit-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+/* Unmeasured: laid out for the measurement, not seen. */
+.fit:not([data-fit]) .fit-inner {
+  visibility: hidden;
+}

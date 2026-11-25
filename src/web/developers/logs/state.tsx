@@ -12,7 +12,8 @@ export function clearState(el: HTMLElement): void {
   roots.delete(el);
 }
 
-function draw(el: HTMLElement, node: React.ReactNode): void {
+/** Renders a state into `el`, replacing what was drawn there before. */
+export function draw(el: HTMLElement, node: React.ReactNode): void {
   clearState(el);
   const root = createRoot(el);
   roots.set(el, root);

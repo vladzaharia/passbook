@@ -1,7 +1,7 @@
 /** What the template itself says about its times and check-in, for the ticket's start, end and one-use line. */
 import type { Personalization, TemplateManifest } from '../types.ts';
 import { isUtcClock, paperZoneOf } from './paper-format.ts';
-import { ISO } from './paper-kinds.ts';
+import { ISO } from './paper-kinds-base.ts';
 
 type Manifest = Pick<TemplateManifest, 'behaviors' | 'scan'>;
 const plain = (v: unknown): string | undefined =>

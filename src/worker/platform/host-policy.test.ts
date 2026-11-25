@@ -103,7 +103,8 @@ function appEnv(fetched: string[] = []): AppEnv {
   } as unknown as AppEnv;
 }
 
-const app = createApp({ stores: fakeAuth(CANONICAL).stores, hostPolicy: true });
+const fake = fakeAuth(CANONICAL);
+const app = createApp({ stores: fake.stores, hostPolicy: true });
 const call = (url: string, init: RequestInit = {}, e = appEnv()) => app.request(url, init, e);
 
 describe('host policy in the app', () => {
@@ -160,12 +161,8 @@ describe('host policy in the app', () => {
     expect(fetched).toEqual(['/login', '/admin/orgs', '/passes/0191']);
   });
 
-  it('serves the SPA shell at / only to a visitor with a session cookie', async () => {
-    const res = await call(
-      `${CANONICAL}/`,
-      { headers: { cookie: '__Host-wallet_sid=abc' } },
-      appEnv([]),
-    );
+  it('serves the SPA shell at / only to a signed-in visitor', async () => {
+    const res = await call(`${CANONICAL}/`, { headers: fake.user() }, appEnv([]));
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(SHELL);
   });

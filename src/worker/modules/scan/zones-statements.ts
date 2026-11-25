@@ -39,7 +39,11 @@ export function mutationError(error: unknown): never {
   throw error;
 }
 
-/** Clear at needs a clock: a root zone's time zone, else the org's. Checked for the zone and every zone below it. */
+/**
+ * Clear at needs a clock: a root zone's time zone, else the org's. Checked for the zone and every
+ * zone below it. Every org has a clock now (its zone, else Seattle), so this only fires for a caller
+ * that passes no org zone.
+ */
 export function assertClocks(
   rows: readonly ZoneRow[],
   id: string,

@@ -5,7 +5,7 @@
  * code; the door credential on paper is the print code.
  */
 import { z } from 'zod';
-import type { Expr, PassJson, TemplateManifest, ValidationIssue } from '../types.ts';
+import type { Expr, PassJson, PassStyle, TemplateManifest, ValidationIssue } from '../types.ts';
 import { styleOf } from '../wallets/view-fields.ts';
 import { checkExpr, exprReferences } from './expr.ts';
 import { paperInk } from './paper-ink.ts';
@@ -36,10 +36,24 @@ export {
 export const PAPER_BARCODES = ['qr', 'code128'] as const;
 export type PaperBarcode = (typeof PAPER_BARCODES)[number];
 /** The layout family: what the door panel leads with. Absent in the manifest means derived. */
-export const PAPER_KINDS = ['admission', 'membership', 'permit', 'coupon', 'pickup'] as const;
+export const PAPER_KINDS = [
+  'admission',
+  'membership',
+  'permit',
+  'coupon',
+  'pickup',
+  'journey',
+  'booking',
+  'stay',
+  'badge',
+  'credential',
+] as const;
 export type PaperKind = (typeof PAPER_KINDS)[number];
 export const PAPER_INKS = ['colour', 'mono'] as const;
 export type PaperInk = (typeof PAPER_INKS)[number];
+
+/** Identity kinds: a lost one is reprinted by staff, so the holder's link neither prints nor voids. */
+export const STAFF_ONLY_KINDS: ReadonlySet<PaperKind> = new Set(['badge', 'credential']);
 
 export const MAX_PAPER_FIELDS = 8;
 const MAX_PAPER_EXPR = 1000;
@@ -83,7 +97,10 @@ export interface PaperDesign {
   barcode: PaperBarcode;
   fields: string[];
   terms?: Expr;
+  /** Who may print: the author's word, else true until `withKind` applies the class's default. */
   holder: boolean;
+  /** The block says `holder`; it beats the class's default. */
+  holderExplicit?: boolean;
   /** Absent: derived from the template. */
   kind?: PaperKind;
   ink: PaperInk;
@@ -105,11 +122,46 @@ export const DERIVED_PAPER: PaperDesign = {
   derived: true,
 };
 
+/** A derived design has no block to say who may print: an ID class is staff-only by default. */
+export function withKind(design: PaperDesign, kind: PaperKind): PaperDesign {
+  const holder = design.holderExplicit ?? !STAFF_ONLY_KINDS.has(kind);
+  return holder === design.holder ? design : { ...design, holder };
+}
+
+/**
+ * Whether the holder's link may print, from the manifest alone: the block's `holder`, else the
+ * class's default (an ID is staff-only), the class being the block's or the derived one.
+ */
+type ClassSource =
+  | {
+      paper?: unknown;
+      display?: unknown;
+      scan?: unknown;
+      bindings?: TemplateManifest['bindings'];
+    }
+  | null
+  | undefined;
+
+/** The class paper reads a template as: the block's `kind`, else the one derived from the manifest. */
+export function holderClassOf(manifest: ClassSource, style?: PassStyle): PaperKind {
+  return (
+    resolvePaper(manifest?.paper).kind ?? (manifest ? kindOf(manifest, style, {}) : 'admission')
+  );
+}
+
+export function holderMayPrint(manifest: ClassSource, style?: PassStyle): boolean {
+  return withKind(resolvePaper(manifest?.paper), holderClassOf(manifest, style)).holder;
+}
+
 /** The design for a manifest's `paper` value. An invalid block falls back to derived. */
 export function resolvePaper(raw: unknown): PaperDesign {
   if (raw === undefined || raw === null) return DERIVED_PAPER;
   const parsed = PaperManifestSchema.safeParse(raw);
-  if (!parsed.success) return DERIVED_PAPER;
+  if (!parsed.success) {
+    // A block that fails to parse still keeps a `holder: false` it says: never open what it closed.
+    const closed = (raw as { holder?: unknown }).holder === false;
+    return closed ? { ...DERIVED_PAPER, holder: false, holderExplicit: false } : DERIVED_PAPER;
+  }
   const { size, sheet, barcode, fields, terms, holder, kind, ink, fold, bring, buddy } =
     parsed.data;
   return {
@@ -119,7 +171,9 @@ export function resolvePaper(raw: unknown): PaperDesign {
     barcode: supportsCode128(size) ? barcode : 'qr',
     fields: fields ?? [],
     ...(terms === undefined ? {} : { terms }),
-    holder: holder !== false,
+    // An ID is reprinted by staff only unless the author says otherwise.
+    holder: holder ?? true,
+    ...(holder === undefined ? {} : { holderExplicit: holder }),
     ...(kind ? { kind } : {}),
     ink: ink ?? 'colour',
     fold: fold !== false,

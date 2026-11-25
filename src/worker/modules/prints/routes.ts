@@ -104,7 +104,7 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
         const { id } = c.req.valid('param');
         const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
         const brand = await orgBrandOf(ctx, pass.orgId);
-        const model = await printPageModel(ctx, pass, 'staff', brand);
+        const model = await printPageModel(ctx, pass, 'staff', brand, true);
         const modeQuery = pass.mode === 'test' ? '?mode=test' : '';
         const html = renderPrintPage({
           model,

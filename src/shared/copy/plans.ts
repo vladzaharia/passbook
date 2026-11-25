@@ -11,20 +11,11 @@ export const PLAN_COPY = {
   current: 'Current',
   noLimit: 'No limit',
   none: 'None',
-  passesUnit: (n: number | null) => (n === 1 ? 'pass' : 'passes'),
-  templatesUnit: (n: number | null) => (n === 1 ? 'template' : 'templates'),
-  noPasses: 'No live passes',
-  noTemplates: 'No templates',
-  noLimitPasses: 'No limit on passes',
-  noLimitTemplates: 'No limit on templates',
-  notIncluded: 'not included',
-  channels: 'Channels',
-  footerLead: 'Footer on holder pages and emails:',
-  placesTitle: 'Where holders see PassBook',
-  placesNote: 'The org picks its footer in Brand.',
-  /** Said to the organization itself. */
-  placesNoteOrg: 'Pick the footer in Brand.',
-  placesLabel: (plan: string) => `Where PassBook shows on ${plan}`,
+  footer: 'Footer',
+  limits: 'Limits',
+  features: 'Features',
+  placesTitle: 'Where PassBook shows',
+  placesNote: 'The org picks its footer in Brand, within what its plan allows.',
   insteadOf: (target: string, current: string) => `${target} instead of ${current}`,
   applyTarget: (target: string) => `Apply ${target}`,
   updated: (when: string) => `Updated ${when}`,
@@ -34,7 +25,7 @@ export const CHANNEL_CHIP = {
   apple: 'Apple',
   google: 'Google',
   samsung: 'Samsung',
-  print: 'Print',
+  print: 'Paper',
   nfc: { off: 'NFC', basic: 'NFC tags', secure: 'Copy-proof NFC' } satisfies Record<
     NfcLevel,
     string
@@ -49,7 +40,7 @@ const credit = (level: FooterLevel): string => {
 export const FOOTER_SAMPLE: Record<FooterLevel, string> = {
   full: credit('full'),
   quiet: credit('quiet'),
-  none: 'No PassBook footer',
+  none: PLAN_COPY.none,
 };
 
 /** Where PassBook shows, per footer level (the "info" popover). */

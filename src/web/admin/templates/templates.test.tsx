@@ -15,6 +15,15 @@ import {
 } from '../passes/test-fixtures.ts';
 import { importPolling } from './api.ts';
 
+async function pickRowAction(
+  user: ReturnType<typeof userEvent.setup>,
+  version: string,
+  action: string,
+) {
+  await user.click(await screen.findByRole('button', { name: `Actions for ${version}` }));
+  await user.click(await screen.findByRole('menuitem', { name: action }));
+}
+
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
 const orgs = () => json({ items: [ORG], nextCursor: null });
 const directoryOrgs = () =>
@@ -415,7 +424,7 @@ describe('template detail', () => {
     expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Change organization' })).toBeNull();
     await user.click(screen.getByRole('tab', { name: 'Releases' }));
-    expect(await screen.findByRole('button', { name: 'Report for v2' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Actions for v2' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Activate Version 2' })).toBeNull();
     await user.click(screen.getByRole('tab', { name: 'Manifest' }));
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
@@ -569,7 +578,7 @@ describe('template detail', () => {
     await user.click(await screen.findByRole('tab', { name: 'Releases' }));
     expect(await screen.findByText('Missing @3x icon.')).toBeInTheDocument();
     expect(screen.queryByText('Legacy active version')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Report for v2' }));
+    await pickRowAction(user, 'v2', 'Report');
     expect(await screen.findByText('Duplicate key.')).toBeInTheDocument();
     expect(screen.getByText('generic.primaryFields')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
@@ -593,12 +602,12 @@ describe('template detail', () => {
       },
     });
     await user.click(await screen.findByRole('tab', { name: 'Releases' }));
-    await screen.findByRole('button', { name: 'Report for v2' });
+    await screen.findByRole('button', { name: 'Actions for v2' });
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
     expect(screen.queryByText(/Requires an approved release/)).toBeNull();
   });
 
-  it('offers New pass and Duplicate on built-in templates, and no delete', async () => {
+  it('makes Duplicate the primary on built-in templates, with New pass in More and no delete', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];
     await renderApp('/admin/templates/b1', {
@@ -618,21 +627,25 @@ describe('template detail', () => {
         '/api/v1/templates/copy1/preview': preview,
       },
     });
-    const newPassLink = await screen.findByRole('link', { name: 'New pass' });
+    // A built-in has no release actions: Duplicate is the primary, New pass moves into More.
+    const duplicate = await screen.findByRole('button', { name: 'Duplicate' });
+    expect(screen.queryByRole('link', { name: 'New pass' })).toBeNull();
+    expect(screen.queryByText(/Customize|Any org/)).toBeNull();
+    // A platform admin's More holds New pass and Change organization: no upload, archive or delete.
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    const newPassLink = await screen.findByRole('menuitem', { name: 'New pass' });
     const newPassUrl = new URL(newPassLink.getAttribute('href') ?? '', 'http://localhost');
     expect(newPassUrl.pathname).toBe('/admin/passes/new');
     expect(Object.fromEntries(newPassUrl.searchParams)).toEqual({
       orgId: ORG.id,
       templateId: 'b1',
     });
-    expect(screen.queryByText(/Customize|Any org/)).toBeNull();
-    // A platform admin's More holds Change organization: no upload, archive or delete.
-    await user.click(screen.getByRole('button', { name: 'More' }));
-    expect(screen.queryByRole('menuitem', { name: /Delete|Archive|Upload version/ })).toBeNull();
+    expect(
+      screen.queryByRole('menuitem', { name: /Delete|Archive|Upload version|Duplicate/ }),
+    ).toBeNull();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'More' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Duplicate' }));
+    await user.click(duplicate);
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate template' });
     await user.click(within(dialog).getByRole('button', { name: 'Duplicate' }));
     expect(await within(dialog).findByText('Choose an organization.')).toBeInTheDocument();
@@ -645,6 +658,28 @@ describe('template detail', () => {
     await user.click(choice);
     await user.click(within(dialog).getByRole('button', { name: 'Duplicate' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1', name: 'Copper card copy' }]));
+  });
+
+  it('gives a built-in version only Report and Technical details', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/templates/b1?tab=versions', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        '/api/v1/orgs': directoryOrgs,
+        '/api/v1/templates/b1': () =>
+          json(templateDetail({ id: 'b1', origin: 'baked', orgId: null })),
+        '/api/v1/templates/previews': previewsHandler,
+        '/api/v1/templates/b1/preview': preview,
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Actions for v1' }));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'Report',
+      'Technical details',
+    ]);
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'Actions for v2' })).toBeInTheDocument();
   });
 
   it('opens a duplicate in the destination author membership rather than the old scope', async () => {

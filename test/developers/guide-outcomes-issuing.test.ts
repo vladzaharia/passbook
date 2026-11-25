@@ -28,7 +28,7 @@ describe('import with auto mapping', () => {
     const checked = await call(
       'POST',
       `/pass-imports/${made.json.id}/check`,
-      fence('import-auto-map', 'pass-imports.postPassImportsByIdCheck'),
+      snippetBody('import-fix-cells'),
     );
     expect(checked.status).toBe(200);
     expect(checked.json.counts).toMatchObject({ create: 3, errors: 0 });
@@ -99,6 +99,8 @@ describe('import with auto mapping', () => {
 describe('change many passes', () => {
   it('previews and starts a run in a sandbox', async () => {
     const { call } = await guideApi();
+    const pass = await call('POST', '/passes', fence('change-many-passes', 'passes.postPasses'));
+    expect(pass.status, pass.text).toBe(201);
     const preview = await call(
       'POST',
       '/broadcasts/preview',
@@ -107,7 +109,7 @@ describe('change many passes', () => {
     expect(preview.status).toBe(200);
     expect(preview.json).toMatchObject({ targeted: 1, unchanged: 0, blocked: [], estimated: true });
     expect(preview.json.samples[0].changes).toEqual([
-      { key: 'venueName', label: 'Venue', from: 'Sample Hall', to: 'Pier 9' },
+      { key: 'venueName', label: 'Venue', from: 'Harbor Hall', to: 'Pier 9' },
     ]);
     const body = snippetBody('change-run');
     const started = await call('POST', '/broadcasts', body);
@@ -118,6 +120,8 @@ describe('change many passes', () => {
 
   it('starts with the preview count, refuses a drifted count, and cannot undo a running run', async () => {
     const { call } = await guideApi({ sandbox: false });
+    const pass = await call('POST', '/passes', fence('change-many-passes', 'passes.postPasses'));
+    expect(pass.status, pass.text).toBe(201);
     const body = snippetBody('change-run') as { target: Record<string, unknown> };
     const drifted = await call('POST', '/broadcasts', {
       ...body,

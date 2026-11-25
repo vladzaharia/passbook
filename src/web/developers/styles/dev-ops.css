@@ -1,4 +1,5 @@
-/* Request log, "Your API" rail and the public status page. */
+/* The request log's first paint (header, slots, the held skeleton) and the public status page. The log island's own
+   styles load with it: logs/logs.css. */
 .pill.warning {
   color: var(--pk-warning);
   background: var(--pk-warning-subtle);
@@ -9,156 +10,57 @@
   background: var(--pk-danger-subtle);
   border-color: color-mix(in oklab, var(--pk-danger-border) 55%, transparent);
 }
-.logs-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  grid-template-areas: "main rail";
-  gap: 24px;
-  align-items: start;
-}
-.logs-grid:not(:has(.logs-rail)) {
-  grid-template-columns: minmax(0, 1fr);
-}
-.logs-main {
-  grid-area: main;
-  min-width: 0;
-}
-.logs-rail {
-  grid-area: rail;
-  position: sticky;
-  top: 72px;
-  display: grid;
-  gap: 12px;
-}
-.rail-list {
-  display: grid;
-  gap: 12px;
-  margin: 0;
-}
-.rail-row {
-  display: grid;
-  gap: 4px;
-}
-.rail-row dd {
-  margin: 0;
-  font-size: 13px;
-}
 
-.logs-full {
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  color: var(--pk-warning);
-  background: var(--pk-warning-subtle);
-  border: 1px solid color-mix(in oklab, var(--pk-warning-border) 55%, transparent);
-  border-radius: var(--pk-radius-md);
-}
-.logs-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.logs-field {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-.logs-input {
-  min-height: 34px;
-  padding: 0 10px;
-  width: 11rem;
-  max-width: 100%;
-  font: inherit;
-  font-size: 13px;
-  color: var(--pk-text-strong);
-  background: var(--pk-surface-raised);
-  border: 1px solid var(--pk-border-strong);
-  border-radius: var(--pk-radius-md);
-}
-.logs-input:focus-visible {
-  outline: 2px solid var(--pk-accent);
-  outline-offset: 1px;
-}
-.logs-list {
-  overflow: hidden;
-}
-.logs-sum {
-  cursor: pointer;
-  list-style: none;
-  flex-wrap: wrap;
-  row-gap: 4px;
-}
-.logs-sum::-webkit-details-marker {
-  display: none;
-}
-.logs-row[open] > .logs-sum {
-  background: var(--pk-state-hover-tint);
-}
-.logs-time {
-  min-width: 5.5rem;
-}
-.logs-where {
-  display: grid;
-  flex: 1 1 12rem;
-  gap: 2px;
-  min-width: 0;
-}
-.logs-path {
-  overflow-wrap: anywhere;
-}
-.logs-code {
-  color: var(--pk-text-muted);
-  overflow-wrap: anywhere;
-}
-.logs-status {
-  min-width: 3rem;
-  justify-content: center;
-}
-.logs-ms {
-  min-width: 4rem;
-  text-align: end;
-}
-.logs-detail {
-  display: grid;
-  gap: 12px;
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--pk-border-subtle);
-}
-.logs-facts {
+/* ---------- Request log: first paint ---------- */
+.logs-h {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  justify-content: space-between;
+  gap: 8px 16px;
 }
-.logs-bodies {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+/* The strip's slot is an empty block until the rail island fills it: it has to stay in view to be mounted. */
+.logs-api:not(:empty) {
+  margin-top: 24px;
 }
-.logs-body {
+.logs-main {
   min-width: 0;
-  background: var(--pk-surface-sunken);
-  border: 1px solid var(--pk-border-subtle);
-  border-radius: var(--pk-radius-md);
-}
-.logs-body > h4 {
-  margin: 0;
-  padding: 8px 16px 0;
-}
-.logs-body pre.src {
-  max-height: 20rem;
-}
-.logs-body pre.src .ln {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.logs-more {
-  display: flex;
-  justify-content: center;
   margin-top: 16px;
 }
+/* Signed in, the log holds its signed-out card until the session is known (shell/islands.ts) and shows the shape
+   of the list instead: a toolbar and five rows, coming in after 150 ms and pulsing in opacity only. */
+[data-island="logs"][data-hydrating] {
+  position: relative;
+  min-height: 300px;
+}
+[data-island="logs"][data-hydrating] > * {
+  visibility: hidden;
+}
+[data-island="logs"][data-hydrating]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 300px;
+  --sk: color-mix(in oklab, var(--pk-text-muted) 16%, transparent);
+  --row: linear-gradient(var(--sk), var(--sk));
+  background:
+    var(--row) 0 0 / min(16rem, 100%) 36px no-repeat,
+    var(--row) 16px 84px / calc(100% - 32px) 12px no-repeat,
+    var(--row) 16px 128px / calc(86% - 32px) 12px no-repeat,
+    var(--row) 16px 172px / calc(94% - 32px) 12px no-repeat,
+    var(--row) 16px 216px / calc(72% - 32px) 12px no-repeat,
+    var(--row) 16px 260px / calc(90% - 32px) 12px no-repeat;
+  border-radius: var(--pk-radius-lg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-island="logs"][data-hydrating]::before {
+    animation:
+      dp-sk-in 200ms ease-out 150ms backwards,
+      dp-sk 1.3s ease-in-out 350ms infinite;
+  }
+}
 
+/* ---------- Status ---------- */
 .status-banner {
   display: flex;
   flex-wrap: wrap;
@@ -197,46 +99,4 @@
 }
 .status-list .incident .row {
   width: 100%;
-}
-
-@media (max-width: 960px) {
-  .logs-grid {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "rail" "main";
-  }
-  .logs-rail {
-    position: static;
-  }
-  .logs-bodies {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-@media (max-width: 480px) {
-  .logs-sum {
-    display: grid;
-    grid-template-columns: auto auto 1fr auto;
-    align-items: center;
-    gap: 6px 10px;
-  }
-  .logs-time {
-    min-width: 0;
-  }
-  .logs-where {
-    grid-column: 1 / -1;
-    order: 9;
-  }
-  .logs-status {
-    grid-column: 3;
-    justify-self: end;
-  }
-  .logs-ms {
-    grid-column: 4;
-    min-width: 0;
-  }
-  .logs-input {
-    width: 100%;
-  }
-  .logs-field {
-    flex: 1 1 8rem;
-  }
 }

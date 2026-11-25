@@ -2,6 +2,7 @@
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
 import { STRIP_COMPACT_H } from '../../passkit/template/paper-geometry-sizes.ts';
 import { doorRows, doorWhen } from './ticket-text.ts';
+import { stripNote } from './ticket-text-kinds.ts';
 
 export interface StripText {
   /** Compact strips (the stub) drop the brand row and the facts boxes. */
@@ -31,7 +32,7 @@ export function stripText(c: PaperContent, heightMm: number, faceW: number): Str
     kicker: c.kicker,
     title: c.title,
     when: doorWhen(c),
-    venue: compact ? join(c.venue, c.room) : join(c.venue, c.address, c.room),
+    venue: stripNote(c) ?? (compact ? join(c.venue, c.room) : join(c.venue, c.address, c.room)),
     rows: doorRows(c),
     stacked: faceW < STRIP_STACK_W,
   };

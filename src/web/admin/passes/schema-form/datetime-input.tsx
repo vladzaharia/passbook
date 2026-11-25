@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
+import { CALENDAR_ZONE } from '../../../../shared/time-zone.ts';
 import { cn } from '../../../lib/cn.ts';
 import { formatWallTime } from '../../../lib/format.ts';
 import { localZone, zoneLabel, zoneOptions } from '../../../lib/timezones.ts';
@@ -24,7 +26,7 @@ function zoneFor(iso: string): string {
   // A UTC value reads as UTC: ignoresTimeZone shows the written wall clock, not the browser's.
   const written = /Z$/i.test(iso) ? 0 : writtenOffset(iso);
   if (Number.isNaN(ms) || written === undefined || zoneOffset(ms, here) === written) return here;
-  if (written === 0) return 'UTC';
+  if (written === 0) return CALENDAR_ZONE;
   return zoneOptions().find((z) => zoneOffset(ms, z.value) === written)?.value ?? here;
 }
 
@@ -41,7 +43,7 @@ export function DateTimeInput({
   zone: venueZone,
   ...control
 }: Props) {
-  const [zone, setZone] = useState(() => venueZone ?? (value ? zoneFor(value) : localZone()));
+  const [zone, setZone] = useState(() => venueZone ?? (value ? zoneFor(value) : DEFAULT_TIME_ZONE));
   // The signed pass shows times in the venue zone, so the editor follows it.
   useEffect(() => {
     if (venueZone) setZone(venueZone);

@@ -87,6 +87,7 @@ import { Route as AdminOOrgIdPassesIndexRouteImport } from './routes/admin/o/$or
 import { Route as AdminOOrgIdPassesPassIdRouteImport } from './routes/admin/o/$orgId/passes/$passId'
 import { Route as AdminOOrgIdPassesNewRouteImport } from './routes/admin/o/$orgId/passes/new'
 import { Route as AdminOOrgIdPassesPhotosRouteImport } from './routes/admin/o/$orgId/passes/photos'
+import { Route as AdminOOrgIdPlanIndexRouteImport } from './routes/admin/o/$orgId/plan/index'
 import { Route as AdminOOrgIdRetentionIndexRouteImport } from './routes/admin/o/$orgId/retention/index'
 import { Route as AdminOOrgIdScanningIndexRouteImport } from './routes/admin/o/$orgId/scanning/index'
 import { Route as AdminOOrgIdScanningSetupRouteImport } from './routes/admin/o/$orgId/scanning/setup'
@@ -529,6 +530,11 @@ const AdminOOrgIdPassesPhotosRoute = AdminOOrgIdPassesPhotosRouteImport.update({
   path: '/passes/photos',
   getParentRoute: () => AdminOOrgIdRouteRoute,
 } as any)
+const AdminOOrgIdPlanIndexRoute = AdminOOrgIdPlanIndexRouteImport.update({
+  id: '/plan/',
+  path: '/plan/',
+  getParentRoute: () => AdminOOrgIdRouteRoute,
+} as any)
 const AdminOOrgIdRetentionIndexRoute =
   AdminOOrgIdRetentionIndexRouteImport.update({
     id: '/retention/',
@@ -750,6 +756,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes/': typeof AdminOOrgIdPassesIndexRoute
+  '/admin/o/$orgId/plan/': typeof AdminOOrgIdPlanIndexRoute
   '/admin/o/$orgId/retention/': typeof AdminOOrgIdRetentionIndexRoute
   '/admin/o/$orgId/scanning/': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
@@ -850,6 +857,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/members': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes': typeof AdminOOrgIdPassesIndexRoute
+  '/admin/o/$orgId/plan': typeof AdminOOrgIdPlanIndexRoute
   '/admin/o/$orgId/retention': typeof AdminOOrgIdRetentionIndexRoute
   '/admin/o/$orgId/scanning': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings': typeof AdminOOrgIdSettingsIndexRoute
@@ -954,6 +962,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes/': typeof AdminOOrgIdPassesIndexRoute
+  '/admin/o/$orgId/plan/': typeof AdminOOrgIdPlanIndexRoute
   '/admin/o/$orgId/retention/': typeof AdminOOrgIdRetentionIndexRoute
   '/admin/o/$orgId/scanning/': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
@@ -1059,6 +1068,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
     | '/admin/o/$orgId/passes/'
+    | '/admin/o/$orgId/plan/'
     | '/admin/o/$orgId/retention/'
     | '/admin/o/$orgId/scanning/'
     | '/admin/o/$orgId/settings/'
@@ -1159,6 +1169,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/members'
     | '/admin/o/$orgId/messages'
     | '/admin/o/$orgId/passes'
+    | '/admin/o/$orgId/plan'
     | '/admin/o/$orgId/retention'
     | '/admin/o/$orgId/scanning'
     | '/admin/o/$orgId/settings'
@@ -1262,6 +1273,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
     | '/admin/o/$orgId/passes/'
+    | '/admin/o/$orgId/plan/'
     | '/admin/o/$orgId/retention/'
     | '/admin/o/$orgId/scanning/'
     | '/admin/o/$orgId/settings/'
@@ -1839,6 +1851,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdPassesPhotosRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/plan/': {
+      id: '/admin/o/$orgId/plan/'
+      path: '/plan'
+      fullPath: '/admin/o/$orgId/plan/'
+      preLoaderRoute: typeof AdminOOrgIdPlanIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/retention/': {
       id: '/admin/o/$orgId/retention/'
       path: '/retention'
@@ -2062,6 +2081,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdMembersIndexRoute: typeof AdminOOrgIdMembersIndexRoute
   AdminOOrgIdMessagesIndexRoute: typeof AdminOOrgIdMessagesIndexRoute
   AdminOOrgIdPassesIndexRoute: typeof AdminOOrgIdPassesIndexRoute
+  AdminOOrgIdPlanIndexRoute: typeof AdminOOrgIdPlanIndexRoute
   AdminOOrgIdRetentionIndexRoute: typeof AdminOOrgIdRetentionIndexRoute
   AdminOOrgIdScanningIndexRoute: typeof AdminOOrgIdScanningIndexRoute
   AdminOOrgIdSettingsIndexRoute: typeof AdminOOrgIdSettingsIndexRoute
@@ -2107,6 +2127,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdMembersIndexRoute: AdminOOrgIdMembersIndexRoute,
   AdminOOrgIdMessagesIndexRoute: AdminOOrgIdMessagesIndexRoute,
   AdminOOrgIdPassesIndexRoute: AdminOOrgIdPassesIndexRoute,
+  AdminOOrgIdPlanIndexRoute: AdminOOrgIdPlanIndexRoute,
   AdminOOrgIdRetentionIndexRoute: AdminOOrgIdRetentionIndexRoute,
   AdminOOrgIdScanningIndexRoute: AdminOOrgIdScanningIndexRoute,
   AdminOOrgIdSettingsIndexRoute: AdminOOrgIdSettingsIndexRoute,

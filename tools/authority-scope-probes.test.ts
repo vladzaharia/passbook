@@ -7,7 +7,7 @@ import { fragmentPlacement } from './authority-scope-placement.ts';
 type Want = 'pass' | 'fail';
 const src = (body: string) =>
   `import { run } from '../../platform/db.ts';\nexport async function f(db, frag, x, y, a, b, c) {\n${body}\n}\n`;
-const R = (sql: string) => 'await run(db, `' + sql + '`, []);';
+const R = (sql: string) => `await run(db, \`${sql}\`, []);`;
 
 const SOURCE_CASES: [string, string, Want][] = [
   ['baseline ok', R('DELETE FROM passes WHERE id = ? AND (${frag.sql})'), 'pass'],
@@ -59,22 +59,22 @@ const SOURCE_CASES: [string, string, Want][] = [
   ],
   [
     'inlined const OR',
-    'const w = `org_id = ? OR (${frag.sql})`;\n  ' + R('DELETE FROM passes WHERE ${w}'),
+    `const w = \`org_id = ? OR (\${frag.sql})\`;\n  ${R('DELETE FROM passes WHERE ${w}')}`,
     'fail',
   ],
   [
     'inlined const unwrapped',
-    'const w = `${frag.sql}`;\n  ' + R('DELETE FROM passes WHERE id = ? AND ${w}'),
+    `const w = \`\${frag.sql}\`;\n  ${R('DELETE FROM passes WHERE id = ? AND ${w}')}`,
     'fail',
   ],
   [
     'inlined lead AND unwrapped',
-    'const w = `id = ? AND ${frag.sql}`;\n  ' + R('DELETE FROM passes WHERE ${w}'),
+    `const w = \`id = ? AND \${frag.sql}\`;\n  ${R('DELETE FROM passes WHERE ${w}')}`,
     'fail',
   ],
   [
     'inlined const ok',
-    'const w = `id = ? AND (${frag.sql})`;\n  ' + R('DELETE FROM passes WHERE ${w}'),
+    `const w = \`id = ? AND (\${frag.sql})\`;\n  ${R('DELETE FROM passes WHERE ${w}')}`,
     'pass',
   ],
   ['two adjacent', R('DELETE FROM passes WHERE id = ? AND (${a} ${b})'), 'fail'],
@@ -198,12 +198,12 @@ const SOURCE_CASES: [string, string, Want][] = [
   ['IS NOT then OR', R('DELETE FROM passes WHERE (${x.sql}) IS NOT 0 OR id = ?'), 'fail'],
   [
     'inline const then OR',
-    'const w = `(${x.sql}) OR 1`;\n  ' + R('DELETE FROM passes WHERE id = ? AND ${w}'),
+    `const w = \`(\${x.sql}) OR 1\`;\n  ${R('DELETE FROM passes WHERE id = ? AND ${w}')}`,
     'fail',
   ],
   [
     'inline const tail ok',
-    'const w = `(${x.sql})`;\n  ' + R('DELETE FROM passes WHERE id = ? AND ${w} AND b = ?'),
+    `const w = \`(\${x.sql})\`;\n  ${R('DELETE FROM passes WHERE id = ? AND ${w} AND b = ?')}`,
     'pass',
   ],
   [

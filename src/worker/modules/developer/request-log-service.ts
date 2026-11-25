@@ -13,7 +13,7 @@ import { getKey } from '../api-keys/repo.ts';
 import { parseScopes } from '../api-keys/service-dto.ts';
 import { sandboxOfUser } from './repo.ts';
 import {
-  callsSince,
+  callBuckets,
   getLog,
   LOG_BODY_MS,
   type LogRow,
@@ -93,10 +93,22 @@ export async function getRequestLog(
 }
 
 const HOUR = 3_600_000;
+const BUCKETS = 12;
+
+/** The last hour in five-minute buckets, oldest first. */
+async function lastHour(ctx: ServiceContext, orgId: string, now: number): Promise<number[]> {
+  const series = Array.from({ length: BUCKETS }, () => 0);
+  for (const { b, n } of await callBuckets(ctx.env.DB, orgId, now - HOUR, HOUR / BUCKETS)) {
+    const i = Math.min(BUCKETS - 1, Math.max(0, Math.floor(b)));
+    series[i] = (series[i] ?? 0) + n;
+  }
+  return series;
+}
 
 export async function apiRail(ctx: ServiceContext, auth: AuthContext | undefined): Promise<Rail> {
   const orgId = await orgOfCaller(ctx, auth);
   const now = ctx.clock.now();
+  const series = await lastHour(ctx, orgId, now);
   const keyId =
     auth?.kind === 'api_key'
       ? auth.keyId
@@ -110,7 +122,8 @@ export async function apiRail(ctx: ServiceContext, auth: AuthContext | undefined
     scopes: row ? parseScopes(row.scopes) : [],
     tier,
     limitPerMinute: tierLimit(tier),
-    callsLastHour: await callsSince(ctx.env.DB, orgId, now - HOUR),
+    callsLastHour: series.reduce((sum, n) => sum + n, 0),
+    series,
     key: row ? { id: row.id, name: row.name, prefix: row.prefix } : null,
   };
 }

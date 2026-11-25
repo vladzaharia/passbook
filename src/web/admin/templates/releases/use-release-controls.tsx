@@ -4,7 +4,7 @@ const TrySheet = lazy(() => import('./try-sheet.tsx'));
 const ReleaseFlowDialog = lazy(() => import('./release-flow-dialog.tsx'));
 const ReviewDialog = lazy(() => import('./review-dialog.tsx'));
 
-/** Try (the sheet: Test release, a Test pass, a device watch) and the Release dialog, for the strip, the header and Saved versions. */
+/** Try (the sheet: Test release, a Test pass, a device watch) and the Release dialog, for the strip, the header and the Versions list. */
 export function useReleaseControls(
   templateId: string,
   orgId: string | undefined,

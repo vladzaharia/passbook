@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 import { z } from 'zod';
 import { ScanStaffSchema } from '@/shared/contracts/scanners.ts';
 import type { SetupPlanContext } from '@/shared/scan-setup-plan-types.ts';
+import { resolveOrgTimeZone } from '@/shared/time-zone.ts';
 import { api } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
-import { localZone } from '@/web/lib/timezones.ts';
 import { useSettings } from '../../settings/queries.ts';
 import { useEligibleTemplates, useScanEvents } from '../scanner-api.ts';
 import { useZones } from '../zones-query.ts';
@@ -28,7 +28,7 @@ export function useSetupFacts(orgId: string) {
   });
   const settings = useSettings(`org:${orgId}`);
   const orgZone = settings.data?.items.find((i) => i.key === 'org.timeZone')?.value;
-  const timeZone = typeof orgZone === 'string' && orgZone ? orgZone : localZone();
+  const timeZone = resolveOrgTimeZone(typeof orgZone === 'string' ? orgZone : null);
 
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = templates;
   useEffect(() => {

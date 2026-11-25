@@ -1,0 +1,127 @@
+[
+  {
+    "id": "capture-endpoint",
+    "title": "Get the capture endpoint",
+    "guide": "react-to-events",
+    "ops": [
+      "webhooks.postWebhookEndpointsCapture"
+    ],
+    "files": {
+      "ts": "capture-endpoint.ts",
+      "curl": "capture-endpoint.sh"
+    },
+    "sandbox": "CAPTURE_DEVELOPER_ONLY"
+  },
+  {
+    "id": "read-capture-secret",
+    "title": "Read the capture endpoint secret",
+    "guide": "react-to-events",
+    "ops": [
+      "webhooks.postWebhookEndpointsByIdCapturesSecret"
+    ],
+    "files": {
+      "ts": "read-capture-secret.ts",
+      "curl": "read-capture-secret.sh"
+    },
+    "sandbox": "WEBHOOK_ENDPOINT_NOT_FOUND"
+  },
+  {
+    "id": "send-test-event",
+    "title": "Send a test event",
+    "guide": "react-to-events",
+    "ops": [
+      "webhooks.postWebhookEndpointsByIdTest"
+    ],
+    "files": {
+      "ts": "send-test-event.ts",
+      "curl": "send-test-event.sh"
+    },
+    "sandbox": "WEBHOOK_ENDPOINT_NOT_FOUND"
+  },
+  {
+    "id": "read-capture",
+    "title": "Read a stored capture",
+    "guide": "react-to-events",
+    "ops": [
+      "webhooks.getWebhookEndpointsByIdCapturesByCaptureId"
+    ],
+    "files": {
+      "ts": "read-capture.ts",
+      "curl": "read-capture.sh"
+    },
+    "sandbox": "WEBHOOK_ENDPOINT_NOT_FOUND"
+  },
+  {
+    "id": "verify-capture",
+    "title": "Verify a stored capture",
+    "guide": "react-to-events",
+    "ops": [
+      "webhooks.getWebhookEndpointsByIdCapturesByCaptureId"
+    ],
+    "files": {
+      "ts": "verify-capture.ts",
+      "curl": "verify-capture.sh"
+    },
+    "expect": "handler"
+  },
+  {
+    "id": "verify-webhook",
+    "title": "Verify a webhook",
+    "guide": "react-to-events",
+    "ops": [],
+    "files": {
+      "ts": "verify-webhook.ts"
+    },
+    "expect": "handler"
+  },
+  {
+    "id": "replay-capture",
+    "title": "Replay a capture",
+    "guide": "react-to-events",
+    "ops": [
+      "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay"
+    ],
+    "files": {
+      "ts": "replay-capture.ts",
+      "curl": "replay-capture.sh"
+    },
+    "sandbox": "WEBHOOK_ENDPOINT_NOT_FOUND"
+  },
+  {
+    "id": "poll-events",
+    "title": "Read events as they happen",
+    "guide": "react-to-events",
+    "ops": [
+      "events.getEvents"
+    ],
+    "files": {
+      "ts": "poll-events.ts",
+      "curl": "poll-events.sh"
+    }
+  },
+  {
+    "id": "pass-activity",
+    "title": "Read what happened to a pass",
+    "guide": "react-to-events",
+    "ops": [
+      "passes.getPassesByIdEvents"
+    ],
+    "files": {
+      "ts": "pass-activity.ts",
+      "curl": "pass-activity.sh"
+    }
+  },
+  {
+    "id": "replay-delivery",
+    "title": "Replay a delivery",
+    "guide": "react-to-events",
+    "ops": [
+      "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay"
+    ],
+    "files": {
+      "ts": "replay-delivery.ts",
+      "curl": "replay-delivery.sh"
+    },
+    "sandbox": "WEBHOOK_ENDPOINT_NOT_FOUND"
+  }
+]

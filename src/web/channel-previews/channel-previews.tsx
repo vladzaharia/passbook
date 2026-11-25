@@ -7,6 +7,7 @@ import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
 import { SegmentedControl } from '../ui/segmented-control.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
+import type { PreviewFace } from './face-pair.tsx';
 import { LockedPreview, type OffLevel } from './locked-preview.tsx';
 import './channel-switch.css';
 import { PREVIEW_CHANNELS, type PreviewChannel, type PreviewSource } from './types.ts';
@@ -32,6 +33,11 @@ export interface ChannelPreviewsProps {
   lockedAction?: ((info: { channel: PreviewChannel; level: OffLevel }) => ReactNode) | undefined;
   /** The page picks the channel (and draws its own switcher): only that channel's pane shows. */
   value?: PreviewChannel | undefined;
+  /** Google and Samsung list what the wallet drops beside the card; off where the page has its own list. */
+  walletNotes?: boolean | undefined;
+  /** The Front / Back choice of the wallet cards, when the page keeps it (a shared hash, say). */
+  face?: PreviewFace | undefined;
+  onFace?: ((face: PreviewFace) => void) | undefined;
   className?: string;
 }
 
@@ -75,6 +81,9 @@ export function ChannelPreviews({
   lockedAction,
   notes,
   value,
+  walletNotes,
+  face,
+  onFace,
   className,
 }: ChannelPreviewsProps) {
   const tabs = PREVIEW_CHANNELS.filter(
@@ -153,6 +162,9 @@ export function ChannelPreviews({
               target={current}
               previews={source ? wallets : { state: 'loading' }}
               testBand={source?.testBand}
+              notes={walletNotes}
+              face={face}
+              onFace={onFace}
             />
           </Suspense>
         ) : null}

@@ -10,6 +10,7 @@ import { fieldChanges } from '../../../shared/issuing/diff.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { targetFilter } from './apply.ts';
@@ -73,6 +74,7 @@ export async function previewChange(
   const designs = new Map<string, string | null>();
   const rows = await targetRows(ctx.env.DB, filter, now, SAMPLED);
   const schemas = new Map<string, unknown>();
+  const timeZone = await readOrgTimeZone(ctx.env.DB, body.orgId);
   const blocked = new Map<string, number>();
   let unchanged = 0;
   let changing = 0;
@@ -113,7 +115,7 @@ export async function previewChange(
         (await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion)).manifest
           .inputs,
       );
-    const result = resolveOps(ops, pass.personalization);
+    const result = resolveOps(ops, pass.personalization, timeZone);
     if (!result.ok) blocked.set(result.code, (blocked.get(result.code) ?? 0) + 1);
     else if (JSON.stringify(result.from) === JSON.stringify(result.to)) unchanged++;
     else {
@@ -123,7 +125,7 @@ export async function previewChange(
         out.samples.push({
           passId: pass.id,
           title: pass.displayTitle,
-          changes: fieldChanges(schemas.get(key), pass.personalization, result.next),
+          changes: fieldChanges(schemas.get(key), pass.personalization, result.next, { timeZone }),
         });
     }
   }

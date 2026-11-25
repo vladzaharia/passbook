@@ -80,7 +80,9 @@ describe('developer routes need developer access', () => {
   const routes: [string, string][] = [
     ['GET', '/sandbox'],
     ['POST', '/sandbox'],
+    ['POST', '/sandbox/close'],
     ['DELETE', '/sandbox'],
+    ['POST', '/sandbox/recreate'],
     ['POST', '/try-token'],
     ['DELETE', '/try-token'],
   ];

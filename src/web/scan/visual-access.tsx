@@ -1,5 +1,6 @@
 /** The access and occupancy scenarios of the visual gallery (`?visual=1&surface=access&case=`). */
 import { useEffect, useState } from 'react';
+import { DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { ScanAppView } from './app.tsx';
 import { fakeInsideApi, insideRow } from './inside/inside-fake.test-support.ts';
@@ -42,17 +43,17 @@ const verdicts: Record<string, ScanOutcome> = {
     admit: {
       type: 'Day pass',
       rule: { kind: 'until', at: FIXTURE_NOW + 6 * 3_600_000 },
-      timeZone: 'UTC',
+      timeZone: DEFAULT_TIME_ZONE,
     },
   }),
   'admit-guest': {
     ...grant({ display }),
-    admit: { type: 'Guest', rule: { kind: 'visit', n: 2, of: 3 }, timeZone: 'UTC' },
+    admit: { type: 'Guest', rule: { kind: 'visit', n: 2, of: 3 }, timeZone: DEFAULT_TIME_ZONE },
   },
   'admit-ended': fixtureOutcome('refused', 'ended', {
     display: fixtureDisplay('refused'),
     at: FIXTURE_NOW,
-    admit: { type: 'Day pass', rule: null, timeZone: 'UTC' },
+    admit: { type: 'Day pass', rule: null, timeZone: DEFAULT_TIME_ZONE },
   }),
   'refused-exit': fixtureOutcome('refused', 'voided', {
     at: FIXTURE_NOW,

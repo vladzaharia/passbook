@@ -489,7 +489,9 @@ describe('new pass wizard', () => {
   // A selected org lets the wizard start at the template step.
   async function toDetails(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+    );
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByLabelText(/Member name/);
   }
@@ -505,7 +507,7 @@ describe('new pass wizard', () => {
     const entries = router.history.length;
     // Without a template Next is disabled: nothing to advance with.
     await screen.findByRole('radio', { name: /Copper card/ });
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('heading', { name: 'Template' })).toBeInTheDocument();
     await toDetails(user);
     // Details with a required field empty: focus moves to it.

@@ -1,4 +1,5 @@
 import { SANDBOX_TEMPLATE_NAME, SANDBOX_TERMINAL_NAME } from '../../../shared/copy/developer.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { grant } from '../../platform/authority.ts';
 import { first } from '../../platform/db.ts';
@@ -124,7 +125,7 @@ export async function ensureSandboxTerminal(
       name: SANDBOX_TERMINAL_NAME,
       eventId: null,
       settings: JSON.stringify(DEFAULT_SETTINGS),
-      timeZone: 'UTC',
+      timeZone: DEFAULT_TIME_ZONE,
       expiresAt: now + TERMINAL_TTL_MS,
       createdBy: createdByOf(authority, actorId),
       now,

@@ -3,11 +3,12 @@
 import type { Json } from '../contracts/common.ts';
 import type { FieldChange } from '../contracts/issuing.ts';
 import { formatDayIn } from '../format-date.ts';
+import { CALENDAR_ZONE, isCalendarMidnight } from '../time-zone.ts';
 import { type InputField, inputFields, isDateField } from './fields.ts';
 
 export interface DiffOptions {
-  /** The zone dates are read in; UTC by default, like the import's own date transform. */
-  timeZone?: string;
+  /** The zone dates are read in: the org's, else `DEFAULT_TIME_ZONE`. */
+  timeZone: string;
   locale?: string;
 }
 
@@ -31,12 +32,12 @@ const empty = (v: Json | undefined): boolean =>
   v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
 
 /** A date-time at midnight in the zone reads as a day; any other time adds the time of day. */
-function formatDate(value: string, f: InputField, o: Required<DiffOptions>): string {
+function formatDate(value: string, o: Required<DiffOptions>): string {
   const dayOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const ms = Date.parse(dayOnly ? `${value}T00:00:00Z` : value);
   if (!Number.isFinite(ms)) return value;
-  // A calendar day has no zone: read it in UTC so it never moves a day.
-  if (dayOnly || f.format === 'date') return formatDayIn(ms, 'UTC', o.locale);
+  // A bare calendar day has no zone: it never moves a day.
+  if (dayOnly || isCalendarMidnight(value)) return formatDayIn(ms, CALENDAR_ZONE, o.locale);
   const day = formatDayIn(ms, o.timeZone, o.locale);
   const at = timeFormat(o.timeZone, o.locale, true).formatToParts(ms);
   const midnight = at.every((p) => p.type === 'literal' || p.value === '00');
@@ -47,14 +48,14 @@ function formatDate(value: string, f: InputField, o: Required<DiffOptions>): str
 export function formatValue(
   value: Json | undefined,
   f: InputField,
-  options: DiffOptions = {},
+  options: DiffOptions,
 ): string | null {
   if (empty(value)) return null;
-  const o = { timeZone: options.timeZone ?? 'UTC', locale: options.locale ?? 'en-US' };
+  const o = { timeZone: options.timeZone, locale: options.locale ?? 'en-US' };
   if (typeof value === 'string') {
     const option = f.options?.find((x) => x.value === value);
     if (option) return option.label;
-    return isDateField(f) ? formatDate(value, f, o) : value;
+    return isDateField(f) ? formatDate(value, o) : value;
   }
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (typeof value === 'number') return value.toLocaleString(o.locale);
@@ -73,7 +74,7 @@ export function fieldChanges(
   schema: unknown,
   before: Readonly<Record<string, Json>> | null,
   after: Readonly<Record<string, Json>>,
-  options: DiffOptions = {},
+  options: DiffOptions,
 ): FieldChange[] {
   const out: FieldChange[] = [];
   for (const f of inputFields(schema)) {

@@ -13,6 +13,7 @@ import {
   MoreMenu,
   PageHeader,
   StatusPill,
+  Tooltip,
 } from '../../ui/index.ts';
 import { TemplateOtherModeCount } from '../passes/other-mode-hint.tsx';
 import { originLabel } from './gallery.tsx';
@@ -65,11 +66,13 @@ export function TemplateDetailHeader({
   const hasLifecycle = canPublish && !baked && (!archived || t.passCount === 0);
   const orgId = t.orgId ?? scopeOrgId;
   const newPass = { ...(orgId ? { orgId } : {}), templateId: t.id };
-  const next = archived || !t.release ? null : nextAction(t.release.next, draftName);
+  // A built-in is released by PassBook: its one way forward is a copy of your own.
+  const builtIn = baked && canAuthor && !archived;
+  const next = archived || builtIn || !t.release ? null : nextAction(t.release.next, draftName);
   const primary = next && isPrimary(next) ? next : null;
   const showNewPass = !archived && canOperate;
   const newPassItem =
-    showNewPass && primary ? (
+    showNewPass && (primary || builtIn) ? (
       <DropdownMenuItem asChild>
         <Link to="/admin/passes/new" search={newPass}>
           <ACTION_ICON.create aria-hidden />
@@ -79,7 +82,7 @@ export function TemplateDetailHeader({
     ) : null;
   const hasMenu =
     Boolean(newPassItem) ||
-    canAuthor ||
+    (canAuthor && !builtIn) ||
     hasLifecycle ||
     Boolean(onChangeOrg) ||
     Boolean(onScanPasses && !archived) ||
@@ -118,7 +121,17 @@ export function TemplateDetailHeader({
       }
       actions={
         <>
-          {primary ? (
+          {builtIn ? (
+            <Tooltip content="Managed by PassBook. Duplicate to release your own.">
+              <Button
+                className="whitespace-nowrap"
+                iconStart={<ACTION_ICON.duplicate aria-hidden />}
+                onClick={onDuplicate}
+              >
+                Duplicate
+              </Button>
+            </Tooltip>
+          ) : primary ? (
             <ReleasePrimary
               kind={primary.kind}
               label={primary.label}
@@ -187,7 +200,7 @@ export function TemplateDetailHeader({
                   </Link>
                 </DropdownMenuItem>
               ) : null}
-              {canAuthor ? (
+              {canAuthor && !builtIn ? (
                 <DropdownMenuItem onSelect={onDuplicate}>
                   <ACTION_ICON.duplicate aria-hidden />
                   Duplicate

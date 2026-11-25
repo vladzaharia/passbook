@@ -36,8 +36,8 @@ describe('the Try it skeleton', () => {
     );
   });
   it('gives the stub and body one size whatever is inside', () => {
-    expect(css).toMatch(/\.try \.stub \{[^}]*block-size: 24rem/);
-    expect(css).toMatch(/\.try \.body \{[^}]*min-block-size: 14rem/);
+    expect(css).toMatch(/\.try \.stub \{[^}]*block-size: 21rem/);
+    expect(css).toMatch(/\.try \.body \{[^}]*min-block-size: 12.25rem/);
   });
 });
 

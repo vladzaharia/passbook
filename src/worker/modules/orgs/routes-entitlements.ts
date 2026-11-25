@@ -9,6 +9,8 @@ import {
   SetEntitlementPresetResultSchema,
   SetEntitlementPresetSchema,
 } from '../../../shared/contracts/entitlement-presets.ts';
+import { OrgPlanParamsSchema, OrgPlanSchema } from '../../../shared/contracts/org-plan.ts';
+import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -20,6 +22,7 @@ import { listPresets, setPreset } from './presets-service.ts';
 import { orgsOnPreset } from './repo-presets.ts';
 import { readOrgEntitlements, setOrgEntitlements } from './service-entitlements.ts';
 import { readOwnEntitlements } from './service-own-entitlements.ts';
+import { readOrgPlan } from './service-plan.ts';
 
 const noStore = async (
   c: { header: (name: string, value: string) => void },
@@ -139,6 +142,7 @@ register(
 /** Mount at /api/v1/orgs. An organization's admins and `org:read` keys see their own features, read-only. */
 export const orgEntitlementsRoutes = createRouter();
 orgEntitlementsRoutes.use('/:id/entitlements', noStore);
+orgEntitlementsRoutes.use('/:id/plan', noStore);
 
 register(
   orgEntitlementsRoutes,
@@ -157,5 +161,25 @@ register(
     const authority = await tenantAuthorityOf(ctx, authOf(c), id, 'org:read');
     if (authority.orgId !== id) throw new ForbiddenError();
     return c.json(await readOwnEntitlements(ctx, id));
+  },
+);
+
+register(
+  orgEntitlementsRoutes,
+  'entitlements',
+  {
+    method: 'get',
+    path: '/{id}/plan',
+    summary: "Read the organization's plan: limits with use, features and the footer rule",
+    params: OrgPlanParamsSchema,
+    response: OrgPlanSchema,
+    auth: { scope: 'org:read', capability: 'org:read' },
+  },
+  async (c) => {
+    const { id } = c.req.valid('param');
+    const ctx = serviceContext(c);
+    const authority = await tenantAuthorityOf(ctx, authOf(c), id, 'org:read');
+    if (authority.orgId !== id) throw new ForbiddenError();
+    return c.json(await readOrgPlan(ctx, id, modeOf(authOf(c))));
   },
 );

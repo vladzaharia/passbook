@@ -1,0 +1,121 @@
+/* Explain (a 4xx; flat): it raises its gold pass like a card toward the text beside it and taps it
+   twice, looks back at you, blinks and lowers it. 2.2 s, once; 1% = 22 ms. --wl-aim is -1 where
+   the text is on the right (a seat at the card's start), 1 where it is on the left (at="end"). */
+.wl-buddy[data-scene="explain"] [data-trunk] {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="explain"][data-run] .wl-art [data-part="c3"] {
+    animation: wl-s-explain-card 2.2s ease-in-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="explain"][data-run] .wl-art [data-trunk] {
+    animation: wl-s-explain-lean 2.2s ease-in-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="explain"][data-run] .wl-art [data-look] {
+    animation: wl-s-explain-look 2.2s ease-in-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="explain"][data-run] .wl-art [data-part="eyes"] {
+    animation: wl-s-explain-blink 2.2s ease-in-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="explain"][data-run] .wl-art [data-body] {
+    animation: wl-s-explain-body 2.2s ease-out var(--wl-at, 0s);
+  }
+}
+
+@keyframes wl-s-explain-card {
+  0%,
+  8% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+  22%,
+  30% {
+    translate: calc(var(--wl-aim, 1) * -7px) -15px;
+    rotate: calc(var(--wl-aim, 1) * -22deg);
+  }
+  /* Two taps toward the text. */
+  35% {
+    translate: calc(var(--wl-aim, 1) * -9px) -14px;
+    rotate: calc(var(--wl-aim, 1) * -30deg);
+  }
+  40% {
+    translate: calc(var(--wl-aim, 1) * -7px) -15px;
+    rotate: calc(var(--wl-aim, 1) * -22deg);
+  }
+  46% {
+    translate: calc(var(--wl-aim, 1) * -9px) -14px;
+    rotate: calc(var(--wl-aim, 1) * -30deg);
+  }
+  52%,
+  70% {
+    translate: calc(var(--wl-aim, 1) * -7px) -15px;
+    rotate: calc(var(--wl-aim, 1) * -22deg);
+  }
+  86%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-explain-lean {
+  0%,
+  12% {
+    rotate: 0deg;
+  }
+  24%,
+  56% {
+    rotate: calc(var(--wl-aim, 1) * -4deg);
+  }
+  72%,
+  100% {
+    rotate: 0deg;
+  }
+}
+/* To the text while it explains, back to you from 62%. */
+@keyframes wl-s-explain-look {
+  0% {
+    translate: 0 0;
+  }
+  12%,
+  56% {
+    translate: calc(var(--wl-aim, 1) * -2.2px) -0.8px;
+  }
+  66%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-explain-blink {
+  0%,
+  70%,
+  78%,
+  100% {
+    scale: 1;
+  }
+  74% {
+    scale: 1 0.12;
+  }
+}
+/* A nod on each tap. */
+@keyframes wl-s-explain-body {
+  0%,
+  33%,
+  100% {
+    scale: 1;
+  }
+  36% {
+    scale: 1.02 0.97;
+  }
+  44% {
+    scale: 1;
+  }
+  47% {
+    scale: 1.02 0.97;
+  }
+  55% {
+    scale: 1;
+  }
+}

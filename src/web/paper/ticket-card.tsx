@@ -1,9 +1,11 @@
 import { PAPER_COPY } from '../../shared/copy/print.ts';
+import { BadgeBack, BadgeFront } from './ticket-badge.tsx';
 import { CodeMark, Credit, Plate, sheetProps, type TicketProps, Typed } from './ticket-parts.tsx';
 import { footMeta, paperAt } from './ticket-text.ts';
 
 /** Front: the pass colour (white in mono), the member, the QR on a white tile. */
 export function CardFront({ p }: { p: TicketProps }) {
+  if (p.content.photo) return <BadgeFront p={p} />;
   const { content: c, assets } = p;
   const member = c.kind === 'membership';
   const art = assets?.art && c.art && c.ink !== 'mono';
@@ -25,7 +27,7 @@ export function CardFront({ p }: { p: TicketProps }) {
           <Plate p={p} style={{ width: 'calc(var(--mm) * 9)', height: 'calc(var(--mm) * 9)' }} />
         )}
         <span className="pp-cd-grow" />
-        <span className="pp-cd-k">{member ? 'Member' : c.kicker}</span>
+        <span className="pp-cd-k">{c.kicker}</span>
         <div className="pp-cd-name">{member ? (c.holder ?? c.title) : c.title}</div>
         <div className="pp-cd-tier">{tier.filter(Boolean).join(' · ')}</div>
       </div>
@@ -38,8 +40,9 @@ export function CardFront({ p }: { p: TicketProps }) {
 
 /** Back: white. Logo, class word, the typed code, one line on what the card is, help, footer. */
 export function CardBack({ p }: { p: TicketProps }) {
+  if (p.content.photo) return <BadgeBack p={p} />;
   const { content: c, assets } = p;
-  const label = c.kind === 'membership' ? 'Membership card' : c.kicker;
+  const label = c.kicker;
   const [, line] = PAPER_COPY.oneTicket(c.noun, c.once);
   return (
     <article {...sheetProps(p, 'pp-card pp-cd-back')} data-face="back">

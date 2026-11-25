@@ -13,8 +13,10 @@ export const SIZES_CSS = `.pp-strip{--org:#333;--org-fg:#fff;--org-label:#ddd}
 .pp-st-when{font-size:${mm('var(--wh)')};font-weight:500}
 .pp-st-venue,.pp-st-line{font-size:${mm('var(--ve)')};white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pp-st-rows{margin-top:auto;display:flex;gap:${mm('2')}}
-.pp-st-row{flex:1 1 auto;min-width:0;border:${mm('0.25')} solid currentColor;border-radius:${mm('1.6')};padding:${mm('1.2')} ${mm('2')}}
+.pp-st-row{flex:1 0 auto;min-width:0;border:${mm('0.25')} solid currentColor;border-radius:${mm('1.6')};padding:${mm('1.2')} ${mm('2')}}
 .pp-stk{flex-direction:column;gap:${mm('0.8')}}
+.pp-st-row.pp-wide{flex-shrink:1;overflow:hidden}
+.pp-st-row .pp-st-rl,.pp-st-row .pp-st-rv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pp-stk .pp-st-row{flex:none;display:flex;gap:${mm('2')};align-items:baseline;border:0;border-radius:0;padding:0}
 .pp-stk .pp-st-rl{flex:none;width:${mm('15')}}
 .pp-stk .pp-st-rv{font-size:${mm('3.4')}}

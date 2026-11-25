@@ -45,14 +45,14 @@ describe('Set up scanning', () => {
     expect(within(aside).getByText('Who gets in').closest('li')).toHaveAttribute('data-dim');
     await next(user);
     // Who gets in: Next waits for a pass type.
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText('Pick a pass type or an event.')).toBeInTheDocument();
     await user.click(await screen.findByRole('checkbox', { name: 'Monthly' }));
     expect(within(await summary()).getByText('Monthly')).toBeInTheDocument();
     await next(user);
     // When: set hours is explicit; nothing is applied until it is typed.
     await user.click(await screen.findByRole('radio', { name: 'Set hours' }));
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     await user.type(screen.getByLabelText('Every day from'), '06:00');
     await user.type(screen.getByLabelText('To'), '22:00');
     await next(user);
@@ -91,7 +91,9 @@ describe('Set up scanning', () => {
     expect(
       await screen.findByRole('radio', { name: 'Anyone with the device' }),
     ).toBeInTheDocument();
-    expect(document.querySelector('[data-skipped]')).toHaveTextContent('When');
+    expect(document.querySelector('[data-state="skipped"]')?.closest('li')).toHaveTextContent(
+      'When',
+    );
   });
 
   it('Review shows the server plan, and a fix edits the answers', async () => {

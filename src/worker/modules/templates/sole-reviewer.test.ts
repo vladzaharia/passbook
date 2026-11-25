@@ -295,6 +295,44 @@ describe('sole-reviewer approval', () => {
     ).toBeNull();
   });
 
+  it('voids a sole approval when a long-standing author is promoted to reviewer', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const author = await member(org.id, ['template_author']);
+    const t = await uploaded('Promoted Author', org, owner);
+    const c = await candidateOf(org, t.templateId, t.version, owner);
+    clock.advance(1000);
+    const a = TemplateApprovalSchema.parse(
+      await (await approve(org, t.templateId, c, owner, { alone: true })).json(),
+    );
+    clock.advance(1000);
+    const promoted = await app.request(
+      `${ORIGIN}/api/v1/orgs/${org.id}/memberships/${author.membershipId}`,
+      {
+        method: 'PATCH',
+        headers: { ...owner.headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ roles: ['template_reviewer'] }),
+      },
+      env,
+    );
+    expect(promoted.status).toBe(200);
+    const released = await post(
+      `/${t.templateId}/releases`,
+      {
+        ...scope(org.id),
+        candidateId: c.id,
+        approvalId: a.id,
+        candidateHash: c.candidateHash,
+        expectedGeneration: 0,
+      },
+      owner,
+    );
+    expect(released.status).toBe(409);
+    expect(
+      await first(env.DB, 'SELECT id FROM template_releases WHERE template_id = ?', [t.templateId]),
+    ).toBeNull();
+  });
+
   it('keeps the trigger role list equal to the roles that grant review', () => {
     const lists = sql.match(/IN \('org_admin'[^)]*\)/g) ?? [];
     expect(lists.length).toBeGreaterThan(0);

@@ -134,9 +134,22 @@ describe('fixOfCall', () => {
     expect(fix).toMatchObject({
       title: 'ticketId is required.',
       path: 'input.ticketId',
-      line: 'Add -d input[ticketId]=QS-1042 and run again.',
+      line: 'Add "ticketId": "QS-1042" to input and run again.',
       code: 'PASS_INPUT_INVALID',
     });
+  });
+
+  it('says required when the server names the missing field in the path', () => {
+    const named = JSON.stringify({
+      detail: 'The pass input is invalid.',
+      issues: [{ path: 'input.ticketId' }],
+    });
+    const fix = fixOfCall(
+      { status: 422, code: 'PASS_INPUT_INVALID' },
+      { response: named, request: sentWithout('ticketId') },
+      sample,
+    );
+    expect(fix).toMatchObject({ title: 'ticketId is required.', path: 'input.ticketId' });
   });
 
   it('uses a path the problem names, and survives a missing or hostile body', () => {

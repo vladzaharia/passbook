@@ -92,7 +92,7 @@ export function ErrorsIndex({ site }: { site: Site }) {
                         <td className="mono">
                           <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a>
                         </td>
-                        <td className="mono">{e.status ?? ''}</td>
+                        <td className="mono">{e.statusText ?? e.status ?? ''}</td>
                         <td>{e.fix || e.title}</td>
                       </tr>
                     ))}
@@ -112,7 +112,9 @@ export function ErrorEntryView({ entry }: { entry: ErrorEntry }) {
     <>
       <div className="eyebrow">
         <a href={PATHS.errors}>Errors</a>
-        {entry.status ? <span className="pill neutral mono">{entry.status}</span> : null}
+        {entry.status ? (
+          <span className="pill neutral mono">{entry.statusText ?? entry.status}</span>
+        ) : null}
         {entry.retryable === null ? null : (
           <span className="pill neutral">{entry.retryable ? 'Retry' : 'Do not retry'}</span>
         )}

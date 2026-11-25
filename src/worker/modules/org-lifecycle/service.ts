@@ -7,7 +7,6 @@ import type {
 import { ORG_LIFECYCLE_COPY as COPY } from '../../../shared/copy/org-lifecycle.ts';
 import { orgClosedEmail, orgReopenedEmail } from '../../email/org-closed.ts';
 import type { Actor } from '../../platform/context.ts';
-import { derivedHmacKey } from '../../platform/crypto.ts';
 import { baseUrl } from '../../platform/env.ts';
 import {
   ConflictError,
@@ -15,14 +14,15 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { safeEqual, toHex } from '../../platform/ids.ts';
+import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { requirePersonalClose } from '../orgs/personal-guard.ts';
 import { readOrgAdminEmails } from '../retention/repo.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
-import { exportKey, LINK_MS } from './export.ts';
+import { exportKey, LINK_MS, linkMac } from './export.ts';
+import { orgDay } from './org-day.ts';
 import {
   actorHolds,
   closedOrgs,
@@ -47,7 +47,6 @@ type ExportDto = z.infer<typeof OrgExportSchema>;
 type ClosedDto = z.infer<typeof ClosedOrgSchema>;
 
 const notFound = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 function lifecycleDto(row: LifecycleRow, now: number): Lifecycle {
   const closed = row.status === 'deleted';
@@ -150,7 +149,8 @@ export async function closeOrg(
   await purgeOrgWalletArt(ctx, orgId);
   const after = await lifecycleRow(ctx.env.DB, orgId);
   if (after?.purge_after) {
-    const mail = orgClosedEmail(baseUrl(ctx.env), before.name, day(after.purge_after));
+    const purgeDay = await orgDay(ctx, orgId, after.purge_after);
+    const mail = orgClosedEmail(baseUrl(ctx.env), before.name, purgeDay);
     await mailAdmins(ctx, orgId, mail);
   }
   return lifecycleDto(after ?? before, ctx.clock.now());
@@ -266,16 +266,6 @@ export async function requestExport(
   return exportDto(row);
 }
 
-async function linkMac(env: object, orgId: string, exportId: string, exp: number): Promise<string> {
-  const key = await derivedHmacKey(env, 'org-export-link.v1');
-  const mac = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    new TextEncoder().encode(`${orgId}|${exportId}|${exp}`),
-  );
-  return toHex(new Uint8Array(mac));
-}
-
 /** A download link for a ready archive, good for 1 hour and one download. Anyone holding it can download, so it is audited. */
 export async function exportLink(
   ctx: ServiceContext,
@@ -325,6 +315,6 @@ export async function openExport(
   return {
     body: object.body,
     size: object.size,
-    name: `${org.slug}-export-${day(export_.created_at)}.zip`,
+    name: `${org.slug}-export-${await orgDay(ctx, orgId, export_.created_at)}.zip`,
   };
 }

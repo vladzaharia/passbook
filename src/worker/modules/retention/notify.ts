@@ -1,6 +1,7 @@
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import type { ShortenNotice } from './changes.ts';
 import { holdEmail, shortenEmail } from './email.ts';
 import { readOrgAdminEmails } from './repo.ts';
@@ -47,8 +48,18 @@ export async function enqueueShortenNotices(
 }
 
 /** The queue job: mails the org's admins. */
-export const sendShortenNotice = (ctx: ServiceContext, n: ShortenNotice) =>
-  toAdmins(ctx, n.orgId, shortenEmail(baseUrl(ctx.env), n.cls, n.days, n.from));
+export const sendShortenNotice = async (ctx: ServiceContext, n: ShortenNotice) =>
+  toAdmins(
+    ctx,
+    n.orgId,
+    shortenEmail(
+      baseUrl(ctx.env),
+      n.cls,
+      n.days,
+      n.from,
+      await readOrgTimeZone(ctx.env.DB, n.orgId),
+    ),
+  );
 
 export const sendHoldNotice = (ctx: ServiceContext, orgId: string, placed: boolean) =>
   toAdmins(ctx, orgId, holdEmail(baseUrl(ctx.env), placed));

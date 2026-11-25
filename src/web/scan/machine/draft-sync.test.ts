@@ -182,6 +182,13 @@ describe('draft sync', () => {
     expect(d.clears.at(-1)).toEqual({ ref: d.key, keep: false });
   });
 
+  it('leaving a read that never drafted still clears the ready card', async () => {
+    const d = await desk();
+    expect(d.clears).toEqual([]);
+    d.store.dispatch({ type: 'dismiss' });
+    expect(d.clears).toEqual([{ ref: d.key, keep: false }]);
+  });
+
   it('an empty or invalid field clears only the draft', async () => {
     const d = await desk();
     open(d);

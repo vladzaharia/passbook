@@ -35,6 +35,8 @@ export const ADMISSION: PaperContent = {
   help: ['hello@harbourlights.nz', '+64 4 555 0123'],
   terms: 'No re-entry. Ticket is non-transferable.',
   extras: [],
+  info: {},
+  photo: false,
 };
 
 const PERMIT: PaperContent = {
@@ -69,7 +71,113 @@ const MEMBERSHIP: PaperContent = {
   validUntil: '2027-12-31T23:59:00+00:00',
 };
 
+type Optional = 'venue' | 'address' | 'room' | 'seat' | 'doors' | 'end' | 'directions';
+const without = (c: PaperContent, ...keys: Optional[]): PaperContent => {
+  const out = { ...c };
+  for (const k of keys) delete out[k];
+  return out;
+};
+/** The shared start of the trip, stay and ID fixtures: no venue, no event wording. */
+const PLAIN: PaperContent = {
+  ...without(ADMISSION, 'venue', 'address', 'room', 'seat', 'doors', 'end'),
+  bring: ['This page or your phone pass'],
+  terms: 'Be there on time.',
+  facts: [],
+};
+
+const JOURNEY: PaperContent = {
+  ...PLAIN,
+  kind: 'journey',
+  kicker: 'Boarding pass',
+  noun: 'pass',
+  title: 'SFO – JFK',
+  zone: 'America/Los_Angeles',
+  start: '2030-06-01T08:00:00-07:00',
+  holder: 'Alex Morgan',
+  seat: { seat: '14A' },
+  facts: [
+    { label: 'Gate', text: 'B12' },
+    { label: 'Seat', text: '14A' },
+    { label: 'Group', text: '3' },
+  ],
+  info: {
+    from: 'SFO',
+    fromCity: 'San Francisco',
+    to: 'JFK',
+    toCity: 'New York',
+    vehicle: 'WA100',
+    vehicleLabel: 'Flight',
+    gate: 'B12',
+    gateLabel: 'Gate',
+    boards: '2030-06-01T07:15:00-07:00',
+    group: '3',
+  },
+};
 const CONTENT: Record<PaperKind, PaperContent> = {
+  journey: JOURNEY,
+  booking: {
+    ...PLAIN,
+    kind: 'booking',
+    bring: ['This page or your phone pass'],
+    kicker: 'Booking',
+    noun: 'pass',
+    title: 'Cut and colour',
+    zone: 'America/New_York',
+    start: '2030-11-24T09:30:00-05:00',
+    venue: 'Soho',
+    facts: [
+      { label: 'With', text: 'Sam' },
+      { label: 'Where', text: 'Soho' },
+    ],
+    info: { with: 'Sam' },
+  },
+  stay: {
+    ...PLAIN,
+    kind: 'stay',
+    bring: ['This page or your phone pass'],
+    kicker: 'Hotel stay',
+    noun: 'pass',
+    title: 'Ana Rivera',
+    zone: 'America/Los_Angeles',
+    start: '2030-11-18T15:00:00-08:00',
+    end: '2030-11-21T11:00:00-08:00',
+    room: '1204',
+    holder: 'Ana Rivera',
+    facts: [
+      { label: 'Room', text: '1204' },
+      { label: 'Nights', text: '3' },
+    ],
+    info: { nights: '3', included: 'Breakfast: Included' },
+  },
+  badge: {
+    ...PLAIN,
+    kind: 'badge',
+    bring: ['Your badge or phone pass'],
+    kicker: 'Visitor pass',
+    noun: 'pass',
+    title: 'Leo Brandt',
+    holder: 'Leo Brandt',
+    photo: true,
+    start: '2030-11-18T09:30:00-08:00',
+    validUntil: '2030-11-18T17:00:00-08:00',
+    zone: 'America/Los_Angeles',
+    info: { company: 'Acme Ltd', host: 'Priya Shah', goTo: 'Floor 3, Oslo' },
+    facts: [],
+  },
+  credential: {
+    ...PLAIN,
+    kind: 'credential',
+    bring: ['Your card or phone pass'],
+    kicker: 'Credential',
+    noun: 'card',
+    title: 'CPR / AED Provider',
+    holder: 'Ana Rivera',
+    photo: true,
+    validUntil: '2028-03-15T00:00:00Z',
+    zone: 'UTC',
+    info: { number: '77310', credential: 'CPR / AED Provider', issued: '2026-03-15T00:00:00Z' },
+    facts: [],
+  },
   admission: ADMISSION,
   permit: PERMIT,
   coupon: COUPON,

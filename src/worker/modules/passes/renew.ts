@@ -6,6 +6,7 @@ import {
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { resolveTemplate } from './builder.ts';
 import { detailOf } from './detail.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -33,7 +34,7 @@ export async function renewPass(
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const config = termConfigOf(template.manifest);
   if (!config) throw new ConflictError('This pass has no term.', 'TERM_NONE');
-  const tz = config.timeZone ?? 'UTC';
+  const tz = config.timeZone ?? (await getOrgSettings(ctx, pass.orgId))['org.timeZone'];
   const now = ctx.clock.now();
   const moved = { from: '', to: '' };
   const result = await publishPass(ctx, {
@@ -53,7 +54,7 @@ export async function renewPass(
       const anchorRaw = config.anchor ? current.personalization[config.anchor] : undefined;
       const next = renewedStart(
         parseTermDate(raw, config.start, tz),
-        config,
+        { ...config, timeZone: tz },
         now,
         typeof anchorRaw === 'string' && anchorRaw !== ''
           ? parseTermDate(anchorRaw, config.anchor ?? '', tz)

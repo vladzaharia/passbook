@@ -1,14 +1,14 @@
 import { type CSSProperties, useId, useRef } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { StepMarker } from '../step-marker.tsx';
-import type { WizardModel } from './use-wizard.ts';
+import type { WizardRail } from './wizard-types.ts';
 
 /**
  * The wizard's steps. A frame 43.5rem wide or more shows a rail: numbered markers down the side,
  * done steps as buttons back to them with what was chosen under them. Narrower, one line, "Step 2
  * of 4 · Access", over a thin progress bar. Put it in a `@container` that holds the step too.
  */
-export function WizardStepper<Id extends string>({ wizard }: { wizard: WizardModel<Id> }) {
+export function WizardStepper({ wizard }: { wizard: WizardRail }) {
   const { steps, index } = wizard;
   const base = useId();
   // A marker pops only for a step that became done after this rail mounted, and keeps the class

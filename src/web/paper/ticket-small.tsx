@@ -109,7 +109,10 @@ const SCISSORS = (
 export function TicketCoupon({ p }: { p: TicketProps }) {
   const { content: c, assets } = p;
   const art = assets?.art && c.art && c.ink !== 'mono';
-  const small = [c.terms, PAPER_COPY.reprints[1].split('. ')[0]].filter(Boolean).join('. ');
+  const small = [c.terms, PAPER_COPY.reprints[1].split('. ')[0]]
+    .filter((t): t is string => Boolean(t))
+    .map((t) => t.trim().replace(/\.+$/, ''))
+    .join('. ');
   return (
     <article {...sheetProps(p, 'pp-cp')}>
       <div className="pp-cp-cut" />
@@ -127,6 +130,7 @@ export function TicketCoupon({ p }: { p: TicketProps }) {
           <div className="pp-cp-offer">
             {c.hero?.offer ? <div className="pp-cp-v">{c.hero.offer}</div> : null}
             {c.hero?.offerNote ? <div className="pp-cp-s">{c.hero.offerNote}</div> : null}
+            {c.info.pack && c.holder ? <div className="pp-cp-s">{`For ${c.holder}`}</div> : null}
             {c.validUntil ? (
               <div className="pp-cp-use">
                 <span className="pp-lbl">Use by</span>

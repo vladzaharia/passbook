@@ -257,25 +257,17 @@ describe('the workbench island mount', () => {
 });
 
 describe('header chip after Reset or Reopen', () => {
-  it('syncChip turns a closed session into a ready one and starts the clock from the same home', async () => {
+  it('syncChip turns a closed session into a ready one from the same home', async () => {
     const { onSession, loadSession: load } = await import('../console/session.ts');
-    const { onClock } = await import('../console/run-clock.ts');
     const { syncChip } = await import('./island.tsx');
-    updateSession({ kind: 'closed', csrf: 'c' });
+    updateSession({ kind: 'closed', csrf: 'c', siteKey: '' });
     const kinds: string[] = [];
     const stop = onSession((s) => kinds.push(s.kind));
-    let clock: unknown = 'unset';
-    const stopClock = onClock((c) => {
-      clock = c;
-    });
     await syncChip(homeFresh);
     expect(kinds).toEqual(['ready']);
     expect((await load()).kind).toBe('ready');
-    expect(clock).not.toBeNull();
     await syncChip(homeClosed);
     expect(kinds).toEqual(['ready', 'closed']);
-    expect(clock).toBeNull();
     stop();
-    stopClock();
   });
 });

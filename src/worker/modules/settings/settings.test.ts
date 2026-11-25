@@ -25,6 +25,7 @@ import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
+import { configuredNames } from '../auth/service.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
@@ -246,10 +247,11 @@ describe('settings api', () => {
     });
     expect(body.oidc).toEqual({
       issuer: appEnv.OIDC_ISSUER,
-      platformAdminGroup: appEnv.OIDC_PLATFORM_ADMIN_GROUP || null,
-      adminGroup: appEnv.OIDC_ADMIN_GROUP || null,
-      developerGroup: appEnv.OIDC_DEVELOPER_GROUP || null,
-      userGroup: appEnv.OIDC_USER_GROUP || null,
+      platformAdminGroup: configuredNames(appEnv, 'OIDC_PLATFORM_ADMIN_GROUP'),
+      adminGroup: configuredNames(appEnv, 'OIDC_ADMIN_GROUP'),
+      developerGroup: configuredNames(appEnv, 'OIDC_DEVELOPER_GROUP'),
+      userGroup: configuredNames(appEnv, 'OIDC_USER_GROUP'),
+      platformAdminPinned: 0,
       consoleGroupRequired: false,
     });
     expect(body.released).toEqual({
@@ -263,10 +265,11 @@ describe('settings api', () => {
     expect(put.status).toBe(200);
     expect(((await put.json()) as List).oidc).toEqual({
       issuer: appEnv.OIDC_ISSUER,
-      platformAdminGroup: appEnv.OIDC_PLATFORM_ADMIN_GROUP || null,
-      adminGroup: appEnv.OIDC_ADMIN_GROUP || null,
-      developerGroup: appEnv.OIDC_DEVELOPER_GROUP || null,
-      userGroup: appEnv.OIDC_USER_GROUP || null,
+      platformAdminGroup: configuredNames(appEnv, 'OIDC_PLATFORM_ADMIN_GROUP'),
+      adminGroup: configuredNames(appEnv, 'OIDC_ADMIN_GROUP'),
+      developerGroup: configuredNames(appEnv, 'OIDC_DEVELOPER_GROUP'),
+      userGroup: configuredNames(appEnv, 'OIDC_USER_GROUP'),
+      platformAdminPinned: 0,
       consoleGroupRequired: false,
     });
     const ctx = createServiceContext(appEnv);
@@ -406,13 +409,13 @@ describe('settings api', () => {
     expect((await getOrgSettings(ctx, a.id))['org.website']).toBeUndefined();
   });
 
-  it('validates the org time zone, defaults to unset, audits it and resets with null', async () => {
+  it('validates the org time zone, defaults to Seattle, audits it and resets with null', async () => {
     const org = await makeOrg(fx);
     await addMembership(org.id);
     const put = (values: object) =>
       call('PUT', '', { scope: `org:${org.id}`, values }, tenantUser.headers);
     const ctx = createServiceContext(appEnv);
-    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBeUndefined();
+    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBe('America/Los_Angeles');
     for (const bad of ['Mars/Olympus', 'EST5EDT5', '', 5, 'x'.repeat(65)])
       expect((await put({ 'org.timeZone': bad })).status).toBe(422);
     expect((await put({ 'org.timeZone': 'Europe/Berlin' })).status).toBe(200);
@@ -422,10 +425,32 @@ describe('settings api', () => {
       "SELECT detail FROM audit_log WHERE action = 'settings.update'",
     );
     expect(JSON.parse(audit[0]?.detail ?? '{}')).toEqual({
-      changes: { 'org.timeZone': { from: null, to: 'Europe/Berlin' } },
+      changes: { 'org.timeZone': { from: 'America/Los_Angeles', to: 'Europe/Berlin' } },
     });
     expect((await put({ 'org.timeZone': null })).status).toBe(200);
-    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBeUndefined();
+    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBe('America/Los_Angeles');
+  });
+
+  it('audits an explicit save of the default zone', async () => {
+    const org = await makeOrg(fx);
+    await addMembership(org.id);
+    const res = await call(
+      'PUT',
+      '',
+      { scope: `org:${org.id}`, values: { 'org.timeZone': 'America/Los_Angeles' } },
+      tenantUser.headers,
+    );
+    expect(res.status).toBe(200);
+    const rows = await all<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'settings.update' AND org_id = ?",
+      [org.id],
+    );
+    expect(JSON.parse(rows[0]?.detail ?? '{}')).toEqual({
+      changes: {
+        'org.timeZone': { from: 'America/Los_Angeles', to: 'America/Los_Angeles' },
+      },
+    });
   });
 
   it('requires a platform admin for platform settings', async () => {

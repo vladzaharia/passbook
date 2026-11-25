@@ -1,0 +1,14 @@
+[
+  {
+    "id": "bulk-import",
+    "title": "Create an import from a CSV",
+    "guide": "bulk-import",
+    "ops": [
+      "pass-imports.postPassImports"
+    ],
+    "files": {
+      "ts": "bulk-import.ts",
+      "curl": "bulk-import.sh"
+    }
+  }
+]

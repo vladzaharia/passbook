@@ -718,6 +718,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"orgs.plan.retrieve", "GET", "/api/v1/orgs/id1/plan", false,
+		"", `{"orgId":"x","preset":"x","label":"x","limits":[{"key":"api","limit":0,"used":0}],"features":[{"key":"apple","level":"x"}],"footer":"full"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Orgs.Plan.Retrieve(ctx, "id1")
+		},
+	},
+	{
 		"orgs.stageBrandAsset", "POST", "/api/v1/orgs/id1/brand-assets", false,
 		`{"slot":"logo","png":"x"}`, `{"slot":"logo","sha":"x","version":"x","w":0,"h":0,"expiresAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {

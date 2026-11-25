@@ -85,12 +85,19 @@ describe('history reads at their widest shape', () => {
     const zones = Intl.supportedValuesOf('timeZone').slice(0, 40);
     const all = await sizes(kit.env.DB, async (db) => {
       expect(await staffTimeZones(db, auth)).toEqual([]);
-      const rows = await readStaffActivity(db, auth, zones, kit.clock.now(), {
-        q: 'ana',
-        limit: 200,
-        staffId: 'staff-1',
-        cursor: { disabled: false, name: 'ana', id: 'staff-0' },
-      });
+      const rows = await readStaffActivity(
+        db,
+        auth,
+        zones,
+        kit.clock.now(),
+        {
+          q: 'ana',
+          limit: 200,
+          staffId: 'staff-1',
+          cursor: { disabled: false, name: 'ana', id: 'staff-0' },
+        },
+        'UTC',
+      );
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({ auth_ok: 1, snapshot_ok: 1, m_id: null });
     });

@@ -11,6 +11,7 @@ import type {
   WalletTarget,
 } from '@/passkit/wallets/types.ts';
 import { resolveWalletView } from '@/passkit/wallets/view.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { assetUrlMap } from '../pass-card/assets.ts';
 import type { PreviewSource } from './types.ts';
 
@@ -31,7 +32,7 @@ const COMPILERS: Record<keyof WalletTargetOut, WalletCompiler> = {
  */
 export function compileWallets(
   source: PreviewSource,
-  where: { origin?: string; now?: Date; website?: string } = {},
+  where: { origin?: string; now?: Date; website?: string; timeZone?: string } = {},
 ): WalletTargetOut {
   const manifest = source.manifest as unknown as TemplateManifest;
   const now = where.now ?? new Date();
@@ -59,6 +60,7 @@ export function compileWallets(
     where.origin ?? (globalThis as unknown as { location: { origin: string } }).location.origin;
   const view = resolveWalletView(plan, manifest, {
     now,
+    timeZone: where.timeZone ?? DEFAULT_TIME_ZONE,
     locales: ['en'],
     input: source.input,
     assets: source.assets as unknown as AssetEntry[],

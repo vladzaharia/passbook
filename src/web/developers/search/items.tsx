@@ -10,7 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { DEV_GUIDE_STEPS, DEV_GUIDES } from '../../../shared/copy/developers.ts';
+import { DEV_GUIDE_STEPS, DEV_GUIDES } from '../../../shared/copy/developers-guides.ts';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import type { CommandGroup, CommandItem } from '../../ui/command-palette.tsx';
 import { goTo, openTab } from './nav.ts';

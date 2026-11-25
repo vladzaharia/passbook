@@ -1,0 +1,28 @@
+[
+  {
+    "id": "scan-setup-preview",
+    "title": "Preview a scanning setup",
+    "guide": "scan-setup",
+    "ops": [
+      "scanners.postScanningSessionsSetup"
+    ],
+    "files": {
+      "ts": "scan-setup-preview.ts",
+      "curl": "scan-setup-preview.sh"
+    },
+    "sandbox": "FEATURE_NOT_INCLUDED"
+  },
+  {
+    "id": "scan-setup-apply",
+    "title": "Apply a scanning setup",
+    "guide": "scan-setup",
+    "ops": [
+      "scanners.postScanningSessionsSetup"
+    ],
+    "files": {
+      "ts": "scan-setup-apply.ts",
+      "curl": "scan-setup-apply.sh"
+    },
+    "sandbox": "FEATURE_NOT_INCLUDED"
+  }
+]

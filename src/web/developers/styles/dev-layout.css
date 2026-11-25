@@ -4,16 +4,18 @@
   display: grid;
   grid-template-columns: 15rem minmax(0, 1fr);
   max-width: 1440px;
+  width: 100%;
   margin: 0 auto;
-  min-height: calc(100dvh - var(--dev-bar) - 64px);
 }
+/* App pages (console, logs): the full width with the kit gutter, and no tree from 1181 px. */
 .docs.no-side {
   grid-template-columns: minmax(0, 1fr);
+  max-width: none;
 }
 .docs.no-side > .main {
   width: 100%;
-  max-width: 960px;
-  margin-inline: auto;
+  max-width: none;
+  padding-inline: var(--wl-gutter);
 }
 .sidenav {
   border-right: 1px solid var(--pk-border-subtle);
@@ -41,11 +43,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 30px;
+  min-height: 36px;
   padding: 4px 8px;
   border-radius: var(--pk-radius-md);
   color: var(--pk-text-muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 .sidenav a:hover {
   background: var(--pk-state-hover-tint);
@@ -61,15 +63,21 @@
   padding-left: 6px;
   border-left: 1px solid var(--pk-border-subtle);
 }
+/* An operation: the method first, then the name, which wraps to two lines before it is cut. */
 .sidenav .subnav a {
-  font-size: 12.5px;
-  min-height: 28px;
-  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 32px;
+  line-height: 20px;
 }
-.sidenav .subnav a span:first-child {
+.sidenav .subnav .method {
+  flex: none;
+  margin-top: 1px;
+}
+.sidenav .subnav a span:last-child {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .sidenav .menu-only,
 .sidenav.drawer-only {
@@ -77,37 +85,6 @@
 }
 .sidenav [hidden] {
   display: none;
-}
-/* The sheet's own groups: Sandbox and Spaces under the sections. */
-.menu-only .menu-sandbox,
-.menu-only .menu-spaces {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--pk-border-subtle);
-}
-.menu-seg {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  gap: 4px;
-  padding: 3px;
-  border: 1px solid var(--pk-border-subtle);
-  border-radius: var(--pk-radius-lg);
-  background: var(--pk-surface-sunken, var(--pk-surface-page));
-}
-.sidenav .menu-seg a {
-  justify-content: center;
-  min-height: 40px;
-  white-space: nowrap;
-  font-weight: 500;
-}
-.sidenav .menu-seg a[aria-current] {
-  box-shadow: inset 0 0 0 1px var(--pk-accent);
-}
-.sidenav .menu-signin {
-  margin-top: 12px;
-  justify-content: center;
-  border: 1px solid var(--pk-border-strong);
-  min-height: 40px;
 }
 /* The header: the sections are links from 1181 px, the menu button stands in below. */
 .dev-nav {
@@ -167,11 +144,13 @@
 .main {
   padding: 32px 40px 64px;
   min-width: 0;
+  max-width: 1040px;
 }
 .prose {
-  max-width: 720px;
+  max-width: 72ch;
 }
 .foot {
+  width: 100%;
   max-width: 1440px;
   margin: 0 auto;
   display: flex;
@@ -212,8 +191,8 @@
   color: inherit;
 }
 .h1 {
-  font-size: 30px;
-  line-height: 36px;
+  font-size: 24px;
+  line-height: 32px;
   font-weight: 600;
   letter-spacing: -0.015em;
 }
@@ -229,7 +208,7 @@
   color: var(--pk-text-strong);
 }
 .page-h {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .lede {
   font-size: 16px;

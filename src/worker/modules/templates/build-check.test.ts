@@ -29,6 +29,41 @@ function resolved(slug: string): ResolvedTemplate {
   };
 }
 
+describe('previewPass term in the org zone', () => {
+  it('ends a month-end term on the org calendar, and on Seattle time with no org', () => {
+    const base = resolved('henrys-copper');
+    const properties = base.manifest.inputs.properties as Record<string, unknown>;
+    const template: ResolvedTemplate = {
+      ...base,
+      manifest: {
+        ...base.manifest,
+        inputs: {
+          ...base.manifest.inputs,
+          properties: { ...properties, term_start: { type: 'string' } },
+        },
+        behaviors: [
+          {
+            use: 'term',
+            version: 1,
+            config: { start: 'term_start', unit: 'month-end', length: 1 },
+          },
+        ],
+      },
+    };
+    const input = {
+      memberName: 'Sam Rivera',
+      memberId: 'M-1',
+      membership: 'All-Inclusive',
+      term_start: '2030-04-10T08:00:00Z',
+    };
+    const now = new Date(1_700_000_000_000);
+    const end = (zone?: string) =>
+      previewPass(env, template, input, 'Org', now, zone).passJson.expirationDate;
+    expect(end('Asia/Tokyo')).toBe('2030-04-30T14:59:59Z');
+    expect(end()).toBe('2030-05-01T06:59:59Z');
+  });
+});
+
 describe('previewPass', () => {
   it('applies input defaults and behaviors like a real build', () => {
     const template = resolved('henrys-copper');

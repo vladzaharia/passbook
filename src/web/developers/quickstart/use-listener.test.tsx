@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LISTEN_MS, useListener } from './use-listener.ts';
+import { LISTEN_MS, QUIET_MS, useListener } from './use-listener.ts';
 
 const row = (id: string) => ({ id, method: 'POST', path: '/api/v1/passes', status: 201 });
 afterEach(() => {
@@ -42,6 +42,33 @@ describe('useListener', () => {
     act(() => result.current.again());
     await act(async () => vi.advanceTimersByTimeAsync(10));
     expect(result.current.over).toBe(false);
+  });
+
+  it('turns quiet after 45 s with nothing heard, and not when a call arrives first', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ items: [] })),
+    );
+    const { result } = renderHook(() => useListener(true, null));
+    await act(async () => vi.advanceTimersByTimeAsync(QUIET_MS - 2000));
+    expect(result.current.quiet).toBe(false);
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(result.current.quiet).toBe(true);
+    expect(result.current.over).toBe(false);
+  });
+
+  it('is not quiet when a call arrives before 45 s', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ items: [row('c1')] })),
+    );
+    const { result } = renderHook(() => useListener(true, null));
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(result.current.heard.length).toBeGreaterThan(0);
+    await act(async () => vi.advanceTimersByTimeAsync(QUIET_MS + 2000));
+    expect(result.current.quiet).toBe(false);
   });
 
   it('does nothing while inactive', async () => {

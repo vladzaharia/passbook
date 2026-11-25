@@ -357,6 +357,42 @@ describe('review', () => {
     expect(await inbox(org, reviewer)).toEqual([]);
   });
 
+  it('lets the only member of a sandbox review their own request, marked Self-approved', async () => {
+    const org = await makeOrg(f, { kind: 'developer' });
+    const owner = await member(org.id, ['org_admin']);
+    const t = await uploaded('Sandbox Review', org, owner, undefined, true);
+    const asked = await send(
+      `/${t.templateId}/review-requests`,
+      { orgId: org.id, version: t.version },
+      owner,
+      { mode: 'test' },
+    );
+    expect(asked.status).toBe(200);
+    const result = await ok(
+      await send(
+        `/${t.templateId}/review`,
+        { orgId: org.id, version: t.version, release: true },
+        owner,
+        { mode: 'test' },
+      ),
+    );
+    expect(result.approved).toEqual(['test']);
+    expect(result.release?.modes).toMatchObject({
+      test: { outcome: 'released', approvalKind: 'test' },
+    });
+    expect(await _approvals(t.templateId)).toEqual([{ mode: 'test', kind: 'test' }]);
+    await expectProblem(
+      await send(
+        `/${t.templateId}/review`,
+        { orgId: org.id, version: t.version },
+        await member(org.id, ['template_reviewer']),
+        { mode: 'test' },
+      ),
+      404,
+      'TEMPLATE_REVIEW_NOT_FOUND',
+    );
+  });
+
   it('records the version and its number on each release audit row', async () => {
     const org = await makeOrg(f);
     const owner = await member(org.id, ['org_admin']);

@@ -6,6 +6,7 @@ import { copyToClipboard } from '../playground/copy.ts';
 import { MakeSandbox } from './make-sandbox.tsx';
 import { envFile, maskKey } from './model.ts';
 import { Step, type StepState, Tag } from './parts.tsx';
+import { SandboxManage } from './sandbox-manage.tsx';
 import type { Quickstart } from './use-quickstart.ts';
 
 const C = QS_COPY.steps.sandbox;
@@ -85,6 +86,27 @@ export function EnvBox({
           {templateId}
         </pre>
       </div>
+      <div className="qs-load">
+        <p className="sm">{M.load}</p>
+        <dl className="qs-load-l">
+          <dt className="xs muted">{M.bash}</dt>
+          <dd>
+            <code className="mono xs">{M.bashLine}</code>
+          </dd>
+          <dt className="xs muted">{M.ps}</dt>
+          <dd>
+            <code className="mono xs">{M.psLine}</code>
+          </dd>
+          <dt className="xs muted">{M.check}</dt>
+          <dd>
+            <code className="mono xs">{M.checkLine}</code>
+            <br />
+            <code className="mono xs">{M.checkPs}</code>
+            <br />
+            <span className="xs muted">{M.checkOut}</span>
+          </dd>
+        </dl>
+      </div>
       <div className="row g3 wrap-row qs-env-a">
         <button type="button" className="btn" onClick={() => void copy()}>
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
@@ -155,6 +177,7 @@ export function SandboxStep({
               />
             </div>
           ) : null}
+          <SandboxManage csrf={q.csrf} siteKey={retryKey} onMade={q.sandboxMade} />
           {secret && templateId ? (
             <EnvBox secret={secret} templateId={templateId} onNext={onNext} />
           ) : (
@@ -164,7 +187,10 @@ export function SandboxStep({
           )}
         </>
       ) : session.kind === 'closed' ? (
-        <p className="sm qs-bad">{C.closed}</p>
+        <>
+          <p className="sm qs-bad">{C.closed}</p>
+          <SandboxManage csrf={q.csrf} siteKey={session.siteKey} onMade={q.sandboxMade} />
+        </>
       ) : (
         <>
           <p className="sm muted">{C.line}</p>

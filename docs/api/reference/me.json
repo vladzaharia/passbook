@@ -6,7 +6,7 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "title": "Day pass",
           "subtitle": "Ada Example",
-          "templateName": "Day pass",
+          "templateName": "Quickstart ticket",
           "orgName": "Northwind Climbing",
           "status": "active",
           "mode": "live",
@@ -23,30 +23,35 @@
             "passTypeIdentifier": "pass.mobile.passbook.northwind",
             "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
             "organizationName": "Northwind Climbing",
-            "description": "Day pass",
+            "description": "Quickstart ticket",
             "backgroundColor": "rgb(17, 42, 74)",
             "foregroundColor": "rgb(255, 255, 255)",
             "labelColor": "rgb(255, 196, 0)",
-            "generic": {
+            "eventTicket": {
               "primaryFields": [
                 {
-                  "key": "name",
-                  "label": "Guest",
-                  "value": "Ada Example"
+                  "key": "event",
+                  "label": "Event",
+                  "value": "Friday Night Bouldering"
                 }
               ],
               "secondaryFields": [
                 {
-                  "key": "tier",
-                  "label": "Pass",
-                  "value": "Day pass"
+                  "key": "venue",
+                  "label": "Venue",
+                  "value": "Northwind Climbing"
+                },
+                {
+                  "key": "starts",
+                  "label": "Starts",
+                  "value": "2026-12-04T18:00:00-08:00"
                 }
               ],
               "auxiliaryFields": [
                 {
-                  "key": "validUntil",
-                  "label": "Valid until",
-                  "value": "2026-12-31"
+                  "key": "attendee",
+                  "label": "Attendee",
+                  "value": "Ada Example"
                 }
               ]
             }
@@ -87,7 +92,7 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "title": "Day pass",
       "subtitle": "Ada Example",
-      "templateName": "Day pass",
+      "templateName": "Quickstart ticket",
       "orgName": "Northwind Climbing",
       "status": "active",
       "mode": "live",
@@ -104,30 +109,35 @@
         "passTypeIdentifier": "pass.mobile.passbook.northwind",
         "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
         "organizationName": "Northwind Climbing",
-        "description": "Day pass",
+        "description": "Quickstart ticket",
         "backgroundColor": "rgb(17, 42, 74)",
         "foregroundColor": "rgb(255, 255, 255)",
         "labelColor": "rgb(255, 196, 0)",
-        "generic": {
+        "eventTicket": {
           "primaryFields": [
             {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
+              "key": "event",
+              "label": "Event",
+              "value": "Friday Night Bouldering"
             }
           ],
           "secondaryFields": [
             {
-              "key": "tier",
-              "label": "Pass",
-              "value": "Day pass"
+              "key": "venue",
+              "label": "Venue",
+              "value": "Northwind Climbing"
+            },
+            {
+              "key": "starts",
+              "label": "Starts",
+              "value": "2026-12-04T18:00:00-08:00"
             }
           ],
           "auxiliaryFields": [
             {
-              "key": "validUntil",
-              "label": "Valid until",
-              "value": "2026-12-31"
+              "key": "attendee",
+              "label": "Attendee",
+              "value": "Ada Example"
             }
           ]
         }

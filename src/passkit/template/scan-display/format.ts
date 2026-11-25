@@ -2,6 +2,8 @@
  * Display formatting (DM 1.9) and text hygiene (DM 1.11 rule 9). Pure: Intl only.
  * System words here ("just now", "min ago") are English in v1; author text is never translated.
  */
+
+import { CALENDAR_ZONE, DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { Json } from '../../types.ts';
 
 export const FILTERS = [
@@ -95,7 +97,7 @@ export function toInstant(value: Json | undefined): { ms: number; zone: string |
   if (typeof value === 'number') return Number.isFinite(value) ? { ms: value, zone: null } : null;
   if (typeof value !== 'string' || value === '') return null;
   const ms = Date.parse(DATE_ONLY.test(value) ? `${value}T12:00:00Z` : value);
-  return Number.isNaN(ms) ? null : { ms, zone: DATE_ONLY.test(value) ? 'UTC' : null };
+  return Number.isNaN(ms) ? null : { ms, zone: DATE_ONLY.test(value) ? CALENDAR_ZONE : null };
 }
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
@@ -106,7 +108,7 @@ function dateFormat(locale: string, timeZone: string, options: Intl.DateTimeForm
     try {
       found = new Intl.DateTimeFormat(locale, { timeZone, ...options });
     } catch {
-      found = new Intl.DateTimeFormat('en', { timeZone: 'UTC', ...options });
+      found = new Intl.DateTimeFormat('en', { timeZone: DEFAULT_TIME_ZONE, ...options });
     }
     if (formatters.size > 200) formatters.clear();
     formatters.set(key, found);

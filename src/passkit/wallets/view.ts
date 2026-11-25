@@ -2,6 +2,8 @@
  * `resolveWalletView` (architecture 2.1): the materialized Apple pass, in the terms compilers
  * read. Pure: the plan already has bindings, behaviours, local time and normalization applied.
  */
+
+import { inputFields } from '../../shared/issuing/fields.ts';
 import type { PlannedPass } from '../build.ts';
 import type { PassScope } from '../template/expr.ts';
 import { evaluate } from '../template/expr.ts';
@@ -11,10 +13,13 @@ import { resolveRoles } from './roles.ts';
 import type { ViewNote, WalletPassView } from './types.ts';
 import { buildFields, styleOf } from './view-fields.ts';
 import { barcodesOf, colorsOf, eventsOf, imagesOf, relevanceOf, urlsOf } from './view-parts.ts';
+import { zonedInput, zonedPass } from './zoned-dates.ts';
 
 export interface ViewContext {
   /** Decides `validity.expired`. Compilers get their own clock in `CompileOptions`. */
   now: Date;
+  /** The org's zone: a date-time written without an offset is read in it. */
+  timeZone: string;
   /** Locales to carry, in preference order. */
   locales: readonly string[];
   /** The pass's personalization: the expression scope of the `wallets` block. */
@@ -30,12 +35,19 @@ export interface ViewContext {
   appLink?: { name?: string; url?: string; logo?: string };
 }
 
+const dateTimeKeys = (manifest: TemplateManifest): Set<string> =>
+  new Set(
+    inputFields(manifest.inputs)
+      .filter((f) => f.format === 'date-time')
+      .map((f) => f.key),
+  );
+
 export function resolveWalletView(
   plan: PlannedPass,
   manifest: TemplateManifest,
   ctx: ViewContext,
 ): WalletPassView {
-  const pass = plan.passJson;
+  const pass = zonedPass(plan.passJson, ctx.timeZone);
   const wallets = manifest.wallets;
   const notes: ViewNote[] = [];
   const style = styleOf(pass);
@@ -44,7 +56,7 @@ export function resolveWalletView(
   const barcodes = barcodesOf(pass);
 
   const scope = {
-    input: applyDefaults(manifest, ctx.input),
+    input: zonedInput(applyDefaults(manifest, ctx.input), dateTimeKeys(manifest), ctx.timeZone),
     lookups: manifest.lookups ?? {},
     ...(ctx.pass ? { pass: ctx.pass } : {}),
   };

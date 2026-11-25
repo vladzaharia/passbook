@@ -1,0 +1,68 @@
+[
+  {
+    "id": "release-draft",
+    "title": "Make a draft from a blueprint",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdUse"
+    ],
+    "files": {
+      "ts": "release-draft.ts",
+      "curl": "release-draft.sh"
+    },
+    "sandbox": "TEMPLATE_EXISTS"
+  },
+  {
+    "id": "release-dry-run",
+    "title": "Preview a release",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdRelease"
+    ],
+    "files": {
+      "ts": "release-dry-run.ts",
+      "curl": "release-dry-run.sh"
+    },
+    "sandbox": "TEMPLATE_NOT_FOUND"
+  },
+  {
+    "id": "release-try",
+    "title": "Try a version in Test",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdRelease"
+    ],
+    "files": {
+      "ts": "release-try.ts",
+      "curl": "release-try.sh"
+    },
+    "sandbox": "TEMPLATE_NOT_FOUND"
+  },
+  {
+    "id": "request-review",
+    "title": "Request a review",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdReviewRequests"
+    ],
+    "files": {
+      "ts": "request-review.ts",
+      "curl": "request-review.sh"
+    },
+    "sandbox": "TEMPLATE_NOT_FOUND"
+  },
+  {
+    "id": "approve-review",
+    "title": "Approve and release",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.getTemplateReviews",
+      "templates.postTemplatesByIdReview"
+    ],
+    "files": {
+      "ts": "approve-review.ts",
+      "curl": "approve-review.sh"
+    },
+    "sandbox": "TEMPLATE_NOT_FOUND"
+  }
+]

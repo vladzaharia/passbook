@@ -4,7 +4,7 @@ import type { Lang } from '../../model/highlight.ts';
 import { copyToClipboard as copyText } from '../../shell/copy.ts';
 import { CodeView } from '../../ui/code-view.tsx';
 import { COPY_LANGS, copyAs } from '../copy-as.ts';
-import { buildSent, type Draft, problems } from '../request.ts';
+import { buildSent, type Draft, type InputCheck, inputUnchecked, problems } from '../request.ts';
 import type { RunOp } from '../types.ts';
 import { HeaderChips } from './chips.tsx';
 import { FormTab } from './form.tsx';
@@ -22,6 +22,8 @@ interface Props {
   op: RunOp;
   origin: string;
   draft: Draft;
+  /** The sandbox template's input schema, once read. */
+  check?: InputCheck | undefined;
   tab: Tab;
   pending: boolean;
   spent: boolean;
@@ -37,6 +39,7 @@ export function Builder({
   op,
   origin,
   draft,
+  check,
   tab,
   pending,
   spent,
@@ -47,7 +50,7 @@ export function Builder({
 }: Props) {
   const [armed, setArmed] = useState(false);
   const [copied, setCopied] = useState(false);
-  const issues = problems(op, draft);
+  const issues = problems(op, draft, check);
   const tabs = TABS.filter((t) => t.id !== 'json' || op.body);
   const list = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -120,7 +123,11 @@ export function Builder({
           {issues.length === 0 ? (
             <>
               <CircleCheck aria-hidden="true" />
-              {op.body ? 'Valid against the schema' : 'Ready'}
+              {op.body
+                ? inputUnchecked(op, draft, check)
+                  ? 'Body shape valid'
+                  : 'Valid against the schema'
+                : 'Ready'}
             </>
           ) : (
             <details>

@@ -1,5 +1,6 @@
 import { PRIVACY_COPY } from '../../../shared/copy/privacy.ts';
 import type { RetentionClass } from '../../../shared/privacy/data-classes.ts';
+import { localDate } from '../../../shared/zoned.ts';
 import { safeUrl } from '../../email/safe.ts';
 import { EMAIL_LIGHT as c, emailShell, escapeHtml, titleHtml, type } from '../../email/shell.ts';
 
@@ -23,13 +24,17 @@ export function noticeEmail(base: string, subject: string, body: string) {
   };
 }
 
-const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
-
-export function shortenEmail(base: string, cls: RetentionClass, days: number, from: number) {
+export function shortenEmail(
+  base: string,
+  cls: RetentionClass,
+  days: number,
+  from: number,
+  timeZone: string,
+) {
   return noticeEmail(
     base,
     PRIVACY_COPY.retentionEmailSubject(cls, days),
-    PRIVACY_COPY.retentionEmailBody(cls, days, day(from)),
+    PRIVACY_COPY.retentionEmailBody(cls, days, localDate(from, timeZone)),
   );
 }
 

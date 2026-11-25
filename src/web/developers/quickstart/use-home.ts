@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
-import { publishClock } from '../console/run-clock.ts';
 import { fetchHome } from '../workbench/api.ts';
 
 /**
@@ -18,7 +17,6 @@ export function useHome() {
       if (!live.current) return null;
       setSkew(next.now - Date.now());
       setHome(next);
-      publishClock(next);
       return next;
     } catch {
       // The page keeps what it has; the next read or poll tries again.

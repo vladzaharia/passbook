@@ -77,4 +77,34 @@ describe('paper op', () => {
     });
     expect(d.manifest.paper).toEqual({ schema: 1, size: 'a4', barcode: 'qr' });
   });
+
+  it('ticking "Holders can print" on an ID kind writes holder true, explicit or derived', () => {
+    const explicit = applyOp(doc(), {
+      op: 'paper',
+      patch: { kind: 'badge', holder: true, effectiveKind: 'badge' },
+    });
+    expect((explicit.manifest.paper as { holder?: boolean }).holder).toBe(true);
+    // A derived ID has no `kind`: the effective class says what the default is.
+    const started = applyOp(doc(), { op: 'paper', patch: { size: 'cr80' } });
+    const derived = applyOp(started, {
+      op: 'paper',
+      patch: { holder: true, effectiveKind: 'badge' },
+    });
+    expect((derived.manifest.paper as { holder?: boolean }).holder).toBe(true);
+    // Back to the default is not written.
+    const closed = applyOp(derived, {
+      op: 'paper',
+      patch: { holder: false, effectiveKind: 'badge' },
+    });
+    expect(closed.manifest.paper).not.toHaveProperty('holder');
+  });
+
+  it('keeps an explicit holder: false through admission, badge and admission again', () => {
+    let d = applyOp(doc(), { op: 'paper', patch: { kind: 'admission', holder: false } });
+    expect((d.manifest.paper as { holder?: boolean }).holder).toBe(false);
+    d = applyOp(d, { op: 'paper', patch: { kind: 'badge' } });
+    expect((d.manifest.paper as { holder?: boolean }).holder).toBe(false);
+    d = applyOp(d, { op: 'paper', patch: { kind: 'admission' } });
+    expect((d.manifest.paper as { holder?: boolean }).holder).toBe(false);
+  });
 });

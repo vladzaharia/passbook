@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { DEFAULT_TIME_ZONE, DEFAULT_TIME_ZONE_LABEL } from '@/shared/time-zone.ts';
+import { zoneLabel } from '@/web/lib/timezones.ts';
 import { Card, CardBody, CardHeader, ErrorState, KeyValue, SkeletonRows } from '@/web/ui/index.ts';
 import { ORG_FIELDS } from './fields-org.ts';
 import { useSettings } from './queries.ts';
@@ -23,10 +25,11 @@ function FormCard({ title, children }: { title: string; children: ReactNode }) {
 /** What a member without org:manage sees: the effective values. */
 function ReadOnlySettings({ orgId }: { orgId: string }) {
   const query = useSettings(`org:${orgId}`);
-  const value = (key: string) => {
-    const current = query.data?.items.find((item) => item.key === key)?.value;
-    if (typeof current === 'boolean') return current ? 'On' : 'Off';
-    return current == null || current === '' ? 'Not set' : String(current);
+  const zoneEntry = query.data?.items.find((item) => item.key === 'org.timeZone');
+  const zoneValue = () => {
+    const zone = typeof zoneEntry?.value === 'string' ? zoneEntry.value : DEFAULT_TIME_ZONE;
+    const name = zone === DEFAULT_TIME_ZONE ? DEFAULT_TIME_ZONE_LABEL : zoneLabel(zone);
+    return zoneEntry?.source === 'org' ? name : `${name} · default`;
   };
   return (
     <Card>
@@ -37,7 +40,7 @@ function ReadOnlySettings({ orgId }: { orgId: string }) {
         ) : query.isError ? (
           <ErrorState subject="settings" error={query.error} onRetry={() => query.refetch()} />
         ) : (
-          <KeyValue items={[{ label: 'Time zone', value: value('org.timeZone') }]} />
+          <KeyValue items={[{ label: 'Time zone', value: zoneValue() }]} />
         )}
       </CardBody>
     </Card>

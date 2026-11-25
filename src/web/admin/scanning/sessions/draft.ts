@@ -5,7 +5,7 @@ import type {
   SessionCustomerSettings,
 } from '@/shared/contracts/scanning-sessions.ts';
 import { type OfflineMode, offlineModeOf } from '@/shared/scan-offline.ts';
-import { localZone } from '@/web/lib/timezones.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { EMPTY_DRAFT, type ScannerDraft, settingsOf } from '../scanners/scanner-draft.ts';
 import { hoursBody, hoursProblem, weekOf } from './session-hours.ts';
 
@@ -29,7 +29,7 @@ export type SessionDraft = ScannerDraft & {
 
 export const emptySessionDraft = (): SessionDraft => ({
   ...EMPTY_DRAFT,
-  timeZone: localZone(),
+  timeZone: DEFAULT_TIME_ZONE,
   accepts: 'all',
   eventIds: [],
   lookup: true,

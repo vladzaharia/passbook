@@ -68,6 +68,8 @@ export interface Field {
 export interface ErrorRow {
   code: string;
   status: number | null;
+  /** "409 or 503" where the code's raise sites tie; shown instead of `status`. */
+  statusText?: string | undefined;
   fix: string;
 }
 
@@ -181,6 +183,7 @@ export interface ChangedIn {
 export interface ErrorEntry {
   code: string;
   status: number | null;
+  statusText?: string | undefined;
   title: string;
   when: string;
   fix: string;

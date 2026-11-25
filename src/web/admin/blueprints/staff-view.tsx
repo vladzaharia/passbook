@@ -4,6 +4,7 @@ import { renderScanDisplay } from '@/passkit/template/scan-display/render.ts';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { ScanDisplay, ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from '@/shared/copy/scan.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { cn } from '../../lib/cn.ts';
 import { DisplayChip } from '../../scan/display/chip.tsx';
 import { DisplayPanels } from '../../scan/display/display-panels.tsx';
@@ -48,7 +49,7 @@ function useStaffResult(
         screen,
         role: 'door',
         locale: 'en',
-        timeZone: 'UTC',
+        timeZone: DEFAULT_TIME_ZONE,
         now,
         ...(action ? { actionId: action.id } : {}),
       });

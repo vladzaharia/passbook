@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import type { Json } from '@/shared/contracts/common.ts';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
 import { fieldChanges } from '@/shared/issuing/diff.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { api } from '../../../lib/api.ts';
 import { isApiError } from '../../../lib/errors.ts';
 import {
@@ -69,6 +70,7 @@ export function FieldsTab({
 }) {
   const qc = useQueryClient();
   const currentPrincipal = () => passMutationPrincipal(qc);
+  const timeZone = useOrgTimeZone(pass.orgId);
   const connection = useConnection(pass.connectionId ?? undefined);
   const [notify, setNotify] = useState(false);
   const removed = pass.removedAt !== null;
@@ -110,8 +112,9 @@ export function FieldsTab({
         schema,
         cleanValues(baseline.values) as Record<string, Json>,
         cleanValues(draft) as Record<string, Json>,
+        { timeZone },
       ),
-    [schema, baseline.values, draft],
+    [schema, baseline.values, draft, timeZone],
   );
   const was = useMemo(
     () => Object.fromEntries(changes.map((c) => [c.key, c.from ?? 'empty'])),

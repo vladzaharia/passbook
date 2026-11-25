@@ -36,6 +36,25 @@
 .qs-spin {
   animation: qs-spin 0.9s linear infinite;
 }
+.qs-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.qs-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+}
+.qs-confirm .btn.danger:not(.outline) {
+  background: var(--pk-danger);
+  color: var(--pk-danger-on, #fff);
+}
 .qs-bad,
 .qs-err {
   color: var(--pk-danger);

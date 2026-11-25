@@ -2,8 +2,8 @@ import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useChangeCount } from '../lib/motion.ts';
-import { Tick } from './checkbox.tsx';
 import { IconButton } from './icon-button.tsx';
+import { StepMarker } from './step-marker.tsx';
 
 export interface ChecklistStep {
   id: string;
@@ -16,18 +16,7 @@ export interface ChecklistStep {
 
 function Mark({ index, done }: { index: number; done: boolean }) {
   const changed = useChangeCount(done);
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'inline-flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums',
-        done ? 'border-accent bg-accent text-accent-on' : 'border-border-strong text-fg-muted',
-        done && changed > 0 && 'wl-step-done',
-      )}
-    >
-      {done ? <Tick key={changed} draw={changed > 0} className="size-3.5" /> : index + 1}
-    </span>
-  );
+  return <StepMarker state={done ? 'done' : 'todo'} n={index + 1} fresh={done && changed > 0} />;
 }
 
 /** Numbered next steps ("Get started"): each checks itself from props; optional dismiss. */
