@@ -406,14 +406,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connectors.list", "GET", "/api/v1/connectors", false,
-		"", `{"items":[{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0}}],"nextCursor":null}`,
+		"", `{"items":[{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0},"entitled":false}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connectors.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"connectors.retrieve", "GET", "/api/v1/connectors/id1", false,
-		"", `{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0}}`,
+		"", `{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0},"entitled":false}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connectors.Retrieve(ctx, "id1")
 		},

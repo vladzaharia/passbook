@@ -4,6 +4,7 @@ import type { Check } from '../../platform/authority-checks.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import { entitled, withinLimit } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { connectorItem } from './entitlement.ts';
 import {
   type ConnectionActor,
   commitOrNull,
@@ -176,12 +177,6 @@ function insertValues(row: ConnectionRow): SqlValue[] {
   ];
 }
 
-/** The plan's allow-list item: `type`, or `type/recipe` for a connector with a fixed recipe. */
-const connectorItem = (row: ConnectionRow): string =>
-  typeof row.config.recipe === 'string'
-    ? `${row.connectorType}/${row.config.recipe}`
-    : row.connectorType;
-
 export async function insertConnection(
   ctx: ServiceContext,
   row: ConnectionRow,
@@ -192,7 +187,7 @@ export async function insertConnection(
     actor,
     'create',
     [
-      entitled('connectors', connectorItem(row)),
+      entitled('connectors', connectorItem(row.connectorType, row.config)),
       withinLimit('connections', 'SELECT COUNT(*) FROM connections cn WHERE cn.org_id = {org}'),
     ],
     row.id,

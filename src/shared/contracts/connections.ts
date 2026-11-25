@@ -68,6 +68,8 @@ export const RecipeInfoSchema = z.object({
   label: z.string(),
   /** True when the sender generates the secret and the admin pastes it. */
   pasteSecret: z.boolean(),
+  /** Whether the org's plan allows this recipe. Always true without an org. */
+  entitled: z.boolean(),
   outputFields: z.record(
     z.string(),
     z.object({
@@ -113,6 +115,8 @@ export const ConnectorInfoSchema = z.object({
   }),
   /** Sender recipes; empty for connectors without any. */
   recipes: z.array(RecipeInfoSchema).default([]),
+  /** Whether the org's plan allows this connector (for a sender, with no recipe). Always true without an org. */
+  entitled: z.boolean(),
 });
 export const ConnectorListSchema = pageOf(ConnectorInfoSchema);
 

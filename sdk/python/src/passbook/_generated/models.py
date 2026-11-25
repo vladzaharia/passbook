@@ -3350,6 +3350,7 @@ class ConnectorsListItem(_Model):
     outputFields: _Dict[str, ConnectorsListItemOutputFieldsValue]
     defaults: ConnectorsListItemDefaults
     recipes: _List[ConnectorsListItemRecipesItem] | None = None
+    entitled: bool
 
 class ConnectorsListItemCapabilities(_Model):
     poll: bool
@@ -3372,6 +3373,7 @@ class ConnectorsListItemRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
+    entitled: bool
     outputFields: _Dict[str, ConnectorsListItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListItemRecipesItemMappingValue]
     holderEmailField: str
@@ -3409,6 +3411,7 @@ class ConnectorsListResponseItemsItem(_Model):
     outputFields: _Dict[str, ConnectorsListResponseItemsItemOutputFieldsValue]
     defaults: ConnectorsListResponseItemsItemDefaults
     recipes: _List[ConnectorsListResponseItemsItemRecipesItem] | None = None
+    entitled: bool
 
 class ConnectorsListResponseItemsItemCapabilities(_Model):
     poll: bool
@@ -3431,6 +3434,7 @@ class ConnectorsListResponseItemsItemRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
+    entitled: bool
     outputFields: _Dict[str, ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListResponseItemsItemRecipesItemMappingValue]
     holderEmailField: str
@@ -3464,6 +3468,7 @@ class ConnectorsRetrieveResponse(_Model):
     outputFields: _Dict[str, ConnectorsRetrieveResponseOutputFieldsValue]
     defaults: ConnectorsRetrieveResponseDefaults
     recipes: _List[ConnectorsRetrieveResponseRecipesItem] | None = None
+    entitled: bool
 
 class ConnectorsRetrieveResponseCapabilities(_Model):
     poll: bool
@@ -3486,6 +3491,7 @@ class ConnectorsRetrieveResponseRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
+    entitled: bool
     outputFields: _Dict[str, ConnectorsRetrieveResponseRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsRetrieveResponseRecipesItemMappingValue]
     holderEmailField: str

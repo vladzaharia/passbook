@@ -11,7 +11,7 @@ import { connectors } from '../../connectors/registry.ts';
 import type { AnyConnector } from '../../connectors/types.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { type Entitlements, entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
-import { authorityDenied, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { orgIdOf, requireTenantSessionOrApiKey } from '../passes/http.ts';
@@ -39,16 +39,25 @@ async function authorizeCatalog(
 }
 
 /**
- * The connector as the org's plan allows it. A connector with recipes also runs with none (`type/custom`);
- * it lists only the entitled recipes, and drops out when neither that nor any recipe is. Null when out.
+ * The connector with the org's plan applied: `entitled` on it (a sender: running with no recipe, which is
+ * `type/custom`) and on each recipe. Nothing is removed, so a detail page still opens for a connection the
+ * plan no longer includes.
  */
-function planned(e: Entitlements, def: AnyConnector): z.infer<typeof ConnectorInfoSchema> | null {
+function flagged(e: Entitlements, def: AnyConnector): z.infer<typeof ConnectorInfoSchema> {
   const info = connectorInfo(def);
-  if (info.recipes.length === 0) return isEntitled(e, 'connectors', def.type) ? info : null;
-  const recipes = info.recipes.filter((r) => isEntitled(e, 'connectors', `${def.type}/${r.id}`));
-  return recipes.length > 0 || isEntitled(e, 'connectors', `${def.type}/custom`)
-    ? { ...info, recipes }
-    : null;
+  const allowed = (item: string) => isEntitled(e, 'connectors', item);
+  if (info.recipes.length === 0) return { ...info, entitled: allowed(def.type) };
+  return {
+    ...info,
+    entitled: allowed(`${def.type}/custom`),
+    recipes: info.recipes.map((r) => ({ ...r, entitled: allowed(`${def.type}/${r.id}`) })),
+  };
+}
+
+/** The list shows only what the plan allows: entitled recipes, and a connector only when something of it is. */
+function listed(info: z.infer<typeof ConnectorInfoSchema>): z.infer<typeof ConnectorInfoSchema>[] {
+  const recipes = info.recipes.filter((r) => r.entitled);
+  return info.entitled || recipes.length > 0 ? [{ ...info, recipes }] : [];
 }
 
 /** Platform catalog or a tenant-scoped integration catalog. */
@@ -69,7 +78,7 @@ export function registerConnectorCatalogRoutes(router: OpenAPIHono<AppBindings>)
       if (orgId === undefined)
         return c.json({ items: connectors.list().map(connectorInfo), nextCursor: null });
       const e = await entitlementsOf(serviceContext(c), orgId);
-      const items = connectors.list().flatMap((def) => planned(e, def) ?? []);
+      const items = connectors.list().flatMap((def) => listed(flagged(e, def)));
       return c.json({ items, nextCursor: null });
     },
   );
@@ -89,9 +98,7 @@ export function registerConnectorCatalogRoutes(router: OpenAPIHono<AppBindings>)
       const def = connectors.get(c.req.valid('param').type);
       if (!def) throw new NotFoundError('Connector type not found.', 'CONNECTOR_NOT_FOUND');
       if (orgId === undefined) return c.json(connectorInfo(def));
-      const info = planned(await entitlementsOf(serviceContext(c), orgId), def);
-      if (!info) throw authorityDenied('entitlement');
-      return c.json(info);
+      return c.json(flagged(await entitlementsOf(serviceContext(c), orgId), def));
     },
   );
 }

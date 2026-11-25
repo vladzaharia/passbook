@@ -22,7 +22,7 @@ export const RECIPES: Readonly<Record<Exclude<RecipeId, 'custom'>, Recipe>> = {
 };
 
 /** What the console lists: everything but the executable parts. */
-export const RECIPE_INFOS: readonly RecipeInfo[] = Object.values(RECIPES).map(
+export const RECIPE_INFOS: readonly Omit<RecipeInfo, 'entitled'>[] = Object.values(RECIPES).map(
   ({ id, label, pasteSecret, outputFields, mapping, holderEmailField, voidWhen }) => ({
     id,
     label,

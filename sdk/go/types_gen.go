@@ -1857,6 +1857,7 @@ type ConnectorsListItem struct {
 	OutputFields map[string]ConnectorsListItemOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsListItemDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsListItemRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                           `json:"entitled"`
 }
 
 type ConnectorsListItemCapabilities struct {
@@ -1883,6 +1884,7 @@ type ConnectorsListItemRecipesItem struct {
 	ID               string                                                    `json:"id"`
 	Label            string                                                    `json:"label"`
 	PasteSecret      bool                                                      `json:"pasteSecret"`
+	Entitled         bool                                                      `json:"entitled"`
 	OutputFields     map[string]ConnectorsListItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListItemRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                    `json:"holderEmailField"`
@@ -1930,6 +1932,7 @@ type ConnectorsListResponseItemsItem struct {
 	OutputFields map[string]ConnectorsListResponseItemsItemOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsListResponseItemsItemDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsListResponseItemsItemRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                                        `json:"entitled"`
 }
 
 type ConnectorsListResponseItemsItemCapabilities struct {
@@ -1956,6 +1959,7 @@ type ConnectorsListResponseItemsItemRecipesItem struct {
 	ID               string                                                                 `json:"id"`
 	Label            string                                                                 `json:"label"`
 	PasteSecret      bool                                                                   `json:"pasteSecret"`
+	Entitled         bool                                                                   `json:"entitled"`
 	OutputFields     map[string]ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListResponseItemsItemRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                                 `json:"holderEmailField"`
@@ -1994,6 +1998,7 @@ type ConnectorsRetrieveResponse struct {
 	OutputFields map[string]ConnectorsRetrieveResponseOutputFieldsValue `json:"outputFields"`
 	Defaults     ConnectorsRetrieveResponseDefaults                     `json:"defaults"`
 	Recipes      []ConnectorsRetrieveResponseRecipesItem                `json:"recipes,omitempty"`
+	Entitled     bool                                                   `json:"entitled"`
 }
 
 type ConnectorsRetrieveResponseCapabilities struct {
@@ -2020,6 +2025,7 @@ type ConnectorsRetrieveResponseRecipesItem struct {
 	ID               string                                                            `json:"id"`
 	Label            string                                                            `json:"label"`
 	PasteSecret      bool                                                              `json:"pasteSecret"`
+	Entitled         bool                                                              `json:"entitled"`
 	OutputFields     map[string]ConnectorsRetrieveResponseRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsRetrieveResponseRecipesItemMappingValue      `json:"mapping"`
 	HolderEmailField string                                                            `json:"holderEmailField"`

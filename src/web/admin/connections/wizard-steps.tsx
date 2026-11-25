@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { z } from 'zod';
 import type { ConnectorInfoSchema, RecipeId } from '@/shared/contracts/connections.ts';
 import { connectorIcon } from '../../lib/entities.ts';
@@ -161,6 +161,12 @@ export function ConfigStep({
   const authType = String(draft.config['auth.type'] ?? 'none');
   const recipe = (draft.config.recipe as RecipeId | undefined) ?? 'custom';
   const offered = connector.recipes.length > 0;
+  const customEntitled = connector.entitled !== false;
+  const firstEntitled = connector.recipes.find((r) => r.entitled !== false)?.id;
+  // A plan that lists senders but not a custom one starts on its first sender.
+  useEffect(() => {
+    if (offered && !customEntitled && recipe === 'custom' && firstEntitled) onRecipe(firstEntitled);
+  }, [offered, customEntitled, recipe, firstEntitled, onRecipe]);
   const hidden = useMemo(
     () => new Set([...WIZARD_HIDDEN(flat, authType), ...recipeHidden(recipe, offered)]),
     [flat, authType, recipe, offered],
@@ -217,7 +223,12 @@ export function ConfigStep({
           )}
         </FormField>
         {offered ? (
-          <RecipePicker recipes={connector.recipes} value={recipe} onChange={onRecipe} />
+          <RecipePicker
+            recipes={connector.recipes}
+            customEntitled={customEntitled}
+            value={recipe}
+            onChange={onRecipe}
+          />
         ) : null}
         {recipe !== 'custom' && connector.recipes.find((r) => r.id === recipe)?.pasteSecret ? (
           <SigningSecretField

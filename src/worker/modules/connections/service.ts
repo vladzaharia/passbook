@@ -9,6 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
 import { percentile, toDto } from './dto.ts';
+import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { schedules } from './health.ts';
 import { assertMayIssue, createIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
@@ -99,6 +100,7 @@ export async function create(
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
   const config = parseWith(def.configSchema, input.config, 'config');
+  await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const mode =
     input.mode ??
     (def.capabilities.poll ? 'poll' : def.capabilities.webhook ? 'webhook' : 'manual');

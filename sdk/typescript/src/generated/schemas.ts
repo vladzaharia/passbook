@@ -1323,6 +1323,7 @@ export type ConnectorsListResponse = {
       id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
       label: string;
       pasteSecret: boolean;
+      entitled: boolean;
       outputFields: Record<string, {
         type: "string" | "number" | "boolean" | "date";
         description?: string;
@@ -1341,6 +1342,7 @@ export type ConnectorsListResponse = {
         values?: Array<string | number | boolean>;
       }>;
     }>;
+    entitled: boolean;
   }>;
   nextCursor: string | null;
 };
@@ -1373,6 +1375,7 @@ export type ConnectorsRetrieveResponse = {
     id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
     label: string;
     pasteSecret: boolean;
+    entitled: boolean;
     outputFields: Record<string, {
       type: "string" | "number" | "boolean" | "date";
       description?: string;
@@ -1391,6 +1394,7 @@ export type ConnectorsRetrieveResponse = {
       values?: Array<string | number | boolean>;
     }>;
   }>;
+  entitled: boolean;
 };
 
 export type CreatedScanner = {
