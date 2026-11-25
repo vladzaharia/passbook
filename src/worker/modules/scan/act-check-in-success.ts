@@ -32,6 +32,7 @@ import { doneOkPredicate, effectiveReleaseCheck } from './repo-scan-checks.ts';
 import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
 import type { StopAuthority } from './scan-stop-authority.ts';
+import type { ScanApprover } from './scan-write-grant.ts';
 import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 import { allOf, overrideOpen } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
@@ -52,7 +53,7 @@ interface CheckInSuccessInput {
   stopAuthority: StopAuthority;
   originalCandidate: Candidate | null;
   facts: Omit<LedgerFacts, 'outcome' | 'reason'>;
-  approver: { id: string; authEpoch: number; deskOk?: boolean } | null;
+  approver: ScanApprover | null;
   onFailureCommitted(): void;
 }
 

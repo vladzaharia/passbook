@@ -1,6 +1,5 @@
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
 import { answerWithoutRow } from './act-answer.ts';
 import { commitCheckIn } from './act-check-in.ts';
 import { type ActRequest, claimOf, failActionClaimStmt } from './act-claim.ts';
@@ -232,6 +231,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
         approvedBy: verified?.id ?? null,
         approvedRole: verified?.role ?? null,
         approvedAuthEpoch: verified?.authEpoch ?? null,
+        approvedSole: alone,
         reservation,
         credentialTombstoneRefs: credentials.credentialTombstoneRefs,
         credentialKeysetCommitment: credentials.credentialKeysetCommitment,
@@ -246,16 +246,6 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
       if (error instanceof ScanEffectStop) return settleEffectStop(error);
       throw error;
     });
-    if (alone && verified && outcome.scanId !== null && !outcome.replay)
-      await recordAudit(ctx, {
-        orgId: authorityActor.orgId,
-        actorType: authorityActor.scanner ? 'scanner' : 'system',
-        actorId: authorityActor.scanner?.id ?? null,
-        action: 'scan.approved_alone',
-        targetType: 'scan',
-        targetId: outcome.scanId,
-        detail: { kind: 'sole', staffId: verified.id, role: verified.role },
-      });
     return {
       outcome,
       evaluatedSnapshot: found.liveCandidate ?? null,

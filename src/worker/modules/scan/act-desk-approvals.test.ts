@@ -4,7 +4,7 @@ import { run } from '../../platform/db.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
 import { signIn } from './overrides-test-fixtures.ts';
 import { deskMayApprove } from './rules.ts';
-import { codeOf } from './test-kit.ts';
+import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
 // A PIN's counters are windowed by the clock: each test starts in a fresh hour.
@@ -176,8 +176,12 @@ describe('the only staff who can approve may approve their own request, with a c
     const pass = await kit.scanPass(t, { balance: 0 });
     return {
       me,
-      send: (approval: Record<string, unknown>) =>
-        act(s.headers, codeOf(pass), { actionId: 'sadd', approval }),
+      send: (approval: Record<string, unknown>, idempotencyKey?: string) =>
+        act(s.headers, codeOf(pass), {
+          actionId: 'sadd',
+          approval,
+          ...(idempotencyKey ? { idempotencyKey } : {}),
+        }),
     };
   }
 
@@ -204,5 +208,26 @@ describe('the only staff who can approve may approve their own request, with a c
   it('is refused while another staff member can approve: two staff mean two people', async () => {
     const { me, send } = await alone('desk', '135791', true);
     expect((await send({ staffId: me.id, pin: me.pin, alone: true })).status).not.toBe(200);
+  });
+  it('does not let a same-key retry approve alone while another approver exists (V1)', async () => {
+    const { me, send: sendOnce } = await alone('desk', '864201', true);
+    const approval = { staffId: me.id, pin: me.pin, alone: true };
+    const idempotencyKey = key();
+    const first = await sendOnce({ ...approval }, idempotencyKey);
+    const second = await sendOnce({ ...approval }, idempotencyKey);
+    expect(first.status).not.toBe(200);
+    expect(second.status).not.toBe(200);
+    expect(await rows('SELECT id FROM scans WHERE approved_by = ?', [me.id])).toEqual([]);
+  });
+
+  it('refuses alone with another person named, without counting a miss against them (V2)', async () => {
+    const { me, send } = await alone('desk', '753101', true);
+    const [other] = await rows<{ id: string }>(
+      'SELECT id FROM scan_staff WHERE org_id = ? AND id != ? AND disabled_at IS NULL LIMIT 1',
+      [kit.org.id, me.id],
+    );
+    const res = await send({ staffId: other?.id ?? '', pin: me.pin, alone: true });
+    expect(res.status).toBe(422);
+    expect(await codeOfBody(res)).toBe('PIN_ALONE_NOT_SELF');
   });
 });

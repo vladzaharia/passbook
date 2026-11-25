@@ -1673,6 +1673,12 @@
     "fix": "Enter the correct PIN; repeated misses lock the entry for a while.",
     "retryable": true
   },
+  "PIN_ALONE_NOT_SELF": {
+    "title": "Approve your own request",
+    "when": "An approval with alone: true named someone other than the signed-in staff member.",
+    "fix": "Send your own staff id, or drop alone and ask another approver.",
+    "retryable": false
+  },
   "PIN_MANAGER_REQUIRED": {
     "title": "Manager required",
     "when": "The action needs a manager and none was chosen.",
