@@ -10,6 +10,7 @@ import {
 import { blueprintPass, SCAN_CODE } from '../../passkit/template/paper-blueprint-fixtures.ts';
 import { paperContent } from '../../passkit/template/paper-content.ts';
 import { overlaps, paperBoxes, TICKET_SHAPE } from '../../passkit/template/paper-geometry.ts';
+import type { BrandMark } from '../../shared/contracts/orgs.ts';
 import { toSvg } from '../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from './drawing.ts';
 import { PaperTicket } from './ticket.tsx';
@@ -28,6 +29,7 @@ async function sheet(
   size: PaperSize,
   paper: Record<string, unknown> = {},
   mode?: 'test',
+  mark: BrandMark = 'full',
 ) {
   const { passJson, manifest, personalization } = await blueprintPass(SLUG[kind]);
   const design: PaperDesign = resolvePaper({ schema: 1, size, barcode: 'qr', kind, ...paper });
@@ -43,6 +45,7 @@ async function sheet(
       content={content}
       design={design}
       code={CODE}
+      mark={mark}
       drawing={drawPaperCode(toSvg, design.barcode, CODE)}
       mode={mode}
     />,
@@ -74,6 +77,15 @@ describe('paper ticket per class and size', () => {
     // PassBook is a text line in the footer, once, and never a second code.
     expect(html.match(/PassBook/g)).toHaveLength(size === 'cr80' ? 1 : 1);
     expect(html.match(/role="img"/g)).toHaveLength(size === 'cr80' ? 1 : 1);
+  });
+
+  it.each(COMBOS)('%s on %s follows the footer choice', async (kind, size) => {
+    const small = (await sheet(kind, size, {}, undefined, 'small')).html;
+    expect(small).toContain('Powered by PassBook');
+    expect(small).not.toContain('Issued with');
+    const none = (await sheet(kind, size, {}, undefined, 'none')).html;
+    expect(none).not.toContain('PassBook');
+    expect(none).not.toContain('pp-passbook');
   });
 
   it('draws a card as two faces', async () => {

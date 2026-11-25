@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
+import type { BrandMark } from '../../shared/contracts/orgs.ts';
 import '../../web/pass-card/sync-barcode.ts';
 import holderCss from '../../generated/ssr-holder.css?raw';
 import type { PaperDesign } from '../../passkit/template/paper.ts';
@@ -62,6 +63,8 @@ export interface PreviewPaper {
   content: PaperContent;
   design: PaperDesign;
   drawing: PaperDrawing | undefined;
+  /** The org's footer choice. */
+  mark: BrandMark;
   assets: { logo?: string | undefined; art?: string | undefined };
 }
 
@@ -185,6 +188,7 @@ function PreviewBody({ view, wallets, paper, passTitle }: PreviewPageProps) {
                 content={paper.content}
                 design={paper.design}
                 code="PSAMPLEABCDEFGHIJKLMNOPQRST"
+                mark={paper.mark}
                 drawing={paper.drawing}
                 assets={paper.assets}
                 testBand

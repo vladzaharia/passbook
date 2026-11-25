@@ -712,7 +712,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"orgs.entitlements.retrieve", "GET", "/api/v1/orgs/id1/entitlements", false,
-		"", `{"orgId":"x","preset":"x","label":"x","items":[{"key":"api","value":0,"source":"preset"}]}`,
+		"", `{"orgId":"x","preset":"x","label":"x","items":[{"key":"api","value":0,"source":"preset"}],"usage":{}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Orgs.Entitlements.Retrieve(ctx, "id1")
 		},

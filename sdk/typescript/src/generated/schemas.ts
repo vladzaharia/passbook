@@ -3953,6 +3953,7 @@ export type OrgsEntitlementsRetrieveResponse = {
     value: number | string | Array<string> | null;
     source: "preset" | "override";
   }>;
+  usage: Record<string, number>;
 };
 
 export type OrgsReopenResponse = {
@@ -6553,6 +6554,37 @@ export type PlatformAuditEntriesListResponse = {
   nextCursor: string | null;
 };
 
+export type PlatformEntitlementPresetsListResponse = {
+  presets: Array<{
+    preset: string;
+    label: string;
+    revision: number;
+    updatedAt: number;
+    orgCount: number;
+    pendingOrgs: number;
+    values: Record<string, number | string | Array<string> | null>;
+  }>;
+};
+
+export type PlatformEntitlementPresetsUpdateParams = {
+  preset: string;
+  expectedRevision: number;
+  values: Record<string, number | string | Array<string> | null>;
+};
+
+export type PlatformEntitlementPresetsUpdateResponse = {
+  preset: {
+    preset: string;
+    label: string;
+    revision: number;
+    updatedAt: number;
+    orgCount: number;
+    pendingOrgs: number;
+    values: Record<string, number | string | Array<string> | null>;
+  };
+  moved: number;
+};
+
 export type PlatformMetricsRetrieveOverviewResponse = {
   source: "analytics_engine" | "d1";
   range: "24h" | "7d" | "30d";
@@ -6668,7 +6700,7 @@ export type PlatformOrgsCreateParams = {
   name: string;
   defaultIdentityId?: string | null;
   branding?: OrgBranding;
-  preset?: "legacy" | "trial" | "standard";
+  preset?: "trial" | "starter" | "standard" | "premium" | "legacy";
   addMe?: boolean;
 };
 
@@ -6779,10 +6811,6 @@ export type PlatformOrgsListResponse = {
     name: string;
     status: "active" | "suspended" | "deleted";
     personal?: boolean;
-    personalOwner?: {
-      id: string;
-      name: string | null;
-    } | null;
     createdAt: number;
     counts: {
       passes: number;
@@ -6792,6 +6820,14 @@ export type PlatformOrgsListResponse = {
       members?: number;
     };
     countsCapped: boolean;
+    personalOwner?: {
+      id: string;
+      name: string | null;
+    } | null;
+    plan?: {
+      preset: string;
+      label: string;
+    } | null;
   }>;
   nextCursor: string | null;
 };
@@ -6837,10 +6873,6 @@ export type PlatformOrgsRetrieveResponse = {
   name: string;
   status: "active" | "suspended" | "deleted";
   personal?: boolean;
-  personalOwner?: {
-    id: string;
-    name: string | null;
-  } | null;
   createdAt: number;
   counts: {
     passes: number;
@@ -6850,6 +6882,14 @@ export type PlatformOrgsRetrieveResponse = {
     members?: number;
   };
   countsCapped: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
+  plan?: {
+    preset: string;
+    label: string;
+  } | null;
 };
 
 export type PlatformOrgsSetStatusParams = {
@@ -6862,10 +6902,6 @@ export type PlatformOrgsSetStatusResponse = {
   name: string;
   status: "active" | "suspended" | "deleted";
   personal?: boolean;
-  personalOwner?: {
-    id: string;
-    name: string | null;
-  } | null;
   createdAt: number;
   counts: {
     passes: number;
@@ -6875,6 +6911,14 @@ export type PlatformOrgsSetStatusResponse = {
     members?: number;
   };
   countsCapped: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
+  plan?: {
+    preset: string;
+    label: string;
+  } | null;
 };
 
 export type PlatformOrgsWalletEnrollmentsHoldParams = {

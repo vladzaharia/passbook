@@ -164,6 +164,12 @@ const NOT_ASKED: [string, string, unknown][] = [
   ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'email.senderName': 'X' } }],
   ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', replace: true, dryRun: true }],
   ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', dryRun: false }],
+  // Asked only when an organization is on the preset (presets.test.ts holds that side).
+  [
+    'PUT',
+    '/api/v1/platform/entitlement-presets',
+    { preset: 'trial', expectedRevision: 1, values: {} },
+  ],
 ];
 
 async function codeOf(
@@ -256,6 +262,7 @@ describe('step-up route inventory', () => {
         "POST /api/v1/webhook-endpoints/:id/captures/secret",
         "POST /api/v1/webhook-endpoints/:id/secret",
         "PUT /api/v1/identities/:id/push-key",
+        "PUT /api/v1/platform/entitlement-presets",
         "PUT /api/v1/settings",
       ]
     `);

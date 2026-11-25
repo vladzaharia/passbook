@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { type APIRequestContext, expect, request } from '@playwright/test';
+import { type APIRequestContext, type Browser, expect, request } from '@playwright/test';
 import { e2eOrigin } from '../../tools/lib/e2e-ports.ts';
-import { type Role, stateFile } from './auth.ts';
+import { type Role, saveState, startOidcAs, stateFile } from './auth.ts';
 
 export const BASE = e2eOrigin;
 
@@ -22,7 +22,11 @@ export interface Api {
 
 /** Real API client acting as a signed-in role (same cookie + CSRF rules as the browser). */
 export async function apiAs(role: Role): Promise<Api> {
-  const ctx = await request.newContext({ baseURL: BASE, storageState: stateFile(role) });
+  return apiFrom(await request.newContext({ baseURL: BASE, storageState: stateFile(role) }));
+}
+
+/** An Api over an existing request context, such as a page's after a fresh sign-in. */
+export async function apiFrom(ctx: APIRequestContext): Promise<Api> {
   const session = await (await ctx.get('/api/v1/session')).json();
   const csrf = session.csrfToken as string;
   const send = async (
@@ -179,4 +183,19 @@ export async function createPass(
     },
     { 'Idempotency-Key': uid('idem'), 'x-passbook-mode': mode },
   );
+}
+
+/**
+ * The admin signed in again just now, for actions that need a recent sign-in (webhook endpoints).
+ * The stored session is minutes old by the time a long CI shard reaches the spec.
+ */
+export async function freshAdminApi(browser: Browser): Promise<Api> {
+  const context = await browser.newContext({ storageState: stateFile('admin') });
+  const page = await context.newPage();
+  await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
+  await page.waitForURL(/\/admin/);
+  // A new sign-in ends the old session, so the stored state must follow.
+  await saveState(page, 'admin');
+  const api = await apiFrom(context.request);
+  return { ...api, dispose: () => context.close() };
 }

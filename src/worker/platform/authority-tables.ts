@@ -196,10 +196,15 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   org_entitlement_overrides: { org: 'org_id', conflict: ['org_id', 'key'] },
   entitlement_preset_meta: {
     org: null,
-    platform: { columns: ['label', 'is_plan', 'revision', 'updated_at', 'updated_by'] },
+    platform: {
+      columns: ['label', 'is_plan', 'revision', 'updated_at', 'updated_by', 'previous_values'],
+    },
   },
   entitlement_presets: { org: null, platform: { columns: ['value'] } },
 };
+
+/** The cron that retires one org's expired overrides and journals the change like a platform save (org scope: the grant pins the tenant). */
+export const ENTITLEMENT_EXPIRY_PURPOSE = 'org.job.entitlement_expiry';
 
 const KEYSET_PURPOSES = ['create', 'rotate', 'retire_key', 'revoke_key', 'disable'].map(
   (p) => `org_mode.nfc.keyset.${p}`,
@@ -219,8 +224,9 @@ export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
     'platform.job.template_sync',
     'platform.job.developer_sandbox.create',
     'platform.org.entitlements_set',
+    ENTITLEMENT_EXPIRY_PURPOSE,
   ],
-  org_entitlement_overrides: ['platform.org.entitlements_set'],
+  org_entitlement_overrides: ['platform.org.entitlements_set', ENTITLEMENT_EXPIRY_PURPOSE],
   entitlement_preset_meta: ['platform.entitlement_preset.update'],
   entitlement_presets: ['platform.entitlement_preset.update'],
   // Secure tag keys (0129): the five keyset purposes only (re-enrol and import write side rows, not keys).

@@ -28,6 +28,11 @@ describe('entitlement copy', () => {
     }
   });
 
+  it('names Unlimited for the legacy id', () => {
+    expect(PRESET_LABEL.legacy).toBe('Unlimited');
+    expect(ENTITLEMENT_LABEL['brand.mark']).toBe('PassBook footer');
+  });
+
   it('has a non-empty, distinct label per key', () => {
     const labels = Object.values(ENTITLEMENT_LABEL);
     expect(labels.every((l) => l.length > 0)).toBe(true);

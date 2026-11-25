@@ -35,6 +35,7 @@ async function paper(testBand: boolean, size: PaperDesign['size']) {
       content={content}
       design={design}
       code="PABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      mark="full"
       drawing={drawPaperCode(toSvg, design.barcode, 'PABCDEFGHIJKLMNOPQRSTUVWXYZ')}
       testBand={testBand}
     />,

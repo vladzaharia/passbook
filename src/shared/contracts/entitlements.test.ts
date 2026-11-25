@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { entitlementImpact } from '../entitlement-impact.ts';
 import {
   ENTITLEMENT_KEYS,
   ENTITLEMENT_PRESETS,
@@ -24,17 +25,42 @@ describe('entitlement registry', () => {
     }
   });
 
-  it('legacy is every flag on, no limits, full mark, no domains', () => {
+  it('Unlimited is every flag on, no limits, footer can be off', () => {
     const legacy = presetValues('legacy');
     for (const key of ENTITLEMENT_KEYS) {
       const def = entitlementDef(key);
       if (def.kind === 'flag') expect(legacy[key], key).toBe(1);
-      if (def.kind === 'limit' && key !== 'domains') expect(legacy[key], key).toBeNull();
+      if (def.kind === 'limit') expect(legacy[key], key).toBeNull();
     }
-    expect(legacy['brand.mark']).toBe('full');
-    expect(legacy.domains).toBe(0);
+    expect(legacy['brand.mark']).toBe('none');
     expect(legacy.connectors).toEqual(['*']);
     expect(legacy['templates.stylesBlocked']).toEqual([]);
+  });
+
+  it('lists the plans in card order, with the developer sandbox last', () => {
+    expect(ENTITLEMENT_PRESETS).toEqual([
+      'trial',
+      'starter',
+      'standard',
+      'premium',
+      'legacy',
+      'developer',
+    ]);
+  });
+
+  it('every step up the ladder only adds: nothing turns off, drops or changes sideways', () => {
+    const ladder = ['trial', 'starter', 'standard', 'premium', 'legacy'] as const;
+    for (const [i, higher] of ladder.entries()) {
+      const lower = ladder[i - 1];
+      if (!lower) continue;
+      const { counts } = entitlementImpact(presetValues(lower), presetValues(higher));
+      expect({
+        step: `${lower} -> ${higher}`,
+        off: counts.off,
+        down: counts.down,
+        changed: counts.changed,
+      }).toEqual({ step: `${lower} -> ${higher}`, off: 0, down: 0, changed: 0 });
+    }
   });
 
   it('levels run lowest to highest and include the ones below', () => {
