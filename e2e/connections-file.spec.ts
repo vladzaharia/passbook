@@ -245,7 +245,7 @@ test('a developer sandbox has no Connections: hidden from the nav, a direct URL 
   const dir = process.env.SHOTS_DIR;
   if (dir) {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await expect(nav.getByRole('link', { name: 'Webhooks' })).toBeVisible();
     for (const scheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme: scheme });
