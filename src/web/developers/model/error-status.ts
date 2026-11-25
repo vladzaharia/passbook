@@ -4,7 +4,7 @@ const asDict = (v: unknown): Dict => (v && typeof v === 'object' ? (v as Dict) :
 const asNumbers = (v: unknown): number[] =>
   Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : [];
 
-/** The HTTP status of each code in docs/api/errors.json, whichever of the shapes it takes. A code raised with several statuses shows the first (the catalog sorts them). */
+/** The HTTP status of each code in docs/api/errors.json, whichever of the shapes it takes. A code raised with several statuses shows the first (the catalog puts the status raised at the most sites first). */
 export function errorStatuses(errors: unknown): Map<string, number> {
   const out = new Map<string, number>();
   const list = Array.isArray(errors) ? errors : asDict(errors).codes;

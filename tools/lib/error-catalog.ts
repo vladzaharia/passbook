@@ -9,6 +9,7 @@ const CODE = /'([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)'/g;
 
 export interface CatalogCode {
   code: string;
+  /** Every status the code is raised with, the one raised at the most sites first (ties: the lower status). */
   statuses: number[];
   /** Directories under src/worker/modules (or the top-level worker directory) that throw it. */
   modules: string[];
@@ -104,10 +105,10 @@ export function buildErrorCatalog(): ErrorCatalog {
   const paths = files(WORKER).sort();
   const sources = paths.map((p) => readFileSync(p, 'utf8'));
   const statuses = statusByClass(sources);
-  const found = new Map<string, { statuses: Set<number>; modules: Set<string> }>();
+  const found = new Map<string, { statuses: Map<number, number>; modules: Set<string> }>();
   const add = (code: string, status: number, module: string): void => {
-    const e = found.get(code) ?? { statuses: new Set(), modules: new Set() };
-    e.statuses.add(status);
+    const e = found.get(code) ?? { statuses: new Map(), modules: new Set() };
+    e.statuses.set(status, (e.statuses.get(status) ?? 0) + 1);
     e.modules.add(module);
     found.set(code, e);
   };
@@ -153,7 +154,9 @@ export function buildErrorCatalog(): ErrorCatalog {
     .sort(([a], [b]) => (a < b ? -1 : 1))
     .map(([code, e]) => ({
       code,
-      statuses: [...e.statuses].sort((a, b) => a - b),
+      statuses: [...e.statuses]
+        .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+        .map(([status]) => status),
       modules: [...e.modules].sort(),
     }));
   return { codes };

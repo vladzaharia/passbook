@@ -83,6 +83,15 @@
       ]
     },
     {
+      "code": "API_KEY_MISSING",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "API_KEY_MODE_MISMATCH",
       "statuses": [
         403
@@ -1531,8 +1540,8 @@
     {
       "code": "IDEMPOTENCY_KEY_REUSED",
       "statuses": [
-        409,
-        422
+        422,
+        409
       ],
       "modules": [
         "delivery",
@@ -2677,8 +2686,8 @@
     {
       "code": "NO_RECIPIENT",
       "statuses": [
-        409,
-        422
+        422,
+        409
       ],
       "modules": [
         "bundles",
@@ -2864,8 +2873,8 @@
     {
       "code": "ORG_REQUIRED",
       "statuses": [
-        403,
-        422
+        422,
+        403
       ],
       "modules": [
         "bundles",
@@ -4072,8 +4081,8 @@
     {
       "code": "SCANNING_SESSION_PAUSED",
       "statuses": [
-        403,
-        409
+        409,
+        403
       ],
       "modules": [
         "scan"
@@ -4100,8 +4109,8 @@
     {
       "code": "SCANNING_SESSION_SETTINGS_INVALID",
       "statuses": [
-        403,
-        422
+        422,
+        403
       ],
       "modules": [
         "scan"
@@ -6414,8 +6423,8 @@
     {
       "code": "WORKFLOW_START",
       "statuses": [
-        502,
-        503
+        503,
+        502
       ],
       "modules": [
         "passes",
