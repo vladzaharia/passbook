@@ -45,6 +45,7 @@ export const WARNING_CODES = [
   'NFC',
   'NFC_STYLE',
   'PAPER_FIELD',
+  'PAPER_FIELD_UNDRAWN',
   'PAPER_INK',
   'PAPER_INPUT',
   'PASS_SIZE',

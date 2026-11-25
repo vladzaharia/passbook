@@ -6,8 +6,10 @@
  */
 import { z } from 'zod';
 import type { Expr, PassJson, TemplateManifest, ValidationIssue } from '../types.ts';
+import { styleOf } from '../wallets/view-fields.ts';
 import { checkExpr, exprReferences } from './expr.ts';
 import { paperInk } from './paper-ink.ts';
+import { kindOf } from './paper-kinds.ts';
 
 export const PAPER_SCHEMA = 1;
 export const PAPER_SIZES = ['a4', 'letter', 'half', 'cr80'] as const;
@@ -241,15 +243,12 @@ export function paperManifestIssues(
         error('PAPER_LOOKUP_FIELD', 'This field carries the scan lookup value.', path);
     }
   }
-  if (
-    paper.fields?.length &&
-    (paper.size === 'cr80' || paper.kind === 'permit' || paper.kind === 'coupon')
-  )
-    warn(
-      'PAPER_FIELD',
-      'A card, permit or coupon does not print extra fields. Remove them or use a larger layout.',
-      'paper.fields',
-    );
+  // A card, permit or coupon draws no extra fields; the kind is the declared one or the derived one.
+  const kind =
+    paper.kind ??
+    kindOf(manifest, options.passJson ? styleOf(options.passJson as PassJson) : undefined, {});
+  if (paper.fields?.length && (paper.size === 'cr80' || kind === 'permit' || kind === 'coupon'))
+    warn('PAPER_FIELD_UNDRAWN', 'Extra fields are not printed on this layout.', 'paper.fields');
   if (paper.size === 'cr80' && paper.barcode === 'code128')
     error('PAPER_BARCODE', 'Code 128 does not fit a card. Use QR.', 'paper.barcode');
   if (paper.ink !== 'mono' && options.passJson && !paperInk(options.passJson as PassJson).colour)

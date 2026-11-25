@@ -1,6 +1,6 @@
 /** The words on a ticket, per class and panel, from the renderer-neutral content. Pure. */
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
-import { paperDate, paperZoneInfo } from '../../passkit/template/paper-format.ts';
+import { paperDate, paperZoneFor, paperZoneInfo } from '../../passkit/template/paper-format.ts';
 import { PAPER_COPY } from '../../shared/copy/print.ts';
 
 export interface Issued {
@@ -23,12 +23,20 @@ export interface Column {
 
 const join = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' · ');
 const at = (c: PaperContent, iso: string | undefined, style: Parameters<typeof paperDate>[2]) =>
-  iso ? paperDate(iso, c.zone, style) : '';
-/** The end's clock, with its day when it falls on another day than the start (a hotel checkout). */
-const endAt = (c: PaperContent, end: string) =>
-  c.start && at(c, end, 'long') !== at(c, c.start, 'long')
-    ? `${at(c, end, 'short')}, ${at(c, end, 'time')}`
-    : at(c, end, 'time');
+  iso ? paperDate(iso, paperZoneFor(c, iso), style) : '';
+const abbrAt = (c: PaperContent, iso: string) => {
+  const zone = paperZoneFor(c, iso);
+  return zone ? paperZoneInfo(zone, iso)?.abbr : undefined;
+};
+/** The end's clock: its day when it is another day, its own zone when that differs from the start's. */
+const endAt = (c: PaperContent, end: string) => {
+  const clock =
+    c.start && at(c, end, 'long') !== at(c, c.start, 'long')
+      ? `${at(c, end, 'short')}, ${at(c, end, 'time')}`
+      : at(c, end, 'time');
+  const own = abbrAt(c, end);
+  return own && c.start && own !== abbrAt(c, c.start) ? `${clock} ${own}` : clock;
+};
 const zoneAbbr = (c: PaperContent) => {
   const iso = c.start ?? c.validUntil;
   return c.zone && iso ? paperZoneInfo(c.zone, iso)?.abbr : undefined;
@@ -77,8 +85,12 @@ const timesLine = (c: PaperContent): string | undefined => {
   return `${parts.join(' · ')}${abbr ? ` (${abbr})` : ''}`;
 };
 
-const MAX_FACE_LINES = 9;
+/** Lines that fit above the seat boxes on a sheet (7) and a half sheet (6), measured on a full ticket. */
+const MAX_FACE_LINES = 7;
 const MAX_HALF_LINES = 6;
+
+/** The half sheet's notes only have room under a short panel. */
+export const faceNotesFit = (lines: readonly Line[]) => lines.length <= 4;
 
 /** The holder panel's text under the band, largest first. */
 export function faceLines(c: PaperContent, half = false): Line[] {
@@ -201,8 +213,8 @@ export function compactBefore(c: PaperContent): string | undefined {
 export function rangeText(c: PaperContent): string | undefined {
   if (!c.validUntil) return undefined;
   if (!c.validFrom) return `Until ${at(c, c.validUntil, 'short')}`;
-  const from = paperDate(c.validFrom, c.zone, 'short').replace(/^\w+ /, '');
-  const to = paperDate(c.validUntil, c.zone, 'short').replace(/^\w+ /, '');
+  const from = at(c, c.validFrom, 'short').replace(/^\w+ /, '');
+  const to = at(c, c.validUntil, 'short').replace(/^\w+ /, '');
   const sameYear = from.slice(-4) === to.slice(-4);
   return `${sameYear ? from.slice(0, -5) : from} – ${to}`;
 }

@@ -7,17 +7,16 @@
  */
 import { PAPER_COPY } from '../../shared/copy/print.ts';
 import type { Expr, PassJson, Personalization, TemplateManifest } from '../types.ts';
-import { resolveRoles } from '../wallets/roles.ts';
 import type { RoleValue } from '../wallets/types.ts';
 import { buildFields, styleOf } from '../wallets/view-fields.ts';
 import { relevanceOf } from '../wallets/view-parts.ts';
 import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
 import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
-import { checkInOnce, declaredTimes } from './paper-declared.ts';
-import { paperZoneOf } from './paper-format.ts';
+import { checkInOnce, declaredTimes, printZone } from './paper-declared.ts';
 import { type PaperColors, paperInk } from './paper-ink.ts';
 import { ISO, type Kinded, kindContent, kindOf } from './paper-kinds.ts';
+import { dedupeAddress, idFlagged, paperRoles } from './paper-roles.ts';
 
 export type PaperArt = 'artwork' | 'background' | 'thumbnail' | 'strip';
 export interface PaperFact {
@@ -47,8 +46,10 @@ export interface PaperContent {
   doors?: string;
   validFrom?: string;
   validUntil?: string;
-  /** IANA name or `+hh:mm`; every time prints with this zone. */
+  /** IANA name or `+hh:mm`: the zone of the start, or of every time when `zoneNamed`. */
   zone?: string;
+  /** A named zone (template input or the org's): every time prints in it. Else each keeps its offset. */
+  zoneNamed: boolean;
   /** Venue, or the home club for a membership. */
   venue?: string;
   address?: string;
@@ -81,6 +82,8 @@ export interface PaperContentInput {
   holderName?: string | null;
   /** The pass's own scan code: a field equal to it is never printed. */
   scanCode?: string | null;
+  /** The org's time zone: times written in UTC read in it. */
+  orgTimeZone?: string | null;
   /** Image slots the template ships (`logo`, `artwork`, ...). Absent: the logo is assumed, no art. */
   images?: readonly string[];
 }
@@ -107,19 +110,6 @@ const ART_ORDER: Record<PaperKind, PaperArt[]> = {
 const MAX_HELP = 3;
 const MAX_BRING = 4;
 
-/** An address that starts with the venue name drops the repeat; one that equals it vanishes. */
-export function dedupeAddress(venue: string | undefined, address: string | undefined) {
-  if (!address) return undefined;
-  if (!venue) return address;
-  let rest = address;
-  while (rest.toLowerCase().startsWith(venue.toLowerCase()))
-    rest = rest
-      .slice(venue.length)
-      .replace(/^[\s,·–-]+/, '')
-      .trim();
-  return rest || undefined;
-}
-
 /** The ticket's words. Pure; the same pass and design always give the same content. */
 export function paperContent(input: PaperContentInput): PaperContent {
   const { passJson, manifest, design } = input;
@@ -138,28 +128,11 @@ export function paperContent(input: PaperContentInput): PaperContent {
     lookups: manifest.lookups ?? {},
   };
   const evalExpr = (e: Expr) => evaluate(e, scope);
-  const roleInput = {
-    style,
-    org: passJson.organizationName,
-    fields,
-    ...(passJson.semantics ? { semantics: passJson.semantics } : {}),
-    barcodes: [],
-    locations: relevance.locations,
-  };
-  const { roles: resolved } = resolveRoles(
-    { ...roleInput, dates: relevance.dates },
+  const roles = paperRoles(
+    { style, org: passJson.organizationName, fields, passJson, relevance },
     manifest.wallets?.roles,
     evalExpr,
   );
-  // The lock-screen relevance date sits early on purpose; it is not when the event starts.
-  const { roles: exact } = resolveRoles(
-    { ...roleInput, dates: [] },
-    manifest.wallets?.roles,
-    evalExpr,
-  );
-  const roles = { ...resolved, eventStart: exact.eventStart, eventEnd: exact.eventEnd };
-  if (!roles.eventStart) delete roles.eventStart;
-  if (!roles.eventEnd) delete roles.eventEnd;
   const evalText = (e: Expr): string | undefined => {
     try {
       return plain(evalExpr(e));
@@ -263,7 +236,11 @@ export function paperContent(input: PaperContentInput): PaperContent {
         .map((v) => v.replace(/^(?:mailto:|tel:)/, '')),
     ),
   ].slice(0, MAX_HELP);
-  const zone = paperZoneOf(parts.start ?? parts.validUntil ?? parts.end, named);
+  const { zone, zoneNamed } = printZone(
+    [parts.start, parts.validUntil, parts.end, parts.validFrom],
+    named,
+    input.orgTimeZone,
+  );
   const room = parts.room && parts.room !== venue ? parts.room : undefined;
   const address = dedupeAddress(room, dedupeAddress(venue, parts.address));
   return {
@@ -283,6 +260,7 @@ export function paperContent(input: PaperContentInput): PaperContent {
     ...(parts.validFrom ? { validFrom: parts.validFrom } : {}),
     ...(parts.validUntil ? { validUntil: parts.validUntil } : {}),
     ...(zone ? { zone } : {}),
+    zoneNamed,
     ...(venue ? { venue } : {}),
     ...(address ? { address } : {}),
     ...(room ? { room } : {}),
@@ -298,13 +276,4 @@ export function paperContent(input: PaperContentInput): PaperContent {
     ...(terms ? { terms } : {}),
     extras,
   };
-}
-
-/** `scan.flags` names an `idRequired` input and this pass has it on. */
-function idFlagged(manifest: PaperContentInput['manifest'], personalization: Personalization) {
-  const flags = (manifest.scan as { flags?: { input?: string }[] } | undefined)?.flags ?? [];
-  return flags.some((f) => {
-    const v = f.input === 'idRequired' ? personalization.idRequired : undefined;
-    return v === true || (typeof v === 'string' && /^(true|yes|y|1)$/i.test(v));
-  });
 }

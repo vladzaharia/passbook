@@ -6,7 +6,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { seedBundlePrincipal } from '../bundles/test-auth-fixtures.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { newPassCode } from '../passes/new-code.ts';
-import { voidPass } from '../passes/service.ts';
+import { unvoidPass, voidPass } from '../passes/service.ts';
 import {
   key,
   ORIGIN,
@@ -218,8 +218,25 @@ describe('a print whose pass cannot admit', () => {
     await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
     const s = await kit.scanner({ templateIds: [tpl] });
     const out = await resolve(s, p.code);
-    expect(out.kind).toBe('refused');
-    expect(out).not.toMatchObject({ reason: 'print_voided' });
+    expect(out).toMatchObject({ kind: 'refused', reason: 'voided' });
+  });
+
+  it('a voided pass with paper off still says voided, not channel_off', async () => {
+    const pass = await printable();
+    const p = await mint(pass.id);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    await call('PUT', `/passes/${pass.id}/channels`, { channels: { paper: 'off' } });
+    const s = await kit.scanner({ templateIds: [tpl] });
+    expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'voided' });
+  });
+
+  it('a restored pass leaves its print voided', async () => {
+    const pass = await printable();
+    const p = await mint(pass.id);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    await unvoidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    const s = await kit.scanner({ templateIds: [tpl] });
+    expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'print_voided' });
   });
 
   it('a test print on a live scanner says test_pass', async () => {

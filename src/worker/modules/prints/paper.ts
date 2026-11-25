@@ -8,6 +8,7 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import * as repo from './repo.ts';
 
 /** The paper design of the pass's pinned template version; derived when it has no `paper` block. */
@@ -46,12 +47,13 @@ export async function paperTicket(
     passJson,
     manifest: (manifest ?? {}) as Pick<
       TemplateManifest,
-      'wallets' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'
+      'wallets' | 'behaviors' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'
     >,
     personalization: pass.personalization,
     scanCode: pass.scanCode,
     design,
     images,
+    orgTimeZone: await readOrgTimeZone(ctx.env.DB, pass.orgId),
   });
   const logo = bestImage(template.assets, 'logo');
   const art = content.art ? bestImage(template.assets, content.art) : undefined;
