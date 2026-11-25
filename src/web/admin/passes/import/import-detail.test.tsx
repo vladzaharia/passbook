@@ -383,7 +383,8 @@ describe('other states', () => {
 
   it('shows the checking state', async () => {
     await open(importDto({ state: 'checking' }));
-    expect(await screen.findByRole('status')).toBeTruthy();
+    // The shell has its own empty live region, so the role alone matches two nodes and findBy retries to timeout.
+    expect(await screen.findByText('Checking rows')).toBeTruthy();
   });
 
   it('shows a load failure with retry', async () => {
