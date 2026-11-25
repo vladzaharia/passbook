@@ -17,7 +17,7 @@ describe('demo v2 goldens', () => {
       rows[locale] = await listRecords({ ...GOLDEN, dataset, locale, count });
     }
     await expect(`${JSON.stringify(rows, null, 1)}\n`).toMatchFileSnapshot(
-      `./__golden__/${dataset}.json`,
+      `./__golden__/${dataset}.golden`,
     );
   });
 });
