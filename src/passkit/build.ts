@@ -1,6 +1,7 @@
 import { cachedAssetBytes } from './asset-cache.ts';
 import type { BehaviorRegistry } from './behaviors/registry.ts';
 import { AssetPlanError, type ShippedAsset, shippedAssets } from './build-assets.ts';
+import { contentHashOf } from './build-hash.ts';
 import { inputTimeZone, isTimeZone, localizeDates, localZones } from './build-local-time.ts';
 import { normalizePass } from './schema/normalize.ts';
 import type { SignedPass } from './sign/index.ts';
@@ -59,6 +60,8 @@ export interface BuiltPass {
   signed: SignedPass;
   /** SHA-256 of pass.json content plus asset digests. Independent of signing time. */
   contentHash: string;
+  /** SHA-1 of each asset, as `contentHash` covers them. */
+  assetSha1: Record<string, string>;
   changed: true;
 }
 
@@ -66,6 +69,7 @@ export interface UnchangedPass {
   passJson: PassJson;
   report: ValidationReport;
   contentHash: string;
+  assetSha1: Record<string, string>;
   changed: false;
 }
 
@@ -90,24 +94,6 @@ function fail(code: PassBuildError['code'], message: string, path?: string): nev
       ...(path ? { path } : {}),
     },
   ]);
-}
-
-function canonical(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  if (value && typeof value === 'object') {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record)
-      .sort()
-      .filter((k) => record[k] !== undefined)
-      .map((k) => `${JSON.stringify(k)}:${canonical(record[k])}`)
-      .join(',')}}`;
-  }
-  return JSON.stringify(value) ?? 'null';
-}
-
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function readAll(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
@@ -249,14 +235,16 @@ async function planAndHash(args: PreviewPassInput): Promise<HashedPlan> {
     if (asset.crc32 !== undefined) crc[asset.name] = asset.crc32;
   }
   checkPackageContents(plan, bytes, args.server.identity);
-  const contentHash = await sha256Hex(
-    `${canonical(plan.passJson)}\n${Object.keys(sha1)
-      .sort()
-      .map((name) => `${name}:${sha1[name]}`)
-      .join('\n')}`,
-  );
+  const contentHash = await contentHashOf(plan.passJson, sha1);
   return { plan, bytes, sha1, crc, contentHash };
 }
+
+const hashed = (plan: PlannedPass, contentHash: string, assetSha1: Record<string, string>) => ({
+  passJson: plan.passJson,
+  report: plan.report,
+  contentHash,
+  assetSha1,
+});
 
 /** The input of a pass that is only ever previewed: no signing material exists to pass. */
 export type PreviewPassInput = Omit<BuildPassInput, 'signing' | 'previousHash' | 'force'>;
@@ -265,6 +253,7 @@ export interface PreviewPass {
   passJson: PassJson;
   report: ValidationReport;
   contentHash: string;
+  assetSha1: Record<string, string>;
 }
 
 /**
@@ -272,8 +261,8 @@ export interface PreviewPass {
  * `signing` parameter, so no caller can sign through it.
  */
 export async function buildPassPreview(args: PreviewPassInput): Promise<PreviewPass> {
-  const { plan, contentHash } = await planAndHash(args);
-  return { passJson: plan.passJson, report: plan.report, contentHash };
+  const { plan, contentHash, sha1 } = await planAndHash(args);
+  return { passJson: plan.passJson, report: plan.report, contentHash, assetSha1: sha1 };
 }
 
 /**
@@ -288,12 +277,12 @@ export async function buildPass(args: BuildPassInput): Promise<BuiltPass | Uncha
   const { signing } = args;
   const { plan, bytes, sha1, crc, contentHash } = await planAndHash(args);
   if (args.previousHash === contentHash && !args.force)
-    return { passJson: plan.passJson, report: plan.report, contentHash, changed: false };
+    return { ...hashed(plan, contentHash, sha1), changed: false };
 
   const signed = await signPass(plan.passJson, bytes, signing, {
     now: args.now,
     precomputedSha1: sha1,
     precomputedCrc32: crc,
   });
-  return { passJson: plan.passJson, report: plan.report, signed, contentHash, changed: true };
+  return { ...hashed(plan, contentHash, sha1), signed, changed: true };
 }

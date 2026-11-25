@@ -20,6 +20,7 @@ import { dailyOrgLifecycle } from '../modules/org-lifecycle/jobs.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { sweepBulkRuns } from '../modules/passes/bulk-run.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
+import { claimBoundaries } from '../modules/passes/event-boundaries.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
 import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
@@ -63,6 +64,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'templates.sync', run: syncBakedOnDeploy },
     { name: 'templates.fork_updates', run: (ctx) => planForkUpdates(ctx) },
     { name: 'passes.stale_reissue', run: reissueStalePasses },
+    { name: 'passes.event_boundaries', run: claimBoundaries },
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
     { name: 'channels.apply_sweep', run: sweepChannelApply },

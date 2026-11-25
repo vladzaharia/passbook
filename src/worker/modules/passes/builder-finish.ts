@@ -1,3 +1,5 @@
+import { withTimedKeys } from '../../../passkit/behaviors/upcoming-events/timed.ts';
+import { contentHashOf } from '../../../passkit/build-hash.ts';
 import type { PreviewPass } from '../../../passkit/index.ts';
 import { evaluate } from '../../../passkit/template/expr.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
@@ -45,8 +47,15 @@ export function tenantOf(
   };
 }
 
-/** The edits a save, a void or a removal make to the built pass.json; true when the pass must be signed again. */
-export function editPass(req: BuildRequest, passJson: PassJson): boolean {
+/**
+ * The edits a save, a void or a removal make to the built pass.json. `resign`: the pass must be signed
+ * again; `planned`: the pass.json as built, before them (what `contentHash` covers).
+ */
+export function editPass(
+  req: BuildRequest,
+  passJson: PassJson,
+): { resign: boolean; planned: PassJson } {
+  const planned = structuredClone(passJson);
   let resign = false;
   if (req.status === 'voided' && passJson.voided !== true) {
     passJson.voided = true;
@@ -61,7 +70,7 @@ export function editPass(req: BuildRequest, passJson: PassJson): boolean {
     applyRemoval(passJson, req.removal);
     resign = true;
   }
-  return resign;
+  return { resign, planned };
 }
 
 /** The artifact of a build, signed (a package) or previewed (the pass JSON). */
@@ -69,6 +78,7 @@ export async function artifactOf(input: {
   bytes: Uint8Array;
   previewOnly: boolean;
   built: PreviewPass;
+  planned: PassJson;
   req: BuildRequest;
   resolved: ResolvedTemplate;
   template: ResolvedTemplate;
@@ -91,6 +101,7 @@ export async function artifactOf(input: {
     title: display.title,
     subtitle: display.subtitle,
     contentHash: built.contentHash,
+    contentHashWith: (keys) => contentHashOf(withTimedKeys(input.planned, keys), built.assetSha1),
     barcodeHash: await barcodeHashOf(built.passJson),
     lookupHash: lookupValue === null ? null : await lookupHashOf(lookupValue),
     warnings: [

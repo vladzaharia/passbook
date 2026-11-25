@@ -9,6 +9,7 @@ export interface BundleRow {
   mode: 'live' | 'test';
   template_id: string;
   template_version: string;
+  identity_id: string;
   object_key: string;
   object_size: number | null;
   version: number;
@@ -74,7 +75,7 @@ export const listBundlePasses = (
 ) =>
   all<BundleRow>(
     db,
-    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version, p.object_key, p.object_size, p.version, p.revision,
+    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version, p.identity_id, p.object_key, p.object_size, p.version, p.revision,
        p.credential_generation, p.lifecycle_generation, p.link_generation
      FROM passes AS p ${ACTIVE_ORG}
      WHERE ${BUNDLE_WHERE} AND p.id <= ? ${range.after === null ? '' : 'AND p.id > ?'}

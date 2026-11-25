@@ -108,4 +108,5 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_token_seals',
   'pass_auth_seals',
   'scan_offline_reads',
+  'pass_boundaries',
 ]);
