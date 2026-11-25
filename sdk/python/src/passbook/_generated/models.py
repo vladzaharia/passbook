@@ -1747,26 +1747,6 @@ __all__ = [
     "TestEmailsListResult",
     "TestEmailsRetrieveResult",
     "UnknownWebhookEvent",
-    "VisitorsCancelResponse",
-    "VisitorsCancelResult",
-    "VisitorsCheckOutResponse",
-    "VisitorsCheckOutResult",
-    "VisitorsCreateBody",
-    "VisitorsCreateParams",
-    "VisitorsCreateResponse",
-    "VisitorsCreateResult",
-    "VisitorsListHostsItem",
-    "VisitorsListHostsResponse",
-    "VisitorsListHostsResponseItemsItem",
-    "VisitorsListHostsResult",
-    "VisitorsListItem",
-    "VisitorsListResponse",
-    "VisitorsListResponseItemsItem",
-    "VisitorsListResult",
-    "VisitorsSendHostEmailBody",
-    "VisitorsSendHostEmailParams",
-    "VisitorsSendHostEmailResponse",
-    "VisitorsSendHostEmailResult",
     "WalletAccountsGoogleManagedCreateParams",
     "WalletAccountsGoogleManagedCreateResponse",
     "WalletAccountsGoogleManagedRetrieveResponse",
@@ -12708,107 +12688,6 @@ class TerminalScansUndoParamsScope(_Model):
     templateIds: _List[str] | None = None
     timeZone: str
 
-class VisitorsCancelResponse(_Model):
-    id: str
-    passId: str
-    name: str
-    hostName: str
-    windowFrom: int
-    windowUntil: int
-    note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
-    statusAt: int | None
-    autoOut: bool
-    hasEmail: bool
-
-class VisitorsCheckOutResponse(_Model):
-    id: str
-    passId: str
-    name: str
-    hostName: str
-    windowFrom: int
-    windowUntil: int
-    note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
-    statusAt: int | None
-    autoOut: bool
-    hasEmail: bool
-
-class VisitorsCreateParams(_Model):
-    orgId: str
-    name: str
-    email: str | None = None
-    hostUserId: str | None = None
-    hostName: str | None = None
-    hostEmail: str | None = None
-    windowFrom: int
-    windowUntil: int
-    note: str | None = None
-    templateId: str | None = None
-
-class VisitorsCreateResponse(_Model):
-    id: str
-    passId: str
-    name: str
-    hostName: str
-    windowFrom: int
-    windowUntil: int
-    note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
-    statusAt: int | None
-    autoOut: bool
-    hasEmail: bool
-
-class VisitorsListHostsItem(_Model):
-    id: str
-    name: str
-    email: str | None
-
-class VisitorsListHostsResponse(_Model):
-    items: _List[VisitorsListHostsResponseItemsItem]
-    nextCursor: str | None
-
-class VisitorsListHostsResponseItemsItem(_Model):
-    id: str
-    name: str
-    email: str | None
-
-class VisitorsListItem(_Model):
-    id: str
-    passId: str
-    name: str
-    hostName: str
-    windowFrom: int
-    windowUntil: int
-    note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
-    statusAt: int | None
-    autoOut: bool
-    hasEmail: bool
-
-class VisitorsListResponse(_Model):
-    items: _List[VisitorsListResponseItemsItem]
-    nextCursor: str | None
-
-class VisitorsListResponseItemsItem(_Model):
-    id: str
-    passId: str
-    name: str
-    hostName: str
-    windowFrom: int
-    windowUntil: int
-    note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
-    statusAt: int | None
-    autoOut: bool
-    hasEmail: bool
-
-class VisitorsSendHostEmailParams(_Model):
-    timeZone: str | None = None
-
-class VisitorsSendHostEmailResponse(_Model):
-    ok: _Literal[True]
-
 class WalletAccountsGoogleManagedCreateParams(_Model):
     mode: _Literal["live"] | str
 
@@ -14022,22 +13901,6 @@ TerminalScansUndoResult = ScanOutcome
 TestEmailsListResult = CapturedEmailPage
 
 TestEmailsRetrieveResult = CapturedEmailDetail
-
-VisitorsCancelResult = VisitorsCancelResponse
-
-VisitorsCheckOutResult = VisitorsCheckOutResponse
-
-VisitorsCreateBody = VisitorsCreateParams
-
-VisitorsCreateResult = VisitorsCreateResponse
-
-VisitorsListHostsResult = VisitorsListHostsResponse
-
-VisitorsListResult = VisitorsListResponse
-
-VisitorsSendHostEmailBody = VisitorsSendHostEmailParams
-
-VisitorsSendHostEmailResult = VisitorsSendHostEmailResponse
 
 WalletCredentialsUpsertParams = WalletCredentialsUpsertParams1 | WalletCredentialsUpsertParams2
 

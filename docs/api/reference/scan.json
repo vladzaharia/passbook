@@ -3088,26 +3088,6 @@
       "note": "forgot_out"
     }
   },
-  "scan.getScanVisitors": {
-    "response": {
-      "items": [
-        {
-          "id": "0193a1b2-7c00-7000-8000-000000000062",
-          "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
-          "name": "Jordan Lee",
-          "hostName": "Sam Rivera",
-          "windowFrom": 1795568400000,
-          "windowUntil": 1795575600000,
-          "note": null,
-          "status": "in",
-          "statusAt": 1795568700000,
-          "autoOut": true,
-          "hasEmail": true
-        }
-      ],
-      "nextCursor": null
-    }
-  },
   "scan.postScanSignOut": {
     "request": {
       "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",

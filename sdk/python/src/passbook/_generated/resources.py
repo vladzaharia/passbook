@@ -2394,65 +2394,6 @@ class TestEmailsResource:
         return self._core.request("GET", f"/api/v1/test-inbox/{_p(id)}", query={"mode": mode}, result=m.TestEmailsRetrieveResult, **opts)
 
 
-class VisitorsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def cancel(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.VisitorsCancelResult:
-        """Cancel a visit and void its pass `POST /api/v1/visitors/{id}/cancel`"""
-        return self._core.request("POST", f"/api/v1/visitors/{_p(id)}/cancel", result=m.VisitorsCancelResult, **opts)
-
-    def check_out(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.VisitorsCheckOutResult:
-        """Check a visitor out `POST /api/v1/visitors/{id}/check-out`"""
-        return self._core.request("POST", f"/api/v1/visitors/{_p(id)}/check-out", result=m.VisitorsCheckOutResult, **opts)
-
-    def create(
-        self,
-        body: m.VisitorsCreateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.VisitorsCreateResult:
-        """Invite a visitor: a visitor pass with a host `POST /api/v1/visitors`"""
-        return self._core.request("POST", "/api/v1/visitors", body=body, result=m.VisitorsCreateResult, **opts)
-
-    def list(
-        self,
-        *,
-        tab: _Literal["today", "upcoming", "past"] | None = None,
-        day_start: int | None | None = None,
-        day_end: int | None | None = None,
-        cursor: str | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.VisitorsListItem]:
-        """List visitors for a day `GET /api/v1/visitors`"""
-        return self._core.paginate("GET", "/api/v1/visitors", query={"tab": tab, "dayStart": day_start, "dayEnd": day_end, "cursor": cursor}, result=m.VisitorsListResult, cursor_param="cursor", **opts)
-
-    def list_hosts(
-        self,
-        *,
-        cursor: str | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.VisitorsListHostsItem]:
-        """People who can host a visitor: the org members `GET /api/v1/visitors/hosts`"""
-        return self._core.paginate("GET", "/api/v1/visitors/hosts", query={"cursor": cursor}, result=m.VisitorsListHostsResult, cursor_param="cursor", **opts)
-
-    def send_host_email(
-        self,
-        id: str,
-        body: m.VisitorsSendHostEmailBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.VisitorsSendHostEmailResult:
-        """Send the host their arrival email again `POST /api/v1/visitors/{id}/host-email`"""
-        return self._core.request("POST", f"/api/v1/visitors/{_p(id)}/host-email", body=body, result=m.VisitorsSendHostEmailResult, **opts)
-
-
 class WebhookEndpointsCapturesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2667,5 +2608,4 @@ class Resources:
         self.template_imports = TemplateImportsResource(core)
         self.blueprints = BlueprintsResource(core)
         self.test_emails = TestEmailsResource(core)
-        self.visitors = VisitorsResource(core)
         self.webhook_endpoints = WebhookEndpointsResource(core)

@@ -1907,56 +1907,6 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"visitors.list", "GET", "/api/v1/visitors", false,
-		"", `{"items":[{"id":"x","passId":"x","name":"x","hostName":"x","windowFrom":0,"windowUntil":0,"note":"x","status":"expected","statusAt":0,"autoOut":false,"hasEmail":false}],"nextCursor":null}`,
-		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Visitors.List(ctx, nil).All(ctx)
-		},
-	},
-	{
-		"visitors.create", "POST", "/api/v1/visitors", false,
-		`{"orgId":"x","name":"x","windowFrom":0,"windowUntil":0}`, `{"id":"x","passId":"x","name":"x","hostName":"x","windowFrom":0,"windowUntil":0,"note":"x","status":"expected","statusAt":0,"autoOut":false,"hasEmail":false}`,
-		func(ctx context.Context, c *Client, body []byte) (any, error) {
-			var b VisitorsCreateBody
-			if err := json.Unmarshal(body, &b); err != nil {
-				return nil, err
-			}
-			return c.Visitors.Create(ctx, &b)
-		},
-	},
-	{
-		"visitors.listHosts", "GET", "/api/v1/visitors/hosts", false,
-		"", `{"items":[{"id":"x","name":"x","email":"x"}],"nextCursor":null}`,
-		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Visitors.ListHosts(ctx, nil).All(ctx)
-		},
-	},
-	{
-		"visitors.cancel", "POST", "/api/v1/visitors/id1/cancel", false,
-		"", `{"id":"x","passId":"x","name":"x","hostName":"x","windowFrom":0,"windowUntil":0,"note":"x","status":"expected","statusAt":0,"autoOut":false,"hasEmail":false}`,
-		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Visitors.Cancel(ctx, "id1")
-		},
-	},
-	{
-		"visitors.checkOut", "POST", "/api/v1/visitors/id1/check-out", false,
-		"", `{"id":"x","passId":"x","name":"x","hostName":"x","windowFrom":0,"windowUntil":0,"note":"x","status":"expected","statusAt":0,"autoOut":false,"hasEmail":false}`,
-		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Visitors.CheckOut(ctx, "id1")
-		},
-	},
-	{
-		"visitors.sendHostEmail", "POST", "/api/v1/visitors/id1/host-email", false,
-		`{}`, `{"ok":true}`,
-		func(ctx context.Context, c *Client, body []byte) (any, error) {
-			var b VisitorsSendHostEmailBody
-			if err := json.Unmarshal(body, &b); err != nil {
-				return nil, err
-			}
-			return c.Visitors.SendHostEmail(ctx, "id1", &b)
-		},
-	},
-	{
 		"passes.retrieveProviderStatus", "GET", "/api/v1/wallet-providers/passes/id1", false,
 		"", `{"credentialGeneration":0,"providers":[{"provider":"google","lifecycle":"absent","desiredOperation":{"version":0,"kind":"upsert","state":"pending","reason":"ok"},"priorGenerationRetirementPending":false,"installation":"unknown","issuance":{"state":"disabled","reason":"not_released"}},{"provider":"samsung","lifecycle":"absent","desiredOperation":{"version":0,"kind":"upsert","state":"pending","reason":"ok"},"priorGenerationRetirementPending":false,"installation":"unknown","issuance":{"state":"disabled","reason":"not_released"}}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

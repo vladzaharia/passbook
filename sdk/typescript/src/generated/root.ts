@@ -31,7 +31,6 @@ import { TemplatesResource } from './resources/templates.ts';
 import { TemplateImportsResource } from './resources/template-imports.ts';
 import { BlueprintsResource } from './resources/blueprints.ts';
 import { TestEmailsResource } from './resources/test-emails.ts';
-import { VisitorsResource } from './resources/visitors.ts';
 import { WebhookEndpointsResource } from './resources/webhook-endpoints.ts';
 
 /** Every resource, named as in docs/api/sdk-names.json. */
@@ -67,7 +66,6 @@ export class Resources {
   readonly templateImports: TemplateImportsResource;
   readonly blueprints: BlueprintsResource;
   readonly testEmails: TestEmailsResource;
-  readonly visitors: VisitorsResource;
   readonly webhookEndpoints: WebhookEndpointsResource;
   constructor(core: Core) {
     this.apiKeys = new ApiKeysResource(core);
@@ -101,7 +99,6 @@ export class Resources {
     this.templateImports = new TemplateImportsResource(core);
     this.blueprints = new BlueprintsResource(core);
     this.testEmails = new TestEmailsResource(core);
-    this.visitors = new VisitorsResource(core);
     this.webhookEndpoints = new WebhookEndpointsResource(core);
   }
 }

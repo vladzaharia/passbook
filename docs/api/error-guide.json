@@ -3143,60 +3143,6 @@
     "fix": "Request a newer version.",
     "retryable": false
   },
-  "VISITOR_CHANGED": {
-    "title": "Visitor changed",
-    "when": "Another request changed the visitor while yours ran.",
-    "fix": "Fetch the visitor list with GET /api/v1/visitors and send your change again.",
-    "retryable": false
-  },
-  "VISITOR_HOST_NOTICE_FAILED": {
-    "title": "Host notice not sent",
-    "when": "The host could not be emailed.",
-    "fix": "Send the request again; the visit is still recorded.",
-    "retryable": false
-  },
-  "VISITOR_HOST_UNKNOWN": {
-    "title": "Host unknown",
-    "when": "The host is not a member of this organization.",
-    "fix": "Choose a host from GET /api/v1/visitors/hosts.",
-    "retryable": false
-  },
-  "VISITOR_IN": {
-    "title": "Visitor in",
-    "when": "They are in.",
-    "fix": "Check them out first.",
-    "retryable": false
-  },
-  "VISITOR_NOT_FOUND": {
-    "title": "Visitor not found",
-    "when": "No visitor with this id exists in this mode and organization.",
-    "fix": "Check the id with GET /api/v1/visitors.",
-    "retryable": false
-  },
-  "VISITOR_NOT_IN": {
-    "title": "Visitor not checked in",
-    "when": "The visitor has not checked in.",
-    "fix": "Check them in before this action.",
-    "retryable": false
-  },
-  "VISITOR_OUT": {
-    "title": "Visitor already out",
-    "when": "The visitor is already checked out.",
-    "fix": "Do nothing; check status with GET /api/v1/visitors.",
-    "retryable": false
-  },
-  "VISITOR_RESEND_LIMIT": {
-    "title": "Host notice limit reached",
-    "when": "The host was already emailed three times for this visit.",
-    "fix": "Contact the host another way.",
-    "retryable": false
-  },
-  "VISITOR_TEMPLATE_MISSING": {
-    "title": "Visitor template missing",
-    "when": "The organization has no visitor template set up.",
-    "fix": "Set up the visitor template in the console, then retry.",
-    "retryable": false
-  },
   "WALLET_ACCOUNT_CONFLICT": {
     "title": "Wallet account changed",
     "when": "The wallet credential or enrolment changed while your request ran.",
