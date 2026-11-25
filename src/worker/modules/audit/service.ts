@@ -9,7 +9,14 @@ import { requireOrgCapability } from '../orgs/access.ts';
 import { orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
 import { redactForRead, safeLabel } from './redact.ts';
 import { REKEYED_ACTION, rekeyedDetail } from './rekeyed-detail.ts';
-import { type AuditRow, auditStmt, labelKey, listAuditRows, loadLabels } from './repo.ts';
+import {
+  type AuditRow,
+  auditStmt,
+  labelKey,
+  listAuditRows,
+  loadLabels,
+  personalOrgLabels,
+} from './repo.ts';
 import { tenantSettingsDetail } from './settings-detail.ts';
 import type { AuditEntry } from './types.ts';
 
@@ -51,7 +58,12 @@ function safeId(id: string | null): string | null {
     : safeLabel(id);
 }
 
-function toDto(row: AuditRow, labels: Map<string, string | null>, tenant: boolean): Dto {
+function toDto(
+  row: AuditRow,
+  labels: Map<string, string | null>,
+  tenant: boolean,
+  orgLabels: Map<string, string>,
+): Dto {
   const actorKey = row.actor_id ? labelKey(row.actor_type, row.actor_id) : null;
   const targetKey =
     row.target_type && row.target_id ? labelKey(row.target_type, row.target_id) : null;
@@ -61,6 +73,7 @@ function toDto(row: AuditRow, labels: Map<string, string | null>, tenant: boolea
     id: row.id,
     at: row.at,
     orgId: row.org_id,
+    orgLabel: (row.org_id && orgLabels.get(row.org_id)) || null,
     actorType: row.actor_type,
     actorId,
     actorLabel: actorId && actorKey ? (labels.get(actorKey) ?? null) : null,
@@ -158,8 +171,14 @@ async function listAudit(
     refs,
     scope.kind === 'tenant' ? scope.orgId : undefined,
   );
+  const orgLabels =
+    scope.kind === 'platform'
+      ? await personalOrgLabels(ctx.env.DB, [
+          ...new Set(page.flatMap((r) => (r.org_id ? [r.org_id] : []))),
+        ])
+      : new Map<string, string>();
   return {
-    items: page.map((r) => toDto(r, labels, scope.kind === 'tenant')),
+    items: page.map((r) => toDto(r, labels, scope.kind === 'tenant', orgLabels)),
     nextCursor: rows.length > query.limit && last ? String(last.id) : null,
   };
 }

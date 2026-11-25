@@ -911,6 +911,10 @@
     "resource": "brand.passImages",
     "method": "delete"
   },
+  "orgs.getPlatformPersonalOrgLabels": {
+    "resource": "platform.orgs.personalLabels",
+    "method": "list"
+  },
   "orgs.getOrgs": {
     "resource": "platform.orgs",
     "method": "list"

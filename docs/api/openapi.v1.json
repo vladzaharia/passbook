@@ -28266,6 +28266,41 @@
           "moved"
         ]
       },
+      "PlatformOrgsPersonalLabelsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "orgId",
+                "label"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "PlatformOrgsLegalHoldsListResponse": {
         "type": "object",
         "properties": {
@@ -58245,6 +58280,12 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
+                "orgLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "actorType": {
                   "type": "string",
                   "enum": [
@@ -58346,6 +58387,12 @@
                   ],
                   "minLength": 1,
                   "maxLength": 64
+                },
+                "orgLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "actorType": {
                   "type": "string",
@@ -79730,6 +79777,7 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -80273,6 +80321,7 @@
           "ORG_FORBIDDEN",
           "ORG_HELD",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -82807,7 +82856,7 @@
     },
     "/api/v1/orgs": {
       "get": {
-        "summary": "List organizations",
+        "summary": "List organizations (personal organizations are never listed)",
         "tags": [
           "orgs"
         ],
@@ -83101,6 +83150,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -83219,6 +83269,7 @@
           "ORG_CONFLICT",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
@@ -83289,6 +83340,7 @@
           "ORG_CONFLICT",
           "ORG_HELD",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -83398,6 +83450,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -83486,13 +83539,19 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -86495,6 +86554,7 @@
           "ORG_FORBIDDEN",
           "ORG_HELD",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -87863,6 +87923,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
@@ -88268,6 +88329,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -88378,6 +88440,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -88528,6 +88591,75 @@
           "PRESET_NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/personal-org-labels": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:orgs",
+        "summary": "Names of the personal organizations, which are not listed, for views that show an org by id",
+        "tags": [
+          "orgs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformOrgsPersonalLabelsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "label": "Northwind Climbing"
+                    }
+                  ],
+                  "nextCursor": "c1.4812"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "orgs.getPlatformPersonalOrgLabels",
+        "x-sdk": {
+          "resource": "platform.orgs.personalLabels",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -89371,6 +89503,7 @@
           "INVALID_CURSOR",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -89563,6 +89696,7 @@
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -89665,6 +89799,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -89783,6 +89918,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -89915,6 +90051,7 @@
           "INVALID_INPUT",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90200,6 +90337,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90319,6 +90457,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90397,6 +90536,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90528,6 +90668,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90679,6 +90820,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90838,6 +90980,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -90953,6 +91096,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -91034,6 +91178,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -91230,6 +91375,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -91343,6 +91489,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -92468,6 +92615,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -92579,6 +92727,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -92717,6 +92866,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93004,6 +93154,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93265,6 +93416,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93375,6 +93527,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93457,6 +93610,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93615,6 +93769,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93730,6 +93885,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93862,6 +94018,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -93990,6 +94147,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94164,6 +94322,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94280,6 +94439,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94463,6 +94623,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94639,6 +94800,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -94750,6 +94912,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -95282,6 +95445,7 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -95423,6 +95587,7 @@
           "INVALID_CURSOR",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -115261,6 +115426,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -115479,6 +115645,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -115560,6 +115727,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -115651,6 +115819,7 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
@@ -115884,6 +116053,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -115999,6 +116169,7 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
@@ -116937,6 +117108,9 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_CONFLICT",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "SELF_DISABLE",
           "UNAUTHENTICATED",
@@ -119250,6 +119424,7 @@
                       "id": 14,
                       "at": 1795570500000,
                       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "orgLabel": "Personal org of Sam Rivera",
                       "actorType": "user",
                       "actorId": "0193a1b2-7c00-7000-8000-000000000011",
                       "actorLabel": "Sam Rivera",
@@ -119452,6 +119627,7 @@
                       "id": 14,
                       "at": 1795570500000,
                       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "orgLabel": "Personal org of Sam Rivera",
                       "actorType": "user",
                       "actorId": "0193a1b2-7c00-7000-8000-000000000011",
                       "actorLabel": "Sam Rivera",
@@ -121331,6 +121507,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "METRICS_NOT_FOUND",
           "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"

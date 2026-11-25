@@ -88,6 +88,9 @@ export const PlatformOrgSummarySchema = OrgSummarySchema.pick({
   plan: z.object({ preset: z.string(), label: z.string() }).nullable().optional(),
 });
 
+/** The personal orgs the platform does not list, named for the views that show an org by id. */
+export const PersonalOrgLabelsSchema = pageOf(z.object({ orgId: IdSchema, label: z.string() }));
+
 export const OrgListQuerySchema = PageQuerySchema.extend({
   /** Name or slug contains. */
   q: z.string().max(200).optional(),

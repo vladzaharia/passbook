@@ -49,8 +49,8 @@ export async function slugTaken(db: D1Database, slug: string, exceptId?: string)
 }
 
 /**
- * Newest first; `before` is the exclusive id bound (UUIDv7 ids sort by creation time). `q` matches
- * the name or slug.
+ * The platform directory, newest first; `before` is the exclusive id bound (UUIDv7 ids sort by creation
+ * time). `q` matches the name or slug. Personal orgs belong to their owners and are never listed.
  */
 export function listOrgRows(
   db: D1Database,
@@ -64,7 +64,7 @@ export function listOrgRows(
   const slug = term ? containsMatch('slug', term) : null;
   return all<OrgRow>(
     db,
-    `SELECT ${COLUMNS} FROM orgs WHERE status != 'deleted' AND id < ?
+    `SELECT ${COLUMNS} FROM orgs WHERE status != 'deleted' AND personal_user_id IS NULL AND id < ?
        ${sandboxes === 'hide' ? "AND kind != 'developer'" : sandboxes === 'only' ? "AND kind = 'developer'" : ''}
        ${name && slug ? `AND (${name.sql} OR ${slug.sql})` : ''}
      ORDER BY id DESC LIMIT ?`,

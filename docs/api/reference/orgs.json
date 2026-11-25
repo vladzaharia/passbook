@@ -304,5 +304,16 @@
       "configRevision": 3,
       "passesToUpdate": 27
     }
+  },
+  "orgs.getPlatformPersonalOrgLabels": {
+    "response": {
+      "items": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "label": "Northwind Climbing"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   }
 }
