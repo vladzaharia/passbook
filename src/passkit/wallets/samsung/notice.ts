@@ -158,9 +158,12 @@ function messageLines(run: Run): Line[] {
     if (typeof field.changeMessage !== 'string') continue;
     const value = fieldValue(field, run);
     const text = sanitizeText(
-      run.tr(field.changeMessage).replace(/%([@%])/gu, (_m, c: string) => (c === '@' ? value : '%')),
+      run
+        .tr(field.changeMessage)
+        .replace(/%([@%])/gu, (_m, c: string) => (c === '@' ? value : '%')),
     );
-    if (text) lines.push({ text, identity: false, capability: 'messaging.notify', path: field.path });
+    if (text)
+      lines.push({ text, identity: false, capability: 'messaging.notify', path: field.path });
   }
   return lines;
 }

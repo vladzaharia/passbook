@@ -229,7 +229,7 @@ describe('state, time and the envelope', () => {
 });
 
 describe('change text', () => {
-  it('writes a notifying field\'s change message into the notice with its value filled in', async () => {
+  it("writes a notifying field's change message into the notice with its value filled in", async () => {
     const v = await view('starter-store-card');
     const field = v.fields[0];
     if (!field) throw new Error('fixture has no field');
