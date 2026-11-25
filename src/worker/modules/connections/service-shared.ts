@@ -30,6 +30,10 @@ export const FENCED = [
   'enabled',
 ] as const;
 
+/** Same JSON value; an absent value equals null. */
+export const sameJson = (a: unknown, b: unknown): boolean =>
+  JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
 export function auditActor(actor: Actor): { actorType: Actor['type']; actorId: string | null } {
   return { actorType: actor.type, actorId: actor.id };
 }

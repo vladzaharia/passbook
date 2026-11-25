@@ -177,6 +177,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
     try {
       if (start.useList) {
         let cursor = start.cursor;
+        let settling = false;
         pages: for (let page = 0; page < MAX_PAGES_PER_RUN; page++) {
           const current = cursor;
           const fetched = await step.do(`page-${page}`, () =>
@@ -193,6 +194,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
             take(fetched.result);
             break;
           }
+          if (fetched.changes.length > 0 || fetched.hasMore) settling = false;
           for (let i = 0; i < fetched.changes.length; i += slice) {
             const changes: Change[] = fetched.changes.slice(i, i + slice);
             const r = await step.do(`page-${page}-apply-${i}`, () =>
@@ -231,7 +233,11 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
               break;
             }
           }
-          if (!fetched.hasMore) break;
+          if (!fetched.hasMore) {
+            // One more listing after the last page: a revision applied meanwhile is picked up by this run.
+            if (!start.settle || settling) break;
+            settling = true;
+          }
           cursor = fetched.cursor;
           const overBudget = spent(totals) - spentBefore >= budget;
           // No hand-off while issuance is blocked (the cursor did not move) or past the chain cap.

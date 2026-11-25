@@ -5,6 +5,7 @@ import {
   type ConnectorFileRef,
   type UpstreamRecord,
 } from '../../connectors/types.ts';
+import { RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { digestOf, type Entry, entriesOf, PAGE_SIZE, parseFile } from './files-parse.ts';
 import { takeUpload, zoneOf } from './files-service.ts';
@@ -19,6 +20,9 @@ export type FilesBinding =
 const refuse = (): never => {
   throw new ConnectorError('CONFIG', { permanent: true });
 };
+
+const retryAfterOf = (error: RateLimitedError): number =>
+  Number(error.headers?.['retry-after'] ?? 60) * 1000;
 
 const fileOf = (row: FileRow, pages = row.pages): ConnectorFile => ({
   id: row.id,
@@ -63,6 +67,20 @@ function storedPort(ctx: ServiceContext, orgId: string, connectionId: string): C
       return refuse();
     return row;
   };
+  // One read of a file's refs per port: a removal run asks for the same few files once per ref.
+  const refsMemo = new Map<string, Promise<ConnectorFileRef[]>>();
+  const refsOf = (fileId: string): Promise<ConnectorFileRef[]> => {
+    let hit = refsMemo.get(fileId);
+    if (!hit) {
+      hit = (async () => {
+        const row = await owned(fileId);
+        return (await readRefs(ctx, orgId, row.id, row.bindId ?? refuse())) ?? refuse();
+      })();
+      hit.catch(() => refsMemo.delete(fileId));
+      refsMemo.set(fileId, hit);
+    }
+    return hit;
+  };
   const page = async (fileId: string, n: number): Promise<Entry[]> => {
     const row = await owned(fileId);
     return (await readPage(ctx, orgId, row.id, row.bindId ?? refuse(), n)) ?? refuse();
@@ -77,15 +95,8 @@ function storedPort(ctx: ServiceContext, orgId: string, connectionId: string): C
         fileOf(r),
       ),
     page: async (fileId, n) => (await page(fileId, n)) as { ref: string; record: UpstreamRecord }[],
-    refs: async (fileId) => {
-      const row = await owned(fileId);
-      return (await readRefs(ctx, orgId, row.id, row.bindId ?? refuse())) ?? refuse();
-    },
-    find: async (fileId, ref) => {
-      const row = await owned(fileId);
-      const refs = (await readRefs(ctx, orgId, row.id, row.bindId ?? refuse())) ?? refuse();
-      return findIn(refs, ref, (n) => page(fileId, n));
-    },
+    refs: (fileId) => refsOf(fileId),
+    find: async (fileId, ref) => findIn(await refsOf(fileId), ref, (n) => page(fileId, n)),
   };
 }
 
@@ -102,9 +113,15 @@ function draftPort(
       if (draftId === null) return refuse();
       const row = await getFile(ctx.env.DB, orgId, draftId);
       if (row?.state !== 'draft' || (row.expiresAt ?? 0) <= ctx.clock.now()) return refuse();
+      // Each test over a draft re-parses the stored file: it spends the same hourly allowance as an upload,
+      // before the file is read.
+      try {
+        await takeUpload(ctx, orgId);
+      } catch (error) {
+        if (!(error instanceof RateLimitedError)) throw error;
+        throw new ConnectorError('RATE_LIMITED', { retryAfterMs: retryAfterOf(error) });
+      }
       const bytes = (await readSource(ctx, orgId, draftId)) ?? refuse();
-      // Each test over a draft re-parses the stored file: it spends the same hourly allowance as an upload.
-      await takeUpload(ctx, orgId);
       const pointer =
         idPointer ?? (await readSummary(ctx, orgId, draftId))?.idCandidates[0] ?? refuse();
       const file = parseFile(

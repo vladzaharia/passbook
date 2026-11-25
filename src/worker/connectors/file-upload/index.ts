@@ -22,7 +22,8 @@ const definition: ConnectorDefinition<Config, unknown> = {
   defaults: {
     intervalSeconds: 3600,
     maxConcurrency: 1,
-    requestsPerMinute: 60,
+    // No network: removals are checked one by one against the files, so do not pace them.
+    requestsPerMinute: 6000,
     timeoutMs: 15_000,
   },
 
@@ -43,7 +44,7 @@ const definition: ConnectorDefinition<Config, unknown> = {
   },
 
   async listChanges(ctx, cursor) {
-    return list(ctx.files ?? failConfig(), cursor);
+    return list(ctx.files ?? failConfig(), cursor, ctx.log);
   },
 };
 

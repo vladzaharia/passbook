@@ -37,6 +37,8 @@ export type StartResult =
   | {
       ok: true;
       useList: boolean;
+      /** The source can change under a run (a file applied mid-run): ask once more before finishing. */
+      settle: boolean;
       cursor: string | null;
       startedAt: number;
       release: ConnectionReleaseSnapshot;
@@ -169,6 +171,7 @@ export async function startRun(
     ok: true,
     useList:
       Boolean(prep.def.listChanges) && (prep.def.hasList?.(prep.cc.connection.config) ?? true),
+    settle: prep.def.capabilities.upload === true,
     cursor: conn.cursor,
     release,
     mode: conn.mode,

@@ -16,11 +16,13 @@ import {
   secretFingerprint,
 } from './secret-fingerprint.ts';
 import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
+import { startRelist } from './service-relist.ts';
 import {
   auditActor,
   type Created,
   FENCED,
   requireConnection,
+  sameJson,
   secretsFor,
   type UpdateInput,
 } from './service-shared.ts';
@@ -120,6 +122,11 @@ export async function update(
     changed.add(key);
   };
 
+  /** What a record means changed: list the source again so every pass is re-applied. */
+  const relist = () => {
+    patch.cursor = null;
+  };
+
   if (input.name !== undefined) set('name', input.name);
   if (input.config !== undefined) {
     const config = parseWith(def.configSchema, input.config, 'config');
@@ -127,38 +134,47 @@ export async function update(
     await assertOriginMoveEntitled(sctx, def, conn, config as Record<string, unknown>);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
     assertCredentialOrigin(def, conn, config, input.secrets);
-    patch.config = config;
-    patch.connectorVersion = def.version;
-    patch.cursor = null;
-    changed.add('config');
+    const moved = !sameJson(config, storedConfig(def, conn));
+    if (moved || conn.connectorVersion !== def.version) {
+      patch.config = config;
+      patch.connectorVersion = def.version;
+    }
+    if (moved) relist();
+    if (moved) changed.add('config');
   }
   if (input.secrets !== undefined) {
     const json = secretsFor(def, input.secrets);
     if (json === '{}') patch.credentialId = null;
     else connectorCredential = json;
     staleCredentials.push(conn.credentialId);
-    patch.cursor = null;
+    relist();
     changed.add('secrets');
   }
+  // A save sends these back unchanged: only a different value re-lists, bumps the generation and fences runs.
   if (input.mapping !== undefined) {
     validateMapping(input.mapping);
-    patch.mapping = input.mapping;
-    // What a record means changed: list the source again so every pass is re-applied.
-    patch.cursor = null;
-    changed.add('mapping');
+    if (!sameJson(input.mapping, conn.mapping)) {
+      patch.mapping = input.mapping;
+      relist();
+      changed.add('mapping');
+    }
   }
   if (input.holderEmailField !== undefined) {
     assertPointer(input.holderEmailField, 'holderEmailField');
-    patch.holderEmailField = input.holderEmailField;
-    patch.cursor = null;
-    changed.add('holderEmailField');
+    if (input.holderEmailField !== conn.holderEmailField) {
+      patch.holderEmailField = input.holderEmailField;
+      relist();
+      changed.add('holderEmailField');
+    }
   }
   const templateId = input.defaultTemplateId ?? conn.defaultTemplateId;
   if (input.defaultTemplateId !== undefined) {
     await assertTemplateUsable(sctx, conn.orgId, input.defaultTemplateId);
-    patch.defaultTemplateId = input.defaultTemplateId;
-    patch.cursor = null;
-    changed.add('defaultTemplateId');
+    if (input.defaultTemplateId !== conn.defaultTemplateId) {
+      patch.defaultTemplateId = input.defaultTemplateId;
+      relist();
+      changed.add('defaultTemplateId');
+    }
   }
   const autoCreate = input.autoCreate ?? conn.autoCreate;
   if (autoCreate && !templateId) {
@@ -166,11 +182,16 @@ export async function update(
       { path: 'defaultTemplateId', message: 'Required with autoCreate.' },
     ]);
   }
-  if (input.autoCreate !== undefined) set('autoCreate', input.autoCreate);
+  if (input.autoCreate !== undefined) {
+    // Switching it on must reach rows a finished listing already passed.
+    if (input.autoCreate && !conn.autoCreate) relist();
+    set('autoCreate', input.autoCreate);
+  }
   if (input.autoEmail !== undefined) set('autoEmail', input.autoEmail);
   if (input.onMissing !== undefined) set('onMissing', input.onMissing);
   if (input.voidWhen !== undefined) {
     validateVoidWhen(input.voidWhen);
+    if (!sameJson(input.voidWhen, conn.voidWhen)) relist();
     set('voidWhen', input.voidWhen);
   }
   for (const key of ['intervalSeconds', 'maxConcurrency', 'requestsPerMinute'] as const) {
@@ -286,5 +307,8 @@ export async function update(
     },
   });
   const fresh = await requireConnection(sctx, id);
+  // A file connection has no schedule: nothing re-applies until someone starts a sync.
+  if (patch.cursor === null && def.capabilities.upload && fresh.enabled)
+    await startRelist(sctx, actor, fresh, authority);
   return { ...toDto(sctx.env, fresh), ...(generated ? { webhookSecret: generated } : {}) };
 }

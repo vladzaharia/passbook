@@ -119,7 +119,10 @@ export async function uploadRevision(
     row.diff = current ? diffRefs(before, refs) : null;
     discarded = await insertPending(ctx, { orgId, authority }, connectionId, row, now);
   } catch (error) {
-    await deleteFileObjects(ctx, orgId, row.id).catch(() => undefined);
+    // The daily sweep removes what this misses; the upload's own error still reaches the caller.
+    await deleteFileObjects(ctx, orgId, row.id).catch(() =>
+      ctx.log.error('connection.file_cleanup_failed', { orgId, code: 'FILE_CLEANUP_FAILED' }),
+    );
     if (classifyD1Error(error)?.kind === 'unique')
       throw new ConflictError('Another upload landed first. Try again.', 'FILE_STATE');
     throw error;

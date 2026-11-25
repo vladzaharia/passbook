@@ -61,7 +61,7 @@ const ctx = (files?: ConnectionFilesPort) =>
 
 /** Runs listChanges to the end; returns every change and the final cursor. */
 async function drain(files: ConnectionFilesPort, from: string | null) {
-  const changes: { ref: string; record?: UpstreamRecord; deleted?: boolean }[] = [];
+  const changes: { ref: string; record?: UpstreamRecord }[] = [];
   let cursor = from;
   for (let i = 0; i < 50; i++) {
     const r = await definition.listChanges?.(ctx(files), cursor);
@@ -72,6 +72,10 @@ async function drain(files: ConnectionFilesPort, from: string | null) {
   }
   throw new Error('never ended');
 }
+
+/** Removals carry no record and no deleted flag: the core asks fetchRecord when it applies them. */
+const removed = (changes: { ref: string; record?: UpstreamRecord }[]) =>
+  changes.filter((c) => !c.record);
 
 const v1 = { id: 'f1', rows: ['a', 'b', 'c', 'd', 'e'] };
 const v2 = { id: 'f2', rows: ['a', 'c', 'e', 'x'] };
@@ -93,7 +97,7 @@ describe('listChanges', () => {
   it('emits every row of the first revision, then finishes at the done cursor', async () => {
     const { changes, cursor } = await drain(port(v1), null);
     expect(changes.map((c) => c.ref)).toEqual(['a', 'b', 'c', 'd', 'e']);
-    expect(changes.every((c) => c.record && !c.deleted)).toBe(true);
+    expect(changes.every((c) => c.record)).toBe(true);
     expect(cursor).toBe('fu1:f1:-:done:0');
   });
 
@@ -104,30 +108,27 @@ describe('listChanges', () => {
 
   it('re-emits all rows of a new revision and deletes what it lost', async () => {
     const { changes, cursor } = await drain(port(v2, [v1]), 'fu1:f1:-:done:0');
-    expect(changes.filter((c) => !c.deleted).map((c) => c.ref)).toEqual(['a', 'c', 'e', 'x']);
-    expect(changes.filter((c) => c.deleted)).toEqual([
-      { ref: 'b', deleted: true },
-      { ref: 'd', deleted: true },
-    ]);
+    expect(changes.filter((c) => c.record).map((c) => c.ref)).toEqual(['a', 'c', 'e', 'x']);
+    expect(removed(changes)).toEqual([{ ref: 'b' }, { ref: 'd' }]);
     expect(cursor).toBe('fu1:f2:-:done:0');
   });
 
   it('a null cursor diffs against every retained revision', async () => {
     const { changes } = await drain(port(v2, [v1]), null);
-    expect(changes.filter((c) => c.deleted).map((c) => c.ref)).toEqual(['b', 'd']);
+    expect(removed(changes).map((c) => c.ref)).toEqual(['b', 'd']);
   });
 
   it('unions the bases when a revision lands mid-run', async () => {
     const v3 = { id: 'f3', rows: ['a', 'x'] };
     // The f2 run stopped in its rows phase, so f1's rows were never removed: f3 diffs against both.
-    const mid = encode({ fileId: 'f2', bases: ['f1'], phase: 'rows', n: 1 });
+    const mid = encode({ fileId: 'f2', bases: ['f1'], phase: 'rows', n: 1, after: '' });
     const { changes } = await drain(port(v3, [v2, v1]), mid);
-    expect(changes.filter((c) => c.deleted).map((c) => c.ref)).toEqual(['b', 'c', 'd', 'e']);
+    expect(removed(changes).map((c) => c.ref)).toEqual(['b', 'c', 'd', 'e']);
   });
 
   it('skips a base that retention has swept', async () => {
     const { changes } = await drain(port(v2, []), 'fu1:f1:-:done:0');
-    expect(changes.filter((c) => c.deleted)).toEqual([]);
+    expect(removed(changes)).toEqual([]);
   });
 
   it('pages removals 200 at a time', async () => {
@@ -137,11 +138,55 @@ describe('listChanges', () => {
     };
     const first = await definition.listChanges?.(
       ctx(port({ id: 'b2', rows: ['keep'] }, [big])),
-      encode({ fileId: 'b2', bases: ['b1'], phase: 'removed', n: 0 }),
+      encode({ fileId: 'b2', bases: ['b1'], phase: 'removed', n: 0, after: '' }),
     );
     expect(first?.changes).toHaveLength(200);
     expect(first?.hasMore).toBe(true);
-    expect(first?.cursor).toBe('fu1:b2:b1:removed:1');
+    const second = await definition.listChanges?.(
+      ctx(port({ id: 'b2', rows: ['keep'] }, [big])),
+      first?.cursor ?? null,
+    );
+    // Paged by ref, so the second page starts right after the first whatever happens to the bases.
+    expect(second?.changes[0]?.ref).toBe('r200');
+  });
+
+  it('diffs against every retained revision when a base was swept', async () => {
+    const v3 = { id: 'f3', rows: ['a'] };
+    // The cursor is done on f0, which retention swept; f1 and f2 were never listed.
+    const { changes } = await drain(port(v3, [v2, v1]), 'fu1:f0:-:done:0');
+    expect(removed(changes).map((c) => c.ref)).toEqual(['b', 'c', 'd', 'e', 'x']);
+  });
+
+  it('diffs against revisions newer than the finished one that no run listed', async () => {
+    const v3 = { id: 'f3', rows: ['a'] };
+    const { changes } = await drain(port(v3, [v2, v1]), 'fu1:f1:-:done:0');
+    expect(removed(changes).map((c) => c.ref)).toEqual(['b', 'c', 'd', 'e', 'x']);
+  });
+
+  it('skips a retained revision it cannot read and still removes from the others', async () => {
+    const files = port(v2, [v1]);
+    const logged: string[] = [];
+    const refs = files.refs;
+    files.refs = async (id) => {
+      if (id === 'f1') throw new ConnectorError('CONFIG', { permanent: true });
+      return refs(id);
+    };
+    const c = { ...ctx(files), log: (e: string) => logged.push(e) };
+    const r = await definition.listChanges?.(c as never, 'fu1:f2:-:removed:-');
+    expect(r?.changes).toEqual([]);
+    expect(logged).toEqual(['file_base_unreadable']);
+  });
+
+  it('goes round again when a newer revision was applied while it listed', async () => {
+    const files = port(v2, [v1]);
+    const real = files.current;
+    let calls = 0;
+    files.current = async () => {
+      calls++;
+      return calls === 1 ? real() : { ...(await real())!, id: 'f3' };
+    };
+    const r = await definition.listChanges?.(ctx(files), 'fu1:f2:f1:removed:-');
+    expect(r).toMatchObject({ hasMore: true, cursor: 'fu1:f2:-:done:0' });
   });
 
   it('treats a cursor it did not write as no cursor', async () => {
@@ -160,7 +205,13 @@ describe('listChanges', () => {
 
 describe('cursor', () => {
   it('round-trips and rejects malformed input', () => {
-    const c = { fileId: 'f2', bases: ['f1', 'f0'], phase: 'removed' as const, n: 3 };
+    const c = {
+      fileId: 'f2',
+      bases: ['f1', 'f0'],
+      phase: 'removed' as const,
+      n: 0,
+      after: 'r:é/1',
+    };
     expect(decode(encode(c))).toEqual(c);
     expect(decode(encode({ ...c, bases: 'all' }))?.bases).toBe('all');
     for (const bad of [
@@ -175,7 +226,13 @@ describe('cursor', () => {
   });
 
   it('keeps at most 3 bases, then falls back to all', () => {
-    const at = (bases: string[]) => ({ fileId: 'z', bases, phase: 'rows' as const, n: 0 });
+    const at = (bases: string[]) => ({
+      fileId: 'z',
+      bases,
+      phase: 'rows' as const,
+      n: 0,
+      after: '',
+    });
     expect(basesFor(at(['a', 'b']))).toEqual(['a', 'b', 'z']);
     expect(basesFor(at(['a', 'b', 'c']))).toBe('all');
     expect(basesFor(null)).toBe('all');

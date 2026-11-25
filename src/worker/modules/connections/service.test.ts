@@ -262,7 +262,7 @@ describe('SSRF at save', () => {
 });
 
 describe('update', () => {
-  it('bumps the generation and resets the cursor on config, secret and mapping changes only', async () => {
+  it('bumps the generation and resets the cursor when config, secrets or mapping change', async () => {
     const dto = await service.create(kit.sctx, kit.actor, httpJson());
     await kit.env.DB.prepare("UPDATE connections SET cursor = 'abc' WHERE id = ?")
       .bind(dto.id)
@@ -292,13 +292,67 @@ describe('update', () => {
     expect(row?.generation).toBe(4);
   });
 
-  it('resets the cursor when the holder email field changes', async () => {
+  it('resets the cursor when the holder email field or default template changes', async () => {
     const dto = await service.create(kit.sctx, kit.actor, httpJson());
-    await kit.env.DB.prepare("UPDATE connections SET cursor = 'abc' WHERE id = ?")
-      .bind(dto.id)
-      .run();
+    const cursor = async () => (await getConnection(kit.env.DB, dto.id))?.cursor;
+    const seed = () =>
+      run(kit.env.DB, "UPDATE connections SET cursor = 'abc' WHERE id = ?", [dto.id]);
+    await seed();
     await service.update(kit.sctx, kit.actor, dto.id, { holderEmailField: '/email' });
-    expect((await getConnection(kit.env.DB, dto.id))?.cursor).toBeNull();
+    expect(await cursor()).toBeNull();
+    await seed();
+    await service.update(kit.sctx, kit.actor, dto.id, { defaultTemplateId: kit.templateId });
+    expect(await cursor()).toBeNull();
+  });
+
+  it('keeps the cursor, the generation and the next run when a save sends the same values', async () => {
+    const dto = await service.create(
+      kit.sctx,
+      kit.actor,
+      httpJson({
+        mapping: { memberName: { from: '/n' } },
+        holderEmailField: '/email',
+        defaultTemplateId: kit.templateId,
+        config: { baseUrl: 'https://api.example.com/v1' },
+      }),
+    );
+    await run(kit.env.DB, "UPDATE connections SET cursor = 'abc' WHERE id = ?", [dto.id]);
+    const before = await getConnection(kit.env.DB, dto.id);
+    await service.update(kit.sctx, kit.actor, dto.id, {
+      name: 'Renamed',
+      mapping: { memberName: { from: '/n' } },
+      holderEmailField: '/email',
+      defaultTemplateId: kit.templateId,
+      config: { baseUrl: 'https://api.example.com/v1' },
+    });
+    const after = await getConnection(kit.env.DB, dto.id);
+    expect([after?.generation, after?.cursor, after?.nextRunAt]).toEqual([
+      before?.generation,
+      'abc',
+      before?.nextRunAt,
+    ]);
+  });
+
+  it('resets the cursor when auto-create turns on or the void rules change', async () => {
+    const dto = await service.create(kit.sctx, kit.actor, httpJson());
+    const cursor = async () => (await getConnection(kit.env.DB, dto.id))?.cursor;
+    const seed = () =>
+      run(kit.env.DB, "UPDATE connections SET cursor = 'abc' WHERE id = ?", [dto.id]);
+    await seed();
+    await service.update(kit.sctx, kit.actor, dto.id, { onMissing: 'void' });
+    expect(await cursor()).toBe('abc');
+    await service.update(kit.sctx, kit.actor, dto.id, {
+      autoCreate: true,
+      defaultTemplateId: kit.templateId,
+    });
+    expect(await cursor()).toBeNull();
+    await seed();
+    await service.update(kit.sctx, kit.actor, dto.id, { autoCreate: true });
+    expect(await cursor()).toBe('abc');
+    await service.update(kit.sctx, kit.actor, dto.id, {
+      voidWhen: [{ from: '/status', op: 'in', values: ['inactive'] }],
+    });
+    expect(await cursor()).toBeNull();
   });
 
   it('replaces credentials without leaving the old row behind', async () => {
