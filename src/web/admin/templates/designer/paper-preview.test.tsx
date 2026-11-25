@@ -143,6 +143,33 @@ describe('designer Paper tab', () => {
     expect(onPaper).toHaveBeenLastCalledWith({ size: 'atb' });
   });
 
+  it('reads the class from the manifest like the server: a door photo on a get-in pass is staff-only', async () => {
+    const user = userEvent.setup();
+    renderTags(
+      <DesignerStage
+        manifest={
+          {
+            ...EVENT_MANIFEST,
+            display: { title: '{{name}}', group: 'get-in' },
+            scan: { lookup: { input: 'ticketNo' }, display: { v: 1, photo: { minRole: 'door' } } },
+            paper: { schema: 1, size: 'a4', barcode: 'qr' },
+          } as Record<string, unknown>
+        }
+        templateId="t1"
+        orgId="o1"
+        passJson={EVENT_PASS as unknown as Record<string, unknown>}
+        assets={[]}
+        assetBase=""
+        checking={false}
+        onPaper={vi.fn()}
+      />,
+      { '/api/v1/templates/t1/channels': channels(on) },
+    );
+    await user.click(await screen.findByRole('radio', { name: 'Paper' }));
+    expect(await screen.findByRole('checkbox', { name: 'Holders can print' })).not.toBeChecked();
+    expect(screen.getByText('Staff print only.')).toBeInTheDocument();
+  });
+
   it('shows an ID kind as staff-only and writes holder true when ticked', async () => {
     const user = userEvent.setup();
     const onPaper = vi.fn();

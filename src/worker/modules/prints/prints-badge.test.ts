@@ -177,9 +177,11 @@ describe('one answer for who may print', () => {
     const t = await token(pass);
     const mint = await holder(t, 'POST');
     const page = await (await holder(t)).text();
-    const offered = mint.status === 200;
-    expect(page.includes('data-act="make"') || page.includes('data-act="reprint"')).toBe(offered);
-    expect((await holderChannels(jobCtxOf(kit), pass as never)).holderPrint).toBe(offered);
+    expect(mint.status).toBe(403);
+    expect(await mint.json()).toMatchObject({ code: 'PRINT_STAFF_ONLY' });
+    expect(page).not.toContain('data-act="make"');
+    expect(page).toContain('Printing unavailable');
+    expect((await holderChannels(jobCtxOf(kit), pass as never)).holderPrint).toBe(false);
   });
 
   it('a block that fails to parse keeps the staff-only word it says', async () => {

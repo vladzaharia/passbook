@@ -133,21 +133,25 @@ export function withKind(design: PaperDesign, kind: PaperKind): PaperDesign {
  * Whether the holder's link may print, from the manifest alone: the block's `holder`, else the
  * class's default (an ID is staff-only), the class being the block's or the derived one.
  */
-export function holderMayPrint(
-  manifest:
-    | {
-        paper?: unknown;
-        display?: unknown;
-        scan?: unknown;
-        bindings?: TemplateManifest['bindings'];
-      }
-    | null
-    | undefined,
-  style?: PassStyle,
-): boolean {
-  const design = resolvePaper(manifest?.paper);
-  const kind = design.kind ?? (manifest ? kindOf(manifest, style, {}) : 'admission');
-  return withKind(design, kind).holder;
+type ClassSource =
+  | {
+      paper?: unknown;
+      display?: unknown;
+      scan?: unknown;
+      bindings?: TemplateManifest['bindings'];
+    }
+  | null
+  | undefined;
+
+/** The class paper reads a template as: the block's `kind`, else the one derived from the manifest. */
+export function holderClassOf(manifest: ClassSource, style?: PassStyle): PaperKind {
+  return (
+    resolvePaper(manifest?.paper).kind ?? (manifest ? kindOf(manifest, style, {}) : 'admission')
+  );
+}
+
+export function holderMayPrint(manifest: ClassSource, style?: PassStyle): boolean {
+  return withKind(resolvePaper(manifest?.paper), holderClassOf(manifest, style)).holder;
 }
 
 /** The design for a manifest's `paper` value. An invalid block falls back to derived. */

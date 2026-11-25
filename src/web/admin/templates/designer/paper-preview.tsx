@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  holderClassOf,
   PAPER_SIZES,
   PAPER_SPECS,
   type PaperDesign,
@@ -221,7 +222,7 @@ export function PaperPreview({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Badge tone="neutral">{PRINT_COPY.sample}</Badge>
             {saved.derived ? <Badge tone="neutral">{PRINT_COPY.derived}</Badge> : null}
-            {(content ? withKind(saved, content.kind) : saved).holder ? null : (
+            {withKind(saved, holderClassOf(manifest)).holder ? null : (
               <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>
             )}
             {content?.ink === 'mono' && saved.ink !== 'mono' ? (
@@ -236,7 +237,7 @@ export function PaperPreview({
           {onEdit && !saved.derived ? (
             <PaperEditor
               design={saved}
-              kind={content?.kind ?? saved.kind ?? 'admission'}
+              kind={holderClassOf(manifest)}
               manifest={manifest}
               passJson={passJson}
               onEdit={onEdit}
