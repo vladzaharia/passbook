@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   approvedRemovalFailures,
+  backdatedDeprecations,
   breakingChanges,
   changes,
   type Doc,
@@ -142,5 +143,30 @@ describe('approvedRemovalFailures', () => {
     expect(approvedRemovalFailures(doc(inline), doc(inline), [approval])[0]).toMatch(
       /still in the document/,
     );
+  });
+});
+
+describe('backdatedDeprecations', () => {
+  const was = (extra: object): Doc => ({
+    paths: { '/a': { get: { operationId: 'a.getA', ...extra } } },
+  });
+  const dep = (since?: string): Doc =>
+    was({
+      deprecated: true,
+      'x-sunset': '2027-11-25',
+      ...(since ? { 'x-deprecated': since } : {}),
+    });
+
+  it('refuses a newly deprecated operation dated before today, or undated', () => {
+    expect(backdatedDeprecations(was({}), dep('2026-11-01'), '2026-11-25')[0]).toMatch(
+      /GET \/a: newly deprecated.*on or after 2026-11-25/,
+    );
+    expect(backdatedDeprecations(was({}), dep(), '2026-11-25')).toHaveLength(1);
+  });
+
+  it('accepts today or later, and leaves an already deprecated operation alone', () => {
+    expect(backdatedDeprecations(was({}), dep('2026-11-25'), '2026-11-25')).toEqual([]);
+    expect(backdatedDeprecations(was({}), dep('2026-12-01'), '2026-11-25')).toEqual([]);
+    expect(backdatedDeprecations(dep('2026-01-01'), dep('2026-01-01'), '2026-11-25')).toEqual([]);
   });
 });

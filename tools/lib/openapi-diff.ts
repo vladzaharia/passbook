@@ -204,6 +204,23 @@ export function approvedRemovalFailures(
   return out;
 }
 
+/** A newly deprecated operation's `x-deprecated` is the day it was deprecated: not before `on`, so no window can be backdated. */
+export function backdatedDeprecations(prev: Doc, next: Doc, on: string = today()): string[] {
+  const out: string[] = [];
+  for (const [path, item] of Object.entries(next.paths ?? {}))
+    for (const method of METHODS) {
+      const op = obj(obj(item)[method]);
+      if (op.deprecated !== true) continue;
+      if (obj(obj(prev.paths?.[path])[method]).deprecated === true) continue;
+      const since = op['x-deprecated'];
+      if (typeof since !== 'string' || since < on)
+        out.push(
+          `${method.toUpperCase()} ${path}: newly deprecated, so x-deprecated must be on or after ${on} (got ${String(since)})`,
+        );
+    }
+  return out;
+}
+
 export interface Change {
   operationId: string;
   /** `GET /passes/{id}`. */
