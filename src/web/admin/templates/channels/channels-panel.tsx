@@ -1,6 +1,6 @@
 import { type Dispatch, type SetStateAction, useRef, useState } from 'react';
 import type { z } from 'zod';
-import { isDigital } from '@/shared/channels.ts';
+import { isDigital, orgChain, stoppedAboveOrg } from '@/shared/channels.ts';
 import {
   CHANNELS,
   type Channel,
@@ -143,7 +143,7 @@ export function TemplateChannelsPanel({
       <Card>
         <CardBody>
           <ChannelList>
-            {CHANNELS.map((c) => {
+            {CHANNELS.filter((c) => !stoppedAboveOrg(data.levels[c])).map((c) => {
               const status = data.effective[c];
               const limited = !status.on && status.reason !== undefined && !OWN.has(status.reason);
               return (
@@ -151,7 +151,7 @@ export function TemplateChannelsPanel({
                   key={c}
                   channel={c}
                   status={status}
-                  chain={<ChainBadge levels={data.levels[c]} />}
+                  chain={<ChainBadge levels={orgChain(data.levels[c])} />}
                   locked={limited}
                   control={
                     <SegmentedControl
