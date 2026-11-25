@@ -7994,7 +7994,7 @@ class PassesPrintsCreateResponse(_Model):
     id: str
     passId: str
     generation: int
-    status: _Literal["active", "voided", "used"] | str
+    status: _Literal["active", "voided"] | str
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8007,7 +8007,7 @@ class PassesPrintsListResponsePrintsItem(_Model):
     id: str
     passId: str
     generation: int
-    status: _Literal["active", "voided", "used"] | str
+    status: _Literal["active", "voided"] | str
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8016,7 +8016,7 @@ class PassesPrintsVoidResponse(_Model):
     id: str
     passId: str
     generation: int
-    status: _Literal["active", "voided", "used"] | str
+    status: _Literal["active", "voided"] | str
     createdAt: int
     voidedAt: int | None
     voidCause: str | None

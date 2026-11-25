@@ -36786,8 +36786,7 @@
             "type": "string",
             "enum": [
               "active",
-              "voided",
-              "used"
+              "voided"
             ]
           },
           "createdAt": {
@@ -36848,8 +36847,7 @@
                   "type": "string",
                   "enum": [
                     "active",
-                    "voided",
-                    "used"
+                    "voided"
                   ]
                 },
                 "createdAt": {
@@ -36907,8 +36905,7 @@
             "type": "string",
             "enum": [
               "active",
-              "voided",
-              "used"
+              "voided"
             ]
           },
           "createdAt": {

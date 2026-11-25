@@ -28,7 +28,7 @@ export const FULL_CSS = `.pp-sheet{--org:#333;--org-fg:#fff;--org-label:#ddd;--i
 .pp-band .pp-top .pp-org{font-size:calc(var(--mm) * 2.8222);font-weight:600;letter-spacing:.02em}
 .pp-band .pp-kicker{font-size:calc(var(--mm) * 2.3283);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--org-label)}
 .pp-band h2{font-size:calc(var(--mm) * 6.7028);line-height:1.08;font-weight:600;letter-spacing:-.01em;margin-top:calc(var(--mm) * 1);max-width:80%}
-.pp-face-body{flex:1;display:flex;flex-direction:column;gap:calc(var(--mm) * 3.2);padding:calc(var(--mm) * 5) calc(var(--mm) * 6.5) calc(var(--mm) * 5.5)}
+.pp-face-body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:calc(var(--mm) * 3.2);padding:calc(var(--mm) * 5) calc(var(--mm) * 6.5) calc(var(--mm) * 5.5)}
 .pp-big{font-size:calc(var(--mm) * 4.5861);font-weight:600;color:var(--ink);line-height:1.2}
 .pp-sub{font-size:calc(var(--mm) * 3.3514);color:var(--text)}
 .pp-facts{display:flex;gap:calc(var(--mm) * 2);margin-top:auto}

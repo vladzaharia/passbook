@@ -241,6 +241,15 @@ export function paperManifestIssues(
         error('PAPER_LOOKUP_FIELD', 'This field carries the scan lookup value.', path);
     }
   }
+  if (
+    paper.fields?.length &&
+    (paper.size === 'cr80' || paper.kind === 'permit' || paper.kind === 'coupon')
+  )
+    warn(
+      'PAPER_FIELD',
+      'A card, permit or coupon does not print extra fields. Remove them or use a larger layout.',
+      'paper.fields',
+    );
   if (paper.size === 'cr80' && paper.barcode === 'code128')
     error('PAPER_BARCODE', 'Code 128 does not fit a card. Use QR.', 'paper.barcode');
   if (paper.ink !== 'mono' && options.passJson && !paperInk(options.passJson as PassJson).colour)

@@ -86,7 +86,10 @@ function faceBody(pen: Pen, s: Sheet, face: Box, top: number, bottom: number, ha
   const x = face.x + 6.5;
   const w = face.w - 13;
   let y = top + 5;
+  // Nothing runs into the fact boxes or the foot of the panel.
+  const limit = c.facts.length ? bottom - 12 : bottom - 4;
   for (const l of faceLines(c, half)) {
+    if (y + pen.lineHeight(l.big ? BIG : SUB) > limit) break;
     y += pen.para(l.text, x, y, w, l.big ? BIG : SUB, { maxLines: 3 }) + 3.2;
   }
   if (half) {
