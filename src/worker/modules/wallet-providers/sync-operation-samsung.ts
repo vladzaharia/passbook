@@ -79,7 +79,7 @@ export async function runSamsungWalletProviderOperation(
       : 'uncertain';
   }
   const state = await samsungOperationState(ctx, op);
-  await ensureSamsungSyncTargets(ctx, { ...claim, now: ctx.clock.now() });
+  await ensureSamsungSyncTargets(ctx, { ...claim, now: ctx.clock.now() }, state);
   const targets = await listSamsungSyncTargets(ctx, claim);
   for (const item of targets) {
     if (item.state !== 'pending' && item.state !== 'retry') continue;

@@ -3927,6 +3927,15 @@
       ]
     },
     {
+      "code": "SCANNING_FOLLOWS_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCANNING_HOLD_RANGE",
       "statuses": [
         400
@@ -4105,6 +4114,24 @@
       "code": "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
       "statuses": [
         404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_DRAFT_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_DRAFT_STALE",
+      "statuses": [
+        409
       ],
       "modules": [
         "scan"

@@ -15,7 +15,7 @@ import {
   ScanRecordMethodSchema,
   TimeZoneSchema,
 } from './scan.ts';
-import { HoursSpanSchema, ZoneIdsSchema } from './scan-access.ts';
+import { HoursSpanSchema, SESSION_DEVICE_CAP, ZoneIdsSchema } from './scan-access.ts';
 import { NativeHardwareEntrySchema, ReportedHardwareSchema } from './scan-hardware.ts';
 import { AdmitsSchema } from './scanners.ts';
 
@@ -92,7 +92,6 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
   preferred: ScanSurfaceSchema,
 });
 export type ScanDeviceCapabilities = z.infer<typeof ScanDeviceCapabilitiesSchema>;
-
 /** Admission, staff rights, accepted passes and time zone always belong to the session. */
 export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   flow: true,
@@ -101,6 +100,7 @@ export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   lookup: true,
   showPhoto: true,
 })
+  .extend({ follows: z.array(IdSchema).min(1).max(SESSION_DEVICE_CAP).optional() }) // absent: all
   .partial()
   .strict();
 export type ScanDeviceOverrides = z.infer<typeof ScanDeviceOverridesSchema>;
@@ -319,7 +319,9 @@ export const JoinAdminScanningSessionSchema = z.strictObject({
 });
 export const ScanWorkspaceSchema = z.object({
   session: ScanningSessionSchema,
-  device: ScanningDeviceSchema,
+  device: ScanningDeviceSchema.extend({
+    overrides: ScanDeviceOverridesSchema.omit({ follows: true }),
+  }),
 });
 export type ScanWorkspace = z.infer<typeof ScanWorkspaceSchema>;
 export const ReportScanDeviceSchema = z.object({

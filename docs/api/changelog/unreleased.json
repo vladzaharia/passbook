@@ -88,6 +88,14 @@
     "note": "Deletes a saved column mapping by name."
   },
   {
+    "key": "DELETE /api/v1/scan/draft new operation",
+    "class": "additive",
+    "operationId": "scan.deleteScanDraft",
+    "op": "DELETE /api/v1/scan/draft",
+    "change": "new operation",
+    "note": "New: clears the customer screen's draft and ready card for a read. Paired scanner devices only."
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
@@ -816,6 +824,22 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "GET /api/v1/scan/live 200.rows[].customer.figure: field added",
+    "class": "additive",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].customer.figure: field added",
+    "note": "A customer body can carry figure, the amount of a review. The session's showDraft also governs a receipt's balance line."
+  },
+  {
+    "key": "GET /api/v1/scan/live 200.rows[].customer.screen: enum value \"review\" added",
+    "class": "notable",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].customer.screen: enum value \"review\" added",
+    "note": "A customer body's screen can be review."
+  },
+  {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
@@ -862,6 +886,14 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "GET /api/v1/scans/{id} 200.late: field added",
@@ -1415,6 +1447,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.patchScanningSessionsById",
@@ -1437,6 +1477,22 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.overrides.follows: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.overrides.follows: optional input field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "PATCH /api/v1/templates/{id} 200.openReview: field added",
@@ -2837,6 +2893,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.postScanningSessions",
@@ -2853,6 +2917,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.overrides.follows: optional input field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
@@ -2867,6 +2947,22 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.sessions[].devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup new operation",
@@ -3363,6 +3459,14 @@
     "op": "PUT /api/v1/platform/wallet-credentials/{id}/cards",
     "change": "new operation",
     "note": "PUT /platform/wallet-credentials/{id}/cards names the Samsung card of one more type on a platform credential, without sending the partner secrets again."
+  },
+  {
+    "key": "PUT /api/v1/scan/draft new operation",
+    "class": "additive",
+    "operationId": "scan.putScanDraft",
+    "op": "PUT /api/v1/scan/draft",
+    "change": "new operation",
+    "note": "New: shows a money take or add under review on the customer screens that follow the scanner. Paired scanner devices only."
   },
   {
     "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field added",
