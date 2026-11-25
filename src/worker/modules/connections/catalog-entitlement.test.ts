@@ -90,12 +90,12 @@ describe('connector plans', () => {
     await run(
       kit.env.DB,
       `INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at)
-       VALUES (?, 'connectors', '["webhook-push/custom"]', 1)`,
+       VALUES (?, 'connectors', '["webhook-push/stripe-payments"]', 1)`,
       [kit.org.id],
     );
     const items = await types();
     expect(items.map((c) => c.type)).toEqual(['webhook-push']);
-    expect(items[0]?.recipes.map((r) => r.id)).toEqual(['custom']);
+    expect(items[0]?.recipes.map((r) => r.id)).toEqual(['stripe-payments']);
     await run(kit.env.DB, "DELETE FROM org_entitlement_overrides WHERE key = 'connectors'");
   });
 
