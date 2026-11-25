@@ -57,7 +57,6 @@ async function call(
     kit.env,
   );
   const text = await res.text();
-  // biome-ignore lint/suspicious/noExplicitAny: a test reads loose JSON
   return { status: res.status, json: (text ? JSON.parse(text) : {}) as Record<string, any> };
 }
 

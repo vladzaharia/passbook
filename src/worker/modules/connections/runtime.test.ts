@@ -81,11 +81,7 @@ describe('prepare', () => {
     if (!files) throw new Error('expected a files port');
     expect(await files.current()).toBeNull();
     expect(await files.previous(3)).toEqual([]);
-    for (const read of [
-      files.page('f1', 0),
-      files.refs('f1'),
-      files.find('f1', 'm-001'),
-    ]) {
+    for (const read of [files.page('f1', 0), files.refs('f1'), files.find('f1', 'm-001')]) {
       expect(await rejection(read)).toMatchObject({ code: 'CONFIG', permanent: true });
     }
   });
