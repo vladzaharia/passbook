@@ -26,7 +26,9 @@ export const LOGS_COPY = {
     noKey: 'Your sandbox has no key.',
     makeKey: 'Make a key',
     console: 'Run in console',
-    portal: 'Show portal calls',
+    hidden: (n: number) =>
+      `${plural(n, 'call', 'calls')} from the portal ${n === 1 ? 'is' : 'are'} hidden.`,
+    showHidden: 'Show them.',
     copy: 'Copy command',
     noMatch: 'No requests match',
     clear: 'Clear filters',

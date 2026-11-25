@@ -113,6 +113,14 @@
 .chan .pg-skel {
   max-width: 17rem;
 }
+/* Front and back pages: a gap that scales with the card, not the page's 12 px. */
+.pg-paper {
+  display: grid;
+  gap: 28px;
+}
+.pg-paper > .pp-fit + .pp-fit {
+  margin-top: 0;
+}
 /* A printed page is shown whole: width and height only ever shrink it. */
 .pg-paper-img {
   display: block;
@@ -160,8 +168,8 @@
     height: auto;
     overflow: visible;
     border-right: 0;
-    border-top: 1px solid var(--pk-border-subtle);
-    order: 2;
+    border-bottom: 1px solid var(--pk-border-subtle);
+    order: 1;
   }
   .edit-body,
   .edit-actions {
@@ -172,7 +180,7 @@
   }
   .pg .view {
     padding: 16px 0 28px;
-    order: 1;
+    order: 2;
   }
   .pg .view > :not(.stage-wrap) {
     margin-inline: 16px;
