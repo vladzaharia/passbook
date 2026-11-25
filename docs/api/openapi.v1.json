@@ -116036,6 +116036,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
@@ -116050,6 +116054,7 @@
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "UPSTREAM",
