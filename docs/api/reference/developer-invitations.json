@@ -1,0 +1,66 @@
+{
+  "developer-invitations.postOrgsByIdDeveloperInvitations": {
+    "description": "Invites a developer by email. They get developer access with their own sandbox through a Polaris ID. Pass roles to also join the organization with them. Needs a session with members:manage and a recent sign-in, or a Live key naming members:write. Counts against the members.developers limit.",
+    "request": {
+      "email": "ada@example.com",
+      "roles": ["read_only"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-95e605fb59de",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "email": "ada@example.com",
+      "roles": ["read_only"],
+      "state": "pending",
+      "createdAt": 1795399200000,
+      "expiresAt": 1796004000000,
+      "revokedAt": null
+    }
+  },
+  "developer-invitations.getOrgsByIdDeveloperInvitations": {
+    "description": "Lists pending developer invitations, plus those revoked or expired in the last 30 days.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-95e605fb59de",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "email": "ada@example.com",
+          "roles": ["read_only"],
+          "state": "pending",
+          "createdAt": 1795399200000,
+          "expiresAt": 1796004000000,
+          "revokedAt": null
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId": {
+    "description": "Revokes a pending developer invitation and the membership invitation paired with it.",
+    "response": {
+      "ok": true
+    }
+  },
+  "developer-invitations.getOrgsByIdDevelopers": {
+    "description": "Lists the developers the organization vouches for. available is false when the plan has no developer seats or Polaris ID cannot be reached.",
+    "response": {
+      "items": [
+        {
+          "userId": "0193a1b2-7c00-7000-8000-67921d38ff5e",
+          "name": "Priya Nair",
+          "email": "priya@example.com",
+          "since": 1795399200000,
+          "roles": ["read_only"]
+        }
+      ],
+      "nextCursor": null,
+      "available": true,
+      "limit": 5
+    }
+  },
+  "developer-invitations.deleteOrgsByIdDevelopersByUserId": {
+    "description": "Ends the organization's developer sponsorship of a person and revokes the membership their invitation made. The answer is the same whether or not they were sponsored here.",
+    "response": {
+      "ok": true
+    }
+  }
+}

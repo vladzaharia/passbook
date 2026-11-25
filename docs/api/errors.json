@@ -1078,6 +1078,24 @@
       ]
     },
     {
+      "code": "DEVELOPER_INVITE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
+      "code": "DEVELOPER_INVITE_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
       "code": "DEVICE_INVALID",
       "statuses": [
         400
@@ -2382,6 +2400,7 @@
         409
       ],
       "modules": [
+        "dev-access",
         "orgs"
       ]
     },
@@ -2876,6 +2895,7 @@
         409
       ],
       "modules": [
+        "dev-access",
         "orgs"
       ]
     },

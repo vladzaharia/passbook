@@ -2137,6 +2137,96 @@ type DeliveriesListResponseItemsItem struct {
 
 type DeliveriesListResult = DeliveriesListResponse
 
+type DeveloperInvitationsCreateBody = DeveloperInvitationsCreateParams
+
+type DeveloperInvitationsCreateParams struct {
+	Email string   `json:"email"`
+	Roles []string `json:"roles,omitempty"`
+}
+
+type DeveloperInvitationsCreateResponse struct {
+	ID        string   `json:"id"`
+	OrgID     string   `json:"orgId"`
+	Email     string   `json:"email"`
+	Roles     []string `json:"roles"`
+	State     string   `json:"state"`
+	CreatedAt int64    `json:"createdAt"`
+	ExpiresAt int64    `json:"expiresAt"`
+	RevokedAt *int64   `json:"revokedAt"`
+}
+
+type DeveloperInvitationsCreateResult = DeveloperInvitationsCreateResponse
+
+type DeveloperInvitationsListItem struct {
+	ID        string   `json:"id"`
+	OrgID     string   `json:"orgId"`
+	Email     string   `json:"email"`
+	Roles     []string `json:"roles"`
+	State     string   `json:"state"`
+	CreatedAt int64    `json:"createdAt"`
+	ExpiresAt int64    `json:"expiresAt"`
+	RevokedAt *int64   `json:"revokedAt"`
+}
+
+type DeveloperInvitationsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
+type DeveloperInvitationsListResponse struct {
+	Items      []DeveloperInvitationsListResponseItemsItem `json:"items"`
+	NextCursor *string                                     `json:"nextCursor"`
+}
+
+type DeveloperInvitationsListResponseItemsItem struct {
+	ID        string   `json:"id"`
+	OrgID     string   `json:"orgId"`
+	Email     string   `json:"email"`
+	Roles     []string `json:"roles"`
+	State     string   `json:"state"`
+	CreatedAt int64    `json:"createdAt"`
+	ExpiresAt int64    `json:"expiresAt"`
+	RevokedAt *int64   `json:"revokedAt"`
+}
+
+type DeveloperInvitationsRevokeResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type DeveloperInvitationsRevokeResult = DeveloperInvitationsRevokeResponse
+
+type DevelopersListItem struct {
+	UserID string   `json:"userId"`
+	Name   *string  `json:"name"`
+	Email  *string  `json:"email"`
+	Since  int64    `json:"since"`
+	Roles  []string `json:"roles"`
+}
+
+type DevelopersListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
+type DevelopersListResponse struct {
+	Items      []DevelopersListResponseItemsItem `json:"items"`
+	NextCursor *string                           `json:"nextCursor"`
+	Available  bool                              `json:"available"`
+	Limit      *int64                            `json:"limit"`
+}
+
+type DevelopersListResponseItemsItem struct {
+	UserID string   `json:"userId"`
+	Name   *string  `json:"name"`
+	Email  *string  `json:"email"`
+	Since  int64    `json:"since"`
+	Roles  []string `json:"roles"`
+}
+
+type DevelopersRemoveResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type DevelopersRemoveResult = DevelopersRemoveResponse
+
 type EmailFailedEvent struct {
 	ID         string               `json:"id"`
 	Type       string               `json:"type"`

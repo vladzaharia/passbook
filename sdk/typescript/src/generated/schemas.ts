@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "api-keys:write" | "audit:read">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "api-keys:write" | "audit:read" | "members:read" | "members:write">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;
@@ -1474,6 +1474,57 @@ export type DeliveriesListResponse = {
     createdAt: number;
     finishedAt: number | null;
   }>;
+};
+
+export type DeveloperInvitationsCreateParams = {
+  email: string;
+  roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+};
+
+export type DeveloperInvitationsCreateResponse = {
+  id: string;
+  orgId: string;
+  email: string;
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  state: "pending" | "revoked" | "expired";
+  createdAt: number;
+  expiresAt: number;
+  revokedAt: number | null;
+};
+
+export type DeveloperInvitationsListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    email: string;
+    roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+    state: "pending" | "revoked" | "expired";
+    createdAt: number;
+    expiresAt: number;
+    revokedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type DeveloperInvitationsRevokeResponse = {
+  ok: true;
+};
+
+export type DevelopersListResponse = {
+  items: Array<{
+    userId: string;
+    name: string | null;
+    email: string | null;
+    since: number;
+    roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only"> | null;
+  }>;
+  nextCursor: string | null;
+  available: boolean;
+  limit: number | null;
+};
+
+export type DevelopersRemoveResponse = {
+  ok: true;
 };
 
 export type EmailFailedEvent = {
@@ -3949,7 +4000,7 @@ export type OrgsEntitlementsRetrieveResponse = {
   preset: string | null;
   label: string | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
     value: number | string | Array<string> | null;
     source: "preset" | "override";
   }>;
@@ -6715,7 +6766,7 @@ export type PlatformOrgsEntitlementsRetrieveResponse = {
   revision: number;
   updatedAt: number | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
     value: number | string | Array<string> | null;
     presetValue: number | string | Array<string> | null;
     source: "preset" | "override";
@@ -6747,7 +6798,7 @@ export type PlatformOrgsEntitlementsUpdateResponse = {
   revision: number;
   updatedAt: number | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
     value: number | string | Array<string> | null;
     presetValue: number | string | Array<string> | null;
     source: "preset" | "override";

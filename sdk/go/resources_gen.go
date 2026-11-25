@@ -895,6 +895,63 @@ func newNfcResource(c *core) *NfcResource {
 	}
 }
 
+type DeveloperInvitationsResource struct {
+	c *core
+}
+
+func newDeveloperInvitationsResource(c *core) *DeveloperInvitationsResource {
+	return &DeveloperInvitationsResource{
+		c: c,
+	}
+}
+
+// Create Invite a developer `POST /api/v1/orgs/{id}/developer-invitations`
+func (r *DeveloperInvitationsResource) Create(ctx context.Context, id string, body *DeveloperInvitationsCreateBody, opts ...RequestOption) (*DeveloperInvitationsCreateResult, error) {
+	var out DeveloperInvitationsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(id) + "/developer-invitations", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List developer invitations `GET /api/v1/orgs/{id}/developer-invitations`
+func (r *DeveloperInvitationsResource) List(ctx context.Context, id string, query *DeveloperInvitationsListQuery, opts ...RequestOption) *Pager[DeveloperInvitationsListItem] {
+	return newPager[DeveloperInvitationsListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/developer-invitations", query: queryValues(query)}, "cursor", opts)
+}
+
+// Revoke Revoke a developer invitation `DELETE /api/v1/orgs/{id}/developer-invitations/{invitationId}`
+func (r *DeveloperInvitationsResource) Revoke(ctx context.Context, id string, invitationId string, opts ...RequestOption) (*DeveloperInvitationsRevokeResult, error) {
+	var out DeveloperInvitationsRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/developer-invitations/" + pathEscape(invitationId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type DevelopersResource struct {
+	c *core
+}
+
+func newDevelopersResource(c *core) *DevelopersResource {
+	return &DevelopersResource{
+		c: c,
+	}
+}
+
+// List List the developers an organization vouches for `GET /api/v1/orgs/{id}/developers`
+func (r *DevelopersResource) List(ctx context.Context, id string, query *DevelopersListQuery, opts ...RequestOption) *Pager[DevelopersListItem] {
+	return newPager[DevelopersListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/developers", query: queryValues(query)}, "cursor", opts)
+}
+
+// Remove Remove a developer `DELETE /api/v1/orgs/{id}/developers/{userId}`
+func (r *DevelopersResource) Remove(ctx context.Context, id string, userId string, opts ...RequestOption) (*DevelopersRemoveResult, error) {
+	var out DevelopersRemoveResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/developers/" + pathEscape(userId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type OrgsEntitlementsResource struct {
 	c *core
 }
@@ -2738,75 +2795,79 @@ func (r *WebhookEndpointsResource) Update(ctx context.Context, id string, body *
 
 // Resources are every resource, named as in docs/api/sdk-names.json.
 type Resources struct {
-	APIKeys          *ApiKeysResource
-	AuditEntries     *AuditEntriesResource
-	Brand            *BrandResource
-	Broadcasts       *BroadcastsResource
-	Bundles          *BundlesResource
-	Connections      *ConnectionsResource
-	Connectors       *ConnectorsResource
-	Deliveries       *DeliveriesResource
-	Events           *EventsResource
-	Holders          *HoldersResource
-	MessageRules     *MessageRulesResource
-	NFC              *NfcResource
-	Orgs             *OrgsResource
-	PassImports      *PassImportsResource
-	Passes           *PassesResource
-	PrintJobs        *PrintJobsResource
-	BulkRuns         *BulkRunsResource
-	PassViews        *PassViewsResource
-	RollCalls        *RollCallsResource
-	ScanEvents       *ScanEventsResource
-	ScanSetups       *ScanSetupsResource
-	ScanStaff        *ScanStaffResource
-	ScanZones        *ScanZonesResource
-	Terminal         *TerminalResource
-	Scanners         *ScannersResource
-	ScanningSessions *ScanningSessionsResource
-	Scans            *ScansResource
-	Templates        *TemplatesResource
-	TemplateImports  *TemplateImportsResource
-	Blueprints       *BlueprintsResource
-	TestEmails       *TestEmailsResource
-	Visitors         *VisitorsResource
-	WebhookEndpoints *WebhookEndpointsResource
+	APIKeys              *ApiKeysResource
+	AuditEntries         *AuditEntriesResource
+	Brand                *BrandResource
+	Broadcasts           *BroadcastsResource
+	Bundles              *BundlesResource
+	Connections          *ConnectionsResource
+	Connectors           *ConnectorsResource
+	Deliveries           *DeliveriesResource
+	Events               *EventsResource
+	Holders              *HoldersResource
+	MessageRules         *MessageRulesResource
+	NFC                  *NfcResource
+	DeveloperInvitations *DeveloperInvitationsResource
+	Developers           *DevelopersResource
+	Orgs                 *OrgsResource
+	PassImports          *PassImportsResource
+	Passes               *PassesResource
+	PrintJobs            *PrintJobsResource
+	BulkRuns             *BulkRunsResource
+	PassViews            *PassViewsResource
+	RollCalls            *RollCallsResource
+	ScanEvents           *ScanEventsResource
+	ScanSetups           *ScanSetupsResource
+	ScanStaff            *ScanStaffResource
+	ScanZones            *ScanZonesResource
+	Terminal             *TerminalResource
+	Scanners             *ScannersResource
+	ScanningSessions     *ScanningSessionsResource
+	Scans                *ScansResource
+	Templates            *TemplatesResource
+	TemplateImports      *TemplateImportsResource
+	Blueprints           *BlueprintsResource
+	TestEmails           *TestEmailsResource
+	Visitors             *VisitorsResource
+	WebhookEndpoints     *WebhookEndpointsResource
 }
 
 func newResources(c *core) Resources {
 	return Resources{
-		APIKeys:          newApiKeysResource(c),
-		AuditEntries:     newAuditEntriesResource(c),
-		Brand:            newBrandResource(c),
-		Broadcasts:       newBroadcastsResource(c),
-		Bundles:          newBundlesResource(c),
-		Connections:      newConnectionsResource(c),
-		Connectors:       newConnectorsResource(c),
-		Deliveries:       newDeliveriesResource(c),
-		Events:           newEventsResource(c),
-		Holders:          newHoldersResource(c),
-		MessageRules:     newMessageRulesResource(c),
-		NFC:              newNfcResource(c),
-		Orgs:             newOrgsResource(c),
-		PassImports:      newPassImportsResource(c),
-		Passes:           newPassesResource(c),
-		PrintJobs:        newPrintJobsResource(c),
-		BulkRuns:         newBulkRunsResource(c),
-		PassViews:        newPassViewsResource(c),
-		RollCalls:        newRollCallsResource(c),
-		ScanEvents:       newScanEventsResource(c),
-		ScanSetups:       newScanSetupsResource(c),
-		ScanStaff:        newScanStaffResource(c),
-		ScanZones:        newScanZonesResource(c),
-		Terminal:         newTerminalResource(c),
-		Scanners:         newScannersResource(c),
-		ScanningSessions: newScanningSessionsResource(c),
-		Scans:            newScansResource(c),
-		Templates:        newTemplatesResource(c),
-		TemplateImports:  newTemplateImportsResource(c),
-		Blueprints:       newBlueprintsResource(c),
-		TestEmails:       newTestEmailsResource(c),
-		Visitors:         newVisitorsResource(c),
-		WebhookEndpoints: newWebhookEndpointsResource(c),
+		APIKeys:              newApiKeysResource(c),
+		AuditEntries:         newAuditEntriesResource(c),
+		Brand:                newBrandResource(c),
+		Broadcasts:           newBroadcastsResource(c),
+		Bundles:              newBundlesResource(c),
+		Connections:          newConnectionsResource(c),
+		Connectors:           newConnectorsResource(c),
+		Deliveries:           newDeliveriesResource(c),
+		Events:               newEventsResource(c),
+		Holders:              newHoldersResource(c),
+		MessageRules:         newMessageRulesResource(c),
+		NFC:                  newNfcResource(c),
+		DeveloperInvitations: newDeveloperInvitationsResource(c),
+		Developers:           newDevelopersResource(c),
+		Orgs:                 newOrgsResource(c),
+		PassImports:          newPassImportsResource(c),
+		Passes:               newPassesResource(c),
+		PrintJobs:            newPrintJobsResource(c),
+		BulkRuns:             newBulkRunsResource(c),
+		PassViews:            newPassViewsResource(c),
+		RollCalls:            newRollCallsResource(c),
+		ScanEvents:           newScanEventsResource(c),
+		ScanSetups:           newScanSetupsResource(c),
+		ScanStaff:            newScanStaffResource(c),
+		ScanZones:            newScanZonesResource(c),
+		Terminal:             newTerminalResource(c),
+		Scanners:             newScannersResource(c),
+		ScanningSessions:     newScanningSessionsResource(c),
+		Scans:                newScansResource(c),
+		Templates:            newTemplatesResource(c),
+		TemplateImports:      newTemplateImportsResource(c),
+		Blueprints:           newBlueprintsResource(c),
+		TestEmails:           newTestEmailsResource(c),
+		Visitors:             newVisitorsResource(c),
+		WebhookEndpoints:     newWebhookEndpointsResource(c),
 	}
 }

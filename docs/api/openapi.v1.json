@@ -22420,6 +22420,7 @@
                     "templates.stylesBlocked",
                     "email.perDay",
                     "members",
+                    "members.developers",
                     "brand.mark",
                     "domains",
                     "identity.own",
@@ -22477,6 +22478,293 @@
           "label",
           "items",
           "usage"
+        ]
+      },
+      "DeveloperInvitationsCreateParams": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org_admin",
+                "integration_admin",
+                "template_author",
+                "template_reviewer",
+                "template_publisher",
+                "pass_operator",
+                "read_only"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 7
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "additionalProperties": false
+      },
+      "DeveloperInvitationsCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "email": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org_admin",
+                "integration_admin",
+                "template_author",
+                "template_reviewer",
+                "template_publisher",
+                "pass_operator",
+                "read_only"
+              ]
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "revoked",
+              "expired"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiresAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "revokedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "email",
+          "roles",
+          "state",
+          "createdAt",
+          "expiresAt",
+          "revokedAt"
+        ]
+      },
+      "DeveloperInvitationsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "email": {
+                  "type": "string"
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "org_admin",
+                      "integration_admin",
+                      "template_author",
+                      "template_reviewer",
+                      "template_publisher",
+                      "pass_operator",
+                      "read_only"
+                    ]
+                  }
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "revoked",
+                    "expired"
+                  ]
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "expiresAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "revokedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "orgId",
+                "email",
+                "roles",
+                "state",
+                "createdAt",
+                "expiresAt",
+                "revokedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "DeveloperInvitationsRevokeResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "DevelopersListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "since": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "roles": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "org_admin",
+                      "integration_admin",
+                      "template_author",
+                      "template_reviewer",
+                      "template_publisher",
+                      "pass_operator",
+                      "read_only"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "userId",
+                "name",
+                "email",
+                "since",
+                "roles"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "available",
+          "limit"
+        ]
+      },
+      "DevelopersRemoveResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "OrgsUpdatePassSetupParams": {
@@ -27195,6 +27483,7 @@
                     "templates.stylesBlocked",
                     "email.perDay",
                     "members",
+                    "members.developers",
                     "brand.mark",
                     "domains",
                     "identity.own",
@@ -27467,6 +27756,7 @@
                     "templates.stylesBlocked",
                     "email.perDay",
                     "members",
+                    "members.developers",
                     "brand.mark",
                     "domains",
                     "identity.own",
@@ -57543,7 +57833,9 @@
                 "scanning:admin",
                 "nfc:keys",
                 "api-keys:write",
-                "audit:read"
+                "audit:read",
+                "members:read",
+                "members:write"
               ]
             },
             "default": []
@@ -80599,6 +80891,487 @@
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/orgs/{id}/developer-invitations": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Invite a developer",
+        "tags": [
+          "developer-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeveloperInvitationsCreateParams"
+              },
+              "example": {
+                "email": "ada@example.com",
+                "roles": [
+                  "read_only"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeveloperInvitationsCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-95e605fb59de",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "email": "ada@example.com",
+                  "roles": [
+                    "read_only"
+                  ],
+                  "state": "pending",
+                  "createdAt": 1795399200000,
+                  "expiresAt": 1796004000000,
+                  "revokedAt": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "developer-invitations.postOrgsByIdDeveloperInvitations",
+        "x-sdk": {
+          "resource": "developerInvitations",
+          "method": "create"
+        },
+        "description": "Invites a developer by email. They get developer access with their own sandbox through a Polaris ID. Pass roles to also join the organization with them. Needs a session with members:manage and a recent sign-in, or a Live key naming members:write. Counts against the members.developers limit.",
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "DEVELOPER_INVITE_PENDING",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_PERSONAL_SINGLE_MEMBER",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "members:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "List developer invitations",
+        "tags": [
+          "developer-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeveloperInvitationsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-95e605fb59de",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "email": "ada@example.com",
+                      "roles": [
+                        "read_only"
+                      ],
+                      "state": "pending",
+                      "createdAt": 1795399200000,
+                      "expiresAt": 1796004000000,
+                      "revokedAt": null
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "developer-invitations.getOrgsByIdDeveloperInvitations",
+        "x-sdk": {
+          "resource": "developerInvitations",
+          "method": "list"
+        },
+        "description": "Lists pending developer invitations, plus those revoked or expired in the last 30 days.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/orgs/{id}/developer-invitations/{invitationId}": {
+      "delete": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Revoke a developer invitation",
+        "tags": [
+          "developer-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "invitationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeveloperInvitationsRevokeResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId",
+        "x-sdk": {
+          "resource": "developerInvitations",
+          "method": "revoke"
+        },
+        "description": "Revokes a pending developer invitation and the membership invitation paired with it.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "DEVELOPER_INVITE_CONFLICT",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/orgs/{id}/developers": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "members:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "List the developers an organization vouches for",
+        "tags": [
+          "developer-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevelopersListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "userId": "0193a1b2-7c00-7000-8000-67921d38ff5e",
+                      "name": "Priya Nair",
+                      "email": "priya@example.com",
+                      "since": 1795399200000,
+                      "roles": [
+                        "read_only"
+                      ]
+                    }
+                  ],
+                  "nextCursor": null,
+                  "available": true,
+                  "limit": 5
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "developer-invitations.getOrgsByIdDevelopers",
+        "x-sdk": {
+          "resource": "developers",
+          "method": "list"
+        },
+        "description": "Lists the developers the organization vouches for. available is false when the plan has no developer seats or Polaris ID cannot be reached.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/orgs/{id}/developers/{userId}": {
+      "delete": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Remove a developer",
+        "tags": [
+          "developer-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevelopersRemoveResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "developer-invitations.deleteOrgsByIdDevelopersByUserId",
+        "x-sdk": {
+          "resource": "developers",
+          "method": "remove"
+        },
+        "description": "Ends the organization's developer sponsorship of a person and revokes the membership their invitation made. The answer is the same whether or not they were sponsored here.",
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LAST_ORG_ADMIN",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

@@ -12,6 +12,8 @@ import { EventsResource } from './resources/events.ts';
 import { HoldersResource } from './resources/holders.ts';
 import { MessageRulesResource } from './resources/message-rules.ts';
 import { NfcResource } from './resources/nfc.ts';
+import { DeveloperInvitationsResource } from './resources/developer-invitations.ts';
+import { DevelopersResource } from './resources/developers.ts';
 import { OrgsResource } from './resources/orgs.ts';
 import { PassImportsResource } from './resources/pass-imports.ts';
 import { PassesResource } from './resources/passes.ts';
@@ -48,6 +50,8 @@ export class Resources {
   readonly holders: HoldersResource;
   readonly messageRules: MessageRulesResource;
   readonly nfc: NfcResource;
+  readonly developerInvitations: DeveloperInvitationsResource;
+  readonly developers: DevelopersResource;
   readonly orgs: OrgsResource;
   readonly passImports: PassImportsResource;
   readonly passes: PassesResource;
@@ -82,6 +86,8 @@ export class Resources {
     this.holders = new HoldersResource(core);
     this.messageRules = new MessageRulesResource(core);
     this.nfc = new NfcResource(core);
+    this.developerInvitations = new DeveloperInvitationsResource(core);
+    this.developers = new DevelopersResource(core);
     this.orgs = new OrgsResource(core);
     this.passImports = new PassImportsResource(core);
     this.passes = new PassesResource(core);

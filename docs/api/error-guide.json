@@ -103,7 +103,7 @@
   },
   "API_KEY_CREDENTIAL_LIVE_ORG": {
     "title": "Credential scopes are live and one org",
-    "when": "A test-mode key or a platform key asked for a credential scope (scanning:admin or nfc:keys).",
+    "when": "A test-mode key or a platform key asked for a credential scope (scanning:admin, nfc:keys or members:write).",
     "fix": "Mint the key in live mode, for that organization, with an expiry within 90 days.",
     "retryable": false
   },
@@ -3615,6 +3615,36 @@
     "title": "Too many resets today",
     "when": "A sandbox can be reset 3 times in a day.",
     "fix": "Wait until the oldest reset of the day is 24 hours old, then reset again.",
+    "retryable": true
+  },
+  "DEVELOPER_INVITE_PENDING": {
+    "title": "Developer invitation already pending",
+    "when": "The address already has a pending developer invitation in this organization.",
+    "fix": "Revoke the pending invitation, then invite again.",
+    "retryable": false
+  },
+  "DEVELOPER_INVITE_CONFLICT": {
+    "title": "Developer invitation changed",
+    "when": "The invitation was already revoked or accepted.",
+    "fix": "List the invitations and check its state.",
+    "retryable": false
+  },
+  "IDP_BUDGET": {
+    "title": "Too many Polaris ID setups today",
+    "when": "The platform used its daily allowance of Polaris ID changes.",
+    "fix": "Try again tomorrow.",
+    "retryable": true
+  },
+  "IDP_REFUSED": {
+    "title": "Polaris ID refused developer access",
+    "when": "The account is an administrator or is disabled in Polaris ID.",
+    "fix": "Ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_CONFLICT": {
+    "title": "Polaris ID changed",
+    "when": "The Polaris ID account or group changed while the request ran.",
+    "fix": "Send the request again.",
     "retryable": true
   }
 }
