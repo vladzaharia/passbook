@@ -1,10 +1,18 @@
-import type { PaperBarcode, PaperInk, PaperKind, PaperSize } from '@/passkit/template/paper.ts';
+import type {
+  PaperBarcode,
+  PaperInk,
+  PaperKind,
+  PaperSheet,
+  PaperSize,
+} from '@/passkit/template/paper.ts';
 import type { DesignDoc } from './model.ts';
 import { copy } from './ops-pass.ts';
 
 /** One edit of the manifest's `paper` block. `null` drops the block: the layout is derived again. */
 export type PaperPatch = null | {
   size?: PaperSize;
+  /** Card sizes: print both faces on a home sheet. `null` prints the card at its own size. */
+  sheet?: PaperSheet | null;
   barcode?: PaperBarcode;
   fields?: string[];
   terms?: string;
@@ -39,6 +47,8 @@ export function setPaper(doc: DesignDoc, patch: PaperPatch): DesignDoc {
     size: patch.size ?? old.size ?? 'a4',
     barcode: patch.barcode ?? old.barcode ?? 'qr',
   };
+  const sheet = 'sheet' in patch ? patch.sheet : old.sheet;
+  if (sheet === 'a4' || sheet === 'letter') block.sheet = sheet;
   const fields = patch.fields ?? old.fields;
   if (Array.isArray(fields) && fields.length > 0) block.fields = fields;
   const terms = 'terms' in patch ? patch.terms : old.terms;

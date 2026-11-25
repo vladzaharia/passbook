@@ -1,13 +1,16 @@
 import {
   PAPER_KINDS,
+  PAPER_SPECS,
   type PaperBarcode,
   type PaperDesign,
   type PaperInk,
   type PaperKind,
   paperManifestIssues,
+  supportsCode128,
 } from '@/passkit/template/paper.ts';
 import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
+import { PRINT_SIZE_COPY } from '@/shared/copy/print-sizes.ts';
 import {
   Button,
   Callout,
@@ -28,6 +31,12 @@ const INKS = [
   { value: 'colour', label: PRINT_COPY.inkColour },
   { value: 'mono', label: PRINT_COPY.inkMono },
 ] as const;
+const OWN = 'own';
+const SHEETS = [
+  { value: OWN, label: PRINT_SIZE_COPY.sheetOwn },
+  { value: 'a4', label: PRINT_SIZE_COPY.sheetA4 },
+  { value: 'letter', label: PRINT_SIZE_COPY.sheetLetter },
+];
 const AUTO = 'auto';
 const KINDS = [
   { value: AUTO, label: PRINT_COPY.kindAuto },
@@ -56,6 +65,7 @@ export function PaperEditor({
   const terms = typeof design.terms === 'string' ? design.terms : '';
   const bring = typeof design.bring === 'string' ? design.bring.split('\n').join('; ') : '';
   const full = design.size === 'a4' || design.size === 'letter';
+  const card = PAPER_SPECS[design.size].layout === 'card';
   return (
     <div className="flex w-full max-w-lg flex-col gap-4" data-testid="paper-editor">
       <FormField label={PRINT_COPY.kindLabel}>
@@ -72,7 +82,7 @@ export function PaperEditor({
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <SegmentedControl
           label="Barcode"
-          options={BARCODES}
+          options={supportsCode128(design.size) ? BARCODES : BARCODES.slice(0, 1)}
           value={design.barcode}
           onValueChange={(v: PaperBarcode) => onEdit({ barcode: v })}
         />
@@ -83,6 +93,19 @@ export function PaperEditor({
           onValueChange={(v: PaperInk) => onEdit({ ink: v })}
         />
       </div>
+      {card ? (
+        <FormField label={PRINT_SIZE_COPY.sheetLabel}>
+          {(c) => (
+            <Select
+              {...c}
+              options={SHEETS}
+              value={design.sheet ?? OWN}
+              onValueChange={(v) => onEdit({ sheet: v === OWN ? null : (v as 'a4' | 'letter') })}
+              className="w-full sm:w-56"
+            />
+          )}
+        </FormField>
+      ) : null}
       <SwitchRow
         label={PRINT_COPY.buddyLabel}
         checked={design.buddy}

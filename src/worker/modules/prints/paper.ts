@@ -1,6 +1,7 @@
 import { type PaperDesign, resolvePaper } from '../../../passkit/template/paper.ts';
 import { bestImage, imageSlots } from '../../../passkit/template/paper-assets.ts';
 import { type PaperContent, paperContent } from '../../../passkit/template/paper-content.ts';
+import { withRegionSize } from '../../../passkit/template/paper-region.ts';
 import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -8,12 +9,18 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import * as repo from './repo.ts';
 
 /** The paper design of the pass's pinned template version; derived when it has no `paper` block. */
 export async function paperDesign(ctx: ServiceContext, pass: Pass): Promise<PaperDesign> {
   const manifest = await repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion);
-  return resolvePaper(manifest?.paper);
+  return withRegionSize(resolvePaper(manifest?.paper), await orgZone(ctx, pass));
+}
+
+/** The org's `org.timeZone`, which picks Letter over A4 for a US or Canadian org without a paper block. */
+async function orgZone(ctx: ServiceContext, pass: Pass): Promise<string | undefined> {
+  return (await getOrgSettings(ctx, pass.orgId))['org.timeZone'];
 }
 
 /** `paper.holder: false` keeps printing with staff: the holder's link neither prints nor reprints nor voids. */
@@ -33,14 +40,15 @@ export async function paperTicket(
   ctx: ServiceContext,
   pass: Pass,
 ): Promise<{ design: PaperDesign; content: PaperContent; files: PaperFiles } | null> {
-  const [manifest, raw, template] = await Promise.all([
+  const [manifest, raw, template, zone] = await Promise.all([
     repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion),
     passJsonAtVersion(ctx.env.DB, pass.id, pass.version),
     resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
+    orgZone(ctx, pass),
   ]);
   if (!raw) return null;
   const passJson: PassJson = parseStoredPassJson(raw);
-  const design = resolvePaper(manifest?.paper);
+  const design = withRegionSize(resolvePaper(manifest?.paper), zone);
   const images = imageSlots(template.assets);
   const content = paperContent({
     passJson,

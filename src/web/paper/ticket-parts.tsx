@@ -131,7 +131,8 @@ export function Plate({ p, style }: { p: TicketProps; style?: CSSProperties }) {
 /** The buddy cameo when the template turns it on and the class and size have a pose. */
 export function BuddyCameo({ p }: { p: TicketProps }) {
   const { content: c, design } = p;
-  const pose = design.buddy && design.size !== 'cr80' ? buddyPose(c.kind, c.noun) : null;
+  const roomy = ['page', 'half'].includes(PAPER_SPECS[design.size].layout);
+  const pose = design.buddy && roomy ? buddyPose(c.kind, c.noun) : null;
   return pose ? <TicketBuddy pose={pose} mono={c.ink === 'mono'} /> : null;
 }
 
