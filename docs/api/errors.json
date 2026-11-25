@@ -1861,6 +1861,15 @@
       ]
     },
     {
+      "code": "IDP_DRIFT",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403

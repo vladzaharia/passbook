@@ -202,6 +202,7 @@ export type ErrorCode =
   | 'IDENTITY_RUN_OPEN'
   | 'IDP_BUDGET'
   | 'IDP_CONFLICT'
+  | 'IDP_DRIFT'
   | 'IDP_EMAIL_NOT_PRIMARY'
   | 'IDP_FROZEN'
   | 'IDP_IN_USE'

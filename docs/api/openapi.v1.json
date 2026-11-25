@@ -118765,7 +118765,7 @@
           "resource": "platform.users.claims",
           "method": "retrieve"
         },
-        "x-sign-in": "idp",
+        "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": false
@@ -118866,7 +118866,7 @@
           "resource": "platform.users.claims",
           "method": "update"
         },
-        "x-sign-in": "idp",
+        "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": false
@@ -118949,7 +118949,7 @@
           "resource": "platform.groups.claims",
           "method": "retrieve"
         },
-        "x-sign-in": "idp",
+        "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": false
@@ -119046,7 +119046,7 @@
           "resource": "platform.groups.claims",
           "method": "update"
         },
-        "x-sign-in": "idp",
+        "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": false
