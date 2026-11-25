@@ -23,7 +23,7 @@ import {
 } from '@/web/ui/index.ts';
 import { CreateOrgDialog } from './create-org-dialog.tsx';
 import { planIcon } from './features/plan-icons.ts';
-import { useOrgPages } from './org-pages.ts';
+import { type SandboxFilter, useOrgPages } from './org-pages.ts';
 import type { PlatformOrgSummarySchema } from './queries.ts';
 
 export { slugify } from './create-org-dialog.tsx';
@@ -151,7 +151,8 @@ export function OrgsPage({
     (next) => onSearch({ q: next.trim() || undefined }),
     300,
   );
-  const list = useOrgPages(search.q);
+  const [sandboxes, setSandboxes] = useState<SandboxFilter>('hide');
+  const list = useOrgPages(search.q, sandboxes);
   const { memberships } = useOrgScope();
   const columns = useMemo(
     () => columnsFor((id) => memberships.some((m) => m.orgId === id)),
@@ -169,9 +170,10 @@ export function OrgsPage({
     }
   }, [openNew, onOpenNewConsumed]);
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
-  const empty = !list.isPending && rows.length === 0 && !search.q;
+  const empty = !list.isPending && rows.length === 0 && !search.q && sandboxes === 'hide';
   const clear = () => {
     setText('');
+    setSandboxes('hide');
     onSearch({});
   };
   const create = (variant: 'primary' | 'outline') => (
@@ -195,11 +197,24 @@ export function OrgsPage({
           fetching={list.isFetching && !list.isFetchingNextPage}
           data={rows}
           getRowId={(o) => o.id}
-          filtered={Boolean(search.q)}
+          filtered={Boolean(search.q) || sandboxes !== 'hide'}
           toolbar={
             <FilterBar
               search={{ value: text, onChange: setText, placeholder: 'Search organizations' }}
-              filters={[]}
+              filters={[
+                {
+                  id: 'sandboxes',
+                  label: 'Sandboxes',
+                  value: sandboxes,
+                  defaultValue: 'hide',
+                  options: [
+                    { value: 'hide', label: 'Hidden' },
+                    { value: 'show', label: 'Shown' },
+                    { value: 'only', label: 'Only' },
+                  ],
+                  onChange: (v) => setSandboxes(v as SandboxFilter),
+                },
+              ]}
               onClear={clear}
             />
           }

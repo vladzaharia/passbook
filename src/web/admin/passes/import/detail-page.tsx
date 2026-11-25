@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { orgPath } from '../../../lib/scope.ts';
 import {
@@ -54,9 +55,9 @@ export function ImportDetailPage({ importId }: { importId: string }) {
     else setEditing(step === STEP.match);
   };
 
+  if (!orgId) return <OrgChooser title={C.chooseOrg} />;
   let body = <Skeleton className="h-64" />;
-  if (!orgId) body = <EmptyState art="people" title={C.chooseOrg} />;
-  else if (query.isError)
+  if (query.isError)
     body = <ErrorState subject="the import" error={query.error} onRetry={() => query.refetch()} />;
   else if (imp) {
     if (imp.state === 'expired' || imp.state === 'discarded')

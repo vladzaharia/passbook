@@ -62,6 +62,8 @@ export const QS_COPY = {
     lost: 'Lost it? Roll it in',
     keys: 'Keys',
     masked: 'Key hidden',
+    stuck: 'Setup did not finish.',
+    retry: 'Retry',
   },
   /** Step 3: the call from your terminal, or from this page. */
   call: {

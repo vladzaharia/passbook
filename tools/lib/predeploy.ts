@@ -116,6 +116,10 @@ function domainProblems(config: WranglerConfig): string[] {
       );
   if (strictEmail(vars.SUPPORT_EMAIL) === null)
     problems.push('vars.SUPPORT_EMAIL must be a valid email address (PassBook support).');
+  if (strictEmail(vars.ACCESS_REQUEST_EMAIL) === null)
+    problems.push(
+      'vars.ACCESS_REQUEST_EMAIL must be a valid email address (Request access inbox).',
+    );
   const from = vars.EMAIL_FROM;
   const allowed = config.send_email?.find((b) => b.name === 'EMAIL')?.allowed_sender_addresses;
   if (typeof from === 'string' && allowed && !allowed.includes(from))
