@@ -327,6 +327,7 @@ type AuditEntriesListItem struct {
 	ID          int64   `json:"id"`
 	At          int64   `json:"at"`
 	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
 	ActorType   string  `json:"actorType"`
 	ActorID     *string `json:"actorId"`
 	ActorLabel  *string `json:"actorLabel,omitempty"`
@@ -361,6 +362,7 @@ type AuditEntriesListResponseItemsItem struct {
 	ID          int64   `json:"id"`
 	At          int64   `json:"at"`
 	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
 	ActorType   string  `json:"actorType"`
 	ActorID     *string `json:"actorId"`
 	ActorLabel  *string `json:"actorLabel,omitempty"`
@@ -7664,6 +7666,7 @@ type PlatformAuditEntriesListResponseItemsItem struct {
 	ID          int64   `json:"id"`
 	At          int64   `json:"at"`
 	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
 	ActorType   string  `json:"actorType"`
 	ActorID     *string `json:"actorId"`
 	ActorLabel  *string `json:"actorLabel,omitempty"`
@@ -8005,6 +8008,16 @@ type PlatformOrgsListResponseItemsItemCounts struct {
 	Connections int64  `json:"connections"`
 	APIKeys     int64  `json:"apiKeys"`
 	Members     *int64 `json:"members,omitempty"`
+}
+
+type PlatformOrgsPersonalLabelsListResponse struct {
+	Items      []PlatformOrgsPersonalLabelsListResponseItemsItem `json:"items"`
+	NextCursor *string                                           `json:"nextCursor"`
+}
+
+type PlatformOrgsPersonalLabelsListResponseItemsItem struct {
+	OrgID string `json:"orgId"`
+	Label string `json:"label"`
 }
 
 type PlatformOrgsRetentionReceiptsDownloadResponse struct {

@@ -192,12 +192,12 @@
     "note": "Keys may hold scanning:admin: staff PINs and pairing codes in the one-call setup."
   },
   {
-    "key": "GET /api/v1/audit 200.items[].orgLabel: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/audit 200.items[].orgLabel: field added",
+    "class": "additive",
     "operationId": "audit.getAudit",
     "op": "GET /api/v1/audit",
-    "change": "200.items[].orgLabel: field removed",
-    "note": ""
+    "change": "200.items[].orgLabel: field added",
+    "note": "Platform audit entries in a personal organization carry orgLabel, \"Personal org of <owner>\", since such an org is not in the directory. Absent elsewhere."
   },
   {
     "key": "GET /api/v1/audit 422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE, AUDIT_LIMIT_TOO_HIGH added",
@@ -232,12 +232,12 @@
     "note": "A key holding audit:read exports its own organization's log as CSV: 2 an hour per key, 6 across the organization's keys, each recorded as audit.export."
   },
   {
-    "key": "GET /api/v1/audit/platform 200.items[].orgLabel: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/audit/platform 200.items[].orgLabel: field added",
+    "class": "additive",
     "operationId": "audit.getAuditPlatform",
     "op": "GET /api/v1/audit/platform",
-    "change": "200.items[].orgLabel: field removed",
-    "note": ""
+    "change": "200.items[].orgLabel: field added",
+    "note": "Platform audit entries in a personal organization carry orgLabel, \"Personal org of <owner>\", since such an org is not in the directory. Absent elsewhere."
   },
   {
     "key": "GET /api/v1/broadcasts 200.items[].message: field added",
@@ -928,12 +928,12 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
-    "key": "GET /api/v1/platform/personal-org-labels operation removed",
-    "class": "breaking",
+    "key": "GET /api/v1/platform/personal-org-labels new operation",
+    "class": "additive",
     "operationId": "orgs.getPlatformPersonalOrgLabels",
     "op": "GET /api/v1/platform/personal-org-labels",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "Platform admins read the names of personal organizations, which are not listed, to label them in views that show an org by id."
   },
   {
     "key": "GET /api/v1/platform/wallet-credentials 200.items[].lastCheck: field added",

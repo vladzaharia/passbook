@@ -306,6 +306,7 @@ export type ErrorCode =
   | 'ORG_INACTIVE'
   | 'ORG_MIXED'
   | 'ORG_NOT_FOUND'
+  | 'ORG_PERSONAL'
   | 'ORG_PERSONAL_SINGLE_MEMBER'
   | 'ORG_PURGING'
   | 'ORG_REOPEN_WINDOW'

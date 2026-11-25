@@ -246,6 +246,7 @@ export type AuditEntriesListResponse = {
     id: number;
     at: number;
     orgId: string | null;
+    orgLabel?: string | null;
     actorType: "user" | "api_key" | "system" | "connection" | "device" | "scanner";
     actorId: string | null;
     actorLabel?: string | null;
@@ -6562,6 +6563,7 @@ export type PlatformAuditEntriesListResponse = {
     id: number;
     at: number;
     orgId: string | null;
+    orgLabel?: string | null;
     actorType: "user" | "api_key" | "system" | "connection" | "device" | "scanner";
     actorId: string | null;
     actorLabel?: string | null;
@@ -6849,6 +6851,14 @@ export type PlatformOrgsListResponse = {
       preset: string;
       label: string;
     } | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformOrgsPersonalLabelsListResponse = {
+  items: Array<{
+    orgId: string;
+    label: string;
   }>;
   nextCursor: string | null;
 };

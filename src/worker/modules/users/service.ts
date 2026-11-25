@@ -14,6 +14,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { emailsOf } from '../auth/repo.ts';
 import { BREAKGLASS_PROVIDER, OIDC_PROVIDER } from '../auth/service.ts';
+import { suspendPersonalOrgOf } from '../orgs/personal-suspend.ts';
 import * as repo from './repo.ts';
 
 export type UserDto = z.infer<typeof UserSchema>;
@@ -162,6 +163,11 @@ export async function setUserStatus(
       targetType: 'user',
       targetId: id,
     });
+    if (status === 'disabled')
+      await suspendPersonalOrgOf(ctx, { type: 'user', id: actorId }, id, {
+        userId: actorId,
+        sessionId: adminSessionId,
+      });
   }
   return toUser({ ...user, status });
 }
