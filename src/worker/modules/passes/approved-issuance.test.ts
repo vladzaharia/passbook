@@ -820,8 +820,8 @@ describe('approved issuance over tenant HTTP', () => {
           passId,
         ]),
       ).toBeNull();
-      // Unknown D1 failures retain the uploaded object until GC can prove it is orphaned.
-      expect(artifacts).toHaveLength(1);
+      // A trigger RAISE is a definite rollback (classified with { triggers: true }), so the object is deleted.
+      expect(artifacts).toHaveLength(0);
       expect(await objects()).toEqual([...before, ...artifacts].sort());
     } finally {
       if (artifacts.length) await kit.env.BUCKET.delete(artifacts);
