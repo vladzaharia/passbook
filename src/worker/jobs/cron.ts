@@ -12,6 +12,7 @@ import { dailyEvents } from '../modules/events/jobs.ts';
 import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyRotationPlan } from '../modules/identities/rotation-plan.ts';
+import { drainIdp, reconcileIdp } from '../modules/idp/jobs.ts';
 import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
@@ -92,6 +93,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'passes.bulk_run_stuck', run: sweepBulkRuns },
     { name: 'developer.request_log_purge', run: minutelyRequestLogPurge },
     { name: 'nfc.binding_expiry', run: async (ctx) => void (await expireBindings(ctx)) },
+    { name: 'idp.drain', run: drainIdp },
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
@@ -122,6 +124,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'photos.retention', run: dailyPhotos },
     { name: 'org_lifecycle.sweep', run: dailyOrgLifecycle },
     { name: 'developer.idle_close', run: dailyDeveloperSandbox },
+    { name: 'idp.reconcile', run: reconcileIdp },
     { name: 'retention.receipts', run: dailyReceipts },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
