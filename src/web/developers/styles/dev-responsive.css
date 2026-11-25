@@ -176,4 +176,14 @@
     width: 44px;
     height: 44px;
   }
+  /* Same geometry as .wl-seg on touch: 44 tall segments, the track's edge drawn inside. */
+  .seg {
+    padding: 0;
+    border-width: 0;
+    outline: 1px solid var(--pk-border-subtle);
+    outline-offset: -1px;
+  }
+  .seg > span {
+    min-height: 2.75rem;
+  }
 }
