@@ -422,7 +422,7 @@ describe('settings api', () => {
       "SELECT detail FROM audit_log WHERE action = 'settings.update'",
     );
     expect(JSON.parse(audit[0]?.detail ?? '{}')).toEqual({
-      changes: { 'org.timeZone': { from: null, to: 'Europe/Berlin' } },
+      changes: { 'org.timeZone': { from: 'America/Los_Angeles', to: 'Europe/Berlin' } },
     });
     expect((await put({ 'org.timeZone': null })).status).toBe(200);
     expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBe('America/Los_Angeles');
