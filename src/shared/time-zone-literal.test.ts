@@ -34,6 +34,7 @@ const UTC_DAY = new Set([
   'web/developers/pages/status.tsx',
   'worker/modules/scan/feed.ts',
   'worker/modules/org-lifecycle/jobs.ts',
+  'worker/platform/browser-signals.ts',
   'worker/modules/wallet-providers/projection-class-rule.ts',
 ]);
 

@@ -264,11 +264,10 @@ export async function updateSettings(
   const wasStored = new Map(before.map((e) => [e.key, e.source === 'org']));
   const changes: Record<string, { from: unknown; to: unknown }> = {};
   for (const entry of stored) {
-    // An explicit save of the default value is a change too: the org now holds it.
-    if (
-      JSON.stringify(prior.get(entry.key)) !== JSON.stringify(entry.value) ||
-      wasStored.get(entry.key) !== (entry.source === 'org')
-    )
+    // The org's zone defaults to Seattle: saving that value is a choice, so it is audited.
+    const chosen =
+      entry.key === 'org.timeZone' && wasStored.get(entry.key) !== (entry.source === 'org');
+    if (chosen || JSON.stringify(prior.get(entry.key)) !== JSON.stringify(entry.value))
       changes[entry.key] = { from: prior.get(entry.key) ?? null, to: entry.value };
   }
   if (Object.keys(changes).length > 0)
