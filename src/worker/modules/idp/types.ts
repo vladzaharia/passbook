@@ -46,7 +46,7 @@ export interface IdpHealth {
   ok: boolean;
   unsafe: string[];
   warnings: string[];
-  groups: Partial<Record<Role, string | null>>;
+  groups: Record<string, string | null>;
   layout: string;
   layoutSuspect: boolean;
   keyExpiresAt: number | null;
@@ -96,33 +96,34 @@ export interface SnapshotMember {
   grant: boolean;
 }
 export interface IdpSnapshot {
-  roles: Partial<Record<Role | GroupTarget, { name: string; members: SnapshotMember[] }>>;
+  roles: Record<string, { name: string; members: SnapshotMember[] }>;
   ended: { subject: string; role: Target }[];
 }
 export interface ManagedGroup {
-  /** The role name for a role group, else the group key. */
+  /** The role name, or the group key. */
   key: string;
   kind: 'role' | 'custom' | 'adopted';
   name: string;
-  friendlyName: string;
-  members: number;
-  /** Managed claim keys set on the group. */
+  friendlyName: string | null;
+  members: number | null;
   claims: string[];
-  /** Allowed clients other than PassBook's. */
-  otherClients: number;
-  drift: string[];
+  /** Allowed OIDC clients other than PassBook's. */
+  otherClients: number | null;
+  /** Why this group blocks writes, such as `group_name_mismatch`. */
+  flags: string[];
 }
-export type ClaimValue =
-  | { type: 'text'; value: string }
-  | { type: 'number'; value: number }
-  | { type: 'boolean'; value: boolean }
-  | { type: 'json'; value: unknown };
-/** A claim to set, or `null` to remove it. */
+export type ClaimType = 'text' | 'number' | 'boolean' | 'json';
+/** One managed claim value, typed. `null` in a change removes the key. */
+export interface ClaimValue {
+  type: ClaimType;
+  value: unknown;
+}
 export type ClaimChange = ClaimValue | null;
 export type ClaimOwner = { subject: string } | { group: Target };
 export interface ClaimView {
+  /** Managed keys only. */
   claims: Record<string, ClaimValue>;
-  /** Keys PassBook may not touch; never shown. */
+  /** Keys other apps or the owner set, which the binding may not touch. Never listed. */
   otherKeys: number;
 }
 export type EmailMatch = 'match' | 'mismatch' | 'unverified';
@@ -151,14 +152,14 @@ export interface IdpRpc {
     key: GroupKey,
     friendlyName: string,
     ctx: WriteCtx,
-  ): Promise<ManagedGroup | IdpDryRun>;
-  ensureRoleGroup(role: WritableRole, ctx: WriteCtx): Promise<ManagedGroup | IdpDryRun>;
+  ): Promise<{ key: GroupKey } | IdpDryRun>;
+  ensureRoleGroup(role: WritableRole, ctx: WriteCtx): Promise<{ key: WritableRole } | IdpDryRun>;
   updateGroup(
-    target: WritableRole | GroupKey,
-    patch: { friendlyName: string },
+    target: Target,
+    change: { friendlyName: string },
     ctx: WriteCtx,
-  ): Promise<ManagedGroup | IdpDryRun>;
-  deleteGroup(key: GroupKey, ctx: WriteCtx): Promise<'deleted' | 'gone' | IdpDryRun>;
+  ): Promise<{ target: Target } | IdpDryRun>;
+  deleteGroup(key: GroupKey, ctx: WriteCtx): Promise<{ key: GroupKey } | IdpDryRun>;
   claims(owner: ClaimOwner): Promise<ClaimView>;
   setClaims(
     owner: ClaimOwner,

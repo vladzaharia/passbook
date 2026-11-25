@@ -41,6 +41,8 @@ export interface FakeIdp extends IdpRpc {
   mode: 'dry_run' | 'live';
   /** Makes the next call to `method` (or any call with `*`) fail as the binding does: `CODE: text`. */
   failNext(code: string, method?: string): void;
+  /** Another write holds this subject or `g:<key>`; writes that need it answer `IDP_CONFLICT`. */
+  holdLease(key: string): void;
   /** The person finished signup with this token: `proveSignup` now finds them. */
   completeSignup(
     tokenId: string,
@@ -96,13 +98,14 @@ export function createFakeIdp(
     phase: string,
     status: string | null,
     target: string | null = null,
+    bucket: string | null = null,
   ): void => {
     calls.push({
       id: calls.length + 1,
       callId: `call-${calls.length + 1}`,
       phase,
       method,
-      bucket: null,
+      bucket,
       target,
       caller: null,
       actor: null,
@@ -116,8 +119,10 @@ export function createFakeIdp(
     });
   };
 
+  let current = '';
   const enter = (method: string, write = false): void => {
     log.push(method);
+    current = method;
     const at = failures.findIndex((f) => f.method === method || f.method === '*');
     if (at >= 0) {
       const [failure] = failures.splice(at, 1);
@@ -141,6 +146,11 @@ export function createFakeIdp(
   };
 
   /** The binding never writes to admins, platform-admin members, the key user or `me`. */
+  /** `holdLease('g:crew')` or a subject: the next write that needs it answers `IDP_CONFLICT`. */
+  const leases = new Set<string>();
+  const lease = (key: string): void => {
+    if (leases.has(key)) refuse('IDP_CONFLICT');
+  };
   const protect = (subject: string, a: FakeAccount): void => {
     if (
       a.isAdmin ||
@@ -153,7 +163,12 @@ export function createFakeIdp(
 
   const account = (subject: string): FakeAccount =>
     accounts.get(subject) ?? refuse('IDP_NOT_FOUND');
-  const dry = (flag?: boolean): boolean => flag === true || idp.mode !== 'live';
+  /** A dry run computes and ledgers the write in the `preview` bucket; it sends nothing. */
+  const dry = (flag?: boolean): boolean => {
+    const isDry = flag === true || idp.mode !== 'live';
+    if (isDry) record(current, 'dry_run', 'preview', null, 'preview');
+    return isDry;
+  };
   const write = (): void => {
     idp.writes += 1;
   };
@@ -177,6 +192,7 @@ export function createFakeIdp(
     refuse,
     account,
     protect,
+    lease,
   });
 
   const idp: FakeIdp = {
@@ -188,6 +204,7 @@ export function createFakeIdp(
     writes: 0,
     frozen: false,
     mode: options.mode ?? 'live',
+    holdLease: (key) => void leases.add(key),
     failNext: (code, method = '*') => void failures.push({ code, method }),
     completeSignup: (tokenId, subject, account) => {
       const s = signups.get(tokenId);
@@ -311,6 +328,7 @@ export function createFakeIdp(
       enter('apply', true);
       const a = account(subject);
       protect(subject, a);
+      lease(subject);
       if (a.disabled && delta.add?.length) refuse('IDP_REFUSED');
       groupsApi.assertTargets([...(delta.add ?? []), ...(delta.remove ?? [])]);
       const isDry = dry(ctx.dryRun);

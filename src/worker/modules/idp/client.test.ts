@@ -106,7 +106,7 @@ describe('idpClient', () => {
       client.groups(),
       client.createGroup('crew', 'Crew', ctx),
       client.ensureRoleGroup('support', ctx),
-      client.updateGroup('crew', { friendlyName: 'Crew' }, ctx),
+      client.updateGroup('g:crew', { friendlyName: 'Crew' }, ctx),
       client.deleteGroup('crew', ctx),
       client.claims({ subject: 's' }),
       client.setClaims({ subject: 's' }, { passbook_x: null }, ctx),

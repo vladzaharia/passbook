@@ -56,6 +56,7 @@ export interface GroupEnv {
   refuse(code: string): never;
   account(subject: string): FakeAccount;
   protect(subject: string, a: FakeAccount): void;
+  lease(key: string): void;
 }
 
 type Methods = Pick<
@@ -70,6 +71,8 @@ type Methods = Pick<
 >;
 
 const sizeOf = (v: unknown): number => JSON.stringify(v).length;
+const depthOf = (v: unknown): number =>
+  v !== null && typeof v === 'object' ? 1 + Math.max(0, ...Object.values(v).map(depthOf)) : 0;
 
 export function groupMethods(env: GroupEnv): Methods & {
   /** Throws `IDP_REFUSED` for a target the binding does not manage. */
@@ -88,7 +91,7 @@ export function groupMethods(env: GroupEnv): Methods & {
     members: membersOf(g.kind === 'role' ? key : `g:${key}`),
     claims: Object.keys(g.claims ?? {}),
     otherClients: g.otherClients,
-    drift: [],
+    flags: [],
   });
   const managed = (key: string): FakeGroup => {
     const g = groups.get(key);
@@ -161,7 +164,7 @@ export function groupMethods(env: GroupEnv): Methods & {
       if (env.dry(ctx.dryRun)) return { dryRun: true };
       env.write();
       groups.set(key, g);
-      return view(key, g);
+      return { key };
     },
     async ensureRoleGroup(role: WritableRole, ctx) {
       env.enter('ensureRoleGroup', true);
@@ -172,27 +175,29 @@ export function groupMethods(env: GroupEnv): Methods & {
       env.write();
       const g: FakeGroup = { kind: 'role', name, friendlyName: name, otherClients: 0 };
       groups.set(role, g);
-      return view(role, g);
+      return { key: role };
     },
     async updateGroup(target, patch, ctx) {
       env.enter('updateGroup', true);
-      const g = managed(target);
+      env.lease(target.startsWith('g:') ? target : `g:${target}`);
+      const g = managed(keyOf(target));
       if (patch.friendlyName.length < 2 || patch.friendlyName.length > 50) refuse('IDP_REFUSED');
       if (env.dry(ctx.dryRun)) return { dryRun: true };
       env.write();
       g.friendlyName = patch.friendlyName;
-      return view(target, g);
+      return { target };
     },
     async deleteGroup(key, ctx) {
       env.enter('deleteGroup', true);
+      env.lease(`g:${key}`);
       const g = groups.get(key);
-      if (!g) return 'gone';
+      if (!g) return refuse('IDP_NOT_FOUND');
       if (g.kind !== 'custom') refuse('IDP_REFUSED');
       if (membersOf(`g:${key}`) > 0 || g.otherClients > 0) refuse('IDP_IN_USE');
       if (env.dry(ctx.dryRun)) return { dryRun: true };
       env.write();
       groups.delete(key);
-      return 'deleted';
+      return { key };
     },
     async claims(owner) {
       env.enter('claims');
@@ -202,6 +207,7 @@ export function groupMethods(env: GroupEnv): Methods & {
     async setClaims(owner, changes, ctx) {
       env.enter('setClaims', true);
       const h = holderOf(owner);
+      env.lease('subject' in owner ? owner.subject : owner.group);
       const entries = Object.entries(changes);
       if (entries.length > 20) refuse('IDP_REFUSED');
       const next = { ...h.claims };
@@ -212,7 +218,7 @@ export function groupMethods(env: GroupEnv): Methods & {
           delete next[key];
           result.removed.push(key);
         } else {
-          if (sizeOf(change.value) > 2048) refuse('IDP_REFUSED');
+          if (sizeOf(change.value) > 2048 || depthOf(change.value) > 5) refuse('IDP_REFUSED');
           next[key] = change;
           result.set.push(key);
         }

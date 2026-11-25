@@ -111,23 +111,24 @@ describe('fake IDP', () => {
     const idp = createFakeIdp();
     idp.addAccount('u', { class: 'created' });
     const g = await idp.createGroup('crew', 'Crew', ctx);
-    expect(g).toMatchObject({ key: 'crew', kind: 'custom', members: 0 });
+    expect(g).toEqual({ key: 'crew' });
+    expect((await idp.groups()).find((x) => x.key === 'crew')).toMatchObject({
+      kind: 'custom',
+      members: 0,
+    });
     await expect(idp.createGroup('crew', 'Crew', ctx)).rejects.toThrow(/^IDP_CONFLICT/);
     await expect(idp.createGroup('Bad Key', 'Crew', ctx)).rejects.toThrow(/^IDP_REFUSED/);
     await expect(idp.createGroup('console', 'Crew', ctx)).rejects.toThrow(/^IDP_REFUSED/);
     await expect(idp.ensureRoleGroup('console', ctx)).rejects.toThrow(/^IDP_REFUSED/);
-    expect(await idp.ensureRoleGroup('support', ctx)).toMatchObject({
-      key: 'support',
-      kind: 'role',
-    });
+    expect(await idp.ensureRoleGroup('support', ctx)).toEqual({ key: 'support' });
     await idp.apply('u', { add: ['g:crew'] }, ctx);
     expect((await idp.groups()).find((x) => x.key === 'crew')?.members).toBe(1);
     await expect(idp.deleteGroup('crew', ctx)).rejects.toThrow(/^IDP_IN_USE/);
     await idp.apply('u', { remove: ['g:crew'] }, ctx);
     await expect(idp.deleteGroup('support', ctx)).rejects.toThrow(/^IDP_REFUSED/);
     expect(await idp.deleteGroup('crew', { ...ctx, dryRun: true })).toEqual({ dryRun: true });
-    expect(await idp.deleteGroup('crew', ctx)).toBe('deleted');
-    expect(await idp.deleteGroup('crew', ctx)).toBe('gone');
+    expect(await idp.deleteGroup('crew', ctx)).toEqual({ key: 'crew' });
+    await expect(idp.deleteGroup('crew', ctx)).rejects.toThrow(/^IDP_NOT_FOUND/);
     await expect(idp.apply('u', { add: ['g:nope'] }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
   });
 
@@ -179,5 +180,21 @@ describe('fake IDP', () => {
     expect((await idp.proveSignup([s.tokenId], { email: 'o@x.test' }))?.emailMatch).toBe(
       'mismatch',
     );
+  });
+
+  it('ledgers dry runs as previews, refuses deep claims and honours leases', async () => {
+    const idp = createFakeIdp();
+    idp.addAccount('u', { class: 'created' });
+    await idp.apply('u', { add: ['console'] }, { ...ctx, dryRun: true });
+    expect((await idp.calls(0)).filter((c) => c.bucket === 'preview')).toHaveLength(1);
+    const deep = { type: 'json', value: { a: { b: { c: { d: { e: { f: 1 } } } } } } } as const;
+    await expect(idp.setClaims({ subject: 'u' }, { passbook_d: deep }, ctx)).rejects.toThrow(
+      /^IDP_REFUSED/,
+    );
+    idp.holdLease('u');
+    await expect(idp.apply('u', { add: ['console'] }, ctx)).rejects.toThrow(/^IDP_CONFLICT/);
+    idp.holdLease('g:crew');
+    await idp.createGroup('crew', 'Crew', ctx);
+    await expect(idp.deleteGroup('crew', ctx)).rejects.toThrow(/^IDP_CONFLICT/);
   });
 });
