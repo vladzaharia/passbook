@@ -88,6 +88,8 @@ const ORG_ONLY: readonly string[] = [
   'org:write',
   'wallet:write',
   'audit:read',
+  'nfc:read',
+  'nfc:write',
   ...TEMPLATE_ACT_AS_SCOPES,
 ];
 
@@ -114,6 +116,8 @@ export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number],
   'scan-setup:read': 'scanning:read',
   'scanning:admin': 'scanning:manage',
   'nfc:keys': 'scanning:manage',
+  'nfc:read': 'passes:read',
+  'nfc:write': 'passes:operate',
   'api-keys:write': 'integrations:manage',
   'audit:read': 'audit:read',
 };

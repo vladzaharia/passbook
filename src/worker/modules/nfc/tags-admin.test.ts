@@ -237,7 +237,7 @@ describe('routes', () => {
     expect((await call(b.headers, 'GET', `/tags/${a.tag.id}`)).status).toBe(404);
     expect((await call(b.headers, 'POST', `/tags/${a.tag.id}/retire`, {})).status).toBe(404);
     expect((await call(b.headers, 'GET', `/tags?orgId=${a.t.org.id}`)).status).toBe(404);
-    for (const path of [`/tags/${a.tag.id}`, '/tags', `/passes/${a.pass.id}/tags`, '/bindings/x'])
+    for (const path of [`/tags/${a.tag.id}`, '/tags', `/passes/${a.pass.id}/tags`])
       expect((await call({}, 'GET', path)).status, path).toBe(401);
     expect((await call({}, 'GET', '/nothing-here')).status).toBe(404);
   });

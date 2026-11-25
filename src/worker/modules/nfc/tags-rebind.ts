@@ -19,7 +19,10 @@ import {
   addBind,
   type BindPlan,
   bindChecks,
+  type SessionTagAuthority,
   type TagAuthority,
+  tagActorOf,
+  tagAuditActorOf,
   tagGrant,
 } from './repo-tags-write.ts';
 import { decideBind, triggerRefusal } from './tags.ts';
@@ -93,7 +96,7 @@ export async function place(
       endLapsed: policy.lapsed,
       audited: rebind !== null,
       source: 'admin',
-      actor: { type: 'user', id: a.userId },
+      actor: tagActorOf(a),
       scannerId: null,
       orgId: a.orgId,
       mode: a.mode,
@@ -111,8 +114,7 @@ export async function place(
         ctx,
         {
           orgId: a.orgId,
-          actorType: 'user',
-          actorId: a.userId,
+          ...tagAuditActorOf(a),
           action: 'tag.rebind',
           targetType: 'tag',
           targetId: tagId,
@@ -146,7 +148,7 @@ async function shown(ctx: ServiceContext, a: TagAuthority, id: string): Promise<
  */
 export async function changeBinding(
   ctx: ServiceContext,
-  a: TagAuthority,
+  a: SessionTagAuthority,
   bindingId: string,
   req: { binding: 'pass' | 'user'; passId?: string | undefined },
 ): Promise<Tag> {
@@ -160,7 +162,7 @@ export async function changeBinding(
 /** Undo on remove: puts the tag back on what it was removed from, by the same admin, within 10 minutes. */
 export async function rebindRemoved(
   ctx: ServiceContext,
-  a: TagAuthority,
+  a: SessionTagAuthority,
   passId: string,
   req: { tagId: string; binding: 'pass' | 'user' },
 ): Promise<Tag> {

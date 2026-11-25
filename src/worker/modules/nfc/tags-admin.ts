@@ -13,14 +13,32 @@ import { assertPassTakesTag } from './pass-state.ts';
 import { bindPolicy, tagsRefusal } from './policy.ts';
 import { activeBinding, bindingTarget, lostBinding, passFacts } from './repo-tag-bindings.ts';
 import { tagTarget, tagView } from './repo-tags.ts';
-import { addBind, bindChecks, endBinding, type TagAuthority, tagGrant } from './repo-tags-write.ts';
+import {
+  addBind,
+  bindChecks,
+  endBinding,
+  type SessionTagAuthority,
+  type TagAuthority,
+  tagActorOf,
+  tagAuditActorOf,
+  tagGrant,
+} from './repo-tags-write.ts';
 import { commitTag } from './tags.ts';
 
 /** The captured console session holds passes:operate for this org. */
-export function tagAuthorityOf(authority: TenantPassWrite): TagAuthority {
+export function tagAuthorityOf(authority: TenantPassWrite): SessionTagAuthority {
   if (authority.kind !== 'session' || authority.capability !== 'passes:operate')
     throw new ForbiddenError();
   return { ...authority, capability: 'passes:operate' };
+}
+
+/** A console session holding passes:operate, or a key holding `nfc:write` (a key acts as `k:<keyId>`). */
+export function tagWriterOf(authority: TenantPassWrite): TagAuthority {
+  if (authority.kind === 'api_key') {
+    if (authority.scope !== 'nfc:write') throw new ForbiddenError();
+    return { ...authority, scope: 'nfc:write' };
+  }
+  return tagAuthorityOf(authority);
 }
 
 const notFound = () => new NotFoundError('Tag not found.', 'TAG_NOT_FOUND');
@@ -47,8 +65,7 @@ const audit = (
 ) =>
   grantedAudit(g, ctx, {
     orgId: a.orgId,
-    actorType: 'user',
-    actorId: a.userId,
+    ...tagAuditActorOf(a),
     action,
     targetType: 'tag',
     targetId: tagId,
@@ -65,7 +82,7 @@ export async function unbindTag(
   if (!binding || binding.orgId !== a.orgId || binding.mode !== a.mode || binding.ended)
     throw notFound();
   const g = tagGrant(ctx, 'org_mode.nfc.tag.unbind', a);
-  endBinding(g, binding, 'admin', { type: 'user', id: a.userId }, ctx.clock.now());
+  endBinding(g, binding, 'admin', tagActorOf(a), ctx.clock.now());
   audit(g, ctx, a, 'tag.unbind', binding.tagId, { cause: 'admin', scope: binding.scope });
   await commitTag(g);
   return shown(ctx, a, binding.tagId);
@@ -85,15 +102,19 @@ export async function reportTagLost(
   const g = tagGrant(ctx, 'org_mode.nfc.tag.lost', a, [
     exactlyOne('nfc_tags', { id, lost_at: null }),
   ]);
-  endBinding(g, active, 'lost', { type: 'user', id: a.userId }, now);
-  g.update('nfc_tags', { set: { lost_at: now, lost_by: a.userId }, where: { id } });
+  endBinding(g, active, 'lost', tagActorOf(a), now);
+  g.update('nfc_tags', { set: { lost_at: now, lost_by: tagActorOf(a).id }, where: { id } });
   audit(g, ctx, a, 'tag.lost', tag.id, { scope: active.scope });
   await commitTag(g);
   return shown(ctx, a, id);
 }
 
 /** The tag stops opening anything and cannot be bound until restored. Nothing is tombstoned: only this row changes. */
-export async function retireTag(ctx: ServiceContext, a: TagAuthority, id: string): Promise<Tag> {
+export async function retireTag(
+  ctx: ServiceContext,
+  a: SessionTagAuthority,
+  id: string,
+): Promise<Tag> {
   const tag = await tagIn(ctx, a, id);
   if (tag.status === 'retired') return shown(ctx, a, id);
   const g = tagGrant(ctx, 'org_mode.nfc.tag.retire', a, [
@@ -174,7 +195,7 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     endLapsed: policy.lapsed,
     audited: true,
     source: 'admin' as const,
-    actor: { type: 'user' as const, id: a.userId },
+    actor: tagActorOf(a),
     scannerId: null,
     orgId: a.orgId,
     mode: a.mode,
@@ -189,7 +210,7 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
 /** A label, or none. Loaner tags are not offered, so `pool` is refused. */
 export async function updateTag(
   ctx: ServiceContext,
-  a: TagAuthority,
+  a: SessionTagAuthority,
   id: string,
   input: { label?: string | null | undefined; pool?: boolean | undefined },
 ): Promise<Tag> {

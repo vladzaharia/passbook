@@ -18,9 +18,26 @@ import {
 import type { TagSystemId } from './systems/types.ts';
 
 type Session = Extract<TenantPassWrite, { kind: 'session' }>;
+type Key = Extract<TenantPassWrite, { kind: 'api_key' }>;
 
-/** A tag edit is a console action: the captured session holds passes:operate. */
-export type TagAuthority = Session & { capability: 'passes:operate' };
+/** A console tag edit: the captured session holds passes:operate. */
+export type SessionTagAuthority = Session & { capability: 'passes:operate' };
+/** A tag edit a key may also make: a session as above, or a key holding `nfc:write`. */
+export type TagAuthority = SessionTagAuthority | (Key & { scope: 'nfc:write' });
+
+/** Who a tag row names as the actor: the user, or `k:<keyId>` for a key (as offboard does). */
+export const tagActorOf = (a: TagAuthority): { type: 'user'; id: string } => ({
+  type: 'user',
+  id: a.kind === 'session' ? a.userId : `k:${a.keyId}`,
+});
+
+/** The audit actor of a tag edit: the user, or the key by its own id. */
+export const tagAuditActorOf = (
+  a: TagAuthority,
+): { actorType: 'user' | 'api_key'; actorId: string } =>
+  a.kind === 'session'
+    ? { actorType: 'user', actorId: a.userId }
+    : { actorType: 'api_key', actorId: a.keyId };
 
 const DAY_MS = 86_400_000;
 const TAG_TABLES = ['nfc_tags', 'tag_bindings', 'nfc_tag_sun'] as const;
@@ -77,8 +94,9 @@ export function endBinding(
   actor: { type: TagActor['type'] | 'system'; id: string },
   now: number,
 ): GrantedStatement {
+  // Through the pass: a key limited to templates reaches a binding only by the pass it opens.
   return g.joined('tag_bindings', {
-    via: 'tag_id',
+    via: 'pass_id',
     where: { id: binding.id, ended_at: null },
     set: { ended_at: now, ended_by_type: actor.type, ended_by: actor.id, end_cause: cause },
     require: 'one',
@@ -183,7 +201,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
   for (const id of p.endLapsed ?? [])
     if (id !== p.end?.id)
       g.joined('tag_bindings', {
-        via: 'tag_id',
+        via: 'pass_id',
         where: { id, ended_at: null },
         set: { ended_at: now, ended_by_type: 'system', ended_by: 'expiry', end_cause: 'expired' },
       });
@@ -233,6 +251,8 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
     ],
     returning: ['id'],
   });
+  const keyActor =
+    p.actor.type === 'user' && p.actor.id.startsWith('k:') ? p.actor.id.slice(2) : null;
   if (!p.audited)
     grantedAudit(
       g,
@@ -240,8 +260,9 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       {
         orgId: p.orgId,
         // A staff member is not a user row: the scanner is the actor and the staff id rides in the detail.
-        actorType: p.actor.type === 'staff' ? 'scanner' : p.actor.type,
-        actorId: p.actor.type === 'staff' ? (p.scannerId ?? p.actor.id) : p.actor.id,
+        // A key's tag actor is `k:<keyId>`: the audit row names the key itself.
+        actorType: p.actor.type === 'staff' ? 'scanner' : keyActor ? 'api_key' : p.actor.type,
+        actorId: p.actor.type === 'staff' ? (p.scannerId ?? p.actor.id) : (keyActor ?? p.actor.id),
         action: p.end?.cause === 'moved' ? 'tag.move' : 'tag.bind',
         targetType: 'tag',
         targetId: p.tagId,
