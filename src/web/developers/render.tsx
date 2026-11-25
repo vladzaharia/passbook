@@ -57,7 +57,15 @@ import type { BlueprintPreviews } from './playground/model.ts';
 import { PlaygroundPage } from './playground/page.tsx';
 import { QuickstartView } from './quickstart/page.tsx';
 import { type Doc, document, fileOf, opIndex } from './render-doc.ts';
-import { crumbs, type FrameOpts, framer, guidePager, navGuides, opPager } from './render-frame.tsx';
+import {
+  crumbs,
+  type FrameOpts,
+  framer,
+  guidePager,
+  navGuides,
+  opPager,
+  toc,
+} from './render-frame.tsx';
 
 export function renderSite(
   site: Site,
@@ -159,7 +167,7 @@ export function renderSite(
               resource: p,
               crumbs: crumbs.op(p, op),
               pager: opPager(p, op),
-              toc: 'op',
+              toc: toc.op(op),
             }),
             md: true,
           },
@@ -184,7 +192,7 @@ export function renderSite(
     'Error codes and their fixes.',
     'reference',
     <ErrorsIndex site={site} />,
-    { dir: true, crumbs: crumbs.errors(), toc: 'errors', md: errorsIndexMarkdown(site) },
+    { dir: true, crumbs: crumbs.errors(), toc: toc.errors(site), md: errorsIndexMarkdown(site) },
   );
   for (const e of site.errors)
     page(
@@ -213,7 +221,7 @@ export function renderSite(
     undefined,
     <ChangelogView site={site} />,
     {
-      toc: 'changelog',
+      toc: toc.changelog(site),
       head: `<link rel="alternate" type="application/atom+xml" title="PassBook API changelog" href="${PATHS.changelogFeed}">`,
       md: changelogMarkdown(site),
     },
@@ -226,7 +234,7 @@ export function renderSite(
     twin: appTwins.playground(),
     body: fr.provide(PATHS.playground, <PlaygroundPage site={site} previews={previews} />),
   });
-  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.meta, 'workbench', <ConsoleView />, {
+  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'workbench', <ConsoleView />, {
     app: true,
     tools: true,
     md: appTwins.console(),
@@ -281,7 +289,11 @@ export function renderSite(
         g.url,
         'guides',
         <GuideView guide={g} examples={guideInputs.examples} markdown={markdown} />,
-        { crumbs: crumbs.guide(g.meta.title), pager: guidePager(guides, g.meta.id), toc: 'guide' },
+        {
+          crumbs: crumbs.guide(g.meta.title),
+          pager: guidePager(guides, g.meta.id),
+          toc: toc.guide(g),
+        },
       ),
       md: true,
     });

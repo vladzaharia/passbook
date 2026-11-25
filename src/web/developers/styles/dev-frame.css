@@ -126,3 +126,40 @@ body > main {
     color: var(--pk-text-strong);
   }
 }
+
+/* "Developers" stays beside the mark on a phone; the shared Wordmark hides its sub there (h0 hand-off). */
+[data-menubar] a[href="/developers"] > span.border-l {
+  display: inline;
+}
+
+/* The sheet's own groups: Sandbox and Spaces under the sections. */
+.menu-only .menu-sandbox,
+.menu-only .menu-spaces {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.menu-seg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-sunken, var(--pk-surface-page));
+}
+.sidenav .menu-seg a {
+  justify-content: center;
+  min-height: 40px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.sidenav .menu-seg a[aria-current] {
+  box-shadow: inset 0 0 0 1px var(--pk-accent);
+}
+.sidenav .menu-signin {
+  margin-top: 12px;
+  justify-content: center;
+  border: 1px solid var(--pk-border-strong);
+  min-height: 40px;
+}

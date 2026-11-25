@@ -8,7 +8,7 @@ import { Menubar, MenubarNav, MenubarSearch, SignInButton } from '../../ui/layou
 import { Wordmark } from '../../ui/layout/wordmark.tsx';
 import type { Site } from '../model/types.ts';
 import { Frame, SideNav } from './nav-tree.tsx';
-import { Crumbs, Pager, ToolsRow } from './toc.tsx';
+import { Crumbs, Pager, Toc, ToolsRow } from './toc.tsx';
 
 export const SIGN_IN = '/login?next=%2Fdevelopers';
 export type NavKey = (typeof DEV_COPY.nav)[number]['key'];
@@ -71,21 +71,23 @@ export function TopBar({ active }: { active?: NavKey }) {
   );
 }
 
+/** "page" only on the page the chip links to; its section otherwise ("true"). */
+function chipCurrent(key: NavKey, active: NavKey | undefined, path: string) {
+  if (key !== active) return undefined;
+  return NAV_PATH[key] === path ? 'page' : 'true';
+}
+
 /**
  * The sheet's top, below 1181 px, where the bar's sections are not on screen: the five sections,
  * then Sandbox and Spaces (empty in the prerender, filled for a signed-in reader by
  * shell/menu-sheet.ts); signed out, the sheet ends the block with Sign in.
  */
-function SheetTop({ active }: { active?: NavKey }) {
+function SheetTop({ active, path }: { active?: NavKey; path: string }) {
   return (
     <div className="menu-only stack">
       <div className="menu-sections">
         {DEV_COPY.nav.map((n) => (
-          <a
-            key={n.key}
-            href={NAV_PATH[n.key]}
-            aria-current={n.key === active ? 'page' : undefined}
-          >
+          <a key={n.key} href={NAV_PATH[n.key]} aria-current={chipCurrent(n.key, active, path)}>
             {n.label}
           </a>
         ))}
@@ -142,7 +144,8 @@ export function Shell({
   bare?: boolean;
 }) {
   const f = useContext(Frame);
-  const cls = ['docs', app ? 'no-side app' : '', f.toc ? 'has-toc' : ''].filter(Boolean).join(' ');
+  const hasToc = (f.toc?.length ?? 0) >= 2;
+  const cls = ['docs', app ? 'no-side app' : '', hasToc ? 'has-toc' : ''].filter(Boolean).join(' ');
   const around = (
     <>
       {f.tools ? <ToolsRow path={f.path} /> : null}
@@ -157,7 +160,7 @@ export function Shell({
       <TopBar active={active} />
       {bare ? (
         <>
-          <SideNav site={site} drawer top={<SheetTop active={active} />} />
+          <SideNav site={site} drawer top={<SheetTop active={active} path={f.path} />} />
           <main id="main">
             {around}
             {children}
@@ -165,15 +168,13 @@ export function Shell({
         </>
       ) : (
         <div className={cls}>
-          <SideNav site={site} drawer={app} top={<SheetTop active={active} />} />
+          <SideNav site={site} drawer={app} top={<SheetTop active={active} path={f.path} />} />
           <main id="main" className="main">
             {around}
             {children}
             {f.pager ? <Pager {...f.pager} /> : null}
           </main>
-          {f.toc ? (
-            <nav className="toc" aria-label={DEV_COPY.reference.onThisPage} data-toc />
-          ) : null}
+          {hasToc && f.toc ? <Toc items={f.toc} /> : null}
         </div>
       )}
       <Footer site={site} />

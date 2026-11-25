@@ -255,13 +255,17 @@ export function OperationView({ page, op, site }: { page: ResourcePage; op: OpVi
           </p>
           {groups.map((g) => (
             <div key={g.w}>
-              <h2 className="h2 mt8">{WHERE_LABEL[g.w]}</h2>
+              <h2 className="h2 mt8" id={`params-${g.w}`}>
+                {WHERE_LABEL[g.w]}
+              </h2>
               <Params fields={g.fields} />
             </div>
           ))}
           {op.returns ? (
             <>
-              <h2 className="h2 mt8">{DEV_COPY.reference.returns}</h2>
+              <h2 className="h2 mt8" id="returns">
+                {DEV_COPY.reference.returns}
+              </h2>
               <p className="mt2">
                 <span className="pill success mono">{op.returns.status}</span>{' '}
                 {op.returns.schema ? (

@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PATHS } from '../../shared/developers.ts';
+import { loadGuideInputs } from './guide/load.ts';
 import { loadInputs } from './model/load.ts';
 import { buildSite } from './model/site.ts';
-import { withToc } from './pages/toc.tsx';
 import { renderSite } from './render.tsx';
 
 const root = resolve(import.meta.dirname, '../../..');
@@ -94,7 +94,7 @@ describe('the prerendered portal', () => {
     const html = page(`${PATHS.reference}/${res.slug}/${op.anchor.toLowerCase()}`);
     expect(html).toContain('aria-label="Breadcrumb"');
     expect(html).toContain('aria-label="Previous and next"');
-    expect(html).toMatch(/<nav class="toc" aria-label="On this page" data-toc>/);
+    expect(html).toMatch(/<nav class="toc" aria-label="On this page" data-toc/);
     expect(html).toContain('>Parameters<');
     // Every entry points at an id on the page.
     for (const m of html.matchAll(/<li><a href="#([^"]+)">/g))
@@ -167,64 +167,62 @@ describe('the prerendered portal', () => {
   });
 });
 
-describe('"On this page" from a page\'s own headings', () => {
-  const doc = (inner: string) =>
-    `<nav class="toc" aria-label="On this page" data-toc="true"></nav><main id="main">${inner}</main>`;
+describe('"On this page"', () => {
+  const entries = (url: string) =>
+    [...page(url).matchAll(/<li><a href="#([^"]+)">([^<]+)<\/a><\/li>/g)].map(
+      (m) => m[1] as string,
+    );
 
-  it("gives each heading an id, once, and lists the guide's sections in order", () => {
-    const html = withToc(
-      doc(
-        '<h2 class="h2">First step</h2><h2 class="h2" id="x">Own id</h2><h2 class="h2">First step</h2>',
-      ),
-      'guide',
-    );
-    expect(html).toContain('<h2 class="h2" id="first-step">First step</h2>');
-    expect(html).toContain('<h2 class="h2" id="first-step-2">First step</h2>');
-    expect(html).toContain(
-      '<li><a href="#first-step">First step</a></li><li><a href="#x">Own id</a></li>',
-    );
+  it('keeps at least two entries on the errors index and the changelog, each an id on the page', () => {
+    for (const url of [PATHS.errors, PATHS.changelog]) {
+      const ids = entries(url);
+      expect(ids.length, url).toBeGreaterThanOrEqual(2);
+      for (const id of ids) expect(page(url), `${url}#${id}`).toContain(`id="${id}"`);
+    }
   });
 
-  it("folds an operation's Path, Query, Headers and Body into Parameters and links the Errors section by its own id", () => {
-    const html = withToc(
-      doc(
-        '<h2 class="h2">Headers</h2><h2 class="h2">Body</h2><h2 class="h2">Returns</h2><section id="errors"><h2 class="h2">Errors</h2></section><h3 class="h3">Examples</h3><h3>Response</h3>',
-      ),
-      'op',
+  it("lists a guide's sections and an operation's Parameters, Returns and Errors, with no Examples", () => {
+    const withGuides = renderSite(site, ORIGIN, '', loadGuideInputs(root));
+    const guide = withGuides.find(
+      (f) => f.url?.startsWith(`${PATHS.guides}/`) && f.file.endsWith('.html'),
     );
-    const labels = [...html.matchAll(/<li><a href="#([^"]+)">([^<]+)</g)].map(
-      (m) => `${m[2]}>${m[1]}`,
+    const listed = guide?.body.match(/<li><a href="#[^"]+">[^<]+<\/a><\/li>/g) ?? [];
+    expect(listed.length).toBeGreaterThanOrEqual(2);
+    const res = site.pages.find((p) =>
+      p.ops.some((o) => o.fields.length > 0 && o.errors.length > 0),
     );
-    expect(labels).toEqual([
-      'Parameters>headers',
-      'Returns>returns',
-      'Errors>errors',
-      'Examples>examples',
-    ]);
+    const op = res?.ops.find((o) => o.fields.length > 0 && o.errors.length > 0);
+    if (!res || !op) throw new Error('no operation');
+    const url = `${PATHS.reference}/${res.slug}/${op.anchor.toLowerCase()}`;
+    const html = page(url);
+    expect(html).toContain('>Parameters</a>');
+    expect(html).not.toMatch(/<li><a href="#[^"]+">Examples</);
+    for (const id of entries(url)) expect(html, id).toContain(`id="${id}"`);
   });
 
-  it('drops the column when there is nothing to jump between', () => {
-    const html = withToc(`<div class="docs has-toc">${doc('<h2>Only</h2>')}</div>`, 'guide');
-    expect(html).not.toContain('data-toc');
-    expect(html).not.toContain('has-toc');
+  it('drops the column when a page lists fewer than two sections', () => {
+    expect(page(PATHS.status)).not.toContain('data-toc');
+    expect(page(PATHS.status)).not.toContain('has-toc');
+  });
+});
+
+describe("the frame's current marks", () => {
+  it('says "page" on a section chip only on that section\'s own page, "true" inside it', () => {
+    const chip = (url: string, name: string) =>
+      new RegExp(`<a href="[^"]*"( aria-current="(\\w+)")?>${name}</a>`).exec(
+        page(url).split('menu-sections')[1] ?? '',
+      )?.[2];
+    expect(chip(PATHS.reference, 'Reference')).toBe('page');
+    expect(chip(PATHS.errors, 'Reference')).toBe('true');
+    expect(chip(PATHS.keys, 'Workbench')).toBe('true');
+    expect(chip(PATHS.keys, 'Guides')).toBeUndefined();
   });
 
-  it('lists the error letters and the changelog days by the ids they already carry', () => {
-    expect(
-      withToc(
-        doc(
-          '<details class="errs-group" id="errors-A"></details><details id="errors-B"></details>',
-        ),
-        'errors',
-      ),
-    ).toContain('<li><a href="#errors-A">A</a></li><li><a href="#errors-B">B</a></li>');
-    expect(
-      withToc(
-        doc(
-          '<section class="cl-day mt6" id="2026-11-20"></section><section class="cl-day mt6" id="2026-10-01"></section>',
-        ),
-        'changelog',
-      ),
-    ).toContain('<li><a href="#2026-11-20">2026-11-20</a></li>');
+  it('opens Reference in the tree on Protocols', () => {
+    const html = page(PATHS.protocols);
+    const at = html.indexOf('aria-label="Docs"');
+    expect(html.slice(at)).toMatch(
+      /<details class="navg" open="">(?:(?!<\/details>).)*API reference/s,
+    );
   });
 });

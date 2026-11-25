@@ -47,7 +47,8 @@
 .main .op-next {
   display: none;
 }
-.main > .eyebrow:not(:has(> :not(a, [aria-hidden="true"]))) {
+.main > .eyebrow:not(:has(> :not(a, [aria-hidden="true"]))),
+.main > .eyebrow:has(> a[href="/developers/reference"]) {
   display: none;
 }
 .main > .eyebrow {
@@ -61,24 +62,11 @@
   gap: 4px;
   margin-bottom: 16px;
 }
+/* Tool pages with no .main: the row keeps the kit gutter, at the page's widest. */
 main:not(.main) > .tools {
   max-width: 1440px;
   margin: 0 auto;
   padding: 12px var(--wl-gutter) 0;
-}
-/* The row lines up with the page under it: Keys is a 960 px column, the webhook tester has its own padding. */
-main:not(.main):has(.ks-slot) > .tools {
-  max-width: 960px;
-  padding-inline: 40px;
-}
-main:not(.main):has(.wh) > .tools {
-  padding-inline: 32px;
-}
-@media (max-width: 720px) {
-  main:not(.main):has(.ks-slot) > .tools,
-  main:not(.main):has(.wh) > .tools {
-    padding-inline: 16px;
-  }
 }
 .tools a {
   display: inline-flex;

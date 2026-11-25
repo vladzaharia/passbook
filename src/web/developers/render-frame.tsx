@@ -5,11 +5,12 @@ import { DEV_COPY, DEV_GUIDES } from '../../shared/copy/developers.ts';
 import { PATHS } from '../../shared/developers.ts';
 import { groupByStep } from './guide/group.ts';
 import type { Guide } from './guide/model.ts';
+import { shortDate } from './model/dates.ts';
 import { opPath, pagePath } from './model/markdown.ts';
 import type { OpView, ResourcePage, Site } from './model/types.ts';
 import { type NavKey, Shell } from './pages/layout.tsx';
 import { Frame, type FrameData, type NavGuide } from './pages/nav-tree.tsx';
-import { type Crumb, type PagerLinks, type TocKind, withToc } from './pages/toc.tsx';
+import type { Crumb, PagerLinks, TocItem } from './pages/toc.tsx';
 
 export interface FrameOpts {
   /** A tool with its own full-width column (console, logs). */
@@ -19,8 +20,8 @@ export interface FrameOpts {
   resource?: ResourcePage;
   crumbs?: readonly Crumb[];
   pager?: PagerLinks;
-  /** The page gets "On this page", built from the headings of this kind. */
-  toc?: TocKind;
+  /** The sections "On this page" lists; each id is on the page (see `toc` below). */
+  toc?: readonly TocItem[];
   tools?: boolean;
 }
 
@@ -82,7 +83,7 @@ export function framer(site: Site, guides: readonly NavGuide[]) {
     resource: o.resource,
     crumbs: o.crumbs,
     pager: o.pager,
-    toc: o.toc !== undefined,
+    toc: o.toc,
     tools: o.tools,
   });
   const html = (node: ReactElement) => renderToStaticMarkup(node);
@@ -91,14 +92,41 @@ export function framer(site: Site, guides: readonly NavGuide[]) {
     provide: (path: string, node: ReactElement, o: FrameOpts = {}) =>
       html(<Frame.Provider value={data(path, o)}>{node}</Frame.Provider>),
     shell: (path: string, active: NavKey | undefined, child: ReactElement, o: FrameOpts = {}) => {
-      const page = html(
+      return html(
         <Frame.Provider value={data(path, o)}>
           <Shell site={site} active={active} app={o.app} bare={o.bare}>
             {child}
           </Shell>
         </Frame.Provider>,
       );
-      return o.toc ? withToc(page, o.toc) : page;
     },
   };
 }
+
+const WHERE_ORDER = ['path', 'query', 'header', 'body'] as const;
+
+/**
+ * What "On this page" lists, from the data a page is built from; the ids are the ones the page's own
+ * components set (guide headings, the operation's `params-*`, `returns` and `errors`, the errors
+ * index's `errors-<letter>`, the changelog's date sections).
+ */
+export const toc = {
+  guide: (g: Guide): TocItem[] => [
+    ...g.blocks.flatMap((b) => (b.kind === 'h2' ? [{ id: b.id, label: b.text }] : [])),
+    ...(g.ops.length > 0 ? [{ id: 'operations', label: DEV_COPY.guides.operations }] : []),
+  ],
+  op: (op: OpView): TocItem[] => {
+    const where = WHERE_ORDER.find((w) => op.fields.some((f) => f.where === w));
+    return [
+      ...(where ? [{ id: `params-${where}`, label: DEV_COPY.frame.parameters }] : []),
+      ...(op.returns ? [{ id: 'returns', label: DEV_COPY.reference.returns }] : []),
+      ...(op.errors.length > 0 ? [{ id: 'errors', label: DEV_COPY.reference.errors }] : []),
+    ];
+  },
+  errors: (site: Site): TocItem[] => {
+    const letters = [...new Set(site.errors.map((e) => e.code.charAt(0).toUpperCase()))];
+    return letters.map((l) => ({ id: `errors-${l}`, label: l }));
+  },
+  changelog: (site: Site): TocItem[] =>
+    [...new Set(site.changelog.map((c) => c.date))].map((d) => ({ id: d, label: shortDate(d) })),
+};

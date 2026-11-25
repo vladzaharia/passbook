@@ -81,15 +81,20 @@ test.describe('admin', () => {
       );
       await expect(nav).toBeVisible({ visible: inline });
       await expect(nav.getByRole('link')).toHaveText(
-        inline ? ['Quickstart', 'Guides', 'Reference', 'Webhooks', 'Logs'] : [],
+        inline ? ['Quickstart', 'Guides', 'Reference', 'Playground', 'Workbench'] : [],
       );
     }
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
     const sheet = page.locator('#dev-menu');
     await expect(sheet.getByRole('link', { name: 'Reference', exact: true })).toBeVisible();
-    await expect(sheet.locator('.menu-only').getByRole('link', { name: 'Playground' })).toHaveCount(
-      0,
-    );
+    // The bar's five sections are the chips at the top of the sheet.
+    await expect(sheet.locator('.menu-sections').getByRole('link')).toHaveText([
+      'Quickstart',
+      'Guides',
+      'Reference',
+      'Playground',
+      'Workbench',
+    ]);
     const spaces = sheet.locator('[data-menu-spaces]');
     await expect(spaces.getByRole('link', { name: 'Developers' })).toHaveAttribute(
       'aria-current',

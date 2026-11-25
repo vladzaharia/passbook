@@ -5,7 +5,7 @@ import { groupByStep } from '../guide/group.ts';
 import { opPath, pagePath } from '../model/markdown.ts';
 import type { ResourcePage, Site } from '../model/types.ts';
 import { MethodPill } from '../ui/method-pill.tsx';
-import { type Crumb, type PagerLinks, TOOL_PATH } from './toc.tsx';
+import { type Crumb, type PagerLinks, TOOL_PATH, type TocItem } from './toc.tsx';
 
 export interface NavGuide {
   id: string;
@@ -22,8 +22,8 @@ export interface FrameData {
   resource?: ResourcePage;
   crumbs?: readonly Crumb[];
   pager?: PagerLinks;
-  /** Reserves the "On this page" column; the renderer fills it from the page's headings. */
-  toc?: boolean;
+  /** The page's sections for "On this page"; the column shows from two entries. */
+  toc?: readonly TocItem[];
   /** A tool page: the row of its Workbench siblings. */
   tools?: boolean;
 }
@@ -49,6 +49,9 @@ function Item({
     </a>
   );
 }
+
+const navLabel = (key: (typeof DEV_COPY.nav)[number]['key']) =>
+  DEV_COPY.nav.find((n) => n.key === key)?.label;
 
 const within = (path: string, base: string) => path === base || path.startsWith(`${base}/`);
 
@@ -79,10 +82,10 @@ export function SideNav({
       <div className="stack">
         <h4>{c.getStarted}</h4>
         <Item href={PATHS.quickstart} path={path}>
-          Quickstart
+          {navLabel('quickstart')}
         </Item>
         <Item href={PATHS.playground} path={path}>
-          Playground
+          {navLabel('playground')}
         </Item>
       </div>
       <details className="navg" open={within(path, PATHS.guides)}>
@@ -101,7 +104,7 @@ export function SideNav({
           </div>
         ))}
       </details>
-      <details className="navg" open={within(path, PATHS.reference) && path !== PATHS.protocols}>
+      <details className="navg" open={within(path, PATHS.reference)}>
         <summary>{DEV_COPY.reference.title}</summary>
         <Item href={PATHS.reference} path={path}>
           {c.overview}
@@ -151,7 +154,7 @@ export function SideNav({
           {DEV_COPY.footer.status}
         </Item>
         <Item href={PATHS.protocols} path={path}>
-          Protocols
+          {c.protocols}
         </Item>
         <a href={PATHS.openapi}>{DEV_COPY.footer.openapi}</a>
         <a href={PATHS.llms}>{DEV_COPY.footer.llms}</a>

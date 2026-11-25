@@ -39,6 +39,21 @@ describe('the drawer menu', () => {
     expect(document.documentElement.dataset.menu).toBeUndefined();
   });
 
+  it('is modal: the page behind is inert and the lit item has focus, and both undo on close', () => {
+    document.body.innerHTML =
+      '<button data-menu-button aria-expanded="false">Menu</button><nav id="dev-menu"><a href="/a">a</a><a href="/b" aria-current="page" id="b">b</a></nav><main><a href="/m">m</a></main><footer class="foot">f</footer>';
+    initMenu();
+    const button = document.querySelector<HTMLButtonElement>('[data-menu-button]');
+    button?.click();
+    expect(document.querySelector('main')?.inert).toBe(true);
+    expect(document.querySelector('footer')?.inert).toBe(true);
+    expect(document.activeElement?.id).toBe('b');
+    button?.click();
+    expect(document.querySelector('main')?.inert).toBe(false);
+    expect(document.querySelector('footer')?.inert).toBe(false);
+    expect(document.activeElement).toBe(button);
+  });
+
   it('does nothing on a page without the button', () => {
     document.body.innerHTML = '';
     expect(() => initMenu()).not.toThrow();
@@ -87,6 +102,7 @@ describe('"On this page"', () => {
         'getBoundingClientRect',
       ).mockImplementation(() => ({ top: tops[id] }) as DOMRect);
     vi.stubGlobal('requestAnimationFrame', (f: () => void) => f());
+    vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(5000);
     return tops;
   };
   const lit = () =>
@@ -107,6 +123,45 @@ describe('"On this page"', () => {
     tops.b = 600;
     initToc();
     expect(lit()).toEqual(['A']);
+  });
+
+  it('lights the last section on screen at the foot of the page, though its heading never reaches the line', () => {
+    const tops = page();
+    tops.a = -900;
+    tops.b = 500;
+    vi.stubGlobal('innerHeight', 800);
+    vi.stubGlobal('scrollY', 1200);
+    vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(2000);
+    initToc();
+    expect(lit()).toEqual(['B']);
+    tops.b = 900;
+    dispatchEvent(new Event('scroll'));
+    expect(lit()).toEqual(['A']);
+  });
+
+  it('keeps a clicked entry lit through the jump, until the reader scrolls', () => {
+    const tops = page();
+    initToc();
+    expect(lit()).toEqual(['B']);
+    document.querySelector<HTMLAnchorElement>('[data-toc] a[href="#a"]')?.click();
+    tops.a = 0;
+    tops.b = 60;
+    dispatchEvent(new Event('scroll'));
+    expect(lit()).toEqual(['A']);
+    dispatchEvent(new Event('wheel'));
+    dispatchEvent(new Event('scroll'));
+    expect(lit()).toEqual(['B']);
+  });
+
+  it('lights the entry named by the hash on load and on a hash change', () => {
+    page();
+    history.replaceState(null, '', '#a');
+    initToc();
+    expect(lit()).toEqual(['A']);
+    history.replaceState(null, '', '#b');
+    dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(lit()).toEqual(['B']);
+    history.replaceState(null, '', location.pathname);
   });
 
   it('does nothing on a page without the list', () => {
