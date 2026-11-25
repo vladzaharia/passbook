@@ -40,3 +40,24 @@ export async function requireNotPersonal(db: D1Database, orgId: string): Promise
   if ((await personalOwnerOf(db, orgId)) !== null)
     throw new ForbiddenError(PERSONAL_ORG_COPY.planFixed, 'ORG_PERSONAL');
 }
+
+/** Closing: the owner cannot close a personal org out from under a suspension someone else placed (reopen would lift it). */
+export async function requirePersonalClose(
+  db: D1Database,
+  org: { id: string; status: string; personal_user_id: string | null },
+  actorUserId: string,
+): Promise<void> {
+  requirePersonalOwner(org.personal_user_id, actorUserId);
+  if (org.status === 'suspended') await requirePersonalStatusMove(db, org, 'active', actorUserId);
+}
+
+/** A wallet enrolment hold on a personal org: its owner releases only a hold they placed. */
+export async function requirePersonalRelease(
+  db: D1Database,
+  orgId: string,
+  actorUserId: string,
+  placedBy: string | null,
+): Promise<void> {
+  if ((await personalOwnerOf(db, orgId)) === actorUserId && placedBy !== actorUserId)
+    throw new ForbiddenError(PERSONAL_ORG_COPY.holdByPlatform, 'ORG_PERSONAL');
+}

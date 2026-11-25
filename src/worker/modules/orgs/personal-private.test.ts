@@ -315,6 +315,31 @@ describe('the platform emergency stop', () => {
     );
   });
 
+  it('does not let the owner close an org another admin suspended, and still records a second suspend', async () => {
+    const o = await ownerWithOrg('Closing Owner');
+    await call(other, 'POST', `/api/v1/orgs/${o.orgId}/status`, { status: 'suspended' });
+    const close = await call(o.session, 'DELETE', `/api/v1/orgs/${o.orgId}`);
+    expect(close.status).toBe(403);
+    expect(await code(close)).toBe('ORG_PERSONAL');
+    expect(await first(env.DB, 'SELECT status FROM orgs WHERE id = ?', [o.orgId])).toMatchObject({
+      status: 'suspended',
+    });
+    // The owner suspends their own, then an admin suspends it again: the owner still cannot lift it.
+    const p = await ownerWithOrg('Double Stop');
+    await call(p.session, 'POST', `/api/v1/orgs/${p.orgId}/status`, { status: 'suspended' });
+    await call(other, 'POST', `/api/v1/orgs/${p.orgId}/status`, { status: 'suspended' });
+    const rows = await all<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE org_id = ? AND action = 'org.suspend' ORDER BY id",
+      [p.orgId],
+    );
+    expect(rows.map((r) => JSON.parse(r.detail).override)).toEqual([false, true]);
+    const lift = await call(p.session, 'POST', `/api/v1/orgs/${p.orgId}/status`, {
+      status: 'active',
+    });
+    expect(lift.status).toBe(403);
+  });
+
   it('lets the owner suspend and reactivate their own', async () => {
     const o = await ownerWithOrg('Self Stopper');
     expect(

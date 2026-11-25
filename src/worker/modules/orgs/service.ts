@@ -262,18 +262,7 @@ export async function setOrgStatus(
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
   await requirePersonalStatusMove(ctx.env.DB, before, status, admin.userId);
-  if (before.status === status) return toDto(before);
-  const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin))
-    ? await getOrgRow(ctx.env.DB, id)
-    : null;
-  if (!saved) {
-    // The org moved under us (status, deletion): a gone org is a 404, a changed one a conflict.
-    const now = await getOrgRow(ctx.env.DB, id);
-    if (!now || now.status === 'deleted')
-      throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-    throw new ConflictError('The organization changed. Reload and retry.', 'ORG_CONFLICT');
-  }
-  await recordAudit(ctx, {
+  const entry = {
     ...auditActor(actor),
     orgId: id,
     action: statusAction(status),
@@ -285,7 +274,27 @@ export async function setOrgStatus(
         ? { personal: true, override: before.personal_user_id !== admin.userId }
         : {}),
     },
-  });
+  };
+  if (before.status === status) {
+    // An admin's suspend of an org the owner already suspended is still recorded: the owner cannot lift it after.
+    if (
+      status === 'suspended' &&
+      before.personal_user_id &&
+      before.personal_user_id !== admin.userId
+    )
+      await recordAudit(ctx, entry);
+    return toDto(before);
+  }
+  const saved = (await moveOrgStatusAsAdmin(ctx, id, before.status, status, admin, entry))
+    ? await getOrgRow(ctx.env.DB, id)
+    : null;
+  if (!saved) {
+    // The org moved under us (status, deletion): a gone org is a 404, a changed one a conflict.
+    const now = await getOrgRow(ctx.env.DB, id);
+    if (!now || now.status === 'deleted')
+      throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+    throw new ConflictError('The organization changed. Reload and retry.', 'ORG_CONFLICT');
+  }
   return toDto(saved);
 }
 
