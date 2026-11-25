@@ -14,7 +14,5 @@ export const GATE_COPY = {
   notFound: { home: 'Developers home', search: 'Search' },
   search: {
     try: 'Try',
-    /** An error code, a path and an operation: one of each kind the index answers. */
-    suggestions: ['INVALID_INPUT', '/passes', 'createPass'],
   },
 } as const;

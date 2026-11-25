@@ -9,6 +9,7 @@ import { actionItem, groupsOf, guideItem, item } from './items.tsx';
 import { type Lookup, loadIndex, reportMiss, resolveId } from './net.ts';
 import { Preview } from './preview.tsx';
 import { hintFor, isEmpty, narrow, type Results, search, wordsOf } from './rank.ts';
+import { suggestions } from './suggest.ts';
 import type { SearchIndex } from './types.ts';
 
 const C = SEARCH_COPY;
@@ -236,7 +237,7 @@ export function SearchPalette({
             ) : null}
             <div className="srch-pills">
               <span className="sm muted">{GATE_COPY.search.try}</span>
-              {GATE_COPY.search.suggestions.map((term) => (
+              {suggestions(index).map((term) => (
                 <button
                   key={term}
                   type="button"

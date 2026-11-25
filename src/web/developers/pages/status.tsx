@@ -1,7 +1,7 @@
 import { Check, CircleAlert, CircleMinus, CircleX } from 'lucide-react';
 import type { PublicStatus } from '../../../shared/contracts/status.ts';
 import { STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
-import { BuddyFace } from '../../ui/art/face.tsx';
+import { FaceArt } from '../../ui/art/face-art.tsx';
 import '../../ui/art/scenes/face.css';
 import { shortDate } from '../model/dates.ts';
 
@@ -27,10 +27,11 @@ export function StatusBody({ status }: { status: PublicStatus | null }) {
   return (
     <>
       <div className={`status-banner ${PILL[status.overall]}`} role="status">
-        <BuddyFace
+        <FaceArt
           className="status-face"
           size="sm"
           scene={status.overall === 'operational' ? 'cheer' : 'wink'}
+          playOnLoad
           mood={FACE[status.overall]}
         />
         <strong>{STATUS_COPY.overall[status.overall]}</strong>

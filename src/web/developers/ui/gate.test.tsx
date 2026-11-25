@@ -32,7 +32,7 @@ describe('Gate', () => {
     );
     expect(container.querySelector('[data-buddy]')?.getAttribute('aria-hidden')).toBe('true');
     expect(getByText(GATE_COPY.lines.keys)).toBeTruthy();
-    expect(await axe(container)).toHaveNoViolations();
+    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('renders with no script (prerender)', () => {
