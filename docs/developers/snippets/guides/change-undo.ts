@@ -2,9 +2,12 @@ import { PassBook } from '@passbook/sdk';
 
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
-const run = await pb.broadcasts.retrieve('0193a1b2-7c00-7000-8000-0000000000e1');
-// A run that is still sending cannot be undone: stop it, then undo once it ends.
-if (run.state === 'sending') await pb.broadcasts.stop(run.id);
+// The newest change run is the one you just started. In your code, keep the id from the create call.
+const { items } = await pb.broadcasts.list({ kind: 'change', limit: 1 });
+const run = items[0];
 
-const undo = await pb.broadcasts.undo(run.id);
-console.log(undo.id, undo.restorable, undo.kept);
+// A run that is still sending cannot be undone. Wait for sent, or stop it with broadcasts.stop(run.id).
+if (run?.state === 'sent') {
+  const undo = await pb.broadcasts.undo(run.id);
+  console.log(undo.id, undo.restorable, undo.kept);
+} else console.log(run?.state);

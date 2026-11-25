@@ -13,7 +13,7 @@ const saved = await pb.orgs.updatePassSetup(
       passColors: { background: '#0f172a', foreground: '#ffffff', label: '#fbbf24' },
     },
   },
-  { idempotencyKey: 'setup-acme-1' },
+  { idempotencyKey: 'setup-harbor-hall-1' },
 );
 
 console.log(saved.view.checks.length === 0 ? 'Ready' : saved.view.checks);

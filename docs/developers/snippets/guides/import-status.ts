@@ -2,6 +2,9 @@ import { PassBook } from '@passbook/sdk';
 
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
+// The newest import is the one you just made. In your code, keep the id from the create call.
+const { items } = await pb.passImports.list({ limit: 1 });
+const imp = await pb.passImports.retrieve(items[0]?.id ?? '');
+
 // Read again until state is done. progress counts what the commit has done so far.
-const imp = await pb.passImports.retrieve('0193a1b2-7c00-7000-8000-0000000000e1');
 console.log(imp.state, imp.progress);

@@ -33,7 +33,8 @@
     "files": {
       "ts": "change-run.ts",
       "curl": "change-run.sh"
-    }
+    },
+    "sandbox": "SELECTION_CHANGED"
   },
   {
     "id": "change-watch",

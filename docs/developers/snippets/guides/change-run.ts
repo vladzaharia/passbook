@@ -4,7 +4,7 @@ const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const target = {
   templateIds: ['0193a1b2-7c00-7000-8000-0000000000b1'],
-  match: [{ input: 'venueName', values: ['Sample Hall'] }],
+  match: [{ input: 'venueName', values: ['Harbor Hall'] }],
 };
 const patch = { venueName: { set: 'Pier 9' } };
 
