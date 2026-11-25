@@ -16,6 +16,7 @@ import {
 import { AuditListSchema } from '../../../shared/contracts/audit.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import { createApp } from '../../app.ts';
+import { systemClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -87,6 +88,7 @@ async function setup() {
 
 beforeAll(async () => {
   appEnv = await makeEnv();
+  fake.bindSessions(appEnv.DB, systemClock);
 });
 
 beforeEach(async () => {

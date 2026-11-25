@@ -1,11 +1,9 @@
 import type { z } from 'zod';
 import type { AuditEntrySchema, AuditQuerySchema } from '../../../shared/contracts/audit.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { proveCapability } from '../../platform/auth-capability.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { requireOrgCapability } from '../orgs/access.ts';
 import { orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
 import { redactForRead, safeLabel } from './redact.ts';
 import { REKEYED_ACTION, rekeyedDetail } from './rekeyed-detail.ts';
@@ -109,16 +107,12 @@ export function assertKeyWindow(ctx: ServiceContext, query: Query, paged: boolea
 export async function listTenantAudit(ctx: ServiceContext, auth: AuthContext, query: Query) {
   const orgId = orgIdOf(auth, query.orgId);
   if (auth.kind === 'api_key' && auth.orgId === null) throw new ForbiddenError();
-  let reader: { userId: string; membershipId: string } | { keyId: string; now: number };
-  if (auth.kind === 'api_key') {
-    const authority = await tenantAuthorityOf(ctx, auth, orgId, 'audit:read');
-    if (authority.kind !== 'api_key') throw new ForbiddenError();
-    reader = { keyId: authority.keyId, now: ctx.clock.now() };
-  } else if (auth.kind === 'session') {
-    const membership = await requireOrgCapability(ctx, auth.userId, orgId, 'audit:read');
-    proveCapability(auth, 'audit:read');
-    reader = { userId: auth.userId, membershipId: membership.id };
-  } else throw new ForbiddenError();
+  if (auth.kind !== 'api_key' && auth.kind !== 'session') throw new ForbiddenError();
+  const authority = await tenantAuthorityOf(ctx, auth, orgId, 'audit:read');
+  const reader =
+    authority.kind === 'api_key'
+      ? { keyId: authority.keyId, now: ctx.clock.now() }
+      : { userId: authority.userId, membershipId: authority.membershipId };
   return listAudit(ctx, query, { kind: 'tenant', orgId, reader });
 }
 
