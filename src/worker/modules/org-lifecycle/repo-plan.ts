@@ -81,6 +81,12 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
     table: 'magic_links',
     where: 'invitation_id IN (SELECT id FROM org_invitations WHERE org_id = ?1)',
   },
+  inOrg('developer_sponsors'),
+  {
+    table: 'developer_invite_setups',
+    where: 'invitation_id IN (SELECT id FROM developer_invitations WHERE org_id = ?1)',
+  },
+  inOrg('developer_invitations'),
   inOrg('org_memberships'),
   inOrg('org_invitations'),
   inOrg('template_release_reissues'),
