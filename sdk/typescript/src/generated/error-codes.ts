@@ -199,6 +199,8 @@ export type ErrorCode =
   | 'IDP_BUDGET'
   | 'IDP_CONFLICT'
   | 'IDP_EMAIL_NOT_PRIMARY'
+  | 'IDP_FROZEN'
+  | 'IDP_NOT_MANAGED'
   | 'IDP_REFUSED'
   | 'IDP_SIGN_IN_REQUIRED'
   | 'IDP_UNAVAILABLE'

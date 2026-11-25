@@ -1812,7 +1812,7 @@
         429
       ],
       "modules": [
-        "dev-access"
+        "idp"
       ]
     },
     {
@@ -1821,7 +1821,7 @@
         409
       ],
       "modules": [
-        "dev-access"
+        "idp"
       ]
     },
     {
@@ -1834,12 +1834,30 @@
       ]
     },
     {
+      "code": "IDP_FROZEN",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_REFUSED",
       "statuses": [
         403
       ],
       "modules": [
-        "dev-access"
+        "idp"
       ]
     },
     {
@@ -1857,7 +1875,7 @@
         503
       ],
       "modules": [
-        "dev-access"
+        "idp"
       ]
     },
     {
