@@ -56,6 +56,7 @@ function pick(
   return out;
 }
 
+const EXITS = new Set(['scan', 'desk', 'stay', 'clear', 'zone', 'forced']);
 const VERSION = { version: 'number' } as const;
 const SCAN_IDS = { scanId: 'string', scannerId: 'string', staffId: 'string' } as const;
 
@@ -114,6 +115,9 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
       out.outcome = row.kind === 'scan.heads_up' ? 'heads_up' : 'ok';
       if (d.direction === 'in' || d.direction === 'out') out.direction = d.direction;
       else if (row.kind === 'scan.checked_out') out.direction = 'out';
+      if (typeof d.zoneId === 'string' && d.zoneId.length <= MAX_STRING) out.zoneId = d.zoneId;
+      if (out.direction === 'out' && typeof d.exit === 'string' && EXITS.has(d.exit))
+        out.exit = d.exit;
       return out;
     }
     case 'pass.scan_refused':

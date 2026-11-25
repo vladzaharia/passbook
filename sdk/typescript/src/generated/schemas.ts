@@ -5274,6 +5274,8 @@ export type PassScannedEvent = {
     action?: string | null;
     outcome: "ok" | "heads_up";
     direction?: "in" | "out";
+    zoneId?: string | null;
+    exit?: "scan" | "desk" | "stay" | "clear" | "zone" | "forced";
     method?: string | null;
     scannerId?: string | null;
     staffId?: string | null;

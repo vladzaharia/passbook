@@ -6016,6 +6016,8 @@ type PassScannedEventData struct {
 	Action    *string  `json:"action,omitempty"`
 	Outcome   string   `json:"outcome"`
 	Direction *string  `json:"direction,omitempty"`
+	ZoneID    *string  `json:"zoneId,omitempty"`
+	Exit      *string  `json:"exit,omitempty"`
 	Method    *string  `json:"method,omitempty"`
 	ScannerID *string  `json:"scannerId,omitempty"`
 	StaffID   *string  `json:"staffId,omitempty"`
