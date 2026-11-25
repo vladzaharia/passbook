@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MARKETING_POLICY } from '@/shared/marketing.ts';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -15,7 +16,7 @@ describe('trustedHtml', () => {
   it('wraps through one passbook-marketing policy', async () => {
     const createPolicy = vi.fn((_name: string, rules: { createHTML(s: string): string }) => rules);
     vi.stubGlobal('trustedTypes', { createPolicy });
-    const { trustedHtml, MARKETING_POLICY } = await import('./trusted-html.ts');
+    const { trustedHtml } = await import('./trusted-html.ts');
     expect(trustedHtml('<g></g>')).toBe('<g></g>');
     expect(trustedHtml('<g></g>')).toBe('<g></g>');
     expect(createPolicy).toHaveBeenCalledTimes(1);

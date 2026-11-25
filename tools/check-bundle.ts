@@ -48,7 +48,7 @@ export const DEV_FORBIDDEN = [...FORBIDDEN, 'routeTree'] as const;
 
 /**
  * A marketing page's initial load (marketing/*.html), scripts and stylesheets, in gzip bytes. The
- * heaviest page (the door, with its CSS) measured 0 kB; budget is that plus about 10 %. No React, router or
+ * heaviest page (the door, with its CSS) measured 25.0 kB (gzip, 24,960 B); the budget is that plus about 10 %. No React, router or
  * console code belongs in them: they are plain pages with the Buddy drawing kit.
  */
 export const MARKETING_BUDGET_BYTES = 27_500;

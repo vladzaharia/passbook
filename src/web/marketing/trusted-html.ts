@@ -1,5 +1,4 @@
-/** The marketing CSP requires Trusted Types for script sinks: one policy for the Buddy's own SVG strings. */
-export const MARKETING_POLICY = 'passbook-marketing';
+import { MARKETING_POLICY } from '@/shared/marketing.ts';
 
 type Policy = { createHTML(s: string): string };
 type TrustedTypesApi = { createPolicy(name: string, rules: Policy): Policy };
