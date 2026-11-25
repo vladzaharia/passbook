@@ -14,6 +14,7 @@ export const ADMISSION: PaperContent = {
   title: 'Harbour Lights: Night Two',
   kicker: 'Event ticket',
   noun: 'ticket',
+  once: true,
   start: '2027-02-13T19:30:00+13:00',
   doors: '2027-02-13T18:30:00+13:00',
   end: '2027-02-13T22:30:00+13:00',
@@ -50,6 +51,7 @@ const COUPON: PaperContent = {
   kind: 'coupon',
   kicker: 'Coupon',
   noun: 'pass',
+  once: false,
   validUntil: '2027-01-31T23:59:00+00:00',
   zone: 'UTC',
   hero: { offer: '20% off', offerNote: 'Your next order of $30 or more' },
@@ -59,6 +61,7 @@ const MEMBERSHIP: PaperContent = {
   kind: 'membership',
   kicker: 'Membership',
   noun: 'pass',
+  once: false,
   type: 'All-Inclusive',
   validUntil: '2027-12-31T23:59:00+00:00',
 };
