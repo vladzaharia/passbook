@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
-import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
+import { useSeededZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { useDebounced } from '../../lib/debounce.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
@@ -118,13 +118,15 @@ function ComposerForm({
   draft: BroadcastDto | undefined;
 }) {
   const navigate = useNavigate();
-  const orgZone = useOrgTimeZone(orgId);
   const orgs = useOrgOptions();
   const org = orgs.data?.items.find((o) => o.id === orgId);
   const [state, setState] = useState<ComposerState>(() =>
     draft ? stateOfBroadcast(draft) : { ...INITIAL, kind: kind ?? 'message' },
   );
   const change = (patch: Partial<ComposerState>) => setState((s) => ({ ...s, ...patch }));
+  const orgZone = useSeededZone(orgId, (from, to) =>
+    setState((s) => (s.at?.zone === from ? { ...s, at: { ...s.at, zone: to } } : s)),
+  );
   const templates = useTemplates({ orgId });
   const usable = useMemo(
     () =>

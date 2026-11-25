@@ -5,6 +5,7 @@ import { roleAtLeast } from '@/passkit/template/scan-display/scope.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { ScanPreviewScreen } from '@/web/scan/preview-screen.tsx';
 import { CheckboxField, SegmentedControl, Select } from '@/web/ui/index.ts';
 import { type DesignDoc, styleOf } from '../model.ts';
@@ -63,6 +64,7 @@ export function ScanStage({
   const [overrides, setOverrides] = useState<Record<string, Json>>({});
   const [tabId, setTabId] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
+  const timeZone = useOrgTimeZone(orgId ?? undefined);
   const real = useRealPreview(
     orgId,
     templateId,
@@ -82,7 +84,18 @@ export function ScanStage({
     cuts,
     fit,
     hiddenPanels,
-  } = useStagePreview({ doc, display, screen, tabId, role, now, overrides, source, real });
+  } = useStagePreview({
+    doc,
+    display,
+    screen,
+    tabId,
+    role,
+    now,
+    overrides,
+    source,
+    real,
+    timeZone,
+  });
   useEffect(() => {
     if (tab.screen !== screen) onScreenChange(tab.screen);
   }, [tab.screen, screen, onScreenChange]);

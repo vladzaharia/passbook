@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { type ScanEventDto, ScanEventSchema } from '@/shared/contracts/scanners.ts';
-import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
+import { useSeededZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { CheckboxField } from '@/web/ui/checkbox.tsx';
@@ -29,8 +30,7 @@ export function EventDialog({
   event?: ScanEventDto;
   onClose: () => void;
 }) {
-  const orgZone = useOrgTimeZone(orgId);
-  const zone = event?.timeZone ?? orgZone;
+  const zone = event?.timeZone ?? DEFAULT_TIME_ZONE;
   const client = useQueryClient();
   const [name, setName] = useState(event?.name ?? '');
   const [opens, setOpens] = useState<DateTimeValue | null>({
@@ -40,6 +40,11 @@ export function EventDialog({
   const [closes, setCloses] = useState<DateTimeValue | null>({
     local: event ? isoToLocal(new Date(event.closesAt).toISOString(), zone) : '',
     zone,
+  });
+  useSeededZone(event ? undefined : orgId, (from, to) => {
+    const move = (v: DateTimeValue | null) => (v && v.zone === from ? { ...v, zone: to } : v);
+    setOpens(move);
+    setCloses(move);
   });
   const [selected, setSelected] = useState(event?.templateIds ?? []);
   const [capacity, setCapacity] = useState(event?.capacity?.toString() ?? '');

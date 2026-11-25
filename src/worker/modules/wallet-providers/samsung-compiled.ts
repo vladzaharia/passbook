@@ -72,12 +72,14 @@ export async function compileSamsungCard(
   const registry = createTemplateRegistry(ctx.env, { ctx });
   const template = await registry.resolve(pass.templateId, pass.templateVersion);
   const now = new Date(ctx.clock.now());
+  const zone = await readOrgTimeZone(ctx.env.DB, pass.orgId);
   const plan = previewPlan(
     ctx.env,
     template,
     template.manifest.sample,
     template.passJson.organizationName,
     now,
+    zone,
   );
   const key = `${input.candidateId}|${input.art}`;
   const art = await memoArt(key, now.getTime(), async () => {
@@ -107,7 +109,7 @@ export async function compileSamsungCard(
     template.manifest,
     {
       now,
-      timeZone: await readOrgTimeZone(ctx.env.DB, pass.orgId),
+      timeZone: zone,
       locales: [],
       input: pass.personalization,
       ...(pass.scanCode ? { pass: { scanCode: pass.scanCode } } : {}),

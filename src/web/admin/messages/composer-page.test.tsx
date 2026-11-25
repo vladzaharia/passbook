@@ -85,10 +85,15 @@ describe('Message composer', () => {
     expect(requests).not.toContain('unscoped');
   });
 
-  it('schedules in the org time zone', async () => {
+  it('follows the org time zone when its setting arrives after Schedule is picked', async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     setup('/admin/messages/new?orgId=org1', {
-      '/api/v1/settings': () =>
-        json({
+      '/api/v1/settings': async () => {
+        await gate;
+        return json({
           items: [
             {
               scope: 'org:org1',
@@ -99,10 +104,13 @@ describe('Message composer', () => {
               updatedBy: null,
             },
           ],
-        }),
+        });
+      },
     });
     const user = userEvent.setup();
     await user.click(await screen.findByRole('radio', { name: 'Schedule' }));
+    expect(await screen.findByText(/Time zone: Los Angeles/)).toBeInTheDocument();
+    release();
     expect(await screen.findByText(/Time zone: Tokyo/)).toBeInTheDocument();
   });
 

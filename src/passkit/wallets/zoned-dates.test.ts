@@ -1,25 +1,48 @@
 import { describe, expect, it } from 'vitest';
-import { withZone } from './zoned-dates.ts';
+import { zonedInput, zonedPass } from './zoned-dates.ts';
 
-describe('withZone', () => {
-  it('gives a date-time with no offset the org zone offset, across a DST change', () => {
-    expect(withZone('2030-01-15T19:00', 'America/Los_Angeles')).toBe('2030-01-15T19:00:00-08:00');
-    expect(withZone('2030-07-15T19:00:30', 'America/Los_Angeles')).toBe(
-      '2030-07-15T19:00:30-07:00',
+const LA = 'America/Los_Angeles';
+
+describe('zonedPass', () => {
+  it('gives an offsetless date-time the org zone offset, across a DST change', () => {
+    const at = (v: string) => zonedPass({ expirationDate: v }, LA).expirationDate;
+    expect(at('2030-01-15T19:00')).toBe('2030-01-15T19:00:00-08:00');
+    expect(at('2030-07-15T19:00:30')).toBe('2030-07-15T19:00:30-07:00');
+    expect(zonedPass({ expirationDate: '2030-07-15T19:00' }, 'Asia/Kolkata').expirationDate).toBe(
+      '2030-07-15T19:00:00+05:30',
     );
-    expect(withZone('2030-07-15T19:00', 'Asia/Kolkata')).toBe('2030-07-15T19:00:00+05:30');
   });
 
-  it('leaves Z, written offsets, bare dates and text alone, at any depth', () => {
-    const value = {
-      a: '2030-01-15T19:00:00Z',
-      b: ['2030-01-15T19:00:00+02:00', '2030-01-15', 'Doors at 7'],
-      c: { d: '2030-01-15T19:00' },
-      n: 3,
+  it('reads only the places that hold a date', () => {
+    const pass = {
+      expirationDate: '2030-01-15T19:00:00Z',
+      relevantDates: [{ startDate: '2030-01-15T19:00' }],
+      semantics: { eventStartDate: '2030-01-15T19:00', seatSection: '2030-01-15T19:00' },
+      eventTicket: {
+        primaryFields: [
+          { key: 'when', value: '2030-01-15T19:00', timeStyle: 'PKDateStyleShort' },
+          { key: 'note', value: '2030-01-15T19:00' },
+        ],
+      },
     };
-    expect(withZone(value, 'America/Los_Angeles')).toEqual({
-      ...value,
-      c: { d: '2030-01-15T19:00:00-08:00' },
+    const out = zonedPass(pass, LA);
+    expect(out.expirationDate).toBe('2030-01-15T19:00:00Z');
+    expect(out.relevantDates[0]?.startDate).toBe('2030-01-15T19:00:00-08:00');
+    expect(out.semantics.eventStartDate).toBe('2030-01-15T19:00:00-08:00');
+    expect(out.semantics.seatSection).toBe('2030-01-15T19:00');
+    expect(out.eventTicket.primaryFields.map((f) => f.value)).toEqual([
+      '2030-01-15T19:00:00-08:00',
+      '2030-01-15T19:00',
+    ]);
+  });
+});
+
+describe('zonedInput', () => {
+  it('reads only the date-time inputs, not free text', () => {
+    const input = { starts: '2030-01-15T19:00', note: '2030-01-15T19:00' };
+    expect(zonedInput(input, new Set(['starts']), LA)).toEqual({
+      starts: '2030-01-15T19:00:00-08:00',
+      note: '2030-01-15T19:00',
     });
   });
 });
