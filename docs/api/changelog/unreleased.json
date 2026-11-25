@@ -285,7 +285,7 @@
     "operationId": "connections.getConnectionsById",
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].passesCreated: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept. A connection stored by an older connector version shows connectorVersion and config migrated to the current version; one that does not migrate shows as stored."
   },
   {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesVoided: field added",
@@ -328,6 +328,54 @@
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.upload: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].category: field added",
+    "note": " List items also carry order and capabilities.upload."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].entitled: field added",
+    "note": "With an org, the list shows only what its plan allows. POST /connections gives 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks. POST /connections/test-config, with or without ?preview=true, also gives 403 FEATURE_NOT_INCLUDED. GET /connectors is filtered when an org is given."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].order: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].order: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].category: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].entitled: field added",
+    "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
@@ -344,6 +392,14 @@
     "note": "Connectors carry category (files, apis, commerce, bookings or try) and order, which group and sort the connector picker."
   },
   {
+    "key": "GET /api/v1/connectors/{type} 200.entitled: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.entitled: field added",
+    "note": "The detail is never filtered; entitled says whether the plan includes it for new connections. Always true without an org."
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.order: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
@@ -358,30 +414,6 @@
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.recipes[].category: field added",
     "note": "Sender recipes carry the picker category of their tile."
-  },
-  {
-    "key": "GET /api/v1/connectors 200.items[].entitled: field added",
-    "class": "additive",
-    "operationId": "connectors.getConnectors",
-    "op": "GET /api/v1/connectors",
-    "change": "200.items[].entitled: field added",
-    "note": "With an org, the list shows only what its plan allows. POST /connections gives 403 FEATURE_NOT_INCLUDED for a type or recipe the plan lacks."
-  },
-  {
-    "key": "GET /api/v1/connectors 200.items[].recipes[].entitled: field added",
-    "class": "additive",
-    "operationId": "connectors.getConnectors",
-    "op": "GET /api/v1/connectors",
-    "change": "200.items[].recipes[].entitled: field added",
-    "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
-  },
-  {
-    "key": "GET /api/v1/connectors/{type} 200.entitled: field added",
-    "class": "additive",
-    "operationId": "connectors.getConnectorsByType",
-    "op": "GET /api/v1/connectors/{type}",
-    "change": "200.entitled: field added",
-    "note": "The detail is never filtered; entitled says whether the plan includes it for new connections. Always true without an org."
   },
   {
     "key": "GET /api/v1/connectors/{type} 200.recipes[].entitled: field added",
