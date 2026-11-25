@@ -26,6 +26,8 @@ export interface SimOptions {
   uid?: Uint8Array;
   /** Source of RndB, TI and PICCData padding; a counter-based one makes a run reproducible. */
   random?: (n: number) => Uint8Array;
+  /** An ISO command inside an authenticated state ends the session (unverified on silicon; AN12196 itself mixes them). */
+  endSessionOnIso?: boolean;
 }
 
 /**
@@ -41,9 +43,11 @@ export class Ntag424Sim {
   readonly trace: number[] = [];
   private tear: { at: number; phase: 'before' | 'after' } | null = null;
   private torn = false;
+  private readonly endOnIso: boolean;
 
   constructor(options: SimOptions = {}) {
     this.random = options.random ?? randomBytes;
+    this.endOnIso = options.endSessionOnIso === true;
     this.tag = blankTag(options.uid ?? new Uint8Array([0x04, 0x51, 0x8d, 0xfa, 0xa9, 0x61, 0x80]));
     const { r, s } = ecdsaSign(SIGNING_KEY, toInt(this.tag.uid), SIGNING_NONCE);
     this.signature = encodeSignature(r, s);
@@ -108,7 +112,7 @@ export class Ntag424Sim {
   private async run(apdu: Uint8Array): Promise<Uint8Array> {
     const [cla, ins, p1, p2] = apdu as unknown as [number, number, number, number];
     // An ISO command inside an authenticated state is unverified on silicon: the simulator ends the session.
-    if (cla === 0x00) this.tag.session = null;
+    if (cla === 0x00 && this.endOnIso) this.tag.session = null;
     if (cla === 0x00) return isoCommand(this.tag, ins, p1, p2, apdu, this.random);
     if (cla !== 0x90) return status(0x6e00);
     const body = apdu.length > 5 ? apdu.slice(5, 5 + (apdu[4] as number)) : new Uint8Array(0);

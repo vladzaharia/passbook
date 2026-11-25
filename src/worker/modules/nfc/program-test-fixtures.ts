@@ -1,10 +1,17 @@
 import { expect } from 'vitest';
 import type { z } from 'zod';
+import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { TagProgramResultSchema } from '../../../shared/contracts/nfc-tag-programs.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { resolveSession } from '../auth/sessions.ts';
+import { grantKitMembership } from '../passes/apple-release-test-fixtures.ts';
+import { tenantAuthorityOf } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import { sunKeyset } from '../scan/sun-test-fixtures.ts';
+import { insertType } from '../scan/tags-policy-test-fixtures.ts';
+import { tagScanFixture } from '../scan/tags-scan-test-fixtures.ts';
 import { openTagKey } from './keyset-seal.ts';
 import { programTag, type RelayPort, type Send } from './ntag424/sim/program.ts';
 import { TagLostError } from './ntag424/sim/state.ts';
@@ -18,7 +25,7 @@ import { adminKeysOf } from './repo-admin-keys.ts';
 import type { ProgramAuthority } from './repo-programs.ts';
 import { bytesToHex } from './sun.ts';
 import { tagRef } from './tag-ref.ts';
-import { tagFixture } from './tags-test-fixtures.ts';
+import { tagAuthorityOf } from './tags-admin.ts';
 
 /** The relay the simulator drives, with what the service last answered and was sent. */
 export type ProgramPort = RelayPort & {
@@ -27,13 +34,54 @@ export type ProgramPort = RelayPort & {
   lastInput?: z.infer<typeof TagProgramResultSchema>;
 };
 
-/** An org with a programmable per-tag keyset, and callers that program as a scanner of it. */
-export async function programFixture() {
-  const f = await tagFixture({ releases: true });
-  const { kit } = f;
-  const o = await f.org();
+/**
+ * An org with a programmable per-tag keyset (of a tag type, when asked), and callers that program as a scanner of
+ * it. Its passes are scannable: they have a release, so the bind policy can read them.
+ */
+export async function programFixture(options: { type?: Parameters<typeof insertType>[2] } = {}) {
+  const base = await tagScanFixture();
+  const { kit } = base;
+  type Row = { id: string };
+
+  /** An org with a pass operator whose captured authority a program grant can stand on. */
+  async function memberOf(row: Row) {
+    const operator = await makeUser(kit.fx);
+    await grantKitMembership(kit, row.id, operator.id, ['pass_operator']);
+    const session = await makeSession(kit.fx, { userId: operator.id, roles: ['user'] });
+    const resolved = await resolveSession(kit.env, kit.clock, session.cookieValue);
+    if (!resolved) throw new Error('The operator session did not resolve.');
+    return {
+      org: row,
+      async authority(mode: Mode = 'live') {
+        return tagAuthorityOf(
+          await tenantAuthorityOf(kit.ctx, { ...resolved, mode }, row.id, 'passes:operate'),
+        );
+      },
+    };
+  }
+  const o = await memberOf(kit.org);
+  /** Another org, with tags on unless `enabled` is false. */
+  async function org(opts: { enabled?: boolean } = {}) {
+    const row = await makeOrg(kit.fx);
+    await run(
+      kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', ?, 1)",
+      [`org:${row.id}`, JSON.stringify({ enabled: opts.enabled !== false })],
+    );
+    return memberOf(row);
+  }
+  /** A scannable pass of the default org. */
+  const pass = async (orgId: string) => {
+    if (orgId !== kit.org.id) throw new Error('Scannable passes are made for the default org.');
+    return (await base.pass()).pass;
+  };
   const keyset = await sunKeyset(kit, o.org.id, { perTag: true });
   await run(kit.env.DB, 'UPDATE nfc_tag_keysets SET programmable = 1 WHERE id = ?', [keyset.id]);
+  if (options.type) {
+    const type = await insertType(kit, o.org.id, { system: 'sun', ...options.type });
+    await run(kit.env.DB, 'UPDATE nfc_tag_keysets SET type_id = ? WHERE id = ?', [type, keyset.id]);
+  }
+  const f = { kit, org, pass };
 
   /** A scanner of an org, with a staff member signed in or not. */
   async function authority(

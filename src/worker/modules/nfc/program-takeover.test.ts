@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { makeScanner } from '../../../../test/helpers/index.ts';
 import { TagProgramStartSchema } from '../../../shared/contracts/nfc-tag-programs.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { sunKeyset } from '../scan/sun-test-fixtures.ts';
-import { insertType } from '../scan/tags-policy-test-fixtures.ts';
+import type { insertType } from '../scan/tags-policy-test-fixtures.ts';
 import { INS, native, selectNdefApp, splitResponse } from './ntag424/apdu.ts';
 import { ZERO16 } from './ntag424/bytes.ts';
 import { authFirstApdu } from './ntag424/ev2.ts';
@@ -28,6 +28,7 @@ const sim = () =>
   new Ntag424Sim({
     uid: Uint8Array.from([0x04, 0x64, 0, 0, 0, (++seq >> 8) & 255, seq & 255]),
     random: countingRandom(),
+    endSessionOnIso: true,
   });
 const refused = (p: Promise<unknown>, code: string) => expect(p).rejects.toMatchObject({ code });
 const lost = (p: Promise<unknown>) => expect(p).rejects.toMatchObject({ name: 'TagLostError' });
@@ -142,18 +143,11 @@ describe('the entitlement', () => {
 });
 
 describe('program and assign follows the bind policy', () => {
-  /** An org of its own with a keyset of a tag type. */
+  /** A fixture whose keyset has a tag type, with a scanner of its org and a scannable pass. */
   async function typed(spec: Parameters<typeof insertType>[2]) {
-    const o = await f.org();
-    const ks = await sunKeyset(f.kit, o.org.id, { perTag: true });
-    const type = await insertType(f.kit, o.org.id, { system: 'sun', ...spec });
-    await run(db(), 'UPDATE nfc_tag_keysets SET programmable = 1, type_id = ? WHERE id = ?', [
-      type,
-      ks.id,
-    ]);
-    const { makeScanner } = await import('../../../../test/helpers/index.ts');
-    const scanner = await makeScanner(f.kit.fx, { orgId: o.org.id });
-    return { o, scanner, pass: await f.pass(o.org.id) };
+    const t = await programFixture({ type: spec });
+    const scanner = await makeScanner(t.kit.fx, { orgId: t.o.org.id });
+    return { t, o: t.o, scanner, pass: await t.pass(t.o.org.id) };
   }
   const bindOf = async (tag: Ntag424Sim, orgId: string) =>
     first<{ id: string; expires_at: number | null }>(
@@ -164,64 +158,63 @@ describe('program and assign follows the bind policy', () => {
     ).then((r) => (tag ? r : r));
 
   it('binds with the type, and the binding takes the type expiry', async () => {
-    const { o, scanner, pass } = await typed({ bindingDays: 7 });
-    const a = await f.authority({ org: o, scannerId: scanner.id });
+    const { t, o, scanner, pass } = await typed({ bindingDays: 7 });
+    const a = await t.authority({ scannerId: scanner.id });
     const tag = sim();
-    const port = f.port(a, {}, [], { passId: pass.id, scope: 'pass' });
-    await programTag(f.sendOf(tag), port);
+    const port = t.port(a, {}, [], { passId: pass.id, scope: 'pass' });
+    await programTag(t.sendOf(tag), port);
     expect(port.last?.refusal).toBeNull();
     expect((await bindOf(tag, o.org.id))?.expires_at).not.toBeNull();
   });
 
   it('a type that takes people only leaves the tag a spare, with the type refusal', async () => {
-    const { o, scanner, pass } = await typed({ scopes: 'user' });
-    const a = await f.authority({ org: o, scannerId: scanner.id });
-    const port = f.port(a, {}, [], { passId: pass.id, scope: 'pass' });
-    await programTag(f.sendOf(sim()), port);
+    const { t, scanner, pass } = await typed({ scopes: 'user' });
+    const a = await t.authority({ scannerId: scanner.id });
+    const port = t.port(a, {}, [], { passId: pass.id, scope: 'pass' });
+    await programTag(t.sendOf(sim()), port);
     expect(port.last?.refusal).toBe('TAG_TYPE_SCOPE');
   });
 
   it('the per-pass limit of the type refuses the second tag', async () => {
-    const { o, scanner, pass } = await typed({ perPass: 1 });
-    const a = await f.authority({ org: o, scannerId: scanner.id });
-    const one = f.port(a, {}, [], { passId: pass.id, scope: 'pass' });
-    await programTag(f.sendOf(sim()), one);
+    const { t, scanner, pass } = await typed({ perPass: 1 });
+    const a = await t.authority({ scannerId: scanner.id });
+    const one = t.port(a, {}, [], { passId: pass.id, scope: 'pass' });
+    await programTag(t.sendOf(sim()), one);
     expect(one.last?.refusal).toBeNull();
-    const two = f.port(a, {}, [], { passId: pass.id, scope: 'pass' });
-    await programTag(f.sendOf(sim()), two);
+    const two = t.port(a, {}, [], { passId: pass.id, scope: 'pass' });
+    await programTag(t.sendOf(sim()), two);
     expect(two.last?.refusal).toBe('TAG_TYPE_LIMIT');
   });
 
   it('the actor needs the right to assign, and the wider one to assign to a person', async () => {
-    const { o, scanner, pass } = await typed({});
+    const { t, scanner, pass } = await typed({});
     for (const [rights, scope] of [
       [{ assign: false, assignAll: false }, 'pass'],
       [{ assign: true, assignAll: false }, 'user'],
     ] as const) {
-      const a = await f.authority({ org: o, scannerId: scanner.id, rights });
-      const port = f.port(a, {}, [], { passId: pass.id, scope });
-      await programTag(f.sendOf(sim()), port);
+      const a = await t.authority({ scannerId: scanner.id, rights });
+      const port = t.port(a, {}, [], { passId: pass.id, scope });
+      await programTag(t.sendOf(sim()), port);
       expect(port.last?.refusal).toBe('TAG_ASSIGN_FORBIDDEN');
     }
   });
 
   it('a repeated result gets the first refusal, for the same scanner only', async () => {
-    const { o, scanner, pass } = await typed({});
-    const a = await f.authority({
-      org: o,
+    const { t, scanner, pass } = await typed({});
+    const a = await t.authority({
       scannerId: scanner.id,
       rights: { assign: false, assignAll: false },
     });
-    const port = f.port(a, {}, [], { passId: pass.id, scope: 'pass' });
-    await programTag(f.sendOf(sim()), port);
+    const port = t.port(a, {}, [], { passId: pass.id, scope: 'pass' });
+    await programTag(t.sendOf(sim()), port);
     const id = port.lastId as string;
     const input = port.lastInput as NonNullable<typeof port.lastInput>;
-    expect(await resultProgram(f.kit.ctx, a, id, input)).toMatchObject({
+    expect(await resultProgram(t.kit.ctx, a, id, input)).toMatchObject({
       state: 'programmed',
       refusal: 'TAG_ASSIGN_FORBIDDEN',
     });
-    const other = await f.authority({ org: o, scannerId: 'someone-else' });
-    await refused(resultProgram(f.kit.ctx, other, id, input), 'TAG_NOT_FOUND');
+    const other = await t.authority({ scannerId: 'someone-else' });
+    await refused(resultProgram(t.kit.ctx, other, id, input), 'TAG_NOT_FOUND');
   });
 });
 
