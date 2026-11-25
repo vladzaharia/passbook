@@ -4,7 +4,17 @@ import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
 import { surfaceFor } from '@/shared/scan-surfaces.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { DiscardDialog } from '@/web/ui/alert-dialog.tsx';
-import { Badge, Button, Callout, FormField, Input, Sheet, SheetContent } from '@/web/ui/index.ts';
+import {
+  Badge,
+  Button,
+  Callout,
+  Form,
+  FormField,
+  Input,
+  Sheet,
+  SheetContent,
+  useFormErrors,
+} from '@/web/ui/index.ts';
 import { useUpdateSessionDevice } from './api.ts';
 import { DeviceFollows, followable } from './device-follows.tsx';
 import { DeviceOverrides } from './device-overrides.tsx';
@@ -41,7 +51,9 @@ export function DeviceSheet({
     JSON.stringify(overrides) !== JSON.stringify(device.overrides);
   // The surface the server will resolve for this choice and these capabilities.
   const layout = surfaceFor(surface, device.capabilities);
+  const check = useFormErrors({ name: name.trim() ? undefined : 'Enter a name.' });
   async function submit() {
+    if (changed || device.revoked || !dirty) return undefined;
     setError('');
     try {
       // A scan surface leaves `follows` out: the server keeps the stored ids, inert, for a flip back.
@@ -53,8 +65,10 @@ export function DeviceSheet({
         revision,
       });
       onClose();
+      return 'saved' as const;
     } catch (cause) {
       setError(errorMessage(cause));
+      return 'failed' as const;
     }
   }
   return (
@@ -72,7 +86,7 @@ export function DeviceSheet({
           title={`${canManage ? 'Configure' : 'Device'} ${device.name}`}
           className="sm:w-[440px]"
         >
-          <div className="grid gap-6 p-4">
+          <Form {...check.form} className="grid gap-6 p-4" onValid={submit}>
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={device.online && !device.revoked ? 'success' : 'neutral'}>
                 {device.revoked
@@ -166,7 +180,7 @@ export function DeviceSheet({
             ) : null}
             <fieldset disabled={!canManage} className="grid min-w-0 gap-6">
               <legend className="sr-only">Device settings</legend>
-              <FormField label="Device name" required>
+              <FormField label="Device name" required error={check.errors.name}>
                 {(p) => (
                   <Input
                     {...p}
@@ -211,9 +225,9 @@ export function DeviceSheet({
             {canManage ? (
               <div className="sticky bottom-0 grid gap-2 border-t border-border bg-surface-raised py-4">
                 <Button
+                  type="submit"
                   loading={save.isPending}
-                  disabled={!dirty || !name.trim() || changed || device.revoked}
-                  onClick={() => void submit()}
+                  disabled={!dirty || changed || device.revoked}
                 >
                   Save device
                 </Button>
@@ -236,7 +250,7 @@ export function DeviceSheet({
                 </div>
               </div>
             ) : null}
-          </div>
+          </Form>
         </SheetContent>
       </Sheet>
       <DiscardDialog open={discard} onOpenChange={setDiscard} onDiscard={onClose} />

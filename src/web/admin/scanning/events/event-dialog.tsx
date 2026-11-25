@@ -4,22 +4,17 @@ import { type ScanEventDto, ScanEventSchema } from '@/shared/contracts/scanners.
 import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { useSeededZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { api } from '@/web/lib/api.ts';
-import { errorMessage } from '@/web/lib/errors.ts';
-import { CheckboxField } from '@/web/ui/checkbox.tsx';
-import { DateTimeField, type DateTimeValue } from '@/web/ui/date-time-field.tsx';
+import { useWizard, WizardDialog } from '@/web/ui/index.ts';
 import {
-  Button,
-  Callout,
-  Dialog,
-  DialogContent,
-  Form,
-  FormField,
-  Input,
-  SwitchRow,
-  useFormErrors,
-} from '@/web/ui/index.ts';
-import { isoToLocal, localToIso } from '../../passes/schema-form/datetime.ts';
-import { EligibleTemplatePicker } from '../eligible-template-picker.tsx';
+  EVENT_FIELD_STEP,
+  EVENT_HINTS,
+  EVENT_STEPS,
+  type EventDraft,
+  eventBody,
+  eventDraft,
+  eventErrors,
+} from './event-draft.ts';
+import { EventReview, StepEvent, StepLimits, StepPasses, StepSchedule } from './event-steps.tsx';
 
 export function EventDialog({
   orgId,
@@ -32,188 +27,67 @@ export function EventDialog({
 }) {
   const zone = event?.timeZone ?? DEFAULT_TIME_ZONE;
   const client = useQueryClient();
-  const [name, setName] = useState(event?.name ?? '');
-  const [opens, setOpens] = useState<DateTimeValue | null>({
-    local: event ? isoToLocal(new Date(event.opensAt).toISOString(), zone) : '',
-    zone,
-  });
-  const [closes, setCloses] = useState<DateTimeValue | null>({
-    local: event ? isoToLocal(new Date(event.closesAt).toISOString(), zone) : '',
-    zone,
-  });
+  const edit = Boolean(event);
+  const [initial] = useState(() => JSON.stringify(eventDraft(event)));
+  const [draft, setDraft] = useState<EventDraft>(() => eventDraft(event));
+  const set = (patch: Partial<EventDraft>) => setDraft((d) => ({ ...d, ...patch }));
   useSeededZone(event ? undefined : orgId, (from, to) => {
-    const move = (v: DateTimeValue | null) => (v && v.zone === from ? { ...v, zone: to } : v);
-    setOpens(move);
-    setCloses(move);
+    const move = (v: EventDraft['opens']) => (v && v.zone === from ? { ...v, zone: to } : v);
+    setDraft((d) => ({ ...d, opens: move(d.opens), closes: move(d.closes) }));
   });
-  const [selected, setSelected] = useState(event?.templateIds ?? []);
-  const [capacity, setCapacity] = useState(event?.capacity?.toString() ?? '');
-  const [hardLimit, setHardLimit] = useState(event?.hardLimit ?? false);
-  const [note, setNote] = useState(event?.note ?? '');
-  const [reentry, setReentry] = useState(event?.reentry ?? false);
-  const [matchInput, setMatchInput] = useState(event?.match?.input ?? '');
-  const [matchValues, setMatchValues] = useState(event?.match?.values.join(', ') ?? '');
-  const check = useFormErrors({
-    name: name.trim() ? undefined : 'Enter a name.',
-    templates: selected.length ? undefined : 'Pick at least one template.',
-    opens: opens?.local ? undefined : 'Set when scanning opens.',
-    closes: closes?.local ? undefined : 'Set when scanning closes.',
-    values:
-      matchInput.trim() && !matchValues.trim() ? 'Enter at least one matching value.' : undefined,
-  });
-  const mutation = useMutation({
+  const found = eventErrors(draft, zone);
+  const dirty = JSON.stringify(draft) !== initial;
+  const save = useMutation({
     mutationFn: async () => {
-      const body = {
-        orgId,
-        name,
-        templateIds: selected,
-        opensAt: Date.parse(localToIso(opens?.local ?? '', opens?.zone ?? zone) ?? ''),
-        closesAt: Date.parse(localToIso(closes?.local ?? '', closes?.zone ?? zone) ?? ''),
-        timeZone: opens?.zone ?? zone,
-        capacity: capacity ? Number(capacity) : null,
-        hardLimit: Boolean(capacity) && hardLimit,
-        note: note.trim() || null,
-        reentry,
-        match: matchInput.trim()
-          ? {
-              input: matchInput.trim(),
-              values: matchValues
-                .split(',')
-                .map((v) => v.trim())
-                .filter(Boolean),
-            }
-          : null,
-      };
-      if (
-        !Number.isFinite(body.opensAt) ||
-        !Number.isFinite(body.closesAt) ||
-        body.closesAt <= body.opensAt
-      )
-        throw new Error('Closing must be after opening.');
-      if (body.match && !body.match.values.length)
-        throw new Error('Enter at least one matching value.');
-      return event
-        ? api.action('PATCH', `/api/v1/scan-events/${encodeURIComponent(event.id)}`, body)
-        : api.post('/api/v1/scan-events', ScanEventSchema, body);
+      const body = eventBody(draft, orgId, zone);
+      if (event) {
+        await api.action('PATCH', `/api/v1/scan-events/${encodeURIComponent(event.id)}`, body);
+        return;
+      }
+      await api.post('/api/v1/scan-events', ScanEventSchema, body);
     },
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: ['admin', 'scanning', 'events'] });
       onClose();
     },
   });
+  const n = draft.templateIds.length;
+  const summary = {
+    event: draft.name.trim() || undefined,
+    passes: n ? `${n} ${n === 1 ? 'template' : 'templates'}` : undefined,
+    limits: draft.capacity ? `${draft.capacity} capacity` : 'No limit',
+  };
+  const w = useWizard({
+    open: true,
+    mode: edit ? 'edit' : 'create',
+    dirty,
+    steps: EVENT_STEPS.filter((s) => !edit || s.id !== 'review').map((s) => ({
+      ...s,
+      summary: summary[s.id as keyof typeof summary],
+    })),
+    errors: found,
+    hints: EVENT_HINTS,
+    fieldStep: EVENT_FIELD_STEP,
+    onFinish: () => save.mutateAsync(),
+  });
+  const step = { draft, set, errors: w.errors, clear: w.clearServer };
   return (
-    <Dialog
+    <WizardDialog
       open
-      onOpenChange={(value) => {
-        if (!value) onClose();
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
+      title={edit ? 'Edit event' : 'New event'}
+      wizard={w}
+      dirty={dirty}
+      finishLabel="Create event"
+      busy={save.isPending}
     >
-      <DialogContent title={event ? 'Edit event' : 'New event'} size="md">
-        <Form {...check.form} className="flex flex-col gap-4" onValid={() => mutation.mutate()}>
-          <FormField label="Name" required error={check.errors.name}>
-            {(p) => (
-              <Input
-                {...p}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                maxLength={80}
-              />
-            )}
-          </FormField>
-          <EligibleTemplatePicker
-            orgId={orgId}
-            selected={selected}
-            onChange={setSelected}
-            requireCheckIn
-            error={check.errors.templates}
-            errorId="event-templates-error"
-          />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Only passes where" help="Input name; optional">
-              {(p) => (
-                <Input
-                  {...p}
-                  value={matchInput}
-                  onChange={(e) => setMatchInput(e.target.value)}
-                  maxLength={64}
-                />
-              )}
-            </FormField>
-            <FormField label="Equals" help="Values separated by commas" error={check.errors.values}>
-              {(p) => (
-                <Input
-                  {...p}
-                  value={matchValues}
-                  onChange={(e) => setMatchValues(e.target.value)}
-                />
-              )}
-            </FormField>
-          </div>
-          <p className="text-xs text-fg-muted">
-            Leave empty to admit every pass of these templates.
-          </p>
-          <FormField label="Scanning opens" required error={check.errors.opens}>
-            {(p) => (
-              <DateTimeField
-                {...p}
-                value={opens}
-                onChange={(value) => {
-                  setOpens(value);
-                  if (value && closes) setCloses({ ...closes, zone: value.zone });
-                }}
-                defaultZone={zone}
-              />
-            )}
-          </FormField>
-          <FormField label="Scanning closes" required error={check.errors.closes}>
-            {(p) => <DateTimeField {...p} value={closes} onChange={setCloses} defaultZone={zone} />}
-          </FormField>
-          <FormField label="Capacity" help="Optional">
-            {(p) => (
-              <Input
-                {...p}
-                type="number"
-                min={1}
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-              />
-            )}
-          </FormField>
-          <SwitchRow
-            label="Hard limit"
-            help="Full is final: no one can let anyone in. Needs a capacity."
-            checked={Boolean(capacity) && hardLimit}
-            disabled={!capacity}
-            onCheckedChange={setHardLimit}
-          />
-          <CheckboxField
-            label="Allow re-entry"
-            checked={reentry}
-            onCheckedChange={(value) => setReentry(value === true)}
-          />
-          <FormField
-            label="Note for staff"
-            help="Shown at the start and on heads-up and refused results."
-          >
-            {(p) => (
-              <Input
-                {...p}
-                maxLength={140}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            )}
-          </FormField>
-          <p className="-mt-2 text-right text-xs text-fg-muted">{note.length}/140</p>
-          {mutation.isError ? (
-            <Callout tone="danger">{errorMessage(mutation.error)}</Callout>
-          ) : null}
-          <Button type="submit" loading={mutation.isPending}>
-            {event ? 'Save event' : 'Create event'}
-          </Button>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      {w.id === 'event' ? <StepEvent {...step} /> : null}
+      {w.id === 'passes' ? <StepPasses {...step} orgId={orgId} /> : null}
+      {w.id === 'schedule' ? <StepSchedule {...step} zone={zone} /> : null}
+      {w.id === 'limits' ? <StepLimits {...step} /> : null}
+      {w.id === 'review' ? <EventReview draft={draft} onEdit={w.go} /> : null}
+    </WizardDialog>
   );
 }

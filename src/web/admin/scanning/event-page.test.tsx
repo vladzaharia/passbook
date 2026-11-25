@@ -295,7 +295,12 @@ describe('Event detail organization scope', () => {
     });
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Edit event' }));
-    expect(await screen.findByRole('dialog', { name: 'Edit event' })).toBeInTheDocument();
+    const edit = await screen.findByRole('dialog', { name: 'Edit event' });
+    expect(within(edit).getByRole('button', { name: 'Save' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(within(edit).getByText('No changes.')).toBeInTheDocument();
     act(() => setMode('test'));
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: 'Edit event' })).not.toBeInTheDocument(),
