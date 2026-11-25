@@ -2477,6 +2477,38 @@
     "note": "Retries a failed or cancelled provisioning run."
   },
   {
+    "key": "POST /api/v1/invitations/accept new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "new operation",
+    "note": "Accept a member or developer invitation with a strong Polaris ID session."
+  },
+  {
+    "key": "POST /api/v1/invitations/claim-existing new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsClaimExisting",
+    "op": "POST /api/v1/invitations/claim-existing",
+    "change": "new operation",
+    "note": "Give the Polaris ID account that has the invited address the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "new operation",
+    "note": "The invitation page names an invitation from its secret; member and developer invitations share it."
+  },
+  {
+    "key": "POST /api/v1/invitations/setup new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsSetup",
+    "op": "POST /api/v1/invitations/setup",
+    "change": "new operation",
+    "note": "Create a Polaris ID from an invitation: a one-hour signup link that already carries the invitation's groups."
+  },
+  {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
     "class": "additive",
     "operationId": "message-rules.postMessageRulesByIdTest",

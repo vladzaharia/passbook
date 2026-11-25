@@ -533,6 +533,30 @@
     "resource": "identityRuns",
     "method": "startManaged"
   },
+  "invitations.postInvitationsAccept": {
+    "resource": "invitationPage",
+    "method": "accept",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
+  "invitations.postInvitationsClaimExisting": {
+    "resource": "invitationPage",
+    "method": "attachExisting",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
+  "invitations.postInvitationsPreview": {
+    "resource": "invitationPage",
+    "method": "preview",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
+  "invitations.postInvitationsSetup": {
+    "resource": "invitationPage",
+    "method": "setup",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
   "join-links.getJoinLinksByTemplateId": {
     "resource": "joinLinks",
     "method": "retrieve"
