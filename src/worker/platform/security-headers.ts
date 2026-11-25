@@ -1,4 +1,5 @@
 import { createMiddleware } from 'hono/factory';
+import { MARKETING_POLICY } from '../../shared/marketing.ts';
 import { SAVE_POLICY } from '../../shared/pass-offline.ts';
 import type { AppBindings } from './context.ts';
 
@@ -47,6 +48,31 @@ export function developersContentSecurityPolicy(options: { turnstile?: boolean }
     "require-trusted-types-for 'script'",
     // The one policy the console page makes, for the Turnstile script address; no other page may make any.
     options.turnstile ? `trusted-types ${TURNSTILE_POLICY}` : "trusted-types 'none'",
+    'upgrade-insecure-requests',
+  ].join('; ');
+}
+
+/**
+ * The public site (/, /door, /blueprints, /build, /access): static pages, one same-origin script and
+ * one stylesheet each, no nonce. Style attributes stay (the kit sets custom properties inline);
+ * scripts never. Trusted Types admits the one pass-through policy the pages' own HTML builders use.
+ */
+export function marketingContentSecurityPolicy(): string {
+  return [
+    "default-src 'none'",
+    "script-src 'self'",
+    "style-src 'self'",
+    "style-src-attr 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "form-action 'self'",
+    "base-uri 'none'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "require-trusted-types-for 'script'",
+    `trusted-types ${MARKETING_POLICY}`,
     'upgrade-insecure-requests',
   ].join('; ');
 }
