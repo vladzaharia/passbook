@@ -66,3 +66,19 @@ describe('webhook endpoint limits', () => {
     expect(await create()).toMatchObject({ code: 'FEATURE_LIMIT_REACHED', limit: 0, used: before });
   });
 });
+
+describe('webhook endpoints need the webhooks feature', () => {
+  it('refuses a create when the plan lacks webhooks, with FEATURE_NOT_INCLUDED', async () => {
+    const trial = await api.otherOrg();
+    await setLimit(api.rig.db, trial, 'webhooks', 0);
+    const who = await api.member(['org_admin'], { orgId: trial });
+    const res = await api.call(
+      'POST',
+      BASE,
+      { orgId: trial, url: 'https://hooks.example.com/t', eventTypes: ['pass.issued'] },
+      who,
+    );
+    expect(res.status).toBe(403);
+    expect(res.json).toMatchObject({ code: 'FEATURE_NOT_INCLUDED' });
+  });
+});

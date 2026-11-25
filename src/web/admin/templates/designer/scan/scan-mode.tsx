@@ -1,6 +1,7 @@
 import { type KeyboardEvent, type ReactNode, useCallback, useRef, useState } from 'react';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { ScanDisplay } from '@/shared/contracts/scan-display.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { PHONE, useMediaQuery } from '../../../../lib/media.ts';
 import { useMode } from '../../../../lib/mode.ts';
 import { ConfirmDialog, toast } from '../../../../ui/index.ts';
@@ -28,6 +29,7 @@ export function ScanMode({
 }) {
   const { doc, state, edit, select, dispatch, readOnly } = useDesigner();
   const mode = useMode();
+  const timeZone = useOrgTimeZone(orgId ?? undefined);
   const phone = useMediaQuery(PHONE);
   const root = useRef<HTMLDivElement>(null);
   const [screen, setScreen] = useState<ScanDisplay['screen']>('ok');
@@ -153,6 +155,7 @@ export function ScanMode({
             screen={screen}
             onScreenChange={setScreen}
             onAction={canvasAction}
+            timeZone={timeZone}
           />
         }
         issues={issues}

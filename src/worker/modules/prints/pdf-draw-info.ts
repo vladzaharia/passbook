@@ -1,7 +1,6 @@
 /** "Before you go" on the bottom half of an A4 or Letter sheet. */
 import { FULL_PARTS } from '../../../passkit/template/paper-geometry.ts';
-import { PAPER_COPY } from '../../../shared/copy/print.ts';
-import { infoColumns, rules } from '../../../web/paper/ticket-text.ts';
+import { beforeTitle, infoColumns, rules } from '../../../web/paper/ticket-text.ts';
 import { footRow, LBL } from './pdf-draw-parts.ts';
 import { type Box, COLORS, type Pen, type TextStyle } from './pdf-kit.ts';
 import type { Sheet } from './pdf-sheet.ts';
@@ -18,7 +17,7 @@ export function drawInfo(pen: Pen, s: Sheet, info: Box): void {
   const c = s.content;
   const h2: TextStyle = { size: 4.2333, font: 'semibold', color: COLORS.ink };
   let y = info.y;
-  pen.text(c.kind === 'pickup' ? PAPER_COPY.beforePickup : PAPER_COPY.before, info.x, y, h2);
+  pen.text(beforeTitle(c), info.x, y, h2);
   y += pen.lineHeight(h2) + 5;
 
   const cols = infoColumns(c);

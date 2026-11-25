@@ -4,6 +4,30 @@ import { parsePassStrings } from './strings.ts';
 
 const ctx = { locale: 'en-US', now: new Date('2026-10-31T12:00:00Z'), timeZone: 'UTC' };
 
+describe('showZone', () => {
+  const at = '2026-07-01T20:00:00Z';
+  const spec = { dateStyle: 'PKDateStyleMedium', timeStyle: 'PKDateStyleShort' };
+  const la = { ...ctx, timeZone: 'America/Los_Angeles' };
+
+  it('names the zone after a time, and only when asked', () => {
+    expect(formatValue(at, spec, la).text).toBe('Jul 1, 2026, 1:00 PM');
+    expect(formatValue(at, spec, { ...la, showZone: true }).text).toBe('Jul 1, 2026, 1:00 PM PDT');
+  });
+
+  it('leaves a date alone, and a wall time that ignores the zone', () => {
+    expect(
+      formatValue(at, { dateStyle: 'PKDateStyleMedium' }, { ...la, showZone: true }).text,
+    ).toBe('Jul 1, 2026');
+    expect(
+      formatValue(
+        '2026-07-01T20:00:00',
+        { ...spec, ignoresTimeZone: true },
+        { ...la, showZone: true },
+      ).text,
+    ).toBe('Jul 1, 2026, 8:00 PM');
+  });
+});
+
 describe('dates', () => {
   it('applies date and time styles', () => {
     const f = formatValue('2026-03-01T15:30:00Z', { dateStyle: 'PKDateStyleMedium' }, ctx);

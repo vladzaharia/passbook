@@ -4,7 +4,6 @@ import type { OrgEntitlementsDto, PresetOptionDto } from '@/shared/contracts/ent
 import { PLAN_COPY } from '@/shared/copy/plans.ts';
 import { entitlementImpact, reducing } from '@/shared/entitlement-impact.ts';
 import { applyPresetConfirm } from '@/web/lib/confirms-features.ts';
-import { formatDateTime } from '@/web/lib/format.ts';
 import {
   Button,
   Callout,
@@ -71,7 +70,6 @@ export function PresetCard({
           picked={picked}
           onPick={setPicked}
           arrival={arrival}
-          orgName={orgName}
         />
         {moving && target && impact ? (
           <Callout
@@ -81,9 +79,6 @@ export function PresetCard({
             <ImpactList impact={impact} />
           </Callout>
         ) : null}
-        <p className="text-right text-xs text-fg-muted">
-          {PLAN_COPY.updated(formatDateTime(state.updatedAt))}
-        </p>
       </CardBody>
       <SaveBar
         dirty={moving}
@@ -108,6 +103,7 @@ export function PresetCard({
           plans={state.presets}
           current={state.preset}
           picked={picked}
+          updatedAt={state.updatedAt}
           onClose={() => setComparing(false)}
         />
       ) : null}

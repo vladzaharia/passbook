@@ -141,7 +141,7 @@ describe('new pass organization selection', () => {
       },
     });
     expect(await screen.findByRole('radio', { name: /Copper card/ })).not.toBeChecked();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     await waitFor(() => expect(passRequests.length).toBeGreaterThan(0));
     expect(
       passRequests.every(
@@ -246,7 +246,7 @@ describe('new pass organization selection', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(templateRequests).toHaveLength(0);
   });
 
@@ -300,7 +300,7 @@ describe('new pass organization selection', () => {
           ?.status,
       ).toBe('error'),
     );
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByLabelText(/Member name/)).toBeNull();
     expect(posts).toBe(0);
   });
@@ -430,7 +430,9 @@ describe('new pass details step', () => {
       ).toBe('success'),
     );
     await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+    );
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByLabelText(/Member name/);
 
@@ -533,7 +535,9 @@ describe('new pass details step', () => {
       },
     });
     expect(await screen.findByText('This template has no inputs.')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+    );
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(await screen.findByRole('button', { name: 'Create pass' }));
@@ -566,7 +570,7 @@ describe('new pass details step', () => {
       await screen.findByText(/returned a different version than the approved release/i),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/Member name/)).toBeNull();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(previews).toBe(0);
   });
 
@@ -588,7 +592,7 @@ describe('new pass details step', () => {
       },
     });
     expect(await screen.findByRole('alert')).toHaveTextContent('Released version unavailable');
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByLabelText(/Member name/)).toBeInTheDocument();
   });
@@ -725,7 +729,9 @@ describe('new pass template step', () => {
     await user.click(await screen.findByRole('radio', { name: /Silver card/ }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.type(await screen.findByLabelText(/Member name/), 'Alex');
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+    );
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByRole('button', { name: 'Create pass' })).toBeInTheDocument();
@@ -841,7 +847,7 @@ describe('new pass template step', () => {
       },
     });
     expect(await screen.findByRole('alert')).toHaveTextContent('Eligible templates unavailable');
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('radio', { name: /Copper card/ })).toBeInTheDocument();
   });

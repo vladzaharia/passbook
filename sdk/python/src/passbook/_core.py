@@ -11,8 +11,10 @@ from pydantic import BaseModel, TypeAdapter
 from pydantic import ValidationError as _PydanticValidationError
 
 from ._errors import PassBookConnectionError, PassBookError, ResponseError, api_error_from
+from ._generated.api_version import API_VERSION
 from ._pagination import Page
 from ._retry import MAX_RETRY_AFTER, backoff, retry_after
+from ._version import __version__
 
 # Safe to repeat after a lost response (RFC 9110); POST and PATCH are, only with an idempotency key.
 _REPEATABLE = {"GET", "PUT", "DELETE"}
@@ -62,9 +64,11 @@ class Core:
         timeout: float,
         retry_delay: float,
         sleep: Callable[[float], None] = time.sleep,
+        api_version: str | None = None,
+        user_agent: str | None = None,
     ) -> None:
         if not isinstance(api_key, str) or api_key.strip() == "":
-            raise PassBookError("api_key is required: pass a pb_live_ or pb_test_ key.")
+            raise PassBookError("api_key is required: pass a pbp_live_ or pbp_test_ key.")
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.client = client or httpx.Client()
@@ -72,6 +76,8 @@ class Core:
         self.timeout = timeout
         self.retry_delay = retry_delay
         self.sleep = sleep
+        self.api_version = api_version or API_VERSION
+        self.user_agent = user_agent or f"passbook-sdk-python/{__version__}"
 
     def request(
         self,
@@ -90,7 +96,12 @@ class Core:
         timeout: float | None = None,
     ) -> Any:
         # Header names are case-insensitive: fold them so a user's `Idempotency-Key` replaces ours.
-        head = {"accept": "application/json", **{k.lower(): v for k, v in (headers or {}).items()}}
+        head = {
+            "accept": "application/json",
+            "user-agent": self.user_agent,
+            "passbook-version": self.api_version,
+            **{k.lower(): v for k, v in (headers or {}).items()},
+        }
         head["authorization"] = f"Bearer {self.api_key}"
         content: bytes | None = None
         if content_type:

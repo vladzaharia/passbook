@@ -28,7 +28,7 @@ export function ChangeStep({
       <div
         role="radiogroup"
         aria-label="Kind of change"
-        className="wl-deal grid gap-3 sm:grid-cols-3"
+        className="wl-deal grid gap-3 @[40rem]:grid-cols-3"
       >
         {KINDS.map(({ kind, icon }, i) => (
           <div key={kind} style={{ '--i': i } as CSSProperties} className="flex">
@@ -46,7 +46,13 @@ export function ChangeStep({
         ))}
       </div>
       {w.kind === 'fields' ? (
-        <FieldRows fields={w.fields} rows={w.rows} onChange={w.setRows} showErrors={showErrors} />
+        <FieldRows
+          fields={w.fields}
+          rows={w.rows}
+          onChange={w.setRows}
+          showErrors={showErrors}
+          timeZone={w.timeZone}
+        />
       ) : null}
     </div>
   );

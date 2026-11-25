@@ -1,0 +1,126 @@
+/* Listen (a webhook endpoint with nothing captured, neutral): it lifts the envelope beside it, tilts its
+   head toward it with its eyes up and aside, blinks once and puts the envelope back down. 1.6 s, once;
+   1% = 16 ms. The envelope prop stands at 2/3 size so it can be held; with no prop only the head plays. */
+.wl-buddy[data-scene="listen"] [data-trunk] {
+  transform-box: view-box;
+  transform-origin: 48px 66px;
+}
+.wl-buddy[data-scene="listen"] .wl-buddy-prop {
+  scale: 0.667;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-scene="listen"][data-run] .wl-buddy-prop {
+    animation: wl-s-listen-env 1.6s ease-in-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="listen"][data-run] .wl-art [data-trunk] {
+    animation: wl-s-listen-tilt 1.6s ease-in-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="listen"][data-run] .wl-art [data-body] {
+    animation: wl-s-listen-body 1.6s ease-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="listen"][data-run] .wl-art [data-look] {
+    animation: wl-s-listen-look 1.6s ease-in-out var(--wl-at, 0s);
+  }
+  .wl-buddy[data-scene="listen"][data-run] .wl-art [data-part="eyes"] {
+    animation: wl-s-listen-blink 1.6s ease-in-out var(--wl-at, 0s);
+  }
+}
+
+/* Up with a small overshoot, a wobble as it listens, down with a thunk. */
+@keyframes wl-s-listen-env {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+  14% {
+    translate: 1px -12px;
+    rotate: -8deg;
+  }
+  20%,
+  36% {
+    translate: 0 -10px;
+    rotate: -5deg;
+  }
+  44% {
+    rotate: -9deg;
+  }
+  54%,
+  78% {
+    translate: 0 -10px;
+    rotate: -5deg;
+  }
+  /* Down, faster all the way. */
+  88% {
+    translate: 0 0;
+    rotate: 0deg;
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+  92% {
+    translate: 0 1px;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-listen-tilt {
+  0% {
+    rotate: 0deg;
+  }
+  22%,
+  76% {
+    rotate: 8deg;
+  }
+  90%,
+  100% {
+    rotate: 0deg;
+  }
+}
+@keyframes wl-s-listen-body {
+  0%,
+  100% {
+    scale: 1;
+  }
+  12% {
+    scale: 1.03 0.96;
+  }
+  24% {
+    scale: 0.99 1.02;
+  }
+  34% {
+    scale: 1;
+  }
+  90% {
+    scale: 1.02 0.97;
+  }
+  96% {
+    scale: 1;
+  }
+}
+@keyframes wl-s-listen-look {
+  0% {
+    translate: 0 0;
+  }
+  8%,
+  74% {
+    translate: -2px -1.6px;
+  }
+  88%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-s-listen-blink {
+  0%,
+  52%,
+  62%,
+  100% {
+    scale: 1;
+  }
+  57% {
+    scale: 1 0.12;
+  }
+}

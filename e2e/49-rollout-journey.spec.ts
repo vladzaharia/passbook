@@ -38,8 +38,8 @@ type Rollout = {
 const segments = (page: Page) =>
   page.getByRole('progressbar', { name: 'Passes on the release' }).locator('[data-segment]');
 
-/** The version tab is lazy: the Releases list and the pass preview paint after the card. */
-const loaded = (page: Page) => expect(page.getByText('Technical details').first()).toBeVisible();
+/** The version tab is lazy: the Versions list and the pass preview paint after the card. */
+const loaded = (page: Page) => expect(page.getByRole('list', { name: 'Versions' })).toBeVisible();
 
 async function sweep(
   page: Page,
@@ -179,12 +179,12 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
     await expect(page.getByText('Message sent')).toBeVisible();
     await expect.poll(async () => (await rollout()).tell).toBeNull();
     await gotoRollout(page, url);
-    await expect(page.getByText('Saved versions')).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Versions' })).toBeVisible();
     await loaded(page);
     await expect(settled).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Tell holders' })).toHaveCount(0);
     await sweep(page, url, 'rollout-4-told', async () => {
-      await expect(page.getByText('Saved versions')).toBeVisible();
+      await expect(page.getByRole('list', { name: 'Versions' })).toBeVisible();
       await loaded(page);
     });
     await reviewer.dispose();

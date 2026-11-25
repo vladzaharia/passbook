@@ -1,5 +1,13 @@
 [
   {
+    "key": "Authorization: API_KEY_MISSING added",
+    "class": "notable",
+    "operationId": "",
+    "op": "Authorization header",
+    "change": "401 API_KEY_MISSING: added",
+    "note": "A Bearer header with no key (empty, a placeholder like undefined or $KEY, or a bare key) now answers 401 API_KEY_MISSING instead of UNAUTHENTICATED."
+  },
+  {
     "key": "DELETE /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.deleteBrandWebLogo",
@@ -392,12 +400,12 @@
     "note": "hide leaves out the portal's own background reads."
   },
   {
-    "key": "GET /api/v1/developer/rail 200.series: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/developer/rail 200.series: field added",
+    "class": "additive",
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
-    "change": "200.series: field removed",
-    "note": ""
+    "change": "200.series: field added",
+    "note": "The rail carries the last hour in five-minute buckets; callsLastHour leaves out the portal's own background reads."
   },
   {
     "key": "GET /api/v1/developer/resolve new operation",
@@ -728,12 +736,12 @@
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
-    "key": "GET /api/v1/orgs/{id}/plan operation removed",
-    "class": "breaking",
+    "key": "GET /api/v1/orgs/{id}/plan new operation",
+    "class": "additive",
     "operationId": "entitlements.getOrgsByIdPlan",
     "op": "GET /api/v1/orgs/{id}/plan",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "New: read an organization's plan, with its limits and use, the features it can use now and its PassBook footer rule. Needs org:read."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -1176,6 +1184,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/settings 200.items.org.timeZone: default changed",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.items.org.timeZone: default changed",
+    "note": "An org with no org.timeZone reads America/Los_Angeles (source default); its access hours and dates run on that zone, not the scanner's or UTC."
+  },
+  {
     "key": "GET /api/v1/settings 200.oidc.consoleGroupRequired: field added",
     "class": "additive",
     "operationId": "settings.getSettings",
@@ -1200,12 +1216,12 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
-    "key": "GET /api/v1/settings 200.oidc.platformAdminPinned: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/settings 200.oidc.platformAdminPinned: field added",
+    "class": "additive",
     "operationId": "settings.getSettings",
     "op": "GET /api/v1/settings",
-    "change": "200.oidc.platformAdminPinned: field removed",
-    "note": ""
+    "change": "200.oidc.platformAdminPinned: field added",
+    "note": "Counts the Polaris ID subjects that pin platform admin (0: the group decides). The oidc group fields are lists of exact names; empty means unset."
   },
   {
     "key": "GET /api/v1/status/incidents new operation",
@@ -1430,6 +1446,14 @@
     "op": "GET /b/{token}/{passId}",
     "change": "new operation",
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
+  },
+  {
+    "key": "Pass input: required issue path",
+    "class": "notable",
+    "operationId": "",
+    "op": "Pass input errors",
+    "change": "issues[].path: input.<field> for input problems",
+    "note": "Input problems report path input.<field>, and a missing field names its full location in <field> is required."
   },
   {
     "key": "PATCH /api/v1/brand 200.kind: field added",
@@ -3125,14 +3149,6 @@
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
-    "key": "POST /api/v1/scan/actions body.approval.alone: optional input field added",
-    "class": "additive",
-    "operationId": "scan.postScanActions",
-    "op": "POST /api/v1/scan/actions",
-    "change": "body.approval.alone: optional input field added",
-    "note": ""
-  },
-  {
     "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
     "class": "additive",
     "operationId": "scan.postScanBatch",
@@ -3187,14 +3203,6 @@
     "op": "POST /api/v1/scan/overrides",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
-  },
-  {
-    "key": "POST /api/v1/scan/overrides body.approval.alone: optional input field added",
-    "class": "additive",
-    "operationId": "scan.postScanOverrides",
-    "op": "POST /api/v1/scan/overrides",
-    "change": "body.approval.alone: optional input field added",
-    "note": ""
   },
   {
     "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
@@ -3267,22 +3275,6 @@
     "op": "POST /api/v1/scan/scans/{scanId}/undo",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
-  },
-  {
-    "key": "POST /api/v1/scan/scans/{scanId}/undo body.approval.alone: optional input field added",
-    "class": "additive",
-    "operationId": "scan.postScanScansByScanIdUndo",
-    "op": "POST /api/v1/scan/scans/{scanId}/undo",
-    "change": "body.approval.alone: optional input field added",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/scan/session/open-now body.approval.alone: optional input field added",
-    "class": "additive",
-    "operationId": "scan.postScanSessionOpenNow",
-    "op": "POST /api/v1/scan/session/open-now",
-    "change": "body.approval.alone: optional input field added",
-    "note": ""
   },
   {
     "key": "POST /api/v1/scan/sign-out behaviour changed",
@@ -3757,20 +3749,12 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
-    "key": "POST /api/v1/templates/{id}/review body.alone: optional input field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdReview",
-    "op": "POST /api/v1/templates/{id}/review",
-    "change": "body.alone: optional input field added",
-    "note": "The only reviewer of an org approves their own request with alone: true; nothing waits after a reviewer leaves."
-  },
-  {
     "key": "POST /api/v1/templates/{id}/review new operation",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdReview",
     "op": "POST /api/v1/templates/{id}/review",
     "change": "new operation",
-    "note": "Approves a requested version in Test and Live; release: true also releases it. Test keys approve Test only. An author may approve own Test work with alone."
+    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only."
   },
   {
     "key": "POST /api/v1/templates/{id}/review-requests new operation",
@@ -4237,12 +4221,12 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
-    "key": "PUT /api/v1/settings 200.oidc.platformAdminPinned: field removed",
-    "class": "breaking",
+    "key": "PUT /api/v1/settings 200.oidc.platformAdminPinned: field added",
+    "class": "additive",
     "operationId": "settings.putSettings",
     "op": "PUT /api/v1/settings",
-    "change": "200.oidc.platformAdminPinned: field removed",
-    "note": ""
+    "change": "200.oidc.platformAdminPinned: field added",
+    "note": "Counts the Polaris ID subjects that pin platform admin (0: the group decides). The oidc group fields are lists of exact names; empty means unset."
   },
   {
     "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",

@@ -62,7 +62,6 @@ function ConsoleLink({ href }: { href: string }) {
       <a className="btn sm" href={href}>
         {DEV_COPY.guides.openConsole}
       </a>
-      <span className="xs muted">{DEV_COPY.guides.consoleHint}</span>
     </div>
   );
 }

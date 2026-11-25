@@ -3,7 +3,6 @@ import { filterDoc, renderScanDisplay } from '@/passkit/template/scan-display/re
 import type { ScanDisplayDoc, ScanPanelDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { Json, ScanAction, ScanRole } from '@/passkit/types.ts';
 import type { ScanDisplay, ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
-import { localZone } from '@/web/lib/timezones.ts';
 import { type DesignDoc, isRecord, styleOf } from '../model.ts';
 import {
   displayForPreview,
@@ -45,6 +44,7 @@ export function useStagePreview({
   overrides,
   source,
   real,
+  timeZone,
 }: {
   doc: DesignDoc;
   display: ScanDisplayDoc | null;
@@ -55,6 +55,7 @@ export function useStagePreview({
   overrides: Record<string, Json>;
   source: 'synthetic' | 'real';
   real: { scope: Record<string, Json> | null };
+  timeZone: string;
 }) {
   const manifest = previewManifest(doc);
   const actions = previewActions(manifest);
@@ -86,7 +87,7 @@ export function useStagePreview({
     screen: tab.screen,
     role,
     locale: 'en',
-    timeZone: localZone(),
+    timeZone,
     now,
     ...(tab.action ? { actionId: tab.action.id } : {}),
   };

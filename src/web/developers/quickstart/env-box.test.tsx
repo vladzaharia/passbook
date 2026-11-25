@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { EnvBox } from './sandbox-step.tsx';
 
 const SECRET = 'pbp_test_demo0001_demo-demo-demo-demo';
@@ -11,6 +12,15 @@ afterEach(() => {
 });
 
 describe('the key box', () => {
+  it('says how to load .env and check it, for both shells', () => {
+    const { container } = render(
+      <EnvBox secret={SECRET} templateId="tpl-1" onNext={() => undefined} />,
+    );
+    expect(container.textContent).toContain('set -a; . ./.env; set +a');
+    expect(container.textContent).toContain('Get-Content .env');
+    expect(container.textContent).toContain(QS_COPY.made.checkLine);
+  });
+
   it('shows the key once as text, masks it after Copy .env, and copies both lines', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });

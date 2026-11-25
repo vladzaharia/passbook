@@ -30,9 +30,11 @@ export interface ChangePlan {
   action: ChangeAction | null;
   text: string | undefined;
   notify: boolean;
+  /** The org's effective zone, read once per chunk: dates in the text read in it. */
+  timeZone: string;
 }
 
-export const planOf = (row: BroadcastRow): ChangePlan =>
+export const planOf = (row: BroadcastRow, timeZone: string): ChangePlan =>
   row.kind === 'change'
     ? {
         ops: changeOpsOf(JSON.parse(row.patch) as Record<string, Json>).ops,
@@ -42,8 +44,9 @@ export const planOf = (row: BroadcastRow): ChangePlan =>
             ? StoredBroadcastTargetSchema.parse(JSON.parse(row.target)).message
             : undefined,
         notify: row.notify === 1,
+        timeZone,
       }
-    : { ops: {}, action: null, text: undefined, notify: false };
+    : { ops: {}, action: null, text: undefined, notify: false, timeZone };
 
 interface TemplateFields {
   fields: InputField[];
@@ -84,7 +87,7 @@ function textFor(
   if (!plan.text) return undefined;
   return fillTokens(plan.text, (label) => {
     const f = t.fields.find((x) => x.label.toLowerCase() === label.toLowerCase());
-    return f ? formatValue(next[f.key] ?? null, f) : null;
+    return f ? formatValue(next[f.key] ?? null, f, { timeZone: plan.timeZone }) : null;
   });
 }
 
@@ -104,7 +107,7 @@ export async function applyChange(
   if (plan.action) return applyAction(ctx, row, plan.action, designs, pass);
   const base = { passId: pass.id, silent: false };
   const template = await fieldsOf(ctx, cache, pass);
-  const first = resolveOps(plan.ops, pass.personalization);
+  const first = resolveOps(plan.ops, pass.personalization, plan.timeZone);
   if (!first.ok) {
     ctx.log.warn('broadcast.pass_failed', {
       broadcastId: row.id,
@@ -146,7 +149,7 @@ export async function applyChange(
           current.removedAt !== null
         )
           throw refused('PASS_CHANGED');
-        const again = resolveOps(plan.ops, current.personalization);
+        const again = resolveOps(plan.ops, current.personalization, plan.timeZone);
         if (!again.ok) throw refused(again.code);
         seen.values = { from: again.from, to: again.to };
         return { personalization: again.next };

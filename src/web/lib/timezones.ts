@@ -1,3 +1,4 @@
+import { DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
 /** Time zone choices: "Los Angeles (PT)" for display, the IANA id as the value. */
 export interface ZoneOption {
   value: string;
@@ -38,4 +39,5 @@ export function zoneOptions(): ZoneOption[] {
   return cached;
 }
 
-export const localZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+export const localZone = (): string =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone || DEFAULT_TIME_ZONE;

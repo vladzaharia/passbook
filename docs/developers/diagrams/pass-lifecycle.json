@@ -1,0 +1,51 @@
+{
+  "title": "Pass lifecycle",
+  "desc": "A pass is Active, Voided, Removed or Deleted. void and unvoid move it between Active and Voided. remove and restore move it between Active and Removed. DELETE ends it from any state. update, refresh, renew, new-code and rotate-link leave it Active.",
+  "kind": "flow",
+  "mermaid": "state",
+  "nodes": [
+    {
+      "id": "voided",
+      "label": "Voided",
+      "note": "scans refused",
+      "tone": "warning",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "id": "active",
+      "label": "Active",
+      "note": "update, refresh, renew",
+      "tone": "success",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "id": "removed",
+      "label": "Removed",
+      "note": "in Expired passes",
+      "tone": "info",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "id": "deleted",
+      "label": "Deleted",
+      "note": "record gone, Wallet keeps the pass and sends it no updates",
+      "tone": "danger",
+      "col": 0,
+      "row": 1,
+      "span": 3,
+      "dashed": true
+    }
+  ],
+  "edges": [
+    { "from": "active", "to": "voided", "label": "void" },
+    { "from": "voided", "to": "active", "label": "unvoid" },
+    { "from": "active", "to": "removed", "label": "remove" },
+    { "from": "removed", "to": "active", "label": "restore" },
+    { "from": "active", "to": "deleted", "label": "DELETE", "dashed": true },
+    { "from": "voided", "to": "deleted", "label": "DELETE", "quiet": true, "dashed": true },
+    { "from": "removed", "to": "deleted", "label": "DELETE", "quiet": true, "dashed": true }
+  ]
+}

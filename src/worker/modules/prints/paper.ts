@@ -1,4 +1,9 @@
-import { type PaperDesign, resolvePaper } from '../../../passkit/template/paper.ts';
+import {
+  holderMayPrint,
+  type PaperDesign,
+  resolvePaper,
+  withKind,
+} from '../../../passkit/template/paper.ts';
 import { bestImage, imageSlots } from '../../../passkit/template/paper-assets.ts';
 import { type PaperContent, paperContent } from '../../../passkit/template/paper-content.ts';
 import { forAudience } from '../../../passkit/template/paper-region.ts';
@@ -33,7 +38,7 @@ function orgZone(ctx: ServiceContext, orgId: string): Promise<string | undefined
 /** `paper.holder: false` keeps printing with staff: the holder's link neither prints nor reprints nor voids. */
 export async function assertHolderMayPrint(ctx: ServiceContext, pass: Pass): Promise<void> {
   const manifest = await repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion);
-  if (!resolvePaper(manifest?.paper).holder)
+  if (!holderMayPrint(manifest))
     throw new ForbiddenError('Printing is available from the organizer.', 'PRINT_STAFF_ONLY');
 }
 
@@ -41,6 +46,8 @@ export async function assertHolderMayPrint(ctx: ServiceContext, pass: Pass): Pro
 export interface PaperFiles {
   logo?: string;
   art?: string;
+  /** The sheet leads with the holder's photo (a badge or ID). */
+  photo?: true;
 }
 
 export interface PaperTicket {
@@ -64,21 +71,31 @@ export async function paperTicket(
   if (!raw) return null;
   const passJson: PassJson = parseStoredPassJson(raw);
   // A holder prints at home (the region's sheet); staff print the exact page.
-  const design = forAudience(resolvePaper(manifest?.paper), audience, zone);
+  const base = forAudience(resolvePaper(manifest?.paper), audience, zone);
   const images = imageSlots(template.assets);
   const content = paperContent({
     passJson,
     manifest: (manifest ?? {}) as Pick<
       TemplateManifest,
-      'wallets' | 'behaviors' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'
+      'wallets' | 'behaviors' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name' | 'bindings'
     >,
     personalization: pass.personalization,
     scanCode: pass.scanCode,
-    design,
+    design: base,
     images,
     orgTimeZone: await readOrgTimeZone(ctx.env.DB, pass.orgId),
   });
+  // One answer for who may print, the one mint, reprint, void and the print link read.
+  const design = { ...withKind(base, content.kind), holder: holderMayPrint(manifest) };
   const logo = bestImage(template.assets, 'logo');
   const art = content.art ? bestImage(template.assets, content.art) : undefined;
-  return { design, content, files: { ...(logo ? { logo } : {}), ...(art ? { art } : {}) } };
+  return {
+    design,
+    content,
+    files: {
+      ...(logo ? { logo } : {}),
+      ...(art ? { art } : {}),
+      ...(content.photo ? { photo: true as const } : {}),
+    },
+  };
 }

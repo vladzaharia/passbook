@@ -262,6 +262,7 @@ describe('step-up route inventory', () => {
   it('lists every route that asks', () => {
     expect(declared).toMatchInlineSnapshot(`
       [
+        "DELETE /api/v1/developer/sandbox",
         "PATCH /api/v1/connections/:id",
         "PATCH /api/v1/orgs/:id/memberships/:membershipId",
         "PATCH /api/v1/webhook-endpoints/:id",
@@ -269,6 +270,7 @@ describe('step-up route inventory', () => {
         "POST /api/v1/api-keys/:id/rotate",
         "POST /api/v1/connections",
         "POST /api/v1/connections/:id/webhook-secret",
+        "POST /api/v1/developer/sandbox/recreate",
         "POST /api/v1/developer/sandbox/reopen",
         "POST /api/v1/developer/sandbox/reset",
         "POST /api/v1/identities",

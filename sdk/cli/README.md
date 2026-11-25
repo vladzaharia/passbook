@@ -1,12 +1,12 @@
 # @passbook/cli
 
 ```sh
-export PASSBOOK_KEY=pb_test_...
+export PASSBOOK_KEY=pbp_test_...
 npx @passbook/cli listen --forward-to localhost:3000/hooks
 npx @passbook/cli types <templateId> > passbook-types.ts
 ```
 
-Needs Node 20+ and a `pb_test_` key. `PASSBOOK_BASE_URL` overrides `https://passbook.mobile`.
+Needs Node 20+ and a `pbp_test_` key. `PASSBOOK_BASE_URL` overrides `https://passbook.mobile`.
 
 ## listen
 
@@ -33,9 +33,9 @@ await pb.passes.create({ templateId, input });
 
 ## passes
 
-Issues or changes a pass. The key comes from PASSBOOK_KEY only. The body is a JSON object from `--file <path>`, or `--file -` for stdin; flags are laid over it. It prints the pass as JSON. A failure prints `CODE: detail` and exits 1.
+Issues or changes a pass. `ticket.json` holds the Quickstart ticket: `{"templateId": "0193a1b2-7c00-7000-8000-0000000000b1", "input": {"eventName": "Harbor Night", "venueName": "Harbor Hall", "venueRegion": "Cupertino, CA", "startsAt": "2030-06-01T19:00:00-07:00", "endsAt": "2030-06-01T22:00:00-07:00", "attendee": "Ada Example", "ticketId": "TICKET-0001"}}`. The key comes from PASSBOOK_KEY only. The body is a JSON object from `--file <path>`, or `--file -` for stdin; flags are laid over it. It prints the pass as JSON. A failure prints `CODE: detail` and exits 1.
 
-    passbook passes create --template <templateId> --set name="Ada" --email ada@example.com
+    passbook passes create --file ticket.json --email ada@example.com
     cat pass.json | passbook passes create --file - --idempotency-key order-1042
     passbook passes update <passId> --set seat=B12 --notify
 

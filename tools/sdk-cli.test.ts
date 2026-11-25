@@ -6,10 +6,11 @@ import { join, resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import type { Api, Capture } from '../sdk/cli/src/api.ts';
-import { run } from '../sdk/cli/src/cli.ts';
+import { CLI_VERSION, run } from '../sdk/cli/src/cli.ts';
 import { receiverUrl } from '../sdk/cli/src/forward.ts';
 import { listen } from '../sdk/cli/src/listen.ts';
 import { inputTypeFile, typeName } from '../sdk/cli/src/types-gen.ts';
+import { SDK_VERSION } from '../sdk/typescript/src/version.ts';
 import { verifyWebhook } from '../sdk/typescript/src/webhooks.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -391,5 +392,30 @@ describe('passbook passes', () => {
       await run(['passes', 'create', '--file', 'x'], io(env, { readFile: async () => 'nope' })),
     ).toBe(1);
     expect(lines.join('\n')).toMatch(/--template.*pass id.*needs a change.*not valid JSON/s);
+  });
+});
+
+describe('versions', () => {
+  it('match each package.json, and the CLI names itself in the User-Agent', async () => {
+    const version = (p: string) =>
+      (JSON.parse(readFileSync(resolve(root, p), 'utf8')) as { version: string }).version;
+    expect(SDK_VERSION).toBe(version('sdk/typescript/package.json'));
+    expect(CLI_VERSION).toBe(version('sdk/cli/package.json'));
+    const go = /const Version = "([^"]+)"/.exec(
+      readFileSync(resolve(root, 'sdk/go/core.go'), 'utf8'),
+    )?.[1];
+    expect(go).toBe(version('sdk/typescript/package.json'));
+    const seen: Array<string | undefined> = [];
+    await run(['passes', 'update', 'p1'], {
+      env: { PASSBOOK_KEY: 'pbp_test_x' },
+      out: () => {},
+      err: () => {},
+      writeFile: async () => {},
+      makeClient: (o) => {
+        seen.push(o.userAgent);
+        return fakeApi(() => []);
+      },
+    });
+    expect(seen).toEqual([`passbook-cli/${CLI_VERSION}`]);
   });
 });

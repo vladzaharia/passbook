@@ -86,6 +86,7 @@
   "developer.postSandboxReset",
   "developer.postTryToken",
   "entitlements.getOrgsByIdEntitlements",
+  "entitlements.getOrgsByIdPlan",
   "entitlements.getPlatformEntitlementPresets",
   "entitlements.getPlatformOrgsByIdEntitlements",
   "entitlements.putPlatformEntitlementPresets",

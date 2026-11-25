@@ -142,7 +142,11 @@ const RULES: Rule[] = [
   [/^passes\.postPassesBulk$/, /\.skipped\[\d+\]\.code$/, 'NO_RECIPIENT'],
   [/^passes\.postPassesBulkChannels$/, /\.skipped\[\d+\]\.code$/, 'RATE_LIMITED'],
   [/^passes\.postPassesBulkPrint$/, /\.skipped\[\d+\]\.code$/, 'PRINTING_OFF'],
-  [/^passes\.postPassesBulkPrint$/, /\.skipped\[\d+\]\.reason$/, 'Paper is off for Day pass'],
+  [
+    /^passes\.postPassesBulkPrint$/,
+    /\.skipped\[\d+\]\.reason$/,
+    'Paper is off for Quickstart ticket',
+  ],
   // Imports: what undo kept, and why (passes/import-undo-run.ts, import-remove.ts).
   [/^pass-imports\./, /\.kept\[\d+\]\.code$/, 'IMPORT_PASS_SCANNED'],
   [/^pass-imports\./, /\.skipped\[\d+\]\.code$/, 'IMPORT_PASS_CHANGED'],
@@ -158,7 +162,7 @@ const RULES: Rule[] = [
   [/^users\./, /\.identities\[\d+\]\.subject$/, 'c2a1f6e0-5b7d-4e3a-9f12-6d8b4a0e7c35'],
   [/^users\./, /\.identities\[\d+\]\.provider$/, 'pocketid'],
   [/^sandbox\./, /\.subject$/, 'Your Northwind Climbing pass'],
-  [/^sandbox\./, /\.text$/, 'Your pass is ready. Day pass for Ada Example.'],
+  [/^sandbox\./, /\.text$/, 'Your pass is ready. Friday Night Bouldering for Ada Example.'],
   // The admin's own words, where the field is free text.
   [/^webhooks\./, /(^|\.endpoint|\.items\[\d+\])\.description$/, 'Front-desk check-in sync'],
   [/^templates\./, /\.report\.issues\[\d+\]\.code$/, 'IMAGE_DERIVED'],

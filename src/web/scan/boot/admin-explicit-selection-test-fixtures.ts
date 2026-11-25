@@ -109,6 +109,19 @@ export function setup({
       const orgId = url.searchParams.get('orgId') ?? '';
       return json({ items: lists[orgId] ?? [], nextCursor: null });
     },
+    '/api/v1/settings': () =>
+      json({
+        items: [
+          {
+            scope: 'org:o1',
+            key: 'org.timeZone',
+            value: 'Asia/Tokyo',
+            source: 'org',
+            updatedAt: 1,
+            updatedBy: null,
+          },
+        ],
+      }),
     '/api/v1/scanning-sessions/session-1': () => json(managedSession),
     '/api/v1/scanning-sessions/session-2': () => json(southSession),
     '/api/v1/scanning-sessions/join': () => (joinResponse ? joinResponse() : json(joined)),

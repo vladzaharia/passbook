@@ -3,6 +3,8 @@ import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { canUseConsole } from '../../../shared/sign-in.ts';
 import {
+  apiKeyMissing,
+  bearerOf,
   modeFromRequest,
   SCANNER_COOKIE,
   SCANNER_TOKEN,
@@ -83,7 +85,9 @@ async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   const meta = { ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')), contact: !upload };
   const header = c.req.header('authorization');
   if (header) {
-    const token = /^Bearer\s+(\S+)$/i.exec(header)?.[1];
+    const sent = bearerOf(c);
+    if (sent === 'empty') throw apiKeyMissing();
+    const token = sent?.token;
     if (token && API_KEY_TOKEN.test(token)) {
       const key = await keyTerminalOf(c, token);
       return { scanner: key.auth, key };

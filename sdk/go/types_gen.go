@@ -4701,6 +4701,28 @@ type OrgsEntitlementsRetrieveResponseItemsItem struct {
 
 type OrgsEntitlementsRetrieveResult = OrgsEntitlementsRetrieveResponse
 
+type OrgsPlanRetrieveResponse struct {
+	OrgID    string                                 `json:"orgId"`
+	Preset   *string                                `json:"preset"`
+	Label    *string                                `json:"label"`
+	Limits   []OrgsPlanRetrieveResponseLimitsItem   `json:"limits"`
+	Features []OrgsPlanRetrieveResponseFeaturesItem `json:"features"`
+	Footer   string                                 `json:"footer"`
+}
+
+type OrgsPlanRetrieveResponseFeaturesItem struct {
+	Key   string  `json:"key"`
+	Level *string `json:"level"`
+}
+
+type OrgsPlanRetrieveResponseLimitsItem struct {
+	Key   string `json:"key"`
+	Limit *int64 `json:"limit"`
+	Used  *int64 `json:"used"`
+}
+
+type OrgsPlanRetrieveResult = OrgsPlanRetrieveResponse
+
 type OrgsReopenResponse struct {
 	OrgID      string `json:"orgId"`
 	Status     string `json:"status"`
@@ -11733,12 +11755,13 @@ type SettingsRetrieveResponseItemsItem struct {
 }
 
 type SettingsRetrieveResponseOidc struct {
-	Issuer               string  `json:"issuer"`
-	PlatformAdminGroup   *string `json:"platformAdminGroup"`
-	AdminGroup           *string `json:"adminGroup"`
-	DeveloperGroup       *string `json:"developerGroup"`
-	UserGroup            *string `json:"userGroup"`
-	ConsoleGroupRequired bool    `json:"consoleGroupRequired"`
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
 }
 
 type SettingsRetrieveResponseReleased struct {
@@ -11774,12 +11797,13 @@ type SettingsUpdateResponseItemsItem struct {
 }
 
 type SettingsUpdateResponseOidc struct {
-	Issuer               string  `json:"issuer"`
-	PlatformAdminGroup   *string `json:"platformAdminGroup"`
-	AdminGroup           *string `json:"adminGroup"`
-	DeveloperGroup       *string `json:"developerGroup"`
-	UserGroup            *string `json:"userGroup"`
-	ConsoleGroupRequired bool    `json:"consoleGroupRequired"`
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
 }
 
 type SettingsUpdateResponseReleased struct {

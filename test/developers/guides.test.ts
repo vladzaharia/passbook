@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 import { describe, expect, it, vi } from 'vitest';
 import openapi from '../../docs/api/openapi.v1.json';
-import snippets from '../../docs/developers/snippets/guides/index.json';
 import { prefillFromCurl } from '../../src/web/developers/guide/model.ts';
 import {
   type Block,
@@ -14,13 +13,23 @@ import { type Call, kit, snippetWorld } from './snippet-world.ts';
 
 // The snippets import the published name; here it is the source.
 vi.mock('@passbook/sdk', () => import('../../sdk/typescript/src/index.ts'));
-vi.mock('node:fs/promises', () => ({ readFile: async () => new Uint8Array() }));
+const PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+vi.mock('node:fs/promises', () => ({
+  readFile: async () => Uint8Array.from(atob(PNG_BASE64), (c) => c.charCodeAt(0)),
+}));
 
 const guideText = import.meta.glob<string>('../../docs/developers/guides/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
 });
+const snippets = Object.values(
+  import.meta.glob<Snippet[]>('../../docs/developers/snippets/guides/index.*.json', {
+    import: 'default',
+    eager: true,
+  }),
+).flat();
 const guideTs = import.meta.glob('../../docs/developers/snippets/guides/*.ts');
 const guideSh = import.meta.glob<string>('../../docs/developers/snippets/guides/*.sh', {
   query: '?raw',
@@ -32,9 +41,10 @@ interface Snippet {
   id: string;
   ops: string[];
   files: { ts: string; curl?: string };
-  expect?: 'reached' | 'fails' | 'handler';
+  sandbox?: string;
+  expect?: 'fails' | 'handler';
 }
-const byId = new Map((snippets as Snippet[]).map((s) => [s.id, s]));
+const byId = new Map(snippets.map((s) => [s.id, s]));
 const dir = '../../docs/developers/snippets/guides/';
 
 /** Where an operation lives in the contract. */
@@ -119,11 +129,7 @@ describe('guides', () => {
           const own = world.calls.filter(
             (c) =>
               !EXPECTED[step.id]?.includes(c.code ?? '') &&
-              (s.expect === 'reached'
-                ? c.status >= 500
-                : s.expect === 'fails'
-                  ? c.status < 400
-                  : failed(c)),
+              (s.expect === 'fails' ? c.status < 400 : failed(c) && c.code !== s.sandbox),
           );
           if (world.calls.length === 0) problems.push(`${step.id}: made no request`);
           problems.push(

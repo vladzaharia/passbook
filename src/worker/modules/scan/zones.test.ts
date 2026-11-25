@@ -74,22 +74,23 @@ describe('zones: create and read', () => {
     );
   });
 
-  it('keeps occupancy limits behind tracking, and clear at behind a time zone', async () => {
+  it('keeps occupancy limits behind tracking, and clear at on the org clock', async () => {
     const org = fixture.kit.org.id;
     expect(
       (await zones('', 'POST', { orgId: org, key: key(), name: 'Cap', capacity: 5 })).status,
     ).toBe(422);
-    await expectProblem(
-      await zones('', 'POST', {
-        orgId: org,
-        key: key(),
-        name: 'Clr',
-        occupancy: 'track',
-        clearAt: '03:00',
-      }),
-      422,
-      'ZONE_CLEAR_NEEDS_TIME_ZONE',
-    );
+    // Every org has a clock, so a root without its own zone still takes a clear time.
+    expect(
+      (
+        await zones('', 'POST', {
+          orgId: org,
+          key: key(),
+          name: 'Clr',
+          occupancy: 'track',
+          clearAt: '03:00',
+        })
+      ).status,
+    ).toBe(201);
     const gym = await make({
       occupancy: 'enforce',
       capacity: 40,
@@ -106,11 +107,7 @@ describe('zones: create and read', () => {
     });
     expect(await cleared.json()).toMatchObject({ occupancy: 'off', capacity: null });
     const tz = await make({ occupancy: 'track', timeZone: 'UTC', clearAt: '04:00' });
-    await expectProblem(
-      await zones(`/${tz.id}`, 'PATCH', { timeZone: null }),
-      422,
-      'ZONE_CLEAR_NEEDS_TIME_ZONE',
-    );
+    expect((await zones(`/${tz.id}`, 'PATCH', { timeZone: null })).status).toBe(200);
   });
 });
 

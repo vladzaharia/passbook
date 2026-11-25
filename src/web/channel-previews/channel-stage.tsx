@@ -11,6 +11,9 @@ import { ChannelPreviews } from './channel-previews.tsx';
 import type { OffLevel } from './locked-preview.tsx';
 import type { PreviewSource } from './types.ts';
 
+/** The tallest the page draws in a stage: the whole page shows, scaled to fit. */
+const PAPER_FIT_H = 520;
+
 /** The Paper pane for a saved template or a pass: read only, from the template's `paper` block. */
 export function PaperChannel({
   source,
@@ -36,6 +39,7 @@ export function PaperChannel({
       orgId={orgId}
       timeZone={source.timeZone}
       testBand={source.testBand}
+      fitHeight={PAPER_FIT_H}
     />
   );
 }

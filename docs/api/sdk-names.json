@@ -413,6 +413,10 @@
     "resource": "orgs.entitlements",
     "method": "retrieve"
   },
+  "entitlements.getOrgsByIdPlan": {
+    "resource": "orgs.plan",
+    "method": "retrieve"
+  },
   "entitlements.getPlatformEntitlementPresets": {
     "resource": "platform.entitlementPresets",
     "method": "list"

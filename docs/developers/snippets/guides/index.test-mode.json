@@ -1,0 +1,14 @@
+[
+  {
+    "id": "read-test-inbox",
+    "title": "List the test inbox",
+    "guide": "test-mode",
+    "ops": [
+      "sandbox.getTestInbox"
+    ],
+    "files": {
+      "ts": "read-test-inbox.ts",
+      "curl": "read-test-inbox.sh"
+    }
+  }
+]

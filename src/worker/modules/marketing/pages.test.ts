@@ -39,7 +39,8 @@ function appEnv(pages: Record<string, string> = PAGES): AppEnv {
   return { ...env, ASSETS } as unknown as AppEnv;
 }
 
-const app = createApp({ stores: fakeAuth(ORIGIN).stores, hostPolicy: true });
+const fake = fakeAuth(ORIGIN);
+const app = createApp({ stores: fake.stores, hostPolicy: true });
 const call = (path: string, init: RequestInit = {}, e = appEnv()) =>
   app.request(`${ORIGIN}${path}`, init, e);
 
@@ -133,8 +134,8 @@ describe('home', () => {
     expect(res.headers.get('content-security-policy')).toContain('passbook-marketing');
   });
 
-  it('with a session cookie is the app shell, as the asset layer serves it', async () => {
-    const res = await call('/', { headers: { cookie: '__Host-wallet_sid=abc' } });
+  it('with a live session is the app shell, as the asset layer serves it', async () => {
+    const res = await call('/', { headers: fake.user() });
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(SPA);
     expect(res.headers.get('x-shell')).toBe('1');
@@ -142,6 +143,42 @@ describe('home', () => {
     expect(res.headers.get('vary')).toContain('Cookie');
     expect(res.headers.get('vary')).toContain('Accept-Encoding');
     expect(res.headers.get('content-security-policy') ?? '').not.toContain('passbook-marketing');
+  });
+
+  it('with an expired or signed-out session cookie is Home, and clears the cookie', async () => {
+    const res = await call('/', { headers: { cookie: '__Host-wallet_sid=gone' } });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('<title>Home</title>');
+    expect(res.headers.get('content-security-policy')).toContain('passbook-marketing');
+    expect(res.headers.get('cache-control')).toBe('private, no-cache, no-transform');
+    expect(res.headers.get('vary')).toContain('Cookie');
+    expect(res.headers.get('set-cookie')).toBe('__Host-wallet_sid=; Max-Age=0; Path=/; Secure');
+  });
+
+  it('keeps the app shell when the session cannot be read', async () => {
+    const broken = createApp({
+      stores: {
+        ...fake.stores,
+        sessions: {
+          ...fake.stores.sessions,
+          resolve: async () => {
+            throw new Error('db down');
+          },
+        },
+      },
+      hostPolicy: true,
+    });
+    const res = await broken.request(
+      `${ORIGIN}/`,
+      { headers: { cookie: '__Host-wallet_sid=abc' } },
+      appEnv(),
+    );
+    expect(await res.text()).toBe(SPA);
+    expect(res.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('with no session cookie sets none', async () => {
+    expect((await call('/')).headers.get('set-cookie')).toBeNull();
   });
 
   it('other cookies do not count as a session', async () => {

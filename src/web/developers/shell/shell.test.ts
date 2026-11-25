@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EXAMPLE_IDS } from '../model/ids.ts';
 import { initChangelogFilter } from './filter.ts';
 import { initLanguage } from './language.ts';
-import { initMenu } from './menu.ts';
+import { initMenu, revealCurrent } from './menu.ts';
+import { initToc } from './toc.ts';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -38,9 +39,134 @@ describe('the drawer menu', () => {
     expect(document.documentElement.dataset.menu).toBeUndefined();
   });
 
+  it('is modal: the page behind is inert and the lit item has focus, and both undo on close', () => {
+    document.body.innerHTML =
+      '<button data-menu-button aria-expanded="false">Menu</button><nav id="dev-menu"><a href="/a">a</a><a href="/b" aria-current="page" id="b">b</a></nav><main><a href="/m">m</a></main><footer class="foot">f</footer>';
+    initMenu();
+    const button = document.querySelector<HTMLButtonElement>('[data-menu-button]');
+    button?.click();
+    expect(document.querySelector('main')?.inert).toBe(true);
+    expect(document.querySelector('footer')?.inert).toBe(true);
+    expect(document.activeElement?.id).toBe('b');
+    button?.click();
+    expect(document.querySelector('main')?.inert).toBe(false);
+    expect(document.querySelector('footer')?.inert).toBe(false);
+    expect(document.activeElement).toBe(button);
+  });
+
   it('does nothing on a page without the button', () => {
     document.body.innerHTML = '';
     expect(() => initMenu()).not.toThrow();
+  });
+});
+
+describe('the tree', () => {
+  it('scrolls the lit page to the middle of its own box, not the sheet chip of the same name', () => {
+    document.body.innerHTML =
+      '<nav id="dev-menu"><div class="menu-sections"><a aria-current="page" id="chip">R</a></div><a aria-current="page" id="page">P</a></nav>';
+    const nav = document.querySelector<HTMLElement>('#dev-menu') as HTMLElement;
+    const at = (id: string, top: number) =>
+      vi
+        .spyOn(document.getElementById(id) as HTMLElement, 'getBoundingClientRect')
+        .mockReturnValue({
+          top,
+        } as DOMRect);
+    at('chip', 0);
+    at('page', 700);
+    vi.spyOn(nav, 'getBoundingClientRect').mockReturnValue({ top: 100 } as DOMRect);
+    vi.spyOn(nav, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    Object.defineProperty(nav, 'clientHeight', { value: 400, configurable: true });
+    revealCurrent(nav);
+    // 700 - 100 below the box top, centred in 400.
+    expect(nav.scrollTop).toBe(400);
+  });
+
+  it('leaves a hidden tree alone', () => {
+    document.body.innerHTML = '<nav id="dev-menu"><a aria-current="page">P</a></nav>';
+    const nav = document.querySelector<HTMLElement>('#dev-menu') as HTMLElement;
+    vi.spyOn(nav, 'getClientRects').mockReturnValue([] as unknown as DOMRectList);
+    nav.scrollTop = 7;
+    revealCurrent(nav);
+    expect(nav.scrollTop).toBe(7);
+  });
+});
+
+describe('"On this page"', () => {
+  const page = () => {
+    document.body.innerHTML =
+      '<nav data-toc><a href="#a">A</a><a href="#b">B</a><a href="#gone">G</a></nav><h2 id="a">A</h2><h2 id="b">B</h2>';
+    const tops: Record<string, number> = { a: -300, b: 90 };
+    for (const id of ['a', 'b'])
+      vi.spyOn(
+        document.getElementById(id) as HTMLElement,
+        'getBoundingClientRect',
+      ).mockImplementation(() => ({ top: tops[id] }) as DOMRect);
+    vi.stubGlobal('requestAnimationFrame', (f: () => void) => f());
+    vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(5000);
+    return tops;
+  };
+  const lit = () =>
+    [...document.querySelectorAll('[data-toc] a[aria-current]')].map((a) => a.textContent);
+
+  it('lights the last section whose heading is above the line, on load and on scroll', () => {
+    const tops = page();
+    initToc();
+    expect(lit()).toEqual(['B']);
+    tops.b = 400;
+    dispatchEvent(new Event('scroll'));
+    expect(lit()).toEqual(['A']);
+  });
+
+  it('lights the first section before any heading has passed, and ignores entries without a heading', () => {
+    const tops = page();
+    tops.a = 300;
+    tops.b = 600;
+    initToc();
+    expect(lit()).toEqual(['A']);
+  });
+
+  it('lights the last section on screen at the foot of the page, though its heading never reaches the line', () => {
+    const tops = page();
+    tops.a = -900;
+    tops.b = 500;
+    vi.stubGlobal('innerHeight', 800);
+    vi.stubGlobal('scrollY', 1200);
+    vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(2000);
+    initToc();
+    expect(lit()).toEqual(['B']);
+    tops.b = 900;
+    dispatchEvent(new Event('scroll'));
+    expect(lit()).toEqual(['A']);
+  });
+
+  it('keeps a clicked entry lit through the jump, until the reader scrolls', () => {
+    const tops = page();
+    initToc();
+    expect(lit()).toEqual(['B']);
+    document.querySelector<HTMLAnchorElement>('[data-toc] a[href="#a"]')?.click();
+    tops.a = 0;
+    tops.b = 60;
+    dispatchEvent(new Event('scroll'));
+    expect(lit()).toEqual(['A']);
+    dispatchEvent(new Event('wheel'));
+    dispatchEvent(new Event('scroll'));
+    expect(lit()).toEqual(['B']);
+  });
+
+  it('lights the entry named by the hash on load and on a hash change', () => {
+    page();
+    history.replaceState(null, '', '#a');
+    initToc();
+    expect(lit()).toEqual(['A']);
+    history.replaceState(null, '', '#b');
+    dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(lit()).toEqual(['B']);
+    history.replaceState(null, '', location.pathname);
+  });
+
+  it('does nothing on a page without the list', () => {
+    document.body.innerHTML = '';
+    expect(() => initToc()).not.toThrow();
   });
 });
 

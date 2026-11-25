@@ -91,7 +91,7 @@ export function shapeOf(lang: keyof typeof RULES, code: string): string {
     const c = code[i] as string;
     const q = rules.strings[c];
     if (q) {
-      // In the shell a double-quoted word is a constant of ours (the key, `$(uuidgen)`): keep it.
+      // In the shell a double-quoted word is a constant of ours (the key, the idempotency key): keep it.
       const end = readString(code, i, q);
       out += lang === 'curl' && c === '"' ? code.slice(i, end) : 'S';
       i = end;
@@ -164,14 +164,14 @@ export async function runTs(
   return calls as never;
 }
 
-/** Runs the curl sample in `sh` with curl, uuidgen and `id` replaced; returns curl's arguments and stdout. */
+/** Runs the curl sample in `sh` with curl and `id` replaced; returns curl's arguments and stdout. */
 export function runSh(
   code: string,
   secret: string,
 ): { args: string[]; stdout: string; status: number | null } {
   const script = [
     'curl() { for a in "$@"; do printf "ARG:%s\\0" "$a"; done; }',
-    'uuidgen() { echo uuid-1; }',
+    'RANDOM=1',
     'id() { echo INJECTED; }',
     `PASSBOOK_KEY=${secret}`,
     code,

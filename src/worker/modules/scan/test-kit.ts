@@ -39,7 +39,7 @@ import { requireApprovedRelease } from '../templates/releases.ts';
 import { type ScanActor, scanScannerCsrfProof } from './actor.ts';
 import { createScannerStore } from './auth-store.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
-import { captureTestEpochs } from './test-kit-epochs.ts';
+import { captureTestEpochs, pinOrgClock } from './test-kit-epochs.ts';
 
 export const ORIGIN = 'https://wallet.test';
 type Hdrs = Record<string, string>;
@@ -212,6 +212,7 @@ export async function approveScanReleases(
 /** The passes kit plus a scan template factory, a real app with the scanner store, and fixtures. */
 export async function setupScanKit(options: Parameters<typeof setupKit>[0] = {}): Promise<ScanKit> {
   const kit = await setupKit({ ...options, clockStart: options.clockStart ?? TEST_NOW });
+  await pinOrgClock(kit.env.DB, kit.org.id);
   // Storage is per file, and kits are often built in beforeEach.
   const adminId = 'admin-1';
   if (!(await first(kit.env.DB, 'SELECT 1 FROM users WHERE id=?', [adminId])))
@@ -233,13 +234,12 @@ export async function setupScanKit(options: Parameters<typeof setupKit>[0] = {})
     ...headers,
     'content-type': 'application/json',
   });
-  const base = kit.template;
   return {
     ...kit,
     async scanTemplate(name, scan, options = {}) {
       const id = `tpl-${(sequence++).toString(36)}-${kit.fx.ids.token(3)}`;
       const manifest: TemplateManifest = {
-        ...base.manifest,
+        ...kit.template.manifest,
         name,
         inputs: {
           type: 'object',
@@ -254,7 +254,7 @@ export async function setupScanKit(options: Parameters<typeof setupKit>[0] = {})
           },
         },
         bindings: [
-          ...base.manifest.bindings,
+          ...kit.template.manifest.bindings,
           { to: { barcode: 0, prop: 'message' }, value: options.barcode ?? '{{pass.scanCode}}' },
         ],
         scan,
@@ -264,7 +264,7 @@ export async function setupScanKit(options: Parameters<typeof setupKit>[0] = {})
         orgId: options.orgId ?? kit.org.id,
         manifest,
         passJson: {
-          ...base.passJson,
+          ...kit.template.passJson,
           barcodes: [{ format: 'PKBarcodeFormatQR', message: 'x', messageEncoding: 'utf-8' }],
           ...(options.passStyle ?? {}),
         } as PassJson,

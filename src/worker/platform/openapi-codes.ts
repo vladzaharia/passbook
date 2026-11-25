@@ -50,7 +50,7 @@ const bySecurity = (op: Op): string[] => {
         'UNAUTHENTICATED',
         'FORBIDDEN',
         'RATE_LIMITED',
-        ...(keys ? ['INVALID_API_KEY', 'MISSING_SCOPE'] : []),
+        ...(keys ? ['API_KEY_MISSING', 'INVALID_API_KEY', 'MISSING_SCOPE'] : []),
         ...(op['x-sign-in'] === 'idp' ? ['IDP_SIGN_IN_REQUIRED'] : []),
         ...(op['x-step-up'] ? ['STEP_UP_REQUIRED'] : []),
       ]

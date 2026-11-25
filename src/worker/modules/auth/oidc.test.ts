@@ -645,4 +645,23 @@ describe('oidc sign-in', () => {
       await expectProblem(res, 403, 'CSRF_ORIGIN');
     });
   });
+
+  it('passes the subject to the platform admin pin: listed is admin, unlisted is not', async () => {
+    const env = h.env as unknown as Record<string, string | undefined>;
+    const saved = env.OIDC_PLATFORM_ADMIN_SUBJECTS;
+    const listed = person(['wallet_admins']);
+    const other = person(['wallet_admins']);
+    env.OIDC_PLATFORM_ADMIN_SUBJECTS = `sub-none, ${listed.sub}`;
+    try {
+      const ctx = createServiceContext(h.env, { clock: h.clock });
+      const sign = { ipPrefix: null, userAgent: null, bindingHash: 'b'.repeat(64) };
+      const asAdmin = await signInOidc(ctx, { ...listed, emailVerified: true }, sign);
+      expect(asAdmin.roles).toContain('admin');
+      await expect(signInOidc(ctx, { ...other, emailVerified: true }, sign)).rejects.toMatchObject({
+        code: 'NO_ACCESS',
+      });
+    } finally {
+      env.OIDC_PLATFORM_ADMIN_SUBJECTS = saved;
+    }
+  });
 });

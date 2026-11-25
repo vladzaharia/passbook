@@ -177,7 +177,9 @@ describe('Change wizard', () => {
     expect(alert).toHaveTextContent('Too many requests. Try again in 2 minutes.');
     // The wizard is out of the way, not gone: Back to review shows the same step and selection.
     await user.click(screen.getByRole('button', { name: 'Back to review' }));
-    expect(await screen.findByRole('button', { name: 'Change 2 passes' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Change 2 passes' })).not.toHaveAttribute(
+      'aria-disabled',
+    );
     await user.click(screen.getByRole('button', { name: 'Change 2 passes' }));
     await waitFor(() => expect(sent).toHaveLength(2));
     expect(sent[1]?.key).toBe(sent[0]?.key);
@@ -244,7 +246,7 @@ describe('Change wizard', () => {
     });
     const user = userEvent.setup();
     const run_ = await toReview(user, 'Change 1,500 passes');
-    expect(run_).toBeEnabled();
+    expect(run_).not.toHaveAttribute('aria-disabled');
     expect(
       screen.getByText('Counts are estimated from the 200 newest passes.'),
     ).toBeInTheDocument();
@@ -254,14 +256,16 @@ describe('Change wizard', () => {
     setup(() => json(run(), 201), { previews: () => ({ unchanged: 2, silent: 0 }) });
     const user = userEvent.setup();
     const button = await toReview(user);
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getAllByText('Nothing would change.').length).toBeGreaterThan(0);
   });
 
   it('turns Run off only when the server counts no passes', async () => {
     setup(() => json(run(), 201), { previews: () => ({ targeted: 0, samples: [] }) });
     const user = userEvent.setup();
-    await toReview(user, 'Change 0 passes').then((b) => expect(b).toBeDisabled());
+    await toReview(user, 'Change 0 passes').then((b) =>
+      expect(b).toHaveAttribute('aria-disabled', 'true'),
+    );
   });
 
   it('voids behind a confirm, on a danger button that reads Void N passes', async () => {
@@ -286,7 +290,7 @@ describe('Change wizard', () => {
     const user = userEvent.setup();
     await fillFirstStep(user);
     await user.click(await screen.findByRole('radio', { name: 'Later' }));
-    expect(next()).toBeDisabled();
+    expect(next()).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText('Pick a start time.')).toBeInTheDocument();
   });
 });

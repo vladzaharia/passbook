@@ -133,7 +133,7 @@ describe('overrides', () => {
 });
 
 describe('dates in changes', () => {
-  it('read in the org time zone, and in UTC when it has none', async () => {
+  it('read in the org time zone, and in Seattle time when it has none', async () => {
     const pass = await kit.pass({ memberName: 'Old' });
     await run(
       kit.env.DB,
@@ -148,13 +148,13 @@ describe('dates in changes', () => {
       };
       return rows.items[0]?.changes?.find((c) => c.key === 'validUntil')?.from;
     };
-    expect(await paid()).toBe('Dec 31, 2030, 8:00 PM');
+    expect(await paid()).toBe('Dec 31, 2030, 12:00 PM');
     await run(
       kit.env.DB,
-      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'org.timeZone', '\"America/Los_Angeles\"', 1)",
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'org.timeZone', '\"UTC\"', 1)",
       [`org:${kit.org.id}`],
     );
-    expect(await paid()).toBe('Dec 31, 2030, 12:00 PM');
+    expect(await paid()).toBe('Dec 31, 2030, 8:00 PM');
     await run(kit.env.DB, "DELETE FROM settings WHERE key = 'org.timeZone'");
   });
 });

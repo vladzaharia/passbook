@@ -18,11 +18,14 @@ func main() {
 
 	var body passbook.TemplatesPreviewBody
 	if err := json.Unmarshal([]byte(`{
-  "version": "3",
   "input": {
-    "name": "Ada Example",
-    "tier": "Day pass",
-    "validUntil": "2026-12-31"
+    "eventName": "Friday Night Bouldering",
+    "venueName": "Northwind Climbing",
+    "venueRegion": "Seattle, WA",
+    "startsAt": "2026-12-04T18:00:00-08:00",
+    "endsAt": "2026-12-04T22:00:00-08:00",
+    "attendee": "Ada Example",
+    "ticketId": "NW-1001"
   }
 }`), &body); err != nil {
 		panic(err)

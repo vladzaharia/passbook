@@ -2,7 +2,10 @@
 /* ---------- Controls and pills ---------- */
 .btn.sm {
   min-height: 32px;
-  padding-inline: 12px;
+  min-width: 32px;
+  padding-block: 0.25rem;
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
 }
 .btn.ghost {
   background: none;
@@ -16,18 +19,19 @@
   display: inline-flex;
   padding: 2px;
   border: 1px solid var(--pk-border-subtle);
-  border-radius: var(--pk-radius-md);
+  border-radius: 0.375rem;
   background: var(--pk-surface-sunken);
 }
 .seg > span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 28px;
-  padding: 0 9px;
+  min-height: 1.875rem;
+  padding: 0 0.75rem;
   border-radius: 5px;
   font-weight: 500;
-  font-size: 12.5px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   color: var(--pk-text-muted);
   white-space: nowrap;
 }
@@ -39,11 +43,12 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 24px;
-  padding: 0 8px;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   font-weight: 500;
   border: 1px solid transparent;
   white-space: nowrap;
@@ -51,17 +56,17 @@
 .pill.success {
   color: var(--pk-success);
   background: var(--pk-success-subtle);
-  border-color: color-mix(in oklab, var(--pk-success-border) 55%, transparent);
+  border-color: var(--pk-success-border);
 }
 .pill.info {
   color: var(--pk-info);
   background: var(--pk-info-subtle);
-  border-color: color-mix(in oklab, var(--pk-info-border) 55%, transparent);
+  border-color: var(--pk-info-border);
 }
 .pill.accent {
   color: var(--pk-accent-fg);
   background: var(--pk-accent-subtle);
-  border-color: color-mix(in oklab, var(--pk-accent) 45%, transparent);
+  border-color: var(--pk-accent);
 }
 .pill.neutral {
   color: var(--pk-text-muted);
@@ -70,7 +75,6 @@
 }
 .pill.mono {
   font-family: var(--pk-font-mono);
-  font-size: 11px;
 }
 .chip {
   display: inline-flex;
@@ -118,12 +122,14 @@
 }
 
 /* ---------- Cards ---------- */
+/* The kit's CARD_SURFACE (ui/card-base.tsx): raised, hairline border, lit top edge, elevation 1. */
 .card {
   position: relative;
+  min-width: 0;
   background: var(--pk-surface-raised);
   border: 1px solid var(--pk-border-subtle);
   border-radius: var(--pk-radius-lg);
-  box-shadow: var(--wl-edge);
+  box-shadow: var(--wl-edge), var(--pk-elevation-1);
 }
 .card-h {
   display: flex;
@@ -194,7 +200,7 @@ a.lrow:hover {
   }
 }
 
-/* Coarse pointers: a control under 44 px becomes a real 44 px box, and a negative margin gives the extra height back so
+/* Coarse under 44 px becomes a real 44 px box, and a negative margin gives the extra height back so
    nothing around it moves (the kit's rule, docs/design/ui-consistency.md). No pseudo-element hit areas. */
 @media (pointer: coarse) {
   .btn,

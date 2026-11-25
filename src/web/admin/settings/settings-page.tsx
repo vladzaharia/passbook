@@ -43,10 +43,18 @@ function OidcSection() {
         <KeyValue
           items={[
             { label: 'Issuer', value: oidc.issuer, mono: true },
-            { label: 'Platform admin group', value: oidc.platformAdminGroup, mono: true },
-            { label: 'Admin group', value: oidc.adminGroup, mono: true },
-            { label: 'Developer group', value: oidc.developerGroup, mono: true },
-            { label: 'User group', value: oidc.userGroup, mono: true },
+            {
+              label: 'Platform admin group',
+              value: oidc.platformAdminGroup.join(', ') || null,
+              mono: true,
+            },
+            { label: 'Admin group', value: oidc.adminGroup.join(', ') || null, mono: true },
+            { label: 'Developer group', value: oidc.developerGroup.join(', ') || null, mono: true },
+            { label: 'User group', value: oidc.userGroup.join(', ') || null, mono: true },
+            {
+              label: 'Pinned platform admins',
+              value: oidc.platformAdminPinned > 0 ? String(oidc.platformAdminPinned) : 'Off',
+            },
             { label: 'Admin group required', value: oidc.consoleGroupRequired ? 'On' : 'Off' },
           ]}
         />

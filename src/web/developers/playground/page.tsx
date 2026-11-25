@@ -12,7 +12,7 @@ export function PlaygroundPage({ site, previews }: { site: Site; previews?: Blue
   const sample =
     previews?.items.find((i) => i.id === DEFAULT_BLUEPRINT) ?? previews?.items[0] ?? null;
   return (
-    <Shell site={site} active="reference" bare>
+    <Shell site={site} active="playground" bare>
       <div className="pg" data-island="playground">
         <div className="pg-fallback">
           <h1 className="h2">{DEV_COPY.slots.playground.title}</h1>

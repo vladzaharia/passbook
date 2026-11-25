@@ -306,6 +306,19 @@ describe('a key refused at the route gate', () => {
   });
 });
 
+describe('a header with no key on the other key guards', () => {
+  it.each(['/api/v1/api-keys/me', '/api/v1/developer/logs'])(
+    '%s answers API_KEY_MISSING for an empty Bearer',
+    async (path) => {
+      for (const authorization of ['Bearer', 'Bearer undefined']) {
+        const res = await h.call(path, { headers: { authorization } });
+        expect(res.status).toBe(401);
+        expect(((await res.json()) as { code: string }).code).toBe('API_KEY_MISSING');
+      }
+    },
+  );
+});
+
 describe('a key refused by the other key guards', () => {
   it('adds the same code to request.done: /me and the try-token logs', async () => {
     const seen: string[] = [];

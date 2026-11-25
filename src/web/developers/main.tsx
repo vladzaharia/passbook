@@ -7,6 +7,8 @@
 import './styles/dev-base.css';
 import '../../generated/menubar-kit.css';
 import './styles/dev-layout.css';
+import './styles/dev-frame.css';
+import './styles/dev-frame-page.css';
 import './styles/dev-controls.css';
 import './styles/dev-code.css';
 import './styles/dev-code-extras.css';
@@ -43,3 +45,11 @@ initMenu();
 initSearch();
 initTryBar();
 mountIslands();
+// "On this page" shows from 1280 px: only then is its chunk fetched, once.
+const wide = matchMedia('(min-width: 1280px)');
+const loadToc = () =>
+  import('./shell/toc.ts').then((t) => t.initToc()).catch((error) => reportError(error));
+if (document.querySelector('[data-toc]')) {
+  if (wide.matches) void loadToc();
+  else wide.addEventListener('change', (e) => e.matches && void loadToc(), { once: true });
+}

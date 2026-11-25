@@ -47,6 +47,8 @@ export interface BuildPassInput {
   behaviors?: BehaviorRegistry;
   /** Signing time and behavior clock. Identical input and `now` give identical output. */
   now?: Date;
+  /** The org's effective time zone, for behaviors whose template names none. */
+  timeZone?: string;
   /** Per-pass images by file name (`thumbnail@2x.png`). */
   assetOverrides?: Record<string, AssetOverride>;
   /** `contentHash` of the pass being replaced. A match skips signing unless `force` is set. */
@@ -170,6 +172,7 @@ export function planPass(args: PreviewPassInput & { signing?: SigningMaterial })
     try {
       plugin.apply(pass, full, use.config, {
         now: args.now ?? new Date(),
+        ...(args.timeZone ? { timeZone: args.timeZone } : {}),
         identity: server.identity,
         lookups: template.manifest.lookups ?? {},
       });

@@ -69,7 +69,7 @@ export async function guideApi({ sandbox = true }: { sandbox?: boolean } = {}) {
   };
   /** A fresh pass from the issue guide's own request body. */
   const makePass = async (externalId: string) => {
-    const body = { ...fence('issue-on-purchase', 'passes.postPasses'), externalId };
+    const body = { ...snippetBody('create-order-pass'), externalId };
     const made = await call('POST', '/passes', body);
     if (made.status !== 201) throw new Error(`create: ${made.status} ${made.text}`);
     return made.json;

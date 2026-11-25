@@ -66,7 +66,7 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await page.goto('/developers/console');
   await expect(
     page.getByRole('navigation', { name: 'Sections' }).locator('[aria-current]'),
-  ).toHaveCount(0);
+  ).toHaveText('Workbench');
   await expect(page.locator('main').getByRole('link', { name: 'Sign in to try' })).toBeVisible();
   await shot(page, 'console-signed-out');
   await page.goto('/developers/playground');
@@ -103,9 +103,17 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   // D10: Try it on an operation page is bound to the sandbox, and runs there.
   await page.goto('/developers/reference/passes/create');
   await expect(page.locator('[data-sandbox]')).toHaveText(/^test · \S+/);
-  await expect(
-    page.locator('.try').getByRole('button', { name: 'Run', exact: true }),
-  ).toBeVisible();
+  const tryRun = page.locator('.try').getByRole('button', { name: 'Run', exact: true });
+  await expect(tryRun).toBeVisible();
+  // R1: the example fits the sandbox's Quickstart ticket, so the first Run creates a pass.
+  await expect(page.locator('.try')).toContainText('Body shape valid');
+  const created = page.waitForResponse(
+    (r) => r.url().endsWith('/api/v1/passes') && r.request().method() === 'POST',
+  );
+  await tryRun.click();
+  expect((await created).status()).toBe(201);
+  // The Run read the template; now `input` is checked against its schema.
+  await expect(page.locator('.try')).toContainText('Valid against the schema');
 
   // D1: the webhook tester renders, with no Trusted Types error.
   await page.goto('/developers/webhooks');

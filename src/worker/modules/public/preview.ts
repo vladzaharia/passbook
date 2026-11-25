@@ -16,6 +16,7 @@ import { depsOf } from '../passes/deps.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { paperTicket } from '../prints/paper.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { currentPublicGeneration } from './repo.ts';
 import { openPublicAsset, type PublicAsset, pageModel } from './service.ts';
@@ -78,11 +79,13 @@ export async function previewFor(
     ]),
   );
   const now = new Date(ctx.clock.now());
+  const zone = await readOrgTimeZone(ctx.env.DB, pass.orgId);
   const view = normalize(model.passJson as PassJson, {
     assets,
     locale,
     now,
-    timeZone: 'UTC',
+    timeZone: zone,
+    showZone: true,
     ...stateWordOption(pass),
   });
   let wallets: PreviewPageProps['wallets'] = null;
@@ -97,7 +100,7 @@ export async function previewFor(
         input: pass.personalization,
         testBand: true,
       },
-      { origin: base, now, ...(website ? { website } : {}) },
+      { origin: base, now, timeZone: zone, ...(website ? { website } : {}) },
     );
   } catch {
     // A pass a compiler cannot read still shows the Apple card and the ticket.

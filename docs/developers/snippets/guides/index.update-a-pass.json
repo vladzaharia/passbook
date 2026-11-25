@@ -1,0 +1,75 @@
+[
+  {
+    "id": "read-pass",
+    "title": "Read a pass and its version",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.getPassesById"
+    ],
+    "files": {
+      "ts": "read-pass.ts",
+      "curl": "read-pass.sh"
+    }
+  },
+  {
+    "id": "update-field",
+    "title": "Change a field on a pass",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.patchPassesById"
+    ],
+    "files": {
+      "ts": "update-field.ts",
+      "curl": "update-field.sh"
+    }
+  },
+  {
+    "id": "stale-write",
+    "title": "Send a stale version",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.patchPassesById"
+    ],
+    "files": {
+      "ts": "stale-write.ts",
+      "curl": "stale-write.sh"
+    },
+    "expect": "fails"
+  },
+  {
+    "id": "void-pass",
+    "title": "Void a pass",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.postPassesByIdVoid"
+    ],
+    "files": {
+      "ts": "void-pass.ts",
+      "curl": "void-pass.sh"
+    }
+  },
+  {
+    "id": "unvoid-pass",
+    "title": "Undo a void",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.postPassesByIdUnvoid"
+    ],
+    "files": {
+      "ts": "unvoid-pass.ts",
+      "curl": "unvoid-pass.sh"
+    }
+  },
+  {
+    "id": "bulk-void",
+    "title": "Void many passes",
+    "guide": "update-a-pass",
+    "ops": [
+      "passes.postPassesBulk"
+    ],
+    "files": {
+      "ts": "bulk-void.ts",
+      "curl": "bulk-void.sh"
+    }
+  }
+]

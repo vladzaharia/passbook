@@ -10,6 +10,7 @@ import { pushBudgetOf } from '../passes/change-messages.ts';
 import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { budgetOutcomes, providerBudgets } from '../wallet-providers/notify-budget.ts';
 import { actorOf } from './actor.ts';
 import type { DesignCache } from './apply-action.ts';
@@ -264,7 +265,7 @@ export async function applyChunk(
   const done = await handledPassIds(ctx.env.DB, broadcastId, page.ids);
   const cache: MessagingInputs = new Map();
   const change = {
-    plan: planOf(row),
+    plan: planOf(row, await readOrgTimeZone(ctx.env.DB, row.org_id)),
     fields: new Map() as FieldCache,
     designs: new Map() as DesignCache,
   };

@@ -1,0 +1,78 @@
+[
+  {
+    "id": "import-sample",
+    "title": "Download the template sample file",
+    "guide": "import-auto-map",
+    "ops": [
+      "templates.getTemplatesByIdSampleCsv"
+    ],
+    "files": {
+      "ts": "import-sample.ts",
+      "curl": "import-sample.sh"
+    }
+  },
+  {
+    "id": "import-auto",
+    "title": "Import a CSV with auto mapping",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImports"
+    ],
+    "files": {
+      "ts": "import-auto.ts",
+      "curl": "import-auto.sh"
+    }
+  },
+  {
+    "id": "import-fix-cells",
+    "title": "Fix a cell without editing the file",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImportsByIdCheck"
+    ],
+    "files": {
+      "ts": "import-fix-cells.ts",
+      "curl": "import-fix-cells.sh"
+    },
+    "sandbox": "IMPORT_NOT_FOUND"
+  },
+  {
+    "id": "import-commit",
+    "title": "Commit an import",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImportsByIdCommit"
+    ],
+    "files": {
+      "ts": "import-commit.ts",
+      "curl": "import-commit.sh"
+    },
+    "sandbox": "IMPORT_NOT_FOUND"
+  },
+  {
+    "id": "import-status",
+    "title": "Read an import",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.getPassImportsById"
+    ],
+    "files": {
+      "ts": "import-status.ts",
+      "curl": "import-status.sh"
+    },
+    "sandbox": "IMPORT_NOT_FOUND"
+  },
+  {
+    "id": "import-undo",
+    "title": "Undo an import",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImportsByIdUndo"
+    ],
+    "files": {
+      "ts": "import-undo.ts",
+      "curl": "import-undo.sh"
+    },
+    "sandbox": "IMPORT_NOT_FOUND"
+  }
+]

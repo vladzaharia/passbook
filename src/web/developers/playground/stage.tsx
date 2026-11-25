@@ -15,6 +15,9 @@ const CHANNEL_LABEL: Record<Channel, string> = {
   samsung: 'Samsung',
   paper: 'Paper',
 };
+/** The tallest a printed page draws: beside the cards, and alone. */
+const ALL_PAPER_H = 420;
+const ONE_PAPER_H = 640;
 const CAPTION = {
   apple: 'Apple Wallet',
   google: 'Google Wallet',
@@ -63,8 +66,15 @@ export function Stage({
   onChannel: (c: Channel) => void;
   onFace: (f: Face) => void;
 }) {
-  const apple = source ? <ApplePane source={source} face={face} /> : <Skel ratio="320/420" />;
-  const paper = <PaperPane source={source} image={paperImage} />;
+  const appleOf = (label?: string) =>
+    source ? (
+      <ApplePane source={source} face={face} onFace={onFace} label={label} />
+    ) : (
+      <Skel ratio="320/420" />
+    );
+  const paperOf = (maxHeight: number) => (
+    <PaperPane source={source} image={paperImage} maxHeight={maxHeight} />
+  );
   return (
     <section className="stage-wrap" aria-label="Previews">
       <div className="wrap-row g3">
@@ -73,16 +83,6 @@ export function Stage({
           value={channel}
           onChange={onChannel}
           options={CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABEL[c] }))}
-        />
-        <Seg
-          label="Side"
-          value={face}
-          onChange={onFace}
-          className="only-d"
-          options={[
-            { value: 'front', label: 'Front' },
-            { value: 'back', label: 'Back' },
-          ]}
         />
         <span className="xs muted push row g1 status" role="status">
           {freshness === 'updating' ? (
@@ -114,25 +114,45 @@ export function Stage({
             tabIndex={0}
           >
             <figure data-channel="apple">
-              {apple}
+              {appleOf('Apple side')}
               <figcaption>{CAPTION.apple}</figcaption>
             </figure>
             <figure data-channel="google">
-              <WalletPane target="google" previews={wallets} face={face} />
+              <WalletPane
+                target="google"
+                previews={wallets}
+                face={face}
+                onFace={onFace}
+                label="Google side"
+              />
               <figcaption>{CAPTION.google}</figcaption>
             </figure>
             <figure data-channel="samsung">
-              <WalletPane target="samsung" previews={wallets} face={face} />
+              <WalletPane
+                target="samsung"
+                previews={wallets}
+                face={face}
+                onFace={onFace}
+                label="Samsung side"
+              />
               <figcaption>{CAPTION.samsung}</figcaption>
             </figure>
             <figure data-channel="paper">
-              {paper}
+              {paperOf(ALL_PAPER_H)}
               <figcaption>{CAPTION.paper}</figcaption>
             </figure>
           </section>
         ) : (
           <div className="one">
-            <ChannelPreviews source={source} apple={apple} paper={paper} value={channel} />
+            <ChannelPreviews
+              source={source}
+              apple={appleOf()}
+              paper={paperOf(ONE_PAPER_H)}
+              value={channel}
+              walletNotes={false}
+              face={face}
+              onFace={onFace}
+            />
           </div>
         )}
       </div>

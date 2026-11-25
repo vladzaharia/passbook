@@ -2,7 +2,7 @@ import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
 import { useChangeCount } from '../../lib/change-count.ts';
 import { cn } from '../../lib/cn.ts';
 import { WizardStepContext } from './step-context.ts';
-import type { WizardModel } from './use-wizard.ts';
+import type { WizardStepView } from './wizard-types.ts';
 
 /**
  * The step body: its heading, the slide from the direction of travel, and the one line a refused
@@ -10,13 +10,13 @@ import type { WizardModel } from './use-wizard.ts';
  * heading takes focus; on first render focus is the dialog's (the `data-autofocus` field).
  * `level` is 3 under a dialog's title and 2 on a page under its h1.
  */
-export function WizardStep<Id extends string>({
+export function WizardStep({
   wizard,
   level = 3,
   notice,
   children,
 }: {
-  wizard: WizardModel<Id>;
+  wizard: WizardStepView;
   level?: 2 | 3;
   /** At the top of the step, above the heading. */
   notice?: ReactNode;

@@ -16,6 +16,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   playground: () => import('../playground/index.tsx'),
   quickstart: () => import('../quickstart/index.tsx'),
   workbench: () => import('../workbench/index.tsx'),
+  'hero-start': () => import('../workbench/hero-start.ts'),
   keys: () => import('../keys/index.tsx'),
   run: () => import('../console/run-entry.ts'),
   account: async () => {
@@ -36,6 +37,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
  */
 const HOLD_UNTIL_MOUNTED = (el: HTMLElement) =>
   el.dataset.island === 'quickstart' ||
+  el.dataset.island === 'logs' ||
   (el.dataset.island === 'run' && el.dataset.mode === 'console');
 
 export function mountIslands(root: ParentNode = document): void {

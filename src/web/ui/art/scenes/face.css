@@ -28,6 +28,9 @@
   .wl-face[data-replay][data-scene="cheer"][data-run] [data-smile] {
     animation: wl-s-face-smile 1.4s ease-in-out;
   }
+  .wl-face[data-replay][data-scene="hop"][data-run] [data-body] {
+    animation: wl-s-face-hop 480ms var(--art-mv);
+  }
   .wl-face[data-replay][data-scene="post"][data-run] [data-letter] {
     animation: wl-s-face-post 1.4s ease-in-out;
   }
@@ -91,6 +94,22 @@
   18%,
   56% {
     scale: 1.25 1.2;
+  }
+}
+/* A step done: up 4 units, down in a squash (the quickstart bar's head). */
+@keyframes wl-s-face-hop {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+  40% {
+    translate: 0 -4px;
+    scale: 0.98 1.03;
+  }
+  74% {
+    translate: 0 0;
+    scale: 1.06 0.94;
   }
 }
 @keyframes wl-s-face-post {

@@ -3,16 +3,28 @@ import type { PaperKind } from '../../../passkit/template/paper.ts';
 import { HALF_FOOT, paperBoxes } from '../../../passkit/template/paper-geometry.ts';
 import { PAPER_COPY } from '../../../shared/copy/print.ts';
 import { buddyPose } from '../../../web/paper/ticket-buddy.tsx';
+import { BAND, bandFit, bandTitleWidth } from '../../../web/paper/ticket-fit.ts';
 import {
   compactBefore,
   doorRows,
   doorWhen,
   faceLines,
   faceNotesFit,
+  folds,
 } from '../../../web/paper/ticket-text.ts';
+import { fitWidths } from '../../../web/paper/ticket-widths.ts';
 import { drawBuddy } from './pdf-buddy.ts';
 import { drawInfo } from './pdf-draw-info.ts';
-import { ART_POS, codeMark, footRow, LBL, plate, specOf, typedCode } from './pdf-draw-parts.ts';
+import {
+  ART_POS,
+  codeMark,
+  footRow,
+  LBL,
+  photo,
+  plate,
+  specOf,
+  typedCode,
+} from './pdf-draw-parts.ts';
 import { fadeState } from './pdf-gstate.ts';
 import { type Box, COLORS, type Pen, type TextStyle } from './pdf-kit.ts';
 import type { Sheet } from './pdf-sheet.ts';
@@ -31,13 +43,12 @@ function doorFacts(pen: Pen, s: Sheet, x: number, w: number, bottom: number): vo
   pen.line(x, top + 0.125, x + w, top + 0.125, COLORS.hair, 0.25);
   const gap = 4;
   const natural = rows.map((r) => Math.max(pen.measure(r.label, LBL), pen.measure(r.text, value)));
-  const spare = w - natural.reduce((a, b) => a + b, 0) - gap * (rows.length - 1);
-  // flex: 1 1 auto: each takes its content plus an equal share of what is left (or shrinks).
-  const widths = natural.map((n) => Math.max(4, n + spare / rows.length));
+  // Boxes keep their text's width plus an equal share of the slack; only the widest give way.
+  const widths = fitWidths(natural, w - gap * (rows.length - 1));
   let at = x;
   for (const [i, r] of rows.entries()) {
     const cw = widths[i] ?? 4;
-    pen.text(r.label, at, top + 2.65, LBL);
+    pen.text(pen.wrap(r.label, cw, LBL, 1)[0] ?? '', at, top + 2.65, LBL);
     pen.para(r.text, at, top + 2.65 + pen.lineHeight(LBL), cw, value, { maxLines: 1 });
     at += cw + gap;
   }
@@ -65,16 +76,30 @@ function band(pen: Pen, s: Sheet, face: Box, h: number): void {
     }
   }
   const fg = mono ? COLORS.ink : c.colors.fg;
-  const x = b.x + 6.5;
-  const top = b.y + 5.5;
-  plate(pen, s, { x, y: top }, 9);
+  const x = b.x + BAND.padX;
+  const top = b.y + BAND.padY;
+  plate(pen, s, { x, y: top }, BAND.plate);
   const org: TextStyle = { size: 2.8222, font: 'semibold', color: fg, ls: 0.02 };
-  pen.text(c.brand, x + (c.logo ? 11.4 : 0), top + (9 - pen.lineHeight(org)) / 2, org);
+  pen.text(c.brand, x + (c.logo ? 11.4 : 0), top + (BAND.plate - pen.lineHeight(org)) / 2, org);
+  if (c.photo)
+    photo(
+      pen,
+      s,
+      {
+        x: b.x + b.w - BAND.padX - BAND.photo,
+        y: b.y + h - BAND.padY - BAND.photo,
+        w: BAND.photo,
+        h: BAND.photo,
+      },
+      2,
+    );
   const kicker: TextStyle = { ...LBL, color: mono ? COLORS.muted : c.colors.label };
-  const title: TextStyle = { size: 6.7028, font: 'semibold', color: fg, ls: -0.01, lh: 1.08 };
-  const lines = pen.wrap(c.title, (b.w - 13) * 0.8, title, h < 44 ? 2 : 3);
+  const width = bandTitleWidth(b.w, c.photo);
+  const fit = bandFit(c.title, width, h);
+  const title: TextStyle = { size: fit.size, font: 'semibold', color: fg, ls: -0.01, lh: BAND.lh };
+  const lines = pen.wrap(c.title, width, title, fit.lines);
   const blockH = pen.lineHeight(kicker) + 1 + lines.length * pen.lineHeight(title);
-  let y = b.y + h - 5.5 - blockH;
+  let y = b.y + h - BAND.padY - blockH;
   pen.text(c.kicker, x, y, kicker);
   y += pen.lineHeight(kicker) + 1;
   for (const l of lines) {
@@ -113,9 +138,15 @@ function faceBody(pen: Pen, s: Sheet, face: Box, top: number, bottom: number, ha
   if (!c.facts.length) return;
   const h = factsH;
   const n = c.facts.length;
-  const fw = (w - 2 * (n - 1)) / n;
+  const widths = fitWidths(
+    c.facts.map((f) => Math.max(pen.measure(f.label, LBL), pen.measure(f.text, value)) + 5.4),
+    w - 2 * (n - 1),
+  );
+  let bx = x;
   for (const [i, f] of c.facts.entries()) {
-    const box = { x: x + i * (fw + 2), y: bottom - 5.5 - h, w: fw, h };
+    const fw = widths[i] ?? 0;
+    const box = { x: bx, y: bottom - 5.5 - h, w: fw, h };
+    bx += fw + 2;
     pen.strokeBox(
       { x: box.x + 0.15, y: box.y + 0.15, w: box.w - 0.3, h: box.h - 0.3 },
       COLORS.hair,
@@ -174,7 +205,7 @@ export function drawFull(pen: Pen, s: Sheet, half: boolean): void {
   const pose = design.buddy ? buddyPose(c.kind, c.noun) : null;
   const boxes = paperBoxes(design.size, c.kind as PaperKind, {
     buddy: pose !== null,
-    fold: design.fold,
+    fold: design.fold && folds(c),
     mark: s.mark,
   });
   const t = boxes.ticket as Box;

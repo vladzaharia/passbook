@@ -79,4 +79,5 @@ export * from './wizard/wizard-result.tsx';
 export * from './wizard/wizard-review.tsx';
 export * from './wizard/wizard-step.tsx';
 export * from './wizard/wizard-stepper.tsx';
+export * from './wizard/wizard-types.ts';
 export * from './wizard.tsx';
