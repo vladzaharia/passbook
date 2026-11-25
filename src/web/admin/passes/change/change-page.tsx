@@ -1,5 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { voidConfirm } from '../../../lib/confirms.ts';
 import { selectionMovedConfirm } from '../../../lib/confirms-change.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
@@ -255,7 +256,7 @@ export function ChangePage({ search }: { search: ChangeSearch }) {
   if (scope.isLoading) body = <Skeleton className="h-64" />;
   else if (scope.isError)
     body = <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  else if (!orgId) body = <EmptyState art="building" title="Choose an organization" />;
+  else if (!orgId) return <OrgChooser />;
   else if (!allowed) return <ForbiddenPage />;
   else if (search.importId && imported.isError)
     body = (

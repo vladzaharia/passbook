@@ -9,13 +9,19 @@ export async function developerLimit(ctx: ServiceContext, orgId: string): Promis
   return value === null ? null : typeof value === 'number' ? value : 0;
 }
 
-/** Polaris ID is reachable, safe to write and the developer group is configured. */
+/** Polaris ID is reachable, healthy, live (not dry run), not frozen, and the developer group is the one sign-in reads. */
 export async function idpReady(ctx: ServiceContext): Promise<boolean> {
-  const env = ctx.env as { IDP?: unknown };
-  if (!idpConfigured(env)) return false;
+  if (!idpConfigured(ctx.env)) return false;
   try {
-    const health = await idpClient(env).health();
-    return health.ok && health.unsafe.length === 0 && !!health.groups.developer;
+    const health = await idpClient(ctx.env).health();
+    return (
+      health.ok &&
+      health.unsafe.length === 0 &&
+      health.mode === 'live' &&
+      !health.frozen &&
+      Boolean(health.groups.developer) &&
+      health.groups.developer === ctx.env.OIDC_DEVELOPER_GROUP
+    );
   } catch {
     ctx.log.warn('developer_access.idp_unhealthy', { code: 'IDP_UNAVAILABLE' });
     return false;

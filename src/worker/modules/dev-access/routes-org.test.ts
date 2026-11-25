@@ -14,6 +14,7 @@ import { invitationByHash } from './repo.ts';
 
 const DAY = 86_400_000;
 let h: TestHarness;
+const ctxForTest = { ref: 'test', reason: 'test', actor: { kind: 'system', job: 'test' } } as const;
 let idp: FakeIdp;
 let failMail = false;
 
@@ -162,14 +163,33 @@ describe('POST /orgs/{id}/developer-invitations', () => {
       503,
       'IDP_UNAVAILABLE',
     );
-    const wrong = createFakeIdp();
-    wrong.frozen = true;
+    const wrong = createFakeIdp({ developerGroup: 'someone_else' });
     installFakeIdp(h.env, wrong);
     await expectProblem(
       await invite(session.headers, { email: 'd@a.test' }),
       503,
       'IDP_UNAVAILABLE',
     );
+    installFakeIdp(h.env, createFakeIdp({ developerGroup: null }));
+    await expectProblem(
+      await invite(session.headers, { email: 'd@a.test' }),
+      503,
+      'IDP_UNAVAILABLE',
+    );
+    expect(await rows('developer_invitations')).toHaveLength(0);
+  });
+
+  it('is refused in dry run, while frozen and when the binding is not ok', async () => {
+    const { session } = await member('org_admin');
+    for (const fake of [createFakeIdp({ mode: 'dry_run' }), createFakeIdp()]) {
+      if (fake.mode === 'live') await fake.freeze('test', ctxForTest);
+      installFakeIdp(h.env, fake);
+      await expectProblem(
+        await invite(session.headers, { email: 'd@a.test' }),
+        503,
+        'IDP_UNAVAILABLE',
+      );
+    }
     expect(await rows('developer_invitations')).toHaveLength(0);
   });
 

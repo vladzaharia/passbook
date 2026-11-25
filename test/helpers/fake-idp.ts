@@ -209,7 +209,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
         blocked: groupsApi.blockedTargets(),
         groups: {
           console: 'passbook_console',
-          developer: 'passbook_developers',
+          developer:
+            options.developerGroup === undefined ? 'passbook_developers' : options.developerGroup,
           users: 'passbook_users',
         },
         layout: 'v2',

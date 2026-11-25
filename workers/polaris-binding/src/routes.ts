@@ -8,8 +8,8 @@ export function routes(layout: Layout) {
   const id = (kind: string, v: string) => encodeURIComponent(assertId(kind, v));
   const sub = (v: string) => encodeURIComponent(assertSubject(v));
   return {
-    groupSearch: (name: string) =>
-      `${base}/user-groups?search=${encodeURIComponent(name)}&pagination[limit]=100`,
+    groupSearch: (name: string, page = 1) =>
+      `${base}/user-groups?search=${encodeURIComponent(name)}&pagination[limit]=100${page > 1 ? `&pagination[page]=${page}` : ''}`,
     groups: `${base}/user-groups`,
     groupPage: (page: number) =>
       `${base}/user-groups?pagination[limit]=100&pagination[page]=${page}`,

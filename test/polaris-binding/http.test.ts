@@ -141,7 +141,7 @@ describe('error mapping', () => {
   ])('answers %i as %s', async (status, code) => {
     await resetLedger();
     const s = setup();
-    s.pocket.s.failWith = { match: /user-groups\//, status };
+    s.pocket.s.failWith = { match: /user-groups/, status };
     const run = s.api.apply('u1', { add: ['developer'] }, ctx());
     const expected = status === 404 ? 'IDP_UNSAFE_CONFIG' : code;
     await expect(run).rejects.toThrow(new RegExp(`^${expected}`));
