@@ -7,7 +7,7 @@ const ctx: WriteCtx = { ref: 'r', reason: 't', actor: { kind: 'system', job: 'te
 describe('fake IDP', () => {
   it('signup grants the kind roles to a created account', async () => {
     const idp = createFakeIdp();
-    const s = await idp.createSignup('member_developer', ctx);
+    const s = await idp.createSignup({ kind: 'member_developer' }, ctx);
     if ('dryRun' in s) throw new Error('dry');
     idp.completeSignup(s.tokenId, 'u1');
     await idp.proveSignup([s.tokenId]);
@@ -20,7 +20,9 @@ describe('fake IDP', () => {
   it('dry run answers without writing', async () => {
     const idp = createFakeIdp();
     idp.addAccount('u', { class: 'created' });
-    expect(await idp.createSignup('member', { ...ctx, dryRun: true })).toEqual({ dryRun: true });
+    expect(await idp.createSignup({ kind: 'member' }, { ...ctx, dryRun: true })).toEqual({
+      dryRun: true,
+    });
     expect(await idp.apply('u', { add: ['console'] }, { ...ctx, dryRun: true })).toMatchObject({
       added: ['console'],
       dryRun: true,
@@ -73,7 +75,7 @@ describe('fake IDP', () => {
     idp.addAccount('u', { class: 'created' });
     expect(await idp.freeze('why', ctx)).toBe('frozen');
     expect(await idp.freeze('again', ctx)).toBe('already');
-    await expect(idp.createSignup('member', ctx)).rejects.toThrow(/^IDP_FROZEN/);
+    await expect(idp.createSignup({ kind: 'member' }, ctx)).rejects.toThrow(/^IDP_FROZEN/);
     await expect(idp.apply('u', { add: ['console'] }, ctx)).rejects.toThrow(/^IDP_FROZEN/);
     await expect(idp.setDisabled('u', true, ctx)).rejects.toThrow(/^IDP_FROZEN/);
     expect((await idp.lookup('u')).roles).toEqual([]);
@@ -102,6 +104,80 @@ describe('fake IDP', () => {
     await budget.apply('u', { add: ['console'] }, ctx);
     await expect(budget.apply('u', { add: ['developer'] }, ctx)).rejects.toThrow(/^IDP_BUDGET/);
     const breaker = createFakeIdp({ breaker: 0 });
-    await expect(breaker.createSignup('member', ctx)).rejects.toThrow(/^IDP_BREAKER/);
+    await expect(breaker.createSignup({ kind: 'member' }, ctx)).rejects.toThrow(/^IDP_BREAKER/);
+  });
+
+  it('creates groups without adopting, and refuses to delete one in use', async () => {
+    const idp = createFakeIdp();
+    idp.addAccount('u', { class: 'created' });
+    const g = await idp.createGroup('crew', 'Crew', ctx);
+    expect(g).toMatchObject({ key: 'crew', kind: 'custom', members: 0 });
+    await expect(idp.createGroup('crew', 'Crew', ctx)).rejects.toThrow(/^IDP_CONFLICT/);
+    await expect(idp.createGroup('Bad Key', 'Crew', ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    await expect(idp.createGroup('console', 'Crew', ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    await expect(idp.ensureRoleGroup('console', ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    expect(await idp.ensureRoleGroup('support', ctx)).toMatchObject({
+      key: 'support',
+      kind: 'role',
+    });
+    await idp.apply('u', { add: ['g:crew'] }, ctx);
+    expect((await idp.groups()).find((x) => x.key === 'crew')?.members).toBe(1);
+    await expect(idp.deleteGroup('crew', ctx)).rejects.toThrow(/^IDP_IN_USE/);
+    await idp.apply('u', { remove: ['g:crew'] }, ctx);
+    await expect(idp.deleteGroup('support', ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    expect(await idp.deleteGroup('crew', { ...ctx, dryRun: true })).toEqual({ dryRun: true });
+    expect(await idp.deleteGroup('crew', ctx)).toBe('deleted');
+    expect(await idp.deleteGroup('crew', ctx)).toBe('gone');
+    await expect(idp.apply('u', { add: ['g:nope'] }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+  });
+
+  it('merges claims, keeps other apps untouched and refuses reserved or unlisted keys', async () => {
+    const idp = createFakeIdp({ claimKeys: ['tier'] });
+    idp.addAccount('u', { class: 'linked', otherClaims: { theirs: 'x' } });
+    idp.addAccount('ext', { class: 'external' });
+    const text = { type: 'text', value: '123' } as const;
+    await idp.setClaims({ subject: 'u' }, { passbook_a: text, tier: text }, ctx);
+    await idp.setClaims({ subject: 'u' }, { passbook_b: { type: 'number', value: 2 } }, ctx);
+    const view = await idp.claims({ subject: 'u' });
+    expect(Object.keys(view.claims).sort()).toEqual(['passbook_a', 'passbook_b', 'tier']);
+    expect(view.claims.passbook_a).toEqual(text);
+    expect(view.otherKeys).toBe(1);
+    expect(await idp.setClaims({ subject: 'u' }, { passbook_a: null }, ctx)).toMatchObject({
+      removed: ['passbook_a'],
+    });
+    for (const key of ['email', 'picture', 'other', 'passbook_']) {
+      await expect(idp.setClaims({ subject: 'u' }, { [key]: text }, ctx)).rejects.toThrow(
+        /^IDP_REFUSED/,
+      );
+    }
+    await expect(idp.setClaims({ subject: 'ext' }, { tier: text }, ctx)).rejects.toThrow(
+      /^IDP_REFUSED/,
+    );
+    await idp.setClaims({ group: 'console' }, { passbook_g: text }, ctx);
+    expect((await idp.claims({ group: 'console' })).claims).toHaveProperty('passbook_g');
+    await expect(idp.claims({ subject: 'nobody' })).rejects.toThrow(/^IDP_NOT_FOUND/);
+    const before = await idp.claims({ subject: 'u' });
+    await idp.setClaims({ subject: 'u' }, { passbook_z: text }, { ...ctx, dryRun: true });
+    expect(await idp.claims({ subject: 'u' })).toEqual(before);
+  });
+
+  it('signup specs carry groups, and the proof matches the invited email', async () => {
+    const idp = createFakeIdp();
+    await idp.createGroup('crew', 'Crew', ctx);
+    await expect(idp.createSignup({ kind: 'platform' }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    await expect(idp.createSignup({ kind: 'member', groups: ['nope'] }, ctx)).rejects.toThrow(
+      /^IDP_REFUSED/,
+    );
+    const s = await idp.createSignup({ kind: 'platform', groups: ['crew'] }, ctx);
+    if ('dryRun' in s) throw new Error('dry');
+    idp.completeSignup(s.tokenId, 'p1', { email: 'p@x.test', emailVerified: true });
+    expect(await idp.proveSignup([s.tokenId], { email: 'P@x.test' })).toMatchObject({
+      subject: 'p1',
+      emailMatch: 'match',
+    });
+    expect((await idp.lookup('p1')).grants).toEqual(['g:crew']);
+    expect((await idp.proveSignup([s.tokenId], { email: 'o@x.test' }))?.emailMatch).toBe(
+      'mismatch',
+    );
   });
 });

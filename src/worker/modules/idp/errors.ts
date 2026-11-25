@@ -43,6 +43,8 @@ export function mapIdpError(error: unknown, log?: Logger): AppError {
       return make('IDP_FROZEN', 503, 'Polaris ID changes are paused. Ask the PassBook owner.');
     case 'IDP_NOT_MANAGED':
       return make('IDP_NOT_MANAGED', 409, "PassBook doesn't manage this Polaris ID account.");
+    case 'IDP_IN_USE':
+      return make('IDP_IN_USE', 409, 'This group still has members or apps.');
     case 'IDP_BREAKER':
       log?.error('idp.breaker', { code: 'IDP_BREAKER' });
       return make('IDP_UNAVAILABLE', 503, IDP_UNAVAILABLE_MESSAGE);

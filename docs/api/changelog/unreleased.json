@@ -792,6 +792,22 @@
     "note": "wallet.messaged records what a wallet did with a change message: notified, updated only (the card changed, no alert) or not accepted."
   },
   {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].passVersion: field removed",
+    "class": "breaking",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].passVersion: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].stale: field removed",
+    "class": "breaking",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].stale: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
     "class": "additive",
     "operationId": "passes.getPassesBulkRunsById",
@@ -2675,6 +2691,46 @@
     "op": "POST /api/v1/passes",
     "change": "idempotency-key reserved prefixes",
     "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/print/drawn operation removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrintDrawn",
+    "op": "POST /api/v1/passes/{id}/print/drawn",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.passVersion: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.passVersion: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.stale: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.stale: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.passVersion: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.passVersion: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.stale: field removed",
+    "class": "breaking",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.stale: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",

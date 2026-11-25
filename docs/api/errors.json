@@ -1807,57 +1807,12 @@
       ]
     },
     {
-      "code": "IDP_BUDGET",
-      "statuses": [
-        429
-      ],
-      "modules": [
-        "idp"
-      ]
-    },
-    {
-      "code": "IDP_CONFLICT",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "idp"
-      ]
-    },
-    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
       ],
       "modules": [
         "sign-in"
-      ]
-    },
-    {
-      "code": "IDP_FROZEN",
-      "statuses": [
-        503
-      ],
-      "modules": [
-        "idp"
-      ]
-    },
-    {
-      "code": "IDP_NOT_MANAGED",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "idp"
-      ]
-    },
-    {
-      "code": "IDP_REFUSED",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "idp"
       ]
     },
     {

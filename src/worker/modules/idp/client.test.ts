@@ -22,6 +22,7 @@ const MAP: [string, string, number, string][] = [
   ['IDP_CONFLICT', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
   ['IDP_FROZEN', 'IDP_FROZEN', 503, 'Polaris ID changes are paused. Ask the PassBook owner.'],
   ['IDP_NOT_MANAGED', 'IDP_NOT_MANAGED', 409, "PassBook doesn't manage this Polaris ID account."],
+  ['IDP_IN_USE', 'IDP_IN_USE', 409, 'This group still has members or apps.'],
   ['IDP_SOMETHING_NEW', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
 ];
 
@@ -35,7 +36,7 @@ describe('idpClient', () => {
     const idp = createFakeIdp();
     idp.failNext(fromBinding);
     const err = await idpClient({ IDP: idp.binding })
-      .createSignup('member', ctx)
+      .createSignup({ kind: 'member' }, ctx)
       .catch((e: unknown) => e);
     expect(err).toBeInstanceOf(AppError);
     expect(err).toMatchObject({ code, status, message });
@@ -95,13 +96,20 @@ describe('idpClient', () => {
     expect(idpConfigured({ IDP: createFakeIdp().binding })).toBe(true);
     const calls = [
       client.health(),
-      client.createSignup('member', ctx),
+      client.createSignup({ kind: 'member' }, ctx),
       client.deleteSignup('t', ctx),
       client.proveSignup(['t']),
       client.findByVerifiedEmail('a@b.c', ctx),
       client.lookup('s'),
       client.apply('s', { add: ['console'] }, ctx),
       client.setDisabled('s', true, ctx),
+      client.groups(),
+      client.createGroup('crew', 'Crew', ctx),
+      client.ensureRoleGroup('support', ctx),
+      client.updateGroup('crew', { friendlyName: 'Crew' }, ctx),
+      client.deleteGroup('crew', ctx),
+      client.claims({ subject: 's' }),
+      client.setClaims({ subject: 's' }, { passbook_x: null }, ctx),
       client.snapshot(ctx),
       client.freeze('why', ctx),
       client.calls(0),
@@ -113,7 +121,7 @@ describe('idpClient', () => {
   it('passes results through', async () => {
     const idp = createFakeIdp();
     const client = idpClient({ IDP: idp.binding });
-    const signup = await client.createSignup('developer', ctx);
+    const signup = await client.createSignup({ kind: 'developer' }, ctx);
     if ('dryRun' in signup) throw new Error('expected a signup');
     expect(await client.proveSignup([signup.tokenId])).toBeNull();
     idp.completeSignup(signup.tokenId, 'sub-1');

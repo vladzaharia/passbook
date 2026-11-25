@@ -1,37 +1,37 @@
 import type {
-  AccountClass,
   ApplyResult,
   IdpCall,
   IdpHealth,
+  IdpLookup,
   IdpRpc,
   IdpSignup,
+  IdpSnapshot,
   Role,
   SignupKind,
-  WritableRole,
+  SnapshotMember,
+  Target,
 } from '../../src/worker/modules/idp/types.ts';
+import { type FakeAccount, type FakeGroup, groupMethods } from './fake-idp-groups.ts';
 
-const KIND_ROLES: Record<SignupKind, WritableRole[]> = {
+export type { FakeAccount, FakeGroup } from './fake-idp-groups.ts';
+
+const KIND_ROLES: Record<SignupKind, Target[]> = {
   member: ['console'],
   developer: ['developer'],
   member_developer: ['developer', 'console'],
+  platform: [],
 };
-
-export interface FakeAccount {
-  class: AccountClass;
-  roles: Set<Role>;
-  /** Roles PassBook added (a live grant); removing any other role needs `override`. */
-  grants: Set<WritableRole>;
-  disabled: boolean;
-  isAdmin: boolean;
-  email?: string;
-  emailVerified: boolean;
-}
 
 export interface FakeIdp extends IdpRpc {
   /** The `IDP` binding for a test env. */
   binding: IdpRpc;
   /** Signup tokens minted and not deleted, by id. */
-  signups: Map<string, IdpSignup & { kind: SignupKind; ref: string; used: boolean }>;
+  signups: Map<
+    string,
+    IdpSignup & { kind: SignupKind; targets: Target[]; ref: string; used: boolean }
+  >;
+  /** Role groups (seeded: console, developer), custom and adopted groups, by role or key. */
+  groupStore: Map<string, FakeGroup>;
   accounts: Map<string, FakeAccount>;
   /** Method names called, in order. */
   log: string[];
@@ -42,11 +42,15 @@ export interface FakeIdp extends IdpRpc {
   /** Makes the next call to `method` (or any call with `*`) fail as the binding does: `CODE: text`. */
   failNext(code: string, method?: string): void;
   /** The person finished signup with this token: `proveSignup` now finds them. */
-  completeSignup(tokenId: string, subject: string): void;
+  completeSignup(
+    tokenId: string,
+    subject: string,
+    account?: { email?: string; emailVerified?: boolean },
+  ): void;
   /** Seeds an account that already exists in Polaris ID. */
   addAccount(
     subject: string,
-    init?: Partial<Omit<FakeAccount, 'roles' | 'grants'>> & { roles?: Role[] },
+    init?: Partial<Omit<FakeAccount, 'roles' | 'grants'>> & { roles?: (Role | `g:${string}`)[] },
   ): void;
 }
 
@@ -64,11 +68,21 @@ export function createFakeIdp(
     budget?: number;
     /** Write calls allowed before the breaker answers `IDP_BREAKER`. */
     breaker?: number;
+    /** `CLAIM_KEYS`: exact claim keys outside `passbook_*`. */
+    claimKeys?: string[];
+    /** `CUSTOM_GROUP_LIMIT`. */
+    customLimit?: number;
   } = {},
 ): FakeIdp {
   const now = options.now ?? (() => Date.now());
   const signups: FakeIdp['signups'] = new Map();
   const accounts: FakeIdp['accounts'] = new Map();
+  const groups: FakeIdp['groupStore'] = new Map(
+    (['console', 'developer'] as const).map((role) => [
+      role,
+      { kind: 'role', name: `passbook_${role}`, friendlyName: `passbook_${role}`, otherClients: 0 },
+    ]),
+  );
   const proofs = new Map<string, string>();
   const calls: IdpCall[] = [];
   const log: string[] = [];
@@ -144,21 +158,49 @@ export function createFakeIdp(
     idp.writes += 1;
   };
 
+  const newAccount = (): FakeAccount => ({
+    class: 'created',
+    roles: new Set(),
+    grants: new Set(),
+    disabled: false,
+    isAdmin: false,
+    emailVerified: false,
+  });
+  const groupsApi = groupMethods({
+    accounts,
+    groups,
+    claimKeys: options.claimKeys ?? [],
+    customLimit: options.customLimit ?? 50,
+    enter,
+    dry,
+    write,
+    refuse,
+    account,
+    protect,
+  });
+
   const idp: FakeIdp = {
     binding: undefined as unknown as IdpRpc,
     signups,
     accounts,
+    groupStore: groups,
     log,
     writes: 0,
     frozen: false,
     mode: options.mode ?? 'live',
     failNext: (code, method = '*') => void failures.push({ code, method }),
-    completeSignup: (tokenId, subject) => {
+    completeSignup: (tokenId, subject, account) => {
       const s = signups.get(tokenId);
       if (!s) throw new Error(`No signup ${tokenId}`);
       s.used = true;
       proofs.set(tokenId, subject);
+      if (account) {
+        const a = accounts.get(subject) ?? newAccount();
+        Object.assign(a, account);
+        accounts.set(subject, a);
+      }
     },
+    ...groupsApi,
     addAccount: (subject, init = {}) => {
       const { roles = [], ...rest } = init;
       accounts.set(subject, {
@@ -191,8 +233,12 @@ export function createFakeIdp(
         budget: {},
       };
     },
-    async createSignup(kind, ctx) {
+    async createSignup(spec, ctx) {
       enter('createSignup', true);
+      const keys = spec.groups ?? [];
+      if (keys.length > 5 || (spec.kind === 'platform' && keys.length === 0)) refuse('IDP_REFUSED');
+      const targets: Target[] = [...KIND_ROLES[spec.kind], ...keys.map((k): Target => `g:${k}`)];
+      groupsApi.assertTargets(targets);
       if (dry(ctx.dryRun)) return { dryRun: true };
       write();
       const tokenId = `tok-${++n}`;
@@ -201,7 +247,7 @@ export function createFakeIdp(
         url: `https://id.test/st/secret-${n}`,
         expiresAt: now() + 3_600_000,
       };
-      signups.set(tokenId, { ...signup, kind, ref: ctx.ref, used: false });
+      signups.set(tokenId, { ...signup, kind: spec.kind, targets, ref: ctx.ref, used: false });
       return signup;
     },
     async deleteSignup(tokenId, ctx) {
@@ -214,31 +260,32 @@ export function createFakeIdp(
       signups.delete(tokenId);
       return 'deleted';
     },
-    async proveSignup(tokenIds, subject) {
+    async proveSignup(tokenIds, opts = {}) {
       enter('proveSignup');
       const matches = [];
       for (const tokenId of tokenIds) {
         const found = proofs.get(tokenId);
-        if (!found || (subject !== undefined && subject !== found)) continue;
-        const kind = signups.get(tokenId)?.kind ?? 'member';
-        const roles = KIND_ROLES[kind];
-        const acct = accounts.get(found) ?? {
-          class: 'created' as const,
-          roles: new Set<Role>(),
-          grants: new Set<WritableRole>(),
-          disabled: false,
-          isAdmin: false,
-          emailVerified: false,
-        };
-        for (const role of roles) {
-          acct.roles.add(role);
-          acct.grants.add(role);
+        if (!found || (opts.subject !== undefined && opts.subject !== found)) continue;
+        const acct = accounts.get(found) ?? newAccount();
+        for (const target of signups.get(tokenId)?.targets ?? []) {
+          acct.roles.add(target);
+          acct.grants.add(target);
         }
         accounts.set(found, acct);
         matches.push({ tokenId, subject: found });
       }
       const first = matches[0];
-      return first ? { ...first, matches } : null;
+      if (!first) return null;
+      const acct = accounts.get(first.subject);
+      const emailMatch =
+        opts.email === undefined || !acct
+          ? undefined
+          : !acct.emailVerified
+            ? ('unverified' as const)
+            : acct.email === opts.email.trim().toLowerCase()
+              ? ('match' as const)
+              : ('mismatch' as const);
+      return { ...first, matches, ...(emailMatch ? { emailMatch } : {}) };
     },
     async findByVerifiedEmail(email) {
       enter('findByVerifiedEmail');
@@ -253,11 +300,11 @@ export function createFakeIdp(
       enter('lookup');
       const a = account(subject);
       return {
-        roles: [...a.roles],
+        roles: [...a.roles] as IdpLookup['roles'],
         disabled: a.disabled,
         isAdmin: a.isAdmin,
         class: a.class,
-        grants: [...a.grants],
+        grants: [...a.grants] as Target[],
       };
     },
     async apply(subject, delta, ctx) {
@@ -265,6 +312,7 @@ export function createFakeIdp(
       const a = account(subject);
       protect(subject, a);
       if (a.disabled && delta.add?.length) refuse('IDP_REFUSED');
+      groupsApi.assertTargets([...(delta.add ?? []), ...(delta.remove ?? [])]);
       const isDry = dry(ctx.dryRun);
       const result: ApplyResult = { added: [], removed: [], skipped: [], dryRun: isDry };
       for (const role of delta.add ?? []) {
@@ -308,7 +356,7 @@ export function createFakeIdp(
     },
     async snapshot() {
       enter('snapshot', true);
-      const roles: Awaited<ReturnType<IdpRpc['snapshot']>>['roles'] = {};
+      const roles: Record<string, { name: string; members: SnapshotMember[] }> = {};
       for (const [subject, a] of accounts)
         for (const role of a.roles) {
           const entry = roles[role] ?? { name: role, members: [] };
@@ -317,10 +365,10 @@ export function createFakeIdp(
             subject,
             disabled: a.disabled,
             isAdmin: a.isAdmin,
-            grant: a.grants.has(role as WritableRole),
+            grant: a.grants.has(role),
           });
         }
-      return { roles, ended: [] };
+      return { roles: roles as IdpSnapshot['roles'], ended: [] };
     },
     async freeze() {
       enter('freeze');
