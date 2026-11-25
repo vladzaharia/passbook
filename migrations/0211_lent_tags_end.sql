@@ -17,5 +17,5 @@ END;
 DROP TRIGGER tag_bindings_expiry_fixed;
 CREATE TRIGGER tag_bindings_expiry_fixed BEFORE UPDATE OF expires_at ON tag_bindings
 WHEN NEW.expires_at IS NOT OLD.expires_at AND NOT EXISTS (
-  SELECT 1 FROM nfc_tags t JOIN nfc_tag_types y ON y.id = t.type_id WHERE t.id = NEW.tag_id AND y.use = 'visitor')
+  SELECT 1 FROM nfc_tags t JOIN nfc_tag_types y ON y.id = t.type_id WHERE t.id = NEW.tag_id AND y.org_id = t.org_id AND y.use = 'visitor')
 BEGIN SELECT RAISE(ABORT, 'tag_binding_immutable'); END;
