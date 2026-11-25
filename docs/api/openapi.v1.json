@@ -127358,6 +127358,189 @@
         ]
       }
     },
+    "/api/v1/scan/draft": {
+      "put": {
+        "summary": "Show the amount under review on the customer screen",
+        "tags": [
+          "scan"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+                  },
+                  "actionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "amount": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "actionId",
+                  "amount"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "ref": "0193a1b2-7c00-7000-8000-0000000000aa",
+                "actionId": "pay",
+                "amount": 12
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "screens": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "screens"
+                  ]
+                },
+                "example": {
+                  "screens": 26
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scan.putScanDraft",
+        "x-sdk": {
+          "resource": "terminal.draft",
+          "method": "set",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        },
+        "security": [
+          {
+            "scanner": []
+          }
+        ],
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "ASSET_SLOT",
+          "DEVICE_REQUIRED",
+          "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "INVALID_API_KEY",
+          "RATE_LIMITED",
+          "SCANNER_REPAIR",
+          "SCANNER_UNAUTHENTICATED",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_DRAFT_INVALID",
+          "SCAN_DRAFT_STALE",
+          "SCAN_PASS_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "SCAN_TOO_MANY_MISSES",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "delete": {
+        "summary": "Clear the draft and the ready card on the customer screen",
+        "tags": [
+          "scan"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "ref",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "screens": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "screens"
+                  ]
+                },
+                "example": {
+                  "screens": 26
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scan.deleteScanDraft",
+        "x-sdk": {
+          "resource": "terminal.draft",
+          "method": "clear",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        },
+        "security": [
+          {
+            "scanner": []
+          }
+        ],
+        "x-codes": [
+          "DEVICE_REQUIRED",
+          "FORBIDDEN",
+          "RATE_LIMITED",
+          "SCANNER_UNAUTHENTICATED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/scan/tags/inspect": {
       "post": {
         "summary": "What a tag is now",
@@ -137569,6 +137752,7 @@
                                 "type": "string",
                                 "enum": [
                                   "ready",
+                                  "review",
                                   "ok",
                                   "see_desk"
                                 ]
@@ -138738,6 +138922,10 @@
                               "test": {
                                 "type": "boolean"
                               },
+                              "figure": {
+                                "type": "string",
+                                "maxLength": 24
+                              },
                               "welcome": {
                                 "type": "string",
                                 "maxLength": 40
@@ -138916,6 +139104,7 @@
                         ],
                         "milestone": null,
                         "test": false,
+                        "figure": "$12.00",
                         "welcome": "Welcome to Northwind"
                       }
                     }
@@ -140237,6 +140426,8 @@
           "SCAN_COUNTS_UNAVAILABLE",
           "SCAN_CREDENTIAL_CHANGED",
           "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+          "SCAN_DRAFT_INVALID",
+          "SCAN_DRAFT_STALE",
           "SCAN_EVENT_CHANGED",
           "SCAN_EXPORT_RANGE",
           "SCAN_EXPORT_TOO_LARGE",
@@ -140487,6 +140678,8 @@
           "SCAN_COUNTS_UNAVAILABLE",
           "SCAN_CREDENTIAL_CHANGED",
           "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+          "SCAN_DRAFT_INVALID",
+          "SCAN_DRAFT_STALE",
           "SCAN_EVENT_CHANGED",
           "SCAN_EXPORT_RANGE",
           "SCAN_EXPORT_TOO_LARGE",
@@ -142084,6 +142277,8 @@
           "SCAN_COUNTS_UNAVAILABLE",
           "SCAN_CREDENTIAL_CHANGED",
           "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+          "SCAN_DRAFT_INVALID",
+          "SCAN_DRAFT_STALE",
           "SCAN_EVENT_CHANGED",
           "SCAN_EXPORT_RANGE",
           "SCAN_EXPORT_TOO_LARGE",
@@ -142334,6 +142529,8 @@
           "SCAN_COUNTS_UNAVAILABLE",
           "SCAN_CREDENTIAL_CHANGED",
           "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+          "SCAN_DRAFT_INVALID",
+          "SCAN_DRAFT_STALE",
           "SCAN_EVENT_CHANGED",
           "SCAN_EXPORT_RANGE",
           "SCAN_EXPORT_TOO_LARGE",

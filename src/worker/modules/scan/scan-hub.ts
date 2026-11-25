@@ -17,10 +17,11 @@ import {
 } from './live-auth.ts';
 import { livePlaces } from './live-places.ts';
 import { liveRowFor, liveRowsFor, watches } from './live-render.ts';
-import { LIVE_ROW_TTL_MS, type LiveRingRow, scrubbedEntry } from './live-ring.ts';
+import { LIVE_ROW_TTL_MS, type LiveRingRow } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
-import { liveRingStaleStmt } from './repo-live-render.ts';
+import { type DraftInput, draftToScreens } from './scan-hub-draft.ts';
 import { pulseDevices } from './scan-hub-pulse.ts';
+import { scrubRing } from './scan-hub-scrub.ts';
 import {
   DEVICE_TAG,
   deviceTag,
@@ -204,6 +205,23 @@ export class ScanHub extends DurableObject<AppEnv> {
     return this.toDevice(input, { enroll: ScanLiveEnrollSchema.parse(input.enrollment) }, false);
   }
 
+  /**
+   * A money draft for the customer screens that follow the scanner (null: no ready card of its own
+   * to draft over), and its cancel, which also clears the ready card.
+   */
+  async draft(input: DraftInput & { say: NonNullable<DraftInput['say']> }) {
+    return this.toScreens(input);
+  }
+  async clearDraft(input: Omit<DraftInput, 'say'>) {
+    return this.toScreens(input);
+  }
+
+  private async toScreens(input: DraftInput) {
+    const ctx = liveContext(this.env, input.now);
+    if (!(await this.tenant(input.orgId, input.mode))) return input.say ? null : 0;
+    return draftToScreens(this.ctx, ctx, input, (s, text) => this.send(s, text));
+  }
+
   /** The ids with an open device socket. */
   connected(scannerIds: string[]): string[] {
     return scannerIds.filter((id) => this.ctx.getWebSockets(deviceTag(id)).length > 0);
@@ -266,32 +284,8 @@ export class ScanHub extends DurableObject<AppEnv> {
     if (rows.length) await this.schedule((rows[0]?.row.at ?? now) + LIVE_ROW_TTL_MS);
   }
 
-  /**
-   * Strip identity from entries whose pass is no longer visible (deleted, erased, transferred,
-   * released elsewhere) or whose Wallet has expired, so a holder's name does not sit in storage
-   * until the TTL. The redacted event stays.
-   */
-  private async scrub(ctx: ServiceContext, ring: LiveRingRow[]): Promise<LiveRingRow[]> {
-    const tenant = await this.ctx.storage.get<string>('tenant');
-    const [orgId, mode] = tenant?.split(':') ?? [];
-    const withPass = ring.filter((e) => e.gen !== null);
-    if (!orgId || !mode || !withPass.length) return ring;
-    const now = ctx.clock.now();
-    let stale: Set<number>;
-    try {
-      const { results } = await liveRingStaleStmt(ctx.env.DB, orgId, mode, ring).all<{
-        i: number;
-      }>();
-      stale = new Set(results.map((r) => r.i));
-    } catch {
-      ctx.log.warn('scan.live_scrub_failed', { orgId, code: 'SCAN_LIVE_SCRUB_FAILED' });
-      return ring;
-    }
-    return ring.map((e, i) =>
-      e.gen !== null && (stale.has(i) || (e.validUntil !== null && now > e.validUntil))
-        ? scrubbedEntry(e)
-        : e,
-    );
+  private scrub(ctx: ServiceContext, ring: LiveRingRow[]) {
+    return scrubRing(this.ctx.storage, ctx, ring);
   }
 
   private async schedule(at: number) {

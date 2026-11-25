@@ -4767,6 +4767,10 @@
     "TOKEN_SEAL_MISMATCH",
     "UNAUTHENTICATED"
   ],
+  "scan delete /draft": [
+    "DEVICE_REQUIRED",
+    "SCANNER_UNAUTHENTICATED"
+  ],
   "scan delete /passes/{passId}/notes/{noteId}": [
     "NOTE_HELD",
     "NOTE_NOT_FOUND",
@@ -5927,6 +5931,26 @@
     "TAG_UNREADABLE"
   ],
   "scan post /unpair": [],
+  "scan put /draft": [
+    "ACTOR_CHANGED",
+    "ASSET_SLOT",
+    "DEVICE_REQUIRED",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "INVALID_API_KEY",
+    "SCANNER_REPAIR",
+    "SCANNER_UNAUTHENTICATED",
+    "SCAN_CONFIG_CHANGED",
+    "SCAN_DRAFT_INVALID",
+    "SCAN_DRAFT_STALE",
+    "SCAN_PASS_CHANGED",
+    "SCAN_STAFF_CHANGED",
+    "SCAN_TOO_MANY_MISSES",
+    "TEMPLATE_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
   "scan-display get /preview": [
     "CSRF_ORIGIN",
     "FORBIDDEN",

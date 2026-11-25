@@ -281,6 +281,7 @@ export const SEEDS: Record<string, unknown> = {
   },
   'scan.postScanResolve request': scanRequest,
   'scan.postScanActions request': { ...scanRequest, actionId: 'admit' },
+  'scan.putScanDraft request': { ref: IDS.idem, actionId: 'pay', amount: 12 },
   'scan.postScanScansByScanIdUndo request': { idempotencyKey: IDS.idem, scope },
   'webhooks.postWebhookEndpoints request': {
     url: WEBHOOK_ENDPOINT.url,

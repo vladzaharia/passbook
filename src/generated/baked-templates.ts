@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "3057640c95ab6fef68008160a73a788011f71391";
+export const BAKED_BUILD_HASH = "13ef307aa1be1bb139ab0d99f1948572b9d15577";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -14495,7 +14495,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-store-card",
     "slug": "starter-store-card",
-    "version": "3e01c2017b5fd7bf",
+    "version": "d9ecf0831e2b1201",
     "name": "Balance card",
     "description": "A big balance up front, on a coin strip.",
     "org": null,
@@ -14564,6 +14564,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "minimum": 0,
             "maximum": 1000000,
             "default": 0,
+            "x-format": "currency",
             "x-label": "Balance",
             "x-group": "Balance",
             "x-order": 40
@@ -15035,7 +15036,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 581305781,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/en.lproj/pass.strings"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/en.lproj/pass.strings"
         }
       },
       {
@@ -15049,7 +15050,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/icon@2x.png"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/icon@2x.png"
         }
       },
       {
@@ -15063,7 +15064,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/icon@3x.png"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/icon@3x.png"
         }
       },
       {
@@ -15077,7 +15078,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/logo@2x.png"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/logo@2x.png"
         }
       },
       {
@@ -15091,7 +15092,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/logo@3x.png"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/logo@3x.png"
         }
       },
       {
@@ -15105,7 +15106,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/strip@2x.png"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/strip@2x.png"
         }
       },
       {
@@ -15119,7 +15120,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/strip@3x.png"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/strip@3x.png"
         }
       },
       {
@@ -15133,7 +15134,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 660,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/3e01c2017b5fd7bf/wallets/google/logo.png"
+          "path": "/templates/starter-store-card/d9ecf0831e2b1201/wallets/google/logo.png"
         }
       }
     ],

@@ -2117,6 +2117,18 @@
     "fix": "Create the preview again and use its new id.",
     "retryable": false
   },
+  "SCAN_DRAFT_INVALID": {
+    "title": "Draft not allowed",
+    "when": "A draft shows only a money take or add that this desk may run, within the action's limit.",
+    "fix": "Use a money action and an amount within its limit.",
+    "retryable": false
+  },
+  "SCAN_DRAFT_STALE": {
+    "title": "Read is over",
+    "when": "The scanner has no presented read under a minute old, or its pass changed.",
+    "fix": "Scan the pass again.",
+    "retryable": false
+  },
   "SCAN_EVENT_CHANGED": {
     "title": "Scan event changed",
     "when": "The event's templates or release changed while your request ran.",
