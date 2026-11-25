@@ -109,7 +109,7 @@
   },
   "API_KEY_CREDENTIAL_LIVE_ORG": {
     "title": "Credential scopes are live and one org",
-    "when": "A test-mode key or a platform key asked for a credential scope (scanning:admin or nfc:keys).",
+    "when": "A test-mode key or a platform key asked for a credential scope (scanning:admin, nfc:keys or members:write).",
     "fix": "Mint the key in live mode, for that organization, with an expiry within 90 days.",
     "retryable": false
   },
@@ -3747,6 +3747,54 @@
     "title": "Records path not found",
     "when": "recordsPointer points at nothing in the file.",
     "fix": "Choose another path.",
+    "retryable": false
+  },
+  "DEVELOPER_INVITE_PENDING": {
+    "title": "Developer invitation already pending",
+    "when": "The address already has a pending developer invitation in this organization.",
+    "fix": "Revoke the pending invitation, then invite again.",
+    "retryable": false
+  },
+  "DEVELOPER_INVITE_CONFLICT": {
+    "title": "Developer invitation changed",
+    "when": "The invitation was already revoked or accepted.",
+    "fix": "List the invitations and check its state.",
+    "retryable": false
+  },
+  "IDP_BUDGET": {
+    "title": "Too many Polaris ID setups today",
+    "when": "The platform used its daily allowance of Polaris ID changes.",
+    "fix": "Try again tomorrow.",
+    "retryable": true
+  },
+  "IDP_REFUSED": {
+    "title": "Polaris ID refused the change",
+    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID.",
+    "fix": "Ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_IN_USE": {
+    "title": "Group still in use",
+    "when": "The Polaris ID group still has members or apps, so it cannot be deleted.",
+    "fix": "Remove its members and apps, then delete it.",
+    "retryable": false
+  },
+  "IDP_NOT_MANAGED": {
+    "title": "Account not managed by PassBook",
+    "when": "PassBook did not create this Polaris ID account, so it cannot change it.",
+    "fix": "Change it in Polaris ID.",
+    "retryable": false
+  },
+  "IDP_CONFLICT": {
+    "title": "Polaris ID changed",
+    "when": "The Polaris ID account or group changed while the request ran.",
+    "fix": "Send the request again.",
+    "retryable": true
+  },
+  "DEVELOPER_INVITE_ROLE_NEEDS_SESSION": {
+    "title": "Admin roles need the console",
+    "when": "A key invited a developer with, or removed one who holds, an org or integration admin role.",
+    "fix": "Do it from the console with a recent sign-in.",
     "retryable": false
   }
 }
