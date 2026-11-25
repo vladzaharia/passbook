@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { IdSchema, TimestampSchema } from './common.ts';
 
-export const PRINT_STATUSES = ['active', 'voided'] as const;
+/** `used` is reserved and never written: single use lives on the pass. Removing it would break clients. */
+export const PRINT_STATUSES = ['active', 'voided', 'used'] as const;
 export const PrintStatusSchema = z.enum(PRINT_STATUSES);
 
 /** Why a print ended; `replaced` is a reprint, the rest follow the pass or an explicit void. */

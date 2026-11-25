@@ -776,14 +776,6 @@
     "note": "wallet.messaged records what a wallet did with a change message: notified, updated only (the card changed, no alert) or not accepted."
   },
   {
-    "key": "GET /api/v1/passes/{id}/prints 200.prints[].status: enum value \"used\" removed",
-    "class": "breaking",
-    "operationId": "passes.getPassesByIdPrints",
-    "op": "GET /api/v1/passes/{id}/prints",
-    "change": "200.prints[].status: enum value \"used\" removed",
-    "note": "A print is active or voided. The used status was never written: single use lives on the pass."
-  },
-  {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
     "class": "additive",
     "operationId": "passes.getPassesBulkRunsById",
@@ -2619,22 +2611,6 @@
     "op": "POST /api/v1/passes",
     "change": "idempotency-key reserved prefixes",
     "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
-  },
-  {
-    "key": "POST /api/v1/passes/{id}/prints 200.status: enum value \"used\" removed",
-    "class": "breaking",
-    "operationId": "passes.postPassesByIdPrints",
-    "op": "POST /api/v1/passes/{id}/prints",
-    "change": "200.status: enum value \"used\" removed",
-    "note": "A print is active or voided. The used status was never written: single use lives on the pass."
-  },
-  {
-    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.status: enum value \"used\" removed",
-    "class": "breaking",
-    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
-    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
-    "change": "200.status: enum value \"used\" removed",
-    "note": "A print is active or voided. The used status was never written: single use lives on the pass."
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",
