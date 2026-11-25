@@ -17,7 +17,13 @@ import { filesPort } from './files-port.ts';
 import { recordConnectionAudit } from './repo-sync.ts';
 import { classify } from './runtime.ts';
 import { auditActor } from './service.ts';
-import { assertOrg, assertSafeUrls, parseWith, requireConnector } from './validate.ts';
+import {
+  assertFileIdAllowed,
+  assertOrg,
+  assertSafeUrls,
+  parseWith,
+  requireConnector,
+} from './validate.ts';
 
 type Input = z.infer<typeof TestConfigSchema>;
 type Result = z.infer<typeof TestConfigResponseSchema>;
@@ -105,6 +111,7 @@ export async function openUnsaved(
 ) {
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
+  assertFileIdAllowed(def, input.fileId);
   const config = parseWith(def.configSchema, input.config, 'config');
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema
@@ -131,6 +138,7 @@ export async function testConfig(
   await assertConnectionAuthority(sctx, authority);
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
+  assertFileIdAllowed(def, input.fileId);
   const config = parseWith(def.configSchema, input.config, 'config');
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema

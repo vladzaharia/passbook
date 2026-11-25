@@ -31,6 +31,14 @@ export function requireConnector(type: string): AnyConnector {
   return def;
 }
 
+/** A draft file belongs to a connector that takes uploads. */
+export function assertFileIdAllowed(def: AnyConnector, fileId: string | undefined): void {
+  if (fileId !== undefined && !def.capabilities.upload)
+    throw new ValidationError('This connector takes no uploads.', [
+      { path: 'fileId', message: 'Not supported.' },
+    ]);
+}
+
 export function parseWith<T>(schema: ZodType<T>, value: unknown, prefix: string): T {
   const result = schema.safeParse(value);
   if (!result.success)
