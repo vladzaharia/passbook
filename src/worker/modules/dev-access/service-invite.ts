@@ -20,6 +20,7 @@ import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
+import { withdrawSetups } from '../idp/invitations/withdraw.ts';
 import { membersLimit } from '../orgs/repo-member-writes.ts';
 import * as members from '../orgs/repo-members.ts';
 import { isPersonalOrg } from '../orgs/repo-personal.ts';
@@ -189,4 +190,5 @@ export async function revokeDeveloperInvitation(
   );
   if (!revoked)
     throw new ConflictError('The request could not be completed.', 'DEVELOPER_INVITE_CONFLICT');
+  await withdrawSetups(ctx, 'developer', invitation.id);
 }

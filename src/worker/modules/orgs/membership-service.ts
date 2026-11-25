@@ -22,6 +22,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { resolveInvite } from '../idp/invitations/resolve.ts';
+import { withdrawForMember } from '../idp/invitations/withdraw.ts';
 import {
   membershipCapability,
   platformAdminSessionParams,
@@ -220,6 +221,7 @@ export async function revokeOrgInvitation(
   };
   if (!(await revokePendingInvitation(ctx, manager.principal, manager.checks, invitationId, entry)))
     throw changed();
+  await withdrawForMember(ctx, invitationId);
 }
 export async function revokeOrgMembership(
   ctx: ServiceContext,

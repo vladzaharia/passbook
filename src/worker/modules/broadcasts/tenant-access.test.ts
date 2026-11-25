@@ -5,6 +5,8 @@ import {
   type ApiKeyFixture,
   editApiKeyIdentity,
   editSessionAuthority,
+  expectSet,
+  expectValue,
   makeApiKey,
   makeOrg,
   makeSession,
@@ -662,12 +664,11 @@ describe('authority at the D1 mutation commit', () => {
                 ]),
               ).toEqual({ changes: 1 });
             } else {
-              expect(
-                await run(db, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
-                  kit.clock.now(),
-                  manager.membershipId,
-                ]),
-              ).toEqual({ changes: 1 });
+              await run(db, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+                kit.clock.now(),
+                manager.membershipId,
+              ]);
+              await expectSet(db, 'org_memberships', 'id', manager.membershipId);
             }
           },
           () => operation(action, id, manager.session.headers),
@@ -869,12 +870,13 @@ describe('authority at the D1 mutation commit', () => {
       const before = await persisted();
       const response = await atBroadcastCommit(
         async (db) => {
-          const result =
-            kind === 'user'
-              ? await run(db, "UPDATE users SET status = 'disabled' WHERE id = ?", [manager.userId])
-              : await run(db, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
-          // A user or organization update also moves its trigger-owned access epoch, which D1 counts.
-          expect(result.changes).toBe(2);
+          if (kind === 'user') {
+            await run(db, "UPDATE users SET status = 'disabled' WHERE id = ?", [manager.userId]);
+            await expectValue(db, 'users', 'id', manager.userId, 'status', 'disabled');
+          } else {
+            await run(db, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
+            await expectValue(db, 'orgs', 'id', kit.org.id, 'status', 'suspended');
+          }
         },
         () => operation('send', item.id, manager.session.headers),
       );

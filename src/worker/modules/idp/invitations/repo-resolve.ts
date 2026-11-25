@@ -84,3 +84,16 @@ export const acceptedBy = (db: D1Database, kind: InviteRow['kind'], id: string) 
       : `SELECT m.user_id, m.id AS membership_id FROM org_memberships m WHERE m.invitation_id = ?`,
     [id],
   );
+
+/** The developer invitation a member invitation is paired with, when it has one. */
+export async function pairedDeveloperOf(
+  db: D1Database,
+  memberInvitationId: string,
+): Promise<string | null> {
+  const row = await first<{ id: string }>(
+    db,
+    'SELECT id FROM developer_invitations WHERE org_invitation_id = ?',
+    [memberInvitationId],
+  );
+  return row?.id ?? null;
+}

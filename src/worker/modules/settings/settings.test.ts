@@ -5,6 +5,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   allowInvalidRoleNames,
   editSessionAuthority,
+  expectSet,
   type Fixtures,
   fakeRateLimiter,
   fixtures,
@@ -1184,12 +1185,11 @@ describe('organization settings authorization', () => {
               ]),
             ).toEqual({ changes: 1 });
           } else {
-            expect(
-              await run(appEnv.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
-                fx.clock.now(),
-                membershipId,
-              ]),
-            ).toEqual({ changes: 1 });
+            await run(appEnv.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+              fx.clock.now(),
+              membershipId,
+            ]);
+            await expectSet(appEnv.DB, 'org_memberships', 'id', membershipId);
             if (revocation === 'membership replacement') await addMembership(org.id);
           }
         },

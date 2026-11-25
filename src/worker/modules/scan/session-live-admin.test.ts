@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { expectSet, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { run } from '../../platform/db.ts';
@@ -68,12 +68,12 @@ describe('administrator session display authorization', () => {
         admin: { ...attachment.admin!, userId: 'other-admin' },
       }),
     ).toBeNull();
-    const revokedMembership = await run(
+    await run(
       kit.env.DB,
       'UPDATE org_memberships SET revoked_at=? WHERE id=? AND revoked_at IS NULL',
       [kit.clock.now(), membershipId],
     );
-    expect(revokedMembership.changes).toBe(1);
+    await expectSet(kit.env.DB, 'org_memberships', 'id', membershipId);
     expect(await liveRecipient(kit.ctx, attachment)).toBeNull();
     await grantScanMembership(kit.fx, kit.org.id, user.id);
     expect(await liveRecipient(kit.ctx, attachment)).toBeNull();
