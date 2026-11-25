@@ -98,7 +98,6 @@ export function CreateConnectionWizard() {
 
   const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
-
   const info = connector.data;
   const { cfgErrors, secErrors, shownSecrets } = useWizardConfig(info, draft);
   const mapped = fromRows(rows);
