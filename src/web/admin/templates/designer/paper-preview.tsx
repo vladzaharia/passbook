@@ -28,6 +28,7 @@ import {
   SegmentedControl,
   Skeleton,
 } from '../../../ui/index.ts';
+import { useBrandMark } from '../../brand/api.ts';
 import { previewAssetMap } from './images.ts';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
@@ -103,6 +104,7 @@ export function PaperPreview({
 }) {
   const inlineCss = usePaperCss();
   const channels = useTemplatePaper(templateId, orgId);
+  const mark = useBrandMark(orgId);
   const saved = useMemo(() => resolvePaper(manifest.paper), [manifest.paper]);
   const [picked, setPicked] = useState<PaperSize>(saved.size);
   const [grey, setGrey] = useState(false);
@@ -172,6 +174,7 @@ export function PaperPreview({
                 content={content}
                 design={design}
                 code={SAMPLE_CODE}
+                mark={mark}
                 drawing={drawing}
                 assets={files}
                 testBand={testBand}

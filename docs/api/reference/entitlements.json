@@ -21,7 +21,10 @@
           "value": 0,
           "source": "preset"
         }
-      ]
+      ],
+      "usage": {
+        "tier": 8
+      }
     }
   },
   "entitlements.getPlatformOrgsByIdEntitlements": {
@@ -91,6 +94,46 @@
           }
         }
       ]
+    }
+  },
+  "entitlements.getPlatformEntitlementPresets": {
+    "response": {
+      "presets": [
+        {
+          "preset": "standard",
+          "label": "Standard",
+          "revision": 3,
+          "updatedAt": 1795399200000,
+          "orgCount": 8,
+          "pendingOrgs": 39,
+          "values": {
+            "tier": 8
+          }
+        }
+      ]
+    }
+  },
+  "entitlements.putPlatformEntitlementPresets": {
+    "request": {
+      "preset": "standard",
+      "expectedRevision": 3,
+      "values": {
+        "tier": 8
+      }
+    },
+    "response": {
+      "preset": {
+        "preset": "standard",
+        "label": "Standard",
+        "revision": 3,
+        "updatedAt": 1795399200000,
+        "orgCount": 8,
+        "pendingOrgs": 39,
+        "values": {
+          "tier": 8
+        }
+      },
+      "moved": 37
     }
   }
 }

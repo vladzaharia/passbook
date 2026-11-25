@@ -1,11 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { crc32 } from '../templates/package/hash.ts';
 import { type Api, auditOf, setupApi } from '../webhooks/api-test-fixtures.ts';
-import { orgBrandOf } from './brand.ts';
+import { orgBrandOf, storedBrandingOf } from './brand.ts';
 
 let api: Api;
 let orgId: string;
@@ -140,27 +140,82 @@ describe('web logo upload', () => {
   });
 });
 
+const plan = (value: string | null) =>
+  value === null
+    ? run(api.rig.db, "DELETE FROM org_entitlement_overrides WHERE key = 'brand.mark'")
+    : run(
+        api.rig.db,
+        "INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'brand.mark', ?, 1)",
+        [orgId, JSON.stringify(value)],
+      );
+
 describe('mark level', () => {
-  it('defaults to full, honours small, and never honours none without the entitlement', async () => {
-    expect((await orgBrandOf(ctx(), orgId)).mark).toBe('full');
+  afterEach(async () => {
+    await plan(null);
+    await run(
+      api.rig.db,
+      "UPDATE orgs SET branding = json_remove(branding, '$.mark') WHERE id = ?",
+      [orgId],
+    );
+  });
+
+  it('a plan whose least is full allows full only, and refuses the rest', async () => {
+    await plan('full');
+    expect((await kit()).json.markAllowed).toEqual(['full']);
+    for (const mark of ['small', 'none']) {
+      const refused = await patch({ mark });
+      expect(refused.status).toBe(403);
+      expect(refused.json.code).toBe('BRAND_MARK_NOT_ALLOWED');
+    }
+    expect((await patch({ mark: 'full' })).status).toBe(200);
+  });
+
+  it('a quiet plan allows small and full, a none plan allows all three', async () => {
+    await plan('quiet');
+    expect((await kit()).json.markAllowed).toEqual(['small', 'full']);
     expect((await patch({ mark: 'small' })).status).toBe(200);
     expect((await orgBrandOf(ctx(), orgId)).mark).toBe('small');
-    const refused = await patch({ mark: 'none' });
-    expect(refused.status).toBe(403);
-    expect(refused.json.code).toBe('BRAND_MARK_NOT_ALLOWED');
-    // A stored `none` (an earlier plan, say) shows full, and is kept.
+    expect((await patch({ mark: 'none' })).json.code).toBe('BRAND_MARK_NOT_ALLOWED');
+    await plan('none');
+    expect((await kit()).json.markAllowed).toEqual(['none', 'small', 'full']);
+    expect((await patch({ mark: 'none' })).status).toBe(200);
+    expect((await orgBrandOf(ctx(), orgId)).mark).toBe('none');
+  });
+
+  it('shows the nearest allowed mark above a stored one the plan no longer allows, and keeps the stored choice', async () => {
+    await plan('quiet');
     await run(
       api.rig.db,
       "UPDATE orgs SET branding = json_set(branding, '$.mark', 'none') WHERE id = ?",
       [orgId],
     );
-    const brand = await orgBrandOf(ctx(), orgId);
-    expect(brand.mark).toBe('full');
-    const body = (await kit()).json;
-    expect(body).toMatchObject({
+    expect((await orgBrandOf(ctx(), orgId)).mark).toBe('small');
+    await plan('full');
+    expect((await orgBrandOf(ctx(), orgId)).mark).toBe('full');
+    expect((await kit()).json).toMatchObject({
       mark: 'full',
       markChosen: 'none',
-      markAllowed: ['full', 'small'],
+      markAllowed: ['full'],
+    });
+  });
+
+  it('fails closed to full when the plan has no brand.mark value', async () => {
+    await run(
+      api.rig.db,
+      "UPDATE orgs SET branding = json_set(branding, '$.mark', 'none') WHERE id = ?",
+      [orgId],
+    );
+    await plan('bogus');
+    expect((await orgBrandOf(ctx(), orgId)).mark).toBe('full');
+  });
+
+  it('refuses unreadable stored branding with a stable code, not a SyntaxError', () => {
+    // The column is CHECK json_valid, so this is the guard for a row that got past it.
+    expect(() => storedBrandingOf(ctx(), { id: orgId, branding: 'not json' })).toThrow(
+      expect.objectContaining({ code: 'BRANDING_UNREADABLE', status: 500 }),
+    );
+    expect(storedBrandingOf(ctx(), { id: orgId, branding: '{"mark":"none"}' })).toMatchObject({
+      stored: { mark: 'none' },
     });
   });
 

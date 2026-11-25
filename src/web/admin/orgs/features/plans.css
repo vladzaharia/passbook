@@ -1,0 +1,84 @@
+/*
+ * Plan cards (plan-tile.tsx). Only transform and opacity animate. A pick replays the plan's icon once,
+ * by a React key, never on load. Reduced motion drops the verbs; the ring and the fades stay.
+ */
+.plan-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid var(--pk-accent);
+  box-shadow: 0 0 0 1px var(--pk-accent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms var(--wl-ease-move);
+}
+.plan-ring[data-on] {
+  opacity: 1;
+}
+
+@keyframes plan-turn {
+  from {
+    transform: rotate(-180deg);
+  }
+}
+@keyframes plan-grow {
+  from {
+    transform: scale(0.7);
+  }
+}
+@keyframes plan-stamp {
+  from {
+    transform: scale(1.25);
+  }
+}
+@keyframes plan-tilt {
+  from {
+    transform: rotate(-12deg) scale(0.85);
+  }
+}
+@keyframes plan-stretch {
+  from {
+    transform: scaleX(0.6);
+  }
+}
+@keyframes plan-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes plan-pop-in {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}
+
+.plan-icon[data-play][data-plan="trial"] {
+  animation: plan-turn 400ms var(--wl-ease-spring) backwards;
+}
+.plan-icon[data-play][data-plan="starter"] {
+  transform-origin: 50% 100%;
+  animation: plan-grow 320ms var(--wl-ease-spring) backwards;
+}
+.plan-icon[data-play][data-plan="standard"] {
+  animation: plan-stamp 320ms var(--wl-ease-bounce) backwards;
+}
+.plan-icon[data-play][data-plan="premium"] {
+  animation: plan-tilt 320ms var(--wl-ease-spring) backwards;
+}
+.plan-icon[data-play][data-plan="legacy"] {
+  animation: plan-stretch 320ms var(--wl-ease-spring) backwards;
+}
+.plan-fade {
+  animation: plan-fade-in 300ms var(--wl-ease-out) backwards;
+}
+.plan-pop {
+  animation: plan-pop-in 300ms var(--wl-ease-bounce) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-icon[data-play][data-plan],
+  .plan-pop {
+    animation: none;
+  }
+}

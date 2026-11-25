@@ -4,6 +4,7 @@ import type { EntitlementKey } from '@/shared/contracts/entitlements.ts';
 import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '@/shared/entitlement-impact.ts';
 import { overrideConfirm, resetOverrideConfirm } from '@/web/lib/confirms-features.ts';
+import { useArrivalMode } from '@/web/lib/motion.ts';
 import { ConfirmDialog, ErrorState, SkeletonRows, toast } from '@/web/ui/index.ts';
 import { PlatformAppleCard } from './apple-card.tsx';
 import { PlatformChannels } from './channels-card.tsx';
@@ -23,20 +24,23 @@ interface Pending {
 /** The platform org page's Features tab: the preset, then every feature with its override. */
 export function FeaturesTab({ orgId, orgName }: { orgId: string; orgName: string }) {
   const query = useOrgFeatures(orgId);
+  const arrival = useArrivalMode(query.isPending);
   if (query.isPending) return <SkeletonRows label="Loading features" />;
   if (!query.data)
     return <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />;
-  return <FeaturesBody orgId={orgId} orgName={orgName} state={query.data} />;
+  return <FeaturesBody orgId={orgId} orgName={orgName} state={query.data} arrival={arrival} />;
 }
 
 function FeaturesBody({
   orgId,
   orgName,
   state,
+  arrival,
 }: {
   orgId: string;
   orgName: string;
   state: OrgEntitlementsDto;
+  arrival: false | 'rise' | 'quiet';
 }) {
   const save = useSetFeatures(orgId, state.revision);
   const overrides = overridesOf(state.items);
@@ -63,6 +67,7 @@ function FeaturesBody({
       <EmptyFeatures
         state={state}
         orgName={orgName}
+        arrival={arrival}
         onApply={async (chosen) => {
           const next = await save.mutateAsync({ preset: chosen, overrides: {} });
           toast.success(`${next.presetLabel} applied`);
@@ -77,6 +82,7 @@ function FeaturesBody({
         state={ready}
         orgName={orgName}
         overrides={overrides}
+        arrival={arrival}
         onApply={async (preset) => {
           const next = await save.mutateAsync({ preset, overrides });
           toast.success(`${next.presetLabel} applied`);

@@ -95,10 +95,16 @@ describe('platform read', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
     const body = (await res.json()) as OrgEntitlementsDto;
-    expect(body).toMatchObject({ preset: 'legacy', presetLabel: 'Legacy', revision: 1 });
+    expect(body).toMatchObject({ preset: 'legacy', presetLabel: 'Unlimited', revision: 1 });
     expect(body.items.map((i) => i.key)).toEqual(ENTITLEMENT_KEYS);
     expect(body.items.every((i) => i.source === 'preset' && i.note === null)).toBe(true);
-    expect(body.presets.map((x) => x.preset)).toEqual(['legacy', 'trial', 'standard']);
+    expect(body.presets.map((x) => x.preset)).toEqual([
+      'trial',
+      'starter',
+      'standard',
+      'premium',
+      'legacy',
+    ]);
     expect(body.presets.find((x) => x.preset === 'legacy')?.orgCount).toBeGreaterThan(0);
     expect(body.presets.find((x) => x.preset === 'trial')?.values).toEqual(presetValues('trial'));
   });
@@ -168,6 +174,7 @@ describe('platform write', () => {
         admin,
         expectedRevision: before.revision,
         preset: 'standard',
+        presetRevision: 1,
         now: rk.kit.clock.now(),
         remove: [],
         put: [{ key: 'api', value: '"off"', note: null, expiresAt: null }],
@@ -352,7 +359,20 @@ describe('org read', () => {
       expect(text).not.toContain('Internal deal 42');
       const body = JSON.parse(text);
       expect(body).toMatchObject({ orgId: p.orgId, preset: 'trial', label: 'Trial' });
-      expect(Object.keys(body).sort()).toEqual(['items', 'label', 'orgId', 'preset']);
+      // `usage` is counts only: no notes, no revision, no other plans.
+      expect(Object.keys(body).sort()).toEqual(['items', 'label', 'orgId', 'preset', 'usage']);
+      expect(body.usage.members).toBeGreaterThanOrEqual(2);
+      expect(body.usage['passes.live']).toBe(0);
+      expect(Object.keys(body.usage).sort()).toEqual([
+        'api.keys',
+        'connections',
+        'members',
+        'passes.live',
+        'passes.test',
+        'scanning.devices',
+        'templates',
+        'webhooks.endpoints',
+      ]);
       expect(body.items).toHaveLength(ENTITLEMENT_KEYS.length);
       expect(body.items.find((i: { key: string }) => i.key === 'webhooks')).toEqual({
         key: 'webhooks',
@@ -395,7 +415,13 @@ describe('an org without a features row', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as OrgEntitlementsDto;
     expect(body).toMatchObject({ preset: null, presetLabel: null, revision: 0, items: [] });
-    expect(body.presets.map((x) => x.preset)).toEqual(['legacy', 'trial', 'standard']);
+    expect(body.presets.map((x) => x.preset)).toEqual([
+      'trial',
+      'starter',
+      'standard',
+      'premium',
+      'legacy',
+    ]);
     // The guard's read sees nothing: fail closed.
     expect(isEntitled(await entitlementsOf(rk.kit.ctx, p.orgId), 'api', 'read')).toBe(false);
   });

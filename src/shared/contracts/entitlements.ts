@@ -8,9 +8,25 @@ import { z } from 'zod';
  * Values are stored as JSON text. A missing or malformed value denies; JSON `null` means "no limit" and is
  * valid for a limit only.
  */
-export const ENTITLEMENT_PRESETS = ['legacy', 'trial', 'standard', 'developer'] as const;
+export const ENTITLEMENT_PRESETS = [
+  'trial',
+  'starter',
+  'standard',
+  'premium',
+  'legacy',
+  'developer',
+] as const;
 export const EntitlementPresetSchema = z.enum(ENTITLEMENT_PRESETS);
 export type EntitlementPreset = z.infer<typeof EntitlementPresetSchema>;
+
+/** Orders preset ids as the registry lists them (the ladder); an id it does not know sorts last, then by id. */
+export function presetOrder(a: string, b: string): number {
+  const rank = (id: string) => {
+    const at = (ENTITLEMENT_PRESETS as readonly string[]).indexOf(id);
+    return at < 0 ? ENTITLEMENT_PRESETS.length : at;
+  };
+  return rank(a) - rank(b) || a.localeCompare(b);
+}
 
 /** 1 on, 0 off. */
 type FlagValue = 0 | 1;
@@ -27,76 +43,74 @@ export type EntitlementDef =
   | { kind: 'list'; block: boolean; presets: Column<string[]> }
   | { kind: 'limit'; presets: Column<LimitValue> };
 
-const col = <V>(legacy: V, trial: V, standard: V, developer: V): Column<V> => ({
-  legacy,
+/** Column order of every row below, and the order the picker lists plans. */
+type Row<V> = readonly [trial: V, starter: V, standard: V, premium: V, unlimited: V, developer: V];
+const col = <V>([trial, starter, standard, premium, legacy, developer]: Row<V>): Column<V> => ({
   trial,
+  starter,
   standard,
+  premium,
+  legacy,
   developer,
 });
-const flag = (
-  legacy: FlagValue,
-  trial: FlagValue,
-  standard: FlagValue,
-  developer: FlagValue,
-): EntitlementDef => ({
-  kind: 'flag',
-  presets: col(legacy, trial, standard, developer),
-});
-const level = (
-  levels: readonly string[],
-  l: string,
-  t: string,
-  s: string,
-  d: string,
-): EntitlementDef => ({
+const flag = (r: Row<FlagValue>): EntitlementDef => ({ kind: 'flag', presets: col(r) });
+const level = (levels: readonly string[], r: Row<string>): EntitlementDef => ({
   kind: 'level',
   levels,
-  presets: col(l, t, s, d),
+  presets: col(r),
 });
-const allow = (l: string[], t: string[], s: string[], d: string[]): EntitlementDef => ({
+const allow = (r: Row<string[]>): EntitlementDef => ({
   kind: 'list',
   block: false,
-  presets: col(l, t, s, d),
+  presets: col(r),
 });
-const block = (l: string[], t: string[], s: string[], d: string[]): EntitlementDef => ({
+const block = (r: Row<string[]>): EntitlementDef => ({
   kind: 'list',
   block: true,
-  presets: col(l, t, s, d),
+  presets: col(r),
 });
-const limit = (l: LimitValue, t: LimitValue, s: LimitValue, d: LimitValue): EntitlementDef => ({
-  kind: 'limit',
-  presets: col(l, t, s, d),
-});
+const limit = (r: Row<LimitValue>): EntitlementDef => ({ kind: 'limit', presets: col(r) });
 
-/** Presets read legacy, trial, standard, developer. `legacy` is every flag on and no limits: nothing changes for existing orgs. */
+const CSV: string[] = ['csv-url', 'webhook-push/*'];
+const ALL: string[] = ['*'];
+const BOARDING: string[] = ['boardingPass'];
+const NONE: string[] = [];
+
+/**
+ * Columns: trial, starter, standard, premium, unlimited (id `legacy`), developer. Unlimited is every flag
+ * on and no limits, so nothing changes for an existing org. Each step up only adds (a test holds it).
+ */
 export const ENTITLEMENTS = {
-  api: level(['off', 'read', 'full'], 'full', 'full', 'full', 'full'),
-  'api.rateTier': level(['standard', 'high', 'bulk'], 'bulk', 'standard', 'high', 'standard'),
-  'api.keys': limit(null, 2, 10, 3),
-  apps: flag(1, 0, 1, 0),
-  webhooks: flag(1, 0, 1, 1),
-  'webhooks.endpoints': limit(null, 1, 10, 3),
-  connections: limit(null, 1, 10, 0),
-  connectors: allow(['*'], ['csv-url', 'webhook-push/*'], ['*'], []),
-  'wallet.google': flag(1, 0, 1, 0),
-  'wallet.samsung': flag(1, 0, 1, 0),
-  print: flag(1, 0, 1, 0),
-  nfc: level(['off', 'basic', 'secure'], 'secure', 'off', 'basic', 'off'),
-  'scanning.devices': limit(null, 2, 20, 0),
-  'join.perDay': limit(null, 100, 1000, 0),
-  'messages.perDay': limit(null, 3, 20, 0),
-  'passes.changesPerDay': limit(null, 3, 20, 10),
-  'passes.live': limit(null, 100, 5000, 0),
-  'passes.test': limit(null, 50, 500, 500),
-  templates: limit(null, 3, 25, 10),
-  'templates.uploads': flag(1, 0, 1, 0),
-  'templates.stylesBlocked': block([], ['boardingPass'], [], []),
-  'email.perDay': limit(null, 100, 500, 100),
-  members: limit(null, 3, 25, 1),
-  'brand.mark': level(['none', 'quiet', 'full'], 'full', 'full', 'quiet', 'full'),
-  domains: limit(0, 0, 1, 0),
-  'identity.own': flag(1, 0, 1, 0),
-  'identity.managed': flag(1, 0, 1, 0),
+  api: level(['off', 'read', 'full'], ['full', 'full', 'full', 'full', 'full', 'full']),
+  'api.rateTier': level(
+    ['standard', 'high', 'bulk'],
+    ['standard', 'standard', 'high', 'bulk', 'bulk', 'standard'],
+  ),
+  'api.keys': limit([2, 3, 10, 50, null, 3]),
+  apps: flag([0, 0, 1, 1, 1, 0]),
+  webhooks: flag([0, 1, 1, 1, 1, 1]),
+  'webhooks.endpoints': limit([1, 2, 10, 50, null, 3]),
+  connections: limit([1, 2, 10, 50, null, 0]),
+  connectors: allow([CSV, CSV, ALL, ALL, ALL, NONE]),
+  'wallet.google': flag([0, 1, 1, 1, 1, 0]),
+  'wallet.samsung': flag([0, 0, 1, 1, 1, 0]),
+  print: flag([0, 1, 1, 1, 1, 0]),
+  nfc: level(['off', 'basic', 'secure'], ['off', 'off', 'basic', 'secure', 'secure', 'off']),
+  'scanning.devices': limit([2, 5, 20, 100, null, 0]),
+  'join.perDay': limit([100, 250, 1000, 10000, null, 0]),
+  'messages.perDay': limit([3, 5, 20, 100, null, 0]),
+  'passes.changesPerDay': limit([3, 5, 20, 100, null, 10]),
+  'passes.live': limit([100, 1000, 5000, 50000, null, 0]),
+  'passes.test': limit([50, 200, 500, 2000, null, 500]),
+  templates: limit([3, 5, 25, 100, null, 10]),
+  'templates.uploads': flag([0, 0, 1, 1, 1, 0]),
+  'templates.stylesBlocked': block([BOARDING, BOARDING, NONE, NONE, NONE, NONE]),
+  'email.perDay': limit([100, 250, 500, 5000, null, 100]),
+  members: limit([3, 5, 25, 100, null, 1]),
+  'brand.mark': level(['none', 'quiet', 'full'], ['full', 'full', 'quiet', 'none', 'none', 'full']),
+  domains: limit([0, 0, 1, 5, null, 0]),
+  'identity.own': flag([0, 0, 1, 1, 1, 0]),
+  'identity.managed': flag([0, 0, 1, 1, 1, 0]),
 } as const satisfies Record<string, EntitlementDef>;
 
 export type EntitlementKey = keyof typeof ENTITLEMENTS;

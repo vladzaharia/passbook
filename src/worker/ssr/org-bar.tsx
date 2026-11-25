@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { OrgBrand } from '../../shared/contracts/brand.ts';
-import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import { passbookCredit } from '../../shared/copy/passbook-credit.ts';
 import { BrandMark } from '../../web/ui/layout/brand-mark.tsx';
 
 /** The logo drawn at most this big: a bar's height, and a width that leaves the page room. */
@@ -47,18 +47,17 @@ export function OrgBar({ orgName, brand }: { orgName: string; brand?: OrgBrand |
  * `none` nothing. Legal and report links are separate and never depend on it.
  */
 export function OrgMark({ brand }: { brand?: OrgBrand | undefined }) {
-  if (!brand || brand.mark === 'none') return null;
-  return brand.mark === 'small' ? (
+  const credit = passbookCredit(brand?.mark);
+  if (!credit) return null;
+  return (
     <footer className="org-mark">
-      <span>{HOLDER_COPY.poweredBy}</span>
-    </footer>
-  ) : (
-    <footer className="org-mark">
-      <span>{HOLDER_COPY.issuedWith}</span>
-      <b>
-        <BrandMark />
-        PassBook
-      </b>
+      <span>{credit.lead}</span>
+      {credit.name && (
+        <b>
+          <BrandMark />
+          {credit.name}
+        </b>
+      )}
     </footer>
   );
 }

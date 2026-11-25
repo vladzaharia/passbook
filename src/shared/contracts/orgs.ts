@@ -70,6 +70,24 @@ export const OrgSummarySchema = OrgSchema.extend({
   personalOwner: z.object({ id: IdSchema, name: z.string().nullable() }).nullable().optional(),
 });
 
+/**
+ * What a platform admin sees in the org directory: the summary without tenant data, plus which plan the org is on
+ * (null when it has no features row).
+ */
+export const PlatformOrgSummarySchema = OrgSummarySchema.pick({
+  id: true,
+  slug: true,
+  name: true,
+  status: true,
+  personal: true,
+  createdAt: true,
+  counts: true,
+  countsCapped: true,
+  personalOwner: true,
+}).extend({
+  plan: z.object({ preset: z.string(), label: z.string() }).nullable().optional(),
+});
+
 export const OrgListQuerySchema = PageQuerySchema.extend({
   /** Name or slug contains. */
   q: z.string().max(200).optional(),

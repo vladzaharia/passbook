@@ -89,6 +89,7 @@ function paperImage(root: string, t: ResolvedTemplate, slug: string, passJson: P
       content={content}
       design={design}
       code={SAMPLE_CODE}
+      mark="full"
       drawing={drawing}
       testBand
       assets={{

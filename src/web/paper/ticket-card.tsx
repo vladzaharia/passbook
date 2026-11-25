@@ -1,5 +1,5 @@
 import { PAPER_COPY } from '../../shared/copy/print.ts';
-import { CodeMark, Plate, sheetProps, type TicketProps, Typed } from './ticket-parts.tsx';
+import { CodeMark, Credit, Plate, sheetProps, type TicketProps, Typed } from './ticket-parts.tsx';
 import { footMeta, paperAt } from './ticket-text.ts';
 
 /** Front: the pass colour (white in mono), the member, the QR on a white tile. */
@@ -58,9 +58,7 @@ export function CardBack({ p }: { p: TicketProps }) {
         {c.help.length ? <p>{c.help.slice(0, 2).join(' · ')}</p> : null}
         <div className="pp-cd-meta">
           <span>{footMeta(c, p.issued)}</span>
-          <span className="pp-passbook">
-            {PAPER_COPY.issuedWith} <b>PassBook</b>
-          </span>
+          <Credit mark={p.mark} />
         </div>
       </div>
     </article>

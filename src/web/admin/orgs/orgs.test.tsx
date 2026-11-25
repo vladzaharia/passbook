@@ -2,6 +2,8 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { ENTITLEMENT_PRESETS, presetValues } from '@/shared/contracts/entitlements.ts';
+import { PRESET_LABEL } from '@/shared/copy/entitlements.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { membershipsQuery, sessionQuery } from '@/web/lib/session.ts';
 import {
@@ -114,6 +116,26 @@ describe('orgs list', () => {
     expect(screen.queryByRole('columnheader', { name: 'Readiness' })).toBeNull();
     expect(screen.queryByText('Not available')).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it("shows each organization's plan, or None when it has no features row", async () => {
+    await renderApp('/admin/orgs', {
+      session: 'admin',
+      memberships: [],
+      handlers: {
+        '/api/v1/orgs': () =>
+          json({
+            items: [
+              { ...provisioning(), plan: { preset: 'premium', label: 'Premium' } },
+              { ...provisioning({ id: 'o9', slug: 'bare', name: 'Bare' }), plan: null },
+            ],
+            nextCursor: null,
+          }),
+      },
+    });
+    expect(await screen.findByRole('columnheader', { name: 'Plan' })).toBeInTheDocument();
+    expect(await screen.findByText('Premium')).toBeVisible();
+    expect(screen.getByText('None')).toBeVisible();
   });
 
   it('shows plain counts for an organization the admin is not a member of', async () => {
@@ -243,7 +265,7 @@ describe('orgs list', () => {
     expect(router.state.location.search).toMatchObject({ q: 'acme' });
   });
 
-  it('creates an org in an md dialog, clears fixed errors and opens the new org', async () => {
+  it('creates an org in an lg dialog (the plan cards need two columns), clears fixed errors and opens the new org', async () => {
     let body: unknown;
     let created = false;
     const { router } = await renderApp('/admin/orgs', {
@@ -262,6 +284,18 @@ describe('orgs list', () => {
             nextCursor: null,
           });
         },
+        '/api/v1/platform/entitlement-presets': () =>
+          json({
+            presets: ENTITLEMENT_PRESETS.map((p) => ({
+              preset: p,
+              label: PRESET_LABEL[p],
+              revision: 1,
+              updatedAt: 1_700_000_000_000,
+              orgCount: 0,
+              pendingOrgs: 0,
+              values: presetValues(p),
+            })),
+          }),
         '/api/v1/orgs/o2': () => json(provisioning({ id: 'o2', name: 'Acme Gym' })),
         '/api/v1/orgs/o2/memberships': () => json({ items: [], nextCursor: null }),
         '/api/v1/orgs/o2/invitations': () => json({ items: [], nextCursor: null }),
@@ -272,7 +306,7 @@ describe('orgs list', () => {
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'New organization' }));
     const dialog = await screen.findByRole('dialog');
-    expect(dialog.className).toContain('sm:max-w-lg');
+    expect(dialog.className).toContain('sm:max-w-3xl');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
     await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByLabelText(/Name/)));
@@ -283,8 +317,14 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Name/)).not.toHaveAttribute('aria-invalid');
     expect(within(dialog).getByLabelText(/Slug/)).toHaveValue('acme-gym');
     expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
+    // Plans load as cards: Standard is the default, the developer sandbox is not offered.
+    expect(await within(dialog).findByRole('radio', { name: 'Standard' })).toBeChecked();
+    expect(within(dialog).queryByRole('radio', { name: 'Developer sandbox' })).toBeNull();
+    await ui.click(within(dialog).getByRole('radio', { name: 'Premium' }));
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
-    await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym', addMe: true }));
+    await waitFor(() =>
+      expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym', addMe: true, preset: 'premium' }),
+    );
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/orgs/o2'));
     // The new org says so once, with the next steps; no toast.
     expect(await screen.findByText('Organization created')).toBeInTheDocument();

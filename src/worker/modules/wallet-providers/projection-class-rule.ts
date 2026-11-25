@@ -49,7 +49,7 @@ function alternatesOf(schema: Schema, current: Json | undefined): Json[] {
   const choices = Array.isArray(schema.enum) ? (schema.enum as Json[]) : [];
   if (choices.length)
     out.push(...choices.filter((c) => canonicalJson(c) !== canonicalJson(current)));
-  else if (type === 'boolean') out.push(current === true ? false : true);
+  else if (type === 'boolean') out.push(current !== true);
   else if (type === 'integer' || type === 'number')
     out.push(typeof current === 'number' ? current + 1 : 1);
   else if (type === 'array') out.push(current === undefined ? [] : deepVary(current), []);

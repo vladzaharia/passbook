@@ -21,7 +21,7 @@ export const BrandKitSchema = z.object({
   webLogo: z.object({ url: z.string(), w: z.number().int(), h: z.number().int() }).nullable(),
   supportEmail: z.string().nullable(),
   supportUrl: z.string().nullable(),
-  /** The level holders see: the chosen one when the org may use it, else full. */
+  /** The level holders see: the chosen one when the plan allows it, else the nearest allowed with more PassBook. */
   mark: BrandMarkSchema,
   /** What the org chose; differs from `mark` when its plan does not allow that level. */
   markChosen: BrandMarkSchema,
@@ -51,7 +51,9 @@ export const BrandOrgQuerySchema = z.object({ orgId: IdSchema.optional() });
 /** `accent: null` clears it. */
 export const UpdateBrandKitSchema = z.object({
   accent: HexColorSchema.nullable().optional(),
-  mark: BrandMarkSchema.optional(),
+  mark: BrandMarkSchema.optional().describe(
+    'Refused with BRAND_MARK_NOT_ALLOWED when the plan does not allow it (`markAllowed`).',
+  ),
   configRevision: z.number().int().optional(),
 });
 
