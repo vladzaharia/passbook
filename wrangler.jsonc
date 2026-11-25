@@ -60,15 +60,15 @@
     "OIDC_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     // Pocket ID groups, matched by exact name. Platform admins: every org and the platform scope, developer implied.
     // Each OIDC_*_GROUP var takes one exact name or a comma list (the rename window; see docs/operations.md).
-    "OIDC_PLATFORM_ADMIN_GROUP": "wallet_admins",
+    "OIDC_PLATFORM_ADMIN_GROUP": "wallet_admins,passbook_platform_admins",
     // Comma list of Polaris ID subjects. When set, platform admin needs the group and a listed subject.
     "OIDC_PLATFORM_ADMIN_SUBJECTS": "",
     // May use the console; which orgs is decided by membership in PassBook.
-    "OIDC_ADMIN_GROUP": "wallet_org_admins",
+    "OIDC_ADMIN_GROUP": "wallet_org_admins,passbook_console",
     "OIDC_DEVELOPER_GROUP": "passbook_developers",
     // "true": org console access also needs OIDC_ADMIN_GROUP (or platform admin). See docs/operations.md.
     "OIDC_CONSOLE_GROUP_REQUIRED": "false",
-    "OIDC_USER_GROUP": "wallet_users",
+    "OIDC_USER_GROUP": "wallet_users,passbook_users",
     // The ID token's `amr` must contain this (a passkey). Empty turns the check off, for a mock provider.
     "OIDC_REQUIRE_AMR": "",
     "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",

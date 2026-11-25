@@ -50,12 +50,12 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    - Renaming groups in Polaris ID (`wallet_admins` to `passbook_platform_admins`, `wallet_org_admins`
      to `passbook_console`, `wallet_users` to `passbook_users`): each `OIDC_*_GROUP` var takes a comma
      list of exact names, and every name in a var grants that var's role only.
-     1. Deploy with both names: `OIDC_PLATFORM_ADMIN_GROUP` `wallet_admins,passbook_platform_admins`,
+     1. Deploy with both names (`wrangler.jsonc` ships this): `OIDC_PLATFORM_ADMIN_GROUP` `wallet_admins,passbook_platform_admins`,
         `OIDC_ADMIN_GROUP` `wallet_org_admins,passbook_console`, `OIDC_USER_GROUP`
         `wallet_users,passbook_users`.
      2. Rename the groups in Polaris ID (ids and members stay) and keep the PassBook client's allowed
         groups in step.
-     3. Deploy the new names only. A near miss (a claim that differs from a configured name only by
+     3. Deploy the new names only (drop the old ones from the three vars). A near miss (a claim that differs from a configured name only by
         case or punctuation) grants nothing and logs `auth.oidc_group_near_miss`.
    - Pinning platform admins (`OIDC_PLATFORM_ADMIN_SUBJECTS`, default empty): a comma list of Polaris ID
      subject ids (the `sub` claim). While it is not empty, platform admin needs the admin group and a
