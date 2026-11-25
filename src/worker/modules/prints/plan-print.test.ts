@@ -129,6 +129,7 @@ describe('the print feature', () => {
           codeHash: 'a'.repeat(64),
           rosterHash: 'b'.repeat(32),
           generation: 1,
+          passVersion: 1,
         },
         false,
       );

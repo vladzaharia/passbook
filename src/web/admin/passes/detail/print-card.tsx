@@ -53,6 +53,7 @@ export function PrintCard({
   const [ask, setAsk] = useState<'reprint' | 'void' | null>(null);
   const paper = channels.data?.effective.paper;
   const active = prints.data?.prints.find((p) => p.status === 'active');
+  const ended = !active && prints.data?.prints[0]?.voidCause === 'pass_voided';
   const voided = pass.status === 'voided' || pass.removedAt != null;
   if (channels.isPending || prints.isPending) return null;
   if (paper && !paper.on && !active && prints.data?.prints.length === 0) return null;
@@ -83,6 +84,20 @@ export function PrintCard({
           {paper && !paper.on && paper.reason ? (
             <Callout tone="info">{channelReason('paper', paper.reason)}</Callout>
           ) : null}
+          {active?.stale ? (
+            <Callout
+              tone="warning"
+              actions={
+                canPrint ? (
+                  <Button variant="outline" size="sm" onClick={() => setAsk('reprint')}>
+                    {PRINT_COPY.reprint}
+                  </Button>
+                ) : undefined
+              }
+            >
+              {PRINT_COPY.stale}
+            </Callout>
+          ) : null}
           {active ? (
             <ListRows label={PRINT_COPY.card}>
               <ListRow
@@ -96,7 +111,7 @@ export function PrintCard({
             <EmptyState
               inline
               art="stub"
-              title={PRINT_COPY.cardEmpty}
+              title={ended ? PRINT_COPY.againNote : PRINT_COPY.cardEmpty}
               action={
                 canPrint ? (
                   <Button
@@ -105,7 +120,7 @@ export function PrintCard({
                     loading={actions.mint.isPending}
                     onClick={printFromButton}
                   >
-                    {PRINT_COPY.print}
+                    {ended ? PRINT_COPY.again : PRINT_COPY.print}
                   </Button>
                 ) : undefined
               }

@@ -86,6 +86,8 @@ export interface NewPrint {
   codeHash: string;
   rosterHash: string;
   generation: number;
+  /** The pass version the print is made from. */
+  passVersion: number;
 }
 
 /**
@@ -116,11 +118,22 @@ export async function writeMint(
       'print_code_hash',
       'roster_hash',
       'generation',
+      'pass_version',
       'status',
       'created_by',
       'created_at',
     ],
-    [print.id, passId, print.codeHash, print.rosterHash, print.generation, 'active', w.by, now],
+    [
+      print.id,
+      passId,
+      print.codeHash,
+      print.rosterHash,
+      print.generation,
+      print.passVersion,
+      'active',
+      w.by,
+      now,
+    ],
   );
   g.audit(
     auditRow(ctx, w, passId, 'pass.print', { printId: print.id, generation: print.generation }),

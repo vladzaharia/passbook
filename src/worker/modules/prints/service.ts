@@ -78,7 +78,13 @@ export async function mintPrint(
     ctx,
     caller.writer,
     pass.id,
-    { id, codeHash, rosterHash: await printRosterHash(code), generation },
+    {
+      id,
+      codeHash,
+      rosterHash: await printRosterHash(code),
+      generation,
+      passVersion: pass.version,
+    },
     replace,
   );
   if (existing && voided > 0) await dropPrintPdfs(ctx, pass, existing.id);

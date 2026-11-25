@@ -154,7 +154,11 @@ function actionsHtml(props: PrintPageProps) {
     props.model.state === 'ready' && hasUndrawable(props.model.content)
       ? `<p class="callout pp-lossy" data-lossy>${iconHtml(TriangleAlert)}<span>${escapeHtml(PRINT_COPY.lossy)}</span></p>`
       : '';
-  return `${lossy}<div class="pp-actions">${actions}</div>${
+  const stale =
+    props.model.state === 'ready' && props.model.stale
+      ? `<p class="callout pp-lossy" data-stale>${iconHtml(TriangleAlert)}<span>${escapeHtml(holder ? PRINT_COPY.staleHolder : PRINT_COPY.stale)}</span></p>`
+      : '';
+  return `${stale}${lossy}<div class="pp-actions">${actions}</div>${
     holder
       ? `${confirm('reprint', PRINT_COPY.confirmReprint, '/reprint')}${confirm('void', PRINT_COPY.confirmVoid, '/void')}`
       : ''
@@ -176,9 +180,9 @@ function stateBody(props: PrintPageProps): { body: string; sheet: boolean } {
   if (model.state === 'empty')
     return {
       sheet: false,
-      body: `<div class="pp-empty pp-stage"><p>${escapeHtml(holder ? PRINT_COPY.noPrint : PRINT_COPY.noPrintStaff)}</p>${
+      body: `<div class="pp-empty pp-stage"><p>${escapeHtml(model.again ? PRINT_COPY.againNote : holder ? PRINT_COPY.noPrint : PRINT_COPY.noPrintStaff)}</p>${
         holder
-          ? `<div class="pp-actions">${button('make', PRINT_COPY.make, Printer, true)}</div>`
+          ? `<div class="pp-actions">${button('make', model.again ? PRINT_COPY.again : PRINT_COPY.make, Printer, true)}</div>`
           : ''
       }<p class="pp-error callout" role="alert" data-error hidden></p></div>${back}`,
     };

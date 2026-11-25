@@ -6386,6 +6386,8 @@ export type PassesPrintsCreateResponse = {
   passId: string;
   generation: number;
   status: "active" | "voided" | "used";
+  passVersion: number | null;
+  stale: boolean;
   createdAt: number;
   voidedAt: number | null;
   voidCause: string | null;
@@ -6398,6 +6400,8 @@ export type PassesPrintsListResponse = {
     passId: string;
     generation: number;
     status: "active" | "voided" | "used";
+    passVersion: number | null;
+    stale: boolean;
     createdAt: number;
     voidedAt: number | null;
     voidCause: string | null;
@@ -6409,6 +6413,8 @@ export type PassesPrintsVoidResponse = {
   passId: string;
   generation: number;
   status: "active" | "voided" | "used";
+  passVersion: number | null;
+  stale: boolean;
   createdAt: number;
   voidedAt: number | null;
   voidCause: string | null;

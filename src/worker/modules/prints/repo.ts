@@ -6,18 +6,24 @@ interface Row {
   pass_id: string;
   generation: number;
   status: PassPrint['status'];
+  pass_version: number | null;
+  stale: number;
   created_at: number;
   voided_at: number | null;
   void_cause: string | null;
 }
 
-const COLUMNS = 'id, pass_id, generation, status, created_at, voided_at, void_cause';
+const COLUMNS = `id, pass_id, generation, status, pass_version, created_at, voided_at, void_cause,
+  (status = 'active' AND pass_version IS NOT NULL
+    AND pass_version < (SELECT p.version FROM passes p WHERE p.id = pass_prints.pass_id)) AS stale`;
 
 const toPrint = (r: Row): PassPrint => ({
   id: r.id,
   passId: r.pass_id,
   generation: r.generation,
   status: r.status,
+  passVersion: r.pass_version,
+  stale: r.stale === 1,
   createdAt: r.created_at,
   voidedAt: r.voided_at,
   voidCause: r.void_cause,
@@ -53,6 +59,16 @@ export async function printById(
     [passId, id],
   );
   return r ? toPrint(r) : null;
+}
+
+/** Whether the pass's newest print ended with the pass (voided), so it needs a new one once restored. */
+export async function endedWithPass(db: D1Database, passId: string): Promise<boolean> {
+  const r = await first<{ void_cause: string | null }>(
+    db,
+    'SELECT void_cause FROM pass_prints WHERE pass_id = ? ORDER BY generation DESC LIMIT 1',
+    [passId],
+  );
+  return r?.void_cause === 'pass_voided';
 }
 
 export async function nextGeneration(db: D1Database, passId: string): Promise<number> {

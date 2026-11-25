@@ -36172,6 +36172,16 @@
               "used"
             ]
           },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -36198,6 +36208,8 @@
           "passId",
           "generation",
           "status",
+          "passVersion",
+          "stale",
           "createdAt",
           "voidedAt",
           "voidCause",
@@ -36234,6 +36246,16 @@
                     "used"
                   ]
                 },
+                "passVersion": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1
+                },
+                "stale": {
+                  "type": "boolean"
+                },
                 "createdAt": {
                   "type": "integer",
                   "minimum": 0
@@ -36257,6 +36279,8 @@
                 "passId",
                 "generation",
                 "status",
+                "passVersion",
+                "stale",
                 "createdAt",
                 "voidedAt",
                 "voidCause"
@@ -36293,6 +36317,16 @@
               "used"
             ]
           },
+          "passVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "stale": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -36316,6 +36350,8 @@
           "passId",
           "generation",
           "status",
+          "passVersion",
+          "stale",
           "createdAt",
           "voidedAt",
           "voidCause"

@@ -149,7 +149,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"scan-setup:read\" added",
-    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
+    "note": "A key can hold scan-setup:read to read the org\u2019s managed scanner and screen setups."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
@@ -710,6 +710,22 @@
     "op": "GET /api/v1/passes/{id}/events",
     "change": "200.items[].kind: enum value \"wallet.messaged\" added",
     "note": "A Google Wallet change message settled: notified, shown on the card only, refused or not confirmed."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].passVersion: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].passVersion: field added",
+    "note": "Prints report passVersion, the pass version they were made from (null for older prints)."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/prints 200.prints[].stale: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdPrints",
+    "op": "GET /api/v1/passes/{id}/prints",
+    "change": "200.prints[].stale: field added",
+    "note": "Prints report stale: true when the pass changed after an active print was made."
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
@@ -2411,6 +2427,38 @@
     "op": "POST /api/v1/passes",
     "change": "idempotency-key reserved prefixes",
     "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.passVersion: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.passVersion: field added",
+    "note": "Prints report passVersion, the pass version they were made from (null for older prints)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints 200.stale: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrints",
+    "op": "POST /api/v1/passes/{id}/prints",
+    "change": "200.stale: field added",
+    "note": "Prints report stale: true when the pass changed after an active print was made."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.passVersion: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.passVersion: field added",
+    "note": "Prints report passVersion, the pass version they were made from (null for older prints)."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/prints/{printId}/void 200.stale: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+    "op": "POST /api/v1/passes/{id}/prints/{printId}/void",
+    "change": "200.stale: field added",
+    "note": "Prints report stale: true when the pass changed after an active print was made."
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",
