@@ -206,7 +206,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     const session = await sessionOrThrow(c, level);
     if (oidcOnly && session.amr !== 'oidc') {
       reportDenied(c, 'IDP_SIGN_IN_REQUIRED', session);
-      throw new IdpSignInRequiredError('/auth/oidc/start?next=/admin');
+      throw new IdpSignInRequiredError(signInUrlFor(c));
     }
     if (developer) assertDeveloper(c, session);
     if (sessionKind === 'tenant') assertConsoleGroup(c, session);
@@ -226,6 +226,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   knownGuards.add(guard);
   if (stepUp)
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
+  if (oidcOnly) declareOidcOnly(guard);
   return declareSignIn(guard, level);
 }
 

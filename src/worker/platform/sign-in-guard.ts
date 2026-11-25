@@ -18,6 +18,15 @@ export function declareSignIn<T extends object>(guard: T, level: SignInLevel): T
   return guard;
 }
 
+const oidcOnly = new WeakSet<object>();
+
+/** Marks a guard that admits Polaris ID sessions only (no break-glass, no email link), for `x-sign-in: oidc`. */
+export function declareOidcOnly<T extends object>(guard: T): T {
+  oidcOnly.add(guard);
+  return guard;
+}
+export const isOidcOnly = (guard: object): boolean => oidcOnly.has(guard);
+
 /** The level a guard enforces, or undefined when it is no session guard. */
 export const signInLevelOf = (guard: object): SignInLevel | undefined => levels.get(guard);
 
@@ -33,7 +42,7 @@ function surfaceFor(c: Context<AppBindings>): string {
         : '/admin';
 }
 
-function signInUrlFor(c: Context<AppBindings>): string {
+export function signInUrlFor(c: Context<AppBindings>): string {
   return `/auth/oidc/start?next=${surfaceFor(c)}`;
 }
 

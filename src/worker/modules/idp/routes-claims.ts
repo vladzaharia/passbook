@@ -19,9 +19,6 @@ const AUTH = {
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
 
-/** The binding can pause writes and Polaris ID can be down; neither shows in the call graph. */
-const CODES = ['IDP_FROZEN', 'IDP_UNAVAILABLE'] as const;
-
 const noStore = (router: ReturnType<typeof createRouter>) =>
   router.use('*', async (c, next) => {
     await next();
@@ -42,7 +39,6 @@ register(
     params: IdParamSchema,
     response: ClaimsViewSchema,
     auth: AUTH,
-    codes: CODES,
   },
   async (c) =>
     c.json(await userClaims(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
@@ -59,7 +55,6 @@ register(
     body: UpdateClaimsSchema,
     response: ClaimsResultSchema,
     auth: AUTH,
-    codes: CODES,
   },
   async (c) =>
     c.json(
@@ -86,7 +81,6 @@ register(
     params: GroupKeyParamSchema,
     response: ClaimsViewSchema,
     auth: AUTH,
-    codes: CODES,
   },
   async (c) =>
     c.json(await groupClaims(serviceContext(c), currentUserId(c), c.req.valid('param').key)),
@@ -103,7 +97,6 @@ register(
     body: UpdateClaimsSchema,
     response: ClaimsResultSchema,
     auth: AUTH,
-    codes: CODES,
   },
   async (c) =>
     c.json(

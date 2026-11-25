@@ -65,10 +65,9 @@ async function writeClaims(
   try {
     result = await idpClient(ctx.env, ctx.log).setClaims(owner, changes, writeCtx(ctx, actorId));
   } catch (error) {
-    // The write may have reached Polaris ID before it failed: keep the attempt.
-    const code = idpCodeOf(error);
-    if (code === 'IDP_DRIFT' || code === 'IDP_UPSTREAM')
-      await audit({ attempted: Object.keys(changes), outcome: code });
+    // Drift is raised only after the PUT was sent (never in dry run): keep the attempt.
+    if (idpCodeOf(error) === 'IDP_DRIFT')
+      await audit({ attempted: Object.keys(changes), outcome: 'IDP_DRIFT' });
     throw error;
   }
   if (!result.dryRun && (result.set.length > 0 || result.removed.length > 0)) {

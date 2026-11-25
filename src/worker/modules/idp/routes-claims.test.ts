@@ -311,14 +311,16 @@ describe('more cases', () => {
     const { headers } = await person();
     idp.failNext('IDP_DRIFT', 'setClaims');
     const res = await patch(url(t.user.id), headers, { passbook_a: text(SECRET) });
-    expect(res.status).toBe(503);
+    await expectProblem(res, 503, 'IDP_DRIFT');
     const [row] = await audit(t.user.id);
     expect(JSON.parse(row?.detail ?? '{}')).toEqual({
       attempted: ['passbook_a'],
       outcome: 'IDP_DRIFT',
     });
-    idp.failNext('IDP_REFUSED', 'setClaims');
-    await patch(url(t.user.id), headers, { passbook_a: text('y') });
+    for (const code of ['IDP_REFUSED', 'IDP_UPSTREAM']) {
+      idp.failNext(code, 'setClaims');
+      await patch(url(t.user.id), headers, { passbook_a: text('y') });
+    }
     expect(await audit(t.user.id)).toHaveLength(1);
   });
 

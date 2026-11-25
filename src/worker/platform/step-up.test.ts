@@ -238,7 +238,11 @@ describe('step-up route inventory', () => {
     expect(declared).toMatchInlineSnapshot(`
       [
         "DELETE /api/v1/orgs/:id/developers/:userId",
+        "GET /api/v1/platform/idp/groups/:key/claims",
+        "GET /api/v1/users/:id/claims",
         "PATCH /api/v1/connections/:id",
+        "PATCH /api/v1/platform/idp/groups/:key/claims",
+        "PATCH /api/v1/users/:id/claims",
         "PATCH /api/v1/webhook-endpoints/:id",
         "POST /api/v1/api-keys",
         "POST /api/v1/api-keys/:id/rotate",
