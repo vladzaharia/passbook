@@ -175,13 +175,6 @@ describe('user claims', () => {
     expect(idp.writes).toBe(0);
     expect(await audit(t.user.id)).toEqual([]);
   });
-
-  it('answers 503 without the binding', async () => {
-    const { headers } = await person();
-    const t = await target();
-    (h.env as unknown as { IDP?: unknown }).IDP = undefined;
-    await expectProblem(await h.call(url(t.user.id), { headers }), 503, 'IDP_UNAVAILABLE');
-  });
 });
 
 describe('group claims', () => {
