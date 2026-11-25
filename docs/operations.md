@@ -230,6 +230,16 @@ Rotate the key (every 90 days; `health().keyExpiresAt` is the nearest expiry amo
 
 Compromise: the key is a Polaris ID admin key on v2.19.3, so treat it as identity provider compromise. Revoke the key in Polaris ID first, then review the Polaris ID audit log for users, groups, signup tokens and OIDC client changes since the last good `idp_calls` row (D1 table `idp_calls`; `calls(since)`), remove any group or admin you did not add, delete unknown signup tokens, and create a new key. The ledger lists the binding's own calls only; anything else came from outside it. Never give CI a Cloudflare token that can deploy `polaris-binding`: anyone who can redeploy it can read the key.
 
+### SCIM receiver
+
+Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (Users and Groups: list, create, replace, delete) with a bearer token. The receiver ends Polaris ID sessions when the owner switches an account off or takes it out of the PassBook client's groups, and queues members removed from a group for the drain. It never adds a role, session, membership or user, and keeps ids and flags only (`idp_directory_users`, `idp_directory_groups`): no names, addresses or group names.
+
+1. `openssl rand -base64 32`, then `npx wrangler secret put SCIM_BEARER_TOKEN` (main Worker; at least 32 characters, or the route answers 404).
+2. Set the PassBook client's allowed groups first (step 3 above), or Polaris ID pushes every user.
+3. In Polaris ID add a SCIM service provider on the PassBook client (a Client ID Metadata Document client is a client row like any other, but it exists in Polaris ID only after its first sign-in; read from v2.19.3 source, not yet tried live; if Polaris ID refuses it, use a plain registered client for SCIM): endpoint `https://<host>/scim/v2`, that token. Run Sync now and check `idp_directory_users` fills.
+
+Limits: a wrong token costs its network prefix a count (30 a minute, then 429); a right token gets 600 requests a minute; user bodies 16 KB, group bodies 256 KB. More than 20 account switch-offs in ten minutes stop ending sessions and log `IDP_SCIM_BREAKER`; the daily reconcile finds the rest. In dry run, or while the binding is frozen or unreachable, the mirror updates and nothing else changes. Rotate the token by putting a new secret and updating the service provider; between the two Polaris ID's pushes fail with 401 and retry on the next sync.
+
 ## Managed identity runs
 
 `IdentityProvision` (workflow binding `IDENTITY_PROVISION`) provisions a managed pass type and certificate for an org (`provision`) and replaces a certificate (`rotate`). The daily hook `identities.rotation_plan` starts a rotate run 60 days before expiry for every `rotation='auto'` identity with no open run. Adding the binding needs `npm run deploy -- --first`.
