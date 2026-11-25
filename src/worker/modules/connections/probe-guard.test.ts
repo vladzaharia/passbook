@@ -259,7 +259,7 @@ describe('a saved probe', () => {
       config: { count: 2 },
     } as never);
     const out = await t.call(`/api/v1/connections/${demo.id}/probe`, { target: 'list' });
-    expect(out).toMatchObject({ status: 422, json: { code: 'PROBE_UNSUPPORTED' } });
+    expect(out).toMatchObject({ status: 422, json: { code: 'VALIDATION' } });
   });
 });
 

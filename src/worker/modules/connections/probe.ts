@@ -139,11 +139,9 @@ export async function probeStored(
   if (authority.orgId !== conn.orgId) throw new ForbiddenError();
   const def = requireConnector(conn.connectorType);
   if (def.type !== 'http-json')
-    throw new ValidationError(
-      'Only REST API connections can be probed.',
-      [{ path: 'connectorType', message: 'Not a REST API connection.' }],
-      'PROBE_UNSUPPORTED',
-    );
+    throw new ValidationError('Only REST API connections can be probed.', [
+      { path: 'connectorType', message: 'Not a REST API connection.' },
+    ]);
   await assertConnectionAuthority(sctx, authority);
   await takeProbe(sctx, conn.orgId, actor);
   await assertOrg(sctx, conn.orgId);

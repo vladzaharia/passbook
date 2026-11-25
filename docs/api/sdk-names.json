@@ -269,6 +269,10 @@
     "resource": "connections",
     "method": "preview"
   },
+  "connections.postConnectionsByIdProbe": {
+    "resource": "connections",
+    "method": "probe"
+  },
   "connections.postConnectionsByIdSync": {
     "resource": "connections",
     "method": "sync"
@@ -288,6 +292,10 @@
   "connections.postConnectionsByIdWebhookSecret": {
     "resource": "connections",
     "method": "rotateWebhookSecret"
+  },
+  "connections.postConnectionsProbe": {
+    "resource": "connections",
+    "method": "probeConfig"
   },
   "connections.postConnectionsTestConfig": {
     "resource": "connections",

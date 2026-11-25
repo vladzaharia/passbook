@@ -1494,6 +1494,58 @@ type ConnectionsListResponseItemsItemVoidWhenItem struct {
 
 type ConnectionsPreviewResult = ConnectionPreview
 
+type ConnectionsProbeBody = ConnectionsProbeParams
+
+type ConnectionsProbeConfigBody = ConnectionsProbeConfigParams
+
+type ConnectionsProbeConfigParams struct {
+	OrgID         string            `json:"orgId"`
+	ConnectorType string            `json:"connectorType"`
+	Config        map[string]any    `json:"config"`
+	Secrets       map[string]string `json:"secrets,omitempty"`
+	Target        string            `json:"target"`
+	Ref           *string           `json:"ref,omitempty"`
+	Next          *string           `json:"next,omitempty"`
+}
+
+type ConnectionsProbeConfigResponse struct {
+	Ok           bool              `json:"ok"`
+	ErrorCode    *string           `json:"errorCode,omitempty"`
+	RetryAfterMs *int64            `json:"retryAfterMs,omitempty"`
+	DurationMs   int64             `json:"durationMs"`
+	Request      map[string]any    `json:"request"`
+	Headers      map[string]string `json:"headers"`
+	Body         any               `json:"body,omitempty"`
+	Pruned       map[string]any    `json:"pruned"`
+	Detections   map[string]any    `json:"detections"`
+	Page         map[string]any    `json:"page"`
+}
+
+type ConnectionsProbeConfigResult = ConnectionsProbeConfigResponse
+
+type ConnectionsProbeParams struct {
+	Config  map[string]any    `json:"config,omitempty"`
+	Secrets map[string]string `json:"secrets,omitempty"`
+	Target  string            `json:"target"`
+	Ref     *string           `json:"ref,omitempty"`
+	Next    *string           `json:"next,omitempty"`
+}
+
+type ConnectionsProbeResponse struct {
+	Ok           bool              `json:"ok"`
+	ErrorCode    *string           `json:"errorCode,omitempty"`
+	RetryAfterMs *int64            `json:"retryAfterMs,omitempty"`
+	DurationMs   int64             `json:"durationMs"`
+	Request      map[string]any    `json:"request"`
+	Headers      map[string]string `json:"headers"`
+	Body         any               `json:"body,omitempty"`
+	Pruned       map[string]any    `json:"pruned"`
+	Detections   map[string]any    `json:"detections"`
+	Page         map[string]any    `json:"page"`
+}
+
+type ConnectionsProbeResult = ConnectionsProbeResponse
+
 type ConnectionsRetrieveResponse struct {
 	ID                  string                                             `json:"id"`
 	OrgID               string                                             `json:"orgId"`

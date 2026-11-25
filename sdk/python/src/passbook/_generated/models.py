@@ -212,6 +212,14 @@ __all__ = [
     "ConnectionsListResponseItemsItemVoidWhenItem",
     "ConnectionsListResult",
     "ConnectionsPreviewResult",
+    "ConnectionsProbeBody",
+    "ConnectionsProbeConfigBody",
+    "ConnectionsProbeConfigParams",
+    "ConnectionsProbeConfigResponse",
+    "ConnectionsProbeConfigResult",
+    "ConnectionsProbeParams",
+    "ConnectionsProbeResponse",
+    "ConnectionsProbeResult",
     "ConnectionsRetrieveResponse",
     "ConnectionsRetrieveResponseMappingValue",
     "ConnectionsRetrieveResponseMappingValueTransform",
@@ -3096,6 +3104,46 @@ class ConnectionsListResponseItemsItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
+
+class ConnectionsProbeConfigParams(_Model):
+    orgId: str
+    connectorType: _Literal["http-json"] | str
+    config: _Dict[str, _Any]
+    secrets: _Dict[str, str] | None = None
+    target: _Literal["list", "record"] | str
+    ref: str | None = None
+    next: str | None = None
+
+class ConnectionsProbeConfigResponse(_Model):
+    ok: bool
+    errorCode: _Literal["AUTH", "FORBIDDEN", "NOT_FOUND", "RATE_LIMITED", "TIMEOUT", "UPSTREAM", "UNSAFE_URL", "REDIRECT_BLOCKED", "NOT_JSON", "TOO_LARGE", "NO_RECORDS", "OFF_ORIGIN", "CONFIG"] | str | None = None
+    retryAfterMs: int | None = None
+    durationMs: int
+    request: _Dict[str, _Any] | None
+    headers: _Dict[str, str]
+    body: _Any | None = None
+    pruned: _Dict[str, _Any] | None
+    detections: _Dict[str, _Any] | None
+    page: _Dict[str, _Any] | None
+
+class ConnectionsProbeParams(_Model):
+    config: _Dict[str, _Any] | None = None
+    secrets: _Dict[str, str] | None = None
+    target: _Literal["list", "record"] | str
+    ref: str | None = None
+    next: str | None = None
+
+class ConnectionsProbeResponse(_Model):
+    ok: bool
+    errorCode: _Literal["AUTH", "FORBIDDEN", "NOT_FOUND", "RATE_LIMITED", "TIMEOUT", "UPSTREAM", "UNSAFE_URL", "REDIRECT_BLOCKED", "NOT_JSON", "TOO_LARGE", "NO_RECORDS", "OFF_ORIGIN", "CONFIG"] | str | None = None
+    retryAfterMs: int | None = None
+    durationMs: int
+    request: _Dict[str, _Any] | None
+    headers: _Dict[str, str]
+    body: _Any | None = None
+    pruned: _Dict[str, _Any] | None
+    detections: _Dict[str, _Any] | None
+    page: _Dict[str, _Any] | None
 
 class ConnectionsRetrieveResponse(_Model):
     id: str
@@ -13906,6 +13954,14 @@ ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 ConnectionsListResult = ConnectionsListResponse
 
 ConnectionsPreviewResult = ConnectionPreview
+
+ConnectionsProbeBody = ConnectionsProbeParams
+
+ConnectionsProbeConfigBody = ConnectionsProbeConfigParams
+
+ConnectionsProbeConfigResult = ConnectionsProbeConfigResponse
+
+ConnectionsProbeResult = ConnectionsProbeResponse
 
 ConnectionsRetrieveResult = ConnectionsRetrieveResponse
 

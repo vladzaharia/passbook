@@ -1272,6 +1272,109 @@
   }
  },
  {
+  "id": "connections.postConnectionsProbe",
+  "call": "connections.probe_config",
+  "http": "POST",
+  "path": "/api/v1/connections/probe",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "connectorType": "http-json",
+   "config": {},
+   "target": "list"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": false,
+   "durationMs": 0,
+   "request": {
+    "method": "GET",
+    "url": "x",
+    "status": 0,
+    "bytes": 0,
+    "contentType": "x"
+   },
+   "headers": {},
+   "pruned": {
+    "arrays": [
+     {
+      "pointer": "x",
+      "total": 0,
+      "shown": 0
+     }
+    ],
+    "strings": 0,
+    "depthCut": false,
+    "nodesCut": false
+   },
+   "detections": {
+    "records": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "count": 0,
+      "score": 0,
+      "reason": "root"
+     }
+    ],
+    "pagination": [
+     {
+      "confidence": "high",
+      "config": {
+       "style": "none"
+      },
+      "evidence": "x"
+     }
+    ],
+    "id": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "unique": false,
+      "score": 0
+     }
+    ],
+    "updatedAt": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "format": "iso",
+      "score": 0
+     }
+    ],
+    "holderEmail": [
+     {
+      "pointer": "x",
+      "jsonPath": "x"
+     }
+    ],
+    "fields": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "label": "x",
+      "type": "text",
+      "samples": [
+       "x"
+      ]
+     }
+    ],
+    "rateLimit": {}
+   },
+   "page": {
+    "index": 0,
+    "from": 0,
+    "to": 0,
+    "overlap": 0,
+    "next": "x"
+   }
+  }
+ },
+ {
   "id": "connections.getConnectionsSummary",
   "call": "connections.retrieve_summary",
   "http": "GET",
@@ -1944,6 +2047,112 @@
     }
    ],
    "durationMs": 0
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdProbe",
+  "call": "connections.probe",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/probe",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "target": "list"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": false,
+   "durationMs": 0,
+   "request": {
+    "method": "GET",
+    "url": "x",
+    "status": 0,
+    "bytes": 0,
+    "contentType": "x"
+   },
+   "headers": {},
+   "pruned": {
+    "arrays": [
+     {
+      "pointer": "x",
+      "total": 0,
+      "shown": 0
+     }
+    ],
+    "strings": 0,
+    "depthCut": false,
+    "nodesCut": false
+   },
+   "detections": {
+    "records": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "count": 0,
+      "score": 0,
+      "reason": "root"
+     }
+    ],
+    "pagination": [
+     {
+      "confidence": "high",
+      "config": {
+       "style": "none"
+      },
+      "evidence": "x"
+     }
+    ],
+    "id": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "unique": false,
+      "score": 0
+     }
+    ],
+    "updatedAt": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "format": "iso",
+      "score": 0
+     }
+    ],
+    "holderEmail": [
+     {
+      "pointer": "x",
+      "jsonPath": "x"
+     }
+    ],
+    "fields": [
+     {
+      "pointer": "x",
+      "jsonPath": "x",
+      "label": "x",
+      "type": "text",
+      "samples": [
+       "x"
+      ]
+     }
+    ],
+    "rateLimit": {}
+   },
+   "page": {
+    "index": 0,
+    "from": 0,
+    "to": 0,
+    "overlap": 0,
+    "next": "x"
+   }
   }
  },
  {

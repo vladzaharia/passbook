@@ -921,6 +921,22 @@
     "WEBHOOK_PAYLOAD",
     "WEBHOOK_SIGNATURE"
   ],
+  "connections post /probe": [
+    "CONNECTION_NOT_FOUND",
+    "CONNECTOR_UNKNOWN",
+    "FILE_CELL_TOO_LONG",
+    "FILE_DAMAGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_NOT_FOUND",
+    "ORG_TEST_ONLY",
+    "RATE_LIMITED",
+    "UNAUTHENTICATED",
+    "UNSAFE_URL",
+    "UPSTREAM",
+    "VALIDATION"
+  ],
   "connections post /test-config": [
     "CONNECTION_NOT_FOUND",
     "CONNECTOR_UNKNOWN",
@@ -1047,6 +1063,22 @@
     "UPSTREAM",
     "VALIDATION",
     "WALLET_PROJECTION_UNSUPPORTED"
+  ],
+  "connections post /{id}/probe": [
+    "CONNECTION_NOT_FOUND",
+    "CONNECTOR_UNKNOWN",
+    "FILE_CELL_TOO_LONG",
+    "FILE_DAMAGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_NOT_FOUND",
+    "ORG_TEST_ONLY",
+    "RATE_LIMITED",
+    "UNAUTHENTICATED",
+    "UNSAFE_URL",
+    "UPSTREAM",
+    "VALIDATION"
   ],
   "connections post /{id}/sync": [
     "ACTOR_CHANGED",
