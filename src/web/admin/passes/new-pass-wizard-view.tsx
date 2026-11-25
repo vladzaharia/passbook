@@ -12,6 +12,7 @@ import {
   UnsavedChangesDialog,
   Wizard,
 } from '../../ui/index.ts';
+import { useOrgTimeZone } from '../settings/use-org-time-zone.ts';
 import { ShowPassRow, StagePreview } from './new-pass-preview.tsx';
 import { ReviewStep } from './new-pass-review.tsx';
 import { HolderStep, OrgStep, TemplateStep } from './new-pass-steps.tsx';
@@ -62,6 +63,7 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
     displayCanReadTemplates,
     displayOrg,
   } = access;
+  const orgZone = useOrgTimeZone(orgId ?? undefined);
   const { eligible, usable, selectedTemplate, release, version, releasedVersion, schema } =
     releaseData;
   const {
@@ -248,6 +250,7 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
               <>
                 {showPass}
                 <SchemaForm
+                  orgZone={orgZone}
                   schema={schema}
                   value={input}
                   onChange={setInput}

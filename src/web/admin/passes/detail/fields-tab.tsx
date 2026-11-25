@@ -258,6 +258,7 @@ export function FieldsTab({
       <BudgetNote budget={pass.pushBudget} show={notify && dirty && !locked} />
       <SchemaForm
         collapseEmpty
+        orgZone={timeZone}
         was={dirty ? was : undefined}
         schema={schema}
         value={draft}
