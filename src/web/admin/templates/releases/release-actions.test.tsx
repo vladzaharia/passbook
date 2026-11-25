@@ -92,7 +92,7 @@ describe('template release actions', () => {
   it('keeps the rollback reason visible when the generation conflicts', async () => {
     const user = userEvent.setup();
     const earlier = release({ id: 'earlier', generation: 1 });
-    const head = release({ id: 'head', generation: 4 });
+    const head = release({ id: 'head', generation: 4, version: 'version-2' });
     const server = releaseServer({
       active: head,
       history: [head, earlier],

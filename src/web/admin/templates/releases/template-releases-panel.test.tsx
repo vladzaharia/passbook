@@ -209,7 +209,7 @@ describe('template release panel', () => {
     vi.stubGlobal('innerHeight', 844);
     const user = userEvent.setup();
     const previous = release({ id: 'previous', generation: 1 });
-    const head = release({ id: 'head', generation: 2 });
+    const head = release({ id: 'head', generation: 2, version: 'version-2' });
     releaseServer({ active: head, history: [head, previous] });
     mountPanel();
     await releasesLoaded();
