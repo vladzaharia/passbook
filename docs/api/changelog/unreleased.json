@@ -1069,7 +1069,7 @@
     "operationId": "settings.getSettings",
     "op": "GET /api/v1/settings",
     "change": "200.items.org.timeZone: default changed",
-    "note": "An org without org.timeZone reads America/Los_Angeles with source default; setting it saves an explicit zone, and null resets it. Access hours, event and term dates in an org with no zone now run on America/Los_Angeles, not the scanner's zone or UTC."
+    "note": "An org with no org.timeZone reads America/Los_Angeles (source default); its access hours and dates run on that zone, not the scanner's or UTC."
   },
   {
     "key": "GET /api/v1/settings 200.oidc.consoleGroupRequired: field added",
