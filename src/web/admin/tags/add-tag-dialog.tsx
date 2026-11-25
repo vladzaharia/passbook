@@ -104,9 +104,9 @@ export function AddTagDialog({
   const scanner = draft.method === 'scanner';
   const w = useWizard({
     open,
-    steps: ASSIGN_STEPS.map((s) => ({
+    steps: ASSIGN_STEPS.filter((s) => s.id !== 'org' || org).map((s) => ({
       ...s,
-      skip: s.id === 'org' ? !org : s.id === 'tap' ? !scanner : false,
+      skip: s.id === 'tap' ? !scanner : false,
       summary:
         s.id === 'org' ? org?.value : s.id === 'tag' ? tagSummary(draft, scannerName) : undefined,
     })),
