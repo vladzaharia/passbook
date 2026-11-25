@@ -1425,6 +1425,10 @@
     {
       "code": "FILE_DAMAGED",
       "statuses": [
+        500,
+        422
+      ],
+      "primary": [
         422,
         500
       ],
@@ -1498,7 +1502,7 @@
     {
       "code": "FILE_ID_COLUMN_MISSING",
       "statuses": [
-        500
+        422
       ],
       "modules": [
         "connections"
