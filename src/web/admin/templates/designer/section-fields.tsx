@@ -15,8 +15,8 @@ const DRAG_TYPE = 'application/x-designer-field';
 /** One group's fields: pick one to edit, drag or use Alt+Arrow keys (or the buttons) to reorder. */
 export function FieldsSection({ group }: { group: GroupId }) {
   const { doc, edit, state, select } = useDesigner();
-  const fields = fieldsOf(doc.passJson, group);
-  const max = (LIMITS[styleOf(doc.passJson)] as Partial<Record<string, number>>)[group];
+  const fields = fieldsOf(doc.passJson, group, doc.target);
+  const max = (LIMITS[styleOf(doc.passJson, doc.target)] as Partial<Record<string, number>>)[group];
   const full = max !== undefined && fields.length >= max;
   const [note, setNote] = useState('');
   const [over, setOver] = useState<number | null>(null);
