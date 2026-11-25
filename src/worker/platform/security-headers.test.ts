@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import staticHeaders from '../../../public/_headers?raw';
+import { MARKETING_POLICY } from '../../shared/marketing.ts';
 import type { AppBindings } from './context.ts';
 import {
   COOP,
@@ -8,6 +9,7 @@ import {
   contentSecurityPolicy,
   DECODE_WORKER_CSP,
   HSTS,
+  marketingContentSecurityPolicy,
   PERMISSIONS_POLICY,
   REFERRER_DEFAULT,
   REFERRER_ORIGIN_ONLY,
@@ -216,5 +218,26 @@ describe('join page CSP', () => {
         .replace('trusted-types passbook-turnstile', WORKER_TT);
     expect(strip(contentSecurityPolicy('n', { turnstile: true }))).toBe(contentSecurityPolicy('n'));
     expect(contentSecurityPolicy()).not.toContain(TURNSTILE_ORIGIN);
+  });
+});
+
+describe('marketing CSP', () => {
+  const csp = marketingContentSecurityPolicy();
+  const directive = (name: string) =>
+    csp
+      .split(';')
+      .map((d) => d.trim())
+      .find((d) => d.startsWith(`${name} `));
+
+  it('allows no inline script, no foreign origin and one Trusted Types policy', () => {
+    expect(directive('script-src')).toBe("script-src 'self'");
+    expect(directive('style-src')).toBe("style-src 'self'");
+    expect(directive('style-src-attr')).toBe("style-src-attr 'unsafe-inline'");
+    expect(directive('connect-src')).toBe("connect-src 'self'");
+    expect(directive('form-action')).toBe("form-action 'self'");
+    expect(directive('frame-src')).toBe("frame-src 'none'");
+    expect(directive('require-trusted-types-for')).toBe("require-trusted-types-for 'script'");
+    expect(directive('trusted-types')).toBe(`trusted-types ${MARKETING_POLICY}`);
+    expect(csp).not.toMatch(/https?:|nonce-|unsafe-eval|wasm/);
   });
 });
