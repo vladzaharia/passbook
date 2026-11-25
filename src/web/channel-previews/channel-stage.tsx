@@ -34,6 +34,7 @@ export function PaperChannel({
       manifest={manifest}
       templateId={templateId}
       orgId={orgId}
+      timeZone={source.timeZone}
       testBand={source.testBand}
     />
   );

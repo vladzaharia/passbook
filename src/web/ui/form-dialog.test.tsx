@@ -199,4 +199,34 @@ describe('FormDialog', () => {
     );
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
+
+  it('does not run onClose when a result replaces the form, only when the dialog then closes', async () => {
+    const onClose = vi.fn();
+    const props = {
+      onOpenChange: () => undefined,
+      title: 'T',
+      onSubmit: () => undefined,
+      submitLabel: 'Go',
+      onClose,
+    };
+    const { rerender } = render(
+      <FormDialog open {...props}>
+        <p>x</p>
+      </FormDialog>,
+    );
+    rerender(
+      <FormDialog open {...props} result={{ title: 'Done', body: <p>r</p> }}>
+        <p>x</p>
+      </FormDialog>,
+    );
+    await screen.findByText('r');
+    await new Promise((r) => setTimeout(r, 20));
+    expect(onClose).not.toHaveBeenCalled();
+    rerender(
+      <FormDialog open={false} {...props} result={{ title: 'Done', body: <p>r</p> }}>
+        <p>x</p>
+      </FormDialog>,
+    );
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
 });

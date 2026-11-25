@@ -56,6 +56,8 @@
     "DEVELOPERS_HOSTS": "developers.passbook.mobile",
     "EMAIL_FROM": "delivery@passbook.mobile",
     "SUPPORT_EMAIL": "support@passbook.mobile",
+    // Where the site's Request access form sends its mail (reply-to is the person who asked).
+    "ACCESS_REQUEST_EMAIL": "support@passbook.mobile",
     "OIDC_ISSUER": "https://id.plrs.im",
     "OIDC_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     // Pocket ID groups, matched by exact name. Platform admins: every org and the platform scope, developer implied.
@@ -152,6 +154,10 @@
     { "name": "wallet-org-purge", "binding": "ORG_PURGE", "class_name": "OrgPurge" }
   ],
 
+  "services": [
+    { "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }
+  ],
+
   "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["delivery@passbook.mobile"] }],
 
   // Enable at go-live after uploading the platform certificate. A missing binding means "push unavailable".
@@ -218,7 +224,10 @@
       "simple": { "limit": 60, "period": 60 }
     },
     // Signed-in browser calls per session (key session:<id>); API keys have their own tiers.
-    { "name": "RL_SESSION", "namespace_id": "1025", "simple": { "limit": 1200, "period": 60 } }
+    { "name": "RL_SESSION", "namespace_id": "1025", "simple": { "limit": 1200, "period": 60 } },
+    // Request access form: per network, and across all networks (the inbox is the shared resource).
+    { "name": "RL_ACCESS", "namespace_id": "1027", "simple": { "limit": 5, "period": 60 } },
+    { "name": "RL_ACCESS_ALL", "namespace_id": "1028", "simple": { "limit": 30, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

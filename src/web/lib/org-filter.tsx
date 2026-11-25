@@ -6,6 +6,7 @@ import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { api } from './api.ts';
 import { canAccessAdminPath } from './guards.ts';
 import { firstAllowedPath } from './nav.ts';
+import { listableMemberships } from './org-lists.ts';
 import { type AdminScope, PLATFORM, parseAdminPath, switchTarget, withOrg } from './scope.ts';
 import { membershipsQuery, sessionQuery, useMemberships, useSession } from './session.ts';
 
@@ -105,6 +106,8 @@ export function useOrgScope() {
     setOrgId,
     switchScope,
     memberships,
+    /** What admin offers as "your organizations": no developer sandboxes (org-lists.ts). */
+    choices: listableMemberships(memberships),
     membership,
     /** The URL names the organization (not an old link that named none). */
     hasExplicitOrg: pathOrgId !== undefined && !bareLink,

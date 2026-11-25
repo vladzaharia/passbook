@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { CHANGE_RUN_UNDO_MS, changeActionOf } from '@/shared/contracts/broadcasts-change.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { cancelBroadcastConfirm } from '../../../lib/confirms.ts';
 import { changeUndoConfirm } from '../../../lib/confirms-change.ts';
 import { formatDateTime } from '../../../lib/format.ts';
@@ -15,7 +16,6 @@ import {
   ConfirmDialog,
   DetailNotFound,
   detailError,
-  EmptyState,
   ErrorState,
   PageHeader,
   SkeletonDetail,
@@ -83,7 +83,7 @@ export function ChangeRunPage({ runId }: { runId: string }) {
   if (scope.isLoading) return <SkeletonDetail label="Loading organization access" />;
   if (scope.isError)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  if (!orgId) return <EmptyState heading art="building" title="Choose an organization" />;
+  if (!orgId) return <OrgChooser />;
   if (!canManage) return <ForbiddenPage />;
   if (found.isError)
     return detailError(found, { entity: 'broadcast', to: list, back: 'Passes', header });

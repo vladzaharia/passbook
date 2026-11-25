@@ -6,9 +6,11 @@ import {
   type PaperDesign,
   type PaperSize,
   resolvePaper,
+  supportsCode128,
 } from '@/passkit/template/paper.ts';
 import { bestImage, imageSlots } from '@/passkit/template/paper-assets.ts';
 import { paperContent } from '@/passkit/template/paper-content.ts';
+import { withRegionSize } from '@/passkit/template/paper-region.ts';
 import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import { TemplateChannelsResponseSchema } from '@/shared/contracts/channels.ts';
 import { channelReason } from '@/shared/copy/channels.ts';
@@ -25,7 +27,8 @@ import {
   Callout,
   CheckboxField,
   EmptyState,
-  SegmentedControl,
+  FormField,
+  Select,
   Skeleton,
 } from '../../../ui/index.ts';
 import { useBrandMark } from '../../brand/api.ts';
@@ -44,7 +47,13 @@ const WIDTH: Record<PaperSize, string> = {
   a4: 'max-w-sm',
   letter: 'max-w-sm',
   half: 'max-w-lg',
+  'half-letter': 'max-w-lg',
   cr80: 'max-w-md',
+  cr80p: 'max-w-[14rem]',
+  stub: 'max-w-xl',
+  atb: 'max-w-2xl',
+  a6: 'max-w-lg',
+  dl: 'max-w-2xl',
 };
 
 /** The template's own paper state in this mode: platform, organization and template levels. */
@@ -85,6 +94,7 @@ export function PaperPreview({
   manifest,
   templateId,
   orgId,
+  timeZone,
   assets = [],
   assetBase = '',
   onEdit,
@@ -97,6 +107,8 @@ export function PaperPreview({
   assetBase?: string | undefined;
   templateId?: string | undefined;
   orgId?: string | undefined;
+  /** The organization's `org.timeZone`: a layout with no block starts on Letter in the US and Canada. */
+  timeZone?: string | undefined;
   /** Writes the block; absent when the draft is read-only. */
   onEdit?: ((patch: PaperPatch) => void) | undefined;
   /** A sandbox pass: the TEST PREVIEW band on every page. */
@@ -105,10 +117,16 @@ export function PaperPreview({
   const inlineCss = usePaperCss();
   const channels = useTemplatePaper(templateId, orgId);
   const mark = useBrandMark(orgId);
-  const saved = useMemo(() => resolvePaper(manifest.paper), [manifest.paper]);
+  const saved = useMemo(
+    () => withRegionSize(resolvePaper(manifest.paper), timeZone),
+    [manifest.paper, timeZone],
+  );
   const [picked, setPicked] = useState<PaperSize>(saved.size);
   const [grey, setGrey] = useState(false);
-  const design = useMemo<PaperDesign>(() => ({ ...saved, size: picked }), [saved, picked]);
+  const design = useMemo<PaperDesign>(
+    () => ({ ...saved, size: picked, barcode: supportsCode128(picked) ? saved.barcode : 'qr' }),
+    [saved, picked],
+  );
   const drawing = useDrawing(design);
   // A sandbox pass previews every channel, so the organization's paper entitlement does not hide it.
   const paper = testBand ? undefined : channels.data?.effective.paper;
@@ -150,16 +168,27 @@ export function PaperPreview({
               {channelReason('paper', paper.reason)}
             </Callout>
           ) : null}
-          <SegmentedControl
-            label={PRINT_COPY.sizeLabel}
-            options={SIZE_OPTIONS}
-            value={picked}
-            onValueChange={(size) => {
-              setPicked(size);
-              if (onEdit && !saved.derived) onEdit({ size });
-            }}
-            className="self-center"
-          />
+          <FormField label={PRINT_COPY.sizeLabel}>
+            {(c) => (
+              <Select
+                {...c}
+                options={SIZE_OPTIONS}
+                value={picked}
+                onValueChange={(v) => {
+                  const size = v as PaperSize;
+                  setPicked(size);
+                  if (onEdit && !saved.derived)
+                    onEdit({
+                      size,
+                      ...(saved.barcode === 'code128' && !supportsCode128(size)
+                        ? { barcode: 'qr' as const }
+                        : {}),
+                    });
+                }}
+                className="w-full sm:w-56"
+              />
+            )}
+          </FormField>
           <CheckboxField
             label={PRINT_COPY.greyscale}
             checked={grey}

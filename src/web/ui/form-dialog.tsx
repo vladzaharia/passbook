@@ -87,7 +87,7 @@ export function FormDialog({
   fields.current = server.fields;
 
   const close = () => onOpenChange(false);
-  useOnClose(open, onClose);
+  const afterClose = useOnClose(open, onClose);
   useEffect(() => {
     if (!open) reset.current();
   }, [open]);
@@ -123,7 +123,7 @@ export function FormDialog({
   if (result) {
     return (
       <Dialog open={open} onOpenChange={() => undefined}>
-        <ResultDialogContent result={result} />
+        <ResultDialogContent result={result} onCloseAutoFocus={afterClose} />
       </Dialog>
     );
   }
@@ -142,6 +142,7 @@ export function FormDialog({
         title={title}
         description={description}
         closeButton={dismissible}
+        onCloseAutoFocus={afterClose}
         {...(dismissible
           ? {}
           : {
