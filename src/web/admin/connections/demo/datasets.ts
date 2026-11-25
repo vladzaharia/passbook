@@ -217,7 +217,8 @@ export function kindOf(preview: string): FieldKind {
   if (/^\[.*\]$/.test(preview)) return 'list';
   if (/^-?\d+(\.\d+)?$/.test(preview)) return 'number';
   if (/^\d{4}-\d{2}-\d{2}(T|$)/.test(preview)) return 'date';
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(preview)) return 'email';
+  if (!preview.includes(' ') && preview.split('@').length === 2 && preview.includes('.'))
+    return 'email';
   if (/^https?:\/\//.test(preview)) return 'link';
   return 'text';
 }
