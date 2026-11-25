@@ -167,7 +167,6 @@ function Rail({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
           <div className="row g2 resp-h">
             <h3 className="h3">Response</h3>
             <span className="pill success mono">{ok.status}</span>
-            <CopyButton label="Copy response" />
           </div>
           <JsonBlock json={ok.example} label={`${op.title}: ${ok.status} response`} />
         </div>

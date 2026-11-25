@@ -77,15 +77,6 @@
 .qs-where {
   margin-block: 4px 12px;
 }
-.qs-soon {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-inline-start: 6px;
-  vertical-align: 6px;
-  border-radius: 50%;
-  background: var(--dp-violet, #8b5cf6);
-}
 .qs-soon-line {
   margin: 0;
   padding: 8px 16px;
@@ -275,15 +266,8 @@
 }
 
 /* A phone: the tab row scrolls instead of clipping, and the file name makes room. */
-.qs-code .code-h {
-  overflow-x: auto;
-  scrollbar-width: none;
-}
 @media (max-width: 520px) {
   .qs-code .code-h .file {
     display: none;
-  }
-  .qs-code .code-h .iconbtn {
-    margin-inline-start: auto;
   }
 }
