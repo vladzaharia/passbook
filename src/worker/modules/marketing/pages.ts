@@ -63,13 +63,30 @@ export async function marketingPage(c: Ctx, address: Address): Promise<Response>
 }
 
 /**
- * `/`: Home for a visitor with no session cookie, the app's shell for one with a cookie (a stale
- * cookie gets the shell, whose root guard sends it to /login). Presence only, no session read.
+ * Whether the request's session cookie names a live session. A failed read counts as signed in:
+ * the shell's own guard then decides, and a database blip never shows a signed-in person Home.
+ */
+async function signedIn(c: Ctx, cookie: string): Promise<boolean> {
+  try {
+    return (await c.var.stores.sessions.resolve(cookie)) !== null;
+  } catch (error) {
+    c.var.log.error('marketing.session_check_failed', {
+      code: 'SESSION_CHECK_FAILED',
+      error: error instanceof Error ? error.name : 'unknown',
+    });
+    return true;
+  }
+}
+
+/**
+ * `/`: the app's shell for a signed-in visitor, Home for everyone else. A cookie whose session
+ * has expired or been signed out is Home too, and the response clears it.
  */
 export async function homePage(c: Ctx): Promise<Response> {
   // no-transform keeps the zone from injecting Cloudflare's analytics beacon, which the marketing CSP refuses.
   const cacheControl = 'private, no-cache, no-transform';
-  if (getCookie(c, SESSION_COOKIE)) {
+  const cookie = getCookie(c, SESSION_COOKIE);
+  if (cookie && (await signedIn(c, cookie))) {
     const shell = await c.env.ASSETS.fetch(c.req.raw);
     const out = new Response(c.req.method === 'HEAD' ? null : shell.body, shell);
     out.headers.set('cache-control', cacheControl);
@@ -78,7 +95,9 @@ export async function homePage(c: Ctx): Promise<Response> {
   }
   const page = await builtPage(c, MARKETING_PATHS.home);
   if (!page) return await notBuilt(c);
-  return pageResponse(c, page, { 'cache-control': cacheControl, vary: 'Cookie' });
+  const out = pageResponse(c, page, { 'cache-control': cacheControl, vary: 'Cookie' });
+  if (cookie) out.headers.append('set-cookie', `${SESSION_COOKIE}=; Max-Age=0; Path=/; Secure`);
+  return out;
 }
 
 /**
