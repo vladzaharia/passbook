@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScanSetupCheck, ScanSetupPreset } from '@/shared/contracts/scan-setup-intent.ts';
 import { hasErrors } from '@/shared/scan-setup-checks.ts';
 import { planScanSetup } from '@/shared/scan-setup-plan.ts';
@@ -10,10 +10,12 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  Form,
   PageHeader,
   Skeleton,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
+  useWizard,
   Wizard,
 } from '@/web/ui/index.ts';
 import { scanningKeys } from '../queries.ts';
@@ -27,11 +29,7 @@ import {
   isPreset,
   LAYOUT_LABEL,
   presetLabel,
-  STEPS,
   type StepId,
-  skipsWhen,
-  stepAfter,
-  stepProblem,
 } from './draft.ts';
 import { useSetupFacts } from './facts.ts';
 import { applyFix, promotable, toIntent } from './intent.ts';
@@ -42,12 +40,11 @@ import { DevicesStep } from './steps/devices-step.tsx';
 import { ScannersStep } from './steps/scanners-step.tsx';
 import { WhenStep } from './steps/when-step.tsx';
 import { WhereStep } from './steps/where-step.tsx';
+import { setupErrors, setupSteps } from './steps-model.ts';
 import { deviceNames, directionsOf, doorLines } from './summary.ts';
 import { useSetupPreview } from './use-preview.ts';
 
 const CRUMBS = [{ label: 'Scanning', to: '/admin/scanning' }, { label: 'Set up' }];
-const REVIEW = STEPS.length - 1;
-const stepIndex = (id: StepId) => STEPS.findIndex((s) => s.id === id);
 
 function Body({
   orgId,
@@ -67,8 +64,7 @@ function Body({
     initialDraft(preset, facts.timeZone, fromTemplate ?? null),
   );
   const first = useRef(JSON.stringify(draft));
-  const [step, setStep] = useState(0);
-  const [reached, setReached] = useState(0);
+  const [reviewing, setReviewing] = useState(false);
   const [phase, setPhase] = useState<'build' | 'done'>('build');
   const guard = useUnsavedChangesGuard(
     phase === 'build' && JSON.stringify(draft) !== first.current,
@@ -81,11 +77,36 @@ function Body({
   }, [intent, ctx]);
   const directions = directionsOf(draft, local);
   const lines = doorLines(draft, ctx, local);
-  const id = STEPS[step]?.id ?? 'where';
-  const onReview = id === 'review';
-  const preview = useSetupPreview(intent, phase === 'build' && onReview);
+  const preview = useSetupPreview(intent, phase === 'build' && reviewing);
   const checks = preview.data?.plan.checks ?? [];
-  const problem = stepProblem(draft, id);
+  const reviewProblem =
+    !reviewing || preview.isPending
+      ? 'Checking…'
+      : preview.error
+        ? 'Could not check the plan.'
+        : hasErrors(checks)
+          ? `Fix ${checks.filter((c) => c.level === 'error').length} error`
+          : undefined;
+  const errors = setupErrors(draft, reviewProblem);
+  const wizard = useWizard({
+    steps: setupSteps(draft, lines),
+    errors,
+    hints: Object.fromEntries(
+      Object.entries(errors).map(([k, v]) => [k, Object.values(v ?? {})[0]]),
+    ),
+    fieldStep: {},
+    onFinish: () => {
+      setPhase('done');
+      apply.mutate();
+    },
+  });
+  const onReview = wizard.id === 'review';
+  useEffect(() => {
+    setReviewing(onReview);
+  }, [onReview]);
+  // The furthest step opened; later door lines read dimmed.
+  const reached = wizard.steps.reduce((at, s, i) => (s.state === 'todo' ? at : i), 0);
+  const stepIndex = (id: StepId) => wizard.steps.findIndex((s) => s.id === id);
 
   // One key per body: a retry of the same answers replays, new answers make a new request.
   const sent = useRef<{ body: string; key: string } | undefined>(undefined);
@@ -97,26 +118,6 @@ function Body({
     },
     onSuccess: () => client.invalidateQueries({ queryKey: scanningKeys.all }),
   });
-
-  const go = (to: number) => {
-    setStep(to);
-    setReached((r) => Math.max(r, to));
-  };
-  const next = () => {
-    if (!onReview) return go(stepAfter(draft, step, 1));
-    setPhase('done');
-    apply.mutate();
-  };
-  const hint = onReview
-    ? preview.isPending
-      ? 'Checking…'
-      : preview.error
-        ? 'Could not check the plan.'
-        : hasErrors(checks)
-          ? `Fix ${checks.filter((c) => c.level === 'error').length} error`
-          : undefined
-    : problem;
-  const blocked = Boolean(hint);
 
   const namesFor = (c: ScanSetupCheck) => ({
     ...(c.fix?.kind === 'device_direction'
@@ -177,10 +178,7 @@ function Body({
         meta={<Badge tone="accent">{presetLabel(draft.preset)}</Badge>}
       />
       <Wizard
-        steps={STEPS}
-        current={step}
-        onStep={go}
-        skipped={skipsWhen(draft) ? ['when'] : []}
+        {...wizard.frame}
         aside={
           onReview ? undefined : (
             <DoorSummary name={draft.name} lines={lines} reached={reached} stepIndex={stepIndex} />
@@ -189,31 +187,35 @@ function Body({
         asideLabel="Door"
         asideQuiet
         onCancel={() => void navigate({ to: '/admin/o/$orgId/scanning', params: { orgId } })}
-        onBack={step > 0 ? () => go(stepAfter(draft, step, -1)) : undefined}
-        onNext={next}
-        nextLabel={onReview ? 'Set up' : step === REVIEW - 1 ? 'Review' : 'Next'}
-        nextDisabled={blocked}
-        {...(hint ? { nextHint: hint } : {})}
+        nextLabel={
+          wizard.primary === 'finish'
+            ? 'Set up'
+            : wizard.primary === 'review' || wizard.id === 'devices'
+              ? 'Review'
+              : 'Next'
+        }
       >
-        {id === 'where' ? <WhereStep draft={draft} set={set} ctx={ctx} /> : null}
-        {id === 'admits' ? <AdmitsStep draft={draft} set={set} ctx={ctx} /> : null}
-        {id === 'when' ? <WhenStep draft={draft} set={set} ctx={ctx} /> : null}
-        {id === 'scanners' ? <ScannersStep draft={draft} set={set} ctx={ctx} /> : null}
-        {id === 'devices' ? (
-          <DevicesStep draft={draft} set={set} ctx={ctx} directions={directions} />
-        ) : null}
-        {onReview ? (
-          <ReviewStep
-            name={draft.name}
-            lines={lines}
-            preview={preview}
-            timeZone={draft.timeZone}
-            onZone={(timeZone) => set({ timeZone })}
-            onEdit={(s) => go(stepIndex(s))}
-            onFix={fix}
-            namesFor={namesFor}
-          />
-        ) : null}
+        <Form {...wizard.form}>
+          {wizard.id === 'where' ? <WhereStep draft={draft} set={set} ctx={ctx} /> : null}
+          {wizard.id === 'admits' ? <AdmitsStep draft={draft} set={set} ctx={ctx} /> : null}
+          {wizard.id === 'when' ? <WhenStep draft={draft} set={set} ctx={ctx} /> : null}
+          {wizard.id === 'scanners' ? <ScannersStep draft={draft} set={set} ctx={ctx} /> : null}
+          {wizard.id === 'devices' ? (
+            <DevicesStep draft={draft} set={set} ctx={ctx} directions={directions} />
+          ) : null}
+          {onReview ? (
+            <ReviewStep
+              name={draft.name}
+              lines={lines}
+              preview={preview}
+              timeZone={draft.timeZone}
+              onZone={(timeZone) => set({ timeZone })}
+              onEdit={(s) => wizard.go(s)}
+              onFix={fix}
+              namesFor={namesFor}
+            />
+          ) : null}
+        </Form>
       </Wizard>
       <UnsavedChangesDialog blocker={guard} />
     </>
