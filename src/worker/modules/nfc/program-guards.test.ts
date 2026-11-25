@@ -80,19 +80,9 @@ describe('what a start refuses, before any key is used', () => {
   });
 
   it('is off when the org has tags off', async () => {
-    const a = await f.authority();
-    await run(
-      db(),
-      "UPDATE settings SET value = '{\"enabled\":false}' WHERE scope = ? AND key = 'nfc.tags'",
-      [`org:${f.o.org.id}`],
-    );
+    const off = await f.org({ enabled: false });
     const req = await hello(sim());
-    await refused(startProgram(f.kit.ctx, a, req), 'TAGS_OFF');
-    await run(
-      db(),
-      "UPDATE settings SET value = '{\"enabled\":true}' WHERE scope = ? AND key = 'nfc.tags'",
-      [`org:${f.o.org.id}`],
-    );
+    await refused(startProgram(f.kit.ctx, await f.authority({ org: off }), req), 'TAGS_OFF');
   });
 });
 
@@ -209,7 +199,7 @@ describe('a start and an auth that are sent twice', () => {
     expect(one.next).toBe('script');
     // Another answer for the same hold is not the script's.
     await refused(
-      authProgram(f.kit.ctx, a, first.id, { responses: [`${answer.slice(0, -4)}9100`] }),
+      authProgram(f.kit.ctx, a, first.id, { responses: [`ff${answer.slice(2)}`] }),
       'TAG_PROGRAM_FAILED',
     );
   });

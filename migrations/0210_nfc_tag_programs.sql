@@ -22,7 +22,7 @@ CREATE TABLE nfc_tag_programs (
   key_version INTEGER NOT NULL CHECK (key_version BETWEEN 1 AND 255),
   -- The tag's identity as `tagRef` makes it (HMAC of the UID): never the UID.
   tag_ref TEXT NOT NULL CHECK (length(tag_ref) = 64),
-  hint TEXT NOT NULL CHECK (length(hint) = 4),
+  hint TEXT NOT NULL CHECK (length(hint) = 4 AND hint NOT GLOB '*[^0-9A-F]*' AND hint = upper(substr(tag_ref, 1, 4))),
   actor_type TEXT NOT NULL CHECK (actor_type IN ('scanner', 'api_key')),
   actor_key TEXT NOT NULL,
   scanner_id TEXT,
@@ -73,6 +73,7 @@ CREATE UNIQUE INDEX nfc_tag_programs_open ON nfc_tag_programs (org_id, mode, tag
   WHERE state IN ('started', 'scripted', 'interrupted', 'abandoned') OR (state = 'failed' AND kek_version IS NOT NULL);
 CREATE UNIQUE INDEX nfc_tag_programs_idem ON nfc_tag_programs (actor_key, idem_key) WHERE idem_key IS NOT NULL;
 CREATE INDEX nfc_tag_programs_org ON nfc_tag_programs (org_id, mode, created_at);
+CREATE INDEX nfc_tag_programs_keyset ON nfc_tag_programs (keyset_id);
 CREATE INDEX nfc_tag_programs_ref ON nfc_tag_programs (org_id, mode, tag_ref, created_at);
 CREATE INDEX nfc_tag_programs_expiry ON nfc_tag_programs (expires_at) WHERE state IN ('started', 'scripted');
 CREATE INDEX nfc_tag_programs_ended ON nfc_tag_programs (updated_at) WHERE state IN ('programmed', 'reset', 'failed', 'abandoned');
@@ -127,9 +128,11 @@ BEGIN
 END;
 
 -- Delete: a row that holds intended keys stays until the tag is reset or abandoned and 30 days have passed, and then
--- only under the retention job's grant (the grant carries the clock). An org that is gone takes its rows with it.
+-- only under the retention job's grant (the grant carries the clock). The org purge may remove it, and an org that
+-- is gone takes its rows with it.
 CREATE TRIGGER nfc_tag_programs_no_delete BEFORE DELETE ON nfc_tag_programs
 WHEN OLD.kek_version IS NOT NULL AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = OLD.org_id)
+  AND NOT EXISTS (SELECT 1 FROM authority_grants g WHERE g.purpose = 'platform.job.org.purge' AND g.target_id = OLD.org_id)
 BEGIN
   SELECT RAISE(ABORT, 'program_keys_kept') WHERE NOT (OLD.state IN ('reset', 'abandoned') AND EXISTS (
     SELECT 1 FROM authority_grants g WHERE g.purpose = 'org_mode.job.nfc.programs' AND g.org_id = OLD.org_id

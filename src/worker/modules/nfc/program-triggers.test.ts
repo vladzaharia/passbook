@@ -31,14 +31,15 @@ const ref = () => (++n).toString(16).padStart(64, '0');
 
 async function insert(over: Record<string, V> = {}) {
   const id = `p${++n}`;
+  const tagRef = (over.tag_ref as string | undefined) ?? ref();
   const row: Record<string, V> = {
     id,
     org_id: org,
     mode: 'live',
     keyset_id: keyset,
     key_version: 1,
-    tag_ref: ref(),
-    hint: 'ABCD',
+    tag_ref: tagRef,
+    hint: tagRef.slice(0, 4).toUpperCase(),
     actor_type: 'scanner',
     actor_key: 'scanner:s1',
     purpose: 'blank',
@@ -103,7 +104,7 @@ describe('inserting a program', () => {
     const tagRef = ref();
     await run(
       db(),
-      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES (?, ?, 'live', ?, 'uid', 'AAAA', 1)",
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES (?, ?, 'live', ?, 'uid', '0000', 1)",
       [`t${++n}`, org, tagRef],
     );
     await expect(insert({ tag_ref: tagRef })).rejects.toThrow(/program_known/);
@@ -177,7 +178,7 @@ describe('the state compare-and-set', () => {
     ).rejects.toThrow(/program_state/);
     await run(
       db(),
-      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('tag-end', ?, 'live', ?, 'sun', 'ABCD', 1)",
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('tag-end', ?, 'live', ?, 'sun', '0000', 1)",
       [org, tagRef],
     );
     await update(id, {
@@ -258,13 +259,13 @@ describe('deleting a program', () => {
     expect(await all(db(), 'SELECT id FROM nfc_tag_programs WHERE id = ?', [id])).toEqual([]);
   });
 
-  it('goes with its org', async () => {
-    const gone = (await f.org()).org.id;
-    const ks = (await sunKeyset(f.kit, gone, { perTag: true })).id;
-    await run(db(), 'UPDATE nfc_tag_keysets SET programmable = 1 WHERE id = ?', [ks]);
-    const id = await insert({ org_id: gone, keyset_id: ks });
+  it('goes to the org purge, which holds a grant of its own', async () => {
+    const id = await insert();
     await update(id, { state: 'scripted', step: 'result', ...KEYS });
-    await run(db(), 'DELETE FROM orgs WHERE id = ?', [gone]);
+    const job = createJobContext(f.kit.env, 'org-purge', { clock: f.kit.clock });
+    const g = jobGrant(job, { job: 'org-purge', purpose: 'platform.job.org.purge', target: org });
+    g.delete('nfc_tag_programs', { where: { id } });
+    await g.commit();
     expect(await all(db(), 'SELECT id FROM nfc_tag_programs WHERE id = ?', [id])).toEqual([]);
   });
 });
