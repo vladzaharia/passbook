@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IdSchema, TimestampSchema } from './common.ts';
 
+/** `used` is reserved and never written: single use lives on the pass. Removing it would break clients. */
 export const PRINT_STATUSES = ['active', 'voided', 'used'] as const;
 export const PrintStatusSchema = z.enum(PRINT_STATUSES);
 
@@ -23,6 +24,13 @@ export const PassPrintSchema = z.object({
   passId: IdSchema,
   generation: z.number().int().min(1),
   status: PrintStatusSchema,
+  /** The pass version the print was made from; null for a print made before versions were recorded. */
+  passVersion: z.number().int().min(1).nullable(),
+  /**
+   * The pass shows different values than this print was drawn from. Only an active print is ever stale.
+   * Not stale means re-drawn from the current values, not proof that the paper on hand is new.
+   */
+  stale: z.boolean(),
   createdAt: TimestampSchema,
   voidedAt: TimestampSchema.nullable(),
   voidCause: z.string().nullable(),
