@@ -24120,6 +24120,61 @@
                   "type": "string",
                   "pattern": "^[a-z]{1,16}$"
                 }
+              },
+              "lastCheck": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean",
+                        "enum": [
+                          true
+                        ]
+                      },
+                      "code": {
+                        "type": "null"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "ok",
+                      "code",
+                      "at"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean",
+                        "enum": [
+                          false
+                        ]
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "ok",
+                      "code",
+                      "at"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -24135,7 +24190,8 @@
               "revokedAt",
               "createdAt",
               "updatedAt",
-              "cardTypes"
+              "cardTypes",
+              "lastCheck"
             ],
             "additionalProperties": false
           },
@@ -24249,6 +24305,61 @@
                     "type": "string",
                     "pattern": "^[a-z]{1,16}$"
                   }
+                },
+                "lastCheck": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "code": {
+                          "type": "null"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -24264,7 +24375,8 @@
                 "revokedAt",
                 "createdAt",
                 "updatedAt",
-                "cardTypes"
+                "cardTypes",
+                "lastCheck"
               ],
               "additionalProperties": false
             }
@@ -24495,6 +24607,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -24510,7 +24677,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -24607,6 +24775,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -24622,7 +24845,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26413,6 +26637,61 @@
                     "type": "string",
                     "pattern": "^[a-z]{1,16}$"
                   }
+                },
+                "lastCheck": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "code": {
+                          "type": "null"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -26428,7 +26707,8 @@
                 "revokedAt",
                 "createdAt",
                 "updatedAt",
-                "cardTypes"
+                "cardTypes",
+                "lastCheck"
               ],
               "additionalProperties": false
             }
@@ -26675,6 +26955,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -26690,7 +27025,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26801,6 +27137,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -26816,7 +27207,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -26913,6 +27305,61 @@
               "type": "string",
               "pattern": "^[a-z]{1,16}$"
             }
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -26928,7 +27375,8 @@
           "revokedAt",
           "createdAt",
           "updatedAt",
-          "cardTypes"
+          "cardTypes",
+          "lastCheck"
         ],
         "additionalProperties": false
       },
@@ -85003,7 +85451,12 @@
                     "updatedAt": 1795399200000,
                     "cardTypes": [
                       "northwind"
-                    ]
+                    ],
+                    "lastCheck": {
+                      "ok": true,
+                      "code": null,
+                      "at": 1795570500000
+                    }
                   },
                   "serviceAccountEmail": "wallet-issuer@example.com"
                 }
@@ -85182,7 +85635,12 @@
                       "updatedAt": 1795399200000,
                       "cardTypes": [
                         "northwind"
-                      ]
+                      ],
+                      "lastCheck": {
+                        "ok": true,
+                        "code": null,
+                        "at": 1795570500000
+                      }
                     }
                   ],
                   "nextCursor": null
@@ -85285,7 +85743,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -85393,7 +85856,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87529,7 +87997,12 @@
                       "updatedAt": 1795399200000,
                       "cardTypes": [
                         "northwind"
-                      ]
+                      ],
+                      "lastCheck": {
+                        "ok": true,
+                        "code": null,
+                        "at": 1795570500000
+                      }
                     }
                   ],
                   "nextCursor": null
@@ -87618,7 +88091,12 @@
                   "updatedAt": 1795399200000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87715,7 +88193,12 @@
                   "updatedAt": 1795399200000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87812,7 +88295,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": null,
+                    "at": 1795570500000
+                  }
                 }
               }
             }
