@@ -39,10 +39,13 @@ describe('boundary rows that cannot move', () => {
     });
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
     expect(await tick(kit)).toBe(0);
-    expect((await rowOf(kit, pass.id))?.due_at).toBe(pass.modifiedAt);
-    await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [org.id]);
-    expect(await tick(kit)).toBe(1);
+    // Parked for an hour, so no claim scans it each minute.
     expect((await rowOf(kit, pass.id))?.due_at).toBe(now + HOUR);
+    await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [org.id]);
+    expect(await tick(kit)).toBe(0);
+    kit.clock.set(now + HOUR);
+    expect(await tick(kit)).toBe(1);
+    expect((await rowOf(kit, pass.id))?.due_at).toBe(now + 2 * HOUR + 1);
   });
 
   it('are dropped for voided, removed and deleted passes', async () => {
@@ -74,10 +77,19 @@ describe('boundary rows that cannot move', () => {
     });
     await run(
       kit.env.DB,
+      `INSERT INTO pass_versions (pass_id, version, object_key, template_version, personalization, pass_json, cause, created_at)
+       SELECT id, 99, object_key, template_version, '{}', '{"upcomingPassInformation":[]}', 'admin', 1 FROM passes WHERE id = ?`,
+      [pass.id],
+    );
+    // The trigger leaves a developer org out; a row that exists anyway is parked, never claimed.
+    expect(await rowOf(kit, pass.id)).toBeNull();
+    await run(
+      kit.env.DB,
       'INSERT INTO pass_boundaries (pass_id, version, object_key, due_at) SELECT id, 1, object_key, 0 FROM passes WHERE id = ?',
       [pass.id],
     );
     expect(await tick(kit)).toBe(0);
+    expect((await rowOf(kit, pass.id))?.due_at).toBe(kit.clock.now() + HOUR);
   });
 });
 

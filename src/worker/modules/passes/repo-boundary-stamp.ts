@@ -54,6 +54,27 @@ export async function stampBoundary(
   const pending = await first(ctx.env.DB, 'SELECT 1 FROM outbox WHERE coalesce_key = ?', [
     coalesceKey,
   ]);
+  try {
+    return await commitStamp(ctx, claim, lineage, next, pushId, coalesceKey, !pending);
+  } catch (error) {
+    // Another writer queued the pass's push between the read and the insert: it announces this render too.
+    if (!pending && error instanceof Error && COALESCE_RACE.test(error.message))
+      return commitStamp(ctx, claim, lineage, next, pushId, coalesceKey, false);
+    throw error;
+  }
+}
+
+const COALESCE_RACE = /UNIQUE constraint failed: outbox\.coalesce_key/;
+
+async function commitStamp(
+  ctx: ServiceContext,
+  claim: BoundaryClaim,
+  lineage: RenderLineage,
+  next: NewRender,
+  pushId: string,
+  coalesceKey: string,
+  withPush: boolean,
+): Promise<'stamped' | 'stale' | 'refused'> {
   const g = jobGrant(ctx, {
     job: 'boundary',
     purpose: 'org_mode.job.pass_boundary_render',
@@ -95,7 +116,7 @@ export async function stampBoundary(
       ],
     ),
   );
-  if (!pending)
+  if (withPush)
     g.insertSelect(
       'outbox',
       ['id', 'kind', 'pass_id', 'coalesce_key', 'payload', 'state', 'available_at', 'created_at'],

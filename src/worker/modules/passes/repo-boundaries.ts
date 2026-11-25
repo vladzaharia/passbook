@@ -1,36 +1,53 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, batch, first, stmt } from '../../platform/db.ts';
 
 /** A claim holds a row from other ticks this long; a lost job is claimed again after it. */
 export const BOUNDARY_LEASE_MS = 5 * 60_000;
 
+/** A row of an org that is not active waits this long before it is looked at again. */
+export const BOUNDARY_PARKED_MS = 60 * 60_000;
+
 /**
- * Claims due rows in one statement: each takes the lease as its due time, so the job that works it
- * compares against that value. Each org gets at most `perOrg` a tick and its rows interleave with the
- * other orgs' (rank within the org first); live before test. Rows of an org that is not active, or
- * of a developer org (its passes are never signed), wait with their due time.
+ * Claims due rows in one batch: each takes the lease as its due time, so the job that works it compares
+ * against that value. Each org gets at most `perOrg` a tick and its rows interleave with the other orgs'
+ * (rank within the org first); live before test. Due rows of an org that is not active (or a developer
+ * org, which the trigger leaves out) are parked for an hour, last, so no claim scans them each minute.
  */
 export async function claimDueBoundaries(
   db: D1Database,
   p: { now: number; lease: number; limit: number; perOrg: number },
 ): Promise<string[]> {
-  const rows = await all<{ pass_id: string }>(
-    db,
-    `UPDATE pass_boundaries SET due_at = ?
-     WHERE pass_id IN (
-       SELECT pass_id FROM (
-         SELECT b.pass_id, b.due_at, p.mode, ROW_NUMBER() OVER (
-           PARTITION BY p.org_id ORDER BY p.mode = 'test', b.due_at, b.pass_id) AS n
-         FROM pass_boundaries b
+  const [claimed] = await batch(db, [
+    stmt(
+      db,
+      `UPDATE pass_boundaries SET due_at = ?
+       WHERE pass_id IN (
+         SELECT pass_id FROM (
+           SELECT b.pass_id, b.due_at, p.mode, ROW_NUMBER() OVER (
+             PARTITION BY p.org_id ORDER BY p.mode = 'test', b.due_at, b.pass_id) AS n
+           FROM pass_boundaries b
+           JOIN passes p ON p.id = b.pass_id
+           JOIN orgs o ON o.id = p.org_id
+           WHERE b.due_at <= ? AND o.status = 'active' AND o.kind != 'developer'
+         ) WHERE n <= ?
+         ORDER BY mode = 'test', n, due_at, pass_id LIMIT ?)
+       RETURNING pass_id`,
+      [p.lease, p.now, p.perOrg, p.limit],
+    ),
+    stmt(
+      db,
+      `UPDATE pass_boundaries SET due_at = ?
+       WHERE pass_id IN (
+         SELECT b.pass_id FROM pass_boundaries b
          JOIN passes p ON p.id = b.pass_id
          JOIN orgs o ON o.id = p.org_id
-         WHERE b.due_at <= ? AND o.status = 'active' AND o.kind != 'developer'
-       ) WHERE n <= ?
-       ORDER BY mode = 'test', n, due_at, pass_id LIMIT ?)
-     RETURNING pass_id`,
-    [p.lease, p.now, p.perOrg, p.limit],
-  );
-  return rows.map((r) => r.pass_id);
+         WHERE b.due_at <= ? AND (o.status != 'active' OR o.kind = 'developer')
+         ORDER BY b.due_at LIMIT ?)
+       RETURNING pass_id`,
+      [p.now + BOUNDARY_PARKED_MS, p.now, p.limit],
+    ),
+  ]);
+  return ((claimed?.results ?? []) as { pass_id: string }[]).map((r) => r.pass_id);
 }
 
 /** A claimed row with what the job needs of its pass and artifact, read in one query. */
@@ -145,20 +162,43 @@ export async function dropBoundary(db: D1Database, claim: BoundaryClaim): Promis
   return rows.length === 1;
 }
 
-/** The render devices get for the pass's current artifact, if one was made. */
-export async function currentRender(
+/**
+ * The boundary row of the pass's current artifact: its render when one was made, and when the last render
+ * was stamped (it outlives a new artifact, for the Last-Modified collision).
+ */
+export interface CurrentRender {
+  renderedAt: number;
+  stampedAt: number;
+  render: string | null;
+}
+
+export async function currentRenders(
   db: D1Database,
-  pass: { id: string; objectKey: string },
-): Promise<{ renderedAt: number; stampedAt: number; render: string } | null> {
-  const row = await first<{ rendered_at: number; stamped_at: number; render: string }>(
+  passes: readonly { id: string; objectKey: string }[],
+): Promise<Map<string, CurrentRender>> {
+  const out = new Map<string, CurrentRender>();
+  if (passes.length === 0) return out;
+  const rows = await all<{
+    pass_id: string;
+    object_key: string;
+    rendered_at: number;
+    stamped_at: number;
+    render: string | null;
+  }>(
     db,
-    `SELECT rendered_at, stamped_at, render FROM pass_boundaries
-     WHERE pass_id = ? AND object_key = ? AND rendered_at > 0 AND render IS NOT NULL`,
-    [pass.id, pass.objectKey],
+    `SELECT pass_id, object_key, rendered_at, stamped_at, render FROM pass_boundaries
+     WHERE pass_id IN (SELECT value FROM json_each(?))`,
+    [JSON.stringify(passes.map((p) => p.id))],
   );
-  return row
-    ? { renderedAt: row.rendered_at, stampedAt: row.stamped_at, render: row.render }
-    : null;
+  const keys = new Map(passes.map((p) => [p.id, p.objectKey]));
+  for (const row of rows)
+    if (keys.get(row.pass_id) === row.object_key)
+      out.set(row.pass_id, {
+        renderedAt: row.rendered_at,
+        stampedAt: row.stamped_at,
+        render: row.rendered_at > 0 ? row.render : null,
+      });
+  return out;
 }
 
 /** What a wallet's boundaries are read from: the pass's template and its latest artifact pass.json. */
@@ -169,16 +209,18 @@ export async function boundarySource(
   orgId: string;
   templateId: string;
   templateVersion: string;
+  personalization: string;
   passJson: string | null;
 } | null> {
   const row = await first<{
     org_id: string;
     template_id: string;
     template_version: string;
+    personalization: string;
     pass_json: string | null;
   }>(
     db,
-    `SELECT p.org_id, p.template_id, p.template_version,
+    `SELECT p.org_id, p.template_id, p.template_version, p.personalization,
        (SELECT v.pass_json FROM pass_versions v WHERE v.pass_id = p.id
          ORDER BY v.version DESC LIMIT 1) AS pass_json
      FROM passes p WHERE p.id = ?`,
@@ -189,6 +231,7 @@ export async function boundarySource(
         orgId: row.org_id,
         templateId: row.template_id,
         templateVersion: row.template_version,
+        personalization: row.personalization,
         passJson: row.pass_json,
       }
     : null;

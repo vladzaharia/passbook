@@ -156,7 +156,8 @@ async function backoff(
 ) {
   const attempts = work.attempts + 1;
   const delay = Math.min(BACKOFF_MS * 2 ** (attempts - 1), BACKOFF_CAP_MS);
-  await moveBoundary(ctx.env.DB, claim, ctx.clock.now() + delay, attempts);
+  // A new artifact took the row over (a refusal from a lost claim): nothing waits, nothing to log.
+  if (!(await moveBoundary(ctx.env.DB, claim, ctx.clock.now() + delay, attempts))) return;
   ctx.log.warn('pass.boundary_backoff', {
     orgId: work.pass.orgId,
     passId: claim.passId,

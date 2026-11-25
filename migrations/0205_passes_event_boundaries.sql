@@ -20,16 +20,20 @@ CREATE TABLE pass_boundaries (
 );
 CREATE INDEX pass_boundaries_due ON pass_boundaries (due_at, pass_id);
 
--- A new artifact that lists events, or that replaces one that did, is worked out from scratch now.
+-- A new artifact that lists events, or that replaces one that did, is worked out from scratch now. A
+-- developer org's passes are never signed (orgs.kind never changes). stamped_at stays: a publish in the
+-- same second as the last render must not hide behind its Last-Modified, and renders stay 5 minutes apart.
 CREATE TRIGGER pass_boundaries_mark AFTER INSERT ON pass_versions
 WHEN NEW.pass_json IS NOT NULL AND NEW.object_key IS NOT NULL
   AND (instr(NEW.pass_json, '"upcomingPassInformation"') > 0
     OR EXISTS (SELECT 1 FROM pass_boundaries b WHERE b.pass_id = NEW.pass_id))
+  AND NOT EXISTS (SELECT 1 FROM passes p JOIN orgs o ON o.id = p.org_id
+    WHERE p.id = NEW.pass_id AND o.kind = 'developer')
 BEGIN
   INSERT INTO pass_boundaries (pass_id, version, object_key, due_at)
   VALUES (NEW.pass_id, NEW.version, NEW.object_key, NEW.created_at)
   ON CONFLICT (pass_id) DO UPDATE SET version = excluded.version, object_key = excluded.object_key,
-    due_at = excluded.due_at, rendered_at = 0, render = NULL, stamp = 0, stamped_at = 0, attempts = 0;
+    due_at = excluded.due_at, rendered_at = 0, render = NULL, stamp = 0, attempts = 0;
 END;
 
 -- A new render takes the next update tag, as a publish does (0045 pass_published).
@@ -44,6 +48,7 @@ END;
 -- latest pass_versions row is the artifact.
 INSERT INTO pass_boundaries (pass_id, version, object_key, due_at)
 SELECT p.id, v.version, v.object_key, 0 FROM passes p
+JOIN orgs o ON o.id = p.org_id AND o.kind != 'developer'
 JOIN pass_versions v ON v.pass_id = p.id
   AND v.version = (SELECT MAX(x.version) FROM pass_versions x WHERE x.pass_id = p.id)
 WHERE p.deleted_at IS NULL AND p.status = 'active' AND p.removed_at IS NULL
