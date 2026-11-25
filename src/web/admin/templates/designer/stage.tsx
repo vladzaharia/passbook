@@ -4,7 +4,6 @@ import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
-import { lockedAction } from '../../../channel-previews/channel-stage.tsx';
 import type { PreviewChannel, PreviewSource } from '../../../channel-previews/types.ts';
 import { useSettings } from '../../settings/queries.ts';
 import { useTemplateChannels } from '../channels/api.ts';
@@ -59,7 +58,7 @@ export function DesignerStage({
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
-  // is locked and names its level.
+  // has no tab.
   const effective = useMemo(() => {
     const all = channels.data?.effective;
     if (!all) return undefined;
@@ -99,7 +98,6 @@ export function DesignerStage({
       source={source}
       channels={effective}
       notes={notes}
-      lockedAction={lockedAction({ orgId })}
       apple={<DesignerPreview {...card} assetOverrides={assetOverrides} />}
       paper={
         <PaperPreview

@@ -1,6 +1,7 @@
 import { createApp } from './app.ts';
 import { handleScheduled } from './jobs/cron.ts';
 import { handleQueue } from './jobs/queue.ts';
+import { openE2eRelease } from './modules/wallet-providers/e2e-release.ts';
 import type { AppEnv } from './platform/env.ts';
 import { reportUnsupportedPatterns } from './platform/pattern-report.ts';
 import { createAuthStores } from './stores.ts';
@@ -17,6 +18,8 @@ export { PassImport } from './workflows/pass-import.ts';
 export { TemplateImport } from './workflows/template-import.ts';
 
 reportUnsupportedPatterns();
+// e2e builds only; every other build compiles this to nothing (docs/design/wallet-providers/e2e-release.md).
+openE2eRelease();
 
 /** Holds routes only. Stores are built from each request's env inside the app. */
 let app: ReturnType<typeof createApp> | undefined;

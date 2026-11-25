@@ -3,7 +3,7 @@ import { Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
-import { Button, ConfirmDialog, toast } from '../../../ui/index.ts';
+import { Button, ConfirmDialog, toast, useNow } from '../../../ui/index.ts';
 import { UndoPanel } from '../run-kit.tsx';
 import { emailTheRest } from './api.ts';
 import { type UndoResult, undoImport } from './api-run.ts';
@@ -15,17 +15,6 @@ const clock = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
-
-/** Now, ticking each second while `on`. */
-function useTicking(on: boolean): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!on) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [on]);
-  return now;
-}
 
 /** What an undo did: removed, restored, emails that will not go out, and what stayed. */
 export function UndoSummary({ result }: { result: UndoResult }) {
@@ -65,7 +54,7 @@ export function UndoCard({
   const p = imp.progress;
   const hold = imp.emailHoldUntil ?? null;
   const held = p?.notEmailed ?? 0;
-  const now = useTicking(hold !== null);
+  const now = useNow(1000, hold !== null);
   const holding = hold !== null && hold > now && held > 0;
   const finished = imp.finishedAt ?? imp.committedAt ?? now;
   const live = (p?.created ?? 0) - (p?.removed ?? 0) + (p?.updated ?? 0) > 0;

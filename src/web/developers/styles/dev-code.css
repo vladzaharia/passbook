@@ -125,9 +125,9 @@ pre.src .ln.hl {
 }
 /* The caller's own key never renders: a chip that reads the environment. */
 .envchip {
-  display: inline-flex;
-  align-items: center;
   padding: 0 5px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   border-radius: 4px;
   color: var(--pk-accent-fg);
   background: var(--pk-accent-subtle);
@@ -237,6 +237,17 @@ pre.src .ln.hl {
   color: var(--pk-accent-fg);
 }
 
+/* A phone keeps the table whole: the code wraps instead of pushing the fix out of view. */
+@media (max-width: 560px) {
+  .errs td.mono {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .errs td:first-child {
+    min-width: 8.5rem;
+  }
+}
+
 .op-errors summary {
   cursor: pointer;
   font-weight: 600;
@@ -290,8 +301,12 @@ pre.src .ln.hl {
 }
 .examples {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin-top: 16px;
+}
+.example {
+  min-width: 0;
 }
 .example > summary {
   cursor: pointer;

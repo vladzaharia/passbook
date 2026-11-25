@@ -10317,6 +10317,22 @@
           "hasMore"
         ]
       },
+      "WalletReissue": {
+        "type": "object",
+        "properties": {
+          "reissueId": {
+            "type": "string"
+          },
+          "instances": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "reissueId",
+          "instances"
+        ]
+      },
       "ApiKeyCurrent": {
         "type": "object",
         "properties": {
@@ -23818,6 +23834,13 @@
               "updatedAt": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "cardTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z]{1,16}$"
+                }
               }
             },
             "required": [
@@ -23832,7 +23855,8 @@
               "verifiedAt",
               "revokedAt",
               "createdAt",
-              "updatedAt"
+              "updatedAt",
+              "cardTypes"
             ],
             "additionalProperties": false
           },
@@ -23939,6 +23963,13 @@
                 "updatedAt": {
                   "type": "integer",
                   "minimum": 0
+                },
+                "cardTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z]{1,16}$"
+                  }
                 }
               },
               "required": [
@@ -23953,7 +23984,8 @@
                 "verifiedAt",
                 "revokedAt",
                 "createdAt",
-                "updatedAt"
+                "updatedAt",
+                "cardTypes"
               ],
               "additionalProperties": false
             }
@@ -24177,6 +24209,13 @@
           "updatedAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "cardTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{1,16}$"
+            }
           }
         },
         "required": [
@@ -24191,7 +24230,8 @@
           "verifiedAt",
           "revokedAt",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "cardTypes"
         ],
         "additionalProperties": false
       },
@@ -24281,6 +24321,13 @@
           "updatedAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "cardTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{1,16}$"
+            }
           }
         },
         "required": [
@@ -24295,7 +24342,8 @@
           "verifiedAt",
           "revokedAt",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "cardTypes"
         ],
         "additionalProperties": false
       },
@@ -26079,6 +26127,13 @@
                 "updatedAt": {
                   "type": "integer",
                   "minimum": 0
+                },
+                "cardTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z]{1,16}$"
+                  }
                 }
               },
               "required": [
@@ -26093,7 +26148,8 @@
                 "verifiedAt",
                 "revokedAt",
                 "createdAt",
-                "updatedAt"
+                "updatedAt",
+                "cardTypes"
               ],
               "additionalProperties": false
             }
@@ -26333,6 +26389,13 @@
           "updatedAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "cardTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{1,16}$"
+            }
           }
         },
         "required": [
@@ -26347,7 +26410,134 @@
           "verifiedAt",
           "revokedAt",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "cardTypes"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformWalletCredentialsSetSamsungCardParams": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "loyalty",
+              "ticket",
+              "coupon"
+            ]
+          },
+          "cardId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,32}$"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "type",
+          "cardId",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformWalletCredentialsSetSamsungCardResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "platform",
+              "org"
+            ]
+          },
+          "orgId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "samsung"
+            ]
+          },
+          "identityHint": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "string",
+            "enum": [
+              "platform",
+              "managed",
+              "own"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "verifiedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "revokedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cardTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{1,16}$"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "orgId",
+          "mode",
+          "provider",
+          "identityHint",
+          "provenance",
+          "revision",
+          "verifiedAt",
+          "revokedAt",
+          "createdAt",
+          "updatedAt",
+          "cardTypes"
         ],
         "additionalProperties": false
       },
@@ -26437,6 +26627,13 @@
           "updatedAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "cardTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{1,16}$"
+            }
           }
         },
         "required": [
@@ -26451,7 +26648,8 @@
           "verifiedAt",
           "revokedAt",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "cardTypes"
         ],
         "additionalProperties": false
       },
@@ -55275,6 +55473,32 @@
         ],
         "additionalProperties": false
       },
+      "PassesResendProviderCopiesParams": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "samsung"
+            ]
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "additionalProperties": false
+      },
       "PlatformUsersListResponse": {
         "type": "object",
         "properties": {
@@ -79109,6 +79333,7 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
@@ -79647,6 +79872,7 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -83957,7 +84183,10 @@
                     "verifiedAt": 1795399200000,
                     "revokedAt": null,
                     "createdAt": 1794362400000,
-                    "updatedAt": 1795399200000
+                    "updatedAt": 1795399200000,
+                    "cardTypes": [
+                      "northwind"
+                    ]
                   },
                   "serviceAccountEmail": "wallet-issuer@example.com"
                 }
@@ -84133,7 +84362,10 @@
                       "verifiedAt": 1795399200000,
                       "revokedAt": null,
                       "createdAt": 1794362400000,
-                      "updatedAt": 1795399200000
+                      "updatedAt": 1795399200000,
+                      "cardTypes": [
+                        "northwind"
+                      ]
                     }
                   ],
                   "nextCursor": null
@@ -84233,7 +84465,10 @@
                   "verifiedAt": null,
                   "revokedAt": null,
                   "createdAt": 1794362400000,
-                  "updatedAt": 1795572000000
+                  "updatedAt": 1795572000000,
+                  "cardTypes": [
+                    "northwind"
+                  ]
                 }
               }
             }
@@ -84338,7 +84573,10 @@
                   "verifiedAt": 1795399200000,
                   "revokedAt": 1795572000000,
                   "createdAt": 1794362400000,
-                  "updatedAt": 1795572000000
+                  "updatedAt": 1795572000000,
+                  "cardTypes": [
+                    "northwind"
+                  ]
                 }
               }
             }
@@ -84872,6 +85110,7 @@
           "WALLET_ACCOUNT_INSTANCES_ACTIVE",
           "WALLET_ACCOUNT_MOVED",
           "WALLET_ART_MISMATCH",
+          "WALLET_CARD_SET",
           "WALLET_CREDENTIALS_INVALID",
           "WALLET_CREDENTIALS_UNAVAILABLE",
           "WALLET_ENROLMENT_HELD",
@@ -84890,9 +85129,9 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
-          "WALLET_RUN_BUSY",
-          "WALLET_VERIFICATION_CONFLICT"
+          "WALLET_RUN_BUSY"
         ]
       }
     },
@@ -85015,6 +85254,7 @@
           "WALLET_ACCOUNT_INSTANCES_ACTIVE",
           "WALLET_ACCOUNT_MOVED",
           "WALLET_ART_MISMATCH",
+          "WALLET_CARD_SET",
           "WALLET_CREDENTIALS_INVALID",
           "WALLET_CREDENTIALS_UNAVAILABLE",
           "WALLET_ENROLMENT_HELD",
@@ -85033,9 +85273,9 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
-          "WALLET_RUN_BUSY",
-          "WALLET_VERIFICATION_CONFLICT"
+          "WALLET_RUN_BUSY"
         ]
       }
     },
@@ -85158,6 +85398,7 @@
           "WALLET_ACCOUNT_INSTANCES_ACTIVE",
           "WALLET_ACCOUNT_MOVED",
           "WALLET_ART_MISMATCH",
+          "WALLET_CARD_SET",
           "WALLET_CREDENTIALS_INVALID",
           "WALLET_CREDENTIALS_UNAVAILABLE",
           "WALLET_ENROLMENT_HELD",
@@ -85176,9 +85417,9 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
-          "WALLET_RUN_BUSY",
-          "WALLET_VERIFICATION_CONFLICT"
+          "WALLET_RUN_BUSY"
         ]
       }
     },
@@ -86468,7 +86709,10 @@
                       "verifiedAt": 1795399200000,
                       "revokedAt": null,
                       "createdAt": 1794362400000,
-                      "updatedAt": 1795399200000
+                      "updatedAt": 1795399200000,
+                      "cardTypes": [
+                        "northwind"
+                      ]
                     }
                   ],
                   "nextCursor": null
@@ -86554,7 +86798,10 @@
                   "verifiedAt": 1795570500000,
                   "revokedAt": null,
                   "createdAt": 1794362400000,
-                  "updatedAt": 1795399200000
+                  "updatedAt": 1795399200000,
+                  "cardTypes": [
+                    "northwind"
+                  ]
                 }
               }
             }
@@ -86589,6 +86836,105 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_CREDENTIALS_INVALID",
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WALLET_IDENTITY_IMMUTABLE"
+        ]
+      }
+    },
+    "/api/v1/platform/wallet-credentials/{id}/cards": {
+      "put": {
+        "summary": "Name the Samsung card of one more type on a platform credential",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformWalletCredentialsSetSamsungCardParams"
+              },
+              "example": {
+                "type": "loyalty",
+                "cardId": "northwind",
+                "expectedRevision": 3
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformWalletCredentialsSetSamsungCardResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-13a7e9559214",
+                  "scope": "platform",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "live",
+                  "provider": "google",
+                  "identityHint": "Northwind signing identity",
+                  "provenance": "platform",
+                  "revision": 3,
+                  "verifiedAt": 1795570500000,
+                  "revokedAt": null,
+                  "createdAt": 1794362400000,
+                  "updatedAt": 1795399200000,
+                  "cardTypes": [
+                    "northwind"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.putPlatformWalletCredentialsByIdCards",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "setSamsungCard"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "CONFLICT",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_CARD_SET",
           "WALLET_CREDENTIALS_INVALID",
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE"
@@ -86646,7 +86992,10 @@
                   "verifiedAt": 1795399200000,
                   "revokedAt": 1795572000000,
                   "createdAt": 1794362400000,
-                  "updatedAt": 1795572000000
+                  "updatedAt": 1795572000000,
+                  "cardTypes": [
+                    "northwind"
+                  ]
                 }
               }
             }
@@ -92757,6 +93106,7 @@
           "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -92889,6 +93239,7 @@
           "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -94315,6 +94666,7 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -115719,7 +116071,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_NOT_FOUND",
-          "WALLET_VERIFICATION_CONFLICT"
+          "WALLET_PROJECTION_SCHEMA_RETIRED"
         ]
       }
     },
@@ -116093,6 +116445,84 @@
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/wallet-providers/reissue": {
+      "post": {
+        "summary": "Send every active Google or Samsung copy of an organization's passes again; a key needs passes:write",
+        "tags": [
+          "wallet-providers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassesResendProviderCopiesParams"
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "provider": "google",
+                "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletReissue"
+                },
+                "example": {
+                  "reissueId": "0193a1b2-7c00-7000-8000-5e1a0cc4f25e",
+                  "instances": 38
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-providers.postWalletProvidersReissue",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "resendProviderCopies"
+        },
+        "description": "Sends every active Google or Samsung copy of an organization's passes again, so a changed release, art or compiler reaches cards whose passes did not change. Passes nobody has added to a wallet have no copy yet and are skipped. A key needs `passes:write`.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"

@@ -36,7 +36,6 @@ import {
   facts,
   type ImageSlot,
   type StagedImage,
-  shownValues,
 } from './draft.ts';
 import { runFix } from './fixes.ts';
 import { HolderPreview } from './holder-preview.tsx';
@@ -95,7 +94,6 @@ function BrandForm({
     setDraft((d) => ({ ...d, images: { ...d.images, [slot]: image } }));
   const draftFacts = useMemo(() => facts(view, draft), [view, draft]);
   const checks = useMemo(() => orgSetupChecks(draftFacts, Date.now()), [draftFacts]);
-  const v = shownValues(view, draft);
   const counts = {
     brand: checks.filter((c) => c.area === 'brand' && c.level !== 'info').length,
     support: checks.filter((c) => c.area === 'support' && c.level !== 'info').length,
@@ -236,13 +234,13 @@ function BrandForm({
         <SupportCard orgId={orgId} view={view} draft={draft} canEdit={canEdit} edit={edit} />
         <ChannelsCard
           orgId={orgId}
-          orgName={v.name}
           view={view}
           draftFacts={draftFacts}
           draft={draft}
           edit={edit}
           canEdit={canEdit}
           canManageApple={canEdit}
+          canOperatePasses={caps.includes('passes:operate')}
           accounts={
             caps.includes('integrations:manage')
               ? 'manage'

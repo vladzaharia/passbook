@@ -28,7 +28,6 @@ import {
   publishProjectionRelease,
 } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
-import { refreshSamsungProjectionEvidence } from './samsung-verification.ts';
 
 /** A source whose entire Apple representation is covered by both native projections. */
 export function makeProviderTestTemplate(id: string): TestTemplate {
@@ -82,13 +81,11 @@ export interface OfferFixtureSource {
   barcode: 'none' | 'qr';
 }
 
-/** Reviewed source and real provider evidence obtained through a mocked Samsung HTTPS response. */
+/** Reviewed source and a card read obtained through a mocked Samsung HTTPS response. */
 export async function setupWalletOfferKit(
   options: {
     google?: 'absent' | 'configured';
     samsung?: OfferFixtureState;
-    /** `2` publishes the compiled projection: no evidence row, the card is read live. */
-    samsungSchema?: 1 | 2;
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
@@ -213,34 +210,7 @@ export async function setupWalletOfferKit(
       });
     });
   }
-  async function refreshSamsungEvidence(candidateId: string, candidateHash: string) {
-    // The provider verifies with the certificate on the account's current revision, which rotation replaces.
-    const readiness = await getWalletProviderReadiness(kit.ctx, scope('samsung'));
-    const current = await readConfiguredWalletProviderCredentials(kit.ctx, scope('samsung'), {
-      accountId: readiness.accountId ?? '',
-      accountRevision: readiness.revision,
-    });
-    if (current?.provider !== 'samsung')
-      throw new Error('Samsung account missing in wallet offer fixture.');
-    const partnerCertificatePem = current.credentials.partnerCertificatePem;
-    const fetch = mockTemplateFetch(partnerCertificatePem);
-    const restoreGate = setWalletProvidersEnabledForTest(true);
-    try {
-      const result = await refreshSamsungProjectionEvidence(kit.ctx, auth, {
-        orgId: kit.org.id,
-        mode: 'live',
-        candidateId,
-        candidateHash,
-      });
-      if (!result.verified)
-        throw new Error('Samsung card verification failed in wallet offer fixture.');
-    } finally {
-      fetch.mockRestore();
-      restoreGate();
-    }
-  }
   async function candidateProjection(provider: NativeProvider) {
-    if (options.samsungSchema !== 2) return projection(provider);
     const version = await getVersion(kit.env.DB, kit.template.id, kit.template.version);
     if (!version) throw new Error('Offer fixture version is missing.');
     const { pins } = await computeProjectionPins(kit.ctx, provider, version);
@@ -273,9 +243,17 @@ export async function setupWalletOfferKit(
         candidateHash: candidate.candidateHash,
       },
     );
-    if (options.samsungSchema !== 2)
-      await refreshSamsungEvidence(candidate.id, candidate.candidateHash);
-    const live = options.samsungSchema === 2 ? mockTemplateFetch(identity.certificate) : null;
+    // Samsung verifies with the certificate on the account's current revision, which a rotation replaces.
+    const readiness = await getWalletProviderReadiness(kit.ctx, common);
+    const current = await readConfiguredWalletProviderCredentials(kit.ctx, common, {
+      accountId: readiness.accountId ?? '',
+      accountRevision: readiness.revision,
+    });
+    const live = mockTemplateFetch(
+      current?.provider === 'samsung'
+        ? current.credentials.partnerCertificatePem
+        : identity.certificate,
+    );
     try {
       return await publishProjectionRelease(kit.ctx, apple.publisherAuth, kit.template.id, {
         ...common,
@@ -285,7 +263,7 @@ export async function setupWalletOfferKit(
         expectedGeneration,
       });
     } finally {
-      live?.mockRestore();
+      live.mockRestore();
     }
   }
   if ((options.google ?? 'configured') !== 'absent') await configure('google');
@@ -303,9 +281,9 @@ export async function setupWalletOfferKit(
     googleCertificate: identity.certificate,
     credentialKeysetCommitment,
     projection,
+    candidateProjection,
     configure,
     publish,
-    refreshSamsungEvidence,
     mockTemplateFetch,
   };
 }

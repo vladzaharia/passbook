@@ -1,5 +1,4 @@
 import { Clock, LogOut } from 'lucide-react';
-import { SCAN_COPY } from '../../../../shared/copy/scan.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { Button } from '../../../ui/button.tsx';
 import { flagged } from '../../inside/inside-model.ts';
@@ -100,7 +99,7 @@ function Row({
         tabIndex={-1}
         disabled={stale}
         title={stale ? ACCESS_COPY.inside.needsConnection : undefined}
-        aria-label={`${SCAN_COPY.actions.markAsOut}: ${name}`}
+        aria-label={`${V.markOut}: ${name}`}
         onClick={() => onMark(row)}
       >
         <LogOut aria-hidden /> {V.markOut}

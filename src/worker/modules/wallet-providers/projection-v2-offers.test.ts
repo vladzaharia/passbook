@@ -19,7 +19,6 @@ import {
 } from './projection-service.ts';
 import { addsSharingLoss, updateCompiler } from './projection-v2-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
-import { setCompiledRuntimeForTest } from './render-projection.ts';
 
 const testEnv = installKeysetTestEnv();
 
@@ -65,7 +64,6 @@ async function googleFixture() {
   // until then: pretend both so these tests are decided by the pause alone.
   restore.push(
     setWalletProvidersEnabledForTest(true),
-    setCompiledRuntimeForTest(true),
     setRuntimeAccountCheckForTest(async () => {}),
   );
   const snapshot = await offerPassSnapshot(kit.ctx, f.pass.id);

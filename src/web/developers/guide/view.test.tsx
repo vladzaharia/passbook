@@ -61,7 +61,7 @@ describe('GuideView', () => {
     expect(screen.getByRole('heading', { name: 'Part' })).toHaveAttribute('id', 'part');
     expect(screen.getByRole('heading', { name: 'Sub' })).toBeInTheDocument();
     expect(screen.getByText('Note.')).toBeInTheDocument();
-    expect(screen.getByLabelText('json request')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Step \d+: json request/)).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByText('Run it')).toBeInTheDocument();
     expect(screen.getByTestId('g1-s1-8')).toBeInTheDocument();

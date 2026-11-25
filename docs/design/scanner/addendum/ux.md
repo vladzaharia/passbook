@@ -1,6 +1,6 @@
 # Scanner addendum UX: customer screens, desk monitors, roles, Access cards
 
-> **Status:** the customer and monitor screens are built; the Access card, zones and the occupancy surfaces are not (see `../README.md`, "Status against the code").
+> **Status:** the customer and monitor screens, access zones and plans (`0073`) and occupancy with desk overrides (`0074`) are built; the Access card is `src/passkit/template/access/decide.ts` (see `../README.md`, "Status against the code").
 
 > **Superseded in part 2026-11-05, later** (occupancy and desk overrides, SD §18 wins): §3.2 (monitors never act; no
 > In now for zones) and §9 item 1 ("In now" for gyms) are answered: tracked zones show **In now** with capacity bars,

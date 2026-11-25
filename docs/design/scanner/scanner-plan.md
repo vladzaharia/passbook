@@ -466,7 +466,7 @@ routers are mounted but empty.
 - 2026-11-05: copy `addendum/{stations,access,cloudflare-realtime,ux,p0-amendments}.md` into
   `docs/design/scanner/addendum/`, and the sheets and shots they cite (`addendum/{sheets,shots}/`,
   `addendum/stations/sheets/`, `addendum/access/{sheets,admin/shots}/`) and `addendum/ux.md` beside them; the reference evaluator
-  `addendum/access/gen/access-eval{,.test}.mjs` as a reference. Still not built: the evaluator is not in the repository; `src/passkit/template/access/decide.ts` is the implementation.
+  `addendum/access/gen/access-eval{,.test}.mjs` as a reference. The reference evaluator is not in the repository; `src/passkit/template/access/decide.ts` is the implementation.
 - Every later reference in this plan means the copy in `docs/design/scanner/`.
 
 **P0.8 Stations and access amendments** (2026-11-05; `addendum/p0-amendments.md`, the source of truth for this task)
@@ -2201,8 +2201,8 @@ A gate passes when all of these hold:
 | **0014** | `migrations/0014_scan.sql` | P0.1 | `scan_events`, `scan_event_templates`, `scan_staff`, `scanners`, `scanner_templates`, `scans`, `scan_gates`, `vas_keys`, `passes.lookup_hash` + `passes_lookup_hash`, `passes_org_title`, `passes_org_subtitle`, the `audit_log` rebuild with `scanner`, `scan_events.note` (≤ 140) and the partial index `scans_pass_ok` for display history. Verbatim from SA §6.1 |
 | **0027** | `migrations/0027_templates_build_key.sql` | PT.7 (M2) | `template_versions.build_key TEXT` and `template_versions_build (template_id, build_key)`; no backfill (the immutability trigger forbids it; `NULL` keeps today's behaviour). SA §6.1a |
 | **0014** (amended) | `migrations/0014_scan.sql` | P0.8 | `scanners.kind` + `display`; `device_role` with its two CHECKs; the terminal-only CSRF CHECK (P0A P0-1). Before the P0 merge |
-| **0019** (still not built; no `scan_stations`) | `migrations/0019_scan_stations.sql` | ST.1 (M3A) | `scan_stations`; `scanners.station_id`, `.watch`, `.screen`; `scans.station_id`; indexes `scanners_station`, `scanners_org_role`, `scans_station` (SA §18.7) |
-| **0020** (built as `0073` and `0074`) | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7). **Extended** (2026-11-05 later, SA §20.13): `scan_zones.occupancy`, `.capacity`, `.max_stay_minutes`, `.clear_at` with CHECKs; `scans.out_cause`, `.override_note`; unique `scans_override_once`; `scan_gates.due_at` + partial `scan_gates_due`; table `scan_place_revs`. Touches SV's `scans` and `scan_gates` additively (reported) |
+| **0019** (superseded: scanning sessions, `0024`, group devices; never built, see `addendum/stations.md`) | `migrations/0019_scan_stations.sql` | ST.1 (M3A) | `scan_stations`; `scanners.station_id`, `.watch`, `.screen`; `scans.station_id`; indexes `scanners_station`, `scanners_org_role`, `scans_station` (SA §18.7) |
+| **0020** (built as `0073` and `0074`; `scanner_zones` is `scanning_session_zones`, `orgs.zones_rev` is `scanning_sessions.config_epoch` plus `scan_place_revs`) | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7). **Extended** (2026-11-05 later, SA §20.13): `scan_zones.occupancy`, `.capacity`, `.max_stay_minutes`, `.clear_at` with CHECKs; `scans.out_cause`, `.override_note`; unique `scans_override_once`; `scan_gates.due_at` + partial `scan_gates_due`; table `scan_place_revs`. Touches SV's `scans` and `scan_gates` additively (reported) |
 | **0014** (amended) | `migrations/0014_scan.sql` | P0.9 | `scans.actor_type` + `system`; `scans.method` + `auto` (P0A P0-9). Before the P0 merge; otherwise auto tap-outs need a `scans` rebuild |
 
 **No ledger or visit table.** The balance ledger, visits and last visit are computed from `scans` (which already holds
@@ -2210,14 +2210,14 @@ A gate passes when all of these hold:
 stores rendered displays, and `scans` stays free of holder data. No memo column: ledger rows show the action label only
 (owner, 2026-11-04).
 
-0019 and 0020 are independent: either may merge first (D1 applies unapplied files by name; neither reads the other).
+0019 was never built and 0020 shipped as `0073` and `0074`. Historical note: they were independent, either could merge first.
 Both were applied on SQLite 3.54 over `next/n8-p0`'s 0001-0016 with the amended 0014. The template-identity column
 (`templates.blueprint`, TI §6.3, "next free number") takes **0021** if it merges after these; the integration agent
 assigns the number at merge.
 
 No other migration is planned. If a stream needs a schema change after P0:
-- add the next free number, `migrations/0021_scan_<topic>.sql` or later (occupancy took none: it extends `0020`, unbuilt) (`0017` is reserved for n5, `0018` is PT.7's,
-  `0019` ST's, `0020` AX's);
+- add the next free number, `migrations/0021_scan_<topic>.sql` or later (this list is historical: the repository is far past `0021`; take the next free number) (`0017` was n5's, `0018` PT.7's,
+  `0019` ST's and never built, `0020` AX's and built as `0073` and `0074`);
 - never rebuild a referenced table;
 - never depend on another stream's in-flight migration;
 - tell the integration agent in the report.

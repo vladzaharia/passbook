@@ -175,6 +175,49 @@ Devices: iPhone (current iOS), Pixel (current Android, Google account), Galaxy i
 9. Void. All three copies fail at `/scan` immediately. Within 15 min each wallet shows the pass as void or expired.
 10. With TalkBack and VoiceOver, reach and activate each badge on `/p`; requirement lines are read.
 
+### Device runbook per card type (Google and Samsung)
+
+Run this before lifting the gate for an account (Q2). Run it first in the provider's demo or testing mode with a
+Test enrolment, then in Live. Make one template per row from its blueprint, release it, and issue one pass from each
+in the mode under test. Send each pass to an inbox opened on the Pixel (Google account) and on the Galaxy (Samsung
+account, in a Samsung Wallet market). Browser coverage of the same steps is in `e2e/*-wallets-*.spec.ts`; for what
+runs today, see `architecture.md` section 8, "CW12 status".
+
+| Card type | Blueprint | Google type | Samsung type |
+| --- | --- | --- | --- |
+| Generic | Membership (`starter-generic`) | Generic | loyalty/others, `type` reported |
+| Loyalty | Store card (`starter-store-card`) | Loyalty | loyalty |
+| Gift card | Store card with a balance and no member ID | Gift card | loyalty/others until Q14 |
+| Event ticket | Event ticket (`starter-event-ticket`) | Event ticket | ticket |
+| Offer | Coupon (`starter-coupon`) | Offer | coupon |
+
+For each type, on each phone:
+
+1. **Save.** Open `/p` and tap the wallet's badge: Google leads on the Pixel, Samsung on the Galaxy. Add the card.
+   - The card shows the title, the mapped fields and the barcode. Only what the release's report omits is missing.
+   - The barcode admits at `/scan`.
+   - Pass detail shows Google `Saved` (once the save callback lands) or Samsung `Added`.
+2. **Update.** Edit a mapped field in admin. Note when the card shows the new value. Target: 15 min p95 (Q5).
+3. **Message.** Google only; Samsung has no notifying call.
+   - Edit a field that carries a change message (Membership: tier or status).
+   - Note whether the phone notified, the text on the card's back, and the ledger row on pass detail.
+   - A fourth notifying change within 24 h arrives as an update with no notification.
+4. **Void.** The copy fails at `/scan` at once. Note when the card shows the void:
+   - Google: inactive, no barcode, `This pass is no longer valid.`
+   - Samsung: canceled.
+5. **Unvoid.** Note when the card is active again with its barcode. `/scan` admits it again.
+
+Record per type and wallet:
+
+- device, OS and wallet app version;
+- mode, and the pass id (never its link);
+- for each step, the time you acted and the time the phone showed it;
+- whether a notification fired;
+- screenshots of the card front and back after each step, with the barcode and holder name cropped;
+- anything that differs from the release's report.
+
+File the record with the release candidate. A failed step blocks lifting the gate for that type and wallet.
+
 ## 6. Open questions for the owner
 
 1. **Accounts:** keep per-org, per-mode Google issuer and Samsung partner accounts (as built), or one PassBook platform account issuing on behalf of all orgs (one approval, faster onboarding, shared reputation and quota)? Decides onboarding, branding on the card and who signs Google/Samsung terms.

@@ -36,16 +36,16 @@ export const isSystemAuthored = (candidate: { authorId: string }): boolean =>
   candidate.authorId === SYSTEM_AUTHOR;
 
 /**
- * Independence from the Apple version author. A Google system candidate is exempt: its author is the
- * platform, so the person who wrote the version (a solo admin included) may approve it. Samsung is not
- * exempt: its retirement and tombstone proofs (0043, 0050, repo-instance-retirement-sql.ts) keep the
- * raw predicate. The author itself is never exempt: `reviewer != author` stays in every statement.
- */
-/**
  * Providers whose candidates the platform authors and approves itself. Google only: the release and
  * approval triggers exempt the system author for Google, so a Samsung system release would be refused.
  */
 export const SYSTEM_AUTHORED_PROVIDERS: readonly string[] = ['google'];
 
+/**
+ * Independence from the Apple version author. A Google system candidate is exempt: its author is the
+ * platform, so the person who wrote the version (a solo admin included) may approve it. Samsung is not
+ * exempt: its retirement and tombstone proofs (0043, 0050, repo-instance-retirement-sql.ts) keep the
+ * raw predicate. The author itself is never exempt: `reviewer != author` stays in every statement.
+ */
 export const versionAuthorIndependentSql = (candidate: string, reviewer: string): string =>
   `(${candidate}.version_author_id IS NULL OR (${candidate}.author_id = '${SYSTEM_AUTHOR}' AND ${candidate}.provider = 'google') OR ${reviewer} != ${candidate}.version_author_id)`;
