@@ -27,6 +27,7 @@ export function useConnectionCreation({
   draft,
   shownSecrets,
   mapping,
+  fileId,
   onCreated,
 }: {
   currentScope: RefObject<WizardScope>;
@@ -35,6 +36,8 @@ export function useConnectionCreation({
   draft: ConfigDraft;
   shownSecrets: Record<string, string>;
   mapping: Mapping;
+  /** File upload: the draft that becomes the first revision. */
+  fileId?: string | undefined;
   onCreated: (created: CreatedConnection) => void;
 }) {
   const qc = useQueryClient();
@@ -52,6 +55,7 @@ export function useConnectionCreation({
         ...(Object.keys(mapping).length > 0 ? { mapping } : {}),
         ...lifecycleToPatch(life),
         ...(webhookSecret ? { webhookSecret } : {}),
+        ...(fileId ? { fileId } : {}),
       };
       const connection = await api.post('/api/v1/connections', ConnectionSchema, body);
       return { connection, webhookSecret: pasted ? undefined : webhookSecret, scope };

@@ -32,6 +32,7 @@ import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { useConnectionActions, useConnector, useConnectorNames } from './api.ts';
 import { ConfigTab } from './config-tab.tsx';
 import { SettingsTab } from './detail-tabs.tsx';
+import { FileTab } from './files/file-tab.tsx';
 import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
 import { sourceLine } from './labels.ts';
@@ -67,8 +68,13 @@ export function ConnectionDetail({
   const caps = connector.data?.capabilities;
   // Until the connector loads, fall back to the mode.
   const showWebhook = caps ? caps.webhook : c.mode === 'webhook' || c.mode === 'hybrid';
-  const canSync = caps ? caps.poll || caps.snapshot : c.mode !== 'webhook';
-  const tab = search.tab === 'webhook' && !showWebhook ? 'health' : (search.tab ?? 'health');
+  const showFile = caps?.upload === true;
+  const canSync = caps ? caps.poll || caps.snapshot || caps.upload : c.mode !== 'webhook';
+  const home = showFile ? 'file' : 'health';
+  const tab =
+    (search.tab === 'webhook' && !showWebhook) || (search.tab === 'file' && !showFile)
+      ? home
+      : (search.tab ?? home);
   const setTab = (next: string) =>
     void navigate({
       to: '.',
@@ -229,12 +235,18 @@ export function ConnectionDetail({
       >
         <Tabs value={tab} onValueChange={setTab} className="min-w-0">
           <TabsList aria-label="Connection sections">
+            {showFile ? <TabsTrigger value="file">File</TabsTrigger> : null}
             <TabsTrigger value="health">Health</TabsTrigger>
             <TabsTrigger value="mapping">Mapping</TabsTrigger>
             <TabsTrigger value="config">Configuration</TabsTrigger>
             <TabsTrigger value="settings">Lifecycle</TabsTrigger>
             {showWebhook ? <TabsTrigger value="webhook">Webhook</TabsTrigger> : null}
           </TabsList>
+          {showFile ? (
+            <TabsContent value="file">
+              <FileTab connectionId={connectionId} onMissing={c.onMissing} canManage={canManage} />
+            </TabsContent>
+          ) : null}
           <TabsContent value="health">
             <HealthPanel
               connection={c}

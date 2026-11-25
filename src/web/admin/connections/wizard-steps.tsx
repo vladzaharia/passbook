@@ -127,6 +127,7 @@ export interface ConfigDraft {
   secrets: FormValues;
   /** A secret the sender made (Shopify, Stripe), pasted. */
   signingSecret?: string;
+  fileId?: string; // file upload: the dropped file's draft
 }
 
 export function ConfigStep({
