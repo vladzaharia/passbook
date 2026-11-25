@@ -23,7 +23,7 @@ import {
   Tooltip,
 } from '../../ui/index.ts';
 import { healthSentence, overdue } from './health-text.ts';
-import { errorMessage } from './labels.ts';
+import { errorMessage, isReplaced, outcomeLabel } from './labels.ts';
 import './connections.css';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
@@ -93,10 +93,7 @@ const columns: DataColumnDef<Run, never>[] = [
     header: 'Outcome',
     cell: ({ row }) => {
       const o = OUTCOME[row.original.outcome];
-      const replaced = row.original.errorCode === 'SUPERSEDED';
-      return (
-        <StatusPill status={o.status}>{replaced ? 'Replaced by a newer run' : o.label}</StatusPill>
-      );
+      return <StatusPill status={o.status}>{outcomeLabel(row.original, o.label)}</StatusPill>;
     },
   },
   {
@@ -109,7 +106,7 @@ const columns: DataColumnDef<Run, never>[] = [
     id: 'code',
     header: 'Code',
     cell: ({ row }) =>
-      row.original.errorCode && row.original.errorCode !== 'SUPERSEDED' ? (
+      row.original.errorCode && !isReplaced(row.original) ? (
         <span
           className="font-mono text-xs text-fg-muted"
           title={errorMessage(row.original.errorCode) ?? undefined}
