@@ -3,7 +3,7 @@ import { createFakeIdp } from '../../../../test/helpers/fake-idp.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { Logger } from '../../platform/log.ts';
 import { idpClient, idpConfigured } from './client.ts';
-import { IDP_UNAVAILABLE_MESSAGE as UNAVAILABLE } from './errors.ts';
+import { idpCodeOf, IDP_UNAVAILABLE_MESSAGE as UNAVAILABLE } from './errors.ts';
 import { IDP_CODES, type WriteCtx } from './types.ts';
 
 const ctx: WriteCtx = { ref: 'r', reason: 'test', actor: { kind: 'system', job: 'test' } };
@@ -16,13 +16,8 @@ const MAP: [string, string, number, string][] = [
   ['IDP_MISCONFIGURED', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
   ['IDP_DRIFT', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
   ['IDP_BREAKER', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
-  ['IDP_BUDGET', 'IDP_BUDGET', 429, 'Too many Polaris ID setups today. Try again tomorrow.'],
-  [
-    'IDP_REFUSED',
-    'IDP_REFUSED',
-    403,
-    "This Polaris ID can't take developer access here. Ask the PassBook owner.",
-  ],
+  ['IDP_BUDGET', 'IDP_BUDGET', 429, 'Too many Polaris ID changes today. Try again tomorrow.'],
+  ['IDP_REFUSED', 'IDP_REFUSED', 403, 'Polaris ID refused this change. Ask the PassBook owner.'],
   ['IDP_NOT_FOUND', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
   ['IDP_CONFLICT', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
   ['IDP_FROZEN', 'IDP_FROZEN', 503, 'Polaris ID changes are paused. Ask the PassBook owner.'],
@@ -55,6 +50,34 @@ describe('idpClient', () => {
       .lookup('s')
       .catch(() => undefined);
     expect(error).toHaveBeenCalledWith('idp.breaker', { code: 'IDP_BREAKER' });
+  });
+
+  it('keeps the binding code behind every mapped error', async () => {
+    for (const code of IDP_CODES) {
+      const idp = createFakeIdp();
+      idp.failNext(code);
+      const err = await idpClient({ IDP: idp.binding })
+        .lookup('s')
+        .catch((e: unknown) => e);
+      expect(idpCodeOf(err), code).toBe(code);
+    }
+    expect(idpCodeOf(new Error('socket closed'))).toBeNull();
+  });
+
+  it('logs unclassified failures with their code', async () => {
+    const error = vi.fn();
+    const log = { error } as unknown as Logger;
+    const idp = createFakeIdp();
+    idp.failNext('IDP_DRIFT');
+    await idpClient({ IDP: idp.binding }, log)
+      .lookup('s')
+      .catch(() => undefined);
+    const rpc = { health: () => Promise.reject(new Error('socket closed')) };
+    await idpClient({ IDP: rpc }, log)
+      .health()
+      .catch(() => undefined);
+    expect(error).toHaveBeenCalledWith('idp.unavailable', { code: 'IDP_DRIFT' });
+    expect(error).toHaveBeenCalledWith('idp.unavailable', { code: 'IDP_UNKNOWN' });
   });
 
   it('hides an unclassified failure behind IDP_UNAVAILABLE', async () => {

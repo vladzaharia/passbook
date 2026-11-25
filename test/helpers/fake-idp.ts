@@ -55,7 +55,16 @@ const refuse = (code: string): never => {
 };
 
 export function createFakeIdp(
-  options: { now?: () => number; mode?: 'dry_run' | 'live' } = {},
+  options: {
+    now?: () => number;
+    mode?: 'dry_run' | 'live';
+    /** The key owner's subject: never writable. */
+    keyUser?: string;
+    /** Write calls allowed before `IDP_BUDGET`. */
+    budget?: number;
+    /** Write calls allowed before the breaker answers `IDP_BREAKER`. */
+    breaker?: number;
+  } = {},
 ): FakeIdp {
   const now = options.now ?? (() => Date.now());
   const signups: FakeIdp['signups'] = new Map();
@@ -64,6 +73,8 @@ export function createFakeIdp(
   const calls: IdpCall[] = [];
   const log: string[] = [];
   const failures: { code: string; method: string }[] = [];
+  const disabledByUs = new Set<string>();
+  let writeCalls = 0;
   let n = 0;
 
   const record = (
@@ -103,6 +114,27 @@ export function createFakeIdp(
       record(method, 'refused', 'IDP_FROZEN');
       refuse('IDP_FROZEN');
     }
+    if (!write) return;
+    writeCalls += 1;
+    if (options.budget !== undefined && writeCalls > options.budget) {
+      record(method, 'budget', 'IDP_BUDGET');
+      refuse('IDP_BUDGET');
+    }
+    if (options.breaker !== undefined && writeCalls > options.breaker) {
+      record(method, 'refused', 'IDP_BREAKER');
+      refuse('IDP_BREAKER');
+    }
+  };
+
+  /** The binding never writes to admins, platform-admin members, the key user or `me`. */
+  const protect = (subject: string, a: FakeAccount): void => {
+    if (
+      a.isAdmin ||
+      a.roles.has('platform_admin') ||
+      subject === options.keyUser ||
+      subject === 'me'
+    )
+      refuse('IDP_REFUSED');
   };
 
   const account = (subject: string): FakeAccount =>
@@ -231,7 +263,7 @@ export function createFakeIdp(
     async apply(subject, delta, ctx) {
       enter('apply', true);
       const a = account(subject);
-      if (a.isAdmin) refuse('IDP_REFUSED');
+      protect(subject, a);
       if (a.disabled && delta.add?.length) refuse('IDP_REFUSED');
       const isDry = dry(ctx.dryRun);
       const result: ApplyResult = { added: [], removed: [], skipped: [], dryRun: isDry };
@@ -262,12 +294,15 @@ export function createFakeIdp(
       enter('setDisabled', true);
       const a = account(subject);
       if (a.class !== 'created') refuse('IDP_NOT_MANAGED');
-      if (a.isAdmin) refuse('IDP_REFUSED');
+      protect(subject, a);
+      if (!disabled && a.disabled && !disabledByUs.has(subject)) refuse('IDP_REFUSED');
       if (a.disabled === disabled) return { result: 'already', dryRun: false };
       const isDry = dry(ctx.dryRun);
       if (!isDry) {
         write();
         a.disabled = disabled;
+        if (disabled) disabledByUs.add(subject);
+        else disabledByUs.delete(subject);
       }
       return { result: disabled ? 'disabled' : 'enabled', dryRun: isDry };
     },

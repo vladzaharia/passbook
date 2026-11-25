@@ -79,4 +79,29 @@ describe('fake IDP', () => {
     expect((await idp.lookup('u')).roles).toEqual([]);
     expect(idp.writes).toBe(0);
   });
+
+  it('re-enables only what it disabled and protects admins, the key user and me', async () => {
+    const idp = createFakeIdp({ keyUser: 'key' });
+    idp.addAccount('ours', { class: 'created' });
+    idp.addAccount('theirs', { class: 'created', disabled: true });
+    idp.addAccount('pa', { class: 'created', roles: ['platform_admin'] });
+    idp.addAccount('key', { class: 'created' });
+    idp.addAccount('me', { class: 'created' });
+    await idp.setDisabled('ours', true, ctx);
+    expect(await idp.setDisabled('ours', false, ctx)).toMatchObject({ result: 'enabled' });
+    await expect(idp.setDisabled('theirs', false, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    for (const s of ['pa', 'key', 'me']) {
+      await expect(idp.apply(s, { add: ['console'] }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+      await expect(idp.setDisabled(s, true, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    }
+  });
+
+  it('simulates the budget and the breaker', async () => {
+    const budget = createFakeIdp({ budget: 1 });
+    budget.addAccount('u');
+    await budget.apply('u', { add: ['console'] }, ctx);
+    await expect(budget.apply('u', { add: ['developer'] }, ctx)).rejects.toThrow(/^IDP_BUDGET/);
+    const breaker = createFakeIdp({ breaker: 0 });
+    await expect(breaker.createSignup('member', ctx)).rejects.toThrow(/^IDP_BREAKER/);
+  });
 });
