@@ -63,41 +63,46 @@ function staged() {
   })) as typeof window.matchMedia;
 }
 
+type Reply = (config: { dataset: string }) => Response | Promise<Response>;
+
+function mount(onTest: Reply) {
+  return renderApp('/admin/connections/new', {
+    session: 'admin',
+    memberships: [membership],
+    handlers: {
+      '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
+      '/api/v1/connectors': () => json({ items: [DEMO], nextCursor: null }),
+      '/api/v1/connectors/demo': () => json(DEMO),
+      '/api/v1/templates': () =>
+        json({
+          items: [
+            templateSummary({ id: 'tpl1', name: 'Copper card' }),
+            templateSummary({
+              id: 'tpl2',
+              name: 'Gym pass',
+              fromBlueprint: { id: 'bp1', name: 'Monthly pass' },
+            }),
+          ],
+          nextCursor: null,
+        }),
+      '/api/v1/templates/tpl1': () => json(templateDetail()),
+      '/api/v1/connections/test-config': (_u, init) =>
+        onTest((JSON.parse(String(init?.body)) as { config: { dataset: string } }).config),
+    },
+  });
+}
+
+const sampleOf = (dataset: string) =>
+  json({ ok: true, durationMs: 3, sample: SAMPLES[dataset] ?? [] });
+
 describe('demo in the wizard', () => {
   it('starts on Gym members, tests on every pick and shows the record card', async () => {
     const user = userEvent.setup();
     const testPosts: Record<string, unknown>[] = [];
     staged();
-    await renderApp('/admin/connections/new', {
-      session: 'admin',
-      memberships: [membership],
-      handlers: {
-        '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
-        '/api/v1/connectors': () => json({ items: [DEMO], nextCursor: null }),
-        '/api/v1/connectors/demo': () => json(DEMO),
-        '/api/v1/templates': () =>
-          json({
-            items: [
-              templateSummary({ id: 'tpl1', name: 'Copper card' }),
-              templateSummary({
-                id: 'tpl2',
-                name: 'Gym pass',
-                fromBlueprint: { id: 'bp1', name: 'Monthly pass' },
-              }),
-            ],
-            nextCursor: null,
-          }),
-        '/api/v1/templates/tpl1': () => json(templateDetail()),
-        '/api/v1/connections/test-config': (_u, init) => {
-          const body = JSON.parse(String(init?.body)) as { config: { dataset: string } };
-          testPosts.push(body.config);
-          return json({
-            ok: true,
-            durationMs: 3,
-            sample: SAMPLES[body.config.dataset] ?? [],
-          });
-        },
-      },
+    await mount((config) => {
+      testPosts.push(config);
+      return sampleOf(config.dataset);
     });
     await user.click(await screen.findByRole('radio', { name: /Demo/ }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -119,6 +124,28 @@ describe('demo in the wizard', () => {
 
     // Failures sit behind a fold.
     expect(screen.getByText('Simulate failures').closest('details')).not.toHaveAttribute('open');
+  });
+
+  it('ignores a slow Test for a dataset that is no longer picked', async () => {
+    const user = userEvent.setup();
+    staged();
+    let release: () => void = () => {};
+    const slow = new Promise<void>((r) => {
+      release = r;
+    });
+    await mount(async (config) => {
+      if (config.dataset === 'gym-members') await slow;
+      return sampleOf(config.dataset);
+    });
+    await user.click(await screen.findByRole('radio', { name: /Demo/ }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    const picker = await screen.findByRole('radiogroup', { name: 'Dataset' });
+    await user.click(within(picker).getByRole('radio', { name: /Hotel stays/ }));
+    expect(await screen.findByText('RES-148271')).toBeInTheDocument();
+    release();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText('Kenosha Riverside')).toBeNull();
+    expect(screen.getByText('RES-148271')).toBeInTheDocument();
   });
 });
 

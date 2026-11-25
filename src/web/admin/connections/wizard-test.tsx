@@ -54,11 +54,18 @@ export function WizardTest({
         ),
       }),
   });
-  const start = () =>
-    run.mutateAsync().then(
-      (r) => onTest({ kind: 'result', result: r, at: Date.now() }),
-      (error: unknown) => onTest({ kind: 'error', error, at: Date.now() }),
+  // Only the newest run reports: a slow answer to an earlier config must not replace a later one.
+  const latest = useRef(0);
+  const start = () => {
+    const mine = ++latest.current;
+    const report = (outcome: TestOutcome) => {
+      if (mine === latest.current) onTest(outcome);
+    };
+    return run.mutateAsync().then(
+      (r) => report({ kind: 'result', result: r, at: Date.now() }),
+      (error: unknown) => report({ kind: 'error', error, at: Date.now() }),
     );
+  };
   const go = useRef(start);
   go.current = start;
   const seen = useRef(autoKey);
