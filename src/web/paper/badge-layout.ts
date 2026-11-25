@@ -6,7 +6,7 @@
 
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
 import type { Box } from '../../passkit/template/paper-geometry.ts';
-import { at, join } from './ticket-text-base.ts';
+import { join } from './ticket-text-base.ts';
 import { idDetails } from './ticket-text-kinds.ts';
 
 export interface BadgeLayout {
