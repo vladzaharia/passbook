@@ -1,7 +1,7 @@
 ---
 id: test-mode
 title: Test mode
-line: Inbox, reset, purge
+line: Inbox, reset, limits
 status: ready
 ---
 Everything you run in the portal runs in test mode, in your sandbox. This page says what that means, how to look at what you made, and how to start over.

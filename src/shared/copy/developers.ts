@@ -134,7 +134,7 @@ export const DEV_GUIDES = [
     line: 'Try, review, release',
     step: 'start',
   },
-  { id: 'test-mode', title: 'Test mode', line: 'Inbox, preview, limits', step: 'start' },
+  { id: 'test-mode', title: 'Test mode', line: 'Inbox, reset, limits', step: 'start' },
   {
     id: 'issue-on-purchase',
     title: 'Issue on purchase',
