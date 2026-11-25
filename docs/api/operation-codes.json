@@ -4291,7 +4291,8 @@
     "IDP_CONFLICT",
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
-    "IDP_REFUSED"
+    "IDP_REFUSED",
+    "UNAUTHENTICATED"
   ],
   "polaris claims get /{id}/claims": [
     "IDP_BUDGET",
@@ -4301,6 +4302,7 @@
     "IDP_NOT_MANAGED",
     "IDP_NO_ACCOUNT",
     "IDP_REFUSED",
+    "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris claims patch /idp/groups/{key}/claims": [

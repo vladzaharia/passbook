@@ -269,15 +269,19 @@ describe('more cases', () => {
   });
 
   it('sends nothing for a group in dry run and writes no audit row', async () => {
-    idp = createFakeIdp({ mode: 'dry_run' });
-    installFakeIdp(h.env, idp);
+    await idp.createGroup('drygroup', 'Dry', {
+      ref: 'r',
+      reason: 't',
+      actor: { kind: 'system', job: 't' },
+    });
+    idp.mode = 'dry_run';
     const { headers } = await person();
-    const res = await patch('/api/v1/platform/idp/groups/developer/claims', headers, {
+    const res = await patch('/api/v1/platform/idp/groups/drygroup/claims', headers, {
       passbook_gx: text('x'),
     });
     expect(await res.json()).toMatchObject({ dryRun: true });
-    expect(idp.writes).toBe(0);
-    expect(await audit('developer')).toEqual([]);
+    expect(idp.writes).toBe(1); // the group's creation only
+    expect(await audit('drygroup')).toEqual([]);
   });
 
   it('treats a same-value PATCH as nothing changed: no write, no audit row', async () => {
