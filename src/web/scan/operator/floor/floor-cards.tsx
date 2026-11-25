@@ -1,17 +1,15 @@
-import { Activity, Monitor, Siren, UserRound, Users } from 'lucide-react';
+import { Activity, Monitor, Siren, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import type { ScanSummarySchema } from '../../../../shared/contracts/scan-session.ts';
 import type { SessionDevices } from '../../../../shared/contracts/scanning-session-devices.ts';
-import type { Visitor } from '../../../../shared/contracts/visitors.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { CountUp } from '../../../ui/count-up.tsx';
 import type { InsidePlace } from '../../inside/inside-types.ts';
 import { fill } from '../../ui/copy.ts';
 import { ACCESS_COPY } from '../../ui/copy-access.ts';
 import { sessionTime } from '../../ui/session-time.ts';
-import { PersonAvatar } from '../lists/person-avatar.tsx';
-import { deviceState, visitorTally } from './floor-model.ts';
+import { deviceState } from './floor-model.ts';
 
 const F = OPERATOR_COPY.floor;
 type Summary = z.infer<typeof ScanSummarySchema>;
@@ -155,63 +153,6 @@ export function ShiftCard({
             </div>
           ))}
         </dl>
-      )}
-    </Card>
-  );
-}
-
-export function VisitorsCard({
-  items,
-  failed,
-  timeZone,
-  onCheckIn,
-  onOpen,
-}: {
-  items: readonly Visitor[] | null;
-  failed: boolean;
-  timeZone?: string | undefined;
-  onCheckIn: (visitor: Visitor) => void;
-  onOpen: (visitor: Visitor) => void;
-}) {
-  const tally = visitorTally(items ?? []);
-  const shown = (items ?? [])
-    .filter((v) => v.status === 'expected' || v.status === 'in')
-    .slice(0, 4);
-  return (
-    <Card
-      icon={<UserRound aria-hidden />}
-      title={F.visitors}
-      meta={items?.length ? fill(F.visitorsIn, { n: tally.in, total: tally.total }) : null}
-    >
-      {failed && !items ? (
-        <p className="op-fl-note" role="status">
-          {F.unavailable}
-        </p>
-      ) : items && !shown.length ? (
-        <p className="op-fl-note">{F.noVisitors}</p>
-      ) : (
-        <ul className="op-fl-visitors">
-          {shown.map((v) => (
-            <li key={v.id}>
-              <PersonAvatar name={v.name} tone={v.status === 'in' ? 'ok' : undefined} />
-              <button type="button" className="op-fl-open" onClick={() => onOpen(v)}>
-                <b title={v.name}>{v.name}</b>
-                <small>
-                  {v.status === 'in' && v.statusAt
-                    ? fill(F.inSince, { time: sessionTime(v.statusAt, timeZone) })
-                    : fill(F.expected, { time: sessionTime(v.windowFrom, timeZone) })}
-                  {' · '}
-                  {v.hostName}
-                </small>
-              </button>
-              {v.status === 'expected' ? (
-                <button type="button" className="op-fl-act" onClick={() => onCheckIn(v)}>
-                  {OPERATOR_COPY.views.checkIn}
-                </button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
       )}
     </Card>
   );

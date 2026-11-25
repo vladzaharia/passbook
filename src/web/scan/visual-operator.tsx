@@ -160,7 +160,7 @@ function apiFor(rows: Row[], scenario: string): ScanApi {
 function sessionOf(): ScanSession {
   const base = sessionFixture({
     staff: { id: ID, name: 'Theo B.', role: 'desk' },
-    templates: ['Members', 'Day passes', 'Guests', 'Visitors'].map((name) => ({
+    templates: ['Members', 'Day passes', 'Guests', 'Staff'].map((name) => ({
       id: ID,
       name,
       style: 'storeCard',
@@ -256,8 +256,8 @@ export function OperatorVisual({
       later(() => document.querySelector<HTMLElement>('[data-testid="op-result"]')?.click(), 900);
     if (scenario === 'problems')
       later(() => document.querySelector<HTMLElement>('#op-tab-problems')?.click(), 150);
-    if (scenario === 'inside' || scenario === 'visitors')
-      later(() => document.querySelector<HTMLElement>(`#op-tab-${scenario}`)?.click(), 150);
+    if (scenario === 'inside')
+      later(() => document.querySelector<HTMLElement>('#op-tab-inside')?.click(), 150);
     if (scenario === 'rollcall-record')
       later(
         () =>

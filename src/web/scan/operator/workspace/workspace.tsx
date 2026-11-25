@@ -74,7 +74,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
   const { api, runtime, session, counts } = props;
   const desk = isDeskRole(session);
   const tracks = desk && trackedPlace(counts, session.event) !== null;
-  const views = useMemo(() => viewsFor({ tracks, desk }), [tracks, desk]);
+  const views = useMemo(() => viewsFor({ tracks }), [tracks]);
   const hub = useHub(props.live ?? true);
   const op = useOperator({
     api,
@@ -131,11 +131,6 @@ export function OperatorWorkspace(props: WorkspaceProps) {
     views: views.length,
     walkIn: false,
   });
-  // A visitor's check-in is the ordinary scan of their pass: its card opens as the record.
-  const checkIn = (v: { passId: string }) => {
-    machine({ type: 'dismiss' });
-    runtime.emit({ method: 'manual', passId: v.passId });
-  };
   const { person, mark } = useRollMarks(op, floor);
   const list = (
     <ListBody
@@ -144,10 +139,8 @@ export function OperatorWorkspace(props: WorkspaceProps) {
       controls={controls}
       wide={wide}
       tracks={tracks}
-      desk={desk}
       online={state.online}
       timeZone={timeZone}
-      checkIn={checkIn}
     />
   );
   const result = resultOf(state.loop, counts);
@@ -256,7 +249,6 @@ export function OperatorWorkspace(props: WorkspaceProps) {
               counts={{
                 problems: op.problems.open.length,
                 inside: inNowOf(counts)?.count ?? 0,
-                visitors: floor.visitors.items?.length ?? 0,
               }}
               onChange={op.changeView}
             />
@@ -304,8 +296,6 @@ export function OperatorWorkspace(props: WorkspaceProps) {
           now={op.clock}
           timeZone={timeZone}
           controls={controls}
-          onCheckIn={checkIn}
-          onOpenVisitor={(v) => op.open(v.passId, 'visitors')}
         />
       </div>
       <StatusBar online={state.online} syncedAt={op.activity.syncedAt} place="" hints={hints} />

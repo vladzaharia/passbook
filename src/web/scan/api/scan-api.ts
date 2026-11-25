@@ -57,7 +57,6 @@ import {
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
-import { VisitorListSchema } from '../../../shared/contracts/visitors.ts';
 import { modeHeaders } from '../../lib/mode.ts';
 import type { BindBody, TagRead } from '../assign/types.ts';
 import {
@@ -314,14 +313,6 @@ export function createScanApi(deps: ScanApiDeps) {
         call,
       ),
     ...personCalls(request),
-    visitors: (day: { start: number; end: number }, call?: Call) =>
-      request(
-        'GET',
-        `/visitors?dayStart=${day.start}&dayEnd=${day.end}`,
-        VisitorListSchema,
-        undefined,
-        call,
-      ),
     signOutPerson: (body: z.infer<typeof SignOutRequestSchema>, call?: Call) =>
       request('POST', '/sign-out', SignOutResultSchema, body, call),
   };

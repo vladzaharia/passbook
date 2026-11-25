@@ -245,7 +245,6 @@ export function ScanLoop({
             open={open}
             onError={setCameraError}
             inside={access.inside}
-            visitors={access.visitors}
             tags={tags}
             approval={handheld ? desk : undefined}
             approving={approving !== null}
