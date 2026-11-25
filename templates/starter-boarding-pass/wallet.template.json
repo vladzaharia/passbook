@@ -691,5 +691,11 @@
         }
       ]
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "atb",
+    "barcode": "qr",
+    "kind": "journey"
   }
 }
