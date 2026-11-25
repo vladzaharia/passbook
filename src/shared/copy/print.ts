@@ -16,6 +16,11 @@ export const PRINT_COPY = {
   noPrint: 'No print yet.',
   noPrintStaff: 'No active print. Make one from the pass.',
   codeUnavailable: 'Barcode unavailable',
+  /** A print made before the pass last changed, and a print that ended with the pass. */
+  stale: 'Printed before the last change.',
+  staleHolder: 'Details changed. Print this page again.',
+  again: 'Print again',
+  againNote: 'The earlier print ended.',
   confirmReprint: 'Reprint? The earlier print stops working.',
   confirmVoid: 'Void this print? Its code stops working.',
   confirmYes: 'Yes',
