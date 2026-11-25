@@ -6,51 +6,72 @@ vi.mock('@passbook/sdk', () => import('../../sdk/typescript/src/index.ts'));
 
 /** The claims of the check-in guide: a sandbox key scans as its own Test terminal, and nothing else. */
 describe('check in at the door', () => {
-  it('resolves, admits once and undoes with the sandbox key as the sandbox terminal', async () => {
-    const { call, world } = await guideApi();
+  it('follows the guide: heads-up before the ticket opens, then admit, a second scan refused, undo', async () => {
+    const { call, makePass } = await guideApi();
     const ids = (await kit()).f.ids;
-    const v7 = () => ids.id();
     const mode = await call('GET', '/api-keys/me');
     expect(mode.json.scopes).not.toContain('scans:write');
 
-    // A pass that is valid now: the sample ticket starts in 2030, which the door reports as not yet valid.
-    const hour = 3_600_000;
-    const iso = (h: number) =>
-      new Date(world.clock.now() + h * hour).toISOString().replace('Z', '+00:00');
-    const body = snippetBody('create-order-pass') as { input: object };
-    const made = await call('POST', '/passes', {
-      ...body,
-      externalId: 'door-1',
-      input: { ...body.input, startsAt: iso(-1), endsAt: iso(2) },
-    });
-    expect(made.status, made.text).toBe(201);
-    const rules = await call(
-      'PUT',
-      `/passes/${made.json.id}/check-in`,
-      snippetBody('check-in-rules'),
-    );
-    expect(rules.status).toBe(200);
-
+    // The guide's own pass: its ticket starts in 2030.
+    const pass = await makePass('door-1');
     const device = { 'x-passbook-device': 'sandbox' };
-    const read = (n: number) => ({
-      idempotencyKey: v7(),
-      input: { passId: made.json.id, method: 'manual' },
-      clientTs: world.clock.now() + n,
+    // The curl bodies of the guide, each with a key of its own and this pass.
+    const scan = (step: string) => ({
+      ...snippetBody(step),
+      idempotencyKey: ids.id(),
+      input: { passId: pass.id, method: 'manual' },
     });
-    const seen = await call('POST', '/scan/resolve', read(0), device);
-    expect(seen.status, seen.text).toBe(200);
-    const admitted = await call('POST', '/scan/actions', { ...read(1), actionId: 'auto' }, device);
-    expect(admitted.json.kind).toBe('ok');
-    // single: a second scan is not an admit.
-    const again = await call('POST', '/scan/actions', { ...read(2), actionId: 'auto' }, device);
-    expect(again.json.kind).not.toBe('ok');
+
+    const early = await call('POST', '/scan/resolve', scan('door-resolve'), device);
+    expect([early.status, early.json.kind, early.json.reason]).toEqual([
+      200,
+      'heads_up',
+      'not_yet_valid',
+    ]);
+
+    const rules = await call('PUT', `/passes/${pass.id}/check-in`, snippetBody('check-in-rules'));
+    expect(rules.status, rules.text).toBe(200);
+
+    const admitted = await call('POST', '/scan/actions', scan('door-check-in'), device);
+    expect([admitted.status, admitted.json.kind]).toEqual([200, 'ok']);
+    expect(admitted.json.undoUntil).toBeGreaterThan(0);
+    const again = await call('POST', '/scan/actions', scan('door-again'), device);
+    expect([again.json.kind, again.json.reason]).toEqual(['heads_up', 'already_done']);
+
+    // A refused scan has nothing to undo; the admit does.
+    const refusedUndo = await call(
+      'POST',
+      `/scan/scans/${again.json.scanId}/undo`,
+      { idempotencyKey: ids.id() },
+      device,
+    );
+    expect([refusedUndo.status, refusedUndo.json.code]).toEqual([404, 'SCAN_NOT_FOUND']);
     const undone = await call(
       'POST',
       `/scan/scans/${admitted.json.scanId}/undo`,
-      { idempotencyKey: v7() },
+      { idempotencyKey: ids.id() },
       device,
     );
     expect(undone.status).toBe(200);
+    const after = await call('POST', '/scan/actions', scan('door-check-in'), device);
+    expect(after.json.kind).toBe('ok');
+  });
+
+  // `uuidgen` makes a v4, which the guide warns about.
+  it('refuses a v4 idempotencyKey', async () => {
+    const { call, makePass } = await guideApi();
+    const pass = await makePass('door-v4');
+    const refused = await call(
+      'POST',
+      '/scan/resolve',
+      {
+        idempotencyKey: crypto.randomUUID(),
+        input: { passId: pass.id, method: 'manual' },
+        clientTs: 1,
+      },
+      { 'x-passbook-device': 'sandbox' },
+    );
+    expect([refused.status, refused.json.code]).toEqual([422, 'VALIDATION']);
   });
 
   it('refuses a missing terminal, another terminal id and a key of an ordinary org', async () => {

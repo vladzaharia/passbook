@@ -20,7 +20,8 @@
       "scanners.postScanningSessionsSetup"
     ],
     "files": {
-      "ts": "scan-setup-apply.ts"
+      "ts": "scan-setup-apply.ts",
+      "curl": "scan-setup-apply.sh"
     },
     "sandbox": "FEATURE_NOT_INCLUDED"
   }
