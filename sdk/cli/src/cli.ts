@@ -5,6 +5,9 @@ import { listen } from './listen.ts';
 import { passesCommand } from './passes.ts';
 import { inputTypeFile, typeName } from './types-gen.ts';
 
+/** Keep equal to `version` in package.json (a test checks). */
+export const CLI_VERSION = '0.1.0';
+
 export const HELP = `passbook <command>
 
   listen --forward-to <url>   Forward webhook captures to a local server, with their original signatures.
@@ -17,7 +20,7 @@ export const HELP = `passbook <command>
   passes update <passId>      Change a pass's input. Same body sources.
       [--external-id <id>] [--template-version <v>] [--notify] [--set key=value]... [--idempotency-key <k>]
 
-PASSBOOK_KEY holds a pb_test_ key. PASSBOOK_BASE_URL overrides https://passbook.mobile.`;
+PASSBOOK_KEY holds a pbp_test_ key. PASSBOOK_BASE_URL overrides https://passbook.mobile.`;
 
 export interface Io {
   env: Record<string, string | undefined>;
@@ -25,7 +28,7 @@ export interface Io {
   err: (line: string) => void;
   writeFile: (path: string, text: string) => Promise<void>;
   /** Builds the API client for a key; bin.ts passes `new PassBook(...)`. */
-  makeClient: (options: { apiKey: string; baseUrl?: string }) => Api;
+  makeClient: (options: { apiKey: string; baseUrl?: string; userAgent?: string }) => Api;
   readFile?: (path: string) => Promise<string>;
   readStdin?: () => Promise<string>;
   fetch?: typeof fetch;
@@ -41,9 +44,10 @@ export async function run(argv: string[], io: Io): Promise<number> {
   }
   try {
     const apiKey = io.env.PASSBOOK_KEY?.trim();
-    if (!apiKey) throw new Error('Set PASSBOOK_KEY to a pb_test_ key.');
+    if (!apiKey) throw new Error('Set PASSBOOK_KEY to a pbp_test_ key.');
     const api = io.makeClient({
       apiKey,
+      userAgent: `passbook-cli/${CLI_VERSION}`,
       ...(io.env.PASSBOOK_BASE_URL ? { baseUrl: io.env.PASSBOOK_BASE_URL } : {}),
     });
     if (command === 'listen') {

@@ -1,6 +1,8 @@
 import { apiErrorFrom, ConnectionError, PassBookError } from './errors.ts';
+import { API_VERSION } from './generated/api-version.ts';
 import { type PageLike, type PagePromise, pagePromise } from './pagination.ts';
 import { backoffMs, MAX_RETRY_AFTER_MS, retryAfterMs, sleep } from './retry.ts';
+import { SDK_VERSION } from './version.ts';
 
 export type { PagePromise } from './pagination.ts';
 
@@ -27,7 +29,7 @@ export interface RequestOptions<Query = Record<string, QueryValue>> {
 }
 
 export interface PassBookOptions {
-  /** A `pb_live_` or `pb_test_` key. A test key only ever sees test data. */
+  /** A `pbp_live_` or `pbp_test_` key (`pb_` and `pbo_` keys work too). A test key only ever sees test data. */
   apiKey: string;
   /** Default `https://passbook.mobile`. */
   baseUrl?: string;
@@ -39,6 +41,10 @@ export interface PassBookOptions {
   timeoutMs?: number;
   /** First backoff step. Default 500. */
   retryDelayMs?: number;
+  /** Sent as `PassBook-Version`. Default: the newest version this SDK was generated against. */
+  apiVersion?: string;
+  /** Sent as `User-Agent`. Default `passbook-sdk-js/<version>`. */
+  userAgent?: string;
 }
 
 /** One call, as the generated resources describe it. */
@@ -80,16 +86,20 @@ export class Core {
   private readonly maxRetries: number;
   private readonly timeoutMs: number;
   private readonly retryDelayMs: number;
+  private readonly apiVersion: string;
+  private readonly userAgent: string;
 
   constructor(options: PassBookOptions) {
     if (typeof options.apiKey !== 'string' || options.apiKey.trim() === '')
-      throw new PassBookError('apiKey is required: pass a pb_live_ or pb_test_ key.');
+      throw new PassBookError('apiKey is required: pass a pbp_live_ or pbp_test_ key.');
     this.apiKey = options.apiKey;
     this.baseUrl = (options.baseUrl ?? 'https://passbook.mobile').replace(/\/+$/, '');
     this.fetchImpl = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
     this.maxRetries = options.maxRetries ?? 2;
     this.timeoutMs = options.timeoutMs ?? 60_000;
     this.retryDelayMs = options.retryDelayMs ?? 500;
+    this.apiVersion = options.apiVersion ?? API_VERSION;
+    this.userAgent = options.userAgent ?? `passbook-sdk-js/${SDK_VERSION}`;
   }
 
   /** One attempt, bounded by the per-attempt timeout and the caller's signal. */
@@ -115,7 +125,13 @@ export class Core {
 
   async request<T>(spec: OperationSpec, options: RequestOptions<object> = {}): Promise<T> {
     const url = `${this.baseUrl}${spec.path}${queryString(spec.query, options.query)}`;
-    const headers = new Headers({ accept: 'application/json', ...options.headers });
+    const headers = new Headers({
+      accept: 'application/json',
+      'user-agent': this.userAgent,
+      'passbook-version': this.apiVersion,
+    });
+    // `set`, not the constructor: header names are case-insensitive, so a per-call header replaces a default.
+    for (const [name, value] of Object.entries(options.headers ?? {})) headers.set(name, value);
     headers.set('authorization', `Bearer ${this.apiKey}`);
     const body = spec.contentType ? (spec.body as BodyInit) : jsonBody(spec.body);
     if (body !== undefined) headers.set('content-type', spec.contentType ?? 'application/json');
