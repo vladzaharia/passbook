@@ -145,7 +145,22 @@ describe('simulate', () => {
       'pass.uninstalled',
     ]);
     for (const row of feed) {
-      const envelope = buildEnvelope(row);
+      const envelope = buildEnvelope({
+        seq: row.seq,
+        eventId: row.event_id,
+        orgId: row.org_id,
+        mode: row.mode,
+        passId: row.pass_id,
+        templateId: row.template_id,
+        externalId: row.external_id,
+        type: row.type,
+        kind: row.kind,
+        device: row.device,
+        deviceCount: row.device_count,
+        actorType: row.actor_type,
+        data: row.data,
+        at: row.at,
+      });
       const result = Object.values(results).find((r) => r.eventId === row.event_id);
       expect(envelope).toMatchObject({ mode: 'test', requestId: result?.requestId });
       expect(envelope.requestId).toBeTruthy();
