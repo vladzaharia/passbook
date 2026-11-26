@@ -3,6 +3,7 @@ import { keyLive } from '../../../platform/repo-api-key-sql.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { auditStmt, auditStmtWhere } from '../../audit/repo.ts';
 import type { AuditEntry } from '../../audit/types.ts';
+import { madeByLiveKey } from '../repo-key-creator.ts';
 
 // A platform invitation has no org and its person holds no membership, so no grant principal exists: like
 // repo-writes.ts, every statement is fenced in SQL by the invitation being open, and the accept is one batch keyed on
@@ -80,13 +81,15 @@ export async function revokePlatformOfKey(db: D1Database, keyId: string, now: nu
 }
 
 /** An invitation to this address that can still be used: open and inside its claim window. */
-export const openPlatformFor = (db: D1Database, email: string, now: number) =>
-  first<{ id: string }>(
+export const openPlatformFor = (db: D1Database, email: string, now: number) => {
+  const byLive = madeByLiveKey('platform_invitations', now);
+  return first<{ id: string }>(
     db,
     `SELECT id FROM platform_invitations
-     WHERE email = ? AND revoked_at IS NULL AND accepted_at IS NULL AND claim_until > ?`,
-    [email, now],
+     WHERE email = ? AND revoked_at IS NULL AND accepted_at IS NULL AND claim_until > ? AND ${byLive.sql}`,
+    [email, now, ...byLive.params],
   );
+};
 
 /** Display names of live groups by key; a key missing from the map is not a live group. */
 export async function groupNames(

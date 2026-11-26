@@ -6,6 +6,8 @@ import { INVITE_PREFIX } from '../../../../shared/invitation-link.ts';
 import { run } from '../../../platform/db.ts';
 import { sha256Hex } from '../../../platform/ids.ts';
 import { f } from '../../api-keys/test-kit.ts';
+import { unsettledClaims } from '../repo-invite-claims.ts';
+import { claimSources } from '../repo-sources.ts';
 import {
   challenge,
   DAY,
@@ -17,6 +19,7 @@ import {
   teardown,
 } from './invitations-test-fixtures.ts';
 import { admin, customGroup } from './platform-test-fixtures.ts';
+import { openPlatformFor } from './repo-platform.ts';
 
 let r: Rig;
 beforeEach(async () => {
@@ -112,6 +115,65 @@ describe('an invitation made by a Platform key', () => {
     expect(body.items.find((i) => i.id === inv.id)?.createdBy).toMatchObject({
       kind: 'key',
       id: inv.keyId,
+    });
+  });
+});
+
+describe('a claim made while the key lived (R2b L5)', () => {
+  let SUBJECT = '';
+  async function claimed() {
+    SUBJECT = `sub-${f().ids.id()}`;
+    const inv = await keyInvite();
+    const now = r.h.clock.now();
+    await run(r.h.env.DB, 'UPDATE platform_invitations SET claim_until = ? WHERE id = ?', [
+      now + 60 * DAY,
+      inv.id,
+    ]);
+    await run(
+      r.h.env.DB,
+      'INSERT INTO idp_invite_claims (id, platform_invitation_id, subject, created_at, claim_until) VALUES (?, ?, ?, ?, ?)',
+      [f().ids.id(), inv.id, SUBJECT, now, now + 60 * DAY],
+    );
+    return inv;
+  }
+  const state = async (email: string) => ({
+    sources: (await claimSources(r.h.env.DB, SUBJECT, r.h.clock.now())).length,
+    unsettled: (await unsettledClaims(r.h.env.DB, r.h.clock.now(), 500)).filter(
+      (c) => c.subject === SUBJECT,
+    ).length,
+    open: (await openPlatformFor(r.h.env.DB, email, r.h.clock.now())) !== null,
+  });
+
+  it('keeps its groups while the key lives', async () => {
+    await claimed();
+    expect(await state(r.addr('guest@agency.test'))).toEqual({
+      sources: 1,
+      unsettled: 0,
+      open: true,
+    });
+  });
+
+  it('loses them when the key expires', async () => {
+    await claimed();
+    r.h.clock.advance(31 * DAY);
+    expect(await state(r.addr('guest@agency.test'))).toEqual({
+      sources: 0,
+      unsettled: 1,
+      open: false,
+    });
+  });
+
+  it('loses them when the creator is demoted', async () => {
+    const inv = await claimed();
+    await run(
+      r.h.env.DB,
+      `UPDATE users SET last_roles = '["user"]' WHERE id = (SELECT created_by FROM api_keys WHERE id = ?)`,
+      [inv.keyId],
+    );
+    expect(await state(r.addr('guest@agency.test'))).toEqual({
+      sources: 0,
+      unsettled: 1,
+      open: false,
     });
   });
 });
