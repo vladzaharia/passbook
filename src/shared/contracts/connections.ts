@@ -161,6 +161,8 @@ export const ConnectionSchema = z.object({
   health: ConnectionHealthSchema,
   /** When the first correctly signed delivery arrived; null until then, and always null without a webhook. */
   firstVerifiedArrivalAt: TimestampSchema.nullable(),
+  /** Set while the provider keeps sending events older than its window; health is not changed. */
+  warning: z.object({ code: z.literal('stale_deliveries'), text: z.string() }).nullable(),
   consecutiveFailures: z.number().int(),
   breakerOpenUntil: TimestampSchema.nullable(),
   nextRunAt: TimestampSchema.nullable(),

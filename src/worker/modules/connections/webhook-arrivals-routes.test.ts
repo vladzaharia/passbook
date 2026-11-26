@@ -66,6 +66,15 @@ describe('GET /connections/{id}/webhook-arrivals', () => {
     expect([403, 404]).toContain((await get('', foreign.headers)).status);
   });
 
+  it('answers 404 in test mode', async () => {
+    const key = await makeApiKey(kit, {
+      orgId: kit.org.id,
+      scopes: ['connections:read'],
+      mode: 'test',
+    });
+    expect((await get('', key.headers)).status).toBe(404);
+  });
+
   it('validates the query', async () => {
     expect((await get('?limit=500')).status).toBe(422);
   });

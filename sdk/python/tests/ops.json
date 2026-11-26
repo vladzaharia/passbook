@@ -1200,6 +1200,10 @@
      "enabled": false,
      "health": "unknown",
      "firstVerifiedArrivalAt": 0,
+     "warning": {
+      "code": "stale_deliveries",
+      "text": "x"
+     },
      "consecutiveFailures": 0,
      "breakerOpenUntil": 0,
      "nextRunAt": 0,
@@ -1261,6 +1265,10 @@
    "enabled": false,
    "health": "unknown",
    "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -1667,6 +1675,10 @@
    "enabled": false,
    "health": "unknown",
    "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -1749,6 +1761,10 @@
    "enabled": false,
    "health": "unknown",
    "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -2410,6 +2426,10 @@
    "enabled": false,
    "health": "unknown",
    "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -2468,6 +2488,10 @@
    "enabled": false,
    "health": "unknown",
    "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,

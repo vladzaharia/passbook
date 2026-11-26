@@ -21,7 +21,7 @@ import { listConnections } from './repo-list.ts';
 import { listRuns, runStats } from './repo-runs.ts';
 import { passCountsFor } from './repo-stats.ts';
 import { purgeConnectionWebhooks } from './repo-sync.ts';
-import { firstVerifiedArrivalAt, firstVerifiedArrivalsOf } from './repo-webhook-arrivals.ts';
+import { arrivalSummaries } from './repo-webhook-arrivals.ts';
 import {
   assertSecretFree,
   pastesSecret,
@@ -49,6 +49,7 @@ import {
   requireConnector,
 } from './validate.ts';
 import { validateVoidWhen } from './void-when.ts';
+import { NO_ARRIVALS, summaryOf } from './webhook-arrivals.ts';
 
 export async function listAll(
   sctx: ServiceContext,
@@ -64,10 +65,12 @@ export async function listAll(
   const page = rows.slice(0, query.limit);
   const ids = page.map((r) => r.id);
   const counts = await passCountsFor(sctx.env.DB, ids);
-  const firsts = await firstVerifiedArrivalsOf(sctx.env.DB, ids);
+  const seen = await arrivalSummaries(sctx.env.DB, ids, sctx.clock.now());
   return {
     items: page.map((r) => ({
-      ...toDto(sctx.env, r, firsts.get(r.id) ?? null, (code) => logShownAsStored(sctx, r, code)),
+      ...toDto(sctx.env, r, seen.get(r.id) ?? NO_ARRIVALS, (code) =>
+        logShownAsStored(sctx, r, code),
+      ),
       passCount: counts.get(r.id) ?? 0,
     })),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
@@ -86,7 +89,7 @@ export async function getDetail(
     .sort((a, b) => a - b);
   const errors = stats.rows.filter((r) => r.outcome === 'error').length;
   return {
-    ...toDto(sctx.env, conn, await firstVerifiedArrivalAt(sctx.env.DB, id), (code) =>
+    ...toDto(sctx.env, conn, await summaryOf(sctx, id), (code) =>
       logShownAsStored(sctx, conn, code),
     ),
     runs,
@@ -239,7 +242,7 @@ export async function create(
     detail: { connectorType: def.type, mode, name: input.name },
   });
   return {
-    ...toDto(sctx.env, row, null),
+    ...toDto(sctx.env, row, NO_ARRIVALS),
     ...(webhookSecret && !input.webhookSecret ? { webhookSecret } : {}),
   };
 }

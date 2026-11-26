@@ -8,6 +8,7 @@ import { connectorInfo, toDto } from './dto.ts';
 import { getConnection } from './repo.ts';
 import * as service from './service.ts';
 import { type Kit, makeKit } from './test-kit.ts';
+import { NO_ARRIVALS } from './webhook-arrivals.ts';
 
 let kit: Kit;
 beforeEach(async () => {
@@ -40,7 +41,11 @@ async function webhookRow() {
 
 describe('toDto config', () => {
   it('shows a v1 webhook-push row as v2 config, under version 2', async () => {
-    const dto = toDto(kit.env, { ...(await webhookRow()), connectorVersion: 1, config: V1 }, null);
+    const dto = toDto(
+      kit.env,
+      { ...(await webhookRow()), connectorVersion: 1, config: V1 },
+      NO_ARRIVALS,
+    );
     expect(dto.connectorVersion).toBe(2);
     expect(dto.config).toEqual({
       ...V1,
@@ -53,7 +58,7 @@ describe('toDto config', () => {
 
   it('shows a current-version row as stored', async () => {
     const row = await webhookRow();
-    const dto = toDto(kit.env, row, null);
+    const dto = toDto(kit.env, row, NO_ARRIVALS);
     expect(dto.connectorVersion).toBe(webhookPush.version);
     expect(dto.config).toBe(row.config);
   });
@@ -64,7 +69,7 @@ describe('toDto config', () => {
     const dto = toDto(
       kit.env,
       { ...(await webhookRow()), connectorVersion: 1, config: broken },
-      null,
+      NO_ARRIVALS,
       (c) => codes.push(c),
     );
     expect(dto.connectorVersion).toBe(1);
@@ -74,7 +79,10 @@ describe('toDto config', () => {
 
   it('keeps an unknown connector type as stored', async () => {
     const row = { ...(await webhookRow()), connectorType: 'gone', connectorVersion: 1 };
-    expect(toDto(kit.env, row, null)).toMatchObject({ connectorVersion: 1, config: row.config });
+    expect(toDto(kit.env, row, NO_ARRIVALS)).toMatchObject({
+      connectorVersion: 1,
+      config: row.config,
+    });
   });
 });
 

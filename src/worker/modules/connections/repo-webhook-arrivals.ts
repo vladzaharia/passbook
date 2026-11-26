@@ -1,10 +1,16 @@
 import type { ArrivalDto } from '../../../shared/contracts/index.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
-import { all, batch, chunk, first, placeholders, stmt } from '../../platform/db.ts';
+import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
 
 export const ARRIVALS_KEPT = 50;
 /** Rejects are what an unauthenticated sender can add: they may never push out the verified rows. */
 export const REJECTS_KEPT = 20;
+/** Ignores and duplicates can be replayed by anyone holding a captured body, so they share a cap too. */
+export const IGNORED_KEPT = 20;
+/** A stale ignore is a sample or a replay: it never counts as a verified arrival. */
+const VERIFIED = `outcome <> 'rejected' AND COALESCE(reason, '') <> 'stale'`;
+const STALE_RUN_MIN = 3;
+const STALE_WINDOW_MS = 24 * 3_600_000;
 
 export type ArrivalOutcome = 'accepted' | 'duplicate' | 'ignored' | 'rejected';
 export type ContentClass = 'json' | 'xml' | 'form' | 'other';
@@ -53,7 +59,8 @@ export interface NewArrival {
 
 /** The earliest verified row of a connection: it outlives the cap and the purge (first_verified_arrival_at). */
 const EARLIEST_VERIFIED = `COALESCE((SELECT f.id FROM connection_webhook_arrivals f
-  WHERE f.connection_id = connection_webhook_arrivals.connection_id AND f.outcome <> 'rejected'
+  WHERE f.connection_id = connection_webhook_arrivals.connection_id
+    AND f.outcome <> 'rejected' AND COALESCE(f.reason, '') <> 'stale'
   ORDER BY f.received_at, f.id LIMIT 1), '')`;
 
 /** Inserts the row, or counts it into the row with the same key. Prunes only when a row was added. */
@@ -101,6 +108,14 @@ export async function writeArrival(db: D1Database, a: NewArrival): Promise<void>
     stmt(
       db,
       `DELETE FROM connection_webhook_arrivals
+       WHERE connection_id = ? AND outcome IN ('ignored', 'duplicate') AND id <> ${EARLIEST_VERIFIED} AND id NOT IN (
+         SELECT id FROM connection_webhook_arrivals WHERE connection_id = ? AND outcome IN ('ignored', 'duplicate')
+         ORDER BY last_at DESC, id DESC LIMIT ${IGNORED_KEPT})`,
+      [a.connectionId, a.connectionId],
+    ),
+    stmt(
+      db,
+      `DELETE FROM connection_webhook_arrivals
        WHERE connection_id = ? AND id <> ${EARLIEST_VERIFIED} AND id NOT IN (
          SELECT id FROM connection_webhook_arrivals WHERE connection_id = ?
          ORDER BY last_at DESC, id DESC LIMIT ${ARRIVALS_KEPT})`,
@@ -112,6 +127,7 @@ export async function writeArrival(db: D1Database, a: NewArrival): Promise<void>
 /** Newest first. `since` keeps rows seen or counted again after it, so a coalesced row ticks. */
 export async function listArrivals(
   db: D1Database,
+  orgId: string,
   connectionId: string,
   since: number,
   limit: number,
@@ -119,9 +135,9 @@ export async function listArrivals(
   const rows = await all<ArrivalSql>(
     db,
     `SELECT id, received_at, last_at, outcome, reason, topic, content_class, event_ref, used_previous, count
-     FROM connection_webhook_arrivals WHERE connection_id = ? AND last_at > ?
+     FROM connection_webhook_arrivals WHERE org_id = ? AND connection_id = ? AND last_at > ?
      ORDER BY last_at DESC, id DESC LIMIT ?`,
-    [connectionId, since, limit],
+    [orgId, connectionId, since, limit],
   );
   return rows.map((r) => ({
     id: r.id,
@@ -137,35 +153,44 @@ export async function listArrivals(
   }));
 }
 
-/** When the first signed delivery arrived, or null. Survives the purge because that row is kept. */
-export async function firstVerifiedArrivalAt(
-  db: D1Database,
-  connectionId: string,
-): Promise<number | null> {
-  const r = await first<{ at: number | null }>(
-    db,
-    `SELECT MIN(received_at) AS at FROM connection_webhook_arrivals
-     WHERE connection_id = ? AND outcome <> 'rejected'`,
-    [connectionId],
-  );
-  return r?.at ?? null;
+export interface ArrivalSummary {
+  /** When the first correctly signed, non-stale delivery arrived. */
+  firstVerifiedAt: number | null;
+  /** Three or more stale deliveries in a day, and no good one since. */
+  staleRun: boolean;
 }
 
-/** The same for a page of connections: one query. */
-export async function firstVerifiedArrivalsOf(
+/** Verified-arrival time and stale-run state for a page of connections: one query per 90. */
+export async function arrivalSummaries(
   db: D1Database,
   connectionIds: readonly string[],
-): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
+  now: number,
+): Promise<Map<string, ArrivalSummary>> {
+  const out = new Map<string, ArrivalSummary>();
   for (const ids of chunk(connectionIds)) {
-    const rows = await all<{ connection_id: string; at: number }>(
+    const rows = await all<{
+      connection_id: string;
+      first_at: number | null;
+      last_ok: number | null;
+      last_stale: number | null;
+      stale_n: number | null;
+    }>(
       db,
-      `SELECT connection_id, MIN(received_at) AS at FROM connection_webhook_arrivals
-       WHERE outcome <> 'rejected' AND connection_id IN (${placeholders(ids.length)})
+      `SELECT connection_id,
+         MIN(CASE WHEN ${VERIFIED} THEN received_at END) AS first_at,
+         MAX(CASE WHEN ${VERIFIED} THEN last_at END) AS last_ok,
+         MAX(CASE WHEN reason = 'stale' THEN last_at END) AS last_stale,
+         SUM(CASE WHEN reason = 'stale' AND last_at > ? THEN count ELSE 0 END) AS stale_n
+       FROM connection_webhook_arrivals WHERE connection_id IN (${placeholders(ids.length)})
        GROUP BY connection_id`,
-      ids,
+      [now - STALE_WINDOW_MS, ...ids],
     );
-    for (const r of rows) out.set(r.connection_id, r.at);
+    for (const r of rows) {
+      out.set(r.connection_id, {
+        firstVerifiedAt: r.first_at,
+        staleRun: (r.stale_n ?? 0) >= STALE_RUN_MIN && (r.last_stale ?? 0) > (r.last_ok ?? 0),
+      });
+    }
   }
   return out;
 }
@@ -178,4 +203,15 @@ export function deleteOldArrivals(db: D1Database, before: number): Promise<numbe
     `last_at < ? AND id <> ${EARLIEST_VERIFIED}`,
     [before],
   );
+}
+
+/** After the retention window the exempt row keeps its time but not the provider's event id or the link. */
+export async function clearOldArrivalRefs(db: D1Database, before: number): Promise<number> {
+  const { changes } = await run(
+    db,
+    `UPDATE connection_webhook_arrivals SET event_ref = NULL, retention_id = NULL, topic = NULL
+     WHERE last_at < ? AND (event_ref IS NOT NULL OR retention_id IS NOT NULL OR topic IS NOT NULL)`,
+    [before],
+  );
+  return changes;
 }

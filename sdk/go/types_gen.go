@@ -1194,6 +1194,7 @@ type ConnectionsCreateResponse struct {
 	Enabled                bool                                             `json:"enabled"`
 	Health                 string                                           `json:"health"`
 	FirstVerifiedArrivalAt *int64                                           `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                   `json:"warning"`
 	ConsecutiveFailures    int64                                            `json:"consecutiveFailures"`
 	BreakerOpenUntil       *int64                                           `json:"breakerOpenUntil"`
 	NextRunAt              *int64                                           `json:"nextRunAt"`
@@ -1403,6 +1404,7 @@ type ConnectionsListItem struct {
 	Enabled                bool                                       `json:"enabled"`
 	Health                 string                                     `json:"health"`
 	FirstVerifiedArrivalAt *int64                                     `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                             `json:"warning"`
 	ConsecutiveFailures    int64                                      `json:"consecutiveFailures"`
 	BreakerOpenUntil       *int64                                     `json:"breakerOpenUntil"`
 	NextRunAt              *int64                                     `json:"nextRunAt"`
@@ -1468,6 +1470,7 @@ type ConnectionsListResponseItemsItem struct {
 	Enabled                bool                                                    `json:"enabled"`
 	Health                 string                                                  `json:"health"`
 	FirstVerifiedArrivalAt *int64                                                  `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                          `json:"warning"`
 	ConsecutiveFailures    int64                                                   `json:"consecutiveFailures"`
 	BreakerOpenUntil       *int64                                                  `json:"breakerOpenUntil"`
 	NextRunAt              *int64                                                  `json:"nextRunAt"`
@@ -1575,6 +1578,7 @@ type ConnectionsRetrieveResponse struct {
 	Enabled                bool                                               `json:"enabled"`
 	Health                 string                                             `json:"health"`
 	FirstVerifiedArrivalAt *int64                                             `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                     `json:"warning"`
 	ConsecutiveFailures    int64                                              `json:"consecutiveFailures"`
 	BreakerOpenUntil       *int64                                             `json:"breakerOpenUntil"`
 	NextRunAt              *int64                                             `json:"nextRunAt"`
@@ -1672,6 +1676,7 @@ type ConnectionsRevokePreviousWebhookSecretResponse struct {
 	Enabled                bool                                                                  `json:"enabled"`
 	Health                 string                                                                `json:"health"`
 	FirstVerifiedArrivalAt *int64                                                                `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                                        `json:"warning"`
 	ConsecutiveFailures    int64                                                                 `json:"consecutiveFailures"`
 	BreakerOpenUntil       *int64                                                                `json:"breakerOpenUntil"`
 	NextRunAt              *int64                                                                `json:"nextRunAt"`
@@ -1730,6 +1735,7 @@ type ConnectionsRotateWebhookSecretResponse struct {
 	Enabled                bool                                                          `json:"enabled"`
 	Health                 string                                                        `json:"health"`
 	FirstVerifiedArrivalAt *int64                                                        `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                                `json:"warning"`
 	ConsecutiveFailures    int64                                                         `json:"consecutiveFailures"`
 	BreakerOpenUntil       *int64                                                        `json:"breakerOpenUntil"`
 	NextRunAt              *int64                                                        `json:"nextRunAt"`
@@ -1979,6 +1985,7 @@ type ConnectionsUpdateResponse struct {
 	Enabled                bool                                             `json:"enabled"`
 	Health                 string                                           `json:"health"`
 	FirstVerifiedArrivalAt *int64                                           `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                   `json:"warning"`
 	ConsecutiveFailures    int64                                            `json:"consecutiveFailures"`
 	BreakerOpenUntil       *int64                                           `json:"breakerOpenUntil"`
 	NextRunAt              *int64                                           `json:"nextRunAt"`

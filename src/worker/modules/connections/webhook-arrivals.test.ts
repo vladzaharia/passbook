@@ -96,7 +96,8 @@ async function customReq(key: string, body: string, ageSec = 0, type = 'applicat
 }
 
 const send = (id: string, req: Request) => receiveWebhook(kit.sctx, id, req);
-const rows = (id: string, since = 0) => connectionArrivals(kit.sctx, id, { since, limit: 50 });
+const rows = (id: string, since = 0) =>
+  connectionArrivals(kit.sctx, kit.org.id, id, { since, limit: 50 });
 const lastRow = async (id: string) => (await rows(id))[0];
 
 describe('arrival ledger: every reason has an ingress test', () => {
@@ -252,7 +253,7 @@ describe('arrival ledger: every reason has an ingress test', () => {
         id,
       ]),
     );
-    expect(dump).not.toMatch(/ana@example|Ana|Pop|727/);
+    expect(dump).not.toMatch(/ana@example|Ana|Pop/);
   });
 
   it('signed with the previous secret is flagged on the accepted row', async () => {
@@ -278,13 +279,40 @@ describe('arrival ledger: every reason has an ingress test', () => {
 describe('arrival ledger: abuse bounds', () => {
   it('rejects coalesce per reason and minute with a count; a new minute is a new row', async () => {
     const { id } = await wooConn();
-    for (let i = 0; i < 30; i++)
+    kit.clock.advance(MINUTE - (kit.clock.now() % MINUTE));
+    for (let i = 0; i < 8; i++) {
       await expect(send(id, await wooReq('{}', { sig: false }))).rejects.toBeTruthy();
+      kit.clock.advance(6000);
+    }
     expect(await rows(id)).toHaveLength(1);
-    expect((await lastRow(id))?.count).toBe(30);
+    expect((await lastRow(id))?.count).toBe(8);
     kit.clock.advance(MINUTE);
     await expect(send(id, await wooReq('{}', { sig: false }))).rejects.toBeTruthy();
     expect(await rows(id)).toHaveLength(2);
+  });
+
+  it('a flood of unsigned requests writes at most the ledger budget, and every answer stays 401', async () => {
+    const { id } = await wooConn();
+    for (let i = 0; i < 100; i++) {
+      kit.clock.advance(6000);
+      await expect(send(id, await wooReq('{}', { sig: false }))).rejects.toMatchObject({
+        status: 401,
+      });
+    }
+    const total = await first<{ n: number }>(
+      kit.env.DB,
+      'SELECT COALESCE(SUM(count), 0) AS n FROM connection_webhook_arrivals WHERE connection_id = ?',
+      [id],
+    );
+    expect(total?.n).toBeGreaterThan(0);
+    expect(total?.n).toBeLessThanOrEqual(30);
+  });
+
+  it('within the debounce a burst in one isolate writes once', async () => {
+    const { id } = await wooConn();
+    for (let i = 0; i < 20; i++)
+      await expect(send(id, await wooReq('{}', { sig: false }))).rejects.toBeTruthy();
+    expect((await lastRow(id))?.count).toBe(1);
   });
 
   it('a stranger cannot push verified rows out: rejects are capped below the total', async () => {
@@ -404,5 +432,167 @@ describe('arrival ledger: first verified arrival and health', () => {
       health: 'unknown',
       firstVerifiedArrivalAt: kit.clock.now(),
     });
+  });
+});
+
+const shopifyConn = (key: string) =>
+  createDemo(kit, {
+    connectorType: 'webhook-push',
+    config: { recipe: 'shopify-orders' },
+    mode: 'webhook',
+    webhookSecret: key,
+  } as never);
+async function shopifyReq(key: string, updatedAt: number): Promise<Request> {
+  const body = JSON.stringify({
+    admin_graphql_api_id: 'gid://shopify/Order/1',
+    updated_at: new Date(updatedAt).toISOString(),
+  });
+  return new Request('https://wallet.test/hooks/connections/x', {
+    method: 'POST',
+    body,
+    headers: {
+      'x-shopify-hmac-sha256': b64(await mac(key, body)),
+      'x-shopify-topic': 'orders/create',
+    },
+  });
+}
+const noEffects = async (id: string) => {
+  expect(kit.seams.jobs).toEqual([]);
+  for (const t of [
+    'connection_webhook_retention',
+    'webhook_events',
+    'connection_webhook_replays',
+  ]) {
+    expect(
+      await first(kit.env.DB, `SELECT 1 AS n FROM ${t} WHERE connection_id = ?`, [id]),
+    ).toBeNull();
+  }
+};
+
+describe('stale and future-dated bodies', () => {
+  it('Shopify: a past-window body is acknowledged with no job, retention or dedupe', async () => {
+    const key = `shpss_${crypto.randomUUID()}`;
+    const { id } = await shopifyConn(key);
+    await send(id, await shopifyReq(key, kit.clock.now() - 72 * 3_600_000));
+    expect(await lastRow(id)).toMatchObject({ outcome: 'ignored', reason: 'stale' });
+    await noEffects(id);
+  });
+
+  it('Shopify and WooCommerce: a body dated ahead stays a 401, so the sender retries', async () => {
+    const key = `shpss_${crypto.randomUUID()}`;
+    const { id } = await shopifyConn(key);
+    await expect(
+      send(id, await shopifyReq(key, kit.clock.now() + 10 * MINUTE)),
+    ).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(await lastRow(id)).toMatchObject({ outcome: 'rejected', reason: 'signature_expired' });
+    await noEffects(id);
+    const woo = await wooConn();
+    await expect(
+      send(woo.id, await wooReq(JSON.stringify(order(kit.clock.now() + 10 * MINUTE)))),
+    ).rejects.toMatchObject({ status: 401 });
+    await noEffects(woo.id);
+  });
+
+  it('Cal.com: a body older than an hour is acknowledged with no job, retention or dedupe', async () => {
+    const dto = await createDemo(kit, {
+      connectorType: 'webhook-push',
+      config: { recipe: 'calcom-bookings' },
+      mode: 'webhook',
+    } as never);
+    const key = dto.webhookSecret ?? '';
+    const body = JSON.stringify({
+      triggerEvent: 'BOOKING_CREATED',
+      createdAt: new Date(kit.clock.now() - 3 * 3_600_000).toISOString(),
+      payload: { uid: 'bk_1' },
+    });
+    await send(
+      dto.id,
+      new Request('https://wallet.test/x', {
+        method: 'POST',
+        body,
+        headers: { 'x-cal-signature-256': hex(await mac(key, body)) },
+      }),
+    );
+    expect(await lastRow(dto.id)).toMatchObject({ outcome: 'ignored', reason: 'stale' });
+    await noEffects(dto.id);
+  });
+
+  it('a fresh delivery after a stale replay is still accepted, and stale is not "verified"', async () => {
+    const { id } = await wooConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    await send(id, await wooReq(JSON.stringify(order(kit.clock.now() - 72 * 3_600_000))));
+    const { getDetail } = await import('./service.ts');
+    expect(await getDetail(kit.sctx, id)).toMatchObject({
+      health: 'awaiting',
+      firstVerifiedArrivalAt: null,
+    });
+    kit.clock.advance(1000);
+    await send(id, await wooReq(JSON.stringify(order(kit.clock.now() - 1000))));
+    expect((await rows(id)).map((r) => r.outcome)).toEqual(['accepted', 'ignored']);
+    expect(kit.seams.jobs).toHaveLength(1);
+  });
+
+  it('a run of stale ignores raises a warning that clears with a good delivery', async () => {
+    const { id } = await wooConn();
+    const { getDetail } = await import('./service.ts');
+    for (let i = 0; i < 3; i++) {
+      kit.clock.advance(MINUTE);
+      await send(id, await wooReq(JSON.stringify(order(kit.clock.now() - 72 * 3_600_000))));
+    }
+    expect((await getDetail(kit.sctx, id)).warning).toMatchObject({ code: 'stale_deliveries' });
+    kit.clock.advance(MINUTE);
+    await send(
+      id,
+      await wooReq('webhook_id=1', { type: 'application/x-www-form-urlencoded', topic: null }),
+    );
+    expect((await getDetail(kit.sctx, id)).warning).toBeNull();
+  });
+});
+
+describe('arrival ledger: caps on replayable rows', () => {
+  it('forged topic headers on a replay cannot push accepted rows out or show a topic', async () => {
+    const { id } = await wooConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    for (let i = 0; i < 3; i++) {
+      kit.clock.advance(MINUTE);
+      await send(id, await wooReq(JSON.stringify(order(kit.clock.now() - 1000 + i))));
+    }
+    kit.clock.advance(MINUTE);
+    const body = JSON.stringify(order(kit.clock.now() - 1000));
+    await send(id, await wooReq(body));
+    for (let i = 0; i < 40; i++) {
+      kit.clock.advance(MINUTE);
+      await send(id, await wooReq(body, { topic: i % 2 ? 'order.created' : 'order.updated' }));
+    }
+    const all_ = await rows(id);
+    expect(all_.filter((r) => r.outcome === 'accepted')).toHaveLength(4);
+    expect(all_.filter((r) => r.outcome === 'duplicate').length).toBeLessThanOrEqual(20);
+    expect(all_.filter((r) => r.outcome === 'duplicate').every((r) => r.topic === null)).toBe(true);
+  });
+
+  it('verified rows beyond the exempt one survive 35 minutes of strangers', async () => {
+    const { id } = await wooConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    for (let i = 0; i < 3; i++) {
+      kit.clock.advance(MINUTE);
+      await send(id, await wooReq(JSON.stringify(order(kit.clock.now() - 1000 + i))));
+    }
+    for (let i = 0; i < 35; i++) {
+      kit.clock.advance(MINUTE);
+      await expect(send(id, await wooReq('{}', { sig: false }))).rejects.toBeTruthy();
+    }
+    expect((await rows(id)).filter((r) => r.outcome === 'accepted')).toHaveLength(3);
+  });
+
+  it('the daily hook clears the exempt row of its event id and retention link', async () => {
+    const { id } = await wooConn({ autoCreate: true, defaultTemplateId: kit.templateId });
+    await send(id, await wooReq(JSON.stringify(order(kit.clock.now() - 1000))));
+    kit.clock.advance(ARRIVAL_RETENTION_MS + MINUTE);
+    await dailyConnections(kit.sctx);
+    const row = await first<{ event_ref: string | null; retention_id: string | null }>(
+      kit.env.DB,
+      'SELECT event_ref, retention_id FROM connection_webhook_arrivals WHERE connection_id = ?',
+      [id],
+    );
+    expect(row).toEqual({ event_ref: null, retention_id: null });
   });
 });

@@ -1,10 +1,12 @@
 import { z } from 'zod';
 import type { ConnectionDto, ConnectorInfoSchema, Json } from '../../../shared/contracts/index.ts';
+import { STALE_DELIVERIES_TEXT } from '../../../shared/copy/connection-warnings.ts';
 import { connectors } from '../../connectors/registry.ts';
 import type { AnyConnector } from '../../connectors/types.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ConnectionRow } from './repo.ts';
+import type { ArrivalSummary } from './repo-webhook-arrivals.ts';
 
 export function webhookUrl(env: AppEnv, conn: Pick<ConnectionRow, 'id' | 'mode'>): string | null {
   return conn.mode === 'webhook' || conn.mode === 'hybrid'
@@ -43,7 +45,7 @@ function shownConfig(c: ConnectionRow): Shown {
 export function toDto(
   env: AppEnv,
   c: ConnectionRow,
-  firstVerifiedArrivalAt: number | null,
+  arrivals: ArrivalSummary,
   onIssue?: (code: NonNullable<Shown['issue']>) => void,
 ): ConnectionDto {
   const shown = shownConfig(c);
@@ -88,10 +90,13 @@ export function toDto(
     requestsPerMinute: c.requestsPerMinute,
     enabled: c.enabled,
     health:
-      c.health === 'unknown' && firstVerifiedArrivalAt === null && webhookUrl(env, c) !== null
+      c.health === 'unknown' && arrivals.firstVerifiedAt === null && webhookUrl(env, c) !== null
         ? 'awaiting'
         : c.health,
-    firstVerifiedArrivalAt,
+    firstVerifiedArrivalAt: arrivals.firstVerifiedAt,
+    warning: arrivals.staleRun
+      ? { code: 'stale_deliveries' as const, text: STALE_DELIVERIES_TEXT }
+      : null,
     consecutiveFailures: c.consecutiveFailures,
     breakerOpenUntil: c.breakerOpenUntil,
     nextRunAt: c.nextRunAt,

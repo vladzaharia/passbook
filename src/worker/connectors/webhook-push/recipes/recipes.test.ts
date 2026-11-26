@@ -406,11 +406,11 @@ describe('verifyRecipe', () => {
     ).toMatchObject({ ignored: 'stale', refs: [] });
   });
 
-  it('Shopify: a future-dated body is acknowledged as stale, never applied', async () => {
+  it('Shopify: a future-dated body is refused, so the sender retries', async () => {
     const body = JSON.stringify(order({ updated_at: iso(NOW + 10 * 60_000) }));
-    expect(
-      await verifyRecipe(shopify, ctx(SECRET), await deliver(shopify, body, SECRET), CFG),
-    ).toMatchObject({ ignored: 'stale', refs: [] });
+    await expect(
+      verifyRecipe(shopify, ctx(SECRET), await deliver(shopify, body, SECRET), CFG),
+    ).rejects.toMatchObject({ code: 'AUTH', detail: 'expired' });
   });
 
   it('Shopify: a wrong secret is AUTH', async () => {

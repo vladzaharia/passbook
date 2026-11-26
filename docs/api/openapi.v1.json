@@ -51378,6 +51378,27 @@
                   ],
                   "minimum": 0
                 },
+                "warning": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "stale_deliveries"
+                      ]
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "text"
+                  ]
+                },
                 "consecutiveFailures": {
                   "type": "integer"
                 },
@@ -51466,6 +51487,7 @@
                 "enabled",
                 "health",
                 "firstVerifiedArrivalAt",
+                "warning",
                 "consecutiveFailures",
                 "breakerOpenUntil",
                 "nextRunAt",
@@ -51871,6 +51893,27 @@
             ],
             "minimum": 0
           },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
+            ]
+          },
           "consecutiveFailures": {
             "type": "integer"
           },
@@ -51957,6 +52000,7 @@
           "enabled",
           "health",
           "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -54903,6 +54947,27 @@
             ],
             "minimum": 0
           },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
+            ]
+          },
           "consecutiveFailures": {
             "type": "integer"
           },
@@ -55132,6 +55197,7 @@
           "enabled",
           "health",
           "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -55544,6 +55610,27 @@
             ],
             "minimum": 0
           },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
+            ]
+          },
           "consecutiveFailures": {
             "type": "integer"
           },
@@ -55630,6 +55717,7 @@
           "enabled",
           "health",
           "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -56362,6 +56450,27 @@
             ],
             "minimum": 0
           },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
+            ]
+          },
           "consecutiveFailures": {
             "type": "integer"
           },
@@ -56448,6 +56557,7 @@
           "enabled",
           "health",
           "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -56664,6 +56774,27 @@
             ],
             "minimum": 0
           },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
+            ]
+          },
           "consecutiveFailures": {
             "type": "integer"
           },
@@ -56747,6 +56878,7 @@
           "enabled",
           "health",
           "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",

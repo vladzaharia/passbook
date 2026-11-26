@@ -2964,6 +2964,7 @@ class ConnectionsCreateResponse(_Model):
     enabled: bool
     health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3132,6 +3133,7 @@ class ConnectionsListItem(_Model):
     enabled: bool
     health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3185,6 +3187,7 @@ class ConnectionsListResponseItemsItem(_Model):
     enabled: bool
     health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3274,6 +3277,7 @@ class ConnectionsRetrieveResponse(_Model):
     enabled: bool
     health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3359,6 +3363,7 @@ class ConnectionsRevokePreviousWebhookSecretResponse(_Model):
     enabled: bool
     health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3407,6 +3412,7 @@ class ConnectionsRotateWebhookSecretResponse(_Model):
     enabled: bool
     health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3610,6 +3616,7 @@ class ConnectionsUpdateResponse(_Model):
     enabled: bool
     health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None

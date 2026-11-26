@@ -860,6 +860,10 @@ export type ConnectionsCreateResponse = {
   enabled: boolean;
   health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
   firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1031,6 +1035,10 @@ export type ConnectionsListResponse = {
     enabled: boolean;
     health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
     firstVerifiedArrivalAt: number | null;
+    warning: {
+      code: "stale_deliveries";
+      text: string;
+    } | null;
     consecutiveFailures: number;
     breakerOpenUntil: number | null;
     nextRunAt: number | null;
@@ -1310,6 +1318,10 @@ export type ConnectionsRetrieveResponse = {
   enabled: boolean;
   health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
   firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1391,6 +1403,10 @@ export type ConnectionsRevokePreviousWebhookSecretResponse = {
   enabled: boolean;
   health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
   firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1437,6 +1453,10 @@ export type ConnectionsRotateWebhookSecretResponse = {
   enabled: boolean;
   health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
   firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1614,6 +1634,10 @@ export type ConnectionsUpdateResponse = {
   enabled: boolean;
   health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
   firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
