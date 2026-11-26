@@ -1,6 +1,6 @@
 import type { StartSetup } from '../../../shared/contracts/idp-setup.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
+import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { ConflictError, UnavailableError } from '../../platform/errors.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
@@ -67,7 +67,7 @@ async function replayOf(
 /** A replay answered before any state check. */
 export async function replay(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   kind: Spec['kind'],
   key: string | undefined,
   target?: Spec['target'],
@@ -83,9 +83,10 @@ export async function replay(
  */
 export async function startIdpOp(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   spec: Spec,
 ): Promise<OperationDto> {
+  const actor = actorOf(auth);
   const id = spec.idempotencyKey
     ? await operationIdFor(principalOf(auth), spec.kind, spec.idempotencyKey)
     : ctx.ids.id();
@@ -94,15 +95,15 @@ export async function startIdpOp(
   const { operation, created } = await startOperationOnce(ctx, {
     id,
     kind: spec.kind,
-    actor: { type: 'user', id: auth.userId },
+    actor,
     ...(spec.target ? { target: spec.target } : {}),
     ...(spec.subject ? { subject: spec.subject } : {}),
   });
   if (!created) return operation;
   if (spec.audit)
     await recordAudit(ctx, {
-      actorType: 'user',
-      actorId: auth.userId,
+      actorType: actor.type,
+      actorId: actor.id,
       action: spec.audit.action,
       targetType: spec.audit.targetType,
       targetId: spec.audit.targetId,
@@ -112,8 +113,14 @@ export async function startIdpOp(
   return operation;
 }
 
-export const limited = (ctx: ServiceContext, auth: SessionAuth) =>
-  enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:idp-ops:${auth.userId}`);
+/** Who started an operation: a person, or the Platform key that did (setup and rotation accept both). */
+const actorOf = (auth: SessionAuth | ApiKeyAuth) =>
+  auth.kind === 'session'
+    ? ({ type: 'user', id: auth.userId } as const)
+    : ({ type: 'api_key', id: auth.keyId } as const);
+
+export const limited = (ctx: ServiceContext, auth: SessionAuth | ApiKeyAuth) =>
+  enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:idp-ops:${actorOf(auth).id}`);
 
 export function needBinding(ctx: ServiceContext): void {
   if (!idpConfigured(ctx.env))
@@ -196,7 +203,7 @@ export async function startBreakerClear(
  */
 export async function startSetup(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   body: StartSetup,
   idempotencyKey: string | undefined,
 ): Promise<OperationDto> {
@@ -218,7 +225,7 @@ export async function startSetup(
 /** Rotate the SCIM token, or preview it. */
 export async function startRotate(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   dryRun: boolean,
   idempotencyKey: string | undefined,
 ): Promise<OperationDto> {

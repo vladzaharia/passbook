@@ -1242,19 +1242,24 @@ __all__ = [
     "PlatformIdpScimBreakerClearResponseOperation",
     "PlatformIdpScimBreakerClearResponseOperationStartedBy",
     "PlatformIdpScimBreakerClearResponseOperationStepsItem",
+    "PlatformIdpScimTokenRotateBody",
     "PlatformIdpScimTokenRotateParams",
     "PlatformIdpScimTokenRotateResponse",
     "PlatformIdpScimTokenRotateResponseOperation",
     "PlatformIdpScimTokenRotateResponseOperationStartedBy",
     "PlatformIdpScimTokenRotateResponseOperationStepsItem",
+    "PlatformIdpScimTokenRotateResult",
     "PlatformIdpSetupRetrieveResponse",
     "PlatformIdpSetupRetrieveResponseItemsItem",
     "PlatformIdpSetupRetrieveResponseItemsItemRowsItem",
-    "PlatformIdpSetupRunParams",
-    "PlatformIdpSetupRunResponse",
-    "PlatformIdpSetupRunResponseOperation",
-    "PlatformIdpSetupRunResponseOperationStartedBy",
-    "PlatformIdpSetupRunResponseOperationStepsItem",
+    "PlatformIdpSetupRetrieveResult",
+    "PlatformIdpSetupStartBody",
+    "PlatformIdpSetupStartParams",
+    "PlatformIdpSetupStartResponse",
+    "PlatformIdpSetupStartResponseOperation",
+    "PlatformIdpSetupStartResponseOperationStartedBy",
+    "PlatformIdpSetupStartResponseOperationStepsItem",
+    "PlatformIdpSetupStartResult",
     "PlatformInvitationsCreateParams",
     "PlatformInvitationsCreateResponse",
     "PlatformInvitationsListResponse",
@@ -9821,14 +9826,14 @@ class PlatformIdpSetupRetrieveResponseItemsItemRowsItem(_Model):
     key: str
     state: _Literal["placed", "allowed", "needed"] | str
 
-class PlatformIdpSetupRunParams(_Model):
+class PlatformIdpSetupStartParams(_Model):
     dryRun: bool | None = None
     items: _List[_Literal["groups", "client_groups", "client_restricted", "client_logo", "scim_provider", "scim_sync"] | str] | None = None
 
-class PlatformIdpSetupRunResponse(_Model):
-    operation: PlatformIdpSetupRunResponseOperation
+class PlatformIdpSetupStartResponse(_Model):
+    operation: PlatformIdpSetupStartResponseOperation
 
-class PlatformIdpSetupRunResponseOperation(_Model):
+class PlatformIdpSetupStartResponseOperation(_Model):
     id: str
     kind: str
     status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
@@ -9838,11 +9843,11 @@ class PlatformIdpSetupRunResponseOperation(_Model):
     mode: _Literal["live", "test", None] | str
     target: _Dict[str, _Any] | None
     step: str | None
-    steps: _List[PlatformIdpSetupRunResponseOperationStepsItem]
+    steps: _List[PlatformIdpSetupStartResponseOperationStepsItem]
     attempt: int
     cancelable: bool
     cancelRequested: bool
-    startedBy: PlatformIdpSetupRunResponseOperationStartedBy
+    startedBy: PlatformIdpSetupStartResponseOperationStartedBy
     createdAt: int
     startedAt: int | None
     updatedAt: int
@@ -9852,11 +9857,11 @@ class PlatformIdpSetupRunResponseOperation(_Model):
     revision: int
     pollAfterMs: int
 
-class PlatformIdpSetupRunResponseOperationStartedBy(_Model):
+class PlatformIdpSetupStartResponseOperationStartedBy(_Model):
     type: _Literal["user", "api_key", "system"] | str
     id: str | None
 
-class PlatformIdpSetupRunResponseOperationStepsItem(_Model):
+class PlatformIdpSetupStartResponseOperationStepsItem(_Model):
     key: str
     label: str
     state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
@@ -16379,6 +16384,16 @@ PassesVersionsRetrieveResult = PassDetail
 PassesVoidResult = PassSummary
 
 PlatformGroupsMembersCreateParams = PlatformGroupsMembersCreateParams1 | PlatformGroupsMembersCreateParams2
+
+PlatformIdpScimTokenRotateBody = PlatformIdpScimTokenRotateParams
+
+PlatformIdpScimTokenRotateResult = PlatformIdpScimTokenRotateResponse
+
+PlatformIdpSetupRetrieveResult = PlatformIdpSetupRetrieveResponse
+
+PlatformIdpSetupStartBody = PlatformIdpSetupStartParams
+
+PlatformIdpSetupStartResult = PlatformIdpSetupStartResponse
 
 PlatformSettingsRetrieveResult = PlatformSettingsRetrieveResponse
 

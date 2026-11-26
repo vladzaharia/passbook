@@ -1,9 +1,13 @@
+import type { Context } from 'hono';
 import {
   RotateScimSchema,
   SetupStatusSchema,
   StartSetupSchema,
 } from '../../../shared/contracts/idp-setup.ts';
 import { StartedOperationSchema } from '../../../shared/contracts/operations.ts';
+import { platformActorOf } from '../../platform/actor.ts';
+import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
+import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -13,12 +17,22 @@ import { startRotate, startSetup } from './ops-start.ts';
 import { readSetup } from './setup-read.ts';
 
 const TAG = 'polaris setup';
-/** A platform admin signed in with Polaris ID recently. Platform scope: `platform:settings` writes, `platform:status` reads. */
+/** A platform admin signed in with Polaris ID recently, or a Platform key: `platform:settings` writes. */
 const WRITE = {
   platform: 'platform:settings',
+  // A Platform key may run both: it never meets a step-up (the mint was it) and only tightens PassBook's own app.
+  key: true,
   signIn: 'oidc',
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
+
+/** The admin session or Platform key the gate admitted, checked for the write scope. */
+function callerOf(c: Context<AppBindings>): SessionAuth | ApiKeyAuth {
+  platformActorOf(c, { scope: 'platform:settings' });
+  const auth = c.var.auth;
+  if (auth?.kind !== 'session' && auth?.kind !== 'api_key') throw new UnauthenticatedError();
+  return auth;
+}
 
 /** Mount at /api/v1/platform. */
 export const idpSetupRoutes = createRouter();
@@ -37,7 +51,8 @@ register(
       'What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read.',
     operationId: 'polaris-setup.getPlatformIdpSetup',
     response: SetupStatusSchema,
-    auth: { platform: 'platform:status' },
+    // A key reads with `platform:read` (or `platform:settings`): `platform:status` is not a key scope.
+    auth: { platform: 'platform:settings', key: true },
   },
   async (c) => c.json(await readSetup(serviceContext(c))),
 );
@@ -58,8 +73,7 @@ register(
     auth: WRITE,
   },
   async (c) => {
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    const auth = callerOf(c);
     const operation = await startSetup(
       serviceContext(c),
       auth,
@@ -88,8 +102,7 @@ register(
     auth: WRITE,
   },
   async (c) => {
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    const auth = callerOf(c);
     const operation = await startRotate(
       serviceContext(c),
       auth,

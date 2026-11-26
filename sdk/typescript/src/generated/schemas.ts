@@ -7996,12 +7996,12 @@ export type PlatformIdpSetupRetrieveResponse = {
   }>;
 };
 
-export type PlatformIdpSetupRunParams = {
+export type PlatformIdpSetupStartParams = {
   dryRun?: boolean;
   items?: Array<"groups" | "client_groups" | "client_restricted" | "client_logo" | "scim_provider" | "scim_sync">;
 };
 
-export type PlatformIdpSetupRunResponse = {
+export type PlatformIdpSetupStartResponse = {
   operation: {
     id: string;
     kind: string;

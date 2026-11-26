@@ -1,28 +1,71 @@
 {
   "polaris-setup.getPlatformIdpSetup": {
+    "description": "What setup has done and what is left, item by item: done, needed (after:<item> waits for another) or blocked with a reason. A Platform key reads it with platform:read or platform:settings. Costs one Polaris ID read.",
     "response": {
       "mode": "live",
       "items": [
         {
           "key": "binding",
+          "status": "done"
+        },
+        {
+          "key": "polaris_settings",
+          "status": "done"
+        },
+        {
+          "key": "client",
+          "status": "done"
+        },
+        {
+          "key": "groups",
           "status": "done",
-          "reason": "Unexpected role changes in Polaris ID.",
-          "owner": false,
           "counts": {
-            "healthy": 30
+            "placed": 5,
+            "total": 5
+          }
+        },
+        {
+          "key": "client_groups",
+          "status": "needed",
+          "counts": {
+            "missing": 1,
+            "other": 0
           },
           "rows": [
             {
-              "key": "tier",
-              "state": "placed"
+              "key": "console",
+              "state": "allowed"
+            },
+            {
+              "key": "support",
+              "state": "needed"
+            },
+            {
+              "key": "wallet_org_admins",
+              "state": "allowed"
             }
-          ],
-          "note": "Pilot pricing through March."
+          ]
+        },
+        {
+          "key": "client_restricted",
+          "status": "needed",
+          "reason": "after:client_groups"
+        },
+        {
+          "key": "scim_provider",
+          "status": "needed",
+          "reason": "after:client_restricted"
+        },
+        {
+          "key": "write_mode",
+          "status": "done",
+          "note": "dry_run"
         }
       ]
     }
   },
   "polaris-setup.postPlatformIdpSetup": {
+    "description": "Sets up groups, the PassBook app and the SCIM connection in Polaris ID. A dry run unless dryRun is false, and a dry run writes nothing. A Platform key needs platform:settings. Stops at the first blocked item.",
     "request": {
       "dryRun": false,
       "items": ["groups"]
@@ -30,7 +73,7 @@
     "response": {
       "operation": {
         "id": "0193a1b2-7c00-7000-8000-2825c52dc1d1",
-        "kind": "kind",
+        "kind": "idp.setup",
         "status": "succeeded",
         "title": "Delete sandbox",
         "text": "Removing Test passes · 4 of 12",
@@ -80,13 +123,14 @@
     }
   },
   "polaris-setup.postPlatformIdpScimTokenRotate": {
+    "description": "Replaces the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless dryRun is false. A Platform key needs platform:settings.",
     "request": {
       "dryRun": false
     },
     "response": {
       "operation": {
         "id": "0193a1b2-7c00-7000-8000-f267abbe9cd2",
-        "kind": "kind",
+        "kind": "idp.setup",
         "status": "succeeded",
         "title": "Delete sandbox",
         "text": "Removing Test passes · 4 of 12",

@@ -194,3 +194,21 @@ export async function hasLiveAdminSession(
     )) !== null
   );
 }
+
+/** A Platform key that is not revoked, expired or retired. */
+export async function hasLivePlatformKey(
+  db: D1Database,
+  keyId: string,
+  now: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS ok FROM api_keys
+       WHERE id = ? AND kind = 'platform' AND org_id IS NULL AND revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > ?) AND (retire_at IS NULL OR retire_at > ?)
+       LIMIT 1`,
+      [keyId, now, now],
+    )) !== null
+  );
+}

@@ -372,8 +372,12 @@ function platformKeyRoutes(): {
  * to `auth: { platform, key? }` and lists it here.
  */
 const PLATFORM_KEY_ROUTES: string[] = [
+  'GET /api/v1/platform/idp/setup',
   'GET /api/v1/platform/settings',
   'GET /api/v1/platform/wallet-release',
+  // AS-4: setup only tightens PassBook's own app and connection; the freeze still stops it.
+  'POST /api/v1/platform/idp/scim-token/rotate',
+  'POST /api/v1/platform/idp/setup',
 ];
 const PLATFORM_KEY_CONDITIONAL: string[] = [
   // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).

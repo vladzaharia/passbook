@@ -28354,7 +28354,7 @@
           "items"
         ]
       },
-      "PlatformIdpSetupRunParams": {
+      "PlatformIdpSetupStartParams": {
         "type": "object",
         "properties": {
           "dryRun": {
@@ -28379,7 +28379,7 @@
         },
         "additionalProperties": false
       },
-      "PlatformIdpSetupRunResponse": {
+      "PlatformIdpSetupStartResponse": {
         "type": "object",
         "properties": {
           "operation": {
@@ -105175,11 +105175,20 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:settings"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
-        "x-platform-scope": "platform:status",
+        "x-platform-scope": "platform:settings",
         "summary": "What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read.",
         "operationId": "polaris-setup.getPlatformIdpSetup",
         "tags": [
@@ -105192,6 +105201,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformIdpSetupRetrieveResponse"
+                },
+                "example": {
+                  "mode": "live",
+                  "items": [
+                    {
+                      "key": "binding",
+                      "status": "done"
+                    },
+                    {
+                      "key": "polaris_settings",
+                      "status": "done"
+                    },
+                    {
+                      "key": "client",
+                      "status": "done"
+                    },
+                    {
+                      "key": "groups",
+                      "status": "done",
+                      "counts": {
+                        "placed": 5,
+                        "total": 5
+                      }
+                    },
+                    {
+                      "key": "client_groups",
+                      "status": "needed",
+                      "counts": {
+                        "missing": 1,
+                        "other": 0
+                      },
+                      "rows": [
+                        {
+                          "key": "console",
+                          "state": "allowed"
+                        },
+                        {
+                          "key": "support",
+                          "state": "needed"
+                        },
+                        {
+                          "key": "wallet_org_admins",
+                          "state": "allowed"
+                        }
+                      ]
+                    },
+                    {
+                      "key": "client_restricted",
+                      "status": "needed",
+                      "reason": "after:client_groups"
+                    },
+                    {
+                      "key": "scim_provider",
+                      "status": "needed",
+                      "reason": "after:client_restricted"
+                    },
+                    {
+                      "key": "write_mode",
+                      "status": "done",
+                      "note": "dry_run"
+                    }
+                  ]
                 }
               }
             }
@@ -105211,8 +105282,10 @@
           "resource": "platform.idp.setup",
           "method": "retrieve"
         },
+        "description": "What setup has done and what is left, item by item: done, needed (after:<item> waits for another) or blocked with a reason. A Platform key reads it with platform:read or platform:settings. Costs one Polaris ID read.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -105223,6 +105296,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
@@ -105230,10 +105305,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:settings"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:settings",
         "summary": "Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless `dryRun` is false; a dry run writes nothing. Stops at the first blocked item. Answers 202 with an operation (`idp.setup`).",
         "operationId": "polaris-setup.postPlatformIdpSetup",
@@ -105245,7 +105324,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlatformIdpSetupRunParams"
+                "$ref": "#/components/schemas/PlatformIdpSetupStartParams"
+              },
+              "example": {
+                "dryRun": false,
+                "items": [
+                  "groups"
+                ]
               }
             }
           }
@@ -105256,7 +105341,58 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlatformIdpSetupRunResponse"
+                  "$ref": "#/components/schemas/PlatformIdpSetupStartResponse"
+                },
+                "example": {
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-2825c52dc1d1",
+                    "kind": "idp.setup",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-445121678a69"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -105274,18 +105410,22 @@
         },
         "x-sdk": {
           "resource": "platform.idp.setup",
-          "method": "run"
+          "method": "start"
         },
+        "description": "Sets up groups, the PassBook app and the SCIM connection in Polaris ID. A dry run unless dryRun is false, and a dry run writes nothing. A Platform key needs platform:settings. Stops at the first blocked item.",
         "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "OPERATION_RUNNING",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -105298,10 +105438,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:settings"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:settings",
         "summary": "Replace the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless `dryRun` is false. Answers 202 with an operation (`idp.scim_rotate`).",
         "operationId": "polaris-setup.postPlatformIdpScimTokenRotate",
@@ -105314,6 +105458,9 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformIdpScimTokenRotateParams"
+              },
+              "example": {
+                "dryRun": false
               }
             }
           }
@@ -105325,6 +105472,57 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformIdpScimTokenRotateResponse"
+                },
+                "example": {
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-f267abbe9cd2",
+                    "kind": "idp.setup",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-48e80ba335ae"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -105344,16 +105542,20 @@
           "resource": "platform.idp.scimToken",
           "method": "rotate"
         },
+        "description": "Replaces the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless dryRun is false. A Platform key needs platform:settings.",
         "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "OPERATION_RUNNING",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",

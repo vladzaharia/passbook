@@ -5706,14 +5706,18 @@
     "IDP_SCIM_MISSING"
   ],
   "polaris setup post /idp/scim-token/rotate": [
+    "FORBIDDEN",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
+    "MISSING_SCOPE",
     "OPERATION_RUNNING",
     "UNAUTHENTICATED"
   ],
   "polaris setup post /idp/setup": [
+    "FORBIDDEN",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
+    "MISSING_SCOPE",
     "OPERATION_RUNNING",
     "UNAUTHENTICATED"
   ],

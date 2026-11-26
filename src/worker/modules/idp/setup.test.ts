@@ -22,6 +22,9 @@ import {
 
 installSetupRig();
 
+/** An org key is no Platform key. */
+const NOT_A_PLATFORM_KEY = ['PLATFORM_KEY_REQUIRED', 'MISSING_SCOPE'];
+
 const matrix = async (headers: Record<string, string>) =>
   SetupStatusSchema.parse(await (await rig.h.call(SETUP, { headers })).json());
 const itemOf = async (headers: Record<string, string>, key: string) =>
@@ -99,7 +102,7 @@ describe('the item matrix', () => {
   it('is for platform admins only', async () => {
     const key = await makeApiKey(f());
     expect((await rig.h.call(SETUP, { headers: {} })).status).toBe(401);
-    await expectProblem(await rig.h.call(SETUP, { headers: key.headers }), 403, 'PERSON_REQUIRED');
+    await expectProblem(await rig.h.call(SETUP, { headers: key.headers }), 403, NOT_A_PLATFORM_KEY);
     await expectProblem(
       await rig.h.call(SETUP, { headers: (await admin(['user'])).headers }),
       403,
@@ -113,7 +116,7 @@ describe('start', () => {
     const key = await makeApiKey(f());
     for (const path of [SETUP, '/api/v1/platform/idp/scim-token/rotate']) {
       expect((await start(path, 'POST', {})).status).toBe(401);
-      await expectProblem(await start(path, 'POST', key.headers), 403, 'PERSON_REQUIRED');
+      await expectProblem(await start(path, 'POST', key.headers), 403, NOT_A_PLATFORM_KEY);
       await expectProblem(
         await start(path, 'POST', (await admin(['user'])).headers),
         403,
@@ -176,6 +179,60 @@ describe('start', () => {
     const res = await start(`/api/v1/operations/${op.id}/retry`, 'POST', key.headers);
     expect(res.status).toBeGreaterThanOrEqual(400);
     expect((await read(op.id, a.headers)).attempt).toBe(1);
+  });
+});
+
+describe('a Platform key', () => {
+  const platformKey = async (scopes: string[]) => {
+    const key = await makeApiKey(f(), {
+      orgId: null,
+      kind: 'platform',
+      scopes,
+      expiresAt: rig.h.clock.now() + 30 * 86_400_000,
+      ipAllow: ['198.51.100.0/24'],
+    });
+    return { id: key.id, headers: { ...key.headers, 'cf-connecting-ip': '198.51.100.7' } };
+  };
+
+  it('needs platform:settings to start and platform:read to read, and no step-up', async () => {
+    const reader = await platformKey(['platform:read']);
+    expect((await rig.h.call(SETUP, { headers: reader.headers })).status).toBe(200);
+    await expectProblem(
+      await start(SETUP, 'POST', reader.headers, { dryRun: false }),
+      403,
+      'MISSING_SCOPE',
+    );
+    const writer = await platformKey(['platform:settings']);
+    const op = await opOf(await start(SETUP, 'POST', writer.headers, {}));
+    expect(op.startedBy).toEqual({ type: 'api_key', id: writer.id });
+    await runNext(op);
+    expect((await read(op.id, writer.headers)).status).toBe('succeeded');
+  });
+
+  it('runs a live setup, audited as the key, and stops when the key is revoked', async () => {
+    const writer = await platformKey(['platform:settings']);
+    const op = await opOf(await start(SETUP, 'POST', writer.headers, { dryRun: false }));
+    await run(rig.h.env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+      rig.h.clock.now(),
+      writer.id,
+    ]);
+    await runNext(op);
+    const rows = await all<{ actor_type: string }>(
+      rig.h.env.DB,
+      "SELECT actor_type FROM audit_log WHERE action = 'idp.setup'",
+    );
+    expect(rows).toEqual([{ actor_type: 'api_key' }]);
+    expect(rig.idp.writes).toBe(0);
+  });
+
+  it('cannot retry', async () => {
+    const writer = await platformKey(['platform:settings']);
+    rig.idp.setup.client.found = false;
+    const op = await opOf(await start(SETUP, 'POST', writer.headers, { dryRun: false }));
+    await runNext(op);
+    expect(
+      (await start(`/api/v1/operations/${op.id}/retry`, 'POST', writer.headers)).status,
+    ).toBeGreaterThanOrEqual(400);
   });
 });
 

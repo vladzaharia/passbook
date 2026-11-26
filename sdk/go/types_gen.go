@@ -9208,6 +9208,8 @@ type PlatformIdpScimBreakerClearResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
+type PlatformIdpScimTokenRotateBody = PlatformIdpScimTokenRotateParams
+
 type PlatformIdpScimTokenRotateParams struct {
 	DryRun *bool `json:"dryRun,omitempty"`
 }
@@ -9260,6 +9262,8 @@ type PlatformIdpScimTokenRotateResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
+type PlatformIdpScimTokenRotateResult = PlatformIdpScimTokenRotateResponse
+
 type PlatformIdpSetupRetrieveResponse struct {
 	Mode  *string                                     `json:"mode"`
 	Items []PlatformIdpSetupRetrieveResponseItemsItem `json:"items"`
@@ -9280,46 +9284,50 @@ type PlatformIdpSetupRetrieveResponseItemsItemRowsItem struct {
 	State string `json:"state"`
 }
 
-type PlatformIdpSetupRunParams struct {
+type PlatformIdpSetupRetrieveResult = PlatformIdpSetupRetrieveResponse
+
+type PlatformIdpSetupStartBody = PlatformIdpSetupStartParams
+
+type PlatformIdpSetupStartParams struct {
 	DryRun *bool    `json:"dryRun,omitempty"`
 	Items  []string `json:"items,omitempty"`
 }
 
-type PlatformIdpSetupRunResponse struct {
-	Operation PlatformIdpSetupRunResponseOperation `json:"operation"`
+type PlatformIdpSetupStartResponse struct {
+	Operation PlatformIdpSetupStartResponseOperation `json:"operation"`
 }
 
-type PlatformIdpSetupRunResponseOperation struct {
-	ID              string                                          `json:"id"`
-	Kind            string                                          `json:"kind"`
-	Status          string                                          `json:"status"`
-	Title           string                                          `json:"title"`
-	Text            string                                          `json:"text"`
-	OrgID           *string                                         `json:"orgId"`
-	Mode            *string                                         `json:"mode"`
-	Target          map[string]any                                  `json:"target"`
-	Step            *string                                         `json:"step"`
-	Steps           []PlatformIdpSetupRunResponseOperationStepsItem `json:"steps"`
-	Attempt         int64                                           `json:"attempt"`
-	Cancelable      bool                                            `json:"cancelable"`
-	CancelRequested bool                                            `json:"cancelRequested"`
-	StartedBy       PlatformIdpSetupRunResponseOperationStartedBy   `json:"startedBy"`
-	CreatedAt       int64                                           `json:"createdAt"`
-	StartedAt       *int64                                          `json:"startedAt"`
-	UpdatedAt       int64                                           `json:"updatedAt"`
-	FinishedAt      *int64                                          `json:"finishedAt"`
-	Error           map[string]any                                  `json:"error"`
-	Result          map[string]any                                  `json:"result"`
-	Revision        int64                                           `json:"revision"`
-	PollAfterMs     int64                                           `json:"pollAfterMs"`
+type PlatformIdpSetupStartResponseOperation struct {
+	ID              string                                            `json:"id"`
+	Kind            string                                            `json:"kind"`
+	Status          string                                            `json:"status"`
+	Title           string                                            `json:"title"`
+	Text            string                                            `json:"text"`
+	OrgID           *string                                           `json:"orgId"`
+	Mode            *string                                           `json:"mode"`
+	Target          map[string]any                                    `json:"target"`
+	Step            *string                                           `json:"step"`
+	Steps           []PlatformIdpSetupStartResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                             `json:"attempt"`
+	Cancelable      bool                                              `json:"cancelable"`
+	CancelRequested bool                                              `json:"cancelRequested"`
+	StartedBy       PlatformIdpSetupStartResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                             `json:"createdAt"`
+	StartedAt       *int64                                            `json:"startedAt"`
+	UpdatedAt       int64                                             `json:"updatedAt"`
+	FinishedAt      *int64                                            `json:"finishedAt"`
+	Error           map[string]any                                    `json:"error"`
+	Result          map[string]any                                    `json:"result"`
+	Revision        int64                                             `json:"revision"`
+	PollAfterMs     int64                                             `json:"pollAfterMs"`
 }
 
-type PlatformIdpSetupRunResponseOperationStartedBy struct {
+type PlatformIdpSetupStartResponseOperationStartedBy struct {
 	Type string  `json:"type"`
 	ID   *string `json:"id"`
 }
 
-type PlatformIdpSetupRunResponseOperationStepsItem struct {
+type PlatformIdpSetupStartResponseOperationStepsItem struct {
 	Key           string  `json:"key"`
 	Label         string  `json:"label"`
 	State         string  `json:"state"`
@@ -9332,6 +9340,8 @@ type PlatformIdpSetupRunResponseOperationStepsItem struct {
 	StartedAt     *int64  `json:"startedAt"`
 	FinishedAt    *int64  `json:"finishedAt"`
 }
+
+type PlatformIdpSetupStartResult = PlatformIdpSetupStartResponse
 
 type PlatformInvitationsCreateParams struct {
 	Email     string   `json:"email"`
