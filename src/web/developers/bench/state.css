@@ -11,8 +11,8 @@
   margin-inline-end: 28px;
 }
 /* In the list's column the card is centred at a reading width, not pushed to the column's left edge. */
-.bench-main > .bench-state,
-.bench-main .logs-main > .bench-state {
+.bench-main .bench-state,
+.logs-solo .bench-state {
   max-width: min(44rem, calc(100% - 28px));
   margin-inline: auto;
 }

@@ -169,7 +169,6 @@ export function LogsTool() {
       <p className="sr" aria-live="polite">
         {log.announce}
       </p>
-      <p className="bench-note">{C.retention}</p>
     </div>
   );
   const pane = row ? (
@@ -242,6 +241,7 @@ export function LogsTool() {
           bare
         />
       )}
+      <p className="bench-note">{C.retention}</p>
     </>
   );
 }
