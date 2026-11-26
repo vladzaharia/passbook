@@ -15,6 +15,11 @@
   font-size: 12.5px;
   white-space: nowrap;
 }
+/* A link in a line of muted text needs more than its colour to be told apart. */
+.bench-tb-n a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* ---------- Search ---------- */
 .bench-search {

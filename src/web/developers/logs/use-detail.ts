@@ -67,27 +67,43 @@ export const causesEvents = (row: Pick<RequestLogDetail, 'method' | 'status'>): 
 
 const events = new Map<string, CausedEvent[]>();
 
+/** A fresh write's events land a moment after its answer: look again a few times before saying there are none. */
+const AGAIN_MS = 3000;
+const AGAIN_TIMES = 3;
+const FRESH_MS = 60_000;
+
 /** The webhook events a call caused (the Trace's last nodes); none known until they are read, and none on failure. */
 export function useCausedEvents(row: RequestLogDetail | null): CausedEvent[] {
   const requestId = row && causesEvents(row) ? row.requestId : null;
+  const at = row?.at ?? 0;
   const [found, setFound] = useState<{ id: string; list: CausedEvent[] } | null>(null);
   useEffect(() => {
     if (!requestId || events.has(requestId)) return;
     let live = true;
-    loadRequestEvents(requestId, api).then(
-      (list) => {
-        events.set(requestId, list);
-        if (live) setFound({ id: requestId, list });
-      },
-      (error: unknown) => {
-        // The Trace ends at the request; the page's handler hears why while the inspector is open.
-        if (live) reportError(error);
-      },
-    );
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const read = (left: number) => {
+      loadRequestEvents(requestId, api).then(
+        (list) => {
+          if (!live) return;
+          if (list.length === 0 && left > 0 && Date.now() - at < FRESH_MS) {
+            timer = setTimeout(() => read(left - 1), AGAIN_MS);
+            return;
+          }
+          events.set(requestId, list);
+          setFound({ id: requestId, list });
+        },
+        (error: unknown) => {
+          // The Trace ends at the request; the page's handler hears why while the inspector is open.
+          if (live) reportError(error);
+        },
+      );
+    };
+    read(AGAIN_TIMES);
     return () => {
       live = false;
+      clearTimeout(timer);
     };
-  }, [requestId]);
+  }, [requestId, at]);
   if (!requestId) return [];
   return events.get(requestId) ?? (found?.id === requestId ? found.list : []);
 }
