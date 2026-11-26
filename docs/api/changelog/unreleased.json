@@ -5795,5 +5795,125 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "DELETE /api/v1/platform/invitations/{id} new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.deletePlatformInvitationsById",
+    "op": "DELETE /api/v1/platform/invitations/{id}",
+    "change": "new operation",
+    "note": "Revoke a platform invitation: its unused signup links are withdrawn."
+  },
+  {
+    "key": "GET /api/v1/developer/sandbox 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.getSandbox",
+    "op": "GET /api/v1/developer/sandbox",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "GET /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "List platform invitations with their state."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandbox",
+    "op": "POST /api/v1/developer/sandbox",
+    "change": "201.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxClose",
+    "op": "POST /api/v1/developer/sandbox/close",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "201.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxReopen",
+    "op": "POST /api/v1/developer/sandbox/reopen",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "POST /api/v1/invitations/accept 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Accepting a platform invitation with developer access answers kind platform, orgName null."
+  },
+  {
+    "key": "POST /api/v1/invitations/confirm new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsConfirm",
+    "op": "POST /api/v1/invitations/confirm",
+    "change": "new operation",
+    "note": "Finish a platform invitation after creating a Polaris ID; accepted when the account's verified address is the invited one."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.groups: field added",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.groups: field added",
+    "note": "Platform invitations list the groups they give, by display name; empty for other kinds."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Invitations come in a third kind, platform, with orgName null."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Invite a person to Polaris ID groups, with developer access if chosen. The invitation link is returned once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "new operation",
+    "note": "Send a platform invitation again on a new row with a new link; the old one is revoked."
   }
 ]

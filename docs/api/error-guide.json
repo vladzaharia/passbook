@@ -3880,5 +3880,35 @@
     "when": "A key invited a developer with, or removed one who holds, an org or integration admin role.",
     "fix": "Do it from the console with a recent sign-in.",
     "retryable": false
+  },
+  "IDP_DRY_RUN": {
+    "title": "Polaris ID changes are in dry run",
+    "when": "The binding to Polaris ID only records what it would change, so a platform invitation cannot be created or sent.",
+    "fix": "Ask the owner to turn dry run off, then try again.",
+    "retryable": false
+  },
+  "INVITATION_EMAIL_UNVERIFIED": {
+    "title": "Email not confirmed",
+    "when": "The Polaris ID made from the invitation has not confirmed the invited address.",
+    "fix": "Confirm the email in Polaris ID, then try again.",
+    "retryable": true
+  },
+  "INVITATION_NOT_STARTED": {
+    "title": "No Polaris ID made yet",
+    "when": "Nobody has finished creating a Polaris ID from this invitation's link.",
+    "fix": "Create the Polaris ID from the invitation page, then confirm.",
+    "retryable": true
+  },
+  "PLATFORM_INVITE_CONFLICT": {
+    "title": "Invitation has ended",
+    "when": "The platform invitation was accepted or revoked already.",
+    "fix": "Send a new invitation if the person still needs access.",
+    "retryable": false
+  },
+  "PLATFORM_INVITE_PENDING": {
+    "title": "Invitation already pending",
+    "when": "This address already has an open platform invitation.",
+    "fix": "Revoke it or use Resend, then invite again.",
+    "retryable": false
   }
 }

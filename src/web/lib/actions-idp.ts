@@ -1,6 +1,7 @@
 import {
   KeyRound,
   type LucideIcon,
+  MailPlus,
   Pause,
   RefreshCw,
   ShieldCheck,
@@ -9,8 +10,8 @@ import {
   Tag,
   UserMinus,
   UserPlus,
-  Users,
   UserX,
+  Users,
 } from 'lucide-react';
 import type { Tone } from './status.ts';
 
@@ -34,6 +35,7 @@ export const IDP_ACTIONS = {
   'idp.group_delete': a('Polaris ID group deleted', Users, 'warning'),
   'idp.group_rule': a('Polaris ID group rule changed', Users, 'info'),
   'idp.group_member': a('Polaris ID group member changed', Users, 'info'),
+  'idp.invite_platform': a('Polaris ID invitation', MailPlus, 'info'),
   'idp.account_enabled': a('Polaris ID account enabled', KeyRound, 'success'),
   'idp.role_grant': a('Platform role granted', UserPlus, 'success'),
   'idp.role_revoke': a('Platform role revoked', UserMinus, 'warning'),
