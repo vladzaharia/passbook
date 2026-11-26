@@ -1,8 +1,8 @@
 import type { Context } from 'hono';
 import type { StartSetup } from '../../../shared/contracts/idp-setup.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
-import type { PlatformScope } from '../../platform/api-scopes.ts';
 import { type Actor, platformActorOf } from '../../platform/actor.ts';
+import type { PlatformScope } from '../../platform/api-scopes.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ConflictError, UnauthenticatedError, UnavailableError } from '../../platform/errors.ts';
 import { principalOf } from '../../platform/idempotency.ts';
