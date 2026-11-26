@@ -5,7 +5,7 @@ export type WalletReleaseState = 'dark' | 'draining' | 'released';
 
 /**
  * The platform release of Google and Samsung per mode: the only place it is decided (provider-policy.ts reads it).
- * `wallet_provider_releases` mirrors it for the database's issuance guards (migration 0226); release-mirror.test.ts
+ * `wallet_provider_releases` mirrors it for the database's issuance guards (migration 0229); release-mirror.test.ts
  * and tools/check-migrations.ts fail when the two differ. A flip changes one cell and adds one migration that
  * updates the same row (docs/operations.md, "Wallet release").
  *

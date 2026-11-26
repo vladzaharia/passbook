@@ -253,15 +253,15 @@ export function findSamsungTombstoneCredential(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, t.account_revision AS revision,
       e.credential_id, NULL AS credential_source_id, NULL AS revoked_at,
-      e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
+      COALESCE(e.created_at, a.updated_at) AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
       t.provider_identity_hash, t.credential_version_id AS pin_version_id,
       COALESCE(json_extract(candidate.projection_json, '$.cardType'), json_extract(candidate.projection_json, '$.type')) AS card_type
     FROM wallet_samsung_tombstones t
     JOIN wallet_provider_accounts a ON a.id = t.account_id AND a.org_id = t.org_id
       AND a.mode = t.mode AND a.provider = 'samsung'
-    JOIN wallet_provider_account_events e ON e.account_id = a.id AND e.org_id = a.org_id
+    LEFT JOIN wallet_provider_account_events e ON e.account_id = a.id AND e.org_id = a.org_id
       AND e.mode = a.mode AND e.provider = a.provider AND e.revision = t.account_revision AND e.kind = 'configure'
-    JOIN wallet_provider_credentials c ON c.id = e.credential_id AND c.account_id = a.id
+    LEFT JOIN wallet_provider_credentials c ON c.id = e.credential_id AND c.account_id = a.id
       AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider
     JOIN template_candidates candidate ON candidate.id = t.candidate_id AND candidate.org_id = t.org_id
       AND candidate.mode = t.mode AND candidate.provider = 'samsung'
@@ -276,6 +276,7 @@ export function findSamsungTombstoneCredential(
       AND approval.credential_keyset_commitment = t.credential_keyset_commitment
     WHERE t.ref_hash = ? AND t.org_id = ? AND t.mode = ? AND t.account_id = ? AND t.account_revision = ?
       AND t.credential_keyset_commitment = ${pinnedKeysetSql}
+      AND (e.id IS NOT NULL OR t.credential_version_id IS NOT NULL)
       AND json_extract(candidate.projection_json, '$.schema') = 2`,
     [input.refHash, input.orgId, input.mode, input.accountId, input.accountRevision],
   );

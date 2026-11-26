@@ -1,4 +1,4 @@
-// The wallet release rows the migrations write (wallet_provider_releases, migration 0226). check-migrations folds
+// The wallet release rows the migrations write (wallet_provider_releases, migration 0229). check-migrations folds
 // every migration into the final table and compares it with RELEASE (release.ts); deploy prints what a pending
 // migration changes. Writes have one canonical form each, so a flip cannot hide in other SQL.
 

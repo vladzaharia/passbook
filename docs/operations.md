@@ -422,7 +422,7 @@ Only archived templates may be listed; the wait ignores them.
 
 ### Wallet migration gate
 
-Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. A legacy account issues with no enrolment, so a flip waits until none is left. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
+Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. Only an enrolment that is On issues (0229): a legacy account, an envelope with no source, does not, and no new one can be made (the configure route and the database refuse it). A flip still waits until none is left. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
 
 ```sql wallet-migration-gate
 SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a
@@ -435,7 +435,7 @@ ORDER BY a.id
 
 Google and Samsung are released per mode in two places that must agree: `RELEASE` in
 `src/worker/modules/wallet-providers/release.ts` (the Worker) and the `wallet_provider_releases` row (the
-database's issuance guards, 0226). `npm run check:rules` (check-migrations) and `release-mirror.test.ts` fail when
+database's issuance guards, 0229). `npm run check:rules` (check-migrations) and `release-mirror.test.ts` fail when
 they differ.
 
 | State | New copies, offers, Samsung references | Updates, messages | Voids, removals, transfers, retirement |

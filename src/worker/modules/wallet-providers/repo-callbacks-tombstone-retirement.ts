@@ -10,6 +10,19 @@ export interface SamsungRetirementScope {
   operationVersion: number;
 }
 
+/**
+ * What a configure event and its envelope prove for a legacy account, an enrolment account proves by its refs:
+ * every Samsung ref of the instance pins a version of a credential the org may use (its own or the platform's).
+ */
+const enrolmentPinsSql = (instance: string, account: string, org: string, mode: string) =>
+  `(EXISTS (SELECT 1 FROM wallet_provider_accounts src_a WHERE src_a.id = ${account}
+      AND src_a.credential_source_id IS NOT NULL)
+    AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs pin_ref WHERE pin_ref.instance_id = ${instance}
+      AND NOT EXISTS (SELECT 1 FROM wallet_credential_versions pin_v
+        JOIN wallet_credentials pin_c ON pin_c.id = pin_v.credential_id AND pin_c.mode = ${mode}
+          AND pin_c.provider = 'samsung' AND (pin_c.scope = 'platform' OR pin_c.org_id = ${org})
+        WHERE pin_v.id = pin_ref.credential_version_id)))`;
+
 const retirementJoins = `FROM wallet_provider_instances i
   JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
     AND op.instance_id = i.id AND op.version = i.desired_version
@@ -28,13 +41,14 @@ const retirementJoins = `FROM wallet_provider_instances i
     AND candidate.provider_account_id = i.account_id AND candidate.candidate_hash = original.candidate_hash
     AND candidate.org_id = i.org_id AND candidate.mode = i.mode AND candidate.provider = 'samsung'
     AND candidate.credential_keyset_commitment = i.credential_keyset_commitment
-  JOIN wallet_provider_account_events approved ON approved.account_id = account.id
+  LEFT JOIN wallet_provider_account_events approved ON approved.account_id = account.id
     AND approved.org_id = i.org_id AND approved.mode = i.mode AND approved.provider = 'samsung'
     AND approved.revision = candidate.provider_account_revision AND approved.kind = 'configure'
-  JOIN wallet_provider_credentials secret ON secret.id = approved.credential_id
+  LEFT JOIN wallet_provider_credentials secret ON secret.id = approved.credential_id
     AND secret.account_id = account.id AND secret.org_id = i.org_id
     AND secret.mode = i.mode AND secret.provider = 'samsung'
   JOIN template_approvals approval ON approval.id = original.approval_id
+    AND (secret.id IS NOT NULL OR ${enrolmentPinsSql('i.id', 'account.id', 'i.org_id', 'i.mode')})
     AND approval.candidate_id = candidate.id AND approval.candidate_hash = candidate.candidate_hash
     AND approval.credential_keyset_commitment = i.credential_keyset_commitment
     AND ${approvalStandsSql('approval', 'candidate')}`;
@@ -89,7 +103,7 @@ const retirementCtes = `WITH retirement_base AS MATERIALIZED (
         AND historical_approval.candidate_hash = historical_candidate.candidate_hash
         AND historical_approval.credential_keyset_commitment = base.credential_keyset_commitment
         AND ${approvalStandsSql('historical_approval', 'historical_candidate')}
-        AND EXISTS (SELECT 1 FROM wallet_provider_account_events historical_config
+        AND (EXISTS (SELECT 1 FROM wallet_provider_account_events historical_config
           JOIN wallet_provider_credentials historical_credential
             ON historical_credential.id = historical_config.credential_id
             AND historical_credential.account_id = base.account_id
@@ -99,6 +113,7 @@ const retirementCtes = `WITH retirement_base AS MATERIALIZED (
             AND historical_config.org_id = base.org_id AND historical_config.mode = base.mode
             AND historical_config.provider = 'samsung' AND historical_config.kind = 'configure'
             AND historical_config.revision = historical.account_revision)
+          OR ${enrolmentPinsSql('base.instance_id', 'base.account_id', 'base.org_id', 'base.mode')})
         AND json_extract(historical_candidate.projection_json, '$.schema') = 2)
 ), retirement_scope AS MATERIALIZED (
   SELECT base.* FROM retirement_base base
@@ -186,16 +201,18 @@ export async function putSamsungTombstone(
           AND historical_approval.candidate_hash = historical_candidate.candidate_hash
           AND historical_approval.credential_keyset_commitment = retirement.credential_keyset_commitment
           AND ${approvalStandsSql('historical_approval', 'historical_candidate')}
-        JOIN wallet_provider_account_events historical_config ON historical_config.account_id = retirement.account_id
+        LEFT JOIN wallet_provider_account_events historical_config ON historical_config.account_id = retirement.account_id
           AND historical_config.org_id = retirement.org_id AND historical_config.mode = retirement.mode
           AND historical_config.provider = 'samsung' AND historical_config.kind = 'configure'
           AND historical_config.revision = historical.account_revision
-        JOIN wallet_provider_credentials historical_credential
+        LEFT JOIN wallet_provider_credentials historical_credential
           ON historical_credential.id = historical_config.credential_id
           AND historical_credential.account_id = retirement.account_id
           AND historical_credential.org_id = retirement.org_id
           AND historical_credential.mode = retirement.mode AND historical_credential.provider = 'samsung'
         WHERE json_extract(historical_candidate.projection_json, '$.schema') = 2
+          AND (historical_credential.id IS NOT NULL
+            OR ${enrolmentPinsSql('retirement.instance_id', 'retirement.account_id', 'retirement.org_id', 'retirement.mode')})
       )
       INSERT INTO wallet_samsung_tombstones
       (ref_hash, org_id, mode, account_id, account_revision, candidate_id, release_id,

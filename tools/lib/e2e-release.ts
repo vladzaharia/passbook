@@ -10,7 +10,7 @@ import { join, relative } from 'node:path';
 export const E2E_RELEASE_MARKERS = ['WALLET_E2E_RELEASE', 'Wallet Test WWDR'] as const;
 
 /**
- * The database side of the release (migration 0226): its issuance guards refuse every provider instance, activation,
+ * The database side of the release (migration 0229): its issuance guards refuse every provider instance, activation,
  * offer and Samsung reference of a provider and mode whose `wallet_provider_releases` row is not `released`.
  * Only tools/e2e-server.ts writes these rows outside a migration, in its throwaway local database, for a release
  * run; the guards then run with their real bodies. Every deployed database changes them only by a flip migration.

@@ -49,7 +49,7 @@ export function listReleaseEnrolments(
   );
 }
 
-/** A copy that can still be in a wallet (0226 `wallet_provider_releases_dark_retired`). */
+/** A copy that can still be in a wallet (0229 `wallet_provider_releases_dark_retired`). */
 const OPEN_COPY = `(lifecycle IN ('active', 'revoking', 'revoked') OR (account_id IS NOT NULL AND lifecycle != 'retired'))`;
 
 export interface ReleaseTemplateCounts {
@@ -103,7 +103,7 @@ export async function countReleaseTemplates(
 
 /**
  * Provider copies of the provider and mode: open (one that can be in a wallet: it reached active, or it has an account
- * and is not retired; the same rule as 0226's dark check) and retired.
+ * and is not retired; the same rule as 0229's dark check) and retired.
  */
 export async function countReleaseInstances(
   db: D1Database,

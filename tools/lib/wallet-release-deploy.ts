@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pendingReleaseWrites } from './wallet-release-sql.ts';
 
-/** Copies that can still be in a wallet, by provider and mode (0226 `wallet_provider_releases_dark_retired`). */
+/** Copies that can still be in a wallet, by provider and mode (0229 `wallet_provider_releases_dark_retired`). */
 export const OPEN_COPIES_SQL = `SELECT provider, mode, COUNT(*) AS open FROM wallet_provider_instances
 WHERE lifecycle IN ('active', 'revoking', 'revoked') OR (account_id IS NOT NULL AND lifecycle != 'retired')
 GROUP BY provider, mode`;
