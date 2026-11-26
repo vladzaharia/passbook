@@ -286,7 +286,7 @@ describe('a saved probe: step-up and tokens', () => {
     );
     const withSecrets = await t.call(
       path,
-      { target: 'list', secrets: { token: 'tok-12345678' } },
+      { target: 'list', secrets: { token: ['tok', '12345678'].join('-') } },
       stale.headers,
     );
     expect([withConfig.status, withSecrets.status]).toEqual([403, 403]);

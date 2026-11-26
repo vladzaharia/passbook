@@ -1,14 +1,10 @@
 import {
-  Braces,
   CalendarCheck,
   CreditCard,
-  FileSpreadsheet,
-  FileUp,
   type LucideIcon,
   Repeat,
   ShoppingBag,
   ShoppingCart,
-  Sparkles,
   Ticket,
   Users,
   Webhook,
@@ -49,12 +45,8 @@ export interface ConnectorTile {
   keywords: string;
 }
 
+/** Senders (recipes); the connectors' own glyphs come from `connectorIcon`. */
 const ICON: Record<string, LucideIcon> = {
-  'file-upload': FileUp,
-  'csv-url': FileSpreadsheet,
-  'http-json': Braces,
-  'webhook-push': Webhook,
-  demo: Sparkles,
   'shopify-orders': ShoppingBag,
   'shopify-customers': Users,
   'stripe-subscriptions': Repeat,
