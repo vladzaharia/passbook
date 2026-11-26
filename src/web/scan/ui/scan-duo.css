@@ -43,6 +43,13 @@
   right: auto;
   bottom: calc(var(--duo-scan-bottom) + var(--scan-dock-h) - 12px);
   width: min(192px, var(--duo-scan-width));
+  /* The duo keeps its raised seat: its dock sits on the other pane. */
+  height: 144px;
+}
+@media (min-width: 1024px) {
+  .scan-shell[data-surface="duo"] .scan-buddy-seat {
+    height: 192px;
+  }
 }
 
 .scan-shell[data-surface="duo"] .scan-operator {

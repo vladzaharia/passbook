@@ -59,6 +59,20 @@ async function joinToken(ctx: Ctx): Promise<string | undefined> {
 const named = (path: string, name: string) => (c: Ctx) =>
   firstInOrgs(c, path, (r) => (r.name === name ? id(r) : undefined));
 
+/** A pass issued from the template named `name` (the paper channel is on for the coupon). */
+async function passOf(ctx: Ctx, name: string): Promise<string | undefined> {
+  const org = await ctx.org();
+  for (const o of await list(await ctx.platform(), '/api/v1/orgs')) {
+    const template = (await list(org, `/api/v1/templates?limit=100&orgId=${o.id}`)).find(
+      (t) => t.name === name,
+    );
+    if (!template) continue;
+    const passes = await list(org, `/api/v1/passes?limit=200&orgId=${o.id}`);
+    return id(passes.find((p) => p.templateId === template.id));
+  }
+  return undefined;
+}
+
 async function orgBySlug(ctx: Ctx, slug: string): Promise<string | undefined> {
   return id((await list(await ctx.platform(), '/api/v1/orgs')).find((o) => o.slug === slug));
 }
@@ -66,6 +80,7 @@ async function orgBySlug(ctx: Ctx, slug: string): Promise<string | undefined> {
 const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
   orgId: (c) => firstInOrgs(c, '/api/v1/passes', (r) => String(r.orgId)),
   passId: (c) => firstInOrgs(c, '/api/v1/passes'),
+  paperPassId: (c) => passOf(c, 'Northwind Coupon'),
   passToken: async (c) => {
     const passId = await SOURCES.passId?.(c);
     if (!passId) return undefined;

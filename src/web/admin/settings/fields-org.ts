@@ -21,6 +21,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Website',
     kind: 'text',
     optional: true,
+    hint: 'https://example.com',
     schema: O['org.website'],
   },
   {
@@ -81,6 +82,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Support URL',
     kind: 'text',
     optional: true,
+    hint: 'https://example.com/help',
     schema: O['support.url'],
   },
   {
@@ -89,6 +91,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Legal name',
     kind: 'text',
     optional: true,
+    hint: 'Example Fitness LLC',
     schema: O['privacy.legalName'],
   },
   {
@@ -97,6 +100,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Privacy email',
     kind: 'text',
     optional: true,
+    hint: 'privacy@example.com',
     schema: O['privacy.email'],
   },
   {
@@ -105,6 +109,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Privacy policy URL',
     kind: 'text',
     optional: true,
+    hint: 'https://example.com/privacy',
     schema: O['privacy.url'],
   },
   ...RETENTION_CLASSES.map(

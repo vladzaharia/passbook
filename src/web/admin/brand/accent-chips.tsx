@@ -13,9 +13,9 @@ export function AccentChips({
   disabled?: boolean;
 }) {
   return (
-    <fieldset className="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0">
+    <fieldset className="m-0 grid min-w-0 grid-cols-5 justify-items-start gap-2 border-0 p-0 sm:flex sm:flex-wrap sm:items-center">
       <legend className="sr-only">{PASS_SETUP_COPY.brand.accentPresets}</legend>
-      <span aria-hidden className="text-xs text-fg-muted">
+      <span aria-hidden className="col-span-5 text-xs text-fg-muted sm:col-auto">
         {PASS_SETUP_COPY.brand.accentPresets}
       </span>
       {ACCENT_PRESETS.map((p) => {

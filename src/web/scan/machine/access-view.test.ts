@@ -30,6 +30,8 @@ describe('durations', () => {
     [12 * 60_000, '12 min'],
     [92 * 60_000, '1 h 32 min'],
     [2 * 3_600_000, '2 h'],
+    [(7 * 24 + 15) * 3_600_000 + 34 * 60_000, '7 d 15 h'],
+    [48 * 3_600_000, '2 d'],
   ])('stay %i is %s', (ms, text) => expect(stayText(ms)).toBe(text));
   it.each([
     [40_000, '40 s ago'],

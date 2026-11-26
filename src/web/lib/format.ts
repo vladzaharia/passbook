@@ -304,21 +304,4 @@ export function formatShortDateIn(ms: number, timeZone: string = DEFAULT_TIME_ZO
   return formatter.format(ms);
 }
 
-/** A span read in its largest whole unit: 45 s, 12 min, 6 h, 2 d. */
-export function formatSpan(ms: number): string {
-  const s = Math.max(0, Math.round(ms / 1000));
-  if (s < 60) return `${s} s`;
-  if (s < 3600) return `${Math.round(s / 60)} min`;
-  if (s < 86_400) return `${Math.round(s / 3600)} h`;
-  return `${Math.round(s / 86_400)} d`;
-}
-
-/** 0:18, 1:12, 1:02:03: a clock that counts up. */
-export function formatClock(ms: number): string {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const h = Math.floor(s / 3600);
-  return h > 0
-    ? `${h}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
-    : `${Math.floor(s / 60)}:${pad(s % 60)}`;
-}
+export { formatClock, formatSpan, formatStay } from './format-duration.ts';

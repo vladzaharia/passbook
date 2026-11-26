@@ -13,7 +13,7 @@ import {
   useNow,
 } from '../../../ui/index.ts';
 import { useRecentImports } from './api.ts';
-import { STATE_LABEL, STATE_TONE } from './state-tone.ts';
+import { stateBadge } from './state-tone.ts';
 
 /** The last 10 imports of this mode, each a link to its page. */
 export function RecentImports({ orgId }: { orgId: string }) {
@@ -55,7 +55,7 @@ export function RecentImports({ orgId }: { orgId: string }) {
                     <RelTime at={imp.createdAt} now={now} />
                   </p>
                 </div>
-                <Badge tone={STATE_TONE[imp.state]}>{STATE_LABEL[imp.state]}</Badge>
+                <Badge tone={stateBadge(imp).tone}>{stateBadge(imp).label}</Badge>
               </li>
             ))}
           </ul>

@@ -9,7 +9,10 @@ const lists = ['admin', 'portal', 'public', 'scanner', 'scanning'].flatMap((n) =
   loadRoutes(resolve(root, `tools/dev/visual-routes/${n}.json`)),
 );
 const shape = (path: string) =>
-  path.replace(/\{[A-Za-z]+\}|\$[A-Za-z]+/g, '{}').replace(/(.)\/$/, '$1');
+  path
+    .replace(/\?.*$/, '')
+    .replace(/\{[A-Za-z]+\}|\$[A-Za-z]+/g, '{}')
+    .replace(/(.)\/$/, '$1');
 
 describe('visual sweep coverage', () => {
   it('lists every SPA route in routeTree.gen.ts', () => {

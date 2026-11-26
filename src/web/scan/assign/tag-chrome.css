@@ -67,7 +67,14 @@
   font: 600 13px / 16px var(--pk-font-sans);
 }
 button.scan-tag-flag {
+  position: relative;
   cursor: pointer;
+}
+/* The pill stays 28 tall; the tap area reaches 44. */
+button.scan-tag-flag::after {
+  content: "";
+  position: absolute;
+  inset: -8px -4px;
 }
 .scan-tag-none {
   margin: 0;

@@ -42,7 +42,7 @@ const NOUN = {
 
 /**
  * The count opens that list scoped to the org (`?orgId=` is the top-bar scope), but only for an
- * org the admin is a member of: any other scope is Forbidden. Other orgs show a plain number.
+ * org the admin is a member of: any other scope is Forbidden. Other orgs show a muted number: it is not a link, and the mix is by access, not by data.
  */
 function countLink(org: Org, key: keyof typeof NOUN, to: string, member: boolean) {
   const n = org.counts[key];
@@ -57,7 +57,9 @@ function countLink(org: Org, key: keyof typeof NOUN, to: string, member: boolean
           aria-label={`${capped ? 'At least ' : ''}${formatCount(n)} ${NOUN[key][n === 1 ? 0 : 1]} in ${org.name}`}
         />
       ) : (
-        <span className="tabular-nums">{formatCount(n)}</span>
+        <span className="tabular-nums text-fg-muted" title="Not a member of this organization">
+          {formatCount(n)}
+        </span>
       )}
       {capped ? <span aria-hidden>+</span> : null}
     </span>

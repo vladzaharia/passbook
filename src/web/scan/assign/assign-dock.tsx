@@ -52,13 +52,19 @@ export function AssignDock({
         <>
           {cancel}
           {reader.kind === 'sheet' ? (
-            <DockButton primary variant="filled" onClick={on.readTag} autoFocus>
-              <Nfc aria-hidden size={20} />
+            <DockButton
+              primary
+              variant="filled"
+              className="scan-dock-wide"
+              onClick={on.readTag}
+              autoFocus
+            >
+              <Nfc aria-hidden size={20} className="scan-dock-icon-extra" />
               {c.tag.readButton}
             </DockButton>
           ) : reader.kind === 'webnfc' && webStatus !== 'on' ? (
-            <DockButton primary variant="filled" onClick={on.startNfc}>
-              <Nfc aria-hidden size={20} />
+            <DockButton primary variant="filled" className="scan-dock-wide" onClick={on.startNfc}>
+              <Nfc aria-hidden size={20} className="scan-dock-icon-extra" />
               {c.tag.allowNfc}
             </DockButton>
           ) : null}
