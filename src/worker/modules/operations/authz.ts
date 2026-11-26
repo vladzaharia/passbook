@@ -11,7 +11,7 @@ import {
   membershipCapability,
   tenantOrgAccessRevision,
 } from '../passes/repo-authority.ts';
-import { kindOf } from './registry.ts';
+import { kindOf } from './kinds.ts';
 import type { OperationRow } from './repo.ts';
 import { type Fence, orgFence, platformFence, starterFence } from './repo-fence.ts';
 

@@ -1,10 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import {
-  CreatedDeveloperSandboxSchema,
-  DeveloperSandboxSchema,
-} from '../../../shared/contracts/developer.ts';
+import { DeveloperSandboxSchema } from '../../../shared/contracts/developer.ts';
 import { ENTITLEMENT_PRESETS, presetValues } from '../../../shared/contracts/entitlements.ts';
 import { PassDetailSchema, RotateLinkResponseSchema } from '../../../shared/contracts/passes.ts';
 import {
@@ -22,6 +19,7 @@ import { createSessionStore } from '../auth/sessions.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { dailyDeveloperSandbox, SANDBOX_IDLE_MS } from './jobs.ts';
 import { checkPreviewLink } from './preview-link.ts';
+import { makeSandbox, startAndSettle } from './sandbox-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const DAY = 86_400_000;
@@ -77,13 +75,11 @@ async function person() {
   return { user, headers: session.headers };
 }
 
-/** A person with a sandbox: the create response, the key header and the person's session. */
+/** A person with a sandbox: the create operation's sandbox, the key (minted once) and the person's session. */
 async function sandboxOf() {
   const p = await person();
-  const res = await send('POST', '/developer/sandbox', p.headers, { turnstileToken: 'ok' });
-  expect(res.status, await res.clone().text()).toBe(201);
-  const parsed = CreatedDeveloperSandboxSchema.parse(await res.json());
-  if (!parsed.key) throw new Error('A new sandbox returns its key.');
+  const parsed = await makeSandbox(send, p.headers);
+  if (!parsed.key) throw new Error('A new sandbox mints its key.');
   const made = { ...parsed, key: parsed.key };
   return { ...p, made, key: { authorization: `Bearer ${made.key.secret}` } };
 }
@@ -167,12 +163,17 @@ describe('POST /developer/sandbox', () => {
 
   it('makes one sandbox per person: a repeat finishes it and never shows a second secret', async () => {
     const s = await sandboxOf();
-    const again = await send('POST', '/developer/sandbox', s.headers, { turnstileToken: 'ok' });
-    expect(again.status).toBe(201);
-    const body = CreatedDeveloperSandboxSchema.parse(await again.json());
-    expect(body.orgId).toBe(s.made.orgId);
-    expect(body.key).toBeNull();
-    expect(body.previousKey?.id).toBe(s.made.key.id);
+    const op = await startAndSettle(send, s.headers, 'POST', '/developer/sandbox', {
+      turnstileToken: 'ok',
+    });
+    expect(op.status).toBe('succeeded');
+    expect(op.result?.ids.orgId).toBe(s.made.orgId);
+    // The key was shown once: while it is live there is no second secret.
+    await expectProblem(
+      await send('POST', '/developer/sandbox/key', s.headers),
+      409,
+      'SANDBOX_KEY_SHOWN',
+    );
     const n = await first<{ n: number }>(
       kit.env.DB,
       'SELECT count(*) AS n FROM developer_sandboxes WHERE user_id = ?',
@@ -374,7 +375,7 @@ describe('a developer org never holds Live', () => {
       kit.env.DB,
       `SELECT m.name FROM sqlite_master m
        WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%' AND m.name NOT LIKE '_cf_%'
-         AND m.name NOT IN ('connections')
+         AND m.name NOT IN ('connections', 'operations')
          AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) WHERE name = 'org_id')
          AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) WHERE name = 'mode')`,
     );

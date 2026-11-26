@@ -1,24 +1,33 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import {
-  CreatedDeveloperSandboxSchema,
-  DeveloperSandboxSchema,
-} from '../../../shared/contracts/developer.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
+import { type OrgPurgeParams, runOrgPurge } from '../../workflows/org-purge.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { beginPurge } from '../org-lifecycle/purge.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
+import { makeSandbox, startAndSettle } from './sandbox-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const realFetch = globalThis.fetch;
 let kit: BlueprintKit;
 let app: ReturnType<typeof createApp>;
-const purges = vi.fn(async (_: unknown) => ({}));
+/** A purge Workflow that runs its steps and then sleeps through the grace, as the real one does for 7 days. */
+const sleeping = {
+  async do(_name: string, a: unknown, b?: unknown) {
+    return ((typeof a === 'function' ? a : b) as () => unknown)();
+  },
+  async sleep() {},
+  sleepUntil: () => new Promise<void>(() => {}),
+};
+const purges = vi.fn(async (opts: { id: string; params: OrgPurgeParams }) => {
+  void runOrgPurge(kit.env, opts.params, sleeping as never, undefined, kit.clock, 0);
+  return {};
+});
 
 beforeAll(async () => {
   kit = await blueprintKit();
@@ -65,10 +74,11 @@ async function person() {
 
 async function sandboxOf() {
   const p = await person();
-  const res = await send('POST', '/developer/sandbox', p.headers, { turnstileToken: 'ok' });
-  expect(res.status, await res.clone().text()).toBe(201);
-  return { ...p, made: CreatedDeveloperSandboxSchema.parse(await res.json()) };
+  return { ...p, made: await makeSandbox(send, p.headers) };
 }
+
+const deleted = (headers: Record<string, string>) =>
+  startAndSettle(send, headers, 'DELETE', '/developer/sandbox');
 
 const orgRow = (id: string) =>
   first<{ status: string; purge_after: number | null }>(
@@ -81,9 +91,11 @@ describe('DELETE /developer/sandbox', () => {
   it('removes the sandbox: org closed and due for purge, keys revoked, record gone, audit row', async () => {
     const s = await sandboxOf();
     const other = await sandboxOf();
-    const res = await send('DELETE', '/developer/sandbox', s.headers);
-    expect(res.status).toBe(200);
-    expect(DeveloperSandboxSchema.parse(await res.json()).closedAt).toBe(kit.clock.now());
+    const op = await deleted(s.headers);
+    expect(op).toMatchObject({
+      kind: 'sandbox.delete',
+      target: { type: 'sandbox', id: s.made.orgId },
+    });
 
     expect(await orgRow(s.made.orgId)).toEqual({ status: 'deleted', purge_after: kit.clock.now() });
     const keys = await all<{ revoked_at: number | null }>(
@@ -102,13 +114,22 @@ describe('DELETE /developer/sandbox', () => {
       [s.user.id],
     );
     expect(audit).toEqual({ org_id: null, target_id: s.made.orgId });
-    expect(purges).toHaveBeenCalledWith(
-      expect.objectContaining({ params: { orgId: s.made.orgId } }),
+    await vi.waitFor(() =>
+      expect(purges).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: { orgId: s.made.orgId, operationId: op.id, attempt: 1, finish: true },
+        }),
+      ),
     );
-    // The org purge takes it from here: it is due now.
+    // The org purge took it from here: it is due now, and it has started.
     expect(
       await beginPurge(createJobContext(kit.env, 'test', { clock: kit.clock }), s.made.orgId),
-    ).toBe('started');
+    ).toBe('resumed');
+    expect(op.status).toBe('succeeded');
+    expect(op.steps.find((x) => x.key === 'erase')).toMatchObject({
+      state: 'waiting',
+      waitingReason: 'due',
+    });
 
     // Another person's sandbox is untouched.
     expect((await orgRow(other.made.orgId))?.status).toBe('active');
@@ -122,8 +143,7 @@ describe('DELETE /developer/sandbox', () => {
   it('removes a closed sandbox too, and a missing one is a 404', async () => {
     const s = await sandboxOf();
     expect((await send('POST', '/developer/sandbox/close', s.headers)).status).toBe(200);
-    const res = await send('DELETE', '/developer/sandbox', s.headers);
-    expect(res.status, await res.clone().text()).toBe(200);
+    await deleted(s.headers);
     expect((await orgRow(s.made.orgId))?.purge_after).toBe(kit.clock.now());
     await expectProblem(
       await send('DELETE', '/developer/sandbox', s.headers),
@@ -134,10 +154,8 @@ describe('DELETE /developer/sandbox', () => {
 
   it('lets a deleted person make a new sandbox, but a closed one still blocks it', async () => {
     const s = await sandboxOf();
-    await send('DELETE', '/developer/sandbox', s.headers);
-    const again = await send('POST', '/developer/sandbox', s.headers, { turnstileToken: 'ok' });
-    expect(again.status).toBe(201);
-    const made = CreatedDeveloperSandboxSchema.parse(await again.json());
+    await deleted(s.headers);
+    const made = await makeSandbox(send, s.headers);
     expect(made.orgId).not.toBe(s.made.orgId);
 
     await send('POST', '/developer/sandbox/close', s.headers);
@@ -165,25 +183,27 @@ describe('DELETE /developer/sandbox', () => {
 });
 
 describe('POST /developer/sandbox/recreate', () => {
-  it('deletes and makes a new sandbox with a new key', async () => {
+  it('deletes and makes a new sandbox, and its key is minted once afterwards', async () => {
     const s = await sandboxOf();
-    const res = await send('POST', '/developer/sandbox/recreate', s.headers, {
+    const op = await startAndSettle(send, s.headers, 'POST', '/developer/sandbox/recreate', {
       turnstileToken: 'ok',
     });
-    expect(res.status, await res.clone().text()).toBe(201);
-    const made = CreatedDeveloperSandboxSchema.parse(await res.json());
-    expect(made.orgId).not.toBe(s.made.orgId);
-    expect(made.key?.secret).toMatch(/^pbp_test_/);
-    expect(made.key?.secret).not.toBe(s.made.key?.secret);
+    expect(op.status, JSON.stringify(op.error)).toBe('succeeded');
+    expect(op.result?.ids.orgId).not.toBe(s.made.orgId);
     expect((await orgRow(s.made.orgId))?.status).toBe('deleted');
+    const keyed = await send('POST', '/developer/sandbox/key', s.headers);
+    expect(keyed.status).toBe(201);
+    const { key } = (await keyed.json()) as { key: { secret: string } };
+    expect(key.secret).toMatch(/^pbp_test_/);
+    expect(key.secret).not.toBe(s.made.key?.secret);
   });
 
   it('makes one for a person with none, and needs a check and the role', async () => {
     const p = await person();
-    const res = await send('POST', '/developer/sandbox/recreate', p.headers, {
+    const op = await startAndSettle(send, p.headers, 'POST', '/developer/sandbox/recreate', {
       turnstileToken: 'ok',
     });
-    expect(res.status).toBe(201);
+    expect(op.status, JSON.stringify(op.error)).toBe('succeeded');
   });
 });
 

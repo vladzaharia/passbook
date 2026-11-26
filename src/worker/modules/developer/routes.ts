@@ -1,42 +1,29 @@
 import { z } from 'zod';
 import { DeveloperHomeSchema } from '../../../shared/contracts/developer-home.ts';
 import {
-  CreateDeveloperSandboxSchema,
   CreatedDeveloperSandboxSchema,
   DeveloperAccessSchema,
   DeveloperSandboxSchema,
   OkSchema,
-  ResetDeveloperSandboxSchema,
-  SandboxResetSchema,
   TryTokenSchema,
 } from '../../../shared/contracts/index.ts';
 import { hasDeveloperAccess } from '../../../shared/spaces.ts';
-import { TURNSTILE_SANDBOX_ACTION } from '../../../shared/turnstile.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
+import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
-import { verifyTurnstile } from '../auth/turnstile.ts';
-import { deleteOwnSandbox, recreateSandbox } from './delete.ts';
 import { developerHome } from './home.ts';
-import { reopenOwnSandbox, resetSandbox } from './reset.ts';
+import { reopenOwnSandbox } from './reset.ts';
 import { developerLogRoutes } from './routes-logs.ts';
-import { closeOwnSandbox, createSandbox, getSandbox } from './service.ts';
+import { developerSandboxRoutes, STEP_UP_AUTH } from './routes-sandbox.ts';
+import { closeOwnSandbox, getSandbox } from './service.ts';
 import { mintTryToken, revokeTryTokens } from './try-token.ts';
-
-/** A signed-in developer who proved themselves recently: the sandbox's destructive calls. */
-const STEP_UP_AUTH = {
-  human: true,
-  signIn: 'strict',
-  developer: true,
-  stepUp: { maxAgeSec: STEP_UP_SECONDS },
-} as const;
 
 export const developerRoutes = createRouter();
 developerRoutes.use('*', limitBody(8 * 1024));
 developerRoutes.route('/', developerLogRoutes);
+developerRoutes.route('/', developerSandboxRoutes);
 
 register(
   developerRoutes,
@@ -86,42 +73,6 @@ register(
   developerRoutes,
   'developer',
   {
-    method: 'post',
-    path: '/sandbox',
-    summary: 'Make your developer sandbox: a test organization whose passes are previews',
-    operationId: 'developer.postSandbox',
-    auth: { human: true, signIn: 'strict', developer: true },
-    body: CreateDeveloperSandboxSchema,
-    status: 201,
-    response: CreatedDeveloperSandboxSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
-    await enforceRateLimit(c.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${auth.userId}`);
-    const input = c.req.valid('json');
-    if (
-      !(await verifyTurnstile(
-        c.env,
-        input.turnstileToken,
-        clientIp(c),
-        ctx.log,
-        fetch,
-        TURNSTILE_SANDBOX_ACTION,
-      ))
-    ) {
-      ctx.log.warn('developer.turnstile_failed', { code: 'TURNSTILE_FAILED' });
-      throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
-    }
-    return c.json(await createSandbox(ctx, auth, {}, { viewedAt: input.viewedAt }), 201);
-  },
-);
-
-register(
-  developerRoutes,
-  'developer',
-  {
     method: 'get',
     path: '/sandbox',
     summary: 'Your developer sandbox, or null, and the site key for the check that makes one',
@@ -157,102 +108,6 @@ register(
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     return c.json(await closeOwnSandbox(serviceContext(c), auth));
-  },
-);
-
-register(
-  developerRoutes,
-  'developer',
-  {
-    method: 'delete',
-    path: '/sandbox',
-    summary:
-      'Delete your developer sandbox, open or closed: keys, passes, webhooks, logs and templates go, and you can make a new one. Three a day.',
-    operationId: 'developer.deleteSandbox',
-    auth: STEP_UP_AUTH,
-    response: DeveloperSandboxSchema,
-  },
-  async (c) => {
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
-    return c.json(await deleteOwnSandbox(serviceContext(c), auth));
-  },
-);
-
-register(
-  developerRoutes,
-  'developer',
-  {
-    method: 'post',
-    path: '/sandbox/recreate',
-    summary:
-      'Start over from nothing: delete your sandbox and make a new one, with a new key shown once. Counts as a delete.',
-    operationId: 'developer.postSandboxRecreate',
-    auth: STEP_UP_AUTH,
-    body: CreateDeveloperSandboxSchema,
-    status: 201,
-    response: CreatedDeveloperSandboxSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
-    await enforceRateLimit(c.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${auth.userId}`);
-    const input = c.req.valid('json');
-    if (
-      !(await verifyTurnstile(
-        c.env,
-        input.turnstileToken,
-        clientIp(c),
-        ctx.log,
-        fetch,
-        TURNSTILE_SANDBOX_ACTION,
-      ))
-    ) {
-      ctx.log.warn('developer.turnstile_failed', { code: 'TURNSTILE_FAILED' });
-      throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
-    }
-    return c.json(await recreateSandbox(ctx, auth, { viewedAt: input.viewedAt }), 201);
-  },
-);
-
-register(
-  developerRoutes,
-  'developer',
-  {
-    method: 'post',
-    path: '/sandbox/reset',
-    summary:
-      'Start over: delete your sandbox test passes, captured webhooks and request log, restart the quickstart and replace the key',
-    operationId: 'developer.postSandboxReset',
-    auth: STEP_UP_AUTH,
-    body: ResetDeveloperSandboxSchema,
-    response: SandboxResetSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
-    await enforceRateLimit(
-      c.env,
-      'RL_REFRESH',
-      `RL_REFRESH:developer-sandbox-reset:${auth.userId}`,
-    );
-    if (
-      !(await verifyTurnstile(
-        c.env,
-        c.req.valid('json').turnstileToken,
-        clientIp(c),
-        ctx.log,
-        fetch,
-        TURNSTILE_SANDBOX_ACTION,
-      ))
-    ) {
-      ctx.log.warn('developer.turnstile_failed', { code: 'TURNSTILE_FAILED' });
-      throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
-    }
-    c.header('cache-control', 'no-store');
-    return c.json(await resetSandbox(ctx, auth));
   },
 );
 

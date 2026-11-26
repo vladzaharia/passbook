@@ -4,7 +4,7 @@ import { AppError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { toDto } from './dto.ts';
-import { kindOf } from './registry.ts';
+import { kindOf } from './kinds.ts';
 import { activeByDedupe, insertOperationStmt, type OperationRow, rowById } from './repo.ts';
 
 /** A runner that holds the lease has this long before a stall check may resend it. */
