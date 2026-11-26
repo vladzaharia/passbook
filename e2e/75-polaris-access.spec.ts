@@ -218,9 +218,9 @@ test.describe('an existing Polaris ID claims an invitation', () => {
     const page = await context.newPage();
     await stubTurnstile(page);
     await page.goto(`/invite#${secret}`);
-    await page.getByRole('button', { name: 'I have a Polaris ID' }).click();
+    // The claim gives the account its group, then the page sends the person to sign in: the link must be set first.
     await signInLinkAs(page, sub);
-    await page.getByRole('link', { name: 'Sign in with Polaris ID' }).click();
+    await page.getByRole('button', { name: 'I have a Polaris ID' }).click();
     await page.getByRole('button', { name: /^Accept/ }).click();
     await expect
       .poll(async () => polarisGroups(sub), { timeout: 60_000 })
@@ -321,8 +321,8 @@ test.describe('developer platform invitation', () => {
     browser,
   }) => {
     await freshAdmin(browser);
-    const group = `devs_${run}`.slice(0, 30);
-    await admin.send('POST', '/api/v1/platform/idp/groups', { key: group, friendlyName: 'Devs' });
+    // The group the invitations above made: group writes have a small daily budget.
+    const group = `guests_${run}`.slice(0, 30);
     const invited = email('newdev');
     const before = snapshotMail();
     await admin.send('POST', '/api/v1/platform/invitations', {
