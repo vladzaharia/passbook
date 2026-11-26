@@ -6369,6 +6369,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "Test key: shared org writes MODE_LIVE_REQUIRED added",
+    "class": "notable",
+    "operationId": "",
+    "op": "Test key",
+    "change": "403 MODE_LIVE_REQUIRED: added",
+    "note": "A Test key outside a sandbox can no longer change brand, setup, zones, tag types or saved mappings: 403 MODE_LIVE_REQUIRED. SCAN_ZONE_LIVE_ONLY is retired."
+  },
+  {
     "key": "webhook pass.removed data.runId: field added",
     "class": "additive",
     "operationId": "webhook.pass.removed",

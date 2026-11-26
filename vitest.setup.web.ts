@@ -10,7 +10,8 @@ expect.extend(axeMatchers);
 if (typeof window !== 'undefined') window.scrollTo = () => undefined;
 // The default 1 s findBy/waitFor window is shorter than a lazy route chunk takes to transform when
 // workerd and jsdom run side by side. A passing test never waits this long.
-configure({ asyncUtilTimeout: 10_000 });
+// The route announcer (data-route-announcer) repeats the page heading; text queries must not see it.
+configure({ asyncUtilTimeout: 10_000, defaultIgnore: 'script, style, [data-route-announcer]' });
 // sonner unmounts a dismissed toast on a timer; if the file ends first, the timer fires after jsdom
 // is torn down ("window is not defined", an unhandled error that fails the run). Let it finish.
 let toastsShown = false;

@@ -11,6 +11,7 @@ import {
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { assertSharedWrite } from '../orgs/shared-write.ts';
 import { webhookOrg } from '../webhooks/access.ts';
 import { listTagTypes, tagTypeOrg } from './repo-tag-types.ts';
 import {
@@ -67,6 +68,7 @@ export function registerTagTypeRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void
       const ctx = serviceContext(c);
       const orgId = webhookOrg(c.var.auth, c.req.valid('query').orgId);
       const authority = await tagTypeAccess(ctx, c.var.auth, orgId, 'scanning:manage');
+      await assertSharedWrite(ctx, authority, orgId, 'tag types');
       return c.json(
         await createTagType(ctx, actorOf(c.var.auth), authority, c.req.valid('json')),
         201,
@@ -126,5 +128,7 @@ async function typeAuthority(
   const ctx = serviceContext(c);
   const orgId = await tagTypeOrg(ctx.env.DB, id);
   if (!orgId) throw tagTypeNotFound();
-  return tagTypeAccess(ctx, c.var.auth, orgId, capability, tagTypeNotFound);
+  const authority = await tagTypeAccess(ctx, c.var.auth, orgId, capability, tagTypeNotFound);
+  if (capability === 'scanning:manage') await assertSharedWrite(ctx, authority, orgId, 'tag types');
+  return authority;
 }

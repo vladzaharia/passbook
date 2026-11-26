@@ -21,7 +21,8 @@
     "files": {
       "ts": "pass-setup-logo.ts",
       "curl": "pass-setup-logo.sh"
-    }
+    },
+    "sandbox": "MODE_LIVE_REQUIRED"
   },
   {
     "id": "pass-setup-preview",
@@ -33,7 +34,8 @@
     "files": {
       "ts": "pass-setup-preview.ts",
       "curl": "pass-setup-preview.sh"
-    }
+    },
+    "sandbox": "MODE_LIVE_REQUIRED"
   },
   {
     "id": "pass-setup-block",
@@ -59,6 +61,6 @@
       "ts": "pass-setup-apply.ts",
       "curl": "pass-setup-apply.sh"
     },
-    "sandbox": "PASS_SETUP_CHANGED"
+    "sandbox": "MODE_LIVE_REQUIRED"
   }
 ]

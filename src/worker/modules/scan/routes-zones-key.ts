@@ -13,6 +13,7 @@ import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
+import { assertSharedWrite } from '../orgs/shared-write.ts';
 import { type C, tenantAuthorityOf } from '../passes/http.ts';
 import { resetVisits } from './access-visits.ts';
 import { orgOf } from './key-credentials.ts';
@@ -64,7 +65,9 @@ async function caller(
 async function ofZone(c: C, id: string) {
   const zone = await zoneTarget(serviceContext(c).env.DB, id);
   if (!zone) throw noZone();
-  return { orgId: zone.orgId, ...(await caller(c, zone.orgId, 'scanning:manage', noZone)) };
+  const w = await caller(c, zone.orgId, 'scanning:manage', noZone);
+  await assertSharedWrite(w.ctx, w.authority, zone.orgId, 'zones');
+  return { orgId: zone.orgId, ...w };
 }
 
 export function registerZoneRoutes(router: Router): void {

@@ -11,6 +11,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { assertSharedWrite } from '../orgs/shared-write.ts';
 import { adminActorOf, audited, createdByOf } from './repo-admin-grant.ts';
 import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
@@ -76,11 +77,10 @@ export async function planZone(
   capture: SetupCapture,
 ): Promise<ZonePlan> {
   const { authority } = capture;
-  // Zones are org-wide, not moded: a key makes them in live mode only (the one-call setup).
+  // Zones are org-wide, not moded: a Test key makes them in a sandbox only (the one-call setup).
   if (authority.kind === 'api_key') {
     if (authority.orgId !== input.orgId) throw new ForbiddenError();
-    if (authority.mode !== 'live')
-      throw new ForbiddenError('Zones need a live key.', 'SCAN_ZONE_LIVE_ONLY');
+    await assertSharedWrite(ctx, authority, input.orgId, 'zones');
   } else assertAuthority(authority, input.orgId, 'scanning:manage');
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
