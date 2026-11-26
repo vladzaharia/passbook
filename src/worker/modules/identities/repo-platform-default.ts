@@ -55,12 +55,15 @@ export async function switchDefault(
          AND NOT EXISTS (SELECT 1 FROM signing_identities WHERE is_default = 1)`,
       [target.id, now],
     ),
-    stmt(
-      db,
-      `UPDATE signing_identities SET issuing = 0
-       WHERE id = '${PLATFORM_IDENTITY_ID}' AND ? = 0 AND ${isDefault}`,
-      [legacy ? 1 : 0, target.id],
-    ),
+    ...(legacy
+      ? []
+      : [
+          stmt(
+            db,
+            `UPDATE signing_identities SET issuing = 0 WHERE id = '${PLATFORM_IDENTITY_ID}' AND ${isDefault}`,
+            [target.id],
+          ),
+        ]),
     auditStmtWhere(db, ctx, audit, isDefault, [target.id]),
   ]);
   // Triggers on the row add to the count, so any change means the guard held.
