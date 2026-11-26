@@ -38,11 +38,17 @@ const inTestOnlyOrg = () => {
 export const getMode = (): Mode =>
   onPlatform() ? 'live' : current === 'test' || inTestOnlyOrg() ? 'test' : 'live';
 
-/** Called with the signed-in person's organizations whenever they load. */
+/**
+ * Called with the signed-in person's organizations whenever they load. Listeners hear of it only
+ * when the open page's mode changes: a grant that does not apply here must not empty the cache
+ * under a page that is open (the Workbench's Console lost its response that way).
+ */
 export function setTestOnlyOrgs(orgIds: readonly string[]): void {
   if (orgIds.length === testOnlyOrgs.size && orgIds.every((id) => testOnlyOrgs.has(id))) return;
+  const before = getMode();
   testOnlyOrgs = new Set(orgIds);
-  for (const listener of listeners) listener(getMode());
+  const after = getMode();
+  if (after !== before) for (const listener of listeners) listener(after);
 }
 
 function apply(next: Mode): void {
