@@ -125,7 +125,10 @@ describe('samsung', () => {
       { name: 'x', method: 'POST', path: '/US/wltex/cards/c/updates' },
       1,
     );
-    const [h, p] = token.split('.').map((s) => JSON.parse(Buffer.from(s, 'base64url').toString()));
+    const [h, p] = token
+      .split('.')
+      .slice(0, 2)
+      .map((s) => JSON.parse(Buffer.from(s, 'base64url').toString()));
     expect(h).toMatchObject({ alg: 'RS256', cty: 'AUTH', ver: '3', certificateId: 'ab12' });
     expect(p).toEqual({ API: { method: 'POST', path: '/US/wltex/cards/c/updates' } });
   });
