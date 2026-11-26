@@ -30,7 +30,12 @@ export function WalletInspector({ env }: { env: WalletEnv }) {
           section="wallets-type"
           index={0}
           label={fill(S.type, short)}
-          value={typeLabel(target, out.compiled.type)}
+          value={typeLabel(
+            target,
+            typeof block[target] === 'object' && (block[target] as { type?: string }).type
+              ? ((block[target] as { type?: string }).type as string)
+              : out.compiled.type,
+          )}
         >
           <TypeSection env={env} />
         </Disclosure>

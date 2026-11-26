@@ -58,7 +58,7 @@ export function WalletTileBody({ target, color, meta, status, off, source }: Wal
 export function WalletTile(props: WalletTileProps) {
   return (
     <div
-      className={cn('wt', props.off && 'wl-hatch', props.className)}
+      className={cn('wt wt-static', props.off && 'wl-hatch', props.className)}
       data-testid={`${props.target}-tile`}
     >
       <WalletTileBody {...props} />

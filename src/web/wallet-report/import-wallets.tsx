@@ -18,8 +18,8 @@ export function ImportWallets({
   orgId: string | undefined;
 }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="wt-host @container flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-3 @md:grid-cols-2">
         {TARGETS.map((target) => (
           <WalletTile
             key={target}
@@ -29,7 +29,7 @@ export function ImportWallets({
           />
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 @3xl:grid-cols-2">
         {TARGETS.map((target) => (
           <WalletReport
             key={target}

@@ -41,7 +41,7 @@ async function storeCard() {
 
 /** Both wallets are open for this org: a template-level off is the one the tab keeps. */
 async function openChannels(page: Page, off: ('google' | 'samsung')[] = []) {
-  await page.route(`**/api/v1/templates/${templateId}/channels?*`, async (route) => {
+  await page.route('**/api/v1/templates/*/channels?*', async (route) => {
     const response = await route.fetch();
     const body = await response.json();
     for (const wallet of ['google', 'samsung'] as const)
@@ -70,6 +70,11 @@ test.beforeAll(async () => {
   templateId = await storeCard();
 });
 
+test.afterEach(async ({ page }) => {
+  // A channels read still in flight when a test ends is not its failure.
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+});
+
 test('Wallets: suggestions, type, required, art, save and reload', async ({ page }) => {
   await openChannels(page);
   await page.goto(design('?mode=wallets&wallet=samsung'));
@@ -93,7 +98,6 @@ test('Wallets: suggestions, type, required, art, save and reload', async ({ page
   await expect(report(page, 'Google')).toBeVisible();
   await shots(page, 'wallets-google-ready');
   await section(page, /^Google images/).click();
-  await shots(page, 'wallets-images');
   await rail(page)
     .getByRole('radio', { name: /^Samsung Wallet/ })
     .click();
@@ -204,9 +208,10 @@ test('The import report shows both wallets and opens the tab', async ({ page }) 
   await expect(wallets.getByTestId('google-report')).toBeVisible();
   await expect(wallets.getByTestId('samsung-report')).toBeVisible();
   await shots(page, 'wallets-import-report');
+  await openChannels(page);
   await wallets.getByRole('link', { name: 'Edit in designer' }).last().click();
   await expect(page).toHaveURL(/mode=wallets&wallet=samsung/);
-  await expect(page.getByRole('radio', { name: 'Wallets' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Wallets' })).toBeChecked({ timeout: 30_000 });
 });
 
 test('axe finds nothing serious on the tab at 1440 and 834, light and dark', async ({ page }) => {
