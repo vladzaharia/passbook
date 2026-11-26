@@ -1,7 +1,9 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
+import { flipToActive, insertPending } from './repo-scim-tokens.ts';
 import { resetScimTokenCache } from './scim-auth.ts';
+import { CACHE_MS } from './scim-cache.ts';
 import { scim, scimRig, TOKEN } from './scim-test-fixtures.ts';
 import {
   activateScimToken,
@@ -146,5 +148,61 @@ describe('SCIM receiver: D1 tokens', () => {
     s.r.f.clock.advance(2 * 86_400_000);
     await dailyScimTokens(s.r.ctx);
     expect(await stateOf(a.token)).toBeNull();
+  });
+
+  it('refuses to activate a pending token past its window, and keeps the live one', async () => {
+    const s = await scimRig();
+    const live = await mintScimToken(s.r.ctx, 'actor-1');
+    expect(await activateScimToken(s.r.ctx, live.id)).toBe(true);
+    const late = await mintScimToken(s.r.ctx, 'actor-1');
+    s.r.f.clock.advance(PENDING_WINDOW_MS);
+    expect(await activateScimToken(s.r.ctx, late.id)).toBe(false);
+    expect((await stateOf(late.token))?.state).toBe('pending');
+    expect((await stateOf(live.token))?.state).toBe('active');
+    const edge = await mintScimToken(s.r.ctx, 'actor-1');
+    s.r.f.clock.advance(PENDING_WINDOW_MS - 1);
+    expect(await activateScimToken(s.r.ctx, edge.id)).toBe(true);
+  });
+
+  it('drops this isolate cache at once on an activation', async () => {
+    const s = await scimRig();
+    const a = await mintScimToken(s.r.ctx, 'actor-1');
+    await activateScimToken(s.r.ctx, a.id);
+    const b = await mintScimToken(s.r.ctx, 'actor-1');
+    expect(await status(s, a.token)).toBe(200);
+    expect(await status(s, b.token)).toBe(200);
+    expect(await activateScimToken(s.r.ctx, b.id)).toBe(true);
+    expect(await status(s, a.token)).toBe(401);
+    expect(await status(s, b.token)).toBe(200);
+  });
+
+  it('drops this isolate cache when a mint retires the older pending token', async () => {
+    const s = await scimRig();
+    const a = await mintScimToken(s.r.ctx, 'actor-1');
+    expect(await status(s, a.token)).toBe(200);
+    await mintScimToken(s.r.ctx, 'actor-1');
+    expect(await status(s, a.token)).toBe(401);
+  });
+
+  it('refuses a token another isolate retired within the cache window', async () => {
+    const s = await scimRig();
+    const a = await mintScimToken(s.r.ctx, 'actor-1');
+    await activateScimToken(s.r.ctx, a.id);
+    expect(await status(s, a.token)).toBe(200);
+    // Another isolate rotates: this one is not told, so its cache still holds the old row.
+    const id = 'other-isolate';
+    const nextToken = 'n'.repeat(43);
+    await insertPending(env.DB, {
+      id,
+      sha256: await hashScimToken(nextToken),
+      now: s.r.f.clock.now(),
+      createdBy: 'other',
+    });
+    expect(await flipToActive(env.DB, id, s.r.f.clock.now(), 0)).toBe(true);
+    s.r.f.clock.advance(CACHE_MS - 1);
+    expect(await status(s, a.token)).toBe(200);
+    s.r.f.clock.advance(1);
+    expect(await status(s, a.token)).toBe(401);
+    expect(await status(s, nextToken)).toBe(200);
   });
 });

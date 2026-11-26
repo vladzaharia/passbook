@@ -6,7 +6,8 @@ import { NotFoundError, RateLimitedError, UnauthenticatedError } from '../../pla
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { checkRateLimit, clientIp, clientRatePrefix } from '../../platform/rate-limit.ts';
-import { activeToken, pendingToken, type ScimTokenRow, touchAuth } from './repo-scim-tokens.ts';
+import { type ScimTokenRow, touchAuth } from './repo-scim-tokens.ts';
+import { dropScimTokenCache, type Snapshot, snapshot } from './scim-cache.ts';
 import { PENDING_WINDOW_MS } from './scim-tokens.ts';
 
 /** A token shorter than this is a misconfiguration: the receiver stays off rather than accept a guessable one. */
@@ -15,32 +16,16 @@ const MAX_TOKEN = 512;
 /** Requests a minute from every caller that proved the token. Polaris ID pushes one resource per request. */
 export const SCIM_REQUESTS_PER_MINUTE = 600;
 const MINUTE = 60_000;
-/** The two current token rows are cached per isolate; a miss re-reads them at most this often. */
-const CACHE_MS = 60_000;
-const MISS_REFRESH_MS = 5_000;
 const FALLBACK_LOG_MS = 3_600_000;
 
-interface Snapshot {
-  db: D1Database;
-  at: number;
-  active: ScimTokenRow | null;
-  pending: ScimTokenRow | null;
-}
-let cache: Snapshot | null = null;
 const touched = new Map<string, number>();
 let fallbackLoggedAt = 0;
 
 /** Tests only: forget the cached rows and use times. */
 export function resetScimTokenCache(): void {
-  cache = null;
+  dropScimTokenCache();
   touched.clear();
   fallbackLoggedAt = 0;
-}
-
-async function snapshot(db: D1Database, now: number, maxAge: number): Promise<Snapshot> {
-  if (cache && cache.db === db && now - cache.at >= 0 && now - cache.at < maxAge) return cache;
-  cache = { db, at: now, active: await activeToken(db), pending: await pendingToken(db) };
-  return cache;
 }
 
 type Verdict = { off: true } | { off: false; hit: ScimTokenRow | 'secret' | null };
@@ -79,20 +64,16 @@ const bearerOf = (header: string | undefined): string | null => {
  * a right token never meets the miss limit, so nobody sharing Polaris ID's network prefix (it leaves from shared
  * Cloudflare addresses) can turn its pushes away by sending wrong ones. A right token spends the receiver's own
  * minute budget. A wrong one is charged to the Workers limiter (`RL_PUBLIC`, by network prefix), which is cost
- * control only: the token is long and random. Rows are cached per isolate; a miss re-reads them at most every
- * 5 s, so a freshly minted pending token works at once and a wrong one costs no query per request.
+ * control only: the token is long and random. Rows are cached per isolate for 5 s, so a wrong token costs no
+ * query per request, a rotation in another isolate is seen within 5 s (this isolate drops its cache on its own
+ * activations), and a retired token is refused at most 5 s late.
  */
 export const scimAuth = createMiddleware<AppBindings>(async (c, next) => {
   const secret = envString(c.env, 'SCIM_BEARER_TOKEN');
   const now = c.var.clock.now();
   const token = bearerOf(c.req.header('authorization'));
   const db = c.env.DB;
-  let snap = await snapshot(db, now, CACHE_MS);
-  let verdict = await judge(snap, secret, token, now);
-  if ((verdict.off || verdict.hit === null) && now - snap.at >= MISS_REFRESH_MS) {
-    snap = await snapshot(db, now, 0);
-    verdict = await judge(snap, secret, token, now);
-  }
+  const verdict = await judge(await snapshot(db, now), secret, token, now);
   if (verdict.off) throw new NotFoundError();
   const window = Math.floor(now / MINUTE) * MINUTE;
   const retry = Math.max(Math.ceil((window + MINUTE - now) / 1000), 1);

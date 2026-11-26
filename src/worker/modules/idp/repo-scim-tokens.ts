@@ -42,20 +42,27 @@ export async function insertPending(
 
 /**
  * Retires the active token and makes the pending one `id` active, in one batch. Does nothing unless `id` is
- * still pending. Returns whether it flipped.
+ * still pending and was created after `notBefore` (a pending token past its window is not accepted by the
+ * receiver, so it must not become the live one). Returns whether it flipped.
  */
-export async function flipToActive(db: D1Database, id: string, now: number): Promise<boolean> {
+export async function flipToActive(
+  db: D1Database,
+  id: string,
+  now: number,
+  notBefore: number,
+): Promise<boolean> {
   const results = await batch(db, [
     stmt(
       db,
       `UPDATE idp_scim_tokens SET state = 'retired', retired_at = ?
-       WHERE state = 'active' AND EXISTS (SELECT 1 FROM idp_scim_tokens WHERE id = ? AND state = 'pending')`,
-      [now, id],
+       WHERE state = 'active' AND EXISTS (
+         SELECT 1 FROM idp_scim_tokens WHERE id = ? AND state = 'pending' AND created_at > ?)`,
+      [now, id, notBefore],
     ),
     stmt(
       db,
-      "UPDATE idp_scim_tokens SET state = 'active', activated_at = ? WHERE id = ? AND state = 'pending'",
-      [now, id],
+      "UPDATE idp_scim_tokens SET state = 'active', activated_at = ? WHERE id = ? AND state = 'pending' AND created_at > ?",
+      [now, id, notBefore],
     ),
   ]);
   return (results[1]?.meta.changes ?? 0) > 0;

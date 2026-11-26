@@ -6,6 +6,7 @@ import {
   purgeRetired,
   retireStalePending,
 } from './repo-scim-tokens.ts';
+import { dropScimTokenCache } from './scim-cache.ts';
 
 /** A pending token is accepted this long: Polaris ID may push between the write of the token and the flip. */
 export const PENDING_WINDOW_MS = 2 * 3_600_000;
@@ -29,16 +30,26 @@ export async function mintScimToken(
     now: ctx.clock.now(),
     createdBy: actor,
   });
+  // The insert retired any older pending token.
+  dropScimTokenCache();
   return { id, token };
 }
 
-/** Makes the pending token `id` the active one and retires the old active token. False when `id` is not pending. */
-export const activateScimToken = (ctx: ServiceContext, id: string) =>
-  flipToActive(ctx.env.DB, id, ctx.clock.now());
+/**
+ * Makes the pending token `id` the active one and retires the old active token. False when `id` is not pending
+ * or is past its window: the caller mints again. This isolate forgets its cached rows at once; others within 5 s.
+ */
+export async function activateScimToken(ctx: ServiceContext, id: string): Promise<boolean> {
+  const now = ctx.clock.now();
+  const flipped = await flipToActive(ctx.env.DB, id, now, now - PENDING_WINDOW_MS);
+  dropScimTokenCache();
+  return flipped;
+}
 
 /** Daily hook `idp.scim_tokens`: retires pending tokens past their window, removes retired ones after 30 days. */
 export async function dailyScimTokens(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
   await retireStalePending(ctx.env.DB, now - PENDING_WINDOW_MS, now);
   await purgeRetired(ctx.env.DB, now - RETIRED_KEEP_MS);
+  dropScimTokenCache();
 }
