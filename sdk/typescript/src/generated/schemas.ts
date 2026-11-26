@@ -858,7 +858,12 @@ export type ConnectionsCreateResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1028,7 +1033,12 @@ export type ConnectionsListResponse = {
     maxConcurrency: number | null;
     requestsPerMinute: number | null;
     enabled: boolean;
-    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    firstVerifiedArrivalAt: number | null;
+    warning: {
+      code: "stale_deliveries";
+      text: string;
+    } | null;
     consecutiveFailures: number;
     breakerOpenUntil: number | null;
     nextRunAt: number | null;
@@ -1042,6 +1052,10 @@ export type ConnectionsListResponse = {
     passCount?: number;
   }>;
   nextCursor: string | null;
+};
+
+export type ConnectionsPreviewParams = {
+  arrivalId?: string;
 };
 
 export type ConnectionsProbeConfigParams = {
@@ -1306,7 +1320,12 @@ export type ConnectionsRetrieveResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1348,7 +1367,7 @@ export type ConnectionsRetrieveSummaryResponse = {
     id: string;
     orgId: string;
     name: string;
-    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
     lastErrorCode: string | null;
     lastErrorAt: number | null;
   }>;
@@ -1386,7 +1405,12 @@ export type ConnectionsRevokePreviousWebhookSecretResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1431,7 +1455,12 @@ export type ConnectionsRotateWebhookSecretResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1463,6 +1492,81 @@ export type ConnectionsRunsListResponse = {
     durationMs: number | null;
   }>;
   nextCursor: string | null;
+};
+
+export type ConnectionsSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
+  values: {
+    endpointUrl: string | null;
+    signatureHeader: string | null;
+    timestampHeader: string | null;
+    hasSecret: boolean;
+  };
 };
 
 export type ConnectionsSyncResponse = {
@@ -1607,7 +1711,12 @@ export type ConnectionsUpdateResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1722,6 +1831,22 @@ export type ConnectionsUploadsUpdateResponse = {
   expiresAt: number | null;
 };
 
+export type ConnectionsWebhookArrivalsListResponse = {
+  items: Array<{
+    id: string;
+    receivedAt: number;
+    lastAt: number;
+    outcome: "accepted" | "duplicate" | "ignored" | "rejected";
+    reason: "signature_missing" | "signature_mismatch" | "signature_expired" | "payload" | "too_large" | "no_secret" | "unknown_type" | "thin_event" | "test_mode" | "unrecognized_shape" | "no_ref" | "ping" | "stale" | null;
+    topic: string | null;
+    contentClass: "json" | "xml" | "form" | "other";
+    eventRef: string | null;
+    usedPrevious: boolean;
+    count: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type ConnectionsWebhookFailuresListResponse = {
   items: Array<{
     id: string;
@@ -1780,6 +1905,9 @@ export type ConnectorsListResponse = {
       label: string;
       category?: "files" | "apis" | "commerce" | "bookings" | "try";
       pasteSecret: boolean;
+      line?: string;
+      secretOrigin?: "provider" | "passbook";
+      setupVersion?: string;
       entitled: boolean;
       outputFields: Record<string, {
         type: "string" | "number" | "boolean" | "date";
@@ -1802,6 +1930,75 @@ export type ConnectorsListResponse = {
     entitled: boolean;
   }>;
   nextCursor: string | null;
+};
+
+export type ConnectorsRecipeSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
 };
 
 export type ConnectorsRetrieveResponse = {
@@ -1836,6 +2033,9 @@ export type ConnectorsRetrieveResponse = {
     label: string;
     category?: "files" | "apis" | "commerce" | "bookings" | "try";
     pasteSecret: boolean;
+    line?: string;
+    secretOrigin?: "provider" | "passbook";
+    setupVersion?: string;
     entitled: boolean;
     outputFields: Record<string, {
       type: "string" | "number" | "boolean" | "date";
@@ -1916,6 +2116,7 @@ export type CreatedScanningDevice = {
   revoked: boolean;
   lastSeenAt: number | null;
   updatedAt: number;
+  configRevision: number;
   signIn: "paired" | "admin";
   adminName: string | null;
   pairing: {
@@ -10696,6 +10897,7 @@ export type ScanWorkspace = {
     revoked: boolean;
     lastSeenAt: number | null;
     updatedAt: number;
+    configRevision: number;
     signIn: "paired" | "admin";
     adminName: string | null;
   };
@@ -11130,6 +11332,7 @@ export type ScanningDevice = {
   revoked: boolean;
   lastSeenAt: number | null;
   updatedAt: number;
+  configRevision: number;
   signIn: "paired" | "admin";
   adminName: string | null;
 };
@@ -13558,6 +13761,75 @@ export type WebhookEndpointsRotateSecretResponse = {
 
 export type WebhookEndpointsSendTestParams = {
   type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+};
+
+export type WebhookEndpointsSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
 };
 
 export type WebhookEndpointsUpdateParams = {

@@ -61,6 +61,7 @@ export const managedSession = ScanningSessionDetailSchema.parse({
       revoked: false,
       lastSeenAt: NOW,
       updatedAt: NOW,
+      configRevision: 1,
       signIn: 'admin',
       adminName: 'Administrator',
     },

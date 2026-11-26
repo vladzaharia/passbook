@@ -11,7 +11,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
-import { toDto } from './dto.ts';
+import type { toDto } from './dto.ts';
 import { assertMayIssue, isArmed } from './issuing.ts';
 import { patchConnection } from './repo.ts';
 import { recordTestRun } from './repo-run-test.ts';
@@ -23,6 +23,7 @@ import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from
 import { auditActor, requireConnection } from './service.ts';
 import { firstRecord, sampleFields } from './test-config.ts';
 import { assertModeSupported, requireConnector } from './validate.ts';
+import { dtoOf } from './webhook-arrivals.ts';
 
 /** Calls the connector's test(). Writes one finished 'test' run; never changes health or passes. */
 export async function test(
@@ -191,7 +192,10 @@ export async function rotateWebhookSecret(
   });
   const current = await requireConnection(sctx, id);
   if (authority && current.orgId !== conn.orgId) throw new ForbiddenError();
-  return { webhookSecret: secret, connection: toDto(sctx.env, current) };
+  return {
+    webhookSecret: secret,
+    connection: await dtoOf(sctx, current),
+  };
 }
 
 export async function runs(
@@ -260,5 +264,5 @@ export async function revokePreviousWebhookSecret(
       targetId: id,
     });
   }
-  return toDto(sctx.env, await requireConnection(sctx, id));
+  return await dtoOf(sctx, await requireConnection(sctx, id));
 }

@@ -5,6 +5,7 @@ import {
   IdSchema,
   OkSchema,
 } from '../../../shared/contracts/common.ts';
+import { SetupGuideSchema } from '../../../shared/contracts/connection-setup.ts';
 import { SendTestEventSchema } from '../../../shared/contracts/webhook-captures.ts';
 import { RotateWebhookSecretSchema } from '../../../shared/contracts/webhook-secrets.ts';
 import {
@@ -28,6 +29,7 @@ import { registerDeliveryRoutes } from './routes-deliveries.ts';
 import * as service from './service.ts';
 import * as secrets from './service-secrets.ts';
 import * as test from './service-test.ts';
+import { outboundSetup } from './setup-guide.ts';
 
 const OrgQuerySchema = z.object({ orgId: IdSchema.optional() });
 const CreateQuerySchema = z.object({ validate: z.literal('1').optional() });
@@ -66,6 +68,23 @@ register(
     const org = webhookOrg(c.var.auth, c.req.valid('query').orgId);
     const access = await authorizeWebhooks(ctx, c.var.auth, org, 'integrations:read');
     return c.json(await service.list(ctx, access));
+  },
+);
+// Before `/{id}`, which would otherwise take `setup` as an id.
+register(
+  webhookEndpointsRoutes,
+  'webhooks',
+  {
+    method: 'get',
+    path: '/setup',
+    summary: 'The setup guide for the server that receives webhooks',
+    query: OrgQuerySchema,
+    response: SetupGuideSchema,
+  },
+  async (c) => {
+    const org = webhookOrg(c.var.auth, c.req.valid('query').orgId);
+    await authorizeWebhooks(serviceContext(c), c.var.auth, org, 'integrations:read');
+    return c.json(outboundSetup);
   },
 );
 register(
