@@ -74,7 +74,7 @@ function OmissionRow({
           label={
             <span className="grid min-w-0 gap-1">
               <span className="text-fg-strong">{item.message}</span>
-              <span className="font-mono text-xs break-all text-fg-muted">
+              <span className="font-mono text-xs break-words text-fg-muted">
                 {item.capability}
                 {item.path ? ` · ${item.path}` : ''}
               </span>
