@@ -6,9 +6,12 @@ export interface SandboxRow {
   slug: string;
   created_at: number;
   closed_at: number | null;
+  /** The org's `org.timeZone` setting as stored (JSON), null when unset. */
+  time_zone: string | null;
 }
 
-const SELECT = `SELECT d.id, d.org_id, o.slug, d.created_at, d.closed_at
+const SELECT = `SELECT d.id, d.org_id, o.slug, d.created_at, d.closed_at,
+  (SELECT s.value FROM settings s WHERE s.scope = 'org:' || d.org_id AND s.key = 'org.timeZone') AS time_zone
   FROM developer_sandboxes d JOIN orgs o ON o.id = d.org_id`;
 
 export const sandboxOfUser = (db: D1Database, userId: string) =>

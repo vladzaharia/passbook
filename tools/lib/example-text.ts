@@ -138,6 +138,9 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
     note: ['Pilot pricing through March.', 'Two extra scanners for the league season.'],
     // shared/copy/pass-setup.ts: the setup checks.
     message: ["Apple passes sign with PassBook's shared ID."],
+    // An operation's current line and a waiting step's words (shared/operations/text.ts).
+    'operation.text': ['Removing Test passes · 4 of 12'],
+    'step.detail': ['Waiting for Apple'],
   },
   identities: {
     'hold.reason': ['Issuer account under review by Google.'],

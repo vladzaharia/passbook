@@ -73,6 +73,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('nfc_tag_types'),
   inOrg('pass_import_mappings'),
   inOrg('pass_imports'),
+  inOrg('operations'),
   inOrg('pass_bulk_runs'),
   inOrg('pass_bulk_locks'),
   inOrg('pass_views'),

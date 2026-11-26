@@ -40,6 +40,14 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
+    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
@@ -616,6 +624,134 @@
     "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
   },
   {
+    "key": "GET /api/v1/developer/sandbox 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.getSandbox",
+    "op": "GET /api/v1/developer/sandbox",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|0.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|0.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|1.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|1.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|10.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|10.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|11.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|11.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|12.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|12.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|13.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|13.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|14.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|14.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|15.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|15.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|16.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|16.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|2.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|2.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|3.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|3.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|4.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|4.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|5.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|5.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|6.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|6.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|7.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|7.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|8.data.exit: field added",
     "class": "additive",
     "operationId": "events.getEvents",
@@ -632,6 +768,142 @@
     "note": "pass.scanned data carries zoneId when the scan was at a zone."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|8.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|8.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|9.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|9.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|0.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|0.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|1.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|1.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|10.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|10.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|11.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|11.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|12.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|12.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|13.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|13.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|14.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|14.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|15.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|15.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|16.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|16.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|2.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|2.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|3.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|3.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|4.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|4.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|5.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|5.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|6.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|6.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|7.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|7.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|8.data.exit: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
@@ -646,6 +918,22 @@
     "op": "GET /api/v1/events/{id}",
     "change": "200|8.data.zoneId: field added",
     "note": "pass.scanned data carries zoneId when the scan was at a zone."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|8.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|8.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|9.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|9.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
     "key": "GET /api/v1/identities 200|0.items[].handle: field added",
@@ -894,6 +1182,22 @@
     "op": "GET /api/v1/nfc/tags/{id}/history",
     "change": "callable by nfc:read key",
     "note": "Callable with an org-bound key holding nfc:read; the audit log names the key."
+  },
+  {
+    "key": "GET /api/v1/operations new operation",
+    "class": "additive",
+    "operationId": "operations.getOperations",
+    "op": "GET /api/v1/operations",
+    "change": "new operation",
+    "note": "New. Lists operations you started or can read in an organization; filter by active, mine, kind, target."
+  },
+  {
+    "key": "GET /api/v1/operations/{id} new operation",
+    "class": "additive",
+    "operationId": "operations.getOperationsById",
+    "op": "GET /api/v1/operations/{id}",
+    "change": "new operation",
+    "note": "New. Reads one long-running action with its steps and counts. 304 when If-None-Match carries its ETag."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -1736,6 +2040,158 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures optional parameter query:passId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "optional parameter query:passId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures optional parameter query:requestId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "optional parameter query:requestId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries optional parameter query:passId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "optional parameter query:passId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries optional parameter query:requestId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "optional parameter query:requestId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|0.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|0.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|1.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|1.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|10.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|10.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|11.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|11.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|12.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|12.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|13.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|13.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|14.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|14.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|15.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|15.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|16.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|16.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|2.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|2.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|3.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|3.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|4.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|4.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|5.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|5.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|6.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|6.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|7.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|7.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.data.exit: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
@@ -1750,6 +2206,22 @@
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|8.data.zoneId: field added",
     "note": "pass.scanned data carries zoneId when the scan was at a zone."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|8.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|9.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|9.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
@@ -2917,12 +3389,36 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
+    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandbox",
+    "op": "POST /api/v1/developer/sandbox",
+    "change": "201.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxClose",
+    "op": "POST /api/v1/developer/sandbox/close",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/close new operation",
     "class": "additive",
     "operationId": "developer.postSandboxClose",
     "op": "POST /api/v1/developer/sandbox/close",
     "change": "new operation",
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "201.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
@@ -2933,12 +3429,28 @@
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxReopen",
+    "op": "POST /api/v1/developer/sandbox/reopen",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
     "class": "additive",
     "operationId": "developer.postSandboxReopen",
     "op": "POST /api/v1/developer/sandbox/reopen",
     "change": "new operation",
     "note": "Reopen your closed developer sandbox inside its 30 days; returns a new key, shown once."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "POST /api/v1/developer/sandbox/reset new operation",
@@ -3251,6 +3763,22 @@
     "op": "POST /api/v1/offboard",
     "change": "200.more: field added",
     "note": "Up to 100 passes a call. more is true while passes remain: send the same request again."
+  },
+  {
+    "key": "POST /api/v1/operations/{id}/cancel new operation",
+    "class": "additive",
+    "operationId": "operations.postOperationsByIdCancel",
+    "op": "POST /api/v1/operations/{id}/cancel",
+    "change": "new operation",
+    "note": "New. Stops an operation: a queued one at once, a running one at its next safe point. 409 OPERATION_NOT_CANCELABLE when the kind cannot be stopped."
+  },
+  {
+    "key": "POST /api/v1/operations/{id}/retry new operation",
+    "class": "additive",
+    "operationId": "operations.postOperationsByIdRetry",
+    "op": "POST /api/v1/operations/{id}/retry",
+    "change": "new operation",
+    "note": "New. Retries a failed operation under the same id with the next attempt. Takes an Idempotency-Key. 409 OPERATION_NOT_RETRYABLE or OPERATION_RUNNING."
   },
   {
     "key": "POST /api/v1/orgs 201.kind: field added",

@@ -74,7 +74,7 @@ function Pill({
       data-after={dim || undefined}
       aria-current={stop ? 'step' : undefined}
       className={cn(
-        'inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium whitespace-nowrap [&_svg]:size-3.5',
+        'inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs max-sm:gap-1 max-sm:px-2 font-medium whitespace-nowrap [&_svg]:size-3.5',
         TONE[dim ? 'after' : level.state],
         stop && 'ring-2 ring-border-strong ring-offset-1 ring-offset-surface-raised',
       )}
@@ -112,7 +112,10 @@ export function ChainBadge({
             {i > 0 ? (
               <span
                 aria-hidden
-                className={cn('h-px w-3', at !== -1 && i > at ? 'bg-border' : 'bg-border-strong')}
+                className={cn(
+                  'h-px w-3 max-sm:w-1.5',
+                  at !== -1 && i > at ? 'bg-border' : 'bg-border-strong',
+                )}
               />
             ) : null}
             <Pill

@@ -284,6 +284,8 @@ describe('step-up route inventory', () => {
         "POST /api/v1/identities/:id/rotate",
         "POST /api/v1/nfc/keysets/:id/import",
         "POST /api/v1/nfc/keysets/:id/rotate",
+        "POST /api/v1/operations/:id/cancel",
+        "POST /api/v1/operations/:id/retry",
         "POST /api/v1/orgs/:id/developer-invitations",
         "POST /api/v1/orgs/:id/invitations",
         "POST /api/v1/orgs/:id/invitations/:invitationId/resend",

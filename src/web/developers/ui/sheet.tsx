@@ -1,10 +1,19 @@
 import { X } from 'lucide-react';
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useRef } from 'react';
 import { KEYS_COPY } from '../../../shared/copy/developers-keys.ts';
+import './sheet.css';
+
+/** A real browser that has not asked for reduced motion: only then does a sheet play its way out. */
+const animates = () =>
+  typeof matchMedia === 'function' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** The exit is 160 ms (sheet.css); the timer only backs up a missed `animationend`. */
+const EXIT_MS = 200;
 
 /**
- * A modal sheet on the native dialog: a side panel on a wide screen, a bottom sheet on a phone. Escape and the
- * backdrop call `onClose` unless `guard` holds (a secret not yet copied); the close button always does.
+ * The portal's one modal sheet, on the native dialog: a side panel from 720 px, a bottom sheet below.
+ * Escape and the backdrop close it unless `guard` holds (a secret not yet copied); the close button
+ * always does. Closing plays the exit first, then calls `onClose`; focus goes back to the opener.
  */
 export function Sheet({
   title,
@@ -24,6 +33,8 @@ export function Sheet({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const opener = useRef<Element | null>(null);
+  const leaving = useRef(false);
+  const titleId = useId();
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -35,46 +46,60 @@ export function Sheet({
       if (opener.current instanceof HTMLElement) opener.current.focus();
     };
   }, []);
+  const dismiss = useCallback(() => {
+    const d = ref.current;
+    if (leaving.current) return;
+    if (!d || !animates()) return onClose();
+    leaving.current = true;
+    d.dataset.closing = '';
+    const done = () => {
+      clearTimeout(timer);
+      onClose();
+    };
+    const timer = setTimeout(done, EXIT_MS);
+    d.addEventListener('animationend', done, { once: true });
+  }, [onClose]);
+  const ask = () => {
+    if (guard) onBlocked?.();
+    else dismiss();
+  };
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: a tap on the backdrop closes; Escape is the cancel event
     <dialog
       ref={ref}
-      className="ks-sheet"
-      aria-labelledby="ks-title"
+      className="sheet"
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
-        if (guard) onBlocked?.();
-        else onClose();
+        ask();
       }}
       // A second Escape can close the dialog without a cancel event: put it back while guarded.
       onClose={() => {
         if (guard) ref.current?.showModal();
-        else onClose();
+        else if (!leaving.current) onClose();
       }}
       onClick={(e) => {
-        if (e.target !== ref.current) return;
-        if (guard) onBlocked?.();
-        else onClose();
+        if (e.target === ref.current) ask();
       }}
     >
-      <div className="ks-h">
-        <span className="ks-grab" aria-hidden="true" />
-        <h2 id="ks-title" className="h3">
+      <div className="sheet-h">
+        <span className="sheet-grab" aria-hidden="true" />
+        <h2 id={titleId} className="h3">
           {title}
         </h2>
         {guard ? null : (
           <button
             type="button"
-            className="btn ghost sm ks-x"
+            className="btn ghost sm sheet-x"
             aria-label={KEYS_COPY.sheet.close}
-            onClick={onClose}
+            onClick={dismiss}
           >
             <X aria-hidden="true" />
           </button>
         )}
       </div>
-      <div className="ks-b">{children}</div>
-      {footer ? <div className="ks-f">{footer}</div> : null}
+      <div className="sheet-b">{children}</div>
+      {footer ? <div className="sheet-f">{footer}</div> : null}
     </dialog>
   );
 }

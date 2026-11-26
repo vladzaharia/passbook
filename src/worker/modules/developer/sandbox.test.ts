@@ -369,12 +369,14 @@ describe('a developer org never holds Live', () => {
     expect(await actorOk(platform(kit.org.id, 'live'))).toBe(1);
     expect(await actorOk(system(kit.org.id, 'live'))).toBe(1);
 
+    // `operations` is progress metadata (a status, step texts, an app path and ids; no tenant data) scoped by org and
+    // audience, and it grants nothing: it has no Live guard.
     // Triggers: every table with an org and a mode refuses a Live row of a developer org, before any other check.
     const tables = await all<{ name: string }>(
       kit.env.DB,
       `SELECT m.name FROM sqlite_master m
        WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%' AND m.name NOT LIKE '_cf_%'
-         AND m.name NOT IN ('connections')
+         AND m.name NOT IN ('connections', 'operations')
          AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) WHERE name = 'org_id')
          AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) WHERE name = 'mode')`,
     );

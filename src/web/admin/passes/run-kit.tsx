@@ -1,53 +1,10 @@
 import { Check, X } from 'lucide-react';
 import { type ReactNode, useRef } from 'react';
 import { cn } from '../../lib/cn.ts';
-import { Buddy, Card, CardBody, Celebrate, CountUp, ProgressBar } from '../../ui/index.ts';
+import { Buddy, Card, CardBody, Celebrate, CountUp } from '../../ui/index.ts';
 
-/** The foil bar with the buddy riding it: a run's progress. The page polls; the bar moves to match. */
-export function RunProgress({
-  done,
-  total,
-  text,
-  meta,
-  aside,
-}: {
-  done: number;
-  total: number;
-  text: string;
-  /** Muted, beside the count: time left. */
-  meta?: ReactNode;
-  /** Right of the count: "You can leave this page." */
-  aside?: ReactNode;
-}) {
-  const share = total > 0 ? Math.min(1, done / total) : 0;
-  return (
-    <>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p aria-live="polite" className="text-base font-semibold tabular-nums text-fg-strong">
-          {text}
-          {meta ? <span className="font-normal text-fg-muted"> · {meta}</span> : null}
-        </p>
-        {aside}
-      </div>
-      <div data-art-host="" className="wl-buddy-room relative [--wl-buddy-room:3.5rem]">
-        <span
-          aria-hidden
-          className="absolute top-0 h-1.5 w-0 motion-safe:transition-[left] motion-safe:duration-(--wl-dur-enter) motion-safe:ease-(--wl-ease-move)"
-          style={{ left: `${share * 100}%` }}
-        >
-          <Buddy scene="count" size="sm" />
-        </span>
-        <ProgressBar
-          label="Passes handled"
-          value={done}
-          max={Math.max(total, 1)}
-          valueText={text}
-          tone="foil"
-        />
-      </div>
-    </>
-  );
-}
+/** The run's bar moved to the kit (ui/operation/run-bar.tsx); pages keep this name. */
+export { RunBar as RunProgress } from '../../ui/operation/run-bar.tsx';
 
 export interface RunStat {
   label: string;

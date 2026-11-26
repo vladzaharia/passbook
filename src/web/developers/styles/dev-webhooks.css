@@ -1,23 +1,6 @@
-/* The webhook tester's page frame; the island's own sheet loads with it. */
+/* The webhook tester's column inside the bench frame (bench/frame.tsx sets the width and gutter); the island's own sheet loads with it. */
 .wh {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 24px 32px 48px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-.wh-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 12px 16px;
-}
-.wh-lede {
-  margin-top: -8px;
-}
-@media (max-width: 720px) {
-  .wh {
-    padding: 20px 16px 40px;
-  }
 }

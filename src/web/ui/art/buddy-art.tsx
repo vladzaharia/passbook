@@ -20,6 +20,7 @@ export type BuddyScene =
   | 'tuck'
   | 'stow'
   | 'count'
+  | 'busy'
   | 'scan'
   | 'listen'
   | 'catch'

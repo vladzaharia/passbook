@@ -117,6 +117,27 @@ export class Session {
     this.csrf = (await this.get('/api/v1/session')).csrfToken;
   }
 
+  /** Mock OIDC sign-in (e2e server only): follows the redirects, naming the user as `login_hint`. */
+  async oidc(sub: string) {
+    let url = `${this.base}/auth/oidc/start?next=${encodeURIComponent('/admin')}`;
+    for (let hop = 0; hop < 12; hop++) {
+      const target = new URL(url);
+      const same = target.origin === new URL(this.base).origin;
+      if (!same && target.searchParams.has('client_id')) target.searchParams.set('login_hint', sub);
+      const res = await fetch(target, {
+        redirect: 'manual',
+        headers: same ? { cookie: [...this.cookies].map(([k, v]) => `${k}=${v}`).join('; ') } : {},
+      });
+      if (same) this.keep(res);
+      const next = res.headers.get('location');
+      if (!next) break;
+      url = new URL(next, target).toString();
+    }
+    const session = await this.get('/api/v1/session');
+    if (!session.authenticated) throw new Error(`Mock OIDC sign-in as ${sub} did not stick.`);
+    this.csrf = session.csrfToken;
+  }
+
   /**
    * Magic-link sign-in for a holder address, reading the link from the local mail directory.
    * Cloudflare's always-pass Turnstile token works with the dev test secret.

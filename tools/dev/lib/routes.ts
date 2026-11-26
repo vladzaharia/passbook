@@ -1,7 +1,8 @@
 // Route lists for tools/dev/visual-sweep.ts: loading, placeholder resolution, output file names.
 import { readFileSync } from 'node:fs';
 
-export type Role = 'platform' | 'org' | 'holder' | 'anon';
+/** `member`: a signed-in non-platform-admin (the demo reviewer), for denied states. */
+export type Role = 'platform' | 'org' | 'member' | 'holder' | 'anon';
 export type Route = {
   role: Role;
   path: string;
@@ -50,7 +51,7 @@ export const DEVICES: Record<
 };
 export type Theme = 'light' | 'dark';
 
-const ROLES: readonly string[] = ['platform', 'org', 'holder', 'anon'];
+const ROLES: readonly string[] = ['platform', 'org', 'member', 'holder', 'anon'];
 
 export function parseRoutes(json: string, source = 'route list'): Route[] {
   const raw: unknown = JSON.parse(json);

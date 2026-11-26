@@ -1,5 +1,6 @@
-// Org templates issue passes only from a live Apple release. The demo owner is the only reviewer in
-// each org, so they approve their own candidate alone, then publish it. Skips templates that have one.
+// Org templates issue passes only from a live Apple release. The owner authors each candidate and
+// the second demo reviewer approves it (an author approves alone only in a one-reviewer org), then
+// the owner publishes it. Skips templates that have one.
 import type { Session } from './demo-client.ts';
 
 type Template = {
@@ -10,7 +11,11 @@ type Template = {
   activeVersion: string | null;
 };
 
-export async function releaseTemplates(owner: Session, templates: Template[]): Promise<void> {
+export async function releaseTemplates(
+  owner: Session,
+  templates: Template[],
+  reviewer: Session,
+): Promise<void> {
   for (const t of templates) {
     // The seeded failed import never gets a version; waiting for it would only stall the run.
     if (t.status !== 'active' || !t.orgId || t.activeVersion || t.name === 'Broken Badge') continue;
@@ -28,10 +33,9 @@ export async function releaseTemplates(owner: Session, templates: Template[]): P
     const scope = { orgId: t.orgId, mode: 'live', provider: 'apple' };
     const base = `/api/v1/templates/${t.id}`;
     const candidate = await owner.send('POST', `${base}/candidates`, { ...scope, version });
-    const approval = await owner.send('POST', `${base}/candidates/${candidate.id}/approve`, {
+    const approval = await reviewer.send('POST', `${base}/candidates/${candidate.id}/approve`, {
       ...scope,
       candidateHash: candidate.candidateHash,
-      alone: true,
     });
     await owner.send('POST', `${base}/releases`, {
       ...scope,

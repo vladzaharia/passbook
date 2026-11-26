@@ -131,9 +131,9 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
         const box = await page.getByTestId('scan-result').boundingBox();
         const seat = await page.locator('.scan-buddy-seat').boundingBox();
         const height = width === 1180 ? 820 : 844;
-        // Card zone (ui/scan.css): top token, and a bottom that clears the buddy's seat.
+        // Card zone (ui/scan.css): top token, and a bottom that ends 116 px above the dock (the buddy stands on the dock's top edge).
         const top = width < 640 ? 117 : width >= 1024 ? 108 : 117;
-        const limit = height - (width >= 1024 ? 312 : width < 640 ? 252 : 314);
+        const limit = height - (width >= 1024 ? 244 : width < 640 ? 252 : 290);
         const bottom = Math.round((box?.y ?? 0) + (box?.height ?? 0));
         expect(box?.y).toBeGreaterThanOrEqual(top);
         expect(bottom).toBeLessThanOrEqual(limit);

@@ -217,7 +217,7 @@ export function QuickFields({
                   onClick={() => state.pick(s)}
                   style={{ background: toHex(s) }}
                   className={cn(
-                    'size-8 rounded-full border border-border-strong wl-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+                    'size-8 pointer-coarse:size-11 rounded-full border border-border-strong wl-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
                     same(color, s) && 'outline-2 outline-offset-2 outline-fg-strong',
                   )}
                 />

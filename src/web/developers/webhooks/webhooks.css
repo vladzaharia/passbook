@@ -180,9 +180,6 @@
   }
 }
 @media (max-width: 720px) {
-  .wh {
-    padding: 20px 16px 40px;
-  }
   .wh-hide-s {
     display: none;
   }

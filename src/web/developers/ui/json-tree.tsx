@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { createContext, type ReactNode, useContext, useState } from 'react';
 import { PATHS } from '../../../shared/developers.ts';
 import type { Json } from '../console/types.ts';
 import { copyToClipboard as copyText } from '../shell/copy.ts';
+import './json-tree.css';
 
 const MAX_ITEMS = 100;
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -22,8 +23,12 @@ export function safeLink(value: string): string | null {
   }
 }
 
+/** How an id in the body draws: the bench gives an IdChip; the console, a copy button. */
+const IdView = createContext<((id: string) => ReactNode) | null>(null);
+
 function Str({ k, v, codes }: { k: string; v: string; codes: ReadonlySet<string> }) {
   const [copied, setCopied] = useState(false);
+  const idView = useContext(IdView);
   const text = JSON.stringify(v);
   const href = safeLink(v);
   if (href)
@@ -38,6 +43,7 @@ function Str({ k, v, codes }: { k: string; v: string; codes: ReadonlySet<string>
         {text}
       </a>
     );
+  if (ID.test(v) && idView) return <span className="s jt-chip">{idView(v)}</span>;
   if (ID.test(v))
     return (
       <button
@@ -142,12 +148,27 @@ function Node({ name, value, depth, last, codes }: NodeProps) {
   );
 }
 
-/** The response as a collapsible tree. Every value is a text node; links are built here, from a short allow-list. */
-export function JsonTree({ value, codes }: { value: Json; codes: ReadonlySet<string> }) {
+/**
+ * The response as a collapsible tree. Every value is a text node; links are built here, from a short
+ * allow-list. `renderId` draws each UUID (the bench's IdChip); `label` names the region.
+ */
+export function JsonTree({
+  value,
+  codes,
+  label = 'Response body',
+  renderId,
+}: {
+  value: Json;
+  codes: ReadonlySet<string>;
+  label?: string;
+  renderId?: (id: string) => ReactNode;
+}) {
   return (
     // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region
-    <section className="region jt" tabIndex={0} aria-label="Response body">
-      <Node value={value} depth={0} last codes={codes} />
+    <section className="region jt" tabIndex={0} aria-label={label}>
+      <IdView.Provider value={renderId ?? null}>
+        <Node value={value} depth={0} last codes={codes} />
+      </IdView.Provider>
     </section>
   );
 }

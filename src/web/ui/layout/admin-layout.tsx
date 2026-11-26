@@ -10,6 +10,7 @@ import { ScopeCrumbContext } from '../../lib/scope-context.ts';
 import { useSession } from '../../lib/session.ts';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
+import { ActivityTray } from './activity-tray.tsx';
 import { AppShell, type AppShellProps } from './app-shell.tsx';
 import { GraceBanner } from './grace-banner.tsx';
 import { MenubarSearch, shortcutHint } from './menubar.tsx';
@@ -76,7 +77,12 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         onClick={() => setPaletteOpen(true)}
       />
     ),
-    controls: switchable ? <ModeSwitch /> : null,
+    controls: (
+      <>
+        <ActivityTray />
+        {switchable ? <ModeSwitch /> : null}
+      </>
+    ),
     tone,
     account: <UserMenu />,
   };

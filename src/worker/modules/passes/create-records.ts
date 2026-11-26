@@ -51,6 +51,7 @@ export async function addCreateStatements(
           cause: join ? 'join' : 'create',
           source: null,
           notified: false,
+          ...(ctx.requestId ? { requestId: ctx.requestId } : {}),
         }),
       ),
       row.now,

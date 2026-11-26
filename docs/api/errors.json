@@ -1845,6 +1845,7 @@
       ],
       "modules": [
         "delivery",
+        "operations",
         "passes",
         "platform",
         "scan"
@@ -2552,6 +2553,7 @@
       "modules": [
         "audit",
         "events",
+        "operations",
         "retention",
         "scan",
         "templates",
@@ -3193,6 +3195,87 @@
       ],
       "modules": [
         "auth"
+      ]
+    },
+    {
+      "code": "OPERATION_KIND_UNKNOWN",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_NOT_CANCELABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_NOT_RETRYABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_ORG_REQUIRED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_OUTCOME_UNKNOWN",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_RUNNING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_SESSION_REQUIRED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_STALLED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
       ]
     },
     {

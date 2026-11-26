@@ -658,6 +658,26 @@ __all__ = [
     "NfcTagsRetrieveResult",
     "NfcTagsUpdateParams",
     "NfcTagsUpdateResponse",
+    "OperationsCancelResponse",
+    "OperationsCancelResponseStartedBy",
+    "OperationsCancelResponseStepsItem",
+    "OperationsCancelResult",
+    "OperationsListItem",
+    "OperationsListItemStartedBy",
+    "OperationsListItemStepsItem",
+    "OperationsListResponse",
+    "OperationsListResponseItemsItem",
+    "OperationsListResponseItemsItemStartedBy",
+    "OperationsListResponseItemsItemStepsItem",
+    "OperationsListResult",
+    "OperationsRetrieveResponse",
+    "OperationsRetrieveResponseStartedBy",
+    "OperationsRetrieveResponseStepsItem",
+    "OperationsRetrieveResult",
+    "OperationsRetryResponse",
+    "OperationsRetryResponseStartedBy",
+    "OperationsRetryResponseStepsItem",
+    "OperationsRetryResult",
     "Org",
     "OrgBranding",
     "OrgBrandingIcon",
@@ -4040,6 +4060,7 @@ class EmailFailedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: EmailFailedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class EmailFailedEventData(_Model):
@@ -6133,6 +6154,215 @@ class NfcTagsUpdateResponse(_Model):
     keysetId: str | None
     binding: _Dict[str, _Any] | None
 
+class OperationsCancelResponse(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsCancelResponseStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsCancelResponseStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsCancelResponseStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsCancelResponseStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsListItem(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsListItemStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsListItemStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsListItemStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsListItemStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsListResponse(_Model):
+    items: _List[OperationsListResponseItemsItem]
+    nextCursor: str | None
+
+class OperationsListResponseItemsItem(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsListResponseItemsItemStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsListResponseItemsItemStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsListResponseItemsItemStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsListResponseItemsItemStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsRetrieveResponse(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsRetrieveResponseStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsRetrieveResponseStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsRetrieveResponseStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsRetrieveResponseStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsRetryResponse(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsRetryResponseStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsRetryResponseStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsRetryResponseStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsRetryResponseStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
 class Org(_Model):
     id: str
     slug: str
@@ -6348,6 +6578,7 @@ class PassChannelsChangedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassChannelsChangedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassChannelsChangedEventData(_Model):
@@ -7267,6 +7498,7 @@ class PassInstalledEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassInstalledEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassInstalledEventData(_Model):
@@ -7284,6 +7516,7 @@ class PassIssuedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassIssuedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassIssuedEventData(_Model):
@@ -7304,6 +7537,7 @@ class PassPrintVoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintVoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassPrintVoidedEventData(_Model):
@@ -7319,6 +7553,7 @@ class PassPrintedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassPrintedEventData(_Model):
@@ -7335,6 +7570,7 @@ class PassRemovedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRemovedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassRemovedEventData(_Model):
@@ -7351,6 +7587,7 @@ class PassRestoredEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRestoredEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassRestoredEventData(_Model):
@@ -7365,6 +7602,7 @@ class PassScanRefusedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanRefusedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScanRefusedEventData(_Model):
@@ -7384,6 +7622,7 @@ class PassScanUndoneEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanUndoneEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScanUndoneEventData(_Model):
@@ -7400,6 +7639,7 @@ class PassScannedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScannedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScannedEventData(_Model):
@@ -7894,6 +8134,7 @@ class PassUninstalledEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUninstalledEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUninstalledEventData(_Model):
@@ -7912,6 +8153,7 @@ class PassUnvoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUnvoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUnvoidedEventData(_Model):
@@ -7926,6 +8168,7 @@ class PassUpdatedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUpdatedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUpdatedEventData(_Model):
@@ -7972,6 +8215,7 @@ class PassVoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassVoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassVoidedEventData(_Model):
@@ -9841,6 +10085,7 @@ class Problem(_Model):
     limit: int | None = None
     used: int | None = None
     signInUrl: str | None = None
+    operationId: str | None = None
 
 class ProblemIssuesItem(_Model):
     path: str
@@ -9856,6 +10101,7 @@ class PushFailedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PushFailedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PushFailedEventData(_Model):
@@ -14069,6 +14315,7 @@ class WebhookTestEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: None = _Field(alias="pass")
     data: WebhookTestEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class WebhookTestEventData(_Model):
@@ -14403,6 +14650,14 @@ NfcTagsReportLostResult = NfcTagsReportLostResponse
 NfcTagsRestoreResult = NfcTagsRestoreResponse
 
 NfcTagsRetrieveResult = NfcTagsRetrieveResponse
+
+OperationsCancelResult = OperationsCancelResponse
+
+OperationsListResult = OperationsListResponse
+
+OperationsRetrieveResult = OperationsRetrieveResponse
+
+OperationsRetryResult = OperationsRetryResponse
 
 OrgsEntitlementsRetrieveResult = OrgsEntitlementsRetrieveResponse
 

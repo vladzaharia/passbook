@@ -5,6 +5,7 @@ import { SettingRow } from './setting-row.tsx';
 
 vi.mock('@/web/lib/timezones.ts', () => ({
   localZone: () => 'America/Los_Angeles',
+  zoneLabel: () => 'Los Angeles (PT)',
   zoneOptions: () => [],
 }));
 
@@ -14,7 +15,7 @@ describe('SettingRow', () => {
   it('offers the browser zone as a link, flush with the label', () => {
     if (!zone) throw new Error('no zone field');
     render(<SettingRow field={zone} value="" error={undefined} flat onChange={() => {}} />);
-    const use = screen.getByRole('button', { name: 'Use America/Los_Angeles' });
+    const use = screen.getByRole('button', { name: 'Use Los Angeles (PT)' });
     expect(use.className).toContain('text-accent-fg');
     expect(use.className).toContain('px-0');
   });
