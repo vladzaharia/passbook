@@ -16,7 +16,8 @@ export const LOGIN_REASONS = {
   /** An email session sent to Admin or Developers. */
   polaris: 'Email links open My passes only. Use Polaris ID.',
   /** Polaris ID worked, the group did not. */
-  noaccess: 'This account has no access. Ask an administrator, or use another Polaris ID.',
+  noaccess:
+    'This account has no access. Ask an organization admin to invite you, or use another Polaris ID.',
 } as const;
 export type LoginReason = keyof typeof LOGIN_REASONS;
 export const LOGIN_REASON_KEYS = Object.keys(LOGIN_REASONS) as [LoginReason, ...LoginReason[]];

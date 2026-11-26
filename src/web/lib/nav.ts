@@ -13,6 +13,13 @@ export interface NavSection {
   entity?: EntityKind;
   /** Extra search terms for the command palette. */
   keywords?: string[];
+  /** Hidden until the platform feature is on: Polaris ID is off while its binding is absent. */
+  requires?: 'polaris';
+}
+
+/** What the deployment has, for sections that depend on it. */
+export interface NavFeatures {
+  polaris?: boolean;
 }
 
 export interface NavItem extends NavSection {
@@ -79,7 +86,14 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
 /** The platform console. */
 export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
   [overview],
-  [page('Organizations', '/orgs', 'org', ['tenants']), page('Users', '/users', 'user')],
+  [
+    page('Organizations', '/orgs', 'org', ['tenants']),
+    page('Users', '/users', 'user'),
+    {
+      ...page('Groups', '/groups', 'group', ['polaris id', 'claims', 'rules', 'access']),
+      requires: 'polaris',
+    },
+  ],
   [page('Status', '/status', 'status', ['health']), audit, retention],
   [
     page('Wallet accounts', '/wallet-accounts', 'identity', [
@@ -105,6 +119,7 @@ export function adminNavGroups(
   scope: AdminScope | undefined,
   platformAdmin: boolean,
   membership?: OrgMembership,
+  features: NavFeatures = {},
 ): NavItem[][] {
   if (!scope) return [];
   const groups = scope.kind === 'platform' ? PLATFORM_NAV : ORG_NAV;
@@ -112,6 +127,7 @@ export function adminNavGroups(
     .map((group) =>
       group
         .map((item): NavItem => ({ ...item, to: scopePath(scope, item.section) }))
+        .filter((item) => item.requires !== 'polaris' || features.polaris === true)
         .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership))
         .map((item) =>
           membership?.testOnly && item.section === '/connections' ? webhooksOnly(item) : item,

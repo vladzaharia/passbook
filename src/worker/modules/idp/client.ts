@@ -39,5 +39,12 @@ export function idpClient(env: object, log?: Logger): IdpRpc {
     snapshot: (ctx) => call((r) => r.snapshot(ctx)),
     freeze: (reason, ctx) => call((r) => r.freeze(reason, ctx)),
     calls: (since, afterId) => call((r) => r.calls(since, afterId)),
+    setupStatus: (opts) => call((r) => r.setupStatus(opts)),
+    placeRoleGroups: (ctx) => call((r) => r.placeRoleGroups(ctx)),
+    allowClientGroups: (ctx) => call((r) => r.allowClientGroups(ctx)),
+    restrictClient: (ctx) => call((r) => r.restrictClient(ctx)),
+    setClientLogo: (ctx) => call((r) => r.setClientLogo(ctx)),
+    ensureScim: (token, ctx) => call((r) => r.ensureScim(token, ctx)),
+    syncScim: (ctx) => call((r) => r.syncScim(ctx)),
   };
 }

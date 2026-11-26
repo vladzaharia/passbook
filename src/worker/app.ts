@@ -22,8 +22,13 @@ import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityRevokeRoutes } from './modules/identities/routes-revoke.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { platformInvitationRoutes } from './modules/idp/invitations/platform-routes.ts';
 import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
+import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
+import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
+import { idpPlatformRoutes } from './modules/idp/routes-platform.ts';
+import { userAccessRoutes } from './modules/idp/routes-users.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
@@ -226,7 +231,13 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/wallet-providers/reissue', walletReissueRoutes);
   // Before usersRoutes: its admin-session guard would otherwise run first on `/{id}/claims`.
   app.route('/api/v1/users', userClaimsRoutes);
+  app.route('/api/v1/users', userHoldRoutes);
+  app.route('/api/v1/users', userAccessRoutes);
   app.route('/api/v1/platform', groupClaimsRoutes);
+  app.route('/api/v1/platform', idpOperationRoutes);
+  app.route('/api/v1/platform', idpPlatformRoutes);
+  app.route('/api/v1/platform', idpGroupsRoutes);
+  app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);

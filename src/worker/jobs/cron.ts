@@ -13,6 +13,7 @@ import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-job
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyRotationPlan } from '../modules/identities/rotation-plan.ts';
 import { drainIdp, reconcileIdp } from '../modules/idp/jobs.ts';
+import { dailyScimTokens } from '../modules/idp/scim-tokens.ts';
 import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
@@ -130,6 +131,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'org_lifecycle.sweep', run: dailyOrgLifecycle },
     { name: 'developer.idle_close', run: dailyDeveloperSandbox },
     { name: 'idp.reconcile', run: reconcileIdp },
+    { name: 'idp.scim_tokens', run: dailyScimTokens },
     { name: 'retention.receipts', run: dailyReceipts },
     // Near the end: it spends what the other daily hooks left of the query budget.
     { name: 'retention.guest_passes', run: dailyGuestPasses },

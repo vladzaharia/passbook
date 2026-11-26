@@ -168,7 +168,8 @@ describe('fake IDP', () => {
   it('signup specs carry groups, and the proof matches the invited email', async () => {
     const idp = createFakeIdp();
     await idp.createGroup('crew', 'Crew', ctx);
-    await expect(idp.createSignup({ kind: 'platform' }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    // A platform signup may carry no group: groups reach the account only after its address matches.
+    expect(await idp.createSignup({ kind: 'platform' }, ctx)).toHaveProperty('tokenId');
     await expect(idp.createSignup({ kind: 'member', groups: ['nope'] }, ctx)).rejects.toThrow(
       /^IDP_REFUSED/,
     );

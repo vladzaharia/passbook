@@ -43,6 +43,7 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/webhook-endpoints/{id}/tests',
   '/api/v1/scan/activity',
   '/api/v1/scan/scans',
+  '/api/v1/platform/idp/drift',
 ]);
 /** Streams keep `after`: a position in an ordered log, not a page. */
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);

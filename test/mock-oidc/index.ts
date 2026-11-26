@@ -9,6 +9,8 @@ export interface MockOidcUser {
   emailVerified?: boolean;
   /** The ID token's `amr`: `['phr']` (a passkey) unless a test says `['otp']` (a login code). */
   amr?: string[];
+  /** Polaris ID's client restriction: the account signs in only while it holds one of these groups. */
+  requiresGroups?: string[];
 }
 
 export interface MockOidcOptions {
@@ -100,6 +102,16 @@ export async function createMockOidc(options: MockOidcOptions) {
       const redirect = p.get('redirect_uri');
       if (!user || !redirect || p.get('client_id') !== options.clientId)
         return new Response('bad request', { status: 400 });
+      if (
+        user.requiresGroups &&
+        !(user.groups ?? []).some((g) => user.requiresGroups?.includes(g))
+      ) {
+        const denied = new URL(redirect);
+        denied.searchParams.set('error', 'access_denied');
+        denied.searchParams.set('state', p.get('state') ?? '');
+        denied.searchParams.set('iss', issuer);
+        return Response.redirect(denied.toString(), 302);
+      }
       const code = `code-${++counter}`;
       codes.set(code, {
         user,

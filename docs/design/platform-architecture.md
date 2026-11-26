@@ -366,6 +366,7 @@ Constant-time token comparison; all tokens ≥ 256-bit from `crypto.getRandomVal
 - `worker` (vitest-pool-workers): every route via `SELF.fetch`; Apple protocol suite (frozen); outbox/queue/DLQ/cron; CAS conflicts; tenant isolation suite; auth flows with a mock OIDC (jose-signed tokens, mocked discovery/JWKS fetch); magic link single use; CSRF; rate limits; webhook signatures; workflows via test helpers.
 - `web` (jsdom): components, forms, `<PassCard>` per style, axe checks.
 - `e2e` (Playwright, `vite dev`/`wrangler dev`, local D1 seeded by factories, mock OIDC server in `test/mock-oidc/`): admin sign-in, create pass, edit with conflict, upload template, delete uploaded template (baked delete refused), connection create + test + sync with `demo` connector, user magic-link sign-in → sees email-linked pass → force refresh, public link without sign-in, mobile layouts, dark/light screenshots.
+  Polaris ID in e2e: the real binding Worker runs as an auxiliary Worker (`test/idp-e2e/`, reached as `IDP`) over a mock Polaris ID admin API, signup and SCIM push served by the same mock server (`test/mock-oidc/{admin-api,signup,scim-push}.ts`). `e2e/75-polaris-access.spec.ts` is the journey. The binding allows one group-read sweep a minute, so Check now waits for its window, and Pause changes has no thaw: rerun on a fresh server.
 - `npm run check` = gen → biome ci → `check:rules` (log codes, file sizes, SQL ownership, authority scope, knip) → typecheck → test (all projects) → build (vite, bundle budget, wrangler dry-run). Must be green before any merge.
 
 ---

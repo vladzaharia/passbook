@@ -149,6 +149,8 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
       'Insurance claim after a fall on 12 November.',
     ],
     note: ['Pilot pricing through March.', 'Two extra scanners for the league season.'],
+    // Pausing Polaris ID changes, and the ledger's reason for a call.
+    reason: ['Unexpected role changes in Polaris ID.'],
     // shared/copy/pass-setup.ts: the setup checks.
     message: ["Apple passes sign with PassBook's shared ID."],
     // An operation's current line and a waiting step's words (shared/operations/text.ts).

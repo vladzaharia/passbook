@@ -236,6 +236,16 @@
   },
   {
     "role": "platform",
+    "path": "/admin/platform/groups",
+    "name": "admin-platform-groups"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/groups/{groupKey}",
+    "name": "admin-platform-group-detail"
+  },
+  {
+    "role": "platform",
     "path": "/admin/platform/status",
     "name": "admin-status"
   },

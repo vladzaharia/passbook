@@ -241,9 +241,17 @@
     "resource": "connections",
     "method": "delete"
   },
+  "connections.deleteConnectionsByIdFilesByFileId": {
+    "resource": "connections.files",
+    "method": "delete"
+  },
   "connections.deleteConnectionsByIdWebhookSecretPrevious": {
     "resource": "connections",
     "method": "revokePreviousWebhookSecret"
+  },
+  "connections.deleteConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "delete"
   },
   "connections.getConnections": {
     "resource": "connections",
@@ -252,6 +260,10 @@
   "connections.getConnectionsById": {
     "resource": "connections",
     "method": "retrieve"
+  },
+  "connections.getConnectionsByIdFiles": {
+    "resource": "connections.files",
+    "method": "list"
   },
   "connections.getConnectionsByIdRuns": {
     "resource": "connections.runs",
@@ -273,13 +285,29 @@
     "resource": "connections",
     "method": "retrieveSummary"
   },
+  "connections.getConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "retrieve"
+  },
   "connections.patchConnectionsById": {
     "resource": "connections",
+    "method": "update"
+  },
+  "connections.patchConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
     "method": "update"
   },
   "connections.postConnections": {
     "resource": "connections",
     "method": "create"
+  },
+  "connections.postConnectionsByIdFiles": {
+    "resource": "connections.files",
+    "method": "upload"
+  },
+  "connections.postConnectionsByIdFilesByFileIdApply": {
+    "resource": "connections.files",
+    "method": "apply"
   },
   "connections.postConnectionsByIdPreview": {
     "resource": "connections",
@@ -316,6 +344,10 @@
   "connections.postConnectionsTestConfig": {
     "resource": "connections",
     "method": "testConfig"
+  },
+  "connections.postConnectionsUploads": {
+    "resource": "connections.uploads",
+    "method": "create"
   },
   "connections.postHooksConnectionsById": {
     "resource": "connections",
@@ -425,15 +457,15 @@
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
-  "developer.postSandboxRecreate": {
-    "resource": "developer.sandbox",
-    "method": "replace",
-    "sdk": false,
-    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
-  },
   "developer.postSandboxKey": {
     "resource": "developer.sandbox",
     "method": "reveal",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.postSandboxRecreate": {
+    "resource": "developer.sandbox",
+    "method": "replace",
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
@@ -600,6 +632,12 @@
     "method": "attachExisting",
     "sdk": false,
     "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
+  "invitations.postInvitationsConfirm": {
+    "resource": "invitationPage",
+    "method": "confirm",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret is the credential."
   },
   "invitations.postInvitationsPreview": {
     "resource": "invitationPage",
@@ -1041,10 +1079,6 @@
     "resource": "brand.passImages",
     "method": "delete"
   },
-  "orgs.getPlatformPersonalOrgLabels": {
-    "resource": "platform.orgs.personalLabels",
-    "method": "list"
-  },
   "orgs.getOrgs": {
     "resource": "platform.orgs",
     "method": "list"
@@ -1064,6 +1098,10 @@
   "orgs.getOrgsByIdWorkspace": {
     "resource": "orgs",
     "method": "retrieve"
+  },
+  "orgs.getPlatformPersonalOrgLabels": {
+    "resource": "platform.orgs.personalLabels",
+    "method": "list"
   },
   "orgs.patchOrgsById": {
     "resource": "orgs",
@@ -1361,6 +1399,38 @@
     "resource": "passViews",
     "method": "replace"
   },
+  "platform-invitations.deletePlatformInvitationsById": {
+    "resource": "platform.invitations",
+    "method": "revoke"
+  },
+  "platform-invitations.getPlatformInvitations": {
+    "resource": "platform.invitations",
+    "method": "list"
+  },
+  "platform-invitations.postPlatformInvitations": {
+    "resource": "platform.invitations",
+    "method": "create"
+  },
+  "platform-invitations.postPlatformInvitationsByIdResend": {
+    "resource": "platform.invitations",
+    "method": "resend"
+  },
+  "polaris-access.getUsersByIdAccess": {
+    "resource": "platform.users.access",
+    "method": "retrieve"
+  },
+  "polaris-access.postUsersByIdOffboard": {
+    "resource": "platform.users",
+    "method": "offboard"
+  },
+  "polaris-access.postUsersByIdRoles": {
+    "resource": "platform.users.roles",
+    "method": "set"
+  },
+  "polaris-access.postUsersByIdRolesByRoleRemoveExternal": {
+    "resource": "platform.users.roles",
+    "method": "removeExternal"
+  },
   "polaris-claims.getPlatformIdpGroupsByKeyClaims": {
     "resource": "platform.groups.claims",
     "method": "retrieve"
@@ -1376,6 +1446,78 @@
   "polaris-claims.patchUsersByIdClaims": {
     "resource": "platform.users.claims",
     "method": "update"
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKey": {
+    "resource": "platform.groups",
+    "method": "delete"
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyMembersById": {
+    "resource": "platform.groups.members",
+    "method": "delete"
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyRulesById": {
+    "resource": "platform.groups.rules",
+    "method": "delete"
+  },
+  "polaris-groups.getPlatformIdpGroups": {
+    "resource": "platform.groups",
+    "method": "list"
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyMembers": {
+    "resource": "platform.groups.members",
+    "method": "list"
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyRules": {
+    "resource": "platform.groups.rules",
+    "method": "list"
+  },
+  "polaris-groups.patchPlatformIdpGroupsByKey": {
+    "resource": "platform.groups",
+    "method": "update"
+  },
+  "polaris-groups.postPlatformIdpGroups": {
+    "resource": "platform.groups",
+    "method": "create"
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyMembers": {
+    "resource": "platform.groups.members",
+    "method": "create"
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyRules": {
+    "resource": "platform.groups.rules",
+    "method": "create"
+  },
+  "polaris-groups.postPlatformIdpGroupsEnsure": {
+    "resource": "platform.groups",
+    "method": "ensure"
+  },
+  "polaris-operations.deleteUsersByIdHoldsByRole": {
+    "resource": "platform.users.holds",
+    "method": "delete"
+  },
+  "polaris-operations.postPlatformIdpReconcile": {
+    "resource": "platform.idp",
+    "method": "check"
+  },
+  "polaris-operations.postPlatformIdpScimBreakerClear": {
+    "resource": "platform.idp.scimBreaker",
+    "method": "clear"
+  },
+  "polaris-platform.getPlatformIdp": {
+    "resource": "platform.idp",
+    "method": "retrieve"
+  },
+  "polaris-platform.getPlatformIdpCalls": {
+    "resource": "platform.idp.calls",
+    "method": "list"
+  },
+  "polaris-platform.getPlatformIdpDrift": {
+    "resource": "platform.idp.drift",
+    "method": "list"
+  },
+  "polaris-platform.postPlatformIdpFreeze": {
+    "resource": "platform.idp",
+    "method": "pause"
   },
   "public.getBByToken": {
     "resource": "public.bundles",
@@ -2213,13 +2355,13 @@
     "resource": "templates.versions",
     "method": "retrieve"
   },
-  "templates.getTemplatesByIdVersionsByVersionWalletReports": {
-    "resource": "templates.versions",
-    "method": "retrieveWalletReports"
-  },
   "templates.getTemplatesByIdVersionsByVersionAssetsByName": {
     "resource": "templates.versions",
     "method": "downloadAsset"
+  },
+  "templates.getTemplatesByIdVersionsByVersionWalletReports": {
+    "resource": "templates.versions",
+    "method": "retrieveWalletReports"
   },
   "templates.getTemplatesEligible": {
     "resource": "templates",
@@ -2441,6 +2583,10 @@
     "resource": "platform.walletEnrollments",
     "method": "list"
   },
+  "wallet-platform.getPlatformWalletRelease": {
+    "resource": "platform.walletRelease",
+    "method": "retrieve"
+  },
   "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged": {
     "resource": "platform.walletAccounts.googleManaged",
     "method": "create"
@@ -2476,6 +2622,10 @@
   "wallet-platform.postPlatformWalletCredentialsMigrateResolve": {
     "resource": "platform.walletCredentials",
     "method": "resolveMigration"
+  },
+  "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady": {
+    "resource": "platform.walletRelease",
+    "method": "enableReady"
   },
   "wallet-platform.putPlatformWalletCredentials": {
     "resource": "platform.walletCredentials",
@@ -2580,45 +2730,5 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
-  },
-  "connections.postConnectionsUploads": {
-    "resource": "connections.uploads",
-    "method": "create"
-  },
-  "connections.getConnectionsUploadsByFileId": {
-    "resource": "connections.uploads",
-    "method": "retrieve"
-  },
-  "connections.patchConnectionsUploadsByFileId": {
-    "resource": "connections.uploads",
-    "method": "update"
-  },
-  "connections.deleteConnectionsUploadsByFileId": {
-    "resource": "connections.uploads",
-    "method": "delete"
-  },
-  "connections.postConnectionsByIdFiles": {
-    "resource": "connections.files",
-    "method": "upload"
-  },
-  "connections.getConnectionsByIdFiles": {
-    "resource": "connections.files",
-    "method": "list"
-  },
-  "connections.postConnectionsByIdFilesByFileIdApply": {
-    "resource": "connections.files",
-    "method": "apply"
-  },
-  "connections.deleteConnectionsByIdFilesByFileId": {
-    "resource": "connections.files",
-    "method": "delete"
-  },
-  "wallet-platform.getPlatformWalletRelease": {
-    "resource": "platform.walletRelease",
-    "method": "retrieve"
-  },
-  "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady": {
-    "resource": "platform.walletRelease",
-    "method": "enableReady"
   }
 }

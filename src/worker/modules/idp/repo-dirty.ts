@@ -1,4 +1,4 @@
-import { all, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 
 export interface DirtyRow {
   subject: string;
@@ -63,6 +63,14 @@ export async function failDirty(
     ).changes > 0
   );
 }
+
+/** One subject's mark, or null once a drain cleared it. */
+export const dirtyOf = (db: D1Database, subject: string) =>
+  first<DirtyRow>(
+    db,
+    'SELECT subject, version, attempts, next_at FROM idp_dirty WHERE subject = ?',
+    [subject],
+  );
 
 export async function dirtyCount(db: D1Database): Promise<number> {
   const [row] = await all<{ n: number }>(db, 'SELECT count(*) AS n FROM idp_dirty');

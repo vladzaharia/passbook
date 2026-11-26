@@ -224,4 +224,6 @@ export type DeveloperFunnel = z.infer<typeof DeveloperFunnelSchema>;
 export const DeveloperAccessSchema = z.object({
   access: z.enum(['yes', 'none', 'email']),
   signInUrl: z.string().optional(),
+  /** With `none`: orgs whose open developer invitation is for an address this account has verified. */
+  invitedBy: z.array(z.string()).optional(),
 });

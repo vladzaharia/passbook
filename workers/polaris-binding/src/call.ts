@@ -32,13 +32,13 @@ export function createCall(env: BindingEnv, deps: Deps) {
       status: null,
       requestId: null,
     };
-    const req: Req = async (method, path, payload) => {
+    const req: Req = async (method, path, payload, timeoutMs) => {
       // A freeze that lands mid-call stops the next write, not only the next call.
       if (method !== 'GET' && (await isFrozen(db))) {
         await logRefusal(db, m, deps.now(), 'IDP_FROZEN');
         throw new IdpError('IDP_FROZEN', 'Polaris ID changes are paused.');
       }
-      const res = await pocketRequest(env, deps, method, path, payload);
+      const res = await pocketRequest(env, deps, method, path, payload, timeoutMs);
       last = { status: String(res.status), requestId: res.requestId };
       return res;
     };

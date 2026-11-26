@@ -8,7 +8,7 @@ import { useSession } from '@/web/lib/session.ts';
 import { Button, ConfirmDialog, EmptyState, ErrorState, toast } from '@/web/ui/index.ts';
 import { ChangeRolesDialog } from './change-roles-dialog.tsx';
 import { InvitationList, pendingInvitations } from './invitation-list.tsx';
-import { InviteDialog } from './invite-dialog.tsx';
+import { MemberInviteWizard } from './member-invite.tsx';
 import { MemberTable, memberName } from './member-table.tsx';
 import { useOrgAccess } from './use-org-access.ts';
 
@@ -90,10 +90,9 @@ export function MembersPanel({ org, inviteOpen, onInviteOpenChange }: MembersPan
         />
       ) : null}
       {personal ? null : (
-        <InviteDialog
+        <MemberInviteWizard
           open={inviteOpen}
           onOpenChange={onInviteOpenChange}
-          pending={access.inviting}
           onInvite={access.sendInvite}
           developers={access.developersAvailable}
         />

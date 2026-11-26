@@ -413,6 +413,13 @@ describe('L items', () => {
       .sort();
     expect(methods).toEqual(
       [
+        'allowClientGroups',
+        'ensureScim',
+        'placeRoleGroups',
+        'restrictClient',
+        'setClientLogo',
+        'setupStatus',
+        'syncScim',
         'apply',
         'claims',
         'createGroup',

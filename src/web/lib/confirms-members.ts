@@ -9,3 +9,13 @@ export function removeMemberConfirm(name: string, org: string): ConfirmCopy {
     typed: false,
   };
 }
+
+/** Ending a developer's access; their other memberships stay. */
+export function removeDeveloperConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Remove ${name}?`,
+    confirmLabel: 'Remove',
+    description: 'Their developer access ends.',
+    typed: false,
+  };
+}

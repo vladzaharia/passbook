@@ -1,0 +1,122 @@
+{
+  "polaris-groups.getPlatformIdpGroups": {
+    "response": {
+      "items": [
+        {
+          "key": "crew",
+          "kind": "custom",
+          "name": "passbook_g_crew",
+          "friendlyName": "Front desk staff",
+          "members": 4,
+          "claims": ["passbook_tier"],
+          "otherClients": 1,
+          "flags": [],
+          "rules": 1,
+          "manual": 2
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "polaris-groups.postPlatformIdpGroups": {
+    "request": {
+      "key": "crew",
+      "friendlyName": "Front desk staff",
+      "rules": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgRoles": ["org_admin"]
+        }
+      ]
+    },
+    "response": {
+      "key": "crew",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.postPlatformIdpGroupsEnsure": {
+    "request": {
+      "role": "support"
+    },
+    "response": {
+      "key": "support",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.patchPlatformIdpGroupsByKey": {
+    "request": {
+      "friendlyName": "Front desk team"
+    },
+    "response": {
+      "key": "crew",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKey": {
+    "response": {
+      "key": "crew",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyRules": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgRoles": ["org_admin"],
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyRules": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgRoles": ["org_admin"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgRoles": ["org_admin"],
+      "createdAt": 1764000000000
+    }
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyRulesById": {
+    "response": {
+      "ok": true
+    }
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyMembers": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+          "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+          "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "source": "manual",
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyMembers": {
+    "request": {
+      "userId": "0193a1b2-7c00-7000-8000-0000000000b1"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+      "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+      "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "source": "manual",
+      "createdAt": 1764000000000
+    }
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyMembersById": {
+    "response": {
+      "ok": true
+    }
+  }
+}

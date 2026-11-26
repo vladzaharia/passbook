@@ -110,6 +110,12 @@ const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
   bundleToken: (c) => firstInOrgs(c, '/api/v1/bundles', (r) => last(r.url)),
   joinToken,
   userId: async (c) => id((await list(await c.platform(), '/api/v1/users?limit=1'))[0]),
+  groupKey: async (c) => {
+    const res = await (await c.platform()).get('/api/v1/idp/groups');
+    if (!res.ok()) return undefined;
+    const rows = ((await res.json()) as { items?: { key?: string; kind?: string }[] }).items ?? [];
+    return (rows.find((r) => r.kind === 'custom') ?? rows[0])?.key;
+  },
   identityId: async (c) => {
     const rows = await list(await c.platform(), '/api/v1/identities?limit=20');
     return id(rows.find((r) => r.id !== 'platform') ?? rows[0]);
