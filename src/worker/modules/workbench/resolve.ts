@@ -9,7 +9,6 @@ import type {
 } from '../../platform/auth.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
-import { first } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { workbenchTestOnly } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
@@ -19,7 +18,7 @@ import { keyAuthOf } from '../api-keys/service.ts';
 import { tryTokenKeyRow } from '../developer/repo-try.ts';
 import { resolveTryToken } from '../developer/try-token.ts';
 import { SHARED_WRITES } from './inventory.ts';
-import { memberTokenRow } from './repo.ts';
+import { memberTokenRow, sandboxPersonRow } from './repo.ts';
 import { tokenBucket, verifyWorkbenchToken, type WorkbenchClaims } from './token.ts';
 
 const ALLOWED: ReadonlySet<string> = new Set(WORKBENCH_ROUTES);
@@ -88,13 +87,7 @@ async function sandboxPerson(
   amr: SessionAuth['amr'],
 ): Promise<SessionAuth | null> {
   if (!membershipId) return null;
-  const row = await first<{ user_id: string; roles: string }>(
-    env.DB,
-    `SELECT s.user_id, s.roles FROM sessions s
-     JOIN org_memberships m ON m.id = ?1 AND m.org_id = ?2 AND m.user_id = s.user_id AND m.revoked_at IS NULL
-     WHERE s.id_hash = ?3 AND s.revoked_at IS NULL`,
-    [membershipId, claims.orgId, claims.sessionIdHash],
-  );
+  const row = await sandboxPersonRow(env.DB, claims.orgId, membershipId, claims.sessionIdHash);
   if (!row) return null;
   const roles = parseRoles(row.roles).filter((role) => role !== 'admin');
   if (roles.length === 0) return null;
