@@ -26,7 +26,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   operations: async () => (await import('./operations.ts')).operationsIsland,
   'org-chip': async () => (await import('../bench/mount.tsx')).barChipIsland,
   'bench-strip': async () => (await import('../bench/mount.tsx')).stripIsland,
-  logs: async () => (await import('../logs/entry.tsx')).logsIsland,
+  logs: async () => (await import('../logs/logs-island.tsx')).logsIsland,
 };
 
 /**

@@ -31,9 +31,10 @@ import './logs.css';
 
 const C = LOGS_BENCH_COPY;
 const NO_OPS: OpIndex = {};
-const idOf = (r: RequestLogEntry) => r.id;
+/** A call is selected by its request id: the id the console, the Trace and the search already link with. */
+const idOf = (r: RequestLogEntry) => r.requestId;
 
-/** One read of a row by its log id or request id, kept so a hash on a request id selects the same row. */
+/** One read of a call by its request id or its log id. */
 async function readOne(id: string): Promise<RequestLogEntry | null> {
   const res = await fetch(`${LOG_API}/${encodeURIComponent(id)}`, {
     headers: { accept: 'application/json' },
@@ -65,6 +66,7 @@ export function LogsTool() {
     known: false,
   });
   const [ops, setOps] = useState<OpIndex>(NO_OPS);
+  const [tab, setTab] = useState('request');
   useEffect(() => {
     let live = true;
     void loadRail().then((r) => live && setRail({ key: r.body?.key ?? null, known: true }));
@@ -73,11 +75,11 @@ export function LogsTool() {
     };
   }, []);
 
-  // A hash that names a request id, not a log id: the same row once it is read.
+  // A hash that names the call by its log id (or a request id in other letters) becomes its request id.
   const selectRef = useRef<(id: string | null) => void>(() => undefined);
   const fetchOne = useCallback(async (id: string) => {
     const row = await readOne(id);
-    if (row && row.id !== id) selectRef.current(row.id);
+    if (row && row.requestId !== id) selectRef.current(row.requestId);
     return row;
   }, []);
   const selection = useBenchSelection({
@@ -91,8 +93,8 @@ export function LogsTool() {
     const id = selection.selectedId;
     if (!id || selection.selected) return;
     const wanted = id.toLowerCase();
-    const row = log.items.find((r) => r.requestId.toLowerCase() === wanted);
-    if (row) selection.select(row.id, { open: true });
+    const row = log.items.find((r) => r.id === id || r.requestId.toLowerCase() === wanted);
+    if (row) selection.select(row.requestId, { open: true });
   }, [log.items, selection.selectedId, selection.selected, selection.select]);
 
   const row = selection.selected;
@@ -134,6 +136,14 @@ export function LogsTool() {
   if (log.phase === 'failed') return <BenchState scene="failed" onRetry={log.retry} />;
   if (log.phase === 'loading') return <BenchSkeleton rows={5} />;
 
+  const nothing = narrowed ? (
+    <NoMatch onClear={clearAll} />
+  ) : (
+    <FirstCall
+      hasKey={!rail.known || rail.key !== null}
+      onShowPortal={() => filters.set('source', 'try')}
+    />
+  );
   const keys = keyOptions(rail.key, log.items, filters.values.key);
   const list = (
     <div className="logs-main" aria-busy={log.busy || undefined} data-busy={log.busy || undefined}>
@@ -155,16 +165,6 @@ export function LogsTool() {
           onMore: log.hasMore ? () => void log.loadMore() : undefined,
           loading: log.more,
         }}
-        empty={
-          narrowed ? (
-            <NoMatch onClear={clearAll} />
-          ) : (
-            <FirstCall
-              hasKey={!rail.known || rail.key !== null}
-              onShowPortal={() => filters.set('source', 'try')}
-            />
-          )
-        }
       />
       <p className="sr" aria-live="polite">
         {log.announce}
@@ -177,12 +177,14 @@ export function LogsTool() {
       detail={detail}
       rail={rail.key}
       ops={ops}
+      tab={tab}
+      onTab={setTab}
       onPrev={at > 0 ? () => selection.step(-1) : undefined}
       onNext={at >= 0 && at < order.length - 1 ? () => selection.step(1) : undefined}
     />
-  ) : log.items.length > 0 ? (
+  ) : (
     <p className="logs-none">{C.select}</p>
-  ) : null;
+  );
   return (
     <>
       <BenchSlot name="count">{C.count(log.items.length, log.hasMore)}</BenchSlot>
@@ -227,14 +229,18 @@ export function LogsTool() {
           />
         </FilterBar>
       </Toolbar>
-      <BenchSplit
-        main={list}
-        pane={pane}
-        open={selection.open && row !== null}
-        onClose={() => selection.setOpen(false)}
-        label={C.list}
-        bare
-      />
+      {log.items.length === 0 && !row ? (
+        <div className="logs-solo">{nothing}</div>
+      ) : (
+        <BenchSplit
+          main={list}
+          pane={pane}
+          open={selection.open && row !== null}
+          onClose={() => selection.setOpen(false)}
+          label={C.list}
+          bare
+        />
+      )}
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { ApiRail, RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
 import { PATHS } from '../../../shared/developers.ts';
@@ -44,6 +44,8 @@ export function LogInspector({
   detail,
   rail,
   ops,
+  tab,
+  onTab,
   onPrev,
   onNext,
 }: {
@@ -51,10 +53,12 @@ export function LogInspector({
   detail: Detail | null;
   rail: ApiRail['key'];
   ops: OpIndex;
+  /** Kept by the tool: the pane is drawn again when the window changes shape. */
+  tab: string;
+  onTab: (tab: string) => void;
   onPrev?: () => void;
   onNext?: () => void;
 }) {
-  const [tab, setTab] = useState<string>('request');
   const full = detail?.kind === 'ready' ? detail.row : null;
   const events = useCausedEvents(full);
   const shown = shownPath(row);
@@ -70,8 +74,9 @@ export function LogInspector({
     [full],
   );
   const base = builderLink(ops, row.method, row.route);
+  const key = keyNode(row.keyId, rail);
   const nodes: TraceNode[] = [
-    ...(keyNode(row.keyId, rail) ? [keyNode(row.keyId, rail) as TraceNode] : []),
+    ...(key ? [key] : []),
     ...traceNodes({
       request: { id: row.requestId, method: row.method, path: shownPath(row), status: row.status },
       events,
@@ -88,14 +93,14 @@ export function LogInspector({
     if (!full.hasBodies) return <p className="logs-quiet">{C.bodiesGone}</p>;
     return which === 'request' ? (
       <BenchCode
-        label={C.request}
+        label={C.body}
         body={full.requestBody}
         items={items}
         codes={NO_CODES}
         empty={C.noBody}
       />
     ) : (
-      <BenchCode label={C.response} body={full.responseBody} codes={NO_CODES} empty={C.noBody} />
+      <BenchCode label={C.body} body={full.responseBody} codes={NO_CODES} empty={C.noBody} />
     );
   };
   return (
@@ -146,7 +151,7 @@ export function LogInspector({
       }
       tabs={TABS}
       tab={tab}
-      onTab={setTab}
+      onTab={onTab}
       onPrev={onPrev}
       onNext={onNext}
       trace={<Trace nodes={nodes} />}

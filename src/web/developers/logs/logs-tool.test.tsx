@@ -70,7 +70,7 @@ describe('Logs on the bench', () => {
     expect(logCalls(calls)[1]).toContain('status=5xx');
     expect(logCalls(calls)[1]).toContain('path=passes');
     expect(location.search).toContain('status=5xx');
-    await waitFor(() => expect(rows()[0]?.id).toContain('log-2'));
+    await waitFor(() => expect(rows()[0]?.id).toContain('req-2'));
   });
 
   it('moves an old #code= link into the query', async () => {
@@ -91,7 +91,7 @@ describe('Logs on the bench', () => {
     fireEvent.click(rows()[0] as HTMLElement);
     const pane = await screen.findByRole('complementary', { name: 'Requests' });
     expect(within(pane).getByRole('heading', { name: /POST \/passes\/p1\?a=1/ })).toBeVisible();
-    expect(location.hash).toBe('#log-1');
+    expect(location.hash).toBe('#req-1');
     await waitFor(() => expect(within(pane).getByText(/Ada/)).toBeInTheDocument());
     const again = within(pane).getByRole('link', { name: 'Run again' });
     expect(again.getAttribute('href')).toContain('#passes.update?body=');
@@ -113,21 +113,21 @@ describe('Logs on the bench', () => {
     expect(await screen.findByText('Bodies are kept for 24 hours.')).toBeInTheDocument();
   });
 
-  it('opens a row by its request id, case aside, without pinning it', async () => {
+  it('opens a row by its request id in other letters, or by its log id, without pinning it', async () => {
     history.replaceState(null, '', '/developers/logs#REQ-2');
     stubApi({ lists: [page([entry(1), entry(2)])], rows: { 'log-2': detail(2) } });
     render(<LogsTool />);
-    await waitFor(() => expect(location.hash).toBe('#log-2'));
+    await waitFor(() => expect(location.hash).toBe('#req-2'));
     expect(screen.queryByText('Not in this view')).toBeNull();
     expect(rows()[1]?.getAttribute('aria-selected')).toBe('true');
   });
 
-  it('pins a call older than the page, found by its request id', async () => {
-    history.replaceState(null, '', '/developers/logs#req-9');
-    stubApi({ lists: [page([entry(1)])], rows: { 'req-9': detail(9) } });
+  it('pins a call older than the page, found by its request id or by its log id', async () => {
+    history.replaceState(null, '', '/developers/logs#log-9');
+    stubApi({ lists: [page([entry(1)])], rows: { 'log-9': detail(9) } });
     render(<LogsTool />);
     await screen.findByText('Not in this view');
-    await waitFor(() => expect(location.hash).toBe('#log-9'));
+    await waitFor(() => expect(location.hash).toBe('#req-9'));
   });
 
   it('slides newer calls in at the top while listening, and says so', async () => {
@@ -142,7 +142,7 @@ describe('Logs on the bench', () => {
       await vi.advanceTimersByTimeAsync(4100);
     });
     expect(rows()).toHaveLength(2);
-    expect(rows()[0]?.id).toContain('log-3');
+    expect(rows()[0]?.id).toContain('req-3');
     expect(rows()[0]?.getAttribute('data-fresh')).not.toBeNull();
     expect(logCalls(calls).at(-1)).toContain('after=log-2');
     expect(screen.getByText('1 new request')).toBeInTheDocument();

@@ -48,6 +48,7 @@ export const LOGS_BENCH_COPY = {
   inspector: {
     request: 'Request',
     response: 'Response',
+    body: 'Body',
     noBody: 'No body',
     bodiesGone: 'Bodies are kept for 24 hours.',
     expires: 'Bodies expire',

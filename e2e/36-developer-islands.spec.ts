@@ -191,7 +191,7 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     await page.keyboard.press('Enter');
     await page.waitForURL((u) => u.pathname === '/developers/logs');
     expect(page.url().toLowerCase()).toContain(requestId.toLowerCase());
-    await expect(page.locator('details[open] .logs-sum')).toBeVisible();
+    await expect(page.locator('[role="option"][aria-selected="true"]')).toBeVisible();
     await shot(page, 'logs-request-id');
   }
 });

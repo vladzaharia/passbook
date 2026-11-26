@@ -92,7 +92,8 @@ test('the Workbench frame: one bench, the same boxes on all four tools', async (
     await expect(strip.getByRole('button', { name: 'Sandbox menu' })).toBeVisible();
     if (tool === 'console') await expect(strip.getByText('Run here')).toBeVisible();
     else await expect(strip.locator('.bench-key code')).toHaveText(/^\S+…$/);
-    if (tool === 'logs') await expect(page.locator('[data-bench-status] .bench-live')).toBeVisible();
+    if (tool === 'logs')
+      await expect(page.locator('[data-bench-status] .bench-live')).toBeVisible();
     await page.waitForLoadState('networkidle');
     await shots(page, `bench-${tool}`);
   }

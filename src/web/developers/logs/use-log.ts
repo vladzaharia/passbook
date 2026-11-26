@@ -126,7 +126,7 @@ export function useLog(filters: LogFilters) {
         if (added.length > 0) {
           quietSince.current = Date.now();
           setItems((all) => [...added, ...all.filter((r) => !added.some((a) => a.id === r.id))]);
-          setFresh(new Set(added.map((r) => r.id)));
+          setFresh(new Set(added.map((r) => r.requestId)));
           setAnnounce(LOGS_BENCH_COPY.fresh(added.length));
           clearFresh.push(setTimeout(() => setFresh(new Set()), FRESH_MS));
         }

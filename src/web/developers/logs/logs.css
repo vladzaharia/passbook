@@ -51,14 +51,9 @@
 .logs-facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 12px;
+  gap: 2px 16px;
   color: var(--pk-text-muted);
   font: 400 12px / 18px var(--pk-font-mono);
-}
-.logs-facts > * + *::before {
-  content: "·";
-  margin-inline-end: 12px;
-  color: var(--pk-border-strong);
 }
 .logs-none {
   margin: 0;
@@ -69,8 +64,21 @@
 
 /* The first call, in the empty state's card. */
 .logs-first {
-  width: min(100%, 36rem);
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 36rem;
   text-align: start;
+}
+.logs-solo {
+  max-width: 52rem;
+}
+/* The card is a grid: its action row would take the code's full line length without these. */
+.logs-solo .pstate-a {
+  min-width: 0;
+  max-width: 100%;
+}
+.logs-solo .code {
+  max-width: 100%;
 }
 .logs-first-a {
   display: flex;
