@@ -3320,6 +3320,8 @@ type IdentityRunsStartManagedResponse struct {
 	FinishedAt *int64  `json:"finishedAt"`
 }
 
+type InvitationsCreateBody = InvitationsCreateParams
+
 type InvitationsCreateParams struct {
 	Email string   `json:"email"`
 	Roles []string `json:"roles"`
@@ -3334,6 +3336,23 @@ type InvitationsCreateResponse struct {
 	ExpiresAt  int64    `json:"expiresAt"`
 	RevokedAt  *int64   `json:"revokedAt"`
 	AcceptedAt *int64   `json:"acceptedAt"`
+}
+
+type InvitationsCreateResult = InvitationsCreateResponse
+
+type InvitationsListItem struct {
+	ID         string   `json:"id"`
+	OrgID      string   `json:"orgId"`
+	Email      string   `json:"email"`
+	Roles      []string `json:"roles"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+}
+
+type InvitationsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type InvitationsListResponse struct {
@@ -3363,9 +3382,13 @@ type InvitationsResendResponse struct {
 	AcceptedAt *int64   `json:"acceptedAt"`
 }
 
+type InvitationsResendResult = InvitationsResendResponse
+
 type InvitationsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
+
+type InvitationsRevokeResult = InvitationsRevokeResponse
 
 type JoinLinksRetrieveResponse struct {
 	Link   map[string]any                        `json:"link"`
@@ -3442,6 +3465,26 @@ type LegalHoldsReleaseResponse struct {
 	Ok bool `json:"ok"`
 }
 
+type MembershipsListItem struct {
+	ID           string   `json:"id"`
+	OrgID        string   `json:"orgId"`
+	OrgName      string   `json:"orgName"`
+	OrgSlug      string   `json:"orgSlug"`
+	Personal     *bool    `json:"personal,omitempty"`
+	TestOnly     *bool    `json:"testOnly,omitempty"`
+	UserID       string   `json:"userId"`
+	Roles        []string `json:"roles"`
+	Capabilities []string `json:"capabilities"`
+	CreatedAt    int64    `json:"createdAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	UserName     *string  `json:"userName"`
+	UserEmail    *string  `json:"userEmail"`
+}
+
+type MembershipsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
 type MembershipsListResponse struct {
 	Items      []MembershipsListResponseItemsItem `json:"items"`
 	NextCursor *string                            `json:"nextCursor"`
@@ -3467,6 +3510,10 @@ type MembershipsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
 
+type MembershipsRevokeResult = MembershipsRevokeResponse
+
+type MembershipsUpdateRolesBody = MembershipsUpdateRolesParams
+
 type MembershipsUpdateRolesParams struct {
 	Roles []string `json:"roles"`
 }
@@ -3486,6 +3533,8 @@ type MembershipsUpdateRolesResponse struct {
 	UserName     *string  `json:"userName"`
 	UserEmail    *string  `json:"userEmail"`
 }
+
+type MembershipsUpdateRolesResult = MembershipsUpdateRolesResponse
 
 type MessageRulesCountDueBody = MessageRulesCountDueParams
 

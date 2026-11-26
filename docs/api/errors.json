@@ -2735,6 +2735,15 @@
       ]
     },
     {
+      "code": "KEY_CANNOT_ADMINISTER",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "KEY_CREATOR_GONE",
       "statuses": [
         403

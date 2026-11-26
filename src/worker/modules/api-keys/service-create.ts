@@ -75,7 +75,7 @@ export function assertCredentialKey(
 
 /** Setup, template and audit scopes belong to one organization (a template scope acts as a member of it): a platform key never holds them. */
 export function assertOrgBoundScopes(scopes: readonly string[], kind: ApiKeyKind): void {
-  const orgOnly = ['org:write', 'wallet:write', 'audit:read', 'nfc:read', 'nfc:write'];
+  const orgOnly = 'org:write wallet:write audit:read nfc:read nfc:write members:read'.split(' ');
   if (
     kind === 'platform' &&
     scopes.some(

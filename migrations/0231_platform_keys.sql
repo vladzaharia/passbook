@@ -11,6 +11,11 @@ WHEN EXISTS (SELECT 1 FROM json_each(NEW.scopes) s WHERE s.value LIKE 'platform:
   AND EXISTS (SELECT 1 FROM json_each(NEW.scopes) s WHERE s.value NOT LIKE 'platform:%')
 BEGIN SELECT RAISE(ABORT, 'platform and org scopes together'); END;
 
+-- Member scopes name one organization's people: a platform-kind key (no org) never holds them, whatever else it holds.
+CREATE TRIGGER api_keys_platform_no_members BEFORE INSERT ON api_keys
+WHEN NEW.kind = 'platform' AND EXISTS (SELECT 1 FROM json_each(NEW.scopes) s WHERE s.value LIKE 'members:%')
+BEGIN SELECT RAISE(ABORT, 'member scope on a platform key'); END;
+
 -- `creator_access_revision`: see below. Added first, so the mint rules can compare it.
 ALTER TABLE api_keys ADD COLUMN creator_access_revision INTEGER;
 

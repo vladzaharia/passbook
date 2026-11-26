@@ -16,6 +16,8 @@ import { OperationsResource } from './resources/operations.ts';
 import { DeveloperInvitationsResource } from './resources/developer-invitations.ts';
 import { DevelopersResource } from './resources/developers.ts';
 import { OrgsResource } from './resources/orgs.ts';
+import { InvitationsResource } from './resources/invitations.ts';
+import { MembershipsResource } from './resources/memberships.ts';
 import { PassImportsResource } from './resources/pass-imports.ts';
 import { PassesResource } from './resources/passes.ts';
 import { PrintJobsResource } from './resources/print-jobs.ts';
@@ -55,6 +57,8 @@ export class Resources {
   readonly developerInvitations: DeveloperInvitationsResource;
   readonly developers: DevelopersResource;
   readonly orgs: OrgsResource;
+  readonly invitations: InvitationsResource;
+  readonly memberships: MembershipsResource;
   readonly passImports: PassImportsResource;
   readonly passes: PassesResource;
   readonly printJobs: PrintJobsResource;
@@ -92,6 +96,8 @@ export class Resources {
     this.developerInvitations = new DeveloperInvitationsResource(core);
     this.developers = new DevelopersResource(core);
     this.orgs = new OrgsResource(core);
+    this.invitations = new InvitationsResource(core);
+    this.memberships = new MembershipsResource(core);
     this.passImports = new PassImportsResource(core);
     this.passes = new PassesResource(core);
     this.printJobs = new PrintJobsResource(core);

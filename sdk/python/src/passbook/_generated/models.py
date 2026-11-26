@@ -427,12 +427,18 @@ __all__ = [
     "IdentityRunsRetryResponse",
     "IdentityRunsStartManagedParams",
     "IdentityRunsStartManagedResponse",
+    "InvitationsCreateBody",
     "InvitationsCreateParams",
     "InvitationsCreateResponse",
+    "InvitationsCreateResult",
+    "InvitationsListItem",
     "InvitationsListResponse",
     "InvitationsListResponseItemsItem",
+    "InvitationsListResult",
     "InvitationsResendResponse",
+    "InvitationsResendResult",
     "InvitationsRevokeResponse",
+    "InvitationsRevokeResult",
     "JoinLinksRetrieveResponse",
     "JoinLinksRetrieveResponseIssuesItem",
     "JoinLinksRotateResponse",
@@ -445,11 +451,16 @@ __all__ = [
     "LegalHoldsListResponse",
     "LegalHoldsListResponseItemsItem",
     "LegalHoldsReleaseResponse",
+    "MembershipsListItem",
     "MembershipsListResponse",
     "MembershipsListResponseItemsItem",
+    "MembershipsListResult",
     "MembershipsRevokeResponse",
+    "MembershipsRevokeResult",
+    "MembershipsUpdateRolesBody",
     "MembershipsUpdateRolesParams",
     "MembershipsUpdateRolesResponse",
+    "MembershipsUpdateRolesResult",
     "MessageRulesCountDueBody",
     "MessageRulesCountDueParams",
     "MessageRulesCountDueParamsAnchor1",
@@ -4753,6 +4764,16 @@ class InvitationsCreateResponse(_Model):
     revokedAt: int | None
     acceptedAt: int | None
 
+class InvitationsListItem(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+    acceptedAt: int | None
+
 class InvitationsListResponse(_Model):
     items: _List[InvitationsListResponseItemsItem]
     nextCursor: str | None
@@ -4842,6 +4863,21 @@ class LegalHoldsListResponseItemsItem(_Model):
 
 class LegalHoldsReleaseResponse(_Model):
     ok: _Literal[True]
+
+class MembershipsListItem(_Model):
+    id: str
+    orgId: str
+    orgName: str
+    orgSlug: str
+    personal: bool | None = None
+    testOnly: bool | None = None
+    userId: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    capabilities: _List[_Literal["org:read", "org:manage", "members:read", "members:manage", "integrations:read", "integrations:manage", "templates:read", "templates:author", "templates:review", "templates:publish", "passes:read", "passes:operate", "messages:read", "messages:manage", "scanning:read", "scanning:manage", "audit:read"] | str]
+    createdAt: int
+    revokedAt: int | None
+    userName: str | None
+    userEmail: str | None
 
 class MembershipsListResponse(_Model):
     items: _List[MembershipsListResponseItemsItem]
@@ -14827,6 +14863,24 @@ HoldersUnassignBody = HoldersUnassignParams
 HoldersUnassignResult = HoldersUnassignResponse
 
 IdentitiesListResponse = IdentitiesListResponse1 | IdentitiesListResponse2
+
+InvitationsCreateBody = InvitationsCreateParams
+
+InvitationsCreateResult = InvitationsCreateResponse
+
+InvitationsListResult = InvitationsListResponse
+
+InvitationsResendResult = InvitationsResendResponse
+
+InvitationsRevokeResult = InvitationsRevokeResponse
+
+MembershipsListResult = MembershipsListResponse
+
+MembershipsRevokeResult = MembershipsRevokeResponse
+
+MembershipsUpdateRolesBody = MembershipsUpdateRolesParams
+
+MembershipsUpdateRolesResult = MembershipsUpdateRolesResponse
 
 MessageRulesCountDueBody = MessageRulesCountDueParams
 

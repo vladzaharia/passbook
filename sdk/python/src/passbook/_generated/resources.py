@@ -1218,6 +1218,82 @@ class OrgsResource:
         return self._core.request("PATCH", f"/api/v1/orgs/{_p(org_id)}/pass-setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.OrgsUpdatePassSetupResult, **opts)
 
 
+class InvitationsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        body: m.InvitationsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsCreateResult:
+        """Invite an organization member `POST /api/v1/orgs/{id}/invitations`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/invitations", body=body, result=m.InvitationsCreateResult, **opts)
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.InvitationsListItem]:
+        """List organization invitations `GET /api/v1/orgs/{id}/invitations`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/invitations", query={"cursor": cursor}, result=m.InvitationsListResult, cursor_param="cursor", **opts)
+
+    def resend(
+        self,
+        id: str,
+        invitation_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsResendResult:
+        """Resend an organization invitation `POST /api/v1/orgs/{id}/invitations/{invitationId}/resend`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/invitations/{_p(invitation_id)}/resend", result=m.InvitationsResendResult, **opts)
+
+    def revoke(
+        self,
+        id: str,
+        invitation_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsRevokeResult:
+        """Revoke an organization invitation `DELETE /api/v1/orgs/{id}/invitations/{invitationId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/invitations/{_p(invitation_id)}", result=m.InvitationsRevokeResult, **opts)
+
+
+class MembershipsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.MembershipsListItem]:
+        """List organization memberships `GET /api/v1/orgs/{id}/memberships`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/memberships", query={"cursor": cursor}, result=m.MembershipsListResult, cursor_param="cursor", **opts)
+
+    def revoke(
+        self,
+        id: str,
+        membership_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.MembershipsRevokeResult:
+        """Revoke an organization membership `DELETE /api/v1/orgs/{id}/memberships/{membershipId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", result=m.MembershipsRevokeResult, **opts)
+
+    def update_roles(
+        self,
+        id: str,
+        membership_id: str,
+        body: m.MembershipsUpdateRolesBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.MembershipsUpdateRolesResult:
+        """Change an organization member's roles `PATCH /api/v1/orgs/{id}/memberships/{membershipId}`"""
+        return self._core.request("PATCH", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", body=body, result=m.MembershipsUpdateRolesResult, **opts)
+
+
 class PassImportsMappingsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2974,6 +3050,8 @@ class Resources:
         self.developer_invitations = DeveloperInvitationsResource(core)
         self.developers = DevelopersResource(core)
         self.orgs = OrgsResource(core)
+        self.invitations = InvitationsResource(core)
+        self.memberships = MembershipsResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)

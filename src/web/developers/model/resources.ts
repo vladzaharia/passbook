@@ -48,6 +48,8 @@ const GROUPS: Record<string, (typeof GROUP_ORDER)[number]> = {
   auditEntries: 'Organization',
   developerInvitations: 'Organization',
   developers: 'Organization',
+  memberships: 'Organization',
+  invitations: 'Organization',
 };
 
 const LABELS: Record<string, string> = {

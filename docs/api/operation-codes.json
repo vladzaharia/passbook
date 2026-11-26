@@ -1293,12 +1293,14 @@
     "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
     "FORBIDDEN",
     "LAST_ORG_ADMIN",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "developer invitations get /{id}/developer-invitations": [
     "FORBIDDEN",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1310,6 +1312,7 @@
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1326,6 +1329,7 @@
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",
@@ -3074,13 +3078,20 @@
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
     "MEMBERSHIP_CONFLICT",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "organization memberships delete /{id}/memberships/{membershipId}": [
     "FORBIDDEN",
+    "KEY_CANNOT_ADMINISTER",
     "LAST_ORG_ADMIN",
     "MEMBERSHIP_CONFLICT",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "organization memberships get /invitations/accept": [],
@@ -3090,18 +3101,28 @@
   ],
   "organization memberships get /{id}/invitations": [
     "FORBIDDEN",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "organization memberships get /{id}/memberships": [
     "FORBIDDEN",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "organization memberships patch /{id}/memberships/{membershipId}": [
     "FORBIDDEN",
+    "KEY_CANNOT_ADMINISTER",
     "LAST_ORG_ADMIN",
     "MEMBERSHIP_CONFLICT",
     "MEMBERSHIP_NOT_FOUND",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "organization memberships post /invitations/accept": [
@@ -3125,15 +3146,23 @@
   "organization memberships post /{id}/invitations": [
     "FORBIDDEN",
     "INVITATION_PENDING",
+    "KEY_CANNOT_ADMINISTER",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
   "organization memberships post /{id}/invitations/{invitationId}/resend": [
     "FORBIDDEN",
     "INVITATION_PENDING",
+    "KEY_CANNOT_ADMINISTER",
     "MEMBERSHIP_CONFLICT",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
+    "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "orgs delete /{id}": [
