@@ -3,11 +3,10 @@ import type { OperationDto, OperationResult } from '../../../shared/contracts/op
 import type { SessionAuth } from '../../platform/auth.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { isActive, parseSteps } from '../operations/dto.ts';
 import { progressOf } from '../operations/progress.ts';
 import type { Progress } from '../operations/progress-types.ts';
-import { rowById } from '../operations/repo.ts';
-import { deleteHalf, purgeInstanceId, startPurge } from './delete.ts';
+import { releaseLease, rowById } from '../operations/repo.ts';
+import { deleteHalf, startPurge } from './delete.ts';
 import { resetSandbox } from './reset.ts';
 import { provisionSandbox, type SandboxHooks } from './service.ts';
 
@@ -25,8 +24,6 @@ export interface RunOptions {
   /** Tests: stop after a step, as a fault would. */
   hooks?: SandboxHooks;
   after?: (step: string) => Promise<void>;
-  /** How often a start over looks for the purge to reach its wait. */
-  pollMs?: number;
 }
 
 /** Ids only: the page reads the sandbox from them, and no secret fits. */
@@ -48,10 +45,16 @@ export async function createRun(
   progress: Progress,
   options: RunOptions = {},
 ): Promise<void> {
+  await held(ctx, op, options.lease);
   const sandbox = await provisionSandbox(ctx, session, progress, {
     ...(options.viewedAt === undefined ? {} : { viewedAt: options.viewedAt }),
     ...(op.target ? { orgId: op.target.id } : {}),
-    ...(options.hooks ? { hooks: options.hooks } : {}),
+    hooks: {
+      after: async (step) => {
+        await held(ctx, op, options.lease);
+        await options.hooks?.after?.(step);
+      },
+    },
   });
   await progress.succeed(result(idsOf(sandbox)));
 }
@@ -63,21 +66,34 @@ export async function resetRun(
   progress: Progress,
   options: RunOptions = {},
 ): Promise<void> {
-  const done = await resetSandbox(ctx, session, op, progress, options.after);
+  const done = await resetSandbox(ctx, session, op, progress, async (step) => {
+    await held(ctx, op, options.lease);
+    await options.after?.(step);
+  });
   await progress.succeed(result({ ...idsOf(done.sandbox), ...done.ids }));
 }
 
-/** The purge Workflow's instance: the one the operation was started with, else this attempt's. */
-async function instanceOf(ctx: ServiceContext, op: OperationDto, orgId: string): Promise<string> {
-  return (
-    (await rowById(ctx.env.DB, op.id))?.workflow_instance_id ??
-    (await purgeInstanceId(ctx, op, orgId, ctx.clock.now()))
-  );
+const stepDone = (op: OperationDto, key: string) =>
+  op.steps.find((s) => s.key === key)?.state === 'done';
+
+/** A run that holds a lease checks it still does before each step's domain writes: a twin that took it over wins. */
+async function held(ctx: ServiceContext, op: OperationDto, lease: string | undefined) {
+  if (lease === undefined) return;
+  const owner = (await rowById(ctx.env.DB, op.id))?.lease_owner;
+  if (owner && owner !== lease)
+    throw new AppError('OPERATION_LEASE_LOST', 409, 'Another runner took this over.');
+}
+
+/** The sandbox this operation is about: its target, set when it started. */
+function targetOf(op: OperationDto): string {
+  if (!op.target) throw new AppError('SANDBOX_NOT_FOUND', 404, 'Sandbox not found.');
+  return op.target.id;
 }
 
 /**
  * Delete: close the sandbox and revoke its keys here, then the org purge Workflow takes over. It reports
- * `passes` and the `erase` wait, and ends the operation: this request has nothing left to wait for.
+ * `passes` and the `erase` wait, and ends the operation: this request has nothing left to wait for. The run is
+ * pinned to the operation's own org: a newer sandbox of the person is never touched.
  */
 export async function deleteRun(
   ctx: ServiceContext,
@@ -85,33 +101,21 @@ export async function deleteRun(
   op: OperationDto,
   progress: Progress,
 ): Promise<void> {
-  const orgId = (await deleteHalf(ctx, by, progress)) ?? op.target?.id;
-  if (!orgId) throw new AppError('SANDBOX_NOT_FOUND', 404, 'Sandbox not found.');
-  if (await startPurge(ctx, op, orgId, await instanceOf(ctx, op, orgId), true)) return;
+  const orgId = targetOf(op);
+  await deleteHalf(ctx, by, progress, orgId);
+  const instance =
+    (await rowById(ctx.env.DB, op.id))?.workflow_instance_id ?? `${op.id}-r${op.attempt}`;
+  if (await startPurge(ctx, op, orgId, instance, true)) return;
   // No purge Workflow on this Worker: nothing erases the data, so there is nothing to wait for.
   await progress.step('passes').skip();
   await progress.succeed(result({ orgId }));
 }
 
-const MAX_WAIT_MS = 25 * 60_000;
-
-/** True once the purge reaches its wait (the passes are voided), false when the operation ended meanwhile. */
-async function purgeReachedWait(ctx: ServiceContext, opId: string, pollMs: number) {
-  const until = Date.now() + MAX_WAIT_MS;
-  while (Date.now() < until) {
-    const row = await rowById(ctx.env.DB, opId);
-    if (!row || !isActive(row.status)) return false;
-    const erase = parseSteps(row.steps).find((s) => s.key === 'erase');
-    if (erase && (erase.state === 'waiting' || erase.state === 'done')) return true;
-    await new Promise((resolve) => setTimeout(resolve, pollMs));
-  }
-  throw new AppError('OPERATION_STALLED', 500, 'The operation stopped responding.');
-}
-
 /**
  * Start over: the delete's steps, then a new sandbox's. The old passes are voided before the new sandbox is
- * made (the new one is another org, so nothing waits on the 7 days). The purge writes the old steps, so the new
- * part reports through a reporter that reads them fresh.
+ * made (the new one is another org, so nothing waits on the 7 days). The run does not wait: it starts the purge and
+ * hands the operation on, and the purge sends `operation.run` once the passes are voided. That second run finds
+ * `close` and `passes` done, skips them and makes the new sandbox, through a reporter that reads the purge's steps fresh.
  */
 export async function recreateRun(
   ctx: ServiceContext,
@@ -120,14 +124,19 @@ export async function recreateRun(
   progress: Progress,
   options: RunOptions = {},
 ): Promise<void> {
+  const orgId = targetOf(op);
   const by = { userId: session.userId, sessionIdHash: session.sessionId };
-  const orgId = (await deleteHalf(ctx, by, progress)) ?? op.target?.id;
-  const voided = op.steps.find((s) => s.key === 'passes')?.state === 'done';
-  if (orgId && !voided) {
-    if (await startPurge(ctx, op, orgId, await instanceOf(ctx, op, orgId), false, options.lease)) {
-      if (!(await purgeReachedWait(ctx, op.id, options.pollMs ?? 1500))) return;
-    } else await progress.step('passes').skip();
+  await held(ctx, op, options.lease);
+  // An earlier attempt closed it: whatever sandbox the person has now is the new half's, not the old one's.
+  if (!stepDone(op, 'close')) await deleteHalf(ctx, by, progress, orgId);
+  if (!stepDone(op, 'passes')) {
+    if (await startPurge(ctx, op, orgId, `${op.id}-r${op.attempt}`, false)) {
+      await releaseLease(ctx.env.DB, op.id, op.attempt, options.lease ?? null);
+      return;
+    }
+    await progress.step('passes').skip();
   }
+  await held(ctx, op, options.lease);
   const next = progressOf(ctx, op.id, op.attempt, options.lease);
   const sandbox = await provisionSandbox(ctx, session, next, {
     ...(options.viewedAt === undefined ? {} : { viewedAt: options.viewedAt }),

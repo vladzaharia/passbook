@@ -31,8 +31,6 @@ export interface OrgPurgeParams {
   attempt?: number;
   /** The purge ends the operation once the passes are voided. False when another runner does. */
   finish?: boolean;
-  /** The lease token of the runner that holds the operation: this purge writes under it. */
-  lease?: string;
 }
 
 const RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
@@ -69,7 +67,7 @@ export async function runOrgPurge(
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'org-purge', orgId },
   });
-  const progress = progressOf(ctx, params.operationId, params.attempt ?? 1, params.lease);
+  const progress = progressOf(ctx, params.operationId, params.attempt ?? 1);
   try {
     const out = await purge(ctx, params, step, providerRounds, progress);
     // An operation that already ended ignores this: only a purge that stopped before the grace fails it.
@@ -127,6 +125,16 @@ async function purge(
   // The tail: the operation is done once the passes are voided; the erase waits out the devices' days.
   await progress.waiting('erase', { until: graceEnds, due: true });
   if (params.finish) await progress.succeed({ href: null, ids: { orgId } });
+  // A start over goes on once the old passes are voided: its next run makes the new sandbox.
+  else if (params.operationId)
+    await step.do('continue', async () => {
+      await ctx.env.JOBS.send({
+        kind: 'operation.run',
+        operationId: params.operationId as string,
+        attempt: params.attempt ?? 1,
+      });
+      return true;
+    });
   await step.sleepUntil('grace', new Date(graceEnds));
   if (!(await alive('alive-grace'))) return { state: 'held', deleted };
   await step.do('uploads', RETRY, () => purgeUploads(ctx, orgId));

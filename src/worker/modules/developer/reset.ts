@@ -62,7 +62,7 @@ export async function checkReset(ctx: ServiceContext, session: SessionAuth): Pro
 export async function resetSandbox(
   ctx: ServiceContext,
   session: SessionAuth,
-  op: Pick<OperationDto, 'steps'>,
+  op: Pick<OperationDto, 'steps' | 'target'>,
   progress: Progress,
   after: (step: string) => Promise<void> = async () => undefined,
 ): Promise<{ sandbox: ReturnType<typeof dto>; ids: Record<string, string> }> {
@@ -70,6 +70,9 @@ export async function resetSandbox(
   if (!row) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
   if (row.closed_at !== null)
     throw new ConflictError('The sandbox is closed. Reopen it first.', 'SANDBOX_CLOSED');
+  // The operation was about one sandbox; a newer one the person made since is not ours to wipe.
+  if (op.target && op.target.id !== row.org_id)
+    throw new ConflictError('The sandbox changed. Reload and retry.', 'SANDBOX_CONFLICT');
   const orgId = row.org_id;
   const sandbox = { id: row.id, orgId };
   if (await orgHeld(ctx.env.DB, orgId))

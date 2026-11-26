@@ -139,6 +139,8 @@ export async function retryOperation(
       steps: JSON.stringify(stepsForRetry(parseSteps(row.steps))),
       stepKey: null,
       retryKey,
+      // The retrying session takes the row over: a step-up revoked the one that started it.
+      actorSession: row.audience === 'starter' && auth.kind === 'session' ? auth.sessionId : null,
       expiresAt: row.audience === 'starter' ? now + KEEP_MS.starter : null,
     });
   } catch (error) {
@@ -160,11 +162,16 @@ export async function retryOperation(
   const next = row.attempt + 1;
   const fresh = toDto((await rowById(ctx.env.DB, id)) as OperationRow);
   try {
-    const launched = runner.relaunch ? await runner.relaunch(ctx, fresh) : undefined;
+    const launched = runner.relaunch
+      ? await runner.relaunch(ctx, fresh, { instanceId: row.workflow_instance_id })
+      : undefined;
     if (!runner.relaunch) await sendOperationRun(ctx, id, next);
     if (launched?.workflowInstanceId)
       await setWorkflowInstance(ctx.env.DB, id, next, launched.workflowInstanceId);
   } catch (error) {
+    // The refused retry leaves the earlier purge named on the row, so the next retry still sees it.
+    if (row.workflow_instance_id)
+      await setWorkflowInstance(ctx.env.DB, id, next, row.workflow_instance_id);
     await progressOf(ctx, id, next).fail(error);
     throw error;
   }

@@ -31,6 +31,8 @@ export interface OperationRunner {
   relaunch?: (
     ctx: ServiceContext,
     op: OperationDto,
+    /** The Workflow instance the failed attempt ran (the retry cleared it from the row), to refuse while it lives. */
+    previous: { instanceId: string | null },
   ) => Promise<{ workflowInstanceId?: string } | undefined>;
   /** Tells the work to stop (a stop flag on its own run row). The operation row is already marked. */
   cancel?: (ctx: ServiceContext, op: OperationDto) => Promise<void>;

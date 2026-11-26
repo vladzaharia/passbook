@@ -8,9 +8,15 @@ import { createJobContext } from '../../platform/service-context.ts';
 import { type OrgPurgeParams, runOrgPurge } from '../../workflows/org-purge.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { handleOperationRun } from '../operations/jobs.ts';
 import { beginPurge } from '../org-lifecycle/purge.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
-import { makeSandbox, startAndSettle } from './sandbox-test-fixtures.ts';
+import {
+  captureQueue,
+  makeSandbox,
+  startAndSettle,
+  startAndSettleWithJobs,
+} from './sandbox-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const realFetch = globalThis.fetch;
@@ -24,6 +30,9 @@ const sleeping = {
   async sleep() {},
   sleepUntil: () => new Promise<void>(() => {}),
 };
+const queue = captureQueue();
+const runJob = (job: { kind: 'operation.run'; operationId: string; attempt: number }) =>
+  handleOperationRun(job, createJobContext(kit.env, 'test', { clock: kit.clock }));
 const purges = vi.fn(async (opts: { id: string; params: OrgPurgeParams }) => {
   void runOrgPurge(kit.env, opts.params, sleeping as never, undefined, kit.clock, 0);
   return {};
@@ -32,7 +41,7 @@ const purges = vi.fn(async (opts: { id: string; params: OrgPurgeParams }) => {
 beforeAll(async () => {
   kit = await blueprintKit();
   kit.env.TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
-  Object.assign(kit.env, { ORG_PURGE: { create: purges } });
+  Object.assign(kit.env, { ORG_PURGE: { create: purges }, JOBS: queue.binding });
   app = createApp({
     stores: {
       ...denyAllStores,
@@ -185,9 +194,15 @@ describe('DELETE /developer/sandbox', () => {
 describe('POST /developer/sandbox/recreate', () => {
   it('deletes and makes a new sandbox, and its key is minted once afterwards', async () => {
     const s = await sandboxOf();
-    const op = await startAndSettle(send, s.headers, 'POST', '/developer/sandbox/recreate', {
-      turnstileToken: 'ok',
-    });
+    const op = await startAndSettleWithJobs(
+      send,
+      s.headers,
+      'POST',
+      '/developer/sandbox/recreate',
+      { turnstileToken: 'ok' },
+      queue,
+      runJob,
+    );
     expect(op.status, JSON.stringify(op.error)).toBe('succeeded');
     expect(op.result?.ids.orgId).not.toBe(s.made.orgId);
     expect((await orgRow(s.made.orgId))?.status).toBe('deleted');

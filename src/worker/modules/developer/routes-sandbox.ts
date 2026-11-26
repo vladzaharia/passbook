@@ -13,12 +13,12 @@ import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
-import { checkDelete, purgeInstanceId } from './delete.ts';
+import { checkDelete } from './delete.ts';
 import { sandboxOfUser } from './repo.ts';
 import { checkReset } from './reset.ts';
 import { mintSandboxKeyOnce } from './sandbox-key.ts';
 import { createRun, deleteRun, recreateRun, resetRun } from './sandbox-runs.ts';
-import { startSandboxOp } from './sandbox-start.ts';
+import { replayOf, startSandboxOp } from './sandbox-start.ts';
 
 /** A signed-in developer who proved themselves recently: the sandbox's destructive calls. */
 export const STEP_UP_AUTH = {
@@ -27,6 +27,12 @@ export const STEP_UP_AUTH = {
   developer: true,
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
+
+/** The 202 every sandbox start answers: the operation, and where to follow it. */
+function answered(c: Parameters<typeof clientIp>[0], operation: { id: string }) {
+  c.header('location', `/api/v1/operations/${operation.id}`);
+  return c.json({ operation }, 202);
+}
 
 /** The Turnstile check every sandbox start makes; a failure is a 403 the page shows. */
 async function requireHuman(
@@ -61,6 +67,10 @@ register(
     const ctx = serviceContext(c);
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    // A replay of a start that already ran answers it before any check: Turnstile tokens and slots are single use.
+    const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
+    const replay = await replayOf(ctx, auth, ['sandbox.create'], key);
+    if (replay) return answered(c, replay);
     await enforceRateLimit(c.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${auth.userId}`);
     const input = c.req.valid('json');
     await requireHuman(c, ctx, input.turnstileToken);
@@ -70,7 +80,7 @@ register(
     const operation = await startSandboxOp(ctx, auth, {
       kind: 'sandbox.create',
       orgId: row?.org_id ?? ctx.ids.id(),
-      idempotencyKey: idempotencyKeyHeader(c.req.header('idempotency-key')),
+      idempotencyKey: key,
       work: (op, progress) => createRun(ctx, auth, op, progress, { viewedAt: input.viewedAt }),
     });
     c.header('location', `/api/v1/operations/${operation.id}`);
@@ -117,17 +127,16 @@ register(
     const ctx = serviceContext(c);
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    // A replay of a start that already ran answers it before any check: Turnstile tokens and slots are single use.
+    const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
+    const replay = await replayOf(ctx, auth, ['sandbox.delete'], key);
+    if (replay) return answered(c, replay);
     const row = await checkDelete(ctx, auth);
     const operation = await startSandboxOp(ctx, auth, {
       kind: 'sandbox.delete',
       orgId: row.org_id,
-      idempotencyKey: idempotencyKeyHeader(c.req.header('idempotency-key')),
-      workflowInstanceId: await purgeInstanceId(
-        ctx,
-        { id: '', attempt: 1 },
-        row.org_id,
-        ctx.clock.now(),
-      ),
+      idempotencyKey: key,
+      workflow: true,
       work: (op, progress) =>
         deleteRun(ctx, { userId: auth.userId, sessionIdHash: auth.sessionId }, op, progress),
     });
@@ -154,6 +163,10 @@ register(
     const ctx = serviceContext(c);
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    // A replay of a start that already ran answers it before any check: Turnstile tokens and slots are single use.
+    const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
+    const replay = await replayOf(ctx, auth, ['sandbox.recreate', 'sandbox.create'], key);
+    if (replay) return answered(c, replay);
     await enforceRateLimit(c.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${auth.userId}`);
     const input = c.req.valid('json');
     await requireHuman(c, ctx, input.turnstileToken);
@@ -165,7 +178,7 @@ register(
     const operation = await startSandboxOp(ctx, auth, {
       kind: row ? 'sandbox.recreate' : 'sandbox.create',
       orgId: row?.org_id ?? ctx.ids.id(),
-      idempotencyKey: idempotencyKeyHeader(c.req.header('idempotency-key')),
+      idempotencyKey: key,
       work: (op, progress) => (row ? recreateRun : createRun)(ctx, auth, op, progress, options),
     });
     c.header('location', `/api/v1/operations/${operation.id}`);
@@ -191,6 +204,10 @@ register(
     const ctx = serviceContext(c);
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    // A replay of a start that already ran answers it before any check: Turnstile tokens and slots are single use.
+    const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
+    const replay = await replayOf(ctx, auth, ['sandbox.reset'], key);
+    if (replay) return answered(c, replay);
     await enforceRateLimit(
       c.env,
       'RL_REFRESH',
@@ -201,7 +218,7 @@ register(
     const operation = await startSandboxOp(ctx, auth, {
       kind: 'sandbox.reset',
       orgId: row.org_id,
-      idempotencyKey: idempotencyKeyHeader(c.req.header('idempotency-key')),
+      idempotencyKey: key,
       work: (op, progress) => resetRun(ctx, auth, op, progress),
     });
     c.header('location', `/api/v1/operations/${operation.id}`);

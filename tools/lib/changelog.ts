@@ -135,7 +135,7 @@ export function sessionOnly(doc: Doc, op: string): boolean {
   return (
     !!security &&
     security.length > 0 &&
-    security.every((r) => Object.keys(r).every((k) => k === 'session'))
+    security.every((r) => Object.keys(r).length > 0 && Object.keys(r).every((k) => k === 'session'))
   );
 }
 

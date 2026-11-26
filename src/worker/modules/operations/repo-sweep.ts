@@ -26,7 +26,7 @@ export async function bumpHeartbeat(db: D1Database, id: string, now: number): Pr
 }
 
 /**
- * The one resend: frees the lease and counts it. `seen` is the count the sweep read, so two overlapping sweeps
+ * The one resend: expires the lease (the owner stays, so a live old runner's writes stay refused until the resent job claims it) and counts it. `seen` is the count the sweep read, so two overlapping sweeps
  * cannot both resend, and a second stall (`resends` already 1) is failed by the caller instead.
  */
 export async function markResent(
@@ -38,7 +38,7 @@ export async function markResent(
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE operations SET resends = resends + 1, lease_until = NULL, lease_owner = NULL, heartbeat_at = ?
+    `UPDATE operations SET resends = resends + 1, lease_until = NULL, heartbeat_at = ?
      WHERE id = ? AND attempt = ? AND resends = ? AND status IN ('queued', 'running')`,
     [now, id, attempt, seen],
   );
