@@ -58,7 +58,6 @@ export const isKnownGuard = (handler: object): boolean => knownGuards.has(handle
 /** `requireCaller` guards that take a bearer (a `scope` route): the Workbench route tests read them. */
 const bearerGuards = new WeakSet<object>();
 export const takesBearer = (handler: object): boolean => bearerGuards.has(handler);
-
 export const API_SCOPES = ApiScopeSchema.options;
 
 export const SESSION_COOKIE = '__Host-wallet_sid';
