@@ -95688,6 +95688,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TemplatesVersionsRetrieveWalletReportsResponse"
+                },
+                "example": {
+                  "google": {
+                    "schema": 1,
+                    "target": "google",
+                    "type": "generic",
+                    "compilerRevision": 3,
+                    "status": {
+                      "kind": "off"
+                    },
+                    "items": [
+                      {
+                        "capability": "type",
+                        "path": "input.tier",
+                        "support": "native",
+                        "severity": "difference",
+                        "group": "holder",
+                        "chosen": false,
+                        "message": "icon@2x.png derived from the @3x image."
+                      }
+                    ]
+                  },
+                  "samsung": {
+                    "schema": 1,
+                    "target": "google",
+                    "type": "generic",
+                    "compilerRevision": 3,
+                    "status": {
+                      "kind": "off"
+                    },
+                    "items": [
+                      {
+                        "capability": "type",
+                        "path": "input.tier",
+                        "support": "native",
+                        "severity": "difference",
+                        "group": "holder",
+                        "chosen": false,
+                        "message": "icon@2x.png derived from the @3x image."
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -95708,6 +95750,7 @@
           "resource": "templates.versions",
           "method": "retrieveWalletReports"
         },
+        "description": "What each wallet shows of a template version: Ready, Ready with omissions or Blocked, with the dropped items. Google and Samsung, compiled from the version's sample.",
         "security": [
           {
             "apiKey": [
