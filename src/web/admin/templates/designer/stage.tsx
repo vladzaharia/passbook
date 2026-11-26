@@ -10,7 +10,7 @@ import type { PreviewChannel } from '../../../channel-previews/types.ts';
 import { Button } from '../../../ui/button.tsx';
 import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
 import { useTemplateChannels } from '../channels/api.ts';
-import { useDesigner } from './context.tsx';
+import { useDesignerMaybe } from './context.tsx';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
 import { PaperPreview } from './paper-preview.tsx';
@@ -50,7 +50,7 @@ export function DesignerStage({
     orgId,
   });
   const timeZone = useOrgTimeZone(orgId);
-  const { openWallets } = useDesigner();
+  const openWallets = useDesignerMaybe()?.openWallets;
   const walletAction = openWallets
     ? (target: 'google' | 'samsung') => (
         <Button

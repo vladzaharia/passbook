@@ -177,6 +177,7 @@ export function WalletReport({
   );
   return (
     <Card
+      role="region"
       aria-label={`${wallet} report`}
       aria-busy={busy || undefined}
       data-testid={`${report.target}-report`}

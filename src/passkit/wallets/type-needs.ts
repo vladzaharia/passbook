@@ -3,25 +3,40 @@
  * checks; this table only names the needs so the designer can show them, and `type-needs.test.ts`
  * fails when the two drift.
  */
+import { MIN_LOGO } from './google/limits.ts';
 import type { ViewImageFile, WalletPassView, WalletRole } from './types.ts';
 
 export type WalletTypeTarget = 'google' | 'samsung';
 
+export interface ImageNeed {
+  kind: 'image';
+  /** The `wallets.<target>.images` slot that overrides the Apple art. */
+  slot: 'logo' | 'main';
+  /** Apple slots the compilers fall back to, in order. */
+  apple: readonly string[];
+  /** The smallest the wallet takes, when it says. */
+  min?: { width: number; height: number };
+}
+
 /** A need is a role, an image or the code a reservation number can come from. */
-export type TypeNeed =
-  | { kind: 'role'; role: WalletRole }
-  | { kind: 'image'; slot: 'logo' | 'main' }
-  | { kind: 'reservation' };
+export type TypeNeed = { kind: 'role'; role: WalletRole } | ImageNeed | { kind: 'reservation' };
 
 const role = (r: WalletRole): TypeNeed => ({ kind: 'role', role: r });
-const image = (slot: 'logo' | 'main'): TypeNeed => ({ kind: 'image', slot });
+const GOOGLE_LOGO: ImageNeed = {
+  kind: 'image',
+  slot: 'logo',
+  apple: ['icon', 'logo'],
+  min: MIN_LOGO,
+};
+const logo = (apple: readonly string[]): ImageNeed => ({ kind: 'image', slot: 'logo', apple });
+const main = (apple: readonly string[]): ImageNeed => ({ kind: 'image', slot: 'main', apple });
 
 export const TYPE_NEEDS: Record<WalletTypeTarget, Record<string, readonly TypeNeed[]>> = {
   google: {
     generic: [],
-    loyalty: [],
+    loyalty: [GOOGLE_LOGO],
     event: [role('eventName'), role('eventStart')],
-    gift: [role('giftCardNumber')],
+    gift: [GOOGLE_LOGO, role('giftCardNumber')],
     offer: [role('offerTitle'), role('redemptionChannel')],
   },
   samsung: {
@@ -32,29 +47,33 @@ export const TYPE_NEEDS: Record<WalletTypeTarget, Record<string, readonly TypeNe
       role('eventName'),
       role('eventStart'),
       { kind: 'reservation' },
-      image('logo'),
-      image('main'),
+      logo(['logo', 'primaryLogo']),
+      main(['artwork', 'strip', 'background']),
     ],
-    coupon: [image('main'), role('validUntil')],
+    coupon: [main(['strip', 'artwork', 'background']), role('validUntil')],
   },
-};
-
-const APPLE_SLOTS: Record<'logo' | 'main', Record<string, readonly string[]>> = {
-  logo: { ticket: ['logo', 'primaryLogo'], coupon: ['logo', 'primaryLogo'] },
-  main: { ticket: ['artwork', 'strip', 'background'], coupon: ['strip', 'artwork', 'background'] },
 };
 
 const usable = (f: ViewImageFile): boolean =>
   !f.personal && f.url !== undefined && f.locale === undefined;
 
-function hasImage(view: WalletPassView, type: string, slot: 'logo' | 'main'): boolean {
-  const own = view.images.overrides.samsung?.[slot];
-  if (own && usable(own)) return true;
-  return (APPLE_SLOTS[slot][type] ?? []).some((s) => view.images.apple[s]?.some(usable));
+const fits = (f: ViewImageFile, min: ImageNeed['min']): boolean =>
+  !min ||
+  ((f.width === undefined || f.width >= min.width) &&
+    (f.height === undefined || f.height >= min.height));
+
+function hasImage(view: WalletPassView, target: WalletTypeTarget, need: ImageNeed): boolean {
+  const own = view.images.overrides[target]?.[need.slot];
+  // Google reads the author's file alone when there is one; Samsung falls back when it is unusable.
+  if (own && (target === 'google' || usable(own))) return usable(own) && fits(own, need.min);
+  return need.apple.some((s) => {
+    const best = view.images.apple[s]?.find(usable);
+    return best !== undefined && fits(best, need.min);
+  });
 }
 
-function met(view: WalletPassView, target: WalletTypeTarget, type: string, need: TypeNeed) {
-  if (need.kind === 'image') return hasImage(view, type, need.slot);
+function met(view: WalletPassView, target: WalletTypeTarget, need: TypeNeed): boolean {
+  if (need.kind === 'image') return hasImage(view, target, need);
   if (need.kind === 'reservation')
     return (
       view.roles.confirmationCode?.kind === 'text' ||
@@ -74,13 +93,5 @@ export function unmetNeeds(
   type: string,
   view: WalletPassView,
 ): TypeNeed[] {
-  return (TYPE_NEEDS[target][type] ?? []).filter((need) => !met(view, target, type, need));
+  return (TYPE_NEEDS[target][type] ?? []).filter((need) => !met(view, target, need));
 }
-
-/** A stable id for a need: `role.eventName`, `image.logo`, `reservation`. */
-export const needId = (need: TypeNeed): string =>
-  need.kind === 'role'
-    ? `role.${need.role}`
-    : need.kind === 'image'
-      ? `image.${need.slot}`
-      : 'reservation';

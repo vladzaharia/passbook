@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PREVIEW_COPY, walletName } from '@/shared/copy/previews.ts';
+import { WALLETS_COPY } from '@/shared/copy/wallets.ts';
 import { Callout } from '../ui/callout.tsx';
 import { EmptyState } from '../ui/empty-state.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
@@ -72,10 +73,15 @@ export function WalletChannel({
         face={side}
       />
     ) : null;
+  // The report beside the card already says why; alone, the card's place says it.
   const card = compiled.blocked ? (
-    <Callout tone="warning" title={PREVIEW_COPY.blocked.replace('{wallet}', wallet)}>
-      {compiled.blocked.message}
-    </Callout>
+    notes ? (
+      <div className="wm-blocked-card wl-hatch">{WALLETS_COPY.report.noPreview}</div>
+    ) : (
+      <Callout tone="warning" title={PREVIEW_COPY.blocked.replace('{wallet}', wallet)}>
+        {compiled.blocked.message}
+      </Callout>
+    )
   ) : (
     <FacePair front={cardOf('front')} back={cardOf('back')} face={face} onFace={onFace} fit={fit} />
   );

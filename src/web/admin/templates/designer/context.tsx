@@ -35,3 +35,8 @@ export function useDesigner(): DesignerApi {
   if (!api) throw new Error('useDesigner needs a DesignerProvider.');
   return api;
 }
+
+/** The designer's api where it may be absent (a preview used outside the designer). */
+export function useDesignerMaybe(): DesignerApi | null {
+  return useContext(Ctx);
+}

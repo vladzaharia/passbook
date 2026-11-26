@@ -135,15 +135,6 @@
   position: relative;
   min-width: 0;
 }
-.wm-blocked-card {
-  display: grid;
-  min-height: 14rem;
-  place-items: center;
-  border: 1px dashed var(--pk-border-strong);
-  border-radius: var(--pk-radius-lg, 0.75rem);
-  color: var(--pk-text-muted);
-  font-size: 0.875rem;
-}
 .wm-fade > * {
   animation: wl-fade-in 160ms var(--wl-ease-out);
 }

@@ -78,3 +78,14 @@
     display: none;
   }
 }
+
+/* A blocked wallet shows its report and no card: a hatched outline holds the card's place. */
+.wm-blocked-card {
+  display: grid;
+  min-height: 14rem;
+  place-items: center;
+  border: 1px dashed var(--pk-border-strong);
+  border-radius: var(--pk-radius-lg, 0.75rem);
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}
