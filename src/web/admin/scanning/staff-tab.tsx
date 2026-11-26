@@ -208,27 +208,34 @@ function OrganizationStaff({
   const rows =
     staff.data?.pages.flatMap((page) => page.items).filter((person) => person.orgId === orgId) ??
     [];
+  // No staff yet: the empty state and its Add button stand alone, without a banner or a search.
+  const bare = !staff.isPending && !staff.isError && rows.length === 0 && !q;
   return (
     <div className="grid gap-4">
       {staff.data?.pages[0]?.pinOnlyOff ? (
         <StaffPinOnlyNotice orgId={orgId} canTurnOn={canTurnOnPinOnly} onTurnedOn={refresh} />
       ) : null}
-      <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-surface-raised p-4">
-        <p className="text-sm text-fg-muted">
-          Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans today, not
-          undone.
-        </p>
-        {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setDialog({ type: 'untagged' })}>
-              Reset untagged PINs
-            </Button>
-            <Button iconStart={<Plus aria-hidden />} onClick={() => setDialog({ type: 'create' })}>
-              Add staff
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      {bare ? null : (
+        <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-surface-raised p-4">
+          <p className="text-sm text-fg-muted">
+            Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans today,
+            not undone.
+          </p>
+          {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setDialog({ type: 'untagged' })}>
+                Reset untagged PINs
+              </Button>
+              <Button
+                iconStart={<Plus aria-hidden />}
+                onClick={() => setDialog({ type: 'create' })}
+              >
+                Add staff
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      )}
       {staff.isError ? (
         <ErrorState
           inline
@@ -243,11 +250,13 @@ function OrganizationStaff({
         />
       ) : (
         <>
-          <FilterBar
-            search={{ value: text, onChange: setText, placeholder: 'Search staff' }}
-            filters={[]}
-            onClear={() => setText('')}
-          />
+          {bare ? null : (
+            <FilterBar
+              search={{ value: text, onChange: setText, placeholder: 'Search staff' }}
+              filters={[]}
+              onClear={() => setText('')}
+            />
+          )}
           <DataTable
             caption="Staff"
             data={rows}

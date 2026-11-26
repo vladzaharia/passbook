@@ -50,7 +50,7 @@ export function DeviceSheet({
     surface !== device.surface ||
     JSON.stringify(overrides) !== JSON.stringify(device.overrides);
   // The surface the server will resolve for this choice and these capabilities.
-  const layout = surfaceFor(surface, device.capabilities);
+  const layout = surface === 'desk' ? 'customer' : surfaceFor(surface, device.capabilities);
   const check = useFormErrors({ name: name.trim() ? undefined : 'Enter a name.' });
   async function submit() {
     if (changed || device.revoked || !dirty) return undefined;
@@ -223,7 +223,7 @@ export function DeviceSheet({
               )}
             </fieldset>
             {canManage ? (
-              <div className="sticky bottom-0 grid gap-2 border-t border-border bg-surface-raised py-4">
+              <div className="sticky bottom-0 z-10 -mx-4 -mb-4 grid gap-2 border-t border-border bg-surface-raised px-4 py-4 shadow-[0_-10px_10px_-10px_rgb(0_0_0/0.25)]">
                 <Button
                   type="submit"
                   loading={save.isPending}

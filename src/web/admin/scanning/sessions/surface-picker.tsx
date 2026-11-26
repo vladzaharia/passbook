@@ -76,8 +76,8 @@ export function SurfacePicker({
   capabilities?: ScanDeviceCapabilities | null;
 }) {
   const choice = (key: SurfaceChoice) => {
-    const selectedSurface = value === 'desk' ? 'operator' : value;
-    const selected = selectedSurface === key;
+    // A desk monitor is a feed that follows scanners and checks no one in: the Customer display's kind.
+    const selected = (value === 'desk' ? 'customer' : value) === key;
     return (
       <button
         key={key}
@@ -106,7 +106,7 @@ export function SurfacePicker({
     );
   };
   return (
-    <fieldset className="@container grid min-w-0 gap-3">
+    <fieldset className="grid min-w-0 gap-3">
       <legend className="mb-2 text-sm font-medium text-fg">Device layout</legend>
       {capabilities?.native?.layout?.posture === 'half-folded' ||
       capabilities?.native?.layout?.posture === 'unfolded' ? (
@@ -116,7 +116,7 @@ export function SurfacePicker({
         </p>
       ) : null}
       {choice('auto')}
-      <div className="grid min-w-0 gap-3 @[34rem]:grid-cols-2">
+      <div className="grid min-w-0 gap-3">
         <div className="grid min-w-0 content-start gap-2">
           <p className="text-xs font-semibold text-fg-muted">CHECK-IN</p>
           {choice('phone')}
