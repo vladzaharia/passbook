@@ -10,7 +10,7 @@ import { BenchSlot } from '../../bench/slots.tsx';
 import { BENCH_WIDE, BenchSplit } from '../../bench/split.tsx';
 import { SearchField, Toolbar } from '../../bench/toolbar.tsx';
 import { bindBenchRouter } from '../../bench/url.ts';
-import { useOptionalToolHost } from '../../host/tool-host.tsx';
+import { useWorkbenchContexts } from '../../host/contexts.ts';
 import { useConsoleClient } from '../client.ts';
 import { loadIndex } from '../data.ts';
 import { launchOf, shimHash } from '../launch.ts';
@@ -48,7 +48,8 @@ const shortPath = (path: string) => path.replace(/^\/api\/v1/, '');
 export function ConsolePage() {
   const router = useRouter();
   const client = useConsoleClient();
-  const context = useOptionalToolHost()?.context ?? null;
+  const orgId = client?.orgId;
+  const context = useWorkbenchContexts().data?.find((c) => c.orgId === orgId) ?? null;
   const search = useLocation({ select: (l) => l.searchStr });
   const hash = useLocation({ select: (l) => l.hash });
   const pathname = useLocation({ select: (l) => l.pathname });

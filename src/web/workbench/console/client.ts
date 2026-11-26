@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useSession } from '../../lib/session.ts';
+import { useToolScope } from '../../lib/tool-api.tsx';
 import type { BenchGet } from '../bench/trace-events.ts';
 import { createBearerFetch } from '../host/api.ts';
 import { markSessionGone } from '../host/session-gone.ts';
 import { dropToken, workbenchToken } from '../host/token.ts';
-import { useOptionalToolHost } from '../host/tool-host.tsx';
 import { spend } from './budget.ts';
 import { drop, token, tokenHeld } from './token.ts';
 
@@ -80,7 +80,7 @@ export function tryClient(csrf: string): ConsoleClient {
 
 /** The signed-in person's client for the org this page is in; null outside a context (browse only). */
 export function useConsoleClient(): ConsoleClient | null {
-  const orgId = useOptionalToolHost()?.context.orgId;
+  const orgId = useToolScope()?.orgId;
   const csrf = useSession().authed?.csrfToken;
   return useMemo(() => (orgId ? workbenchClient(orgId, csrf ?? '') : null), [orgId, csrf]);
 }
