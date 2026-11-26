@@ -368,6 +368,7 @@
     "schema": 1,
     "size": "cr80",
     "barcode": "qr",
-    "kind": "membership"
+    "kind": "membership",
+    "ink": "mono"
   }
 }
