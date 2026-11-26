@@ -681,6 +681,14 @@
     "note": "A webhook connection's setup guide with its URL and header names filled in. It never returns the secret, only hasSecret."
   },
   {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals 200.items[].retentionId: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "200.items[].retentionId: field added",
+    "note": "Each accepted arrival carries retentionId, the id of its retained work in webhook-failures, so a client can tell an accepted delivery that issued nothing. Null until retained and after retention ends."
+  },
+  {
     "key": "GET /api/v1/connections/{id}/webhook-arrivals new operation",
     "class": "additive",
     "operationId": "connections.getConnectionsByIdWebhookArrivals",

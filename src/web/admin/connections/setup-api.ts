@@ -44,7 +44,7 @@ export const arrivalLoader =
 export const recordNoun = (recipe: string): string =>
   recipe === 'custom' ? 'records' : recipe.split('-').slice(1).join(' ') || 'records';
 
-/** Event refs of accepted deliveries whose work failed or is blocked: PassBook read them, nothing was issued. */
+/** Retention ids of accepted deliveries whose work failed or is blocked: PassBook read them, nothing was issued. */
 export function useNotIssued(connectionId: string): ReadonlySet<string> {
   const failures = useWebhookFailures(connectionId, true, 4000);
   return useMemo(
@@ -52,7 +52,7 @@ export function useNotIssued(connectionId: string): ReadonlySet<string> {
       new Set(
         (failures.data?.items ?? [])
           .filter((f) => f.state === 'failed' || f.state === 'blocked')
-          .map((f) => f.eventRef),
+          .map((f) => f.id),
       ),
     [failures.data],
   );

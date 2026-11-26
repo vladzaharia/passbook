@@ -80,6 +80,7 @@ export function ledgerRow(over: Record<string, unknown> = {}) {
     topic: null,
     contentClass: 'json',
     eventRef: null,
+    retentionId: null,
     usedPrevious: false,
     count: 1,
     ...over,

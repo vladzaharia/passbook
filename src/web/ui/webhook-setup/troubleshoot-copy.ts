@@ -17,17 +17,11 @@ export interface InboundContext {
   origin: 'provider' | 'passbook';
   /** The guide's `troubleshooting`: ledger reason to a recipe-specific fix. `none` is the empty ledger. */
   recipeFix?: Readonly<Record<string, string>> | undefined;
-  /** Event refs of accepted deliveries whose work failed or is blocked: nothing was issued. */
+  /** Retention ids of accepted deliveries whose work failed or is blocked: nothing was issued. */
   notIssued?: ReadonlySet<string> | undefined;
 }
 
 export const NOTHING = 'none';
-
-/** The ledger names an event `shopify:<id>` where retained work names it `<id>`: either matches. */
-function isNotIssued(ref: string | null | undefined, failed: ReadonlySet<string> | undefined) {
-  if (!ref || !failed) return false;
-  return failed.has(ref) || failed.has(ref.slice(ref.indexOf(':') + 1));
-}
 
 /** A name that opens a line is capitalised there only: "your system sent no signature" reads "Your system…". */
 const atLineStart = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -36,7 +30,7 @@ const atLineStart = (text: string) => text.charAt(0).toUpperCase() + text.slice(
 function rawInboundTrouble(
   arrival: Pick<
     Arrival,
-    'outcome' | 'reason' | 'topic' | 'contentClass' | 'usedPrevious' | 'eventRef'
+    'outcome' | 'reason' | 'topic' | 'contentClass' | 'usedPrevious' | 'retentionId'
   > | null,
   ctx: InboundContext,
 ): Trouble {
@@ -61,7 +55,7 @@ function rawInboundTrouble(
             'Signed with the previous secret. Switch the sender to the new one.',
           ),
         }
-      : isNotIssued(arrival.eventRef, ctx.notIssued)
+      : (arrival.retentionId ? ctx.notIssued?.has(arrival.retentionId) : false)
         ? {
             tone: 'warning',
             title: 'Accepted, not issued',

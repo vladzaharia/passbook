@@ -55547,6 +55547,14 @@
                   ],
                   "maxLength": 200
                 },
+                "retentionId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
                 "usedPrevious": {
                   "type": "boolean"
                 },
@@ -55564,6 +55572,7 @@
                 "topic",
                 "contentClass",
                 "eventRef",
+                "retentionId",
                 "usedPrevious",
                 "count"
               ]

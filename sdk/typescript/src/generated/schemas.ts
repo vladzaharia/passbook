@@ -1844,6 +1844,7 @@ export type ConnectionsWebhookArrivalsListResponse = {
     topic: string | null;
     contentClass: "json" | "xml" | "form" | "other";
     eventRef: string | null;
+    retentionId: string | null;
     usedPrevious: boolean;
     count: number;
   }>;
