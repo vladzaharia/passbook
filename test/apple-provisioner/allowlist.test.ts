@@ -86,7 +86,7 @@ describe('apple-provisioner allowlist', () => {
       body: { data: [passTypeBody('PLAT', 'pass.im.plrs.wallet').data] },
     }));
     expect((await api.findPassType('pass.im.plrs.wallet'))?.ascId).toBe('PLAT');
-    expect(seen[0]?.path).toBe('/v1/passTypeIds?filter[identifier]=pass.im.plrs.wallet&limit=10');
+    expect(seen[0]?.path).toBe('/v1/passTypeIds?filter[identifier]=pass.im.plrs.wallet&limit=200');
     await expect(api.listCertificates('PLAT')).resolves.toHaveLength(1);
   });
 
@@ -156,7 +156,9 @@ describe('apple-provisioner allowlist', () => {
     });
     expect((await api.createPlatformPassType(slot)).outcome).toBe('existing');
     expect(seen).toHaveLength(1);
-    expect((await ledger()).some((r) => r.method === 'createPlatformPassType')).toBe(true);
+    expect((await ledger()).some((r) => r.method === 'createPassType' && r.target === id)).toBe(
+      true,
+    );
   });
 
   it('adopts a platform pass type Apple already has when create answers 409', async () => {
