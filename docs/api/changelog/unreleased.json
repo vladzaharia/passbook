@@ -805,7 +805,7 @@
     "operationId": "operations.getOperations",
     "op": "GET /api/v1/operations",
     "change": "new operation",
-    "note": "New. Lists operations: those you started, those of an organization you read, and platform-wide for admins. Filters: active, mine, kind, target. Pages with a cursor."
+    "note": "New. Lists operations you started or can read in an organization; filter by active, mine, kind, target."
   },
   {
     "key": "GET /api/v1/operations/{id} new operation",
@@ -813,7 +813,7 @@
     "operationId": "operations.getOperationsById",
     "op": "GET /api/v1/operations/{id}",
     "change": "new operation",
-    "note": "New. Reads one long-running action: status, steps with counts, the current line, and its error. Answers 304 when If-None-Match carries the ETag \"<id>:<revision>\"."
+    "note": "New. Reads one long-running action with its steps and counts. 304 when If-None-Match carries its ETag."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
