@@ -5,6 +5,7 @@ import { all } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { toDto } from '../operations/dto.ts';
 import { rowById } from '../operations/repo.ts';
+import { sweepStalledOperations } from '../operations/stalls.ts';
 import { type ApplyKit, applyKit } from './apply-test-fixtures.ts';
 import { insertCopy } from './repo.ts';
 
@@ -301,5 +302,30 @@ describe('replace codes: operation', () => {
     const waiting = await opOf(t, body.operationId);
     expect(waiting).toMatchObject({ status: 'waiting', text: 'Waiting for a scan window' });
     expect(waiting.steps[1]?.done).toBe(0);
+  });
+
+  it('ends a row failed when the delayed job is lost: the sweep sees a wait that ran out (M1)', async () => {
+    const t = await passKit();
+    const now = t.kit.clock.now();
+    await makeScanEvent(t.kit.fx, {
+      orgId: t.orgId,
+      templateIds: [t.templateId],
+      opensAt: now - 60_000,
+      closesAt: now + 3_600_000,
+    });
+    const body = (await (await bulk(t)).json()) as { operationId: string };
+    await runJob(jobs(t, 'channel.replace_code')[0] as never, jobCtxOf(t.kit));
+    expect((await opOf(t, body.operationId)).status).toBe('waiting');
+    // A wake-up a little after `until` is not a stall (L2)...
+    t.kit.clock.advance(3_600_000 + 60_000);
+    await sweepStalledOperations(jobCtxOf(t.kit));
+    expect((await opOf(t, body.operationId)).status).toBe('waiting');
+    // ...but one that never comes, past the kind's stall time, is.
+    t.kit.clock.advance(31 * 60_000);
+    await sweepStalledOperations(jobCtxOf(t.kit));
+    expect(await opOf(t, body.operationId)).toMatchObject({
+      status: 'failed',
+      error: { code: 'OPERATION_STALLED' },
+    });
   });
 });

@@ -296,7 +296,9 @@ describe('stall sweep', () => {
     const recent = await start();
     await progressOf(kit.ctx, recent.id, 1).step('a').done();
     const waiting = await start();
-    await progressOf(kit.ctx, waiting.id, 1).waiting('a', { until: kit.clock.now() + 1000 });
+    await progressOf(kit.ctx, waiting.id, 1).waiting('a', {
+      until: kit.clock.now() + 2 * 3_600_000,
+    });
     kit.clock.advance(90_000);
     await sweepStalledOperations(kit.ctx);
     kit.clock.advance(3_600_000);

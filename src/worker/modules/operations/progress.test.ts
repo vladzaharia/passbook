@@ -274,3 +274,37 @@ describe('tick (work spread over jobs)', () => {
     expect(await progressOf(kit.ctx, op.id, 1).step('b').tick()).toBeNull();
   });
 });
+
+describe('stale writers (H1)', () => {
+  it('a runner that loaded the step before two ticks cannot lower its count, by waiting() or step()', async () => {
+    const op = await start();
+    const setup = progressOf(kit.ctx, op.id, 1);
+    const b = setup.step('b');
+    b.total(5);
+    await b.count(0);
+    const stale = progressOf(kit.ctx, op.id, 1);
+    const staleStep = stale.step('b');
+    await staleStep.count(0);
+    await progressOf(kit.ctx, op.id, 1).step('b').tick();
+    await progressOf(kit.ctx, op.id, 1).step('b').tick();
+    await stale.waiting('b', {
+      until: kit.clock.now() + 1000,
+      reason: 'Waiting for a scan window',
+    });
+    expect((await read(op.id)).steps[1]).toMatchObject({ state: 'waiting', done: 2 });
+    await stale.step('b').count(1);
+    expect((await read(op.id)).steps[1]?.done).toBe(2);
+  });
+
+  it('a shorter wait never replaces a longer one', async () => {
+    const op = await start();
+    const long = progressOf(kit.ctx, op.id, 1);
+    const until = kit.clock.now() + 10 * 3_600_000;
+    await long.waiting('b', { until, reason: 'Waiting for a scan window' });
+    await progressOf(kit.ctx, op.id, 1).waiting('b', {
+      until: kit.clock.now() + 60_000,
+      reason: 'Waiting for a scan window',
+    });
+    expect((await read(op.id)).steps[1]?.until).toBe(until);
+  });
+});

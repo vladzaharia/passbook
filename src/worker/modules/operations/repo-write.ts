@@ -39,15 +39,30 @@ export function writeStep(
 ): Promise<Written | null> {
   // The index is an integer from the code's own step list, never a request value.
   const at = `$[${Math.trunc(w.index)}]`;
+  const old = (field: string) => `json_extract(steps, '${at}.${field}')`;
+  // A runner holds the step as it loaded it, possibly seconds ago: `done` never goes down, and a wait never
+  // ends sooner than one another job already set.
+  const done = `CASE WHEN ${old('done')} IS NULL AND json_extract(?, '$.done') IS NULL THEN NULL
+    ELSE MAX(COALESCE(${old('done')}, 0), COALESCE(json_extract(?, '$.done'), 0)) END`;
+  const until = `CASE WHEN json_extract(?, '$.state') = 'waiting' AND ${old('until')} IS NOT NULL
+    AND json_extract(?, '$.until') IS NOT NULL
+    THEN MAX(${old('until')}, json_extract(?, '$.until')) ELSE json_extract(?, '$.until') END`;
   return first<Written>(
     db,
-    `UPDATE operations SET steps = json_set(steps, ?, json(?)), step_key = ?, status = ?,
+    `UPDATE operations SET steps = json_set(json_set(json_set(steps, ?, json(?)), '${at}.done', ${done}), '${at}.until', ${until}),
+       step_key = ?, status = ?,
        revision = revision + 1, started_at = COALESCE(started_at, ?), updated_at = ?, heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
      WHERE id = ? AND attempt = ? AND ${ACTIVE}${fence(w.lease).sql}
      RETURNING status, cancel_requested`,
     [
       at,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
       w.stepJson,
       w.stepKey,
       w.status,

@@ -23,7 +23,13 @@ export function runningSilentSince(
  */
 export function waitingSilentSince(
   db: D1Database,
-  q: { before: number; now: number; limit: number; tails: ReadonlyMap<string, readonly string[]> },
+  q: {
+    before: number;
+    now: number;
+    limit: number;
+    staleBefore: number;
+    tails: ReadonlyMap<string, readonly string[]>;
+  },
 ): Promise<OperationRow[]> {
   const params: Array<string | number> = [q.before, q.now];
   const tailSql = (): string => {
@@ -35,17 +41,22 @@ export function waitingSilentSince(
   };
   const pendingTail = tailSql();
   const waitingTail = tailSql();
-  params.push(q.now, q.limit);
+  params.push(q.now);
+  const lateTail = tailSql();
+  params.push(q.staleBefore, q.limit);
   // Order matters: params were pushed as the placeholders appear.
   const sql = `SELECT ${COLUMNS} FROM operations
      WHERE status = 'waiting' AND COALESCE(heartbeat_at, created_at) < ?
        AND (lease_until IS NULL OR lease_until <= ?)
-       AND EXISTS (SELECT 1 FROM json_each(operations.steps) j
+       AND ((EXISTS (SELECT 1 FROM json_each(operations.steps) j
          WHERE json_extract(j.value, '$.state') = 'pending' AND NOT (${pendingTail}))
        AND NOT EXISTS (SELECT 1 FROM json_each(operations.steps) j
          WHERE json_extract(j.value, '$.state') = 'waiting'
            AND (json_extract(j.value, '$.waitingReason') = 'blocked'
-             OR (NOT (${waitingTail}) AND json_extract(j.value, '$.until') > ?)))
+             OR (NOT (${waitingTail}) AND json_extract(j.value, '$.until') > ?))))
+         OR EXISTS (SELECT 1 FROM json_each(operations.steps) j
+           WHERE json_extract(j.value, '$.state') = 'waiting' AND NOT (${lateTail})
+             AND json_extract(j.value, '$.until') IS NOT NULL AND json_extract(j.value, '$.until') < ?))
      ORDER BY COALESCE(heartbeat_at, created_at) LIMIT ?`;
   return all<OperationRow>(db, sql, params);
 }

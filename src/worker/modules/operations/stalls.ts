@@ -1,5 +1,6 @@
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { parseSteps } from './dto.ts';
 import { sendOperationRun } from './jobs.ts';
 import { kinds } from './kinds.ts';
 import { progressOf } from './progress.ts';
@@ -95,12 +96,23 @@ export async function sweepStalledOperations(ctx: ServiceContext): Promise<void>
       before: now - MIN_STALL_MS,
       now,
       limit: BATCH,
+      staleBefore: now - MIN_STALL_MS,
       tails: tailKeys(),
     })),
   ];
   for (const row of silent) {
-    const limit = kindOf(row.kind)?.stallMs ?? DEFAULT_STALL_MS;
-    if ((row.heartbeat_at ?? row.created_at) > now - limit) continue;
+    const def = kindOf(row.kind);
+    const limit = def?.stallMs ?? DEFAULT_STALL_MS;
+    // A wait that has ended since the last heartbeat is silent only from its end: a wake-up a little late is not a stall.
+    const tails = new Set(def?.steps.filter((x) => x.tail).map((x) => x.key));
+    const waitEnds = parseSteps(row.steps).reduce(
+      (m, x) =>
+        x.state === 'waiting' && !tails.has(x.key) && x.until !== null && x.until <= now
+          ? Math.max(m, x.until)
+          : m,
+      0,
+    );
+    if (Math.max(row.heartbeat_at ?? row.created_at, waitEnds) > now - limit) continue;
     await check(ctx, row, now);
   }
 }
