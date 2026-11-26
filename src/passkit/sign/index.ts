@@ -28,6 +28,16 @@ export interface CertificateInfo {
 
 const encoder = new TextEncoder();
 
+/** A signing refusal with a stable code, so a caller can log which check failed without reading the message. */
+class SigningError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'SigningError';
+    this.code = code;
+  }
+}
+
 function derFromPem(pem: string): ArrayBuffer {
   const body = pem.replace(/-----[^-]+-----|\s/g, '');
   const bytes = Uint8Array.from(atob(body), (c) => c.charCodeAt(0));
@@ -144,14 +154,17 @@ export async function signManifest(
   const signer = certificateFromPem(material.certificate);
   const intermediate = certificateFromPem(material.intermediate);
   if (signer.notBefore.value > now || signer.notAfter.value < now) {
-    throw new Error('Pass signing certificate is not currently valid');
+    throw new SigningError(
+      'SIGN_CERT_NOT_VALID',
+      'Pass signing certificate is not currently valid',
+    );
   }
   if (
     intermediate.notBefore.value > now ||
     intermediate.notAfter.value < now ||
     !signer.issuer.isEqual(intermediate.subject)
   ) {
-    throw new Error('Incorrect or expired WWDR intermediate');
+    throw new SigningError('SIGN_INTERMEDIATE_INVALID', 'Incorrect or expired WWDR intermediate');
   }
   const expected = options.expectedIdentity;
   if (
@@ -159,11 +172,14 @@ export async function signManifest(
     (subjectValue(signer, UID_OID) !== expected.passTypeIdentifier ||
       subjectValue(signer, OU_OID) !== expected.teamIdentifier)
   ) {
-    throw new Error('Pass identity does not match signing certificate');
+    throw new SigningError(
+      'SIGN_IDENTITY_MISMATCH',
+      'Pass identity does not match signing certificate',
+    );
   }
   const engine = webCrypto();
   if (!(await chainIsValid(material, signer, intermediate, engine)))
-    throw new Error('Invalid certificate chain');
+    throw new SigningError('SIGN_CHAIN_INVALID', 'Invalid certificate chain');
 
   const data = manifestBytes.buffer.slice(
     manifestBytes.byteOffset,
