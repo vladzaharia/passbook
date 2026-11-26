@@ -189,4 +189,35 @@ describe('OperationTray', () => {
       expect(window.location.search).toBe('');
     });
   });
+
+  describe('a finished row with a page', () => {
+    const done = (href: string) => ({
+      ...fixtureOperation(SANDBOX_CREATE, { status: 'succeeded' }),
+      result: { href, ids: {} },
+    });
+    it('opens the page named by a safe app path', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const onNavigate = vi.fn();
+      mount(client(), <OperationTray onNavigate={onNavigate} />);
+      await settle();
+      act(() => trackOperation({ ...done('/developers/quickstart'), status: 'running' }));
+      act(() => trackOperation({ ...done('/developers/quickstart'), revision: 9 }));
+      await user.click(screen.getByRole('button', { name: /Activity/ }));
+      await user.click(await screen.findByRole('button', { name: /Create sandbox/ }));
+      expect(onNavigate).toHaveBeenCalledWith('/developers/quickstart');
+    });
+
+    it('never navigates to anything else: it opens the sheet instead', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const onNavigate = vi.fn();
+      mount(client(), <OperationTray onNavigate={onNavigate} />);
+      await settle();
+      act(() => trackOperation({ ...done('https://evil.example/x'), status: 'running' }));
+      act(() => trackOperation({ ...done('https://evil.example/x'), revision: 9 }));
+      await user.click(screen.getByRole('button', { name: /Activity/ }));
+      await user.click(await screen.findByRole('button', { name: /Create sandbox/ }));
+      expect(onNavigate).not.toHaveBeenCalled();
+      expect(await screen.findByRole('dialog', { name: 'Create sandbox' })).toBeInTheDocument();
+    });
+  });
 });

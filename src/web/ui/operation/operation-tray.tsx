@@ -1,5 +1,6 @@
 import { Check, Loader2 } from 'lucide-react';
 import { type ReactNode, useCallback, useState } from 'react';
+import { safeNextPath } from '../../../shared/next.ts';
 import { cn } from '../../lib/cn.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { IconButton } from '../icon-button.tsx';
@@ -70,7 +71,9 @@ export function OperationTray({
   const closeDetail = useCallback(() => setDetail(null), [setDetail]);
   const openOp = (op: Operation) => {
     setOpen(false);
-    if (op.status === 'succeeded' && op.result?.href) onNavigate(op.result.href);
+    // The server holds `result.href` to an app path; a client that is handed anything else opens the sheet.
+    const href = op.status === 'succeeded' ? safeNextPath(op.result?.href) : null;
+    if (href) onNavigate(href);
     else setDetail(op.id);
   };
   const { active, recent, unseen, markSeen } = useTray({ notify, onOpen: openOp });
