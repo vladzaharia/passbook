@@ -145,7 +145,6 @@ html:has(.bench) {
 /* ---------- Title row and toolbar ---------- */
 .bench-title {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
   min-height: var(--wb-title);
@@ -156,7 +155,6 @@ html:has(.bench) {
   min-width: 0;
 }
 .bench-count {
-  white-space: nowrap;
   font-family: var(--pk-font-mono);
   font-size: 13px;
   color: var(--pk-text-muted);

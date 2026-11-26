@@ -18,6 +18,24 @@ export async function loadRows(
   return byNewest([...d.map((x) => deliveryRow(x, endpoint.id)), ...tests]);
 }
 
+export /** A row `#id` names that this endpoint's list does not hold: found on any endpoint of the sandbox. */
+async function locate(
+  api: TesterApi,
+  endpoints: readonly WebhookEndpointDto[],
+  id: string,
+): Promise<Row | null> {
+  for (const e of endpoints) {
+    try {
+      if (e.target === 'url') return { ...deliveryRow(await api.delivery(e.id, id), e.id), id };
+      const found = (await api.captures(e.id)).find((c) => c.id === id || c.eventId === id);
+      if (found) return { ...captureRow(found), id };
+    } catch {
+      // Not on this endpoint (a 404) or unreadable: the next one may hold it.
+    }
+  }
+  return null;
+}
+
 export interface Feed {
   rows: Row[];
   /** The first read of this endpoint and query has answered. */

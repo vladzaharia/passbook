@@ -23,7 +23,6 @@ export function FilterSelect({
   options,
   onChange,
   any = C.any,
-  name,
   className,
 }: {
   label: string;
@@ -33,8 +32,6 @@ export function FilterSelect({
   onChange: (value: string | null) => void;
   /** The off choice's words. */
   any?: string;
-  /** The control's accessible name when the visible label is shorter ("Send as" for "Event type to send"). */
-  name?: string;
   /** A tool's hook for its own sizing (the phone toolbar). */
   className?: string;
 }) {
@@ -50,7 +47,7 @@ export function FilterSelect({
       <select
         className="bench-fs-s"
         value={value ?? ''}
-        aria-label={name ?? label}
+        aria-label={label}
         onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
       >
         <option value="">{any}</option>

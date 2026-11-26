@@ -9,6 +9,36 @@
   background: var(--pk-danger-subtle);
 }
 
+/* The send button and the chevron beside it share one row; the chevron is a quiet control. */
+.wh-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.wh-send .bench-mn-t {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-default);
+  cursor: pointer;
+}
+.wh-send .bench-mn-t:hover,
+.wh-send .bench-mn-t[aria-expanded="true"] {
+  background: var(--pk-state-hover-tint);
+}
+.wh-send .bench-mn-t:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 1px;
+}
+.wh-send .bench-mn-t svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* The Test tag sits a word's space from the type it tags. */
 .bench-row-tt .bench-sc {
   margin-inline-start: 8px;
@@ -152,6 +182,9 @@
 
 /* The toolbar keeps one row on a phone: the endpoint drops its word, Manage keeps only its icon. */
 @media (max-width: 719.98px) {
+  .wh-count {
+    display: none;
+  }
   .wh-endpoint .bench-fs-l {
     display: none;
   }

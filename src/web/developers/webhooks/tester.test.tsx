@@ -166,12 +166,11 @@ describe('Tester', () => {
     const fake = api([capture()]);
     render(<Tester connect={ready(fake)} types={TYPES} />);
     await screen.findByText('Signature matches');
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Event type to send' }),
-      'pass.issued',
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Send test event' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send as' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'pass.issued' }));
     await waitFor(() => expect(fake.sent).toEqual(['pass.issued']));
+    await userEvent.click(screen.getByRole('button', { name: 'Send test event' }));
+    await waitFor(() => expect(fake.sent).toEqual(['pass.issued', 'webhook.test']));
   });
 
   it('shows the headers and the raw body of a capture, and replays it', async () => {
