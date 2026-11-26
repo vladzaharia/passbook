@@ -76,9 +76,17 @@ describe('sandbox actions', () => {
 
   it('reads the sandbox a finished operation made from its result ids', () => {
     const op = {
-      result: { href: null, ids: { sandboxId: 's', orgId: 'o', orgSlug: 'dev-1', templateId: 't' } },
+      result: {
+        href: null,
+        ids: { sandboxId: 's', orgId: 'o', orgSlug: 'dev-1', templateId: 't' },
+      },
     };
-    expect(sandboxOfOperation(op as never)).toEqual({ id: 's', orgId: 'o', orgSlug: 'dev-1', templateId: 't' });
+    expect(sandboxOfOperation(op as never)).toEqual({
+      id: 's',
+      orgId: 'o',
+      orgSlug: 'dev-1',
+      templateId: 't',
+    });
     expect(sandboxOfOperation({ result: null } as never)).toBeNull();
   });
 });

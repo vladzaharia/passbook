@@ -128,7 +128,10 @@ describe('Create sandbox', () => {
     render(<Host onMade={onMade} />);
     await userEvent.click(screen.getByRole('button', { name: 'Create sandbox' }));
     await waitFor(() =>
-      expect(onMade).toHaveBeenCalledWith({ id: 's1', orgId: 'o1', orgSlug: 'dev-1', templateId: 't1' }, null),
+      expect(onMade).toHaveBeenCalledWith(
+        { id: 's1', orgId: 'o1', orgSlug: 'dev-1', templateId: 't1' },
+        null,
+      ),
     );
   });
 
