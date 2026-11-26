@@ -88,6 +88,7 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
     /** Renames a group as Polaris ID reports it. */
     groupNames: {} as Record<string, string>,
     client: {
+      id: CLIENT_ID as string,
       restricted: true,
       allowed: Object.values(GROUPS)
         .filter((g) => g.id !== 'g-support')
@@ -227,16 +228,20 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
       return json(paginated([apiKeyDto('k1', s.keyExpires)]));
     if (method === 'GET' && path === `${base}/users/me`) return json(user(KEY_USER));
     const client = path.match(new RegExp(`^${base}/oidc/clients/([^/]+)$`));
-    if (method === 'GET' && client)
-      return client[1] === CLIENT_ID
+    if (method === 'GET' && client) {
+      // Polaris ID decodes `~<base64url>` in every :id segment.
+      const raw = client[1] as string;
+      const id = raw.startsWith('~') ? Buffer.from(raw.slice(1), 'base64url').toString() : raw;
+      return id === s.client.id
         ? json(
             clientDto(
-              CLIENT_ID,
+              id,
               s.client.restricted,
               s.client.allowed.map((id) => ({ id, name: nameOf(id) })),
             ),
           )
         : json({ error: 'not found' }, 404);
+    }
 
     if (method === 'GET' && path === `${base}/users`) {
       const q = (url.searchParams.get('search') ?? '').toLowerCase();

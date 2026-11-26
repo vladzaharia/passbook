@@ -8,6 +8,43 @@ import {
 } from './types.ts';
 
 export const ID = /^[A-Za-z0-9_-]{1,64}$/;
+/** PassBook's CIMD client id is its metadata URL (Polaris ID: the client's id is the URL itself). */
+const CIMD_PATH = '/auth/oidc/client-metadata.json';
+const PLAIN_CLIENT = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
+
+/** A CIMD metadata URL in its canonical form, or a plain registered client id. Nothing else. */
+export function clientIdOk(v: unknown): v is string {
+  if (typeof v !== 'string') return false;
+  if (PLAIN_CLIENT.test(v)) return !v.includes('..');
+  if (v.length > 512) return false;
+  try {
+    const u = new URL(v);
+    return (
+      u.protocol === 'https:' &&
+      !u.username &&
+      !u.password &&
+      !u.search &&
+      !u.hash &&
+      u.pathname === CIMD_PATH &&
+      u.href === v
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The client id as one admin path segment. Polaris ID takes a CIMD id as `~` + base64url, and decodes `~` in
+ * every `:id` segment, so this is the only segment that may carry one.
+ */
+export function encodeClientId(v: string): string {
+  if (!clientIdOk(v)) throw new Error('Invalid client id.');
+  if (PLAIN_CLIENT.test(v)) return v;
+  let bin = '';
+  for (const b of new TextEncoder().encode(v)) bin += String.fromCharCode(b);
+  return `~${btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+}
+
 export const GROUP_KEY = /^[a-z][a-z0-9_]{1,39}$/;
 const ROLES: readonly Role[] = [...WRITABLE_ROLES, 'platform_admin', 'users'];
 const PROTECTED_ROLES: readonly Role[] = ['platform_admin', 'users'];

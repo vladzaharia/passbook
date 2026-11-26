@@ -1,4 +1,12 @@
-import { GROUP_KEY, ID, parseRegistry, type Registry, type Settings } from './registry.ts';
+import {
+  clientIdOk,
+  encodeClientId,
+  GROUP_KEY,
+  ID,
+  parseRegistry,
+  type Registry,
+  type Settings,
+} from './registry.ts';
 import {
   type Actor,
   type ApplyCtx,
@@ -12,6 +20,12 @@ import {
 } from './types.ts';
 
 export { ID };
+
+/** The configured client id as its path segment: plain as is, a CIMD URL as `~<base64url>`. */
+export function assertClientId(value: unknown): string {
+  if (!clientIdOk(value)) refuse('Invalid client id.');
+  return encodeClientId(value as string);
+}
 /** Writes read the config at most this often; an unsafe answer is re-read sooner. */
 export const HEALTH_TTL = 10 * 60_000;
 export const UNSAFE_TTL = 60_000;
@@ -181,7 +195,7 @@ export function envReasons(env: BindingEnv): {
   const out = [...reasons];
   if (env.POCKET_ID_API !== 'v2' && env.POCKET_ID_API !== 'admin') out.push('env_layout');
   if (!env.POCKET_ID_API_KEY) out.push('env_key');
-  if (!ID.test(env.PASSBOOK_CLIENT_ID ?? '')) out.push('env_client');
+  if (!clientIdOk(env.PASSBOOK_CLIENT_ID)) out.push('env_client');
   try {
     const url = new URL(env.POCKET_ID_ORIGIN);
     if (url.protocol !== 'https:' || url.origin !== env.POCKET_ID_ORIGIN || url.username)

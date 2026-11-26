@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { allowedRoutes, routes } from '../../workers/polaris-binding/src/routes.ts';
+import { CLIENT_ID } from './fake-pocket.ts';
 import { ctx, groupsJson, resetLedger, seedCreated, seedGrant, setup, userCtx } from './harness.ts';
 
 beforeEach(resetLedger);
@@ -100,7 +101,7 @@ describe.each(['v2', 'admin'] as const)('route table (%s layout)', (layout) => {
       r.signupToken('t1'),
       r.auditLogs(1),
     ];
-    const table = allowedRoutes(layout);
+    const table = allowedRoutes(layout, CLIENT_ID);
     for (const path of built) {
       const pathname = path.replace(/[?].*$/, '');
       expect(
@@ -111,7 +112,7 @@ describe.each(['v2', 'admin'] as const)('route table (%s layout)', (layout) => {
   });
 
   it('allows no POST or DELETE on users, no group write and no write of config, clients or keys', () => {
-    const table = allowedRoutes(layout);
+    const table = allowedRoutes(layout, CLIENT_ID);
     const hits = (method: string, path: string) =>
       table.filter((t) => t.method === method && t.path.test(path));
     for (const [method, path] of [
@@ -150,7 +151,7 @@ describe('the allow-list is exactly the list of design 2 5.7', () => {
         : '/api/application-configuration/all';
     const audit = layout === 'admin' ? '/api/admin/audit-logs' : '/api/audit-logs/all';
     expect(
-      allowedRoutes(layout)
+      allowedRoutes(layout, CLIENT_ID)
         .map((r) => `${r.method} ${r.path.source}`)
         .sort(),
     ).toEqual(
@@ -165,7 +166,7 @@ describe('the allow-list is exactly the list of design 2 5.7', () => {
         ['PUT', `${base}/custom-claims/user-group/${id}`],
         ['GET', config],
         ['GET', '/api/api-keys'],
-        ['GET', `${base}/oidc/clients/${id}`],
+        ['GET', `${base}/oidc/clients/${CLIENT_ID}`],
         ['GET', `${base}/users/me`],
         ['GET', `${base}/users`],
         ['GET', `${base}/users/${id}`],

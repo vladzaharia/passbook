@@ -1,5 +1,8 @@
-import { assertId, assertSubject } from './policy.ts';
+import { assertClientId, assertId, assertSubject } from './policy.ts';
+import { clientIdOk, encodeClientId } from './registry.ts';
 import type { Layout } from './types.ts';
+
+const escapeRegExp = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Polaris ID routes per layout. Ids are validated here, so no caller text becomes path syntax. */
 export function routes(layout: Layout) {
@@ -20,7 +23,7 @@ export function routes(layout: Layout) {
     group: (gid: string) => `${base}/user-groups/${id('group id', gid)}`,
     config: admin ? '/api/admin/application-configuration' : '/api/application-configuration/all',
     apiKeys: '/api/api-keys',
-    client: (cid: string) => `${base}/oidc/clients/${id('client id', cid)}`,
+    client: (cid: string) => `${base}/oidc/clients/${assertClientId(cid)}`,
     signupTokens: `${base}/signup-tokens`,
     signupToken: (tid: string) => `${base}/signup-tokens/${id('token id', tid)}`,
     auditLogs: (page: number) =>
@@ -42,8 +45,13 @@ export type Routes = ReturnType<typeof routes>;
  * replace), `PUT oidc/clients/{id}/allowed-user-groups`, any OIDC client write, `GET custom-claims/suggestions`
  * (every app's keys), config writes and API key writes. The group and claim writes that are allowed are called
  * only through group-admin.ts and api-claims.ts. A test lists what the RPCs actually send.
+ * The client path is the configured client's exact encoded literal. `~` is allowed there and nowhere else:
+ * Polaris ID decodes `~` in every `:id`, so `~bWU` on a user route would reach it as `me`.
  */
-export function allowedRoutes(layout: Layout): { method: string; path: RegExp }[] {
+export function allowedRoutes(
+  layout: Layout,
+  clientId: string,
+): { method: string; path: RegExp }[] {
   const base = layout === 'admin' ? '/api/admin' : '/api';
   const id = '[A-Za-z0-9_-]{1,64}';
   const config =
@@ -63,7 +71,9 @@ export function allowedRoutes(layout: Layout): { method: string; path: RegExp }[
     rule('PUT', `${base}/custom-claims/user-group/${id}`),
     rule('GET', config),
     rule('GET', '/api/api-keys'),
-    rule('GET', `${base}/oidc/clients/${id}`),
+    ...(clientIdOk(clientId)
+      ? [rule('GET', `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}`)]
+      : []),
     rule('GET', `${base}/users/me`),
     rule('GET', `${base}/users`),
     rule('GET', `${base}/users/${id}`),

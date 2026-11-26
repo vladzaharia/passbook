@@ -10,11 +10,11 @@
   "preview_urls": false,
   "upload_source_maps": true,
   "vars": {
-    "POCKET_ID_ORIGIN": "https://id.example.invalid",
+    "POCKET_ID_ORIGIN": "https://id.plrs.im",
     // v2 is Polaris ID on Pocket ID v2.19.x (/api/...); admin is the next release (/api/admin/...).
     "POCKET_ID_API": "v2",
-    // The PassBook OIDC client's id in Polaris ID, for the group-restriction check.
-    "PASSBOOK_CLIENT_ID": "",
+    // The PassBook OIDC client's id in Polaris ID: its CIMD metadata URL (or a registered client's plain id).
+    "PASSBOOK_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     // dry_run computes and ledgers every write and sends none. The owner sets live after a dry-run week.
     "WRITE_MODE": "dry_run",
     "GROUP_PREFIX": "passbook_",

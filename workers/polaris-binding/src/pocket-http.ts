@@ -76,7 +76,9 @@ export async function pocketRequest(
   const url = new URL(path, env.POCKET_ID_ORIGIN);
   const layout = env.POCKET_ID_API === 'admin' ? 'admin' : 'v2';
   if (
-    !allowedRoutes(layout).some((r) => r.method === method && r.path.test(url.pathname)) ||
+    !allowedRoutes(layout, env.PASSBOOK_CLIENT_ID).some(
+      (r) => r.method === method && r.path.test(url.pathname),
+    ) ||
     url.origin !== env.POCKET_ID_ORIGIN ||
     !url.pathname.startsWith('/api/') ||
     !path.startsWith('/api/') ||
