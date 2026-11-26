@@ -639,6 +639,10 @@ Owner setup: [Play Console Setup](runbooks/play-console-setup.md) and [TestFligh
   appear after the normal sync has verified and recorded their system releases. A final issuance
   still rechecks authority, release head and asset integrity.
 
+## Recording wallet contract fixtures
+
+See `docs/runbooks/record-wallet-fixtures.md` (owner only).
+
 ## SDK release checks
 
 Runbook: [SDK Release Checks](runbooks/sdk-release-checks.md). Run before publishing; publishing is the owner's.
