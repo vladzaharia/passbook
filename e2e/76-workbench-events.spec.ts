@@ -110,8 +110,8 @@ test('L17: the mounted wizard creates, pauses and deletes a Test endpoint', asyn
   await expect(page.getByText('Endpoint deleted')).toBeVisible();
   await expect(page.getByRole('option', { name: /hooks\.example\.com/ })).toHaveCount(0);
 
-  // Every tenant call rode the Workbench token; none named a mode. (`developer/sandbox` and `developer/home`
-  // are the shell's own session reads, which T1 and T8 move onto the token; the boundary test lists them.)
+  // Every tenant call rode the Workbench token; none named a mode. (`developer/home` and `developer/sandbox`
+  // are account-level reads on the session; the boundary test lists them.)
   const tenant = calls.filter(
     ({ path }) =>
       !/^\/api\/v1\/(session|workbench\/(token|contexts)|orgs(\/memberships\/me)?|developer\/(sandbox|home))$/.test(

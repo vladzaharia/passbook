@@ -34,11 +34,12 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   test.setTimeout(240_000);
   await stubTurnstile(page);
 
-  // 1. Signed out the Workbench shows its sign-in state (T8 rebuilds the public first step).
+  // 1. Signed out the page is the whole page, with the empty pass.
   // The Workbench shell collapses its nav and the stage below 1440 px: the whole page is the desktop one.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/workbench/quickstart');
   await expect(page.getByRole('heading', { level: 1, name: 'Quickstart' })).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Hear back' })).toBeVisible();
   await shots(page, '01-signed-out');
   await startOidcAs(page, 'onboard', '/workbench/quickstart');
   await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
@@ -66,16 +67,14 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   const bad = await curl('POST', '/passes', key, { templateId, input: broken }, uid('bad'));
   expect(bad.status).toBe(422);
   await expect(page.getByText('422 INVALID')).toBeVisible();
-  // The field detail ("ticketId is required.") is not on the page today; T8's rebuild restores it.
-  await expect(
-    page.getByRole('alert').filter({ hasText: 'The pass input is invalid.' }),
-  ).toBeVisible();
+  // The log blanks the request's input (R3) but keeps the problem's own issue list: the page names the field.
+  await expect(page.getByRole('alert').filter({ hasText: 'ticketId is required.' })).toBeVisible();
   await shots(page, '04-bad-call-422');
   const made = await curl('POST', '/passes', key, { templateId, input }, uid('good'));
   expect(made.status).toBe(201);
   await expect(page.getByText('201 CREATED')).toBeVisible();
   const preview = page.getByRole('complementary', { name: 'Your pass, live' });
-  await expect(preview.getByText(/Rendered in/)).toBeAttached();
+  await expect(preview.getByText(/Rendered in/)).toBeVisible();
   await shots(page, '05-pass-from-curl', true);
 
   // 4. PATCH from the page, with If-Match; the runner then reads the change back.
@@ -130,9 +129,20 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await expect(page.getByRole('radiogroup', { name: 'Mode' })).toHaveCount(0);
   await shots(page, '10-admin-pinned');
 
-  // Reset and Reopen move into the Workbench's Sandbox area (T8, a placeholder today); until it lands
-  // Close and Reopen run on the server contract the area will call, and T8 restores the UI steps.
-  // Closed, the workbench offers Reopen inside its window, and Reopen gives a replacement key.
+  // Reset confirms, deletes the test data and shows the new key once; the old key stops.
+  await page.goto(`/workbench/o/${await sandboxOrgId(page)}/sandbox`);
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await expect(
+    page.getByRole('alertdialog').getByText('Passes, events and logs in this sandbox are deleted.'),
+  ).toBeVisible();
+  await shots(page, '11-reset-confirm');
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Reset sandbox' }).click();
+  await expect(page.getByText(/^pbp_test_\S{20,}$/)).toBeVisible({ timeout: 60_000 });
+  await shots(page, '12-reset-done');
+  expect((await curl('GET', '/passes', key)).status).toBe(401);
+
+  // Closed, the Workbench offers Reopen inside its window, and Reopen gives a replacement key. The
+  // Sandbox area has no Close of its own: both run on the server contract it calls.
   const closed = await page.evaluate(async () => {
     const who = (await (await fetch('/api/v1/session')).json()) as { csrfToken: string };
     const res = await fetch('/api/v1/developer/sandbox/close', {
@@ -159,9 +169,10 @@ test.describe('quickstart gates', () => {
     test.use({ storageState: 'e2e/.auth/user.json' });
     test('says so and offers the other account or the passes', async ({ page }) => {
       await page.goto('/workbench/quickstart');
-      // Without the developer group the Workbench offers no sandbox. Its own "No developer access"
-      // step returns with T8's Quickstart; today the shell's sign-in state is what shows.
-      await expect(page.getByRole('main').getByRole('link', { name: /Polaris ID/ })).toBeVisible();
+      const step = page.getByRole('listitem').filter({ hasText: 'No developer access' });
+      await expect(step.getByRole('link', { name: /Polaris ID/ })).toBeVisible();
+      await expect(step.getByRole('link', { name: 'My passes' })).toBeVisible();
+      await expect(page.getByText(/user@example\.test/)).toBeVisible();
       await expect(page.getByRole('button', { name: 'Create sandbox' })).toHaveCount(0);
       await shots(page, '15-no-group');
     });
@@ -179,13 +190,11 @@ test.describe('quickstart gates', () => {
       }
       await signInHolder(page, email);
       await page.goto('/workbench/quickstart');
-      // An email session is not for the Workbench: it asks for Polaris ID and makes no sandbox.
-      await expect(
-        page.getByRole('heading', { level: 1, name: 'The Workbench needs Polaris ID.' }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole('main').getByRole('link', { name: /Polaris ID/ }),
-      ).toHaveAttribute('href', /\/auth\/oidc\/start\?next=/);
+      const step = page.getByRole('listitem').filter({ hasText: 'Use Polaris ID' });
+      await expect(step.getByRole('link', { name: /Polaris ID/ })).toHaveAttribute(
+        'href',
+        /\/auth\/oidc\/start\?next=/,
+      );
       await expect(page.getByRole('button', { name: 'Create sandbox' })).toHaveCount(0);
       await shots(page, '16-email');
     });

@@ -60,9 +60,21 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   const create = page.getByRole('button', { name: 'Create sandbox' });
   // Polaris ID lands straight on the page, so wait for the island to pick a state.
   await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
+  let requestId: string | null = null;
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
     await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
+    // A call with the sandbox's own key leaves a request id to paste into the search below.
+    const key = /PASSBOOK_KEY=(pbp_test_\S+)/.exec(
+      (await page.locator('.qs-env-v').textContent()) ?? '',
+    )?.[1];
+    if (key) {
+      const call = await page.request.get('/api/v1/templates', {
+        headers: { authorization: `Bearer ${key}` },
+      });
+      expect(call.status()).toBe(200);
+      requestId = call.headers()['x-request-id'] ?? null;
+    }
   }
   // An operation page runs in the Workbench: Run in Workbench opens the Console on that operation, no body in the URL.
   await page.goto('/developers/reference/passes/create');
@@ -89,5 +101,14 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await expect
     .poll(() => page.evaluate(() => document.activeElement?.hasAttribute('data-search')))
     .toBe(true);
-  // A pasted request id opening its Logs row is the Logs tool's (T2 owns its spec).
+  // A pasted request id finds its request and opens it in the Logs tool, selected.
+  if (requestId) {
+    await page.keyboard.press('Control+k');
+    await page.keyboard.type(requestId);
+    const found = page.getByRole('option').filter({ hasText: /GET \/templates/ });
+    await expect(found).toBeVisible();
+    await page.keyboard.press('Enter');
+    await page.waitForURL(new RegExp(`/workbench/o/[^/]+/logs.*${requestId}`, 'i'));
+    await expect(page.locator('[role="option"][aria-selected="true"]')).toBeVisible();
+  }
 });

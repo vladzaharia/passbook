@@ -89,8 +89,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
   await page.setViewportSize({ width: 1440, height: 900 });
 
   // 1. Console: issue a pass, a write that causes pass.issued.
-  // Today's Console selects by hash (T5 moves it to ?op=).
-  await page.goto('/workbench/console#passes.postPasses');
+  await page.goto('/workbench/console?op=passes.postPasses');
   await expect(page.getByRole('heading', { level: 1, name: 'Console' })).toBeVisible();
   const run = page.getByRole('button', { name: /^Run/ }).first();
   await expect(run).toBeEnabled();
