@@ -35,11 +35,12 @@ import {
   finishVoid,
   firstRegistration,
   reschedule,
+  setWaitReason,
   unclaimReminder,
   voidedByMove,
   voidRef,
 } from './repo-identity-move-timers.ts';
-import { heldReason, setWaitReason } from './repo-identity-move-wallet.ts';
+import { heldReason } from './repo-identity-move-wallet.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
 import { setPassStatus } from './service-status.ts';

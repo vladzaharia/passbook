@@ -1,4 +1,4 @@
-import { all, run } from '../../platform/db.ts';
+import { all } from '../../platform/db.ts';
 import type { MoveRow } from './repo-identity-move.ts';
 
 /**
@@ -66,20 +66,6 @@ export function walletArmable(
          AND o.removed_at IS NULL AND o.deleted_at IS NULL)
      LIMIT ?`,
     [limit],
-  );
-}
-
-/** The wait's reason, shown while the row is `registered`. */
-export async function setWaitReason(
-  db: D1Database,
-  id: string,
-  reason: string | null,
-  now: number,
-): Promise<void> {
-  await run(
-    db,
-    `UPDATE pass_moves SET reason = ?, updated_at = ? WHERE id = ? AND state = 'registered'`,
-    [reason, now, id],
   );
 }
 

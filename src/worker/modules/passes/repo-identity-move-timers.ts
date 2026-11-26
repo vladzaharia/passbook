@@ -248,3 +248,17 @@ export async function voidedByMove(db: D1Database, row: MoveRow): Promise<boolea
   );
   return hit !== null;
 }
+
+/** The wait's reason, shown while the row is `registered`. */
+export async function setWaitReason(
+  db: D1Database,
+  id: string,
+  reason: string | null,
+  now: number,
+): Promise<void> {
+  await run(
+    db,
+    `UPDATE pass_moves SET reason = ?, updated_at = ? WHERE id = ? AND state = 'registered'`,
+    [reason, now, id],
+  );
+}
