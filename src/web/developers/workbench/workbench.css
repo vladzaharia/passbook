@@ -244,6 +244,11 @@ a.wb-stat:hover {
 /* The sandbox slot under the hero: holds the signed-out card, or the Workbench in its place. */
 .wb-slot {
   min-height: 1px;
+  /* A link to #workbench lands below the sticky bar. */
+  scroll-margin-top: calc(var(--dev-bar) + 16px);
+}
+.wb-slot:focus {
+  outline: none;
 }
 
 /* Reset and Reopen: a consequence confirm, inline in the head. */

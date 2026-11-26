@@ -98,7 +98,7 @@ export function EnvBox({
           <ArrowRight aria-hidden="true" />
         </button>
         <span className="xs muted push">
-          {M.lost} <a href={`${PATHS.home}/keys`}>{M.keys}</a>.
+          {M.lost} <a href={PATHS.keys}>{M.keys}</a>.
         </span>
       </div>
     </div>
@@ -200,7 +200,7 @@ function Body({ q, state, onNext }: { q: Quickstart; state: StepState; onNext: (
             <ShowKey q={q} />
           ) : (
             <p className="xs muted qs-note">
-              {M.lost} <a href={`${PATHS.home}/keys`}>{M.keys}</a>.
+              {M.lost} <a href={PATHS.keys}>{M.keys}</a>.
             </p>
           )}
         </>

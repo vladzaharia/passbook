@@ -148,6 +148,25 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     expect(Object.keys(b).every((k) => k === 'step' || k === 'code')).toBe(true);
   expect(Object.keys(created ?? {}).sort()).toEqual(['turnstileToken', 'viewedAt']);
 
+  // "Open your workbench" lands on the Workbench itself, not the developer front page, at every width.
+  await page.getByRole('link', { name: 'Open your workbench' }).click();
+  await page.waitForURL((u) => u.pathname === '/developers' && u.hash === '#workbench');
+  for (const [width, height] of [
+    [1440, 900],
+    [834, 1112],
+    [390, 844],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/developers#workbench');
+    await expect(page.locator('#workbench .wb')).toBeVisible();
+    await expect(page.locator('#workbench')).toBeInViewport();
+    await expect(page.locator('#workbench')).toBeFocused();
+    // Below the sticky bar, not under it.
+    const top = (await page.locator('#workbench').boundingBox())?.y ?? 0;
+    expect(top).toBeGreaterThanOrEqual(56);
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+
   // The workbench: Reset deletes the test data, restarts the track and shows the new key once.
   await page.goto('/developers');
   await page.getByRole('button', { name: 'Reset' }).click();
