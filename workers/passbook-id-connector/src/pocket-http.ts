@@ -1,3 +1,4 @@
+import { alert } from './ledger.ts';
 import { allowedRoutes } from './routes.ts';
 import { type BindingEnv, IdpError } from './types.ts';
 
@@ -7,6 +8,8 @@ const MAX_BODY = 256 * 1024;
 export interface Deps {
   fetch: typeof fetch;
   now: () => number;
+  /** Which transport `fetch` uses; absent means public HTTPS. */
+  transport?: 'binding' | 'https';
 }
 
 export interface PocketResponse {
@@ -95,6 +98,8 @@ export async function pocketRequest(
       ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
     });
   } catch {
+    // Fail closed: a bound transport never falls back to public HTTPS.
+    alert('error', 'binding.upstream_unreachable', { transport: deps.transport ?? 'https' });
     throw new IdpError('IDP_UPSTREAM', 'Polaris ID was unreachable.');
   }
   let raw: string;

@@ -50,6 +50,7 @@ export interface IdpHealth {
   blocked: string[];
   groups: Record<string, string | null>;
   layout: string;
+  transport: 'binding' | 'https';
   layoutSuspect: boolean;
   keyExpiresAt: number | null;
   checkedAt: number;

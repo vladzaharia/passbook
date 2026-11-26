@@ -37,6 +37,9 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Polaris ID is the `pocket-id` Worker in this account: admin calls go through the binding, not public HTTPS.
+  // POCKET_ID_ORIGIN stays the request URL and Host. Remove this entry to use public HTTPS (health().transport shows which).
+  "services": [{ "binding": "POLARIS", "service": "pocket-id" }],
   "secrets": { "required": ["POCKET_ID_API_KEY"] },
   // Traces would record request attributes of calls that carry the key; logs are enough.
   "observability": { "enabled": true, "traces": { "enabled": false } }

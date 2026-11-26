@@ -28,6 +28,8 @@ export class IdpError extends Error {
 export interface BindingEnv {
   DB: D1Database;
   POCKET_ID_API_KEY: string;
+  /** Optional service binding to the Polaris ID Worker (same account). When set, every admin API request goes through it. */
+  POLARIS?: Fetcher;
   POCKET_ID_ORIGIN: string;
   /** `v2` is Polaris ID on Pocket ID v2.19.x (`/api/...`); `admin` is the next release (`/api/admin/...`). */
   POCKET_ID_API: string;
@@ -122,6 +124,8 @@ export interface Health {
   /** Live group name per registry role, or null when the group was not found. */
   groups: Record<string, string | null>;
   layout: string;
+  /** How requests reach Polaris ID: the `POLARIS` service binding or public HTTPS. */
+  transport: 'binding' | 'https';
   /** Every group read answered 404: the key or `POCKET_ID_API` points at the wrong route layout. */
   layoutSuspect: boolean;
   /** Epoch ms of the nearest expiry among the key owner's keys, or null. */

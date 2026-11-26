@@ -233,6 +233,7 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
       ...core,
       ok: h.unsafe.length === 0 && !frozen,
       layout: env.POCKET_ID_API,
+      transport: deps.transport ?? 'https',
       mode: env.WRITE_MODE === 'live' ? 'live' : 'dry_run',
       frozen,
       budget: await budgetUse(db, deps.now()),

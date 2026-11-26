@@ -75,11 +75,17 @@ In Polaris ID's application configuration check that signup default custom claim
 npx wrangler deploy --config workers/passbook-id-connector/wrangler.jsonc
 ```
 
-## 9. Check health
+## 9. Service binding (already configured)
 
-Check that `health()` reports `ok: true`, `mode: "dry_run"`, the group names, no warnings and the key expiry. If every group read answers 404, `layoutSuspect` is set: `POCKET_ID_API` does not match the Polaris ID release.
+`workers/passbook-id-connector/wrangler.jsonc` binds `POLARIS` to the `pocket-id` Worker (Polaris ID, same Cloudflare account), so admin calls skip public HTTPS. `POCKET_ID_ORIGIN` stays the request URL and Host. The step 8 deploy applies it; Cloudflare fails the deploy if `pocket-id` does not exist in the account. To use public HTTPS instead, remove the `services` entry and deploy again.
 
-Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`.
+The key is still sent: the binding is not authentication. If a bound call fails, the Worker fails closed with `IDP_UPSTREAM` and logs `binding.upstream_unreachable`; it never falls back to HTTPS.
+
+## 10. Check health
+
+Check that `health()` reports `ok: true`, `mode: "dry_run"`, `transport: "binding"` (`https` only if the `services` entry was removed), the group names, no warnings and the key expiry. If every group read answers 404, `layoutSuspect` is set: `POCKET_ID_API` does not match the Polaris ID release.
+
+Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`, `binding.upstream_unreachable`.
 
 ## Next
 
