@@ -135,3 +135,8 @@ BEGIN
     AND (e.template_ids IS NULL
       OR EXISTS (SELECT 1 FROM json_each(e.template_ids) t WHERE t.value = f.template_id));
 END;
+
+-- A developer org holds no Live row, whoever writes it (0156).
+CREATE TRIGGER pass_moves_developer_no_live BEFORE INSERT ON pass_moves
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live data'); END;
