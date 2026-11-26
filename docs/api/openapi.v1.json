@@ -105993,7 +105993,7 @@
                   "createdBy": {
                     "kind": "user",
                     "id": "0193a1b2-7c00-7000-8000-000000000011",
-                    "name": "Sam Rivera"
+                    "name": null
                   },
                   "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
                 }
@@ -106104,7 +106104,7 @@
                       "createdBy": {
                         "kind": "user",
                         "id": "0193a1b2-7c00-7000-8000-000000000011",
-                        "name": "Sam Rivera"
+                        "name": null
                       }
                     }
                   ],
@@ -106281,7 +106281,7 @@
                   "createdBy": {
                     "kind": "user",
                     "id": "0193a1b2-7c00-7000-8000-000000000011",
-                    "name": "Sam Rivera"
+                    "name": null
                   },
                   "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
                 }
