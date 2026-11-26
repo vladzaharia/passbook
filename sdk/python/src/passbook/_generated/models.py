@@ -290,6 +290,7 @@ __all__ = [
     "ConnectionsUploadsUpdateResponseColumnsItem",
     "ConnectionsUploadsUpdateResponsePreview",
     "ConnectionsUploadsUpdateResult",
+    "ConnectionsWebhookArrivalsListItem",
     "ConnectionsWebhookArrivalsListResponse",
     "ConnectionsWebhookArrivalsListResponseItemsItem",
     "ConnectionsWebhookArrivalsListResult",
@@ -3734,6 +3735,18 @@ class ConnectionsUploadsUpdateResponseColumnsItem(_Model):
 class ConnectionsUploadsUpdateResponsePreview(_Model):
     header: _List[str]
     rows: _List[_List[str]]
+
+class ConnectionsWebhookArrivalsListItem(_Model):
+    id: str
+    receivedAt: int
+    lastAt: int
+    outcome: _Literal["accepted", "duplicate", "ignored", "rejected"] | str
+    reason: _Literal["signature_missing", "signature_mismatch", "signature_expired", "payload", "too_large", "no_secret", "unknown_type", "thin_event", "test_mode", "unrecognized_shape", "no_ref", "ping", "stale", None] | str
+    topic: str | None
+    contentClass: _Literal["json", "xml", "form", "other"] | str
+    eventRef: str | None
+    usedPrevious: bool
+    count: int
 
 class ConnectionsWebhookArrivalsListResponse(_Model):
     items: _List[ConnectionsWebhookArrivalsListResponseItemsItem]

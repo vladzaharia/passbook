@@ -325,6 +325,7 @@ export type ConnectionsTestResult = ConnectionsTestResponse;
 
 /** Query of `connections.webhookArrivals.list`. */
 export type ConnectionsWebhookArrivalsListQuery = {
+  cursor?: string;
   since?: number | null;
   limit?: number;
 };

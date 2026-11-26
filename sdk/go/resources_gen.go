@@ -469,12 +469,8 @@ func newConnectionsWebhookArrivalsResource(c *core) *ConnectionsWebhookArrivalsR
 }
 
 // List List webhook arrivals `GET /api/v1/connections/{id}/webhook-arrivals`
-func (r *ConnectionsWebhookArrivalsResource) List(ctx context.Context, id string, query *ConnectionsWebhookArrivalsListQuery, opts ...RequestOption) (*ConnectionsWebhookArrivalsListResult, error) {
-	var out ConnectionsWebhookArrivalsListResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/webhook-arrivals", query: queryValues(query)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
+func (r *ConnectionsWebhookArrivalsResource) List(ctx context.Context, id string, query *ConnectionsWebhookArrivalsListQuery, opts ...RequestOption) *Pager[ConnectionsWebhookArrivalsListItem] {
+	return newPager[ConnectionsWebhookArrivalsListItem](r.c, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/webhook-arrivals", query: queryValues(query)}, "cursor", opts)
 }
 
 type ConnectionsWebhookFailuresResource struct {

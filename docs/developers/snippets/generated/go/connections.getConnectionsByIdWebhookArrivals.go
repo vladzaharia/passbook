@@ -23,9 +23,11 @@ func main() {
 		panic(err)
 	}
 
-	result, err := pb.Connections.WebhookArrivals.List(ctx, "0193a1b2-7c00-7000-8000-0000000000e1", &query)
-	if err != nil {
+	pager := pb.Connections.WebhookArrivals.List(ctx, "0193a1b2-7c00-7000-8000-0000000000e1", &query)
+	for pager.Next(ctx) {
+		fmt.Printf("%+v\n", pager.Item())
+	}
+	if err := pager.Err(); err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", result)
 }

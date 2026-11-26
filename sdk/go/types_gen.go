@@ -2135,9 +2135,23 @@ type ConnectionsUploadsUpdateResponsePreview struct {
 
 type ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
 
+type ConnectionsWebhookArrivalsListItem struct {
+	ID           string  `json:"id"`
+	ReceivedAt   int64   `json:"receivedAt"`
+	LastAt       int64   `json:"lastAt"`
+	Outcome      string  `json:"outcome"`
+	Reason       *string `json:"reason"`
+	Topic        *string `json:"topic"`
+	ContentClass string  `json:"contentClass"`
+	EventRef     *string `json:"eventRef"`
+	UsedPrevious bool    `json:"usedPrevious"`
+	Count        int64   `json:"count"`
+}
+
 type ConnectionsWebhookArrivalsListQuery struct {
-	Since *int64 `json:"since,omitempty"`
-	Limit *int64 `json:"limit,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
+	Since  *int64  `json:"since,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
 }
 
 type ConnectionsWebhookArrivalsListResponse struct {
@@ -2157,8 +2171,6 @@ type ConnectionsWebhookArrivalsListResponseItemsItem struct {
 	UsedPrevious bool    `json:"usedPrevious"`
 	Count        int64   `json:"count"`
 }
-
-type ConnectionsWebhookArrivalsListResult = ConnectionsWebhookArrivalsListResponse
 
 type ConnectionsWebhookFailuresListItem struct {
 	ID             string  `json:"id"`

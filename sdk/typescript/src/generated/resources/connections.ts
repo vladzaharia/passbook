@@ -75,8 +75,8 @@ export class ConnectionsWebhookArrivalsResource {
   }
 
   /** List webhook arrivals `GET /api/v1/connections/{id}/webhook-arrivals` */
-  list(id: string, query?: ConnectionsWebhookArrivalsListQuery, options?: RequestOptions): Promise<ConnectionsWebhookArrivalsListResult> {
-    return this.core.request({ method: 'GET', path: `/api/v1/connections/${encodeURIComponent(id)}/webhook-arrivals`, query }, options);
+  list(id: string, query?: ConnectionsWebhookArrivalsListQuery, options?: RequestOptions): PagePromise<ConnectionsWebhookArrivalsListResult> {
+    return this.core.paginate({ method: 'GET', path: `/api/v1/connections/${encodeURIComponent(id)}/webhook-arrivals`, query }, 'cursor', options);
   }
 }
 

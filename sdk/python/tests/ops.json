@@ -2257,7 +2257,7 @@
   "binary": false,
   "idempotent": false,
   "raw": false,
-  "cursor": null,
+  "cursor": "cursor",
   "result": {
    "items": [
     {
@@ -2273,7 +2273,7 @@
      "count": 0
     }
    ],
-   "nextCursor": "x"
+   "nextCursor": null
   }
  },
  {

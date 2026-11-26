@@ -461,9 +461,9 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.webhookArrivals.list", "GET", "/api/v1/connections/id1/webhook-arrivals", false,
-		"", `{"items":[{"id":"x","receivedAt":0,"lastAt":0,"outcome":"accepted","reason":"signature_missing","topic":"x","contentClass":"json","eventRef":"x","usedPrevious":false,"count":0}],"nextCursor":"x"}`,
+		"", `{"items":[{"id":"x","receivedAt":0,"lastAt":0,"outcome":"accepted","reason":"signature_missing","topic":"x","contentClass":"json","eventRef":"x","usedPrevious":false,"count":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Connections.WebhookArrivals.List(ctx, "id1", nil)
+			return c.Connections.WebhookArrivals.List(ctx, "id1", nil).All(ctx)
 		},
 	},
 	{

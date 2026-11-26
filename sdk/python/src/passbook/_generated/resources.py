@@ -464,12 +464,13 @@ class ConnectionsWebhookArrivalsResource:
         self,
         id: str,
         *,
+        cursor: str | None = None,
         since: int | None | None = None,
         limit: int | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> m.ConnectionsWebhookArrivalsListResult:
+    ) -> Page[m.ConnectionsWebhookArrivalsListItem]:
         """List webhook arrivals `GET /api/v1/connections/{id}/webhook-arrivals`"""
-        return self._core.request("GET", f"/api/v1/connections/{_p(id)}/webhook-arrivals", query={"since": since, "limit": limit}, result=m.ConnectionsWebhookArrivalsListResult, **opts)
+        return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/webhook-arrivals", query={"cursor": cursor, "since": since, "limit": limit}, result=m.ConnectionsWebhookArrivalsListResult, cursor_param="cursor", **opts)
 
 
 class ConnectionsWebhookFailuresResource:
