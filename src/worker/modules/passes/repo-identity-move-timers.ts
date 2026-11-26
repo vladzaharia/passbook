@@ -265,10 +265,10 @@ export async function setWaitReason(
   /** The next look at the row, when the wait cost a provider read. */
   retryAt: number | null = null,
 ): Promise<void> {
+  const later = retryAt === null ? '' : ', void_at = MAX(void_at, ?)';
   await run(
     db,
-    `UPDATE pass_moves SET reason = ?, updated_at = ?, void_at = MAX(void_at, COALESCE(?, 0))
-     WHERE id = ? AND state = 'registered'`,
-    [reason, now, retryAt, id],
+    `UPDATE pass_moves SET reason = ?, updated_at = ?${later} WHERE id = ? AND state = 'registered'`,
+    retryAt === null ? [reason, now, id] : [reason, now, retryAt, id],
   );
 }
