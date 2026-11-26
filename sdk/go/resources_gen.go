@@ -2042,7 +2042,7 @@ func (r *PlatformSettingsResource) Retrieve(ctx context.Context, opts ...Request
 	return &out, nil
 }
 
-// Update Update the platform settings; sign-in settings (auth.*, oidc.*) are a person signed in with Polaris ID only `PUT /api/v1/platform/settings`
+// Update Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.* `PUT /api/v1/platform/settings`
 func (r *PlatformSettingsResource) Update(ctx context.Context, body *PlatformSettingsUpdateBody, opts ...RequestOption) (*PlatformSettingsUpdateResult, error) {
 	var out PlatformSettingsUpdateResult
 	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/platform/settings", body: body}, &out, opts); err != nil {

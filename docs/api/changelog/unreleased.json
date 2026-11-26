@@ -5610,7 +5610,7 @@
     "operationId": "settings.putPlatformSettings",
     "op": "PUT /api/v1/platform/settings",
     "change": "new operation",
-    "note": "Change the platform settings. A Platform key with platform:settings may change any setting except sign-in (auth.*, oidc.*), which is 403 PERSON_REQUIRED."
+    "note": "Change platform settings: an admin session (sign-in settings need a recent sign-in) or a platform:settings key that never names auth.* or oidc.*."
   },
   {
     "key": "PUT /api/v1/platform/wallet-credentials 200.cardTypes: field added",

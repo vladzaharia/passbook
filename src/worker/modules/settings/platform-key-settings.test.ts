@@ -1,7 +1,7 @@
 // Platform-keys §3.6 tests 5 and 11: what a Platform key may do on the platform settings, the wallet release and the
 // person-only routes this package declares; and how a write by a key is audited.
 import { beforeEach, describe, expect, it } from 'vitest';
-import { makeApiKey } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first } from '../../platform/db.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
@@ -132,5 +132,64 @@ describe('person-only routes', () => {
     const res = await call('/platform/orgs/none/retention/holds/h-1/release', auth.admin(), 'POST');
     expect(res.status).not.toBe(401);
     expect(res.status).not.toBe(403);
+  });
+});
+
+describe('relocated routes refuse the wrong session', () => {
+  const HOUR = 3_600_000;
+  const session = async (options: {
+    roles: ('admin' | 'user')[];
+    amr?: 'oidc' | 'breakglass';
+    stale?: boolean;
+  }) => {
+    const user = await makeUser(kit.fx);
+    const s = await makeSession(kit.fx, {
+      userId: user.id,
+      roles: options.roles,
+      ...(options.amr ? { amr: options.amr } : {}),
+      ...(options.stale ? { authTime: kit.clock.now() - 2 * HOUR } : {}),
+    });
+    return { ...s.headers, origin: 'https://wallet.test', 'content-type': 'application/json' };
+  };
+  const routes: [string, string, unknown][] = [
+    ['POST', '/identities/wi-1/revoke-certificate', {}],
+    ['POST', `/platform/orgs/${'x'}/retention/holds/h-1/release`, {}],
+    ['GET', '/platform/settings', undefined],
+    ['PUT', '/platform/settings', { values: { 'scan.undoWindowMinutes': 17 } }],
+    ['GET', '/platform/wallet-release', undefined],
+    ['POST', '/platform/wallet-release/google/test/enable-ready', { apply: false }],
+  ];
+
+  it('give a non-admin session 403', async () => {
+    const user = await session({ roles: ['user'] });
+    for (const [method, path, body] of routes)
+      expect((await call(path, user, method, body)).status, `${method} ${path}`).toBe(403);
+  });
+
+  it('ask a session with an old sign-in for a step-up where one applies', async () => {
+    const old = await session({ roles: ['admin', 'user'], stale: true });
+    for (const [method, path, body] of [
+      routes[0],
+      routes[5],
+      ['PUT', '/platform/settings', { values: { 'auth.magicLinkEnabled': false } }],
+    ] as [string, string, unknown][]) {
+      const res = await call(path, old, method, body);
+      expect([res.status, await code(res)], `${method} ${path}`).toEqual([403, 'STEP_UP_REQUIRED']);
+    }
+    // No step-up on a read, a hold release or a setting that is not a sign-in one.
+    for (const i of [1, 2, 3, 4]) {
+      const [method, path, body] = routes[i] as [string, string, unknown];
+      expect((await call(path, old, method, body)).status, path).not.toBe(403);
+    }
+  });
+
+  it('refuse break-glass on revoke-certificate: Polaris ID only', async () => {
+    const glass = await session({ roles: ['admin', 'user'], amr: 'breakglass' });
+    const res = await call('/identities/wi-1/revoke-certificate', glass, 'POST', {
+      certificateId: 'wc-1',
+      reason: 'compromised',
+      confirm: 'pass.test',
+    });
+    expect([res.status, await code(res)]).toEqual([403, 'OIDC_REQUIRED']);
   });
 });

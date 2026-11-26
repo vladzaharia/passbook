@@ -45,7 +45,7 @@ register(
     method: 'put',
     path: '/settings',
     summary:
-      'Update the platform settings; sign-in settings (auth.*, oidc.*) are a person signed in with Polaris ID only',
+      'Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.*',
     body: PlatformSettingsUpdateSchema,
     response: ScopedSettingsListSchema,
     auth: {

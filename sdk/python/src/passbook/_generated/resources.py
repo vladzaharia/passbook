@@ -1925,7 +1925,7 @@ class PlatformSettingsResource:
         body: m.PlatformSettingsUpdateBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.PlatformSettingsUpdateResult:
-        """Update the platform settings; sign-in settings (auth.*, oidc.*) are a person signed in with Polaris ID only `PUT /api/v1/platform/settings`"""
+        """Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.* `PUT /api/v1/platform/settings`"""
         return self._core.request("PUT", "/api/v1/platform/settings", body=body, result=m.PlatformSettingsUpdateResult, **opts)
 
 

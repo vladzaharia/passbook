@@ -13,7 +13,7 @@ export class PlatformSettingsResource {
     return this.core.request({ method: 'GET', path: '/api/v1/platform/settings' }, options);
   }
 
-  /** Update the platform settings; sign-in settings (auth.*, oidc.*) are a person signed in with Polaris ID only `PUT /api/v1/platform/settings` */
+  /** Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.* `PUT /api/v1/platform/settings` */
   update(body: PlatformSettingsUpdateBody, options?: RequestOptions): Promise<PlatformSettingsUpdateResult> {
     return this.core.request({ method: 'PUT', path: '/api/v1/platform/settings', body }, options);
   }
