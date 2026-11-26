@@ -171,6 +171,41 @@ export default defineConfig(({ command }) => ({
     client: {
       build: {
         rolldownOptions: {
+          // The Workbench groups below need it. The Worker environment keeps the Cloudflare plugin's
+          // `strict`, so they live here, not on `build`.
+          preserveEntrySignatures: 'allow-extension',
+          output: {
+            // The Workbench's shared code, one named chunk each (tools/check-bundle.ts measures them
+            // by name). Without them the bundler merges these modules by which tool routes import
+            // them, so each new tool moves code between the tool chunks and breaks their budgets.
+            // Nothing the SPA entry, the scanner or the docs portal loads may sit in one of them.
+            codeSplitting: {
+              groups: [
+                // The bench primitives. Their base stylesheets are the portal's own imports.
+                {
+                  name: 'wb-bench',
+                  test: /src[\\/]web[\\/]workbench[\\/]bench[\\/](?!(bench|pane|view-transition)\.css)/,
+                  priority: 12,
+                  includeDependenciesRecursively: false,
+                },
+                // The host client and tool-api, minus what the entry's routes import.
+                {
+                  name: 'wb-host',
+                  test: /src[\\/]web[\\/](workbench[\\/]host[\\/](?!(session-fetch|contexts|entry)\.)|lib[\\/]tool-api\.)/,
+                  priority: 12,
+                  includeDependenciesRecursively: false,
+                },
+                // What every tool route shares: its page frame, the shared states, the legacy
+                // stylesheets and the placeholder. The kit controls they import stay their own chunks.
+                {
+                  name: 'wb-kit',
+                  test: /src[\\/]web[\\/]workbench[\\/](shell[\\/]tool-page\.|states[\\/]states\.|styles[\\/]|tools[\\/](legacy|placeholder)\.)/,
+                  priority: 12,
+                  includeDependenciesRecursively: false,
+                },
+              ],
+            },
+          },
           input: {
             main: fileURLToPath(new URL('./index.html', import.meta.url)),
             scan: fileURLToPath(new URL('./scan.html', import.meta.url)),

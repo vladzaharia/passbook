@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { e2eReleaseProblems } from './lib/e2e-release.ts';
-import { markedAssets } from './lib/marked-assets.ts';
+import { markedAssets, namedAssets } from './lib/marked-assets.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
@@ -38,22 +38,41 @@ export const DEV_SEARCH_BUDGET_BYTES = 135_000;
 export const WB_SHELL_BUDGET_BYTES = 45_000;
 /**
  * The bench primitives (workbench/bench/**: list, inspector, split, toolbar, id chip, trace), counted
- * once on top of the entry and the shell, in gzip bytes: the lazy chunk carrying `bench-split`, the
- * chunks it imports and its stylesheet. 28.2 kB measured; Workbench v2 §4.6 sets 35 kB.
+ * once on top of the entry and the shell, in gzip bytes: the chunk the build names `wb-bench`
+ * (vite.config.ts), the chunks it imports and its stylesheet. 24.9 kB measured; Workbench v2 §4.6
+ * sets 35 kB.
  */
 export const WB_BENCH_BUDGET_BYTES = 35_000;
-/** The class only the bench's split renders: it marks the bench chunk. */
-export const WB_BENCH_MARKER = 'bench-split';
+/** The build names the bench's chunk after this (the `codeSplitting` group in vite.config.ts). */
+export const WB_BENCH_CHUNK = 'wb-bench';
 /**
- * One tool route (workbench/tools/tool-<name>.tsx), on top of the entry, the shell and the bench, in
- * gzip bytes: its chunk, the chunks and stylesheets its loader lists. Dynamic imports (the wallet
+ * The host and tool-api (workbench/host/**, lib/tool-api): the chunk the build names `wb-host`, the
+ * chunks it imports past the entry. The shell imports it, so the shell's 45 kB already holds it:
+ * this line keeps it from growing unseen. 10.8 kB measured with the inbox and events tools merged.
+ */
+export const WB_HOST_BUDGET_BYTES = 15_000;
+/** The build names the host's chunk after this. */
+export const WB_HOST_CHUNK = 'wb-host';
+/**
+ * What every tool route shares (workbench/shell/tool-page, states, the legacy stylesheets, the tool
+ * placeholder), counted once on top of the entry, the shell and the bench: the chunk the build names
+ * `wb-kit`, the kit controls it imports and its stylesheet. 21.6 kB measured.
+ */
+export const WB_KIT_BUDGET_BYTES = 25_000;
+/** The build names the kit's chunk after this. */
+export const WB_KIT_CHUNK = 'wb-kit';
+/** The shared Workbench chunks: no entry (SPA, scanner, docs, site) loads one. */
+const WB_CHUNK = new RegExp(`/(${[WB_BENCH_CHUNK, WB_HOST_CHUNK, WB_KIT_CHUNK].join('|')})-`);
+/**
+ * One tool route (workbench/tools/tool-<name>.tsx), on top of the entry, the shell, the bench and the
+ * kit, in gzip bytes: its chunk, the chunks and stylesheets its loader lists. Dynamic imports (the wallet
  * compilers, the barcode encoder) stay out. Workbench v2 §4.6.
  */
 export const WB_TOOL_BUDGET_BYTES = 75_000;
 /**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
- * quickstart (88.3 kB measured; its pass cards and the compilers' loader) until T8, and the anonymous
- * Design route (88.0 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
+ * quickstart (79.7 kB measured; its pass cards and the compilers' loader) until T8, and the anonymous
+ * Design route (84.8 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
  */
 export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   logs: WB_TOOL_BUDGET_BYTES,
@@ -201,6 +220,7 @@ export function checkBundle(
     for (const marker of forbidden) {
       if (body.includes(marker)) errors.push(`${url} contains ${marker}`);
     }
+    if (WB_CHUNK.test(url)) errors.push(`${url} is a Workbench chunk`);
   }
   if (budget > 0 && total > budget)
     errors.push(`initial gzip ${total} B exceeds budget ${budget} B`);
@@ -304,17 +324,29 @@ if (import.meta.main) {
   }
   const gz = (urls: readonly string[]) =>
     urls.reduce((sum, url) => sum + gzipSync(read(url)).length, 0);
+  const host = namedAssets(read, assets, entry, WB_HOST_CHUNK);
+  const hostTotal = gz(host.files);
+  process.stdout.write(`workbench host gzip: ${hostTotal} B (${host.files.length} files)\n`);
+  const benchErrors = [...host.errors];
+  if (hostTotal > WB_HOST_BUDGET_BYTES)
+    benchErrors.push(`workbench host gzip ${hostTotal} B exceeds budget ${WB_HOST_BUDGET_BYTES} B`);
   const loaded = new Set([...entry, ...shell.files]);
-  const bench = markedAssets(read, assets, [...loaded], WB_BENCH_MARKER);
+  const bench = namedAssets(read, assets, [...loaded], WB_BENCH_CHUNK);
   const benchTotal = gz(bench.files);
   process.stdout.write(`workbench bench gzip: ${benchTotal} B (${bench.files.length} files)\n`);
-  const benchErrors = [...bench.errors];
+  benchErrors.push(...bench.errors);
   if (benchTotal > WB_BENCH_BUDGET_BYTES)
     benchErrors.push(
       `workbench bench gzip ${benchTotal} B exceeds budget ${WB_BENCH_BUDGET_BYTES} B`,
     );
+  const kit = namedAssets(read, assets, [...loaded, ...bench.files], WB_KIT_CHUNK);
+  const kitTotal = gz(kit.files);
+  process.stdout.write(`workbench kit gzip: ${kitTotal} B (${kit.files.length} files)\n`);
+  benchErrors.push(...kit.errors);
+  if (kitTotal > WB_KIT_BUDGET_BYTES)
+    benchErrors.push(`workbench kit gzip ${kitTotal} B exceeds budget ${WB_KIT_BUDGET_BYTES} B`);
   for (const [stem, limit] of Object.entries(WB_TOOLS_MEASURED)) {
-    const tool = toolAssets(read, assets, new Set([...loaded, ...bench.files]), stem);
+    const tool = toolAssets(read, assets, new Set([...loaded, ...bench.files, ...kit.files]), stem);
     const total = gz(tool.files);
     process.stdout.write(`workbench tool ${stem} gzip: ${total} B (${tool.files.length} files)\n`);
     benchErrors.push(...tool.errors);
