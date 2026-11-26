@@ -10,6 +10,7 @@ import {
   useOperation,
   useOperationParam,
 } from '../../ui/operation/index.ts';
+import { useCachedOperation } from '../../ui/operation/store.ts';
 import { ActionError, mintKey, reopenSandbox, startReset } from '../console/sandbox-actions.ts';
 import { loadSession } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
@@ -52,7 +53,6 @@ function ResetRun({
 }) {
   const { operation } = useOperation(id);
   const ours = !operation || operation.kind === 'sandbox.reset';
-  useClaimOperation(ours ? id : null);
   useEffect(() => {
     if (!ours) onOther();
   }, [ours, onOther]);
@@ -75,6 +75,9 @@ export function ResetAction({
   panel: HTMLElement | null;
 }) {
   const [opId, setOpId] = useOperationParam();
+  // Claimed from the first paint, before the session reads: the tray opens no second sheet for this id.
+  const seen = useCachedOperation(opId);
+  useClaimOperation(opId && (!seen || seen.kind === 'sandbox.reset') ? opId : null);
   const [step, setStep] = useState<'idle' | 'confirm' | 'working'>(opId ? 'working' : 'idle');
   const [error, setError] = useState<{ text: string; signInUrl: string | undefined } | null>(null);
   const [showCheck, setShowCheck] = useState(false);
@@ -161,8 +164,12 @@ export function ResetAction({
   const confirm: ReactNode =
     step === 'idle' ? null : (
       <section className="wb-act wb-confirm" aria-label={resetSandboxConfirm.title}>
-        <strong>{resetSandboxConfirm.title}</strong>
-        {op ? null : <p className="sm">{resetSandboxConfirm.description}</p>}
+        {op ? null : (
+          <>
+            <strong>{resetSandboxConfirm.title}</strong>
+            <p className="sm">{resetSandboxConfirm.description}</p>
+          </>
+        )}
         {op ? (
           <SandboxOperations csrf={op.csrf}>
             <ResetRun

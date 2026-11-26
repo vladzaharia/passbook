@@ -133,7 +133,10 @@ describe('Tester', () => {
     );
     unmount();
     render(<Tester connect={async () => ({ kind: 'no-sandbox' })} types={TYPES} />);
-    expect(await screen.findByRole('link', { name: 'Open the quickstart' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Create sandbox' })).toHaveAttribute(
+      'href',
+      '/developers/quickstart#sandbox',
+    );
   });
 
   it('lists captures, opens the newest on Verify and shows every step passing with the vectors', async () => {

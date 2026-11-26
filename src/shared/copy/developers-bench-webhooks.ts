@@ -37,10 +37,6 @@ export const BENCH_WEBHOOKS_COPY = {
     trigger: { event: 'Event', test: 'Sent from this page', replay: 'Replayed', retry: 'Retry' },
     test: 'Test',
   },
-  states: {
-    sandboxFirst: 'Make your sandbox first',
-    quickstart: 'Open the quickstart',
-  },
   errors: {
     tooMany: 'Too many sends. Wait a minute and try again.',
     generic: 'Something went wrong. Try again.',

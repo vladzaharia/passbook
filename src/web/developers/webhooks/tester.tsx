@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BENCH_WEBHOOKS_COPY } from '../../../shared/copy/developers-bench-webhooks.ts';
+import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
 import { BenchGate, BenchState } from '../bench/state.tsx';
@@ -32,9 +32,9 @@ export function Tester({
   if (auth.kind === 'signed-out') return <BenchGate tool="webhooks" />;
   if (auth.kind === 'no-sandbox')
     return (
-      <BenchState scene="no-sandbox" title={BENCH_WEBHOOKS_COPY.states.sandboxFirst}>
-        <a className="btn" href={PATHS.quickstart}>
-          {BENCH_WEBHOOKS_COPY.states.quickstart}
+      <BenchState scene="no-sandbox">
+        <a className="btn" href={`${PATHS.quickstart}#sandbox`}>
+          {BENCH_COPY.strip.create}
         </a>
       </BenchState>
     );

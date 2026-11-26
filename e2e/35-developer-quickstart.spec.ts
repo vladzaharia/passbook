@@ -128,7 +128,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   // Step 5: the events the sandbox captured, signed.
   await page.getByRole('button', { name: 'Send test event' }).click();
   await expect(page.locator('.qs-cap', { hasText: 'webhook.test' })).toContainText('Verified');
-  await page.getByRole('button', { name: 'Finish' }).click();
+  await page.getByRole('button', { name: 'Finish', exact: true }).click();
   await expect(
     page.getByRole('status').filter({ hasText: /First pass in \d+:\d\d/ }),
   ).toBeVisible();
