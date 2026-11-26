@@ -161,7 +161,7 @@ describe('Assign tag dialog', () => {
     });
     await next(user);
     expect(await screen.findByText(TAG_ERROR_COPY.TAG_LOST)).toBeInTheDocument();
-    expect(screen.getByText('Tap the tag on Front desk iPad')).toBeInTheDocument();
+    expect(screen.getAllByText('Tap the tag on Front desk iPad').length).toBeGreaterThan(0);
   });
 
   it('says the pass changed hands when completion is refused', async () => {

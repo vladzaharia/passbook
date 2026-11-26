@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +11,9 @@ const m = vi.hoisted(() => ({
   upload: vi.fn(),
   invalidate: vi.fn(),
   toast: { error: vi.fn(), success: vi.fn() },
+}));
+vi.mock('../../settings/use-org-time-zone.ts', () => ({
+  useOrgTimeZone: () => 'America/Los_Angeles',
 }));
 vi.mock('../../../lib/org-filter.tsx', () => ({ useOrgScope: () => m.scope }));
 vi.mock('@tanstack/react-query', async (orig) => ({
@@ -64,11 +67,13 @@ describe('PhotosPage', () => {
     expect(screen.getByText('No pass')).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: /Include photos/ }));
     await user.click(await screen.findByRole('button', { name: 'Upload 1' }));
-    await waitFor(() => expect(m.toast.success).toHaveBeenCalledWith('1 uploaded, 0 failed.'));
+    expect((await screen.findAllByText('Photos uploaded')).length).toBeGreaterThan(0);
     expect(m.upload).toHaveBeenCalledWith(expect.objectContaining({ key: 'a' }), true);
     expect(m.invalidate).toHaveBeenCalled();
     expect(screen.getByText('Uploaded')).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: 'Photos handled' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Import photos' })).toHaveTextContent(
+      'Upload photos (done)',
+    );
   });
 
   it('counts a failed upload and offers to send it again', async () => {
@@ -80,7 +85,8 @@ describe('PhotosPage', () => {
     const user = userEvent.setup();
     await user.upload(screen.getByLabelText('Drop photos or choose'), png('a.png'));
     await user.click(await screen.findByRole('button', { name: 'Upload 1' }));
-    await waitFor(() => expect(m.toast.success).toHaveBeenCalledWith('0 uploaded, 1 failed.'));
+    expect((await screen.findAllByText('Could not import the photos')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
     expect(screen.getByText('Too big')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Upload 1' })).toBeEnabled();
   });
@@ -89,8 +95,10 @@ describe('PhotosPage', () => {
     m.match.mockRejectedValue(new Error('down'));
     render(<PhotosPage />);
     await userEvent.setup().upload(screen.getByLabelText('Drop photos or choose'), png('a.png'));
-    await waitFor(() => expect(m.toast.error).toHaveBeenCalled());
-    expect(m.toast.error.mock.calls[0]?.[1]).toBe('Could not match the photos');
+    expect((await screen.findAllByText('Could not import the photos')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('list', { name: 'Import photos' })).toHaveTextContent(
+      'Match files to passes (failed)',
+    );
     expect(screen.queryByText('1 files')).toBeNull();
   });
 });
