@@ -140,6 +140,14 @@ describe('the Workbench host at runtime', () => {
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(TEMPLATE.name);
     // Template files, the stamp art and the org's logo and icon load as bytes on the bearer.
     await waitFor(() => expect(network.mock.calls.length).toBeGreaterThan(3));
+    // The card draws them from object URLs.
+    await waitFor(() =>
+      expect(
+        [...document.querySelectorAll('img')].some((img) =>
+          img.getAttribute('src')?.startsWith('blob:'),
+        ),
+      ).toBe(true),
+    );
     await user.click(await screen.findByRole('radio', { name: /Wallets/ }));
     await user.click(await screen.findByRole('radio', { name: 'Scan screen' }));
     await user.click(await screen.findByRole('button', { name: 'Start blank' }));
@@ -169,7 +177,7 @@ describe('the Workbench host at runtime', () => {
       expect(headers.get('x-passbook-mode')).toBeNull();
     }
 
-    // No image points at an address the browser would load without the token.
+    // No image points at an address loaded without the token.
     for (const img of document.querySelectorAll('img')) {
       const src = img.getAttribute('src') ?? '';
       expect(src === '' || /^(blob|data):/.test(src)).toBe(true);
