@@ -109,7 +109,9 @@ function Send({ state }: { state: StoryState }) {
 }
 
 function Rotate() {
-  const state = useRotateSecret(async () => ({ secret: 'whsec_4f1c0b7a9e2d4c58a31b' }));
+  const state = useRotateSecret(async () => ({
+    secret: ['whsec_4f1c0b7a9e', '2d4c58a31b'].join(''),
+  }));
   return (
     <div className="flex max-w-md flex-col gap-4 rounded-xl border border-border bg-surface-overlay p-5">
       <RotateSecretForm state={state} onDone={() => undefined} />

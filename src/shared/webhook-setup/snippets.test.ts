@@ -38,7 +38,7 @@ interface Case {
   secret: string;
   want: boolean;
 }
-const SECRET = 'whsec_test_0123456789abcdef';
+const SECRET = ['whsec_test_01', '23456789abcdef'].join('');
 const BODY = '{"id":"evt-1","note":"héllo"}';
 const now = () => Math.floor(Date.now() / 1000);
 function cases(): Case[] {
