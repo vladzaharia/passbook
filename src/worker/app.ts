@@ -87,6 +87,7 @@ import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
 import { workbenchRoutes } from './modules/workbench/routes.ts';
+import { resolveRoutes, workbenchReadRoutes } from './modules/workbench/routes-read.ts';
 import { apiVersionGate } from './platform/api-version.ts';
 import { type AuthStores, denyAllStores, SESSION_COOKIE } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
@@ -175,6 +176,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/developer', developerRoutes);
   app.route('/api/v1/workbench', workbenchRoutes);
+  app.route('/api/v1/resolve', resolveRoutes);
+  app.route('/api/v1/workbench', workbenchReadRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);

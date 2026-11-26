@@ -2870,10 +2870,34 @@ type EventPage struct {
 	HasMore    bool           `json:"hasMore"`
 }
 
+type EventsListDeliveriesResponse struct {
+	Items []EventsListDeliveriesResponseItemsItem `json:"items"`
+}
+
+type EventsListDeliveriesResponseItemsItem struct {
+	EventID       string  `json:"eventId"`
+	Type          string  `json:"type"`
+	PassID        string  `json:"passId"`
+	ExternalID    *string `json:"externalId"`
+	State         string  `json:"state"`
+	Attempts      int64   `json:"attempts"`
+	NextAt        int64   `json:"nextAt"`
+	LastStatus    *int64  `json:"lastStatus"`
+	LastError     *string `json:"lastError"`
+	LastAttemptAt *int64  `json:"lastAttemptAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+	Replays       int64   `json:"replays"`
+	EndpointID    string  `json:"endpointId"`
+	Target        string  `json:"target"`
+}
+
+type EventsListDeliveriesResult = EventsListDeliveriesResponse
+
 type EventsListQuery struct {
 	After      *string `json:"after,omitempty"`
 	Types      *string `json:"types,omitempty"`
 	PassID     *string `json:"passId,omitempty"`
+	RequestID  *string `json:"requestId,omitempty"`
 	Limit      *int64  `json:"limit,omitempty"`
 	APIVersion *string `json:"apiVersion,omitempty"`
 }

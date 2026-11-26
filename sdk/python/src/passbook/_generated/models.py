@@ -396,6 +396,9 @@ __all__ = [
     "EmailFailedEvent",
     "EmailFailedEventData",
     "EventPage",
+    "EventsListDeliveriesResponse",
+    "EventsListDeliveriesResponseItemsItem",
+    "EventsListDeliveriesResult",
     "EventsListResult",
     "EventsRetrieveResult",
     "HoldersAssignBody",
@@ -4383,6 +4386,25 @@ class EventPage(_Model):
     items: _List[WebhookEvent]
     nextCursor: str
     hasMore: bool
+
+class EventsListDeliveriesResponse(_Model):
+    items: _List[EventsListDeliveriesResponseItemsItem]
+
+class EventsListDeliveriesResponseItemsItem(_Model):
+    eventId: str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    passId: str
+    externalId: str | None
+    state: _Literal["pending", "delivered", "failed", "cancelled"] | str
+    attempts: int
+    nextAt: int
+    lastStatus: int | None
+    lastError: str | None
+    lastAttemptAt: int | None
+    finishedAt: int | None
+    replays: int
+    endpointId: str
+    target: _Literal["url", "capture"] | str
 
 class HoldersAssignParams(_Model):
     passId: str
@@ -15080,6 +15102,8 @@ DeveloperInvitationsRevokeResult = DeveloperInvitationsRevokeResponse
 DevelopersListResult = DevelopersListResponse
 
 DevelopersRemoveResult = DevelopersRemoveResponse
+
+EventsListDeliveriesResult = EventsListDeliveriesResponse
 
 EventsListResult = EventPage
 

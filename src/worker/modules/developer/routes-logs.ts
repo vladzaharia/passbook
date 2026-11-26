@@ -24,7 +24,7 @@ import { resolveId } from './resolve-service.ts';
  * names its org and a session finds the person's sandbox; neither takes an org from the request. A real API key is
  * not accepted. Declared with no key scopes, so the public document lists no key for these operations.
  */
-const logCaller = declareKeyAccess(
+export const logCaller = declareKeyAccess(
   createMiddleware<AppBindings>(async (c, next) => {
     const sent = bearerOf(c);
     if (sent === 'empty') throw apiKeyMissing();
@@ -103,13 +103,14 @@ register(
   {
     method: 'get',
     path: '/resolve',
-    summary: 'What a pasted id is in your sandbox: a request, a pass, a template or the sandbox',
+    summary: 'What a pasted id is in your sandbox. An alias of GET /resolve',
     operationId: 'developer.getResolve',
     query: ResolveQuerySchema,
     response: ResolvedSchema,
   },
   async (c) => {
     c.header('cache-control', 'no-store');
-    return c.json(await resolveId(serviceContext(c), c.var.auth, c.req.valid('query').id));
+    const { id, orgId } = c.req.valid('query');
+    return c.json(await resolveId(serviceContext(c), c.var.auth, id, { orgId, style: 'portal' }));
   },
 );

@@ -63,9 +63,10 @@
   },
   "developer.getResolve": {
     "response": {
-      "kind": "request",
-      "href": "https://passbook.mobile/developers/logs",
-      "label": "Server integration"
+      "kind": "live",
+      "id": "0193a1b2-7c00-7000-8000-e3816cf1ba1d",
+      "label": "Server integration",
+      "href": "https://passbook.mobile/developers/logs"
     }
   },
   "developer.getAccess": {
@@ -118,6 +119,24 @@
           "from": 1795489200000,
           "calls": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 1, 1],
           "errors": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1]
+        }
+      },
+      "quotas": {
+        "passes": {
+          "used": 128,
+          "limit": 25
+        },
+        "templates": {
+          "used": 128,
+          "limit": 25
+        },
+        "endpoints": {
+          "used": 128,
+          "limit": 25
+        },
+        "keys": {
+          "used": 128,
+          "limit": 25
         }
       },
       "keys": [

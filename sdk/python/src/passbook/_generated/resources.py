@@ -712,12 +712,21 @@ class EventsResource:
         after: str | None = None,
         types: str | None = None,
         pass_id: str | None = None,
+        request_id: str | None = None,
         limit: int | None = None,
         api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEvent]:
         """Event feed (cursor paging, ascending) `GET /api/v1/events`"""
-        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "limit": limit, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
+        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "requestId": request_id, "limit": limit, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
+
+    def list_deliveries(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.EventsListDeliveriesResult:
+        """Where one event was sent: its deliveries across endpoints. `passes:read`, like the event `GET /api/v1/events/{id}/deliveries`"""
+        return self._core.request("GET", f"/api/v1/events/{_p(id)}/deliveries", result=m.EventsListDeliveriesResult, **opts)
 
     def retrieve(
         self,
