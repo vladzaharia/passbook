@@ -1,15 +1,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
+import { StampsImpactSchema } from '@/shared/contracts/stamps.ts';
 import {
   type SaveVersionRequest,
   type SaveVersionResponse,
   SaveVersionResponseSchema,
-  TemplateVersionDetailSchema,
-} from '@/shared/contracts/index.ts';
-import { StampsImpactSchema } from '@/shared/contracts/stamps.ts';
+} from '@/shared/contracts/template-versions.ts';
+import { TemplateVersionDetailSchema } from '@/shared/contracts/templates.ts';
 import { useDebounced } from '../../../lib/debounce.ts';
-import { templateKeys } from '../api.ts';
+import { templateKeys } from '../keys.ts';
 import { useDesignerHost, useHostKey } from './host.tsx';
 import { assetsPayload } from './images.ts';
 import { type DesignDoc, type DraftAsset, isRecord } from './model.ts';

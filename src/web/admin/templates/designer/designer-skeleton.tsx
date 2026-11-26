@@ -20,3 +20,29 @@ export function DesignerSkeleton() {
     </div>
   );
 }
+
+/** The Wallets mode's rail of wallets above the same columns. */
+export function WalletsSkeleton() {
+  return (
+    <div className="grid gap-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <Skeleton className="h-[4.25rem] rounded-lg" />
+        <Skeleton className="h-[4.25rem] rounded-lg" />
+        <Skeleton className="hidden h-[4.25rem] rounded-lg md:block" />
+      </div>
+      <DesignerSkeleton />
+    </div>
+  );
+}
+
+/** An opening section's panel while its code loads. */
+export function SectionSkeleton() {
+  return (
+    <div role="status" aria-busy className="grid gap-3">
+      <span className="sr-only">Loading section</span>
+      <Skeleton className="h-9 w-full" />
+      <Skeleton className="h-9 w-full" />
+      <Skeleton className="h-24 w-full" />
+    </div>
+  );
+}

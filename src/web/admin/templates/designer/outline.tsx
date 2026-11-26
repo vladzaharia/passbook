@@ -1,7 +1,8 @@
-import { AccessSection } from './access/access-section.tsx';
+import { lazy, type ReactNode, Suspense } from 'react';
 import { readAccess } from './access/model.ts';
 import { useDesigner } from './context.tsx';
 import { readCounters } from './counters.ts';
+import { SectionSkeleton } from './designer-skeleton.tsx';
 import { Disclosure } from './disclosure.tsx';
 import { readInputs } from './inputs.ts';
 import {
@@ -13,19 +14,50 @@ import {
   listCount,
   styleOf,
 } from './model.ts';
-import { ActionsSection } from './scan/actions/actions-section.tsx';
 import { readActions } from './scan/actions/model.ts';
-import { BarcodeSection } from './section-barcode.tsx';
-import { ColorsSection } from './section-colors.tsx';
-import { CountersSection } from './section-counters.tsx';
-import { FieldsSection } from './section-fields.tsx';
-import { ImagesSection } from './section-images.tsx';
-import { InputsSection } from './section-inputs.tsx';
-import { RelevanceSection } from './section-relevance.tsx';
-import { StampsSection } from './section-stamps.tsx';
 import { StyleSection } from './section-style.tsx';
 import { TemplateSection } from './section-template.tsx';
 import { STRIP_STYLES } from './stamps.ts';
+
+/**
+ * Template and Style stay in the first load (Style is the section the designer opens on). Every
+ * other section loads when it opens, behind a skeleton of its panel: the stamps editor, the scan
+ * actions, access, inputs and the rest never reach a visit that does not open them.
+ */
+const AccessSection = lazy(() =>
+  import('./access/access-section.tsx').then((m) => ({ default: m.AccessSection })),
+);
+const ActionsSection = lazy(() =>
+  import('./scan/actions/actions-section.tsx').then((m) => ({ default: m.ActionsSection })),
+);
+const BarcodeSection = lazy(() =>
+  import('./section-barcode.tsx').then((m) => ({ default: m.BarcodeSection })),
+);
+const ColorsSection = lazy(() =>
+  import('./section-colors.tsx').then((m) => ({ default: m.ColorsSection })),
+);
+const CountersSection = lazy(() =>
+  import('./section-counters.tsx').then((m) => ({ default: m.CountersSection })),
+);
+const FieldsSection = lazy(() =>
+  import('./section-fields.tsx').then((m) => ({ default: m.FieldsSection })),
+);
+const ImagesSection = lazy(() =>
+  import('./section-images.tsx').then((m) => ({ default: m.ImagesSection })),
+);
+const InputsSection = lazy(() =>
+  import('./section-inputs.tsx').then((m) => ({ default: m.InputsSection })),
+);
+const RelevanceSection = lazy(() =>
+  import('./section-relevance.tsx').then((m) => ({ default: m.RelevanceSection })),
+);
+const StampsSection = lazy(() =>
+  import('./section-stamps.tsx').then((m) => ({ default: m.StampsSection })),
+);
+
+function Panel({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<SectionSkeleton />}>{children}</Suspense>;
+}
 
 /** Image slots with a file of their own, whatever the scales. */
 const filledSlots = (assets: readonly DraftAsset[]): number =>
@@ -48,18 +80,26 @@ export function Outline() {
           <StyleSection />
         </Disclosure>
         <Disclosure section="colors" index={next()}>
-          <ColorsSection />
+          <Panel>
+            <ColorsSection />
+          </Panel>
         </Disclosure>
         <Disclosure section="images" index={next()} count={filledSlots(doc.assets)}>
-          <ImagesSection />
+          <Panel>
+            <ImagesSection />
+          </Panel>
         </Disclosure>
         {STRIP_STYLES.some((s) => s === style) ? (
           <Disclosure section="stamps" index={next()}>
-            <StampsSection />
+            <Panel>
+              <StampsSection />
+            </Panel>
           </Disclosure>
         ) : null}
         <Disclosure section="counters" index={next()} count={readCounters(doc).length}>
-          <CountersSection />
+          <Panel>
+            <CountersSection />
+          </Panel>
         </Disclosure>
         {groups.map((g: GroupId) => (
           <Disclosure
@@ -68,23 +108,35 @@ export function Outline() {
             index={next()}
             count={fieldsOf(doc.passJson, g, doc.target).length}
           >
-            <FieldsSection group={g} />
+            <Panel>
+              <FieldsSection group={g} />
+            </Panel>
           </Disclosure>
         ))}
         <Disclosure section="inputs" index={next()} count={readInputs(doc.manifest).length}>
-          <InputsSection />
+          <Panel>
+            <InputsSection />
+          </Panel>
         </Disclosure>
         <Disclosure section="barcode" index={next()}>
-          <BarcodeSection />
+          <Panel>
+            <BarcodeSection />
+          </Panel>
         </Disclosure>
         <Disclosure section="access" index={next()} count={readAccess(doc)?.plans.length}>
-          <AccessSection />
+          <Panel>
+            <AccessSection />
+          </Panel>
         </Disclosure>
         <Disclosure section="scan-actions" index={next()} count={readActions(doc).length}>
-          <ActionsSection />
+          <Panel>
+            <ActionsSection />
+          </Panel>
         </Disclosure>
         <Disclosure section="relevance" index={next()} count={listCount(doc)}>
-          <RelevanceSection />
+          <Panel>
+            <RelevanceSection />
+          </Panel>
         </Disclosure>
       </ul>
     </nav>

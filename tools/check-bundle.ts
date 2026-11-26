@@ -70,6 +70,13 @@ const WB_CHUNK = new RegExp(`/(${[WB_BENCH_CHUNK, WB_HOST_CHUNK, WB_KIT_CHUNK].j
  */
 export const WB_TOOL_BUDGET_BYTES = 75_000;
 /**
+ * The Design route (workbench/design on the designer core), on top of the entry, the shell, the bench
+ * and the kit, in gzip bytes. The core loads Scan, Wallets, Paper, the stamps compositor, the Code
+ * tab, the JSON editor, the local validators and every section but Template and Style on demand
+ * (the note atop admin/templates/designer/designer-body.tsx names what stays eager). 210 kB measured.
+ */
+export const WB_DESIGN_BUDGET_BYTES = 230_000;
+/**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
  * anonymous Design route (88.0 kB; the playground's cards), which DC2 and DC3 bring under the design
  * budget. The quickstart is under 75 kB (60.5 kB measured) since its stage and finished page load lazily.
@@ -82,6 +89,7 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   keys: WB_TOOL_BUDGET_BYTES,
   sandbox: WB_TOOL_BUDGET_BYTES,
   quickstart: WB_TOOL_BUDGET_BYTES,
+  design: WB_DESIGN_BUDGET_BYTES,
   playground: 92_000,
 };
 /** The class every tool route's body carries (`wb-tool-logs`): it marks the route's chunk. */
@@ -192,7 +200,6 @@ export function toolAssets(
     return { files: [], errors: [`${marker}: ${scripts.length} chunks carry it, want 1`] };
   const base = (scripts[0] as string).replace(/^\/assets\//, '');
   const loader = new RegExp(
-    // A route chunk that also holds code its lazy children share exports more than the component: `.then(e=>e.t)`.
     `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\)(?:\\.then\\([^)]*\\))?,__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
   );
   for (const f of files) {

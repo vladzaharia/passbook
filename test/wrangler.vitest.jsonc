@@ -143,6 +143,11 @@
     { "name": "RL_API_ORG", "namespace_id": "2022", "simple": { "limit": 6000, "period": 60 } },
     { "name": "RL_API_TRY", "namespace_id": "2023", "simple": { "limit": 60, "period": 60 } },
     {
+      "name": "RL_API_TRY_ASSET",
+      "namespace_id": "2033",
+      "simple": { "limit": 600, "period": 60 }
+    },
+    {
       "name": "RL_TEMPLATE_UPLOAD",
       "namespace_id": "2024",
       "simple": { "limit": 60, "period": 60 }

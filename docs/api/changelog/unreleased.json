@@ -6871,5 +6871,13 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "Workbench token: file reads rate limit",
+    "class": "notable",
+    "operationId": "",
+    "op": "Workbench token",
+    "change": "template file reads: own rate limit",
+    "note": "A Workbench token's template file reads (GET .../assets/{name}) now have their own limit, 600 a minute per session."
   }
 ]

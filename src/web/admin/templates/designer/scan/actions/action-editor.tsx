@@ -5,7 +5,8 @@ import { useDesigner } from '../../context.tsx';
 import { PickEdit, TextEdit } from '../../controls.tsx';
 import { AmountFields } from './amount-fields.tsx';
 import { IssueList, NumEdit } from './fields.tsx';
-import { actionSummary, inputsFor, KINDS, moneyDigits, REPEATS, ROLES } from './model.ts';
+import { actionSummary, inputsFor, KINDS, REPEATS, ROLES } from './model.ts';
+import { moneyDigits } from './money-digits.ts';
 import { SetValue } from './set-value.tsx';
 
 const NONE = '__none';

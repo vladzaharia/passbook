@@ -22,6 +22,14 @@ import { memberTokenRow, sandboxPersonRow } from './repo.ts';
 import { tokenBucket, verifyWorkbenchToken, type WorkbenchClaims } from './token.ts';
 
 const ALLOWED: ReadonlySet<string> = new Set(WORKBENCH_ROUTES);
+const ASSET_READ = 'GET /api/v1/templates/:id/versions/:version/assets/:name';
+
+/**
+ * A call that only reads a version's file bytes (immutable per content hash, and a designer opens a
+ * dozen at once) counts against its own, larger budget so it never spends the session's calls.
+ */
+const readsAssetBytes = (caller: KeyCaller | undefined): boolean =>
+  !!caller?.routes?.length && caller.routes.every((route) => route === ASSET_READ);
 
 /**
  * Bound to the browser, as the v1 try token is: the request carries the session cookie the token was made
@@ -171,7 +179,11 @@ export async function resolveWorkbenchToken(
       !(await cookieOk(caller, claims.sessionIdHash))
     )
       return null;
-    await enforceRateLimit(env, 'RL_API_TRY', tokenBucket(claims.sessionIdHash));
+    await enforceRateLimit(
+      env,
+      readsAssetBytes(caller) ? 'RL_API_TRY_ASSET' : 'RL_API_TRY',
+      tokenBucket(claims.sessionIdHash),
+    );
     auth =
       claims.subject === 'sandbox_key'
         ? await sandboxPrincipal(env, clock, claims, caller, options)

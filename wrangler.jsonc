@@ -220,6 +220,12 @@
     { "name": "RL_API_ORG", "namespace_id": "1022", "simple": { "limit": 6000, "period": 60 } },
     // Developer try tokens: mint and use per person (key user:<id>).
     { "name": "RL_API_TRY", "namespace_id": "1023", "simple": { "limit": 60, "period": 60 } },
+    // Workbench token reads of template file bytes (key session:<id>): immutable per hash, 10x the try budget.
+    {
+      "name": "RL_API_TRY_ASSET",
+      "namespace_id": "1033",
+      "simple": { "limit": 600, "period": 60 }
+    },
     // Template upload and version save (dry runs included): keys user:<id> and org:<id>.
     {
       "name": "RL_TEMPLATE_UPLOAD",

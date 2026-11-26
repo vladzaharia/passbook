@@ -97483,6 +97483,7 @@
           }
         },
         "operationId": "pass-setup.getOrgsByOrgIdPassSetup",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "orgs",
           "method": "retrievePassSetup"
@@ -107247,6 +107248,7 @@
           }
         },
         "operationId": "templates.getTemplatesById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates",
           "method": "retrieve"
@@ -108159,6 +108161,7 @@
           }
         },
         "operationId": "templates.postTemplatesByIdPreview",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates",
           "method": "preview"
@@ -108607,6 +108610,7 @@
           }
         },
         "operationId": "templates.getTemplatesByIdVersionsByVersion",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates.versions",
           "method": "retrieve"
@@ -108748,6 +108752,7 @@
           }
         },
         "operationId": "templates.getTemplatesByIdVersionsByVersionWalletReports",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates.versions",
           "method": "retrieveWalletReports"
@@ -108864,6 +108869,7 @@
           }
         },
         "operationId": "templates.getTemplatesByIdVersionsByVersionAssetsByName",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates.versions",
           "method": "downloadAsset"
@@ -109172,6 +109178,7 @@
           }
         },
         "operationId": "templates.getTemplatesByIdChannels",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates.channels",
           "method": "retrieve"
@@ -110087,6 +110094,7 @@
           }
         },
         "operationId": "templates.postTemplatesByIdVersions",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates.versions",
           "method": "create"
@@ -110202,6 +110210,7 @@
           }
         },
         "operationId": "templates.getTemplatesByIdStampsImpact",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates",
           "method": "retrieveStampsImpact"
@@ -112151,6 +112160,7 @@
           }
         },
         "operationId": "templates.getTemplatesByIdReleases",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates.releases",
           "method": "list"
@@ -143771,6 +143781,7 @@
           }
         },
         "operationId": "settings.getSettings",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "settings",
           "method": "retrieve"

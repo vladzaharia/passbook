@@ -5,7 +5,8 @@ import { applyOp, type Op } from '../../apply.ts';
 import { sampleDoc } from '../../fixtures.ts';
 import type { DesignDoc } from '../../model.ts';
 import { actionLocalIssues } from './issues.ts';
-import { moneyDigits, readActions } from './model.ts';
+import { readActions } from './model.ts';
+import { moneyDigits } from './money-digits.ts';
 import { docWithInputs } from './test-fixtures.ts';
 
 const errors = (doc: DesignDoc) =>
