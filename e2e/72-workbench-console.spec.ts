@@ -59,6 +59,10 @@ test('the Console: opens on a read, runs with Cmd+Enter, and its request id open
   await page.keyboard.press('Control+Enter');
   const stamp = page.locator('.stamp');
   await expect(stamp).toContainText(/^2\d\d/);
+  // The first 2xx of the session: the buddy waves from the response's edge.
+  await expect(page.locator('.cr-cheer .wl-buddy[data-scene="wave"]')).toBeVisible();
+  await page.waitForTimeout(600);
+  await shots(page, 'console-wave');
   const rid = await page.locator('.cr-h .bench-id-c').getAttribute('title');
   expect(rid).toBeTruthy();
   await shots(page, 'console-response', true);
@@ -136,6 +140,17 @@ test('the Console: a search with no match says so, and Clear brings the index ba
         path: `${process.env.SHOTS_DIR}/console-nomatch-1440-${scheme}.png`,
       });
     }
+  if (process.env.SHOTS_DIR && (!only || only.includes('console-nomatch'))) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.screenshot({
+        path: `${process.env.SHOTS_DIR}/console-nomatch-390-${scheme}.png`,
+        fullPage: true,
+      });
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
   await page.getByRole('button', { name: 'Clear search' }).click();
   await expect(index).toBeVisible();
 });

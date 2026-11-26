@@ -6,6 +6,7 @@ import { BenchSkeleton } from '../../bench/skeleton.tsx';
 import { copyWithFeedback } from '../../shell/copy.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { remaining, subscribe } from '../budget.ts';
+import { cheersFor } from '../cheer.ts';
 import { copyAs } from '../copy-as.ts';
 import { applyPrefill, type Prefill } from '../prefill.ts';
 import {
@@ -28,6 +29,7 @@ import { RunBar } from './run-bar.tsx';
 const DOCK = '(max-width: 719.98px)';
 
 // The response (its code block, id chips and Trace) is read when there is one to draw, and warmed once the console is idle.
+const Cheer = lazy(() => import('./cheer.tsx').then((m) => ({ default: m.Cheer })));
 const loadResponse = () => import('./response.tsx');
 const ResponseView = lazy(() => loadResponse().then((m) => ({ default: m.ResponseView })));
 
@@ -63,6 +65,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
     null,
   );
   const count = useRef(0);
+  const [cheer, setCheer] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [spent, setSpent] = useState(() => remaining() === 0);
   const live = useRef(true);
@@ -113,6 +116,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
         if (!live.current) return;
         count.current += 1;
         setOutcome({ result, draft: d, at: count.current });
+        if (mode === 'console' && cheersFor(result.status)) setCheer(count.current);
         // A call that went through spends its key: the next Run is a new call. "Same key" keeps it.
         if (!again && d.idemOn && result.status < 500)
           setDraft((cur) => ({ ...cur, idemKey: crypto.randomUUID() }));
@@ -122,7 +126,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
         if (live.current) setPending(false);
       }
     },
-    [op, csrf],
+    [op, csrf, mode],
   );
 
   const edit = (next: Draft) => {
@@ -199,6 +203,11 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
               </p>
             ) : null}
             {pending && !outcome ? <BenchSkeleton rows={3} /> : null}
+            {outcome && cheer === outcome.at ? (
+              <Suspense fallback={null}>
+                <Cheer />
+              </Suspense>
+            ) : null}
             {outcome ? (
               <Suspense fallback={<BenchSkeleton rows={3} />}>
                 <ResponseView

@@ -72,3 +72,9 @@
   margin: 36px 28px 20px 16px;
   box-shadow: none;
 }
+/* The buddy seats on the response's top edge, at its end; the card leaves it room. */
+.cr-cheer {
+  position: relative;
+  height: 0;
+  margin: 44px 16px 0 0;
+}
