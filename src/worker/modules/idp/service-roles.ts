@@ -6,9 +6,10 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { requireUser } from '../users/service.ts';
 import { idpClient } from './client.ts';
-import { accessView, isAdminRoles } from './dto.ts';
+import { accessView } from './dto.ts';
 import { removedTarget } from './effects.ts';
 import { needBinding } from './ops-start.ts';
+import { isLiveAdmin } from './platform-admin.ts';
 import { insertGrant, liveGrantOf, revokeGrant } from './repo-role-grants.ts';
 import { statesOfUser } from './repo-state.ts';
 import type { WritableRole } from './types.ts';
@@ -28,7 +29,8 @@ const ADMIN_MESSAGE = 'Platform admins hold every role. Change it in Polaris ID.
 
 async function nonAdmin(ctx: ServiceContext, userId: string) {
   const user = await requireUser(ctx, userId);
-  if (isAdminRoles(user.last_roles)) throw new ConflictError(ADMIN_MESSAGE, 'IDP_PLATFORM_ADMIN');
+  if (await isLiveAdmin(ctx, userId, user.last_roles))
+    throw new ConflictError(ADMIN_MESSAGE, 'IDP_PLATFORM_ADMIN');
   return user;
 }
 

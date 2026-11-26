@@ -1,14 +1,15 @@
 import { CursorQuerySchema, IdParamSchema, OkSchema } from '../../../../shared/contracts/common.ts';
 import {
   CreatePlatformInvitationSchema,
+  type PlatformInvitationCreated,
   PlatformInvitationCreatedSchema,
   PlatformInvitationListSchema,
 } from '../../../../shared/contracts/platform-invitations.ts';
 import { currentUserId } from '../../../platform/auth.ts';
-import { idempotentJson } from '../../../platform/idempotency.ts';
 import { createRouter, register } from '../../../platform/openapi.ts';
 import { serviceContext } from '../../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../../platform/sign-in-guard.ts';
+import { idempotentSecret } from '../../api-keys/idempotent-secret.ts';
 import {
   createPlatformInvitation,
   listPlatformInvitations,
@@ -20,8 +21,8 @@ const TAG = 'platform invitations';
 /** A platform invitation puts a person in groups other apps trust: platform admins only, signed in with Polaris ID, step-up to write. */
 const READ = { platform: 'platform:users', signIn: 'oidc' } as const;
 const WRITE = { ...READ, stepUp: { maxAgeSec: STEP_UP_SECONDS } } as const;
-/** Idempotency keys are per org; a platform write has none. */
-const SCOPE = { orgId: 'platform', mode: 'live' } as const;
+/** The stored copy of a replayable answer never holds the link. */
+const withoutLink = ({ link: _link, ...rest }: PlatformInvitationCreated) => rest;
 
 /** Mount at /api/v1/platform. */
 export const platformInvitationRoutes = createRouter();
@@ -47,8 +48,14 @@ register(
     const body = c.req.valid('json');
     const ctx = serviceContext(c);
     const actor = currentUserId(c);
-    return idempotentJson(c, ctx, { ...SCOPE, principal: `session:${actor}`, body }, 201, () =>
-      createPlatformInvitation(ctx, actor, body),
+    return idempotentSecret(
+      c,
+      ctx,
+      null,
+      body,
+      201,
+      () => createPlatformInvitation(ctx, actor, body),
+      withoutLink,
     );
   },
 );
@@ -102,12 +109,14 @@ register(
     const { id } = c.req.valid('param');
     const ctx = serviceContext(c);
     const actor = currentUserId(c);
-    return idempotentJson(
+    return idempotentSecret(
       c,
       ctx,
-      { ...SCOPE, principal: `session:${actor}`, body: { id } },
+      null,
+      { id },
       201,
       () => resendPlatformInvitation(ctx, actor, id),
+      withoutLink,
     );
   },
 );

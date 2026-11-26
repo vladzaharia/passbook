@@ -80,7 +80,7 @@ execFileSync(
     'd1',
     'migrations',
     'apply',
-    'polaris-binding',
+    'polaris-binding-e2e',
     '--local',
     '--persist-to',
     state,

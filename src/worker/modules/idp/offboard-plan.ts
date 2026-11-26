@@ -3,7 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { liveSponsorsOfUser } from '../dev-access/repo-sponsors.ts';
 import { sandboxOfUser } from '../developer/repo.ts';
 import { requireUser } from '../users/service.ts';
-import { isAdminRoles } from './dto.ts';
+import { isLiveAdmin } from './platform-admin.ts';
 import { activePlatformGrants } from './repo-role-grants.ts';
 import { statesOfUser } from './repo-state.ts';
 import {
@@ -15,8 +15,8 @@ import {
 } from './repo-user-access.ts';
 import { WRITABLE_ROLES } from './types.ts';
 
-/** An org whose membership ends only through an active org: a suspended one is kept and reported. */
-const REVOCABLE = 'active';
+/** Orgs whose memberships offboarding ends: a suspended org's too, or re-enabling the user or the org would restore them. */
+const REVOCABLE = ['active', 'suspended'];
 
 /**
  * What offboarding a user ends (design 1 section 4.4), read from D1 alone. The dry run returns this; the real
@@ -32,12 +32,12 @@ export async function offboardPlan(ctx: ServiceContext, userId: string): Promise
     platformKeysMadeBy(db, userId),
     sandboxOfUser(db, userId),
   ]);
-  const revoked = memberships.filter((m) => m.org_status === REVOCABLE);
+  const revoked = memberships.filter((m) => REVOCABLE.includes(m.org_status));
   const orgs = await orgInfo(
     db,
     sponsors.map((s) => s.org_id),
   );
-  const sponsorOrgs = sponsors.filter((s) => orgs.get(s.org_id)?.status === REVOCABLE);
+  const sponsorOrgs = sponsors.filter((s) => REVOCABLE.includes(orgs.get(s.org_id)?.status ?? ''));
   const removes = WRITABLE_ROLES.filter((role) =>
     states.some((s) => s.target === role && s.observed === 1 && s.presence === 'passbook'),
   );
@@ -51,7 +51,7 @@ export async function offboardPlan(ctx: ServiceContext, userId: string): Promise
       org: { id: m.org_id, name: m.org_name },
     })),
     kept: memberships
-      .filter((m) => m.org_status !== REVOCABLE)
+      .filter((m) => !REVOCABLE.includes(m.org_status))
       .map((m) => ({ org: { id: m.org_id, name: m.org_name } })),
     sponsorships: sponsorOrgs.map((s) => ({
       org: { id: s.org_id, name: orgs.get(s.org_id)?.name ?? '' },
@@ -78,5 +78,5 @@ export async function offboardPlan(ctx: ServiceContext, userId: string): Promise
 /** The user row, refused for a platform admin: they keep everything implied and the binding refuses them. */
 export async function offboardable(ctx: ServiceContext, userId: string) {
   const user = await requireUser(ctx, userId);
-  return { user, admin: isAdminRoles(user.last_roles) };
+  return { user, admin: await isLiveAdmin(ctx, userId, user.last_roles) };
 }

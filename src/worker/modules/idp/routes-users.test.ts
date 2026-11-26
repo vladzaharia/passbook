@@ -149,6 +149,16 @@ describe('grant and revoke a platform role', () => {
     expect(off.roles.find((r) => r.role === 'developer')).toMatchObject({ wanted: false });
   });
 
+  it('answers a repeated Idempotency-Key from the first call', async () => {
+    const p = await linked();
+    const a = await admin();
+    const headers = { ...a.headers, 'idempotency-key': `role-${p.id}` };
+    const body = { role: 'support', grant: true };
+    expect((await start(roles(p.id), 'POST', headers, body)).status).toBe(200);
+    const again = await start(roles(p.id), 'POST', headers, body);
+    expect(again.headers.get('Idempotent-Replayed')).toBe('true');
+  });
+
   it('refuses console, a platform admin and a missing binding', async () => {
     const p = await linked();
     const a = await admin();
@@ -158,6 +168,13 @@ describe('grant and revoke a platform role', () => {
     const boss = await person(f(), { lastRoles: ['admin', 'user'] });
     await expectProblem(
       await start(roles(boss.id), 'POST', a.headers, { role: 'support', grant: true }),
+      409,
+      'IDP_PLATFORM_ADMIN',
+    );
+    const quiet = await linked();
+    rig.idp.addAccount(quiet.subject, { class: 'linked', isAdmin: true });
+    await expectProblem(
+      await start(roles(quiet.id), 'POST', a.headers, { role: 'support', grant: true }),
       409,
       'IDP_PLATFORM_ADMIN',
     );

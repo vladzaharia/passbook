@@ -110,3 +110,14 @@ export function endRuleConfirm(org: string): ConfirmCopy {
     typed: false,
   };
 }
+
+/** Offboarding ends a person's access everywhere; the dry-run plan is the body, the name is typed. */
+export function offboardConfirm(name: string): ConfirmCopy & { word: string } {
+  return {
+    title: `Offboard ${name}?`,
+    confirmLabel: 'Offboard',
+    description: 'Ends this access and signs them out.',
+    typed: true,
+    word: name.length <= 24 ? name : 'offboard',
+  };
+}

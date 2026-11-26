@@ -93,6 +93,16 @@ describe('platform routes', () => {
     expect((await start(`${P}/freeze`, 'POST', a.headers, { reason: '' })).status).toBe(422);
   });
 
+  it('answers a repeated Idempotency-Key for freeze from the first call', async () => {
+    const a = await admin();
+    const headers = { ...a.headers, 'idempotency-key': 'freeze-1' };
+    const body = { reason: 'owner asked' };
+    await start(`${P}/freeze`, 'POST', headers, body);
+    const again = await start(`${P}/freeze`, 'POST', headers, body);
+    expect(again.headers.get('Idempotent-Replayed')).toBe('true');
+    expect(FrozenSchema.parse(await again.json()).result).toBe('frozen');
+  });
+
   it('reads the binding ledger', async () => {
     const a = await admin();
     await start(P, 'GET', a.headers);

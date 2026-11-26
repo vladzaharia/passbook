@@ -150,7 +150,7 @@ export function assertDelta(value: unknown): { add: Target[]; remove: Target[] }
   return { add, remove };
 }
 
-/** A signup spec: a kind, and up to 5 group keys in all. A platform signup needs a group. */
+/** A signup spec: a kind, and up to 5 group keys in all. */
 export function assertSpec(value: unknown): { kind: SignupKind; groups: string[] } {
   const v = value as { kind?: unknown; groups?: unknown } | null;
   if (!v || typeof v !== 'object' || Array.isArray(v)) return refuse('Invalid signup.');
@@ -158,7 +158,6 @@ export function assertSpec(value: unknown): { kind: SignupKind; groups: string[]
   const raw = v.groups ?? [];
   if (!Array.isArray(raw) || raw.length > 5) return refuse('Invalid signup groups.');
   const groups = [...new Set((raw as unknown[]).map(assertGroupKey))];
-  if (kind === 'platform' && !groups.length) return refuse('A platform signup needs a group.');
   return { kind, groups };
 }
 

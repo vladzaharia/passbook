@@ -80,13 +80,13 @@ describe('POST /invitations/preview, platform', () => {
 });
 
 describe('setup', () => {
-  it('mints a one-hour token carrying the groups, and developer when chosen', async () => {
+  it('mints a one-hour token that carries no group, and developer when chosen', async () => {
     const key = await customGroup(r);
     const invite = await platformInvite(r, 'guest@agency.test', { groups: [key], developer: true });
     const res = await post(r, '/setup', challenge(invite.secret));
     expect(res.status).toBe(200);
     const token = [...r.idp.signups.values()].at(-1);
-    expect([...(token?.targets ?? [])].sort()).toEqual(['developer', `g:${key}`]);
+    expect([...(token?.targets ?? [])]).toEqual(['developer']);
     expect(
       await rowsOf(r, 'SELECT * FROM platform_invitation_setups WHERE invitation_id = ?', [
         invite.id,
@@ -138,6 +138,25 @@ describe('POST /invitations/confirm', () => {
     await clearMarks(['sub-guest']);
     await drain();
     expect(r.idp.accounts.get('sub-guest')?.roles.has(`g:${a}`)).toBe(true);
+  });
+
+  it('a forwarded link: a stranger who signs up with their own address gets no group at any point', async () => {
+    const key = await customGroup(r);
+    const invite = await platformInvite(r, 'guest@agency.test', { groups: [key] });
+    await signUp(invite.secret, 'sub-stranger', r.addr('stranger@elsewhere.test'));
+    const held = () => r.idp.accounts.get('sub-stranger')?.roles.has(`g:${key}`) ?? false;
+    expect(
+      [...r.idp.signups.values()].every((t) => !t.targets.some((x) => x.startsWith('g:'))),
+    ).toBe(true);
+    expect(held()).toBe(false);
+    await expectProblem(await confirm(invite.secret), 403, 'INVITATION_EMAIL_MISMATCH');
+    expect(held()).toBe(false);
+    await drain();
+    expect(held()).toBe(false);
+    r.h.clock.advance(3 * 60 * 60 * 1000);
+    await drain();
+    expect(held()).toBe(false);
+    expect((await accepted(invite.id))?.accepted_at).toBeNull();
   });
 
   it('unverified: asks to confirm the email and accepts nothing', async () => {
@@ -310,6 +329,32 @@ describe('POST /invitations/accept, platform developer', () => {
     ]);
   });
 
+  it('applies the groups to the account the person signed in with, not their first one', async () => {
+    const key = await customGroup(r);
+    const invite = await platformInvite(r, 'guest@agency.test', { groups: [key], developer: true });
+    const p = await person(r, 'guest@agency.test', ['user']);
+    const now = r.h.clock.now();
+    // Two linked accounts; the other sorts first, the person used theirs last.
+    await run(r.h.env.DB, 'UPDATE auth_identities SET last_used_at = ? WHERE subject = ?', [
+      now,
+      p.subject,
+    ]);
+    await run(
+      r.h.env.DB,
+      "INSERT INTO auth_identities (provider, subject, user_id, email_claim, email_verified, created_at, last_used_at) VALUES ('pocketid', 'aaa-other', ?, ?, 1, ?, ?)",
+      [p.user.id, invite.email, now, now - 1000],
+    );
+    r.idp.addAccount(p.subject, { email: invite.email, emailVerified: true });
+    r.idp.addAccount('aaa-other', { email: invite.email, emailVerified: true });
+    expect((await accept(invite.secret, p.session.headers)).status).toBe(200);
+    expect(await accepted(invite.id)).toMatchObject({ accepted_subject: p.subject });
+    expect([...(r.idp.accounts.get(p.subject)?.grants ?? [])].sort()).toEqual([
+      'developer',
+      `g:${key}`,
+    ]);
+    expect([...(r.idp.accounts.get('aaa-other')?.grants ?? [])]).toEqual([]);
+  });
+
   it('is only for developer invitations', async () => {
     const key = await customGroup(r);
     const invite = await platformInvite(r, 'guest@agency.test', { groups: [key] });
@@ -329,12 +374,10 @@ describe('the setup sweep, platform', () => {
     expect(await members(invite.id)).toMatchObject([{ group_key: key, subject: 'sub-guest' }]);
   });
 
-  it('takes the groups back from an account with another address', async () => {
+  it('gives an account with another address no group, even when the sweep proves it', async () => {
     const key = await customGroup(r);
     const invite = await platformInvite(r, 'guest@agency.test', { groups: [key] });
     await signUp(invite.secret, 'sub-stranger', r.addr('stranger@elsewhere.test'));
-    // Polaris ID puts the token's groups on the account when it is made; the fake does so at proof.
-    r.idp.accounts.get('sub-stranger')?.roles.add(`g:${key}`);
     r.h.clock.advance(3 * 60 * 60 * 1000);
     await drain();
     expect((await accepted(invite.id))?.accepted_at).toBeNull();

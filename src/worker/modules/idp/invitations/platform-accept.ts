@@ -62,6 +62,19 @@ export async function acceptPlatformSubject(
   for (const who of new Set([subject, ...proven, ...claimed])) await markDirty(ctx.env.DB, who);
 }
 
+/** Puts the invitation's groups on an account whose address matched the invited one; repeating it changes nothing. */
+export async function grantPlatformGroups(
+  ctx: ServiceContext,
+  invite: PlatformInvite,
+  subject: string,
+): Promise<void> {
+  await idpClient(ctx.env, ctx.log).apply(
+    subject,
+    { add: platformTargets(invite) },
+    ledgerOfPlatform(invite, INVITE_REASON.claim),
+  );
+}
+
 /**
  * Gives an existing Polaris ID account what the invitation carries, at once, and records why (a claim row the sweep
  * settles if nobody accepts in time). Repeating it for the same account changes nothing.
@@ -92,9 +105,5 @@ export async function claimPlatformAccount(
       claimUntil: until,
     });
   }
-  await idpClient(ctx.env, ctx.log).apply(
-    subject,
-    { add: platformTargets(invite) },
-    ledgerOfPlatform(invite, INVITE_REASON.claim),
-  );
+  await grantPlatformGroups(ctx, invite, subject);
 }

@@ -1,7 +1,7 @@
 {
   // The polaris-binding Worker as the e2e stack runs it (tools/e2e-server.ts, vite.config.ts): the real binding code over the
-  // mock Polaris ID admin API (test/mock-oidc/admin-api.ts). Never deployed; vars and the key are throwaway.
-  "name": "polaris-binding",
+  // mock Polaris ID admin API (test/mock-oidc/admin-api.ts). Never deployed; vars and the key are throwaway, and the names differ from the production Worker's so a stray deploy cannot replace it (tools/e2e-config-names.test.ts).
+  "name": "polaris-binding-e2e",
   "main": "worker.ts",
   "compatibility_date": "2026-08-14",
   "compatibility_flags": ["nodejs_compat"],
@@ -25,7 +25,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "polaris-binding",
+      "database_name": "polaris-binding-e2e",
       "database_id": "00000000-0000-0000-0000-0000000e2e01",
       "migrations_dir": "../../workers/polaris-binding/migrations"
     }

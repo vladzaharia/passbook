@@ -234,7 +234,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     async createSignup(spec, ctx) {
       enter('createSignup', true);
       const keys = spec.groups ?? [];
-      if (keys.length > 5 || (spec.kind === 'platform' && keys.length === 0)) refuse('IDP_REFUSED');
+      if (keys.length > 5) refuse('IDP_REFUSED');
       const targets: Target[] = [...KIND_ROLES[spec.kind], ...keys.map((k): Target => `g:${k}`)];
       groupsApi.assertTargets(targets);
       if (dry(ctx.dryRun, 'createSignup')) return { dryRun: true };

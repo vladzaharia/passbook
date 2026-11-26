@@ -25,6 +25,21 @@ export const subjectsOfUser = async (db: D1Database, userId: string): Promise<st
     )
   ).map((r) => r.subject);
 
+/**
+ * The account a person signed in with: the one used last, since a session records no subject. Null when they have
+ * none, or when two were used at the same moment and nothing says which.
+ */
+export async function signedInSubject(db: D1Database, userId: string): Promise<string | null> {
+  const rows = await all<{ subject: string; last_used_at: number | null }>(
+    db,
+    "SELECT subject, last_used_at FROM auth_identities WHERE provider = 'pocketid' AND user_id = ? ORDER BY last_used_at DESC, subject LIMIT 2",
+    [userId],
+  );
+  if (rows.length === 2 && (rows[0]?.last_used_at ?? 0) === (rows[1]?.last_used_at ?? 0))
+    return null;
+  return rows[0]?.subject ?? null;
+}
+
 export interface MembershipSource {
   org_id: string;
   kind: 'standard' | 'developer';

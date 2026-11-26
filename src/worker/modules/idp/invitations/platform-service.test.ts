@@ -172,8 +172,35 @@ describe('POST /platform/invitations', () => {
     const one = await create(headers, body);
     const two = await create(headers, body);
     expect(two.headers.get('Idempotent-Replayed')).toBe('true');
-    expect(await two.json()).toEqual(await one.json());
+    const first = (await one.json()) as { id: string; link?: string };
+    const replayed = (await two.json()) as { id: string; link?: string };
+    expect(first.link).toMatch(/#p_/);
+    // The stored copy never holds the link: the replay names the invitation and nothing that opens it.
+    expect(replayed).toEqual({ ...first, link: undefined });
+    expect(replayed.link).toBeUndefined();
     expect(r.h.mail).toHaveLength(1);
+    const secret = (first.link as string).split('#')[1] as string;
+    const stored = await rowsOf(r, 'SELECT body FROM idempotent_requests', []);
+    expect(JSON.stringify(stored)).not.toContain(secret);
+  });
+
+  it('keeps the link out of a stored resend too', async () => {
+    const key = await customGroup(r);
+    const who = await admin();
+    const made = (await (
+      await create(who.headers, { email: addr('a@agency.test'), groups: [key] })
+    ).json()) as { id: string };
+    const headers = { ...who.headers, 'idempotency-key': 'resend-1' };
+    const one = (await (
+      await r.h.call(`${URL}/${made.id}/resend`, { method: 'POST', headers })
+    ).json()) as { link?: string };
+    const two = await r.h.call(`${URL}/${made.id}/resend`, { method: 'POST', headers });
+    expect(two.headers.get('Idempotent-Replayed')).toBe('true');
+    expect(((await two.json()) as { link?: string }).link).toBeUndefined();
+    const secret = (one.link as string).split('#')[1] as string;
+    expect(
+      JSON.stringify(await rowsOf(r, 'SELECT body FROM idempotent_requests', [])),
+    ).not.toContain(secret);
   });
 });
 

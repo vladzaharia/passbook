@@ -36,9 +36,12 @@ export const PlatformInvitationSchema = z.object({
 });
 export type PlatformInvitation = z.infer<typeof PlatformInvitationSchema>;
 
-/** A created or resent invitation: the PassBook link is shown here once, only its hash is stored. */
+/**
+ * A created or resent invitation: the PassBook link is shown here once, only its hash is stored. A replay with the
+ * same `Idempotency-Key` answers without it; revoke and send again if the first answer was lost.
+ */
 export const PlatformInvitationCreatedSchema = PlatformInvitationSchema.extend({
-  link: z.string(),
+  link: z.string().optional(),
 });
 export type PlatformInvitationCreated = z.infer<typeof PlatformInvitationCreatedSchema>;
 

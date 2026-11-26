@@ -12,6 +12,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { accessView } from './dto.ts';
+import { idpIdempotent } from './idempotent.ts';
 import { startOffboard } from './service-offboard.ts';
 import { actorOf, removeExternalRole, setPlatformRole } from './service-roles.ts';
 
@@ -61,15 +62,11 @@ register(
     response: AccessViewSchema,
     auth: WRITE,
   },
-  async (c) =>
-    c.json(
-      await setPlatformRole(
-        serviceContext(c),
-        actorOf(c),
-        c.req.valid('param').id,
-        c.req.valid('json'),
-      ),
-    ),
+  (c) => {
+    const body = c.req.valid('json');
+    const { id } = c.req.valid('param');
+    return idpIdempotent(c, body, 200, (ctx) => setPlatformRole(ctx, actorOf(c), id, body));
+  },
 );
 
 register(
@@ -85,9 +82,9 @@ register(
     response: AccessViewSchema,
     auth: WRITE,
   },
-  async (c) => {
+  (c) => {
     const { id, role } = c.req.valid('param');
-    return c.json(await removeExternalRole(serviceContext(c), actorOf(c), id, role));
+    return idpIdempotent(c, null, 200, (ctx) => removeExternalRole(ctx, actorOf(c), id, role));
   },
 );
 

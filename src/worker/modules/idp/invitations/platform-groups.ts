@@ -8,10 +8,12 @@ export const ledgerOfPlatform = (invite: PlatformInvite, reason: string): WriteC
   actor: { kind: 'system', job: 'invitations' },
 });
 
-/** A developer invitation's token carries developer; the groups come from the row alone. */
+/**
+ * A forwarded link enrols nobody: the token carries no groups, only the kind. The groups are added once the signed-up
+ * address has matched the invited one (`grantPlatformGroups`).
+ */
 export const platformSignupSpec = (invite: PlatformInvite): SignupSpec => ({
   kind: invite.developer ? 'developer' : 'platform',
-  ...(invite.groups.length ? { groups: invite.groups } : {}),
 });
 
 /** What an existing account is given at once when it claims the invitation. */

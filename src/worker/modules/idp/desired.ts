@@ -35,12 +35,13 @@ export interface Desired {
 
 const asGroup = (key: string): GroupTarget => `g:${key}`;
 
+/** Whether the roles of a user's last sign-in name admin. Roles that do not parse count as admin: a refusal, never a pass. */
 export const isPlatformAdmin = (lastRoles: string): boolean => {
   try {
     const roles: unknown = JSON.parse(lastRoles);
-    return Array.isArray(roles) && roles.includes('admin');
+    return !Array.isArray(roles) || roles.includes('admin');
   } catch {
-    return false;
+    return true;
   }
 };
 

@@ -215,17 +215,64 @@ describe('offboard', () => {
     expect(rig.queue.jobs).toEqual([]);
   });
 
-  it('keeps a membership of an org that is not active and says so', async () => {
+  it('keeps a membership of a deleted org and says so', async () => {
     const t = await target();
-    const idle = await makeOrg(f());
-    await run(rig.h.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [idle.id]);
-    await membership(f(), idle.id, t.p, ['org_admin']);
+    const gone = await makeOrg(f());
+    await run(rig.h.env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [gone.id]);
+    await membership(f(), gone.id, t.p, ['org_admin']);
     const a = await admin();
     const dry = OffboardStartedSchema.parse(
       await (await start(offboard(t.p.id), 'POST', a.headers, { dryRun: true })).json(),
     );
-    expect(dry.plan.kept).toEqual([{ org: { id: idle.id, name: idle.name } }]);
+    expect(dry.plan.kept).toEqual([{ org: { id: gone.id, name: gone.name } }]);
     expect(dry.plan.memberships.map((m) => m.org.id)).toEqual([t.org.id]);
+  });
+
+  it('also ends a membership of a suspended org, so re-enabling restores nothing', async () => {
+    const t = await target();
+    const idle = await makeOrg(f());
+    await run(rig.h.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [idle.id]);
+    const idleId = await membership(f(), idle.id, t.p, ['org_admin']);
+    const other = await person(f(), { link: false });
+    await membership(f(), idle.id, other, ['org_admin']);
+    const a = await admin();
+    const dry = OffboardStartedSchema.parse(
+      await (await start(offboard(t.p.id), 'POST', a.headers, { dryRun: true })).json(),
+    );
+    expect(dry.plan.kept).toEqual([]);
+    expect(dry.plan.memberships.map((m) => m.org.id).sort()).toEqual([idle.id, t.org.id].sort());
+    expect((await start(offboard(t.p.id), 'POST', a.headers, {})).status).toBe(202);
+    const row = await first<{ revoked_at: number | null }>(
+      rig.h.env.DB,
+      'SELECT revoked_at FROM org_memberships WHERE id = ?',
+      [idleId],
+    );
+    expect(row?.revoked_at).not.toBeNull();
+  });
+
+  it('refuses an account that is an admin in Polaris ID though the user has not signed in since', async () => {
+    const t = await target();
+    const a = await admin();
+    const account = rig.idp.accounts.get(t.p.subject);
+    if (account) account.isAdmin = true;
+    await expectProblem(
+      await start(offboard(t.p.id), 'POST', a.headers, { dryRun: true }),
+      409,
+      'IDP_PLATFORM_ADMIN',
+    );
+  });
+
+  it('refuses a user whose last roles do not parse', async () => {
+    const t = await target();
+    const a = await admin();
+    await withoutTrigger(rig.h.env.DB, 'idp_dirty_user_roles', () =>
+      run(rig.h.env.DB, "UPDATE users SET last_roles = '{}' WHERE id = ?", [t.p.id]),
+    );
+    await expectProblem(
+      await start(offboard(t.p.id), 'POST', a.headers, { dryRun: true }),
+      409,
+      'IDP_PLATFORM_ADMIN',
+    );
   });
 
   it('answers a repeat with the same key by the first operation', async () => {

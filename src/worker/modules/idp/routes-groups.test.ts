@@ -114,6 +114,58 @@ describe('groups', () => {
     ).not.toBeNull();
   });
 
+  it('answers a repeated Idempotency-Key from the first call', async () => {
+    const { headers } = await person();
+    const keyed = { ...headers, 'idempotency-key': `create-${crew}` };
+    const body = { key: crew, friendlyName: 'Crew' };
+    expect((await send('POST', BASE, keyed, body)).status).toBe(201);
+    const again = await send('POST', BASE, keyed, body);
+    expect(again.status).toBe(201);
+    expect(again.headers.get('Idempotent-Replayed')).toBe('true');
+    expect(await audit('idp.group_create')).toBe(1);
+    const renameKey = { ...headers, 'idempotency-key': `rename-${crew}` };
+    await send('PATCH', `${BASE}/${crew}`, renameKey, { friendlyName: 'Crew two' });
+    const renamed = await send('PATCH', `${BASE}/${crew}`, renameKey, { friendlyName: 'Crew two' });
+    expect(renamed.headers.get('Idempotent-Replayed')).toBe('true');
+  });
+
+  it('adopts the group an earlier attempt made in Polaris ID instead of orphaning it', async () => {
+    const { headers } = await person();
+    // The earlier attempt reached Polaris ID and left its intent, then failed before the group's own row.
+    await run(
+      h.env.DB,
+      'INSERT INTO idp_group_intents (key, friendly_name, created_at) VALUES (?, ?, ?)',
+      [crew, 'Crew', h.clock.now()],
+    );
+    await idp.createGroup(crew, 'Crew', {
+      ref: 'earlier',
+      reason: 'group_create',
+      actor: { kind: 'user', id: 'earlier' },
+    });
+    const made = await send('POST', BASE, headers, { key: crew, friendlyName: 'Crew' });
+    expect(made.status).toBe(201);
+    expect(await made.json()).toEqual({ key: crew, dryRun: false });
+    const rows = await all(h.env.DB, 'SELECT 1 FROM idp_groups WHERE key = ?', [crew]);
+    expect(rows).toHaveLength(1);
+    expect(await all(h.env.DB, 'SELECT 1 FROM idp_group_intents WHERE key = ?', [crew])).toEqual(
+      [],
+    );
+  });
+
+  it('does not adopt a group with the name but no intent of ours', async () => {
+    const { headers } = await person();
+    await idp.createGroup(crew, 'Theirs', {
+      ref: 'other',
+      reason: 'group_create',
+      actor: { kind: 'user', id: 'other' },
+    });
+    await expectProblem(
+      await send('POST', BASE, headers, { key: crew, friendlyName: 'Crew' }),
+      409,
+      'IDP_CONFLICT',
+    );
+  });
+
   it('answers 409 for a taken key or name, and 422 for a bad or reserved key', async () => {
     const { headers } = await person();
     await send('POST', BASE, headers, { key: crew, friendlyName: 'Crew' });

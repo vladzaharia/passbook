@@ -76,3 +76,27 @@ export async function markGroupDeleted(db: D1Database, key: string, now: number)
     ).changes > 0
   );
 }
+
+/**
+ * Records that a create is about to be sent. True when an earlier attempt left its intent (the group may already
+ * exist in Polaris ID), false when this one is the first.
+ */
+export async function noteGroupIntent(
+  db: D1Database,
+  key: string,
+  friendlyName: string,
+  now: number,
+): Promise<boolean> {
+  return (
+    (
+      await run(
+        db,
+        'INSERT OR IGNORE INTO idp_group_intents (key, friendly_name, created_at) VALUES (?, ?, ?)',
+        [key, friendlyName, now],
+      )
+    ).changes === 0
+  );
+}
+
+export const clearGroupIntentStmt = (db: D1Database, key: string) =>
+  stmt(db, 'DELETE FROM idp_group_intents WHERE key = ?', [key]);

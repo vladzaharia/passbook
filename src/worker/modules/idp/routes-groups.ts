@@ -18,6 +18,7 @@ import { currentUserId } from '../../platform/auth.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { idpIdempotent } from './idempotent.ts';
 import { addMember, listMembers, removeMember } from './service-group-members.ts';
 import { addRule, endRule, listRules } from './service-group-rules.ts';
 import {
@@ -66,8 +67,10 @@ register(
     status: 201,
     auth: WRITE,
   },
-  async (c) =>
-    c.json(await createGroup(serviceContext(c), currentUserId(c), c.req.valid('json')), 201),
+  (c) => {
+    const body = c.req.valid('json');
+    return idpIdempotent(c, body, 201, (ctx) => createGroup(ctx, currentUserId(c), body));
+  },
 );
 
 register(
@@ -82,11 +85,10 @@ register(
     status: 201,
     auth: WRITE,
   },
-  async (c) =>
-    c.json(
-      await ensureRoleGroup(serviceContext(c), currentUserId(c), c.req.valid('json').role),
-      201,
-    ),
+  (c) => {
+    const body = c.req.valid('json');
+    return idpIdempotent(c, body, 201, (ctx) => ensureRoleGroup(ctx, currentUserId(c), body.role));
+  },
 );
 
 register(
@@ -101,15 +103,13 @@ register(
     response: GroupResultSchema,
     auth: WRITE,
   },
-  async (c) =>
-    c.json(
-      await updateGroup(
-        serviceContext(c),
-        currentUserId(c),
-        c.req.valid('param').key,
-        c.req.valid('json').friendlyName,
-      ),
-    ),
+  (c) => {
+    const body = c.req.valid('json');
+    const { key } = c.req.valid('param');
+    return idpIdempotent(c, body, 200, (ctx) =>
+      updateGroup(ctx, currentUserId(c), key, body.friendlyName),
+    );
+  },
 );
 
 register(
@@ -123,8 +123,10 @@ register(
     response: GroupResultSchema,
     auth: WRITE,
   },
-  async (c) =>
-    c.json(await deleteGroup(serviceContext(c), currentUserId(c), c.req.valid('param').key)),
+  (c) => {
+    const { key } = c.req.valid('param');
+    return idpIdempotent(c, null, 200, (ctx) => deleteGroup(ctx, currentUserId(c), key));
+  },
 );
 
 register(
@@ -159,16 +161,11 @@ register(
     status: 201,
     auth: WRITE,
   },
-  async (c) =>
-    c.json(
-      await addRule(
-        serviceContext(c),
-        currentUserId(c),
-        c.req.valid('param').key,
-        c.req.valid('json'),
-      ),
-      201,
-    ),
+  (c) => {
+    const body = c.req.valid('json');
+    const { key } = c.req.valid('param');
+    return idpIdempotent(c, body, 201, (ctx) => addRule(ctx, currentUserId(c), key, body));
+  },
 );
 
 register(
@@ -182,10 +179,12 @@ register(
     response: OkSchema,
     auth: WRITE,
   },
-  async (c) => {
+  (c) => {
     const { key, id } = c.req.valid('param');
-    await endRule(serviceContext(c), currentUserId(c), key, id);
-    return c.json({ ok: true as const });
+    return idpIdempotent(c, null, 200, async (ctx) => {
+      await endRule(ctx, currentUserId(c), key, id);
+      return { ok: true as const };
+    });
   },
 );
 
@@ -221,16 +220,11 @@ register(
     status: 201,
     auth: WRITE,
   },
-  async (c) =>
-    c.json(
-      await addMember(
-        serviceContext(c),
-        currentUserId(c),
-        c.req.valid('param').key,
-        c.req.valid('json'),
-      ),
-      201,
-    ),
+  (c) => {
+    const body = c.req.valid('json');
+    const { key } = c.req.valid('param');
+    return idpIdempotent(c, body, 201, (ctx) => addMember(ctx, currentUserId(c), key, body));
+  },
 );
 
 register(
@@ -244,9 +238,11 @@ register(
     response: OkSchema,
     auth: WRITE,
   },
-  async (c) => {
+  (c) => {
     const { key, id } = c.req.valid('param');
-    await removeMember(serviceContext(c), currentUserId(c), key, id);
-    return c.json({ ok: true as const });
+    return idpIdempotent(c, null, 200, async (ctx) => {
+      await removeMember(ctx, currentUserId(c), key, id);
+      return { ok: true as const };
+    });
   },
 );

@@ -4,7 +4,7 @@ import { readSystemValue, writeSystemValue } from '../../settings/repo.ts';
 import { idpCodeOf } from '../errors.ts';
 import { markDirty } from '../repo-dirty.ts';
 import type { IdpRpc } from '../types.ts';
-import { acceptPlatformSubject } from './platform-accept.ts';
+import { acceptPlatformSubject, grantPlatformGroups } from './platform-accept.ts';
 import { platformInviteOf } from './platform-resolve.ts';
 import { platformById } from './repo-platform.ts';
 import { setupsOf } from './repo-resolve.ts';
@@ -53,6 +53,7 @@ async function acceptSweptPlatform(
   const invite = row ? platformInviteOf(row, ctx.clock.now()) : null;
   if (invite?.state !== 'pending' || invite.developer) return;
   try {
+    await grantPlatformGroups(ctx, invite, subject);
     await acceptPlatformSubject(ctx, invite, subject, null);
   } catch (error) {
     // A lost race (revoked or accepted meanwhile) settles nothing here; anything else stops the run like a binding failure.

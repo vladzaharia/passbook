@@ -267,11 +267,12 @@ test.describe('groups, rules, members and claims', () => {
 test.describe('platform invitations', () => {
   const group = `guests_${run}`.slice(0, 30);
 
-  test('a matching address joins the group; another address is refused and loses it', async ({
+  test('a matching address joins the group; a forwarded link enrols nobody else', async ({
     browser,
   }) => {
     await freshAdmin(browser);
     await admin.send('POST', '/api/v1/platform/idp/groups', { key: group, friendlyName: 'Guests' });
+    const polarisGroup = `passbook_g_${group}`;
     for (const [who, signupAddress, outcome] of [
       ['match', null, 'joined'],
       ['mismatch', email('other'), 'refused'],
@@ -283,19 +284,23 @@ test.describe('platform invitations', () => {
       const context = await browser.newContext();
       const page = await context.newPage();
       const sub = await createAndAccept(page, context, secret, signupAddress ?? invited);
+      // A stranger with their own address holds no group the moment the account exists: the token carries none.
+      if (outcome === 'refused') expect(await polarisGroups(sub)).not.toContain(polarisGroup);
       const res = await context.request.post('/api/v1/invitations/confirm', {
         data: { token: secret },
       });
       if (outcome === 'joined') {
         expect(res.ok()).toBe(true);
-        expect(await polarisGroups(sub)).toContain(`passbook_g_${group}`);
+        expect(await polarisGroups(sub)).toContain(polarisGroup);
       } else {
         expect(res.ok()).toBe(false);
-        // The refused account is marked for the drain, which takes the token's group back.
+        expect(await polarisGroups(sub)).not.toContain(polarisGroup);
+        // The drain settles the refused account and still gives it nothing.
         await drainUntil(
-          async () => !(await polarisGroups(sub)).includes(`passbook_g_${group}`),
-          'the refused account loses the group',
+          async () => (await admin.get<{ breakerOpen: boolean }>('/api/v1/platform/idp')) !== null,
+          'the refused account is settled',
         );
+        expect(await polarisGroups(sub)).not.toContain(polarisGroup);
       }
       await context.close();
     }

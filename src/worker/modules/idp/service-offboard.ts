@@ -12,6 +12,7 @@ import { setUserStatus } from '../users/service.ts';
 import { offboardable, offboardPlan } from './offboard-plan.ts';
 import { limited, needBinding, replay, startIdpOp } from './ops-start.ts';
 import { revokeAllGrants } from './repo-role-grants.ts';
+import { orgInfo } from './repo-user-access.ts';
 
 export const offboardTarget = (userId: string) => ({ type: 'user', id: userId });
 
@@ -38,8 +39,25 @@ async function endAccess(
 ): Promise<void> {
   const db = ctx.env.DB;
   const now = ctx.clock.now();
+  const orgs = await orgInfo(
+    db,
+    plan.memberships.map((m) => m.org.id),
+  );
   for (const m of plan.memberships) {
-    const manager = await managerOf(ctx, auth, m.org.id);
+    // A suspended org takes no membership principal: the admin session acts, as it did to make the plan.
+    const manager =
+      orgs.get(m.org.id)?.status === 'suspended'
+        ? {
+            principal: {
+              kind: 'platform' as const,
+              userId: auth.userId,
+              sessionIdHash: auth.sessionId,
+              orgId: m.org.id,
+              inactiveOk: true as const,
+            },
+            checks: [],
+          }
+        : await managerOf(ctx, auth, m.org.id);
     try {
       await revokeActiveMembership(ctx, manager.principal, manager.checks, m.membershipId, {
         orgId: m.org.id,

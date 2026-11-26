@@ -9,6 +9,7 @@ import {
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { idpIdempotent } from './idempotent.ts';
 import { freezeIdp, idpCalls, idpDrift, idpStatus } from './service-platform.ts';
 import { actorOf } from './service-roles.ts';
 
@@ -67,10 +68,12 @@ register(
       stepUp: { maxAgeSec: STEP_UP_SECONDS },
     },
   },
-  async (c) =>
-    c.json({
-      result: await freezeIdp(serviceContext(c), actorOf(c), c.req.valid('json').reason),
-    }),
+  (c) => {
+    const body = c.req.valid('json');
+    return idpIdempotent(c, body, 200, async (ctx) => ({
+      result: await freezeIdp(ctx, actorOf(c), body.reason),
+    }));
+  },
 );
 
 register(

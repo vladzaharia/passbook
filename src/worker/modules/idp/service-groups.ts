@@ -8,10 +8,12 @@ import { liveSourceCounts } from './repo-group-counts.ts';
 import { liveMembersOfGroup } from './repo-group-members.ts';
 import { liveRulesOfGroup } from './repo-group-rules.ts';
 import {
+  clearGroupIntentStmt,
   groupByKey,
   insertGroupStmt,
   liveGroupCount,
   markGroupDeleted,
+  noteGroupIntent,
   renameGroup,
 } from './repo-groups.ts';
 import { requireLiveGroup, ruleStatements, writeBatch } from './service-group-rules.ts';
@@ -86,11 +88,21 @@ export async function createGroup(
       'IDP_GROUP_LIMIT',
     );
   const rules = await ruleStatements(ctx, actorId, input.key, input.rules ?? []);
-  const sent = await idpClient(ctx.env, ctx.log)
+  const rpc = idpClient(ctx.env, ctx.log);
+  const retry = await noteGroupIntent(db, input.key, input.friendlyName, ctx.clock.now());
+  const sent = await rpc
     .createGroup(input.key, input.friendlyName, writeCtx(ctx, userActor(actorId), 'group_create'))
-    .catch(nameTaken);
-  if ('dryRun' in sent) return { key: input.key, dryRun: true };
+    .catch(async (error: unknown) => {
+      // An earlier attempt may have made the group before it failed: it is ours when its key is there.
+      if (retry && (await rpc.groups()).some((g) => g.key === input.key)) return { key: input.key };
+      return nameTaken(error);
+    });
+  if ('dryRun' in sent) {
+    await clearGroupIntentStmt(db, input.key).run();
+    return { key: input.key, dryRun: true };
+  }
   await writeBatch(db, [
+    clearGroupIntentStmt(db, input.key),
     insertGroupStmt(db, {
       key: input.key,
       kind: 'custom',

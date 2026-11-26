@@ -191,6 +191,8 @@ describe('Offboard', () => {
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Offboard' }));
     const dialog = await screen.findByRole('dialog', { name: 'Offboard Ada Lovelace?' });
+    // The shared typed confirm: no X, a field that checks the word.
+    expect(within(dialog).queryByRole('button', { name: 'Close' })).toBeNull();
     expect(await within(dialog).findByText(/Leaves 1 organization: Acme/)).toBeInTheDocument();
     expect(within(dialog).getByText('2 sessions ended')).toBeInTheDocument();
     const go = within(dialog).getByRole('button', { name: 'Offboard' });

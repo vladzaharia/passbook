@@ -3,21 +3,13 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { liveSponsorsOfUser } from '../dev-access/repo-sponsors.ts';
 import { requireUser } from '../users/service.ts';
 import { idpClient, idpConfigured } from './client.ts';
+import { isPlatformAdmin } from './desired.ts';
 import { idpCodeOf } from './errors.ts';
 import { activePlatformGrants } from './repo-role-grants.ts';
 import { membershipSources, subjectsOfUser } from './repo-sources.ts';
 import { statesOfUser } from './repo-state.ts';
 import { orgInfo } from './repo-user-access.ts';
 import { WRITABLE_ROLES } from './types.ts';
-
-export const isAdminRoles = (lastRoles: string): boolean => {
-  try {
-    const roles: unknown = JSON.parse(lastRoles);
-    return Array.isArray(roles) && roles.includes('admin');
-  } catch {
-    return false;
-  }
-};
 
 /** The account's class and state, from Polaris ID. A failed read is logged with its code and leaves them unknown. */
 async function accountOf(ctx: ServiceContext, subjects: string[]): Promise<AccessView['account']> {
@@ -40,7 +32,7 @@ async function accountOf(ctx: ServiceContext, subjects: string[]): Promise<Acces
 export async function accessView(ctx: ServiceContext, userId: string): Promise<AccessView> {
   const user = await requireUser(ctx, userId);
   const db = ctx.env.DB;
-  const admin = isAdminRoles(user.last_roles);
+  const admin = isPlatformAdmin(user.last_roles);
   const disabled = user.status === 'disabled';
   const live = !admin && !disabled;
   const [memberships, sponsorships, grants, states, subjects] = await Promise.all([

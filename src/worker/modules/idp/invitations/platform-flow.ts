@@ -21,9 +21,13 @@ import { assertIdpReady, idpReady } from '../../dev-access/availability.ts';
 import { idpClient } from '../client.ts';
 import { markDirty } from '../repo-dirty.ts';
 import { claimsOfInvitation } from '../repo-invite-claims.ts';
-import { subjectsOfUser } from '../repo-sources.ts';
+import { signedInSubject, subjectsOfUser } from '../repo-sources.ts';
 import { assertHuman, invalidInvitation } from './challenge.ts';
-import { acceptPlatformSubject, claimPlatformAccount } from './platform-accept.ts';
+import {
+  acceptPlatformSubject,
+  claimPlatformAccount,
+  grantPlatformGroups,
+} from './platform-accept.ts';
 import { ledgerOfPlatform, platformSignupSpec } from './platform-groups.ts';
 import { type PlatformInvite, resolvePlatform } from './platform-resolve.ts';
 import { INVITE_REASON } from './reasons.ts';
@@ -74,7 +78,7 @@ async function challengedPlatform(
 }
 
 /**
- * "Create a Polaris ID": a one-hour, one-use signup token carrying the invitation's groups, minted at the click.
+ * "Create a Polaris ID": a one-hour, one-use signup token with no groups, minted at the click.
  * Only its id is kept. A fourth link is refused; a new one withdraws an unused earlier one.
  */
 export async function setupPlatform(
@@ -180,8 +184,8 @@ export async function claimExistingPlatform(
 
 /**
  * After "Done" on the page: for each signup token the invitation made, `proveSignup` finds the account and compares
- * its verified address with the invited one, without returning it. A match accepts; an account made from a forwarded
- * link with another address loses the token's groups (the drain takes them back). Repeating it after the accept is a no-op.
+ * its verified address with the invited one, without returning it. A match gets the groups and accepts; an account
+ * made from a forwarded link with another address never had any. Repeating it after the accept is a no-op.
  */
 export async function confirmPlatform(
   ctx: ServiceContext,
@@ -224,6 +228,7 @@ export async function confirmPlatform(
       );
     throw new ConflictError('Finish creating your Polaris ID first.', 'INVITATION_NOT_STARTED');
   }
+  await grantPlatformGroups(ctx, invite, matched);
   await acceptPlatformSubject(ctx, invite, matched, null, [...others, ...wrong]);
   return { outcome: 'joined' };
 }
@@ -261,9 +266,11 @@ export async function acceptPlatformInvite(
   const setups = await setupsOf(db, 'platform', invite.row.id);
   const proof = setups.length ? await rpc.proveSignup(setups.map((s) => s.idp_token_id)) : null;
   const made = [...new Set(proof?.matches.map((m) => m.subject))];
-  const subject = subjects.find((s) => made.includes(s)) ?? subjects[0];
+  const subject =
+    subjects.find((s) => made.includes(s)) ?? (await signedInSubject(db, session.userId));
   if (!subject) throw new IdpSignInRequiredError('/auth/oidc/start?next=/invite');
-  if (!made.includes(subject)) await claimPlatformAccount(ctx, invite, subject);
+  if (made.includes(subject)) await grantPlatformGroups(ctx, invite, subject);
+  else await claimPlatformAccount(ctx, invite, subject);
   await acceptPlatformSubject(ctx, invite, subject, session.userId, made);
   return outcome();
 }
