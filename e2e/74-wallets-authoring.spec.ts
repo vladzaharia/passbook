@@ -560,6 +560,7 @@ test('in a two-person organization the author cannot approve their own candidate
   const url = `/admin/o/${encodeURIComponent(team.id)}/templates/${encodeURIComponent(made.id)}`;
   await page.goto(url);
   await page.getByRole('tab', { name: 'Releases' }).click();
+  await expect(walletRow(page, 'Google')).toContainText('Ready with omissions (1)');
   await walletRow(page, 'Google').getByRole('button', { name: 'Review Google Wallet' }).click();
   const dialog = page.getByRole('dialog', { name: 'Review Google Wallet' });
   await expect(dialog.getByText(/Another reviewer must approve this/)).toBeVisible({
@@ -575,6 +576,7 @@ test('in a two-person organization the author cannot approve their own candidate
     const second = await other.newPage();
     await second.goto(url);
     await second.getByRole('tab', { name: 'Releases' }).click();
+    await expect(walletRow(second, 'Google')).toContainText('Ready with omissions (1)');
     await walletRow(second, 'Google').getByRole('button', { name: 'Review Google Wallet' }).click();
     const theirs = second.getByRole('dialog', { name: 'Review Google Wallet' });
     await theirs.getByRole('checkbox').check();
