@@ -12,15 +12,22 @@ import type { AppEnv } from '../../platform/env.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { Logger } from '../../platform/log.ts';
-import { createIdentityResolver } from '../identities/resolver.ts';
+import { resolveDefaultPlatform } from '../identities/db-resolver.ts';
+import { defaultPlatformPassIdentity } from '../identities/repo-platform-default.ts';
 
 export const behaviors = createBehaviorRegistry([...behaviorPlugins]);
 
 /** What `{{pass.scanCode}}` reads in previews and dry runs: shaped like a real code (26 base32). */
 export const PREVIEW_SCAN_CODE = 'PREVIEW2PASS3SCAN4CODE5XYZ';
 
+/** The env pass type, until a caller that can read the database passes the default platform row's. */
 function platformIdentity(env: AppEnv): PassIdentity {
   return { passTypeIdentifier: env.PLATFORM_PASS_TYPE_ID, teamIdentifier: env.PLATFORM_TEAM_ID };
+}
+
+/** The pass type and team new platform passes carry: the default platform row, else the env values. */
+export function defaultPassIdentity(env: AppEnv): Promise<PassIdentity> {
+  return defaultPlatformPassIdentity(env.DB, platformIdentity(env));
 }
 
 const noRegistry: TemplateRegistry = {
@@ -47,6 +54,7 @@ export function previewPlan(
   now: Date,
   /** The org's zone, for behaviors whose template names none; a shared template keeps the default. */
   timeZone?: string,
+  identity: PassIdentity = platformIdentity(env),
 ): PlannedPass {
   return planPass({
     template,
@@ -57,7 +65,7 @@ export function previewPlan(
       authToken: 'preview-token-000000000000000000',
       webServiceURL: `${baseUrl(env)}/wallet`,
       organizationName,
-      identity: platformIdentity(env),
+      identity,
       scanCode: PREVIEW_SCAN_CODE,
     },
     signing: undefined as never,
@@ -75,8 +83,9 @@ export function previewPass(
   organizationName: string,
   now: Date,
   timeZone?: string,
+  identity?: PassIdentity,
 ): PreviewResult {
-  const plan = previewPlan(env, template, input, organizationName, now, timeZone);
+  const plan = previewPlan(env, template, input, organizationName, now, timeZone, identity);
   const { authenticationToken: _token, ...passJson } = plan.passJson;
   return { passJson, issues: plan.report.issues };
 }
@@ -92,7 +101,7 @@ export async function dryRun(
 ): Promise<ValidationIssue[]> {
   const input = template.manifest.sample;
   try {
-    const identity = await createIdentityResolver(env).platform();
+    const identity = await resolveDefaultPlatform(env);
     const registry: TemplateRegistry = {
       list: async () => [],
       resolve: async () => template,

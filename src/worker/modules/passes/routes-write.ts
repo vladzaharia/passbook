@@ -27,6 +27,7 @@ import {
   tenantAuthorityOf,
 } from './http.ts';
 import { tenantPassForWrite } from './pass-access.ts';
+import { forwardedId } from './pass-replaced.ts';
 import { updatePass } from './service.ts';
 
 function ifMatch(c: C): number | undefined {
@@ -148,14 +149,19 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
       const patch = c.req.valid('json');
       const expected = ifMatch(c);
       const ctx = svc(c);
-      const id = c.req.valid('param').id;
+      const asked = c.req.valid('param').id;
+      // A pass that a move replaced is written through its replacement.
+      const id = await forwardedId(ctx.env.DB, asked);
       const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
       const detail = await updatePass(ctx, actorFor(c), id, patch, {
         scope,
         authority,
         ...(expected !== undefined ? { ifMatch: expected } : {}),
       });
-      return c.json(detail, 200, { etag: `"${detail.version}"` });
+      return c.json(detail, 200, {
+        etag: `"${detail.version}"`,
+        ...(id === asked ? {} : { 'x-forwarded-from': asked }),
+      });
     },
   );
 }

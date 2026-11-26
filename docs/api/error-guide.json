@@ -829,7 +829,7 @@
   },
   "IDEMPOTENCY_KEY_REQUIRED": {
     "title": "Idempotency-Key required",
-    "when": "A release without dryRun came without an Idempotency-Key header.",
+    "when": "A release without dryRun, or a platform identity write, came without an Idempotency-Key header.",
     "fix": "Send a unique string of 1 to 200 characters, such as a UUID, and reuse it to retry.",
     "retryable": false
   },
@@ -931,8 +931,8 @@
   },
   "IDENTITY_NOT_READY": {
     "title": "Identity not ready",
-    "when": "The identity has no certificate yet.",
-    "fix": "Wait for provisioning to finish, then send the request again.",
+    "when": "The identity has no certificate yet, or as a platform default it is not issuing, has no healthy push or has no device that registered one of its passes.",
+    "fix": "Wait for provisioning to finish, or run the push check and the device test, then send the request again.",
     "retryable": true
   },
   "IDENTITY_NOT_ROTATABLE": {
@@ -1677,6 +1677,12 @@
     "title": "Pass removed",
     "when": "The pass was removed from the holder's wallet.",
     "fix": "Restore it with POST /api/v1/passes/{id}/restore, then send the request again.",
+    "retryable": false
+  },
+  "PASS_REPLACED": {
+    "title": "Pass was replaced",
+    "when": "The pass was replaced by a pass on another Apple identity, and this call would write to the old one, for example a connection bind or sync.",
+    "fix": "Use the replacement pass id from the message, then send the request again. API writes by the old id to a replaced pass are forwarded; connector syncs are refused.",
     "retryable": false
   },
   "PASS_SETUP_CHANGED": {
@@ -3856,6 +3862,72 @@
     "when": "The owner pointed Polaris ID's user sync at a different address, so PassBook will not change or push to it.",
     "fix": "Ask the PassBook owner to point it back at PassBook.",
     "retryable": false
+  },
+  "IDP_SETUP_BINDING_ABSENT": {
+    "title": "Polaris ID connector not deployed",
+    "when": "PassBook's Polaris ID connector is not deployed, so setup has nothing to talk to.",
+    "fix": "Ask the PassBook owner to deploy it.",
+    "retryable": false
+  },
+  "IDP_SETUP_AUTH": {
+    "title": "Polaris ID refused PassBook's key",
+    "when": "Polaris ID did not accept the key the connector uses.",
+    "fix": "Ask the PassBook owner to replace the key.",
+    "retryable": false
+  },
+  "IDP_SETUP_LAYOUT": {
+    "title": "Polaris ID layout looks wrong",
+    "when": "The connector reports a Polaris ID layout it does not recognise, so setup stops.",
+    "fix": "Ask the PassBook owner to check the connector's settings.",
+    "retryable": false
+  },
+  "IDP_SETUP_SETTINGS": {
+    "title": "Polaris ID settings need a change",
+    "when": "Polaris ID or connector settings are unsafe for setup.",
+    "fix": "Open setup, read the reason and ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_SETUP_CLIENT_MISSING": {
+    "title": "PassBook app not in Polaris ID",
+    "when": "Polaris ID has not seen PassBook's app yet. It is created on the first sign-in.",
+    "fix": "Sign in to PassBook with Polaris ID once, then run setup again.",
+    "retryable": false
+  },
+  "IDP_SETUP_CLIENT_WRONG": {
+    "title": "PassBook app not set up as expected",
+    "when": "PassBook's app in Polaris ID is not the one PassBook registers, or its callbacks are not PassBook's.",
+    "fix": "Ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_SETUP_GROUP_IN_USE": {
+    "title": "Role group used by another app",
+    "when": "A group PassBook needs for a role also belongs to another app or carries other claims.",
+    "fix": "Ask the PassBook owner to free it or choose another group.",
+    "retryable": false
+  },
+  "IDP_SETUP_GROUP_MISSING": {
+    "title": "Required group missing",
+    "when": "The platform admin or user group does not exist in Polaris ID.",
+    "fix": "Ask the PassBook owner to create it.",
+    "retryable": false
+  },
+  "IDP_SETUP_SCIM_PUSH": {
+    "title": "No user sync arrived",
+    "when": "Ten minutes after setup asked for a sync, Polaris ID had not pushed to PassBook.",
+    "fix": "Check the connection in Polaris ID, then retry.",
+    "retryable": true
+  },
+  "IDP_SETUP_MIRROR_EMPTY": {
+    "title": "No users or groups arrived",
+    "when": "A sync arrived but carried no users or no groups.",
+    "fix": "Check the connection in Polaris ID, then retry.",
+    "retryable": true
+  },
+  "IDP_SETUP_TOKEN": {
+    "title": "SCIM token not switched",
+    "when": "Polaris ID took the new SCIM token, but PassBook could not switch to it after two tries.",
+    "fix": "Retry.",
+    "retryable": true
   },
   "IDP_SCIM_MISSING": {
     "title": "User sync not set up",

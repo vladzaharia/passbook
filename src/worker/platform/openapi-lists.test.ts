@@ -38,6 +38,7 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/scan/devices',
   '/api/v1/identities/{id}/certificates',
   '/api/v1/platform/apple-calls',
+  '/api/v1/platform/apple/identities',
   // Found once the filter read named schemas: each is a capped list, not a collection to page.
   '/api/v1/passes/views',
   '/api/v1/webhook-endpoints/{id}/tests',
@@ -46,6 +47,8 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/scan/activity',
   '/api/v1/scan/scans',
   '/api/v1/platform/idp/drift',
+  // The setup checklist: a fixed list of items, not rows to page.
+  '/api/v1/platform/idp/setup',
 ]);
 /** Streams keep `after`: a position in an ordered log, not a page. */
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);

@@ -378,7 +378,8 @@
         403
       ],
       "modules": [
-        "identities"
+        "identities",
+        "workflows"
       ]
     },
     {
@@ -1906,6 +1907,8 @@
         400
       ],
       "modules": [
+        "identities",
+        "passes",
         "templates"
       ]
     },
@@ -2070,6 +2073,42 @@
       ]
     },
     {
+      "code": "IDENTITY_MOVE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_PARAMS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_PARTIAL",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_SAME",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_NOT_CONFIGURED",
       "statuses": [
         404
@@ -2086,7 +2125,8 @@
       ],
       "modules": [
         "identities",
-        "orgs"
+        "orgs",
+        "passes"
       ]
     },
     {
@@ -2113,6 +2153,7 @@
         409
       ],
       "modules": [
+        "identities",
         "workflows"
       ]
     },
@@ -2174,6 +2215,7 @@
       "code": "IDENTITY_RUN_INCOMPLETE",
       "statuses": [
         502,
+        409,
         503
       ],
       "modules": [
@@ -2484,6 +2526,105 @@
       "code": "IDP_SCIM_MISSING",
       "statuses": [
         404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_AUTH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_BINDING_ABSENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_CLIENT_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_CLIENT_WRONG",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_GROUP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_GROUP_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_LAYOUT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_MIRROR_EMPTY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_SCIM_PUSH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_SETTINGS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_TOKEN",
+      "statuses": [
+        502
       ],
       "modules": [
         "idp"
@@ -3996,6 +4137,15 @@
     },
     {
       "code": "PASS_REMOVED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_REPLACED",
       "statuses": [
         409
       ],

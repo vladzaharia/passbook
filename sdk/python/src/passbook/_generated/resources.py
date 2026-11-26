@@ -2050,6 +2050,46 @@ class PassViewsResource:
         return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
 
 
+class PlatformIdpScimTokenResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def rotate(
+        self,
+        body: m.PlatformIdpScimTokenRotateBody | _Dict[str, _Any] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpScimTokenRotateResult:
+        """Replace the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless `dryRun` is false. Answers 202 with an operation (`idp.scim_rotate`). `POST /api/v1/platform/idp/scim-token/rotate`"""
+        return self._core.request("POST", "/api/v1/platform/idp/scim-token/rotate", body=body, result=m.PlatformIdpScimTokenRotateResult, **opts)
+
+
+class PlatformIdpSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpSetupRetrieveResult:
+        """What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read. `GET /api/v1/platform/idp/setup`"""
+        return self._core.request("GET", "/api/v1/platform/idp/setup", result=m.PlatformIdpSetupRetrieveResult, **opts)
+
+    def start(
+        self,
+        body: m.PlatformIdpSetupStartBody | _Dict[str, _Any] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpSetupStartResult:
+        """Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless `dryRun` is false; a dry run writes nothing. Stops at the first blocked item. Answers 202 with an operation (`idp.setup`). `POST /api/v1/platform/idp/setup`"""
+        return self._core.request("POST", "/api/v1/platform/idp/setup", body=body, result=m.PlatformIdpSetupStartResult, **opts)
+
+
+class PlatformIdpResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.scim_token = PlatformIdpScimTokenResource(core)
+        self.setup = PlatformIdpSetupResource(core)
+
+
 class PlatformSettingsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2095,6 +2135,7 @@ class PlatformWalletReleaseResource:
 class PlatformResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.idp = PlatformIdpResource(core)
         self.settings = PlatformSettingsResource(core)
         self.wallet_release = PlatformWalletReleaseResource(core)
 
@@ -2968,7 +3009,7 @@ class WebhookEndpointsCapturesResource:
         *,
         cursor: str | None = None,
         limit: int | None = None,
-        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
         request_id: str | None = None,
         pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
@@ -3023,7 +3064,7 @@ class WebhookEndpointsDeliveriesResource:
         cursor: str | None = None,
         limit: int | None = None,
         state: _Literal["pending", "delivered", "failed", "cancelled"] | None = None,
-        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
         request_id: str | None = None,
         pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],

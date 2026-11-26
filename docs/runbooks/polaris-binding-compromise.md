@@ -7,6 +7,8 @@ profile: passbook-polaris-binding
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
+Settings, Polaris ID has Freeze; use it first if the card is reachable. First turn-on: [[Polaris Binding Turn On]].
+
 Use when the binding's Polaris ID API key may have leaked. On Polaris ID v2.19.3 the key is a full admin key, so treat it as identity provider compromise. Order matters: revoke first, review, then replace.
 
 ## Prerequisites

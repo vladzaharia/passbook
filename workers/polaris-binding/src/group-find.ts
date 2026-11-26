@@ -23,6 +23,21 @@ export async function exactHit(r: Routes, req: Req, name: string): Promise<strin
   return ids[0] ?? null;
 }
 
+/** Each alias group by name: whether it exists, and whether `allowed` (the client's group ids) holds it. */
+export async function aliasStates(
+  r: Routes,
+  req: Req,
+  names: string[],
+  allowed: readonly string[],
+): Promise<{ name: string; exists: boolean; allowed: boolean }[]> {
+  const out = [];
+  for (const name of names) {
+    const id = await exactHit(r, req, name);
+    out.push({ name, exists: id !== null, allowed: id !== null && allowed.includes(id) });
+  }
+  return out;
+}
+
 /** The ids of the alias groups that exist. An alias that does not exist yet is simply absent. */
 export async function aliasIds(r: Routes, req: Req, names: string[]): Promise<string[]> {
   const out: string[] = [];

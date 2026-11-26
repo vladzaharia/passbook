@@ -3,6 +3,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import { createLogger } from '../../platform/log.ts';
 import {
+  envIdentityPresent,
   type IdentityResolver,
   intermediatePem,
   PLATFORM_IDENTITY_ID,
@@ -88,10 +89,32 @@ function noteEnvMismatch(identity: ResolvedIdentity, row: IdentityRow): void {
   });
 }
 
+/**
+ * The row can no longer sign or push its passes: the legacy platform row, after the default moved on (it issues no
+ * new passes) and its env material was removed. `issuing = 0` alone only stops new passes: the identity still
+ * updates the ones it has until this holds. Resolving such a row refuses with `IDENTITY_RETIRED`.
+ */
+export function identityRetired(env: AppEnv, row: IdentityRow): boolean {
+  return (
+    row.source === 'env' &&
+    row.id === PLATFORM_IDENTITY_ID &&
+    row.issuing === 0 &&
+    !envIdentityPresent(env)
+  );
+}
+
 export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<ResolvedIdentity> {
   if (row.source === 'env') {
     if (row.id !== PLATFORM_IDENTITY_ID)
       throw new NotFoundError('Signing identity is not configured.', 'IDENTITY_NOT_CONFIGURED');
+    // The default moved on and the env material was removed: a retired row says so, not "not configured".
+    if (identityRetired(env, row)) {
+      createLogger().warn('identity.platform_retired', {
+        code: 'IDENTITY_RETIRED',
+        identityId: row.id,
+      });
+      throw new ConflictError('This signing identity no longer issues passes.', 'IDENTITY_RETIRED');
+    }
     const identity = readEnvIdentity(env);
     // Installed passes key on the row's pass type and team: never sign them as anything else.
     if (platformEnvMismatch(identity, row)) {
@@ -134,6 +157,13 @@ async function refusal(env: AppEnv, id: string, now: number): Promise<ConflictEr
   return null;
 }
 
+/** The identity new platform-owned passes sign with: the default platform row, else the env one. */
+export async function resolveDefaultPlatform(env: AppEnv): Promise<ResolvedIdentity> {
+  const row = await getDefaultRow(env.DB);
+  if (row && row.org_id === null && row.purpose === 'passes') return resolveRow(env, row);
+  return createDbIdentityResolver(env).platform();
+}
+
 export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
   const platform = async () => {
     const row = await getIdentityRow(env.DB, PLATFORM_IDENTITY_ID);
@@ -147,13 +177,65 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
     return resolveRow(env, row);
   };
 
+  /** The row an id names, without its key: the legacy id stands for the env identity when it has no row. */
+  const peekRow = async (
+    id: string,
+  ): Promise<{ id: string; orgId: string | null; purpose: string }> => {
+    const row = await getIdentityRow(env.DB, id);
+    if (row) {
+      if (row.source !== 'env' && !row.cert_pem) throw notFound();
+      return { id: row.id, orgId: row.org_id, purpose: row.purpose };
+    }
+    if (id === PLATFORM_IDENTITY_ID && envIdentityPresent(env))
+      return { id, orgId: null, purpose: 'passes' };
+    throw notFound();
+  };
+
   return {
     platform,
     byId,
     byRow: (row) => resolveRow(env, row),
+    async peekById(id) {
+      return { id: (await peekRow(id)).id };
+    },
+    async peekForOrg(orgId, identityId, now) {
+      const scoped = async (id: string) => {
+        const meta = await peekRow(id);
+        if (meta.purpose !== 'passes') throw notFound();
+        if (meta.orgId !== null && meta.orgId !== orgId) throw notFound();
+        return meta.id;
+      };
+      if (identityId) {
+        const id = await scoped(identityId);
+        const refused = await refusal(env, id, now);
+        if (refused) throw refused;
+        return { id };
+      }
+      const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
+      if (orgDefault) {
+        const refused = await refusal(env, orgDefault, now);
+        if (!refused) return { id: await scoped(orgDefault) };
+        if (refused.code !== 'IDENTITY_RETIRED') {
+          await scoped(orgDefault);
+          throw refused;
+        }
+      }
+      const fallback = await getDefaultRow(env.DB);
+      if (fallback && fallback.purpose !== 'passes') throw notFound();
+      if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
+        if (!(await refusal(env, fallback.id, now))) return { id: (await peekRow(fallback.id)).id };
+      }
+      const id = (await peekRow(PLATFORM_IDENTITY_ID)).id;
+      const refused = await refusal(env, id, now);
+      if (refused) throw refused;
+      return { id };
+    },
     async forOrg(orgId, identityId, now) {
       // An org may use its own identities and global ones, never another org's.
       const scoped = async (id: string) => {
+        // A platform-only identity (device test) is no org's to use, named or defaulted: refuse before decrypting.
+        const row = id === PLATFORM_IDENTITY_ID ? null : await getIdentityRow(env.DB, id);
+        if (row && row.purpose !== 'passes') throw notFound();
         const identity = await byId(id);
         if (identity.orgId !== null && identity.orgId !== orgId) throw notFound();
         return identity;
@@ -167,14 +249,18 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
       }
       const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
       if (orgDefault) {
-        const identity = await scoped(orgDefault);
-        const refused = await refusal(env, identity.id, now);
-        if (!refused) return identity;
+        // The refusal comes before the material: a retired legacy row whose env material is gone cannot resolve.
+        const refused = await refusal(env, orgDefault, now);
+        if (!refused) return scoped(orgDefault);
         // Only a retired default hands over to the next one: a pass never changes identity, so an
         // expired one must refuse instead of quietly issuing under another pass type.
-        if (refused.code !== 'IDENTITY_RETIRED') throw refused;
+        if (refused.code !== 'IDENTITY_RETIRED') {
+          await scoped(orgDefault);
+          throw refused;
+        }
       }
       const fallback = await getDefaultRow(env.DB);
+      if (fallback && fallback.purpose !== 'passes') throw notFound();
       if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
         const identity = await resolveRow(env, fallback);
         if (!(await refusal(env, identity.id, now))) return identity;

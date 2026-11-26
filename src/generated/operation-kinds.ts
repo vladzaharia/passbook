@@ -7,13 +7,14 @@ import * as k2 from '../shared/operations/kinds/holder-lost-phone.ts';
 import * as k3 from '../shared/operations/kinds/holder-refresh.ts';
 import * as k4 from '../shared/operations/kinds/holder-remove.ts';
 import * as k5 from '../shared/operations/kinds/holder-resend.ts';
-import * as k6 from '../shared/operations/kinds/idp-offboard.ts';
-import * as k7 from '../shared/operations/kinds/idp.ts';
-import * as k8 from '../shared/operations/kinds/org-export.ts';
-import * as k9 from '../shared/operations/kinds/passes-reissue.ts';
-import * as k10 from '../shared/operations/kinds/prints-bulk.ts';
-import * as k11 from '../shared/operations/kinds/sandbox.ts';
-import * as k12 from '../shared/operations/kinds/wallet-reissue.ts';
+import * as k6 from '../shared/operations/kinds/identity-move.ts';
+import * as k7 from '../shared/operations/kinds/idp-offboard.ts';
+import * as k8 from '../shared/operations/kinds/idp.ts';
+import * as k9 from '../shared/operations/kinds/org-export.ts';
+import * as k10 from '../shared/operations/kinds/passes-reissue.ts';
+import * as k11 from '../shared/operations/kinds/prints-bulk.ts';
+import * as k12 from '../shared/operations/kinds/sandbox.ts';
+import * as k13 from '../shared/operations/kinds/wallet-reissue.ts';
 
 /** Every declared operation kind. */
-export const OPERATION_KINDS: readonly OperationKindDef[] = [...(Object.values(k0) as OperationKindDef[]), ...(Object.values(k1) as OperationKindDef[]), ...(Object.values(k2) as OperationKindDef[]), ...(Object.values(k3) as OperationKindDef[]), ...(Object.values(k4) as OperationKindDef[]), ...(Object.values(k5) as OperationKindDef[]), ...(Object.values(k6) as OperationKindDef[]), ...(Object.values(k7) as OperationKindDef[]), ...(Object.values(k8) as OperationKindDef[]), ...(Object.values(k9) as OperationKindDef[]), ...(Object.values(k10) as OperationKindDef[]), ...(Object.values(k11) as OperationKindDef[]), ...(Object.values(k12) as OperationKindDef[])];
+export const OPERATION_KINDS: readonly OperationKindDef[] = [...(Object.values(k0) as OperationKindDef[]), ...(Object.values(k1) as OperationKindDef[]), ...(Object.values(k2) as OperationKindDef[]), ...(Object.values(k3) as OperationKindDef[]), ...(Object.values(k4) as OperationKindDef[]), ...(Object.values(k5) as OperationKindDef[]), ...(Object.values(k6) as OperationKindDef[]), ...(Object.values(k7) as OperationKindDef[]), ...(Object.values(k8) as OperationKindDef[]), ...(Object.values(k9) as OperationKindDef[]), ...(Object.values(k10) as OperationKindDef[]), ...(Object.values(k11) as OperationKindDef[]), ...(Object.values(k12) as OperationKindDef[]), ...(Object.values(k13) as OperationKindDef[])];

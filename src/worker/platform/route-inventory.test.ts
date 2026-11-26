@@ -372,8 +372,12 @@ function platformKeyRoutes(): {
  * to `auth: { platform, key? }` and lists it here.
  */
 const PLATFORM_KEY_ROUTES: string[] = [
+  'GET /api/v1/platform/idp/setup',
   'GET /api/v1/platform/settings',
   'GET /api/v1/platform/wallet-release',
+  // AS-4: setup only tightens PassBook's own app and connection; the freeze still stops it.
+  'POST /api/v1/platform/idp/scim-token/rotate',
+  'POST /api/v1/platform/idp/setup',
 ];
 const PLATFORM_KEY_CONDITIONAL: string[] = [
   // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
@@ -392,6 +396,9 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'GET /api/v1/audit/platform/export',
   'GET /api/v1/metrics/platform/developer',
   'GET /api/v1/platform/apple-calls',
+  'GET /api/v1/platform/apple/identities',
+  'GET /api/v1/platform/apple/identity-moves',
+  'GET /api/v1/platform/apple/identity-moves/preview',
   'GET /api/v1/platform/entitlement-presets',
   'GET /api/v1/platform/idp',
   'GET /api/v1/platform/idp/calls',
@@ -410,6 +417,10 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'PATCH /api/v1/users/:id/claims',
   // P3: irreversible, every pass the certificate signed stops updating.
   'POST /api/v1/identities/:id/revoke-certificate',
+  'POST /api/v1/platform/apple/identities',
+  'POST /api/v1/platform/apple/identities/:id/default',
+  'POST /api/v1/platform/apple/identity-moves',
+  'POST /api/v1/platform/apple/identity-moves/:moveId/arm',
   'POST /api/v1/platform/idp/freeze',
   'POST /api/v1/platform/idp/groups',
   'POST /api/v1/platform/idp/groups/:key/members',
@@ -437,6 +448,8 @@ it('pins which platform routes take a key and which are person-only', () => {
 
 it('makes a platform scope mintable exactly when a route accepts it by key', () => {
   const { scopes } = platformKeyRoutes();
+  // `platform:status` is declared by GET /idp/setup for sessions but is not a key scope until PK-2a.
+  scopes.delete('platform:status');
   if (scopes.size > 0) scopes.add('platform:read');
   expect([...MINTABLE_PLATFORM_SCOPES].sort()).toEqual([...scopes].sort());
 });

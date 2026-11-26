@@ -1,5 +1,6 @@
+import type { StartSetup } from '../../../shared/contracts/idp-setup.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
+import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { ConflictError, UnavailableError } from '../../platform/errors.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
@@ -17,15 +18,29 @@ import { restoreTarget } from './ops-runs.ts';
 import { latchedAt } from './repo-scim.ts';
 import { statesOfUser } from './repo-state.ts';
 import { BREAKER_KEY, BREAKER_LATCH_MS } from './scim-effects.ts';
+import { setupTarget } from './setup-run.ts';
+import { rotateTarget } from './setup-token.ts';
 import type { WritableRole } from './types.ts';
 
 type Spec = {
-  kind: 'idp.check' | 'idp.dry_run' | 'idp.restore' | 'idp.breaker_clear' | 'idp.offboard';
+  kind:
+    | 'idp.check'
+    | 'idp.dry_run'
+    | 'idp.restore'
+    | 'idp.breaker_clear'
+    | 'idp.offboard'
+    | 'idp.setup'
+    | 'idp.scim_rotate';
   target?: { type: string; id: string };
   subject?: Record<string, string>;
   idempotencyKey: string | undefined;
-  /** The audit row for the start: who did it, to what. */
-  audit: { action: string; targetType: string; targetId: string };
+  /** The audit row for the start: who did it, to what. `null`: a preview writes none. */
+  audit: {
+    action: string;
+    targetType: string;
+    targetId: string;
+    detail?: Record<string, unknown>;
+  } | null;
 };
 
 /**
@@ -52,7 +67,7 @@ async function replayOf(
 /** A replay answered before any state check. */
 export async function replay(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   kind: Spec['kind'],
   key: string | undefined,
   target?: Spec['target'],
@@ -68,9 +83,10 @@ export async function replay(
  */
 export async function startIdpOp(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   spec: Spec,
 ): Promise<OperationDto> {
+  const actor = actorOf(auth);
   const id = spec.idempotencyKey
     ? await operationIdFor(principalOf(auth), spec.kind, spec.idempotencyKey)
     : ctx.ids.id();
@@ -79,25 +95,32 @@ export async function startIdpOp(
   const { operation, created } = await startOperationOnce(ctx, {
     id,
     kind: spec.kind,
-    actor: { type: 'user', id: auth.userId },
+    actor,
     ...(spec.target ? { target: spec.target } : {}),
     ...(spec.subject ? { subject: spec.subject } : {}),
   });
   if (!created) return operation;
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: auth.userId,
-    action: spec.audit.action,
-    targetType: spec.audit.targetType,
-    targetId: spec.audit.targetId,
-    detail: { operationId: operation.id },
-  });
+  if (spec.audit)
+    await recordAudit(ctx, {
+      actorType: actor.type,
+      actorId: actor.id,
+      action: spec.audit.action,
+      targetType: spec.audit.targetType,
+      targetId: spec.audit.targetId,
+      detail: spec.audit.detail ?? { operationId: operation.id },
+    });
   await sendOperationRun(ctx, operation.id, operation.attempt);
   return operation;
 }
 
-export const limited = (ctx: ServiceContext, auth: SessionAuth) =>
-  enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:idp-ops:${auth.userId}`);
+/** Who started an operation: a person, or the Platform key that did (setup and rotation accept both). */
+const actorOf = (auth: SessionAuth | ApiKeyAuth) =>
+  auth.kind === 'session'
+    ? ({ type: 'user', id: auth.userId } as const)
+    : ({ type: 'api_key', id: auth.keyId } as const);
+
+export const limited = (ctx: ServiceContext, auth: SessionAuth | ApiKeyAuth) =>
+  enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:idp-ops:${actorOf(auth).id}`);
 
 export function needBinding(ctx: ServiceContext): void {
   if (!idpConfigured(ctx.env))
@@ -171,5 +194,57 @@ export async function startBreakerClear(
     target: { type: 'scim_breaker', id: String(trippedAt) },
     idempotencyKey,
     audit: { action: 'idp.breaker_clear', targetType: 'idp', targetId: 'scim_breaker' },
+  });
+}
+
+/**
+ * Set up Polaris ID, or preview it: a dry run unless `dryRun` is false, and a preview writes nothing, audit
+ * included. The run's choices ride in the target, so a replay with another body is a different request.
+ */
+export async function startSetup(
+  ctx: ServiceContext,
+  auth: SessionAuth | ApiKeyAuth,
+  body: StartSetup,
+  idempotencyKey: string | undefined,
+): Promise<OperationDto> {
+  const target = setupTarget(body.dryRun, body.items);
+  const again = await replay(ctx, auth, 'idp.setup', idempotencyKey, target);
+  if (again) return again;
+  needBinding(ctx);
+  await limited(ctx, auth);
+  return startIdpOp(ctx, auth, {
+    kind: 'idp.setup',
+    target,
+    idempotencyKey,
+    audit: body.dryRun
+      ? null
+      : { action: 'idp.setup', targetType: 'idp', targetId: 'setup', detail: { dryRun: false } },
+  });
+}
+
+/** Rotate the SCIM token, or preview it. */
+export async function startRotate(
+  ctx: ServiceContext,
+  auth: SessionAuth | ApiKeyAuth,
+  dryRun: boolean,
+  idempotencyKey: string | undefined,
+): Promise<OperationDto> {
+  const target = rotateTarget(dryRun);
+  const again = await replay(ctx, auth, 'idp.scim_rotate', idempotencyKey, target);
+  if (again) return again;
+  needBinding(ctx);
+  await limited(ctx, auth);
+  return startIdpOp(ctx, auth, {
+    kind: 'idp.scim_rotate',
+    target,
+    idempotencyKey,
+    audit: dryRun
+      ? null
+      : {
+          action: 'idp.scim_rotate',
+          targetType: 'idp',
+          targetId: 'scim_token',
+          detail: { dryRun: false },
+        },
   });
 }

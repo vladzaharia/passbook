@@ -26,10 +26,12 @@ const RULES: Rule[] = [
   [/^operations\./, /(^|\.)result\.href$/, '/admin/passes'],
   [/^operations\./, /(^|\.)result\.ids\.\w+$/, 'northwind'],
   // A start that answers 202 carries the same operation (a sandbox action, in the developer area).
+  [/^wallet-identities\.postPlatformAppleIdentityMoves$/, /(^|\.)kind$/, 'identity.move'],
   [/^developer\./, /(^|\.)operation\.kind$/, 'sandbox.delete'],
   // A Polaris ID start answers the same operation (platform area).
   [/^polaris-operations\./, /(^|\.)operation\.kind$/, 'idp.check'],
   [/^polaris-access\./, /(^|\.)operation\.kind$/, 'idp.offboard'],
+  [/^polaris-setup\./, /(^|\.)operation\.kind$/, 'idp.setup'],
   // The binding's ledger: who made a call, and the open difference it found.
   [/^polaris-platform\./, /\.items\[\d+\]\.actor$/, 'idp_sync'],
   [/^polaris-platform\./, /\.items\[\d+\]\.kind$/, 'unknown_member'],

@@ -2175,6 +2175,67 @@ func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceB
 	return &out, nil
 }
 
+type PlatformIdpScimTokenResource struct {
+	c *core
+}
+
+func newPlatformIdpScimTokenResource(c *core) *PlatformIdpScimTokenResource {
+	return &PlatformIdpScimTokenResource{
+		c: c,
+	}
+}
+
+// Rotate Replace the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless `dryRun` is false. Answers 202 with an operation (`idp.scim_rotate`). `POST /api/v1/platform/idp/scim-token/rotate`
+func (r *PlatformIdpScimTokenResource) Rotate(ctx context.Context, body *PlatformIdpScimTokenRotateBody, opts ...RequestOption) (*PlatformIdpScimTokenRotateResult, error) {
+	var out PlatformIdpScimTokenRotateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/scim-token/rotate", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformIdpSetupResource struct {
+	c *core
+}
+
+func newPlatformIdpSetupResource(c *core) *PlatformIdpSetupResource {
+	return &PlatformIdpSetupResource{
+		c: c,
+	}
+}
+
+// Retrieve What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read. `GET /api/v1/platform/idp/setup`
+func (r *PlatformIdpSetupResource) Retrieve(ctx context.Context, opts ...RequestOption) (*PlatformIdpSetupRetrieveResult, error) {
+	var out PlatformIdpSetupRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/idp/setup"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Start Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless `dryRun` is false; a dry run writes nothing. Stops at the first blocked item. Answers 202 with an operation (`idp.setup`). `POST /api/v1/platform/idp/setup`
+func (r *PlatformIdpSetupResource) Start(ctx context.Context, body *PlatformIdpSetupStartBody, opts ...RequestOption) (*PlatformIdpSetupStartResult, error) {
+	var out PlatformIdpSetupStartResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/setup", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformIdpResource struct {
+	c         *core
+	ScimToken *PlatformIdpScimTokenResource
+	Setup     *PlatformIdpSetupResource
+}
+
+func newPlatformIdpResource(c *core) *PlatformIdpResource {
+	return &PlatformIdpResource{
+		c:         c,
+		ScimToken: newPlatformIdpScimTokenResource(c),
+		Setup:     newPlatformIdpSetupResource(c),
+	}
+}
+
 type PlatformSettingsResource struct {
 	c *core
 }
@@ -2233,6 +2294,7 @@ func (r *PlatformWalletReleaseResource) Retrieve(ctx context.Context, opts ...Re
 
 type PlatformResource struct {
 	c             *core
+	Idp           *PlatformIdpResource
 	Settings      *PlatformSettingsResource
 	WalletRelease *PlatformWalletReleaseResource
 }
@@ -2240,6 +2302,7 @@ type PlatformResource struct {
 func newPlatformResource(c *core) *PlatformResource {
 	return &PlatformResource{
 		c:             c,
+		Idp:           newPlatformIdpResource(c),
 		Settings:      newPlatformSettingsResource(c),
 		WalletRelease: newPlatformWalletReleaseResource(c),
 	}

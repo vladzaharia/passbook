@@ -20,6 +20,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { upperLevels } from '../channels/chain.ts';
 import * as channelsRepo from '../channels/repo.ts';
 import { levels } from '../channels/service.ts';
+import { defaultPlatformPassIdentity } from '../identities/repo-platform-default.ts';
 import { latestRun } from '../identities/repo-runs.ts';
 import { toRunDto } from '../identities/runs-service.ts';
 import { listWalletIdentities } from '../identities/wallet-list.ts';
@@ -181,7 +182,12 @@ async function loadApple(ctx: ServiceContext, orgId: string, mode: Mode, managed
   const run = await latestRun(db, 'org', orgId, 'provision');
   return {
     identity,
-    sharedIdentifier: ctx.env.PLATFORM_PASS_TYPE_ID,
+    sharedIdentifier: (
+      await defaultPlatformPassIdentity(db, {
+        passTypeIdentifier: ctx.env.PLATFORM_PASS_TYPE_ID,
+        teamIdentifier: ctx.env.PLATFORM_TEAM_ID,
+      })
+    ).passTypeIdentifier,
     push: identity ? await apnsHealthOf(db, identity.id) : ('unknown' as const),
     run: run ? toRunDto(run) : null,
     managedAllowed: managed,
