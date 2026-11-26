@@ -9,7 +9,6 @@ import {
   isMarkedOwnOnly,
   isOwnOnly,
   proveCapability,
-  tagPlatformScope,
   verifiedScopeOf,
   verifiedScopes,
 } from './auth-capability.ts';
@@ -26,7 +25,7 @@ import {
   UnauthenticatedError,
 } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
-import { holdsPlatformScope, isPlatformKey, platformKeyGate } from './platform-key-gate.ts';
+import { admitOwnPlatformRead, holdsPlatformScope, platformKeyGate } from './platform-key-gate.ts';
 import { enforceRateLimit } from './rate-limit.ts';
 import {
   isRead,
@@ -241,17 +240,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
         });
         return next();
       }
-      // `platformKeys: 'own'`: a Platform key reads here, and the handler shows it only what it started.
-      const platformScope =
-        platformKeysOwn && isRead(c) && isPlatformKey(key)
-          ? key.scopes.find((s) => s.startsWith('platform:'))
-          : undefined;
-      if (platformScope) {
-        const scoped = { ...key };
-        tagPlatformScope(scoped, platformScope);
-        c.set('auth', scoped);
-        return next();
-      }
+      if (platformKeysOwn && admitOwnPlatformRead(c, key)) return next();
       // A sandbox never holds Live: a key that asks for it is told, not quietly served Test.
       if (key.orgKind === 'developer' && modeHeaderOf(c) === 'live') throw orgTestOnly();
       const needed = neededScope(rule, c, key.scopes);
@@ -265,8 +254,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
         );
       }
       const scoped = { ...key };
-      // Admin-session routes are not tenant routes: their keys carry no verified scope, so
-      // tenantAuthorityOf refuses them, as it always has.
+      // Admin-session routes carry no verified scope, so tenantAuthorityOf refuses their keys.
       if (sessionKind !== 'admin') verifiedScopes.set(scoped, needed);
       if (capability) capabilityState.set(scoped, { capability, proven: false });
       // An org-bound key needs the `api` level (read for GET and HEAD, full for the rest). Exempt: a platform
@@ -279,7 +267,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
           : { key: 'api', atLeast: isRead(c) ? 'read' : 'full' },
       );
       c.set('auth', scoped);
-      // An org-bound key names its org; a platform key's declared feature is checked per org in tenantAuthorityOf.
+      // A platform key's feature is checked per org in tenantAuthorityOf.
       if (key.orgId !== null) await enforceFeatures(serviceContext(c), scoped, key.orgId);
       return next();
     }
@@ -310,13 +298,12 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   if (oidcOnly) declareOidcOnly(guard);
   if (platformKeysOwn) declarePlatformKeysOwn(guard);
-  if (platformDecl) {
+  if (platformDecl)
     declarePlatformKey(
       guard,
       !platformDecl.key ? 'person' : platformDecl.key === true ? 'key' : 'conditional',
       platformDecl.platform,
     );
-  }
   return declareSignIn(guard, level);
 }
 

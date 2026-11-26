@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { makeApiKey } from '../../../../test/helpers/index.ts';
 import { first } from '../../platform/db.ts';
-import { bearer, workbenchKit } from './workbench-test-fixtures.ts';
+import { workbenchKit } from './workbench-test-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof workbenchKit>>;
 beforeAll(async () => {
@@ -42,11 +42,11 @@ describe('a Platform key and a Workbench token never stand in for each other', (
       orgId: null,
       scopes: ['platform:read'],
     });
-    const res = await t.call('POST', '/workbench/token', bearer(key.token), { orgId: m.orgId });
+    const res = await t.call('POST', '/workbench/token', key.headers, { orgId: m.orgId });
     expect(res.status).toBeGreaterThanOrEqual(400);
     expect(res.status).toBeLessThan(500);
     // It gets no token's Test pin or org either: a key of no org reaches no org's rows.
-    const read = await t.call('GET', `/orgs/${m.orgId}/members`, bearer(key.token));
+    const read = await t.call('GET', `/orgs/${m.orgId}/members`, key.headers);
     expect(read.status).toBeGreaterThanOrEqual(400);
     expect(read.status).toBeLessThan(500);
   });

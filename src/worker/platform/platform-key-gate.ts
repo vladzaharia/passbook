@@ -17,6 +17,17 @@ import { isRead, type RouteAuth, type UnlessRule } from './route-auth-spec.ts';
 export const isPlatformKey = (key: ApiKeyAuth): boolean =>
   key.keyKind === 'platform' && key.orgId === null;
 
+/** `platformKeys: 'own'`: a Platform key reads here and the handler shows it only what it started. True when it passed. */
+export function admitOwnPlatformRead(c: Context<AppBindings>, key: ApiKeyAuth): boolean {
+  const scope =
+    isRead(c) && isPlatformKey(key) ? key.scopes.find((s) => s.startsWith('platform:')) : undefined;
+  if (!scope) return false;
+  const scoped = { ...key };
+  tagPlatformScope(scoped, scope);
+  c.set('auth', scoped);
+  return true;
+}
+
 /**
  * `key.unless`, given the raw JSON body (null when absent, malformed or not an object). Phrase it as "refuse unless
  * provably safe": a throw, or a body it cannot read, counts as needing a person.
