@@ -1,15 +1,5 @@
-import { useState } from 'react';
 import { zoneOptions } from '@/web/lib/timezones.ts';
-import {
-  FormField,
-  Input,
-  Select,
-  SwitchRow,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/web/ui/index.ts';
+import { FormField, Input, Select, SwitchRow } from '@/web/ui/index.ts';
 import { CheckInFields } from '../check-in-fields.tsx';
 import { AdmitsPicker } from './admits-picker.tsx';
 import { AdmitsRules } from './admits-rules.tsx';
@@ -18,20 +8,24 @@ import { SessionAccessFields } from './session-access-fields.tsx';
 import { SessionCustomerFields } from './session-customer-fields.tsx';
 import { SessionHoursFields } from './session-hours-fields.tsx';
 import { SessionOfflineFields } from './session-offline-fields.tsx';
+import type { SessionBodyId } from './session-steps.ts';
 
 function SessionScope({
   draft,
   set,
+  errors,
 }: {
   draft: ScannerDraft;
   set: (patch: Partial<ScannerDraft>) => void;
+  errors: Errors;
 }) {
   return (
     <div className="grid gap-4">
-      <FormField label="Session name" required>
+      <FormField label="Session name" required error={errors.name}>
         {(p) => (
           <Input
             {...p}
+            data-autofocus
             value={draft.name}
             onChange={(e) => set({ name: e.target.value })}
             placeholder="Membership entrance"
@@ -58,6 +52,7 @@ function SessionScope({
         onAnyChange={(any) => set({ accepts: any ? 'all' : 'templates' })}
         onChange={set}
       />
+      {errors.accepts ? <p className="-mt-2 text-xs text-danger">{errors.accepts}</p> : null}
       {draft.accepts === 'all' ? null : (
         <AdmitsRules orgId={draft.orgId} templateIds={draft.templateIds} cap={draft.checkIn} />
       )}
@@ -191,27 +186,24 @@ function SessionStaff({
     </section>
   );
 }
+export type Errors = Record<string, string | undefined>;
+
+/** One step's body: the same for New session, Duplicate and Session rules. */
 export function SessionFields({
   draft,
   set,
+  step,
+  errors = {},
 }: {
   draft: ScannerDraft;
   set: (patch: Partial<ScannerDraft>) => void;
+  step: SessionBodyId;
+  errors?: Errors;
 }) {
-  const [tab, setTab] = useState('passes');
-  return (
-    <Tabs value={tab} onValueChange={setTab} className="@container min-w-0">
-      <TabsList aria-label="Session settings">
-        <TabsTrigger value="passes">Passes</TabsTrigger>
-        <TabsTrigger value="rules">Admission</TabsTrigger>
-        <TabsTrigger value="access">Access</TabsTrigger>
-        <TabsTrigger value="customer">Customer screen</TabsTrigger>
-        <TabsTrigger value="defaults">Device defaults</TabsTrigger>
-      </TabsList>
-      <TabsContent value="passes">
-        <SessionScope draft={draft} set={set} />
-      </TabsContent>
-      <TabsContent value="rules">
+  if (step === 'passes') return <SessionScope draft={draft} set={set} errors={errors} />;
+  if (step === 'rules')
+    return (
+      <>
         <CheckInFields
           orgId={draft.orgId}
           timeZone={draft.timeZone}
@@ -220,20 +212,16 @@ export function SessionFields({
         />
         <SessionOfflineFields draft={draft} set={set} />
         <SessionStaff draft={draft} set={set} />
-      </TabsContent>
-      <TabsContent value="access">
-        <SessionAccessFields draft={draft} set={set} />
-      </TabsContent>
-      <TabsContent value="customer">
-        <SessionCustomerFields
-          desk={draft.deskActions}
-          value={draft.customer}
-          onChange={(customer) => set({ customer })}
-        />
-      </TabsContent>
-      <TabsContent value="defaults">
-        <SessionDefaults draft={draft} set={set} />
-      </TabsContent>
-    </Tabs>
-  );
+      </>
+    );
+  if (step === 'access') return <SessionAccessFields draft={draft} set={set} />;
+  if (step === 'customer')
+    return (
+      <SessionCustomerFields
+        desk={draft.deskActions}
+        value={draft.customer}
+        onChange={(customer) => set({ customer })}
+      />
+    );
+  return <SessionDefaults draft={draft} set={set} />;
 }

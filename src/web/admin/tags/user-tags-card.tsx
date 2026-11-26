@@ -11,9 +11,7 @@ import {
   DialogContent,
   EmptyState,
   ErrorState,
-  FormField,
   ListRows,
-  Select,
   SkeletonRows,
 } from '@/web/ui/index.ts';
 import { usePass } from '../passes/api.ts';
@@ -119,7 +117,7 @@ export function UserTagsCard({
   );
 }
 
-/** Pick an organization when the person has passes in several, then assign person-wide. */
+/** Assign person-wide; the first step picks an organization when the person has passes in several. */
 function AssignToPerson({
   name,
   passes,
@@ -131,38 +129,14 @@ function AssignToPerson({
   onClose: () => void;
 }) {
   const orgs = [...new Set(passes.map((p) => p.orgName))];
-  const [org, setOrg] = useState<string | undefined>(orgs.length === 1 ? orgs[0] : undefined);
+  const several = orgs.length > 1;
+  const [org, setOrg] = useState<string | undefined>(several ? undefined : orgs[0]);
   const first = passes.find((p) => p.orgName === org);
   const pass = usePass(first?.id ?? '');
-  if (!org || !first) {
+  const close = (open: boolean) => !open && onClose();
+  if (!several && !pass.data) {
     return (
-      <Dialog open onOpenChange={(o) => !o && onClose()}>
-        <DialogContent
-          title={TAG_COPY.dialog.title}
-          footer={
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-          }
-        >
-          <FormField label="Organization">
-            {(p) => (
-              <Select
-                {...p}
-                value={org}
-                onValueChange={setOrg}
-                placeholder="Choose"
-                options={orgs.map((o) => ({ value: o, label: o }))}
-              />
-            )}
-          </FormField>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-  if (!pass.data) {
-    return (
-      <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <Dialog open onOpenChange={close}>
         <DialogContent title={TAG_COPY.dialog.title}>
           {pass.isError ? (
             <ErrorState inline error={pass.error} onRetry={() => void pass.refetch()} />
@@ -176,9 +150,26 @@ function AssignToPerson({
   return (
     <AddTagDialog
       open
-      onOpenChange={(o) => !o && onClose()}
+      onOpenChange={close}
       fixed="person"
-      target={{ passId: pass.data.id, orgId: pass.data.orgId, holderName: name, hasAccount: true }}
+      target={{
+        passId: pass.data?.id ?? '',
+        orgId: pass.data?.orgId ?? '',
+        holderName: name,
+        hasAccount: true,
+      }}
+      {...(several
+        ? {
+            org: {
+              options: orgs,
+              value: org,
+              onChange: setOrg,
+              ready: Boolean(pass.data),
+              error: pass.isError ? pass.error : undefined,
+              onRetry: () => void pass.refetch(),
+            },
+          }
+        : {})}
     />
   );
 }

@@ -1,6 +1,5 @@
 import { TAG_COPY, TAG_ERROR_COPY } from '@/shared/copy/tags.ts';
-import { cn } from '@/web/lib/cn.ts';
-import { Callout, useNow } from '@/web/ui/index.ts';
+import { Callout, StepList, useNow } from '@/web/ui/index.ts';
 import { formatCountdown } from '../scanning/scanners/labels.ts';
 import type { Enrollment } from './enroll-api.ts';
 import { EnrollArt } from './enroll-art.tsx';
@@ -51,28 +50,22 @@ export function endedOutcome(
 
 function Steps({ current }: { current: 0 | 1 | 2 }) {
   return (
-    <ol className="flex items-center justify-center gap-4 text-xs text-fg-muted">
-      {D.steps.map((label, i) => (
-        <li
-          key={label}
-          aria-current={i === current ? 'step' : undefined}
-          className={cn('flex items-center gap-1.5', i <= current && 'text-fg-strong')}
-        >
-          <span
-            aria-hidden
-            className={cn(
-              'size-2 rounded-full border transition-[background-color,border-color] duration-(--wl-dur-hover)',
-              i < current || (i === current && current === 2)
-                ? 'border-accent bg-accent'
-                : i === current
-                  ? 'border-accent bg-accent/40'
-                  : 'border-border-strong',
-            )}
-          />
-          {label}
-        </li>
-      ))}
-    </ol>
+    <div className="mx-auto">
+      <StepList
+        label="Request progress"
+        size="sm"
+        items={D.steps.map((label, i) => ({
+          id: label,
+          label,
+          state:
+            i < current || (i === current && current === 2)
+              ? 'done'
+              : i === current
+                ? 'working'
+                : 'todo',
+        }))}
+      />
+    </div>
   );
 }
 

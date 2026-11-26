@@ -25,7 +25,12 @@ const WORD: Partial<Record<StepMarkerState, string>> = {
   invalid: 'needs attention',
   skipped: 'skipped',
 };
-const TICK = { sm: 'size-3', md: 'size-3.5', lg: 'size-4' } as const;
+// Important: a host's `[&_svg]` rule (a menu item sets size and a muted colour) must not restyle the glyph.
+const TICK = {
+  sm: '!size-3 !text-current',
+  md: '!size-3.5 !text-current',
+  lg: '!size-4 !text-current',
+} as const;
 
 export interface StepMarkerProps {
   state: StepMarkerState;

@@ -19,6 +19,14 @@ async function openNew(extra: Parameters<typeof openKeys>[1] = {}) {
   return { user, dialog, ...rendered };
 }
 
+type User = ReturnType<typeof userEvent.setup>;
+async function next(user: User, dialog: HTMLElement, heading: string) {
+  await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+  await within(dialog).findByRole('heading', { name: heading });
+}
+const create = (user: User, dialog: HTMLElement) =>
+  user.click(within(dialog).getByRole('button', { name: 'Create keyset' }));
+
 describe('New keyset', () => {
   it('generates keys, shows them once with the tag settings, and drops them when done', async () => {
     const { user, dialog, fetchMock } = await openNew({
@@ -28,7 +36,10 @@ describe('New keyset', () => {
           : json({ items: [], nextCursor: null }),
     });
     await user.type(within(dialog).getByRole('textbox', { name: /Name/ }), 'Staff badges');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    // Generate has no Keys step: Review follows.
+    await next(user, dialog, 'Check and create');
+    expect(within(dialog).getByText('The keys are shown once, after you create it.')).toBeVisible();
+    await create(user, dialog);
     await waitFor(() => expect(posted(fetchMock, '/api/v1/nfc/keysets')).toHaveLength(1));
     expect(bodyOf(posted(fetchMock, '/api/v1/nfc/keysets')[0])).toEqual({
       name: 'Staff badges',
@@ -63,9 +74,13 @@ describe('New keyset', () => {
     });
     await user.type(within(dialog).getByRole('textbox', { name: /Name/ }), 'Supplier');
     await user.click(within(dialog).getByRole('radio', { name: /Enter supplier keys/ }));
+    await next(user, dialog, 'Enter the keys');
     await user.type(within(dialog).getByRole('textbox', { name: /Meta key/ }), META);
     await user.type(within(dialog).getByRole('textbox', { name: /File key/ }), FILE);
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await next(user, dialog, 'Check and create');
+    // The review says the keys were entered, never what they are.
+    expect(dialog).not.toHaveTextContent(META);
+    await create(user, dialog);
     await waitFor(() => expect(posted(fetchMock, '/api/v1/nfc/keysets')).toHaveLength(1));
     expect(bodyOf(posted(fetchMock, '/api/v1/nfc/keysets')[0])).toEqual({
       name: 'Supplier',
@@ -88,9 +103,11 @@ describe('New keyset', () => {
     });
     await user.type(within(dialog).getByRole('textbox', { name: /Name/ }), 'Supplier tags');
     await user.click(within(dialog).getByRole('radio', { name: /Imported per tag/ }));
+    await next(user, dialog, 'Enter the keys');
     expect(within(dialog).queryByRole('textbox', { name: /File key/ })).toBeNull();
     await user.type(within(dialog).getByRole('textbox', { name: /Meta key/ }), META);
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await next(user, dialog, 'Check and create');
+    await create(user, dialog);
     await waitFor(() => expect(posted(fetchMock, '/api/v1/nfc/keysets')).toHaveLength(1));
     expect(bodyOf(posted(fetchMock, '/api/v1/nfc/keysets')[0])).toEqual({
       name: 'Supplier tags',
@@ -103,9 +120,11 @@ describe('New keyset', () => {
     const { user, dialog, fetchMock } = await openNew();
     await user.type(within(dialog).getByRole('textbox', { name: /Name/ }), 'X');
     await user.click(within(dialog).getByRole('radio', { name: /Imported per tag/ }));
+    await next(user, dialog, 'Enter the keys');
     await user.type(within(dialog).getByRole('textbox', { name: /Meta key/ }), 'abc');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
     expect(await within(dialog).findByText('A key is 32 hex digits.')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('heading', { name: 'Check and create' })).toBeNull();
     expect(posted(fetchMock, '/api/v1/nfc/keysets')).toHaveLength(0);
   });
 
@@ -126,7 +145,8 @@ describe('New keyset', () => {
           : json({ items: [], nextCursor: null }),
     });
     await user.type(within(dialog).getByRole('textbox', { name: /Name/ }), 'Fifth');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await next(user, dialog, 'Check and create');
+    await create(user, dialog);
     expect(await within(dialog).findByText(/4 keysets are in use/)).toBeInTheDocument();
   });
 
@@ -136,6 +156,9 @@ describe('New keyset', () => {
       const { user, dialog } = await openNew();
       expect(await axeAt(document.body, width, theme)).toEqual([]);
       await user.click(within(dialog).getByRole('radio', { name: /Enter supplier keys/ }));
+      expect(await axeAt(document.body, width, theme)).toEqual([]);
+      await user.type(within(dialog).getByRole('textbox', { name: /Name/ }), 'X');
+      await next(user, dialog, 'Enter the keys');
       expect(await axeAt(document.body, width, theme)).toEqual([]);
     },
     20_000,

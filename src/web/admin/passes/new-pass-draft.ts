@@ -1,11 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
-import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from 'react';
+import {
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { PassListSchema } from '@/shared/contracts/passes.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { api } from '../../lib/api.ts';
 import { useUnsavedChangesGuard } from '../../ui/index.ts';
 import { passKeys } from './api.ts';
-import type { NewPassDraft, NewPassRelease, NewPassScope, StepId } from './new-pass-types.ts';
+import type { NewPassDraft, NewPassRelease, NewPassScope } from './new-pass-types.ts';
 import {
   cleanValues,
   defaultValues,
@@ -20,25 +27,20 @@ export const EMPTY_SAMPLE: FormValues = {};
 export function useNewPassDraft({
   principalId,
   sessionReady,
-  linkTemplate,
   templateId,
   setTemplateId,
-  stepChoice,
-  setStep,
   setPendingTemplateCommit,
-  ids,
+  navReset,
   access,
   releaseData,
 }: {
   principalId: string | undefined;
   sessionReady: boolean;
-  linkTemplate: string | undefined;
   templateId: string | undefined;
   setTemplateId: Dispatch<SetStateAction<string | undefined>>;
-  stepChoice: number | undefined;
-  setStep: Dispatch<SetStateAction<number | undefined>>;
   setPendingTemplateCommit: Dispatch<SetStateAction<string | undefined>>;
-  ids: StepId[];
+  /** Set by the wizard: back to its first step, as a draft for another organization starts. */
+  navReset: MutableRefObject<() => void>;
   access: NewPassScope;
   releaseData: NewPassRelease;
 }): NewPassDraft {
@@ -68,15 +70,7 @@ export function useNewPassDraft({
     principalId && orgId && templateId && version
       ? JSON.stringify([principalId, orgId, templateId, version])
       : undefined;
-  // Deep links advance only after the chosen template's active release is known.
-  const step =
-    stepChoice ??
-    (orgId ? (linkTemplate && selectedTemplate?.id === linkTemplate && release ? 2 : 1) : 0);
-  const at = ids[Math.min(step, ids.length - 1)] ?? 'org';
-  useEffect(() => {
-    if (stepChoice === undefined && orgId && linkTemplate && selectedTemplate?.id === linkTemplate)
-      setStep(2);
-  }, [stepChoice, orgId, linkTemplate, selectedTemplate, setStep]);
+  const [orgChosen, setOrgChosen] = useState(false);
   const firstPass = useQuery({
     queryKey: [...passKeys.all, 'first-of-org', orgId ?? null, mode, principalId ?? null],
     queryFn: ({ signal }) => {
@@ -130,41 +124,6 @@ export function useNewPassDraft({
     reviewed?.releaseId === release?.releaseId &&
     reviewed?.releaseGeneration === release?.releaseGeneration &&
     reviewed?.candidateHash === release?.candidateHash;
-  useEffect(() => {
-    // A missing release while access or the eligible list is being revalidated is not a
-    // confirmed change. Keep the review until the fresh result can be compared.
-    if (scope.isLoading || !sessionReady || (eligible.isFetching && !eligible.isFetchingNextPage))
-      return;
-    if (
-      at === 'review' &&
-      reviewed &&
-      (reviewed.principalId !== principalId ||
-        reviewed.orgId !== orgId ||
-        reviewed.mode !== mode ||
-        reviewed.templateId !== templateId ||
-        reviewed.version !== version ||
-        reviewed.releaseId !== release?.releaseId ||
-        reviewed.releaseGeneration !== release?.releaseGeneration ||
-        reviewed.candidateHash !== release?.candidateHash)
-    ) {
-      setReviewed(undefined);
-    }
-  }, [
-    at,
-    reviewed,
-    scope.isLoading,
-    sessionReady,
-    eligible.isFetching,
-    eligible.isFetchingNextPage,
-    principalId,
-    orgId,
-    mode,
-    templateId,
-    version,
-    release?.releaseId,
-    release?.releaseGeneration,
-    release?.candidateHash,
-  ]);
   const [created, setCreated] = useState<{ id: string; orgId: string; principalId: string }>();
   const createdId = created?.id;
 
@@ -196,18 +155,17 @@ export function useNewPassDraft({
     seeded.current = undefined;
     setReviewed(undefined);
     setConflict(false);
-    setStep(scope.orgId && !scope.isError && operable.has(scope.orgId) ? 1 : 0);
+    setOrgChosen(false);
+    navReset.current();
   }, [
     scope.orgId,
     scope.isLoading,
-    scope.isError,
-    operable,
     pendingChoice,
     setSelectedOrg,
     setPendingChoice,
     setPendingTemplateCommit,
     setTemplateId,
-    setStep,
+    navReset,
   ]);
   const previousTemplateGrant = useRef<{ orgId: string; allowed: boolean } | undefined>(undefined);
   useEffect(() => {
@@ -279,8 +237,7 @@ export function useNewPassDraft({
       setConflict(false);
       setReviewed(undefined);
     }
-    // Keep the picker visible after a radio click; Enter/double-click may still commit it.
-    setStep(step);
+    setOrgChosen(true);
     setSelectedOrg(id);
     setPendingChoice(id !== scope.orgId ? id : undefined);
   };
@@ -301,9 +258,9 @@ export function useNewPassDraft({
     setSend,
     validEmail,
     inputErrors,
-    step,
-    at,
+    reviewed,
     setReviewed,
+    orgChosen,
     setConflict,
     releaseReady,
     readyToCreate,

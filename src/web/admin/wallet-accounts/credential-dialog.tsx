@@ -1,10 +1,13 @@
-import { useState } from 'react';
 import type { SaveWalletCredential, WalletProvider } from '@/shared/contracts/wallet-providers.ts';
-import { Button, Dialog, DialogContent, toast } from '@/web/ui/index.ts';
+import { UserMessageError } from '@/web/lib/errors.ts';
+import { FormDialog, toast } from '@/web/ui/index.ts';
 import { PROVIDER_NAME, safeError } from './copy.ts';
-import { CREDENTIAL_FORM_ID, WalletCredentialFields } from './credential-fields.tsx';
+import { useCredentialForm, WalletCredentialFields } from './credential-fields.tsx';
 
-/** Create (revision 0) or rotate: the caller binds the scope and the revision. */
+/**
+ * Create (revision 0) or rotate: the caller binds the scope and the revision. No dirty guard:
+ * the form is uncontrolled so secrets stay out of React state, and a closed dialog drops them.
+ */
 export function CredentialDialog({
   provider,
   modeLabel,
@@ -22,50 +25,33 @@ export function CredentialDialog({
   onOpenChange: (open: boolean) => void;
   save: (body: SaveWalletCredential) => Promise<unknown>;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  async function onSave(body: SaveWalletCredential) {
-    setBusy(true);
-    setError('');
-    try {
-      await save(body);
-      toast.success(rotating ? 'Credentials rotated' : 'Credentials saved');
-      onOpenChange(false);
-    } catch (cause) {
-      setError(safeError(cause));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const form = useCredentialForm(provider, revision);
   return (
-    <Dialog open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
-      <DialogContent
-        title={`${rotating ? 'Rotate' : 'Add'} ${PROVIDER_NAME[provider]} credentials · ${modeLabel}`}
-        size="lg"
-        footer={
-          <>
-            <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" form={CREDENTIAL_FORM_ID} loading={busy}>
-              {rotating ? 'Rotate' : 'Save'}
-            </Button>
-          </>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`${rotating ? 'Rotate' : 'Add'} ${PROVIDER_NAME[provider]} credentials · ${modeLabel}`}
+      description={
+        rotating
+          ? 'The issuer, or partner and cards, stay the same: enter every card again.'
+          : undefined
+      }
+      size="lg"
+      submitLabel={rotating ? 'Rotate' : 'Save'}
+      onSubmit={async () => {
+        const request = form.read();
+        if (!request) throw new UserMessageError('Check the highlighted fields.');
+        try {
+          await save(request);
+        } catch (cause) {
+          throw new UserMessageError(safeError(cause));
         }
-      >
-        <WalletCredentialFields
-          provider={provider}
-          revision={revision}
-          rotating={rotating}
-          busy={busy}
-          onSave={onSave}
-        />
-        {error ? (
-          <p role="alert" className="mt-3 text-sm text-danger">
-            {error}
-          </p>
-        ) : null}
-      </DialogContent>
-    </Dialog>
+        toast.success(rotating ? 'Credentials rotated' : 'Credentials saved');
+        onOpenChange(false);
+      }}
+      onClose={form.reset}
+    >
+      <WalletCredentialFields provider={provider} form={form} />
+    </FormDialog>
   );
 }

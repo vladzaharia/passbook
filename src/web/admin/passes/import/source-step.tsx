@@ -19,13 +19,13 @@ import {
   Select,
   Skeleton,
   Textarea,
-  Wizard,
 } from '../../../ui/index.ts';
 import { rememberImportLink } from '../../connections/import-handoff.ts';
 import { useCreateImport, useImportTemplates } from './api.ts';
 import { markFresh } from './fresh.ts';
+import { ImportWizard } from './import-wizard.tsx';
 import { SampleCsv } from './sample-csv.tsx';
-import { IMPORT_STEPS, STEP } from './steps.ts';
+import { STEP } from './steps.ts';
 
 type Way = 'file' | 'connection' | 'api';
 type Kind = 'file' | 'paste' | 'link';
@@ -116,8 +116,7 @@ export function SourceStep({ orgId, children }: { orgId: string; children?: Reac
   }
 
   return (
-    <Wizard
-      steps={IMPORT_STEPS}
+    <ImportWizard
       current={STEP.source}
       onStep={() => undefined}
       onCancel={() => void navigate({ href: orgPath(orgId, '/passes') })}
@@ -265,6 +264,6 @@ export function SourceStep({ orgId, children }: { orgId: string; children?: Reac
       ) : null}
       {create.isError ? <Callout tone="danger">{errorMessage(create.error)}</Callout> : null}
       {children}
-    </Wizard>
+    </ImportWizard>
   );
 }
