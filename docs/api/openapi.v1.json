@@ -108334,6 +108334,11 @@
                   "expiresAt": 1798790399999,
                   "acceptedAt": 1795570500000,
                   "revokedAt": null,
+                  "createdBy": {
+                    "kind": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011",
+                    "name": null
+                  },
                   "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
                 }
               }
@@ -108439,7 +108444,12 @@
                       "createdAt": 1794362400000,
                       "expiresAt": 1798790399999,
                       "acceptedAt": 1795570500000,
-                      "revokedAt": null
+                      "revokedAt": null,
+                      "createdBy": {
+                        "kind": "user",
+                        "id": "0193a1b2-7c00-7000-8000-000000000011",
+                        "name": null
+                      }
                     }
                   ],
                   "nextCursor": "c1.4812"
@@ -108612,6 +108622,11 @@
                   "expiresAt": 1798790399999,
                   "acceptedAt": 1795570500000,
                   "revokedAt": null,
+                  "createdBy": {
+                    "kind": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011",
+                    "name": null
+                  },
                   "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
                 }
               }
