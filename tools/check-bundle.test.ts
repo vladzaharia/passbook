@@ -11,12 +11,14 @@ import {
   SCAN_FORBIDDEN,
   toolAssets,
   WB_BENCH_BUDGET_BYTES,
+  WB_HOST_BUDGET_BYTES,
+  WB_KIT_BUDGET_BYTES,
   WB_SHELL_BUDGET_BYTES,
   WB_SHELL_MARKER,
   WB_TOOL_BUDGET_BYTES,
   WB_TOOLS_MEASURED,
 } from './check-bundle.ts';
-import { markedAssets } from './lib/marked-assets.ts';
+import { markedAssets, namedAssets } from './lib/marked-assets.ts';
 
 const html = `<script type="module" crossorigin src="/assets/index.js"></script>
 <link rel="modulepreload" crossorigin href="/assets/ui.js">
@@ -153,8 +155,33 @@ describe('check-bundle', () => {
     expect(toolAssets(read, all, new Set(), 'keys').errors[0]).toMatch(/no loader lists/);
   });
 
+  it('measures a shared chunk the build names: the chunk, what it imports past the skip, its stylesheet', () => {
+    const files: Record<string, string> = {
+      '/assets/react.js': 'react',
+      '/assets/wb-bench-A.js': 'import{a}from"./react.js";import{b}from"./buddy-B.js";bench',
+      '/assets/buddy-B.js': 'buddy',
+      '/assets/wb-bench-A.css': '.bench-list{}',
+      '/assets/logs-C.js': 'a tool',
+    };
+    const read = (url: string) => files[url] ?? '';
+    const all = Object.keys(files);
+    const bench = namedAssets(read, all, ['/assets/react.js'], 'wb-bench');
+    expect(bench.errors).toEqual([]);
+    expect(bench.files.sort()).toEqual([
+      '/assets/buddy-B.js',
+      '/assets/wb-bench-A.css',
+      '/assets/wb-bench-A.js',
+    ]);
+    expect(namedAssets(read, all, [], 'wb-kit').errors[0]).toMatch(/0 chunks are named so/);
+    expect(namedAssets(read, [...all, '/assets/wb-bench-Z.js'], [], 'wb-bench').errors[0]).toMatch(
+      /2 chunks are named so/,
+    );
+  });
+
   it('holds the bench once and each tool route under its own line', () => {
     expect(WB_BENCH_BUDGET_BYTES).toBe(35_000);
+    expect(WB_HOST_BUDGET_BYTES).toBe(15_000);
+    expect(WB_KIT_BUDGET_BYTES).toBe(25_000);
     expect(WB_TOOL_BUDGET_BYTES).toBe(75_000);
     expect(WB_TOOLS_MEASURED.logs).toBe(WB_TOOL_BUDGET_BYTES);
     expect(Object.keys(WB_TOOLS_MEASURED).sort()).toEqual([
@@ -166,6 +193,13 @@ describe('check-bundle', () => {
       'playground',
       'quickstart',
     ]);
+  });
+
+  it('keeps the shared Workbench chunks out of every entry', () => {
+    const files: Record<string, string> = { '/assets/index.js': '', '/assets/wb-kit-C.js': '' };
+    const page = `${html}<link rel="modulepreload" href="/assets/wb-kit-C.js">`;
+    const { errors } = checkBundle((url) => files[url] ?? '', page, 0);
+    expect(errors).toEqual(['/assets/wb-kit-C.js is a Workbench chunk']);
   });
 
   it('keeps the Workbench shell out of every entry: the SPA, the scanner, the docs and the site', () => {
