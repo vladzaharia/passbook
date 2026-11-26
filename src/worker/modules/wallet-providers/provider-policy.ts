@@ -23,14 +23,18 @@ type Mode = 'live' | 'test';
 const MODES: readonly Mode[] = ['live', 'test'];
 const PROVIDERS: readonly WalletProvider[] = ['google', 'samsung'];
 
-const released = (provider: WalletProvider, mode: Mode) => RELEASE[provider][mode] === 'released';
+type Release = Record<WalletProvider, Record<Mode, WalletReleaseState>>;
+/** The policy's view of RELEASE: the shipped constant, or a test or e2e override (setWalletReleaseForTest). */
+let current: Readonly<Record<WalletProvider, Readonly<Record<Mode, WalletReleaseState>>>> = RELEASE;
+
+const released = (provider: WalletProvider, mode: Mode) => current[provider][mode] === 'released';
 
 /** The release state of a provider in a mode (release.ts). */
 export function walletProviderReleaseState(
   provider: WalletProvider,
   mode: Mode,
 ): WalletReleaseState {
-  return RELEASE[provider][mode];
+  return current[provider][mode];
 }
 
 /**
@@ -55,7 +59,7 @@ export function walletProviderEnabled(provider: WalletProvider, mode?: Mode): bo
  * already in wallets still go void after a rollback. Without a mode, in some mode.
  */
 export function walletProviderRevokes(provider: WalletProvider, mode?: Mode): boolean {
-  return (mode ? [mode] : MODES).some((m) => RELEASE[provider][m] !== 'dark');
+  return (mode ? [mode] : MODES).some((m) => current[provider][m] !== 'dark');
 }
 
 /**
@@ -152,20 +156,22 @@ export function walletProviderEnabledSql(providerSql: string, modeSql?: string):
 }
 
 /**
- * Tests only: sets the code side of the release (RELEASE) for the current test file's module registry, for one
+ * Tests only: overrides the code side of the release (RELEASE) for the current test file's module registry, for one
  * provider and mode or all of them; returns a restorer. The database side is the `wallet_provider_releases` row.
  */
 export function setWalletReleaseForTest(
   state: WalletReleaseState,
   scope: { provider?: WalletProvider; mode?: Mode } = {},
 ): () => void {
-  const previous = structuredClone(RELEASE);
+  const previous = current;
+  const next: Release = structuredClone(current) as Release;
   for (const p of PROVIDERS)
     for (const m of MODES)
       if ((!scope.provider || p === scope.provider) && (!scope.mode || m === scope.mode))
-        RELEASE[p][m] = state;
+        next[p][m] = state;
+  current = next;
   return () => {
-    for (const p of PROVIDERS) Object.assign(RELEASE[p], previous[p]);
+    current = previous;
   };
 }
 

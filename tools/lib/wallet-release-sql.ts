@@ -1,8 +1,6 @@
 // The wallet release rows the migrations write (wallet_provider_releases, migration 0226). check-migrations folds
 // every migration into the final table and compares it with RELEASE (release.ts); deploy prints what a pending
 // migration changes. Writes have one canonical form each, so a flip cannot hide in other SQL.
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 export type ReleaseProvider = 'google' | 'samsung';
 export type ReleaseMode = 'live' | 'test';
@@ -11,6 +9,8 @@ export type ReleaseTable = Record<ReleaseProvider, Record<ReleaseMode, ReleaseSt
 
 export interface ReleaseWrite {
   migration: string;
+  /** `seed`: the rows the table is created with; `update`: a change of one row (a flip, a drain, back to dark). */
+  kind: 'seed' | 'update';
   provider: ReleaseProvider;
   mode: ReleaseMode;
   state: ReleaseState;
@@ -19,8 +19,9 @@ export interface ReleaseWrite {
 const PROVIDERS: readonly ReleaseProvider[] = ['google', 'samsung'];
 const MODES: readonly ReleaseMode[] = ['live', 'test'];
 
+// Any write to the table, however the name is quoted or qualified (`"main"."wallet_provider_releases"`).
 const ANY_WRITE =
-  /\b(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|REPLACE\s+INTO|UPDATE(?:\s+OR\s+\w+)?|DELETE\s+FROM)\s+wallet_provider_releases\b/gi;
+  /\b(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|REPLACE\s+INTO|UPDATE(?:\s+OR\s+\w+)?|DELETE\s+FROM)\s+(?:["`[]?\w+["`\]]?\s*\.\s*)?["`[]?wallet_provider_releases\b/gi;
 const SEED =
   /INSERT INTO wallet_provider_releases \(provider, mode, state, changed_at\) VALUES((?:\s*\('(?:google|samsung)', '(?:live|test)', '(?:dark|draining|released)', \d+\),?)+);/g;
 const SEED_ROW = /\('(google|samsung)', '(live|test)', '(dark|draining|released)', \d+\)/g;
@@ -43,6 +44,7 @@ export function releaseWrites(
       at: m.index,
       writes: [...(m[1] ?? '').matchAll(SEED_ROW)].map((r) => ({
         migration,
+        kind: 'seed' as const,
         provider: r[1] as ReleaseProvider,
         mode: r[2] as ReleaseMode,
         state: r[3] as ReleaseState,
@@ -54,6 +56,7 @@ export function releaseWrites(
       writes: [
         {
           migration,
+          kind: 'update' as const,
           state: m[1] as ReleaseState,
           provider: m[2] as ReleaseProvider,
           mode: m[3] as ReleaseMode,
@@ -114,21 +117,4 @@ export function pendingReleaseWrites(
     if (problem) throw new Error(problem);
     return writes;
   });
-}
-
-/**
- * Deploy: logs each release write of the pending migrations, and says whether one releases a provider (a flip),
- * which needs every wallet account on a credential source first (`--require-wallet-migrated`).
- */
-export function pendingReleaseFlip(
-  root: string,
-  pending: readonly string[] | null,
-  log: (line: string) => void,
-): boolean {
-  const writes = pendingReleaseWrites(pending, (name) =>
-    readFileSync(resolve(root, 'migrations', name), 'utf8'),
-  );
-  for (const w of writes)
-    log(`Wallet release: ${w.provider} ${w.mode} -> ${w.state} (${w.migration})`);
-  return writes.some((w) => w.state === 'released');
 }

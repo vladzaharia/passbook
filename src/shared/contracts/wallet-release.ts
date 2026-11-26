@@ -9,8 +9,9 @@ export type WalletReleaseState = z.infer<typeof WalletReleaseStateSchema>;
 /**
  * Why an enrolment is not ready for the release: the plan lacks the wallet (developer orgs included), a step of
  * enabling is missing (source, verified, check, round_trip), the platform holds it, it is revoked, the org blocked
- * the channel, or the org is not active. `legacy` is an envelope with no source: it would issue with no enrolment,
- * so a flip's deploy refuses while one exists (wallet-migration-gate).
+ * the channel, or the org is not active. `org_off`: it was On and the org switched it Off; `hold_released`: a
+ * platform hold cleared it. Only the org turns those back On. `legacy` is an envelope with no source: it would issue
+ * with no enrolment, so a flip's deploy refuses while one exists (wallet-migration-gate).
  */
 export const WalletReleaseBlockSchema = z.enum([
   'plan',
@@ -23,6 +24,8 @@ export const WalletReleaseBlockSchema = z.enum([
   'legacy',
   'channel_off',
   'org',
+  'org_off',
+  'hold_released',
 ]);
 export type WalletReleaseBlock = z.infer<typeof WalletReleaseBlockSchema>;
 
@@ -67,8 +70,19 @@ export const WalletReleaseParamsSchema = z.strictObject({
   mode: ModeSchema,
 });
 
-/** A dry run unless `apply` is true; applying needs the provider released in the mode. */
-export const EnableReadySchema = z.strictObject({ apply: z.boolean().default(false) });
+/**
+ * A dry run unless `apply` is true. An apply names the orgs of the dry run it follows (`orgIds`) and is refused
+ * (409) when the ready list differs; it also needs the provider released in the mode.
+ */
+export const EnableReadySchema = z
+  .strictObject({
+    apply: z.boolean().default(false),
+    orgIds: z.array(IdSchema).max(1000).optional(),
+  })
+  .refine((v) => !v.apply || v.orgIds !== undefined, {
+    message: 'An apply names the orgIds of its dry run.',
+    path: ['orgIds'],
+  });
 export type EnableReady = z.infer<typeof EnableReadySchema>;
 
 export const EnableReadyResultSchema = z.strictObject({

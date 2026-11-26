@@ -8,7 +8,8 @@ import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { configureWalletProviderAccount } from './account-service.ts';
 import { savePlatformCredential } from './credential-service.ts';
-import { enableEnrolment, setEnrolmentSource } from './enrolment-service.ts';
+import { holdEnrolment, releaseEnrolment } from './enrolment-hold.ts';
+import { disableEnrolment, enableEnrolment, setEnrolmentSource } from './enrolment-service.ts';
 import { setWalletReleaseForTest } from './provider-policy.ts';
 import { addCheck } from './repo-wallet-credentials-test-fixtures.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
@@ -149,12 +150,18 @@ describe('POST /platform/wallet-release/{provider}/{mode}/enable-ready', () => {
           [off.id],
         )
       )?.at ?? null;
-    const refused = await call(h, 'POST', path, { apply: true });
+    const orgIds = listed.enrolments.map((e) => e.orgId);
+    // An apply names the reviewed list; a missing or different one is refused before anything is written.
+    expect((await call(h, 'POST', path, { apply: true })).status).toBe(422);
+    const stale = await call(h, 'POST', path, { apply: true, orgIds: orgIds.slice(1) });
+    expect(stale.status).toBe(409);
+    expect(((await stale.json()) as { code: string }).code).toBe('WALLET_RELEASE_READY_CHANGED');
+    const refused = await call(h, 'POST', path, { apply: true, orgIds });
     expect(refused.status).toBe(403);
     expect(((await refused.json()) as { code: string }).code).toBe('WALLET_PROVIDER_DISABLED');
     expect(await enabled()).toBeNull();
     undo = setWalletReleaseForTest('released', { provider: 'google', mode: 'test' });
-    const applied = await call(h, 'POST', path, { apply: true });
+    const applied = await call(h, 'POST', path, { apply: true, orgIds });
     expect(applied.status).toBe(200);
     const result = (await applied.json()) as { applied: boolean; enrolments: { orgId: string }[] };
     expect(result.applied).toBe(true);
@@ -169,5 +176,44 @@ describe('POST /platform/wallet-release/{provider}/{mode}/enable-ready', () => {
     // Nothing is left to turn on.
     const after = (await (await call(h, 'POST', path, {})).json()) as { enrolments: unknown[] };
     expect(after.enrolments).toEqual([]);
+  });
+
+  it('leaves Off an enrolment the org switched Off or a released hold cleared', async () => {
+    const switched = await org('on');
+    const sm = await k.member(switched.id, 'test');
+    await disableEnrolment(k.ctx, sm.auth, switched.id, 'google', { expectedRevision: 2 });
+    const held = await org('on');
+    const admin = await k.admin('test');
+    const scope = { orgId: held.id, mode: 'test' as const, provider: 'google' as const };
+    await holdEnrolment(k.ctx, admin.auth, scope, 'abuse');
+    await releaseEnrolment(k.ctx, admin.auth, scope);
+    await addCheck(source.id, source.versionId);
+    const h = await headers(['admin', 'user']);
+    const report = (await (await call(h, 'GET', '/wallet-release')).json()) as Report;
+    const by = (id: string) => googleTest(report)?.enrolments.find((e) => e.orgId === id);
+    expect(by(switched.id)).toMatchObject({ status: 'blocked', blocks: ['org_off'] });
+    expect(by(held.id)).toMatchObject({ status: 'blocked', blocks: ['hold_released'] });
+    const dry = (await (
+      await call(h, 'POST', '/wallet-release/google/test/enable-ready', {})
+    ).json()) as { enrolments: { orgId: string }[] };
+    expect(dry.enrolments.map((e) => e.orgId)).not.toContain(switched.id);
+    expect(dry.enrolments.map((e) => e.orgId)).not.toContain(held.id);
+  });
+
+  it('needs a recent sign-in', async () => {
+    const user = await k.admin('test');
+    const s = await makeSession(k.f, {
+      userId: user.user.id,
+      roles: ['admin', 'user'],
+      authTime: Date.now() - 3_600_000,
+    });
+    const res = await call(
+      { ...s.headers, 'x-passbook-mode': 'test' },
+      'POST',
+      '/wallet-release/google/test/enable-ready',
+      {},
+    );
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { code: string }).code).toBe('STEP_UP_REQUIRED');
   });
 });

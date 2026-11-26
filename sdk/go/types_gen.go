@@ -9337,7 +9337,8 @@ type PlatformWalletEnrollmentsListResponseItemsItem struct {
 }
 
 type PlatformWalletReleaseEnableReadyParams struct {
-	Apply *bool `json:"apply,omitempty"`
+	Apply  *bool    `json:"apply,omitempty"`
+	OrgIds []string `json:"orgIds,omitempty"`
 }
 
 type PlatformWalletReleaseEnableReadyResponse struct {

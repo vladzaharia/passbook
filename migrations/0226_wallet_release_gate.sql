@@ -9,7 +9,12 @@
 -- and mode are not released. With every row dark, each refuses what it refused before. Two terms stay on when
 -- released: the insert guard's keyset match (keyset-guards.test.ts names it the instance table's keyset trigger) and
 -- its refusal of a copy inserted already retiring. Successors (channel_epoch > 1) join the release rule, so a
--- draining channel cannot come back on.
+-- draining channel cannot come back on. Once released, a copy inserted active needs the same approved-release proof
+-- a placeholder needs to activate (0207 binding rule).
+--
+-- Draining refuses in the database too: every activation (an un-void included) needs the release, and while
+-- draining every operation but a revoke (an update, a message's upsert) is refused (a trigger beside the 0208
+-- operation guard). Dark needs no such term: no copy is active there, so the 0208 rule already refuses them.
 
 CREATE TABLE wallet_provider_releases (
   provider TEXT NOT NULL CHECK (provider IN ('google', 'samsung')),
@@ -30,11 +35,13 @@ BEGIN SELECT RAISE(ABORT, 'wallet release rows are fixed'); END;
 CREATE TRIGGER wallet_provider_releases_fixed BEFORE UPDATE OF provider, mode ON wallet_provider_releases
 WHEN NEW.provider IS NOT OLD.provider OR NEW.mode IS NOT OLD.mode
 BEGIN SELECT RAISE(ABORT, 'wallet release rows are fixed'); END;
--- Dark again only once every copy of that provider and mode is retired: a void reaches each one first (draining).
+-- Dark again only once no copy of that provider and mode can still be in a wallet: a void reaches each one first
+-- (draining). Placeholders that never got an account never reached one. tools/deploy.ts refuses such a migration
+-- before it runs; this is the backstop.
 CREATE TRIGGER wallet_provider_releases_dark_retired BEFORE UPDATE OF state ON wallet_provider_releases
 WHEN NEW.state = 'dark' AND OLD.state != 'dark' AND EXISTS (
   SELECT 1 FROM wallet_provider_instances i WHERE i.provider = NEW.provider AND i.mode = NEW.mode
-    AND i.lifecycle != 'retired')
+    AND (i.lifecycle IN ('active', 'revoking', 'revoked') OR (i.account_id IS NOT NULL AND i.lifecycle != 'retired')))
 BEGIN SELECT RAISE(ABORT, 'wallet release cannot go dark while copies exist; drain it first'); END;
 
 DROP TRIGGER wallet_provider_generation_insert_guard;
@@ -57,14 +64,29 @@ WHEN (NEW.channel_epoch = 1 AND (NEW.retirement_requested_at IS NOT NULL
           WHERE current.pass_id = p.id AND current.provider = NEW.provider
             AND current.credential_generation = NEW.credential_generation)
     )))
+  OR (NEW.channel_epoch = 1 AND NEW.lifecycle = 'active' AND NOT EXISTS (
+    SELECT 1 FROM wallet_provider_accounts a
+    JOIN template_releases r ON r.id = NEW.identity_projection_release_id
+      AND r.org_id = NEW.org_id AND r.mode = NEW.mode AND r.provider = NEW.provider AND r.source = 'approved'
+    JOIN template_candidates c ON c.id = r.candidate_id AND c.provider_account_id = a.id
+      AND c.provider_account_epoch = a.authority_epoch
+    WHERE a.id = NEW.account_id AND a.org_id = NEW.org_id AND a.mode = NEW.mode AND a.provider = NEW.provider
+      AND COALESCE(a.credential_id, a.credential_source_id) IS NOT NULL AND a.revoked_at IS NULL))
 BEGIN SELECT RAISE(ABORT, 'provider issuance is unavailable'); END;
 
 DROP TRIGGER wallet_provider_generation_binding_guard;
 CREATE TRIGGER wallet_provider_generation_binding_guard BEFORE UPDATE OF lifecycle ON wallet_provider_instances
-WHEN OLD.lifecycle = 'ready' AND NEW.lifecycle = 'active' AND NOT EXISTS (
+WHEN OLD.lifecycle != 'active' AND NEW.lifecycle = 'active' AND NOT EXISTS (
   SELECT 1 FROM wallet_provider_releases release WHERE release.provider = NEW.provider
     AND release.mode = NEW.mode AND release.state = 'released')
 BEGIN SELECT RAISE(ABORT, 'provider issuance is unavailable'); END;
+
+CREATE TRIGGER wallet_provider_generation_operation_draining BEFORE INSERT ON wallet_provider_instance_operations
+WHEN NEW.kind != 'revoke' AND EXISTS (
+  SELECT 1 FROM wallet_provider_instances i JOIN wallet_provider_releases release
+    ON release.provider = i.provider AND release.mode = i.mode AND release.state = 'draining'
+  WHERE i.id = NEW.instance_id)
+BEGIN SELECT RAISE(ABORT, 'provider is draining: only a revoke is sent'); END;
 
 DROP TRIGGER wallet_provider_generation_offer_insert;
 CREATE TRIGGER wallet_provider_generation_offer_insert BEFORE INSERT ON wallet_provider_offer_refs

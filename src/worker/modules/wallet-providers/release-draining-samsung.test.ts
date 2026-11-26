@@ -1,5 +1,6 @@
 // TURN-0 rollback: with Samsung `draining` in Live, a card already added still gets its void (CANCELED) and its
-// removal (DELETED, then a tombstone), while an edit and a new reference never reach Samsung.
+// removal (DELETED, then a tombstone), while an edit and a new reference never reach Samsung. Samsung's own calls
+// on the card are answered without card data and a holder's DELETED is still recorded.
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createMockWallets } from '../../../../test/mock-wallets/index.ts';
 import { first } from '../../platform/db.ts';
@@ -90,6 +91,24 @@ describe('Samsung draining in Live', () => {
     await drainWalletProviderSync(ctx);
     await drainWalletProviderSync(ctx);
     expect(sent()).toBe('DELETED');
+  });
+
+  it('answers Get Card Data without card data, and records a holder DELETED without promoting', async () => {
+    const { t } = await drainingCard();
+    expect((await t.call({ token: await t.token() })).status).toBe(204);
+    const deleted = await t.call({
+      method: 'POST',
+      token: await t.token({ method: 'POST' }),
+      query: '?cc2=gb&event=DELETED',
+    });
+    expect(deleted.status).toBe(200);
+    expect(
+      await first(
+        t.kit.env.DB,
+        "SELECT 1 FROM wallet_samsung_callback_receipts WHERE event = 'DELETED' AND instance_id IN (SELECT id FROM wallet_provider_instances WHERE pass_id = ?)",
+        [t.pass.id],
+      ),
+    ).not.toBeNull();
   });
 
   it('calls Samsung for nothing once dark', async () => {

@@ -102,6 +102,29 @@ const activate = (instanceId: string) =>
   run(k.env.DB, "UPDATE wallet_provider_instances SET lifecycle = 'active' WHERE id = ?", [
     instanceId,
   ]);
+const operation = (instanceId: string, kind: 'upsert' | 'revoke') =>
+  run(
+    k.env.DB,
+    `INSERT INTO wallet_provider_instance_operations (id, instance_id, version, kind, request_hash, pass_version,
+       pass_revision, pass_credential_generation, lifecycle_generation, issuing_release_id, projection_release_id,
+       account_revision, adapter_revision, policy_revision, created_at, credential_keyset_commitment)
+     SELECT ?, i.id, 1, ?, ?, p.version, p.revision, p.credential_generation, p.lifecycle_generation, p.release_id,
+       NULL, 1, 1, 1, 1, i.credential_keyset_commitment
+     FROM wallet_provider_instances i JOIN passes p ON p.id = i.pass_id WHERE i.id = ?`,
+    [crypto.randomUUID(), kind, 'c'.repeat(64), instanceId],
+  );
+/** A copy inserted active with no approved release behind it. */
+async function bareActive(provider: Provider, mode: Mode) {
+  const org = await k.org();
+  const pass = await makePass(k.f, { orgId: org.id, template: makeTemplate().resolved, mode });
+  return run(
+    k.env.DB,
+    `INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, credential_generation, lifecycle,
+       desired_version, created_at, updated_at, credential_keyset_commitment)
+     VALUES (?, ?, ?, ?, ?, 1, 'active', 1, 1, 1, ?)`,
+    [crypto.randomUUID(), pass.id, org.id, mode, provider, keyset],
+  );
+}
 const refusal = (p: Promise<unknown>) =>
   p.then(
     () => null,
@@ -143,6 +166,9 @@ describe('the database guards open one pair at a time', () => {
         continue;
       }
       const id = await placeholder(q[0], q[1]);
+      // Released, a copy inserted active still needs an approved release naming its account (0207's proof).
+      expect(await refusal(bareActive(q[0], q[1]))).toContain('provider issuance is unavailable');
+      expect(await refusal(operation(id, 'upsert'))).not.toContain('draining');
       // Released: the guards let these through; the table rules (an active copy needs an account) still hold.
       expect(await refusal(activate(id))).not.toContain('provider issuance is unavailable');
       expect(await refusal(offer(id))).toBeNull();
@@ -153,6 +179,9 @@ describe('the database guards open one pair at a time', () => {
       expect(await refusal(activate(id))).toContain('provider issuance is unavailable');
       expect(await refusal(offer(id))).toContain('provider offer is unavailable');
       expect(await refusal(samsungRef(id))).toContain('provider reference is unavailable');
+      // Only a revoke may be queued while draining: no update, no message's upsert.
+      expect(await refusal(operation(id, 'upsert'))).toContain('provider is draining');
+      expect(await refusal(operation(id, 'revoke'))).not.toContain('draining');
       expect(
         await refusal(
           run(

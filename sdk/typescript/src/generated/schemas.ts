@@ -7913,6 +7913,7 @@ export type PlatformWalletEnrollmentsListResponse = {
 
 export type PlatformWalletReleaseEnableReadyParams = {
   apply?: boolean;
+  orgIds?: Array<string>;
 };
 
 export type PlatformWalletReleaseEnableReadyResponse = {
@@ -7956,7 +7957,7 @@ export type PlatformWalletReleaseRetrieveResponse = {
       orgId: string;
       orgName: string;
       status: "issuing" | "ready" | "blocked";
-      blocks: Array<"plan" | "source" | "verified" | "check" | "round_trip" | "hold" | "revoked" | "legacy" | "channel_off" | "org">;
+      blocks: Array<"plan" | "source" | "verified" | "check" | "round_trip" | "hold" | "revoked" | "legacy" | "channel_off" | "org" | "org_off" | "hold_released">;
     }>;
     templates: {
       ready: number;

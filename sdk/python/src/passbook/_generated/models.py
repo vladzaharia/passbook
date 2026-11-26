@@ -9656,6 +9656,7 @@ class PlatformWalletEnrollmentsListResponseItemsItem(_Model):
 
 class PlatformWalletReleaseEnableReadyParams(_Model):
     apply: bool | None = None
+    orgIds: _List[str] | None = None
 
 class PlatformWalletReleaseEnableReadyResponse(_Model):
     applied: bool
@@ -9707,7 +9708,7 @@ class PlatformWalletReleaseRetrieveResponseReleasesItemEnrolmentsItem(_Model):
     orgId: str
     orgName: str
     status: _Literal["issuing", "ready", "blocked"] | str
-    blocks: _List[_Literal["plan", "source", "verified", "check", "round_trip", "hold", "revoked", "legacy", "channel_off", "org"] | str]
+    blocks: _List[_Literal["plan", "source", "verified", "check", "round_trip", "hold", "revoked", "legacy", "channel_off", "org", "org_off", "hold_released"] | str]
 
 class PlatformWalletReleaseRetrieveResponseReleasesItemInstances(_Model):
     open: int

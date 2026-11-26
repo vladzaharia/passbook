@@ -27216,7 +27216,9 @@
                             "revoked",
                             "legacy",
                             "channel_off",
-                            "org"
+                            "org",
+                            "org_off",
+                            "hold_released"
                           ]
                         }
                       }
@@ -27301,6 +27303,15 @@
           "apply": {
             "type": "boolean",
             "default": false
+          },
+          "orgIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 1000
           }
         },
         "additionalProperties": false
@@ -89521,6 +89532,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -89664,6 +89676,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -89807,6 +89820,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -91164,7 +91178,7 @@
     },
     "/api/v1/platform/wallet-release/{provider}/{mode}/enable-ready": {
       "post": {
-        "summary": "Turn on every ready enrollment of a released provider (dry run unless apply)",
+        "summary": "Turn on the reviewed ready enrollments of a released provider (dry run unless apply)",
         "tags": [
           "wallet-platform"
         ],
@@ -91202,7 +91216,10 @@
                 "$ref": "#/components/schemas/PlatformWalletReleaseEnableReadyParams"
               },
               "example": {
-                "apply": false
+                "apply": false,
+                "orgIds": [
+                  "0193a1b2-7c00-7000-8000-0000000000a1"
+                ]
               }
             }
           }
@@ -91249,17 +91266,23 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
           "WALLET_ENROLMENT_HELD",
-          "WALLET_ENROLMENT_PREREQUISITE"
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WALLET_RELEASE_READY_CHANGED"
         ]
       }
     },

@@ -426,28 +426,41 @@ they differ.
 | `released` | per org: plan, then an enrolment that is On | sent | sent |
 | `draining` | refused | refused | sent |
 
+The database enforces each column too: while not released, its guards refuse new copies, activations (an un-void
+included), offers, references and every operation but a revoke. While draining, Samsung's callbacks on cards
+already added are answered without card data, a holder's DELETED is recorded and nothing is promoted.
+
 **Flip** (one PR per provider and mode, Test before Live): change the one cell of `RELEASE` and add a migration
 with only this statement (any other way of writing the table fails check-migrations):
 
-```sql
+```sql norun
 UPDATE wallet_provider_releases SET state = 'released', changed_at = <ms> WHERE provider = 'google' AND mode = 'test';
 ```
 
 Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin): a platform credential with a
 passing check, no `legacy` enrolment, the intended orgs `issuing` or `ready`, templates released. The deploy
 prints `Wallet release: google test -> released (<migration>)` and runs the wallet migration gate before it
-migrates. It migrates before it serves, and both sides must say `released`, so every step in between is dark.
+migrates, and again before it serves for as long as any wallet is released. It refuses when it cannot read the
+pending migrations. It migrates before it serves, and both sides must say `released`, so every step in between
+is dark.
 
-**After the flip**, turn on the orgs that set up before it:
-`POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that would turn
-On (plan, source, fresh check, Live round trip, no hold, channel not blocked). Send `{"apply": true}` to turn
-exactly those On, each with its own audit row. Apply is refused while the mode is not released.
+**After the flip**, turn on the orgs that set up before it (a recent sign-in is required):
+`POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that were never
+On and would turn On (plan, source, fresh check, Live round trip, no hold, channel not blocked). An enrolment the
+org switched Off (`org_off`) or a released hold cleared (`hold_released`) stays Off: only the org turns it back
+On. Review the list, then send `{"apply": true, "orgIds": [...]}` with the listed orgs: exactly those turn On,
+each with its own audit row. Apply is refused (409) when the list changed and while the mode is not released.
 
 **Rollback** is `draining`, never straight to `dark`: the same one-cell PR and one-statement migration with
 `state = 'draining'`. Copies already in wallets keep getting voids and removals; badges and offers go away; the
 next deploy applies it. Narrower: hold one org (`POST /api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold`)
-or revoke one credential. Go back to `dark` only once the readiness report shows `instances.open` at 0 for that
-provider and mode; until then the migration aborts (`drain it first`).
+or revoke one credential.
+
+**Back to dark** only once the readiness report shows `instances.open` at 0 for that provider and mode (copies
+that can still be in a wallet: active, revoking, revoked, or with an account and not retired). Merge the dark PR
+only then. Otherwise the deploy refuses before it migrates (`sets google test dark while N copies ...`), and every
+later deploy waits until those copies are voided or removed, since a merged migration cannot be edited; the
+migration itself also aborts as a backstop (`drain it first`).
 
 ### Entitlements gate
 

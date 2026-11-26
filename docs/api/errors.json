@@ -6556,6 +6556,15 @@
       ]
     },
     {
+      "code": "WALLET_RELEASE_READY_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "WALLET_RUN_BUSY",
       "statuses": [
         503

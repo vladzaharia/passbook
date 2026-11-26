@@ -2669,6 +2669,22 @@
     "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
   },
   {
+    "key": "POST /api/v1/connections/{id}/probe operation removed",
+    "class": "breaking",
+    "operationId": "connections.postConnectionsByIdProbe",
+    "op": "POST /api/v1/connections/{id}/probe",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/connections/probe operation removed",
+    "class": "breaking",
+    "operationId": "connections.postConnectionsProbe",
+    "op": "POST /api/v1/connections/probe",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/connections/test-config 200.columns: field added",
     "class": "additive",
     "operationId": "connections.postConnectionsTestConfig",
