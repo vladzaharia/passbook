@@ -154,6 +154,9 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
     async forOrg(orgId, identityId, now) {
       // An org may use its own identities and global ones, never another org's.
       const scoped = async (id: string) => {
+        // A platform-only identity (device test) is no org's to use, named or defaulted: refuse before decrypting.
+        const row = id === PLATFORM_IDENTITY_ID ? null : await getIdentityRow(env.DB, id);
+        if (row && row.purpose !== 'passes') throw notFound();
         const identity = await byId(id);
         if (identity.orgId !== null && identity.orgId !== orgId) throw notFound();
         return identity;
@@ -175,6 +178,7 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
         if (refused.code !== 'IDENTITY_RETIRED') throw refused;
       }
       const fallback = await getDefaultRow(env.DB);
+      if (fallback && fallback.purpose !== 'passes') throw notFound();
       if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
         const identity = await resolveRow(env, fallback);
         if (!(await refusal(env, identity.id, now))) return identity;

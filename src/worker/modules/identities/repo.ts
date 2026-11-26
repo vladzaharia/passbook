@@ -22,6 +22,8 @@ export interface IdentityRow {
   rotation: 'auto' | 'csr' | 'manual';
   next_rotation_at: number | null;
   handle: string | null;
+  /** Only `passes` identities sign for orgs; `device_test` is the platform's own. */
+  purpose: 'passes' | 'device_test';
   created_at: number;
   revision: number;
 }
@@ -34,7 +36,7 @@ export interface CredentialBlob {
 }
 
 const COLUMNS = `id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, credential_id,
-  cert_pem, cert_sha256, not_before, not_after, apns_binding, apns_health, nfc_enabled, is_default, issuing, provenance, rotation, next_rotation_at, handle, created_at, revision`;
+  cert_pem, cert_sha256, not_before, not_after, apns_binding, apns_health, nfc_enabled, is_default, issuing, provenance, rotation, next_rotation_at, handle, purpose, created_at, revision`;
 
 export function listIdentityRows(db: D1Database): Promise<IdentityRow[]> {
   return all<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities ORDER BY created_at, id`);

@@ -9,6 +9,7 @@ export const RESERVED_HANDLES: ReadonlySet<string> = new Set([
   'demo',
   'platform',
   'passbook',
+  'devtest',
   'apple',
   'google',
   'samsung',
