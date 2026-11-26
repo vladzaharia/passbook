@@ -42,6 +42,11 @@ function landOnWorkbench(el: HTMLElement): void {
   el.setAttribute('role', 'region');
   el.setAttribute('aria-label', 'Workbench');
   el.tabIndex = -1;
-  el.scrollIntoView({ block: 'start' });
-  el.focus({ preventScroll: true });
+  // The island shell shows the slot after `mount` returns: scroll and focus once it is shown.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ block: 'start' });
+      el.focus({ preventScroll: true });
+    }),
+  );
 }
