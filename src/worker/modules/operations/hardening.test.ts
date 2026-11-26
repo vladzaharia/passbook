@@ -11,6 +11,7 @@ import { handleOperationRun } from './jobs.ts';
 import {
   NEVER_KIND,
   ORG_KIND,
+  PLATFORM_KIND,
   person,
   QUEUED_ONLY_KIND,
   registerTestKinds,
@@ -100,11 +101,14 @@ describe('stall sweep and Workflows (M1)', () => {
     expect((await read(op.id)).error?.code).toBe('OPERATION_STALLED');
   });
 
-  it('settles the row of a completed Workflow whose final write was lost', async () => {
+  it('does not assume a completed Workflow succeeded: its lost outcome is unknown and retryable', async () => {
     withWorkflow(async () => ({ status: 'complete' }));
     const op = await wfOp();
     await sweepStalledOperations(kit.ctx);
-    expect((await read(op.id)).status).toBe('succeeded');
+    expect((await read(op.id)).error).toMatchObject({
+      code: 'OPERATION_OUTCOME_UNKNOWN',
+      retryable: true,
+    });
   });
 });
 
@@ -262,8 +266,8 @@ describe('retry replay (L3)', () => {
       post(`/${op.id}/retry`, headers),
       post(`/${op.id}/retry`, headers),
     ]);
-    expect([one.status, two.status]).toEqual([200, 200]);
-    expect(((await two.json()) as OperationDto).attempt).toBe(2);
+    expect([one.status, two.status]).toEqual([202, 202]);
+    expect(((await two.json()) as { operation: OperationDto }).operation.attempt).toBe(2);
   });
 });
 
@@ -281,7 +285,7 @@ describe('starter rows (L7, L8)', () => {
     const op = await startOperation(kit.ctx, {
       kind: STARTER_KIND.kind,
       actor: { type: 'user', id: owner.userId },
-      ...(hash ? { session: hash } : {}),
+      session: hash ?? 'sess',
     });
     expect((await get(`/${op.id}`, second)).status).toBe(200);
     expect((await post(`/${op.id}/cancel`, second)).status).toBe(403);
@@ -304,7 +308,7 @@ describe('starter rows (L7, L8)', () => {
     });
     await progressOf(kit.ctx, op.id, 1).fail(new AppError('X_FAILED', 500, 'x'));
     kit.clock.advance(1_000_000);
-    expect((await post(`/${op.id}/retry`, owner.headers)).status).toBe(200);
+    expect((await post(`/${op.id}/retry`, owner.headers)).status).toBe(202);
     expect((await rowById(kit.env.DB, op.id))?.expires_at).toBe(kit.clock.now() + 7 * 86_400_000);
   });
 });
@@ -314,3 +318,100 @@ async function makeSecondSession(userId: string): Promise<Record<string, string>
   const s = await makeSession(kit.fx, { userId });
   return { ...s.headers, origin: ORIGIN };
 }
+
+describe('verify round', () => {
+  it('V1: after a retry the sweep checks the new Workflow instance, not the dead one', async () => {
+    const seen: string[] = [];
+    undo();
+    undo = registerTestKinds({
+      ...base,
+      workflow: async (_ctx, instanceId) => ({
+        status: async () => {
+          seen.push(instanceId);
+          return { status: instanceId === 'wf' ? 'errored' : 'running' };
+        },
+      }),
+      relaunch: async () => ({ workflowInstanceId: 'wf-r2' }),
+    });
+    const op = await start({ workflowInstanceId: 'wf' });
+    const p = progressOf(kit.ctx, op.id, 1);
+    p.step('a');
+    await p.fail(new AppError('X_FAILED', 500, 'x'));
+    expect((await post(`/${op.id}/retry`, auth.admin())).status).toBe(202);
+    expect((await rowById(kit.env.DB, op.id))?.workflow_instance_id).toBe('wf-r2');
+    await progressOf(kit.ctx, op.id, 2).step('a').done();
+    kit.clock.advance(300_000);
+    await sweepStalledOperations(kit.ctx);
+    expect(seen).toEqual(['wf-r2']);
+    expect((await read(op.id)).status).toBe('running');
+  });
+
+  it('V2: a queued-only stop cannot take a row a runner already leased', async () => {
+    const op = await start({ kind: QUEUED_ONLY_KIND.kind });
+    await handleOperationRun({ kind: 'operation.run', operationId: op.id, attempt: 1 }, kit.ctx);
+    expect((await post(`/${op.id}/cancel`, auth.admin())).status).toBe(409);
+    expect((await read(op.id)).status).toBe('queued');
+    expect(await count('operation.cancelled', op.id)).toBe(0);
+  });
+
+  it('V3: a starter start without a session is refused', async () => {
+    const error = await startOperation(kit.ctx, {
+      kind: STARTER_KIND.kind,
+      actor: { type: 'user', id: 'u1' },
+    }).catch((e) => e);
+    expect((error as AppError).code).toBe('OPERATION_SESSION_REQUIRED');
+  });
+
+  it('V4: a runner that lost its lease cannot end the row', async () => {
+    const op = await start();
+    await run(kit.env.DB, "UPDATE operations SET lease_owner = 'a', lease_until = ? WHERE id = ?", [
+      kit.clock.now() + 60_000,
+      op.id,
+    ]);
+    await progressOf(kit.ctx, op.id, 1, 'b').succeed();
+    expect((await read(op.id)).status).toBe('queued');
+    await progressOf(kit.ctx, op.id, 1, 'a').succeed();
+    expect((await read(op.id)).status).toBe('succeeded');
+  });
+
+  it('V5: a retry 409 names the operation only to the caller who started it', async () => {
+    const op = await start({ subject: { k: 'v5' }, actor: { type: 'user', id: 'someone-else' } });
+    await progressOf(kit.ctx, op.id, 1).fail(new AppError('X_FAILED', 500, 'x'));
+    const twin = await start({ subject: { k: 'v5' }, actor: { type: 'user', id: 'someone-else' } });
+    const res = await post(`/${op.id}/retry`, auth.admin());
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as { operationId?: string }).operationId).toBeUndefined();
+    expect(twin.id).not.toBe(op.id);
+  });
+
+  it('V6: the retention sweep drains more than one batch', async () => {
+    await run(
+      kit.env.DB,
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 1200)
+       INSERT INTO operations (id, kind, audience, steps, status, actor_type, created_at, updated_at, expires_at)
+       SELECT 'old-' || i, 'test.org', 'platform', '[]', 'succeeded', 'system', 1, 1, 2 FROM n`,
+    );
+    const { sweepOperations } = await import('./sweep.ts');
+    await sweepOperations(kit.ctx);
+    const left = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) AS n FROM operations WHERE id LIKE 'old-%'",
+    );
+    expect(left?.n ?? 0).toBe(0);
+  });
+
+  it('V7: a platform kind has one active run for every admin', async () => {
+    const a = await startOperation(kit.ctx, {
+      kind: PLATFORM_KIND.kind,
+      actor: { type: 'user', id: 'a1' },
+      subject: { s: 'x' },
+    });
+    const error = await startOperation(kit.ctx, {
+      kind: PLATFORM_KIND.kind,
+      actor: { type: 'user', id: 'a2' },
+      subject: { s: 'x' },
+    }).catch((e) => e);
+    expect(toProblem(error).code).toBe('OPERATION_RUNNING');
+    expect(a.status).toBe('queued');
+  });
+});

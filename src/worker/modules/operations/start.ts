@@ -4,7 +4,7 @@ import { AppError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { toDto } from './dto.ts';
-import { kindOf } from './registry.ts';
+import { kindOf } from './kinds.ts';
 import { activeByDedupe, insertOperationStmt, type OperationRow, rowById } from './repo.ts';
 
 /** A runner that holds the lease has this long before a stall check may resend it. */
@@ -40,7 +40,9 @@ export interface StartInput {
 export function dedupeKeyOf(input: StartInput): string | null {
   const def = kindOf(input.kind);
   if (!def?.dedupe) return null;
-  return `${def.audience}:${input.org?.orgId ?? input.actor.id ?? ''}:${def.dedupe(input.subject ?? {})}`;
+  // Platform kinds have one scope for every admin; starter kinds one per person.
+  const tenant = def.audience === 'platform' ? '' : (input.org?.orgId ?? input.actor.id ?? '');
+  return `${def.audience}:${tenant}:${def.dedupe(input.subject ?? {})}`;
 }
 
 /** An id for a caller-supplied key: per principal and kind, so two callers never derive the same one. */
@@ -66,6 +68,8 @@ const reused = () =>
 export function startOperationStmt(ctx: ServiceContext, input: StartInput) {
   const def = kindOf(input.kind);
   if (!def) throw new AppError('OPERATION_KIND_UNKNOWN', 500, 'Unknown operation kind.');
+  if (def.audience === 'starter' && !input.session)
+    throw new AppError('OPERATION_SESSION_REQUIRED', 500, 'A starter operation needs its session.');
   if (def.audience === 'org' && !input.org)
     throw new AppError('OPERATION_ORG_REQUIRED', 500, 'An org operation needs an org and mode.');
   const now = ctx.clock.now();

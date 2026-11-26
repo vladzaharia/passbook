@@ -54,7 +54,11 @@ async function check(ctx: ServiceContext, row: OperationRow, now: number): Promi
     const state = await workflowState(ctx, row);
     if (state === 'dead') await fail();
     // The instance finished but its final write was lost: settle the row.
-    else if (state === 'complete') await progress.succeed();
+    // `complete` only means run() returned: the outcome is not known, so it is not assumed to be success.
+    else if (state === 'complete')
+      await progress.fail(
+        new AppError('OPERATION_OUTCOME_UNKNOWN', 500, 'The outcome was not recorded.'),
+      );
     else if (state === 'alive') await bumpHeartbeat(db, row.id, now);
     return;
   }

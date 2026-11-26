@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { useActiveOperation } from '../../ui/operation/index.ts';
+import { isTerminal, useOperations } from '../../ui/operation/index.ts';
 import { loadSession, onSession, type Session } from '../console/session.ts';
 import type { Island } from '../shell/islands.ts';
+import { OPERATION_STARTED } from './operation-started.ts';
 import { type ChipState, SandboxChip } from './sandbox-chip.tsx';
 import { BenchKeys } from './shortcuts.tsx';
 import { ContextStrip, type StripModel, stripModel } from './strip.tsx';
@@ -12,7 +14,15 @@ type Ready = Extract<StripModel, { kind: 'ready' }>;
 
 /** The strip of a sandbox in use: an operation running on it (OP-2) rings the chip and leads its menu. */
 function ReadyStrip({ tool, model }: { tool: BenchTool; model: Ready }) {
-  const op = useActiveOperation({ type: 'sandbox', id: model.orgId });
+  const { operations, refetch } = useOperations({
+    active: true,
+    target: { type: 'sandbox', id: model.orgId },
+  });
+  const op = operations.find((o) => !isTerminal(o.status));
+  useEffect(() => {
+    window.addEventListener(OPERATION_STARTED, refetch);
+    return () => window.removeEventListener(OPERATION_STARTED, refetch);
+  }, [refetch]);
   return (
     <ContextStrip
       tool={tool}

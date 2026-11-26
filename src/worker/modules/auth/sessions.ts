@@ -100,7 +100,16 @@ export async function resolveSession(
   cookieValue: string,
 ): Promise<ResolvedSession | null> {
   if (!cookieValue || cookieValue.length > 256) return null;
-  const idHash = await hashSessionCookie(cookieValue);
+  return resolveSessionByHash(env, clock, await hashSessionCookie(cookieValue), true);
+}
+
+/** The same check from the stored id hash. A job that serves the person's own earlier request does not touch it. */
+export async function resolveSessionByHash(
+  env: Pick<AppEnv, 'DB'>,
+  clock: Clock,
+  idHash: string,
+  touch = false,
+): Promise<ResolvedSession | null> {
   const row = await repo.getSession(env.DB, idHash);
   if (!row || row.revoked_at !== null || row.user_status !== 'active') return null;
   const now = clock.now();
@@ -108,7 +117,7 @@ export async function resolveSession(
   const roles = parseRoles(row.roles);
   if (roles.length === 0) return null;
   const life = lifetimeFor(roles, row.amr);
-  if (now - row.last_seen_at >= life.touchEveryMs) {
+  if (touch && now - row.last_seen_at >= life.touchEveryMs) {
     await repo.touchSession(env.DB, idHash, now, life.idleMs);
   }
   return {

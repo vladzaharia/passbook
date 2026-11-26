@@ -6,6 +6,7 @@ export const OPERATION_COPY = {
   /** Catalog sentences by error code: what happened and what to do. */
   errors: {
     OPERATION_STALLED: 'It stopped responding. Retry.',
+    OPERATION_OUTCOME_UNKNOWN: 'It finished but did not report back. Check the result, then retry.',
     OPERATION_FAILED: 'Something went wrong. Retry.',
     OPERATION_CANCELLED: 'Stopped.',
   } as Record<string, string>,

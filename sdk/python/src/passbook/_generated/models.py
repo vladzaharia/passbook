@@ -659,8 +659,9 @@ __all__ = [
     "NfcTagsUpdateParams",
     "NfcTagsUpdateResponse",
     "OperationsCancelResponse",
-    "OperationsCancelResponseStartedBy",
-    "OperationsCancelResponseStepsItem",
+    "OperationsCancelResponseOperation",
+    "OperationsCancelResponseOperationStartedBy",
+    "OperationsCancelResponseOperationStepsItem",
     "OperationsCancelResult",
     "OperationsListItem",
     "OperationsListItemStartedBy",
@@ -675,8 +676,9 @@ __all__ = [
     "OperationsRetrieveResponseStepsItem",
     "OperationsRetrieveResult",
     "OperationsRetryResponse",
-    "OperationsRetryResponseStartedBy",
-    "OperationsRetryResponseStepsItem",
+    "OperationsRetryResponseOperation",
+    "OperationsRetryResponseOperationStartedBy",
+    "OperationsRetryResponseOperationStepsItem",
     "OperationsRetryResult",
     "Org",
     "OrgBranding",
@@ -6144,6 +6146,9 @@ class NfcTagsUpdateResponse(_Model):
     binding: _Dict[str, _Any] | None
 
 class OperationsCancelResponse(_Model):
+    operation: OperationsCancelResponseOperation
+
+class OperationsCancelResponseOperation(_Model):
     id: str
     kind: str
     status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
@@ -6153,11 +6158,11 @@ class OperationsCancelResponse(_Model):
     mode: _Literal["live", "test", None] | str
     target: _Dict[str, _Any] | None
     step: str | None
-    steps: _List[OperationsCancelResponseStepsItem]
+    steps: _List[OperationsCancelResponseOperationStepsItem]
     attempt: int
     cancelable: bool
     cancelRequested: bool
-    startedBy: OperationsCancelResponseStartedBy
+    startedBy: OperationsCancelResponseOperationStartedBy
     createdAt: int
     startedAt: int | None
     updatedAt: int
@@ -6167,11 +6172,11 @@ class OperationsCancelResponse(_Model):
     revision: int
     pollAfterMs: int
 
-class OperationsCancelResponseStartedBy(_Model):
+class OperationsCancelResponseOperationStartedBy(_Model):
     type: _Literal["user", "api_key", "system"] | str
     id: str | None
 
-class OperationsCancelResponseStepsItem(_Model):
+class OperationsCancelResponseOperationStepsItem(_Model):
     key: str
     label: str
     state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
@@ -6312,6 +6317,9 @@ class OperationsRetrieveResponseStepsItem(_Model):
     finishedAt: int | None
 
 class OperationsRetryResponse(_Model):
+    operation: OperationsRetryResponseOperation
+
+class OperationsRetryResponseOperation(_Model):
     id: str
     kind: str
     status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
@@ -6321,11 +6329,11 @@ class OperationsRetryResponse(_Model):
     mode: _Literal["live", "test", None] | str
     target: _Dict[str, _Any] | None
     step: str | None
-    steps: _List[OperationsRetryResponseStepsItem]
+    steps: _List[OperationsRetryResponseOperationStepsItem]
     attempt: int
     cancelable: bool
     cancelRequested: bool
-    startedBy: OperationsRetryResponseStartedBy
+    startedBy: OperationsRetryResponseOperationStartedBy
     createdAt: int
     startedAt: int | None
     updatedAt: int
@@ -6335,11 +6343,11 @@ class OperationsRetryResponse(_Model):
     revision: int
     pollAfterMs: int
 
-class OperationsRetryResponseStartedBy(_Model):
+class OperationsRetryResponseOperationStartedBy(_Model):
     type: _Literal["user", "api_key", "system"] | str
     id: str | None
 
-class OperationsRetryResponseStepsItem(_Model):
+class OperationsRetryResponseOperationStepsItem(_Model):
     key: str
     label: str
     state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str

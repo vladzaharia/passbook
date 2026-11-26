@@ -1,4 +1,7 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
+import { unvoidedPassCount } from '../modules/developer/repo-sandbox-op.ts';
+import { progressOf } from '../modules/operations/progress.ts';
+import type { Progress } from '../modules/operations/progress-types.ts';
 import {
   beginPurge,
   deletePassesPage,
@@ -17,10 +20,19 @@ import {
 } from '../modules/org-lifecycle/purge.ts';
 import type { Clock } from '../platform/clock.ts';
 import type { AppEnv } from '../platform/env.ts';
+import { AppError } from '../platform/errors.ts';
 import { createJobContext } from '../platform/service-context.ts';
 
 export interface OrgPurgeParams {
   orgId: string;
+  /** The operation that reports this purge (a sandbox delete or start over): its `passes` count and `erase` wait. */
+  operationId?: string;
+  /** The operation's attempt: an old instance of a retried operation reports nothing. */
+  attempt?: number;
+  /** The purge ends the operation once the passes are voided. False when another runner does. */
+  finish?: boolean;
+  /** The lease token of the runner that holds the operation: this purge writes under it. */
+  lease?: string;
 }
 
 const RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
@@ -57,6 +69,33 @@ export async function runOrgPurge(
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'org-purge', orgId },
   });
+  const progress = progressOf(ctx, params.operationId, params.attempt ?? 1, params.lease);
+  try {
+    const out = await purge(ctx, params, step, providerRounds, progress);
+    // An operation that already ended ignores this: only a purge that stopped before the grace fails it.
+    if (out.state !== 'purged' && out.state !== 'done')
+      await progress.fail(
+        new AppError(
+          out.state === 'held' ? 'ORG_HELD' : 'ORG_PURGE_BLOCKED',
+          409,
+          'The purge did not finish.',
+        ),
+      );
+    return out;
+  } catch (error) {
+    await progress.fail(error);
+    throw error;
+  }
+}
+
+async function purge(
+  ctx: ReturnType<typeof createJobContext>,
+  params: OrgPurgeParams,
+  step: StepLike,
+  providerRounds: number,
+  progress: Progress,
+): Promise<{ state: PurgeOutcome; deleted: number }> {
+  const { orgId } = params;
   const started = await step.do('begin', () => beginPurge(ctx, orgId));
   if (started === 'held' || started === 'not_due' || started === 'skipped' || started === 'done')
     return { state: started, deleted: 0 };
@@ -65,10 +104,16 @@ export async function runOrgPurge(
   if (!(await alive('alive-void'))) return { state: 'held', deleted };
   let failed = 0;
   let from = '';
+  const voiding = progress.step('passes');
+  if (params.operationId)
+    voiding.total(await step.do('count', () => unvoidedPassCount(ctx.env.DB, orgId)));
+  let visited = 0;
   for (let i = 0; i < MAX_PAGES; i++) {
     const at = from;
     const page = await step.do(`void-${i}`, RETRY, () => voidPage(ctx, orgId, at));
     failed += page.failed;
+    visited += page.voided + page.failed;
+    await voiding.count(visited);
     if (!page.more || !page.last) break;
     from = page.last;
   }
@@ -76,7 +121,12 @@ export async function runOrgPurge(
     ctx.log.error('org.purge_void_blocked', { orgId, code: 'ORG_PURGE_VOID', passes: failed });
     return { state: 'blocked', deleted };
   }
+  voiding.total(visited);
+  await voiding.done();
   const graceEnds = await step.do('voided', () => markVoided(ctx, orgId));
+  // The tail: the operation is done once the passes are voided; the erase waits out the devices' days.
+  await progress.waiting('erase', { until: graceEnds, due: true });
+  if (params.finish) await progress.succeed({ href: null, ids: { orgId } });
   await step.sleepUntil('grace', new Date(graceEnds));
   if (!(await alive('alive-grace'))) return { state: 'held', deleted };
   await step.do('uploads', RETRY, () => purgeUploads(ctx, orgId));

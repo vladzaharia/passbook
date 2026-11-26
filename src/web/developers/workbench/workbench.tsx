@@ -123,7 +123,7 @@ function Head({
           {note}
         </p>
       ) : null}
-      {reveal ? (
+      {reveal && !reveal.shown ? (
         <RevealSheet
           revealed={{ name: H.newKeyTitle, secret: reveal.secret }}
           labels={KEYS_COPY.reveal}

@@ -96,6 +96,7 @@
   "developer.getSandbox",
   "developer.postSandbox",
   "developer.postSandboxClose",
+  "developer.postSandboxKey",
   "developer.postSandboxRecreate",
   "developer.postSandboxReopen",
   "developer.postSandboxReset",

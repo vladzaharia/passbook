@@ -97,6 +97,7 @@ describe('operations read rules', () => {
     const owner = await person(kit);
     const op = await startOperation(kit.ctx, {
       kind: STARTER_KIND.kind,
+      session: 'sess',
       actor: { type: 'user', id: owner.userId },
     });
     expect((await call(`/${op.id}`, owner.headers)).status).toBe(200);
@@ -161,6 +162,7 @@ describe('operations list', () => {
       kit.clock.advance(10);
       return startOperation(kit.ctx, {
         kind: STARTER_KIND.kind,
+        session: 'sess',
         actor: { type: 'user', id: owner.userId },
         subject: { n: String(n) },
       });
@@ -187,6 +189,7 @@ describe('operations list', () => {
     const owner = await person(kit);
     await startOperation(kit.ctx, {
       kind: STARTER_KIND.kind,
+      session: 'sess',
       actor: { type: 'user', id: owner.userId },
       target: { type: 'sandbox', id: 's1' },
     });

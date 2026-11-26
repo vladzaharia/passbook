@@ -5081,36 +5081,40 @@ type NfcTagsUpdateResponse struct {
 }
 
 type OperationsCancelResponse struct {
-	ID              string                              `json:"id"`
-	Kind            string                              `json:"kind"`
-	Status          string                              `json:"status"`
-	Title           string                              `json:"title"`
-	Text            string                              `json:"text"`
-	OrgID           *string                             `json:"orgId"`
-	Mode            *string                             `json:"mode"`
-	Target          map[string]any                      `json:"target"`
-	Step            *string                             `json:"step"`
-	Steps           []OperationsCancelResponseStepsItem `json:"steps"`
-	Attempt         int64                               `json:"attempt"`
-	Cancelable      bool                                `json:"cancelable"`
-	CancelRequested bool                                `json:"cancelRequested"`
-	StartedBy       OperationsCancelResponseStartedBy   `json:"startedBy"`
-	CreatedAt       int64                               `json:"createdAt"`
-	StartedAt       *int64                              `json:"startedAt"`
-	UpdatedAt       int64                               `json:"updatedAt"`
-	FinishedAt      *int64                              `json:"finishedAt"`
-	Error           map[string]any                      `json:"error"`
-	Result          map[string]any                      `json:"result"`
-	Revision        int64                               `json:"revision"`
-	PollAfterMs     int64                               `json:"pollAfterMs"`
+	Operation OperationsCancelResponseOperation `json:"operation"`
 }
 
-type OperationsCancelResponseStartedBy struct {
+type OperationsCancelResponseOperation struct {
+	ID              string                                       `json:"id"`
+	Kind            string                                       `json:"kind"`
+	Status          string                                       `json:"status"`
+	Title           string                                       `json:"title"`
+	Text            string                                       `json:"text"`
+	OrgID           *string                                      `json:"orgId"`
+	Mode            *string                                      `json:"mode"`
+	Target          map[string]any                               `json:"target"`
+	Step            *string                                      `json:"step"`
+	Steps           []OperationsCancelResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                        `json:"attempt"`
+	Cancelable      bool                                         `json:"cancelable"`
+	CancelRequested bool                                         `json:"cancelRequested"`
+	StartedBy       OperationsCancelResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                        `json:"createdAt"`
+	StartedAt       *int64                                       `json:"startedAt"`
+	UpdatedAt       int64                                        `json:"updatedAt"`
+	FinishedAt      *int64                                       `json:"finishedAt"`
+	Error           map[string]any                               `json:"error"`
+	Result          map[string]any                               `json:"result"`
+	Revision        int64                                        `json:"revision"`
+	PollAfterMs     int64                                        `json:"pollAfterMs"`
+}
+
+type OperationsCancelResponseOperationStartedBy struct {
 	Type string  `json:"type"`
 	ID   *string `json:"id"`
 }
 
-type OperationsCancelResponseStepsItem struct {
+type OperationsCancelResponseOperationStepsItem struct {
 	Key           string  `json:"key"`
 	Label         string  `json:"label"`
 	State         string  `json:"state"`
@@ -5275,36 +5279,40 @@ type OperationsRetrieveResponseStepsItem struct {
 type OperationsRetrieveResult = OperationsRetrieveResponse
 
 type OperationsRetryResponse struct {
-	ID              string                             `json:"id"`
-	Kind            string                             `json:"kind"`
-	Status          string                             `json:"status"`
-	Title           string                             `json:"title"`
-	Text            string                             `json:"text"`
-	OrgID           *string                            `json:"orgId"`
-	Mode            *string                            `json:"mode"`
-	Target          map[string]any                     `json:"target"`
-	Step            *string                            `json:"step"`
-	Steps           []OperationsRetryResponseStepsItem `json:"steps"`
-	Attempt         int64                              `json:"attempt"`
-	Cancelable      bool                               `json:"cancelable"`
-	CancelRequested bool                               `json:"cancelRequested"`
-	StartedBy       OperationsRetryResponseStartedBy   `json:"startedBy"`
-	CreatedAt       int64                              `json:"createdAt"`
-	StartedAt       *int64                             `json:"startedAt"`
-	UpdatedAt       int64                              `json:"updatedAt"`
-	FinishedAt      *int64                             `json:"finishedAt"`
-	Error           map[string]any                     `json:"error"`
-	Result          map[string]any                     `json:"result"`
-	Revision        int64                              `json:"revision"`
-	PollAfterMs     int64                              `json:"pollAfterMs"`
+	Operation OperationsRetryResponseOperation `json:"operation"`
 }
 
-type OperationsRetryResponseStartedBy struct {
+type OperationsRetryResponseOperation struct {
+	ID              string                                      `json:"id"`
+	Kind            string                                      `json:"kind"`
+	Status          string                                      `json:"status"`
+	Title           string                                      `json:"title"`
+	Text            string                                      `json:"text"`
+	OrgID           *string                                     `json:"orgId"`
+	Mode            *string                                     `json:"mode"`
+	Target          map[string]any                              `json:"target"`
+	Step            *string                                     `json:"step"`
+	Steps           []OperationsRetryResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                       `json:"attempt"`
+	Cancelable      bool                                        `json:"cancelable"`
+	CancelRequested bool                                        `json:"cancelRequested"`
+	StartedBy       OperationsRetryResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                       `json:"createdAt"`
+	StartedAt       *int64                                      `json:"startedAt"`
+	UpdatedAt       int64                                       `json:"updatedAt"`
+	FinishedAt      *int64                                      `json:"finishedAt"`
+	Error           map[string]any                              `json:"error"`
+	Result          map[string]any                              `json:"result"`
+	Revision        int64                                       `json:"revision"`
+	PollAfterMs     int64                                       `json:"pollAfterMs"`
+}
+
+type OperationsRetryResponseOperationStartedBy struct {
 	Type string  `json:"type"`
 	ID   *string `json:"id"`
 }
 
-type OperationsRetryResponseStepsItem struct {
+type OperationsRetryResponseOperationStepsItem struct {
 	Key           string  `json:"key"`
 	Label         string  `json:"label"`
 	State         string  `json:"state"`
