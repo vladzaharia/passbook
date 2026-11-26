@@ -1,6 +1,8 @@
 // TURN-0 rollback: with Google `draining` in Live, an object already saved still goes inactive on a void and on a
 // removal (PUT, then a GET to confirm), while an edit, a message and a new save link never reach Google.
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
+import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { removePass } from '../passes/remove.ts';
 import { updatePass, voidPass } from '../passes/service.ts';
@@ -60,6 +62,24 @@ describe('Google draining in Live', () => {
     await drainWalletProviderSync(jobCtx);
     expect(google().slice(before)).toContain('PUT');
     expect(object()).toMatchObject({ state: 'INACTIVE' });
+  });
+
+  // The database refuses to go dark while this copy can still be in a wallet (0226).
+  it('cannot go back to dark while the copy is open', async () => {
+    const { f } = await draining();
+    await run(
+      f.kit.env.DB,
+      "UPDATE wallet_provider_releases SET state = 'draining', changed_at = 1 WHERE provider = 'google' AND mode = 'live'",
+    );
+    await expect(
+      run(
+        f.kit.env.DB,
+        "UPDATE wallet_provider_releases SET state = 'dark', changed_at = 2 WHERE provider = 'google' AND mode = 'live'",
+      ),
+    ).rejects.toThrow('drain it first');
+    await withoutTrigger(f.kit.env.DB, 'wallet_provider_releases_dark_retired', () =>
+      run(f.kit.env.DB, "UPDATE wallet_provider_releases SET state = 'dark', changed_at = 0"),
+    );
   });
 
   it('calls Google for nothing once dark', async () => {

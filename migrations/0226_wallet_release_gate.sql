@@ -12,9 +12,9 @@
 -- draining channel cannot come back on. Once released, a copy inserted active needs the same approved-release proof
 -- a placeholder needs to activate (0207 binding rule).
 --
--- Draining refuses in the database too: every activation (an un-void included) needs the release, and while
--- draining every operation but a revoke (an update, a message's upsert) is refused (a trigger beside the 0208
--- operation guard). Dark needs no such term: no copy is active there, so the 0208 rule already refuses them.
+-- Draining refuses in the database too: an un-void (revoking or revoked back to active) and every operation but a
+-- revoke (an update, a message's upsert; a trigger beside the 0208 operation guard). Dark needs neither term: no
+-- copy can be active, revoking or revoked there (going dark needs none open), so the 0208 rules already refuse.
 
 CREATE TABLE wallet_provider_releases (
   provider TEXT NOT NULL CHECK (provider IN ('google', 'samsung')),
@@ -76,9 +76,12 @@ BEGIN SELECT RAISE(ABORT, 'provider issuance is unavailable'); END;
 
 DROP TRIGGER wallet_provider_generation_binding_guard;
 CREATE TRIGGER wallet_provider_generation_binding_guard BEFORE UPDATE OF lifecycle ON wallet_provider_instances
-WHEN OLD.lifecycle != 'active' AND NEW.lifecycle = 'active' AND NOT EXISTS (
-  SELECT 1 FROM wallet_provider_releases release WHERE release.provider = NEW.provider
-    AND release.mode = NEW.mode AND release.state = 'released')
+WHEN (OLD.lifecycle = 'ready' AND NEW.lifecycle = 'active' AND NOT EXISTS (
+    SELECT 1 FROM wallet_provider_releases release WHERE release.provider = NEW.provider
+      AND release.mode = NEW.mode AND release.state = 'released'))
+  OR (OLD.lifecycle IN ('revoking', 'revoked') AND NEW.lifecycle = 'active' AND EXISTS (
+    SELECT 1 FROM wallet_provider_releases release WHERE release.provider = NEW.provider
+      AND release.mode = NEW.mode AND release.state = 'draining'))
 BEGIN SELECT RAISE(ABORT, 'provider issuance is unavailable'); END;
 
 CREATE TRIGGER wallet_provider_generation_operation_draining BEFORE INSERT ON wallet_provider_instance_operations

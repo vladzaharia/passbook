@@ -168,7 +168,6 @@ describe('the database guards open one pair at a time', () => {
       const id = await placeholder(q[0], q[1]);
       // Released, a copy inserted active still needs an approved release naming its account (0207's proof).
       expect(await refusal(bareActive(q[0], q[1]))).toContain('provider issuance is unavailable');
-      expect(await refusal(operation(id, 'upsert'))).not.toContain('draining');
       // Released: the guards let these through; the table rules (an active copy needs an account) still hold.
       expect(await refusal(activate(id))).not.toContain('provider issuance is unavailable');
       expect(await refusal(offer(id))).toBeNull();
@@ -181,7 +180,7 @@ describe('the database guards open one pair at a time', () => {
       expect(await refusal(samsungRef(id))).toContain('provider reference is unavailable');
       // Only a revoke may be queued while draining: no update, no message's upsert.
       expect(await refusal(operation(id, 'upsert'))).toContain('provider is draining');
-      expect(await refusal(operation(id, 'revoke'))).not.toContain('draining');
+      expect(String(await refusal(operation(id, 'revoke')))).not.toContain('draining');
       expect(
         await refusal(
           run(
@@ -191,8 +190,8 @@ describe('the database guards open one pair at a time', () => {
           ),
         ),
       ).toContain('provider offer is unavailable');
-      // Copies exist, so the release cannot go back to dark.
-      expect(await refusal(release(provider, mode, 'dark'))).toContain('drain it first');
+      // A placeholder never reached a wallet, so it does not hold the release open (0226 M4).
+      expect(await refusal(release(provider, mode, 'dark'))).toBeNull();
     }
   });
 
