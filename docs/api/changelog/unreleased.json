@@ -3733,7 +3733,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"platform:users\" added",
-    "note": "Platform keys may hold platform:users: grant or revoke developer and support, start a Polaris ID check, read access and drift, and invite people to Polaris ID groups. Offboarding by key is a dry run only; a person runs it (403 PERSON_REQUIRED)."
+    "note": "Platform keys may hold platform:users: platform roles, Polaris ID checks, invitations, access reads and the offboard plan."
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:wallet\" added",
