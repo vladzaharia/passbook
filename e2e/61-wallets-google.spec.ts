@@ -396,6 +396,7 @@ test('an upcoming event that has ended rolls off the Google object with no edit'
   const at = (ms: number) => new Date(Date.now() + ms).toISOString().replace('Z', '+00:00');
   const venue = { venueName: 'Sample Hall', venueRegion: 'Cupertino, CA' };
   const holder = await samplePass(admin, events, {
+    venueTimeZone: 'UTC',
     startsAt: at(7_200_000),
     endsAt: at(10_800_000),
     doorsAt: at(7_000_000),
@@ -413,6 +414,13 @@ test('an upcoming event that has ended rolls off the Google object with no edit'
   };
   expect(await upcoming()).toContain('Opening night');
   // Nobody edits the pass: the next event boundary schedules the recompile (lifecycle-instance-schedule.ts).
+  // An edit puts the instance on the drain's list, which then parks it until the next boundary. (A copy no edit
+  // has touched is not listed: see the report on first-tap instances.)
+  await admin.send('PATCH', passPath(holder.id), { input: { note: 'See you there.' } }, TEST);
+  await syncUntil(
+    async () => (await upcoming()).includes('See you there.'),
+    'the edit reaches Google',
+  );
   await syncUntil(
     async () => !(await upcoming()).includes('Opening night'),
     'the first event rolls off',
