@@ -68,6 +68,13 @@ oidc.addUser({
   name: 'Demo Owner',
   groups: ['wallet_users'],
 });
+// The onboarding journey's invited admin (tools/dev/visual-journeys/onboarding-signin.ts).
+oidc.addUser({
+  sub: 'journey-admin',
+  email: 'journey.admin@example.com',
+  name: 'Journey Admin',
+  groups: ['wallet_users'],
+});
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 
 createServer(async (req, res) => {

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
-import { open, signedIn } from './auth.ts';
+import { oidc, open, signedIn } from './auth.ts';
 import type { Role } from './routes.ts';
 
 // biome-ignore lint/suspicious/noExplicitAny: loosely typed API payloads
@@ -122,8 +122,8 @@ export type JourneyEnv = {
   api: (role: Exclude<Role, 'anon'>) => Promise<Api>;
   /** The newest mail since `sinceMs` that `match` accepts; waits up to `waitMs`, null when none came. */
   mail: (sinceMs: number, match: (m: Mail) => boolean, waitMs?: number) => Promise<Mail | null>;
-  /** Signs a new address in by magic link; returns the saved storage-state file and its API client. */
-  signInAs: (email: string, key: string) => Promise<{ storage: string; api: Api }>;
+  /** Signs a mock Polaris ID account in (admins and developers; email links are for holders); returns the saved storage-state file and its API client. */
+  signInOidc: (subject: string, key: string) => Promise<{ storage: string; api: Api }>;
   /** An API client with a short-lived key (passes:read, passes:write, ...) for an org: how seeds issue passes. */
   keyFor: (orgId: string, mode?: 'live' | 'test') => Promise<Api>;
   /** Runs when the journey ends (revoking a key). */
@@ -214,14 +214,18 @@ export function makeEnv(o: {
       } while (Date.now() < deadline);
       return null;
     },
-    async signInAs(email, key) {
+    async signInOidc(subject, key) {
       const storage = join(o.stateDir, `journey-${key}.json`);
       if (existsSync(storage)) {
         const saved = await open(o.base, storage);
         if (await signedIn(saved)) return { storage, api: await apiFrom(saved) };
         await saved.dispose();
       }
-      return (await env.magic(email, key)).finish();
+      const ctx = await open(o.base);
+      await oidc(ctx, subject);
+      mkdirSync(dirname(storage), { recursive: true });
+      await ctx.storageState({ path: storage });
+      return { storage, api: await apiFrom(ctx) };
     },
     async magic(email, key) {
       const ctx = await open(o.base);

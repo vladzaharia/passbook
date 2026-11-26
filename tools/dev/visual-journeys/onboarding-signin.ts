@@ -35,11 +35,24 @@ export const onboardingSignin: Journey = {
         org ??= await platform.post('/api/v1/orgs', { slug: ORG_SLUG, name: 'Journey Onboarding' });
         env.vars.orgId = org.id;
         env.vars.since = String(Date.now() - 1_000);
-        env.vars.email = `journey.admin.${env.stamp}@example.com`;
-        await platform.post(`/api/v1/orgs/${org.id}/invitations`, {
-          email: env.vars.email,
-          roles: ['org_admin'],
-        });
+        // The mock Polaris ID account `journey-admin` has this address: admins sign in through it.
+        env.vars.email = 'journey.admin@example.com';
+        try {
+          await platform.post(`/api/v1/orgs/${org.id}/invitations`, {
+            email: env.vars.email,
+            roles: ['org_admin'],
+          });
+        } catch (error) {
+          // A rerun: a pending invitation is sent again; a joined admin gets no new link.
+          if (!(error as Error).message.includes('INVITATION_PENDING'))
+            console.warn(`invitation skipped: ${(error as Error).message.slice(0, 160)}`);
+          else {
+            const list: Json = await platform.get(`/api/v1/orgs/${org.id}/invitations?limit=100`);
+            const pending = list.items.find((i: Json) => i.email === env.vars.email);
+            if (pending)
+              await platform.post(`/api/v1/orgs/${org.id}/invitations/${pending.id}/resend`);
+          }
+        }
         return page('platform', `/admin/orgs/${org.id}`);
       },
     },
@@ -64,7 +77,9 @@ export const onboardingSignin: Journey = {
       title: 'First org admin landing',
       async run(env) {
         if (!env.vars.token) return { skip: 'no invitation link' };
-        const { storage } = await env.consume(env.vars.token, `onboard-${env.stamp}`);
+        // The link accepts the invitation; the console itself needs Polaris ID.
+        await env.consume(env.vars.token, `onboard-link-${env.stamp}`);
+        const { storage } = await env.signInOidc('journey-admin', `onboard-${env.stamp}`);
         env.vars.storage = storage;
         return page('org', '/admin', { storage, orgId: env.vars.orgId as string });
       },
