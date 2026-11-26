@@ -1,7 +1,7 @@
 import { ChevronDown, ExternalLink, Info } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
-import { formatCalendarDate } from '../../lib/format.ts';
+import { formatMonthYear } from '../../lib/format.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { CheckboxField } from '../checkbox.tsx';
 import { StepMarker } from '../step-marker.tsx';
@@ -188,7 +188,7 @@ export function SetupSources({
           </a>
         ))}
       </span>
-      <span>Checked {formatCalendarDate(checkedAt)}</span>
+      <span>Checked {formatMonthYear(checkedAt)}</span>
     </div>
   );
 }

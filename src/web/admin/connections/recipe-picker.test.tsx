@@ -3,10 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import { CONNECTOR, connection, connectionDetail, ORG } from '../passes/test-fixtures.ts';
+import { GUIDES, setupOf } from './setup-fixtures.test-support.ts';
 
 const STRIPE = {
   id: 'stripe-subscriptions',
   label: 'Stripe subscriptions',
+  line: 'Subscription to membership.',
+  secretOrigin: 'provider',
   pasteSecret: true,
   entitled: true,
   outputFields: { status: { type: 'string' }, plan: { type: 'string' } },
@@ -19,6 +22,7 @@ const CAL = {
   id: 'calcom-bookings',
   label: 'Cal.com bookings',
   pasteSecret: false,
+  secretOrigin: 'passbook',
   voidWhen: [],
 };
 const WEBHOOK = {
@@ -59,76 +63,96 @@ function setup(posts: Record<string, unknown>[], connector: Record<string, unkno
       '/api/v1/templates': () => json({ items: [], nextCursor: null }),
       '/api/v1/connections': (_u: URL, init?: RequestInit) => {
         if ((init?.method ?? 'GET') === 'POST') {
-          posts.push(JSON.parse(String(init?.body)));
-          return json(connection({ id: 'c9', webhookUrl: 'https://wallet.example/h/c9' }), 201);
+          const body = JSON.parse(String(init?.body));
+          posts.push(body);
+          // PassBook is the origin for Cal.com: the server makes the secret and returns it once.
+          const made =
+            body.config?.recipe === 'calcom-bookings' ? { webhookSecret: 'f'.repeat(64) } : {};
+          return json(
+            { ...connection({ id: 'c9', webhookUrl: 'https://wallet.example/h/c9' }), ...made },
+            201,
+          );
         }
         return json({ items: [], nextCursor: null });
       },
       '/api/v1/connections/c9': () => json(connectionDetail({ id: 'c9' })),
+      '/api/v1/connectors/webhook-push/recipes/stripe-subscriptions/setup': () =>
+        json(GUIDES['stripe-subscriptions']),
+      '/api/v1/connectors/webhook-push/recipes/calcom-bookings/setup': () =>
+        json(GUIDES['calcom-bookings']),
+      '/api/v1/connections/c9/setup': () => json(setupOf(handoff.recipe, handoff.values)),
+      '/api/v1/connections/c9/webhook-arrivals': () => json({ items: [], nextCursor: null }),
     },
   });
 }
 
+const handoff: {
+  recipe: 'stripe-subscriptions' | 'calcom-bookings';
+  values: Record<string, unknown>;
+} = {
+  recipe: 'stripe-subscriptions',
+  values: { hasSecret: false },
+};
+
 describe('webhook sender picker', () => {
-  it('seeds the sender, asks for a pasted secret and creates with its void rules', async () => {
+  it('seeds the sender and creates with its void rules, asking for no secret before Create', async () => {
     const user = userEvent.setup();
     const posts: Record<string, unknown>[] = [];
-    await setup(posts);
+    handoff.recipe = 'stripe-subscriptions';
+    handoff.values = { hasSecret: false };
+    const { router } = await setup(posts);
     // A sender is a tile in the picker; the plain webhook tile is Custom.
     await user.click(await screen.findByRole('radio', { name: /Webhook push/ }));
     await user.click(screen.getByRole('radio', { name: /Stripe subscriptions/ }));
     await next(user);
     await user.type(await screen.findByLabelText(/^Name/), 'Gym billing');
-    // The custom pointers belong to Custom only, and Configuration has no sender picker.
+    // The custom pointers belong to Custom only, and Setup has no sender picker.
     expect(screen.queryByLabelText('Records')).toBeNull();
     expect(screen.queryByRole('radiogroup', { name: 'Sender' })).toBeNull();
-    await next(user);
-    expect(await screen.findByText('Paste the signing secret.')).toBeInTheDocument();
-    await user.type(screen.getByLabelText(/Signing secret/), 'secret-without-prefix');
-    await next(user);
-    expect(
-      await screen.findByText('A Stripe signing secret starts with whsec_.'),
-    ).toBeInTheDocument();
-    await user.clear(screen.getByLabelText(/Signing secret/));
-    await user.type(screen.getByLabelText(/Signing secret/), 'whsec_demo_demo_demo');
+    // The sender makes the secret after the webhook exists there: nothing to paste yet.
+    expect(screen.queryByLabelText(/Signing secret/)).toBeNull();
+    // The rail names the sender's side from its guide.
+    expect(await screen.findByRole('group', { name: 'In Stripe' })).toBeInTheDocument();
     await next(user);
     await next(user);
-    // Lifecycle: holder email and the void rule come from the sender.
+    // Issuing: holder email and the void rule come from the sender.
     expect(await screen.findByDisplayValue('/email')).toBeInTheDocument();
     expect(screen.getByDisplayValue('/status')).toBeInTheDocument();
     expect(screen.getByDisplayValue('canceled, incomplete_expired')).toBeInTheDocument();
     expect(screen.getByText('Voided passes stay voided.')).toBeInTheDocument();
     await next(user);
+    expect(screen.getByText(/add the webhook in Stripe/)).toBeInTheDocument();
     await next(user);
-    // The sender made the secret, so the created page has none to show; it names the topics.
-    expect(await screen.findByText(/subscribe to: checkout.session.completed/)).toBeInTheDocument();
-    expect(screen.queryByText('Signing secret')).toBeNull();
+    await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({
       connectorType: 'webhook-push',
       config: { recipe: 'stripe-subscriptions' },
-      webhookSecret: 'whsec_demo_demo_demo',
       holderEmailField: '/email',
       mapping: { tier: { from: '/plan' } },
       voidWhen: [{ from: '/status', op: 'in', values: ['canceled', 'incomplete_expired'] }],
     });
+    expect(posts[0]).not.toHaveProperty('webhookSecret');
+    // The sender's own side: Connect first, its secret pasted after.
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/\/connections\/c9\/setup$/),
+    );
+    expect(await screen.findByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
   });
 
-  it('generates the secret for a sender that takes ours', async () => {
+  it('leaves the secret to the server for a sender that takes ours', async () => {
     const user = userEvent.setup();
     const posts: Record<string, unknown>[] = [];
+    handoff.recipe = 'calcom-bookings';
+    handoff.values = { hasSecret: true };
     await setup(posts);
     await user.click(await screen.findByRole('radio', { name: /Cal.com bookings/ }));
     await next(user);
     await user.type(await screen.findByLabelText(/^Name/), 'Bookings');
     expect(screen.queryByLabelText(/Signing secret/)).toBeNull();
-    await next(user);
-    await next(user);
-    await next(user);
-    await next(user);
+    for (let i = 0; i < 4; i++) await next(user);
     await waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0]?.webhookSecret).toMatch(/^[0-9a-f]{64}$/);
-    expect(await screen.findByText(/subscribe to: BOOKING_CREATED/)).toBeInTheDocument();
-    expect(screen.getByText('Signing secret')).toBeInTheDocument();
+    expect(posts[0]).not.toHaveProperty('webhookSecret');
+    expect(await screen.findByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
   });
 
   it('hides the senders a plan leaves out, Custom included', async () => {

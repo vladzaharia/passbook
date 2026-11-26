@@ -8,6 +8,7 @@ import {
   formatEndedOn,
   formatExpiry,
   formatMaybeDate,
+  formatMonthYear,
   formatRelative,
   formatShortDate,
   formatShortDateHour,
@@ -18,6 +19,14 @@ import {
 
 // Local wall time, so the expectations hold in any zone the tests run in.
 const at = new Date(2026, 10, 2, 23, 51).getTime();
+
+describe('formatMonthYear', () => {
+  it('is the month and year of a calendar date, with no weekday or day', () => {
+    expect(formatMonthYear('2026-11-25')).toBe('Nov 2026');
+    expect(formatMonthYear('2026-12-01')).toBe('Dec 2026');
+    expect(formatMonthYear('2026-11-30')).toBe('Nov 2026');
+  });
+});
 
 describe('format', () => {
   it('joins date and time the same way in every engine', () => {

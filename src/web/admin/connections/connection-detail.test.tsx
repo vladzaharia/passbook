@@ -328,11 +328,54 @@ describe('connection detail', () => {
     });
     expect(await screen.findByText('https://wallet.example/hooks/connections/c1')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Create' }));
-    const dialog = await screen.findByRole('alertdialog');
+    const dialog = await screen.findByRole('dialog', { name: 'Create the signing secret' });
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(patches[0]?.webhookSecret).toMatch(/^[0-9a-f]{64}$/));
+    expect(patches[0]?.overlapSeconds).toBe(86_400);
     expect(await screen.findByRole('button', { name: 'Copy signing secret' })).toBeVisible();
     expect(screen.getByText(/not shown again/i)).toBeInTheDocument();
+  });
+
+  it('shows the warning when the sender keeps sending events past its window', async () => {
+    await renderApp('/admin/connections/c1', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: handlers({
+        c: connectionDetail({
+          mode: 'webhook',
+          consecutiveFailures: 0,
+          warning: {
+            code: 'stale_deliveries',
+            text: 'Shopify keeps sending events older than 48 hours.',
+          },
+        }),
+      }),
+    });
+    expect(
+      await screen.findByText('Shopify keeps sending events older than 48 hours.'),
+    ).toBeVisible();
+  });
+
+  it('says it is waiting for the first event and links to Setup until one is verified', async () => {
+    await renderApp('/admin/connections/c1?tab=webhook', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: handlers({
+        c: connectionDetail({
+          mode: 'webhook',
+          health: 'awaiting',
+          consecutiveFailures: 0,
+          lastRunAt: null,
+          lastErrorCode: null,
+          hasWebhookSecret: true,
+        }),
+      }),
+    });
+    expect(await screen.findByText('Waiting for first event')).toBeVisible();
+    const setup = await screen.findByRole('link', { name: 'Setup' });
+    expect(setup).toHaveAttribute('href', expect.stringMatching(/\/connections\/c1\/setup/));
   });
 
   it('needs the name typed before deleting', async () => {

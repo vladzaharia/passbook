@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { ConnectorInfoSchema, RecipeId } from '@/shared/contracts/connections.ts';
 import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
-import { Card, CardBody, FormField, Input, RadioGroup } from '../../ui/index.ts';
+import { Card, CardBody, CodeBlock, FormField, Input, RadioGroup } from '../../ui/index.ts';
 import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
 import { DemoFields } from './demo/demo-fields.tsx';
 import { FieldChips } from './demo/field-chips.tsx';
+import { exampleBody } from './payload-example.ts';
 import { recipeHidden } from './recipe-copy.ts';
-import { SigningSecretField } from './recipe-picker.tsx';
 import type { SampleField } from './rest/mapping-seed.ts';
 import { WizardRest } from './rest/wizard-rest.tsx';
 import { secretSchema } from './secret-schema.ts';
@@ -21,8 +21,6 @@ export interface ConfigDraft {
   name: string;
   config: FormValues;
   secrets: FormValues;
-  /** A secret the sender made (Shopify, Stripe), pasted. */
-  signingSecret?: string;
   fileId?: string; // file upload: the dropped file's draft
 }
 
@@ -36,7 +34,6 @@ export function ConfigStep({
   test,
   onTest,
   onSample,
-  secretError,
 }: {
   connector: Connector;
   orgId: string;
@@ -46,14 +43,11 @@ export function ConfigStep({
   serverErrors: {
     config?: Record<string, string>;
     secrets?: Record<string, string>;
-    /** The server refused the pasted signing secret. */
-    signing?: string | undefined;
   };
   test: TestOutcome | undefined;
   onTest: (outcome: TestOutcome) => void;
   /** The REST sample's fields, for the Mapping step. */
   onSample?: (fields: SampleField[]) => void;
-  secretError?: string | undefined;
 }) {
   const orgZone = useOrgTimeZone(orgId);
   const flat = useMemo(() => flattenSchema(connector.configSchema), [connector.configSchema]);
@@ -123,14 +117,6 @@ export function ConfigStep({
             />
           )}
         </FormField>
-        {recipe !== 'custom' && connector.recipes.find((r) => r.id === recipe)?.pasteSecret ? (
-          <SigningSecretField
-            recipe={recipe}
-            value={draft.signingSecret ?? ''}
-            onChange={(signingSecret) => set({ signingSecret })}
-            error={(showErrors ? secretError : undefined) ?? serverErrors.signing}
-          />
-        ) : null}
         {demo ? (
           <DemoFields
             schema={flat}
@@ -150,6 +136,16 @@ export function ConfigStep({
             serverErrors={serverErrors.config}
           />
         )}
+        {connector.type === 'webhook-push' && recipe === 'custom' ? (
+          <div className="flex min-w-0 flex-col gap-2">
+            <h3 className="text-sm font-medium text-fg-strong">Example body</h3>
+            <CodeBlock
+              code={exampleBody(draft.config, true)}
+              label="Example body"
+              maxHeight="max-h-56"
+            />
+          </div>
+        ) : null}
         {auth ? (
           <RadioGroup
             legend="Authentication"

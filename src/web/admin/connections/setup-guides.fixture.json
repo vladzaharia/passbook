@@ -1,0 +1,1096 @@
+{
+  "custom": {
+    "direction": "inbound",
+    "recipe": "custom",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "Your system",
+      "consoleUrl": null,
+      "docs": []
+    },
+    "secret": {
+      "origin": "passbook",
+      "allowPaste": true,
+      "prefix": null,
+      "minLength": 16,
+      "whereStep": null
+    },
+    "subscriptions": {
+      "perWebhook": "many",
+      "topics": []
+    },
+    "steps": [
+      {
+        "id": "sign",
+        "side": "provider",
+        "title": "Sign each request",
+        "parts": [
+          {
+            "t": "field",
+            "label": "URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Signature header",
+            "copy": "signatureHeader",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Timestamp header",
+            "copy": "timestampHeader",
+            "choose": false
+          },
+          {
+            "t": "text",
+            "text": "The timestamp is in seconds. Sign `{timestamp}.{raw body}` with HMAC-SHA256 and the secret, in hex. Send the signature as `v1=<hex>`."
+          },
+          {
+            "t": "note",
+            "text": "The time may be 5 minutes behind or 1 minute ahead."
+          },
+          {
+            "t": "note",
+            "text": "Send JSON of at most 256 KB and 100 records. Each record has a ref and the record."
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "send",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Set `PASSBOOK_SECRET` and `WEBHOOK_URL`, then run this."
+          },
+          {
+            "t": "code",
+            "lang": "curl",
+            "code": "BODY='{\"id\":\"evt-1\",\"records\":[{\"ref\":\"m-001\",\"record\":{},\"deleted\":false}]}'\nTS=$(date +%s)\nSIG=$(printf '%s.%s' \"$TS\" \"$BODY\" | openssl dgst -sha256 -hmac \"$PASSBOOK_SECRET\" -hex | sed 's/^.* //')\ncurl -X POST \"$WEBHOOK_URL\" \\\n  -H 'content-type: application/json' \\\n  -H \"x-passbook-timestamp: $TS\" \\\n  -H \"x-passbook-signature: v1=$SIG\" \\\n  -d \"$BODY\""
+          }
+        ],
+        "verified": true
+      }
+    ],
+    "test": {
+      "kind": "snippet",
+      "text": "Send a signed record from your system. A valid one issues a pass.",
+      "command": null,
+      "issues": true
+    },
+    "troubleshooting": {
+      "none": "Check the URL matches exactly and your system sent a request.",
+      "signature_missing": "Send `x-passbook-signature` and `x-passbook-timestamp`.",
+      "signature_mismatch": "Sign `{timestamp}.{raw body}` with the secret from the Secret step, whole, with no spaces.",
+      "signature_expired": "The signed time is over 5 minutes off. Check the sending clock.",
+      "payload": "Check the payload matches the shape you set in Setup.",
+      "too_large": "Over 256 KB. Send fewer records per request.",
+      "no_secret": "Save the secret first.",
+      "unrecognized_shape": "Signed correctly, but the records are not where Setup says.",
+      "no_ref": "Signed correctly, but a record has no id PassBook can use."
+    }
+  },
+  "shopify-orders": {
+    "direction": "inbound",
+    "recipe": "shopify-orders",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "Shopify",
+      "consoleUrl": null,
+      "docs": [
+        {
+          "label": "Shopify: webhooks",
+          "url": "https://help.shopify.com/en/manual/orders/notifications/webhooks"
+        },
+        {
+          "label": "Shopify: verify a webhook",
+          "url": "https://shopify.dev/docs/apps/build/webhooks/subscribe/https"
+        }
+      ]
+    },
+    "secret": {
+      "origin": "provider",
+      "allowPaste": true,
+      "prefix": null,
+      "minLength": 16,
+      "whereStep": "secret"
+    },
+    "subscriptions": {
+      "perWebhook": "one",
+      "topics": [
+        {
+          "id": "orders/create",
+          "label": "Order creation",
+          "required": true,
+          "verified": true
+        },
+        {
+          "id": "orders/updated",
+          "label": null,
+          "required": true,
+          "verified": false
+        },
+        {
+          "id": "orders/paid",
+          "label": null,
+          "required": false,
+          "verified": false
+        },
+        {
+          "id": "orders/cancelled",
+          "label": null,
+          "required": false,
+          "verified": false
+        },
+        {
+          "id": "orders/fulfilled",
+          "label": null,
+          "required": false,
+          "verified": false
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "connect",
+        "side": "provider",
+        "title": "Add the webhooks",
+        "parts": [
+          {
+            "t": "path",
+            "items": ["Settings", "Notifications", "Webhooks", "Create webhook"]
+          },
+          {
+            "t": "text",
+            "text": "Add one webhook for each event. Shopify takes one event per webhook."
+          },
+          {
+            "t": "field",
+            "label": "Event",
+            "value": "One of the events below.",
+            "choose": true
+          },
+          {
+            "t": "field",
+            "label": "Format",
+            "value": "JSON",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Webhook API version",
+            "value": "The latest stable one.",
+            "choose": true
+          },
+          {
+            "t": "topics"
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "secret",
+        "side": "provider",
+        "title": "Copy the signing secret",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Shopify signs every webhook made in admin with one secret for the store. It shows at the foot of the **Webhooks** page."
+          },
+          {
+            "t": "note",
+            "text": "Made by an app? Use that app's client secret."
+          }
+        ],
+        "verified": false
+      },
+      {
+        "id": "test",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Open the row menu on the webhook and choose **Send test**."
+          },
+          {
+            "t": "note",
+            "text": "A test is a sample, so it may not issue a pass."
+          }
+        ],
+        "verified": false
+      }
+    ],
+    "test": {
+      "kind": "button",
+      "text": "Row menu, **Send test**. The sample may not be a real record, so no pass is issued.",
+      "command": null,
+      "issues": false
+    },
+    "troubleshooting": {
+      "none": "Check the webhook is listed. Shopify deletes one that keeps failing.",
+      "signature_missing": "Shopify sent no signature header. Make sure the webhook was created in Shopify admin.",
+      "signature_mismatch": "The secret isn't the one signing these. Copy it again from the foot of the Webhooks page. Made by an app? Use that app's client secret.",
+      "payload": "The body was not JSON. Edit the webhook in Shopify and set **Format** to **JSON**.",
+      "stale": "Signed correctly. It's a sample, so nothing was issued.",
+      "unknown_type": "Shopify sent a topic this connection does not read. Remove it or ignore it.",
+      "unrecognized_shape": "Signed correctly, but it isn't an order. Check the topic."
+    }
+  },
+  "shopify-customers": {
+    "direction": "inbound",
+    "recipe": "shopify-customers",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "Shopify",
+      "consoleUrl": null,
+      "docs": [
+        {
+          "label": "Shopify: webhooks",
+          "url": "https://help.shopify.com/en/manual/orders/notifications/webhooks"
+        },
+        {
+          "label": "Shopify: verify a webhook",
+          "url": "https://shopify.dev/docs/apps/build/webhooks/subscribe/https"
+        }
+      ]
+    },
+    "secret": {
+      "origin": "provider",
+      "allowPaste": true,
+      "prefix": null,
+      "minLength": 16,
+      "whereStep": "secret"
+    },
+    "subscriptions": {
+      "perWebhook": "one",
+      "topics": [
+        {
+          "id": "customers/create",
+          "label": "Customer creation",
+          "required": true,
+          "verified": true
+        },
+        {
+          "id": "customers/update",
+          "label": null,
+          "required": true,
+          "verified": false
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "connect",
+        "side": "provider",
+        "title": "Add the webhooks",
+        "parts": [
+          {
+            "t": "path",
+            "items": ["Settings", "Notifications", "Webhooks", "Create webhook"]
+          },
+          {
+            "t": "text",
+            "text": "Add one webhook for each event. Shopify takes one event per webhook."
+          },
+          {
+            "t": "field",
+            "label": "Event",
+            "value": "One of the events below.",
+            "choose": true
+          },
+          {
+            "t": "field",
+            "label": "Format",
+            "value": "JSON",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Webhook API version",
+            "value": "The latest stable one.",
+            "choose": true
+          },
+          {
+            "t": "topics"
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "secret",
+        "side": "provider",
+        "title": "Copy the signing secret",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Shopify signs every webhook made in admin with one secret for the store. It shows at the foot of the **Webhooks** page."
+          },
+          {
+            "t": "note",
+            "text": "Made by an app? Use that app's client secret."
+          }
+        ],
+        "verified": false
+      },
+      {
+        "id": "test",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Open the row menu on the webhook and choose **Send test**."
+          },
+          {
+            "t": "note",
+            "text": "A test is a sample, so it may not issue a pass."
+          }
+        ],
+        "verified": false
+      }
+    ],
+    "test": {
+      "kind": "button",
+      "text": "Row menu, **Send test**. The sample may not be a real record, so no pass is issued.",
+      "command": null,
+      "issues": false
+    },
+    "troubleshooting": {
+      "none": "Check the webhook is listed. Shopify deletes one that keeps failing.",
+      "signature_missing": "Shopify sent no signature header. Make sure the webhook was created in Shopify admin.",
+      "signature_mismatch": "The secret isn't the one signing these. Copy it again from the foot of the Webhooks page. Made by an app? Use that app's client secret.",
+      "payload": "The body was not JSON. Edit the webhook in Shopify and set **Format** to **JSON**.",
+      "stale": "Signed correctly. It's a sample, so nothing was issued.",
+      "unknown_type": "Shopify sent a topic this connection does not read. Remove it or ignore it.",
+      "unrecognized_shape": "Signed correctly, but it isn't a customer. Check the topic."
+    }
+  },
+  "stripe-subscriptions": {
+    "direction": "inbound",
+    "recipe": "stripe-subscriptions",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "Stripe",
+      "consoleUrl": "https://dashboard.stripe.com/webhooks",
+      "docs": [
+        {
+          "label": "Stripe: webhooks",
+          "url": "https://docs.stripe.com/webhooks"
+        },
+        {
+          "label": "Stripe: Workbench",
+          "url": "https://docs.stripe.com/workbench/overview"
+        }
+      ]
+    },
+    "secret": {
+      "origin": "provider",
+      "allowPaste": true,
+      "prefix": "whsec_",
+      "minLength": 16,
+      "whereStep": "secret"
+    },
+    "subscriptions": {
+      "perWebhook": "many",
+      "topics": [
+        {
+          "id": "checkout.session.completed",
+          "label": null,
+          "required": true,
+          "verified": true
+        },
+        {
+          "id": "customer.subscription.updated",
+          "label": null,
+          "required": true,
+          "verified": true
+        },
+        {
+          "id": "customer.subscription.deleted",
+          "label": null,
+          "required": true,
+          "verified": true
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "connect",
+        "side": "provider",
+        "title": "Create the destination",
+        "parts": [
+          {
+            "t": "path",
+            "items": ["Dashboard", "Workbench", "Webhooks"]
+          },
+          {
+            "t": "text",
+            "text": "Choose **Create an event destination**."
+          },
+          {
+            "t": "field",
+            "label": "Events from",
+            "value": "Your account",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Payload style",
+            "value": "Snapshot",
+            "choose": false
+          },
+          {
+            "t": "warn",
+            "text": "Not **Thin**. PassBook can't read a thin event, so nothing would be issued."
+          },
+          {
+            "t": "field",
+            "label": "API version",
+            "value": "Your account's default.",
+            "choose": true
+          },
+          {
+            "t": "topics"
+          },
+          {
+            "t": "field",
+            "label": "Destination type",
+            "value": "Webhook endpoint",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Endpoint URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "text",
+            "text": "Create the destination."
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "secret",
+        "side": "provider",
+        "title": "Copy the signing secret",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Open the destination. Under **Signing secret**, choose **Reveal** and copy `whsec_…`."
+          },
+          {
+            "t": "note",
+            "text": "Sandbox and live have different secrets."
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "test",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "In a **sandbox**, make a destination with its own secret, then run the command in Stripe CLI or Workbench Shell."
+          },
+          {
+            "t": "code",
+            "lang": "sh",
+            "code": "stripe trigger checkout.session.completed"
+          },
+          {
+            "t": "note",
+            "text": "Live: wait for a real checkout, or resend one from the destination."
+          }
+        ],
+        "verified": true
+      }
+    ],
+    "test": {
+      "kind": "cli",
+      "text": "Sandbox: run the command. Live: wait for a real checkout. A sandbox event passes the test, and issues a pass only when Test events is on.",
+      "command": "stripe trigger checkout.session.completed",
+      "issues": false
+    },
+    "troubleshooting": {
+      "none": "Check the destination is in the same sandbox or live account you're testing in.",
+      "signature_mismatch": "The secret isn't the one signing these. Copy it again from the destination, under **Signing secret**. Sandbox and live differ.",
+      "signature_expired": "The signed time is over 5 minutes off. Check the sending clock.",
+      "thin_event": "Stripe sent a thin event. Edit the destination and choose **Snapshot**.",
+      "test_mode": "A sandbox event, signed correctly. Turn on Test events to issue from sandbox events.",
+      "unknown_type": "Stripe sent an event this connection does not read. Remove it or ignore it.",
+      "unrecognized_shape": "Signed correctly, but it isn't a subscription. Check the event."
+    }
+  },
+  "stripe-payments": {
+    "direction": "inbound",
+    "recipe": "stripe-payments",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "Stripe",
+      "consoleUrl": "https://dashboard.stripe.com/webhooks",
+      "docs": [
+        {
+          "label": "Stripe: webhooks",
+          "url": "https://docs.stripe.com/webhooks"
+        },
+        {
+          "label": "Stripe: Workbench",
+          "url": "https://docs.stripe.com/workbench/overview"
+        }
+      ]
+    },
+    "secret": {
+      "origin": "provider",
+      "allowPaste": true,
+      "prefix": "whsec_",
+      "minLength": 16,
+      "whereStep": "secret"
+    },
+    "subscriptions": {
+      "perWebhook": "many",
+      "topics": [
+        {
+          "id": "checkout.session.completed",
+          "label": null,
+          "required": true,
+          "verified": true
+        },
+        {
+          "id": "charge.refunded",
+          "label": null,
+          "required": true,
+          "verified": true
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "connect",
+        "side": "provider",
+        "title": "Create the destination",
+        "parts": [
+          {
+            "t": "path",
+            "items": ["Dashboard", "Workbench", "Webhooks"]
+          },
+          {
+            "t": "text",
+            "text": "Choose **Create an event destination**."
+          },
+          {
+            "t": "field",
+            "label": "Events from",
+            "value": "Your account",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Payload style",
+            "value": "Snapshot",
+            "choose": false
+          },
+          {
+            "t": "warn",
+            "text": "Not **Thin**. PassBook can't read a thin event, so nothing would be issued."
+          },
+          {
+            "t": "field",
+            "label": "API version",
+            "value": "Your account's default.",
+            "choose": true
+          },
+          {
+            "t": "topics"
+          },
+          {
+            "t": "field",
+            "label": "Destination type",
+            "value": "Webhook endpoint",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Endpoint URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "text",
+            "text": "Create the destination."
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "secret",
+        "side": "provider",
+        "title": "Copy the signing secret",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Open the destination. Under **Signing secret**, choose **Reveal** and copy `whsec_…`."
+          },
+          {
+            "t": "note",
+            "text": "Sandbox and live have different secrets."
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "test",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "In a **sandbox**, make a destination with its own secret, then run the command in Stripe CLI or Workbench Shell."
+          },
+          {
+            "t": "code",
+            "lang": "sh",
+            "code": "stripe trigger checkout.session.completed"
+          },
+          {
+            "t": "note",
+            "text": "Live: wait for a real checkout, or resend one from the destination."
+          }
+        ],
+        "verified": true
+      }
+    ],
+    "test": {
+      "kind": "cli",
+      "text": "Sandbox: run the command. Live: wait for a real checkout. A sandbox event passes the test, and issues a pass only when Test events is on.",
+      "command": "stripe trigger checkout.session.completed",
+      "issues": false
+    },
+    "troubleshooting": {
+      "none": "Check the destination is in the same sandbox or live account you're testing in.",
+      "signature_mismatch": "The secret isn't the one signing these. Copy it again from the destination, under **Signing secret**. Sandbox and live differ.",
+      "signature_expired": "The signed time is over 5 minutes off. Check the sending clock.",
+      "thin_event": "Stripe sent a thin event. Edit the destination and choose **Snapshot**.",
+      "test_mode": "A sandbox event, signed correctly. Turn on Test events to issue from sandbox events.",
+      "unknown_type": "Stripe sent an event this connection does not read. Remove it or ignore it.",
+      "unrecognized_shape": "Signed correctly, but it isn't a payment. Check the event."
+    }
+  },
+  "calcom-bookings": {
+    "direction": "inbound",
+    "recipe": "calcom-bookings",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "Cal.com",
+      "consoleUrl": null,
+      "docs": [
+        {
+          "label": "Cal.com: webhooks",
+          "url": "https://cal.com/features/webhooks"
+        }
+      ]
+    },
+    "secret": {
+      "origin": "passbook",
+      "allowPaste": false,
+      "prefix": null,
+      "minLength": 16,
+      "whereStep": null
+    },
+    "subscriptions": {
+      "perWebhook": "many",
+      "topics": [
+        {
+          "id": "BOOKING_CREATED",
+          "label": null,
+          "required": true,
+          "verified": false
+        },
+        {
+          "id": "BOOKING_RESCHEDULED",
+          "label": null,
+          "required": true,
+          "verified": false
+        },
+        {
+          "id": "BOOKING_CANCELLED",
+          "label": null,
+          "required": true,
+          "verified": false
+        },
+        {
+          "id": "BOOKING_REQUESTED",
+          "label": null,
+          "required": true,
+          "verified": false
+        },
+        {
+          "id": "BOOKING_REJECTED",
+          "label": null,
+          "required": true,
+          "verified": false
+        },
+        {
+          "id": "BOOKING_PAID",
+          "label": null,
+          "required": true,
+          "verified": false
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "connect",
+        "side": "provider",
+        "title": "Add the webhook",
+        "parts": [
+          {
+            "t": "path",
+            "items": ["Settings", "Developer", "Webhooks", "New"]
+          },
+          {
+            "t": "field",
+            "label": "Subscriber URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Event triggers",
+            "value": "Leave the defaults on, or keep at least these.",
+            "choose": true
+          },
+          {
+            "t": "topics"
+          },
+          {
+            "t": "field",
+            "label": "Secret",
+            "copy": "secret",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Payload template",
+            "value": "Leave it empty.",
+            "choose": false
+          },
+          {
+            "t": "note",
+            "text": "A webhook on an event type fires for that event type only."
+          }
+        ],
+        "verified": false
+      },
+      {
+        "id": "test",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Press **Ping test** at the foot of the form."
+          }
+        ],
+        "verified": false
+      }
+    ],
+    "test": {
+      "kind": "button",
+      "text": "Press **Ping test** at the foot of the form. A ping is not a booking, so no pass is issued.",
+      "command": null,
+      "issues": false
+    },
+    "troubleshooting": {
+      "none": "A webhook on an event type fires only for that event type.",
+      "signature_missing": "Cal.com sent no signature. Paste the secret into the webhook.",
+      "signature_mismatch": "Paste the secret into the Cal.com webhook again, whole, with no spaces.",
+      "unknown_type": "Cal.com sent a trigger this connection does not read. Remove it or ignore it.",
+      "unrecognized_shape": "Signed correctly, but it isn't a booking. Clear the custom payload template.",
+      "ping": "Cal.com pinged and the signature held. Make a booking to issue a pass."
+    }
+  },
+  "woocommerce-orders": {
+    "direction": "inbound",
+    "recipe": "woocommerce-orders",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "WooCommerce",
+      "consoleUrl": null,
+      "docs": [
+        {
+          "label": "WooCommerce: webhooks",
+          "url": "https://woocommerce.com/document/webhooks/"
+        },
+        {
+          "label": "WooCommerce: webhooks API",
+          "url": "https://developer.woocommerce.com/docs/apis/rest-api/v3/webhooks/"
+        }
+      ]
+    },
+    "secret": {
+      "origin": "passbook",
+      "allowPaste": true,
+      "prefix": null,
+      "minLength": 16,
+      "whereStep": null
+    },
+    "subscriptions": {
+      "perWebhook": "one",
+      "topics": [
+        {
+          "id": "order.created",
+          "label": "Order created",
+          "required": true,
+          "verified": true
+        },
+        {
+          "id": "order.updated",
+          "label": "Order updated",
+          "required": true,
+          "verified": true
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "connect",
+        "side": "provider",
+        "title": "Add the webhooks",
+        "parts": [
+          {
+            "t": "path",
+            "items": [
+              "WordPress admin",
+              "WooCommerce",
+              "Settings",
+              "Advanced",
+              "Webhooks",
+              "Add webhook"
+            ]
+          },
+          {
+            "t": "text",
+            "text": "Add one webhook for each topic. Paste the same secret into both."
+          },
+          {
+            "t": "field",
+            "label": "Name",
+            "value": "Anything you will recognise.",
+            "choose": true
+          },
+          {
+            "t": "field",
+            "label": "Status",
+            "value": "Active",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Topic",
+            "value": "One of the topics below.",
+            "choose": true
+          },
+          {
+            "t": "topics"
+          },
+          {
+            "t": "field",
+            "label": "Delivery URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "Secret",
+            "copy": "secret",
+            "choose": false
+          },
+          {
+            "t": "field",
+            "label": "API Version",
+            "value": "Keep the default.",
+            "choose": true
+          }
+        ],
+        "verified": true
+      },
+      {
+        "id": "test",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Saving an **Active** webhook sends a ping."
+          },
+          {
+            "t": "note",
+            "text": "For a real test, place a test order."
+          }
+        ],
+        "verified": false
+      }
+    ],
+    "test": {
+      "kind": "ping-on-save",
+      "text": "Save an **Active** webhook and WooCommerce pings. The ping is not an order, so no pass is issued. Place a test order to issue one.",
+      "command": null,
+      "issues": false
+    },
+    "troubleshooting": {
+      "none": "Check both webhooks say **Active**.",
+      "signature_missing": "WooCommerce sent no signature. Check the webhook has a secret.",
+      "signature_mismatch": "Paste the secret into **Secret** on both webhooks again, whole, with no spaces.",
+      "unknown_type": "WooCommerce sent a topic this connection does not read. Remove it or ignore it.",
+      "unrecognized_shape": "Signed correctly, but it isn't an order. Check the topic.",
+      "ping": "WooCommerce pinged and the signature held. Place a test order to issue a pass."
+    }
+  },
+  "tickettailor-tickets": {
+    "direction": "inbound",
+    "recipe": "tickettailor-tickets",
+    "version": "2026-11-25",
+    "checkedAt": "2026-11-25",
+    "provider": {
+      "name": "Ticket Tailor",
+      "consoleUrl": "https://app.tickettailor.com/box-office/webhooks",
+      "docs": [
+        {
+          "label": "Ticket Tailor: create a webhook",
+          "url": "https://help.tickettailor.com/en/articles/5149215-how-can-i-create-a-webhook"
+        },
+        {
+          "label": "Ticket Tailor: webhook security",
+          "url": "https://developers.tickettailor.com/docs/webhook/security/"
+        }
+      ]
+    },
+    "secret": {
+      "origin": "provider",
+      "allowPaste": true,
+      "prefix": null,
+      "minLength": 16,
+      "whereStep": "secret"
+    },
+    "subscriptions": {
+      "perWebhook": "many",
+      "topics": [
+        {
+          "id": "ISSUED_TICKET.CREATED",
+          "label": "Issued ticket: Created",
+          "required": true,
+          "verified": false
+        },
+        {
+          "id": "ISSUED_TICKET.UPDATED",
+          "label": "Issued ticket: Updated",
+          "required": true,
+          "verified": false
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "connect",
+        "side": "provider",
+        "title": "Add the webhook",
+        "parts": [
+          {
+            "t": "path",
+            "items": ["Box office", "Settings", "API", "Webhooks", "Create new webhook"]
+          },
+          {
+            "t": "field",
+            "label": "Events",
+            "value": "Both events below.",
+            "choose": true
+          },
+          {
+            "t": "topics"
+          },
+          {
+            "t": "field",
+            "label": "URL",
+            "copy": "endpointUrl",
+            "choose": false
+          },
+          {
+            "t": "note",
+            "text": "If it takes one event each, add a webhook for each."
+          },
+          {
+            "t": "warn",
+            "text": "Use an API key with customer data access. The events carry the holder."
+          }
+        ],
+        "verified": false
+      },
+      {
+        "id": "secret",
+        "side": "provider",
+        "title": "Copy the signing secret",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Copy the webhook's signing secret from the **Webhooks** page."
+          }
+        ],
+        "verified": false
+      },
+      {
+        "id": "test",
+        "side": "provider",
+        "title": "Send a test",
+        "parts": [
+          {
+            "t": "text",
+            "text": "Issue a free test ticket to yourself."
+          }
+        ],
+        "verified": true
+      }
+    ],
+    "test": {
+      "kind": "real-event",
+      "text": "Issue a free test ticket to yourself. Ticket Tailor has no test button.",
+      "command": null,
+      "issues": true
+    },
+    "troubleshooting": {
+      "none": "Check the webhook is on the **Webhooks** page and set to both issued ticket events.",
+      "signature_missing": "Ticket Tailor sent no signature. Check the webhook has a secret.",
+      "signature_mismatch": "The secret isn't the one signing these. Copy it again from the **Webhooks** page, whole.",
+      "signature_expired": "The signed time is over 5 minutes off. Check the sending clock.",
+      "unknown_type": "Ticket Tailor sent an event this connection does not read. Remove it or ignore it.",
+      "unrecognized_shape": "Signed correctly, but it isn't an issued ticket. Check the event."
+    }
+  }
+}

@@ -38,6 +38,8 @@ import { HealthPanel } from './health-panel.tsx';
 import { sourceLine } from './labels.ts';
 import { MappingTab } from './mapping-tab.tsx';
 import type { ConnectionDetailSearch } from './search.ts';
+import { useConnectionSetup } from './setup-api.ts';
+import { heldSecret } from './setup-handoff.ts';
 import { runSync, SyncOperation } from './sync-operation.tsx';
 import { type TestOutcome, TestResult } from './test-result.tsx';
 import { WebhookPanel } from './webhook.tsx';
@@ -70,6 +72,9 @@ export function ConnectionDetail({
   // Until the connector loads, fall back to the mode.
   const showWebhook = caps ? caps.webhook : c.mode === 'webhook' || c.mode === 'hybrid';
   const showFile = caps?.upload === true;
+  const sender = connector.data?.recipes.find((r) => r.id === c.config.recipe);
+  // Only a sender's own secret is checked for its look; the guide says how.
+  const guide = useConnectionSetup(showWebhook && sender?.pasteSecret ? c.id : undefined);
   const canSync = caps ? caps.poll || caps.snapshot || caps.upload : c.mode !== 'webhook';
   const home = showFile ? 'file' : 'health';
   const tab =
@@ -281,11 +286,15 @@ export function ConnectionDetail({
           {showWebhook ? (
             <TabsContent value="webhook">
               <WebhookPanel
+                connectionId={c.id}
                 url={c.webhookUrl}
                 hasSecret={c.hasWebhookSecret}
                 canManage={canManage}
-                sender={connector.data?.recipes.find((r) => r.id === c.config.recipe)}
+                sender={sender}
                 prevUntil={c.webhookPrevUntil}
+                awaiting={c.health === 'awaiting'}
+                initialSecret={heldSecret(c.id)}
+                secretFormat={guide.data?.secret}
                 onRotate={async (webhookSecret, overlapSeconds) => {
                   if (!canManage) return;
                   await actions.update.mutateAsync({

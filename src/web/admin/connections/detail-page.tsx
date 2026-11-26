@@ -5,13 +5,17 @@ import { DetailNotFound, detailError, PageHeader, SkeletonDetail } from '../../u
 import { connectionDetailQuery } from './api.ts';
 import { ConnectionDetail } from './detail-content.tsx';
 import type { ConnectionDetailSearch } from './search.ts';
+import { SetupView } from './setup-page.tsx';
 
 export function ConnectionDetailPage({
   connectionId,
   search,
+  setup,
 }: {
   connectionId: string;
   search: ConnectionDetailSearch;
+  /** The provider's side of a webhook connection, in place of the detail. */
+  setup?: boolean;
 }) {
   const { hasExplicitOrg, requestedOrgId } = useOrgScope();
   return (
@@ -19,6 +23,7 @@ export function ConnectionDetailPage({
       key={JSON.stringify([connectionId, hasExplicitOrg, requestedOrgId])}
       connectionId={connectionId}
       search={search}
+      setup={setup}
     />
   );
 }
@@ -26,9 +31,11 @@ export function ConnectionDetailPage({
 function ConnectionDetailLoader({
   connectionId,
   search,
+  setup,
 }: {
   connectionId: string;
   search: ConnectionDetailSearch;
+  setup?: boolean | undefined;
 }) {
   const scope = useOrgScope();
   const canFetch = Boolean(
@@ -85,6 +92,7 @@ function ConnectionDetailLoader({
     );
   }
   const canManage = Boolean(scope.membership?.capabilities.includes('integrations:manage'));
+  if (setup) return <SetupView key={connectionId} c={connection.data} />;
   return (
     <ConnectionDetail
       key={JSON.stringify([scope.orgId, connectionId, canManage])}

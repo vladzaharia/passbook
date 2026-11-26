@@ -41,6 +41,7 @@ export function healthLine(
  */
 export function healthSentence(c: Connection, now: number, failingSince?: number): string {
   if (!c.enabled) return 'Disabled. Nothing syncs until it is enabled.';
+  if (c.health === 'awaiting') return 'Waiting for the first signed delivery.';
   const parts: string[] = [];
   if (c.consecutiveFailures > 0) {
     // Same word as the header pill: one state, one name.
