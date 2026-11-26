@@ -181,7 +181,7 @@ describe('org chooser', () => {
     expect(document.querySelector('main [data-buddy]')).toHaveAttribute('data-scene', 'inspect');
   });
 
-  it('lists the platform with the organizations for a platform admin', async () => {
+  it('never offers the platform for an organization-scoped destination, even to a platform admin', async () => {
     await renderApp('/admin?next=/passes', {
       session: 'admin',
       memberships: [northwind, harbor],
@@ -189,11 +189,9 @@ describe('org chooser', () => {
     });
     await screen.findByRole('heading', { name: 'Choose an organization', level: 1 });
     expect(cards().map((l) => l.getAttribute('href'))).toEqual([
-      '/admin/platform',
       '/admin/o/o1/passes',
       '/admin/o/o2/passes',
     ]);
-    // The buddy points at the badges.
-    expect(document.querySelector('main [data-buddy]')).toHaveAttribute('data-scene', 'nudge');
+    expect(screen.queryByRole('link', { name: 'Platform' })).toBeNull();
   });
 });

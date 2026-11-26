@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChannelSchema } from './channels.ts';
 import { IdSchema, pageOf, RoleSchema, TimestampSchema } from './common.ts';
 import { PassStatusSchema } from './passes.ts';
 
@@ -61,11 +62,12 @@ export const UserDetailSchema = UserSchema.extend({
       method: z.string(),
     }),
   ),
-  /** First 100 owned passes (title falls back to the serial); `passCount` is the total. */
+  /** First 100 owned passes, title is no longer sent; `passCount` is the total. */
   passes: z.array(
     z.object({
       id: IdSchema,
-      title: z.string(),
+      /** Deprecated: never sent (holder personalization). Read passes from GET /users/{id}/passes. */
+      title: z.string().optional().meta({ deprecated: true }),
       templateName: z.string(),
       orgName: z.string(),
       status: PassStatusSchema,
@@ -84,3 +86,27 @@ export const UserDetailSchema = UserSchema.extend({
 });
 export const UpdateUserSchema = z.object({ status: z.enum(['active', 'disabled']) });
 export const AddUserEmailSchema = z.object({ email: z.string().max(254) });
+
+export const UserPassesQuerySchema = z.object({
+  cursor: IdSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+/** One pass of a person, in any organization. No holder personalization, title or link. */
+export const UserPassSchema = z.object({
+  id: IdSchema,
+  orgId: IdSchema,
+  orgName: z.string(),
+  /** Passes of a deleted organization are left out. */
+  orgStatus: z.enum(['active', 'suspended']),
+  /** The organization's own zone, for the dates below. */
+  timeZone: z.string(),
+  templateName: z.string(),
+  status: PassStatusSchema,
+  /** Owned: they claimed it. Waiting: issued to a verified address of theirs, not yet claimed. */
+  holding: z.enum(['owned', 'waiting']),
+  /** Wallets with an active copy. */
+  channels: z.array(ChannelSchema),
+  issuedAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+});
+export const UserPassListSchema = pageOf(UserPassSchema);

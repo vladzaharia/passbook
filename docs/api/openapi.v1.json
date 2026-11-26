@@ -58310,7 +58310,8 @@
                   "maxLength": 64
                 },
                 "title": {
-                  "type": "string"
+                  "type": "string",
+                  "deprecated": true
                 },
                 "templateName": {
                   "type": "string"
@@ -58328,7 +58329,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -58465,6 +58465,104 @@
           "lastRoles",
           "createdAt",
           "lastLoginAt"
+        ]
+      },
+      "PlatformUsersPassesListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgName": {
+                  "type": "string"
+                },
+                "orgStatus": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "suspended"
+                  ]
+                },
+                "timeZone": {
+                  "type": "string"
+                },
+                "templateName": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "voided"
+                  ]
+                },
+                "holding": {
+                  "type": "string",
+                  "enum": [
+                    "owned",
+                    "waiting"
+                  ]
+                },
+                "channels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "mobile",
+                      "apple",
+                      "google",
+                      "samsung",
+                      "paper",
+                      "nfc"
+                    ]
+                  }
+                },
+                "issuedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "orgId",
+                "orgName",
+                "orgStatus",
+                "timeZone",
+                "templateName",
+                "status",
+                "holding",
+                "channels",
+                "issuedAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "PlatformUsersEmailsCreateParams": {
@@ -58699,7 +58797,8 @@
                   "maxLength": 64
                 },
                 "title": {
-                  "type": "string"
+                  "type": "string",
+                  "deprecated": true
                 },
                 "templateName": {
                   "type": "string"
@@ -58717,7 +58816,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -59000,7 +59098,8 @@
                   "maxLength": 64
                 },
                 "title": {
-                  "type": "string"
+                  "type": "string",
+                  "deprecated": true
                 },
                 "templateName": {
                   "type": "string"
@@ -59018,7 +59117,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -59301,7 +59399,8 @@
                   "maxLength": 64
                 },
                 "title": {
-                  "type": "string"
+                  "type": "string",
+                  "deprecated": true
                 },
                 "templateName": {
                   "type": "string"
@@ -59319,7 +59418,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -122682,7 +122780,6 @@
                   "passes": [
                     {
                       "id": "0193a1b2-7c00-7000-8000-42d7551c0b15",
-                      "title": "Day pass",
                       "templateName": "Day pass",
                       "orgName": "Northwind Climbing",
                       "status": "active"
@@ -122823,6 +122920,109 @@
         ]
       }
     },
+    "/api/v1/users/{id}/passes": {
+      "get": {
+        "summary": "List a user's passes in every organization",
+        "tags": [
+          "users"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersPassesListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-a97e2c9eb615",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "orgName": "Northwind Climbing",
+                      "orgStatus": "active",
+                      "timeZone": "America/Los_Angeles",
+                      "templateName": "Monthly membership",
+                      "status": "active",
+                      "holding": "owned",
+                      "channels": [
+                        "mobile"
+                      ],
+                      "issuedAt": 1795570500000,
+                      "updatedAt": 1795399200000
+                    }
+                  ],
+                  "nextCursor": "c1.4812"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "users.getUsersByIdPasses",
+        "x-sdk": {
+          "resource": "platform.users.passes",
+          "method": "list"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/users/{id}/emails": {
       "post": {
         "summary": "Send an email verification link",
@@ -122913,7 +123113,6 @@
                   "passes": [
                     {
                       "id": "0193a1b2-7c00-7000-8000-9f970a1ed4fc",
-                      "title": "Day pass",
                       "templateName": "Day pass",
                       "orgName": "Northwind Climbing",
                       "status": "active"
@@ -123058,7 +123257,6 @@
                   "passes": [
                     {
                       "id": "0193a1b2-7c00-7000-8000-f8ee46f35f20",
-                      "title": "Day pass",
                       "templateName": "Day pass",
                       "orgName": "Northwind Climbing",
                       "status": "active"
@@ -123199,7 +123397,6 @@
                   "passes": [
                     {
                       "id": "0193a1b2-7c00-7000-8000-c427695ea03d",
-                      "title": "Day pass",
                       "templateName": "Day pass",
                       "orgName": "Northwind Climbing",
                       "status": "active"
