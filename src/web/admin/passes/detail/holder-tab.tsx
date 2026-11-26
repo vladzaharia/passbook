@@ -88,7 +88,7 @@ export function HolderTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: b
                           <Link
                             to="/admin/users/$userId"
                             params={{ userId: owner }}
-                            className="flex min-w-0 items-baseline gap-2 underline-offset-2 hover:underline"
+                            className="flex min-w-0 items-baseline gap-2 underline-offset-2 hover:underline pointer-coarse:min-h-11 pointer-coarse:items-center"
                           >
                             <span className="truncate text-fg-strong">
                               {pass.ownerName ?? pass.ownerEmail}
