@@ -35,7 +35,13 @@ import {
   platformPassType,
   refuse,
 } from './policy.ts';
-import { type AppleRpc, AscError, type CreatedPassType, type ProvisionerEnv } from './types.ts';
+import {
+  type AppleRpc,
+  AscError,
+  type CreatedPassType,
+  type PassTypeRef,
+  type ProvisionerEnv,
+} from './types.ts';
 
 type Req = (
   method: 'GET' | 'POST' | 'DELETE',
