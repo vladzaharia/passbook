@@ -73,7 +73,7 @@ export function useChannelRuns(templateId: string, orgId: string) {
 export function useResetPasses(templateId: string, orgId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (onPage?: (done: number) => void) => {
       let done = 0;
       let remaining = 0;
       for (;;) {
@@ -83,6 +83,7 @@ export function useResetPasses(templateId: string, orgId: string) {
           { orgId },
         );
         done += res.done;
+        onPage?.(done);
         remaining = res.remaining;
         if (remaining === 0 || res.done === 0) return { done, remaining };
       }

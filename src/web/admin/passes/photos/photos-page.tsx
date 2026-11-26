@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
+import { errorMessage } from '@/web/lib/errors.ts';
 import { pluralize } from '@/web/lib/format.ts';
 import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
@@ -15,11 +16,12 @@ import {
   ListRow,
   ListRows,
   PageHeader,
-  ProgressBar,
   toast,
 } from '../../../ui/index.ts';
+import { LocalOperation } from '../../../ui/operation/index.ts';
 import { passKeys } from '../api.ts';
 import { type Entry, entriesOf, matchEntries, uploadEntry } from './photo-batch.ts';
+import { PHOTO_DEF, PhotoProgress } from './photo-progress.tsx';
 
 const CRUMBS = [{ label: 'Passes', to: '/admin/passes' }, { label: 'Photos' }];
 const PARALLEL = 3;
@@ -47,6 +49,7 @@ export function PhotosPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [include, setInclude] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [driver, setDriver] = useState<LocalOperation | null>(null);
   const live = useRef<Entry[]>([]);
   const set = (next: Entry[]) => {
     live.current = next;
@@ -59,12 +62,19 @@ export function PhotosPage() {
       toast.error(`Choose at most ${MAX_FILES} photos at once.`, 'Too many photos');
       return;
     }
+    const op = new LocalOperation(PHOTO_DEF);
+    setDriver(op);
     set(entriesOf(files));
     setBusy(true);
+    op.step('match', { total: files.length });
     try {
-      set(await matchEntries(orgId, live.current));
+      set(await matchEntries(orgId, live.current, (n) => op.progress('match', n)));
+      op.complete('match');
+      const ready = live.current.filter(retryable).length;
+      if (ready === 0) op.fail('match', 'No photo matched a pass.', { retryable: false });
+      else op.wait('upload', `Ready to upload ${pluralize(ready, 'photo')}`);
     } catch (error) {
-      toast.error(error, 'Could not match the photos');
+      op.fail('match', errorMessage(error), { retryable: false });
       set([]);
     } finally {
       setBusy(false);
@@ -72,27 +82,35 @@ export function PhotosPage() {
   }
 
   async function upload() {
+    const op = driver;
     setBusy(true);
     const queue = live.current.map((e, i) => [e, i] as const).filter(([e]) => retryable(e));
+    const total = queue.length;
+    if (op?.snapshot().status === 'failed') op.retry();
+    op?.step('upload', { total });
+    let handled = 0;
     const worker = async () => {
       for (let next = queue.shift(); next; next = queue.shift()) {
         const [entry, index] = next;
         set(live.current.map((e, i) => (i === index ? { ...e, state: 'uploading' } : e)));
         const done = await uploadEntry(entry, include);
         set(live.current.map((e, i) => (i === index ? done : e)));
+        op?.progress('upload', ++handled);
       }
     };
     await Promise.all(Array.from({ length: PARALLEL }, worker));
     setBusy(false);
     void client.invalidateQueries({ queryKey: passKeys.all });
-    const count = (s: Entry['state']) => live.current.filter((e) => e.state === s).length;
-    toast.success(`${count('done')} uploaded, ${count('failed')} failed.`);
+    const failed = live.current.filter((e) => e.state === 'failed').length;
+    if (failed > 0)
+      op?.fail('upload', `${pluralize(failed, 'photo')} failed. Retry sends them again.`);
+    else {
+      op?.complete('upload');
+      op?.finish();
+    }
   }
 
-  const count = (s: Entry['state']) => entries.filter((e) => e.state === s).length;
   const ready = entries.filter(retryable).length;
-  const finished = count('done') + count('failed');
-  const handled = entries.filter((e) => e.state === 'done' || e.state === 'failed').length;
   if (!orgId) return <OrgChooser />;
   return (
     <>
@@ -123,6 +141,14 @@ export function PhotosPage() {
               />
             </CardBody>
           </Card>
+          {driver && orgId ? (
+            <PhotoProgress
+              driver={driver}
+              orgId={orgId}
+              onRetry={() => void upload()}
+              onClose={() => setDriver(null)}
+            />
+          ) : null}
           {entries.length > 0 ? (
             <Card>
               <CardHeader title={pluralize(entries.length, 'file')} />
@@ -134,14 +160,6 @@ export function PhotosPage() {
                 >
                   {ready === 0 ? 'Upload' : `Upload ${ready}`}
                 </Button>
-                {finished > 0 ? (
-                  <ProgressBar
-                    label="Photos handled"
-                    value={handled}
-                    max={entries.length - count('none') - count('ambiguous')}
-                    valueText={`${handled} photos handled`}
-                  />
-                ) : null}
                 <ListRows label="Photo files">
                   {entries.map((e) => (
                     <ListRow

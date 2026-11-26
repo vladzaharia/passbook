@@ -89,24 +89,19 @@ export const join: Journey = {
           form: { name: 'Ada', email: env.vars.email as string, 'cf-turnstile-response': PASS },
           maxRedirects: 0,
         });
+        // With the email asked for, the card goes by mail and the page only says so.
+        const html = await res.text();
         await visitor.dispose();
-        const where = res.headers().location;
-        if (res.status() !== 303 || !where) throw new Error(`Join post answered ${res.status()}.`);
-        env.vars.cardToken = tokenOf(where);
-        return page('anon', where);
+        if (res.status() !== 200 || !html.includes('Check your email'))
+          throw new Error(`Join post answered ${res.status()}.`);
+        return { kind: 'html', html };
       },
     },
     {
       title: 'Join email',
       async run(env) {
-        const token = env.vars.cardToken as string;
-        return mailOrSkip(
-          await env.mail(
-            Number(env.vars.since),
-            (m) => m.html.includes(token) || m.text.includes(token),
-          ),
-          'join',
-        );
+        // The card email is the only mail since the post.
+        return mailOrSkip(await env.mail(Number(env.vars.since), () => true), 'join');
       },
     },
     {

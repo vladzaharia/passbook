@@ -73,7 +73,8 @@ export const connectionsWebhooks: Journey = {
         if (!endpoint) {
           const made = await owner.post(`/api/v1/webhook-endpoints?${q}`, {
             orgId: env.orgId,
-            url: `https://example.com/journey-hook-${env.stamp}`,
+            // hooks.example.com is the host the e2e server resolves without DNS (WEBHOOK_TEST_DNS).
+            url: `https://hooks.example.com/journey-hook-${env.stamp}`,
             description: DESCRIPTION,
             eventTypes: ['pass.issued', 'pass.updated', 'pass.voided'],
           });
@@ -138,6 +139,19 @@ export const connectionsWebhooks: Journey = {
     {
       title: 'Replay dialog',
       async run(env) {
+        // The endpoint's Replay shows only once a delivery was attempted. No local target is allowed:
+        // endpoint URLs go through safe-fetch, which refuses loopback and private addresses
+        // (platform/safe-fetch.ts isPrivateIp), and capture endpoints are for developer sandboxes in
+        // Test mode only (webhooks/capture.ts assertCaptureHome), not this org. A paused endpoint
+        // sends nothing, and a pending delivery cannot be replayed.
+        const owner = await env.api('org');
+        const endpoint: Json = await owner.get(
+          `/api/v1/webhook-endpoints/${env.vars.endpointId}?orgId=${env.orgId}`,
+        );
+        if (endpoint.lastSuccessAt == null && endpoint.lastFailureAt == null)
+          return {
+            skip: 'no delivery was attempted, so the endpoint has nothing to replay (SSRF rules refuse a local target)',
+          };
         // The endpoint's own Replay opens the dialog; nothing is queued until it is confirmed.
         return page(
           'org',

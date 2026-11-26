@@ -78,6 +78,7 @@ export default defineConfig({
             './test/setup/block-network.ts',
             './test/setup/check-responses.ts',
             './test/setup/apply-migrations.ts',
+            './test/setup/settle-wait-until.ts',
           ],
         },
       },

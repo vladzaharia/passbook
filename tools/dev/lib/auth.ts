@@ -1,5 +1,5 @@
 // Per-role sign-in for the visual sweep. Saves Playwright storage state and reuses it while valid.
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
 import { mailFiles, nextMagicToken } from '../../lib/demo-client.ts';
@@ -59,7 +59,7 @@ export async function magicLink(
 }
 
 /** Admin sign-in is Polaris ID only; the e2e server's mock OIDC takes the user as `login_hint`. */
-async function oidc(ctx: APIRequestContext, base: string, sub: string): Promise<void> {
+export async function oidc(ctx: APIRequestContext, base: string, sub: string): Promise<void> {
   let url = `${base}/auth/oidc/start?next=${encodeURIComponent('/admin')}`;
   for (let hop = 0; hop < 12; hop++) {
     const target = new URL(url);
@@ -83,7 +83,13 @@ export async function contextFor(
   role: Role,
 ): Promise<APIRequestContext> {
   const file = statePath(stateDir, role);
-  if (existsSync(file)) {
+  // Key and webhook changes ask for a Polaris ID sign-in under 10 minutes old (STEP_UP_SECONDS), so
+  // a saved admin session is reused for 5.
+  const stale =
+    (role === 'org' || role === 'platform' || role === 'member') &&
+    existsSync(file) &&
+    Date.now() - statSync(file).mtimeMs > 300_000;
+  if (existsSync(file) && !stale) {
     const saved = await open(base, file);
     if (await signedIn(saved)) return saved;
     await saved.dispose();

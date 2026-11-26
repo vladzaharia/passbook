@@ -7,6 +7,8 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 test('Test mode marks a test pass, keeps its email in the Test inbox and out of live lists', async ({
   page,
 }) => {
+  // The inbox poll below may wait up to 90 s for the email.
+  test.setTimeout(150_000);
   const admin = await apiAs('admin');
   const orgId = readSeed().org.id;
   const name = `Sandbox ${uid('S')}`;
@@ -51,7 +53,8 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   await expect(page.locator('main').getByText('Test', { exact: true }).first()).toBeVisible();
   await expect(bar).toBeVisible();
 
-  // The queue captures the email shortly after the pass is created.
+  // The outbox dispatch starts under waitUntil when the pass is created, and a loaded server (CI) can leave it to the
+  // next scheduled tick: allow for that instead of a fixed 30 s.
   await page.goto(`/admin/test-inbox?orgId=${encodeURIComponent(orgId)}`);
   const mail = page.getByRole('listitem').filter({ hasText: `To ${to}` });
   await expect
@@ -61,7 +64,7 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
         await page.getByRole('heading', { name: 'Test inbox' }).waitFor();
         return mail.count();
       },
-      { intervals: [1_000, 2_000], timeout: 30_000 },
+      { intervals: [1_000, 2_000], timeout: 90_000 },
     )
     .toBe(1);
   await mail.getByRole('link').click();

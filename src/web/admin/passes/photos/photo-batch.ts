@@ -29,7 +29,11 @@ export function entriesOf(files: File[]): Entry[] {
   });
 }
 
-export async function matchEntries(orgId: string, entries: Entry[]): Promise<Entry[]> {
+export async function matchEntries(
+  orgId: string,
+  entries: Entry[],
+  onProgress?: (done: number) => void,
+): Promise<Entry[]> {
   const out = [...entries];
   const open = out.filter((e) => e.state === 'matching');
   for (let at = 0; at < open.length; at += 200) {
@@ -44,6 +48,7 @@ export async function matchEntries(orgId: string, entries: Entry[]): Promise<Ent
       if (entry)
         out[index] = { ...entry, state: m.state, ...(m.passId ? { passId: m.passId } : {}) };
     }
+    onProgress?.(Math.min(open.length, at + chunk.length));
   }
   return out;
 }
