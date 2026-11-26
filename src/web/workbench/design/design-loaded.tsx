@@ -67,10 +67,10 @@ function openedVersion(t: Template): string | null {
 /** A template of the org, in the designer: editable when it is the org's own and active. */
 export function DesignLoaded({ template: t, view, onView }: { template: Template } & DesignView) {
   const [opened] = useState(() => openedVersion(t));
-  const { orgId, allows } = useDesignerHost();
+  const { orgId } = useDesignerHost();
   const version = useBaseVersion(t.id, opened);
   const shared = t.orgId === null;
-  const locked = t.origin === 'baked' || t.status !== 'active' || shared || !allows.edit;
+  const locked = t.origin === 'baked' || t.status !== 'active' || shared;
   const lockedPass = useLockedPass(t, opened ?? '', locked && Boolean(opened));
   const base = useMemo(() => (version.data ? docOf(version.data) : null), [version.data]);
   if (!opened) return <EmptyState art="template" title={WB_DESIGN.states.noVersions} />;

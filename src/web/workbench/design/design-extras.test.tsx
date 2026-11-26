@@ -93,13 +93,12 @@ function tokenClient() {
   return { client, calls };
 }
 
-function Mounted({ client, canSave }: { client: WorkbenchClient; canSave: boolean }) {
+function Mounted({ client }: { client: WorkbenchClient }) {
   const host = useWorkbenchDesignerHost({
     orgId: ORG,
     orgName: 'Northwind',
     client,
     extras: DESIGN_EXTRAS,
-    canSave,
   });
   return (
     <DesignerHostProvider host={host}>
@@ -116,12 +115,12 @@ function Mounted({ client, canSave }: { client: WorkbenchClient; canSave: boolea
   );
 }
 
-function mount(canSave = true) {
+function mount() {
   const token = tokenClient();
   const queryClient = createQueryClient();
   queryClient.setDefaultOptions({ queries: { retry: false } });
   const root = createRootRoute({
-    component: () => <Mounted client={token.client} canSave={canSave} />,
+    component: () => <Mounted client={token.client} />,
   });
   const router = createRouter({
     routeTree: root,
@@ -175,16 +174,6 @@ describe('Design in the Workbench', () => {
     await waitFor(() => expect(screen.getAllByText(/Zed Test/).length).toBeGreaterThan(1));
     fireEvent.change(box, { target: { value: '[1]' } });
     expect(await screen.findByText('The sample is an object.')).toBeInTheDocument();
-  });
-
-  it('is read only while the server takes no save: the sample shows, nothing edits or checks', async () => {
-    const token = mount(false);
-    const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: /JSON/ }));
-    expect(await screen.findByRole('textbox', { name: 'Sample as JSON' })).toBeDisabled();
-    expect(token.calls.some((c) => c.method === 'POST' && c.path.endsWith('/versions'))).toBe(
-      false,
-    );
   });
 
   it('keeps the section editor mounted behind its tab', async () => {
