@@ -1629,6 +1629,35 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.idp.scimToken.rotate", "POST", "/api/v1/platform/idp/scim-token/rotate", false,
+		`{}`, `{"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformIdpScimTokenRotateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Idp.ScimToken.Rotate(ctx, &b)
+		},
+	},
+	{
+		"platform.idp.setup.retrieve", "GET", "/api/v1/platform/idp/setup", false,
+		"", `{"mode":"dry_run","items":[{"key":"binding","status":"done"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Setup.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.idp.setup.start", "POST", "/api/v1/platform/idp/setup", false,
+		`{}`, `{"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformIdpSetupStartBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Idp.Setup.Start(ctx, &b)
+		},
+	},
+	{
 		"platform.settings.retrieve", "GET", "/api/v1/platform/settings", false,
 		"", `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

@@ -1260,6 +1260,24 @@ __all__ = [
     "PlatformIdpScimBreakerClearResponseOperation",
     "PlatformIdpScimBreakerClearResponseOperationStartedBy",
     "PlatformIdpScimBreakerClearResponseOperationStepsItem",
+    "PlatformIdpScimTokenRotateBody",
+    "PlatformIdpScimTokenRotateParams",
+    "PlatformIdpScimTokenRotateResponse",
+    "PlatformIdpScimTokenRotateResponseOperation",
+    "PlatformIdpScimTokenRotateResponseOperationStartedBy",
+    "PlatformIdpScimTokenRotateResponseOperationStepsItem",
+    "PlatformIdpScimTokenRotateResult",
+    "PlatformIdpSetupRetrieveResponse",
+    "PlatformIdpSetupRetrieveResponseItemsItem",
+    "PlatformIdpSetupRetrieveResponseItemsItemRowsItem",
+    "PlatformIdpSetupRetrieveResult",
+    "PlatformIdpSetupStartBody",
+    "PlatformIdpSetupStartParams",
+    "PlatformIdpSetupStartResponse",
+    "PlatformIdpSetupStartResponseOperation",
+    "PlatformIdpSetupStartResponseOperationStartedBy",
+    "PlatformIdpSetupStartResponseOperationStepsItem",
+    "PlatformIdpSetupStartResult",
     "PlatformInvitationsCreateParams",
     "PlatformInvitationsCreateResponse",
     "PlatformInvitationsListResponse",
@@ -9945,6 +9963,118 @@ class PlatformIdpScimBreakerClearResponseOperationStepsItem(_Model):
     startedAt: int | None
     finishedAt: int | None
 
+class PlatformIdpScimTokenRotateParams(_Model):
+    dryRun: bool | None = None
+
+class PlatformIdpScimTokenRotateResponse(_Model):
+    operation: PlatformIdpScimTokenRotateResponseOperation
+
+class PlatformIdpScimTokenRotateResponseOperation(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[PlatformIdpScimTokenRotateResponseOperationStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: PlatformIdpScimTokenRotateResponseOperationStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class PlatformIdpScimTokenRotateResponseOperationStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class PlatformIdpScimTokenRotateResponseOperationStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class PlatformIdpSetupRetrieveResponse(_Model):
+    mode: _Literal["dry_run", "live", None] | str
+    items: _List[PlatformIdpSetupRetrieveResponseItemsItem]
+
+class PlatformIdpSetupRetrieveResponseItemsItem(_Model):
+    key: _Literal["binding", "polaris_settings", "client", "groups", "client_groups", "client_restricted", "client_logo", "scim_token", "scim_provider", "scim_sync", "scim_mirror", "write_mode"] | str
+    status: _Literal["done", "needed", "blocked"] | str
+    reason: str | None = None
+    owner: bool | None = None
+    counts: _Dict[str, int] | None = None
+    rows: _List[PlatformIdpSetupRetrieveResponseItemsItemRowsItem] | None = None
+    note: str | None = None
+
+class PlatformIdpSetupRetrieveResponseItemsItemRowsItem(_Model):
+    key: str
+    state: _Literal["placed", "allowed", "needed"] | str
+
+class PlatformIdpSetupStartParams(_Model):
+    dryRun: bool | None = None
+    items: _List[_Literal["groups", "client_groups", "client_restricted", "client_logo", "scim_provider", "scim_sync"] | str] | None = None
+
+class PlatformIdpSetupStartResponse(_Model):
+    operation: PlatformIdpSetupStartResponseOperation
+
+class PlatformIdpSetupStartResponseOperation(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[PlatformIdpSetupStartResponseOperationStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: PlatformIdpSetupStartResponseOperationStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class PlatformIdpSetupStartResponseOperationStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class PlatformIdpSetupStartResponseOperationStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
 class PlatformInvitationsCreateParams(_Model):
     email: str
     groups: _List[str] | None = None
@@ -16455,6 +16585,16 @@ PassesVersionsRetrieveResult = PassDetail
 PassesVoidResult = PassSummary
 
 PlatformGroupsMembersCreateParams = PlatformGroupsMembersCreateParams1 | PlatformGroupsMembersCreateParams2
+
+PlatformIdpScimTokenRotateBody = PlatformIdpScimTokenRotateParams
+
+PlatformIdpScimTokenRotateResult = PlatformIdpScimTokenRotateResponse
+
+PlatformIdpSetupRetrieveResult = PlatformIdpSetupRetrieveResponse
+
+PlatformIdpSetupStartBody = PlatformIdpSetupStartParams
+
+PlatformIdpSetupStartResult = PlatformIdpSetupStartResponse
 
 PlatformSettingsRetrieveResult = PlatformSettingsRetrieveResponse
 

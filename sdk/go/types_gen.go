@@ -9410,6 +9410,141 @@ type PlatformIdpScimBreakerClearResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
+type PlatformIdpScimTokenRotateBody = PlatformIdpScimTokenRotateParams
+
+type PlatformIdpScimTokenRotateParams struct {
+	DryRun *bool `json:"dryRun,omitempty"`
+}
+
+type PlatformIdpScimTokenRotateResponse struct {
+	Operation PlatformIdpScimTokenRotateResponseOperation `json:"operation"`
+}
+
+type PlatformIdpScimTokenRotateResponseOperation struct {
+	ID              string                                                 `json:"id"`
+	Kind            string                                                 `json:"kind"`
+	Status          string                                                 `json:"status"`
+	Title           string                                                 `json:"title"`
+	Text            string                                                 `json:"text"`
+	OrgID           *string                                                `json:"orgId"`
+	Mode            *string                                                `json:"mode"`
+	Target          map[string]any                                         `json:"target"`
+	Step            *string                                                `json:"step"`
+	Steps           []PlatformIdpScimTokenRotateResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                                  `json:"attempt"`
+	Cancelable      bool                                                   `json:"cancelable"`
+	CancelRequested bool                                                   `json:"cancelRequested"`
+	StartedBy       PlatformIdpScimTokenRotateResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                                  `json:"createdAt"`
+	StartedAt       *int64                                                 `json:"startedAt"`
+	UpdatedAt       int64                                                  `json:"updatedAt"`
+	FinishedAt      *int64                                                 `json:"finishedAt"`
+	Error           map[string]any                                         `json:"error"`
+	Result          map[string]any                                         `json:"result"`
+	Revision        int64                                                  `json:"revision"`
+	PollAfterMs     int64                                                  `json:"pollAfterMs"`
+}
+
+type PlatformIdpScimTokenRotateResponseOperationStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformIdpScimTokenRotateResponseOperationStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformIdpScimTokenRotateResult = PlatformIdpScimTokenRotateResponse
+
+type PlatformIdpSetupRetrieveResponse struct {
+	Mode  *string                                     `json:"mode"`
+	Items []PlatformIdpSetupRetrieveResponseItemsItem `json:"items"`
+}
+
+type PlatformIdpSetupRetrieveResponseItemsItem struct {
+	Key    string                                              `json:"key"`
+	Status string                                              `json:"status"`
+	Reason *string                                             `json:"reason,omitempty"`
+	Owner  *bool                                               `json:"owner,omitempty"`
+	Counts map[string]int64                                    `json:"counts,omitempty"`
+	Rows   []PlatformIdpSetupRetrieveResponseItemsItemRowsItem `json:"rows,omitempty"`
+	Note   *string                                             `json:"note,omitempty"`
+}
+
+type PlatformIdpSetupRetrieveResponseItemsItemRowsItem struct {
+	Key   string `json:"key"`
+	State string `json:"state"`
+}
+
+type PlatformIdpSetupRetrieveResult = PlatformIdpSetupRetrieveResponse
+
+type PlatformIdpSetupStartBody = PlatformIdpSetupStartParams
+
+type PlatformIdpSetupStartParams struct {
+	DryRun *bool    `json:"dryRun,omitempty"`
+	Items  []string `json:"items,omitempty"`
+}
+
+type PlatformIdpSetupStartResponse struct {
+	Operation PlatformIdpSetupStartResponseOperation `json:"operation"`
+}
+
+type PlatformIdpSetupStartResponseOperation struct {
+	ID              string                                            `json:"id"`
+	Kind            string                                            `json:"kind"`
+	Status          string                                            `json:"status"`
+	Title           string                                            `json:"title"`
+	Text            string                                            `json:"text"`
+	OrgID           *string                                           `json:"orgId"`
+	Mode            *string                                           `json:"mode"`
+	Target          map[string]any                                    `json:"target"`
+	Step            *string                                           `json:"step"`
+	Steps           []PlatformIdpSetupStartResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                             `json:"attempt"`
+	Cancelable      bool                                              `json:"cancelable"`
+	CancelRequested bool                                              `json:"cancelRequested"`
+	StartedBy       PlatformIdpSetupStartResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                             `json:"createdAt"`
+	StartedAt       *int64                                            `json:"startedAt"`
+	UpdatedAt       int64                                             `json:"updatedAt"`
+	FinishedAt      *int64                                            `json:"finishedAt"`
+	Error           map[string]any                                    `json:"error"`
+	Result          map[string]any                                    `json:"result"`
+	Revision        int64                                             `json:"revision"`
+	PollAfterMs     int64                                             `json:"pollAfterMs"`
+}
+
+type PlatformIdpSetupStartResponseOperationStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformIdpSetupStartResponseOperationStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformIdpSetupStartResult = PlatformIdpSetupStartResponse
+
 type PlatformInvitationsCreateParams struct {
 	Email     string   `json:"email"`
 	Groups    []string `json:"groups,omitempty"`

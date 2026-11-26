@@ -372,8 +372,12 @@ function platformKeyRoutes(): {
  * to `auth: { platform, key? }` and lists it here.
  */
 const PLATFORM_KEY_ROUTES: string[] = [
+  'GET /api/v1/platform/idp/setup',
   'GET /api/v1/platform/settings',
   'GET /api/v1/platform/wallet-release',
+  // AS-4: setup only tightens PassBook's own app and connection; the freeze still stops it.
+  'POST /api/v1/platform/idp/scim-token/rotate',
+  'POST /api/v1/platform/idp/setup',
 ];
 const PLATFORM_KEY_CONDITIONAL: string[] = [
   // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
@@ -444,6 +448,8 @@ it('pins which platform routes take a key and which are person-only', () => {
 
 it('makes a platform scope mintable exactly when a route accepts it by key', () => {
   const { scopes } = platformKeyRoutes();
+  // `platform:status` is declared by GET /idp/setup for sessions but is not a key scope until PK-2a.
+  scopes.delete('platform:status');
   if (scopes.size > 0) scopes.add('platform:read');
   expect([...MINTABLE_PLATFORM_SCOPES].sort()).toEqual([...scopes].sort());
 });

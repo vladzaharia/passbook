@@ -12,6 +12,7 @@ import {
   UserPlus,
   Users,
   UserX,
+  Wrench,
 } from 'lucide-react';
 import type { Tone } from './status.ts';
 
@@ -42,4 +43,13 @@ export const IDP_ACTIONS = {
   'idp.remove_external': a('Polaris ID role removed', ShieldOff, 'warning'),
   'idp.offboard': a('User offboarded', UserX, 'warning'),
   'idp.freeze': a('Polaris ID changes paused', Snowflake, 'warning'),
+  'idp.setup': a('Polaris ID set up', Wrench, 'info'),
+  'idp.scim_rotate': a('SCIM token rotated', KeyRound, 'warning'),
+  'idp.setup.groups': a('Polaris ID groups placed', Users, 'success'),
+  'idp.setup.client_groups': a('Polaris ID app groups allowed', Users, 'success'),
+  'idp.setup.client_restricted': a('Polaris ID app restricted', ShieldCheck, 'success'),
+  'idp.setup.client_logo': a('Polaris ID app logo set', Tag, 'info'),
+  'idp.setup.scim_token': a('SCIM token created', KeyRound, 'success'),
+  'idp.setup.scim_provider': a('SCIM connection set up', RefreshCw, 'success'),
+  'idp.setup.scim_sync': a('SCIM sync requested', RefreshCw, 'info'),
 };

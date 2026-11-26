@@ -14,6 +14,22 @@ const errors = {
   IDP_BUDGET_LOW: 'Too few Polaris ID reads left today. The daily check keeps them. Try tomorrow.',
   IDP_ADMIN_ENDED: 'The admin who started this is no longer a signed-in platform admin.',
   OPERATION_LEASE_LOST: 'Another runner took this over. Retry.',
+  IDP_FROZEN: 'Polaris ID changes are paused. Ask the PassBook owner.',
+  IDP_CLIENT: "PassBook's Polaris ID app needs a change first. Check setup.",
+  IDP_SCIM_FOREIGN: 'Polaris ID sends users somewhere other than PassBook. Ask the PassBook owner.',
+  IDP_SCIM_MISSING: 'Polaris ID has no user sync for PassBook yet. Run setup first.',
+  IDP_SETUP_BINDING_ABSENT: 'The Polaris ID connector is not deployed. Ask the PassBook owner.',
+  IDP_SETUP_AUTH: "Polaris ID refused PassBook's key. Ask the PassBook owner to replace it.",
+  IDP_SETUP_LAYOUT: 'The Polaris ID layout looks wrong. Ask the PassBook owner to check it.',
+  IDP_SETUP_SETTINGS: 'Polaris ID settings need a change. Ask the PassBook owner.',
+  IDP_SETUP_CLIENT_MISSING: 'Sign in to PassBook with Polaris ID once, then run setup again.',
+  IDP_SETUP_CLIENT_WRONG:
+    "PassBook's app in Polaris ID is not set up as expected. Ask the PassBook owner.",
+  IDP_SETUP_GROUP_IN_USE: 'A role group is used by another app. Ask the PassBook owner.',
+  IDP_SETUP_GROUP_MISSING: 'A required Polaris ID group is missing. Ask the PassBook owner.',
+  IDP_SETUP_SCIM_PUSH: 'Polaris ID has not pushed users yet. Check the connection, then retry.',
+  IDP_SETUP_MIRROR_EMPTY: 'Polaris ID pushed no users or groups. Check the connection, then retry.',
+  IDP_SETUP_TOKEN: 'Polaris ID did not take the new SCIM token. Retry.',
 } as const;
 
 /** Platform admins only; a stop or retry needs a recent Polaris ID sign-in. */
@@ -83,5 +99,43 @@ export const idpBreakerClear = defineOperationKind({
   steps: [
     { key: 'clear', label: 'Clear the latch', active: 'Clearing the latch' },
     { key: 'confirm', label: 'Confirm', active: 'Checking the latch is gone' },
+  ],
+});
+
+/** One setup at a time; a rotation shares the subject, as both write the SCIM token. */
+const setupSubject = () => 'idp:setup';
+
+export const idpSetup = defineOperationKind({
+  ...common,
+  kind: 'idp.setup',
+  cancel: 'between-steps',
+  dedupe: setupSubject,
+  title: 'Set up Polaris ID',
+  doneTitle: 'Polaris ID set up',
+  failTitle: 'Could not set up Polaris ID',
+  steps: [
+    { key: 'check', label: 'Check Polaris ID', active: 'Reading the Polaris ID setup' },
+    { key: 'groups', label: 'Groups', active: 'Placing the role groups' },
+    { key: 'client_groups', label: 'Allowed groups', active: 'Allowing the groups on the app' },
+    { key: 'client_restricted', label: 'Only these groups', active: 'Restricting the app' },
+    { key: 'client_logo', label: 'App logo', active: 'Setting the app logo' },
+    { key: 'scim_token', label: 'SCIM token', active: 'Creating the SCIM token' },
+    { key: 'scim_provider', label: 'SCIM connection', active: 'Adding the SCIM connection' },
+    { key: 'scim_sync', label: 'First sync', active: 'Waiting for the first sync' },
+    { key: 'scim_mirror', label: 'Directory copy', active: 'Waiting for users and groups' },
+  ],
+});
+
+export const idpScimRotate = defineOperationKind({
+  ...common,
+  kind: 'idp.scim_rotate',
+  cancel: 'never',
+  dedupe: setupSubject,
+  title: 'Rotate SCIM token',
+  doneTitle: 'SCIM token rotated',
+  failTitle: 'Could not rotate the SCIM token',
+  steps: [
+    { key: 'token', label: 'New token', active: 'Giving Polaris ID the new token' },
+    { key: 'switch', label: 'Switch', active: 'Switching PassBook to the new token' },
   ],
 });

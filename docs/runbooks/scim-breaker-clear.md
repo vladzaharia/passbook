@@ -23,7 +23,7 @@ In Polaris ID check the users and groups that changed in the last day. If the bu
 
 Tripping resets the ten-minute count, so clearing in the same window does not latch it again.
 
-Use the operation: a platform admin signed in with Polaris ID, with a recent sign-in (step-up). No API key can call it, so send it from the admin session, not from this note. It answers `202` with an operation (`idp.breaker_clear`); follow it at `GET /api/v1/operations/{id}` or in the activity tray. `409 IDP_BREAKER_CLOSED` means the breaker is not tripped.
+Settings, Polaris ID, Clear breaker does it: a platform admin signed in with Polaris ID, with a recent sign-in (step-up). It is the same operation as below; no API key can call it, so use the card or the admin session, not this note. It answers `202` with an operation (`idp.breaker_clear`); follow it at `GET /api/v1/operations/{id}` or in the activity tray. `409 IDP_BREAKER_CLOSED` means the breaker is not tripped.
 
 ```http norun
 POST /api/v1/platform/idp/scim-breaker/clear
@@ -33,7 +33,7 @@ The operation deletes the latch you saw, reads that it is gone and reports `owed
 
 ### Fallback: raw D1
 
-Only when the admin session cannot reach the Worker. The same row, deleted directly; it leaves no audit row and no operation.
+Only when neither the card nor the admin session can reach the Worker. The same row, deleted directly; it leaves no audit row and no operation.
 
 ```sh name=clear-breaker-d1 confirm="Fallback: delete counters row idp:scim:breaker from the production D1 database? Pending session endings then run."
 npx wrangler d1 execute "$DB_NAME" --remote --command "DELETE FROM counters WHERE key = 'idp:scim:breaker'"

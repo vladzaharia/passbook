@@ -2273,6 +2273,14 @@
     "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
+    "key": "GET /api/v1/platform/idp/setup new operation",
+    "class": "additive",
+    "operationId": "polaris-setup.getPlatformIdpSetup",
+    "op": "GET /api/v1/platform/idp/setup",
+    "change": "new operation",
+    "note": "Read what Polaris ID setup has done and what is left, item by item."
+  },
+  {
     "key": "GET /api/v1/platform/invitations new operation",
     "class": "additive",
     "operationId": "platform-invitations.getPlatformInvitations",
@@ -5711,6 +5719,22 @@
     "op": "POST /api/v1/platform/idp/scim-breaker/clear",
     "change": "new operation",
     "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/scim-token/rotate new operation",
+    "class": "additive",
+    "operationId": "polaris-setup.postPlatformIdpScimTokenRotate",
+    "op": "POST /api/v1/platform/idp/scim-token/rotate",
+    "change": "new operation",
+    "note": "Replace the SCIM token without a gap. A dry run unless dryRun is false. Starts the idp.scim_rotate operation."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/setup new operation",
+    "class": "additive",
+    "operationId": "polaris-setup.postPlatformIdpSetup",
+    "op": "POST /api/v1/platform/idp/setup",
+    "change": "new operation",
+    "note": "Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless dryRun is false. Starts the idp.setup operation."
   },
   {
     "key": "POST /api/v1/platform/invitations new operation",

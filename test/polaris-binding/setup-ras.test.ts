@@ -130,6 +130,26 @@ describe('M3: alias groups the main Worker accepts', () => {
     expect((await h.api.setupStatus()).client.otherGroups).toBe(0);
   });
 
+  it('setupStatus reports each alias: existing or not, allowed or not', async () => {
+    const h = withAlias();
+    open(h);
+    expect((await h.api.setupStatus()).client.aliases).toEqual([
+      { name: 'staff', exists: true, allowed: false },
+    ]);
+    await h.api.allowClientGroups(run());
+    expect((await h.api.setupStatus()).client.aliases).toEqual([
+      { name: 'staff', exists: true, allowed: true },
+    ]);
+    const none = setupCimd('v2', {
+      patch: {
+        GROUPS: JSON.stringify({ aliases: ['no_such_group'], ...JSON.parse(groupsJson()) }),
+      },
+    });
+    expect((await none.api.setupStatus()).client.aliases).toEqual([
+      { name: 'no_such_group', exists: false, allowed: false },
+    ]);
+  });
+
   it('GROUPS aliases must be plain names, and not repeat a configured name', () => {
     for (const aliases of ['x', [1], ['has space'], ['passbook_console']]) {
       const { registry, reasons } = parseRegistry({

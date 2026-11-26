@@ -39,19 +39,17 @@ Needs a deployed Worker. Every URL in the document should be on the production h
 curl -fsS "$PUBLIC_BASE_URL/auth/oidc/client-metadata.json"
 ```
 
-## 3. First sign-in, then set the client
+## 3. Sign in once, then Set up
 
-The first sign-in creates the client in Polaris ID. Then:
+Sign in to PassBook once with Polaris ID: that creates the client in Polaris ID. Then Settings, Polaris ID, Set up places the groups, allows them on the client, restricts it, sets the logo and creates the SCIM push ([[Polaris Binding Turn On]]). Nothing about groups, logo or SCIM is set by hand.
 
-1. Set its allowed groups to the group names `OIDC_*_GROUP` expects (PassBook also checks the groups claim itself).
-2. Logo: Polaris ID ignores the document's `logo_uri`. Set Logo URL and Dark logo URL on the client to `${PUBLIC_BASE_URL}/icons/icon-512.png`; Polaris ID downloads and keeps it.
-3. Settings, "Trust Polaris ID emails" links and verifies an address only when Polaris ID sends `email_verified: true`. Never set Polaris ID's `EMAILS_VERIFIED=true`: a user could then claim any address.
+Never set Polaris ID's `EMAILS_VERIFIED=true`: a user could then claim any address. Settings, "Trust Polaris ID emails" links and verifies an address only when Polaris ID sends `email_verified: true`.
 
 Check the real group values in the logs of a refused sign-in (`auth.oidc_no_access` lists the groups it received) before a deploy that changes them.
 
 ## A registered client instead
 
-Set its id in `vars.OIDC_CLIENT_ID`. A confidential client also needs the `OIDC_CLIENT_SECRET` secret ([[Go-Live Secrets]]). Local dev only loads secrets listed in `secrets.required`, so the mock provider runs as a public client.
+Set its id in `vars.OIDC_CLIENT_ID`. Set up on the binding refuses a plain client id: it needs the metadata URL above. A confidential client also needs the `OIDC_CLIENT_SECRET` secret ([[Go-Live Secrets]]). Local dev only loads secrets listed in `secrets.required`, so the mock provider runs as a public client.
 
 ## Related
 
