@@ -12,11 +12,7 @@ import {
   startCredentialTransfer,
 } from '../passes/credential-transfer.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import {
-  configureWalletProviderAccount,
-  getWalletProviderReadiness,
-  revokeWalletProviderAccount,
-} from './account-service.ts';
+import { getWalletProviderReadiness } from './account-service.ts';
 import { ensureSamsungFetchRef } from './callbacks-ref.ts';
 import { replaceCallbackKeysetForTest, setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { persistSamsungTombstone } from './callbacks-tombstone.ts';
@@ -30,6 +26,7 @@ import {
   requestWalletRetirement,
   retireWalletInstance,
 } from './instance.ts';
+import { configureOn, revokeOff } from './legacy-on-test-fixtures.ts';
 import { onWalletPassRetired, reconcileWalletInstance } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
 import { queueWalletOperation } from './queue-test-fixtures.ts';
@@ -180,7 +177,7 @@ describe('Samsung tombstone retention', () => {
 
     const identity = await createFixtureIdentity(undefined, { now: new Date(t.kit.clock.now()) });
     const readiness = await getWalletProviderReadiness(t.kit.ctx, providerScope);
-    await configureWalletProviderAccount(t.kit.ctx, t.auth, {
+    await configureOn(t.kit.ctx, t.auth, {
       ...providerScope,
       expectedRevision: readiness.revision,
       credentials: {
@@ -196,7 +193,7 @@ describe('Samsung tombstone retention', () => {
     expect(await response.text()).toBe('');
     expect((await t.call({ token: historical })).status).toBe(401);
     const changed = await getWalletProviderReadiness(t.kit.ctx, providerScope);
-    await revokeWalletProviderAccount(t.kit.ctx, t.auth, {
+    await revokeOff(t.kit.ctx, t.auth, {
       ...providerScope,
       expectedRevision: changed.revision,
     });
@@ -250,7 +247,7 @@ describe('Samsung tombstone retention', () => {
       now: new Date(t.kit.clock.now()),
     });
     const account = await getWalletProviderReadiness(t.kit.ctx, providerScope);
-    await configureWalletProviderAccount(t.kit.ctx, t.auth, {
+    await configureOn(t.kit.ctx, t.auth, {
       ...providerScope,
       expectedRevision: account.revision,
       credentials: {

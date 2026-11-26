@@ -25,7 +25,7 @@ import { basicPackage, makePng, passJson, zipOf } from '../templates/package/fix
 import { approveCandidate, createCandidate, publishRelease } from '../templates/releases.ts';
 import { getVersion } from '../templates/repo.ts';
 import { fakeAssets, importZip } from '../templates/testing.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import type { ProjectionV2 } from './projection-contract.ts';
 import { computeProjectionPins } from './projection-pins.ts';
 import {
@@ -163,7 +163,7 @@ export async function setup(
   });
   const scope = { orgId, mode: 'live' as const, provider: 'google' as const };
   if (!existing || sole)
-    await configureWalletProviderAccount(ctx, author, {
+    await configureOn(ctx, author, {
       ...scope,
       expectedRevision: 0,
       credentials: S.google,

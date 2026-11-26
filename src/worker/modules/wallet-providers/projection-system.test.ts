@@ -34,6 +34,7 @@ import {
   setup,
   updateCompiler,
 } from './projection-v2-test-fixtures.ts';
+import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { walletInstanceProofSql } from './repo-instance-proof.ts';
 import {
   getProjectionRetirementMetadata,
@@ -364,6 +365,7 @@ describe('the Apple release hook', () => {
 
   it('queues one job for Google only, and only for an org with an account', async () => {
     const kit = await setup();
+    restore.push(setWalletProvidersEnabledForTest(true));
     const sent: unknown[] = [];
     const ctx = ctxWith(async (messages) => void sent.push(...messages.map((m) => m.body)));
     await queueSystemProjections(ctx, release('apple', 'org-without-account'));
@@ -455,7 +457,7 @@ describe('resuming and edge cases of the system job', () => {
     },
   );
 
-  it('the revoke proof exempts the version author from a Google system candidate only', async () => {
+  it('the revoke proof exempts the version author from a system candidate only', async () => {
     const row = (author: string, provider = 'google') =>
       first<{ ok: number }>(
         S.env.DB,
@@ -465,8 +467,8 @@ describe('resuming and edge cases of the system job', () => {
       );
     expect((await row(SYSTEM_AUTHOR))?.ok).toBe(1);
     expect((await row('u2'))?.ok).toBe(0);
-    // Samsung retirement and tombstone proofs keep the raw predicate, so the exemption stops at Google.
-    expect((await row(SYSTEM_AUTHOR, 'samsung'))?.ok).toBe(0);
+    expect((await row(SYSTEM_AUTHOR, 'samsung'))?.ok).toBe(1);
+    expect((await row('u2', 'samsung'))?.ok).toBe(0);
     expect(walletInstanceProofSql('i', 'o', '1', false, 'revoke')).toContain(
       `author_id = '${SYSTEM_AUTHOR}'`,
     );

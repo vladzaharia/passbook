@@ -16,7 +16,7 @@ import {
   walletOperationFresh,
 } from './instance.ts';
 import type { WalletClaimRef, WalletOperation } from './instance-types.ts';
-import { walletProviderDisabledReason, walletProviderReleaseReason } from './provider-policy.ts';
+import { walletProviderDisabledReason, walletProviderRevokes } from './provider-policy.ts';
 import type { OutcomeReceipt } from './repo-instance-outcomes.ts';
 import {
   originalScope,
@@ -62,11 +62,14 @@ export async function runWalletProviderOperation(
   }
   // A disabled provider is never called and the operation is not claimed, so it cannot go uncertain.
   // Only a locally proven absence (no external card) can still settle.
-  // An org that is not enrolled (Off, held, revoked) is not called either; revoking still needs only the release.
+  // An org that is not enrolled (Off, held, revoked) is not called either; a revoke needs only the release to be
+  // released or draining, so copies already in wallets go void after a rollback.
   if (!unissuedCandidate) {
     const reason =
       candidate.kind === 'revoke'
-        ? walletProviderReleaseReason(candidate.provider, candidate.mode)
+        ? walletProviderRevokes(candidate.provider, candidate.mode)
+          ? null
+          : 'not_released'
         : await walletProviderDisabledReason(
             ctx.env.DB,
             candidate.provider,

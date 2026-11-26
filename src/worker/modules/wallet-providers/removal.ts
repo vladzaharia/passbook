@@ -3,12 +3,12 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelOn } from '../channels/gate.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getWalletInstance } from './instance.ts';
-import { walletProviderDisabledReason } from './provider-policy.ts';
+import { walletProviderRevokes } from './provider-policy.ts';
 
 /**
  * The wallets a removal reaches. Apple always: registered devices fetch the voided version.
- * Google and Samsung only when released, on for the org, and the pass has a live copy there; their revoke runs
- * from the pass's own lifecycle, so this only describes it.
+ * Google and Samsung when their revokes run (released or draining), the channel is on for the pass and it has a
+ * live copy there; the revoke runs from the pass's own lifecycle, so this only describes it.
  */
 export async function removalWallets(
   ctx: ServiceContext,
@@ -17,11 +17,8 @@ export async function removalWallets(
 ): Promise<RemovalWallet[]> {
   const wallets: RemovalWallet[] = ['apple'];
   for (const provider of providers) {
-    // Released and enrolled for this org and mode, and on for this pass (block, template, pass).
-    if (
-      (await walletProviderDisabledReason(ctx.env.DB, provider, pass.orgId, pass.mode)) !== null ||
-      !(await channelOn(ctx, pass, provider))
-    )
+    // Revokes run released or draining, enrolled or held; the pass's channel must still be on.
+    if (!walletProviderRevokes(provider, pass.mode) || !(await channelOn(ctx, pass, provider)))
       continue;
     const instance = await getWalletInstance(ctx.env.DB, {
       orgId: pass.orgId,

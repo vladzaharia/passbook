@@ -250,5 +250,71 @@
         "at": 1795570500000
       }
     }
+  },
+  "wallet-platform.getPlatformWalletRelease": {
+    "response": {
+      "releases": [
+        {
+          "provider": "google",
+          "mode": "live",
+          "state": "dark",
+          "credentials": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-88ed9bfcff71",
+              "scope": "platform",
+              "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+              "mode": "live",
+              "provider": "google",
+              "identityHint": "Northwind signing identity",
+              "provenance": "platform",
+              "revision": 3,
+              "verifiedAt": 1795570500000,
+              "revokedAt": null,
+              "createdAt": 1794362400000,
+              "updatedAt": 1795399200000,
+              "cardTypes": ["northwind"],
+              "lastCheck": {
+                "ok": true,
+                "code": null,
+                "at": 1795570500000
+              }
+            }
+          ],
+          "enrolments": [
+            {
+              "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+              "orgName": "Northwind Climbing",
+              "status": "ready",
+              "blocks": ["plan"]
+            }
+          ],
+          "templates": {
+            "ready": 6,
+            "withOmissions": 33,
+            "awaitingReview": 35,
+            "none": 20
+          },
+          "instances": {
+            "open": 37,
+            "retired": 31
+          }
+        }
+      ]
+    }
+  },
+  "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady": {
+    "request": {
+      "apply": false,
+      "orgIds": ["0193a1b2-7c00-7000-8000-0000000000a1"]
+    },
+    "response": {
+      "applied": false,
+      "enrolments": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing"
+        }
+      ]
+    }
   }
 }

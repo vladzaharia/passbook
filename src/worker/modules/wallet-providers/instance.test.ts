@@ -50,6 +50,7 @@ import { fixture, reference } from './instance-test-fixtures.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
 import { queueWalletOperation } from './queue-test-fixtures.ts';
+import { darkRows } from './release-test-fixtures.ts';
 import { googleRetirementTargetSql } from './repo-accounts.ts';
 import { consumeOffer, readOffer } from './repo-instance-offers.ts';
 import {
@@ -353,6 +354,7 @@ describe('native wallet instance lifecycle', () => {
   it('denies new wrappers while preserving historical reference fences', async () => {
     const f = await fixture();
     const db = f.kit.env.DB;
+    await darkRows(db);
     const authority = { kind: 'download' as const, token: f.pass.downloadToken };
     const input = {
       ...f.proof,
@@ -372,7 +374,9 @@ describe('native wallet instance lifecycle', () => {
     expect(
       await first(db, 'SELECT id FROM wallet_provider_instances WHERE pass_id = ?', [f.pass.id]),
     ).toBeNull();
-    const op = await f.create();
+    const op = await withoutTrigger(db, 'wallet_provider_generation_operation_draining', () =>
+      f.create(),
+    );
     expect(await createWalletInstanceAndOffer(db, input)).toBeNull();
     expect(
       await createWalletOfferRef(db, { ...reference(op), now: input.now, authority }),

@@ -16,8 +16,7 @@ export const slotFreeSql = `NOT EXISTS (SELECT 1 FROM wallet_provider_instances 
 export const successorGuardSql = `AND NOT EXISTS (SELECT 1 FROM pass_channels retired WHERE retired.pass_id = i.pass_id
     AND retired.channel = i.provider AND retired.retired_at IS NOT NULL)
   AND EXISTS (SELECT 1 FROM wallet_provider_accounts enrolment WHERE enrolment.id = i.account_id
-    AND (enrolment.credential_source_id IS NULL
-      OR (enrolment.enabled_at IS NOT NULL AND enrolment.platform_hold_at IS NULL)))
+    AND enrolment.enabled_at IS NOT NULL AND enrolment.platform_hold_at IS NULL)
   AND EXISTS (SELECT 1 FROM wallet_provider_instances pred WHERE pred.pass_id = i.pass_id
     AND pred.provider = i.provider AND pred.credential_generation = i.credential_generation
     AND pred.channel_epoch = i.channel_epoch - 1
