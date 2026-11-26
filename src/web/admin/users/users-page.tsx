@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { UserPlus } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { UserSummarySchema } from '@/shared/contracts/users.ts';
 import { cn } from '@/web/lib/cn.ts';
@@ -7,6 +8,7 @@ import { ENTITY } from '@/web/lib/entities.ts';
 import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
+  Button,
   DataTable,
   EmptyState,
   EntityAvatar,
@@ -19,6 +21,8 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { personLabel } from '../../lib/format.ts';
+import { useIdpConnected } from './access/queries.ts';
+import { PlatformInviteWizard } from './invite/platform-invite.tsx';
 import { methodsLabel } from './labels.ts';
 import { useUserList } from './queries.ts';
 import type { UsersSearch } from './users-search.ts';
@@ -123,6 +127,8 @@ export function UsersPage({
   );
 
   const list = useUserList(search);
+  const connected = useIdpConnected();
+  const [inviting, setInviting] = useState(false);
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const filtered = Boolean(search.q || search.status);
 
@@ -133,7 +139,17 @@ export function UsersPage({
 
   return (
     <>
-      <PageHeader title="Users" />
+      <PageHeader
+        title="Users"
+        actions={
+          connected ? (
+            <Button iconStart={<UserPlus aria-hidden />} onClick={() => setInviting(true)}>
+              Invite
+            </Button>
+          ) : null
+        }
+      />
+      {connected ? <PlatformInviteWizard open={inviting} onOpenChange={setInviting} /> : null}
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (

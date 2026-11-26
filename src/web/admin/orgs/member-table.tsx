@@ -1,6 +1,7 @@
 import { MoreHorizontal, Trash2, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { OrgMember } from '@/shared/contracts/org-membership.ts';
+import { IDP_COPY } from '@/shared/copy/idp.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
   Badge,
@@ -101,6 +102,7 @@ export function MemberTable({
               <div className="flex min-w-0 items-center gap-2">
                 <span className="truncate text-sm font-medium text-fg-strong">{name}</span>
                 {member.userId === selfId ? <Badge tone="accent">You</Badge> : null}
+                {member.accessPaused ? <Badge tone="warning">{IDP_COPY.accessPaused}</Badge> : null}
               </div>
               {member.userName && member.userEmail ? (
                 <span className="block truncate text-xs text-fg-muted">{member.userEmail}</span>
