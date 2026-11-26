@@ -234,6 +234,7 @@ describe('Workbench entry and states', () => {
       level: 1,
     });
     const main = title.closest('main') as HTMLElement;
+    expect(screen.getAllByRole('link', { name: 'Sign in with Polaris ID' })).toHaveLength(1);
     expect(within(main).getByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
       'href',
       `/auth/oidc/start?next=${encodeURIComponent('/workbench/o/sbx/logs')}`,
@@ -247,6 +248,11 @@ describe('Workbench entry and states', () => {
   it('signed out at /workbench/design: the Playground page', async () => {
     await renderApp('/workbench/design', { session: 'anon', handlers: handlers() });
     await screen.findByRole('heading', { name: 'Design', level: 1 });
+    // The sidebar's card offers sign-in here; on the sign-in state it stays away (one buddy).
+    expect(await screen.findByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
+      'href',
+      `/auth/oidc/start?next=${encodeURIComponent('/workbench/design')}`,
+    );
   });
 
   it('an email-link session waits for Polaris ID', async () => {

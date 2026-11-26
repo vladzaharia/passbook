@@ -3,9 +3,9 @@ import { render, renderHook, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { ApiError } from '../../lib/errors.ts';
-import { useToolApi, useToolMode, useToolScope } from '../../lib/tool-api.tsx';
 import { NoAccessState } from '../../ui/no-access-state.tsx';
 import { ToolHostProvider, useToolHost } from '../host/tool-host.tsx';
+import { useToolApi, useToolMode, useToolScope } from '../host/tool-scope.ts';
 import { failedLine, ResettingState, ToolEmpty } from './states.tsx';
 
 afterEach(() => vi.unstubAllGlobals());

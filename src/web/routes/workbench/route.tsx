@@ -45,13 +45,16 @@ function WorkbenchLayout() {
       : tool === 'quickstart'
         ? list.find((c) => c.kind === 'sandbox')
         : undefined) ?? null;
+  // Signed out, Design and Quickstart open; the sidebar's sign-in card shows there only, so a view
+  // never carries two buddies or two sign-in buttons.
+  const signedOutPublic = Boolean(tool && PUBLIC_AREAS.has(tool) && !orgId);
   let body = <Outlet />;
   if (isPending) body = <SkeletonRows label="Loading" />;
   // An email link opens the holder's spaces only: the Workbench waits for Polaris ID.
   else if (authed && authed.amr !== 'oidc')
     body = <PolarisIdRequired space="The Workbench" next={href} />;
   else if (!authed) {
-    if (!tool || !PUBLIC_AREAS.has(tool) || orgId) body = <SignInState next={href} />;
+    if (!signedOutPublic) body = <SignInState next={href} />;
   } else if (contexts.isPending) body = <SkeletonRows label="Loading" />;
   else if (contexts.isError)
     body = <ToolFailed error={contexts.error} onRetry={contexts.refetch} />;
@@ -61,7 +64,7 @@ function WorkbenchLayout() {
       contexts={list}
       context={context}
       tool={tool}
-      signedOutNext={authed || isPending ? null : href}
+      signedOutNext={authed || isPending || !signedOutPublic ? null : href}
     >
       <Suspense fallback={<SkeletonRows label="Loading" />}>{body}</Suspense>
     </WorkbenchShell>

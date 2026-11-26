@@ -7,8 +7,9 @@ import { setSingleKeys, useSingleKeys } from './prefs.ts';
 function Keys({ text }: { text: string }) {
   return (
     <span className="flex shrink-0 items-center gap-1">
-      {text.split(' ').map((part, i) =>
-        part === '/' || part === 'or' ? (
+      {text.split(' ').map((part, i, all) =>
+        // A lone "/" is the filter key; between two keys it separates them.
+        (part === '/' && all.length > 1) || part === 'or' ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: a fixed sequence of caps
           <span key={i} className="text-xs text-fg-muted">
             {part}
