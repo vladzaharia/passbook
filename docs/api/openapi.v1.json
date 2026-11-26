@@ -82554,7 +82554,8 @@
                 },
                 "example": {
                   "transferId": "0193a1b2-7c00-7000-8000-0cc606e8ee52",
-                  "state": "completed"
+                  "state": "completed",
+                  "operationId": "0193a1b2-7c00-7000-8000-63650d8198ea"
                 }
               }
             }
@@ -82632,6 +82633,7 @@
           "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
+          "OPERATION_RUNNING",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
           "PASS_FILE_MISSING",
@@ -82761,7 +82763,8 @@
                 "example": {
                   "accepted": true,
                   "requestedAt": 1795570500000,
-                  "cooldownSeconds": 16
+                  "cooldownSeconds": 16,
+                  "operationId": "0193a1b2-7c00-7000-8000-89e7b376f249"
                 }
               }
             }
@@ -82792,8 +82795,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_NOT_FOUND",
@@ -82847,7 +82852,8 @@
                   ]
                 },
                 "example": {
-                  "ok": true
+                  "ok": true,
+                  "operationId": "0193a1b2-7c00-7000-8000-0ad5c2baa7ca"
                 }
               }
             }
@@ -82879,9 +82885,11 @@
         "x-codes": [
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
+          "OPERATION_RUNNING",
           "PASS_NOT_FOUND",
           "PASS_VOIDED",
           "RATE_LIMITED",
@@ -82944,7 +82952,8 @@
                 },
                 "example": {
                   "transferId": "0193a1b2-7c00-7000-8000-252b8f18d5c4",
-                  "state": "completed"
+                  "state": "completed",
+                  "operationId": "0193a1b2-7c00-7000-8000-4cacc5e67167"
                 }
               }
             }
@@ -82986,6 +82995,7 @@
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -82996,6 +83006,7 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "NO_RECIPIENT",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_TEST_ONLY",
           "PASS_CONFLICT",
