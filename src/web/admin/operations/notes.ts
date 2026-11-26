@@ -26,11 +26,6 @@ export function walletNote(op: Operation): string | null {
   return `${plural(n(op, 'updated'), 'pass', 'passes')} updated${skipped ? `, ${skipped} skipped` : ''}.`;
 }
 
-/** The line under finished code replacements. */
-export function codesNote(op: Operation): string | null {
-  return op.result ? `${plural(n(op, 'replaced'), 'code')} replaced.` : null;
-}
-
 /** The line under finished tickets: what was left out, and whether the PDF replaced a character. */
 export function printNote(op: Operation): string | null {
   if (!op.result) return null;

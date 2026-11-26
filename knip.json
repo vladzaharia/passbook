@@ -7,7 +7,7 @@
     "src/web/marketing/pages/*.ts!",
     "src/web/developers/render.tsx!",
     "src/web/scan/camera/decode-worker.ts!",
-    "src/web/ui/operation/{index,story-main}.ts*",
+    "src/web/ui/operation/{index,story-main,story-jobs-main}.ts*",
     "tools/dev/operation-story/vite.config.ts",
     "tools/*.ts",
     "tools/dev/visual-sweep.ts",
