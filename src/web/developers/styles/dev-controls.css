@@ -15,6 +15,13 @@
 .btn.ghost:hover {
   background: var(--pk-state-hover-tint);
 }
+/* The portal's one destructive button: Revoke, Delete, an armed destructive Run. */
+.btn.danger,
+.btn.danger:not(.outline):is(:hover, :focus-visible):not(:disabled) {
+  background: var(--pk-danger);
+  color: var(--pk-danger-on);
+  box-shadow: none;
+}
 .seg {
   display: inline-flex;
   padding: 2px;

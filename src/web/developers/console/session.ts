@@ -6,8 +6,12 @@ import { hasDeveloperAccess, needsPocketId, type SignInMethod } from '../../../s
 
 export interface Sandbox {
   id: string;
+  /** The sandbox's org: the target its operations name. */
+  orgId: string;
   orgSlug: string;
   templateId: string | null;
+  /** The org's IANA zone (WB0): every Workbench time shows in it, never UTC. */
+  timeZone?: string;
 }
 
 export type Session =
@@ -79,8 +83,10 @@ async function read(): Promise<Session> {
     siteKey: typeof body.turnstileSiteKey === 'string' ? body.turnstileSiteKey : '',
     sandbox: {
       id: String(box.id),
+      orgId: String(box.orgId),
       orgSlug: String(box.orgSlug),
       templateId: typeof box.templateId === 'string' ? box.templateId : null,
+      ...(typeof box.timeZone === 'string' ? { timeZone: box.timeZone } : {}),
     },
   };
 }

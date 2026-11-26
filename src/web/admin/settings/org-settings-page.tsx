@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { DEFAULT_TIME_ZONE, DEFAULT_TIME_ZONE_LABEL } from '@/shared/time-zone.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { zoneLabel } from '@/web/lib/timezones.ts';
 import { Card, CardBody, CardHeader, ErrorState, KeyValue, SkeletonRows } from '@/web/ui/index.ts';
 import { ORG_FIELDS } from './fields-org.ts';
@@ -28,7 +28,7 @@ function ReadOnlySettings({ orgId }: { orgId: string }) {
   const zoneEntry = query.data?.items.find((item) => item.key === 'org.timeZone');
   const zoneValue = () => {
     const zone = typeof zoneEntry?.value === 'string' ? zoneEntry.value : DEFAULT_TIME_ZONE;
-    const name = zone === DEFAULT_TIME_ZONE ? DEFAULT_TIME_ZONE_LABEL : zoneLabel(zone);
+    const name = zoneLabel(zone);
     return zoneEntry?.source === 'org' ? name : `${name} · default`;
   };
   return (

@@ -12,20 +12,12 @@
 }
 
 /* ---------- Request log: first paint ---------- */
-.logs-h {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-}
 /* The strip's slot is an empty block until the rail island fills it: it has to stay in view to be mounted. */
-.logs-api:not(:empty) {
-  margin-top: 24px;
+.logs-api:not(:empty) + .logs-main {
+  margin-top: 16px;
 }
 .logs-main {
   min-width: 0;
-  margin-top: 16px;
 }
 /* Signed in, the log holds its signed-out card until the session is known (shell/islands.ts) and shows the shape
    of the list instead: a toolbar and five rows, coming in after 150 ms and pulsing in opacity only. */

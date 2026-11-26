@@ -61,13 +61,6 @@ oidc.addUser({
   name: 'E2E Developer',
   groups: ['wallet_users', 'passbook_developers'],
 });
-// The local demo owner (tools/seed-demo.ts): an org owner who signs in through Polaris ID.
-oidc.addUser({
-  sub: 'demo-owner',
-  email: 'demo.owner@example.com',
-  name: 'Demo Owner',
-  groups: ['wallet_users'],
-});
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 
 createServer(async (req, res) => {

@@ -5,7 +5,7 @@ import {
   type ScanLine,
   scanLine,
 } from '../../../shared/copy/scan.ts';
-import { formatTime, formatWeekdayTime } from '../../lib/format.ts';
+import { formatStay, formatTime, formatWeekdayTime } from '../../lib/format.ts';
 import { sessionTime } from '../ui/session-time.ts';
 import { accessBeat, type ResolvedOutcome } from './access-events.ts';
 import type { BuddyBeat, ScanOutcome } from './types.ts';
@@ -14,14 +14,8 @@ const MIN = 60_000;
 const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 
-/** 1 h 32 min, 12 min, 40 s. */
-export function stayText(ms: number): string {
-  if (ms < MIN) return `${Math.max(1, Math.round(ms / 1000))} s`;
-  const h = Math.floor(ms / HOUR);
-  const m = Math.round((ms % HOUR) / MIN);
-  if (h === 0) return `${m} min`;
-  return m === 0 ? `${h} h` : `${h} h ${m} min`;
-}
+/** 1 h 32 min, 12 min, 40 s, 7 d 15 h. */
+export const stayText = formatStay;
 
 /** 40 s ago, 12 min ago, 3 h ago, 14 d ago: the unit a person would say. */
 export function agoText(ms: number): string {

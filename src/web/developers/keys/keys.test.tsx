@@ -110,7 +110,8 @@ describe('the shared preset map', () => {
 describe('Keys page', () => {
   it('lists the sandbox keys masked, with access, expiry and last use', () => {
     page(api());
-    expect(screen.getByRole('heading', { name: 'Keys' })).toBeTruthy();
+    // The frame's title row has the h1; the page gives it the count (in place here: no frame).
+    expect(screen.getByText(/^\d+ keys?$/)).toBeTruthy();
     const row = screen.getByText('Sandbox key').closest('tr') as HTMLElement;
     expect(within(row).getByText('pbp_test_Ab12Cd_…')).toBeTruthy();
     expect(within(row).getByText('Issue passes')).toBeTruthy();

@@ -10,14 +10,9 @@ import { KeysPage } from './keys-page.tsx';
 import './keys.css';
 import '../ui/sheet.css';
 
-/** The page without keys to list: the heading stays, one state card says why. */
+/** The page without keys to list: the frame's heading stays, one state card says why. */
 const state = (el: HTMLElement, node: ReactNode) =>
-  createRoot(el).render(
-    <div className="ks">
-      <h1 className="h1">{KEYS_COPY.title}</h1>
-      {node}
-    </div>,
-  );
+  createRoot(el).render(<div className="ks">{node}</div>);
 const noSandbox = (el: HTMLElement) =>
   state(
     el,

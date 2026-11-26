@@ -233,14 +233,12 @@ export function OrgDetailPage({
               <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
             ) : null}
             <Card>
-              <CardHeader
-                title="Signing identities"
-                actions={
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/admin/identities">Manage identities</Link>
-                  </Button>
-                }
-              />
+              <CardHeader title="Signing identities" />
+              <CardBody>
+                <Button asChild variant="outline">
+                  <Link to="/admin/identities">Manage identities</Link>
+                </Button>
+              </CardBody>
             </Card>
             <HoldsCard scope="platform" orgId={org.id} canManage />
             <ReceiptsCard scope="platform" orgId={org.id} />

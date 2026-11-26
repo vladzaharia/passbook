@@ -117,25 +117,25 @@ export class Session {
     this.csrf = (await this.get('/api/v1/session')).csrfToken;
   }
 
-  /**
-   * Polaris ID sign-in through the local mock provider (npm run dev:oidc): `subject` picks the mock
-   * account with login_hint, like the e2e harness. The session is strong, so it may manage keys.
-   */
-  async oidc(subject: string) {
-    const start = await this.raw('GET', '/auth/oidc/start?next=%2F');
-    const toIdp = start.headers.get('location');
-    if (start.status !== 302 || !toIdp) throw new Error(`OIDC start failed (${start.status}).`);
-    const authorize = new URL(toIdp);
-    assertLocal(authorize.origin);
-    authorize.searchParams.set('login_hint', subject);
-    const idp = await fetchRetrying(authorize.toString(), { redirect: 'manual' });
-    const back = idp.headers.get('location');
-    if (idp.status !== 302 || !back)
-      throw new Error(`Mock OIDC refused ${subject} (${idp.status}). Is npm run dev:oidc running?`);
-    const target = new URL(back);
-    const done = await this.raw('GET', `${target.pathname}${target.search}`);
-    if (done.status !== 302) throw new Error(`OIDC sign-in failed (${done.status}).`);
-    this.csrf = (await this.get('/api/v1/session')).csrfToken;
+  /** Mock OIDC sign-in (e2e server only): follows the redirects, naming the user as `login_hint`. */
+  async oidc(sub: string) {
+    let url = `${this.base}/auth/oidc/start?next=${encodeURIComponent('/admin')}`;
+    for (let hop = 0; hop < 12; hop++) {
+      const target = new URL(url);
+      const same = target.origin === new URL(this.base).origin;
+      if (!same && target.searchParams.has('client_id')) target.searchParams.set('login_hint', sub);
+      const res = await fetch(target, {
+        redirect: 'manual',
+        headers: same ? { cookie: [...this.cookies].map(([k, v]) => `${k}=${v}`).join('; ') } : {},
+      });
+      if (same) this.keep(res);
+      const next = res.headers.get('location');
+      if (!next) break;
+      url = new URL(next, target).toString();
+    }
+    const session = await this.get('/api/v1/session');
+    if (!session.authenticated) throw new Error(`Mock OIDC sign-in as ${sub} did not stick.`);
+    this.csrf = session.csrfToken;
   }
 
   /**

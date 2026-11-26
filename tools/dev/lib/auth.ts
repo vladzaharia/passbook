@@ -2,8 +2,9 @@
 import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
-import { assertLocal, mailFiles, nextMagicToken } from '../../lib/demo-client.ts';
+import { mailFiles, nextMagicToken } from '../../lib/demo-client.ts';
 import { emailOf, PORTAL } from '../../lib/demo-data.ts';
+import { DEMO_OWNER_SUB, DEMO_REVIEWER_SUB } from '../../lib/demo-tenancy.ts';
 import type { Role } from './routes.ts';
 
 const root = resolve(import.meta.dirname, '../../..');
@@ -34,24 +35,6 @@ async function breakglass(ctx: APIRequestContext): Promise<void> {
   if (res.status() !== 302) throw new Error(`Break-glass sign-in failed (${res.status()}).`);
 }
 
-/** Polaris ID sign-in through the local mock provider; the console accepts no email link. */
-export async function oidc(ctx: APIRequestContext, subject: string): Promise<void> {
-  const start = await ctx.get('/auth/oidc/start?next=%2F', { maxRedirects: 0 });
-  const toIdp = start.headers().location;
-  if (start.status() !== 302 || !toIdp) throw new Error(`OIDC start failed (${start.status()}).`);
-  const authorize = new URL(toIdp);
-  assertLocal(authorize.origin);
-  authorize.searchParams.set('login_hint', subject);
-  const idp = await request.newContext();
-  const hop = await idp.get(authorize.toString(), { maxRedirects: 0 });
-  const back = hop.headers().location;
-  await idp.dispose();
-  if (hop.status() !== 302 || !back)
-    throw new Error(`Mock OIDC refused ${subject} (${hop.status()}). Is npm run dev:oidc running?`);
-  const done = await ctx.get(back, { maxRedirects: 0 });
-  if (done.status() !== 302) throw new Error(`OIDC sign-in failed (${done.status()}).`);
-}
-
 export async function magicLink(
   ctx: APIRequestContext,
   base: string,
@@ -75,6 +58,20 @@ export async function magicLink(
   if (!res.ok()) throw new Error(`Magic link for ${email} was refused (${res.status()}).`);
 }
 
+/** Admin sign-in is Polaris ID only; the e2e server's mock OIDC takes the user as `login_hint`. */
+export async function oidc(ctx: APIRequestContext, base: string, sub: string): Promise<void> {
+  let url = `${base}/auth/oidc/start?next=${encodeURIComponent('/admin')}`;
+  for (let hop = 0; hop < 12; hop++) {
+    const target = new URL(url);
+    if (target.origin !== base && target.searchParams.has('client_id'))
+      target.searchParams.set('login_hint', sub);
+    const res = await ctx.get(target.toString(), { maxRedirects: 0 });
+    const next = res.headers().location;
+    if (!next) break;
+    url = new URL(next, target).toString();
+  }
+}
+
 const emailFor: Partial<Record<Role, string>> = {
   holder: emailOf(PORTAL[0] as string),
 };
@@ -89,7 +86,7 @@ export async function contextFor(
   // Key and webhook changes ask for a Polaris ID sign-in under 10 minutes old (STEP_UP_SECONDS), so
   // a saved admin session is reused for 5.
   const stale =
-    (role === 'org' || role === 'platform') &&
+    (role === 'org' || role === 'platform' || role === 'member') &&
     existsSync(file) &&
     Date.now() - statSync(file).mtimeMs > 300_000;
   if (existsSync(file) && !stale) {
@@ -99,7 +96,8 @@ export async function contextFor(
   }
   const ctx = await open(base);
   if (role === 'platform') await breakglass(ctx);
-  else if (role === 'org') await oidc(ctx, 'demo-owner');
+  else if (role === 'org') await oidc(ctx, base, DEMO_OWNER_SUB);
+  else if (role === 'member') await oidc(ctx, base, DEMO_REVIEWER_SUB);
   else await magicLink(ctx, base, emailFor[role] as string);
   if (!(await signedIn(ctx))) throw new Error(`Sign-in as ${role} did not stick.`);
   mkdirSync(dirname(file), { recursive: true });

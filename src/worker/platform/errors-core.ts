@@ -15,6 +15,8 @@ export interface AppErrorOptions {
   used?: number;
   /** An IDP_SIGN_IN_REQUIRED refusal: the sign-in path that keeps the caller's place. */
   signInUrl?: string;
+  /** An OPERATION_RUNNING refusal: the operation already doing this. */
+  operationId?: string;
   cause?: unknown;
 }
 
@@ -28,6 +30,7 @@ export class AppError extends Error {
   readonly limit?: number;
   readonly used?: number;
   readonly signInUrl?: string;
+  readonly operationId?: string;
 
   constructor(code: string, status: number, message: string, options: AppErrorOptions = {}) {
     super(message, options.cause === undefined ? undefined : { cause: options.cause });
@@ -40,6 +43,7 @@ export class AppError extends Error {
     if (options.limit !== undefined) this.limit = options.limit;
     if (options.used !== undefined) this.used = options.used;
     if (options.signInUrl) this.signInUrl = options.signInUrl;
+    if (options.operationId) this.operationId = options.operationId;
   }
 }
 

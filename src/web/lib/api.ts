@@ -262,6 +262,10 @@ export function sessionEndedHref(next: string): string {
     : `/login?next=${encodeURIComponent(target)}&reason=expired`;
 }
 
+/** The session's write token and principal, for clients that own their fetch (lib/operations-client.ts). */
+export const sessionCsrfToken = (): Promise<string | undefined> => csrfProvider();
+export const sessionPrincipal = (): string | undefined => sessionPrincipalProvider();
+
 export const api = createApiClient({
   getCsrfToken: () => csrfProvider(),
   getSessionPrincipal: () => sessionPrincipalProvider(),

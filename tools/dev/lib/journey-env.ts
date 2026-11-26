@@ -222,7 +222,7 @@ export function makeEnv(o: {
         await saved.dispose();
       }
       const ctx = await open(o.base);
-      await oidc(ctx, subject);
+      await oidc(ctx, o.base, subject);
       mkdirSync(dirname(storage), { recursive: true });
       await ctx.storageState({ path: storage });
       return { storage, api: await apiFrom(ctx) };

@@ -52,6 +52,7 @@ export function SettingsFormContent({
   advancedDirty,
   edit,
   reset,
+  columns,
 }: {
   fields: readonly SettingField[];
   entries: Entries;
@@ -67,6 +68,7 @@ export function SettingsFormContent({
   advancedDirty: number;
   edit: (key: string, value: string | boolean) => void;
   reset: (field: SettingField) => void;
+  columns?: boolean;
 }) {
   const renderSections = (subset: readonly SettingField[]) =>
     sections(subset).map((section) => {
@@ -124,7 +126,7 @@ export function SettingsFormContent({
             placeholder={
               !platform && field.kind !== 'boolean' && entry?.default != null
                 ? String(entry.default)
-                : undefined
+                : field.hint
             }
             disabled={entry?.blockedByPlatform || entry?.blockedByPlan}
             onReset={canReset ? () => reset(field) : undefined}
@@ -157,7 +159,10 @@ export function SettingsFormContent({
       }
       if (!section.title)
         return (
-          <div key="flat" className="flex flex-col gap-4">
+          <div
+            key="flat"
+            className={columns ? 'grid gap-x-10 gap-y-5 lg:grid-cols-2' : 'flex flex-col gap-4'}
+          >
             {rows}
           </div>
         );

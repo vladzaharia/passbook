@@ -1,18 +1,26 @@
-// Dev only: seeds a demo dataset into a local dev server through the admin API.
-// Needs npm run dev:oidc (the owner signs in through the mock Polaris ID).
-//   SEED_BREAKGLASS_TOKEN=… node tools/seed-demo.ts [--url http://localhost:5173] [--token-file f]
+// Dev only: seeds a demo dataset into the local e2e server (tools/e2e-server.ts: mock OIDC, mock mail)
+// through the admin API.
+//   SEED_BREAKGLASS_TOKEN=wbg_e2e-breakglass-token node tools/seed-demo.ts [--url http://localhost:5173] [--state .wrangler/e2e-state]
 // Token defaults to .secrets/breakglass-token (npm run breakglass). Refuses non-localhost URLs.
-// Also makes a demo owner an org_admin in every org and pins uploaded templates to a release
-// (tools/bootstrap-tenancy.ts --apply, local D1). Rerunnable: existing orgs, templates, passes (by external id), connections and keys are skipped.
+// Admin sign-in is Polaris ID, so the demo owner and a second reviewer sign in through the mock OIDC.
+// The owner becomes org_admin in every org and templates are pinned to a release
+// (tools/bootstrap-tenancy.ts --apply on --state, local D1). Rerunnable: existing orgs, templates, passes (by external id), connections and keys are skipped.
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
-import { zipSync } from 'fflate';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { assertLocal, discPng, Session } from './lib/demo-client.ts';
 import { demoPlans, emailOf, PORTAL } from './lib/demo-data.ts';
 import { seedExtras } from './lib/demo-extras.ts';
 import { releaseTemplates } from './lib/demo-releases.ts';
-import { DEMO_OWNER, tenancyCommand } from './lib/demo-tenancy.ts';
+import {
+  DEMO_OWNER,
+  DEMO_OWNER_SUB,
+  DEMO_REVIEWER,
+  DEMO_REVIEWER_SUB,
+  E2E_STATE,
+  tenancyCommand,
+} from './lib/demo-tenancy.ts';
+import { uploadVariants } from './lib/demo-uploads.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const arg = (name: string) => {
@@ -53,8 +61,7 @@ const ORGS = [
 const orgs = await admin.all('/api/v1/orgs');
 for (const org of ORGS) {
   if (!orgs.some((o) => o.slug === org.slug))
-    // addMe false: the break-glass account is not a member, so the demo owner stays each org's only reviewer.
-    orgs.push(await admin.send('POST', '/api/v1/orgs', { ...org, preset: 'legacy', addMe: false }));
+    orgs.push(await admin.send('POST', '/api/v1/orgs', { ...org, preset: 'legacy' }));
 }
 const orgId = (slug: string) => orgs.find((o) => o.slug === slug).id as string;
 const henrys = orgId('henrys');
@@ -64,15 +71,9 @@ const harbor = orgId('harbor-lights');
 // A platform admin without membership is treated as a non-member (404), so the demo owner makes the
 // org templates: sign in once, then become org_admin in every org (re-run after uploads below).
 const owner = new Session(base);
-// Admin and developer access is Polaris ID only, so the owner signs in through the local mock
-// provider (npm run dev:oidc). The mock verifies its emails; trusting them lets a first sign-in
-// create the account without a mail round trip, as in the e2e database.
-await admin.send('PUT', '/api/v1/settings', {
-  scope: 'platform',
-  values: { 'oidc.trustEmail': true },
-});
-await owner.oidc('demo-owner');
-const tenancy = tenancyCommand(DEMO_OWNER);
+await owner.oidc(DEMO_OWNER_SUB);
+const state = resolve(root, arg('--state') ?? E2E_STATE);
+const tenancy = tenancyCommand(DEMO_OWNER, state);
 const applyTenancy = () =>
   execFileSync(tenancy.file, tenancy.args, { cwd: root, stdio: 'inherit' });
 applyTenancy();
@@ -98,61 +99,27 @@ const coupon = await fromBlueprint('coupon', northwind, 'Northwind Coupon');
 const crew = await fromBlueprint('generic', harbor, 'Harbor Crew');
 await fromBlueprint('generic', northwind, 'Northwind Member');
 
-function variantZip(name: string, joinable = false): Uint8Array {
-  const dir = resolve(root, 'templates/starter-generic');
-  const files: Record<string, Uint8Array> = {};
-  // Nested files (wallets/google/logo.png) belong to the package: an upload without them is invalid.
-  for (const entry of readdirSync(dir, { withFileTypes: true, recursive: true })) {
-    if (!entry.isFile()) continue;
-    const rel = relative(dir, join(entry.parentPath, entry.name));
-    let bytes: Uint8Array = readFileSync(join(dir, rel));
-    if (rel === 'wallet.template.json') {
-      const manifest = JSON.parse(Buffer.from(bytes).toString('utf8'));
-      manifest.name = name;
-      // An uploaded package is never a blueprint.
-      manifest.blueprint = undefined;
-      // Uploads are untrusted: baked-only keywords and /semantics bindings are rejected.
-      if (manifest.inputs?.properties?.website)
-        manifest.inputs.properties.website.pattern = undefined;
-      if (manifest.inputs) manifest.inputs.dependentRequired = undefined;
-      manifest.bindings = (manifest.bindings ?? []).filter(
-        (b: { to: { pointer?: string } }) => !b.to.pointer?.startsWith('/semantics'),
-      );
-      // A join link needs a barcode that carries only the scan code, so its alt text names no input.
-      if (joinable)
-        for (const b of manifest.bindings)
-          if (b.to.barcode === '*' && b.to.prop === 'altText') b.value = 'Member code';
-      bytes = Buffer.from(JSON.stringify(manifest, null, 2));
-    }
-    files[rel] = bytes;
-  }
-  return zipSync(files);
-}
-const upload = (query: string, zip: Uint8Array) =>
-  owner.send('POST', `/api/v1/templates/uploads?${query}`, zip, {
-    'content-type': 'application/zip',
-  });
-if (!byName('Harbor Join Badge'))
-  await upload(`orgId=${harbor}&name=Harbor%20Join%20Badge`, variantZip('Harbor Join Badge', true));
-if (!byName('Harbor Crew Badge')) {
-  await upload(`orgId=${harbor}&name=Harbor%20Crew%20Badge`, variantZip('Harbor Crew Badge'));
-  await upload(
-    `orgId=${harbor}&name=Broken%20Badge`,
-    zipSync({ 'wallet.template.json': Buffer.from('{') }),
-  );
-}
-// An upload imports asynchronously; its template appears when the build is done.
-for (let attempt = 0; attempt < 60; attempt++) {
-  templates = await listTemplates();
-  if (byName('Harbor Join Badge') && byName('Harbor Crew Badge')) break;
+await uploadVariants(owner, harbor, byName);
+// An upload imports asynchronously; its template appears once the build is done.
+templates = await listTemplates();
+for (
+  let attempt = 0;
+  attempt < 60 && !(byName('Harbor Join Badge') && byName('Harbor Crew Badge'));
+  attempt++
+) {
   await new Promise((done) => setTimeout(done, 1000));
+  templates = await listTemplates();
 }
 const member = byName('Northwind Member')?.id as string;
 
 // Tenancy: the demo owner is org_admin everywhere. Passes issue only from a live release, so the
 // owner approves and publishes each org template. Safe to re-run.
 applyTenancy();
-await releaseTemplates(owner, templates);
+const reviewer = new Session(base);
+await reviewer.oidc(DEMO_REVIEWER_SUB);
+const reviewerTenancy = tenancyCommand(DEMO_REVIEWER, state);
+execFileSync(reviewerTenancy.file, reviewerTenancy.args, { cwd: root, stdio: 'inherit' });
+await releaseTemplates(owner, templates, reviewer);
 
 // Passes
 const plans = demoPlans({ henrys, northwind, harbor, member, store, ticket, coupon, crew });
@@ -310,12 +277,11 @@ const KEYS = [
   { name: 'Henry’s CRM', orgId: henrys, scopes: ['passes:read', 'passes:write', 'holders:write'] },
   { name: 'Box office', orgId: harbor, scopes: ['passes:write'], expiresAt: Date.now() + 30 * DAY },
   {
-    // A platform key needs an expiry and an IP allowlist.
     name: 'Ops read-only',
     orgId: null,
     scopes: ['passes:read', 'templates:read'],
-    expiresAt: Date.now() + 7 * DAY,
-    ipAllow: ['127.0.0.1/32', '::1/128'],
+    expiresAt: Date.now() + 60 * DAY,
+    ipAllow: ['203.0.113.0/24'],
   },
   { name: 'Old import script', orgId: northwind, scopes: ['passes:write'], revoke: true },
 ];

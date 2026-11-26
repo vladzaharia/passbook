@@ -90,7 +90,8 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
     const id = `${ID.slice(0, -1)}2`;
     const row: ScanLiveRow = {
       id,
-      at: Date.now(),
+      // The customer screen drops a row after 4 to 6 s; a gallery frame must outlast the capture.
+      at: Date.now() + 3_600_000,
       scannerId: ID,
       scannerName: 'West entrance',
       passId: ID,

@@ -144,6 +144,12 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
   }
 }
 
+/** The API request that caused the event, when the ledger kept it. */
+function requestIdOf(raw: string): { requestId?: string } {
+  const id = parse(raw).requestId;
+  return typeof id === 'string' && id.length > 0 && id.length <= 64 ? { requestId: id } : {};
+}
+
 /**
  * The webhook and feed envelope for one journal row. Pure: the same row and version always give the
  * same event, so a replay is identical but for its timestamp and signature.
@@ -163,6 +169,7 @@ export function buildEnvelope(
     mode: row.mode,
     pass: { id: row.passId, externalId: row.externalId, templateId: row.templateId },
     data: dataOf(row, type),
+    ...requestIdOf(row.data),
     ...(sample ? { sample: true } : {}),
   } as WebhookEvent;
 }

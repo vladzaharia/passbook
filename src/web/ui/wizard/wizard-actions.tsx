@@ -45,7 +45,7 @@ export function WizardButtons({
       <Button
         variant="ghost"
         disabled={working}
-        className={keepCancel ? 'mr-auto' : 'max-sm:hidden sm:mr-auto'}
+        className={keepCancel ? 'mr-auto max-sm:order-2 max-sm:w-full' : 'max-sm:hidden sm:mr-auto'}
         onClick={onCancel}
       >
         Cancel
@@ -55,7 +55,7 @@ export function WizardButtons({
           {why}
         </span>
       ) : null}
-      <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
+      <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:basis-full max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
         {first ? null : (
           <Button variant="outline" disabled={working} onClick={onBack}>
             Back

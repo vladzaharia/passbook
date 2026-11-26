@@ -30,8 +30,12 @@ export const toast = {
     return id;
   },
   warning: (message: string) => later((t) => t.warning(message)),
-  /** Errors stay until dismissed. `title` names what failed ("Could not save"). */
-  error: (error: unknown, title: string) => later((t) => t.error(error, title)),
+  /**
+   * Errors stay until dismissed. `title` names what failed ("Could not save"); `action` offers one
+   * way on ("Retry").
+   */
+  error: (error: unknown, title: string, action?: { label: string; onClick: () => void }) =>
+    later((t) => t.error(error, title, action)),
   /** A success with one follow-up ("View run"). */
   action: (message: string, action: { label: string; onClick: () => void }) =>
     later((t) => t.action(message, action)),

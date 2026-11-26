@@ -39,6 +39,7 @@ import { DEVELOPER_ACTIONS } from './actions-developer.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
 import { MEMBER_ACTIONS } from './actions-members.ts';
+import { OPERATION_ACTIONS } from './actions-operations.ts';
 import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { TAG_KEY_ACTIONS } from './actions-tag-keys.ts';
 import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
@@ -62,11 +63,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'broadcast.send': a('Message sent', I.updateDevices, 'info'),
   'broadcast.update': a('Message edited', I.edit, 'info'),
   'broadcast.retry': a('Message sent again', I.updateDevices, 'info'),
-  'message_rule.create': a('Message rule created', ENTITY.broadcast.icon, 'success'),
-  'message_rule.update': a('Message rule edited', I.edit, 'info'),
-  'message_rule.pause': a('Message rule paused', Pause, 'warning'),
-  'message_rule.delete': a('Message rule deleted', I.delete, 'danger'),
-  'message_rule.test': a('Message rule tested', I.test, 'info'),
   'audit.export': a('Audit log exported', Download, 'info'),
   'api_key.create': a('API key created', ENTITY.apiKey.icon, 'success'),
   'api_key.revoke': a('API key revoked', ENTITY.apiKey.icon, 'warning'),
@@ -272,6 +268,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   ...TAG_KEY_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,
   ...DEVELOPER_ACTIONS,
+  ...OPERATION_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),
   'bundle.rotate_link': a('Bundle link rotated', I.rotate, 'info'),

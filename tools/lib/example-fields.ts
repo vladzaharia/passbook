@@ -20,6 +20,11 @@ const PNG_1PX =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 const RULES: Rule[] = [
+  // An operation's kind is a dotted name from the registry, a step's state is its own word.
+  [/^operations\./, /(^|\.)kind$/, 'bulk.run'],
+  // A result link is an app path; its ids are plain id words.
+  [/^operations\./, /(^|\.)result\.href$/, '/admin/passes'],
+  [/^operations\./, /(^|\.)result\.ids\.\w+$/, 'northwind'],
   // Scan answers. A tag's passes and a group's members carry a scan reason only when refused (scan/tag-choose.ts,
   // scan/group.ts); the everyday answer admits them.
   [/^scans?\./, /\.tag\.passes\[\d+\]\.reason$/, null],

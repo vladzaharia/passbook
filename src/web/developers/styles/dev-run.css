@@ -31,7 +31,6 @@
 .console-slot {
   /* 45rem, less on a short window: the footer stays on the first screen of a signed-out console. */
   min-block-size: clamp(24rem, calc(100dvh - 27rem), 45rem);
-  margin-top: 24px;
 }
 /* A state card (no sandbox, failed) is not a ticket: no blank min-height under it. */
 .console-slot:has(.pstate) {
@@ -85,8 +84,8 @@
   }
 }
 
-/* ---------- Org chip and the Run budget ---------- */
-/* The slot keeps the chip's width, so the Sign in button turning into the chip moves nothing. */
+/* ---------- The sandbox chip's slot and the Run budget ---------- */
+/* The slot keeps the chip's width, so the Sign in button turning into the chip moves nothing (bench/bench-chip.css draws the chip). */
 [data-island="org-chip"] {
   display: inline-flex;
   justify-content: flex-end;
@@ -94,41 +93,6 @@
 }
 [data-island="org-chip"][hidden] {
   display: none;
-}
-.orgchip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 10px 0 4px;
-  border: 1px solid var(--pk-border-subtle);
-  border-radius: var(--pk-radius-lg);
-  background: var(--pk-surface-raised);
-  color: var(--pk-text-strong);
-  font-weight: 500;
-  font-size: 13px;
-  max-width: 100%;
-}
-.orgchip:hover {
-  text-decoration: none;
-  border-color: var(--pk-border-strong);
-}
-.orgchip-dot {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: var(--pk-accent);
-  color: var(--pk-accent-on);
-  font-size: 12px;
-  font-weight: 600;
-}
-.orgchip-name {
-  max-width: 12ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .budget {
   display: inline-flex;
@@ -157,27 +121,9 @@
   font-size: 12px;
   color: var(--pk-text-muted);
 }
-.orgchip .budget-label {
-  display: none;
-}
-@media (max-width: 1280px) {
-  .orgchip-name {
-    display: none;
-  }
-  [data-island="org-chip"] {
-    min-inline-size: 6rem;
-  }
-}
 @media (max-width: 720px) {
   [data-island="org-chip"] {
     min-inline-size: 0;
-  }
-  .orgchip {
-    padding-right: 6px;
-  }
-  /* The text button (Create sandbox, Sandbox closed) is the sandbox card's job on a phone: it overlapped the search. */
-  [data-island="org-chip"] > .btn {
-    display: none;
   }
 }
 
