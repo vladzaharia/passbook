@@ -12,7 +12,7 @@ import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
 import { depsOf } from './deps.ts';
 import { linksOf } from './detail.ts';
 import { carryEdits, messageKey, without } from './identity-move-carry.ts';
-import { ASK_AGAIN_MS, askGoogle } from './identity-move-copies.ts';
+import { ASK_AGAIN_MS, askGoogle, remindWalletCopy } from './identity-move-copies.ts';
 import { fingerprintOf, recarryState } from './identity-move-recarry.ts';
 import { moveVoidCommit } from './identity-move-repoint.ts';
 import { gone, revokeReplacement, SYSTEM } from './identity-move-revoke.ts';
@@ -221,6 +221,11 @@ export async function voidDue(
     const held = await heldReason(db, row, asked === 'empty' ? ['google'] : []);
     if (held !== null) {
       if (fresh.remind_at !== null && now >= fresh.remind_at) {
+        // The reminder asks the holder to save the new copy; a mail that fails is tried again tomorrow.
+        if ((await remindWalletCopy(ctx, fresh, held)) === 'retry') {
+          await setWaitReason(db, row.id, held, now, now + DAY_MS);
+          return 'waiting';
+        }
         await setState(db, row.id, ['registered'], { state: 'kept_both', reason: held }, now);
         ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: held });
         return 'kept';

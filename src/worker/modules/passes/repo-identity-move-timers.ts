@@ -124,6 +124,7 @@ export async function claimVoid(
   /** Providers Google was asked about and said nobody has the copy. */
   cleared: readonly string[] = [],
 ): Promise<boolean> {
+  // The device check is for wallet-armed rows only: an Apple-armed row already has the replacement on a device that held the old pass, and arm-now is the admin's override.
   const { changes } = await run(
     db,
     `UPDATE pass_moves SET claim_until = ?, updated_at = ?, reason = NULL
@@ -272,5 +273,33 @@ export async function setWaitReason(
     db,
     `UPDATE pass_moves SET reason = ?, updated_at = ?${later} WHERE id = ? AND state = 'registered'`,
     retryAt === null ? [reason, now, id] : [reason, now, retryAt, id],
+  );
+}
+
+/** Takes the one reminder of a row that waits on a wallet copy; false when it was already taken. */
+export async function claimWalletReminder(
+  db: D1Database,
+  id: string,
+  now: number,
+): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE pass_moves SET reminded_at = ?, updated_at = ?
+     WHERE id = ? AND state = 'registered' AND reminded_at IS NULL`,
+    [now, now, id],
+  );
+  return changes === 1;
+}
+
+/** The wallet reminder did not go out: the row may take it again. */
+export async function unclaimWalletReminder(
+  db: D1Database,
+  id: string,
+  now: number,
+): Promise<void> {
+  await run(
+    db,
+    `UPDATE pass_moves SET reminded_at = NULL, updated_at = ? WHERE id = ? AND state = 'registered'`,
+    [now, id],
   );
 }

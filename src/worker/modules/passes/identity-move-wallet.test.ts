@@ -463,6 +463,61 @@ describe('W1: a lost save callback is not proof the copy is unsaved', () => {
   });
 });
 
+describe('the 30-day reminder of a move waiting on a wallet copy', () => {
+  const sentTo = (email: string | null) =>
+    kit.mailer.sent.filter((m) => m.to === email && /Save it in/.test(m.text ?? ''));
+
+  it.each([
+    [['google'], 'Google Wallet'],
+    [['samsung'], 'Samsung Wallet'],
+    [['google', 'samsung'], 'Google Wallet and Samsung Wallet'],
+  ] as [Provider[], string][])(
+    'names the wallet of %j and goes once, then the row ends kept_both',
+    async (providers, names) => {
+      const { old, next } = await moved(providers);
+      for (const p of providers) await save(old, p);
+      await completeMove(next);
+      expect(sentTo(next.holderEmail)).toHaveLength(0);
+      kit.clock.advance(35 * DAY);
+      await sweep();
+      const mails = sentTo(next.holderEmail);
+      expect(mails).toHaveLength(1);
+      expect(mails[0]?.text).toContain(`Save it in ${names}`);
+      expect(mails[0]?.text).toContain('/p/');
+      expect((await moveOf(kit, old.id)).state).toBe('kept_both');
+      kit.clock.advance(40 * DAY);
+      await sweep();
+      expect(sentTo(next.holderEmail)).toHaveLength(1);
+    },
+  );
+
+  it('is not sent when the holder saved the new copy in time', async () => {
+    const { old, next } = await moved(['google']);
+    await save(old, 'google');
+    await completeMove(next);
+    await save(next, 'google');
+    kit.clock.advance(35 * DAY);
+    await sweep();
+    expect(sentTo(next.holderEmail)).toHaveLength(0);
+    expect((await moveOf(kit, old.id)).state).toBe('voided');
+  });
+
+  it('is tried again tomorrow when the mail fails, and goes once', async () => {
+    const { old, next } = await moved(['samsung']);
+    await completeMove(next);
+    kit.clock.advance(35 * DAY);
+    const send = vi.spyOn(kit.mailer, 'send').mockRejectedValueOnce(new Error('down'));
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:samsung']);
+    expect(sentTo(next.holderEmail)).toHaveLength(0);
+    kit.clock.advance(DAY + HOUR);
+    await sweep();
+    send.mockRestore();
+    expect(sentTo(next.holderEmail)).toHaveLength(1);
+    expect((await moveOf(kit, old.id)).state).toBe('kept_both');
+  });
+});
+
 describe('revocation with copies', () => {
   it('an admin voiding a kept_both old pass revokes the replacement and its copy through the void path', async () => {
     const { org, old, next } = await moved(['samsung']);

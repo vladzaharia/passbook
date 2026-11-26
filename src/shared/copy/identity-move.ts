@@ -6,4 +6,7 @@ export const IDENTITY_MOVE_COPY = {
   /** `org` is null when the organization cannot be read: the sentence then names none. */
   reminderBody: (org: string | null, url: string) =>
     `Your new ${org ? `${org} ` : ''}pass is ready. Add it: ${url}`,
+  /** `wallets` names the wallets whose new pass the holder has not saved, as "Google Wallet and Samsung Wallet". */
+  reminderWalletBody: (org: string | null, url: string, wallets: string) =>
+    `Your new ${org ? `${org} ` : ''}pass is ready. Save it in ${wallets}: ${url}`,
 } as const;
