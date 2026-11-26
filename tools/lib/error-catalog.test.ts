@@ -13,6 +13,7 @@ const COMMON: Record<string, number> = {
   IDEMPOTENCY_KEY_REUSED: 422,
   IDENTITY_NOT_FOUND: 404,
   IDENTITY_RUN_INCOMPLETE: 502,
+  IDP_REFUSED: 409,
   NO_RECIPIENT: 422,
   OPERATION_NOT_RETRYABLE: 404,
   ORG_INACTIVE: 403,
@@ -51,7 +52,7 @@ describe('error catalog statuses', () => {
 
   it('shows a multi-status code with its most common raise site', () => {
     expect(Object.fromEntries(multi.map((c) => [c.code, c.statuses[0]]))).toEqual(COMMON);
-    expect(multi).toHaveLength(26);
+    expect(multi).toHaveLength(27);
   });
 
   it('carries the tied set where raise sites tie', () => {

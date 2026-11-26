@@ -25,6 +25,21 @@ export const subjectsOfUser = async (db: D1Database, userId: string): Promise<st
     )
   ).map((r) => r.subject);
 
+/**
+ * The account a person signed in with: the one used last, since a session records no subject. Null when they have
+ * none, or when two were used at the same moment and nothing says which.
+ */
+export async function signedInSubject(db: D1Database, userId: string): Promise<string | null> {
+  const rows = await all<{ subject: string; last_used_at: number | null }>(
+    db,
+    "SELECT subject, last_used_at FROM auth_identities WHERE provider = 'pocketid' AND user_id = ? ORDER BY last_used_at DESC, subject LIMIT 2",
+    [userId],
+  );
+  if (rows.length === 2 && (rows[0]?.last_used_at ?? 0) === (rows[1]?.last_used_at ?? 0))
+    return null;
+  return rows[0]?.subject ?? null;
+}
+
 export interface MembershipSource {
   org_id: string;
   kind: 'standard' | 'developer';
@@ -159,4 +174,23 @@ export async function liveGroupKeys(db: D1Database, keys: readonly string[]): Pr
     keys,
   );
   return new Set(rows.map((r) => r.key));
+}
+
+/** The user is active and has a live, unrevoked session with the admin role (a demotion in Polaris ID ends it). */
+export async function hasLiveAdminSession(
+  db: D1Database,
+  userId: string,
+  now: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS ok FROM sessions s JOIN users u ON u.id = s.user_id
+       WHERE s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL AND s.amr = 'oidc'
+         AND s.expires_at > ? AND s.idle_expires_at > ? AND json_valid(s.roles)
+         AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin')
+       LIMIT 1`,
+      [userId, now, now],
+    )) !== null
+  );
 }

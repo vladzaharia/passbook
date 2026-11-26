@@ -1,6 +1,6 @@
 import { type Custom, type Registry, type Settings, withRecorded } from './registry.ts';
 import { listGroupRows } from './store-groups.ts';
-import type { WritableRole } from './types.ts';
+import type { Role } from './types.ts';
 
 /**
  * The static registry plus what the binding recorded: role groups it created, custom groups it created and the
@@ -12,9 +12,15 @@ export async function composeRegistry(
   settings: Settings,
 ): Promise<Registry> {
   const rows = await listGroupRows(db);
+  // A protected placement is keyed `<role>:<name>`; a writable role group by its role.
   const roles = rows
     .filter((r) => r.kind === 'role' && r.state === 'live' && r.groupId)
-    .map((r) => ({ role: r.key as WritableRole, id: r.groupId as string, name: r.name }));
+    .map((r) => ({
+      role: r.key.split(':')[0] as Role,
+      id: r.groupId as string,
+      name: r.name,
+      protected: r.key.includes(':'),
+    }));
   const custom: Custom[] = [];
   for (const r of rows) {
     if (!r.groupId || (r.state !== 'live' && r.state !== 'deleting')) continue;

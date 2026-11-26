@@ -1,8 +1,12 @@
+import { ConflictError } from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../../settings/repo.ts';
 import { idpCodeOf } from '../errors.ts';
 import { markDirty } from '../repo-dirty.ts';
 import type { IdpRpc } from '../types.ts';
+import { acceptPlatformSubject, grantPlatformGroups } from './platform-accept.ts';
+import { platformInviteOf } from './platform-resolve.ts';
+import { platformById } from './repo-platform.ts';
 import { setupsOf } from './repo-resolve.ts';
 import {
   type Cursor,
@@ -39,6 +43,25 @@ export async function dueSweeps(ctx: ServiceContext, limit: number): Promise<Due
   };
 }
 
+/** A platform invitation still open whose token proved the invited address: accepted here, unless it needs a sign-in. */
+async function acceptSweptPlatform(
+  ctx: ServiceContext,
+  invitationId: string,
+  subject: string,
+): Promise<void> {
+  const row = await platformById(ctx.env.DB, invitationId);
+  const invite = row ? platformInviteOf(row, ctx.clock.now()) : null;
+  if (invite?.state !== 'pending' || invite.developer) return;
+  try {
+    await grantPlatformGroups(ctx, invite, subject);
+    await acceptPlatformSubject(ctx, invite, subject, null);
+  } catch (error) {
+    // A lost race (revoked or accepted meanwhile) settles nothing here; anything else stops the run like a binding failure.
+    if (!(error instanceof ConflictError)) throw error;
+    ctx.log.warn('invitation.sweep_failed', { code: 'INVITATION_CONFLICT', what: 'platform' });
+  }
+}
+
 /** A definite refusal skips the item; anything else stops the run, and the next one starts at the same item. */
 function stopsRun(ctx: ServiceContext, error: unknown, what: string): boolean {
   const code = idpCodeOf(error);
@@ -51,6 +74,8 @@ function stopsRun(ctx: ServiceContext, error: unknown, what: string): boolean {
  * as ours, so marking each dirty lets the drain take back what the token gave: the desired state holds no reason for
  * an account nobody accepted, and keeps the groups of whoever has a membership or sponsorship.
  * - A token that expired for another address than the invitation's: that account can never accept; settled at once.
+ *   A platform invitation's token that expired for the invited address finishes the invitation (no sign-in is
+ *   needed without developer access), so a person who created their Polaris ID and never pressed Done still joins.
  * - An invitation that ended (revoked, accepted, or past its window) and whose last token expired: every account its
  *   tokens made, so a stranger's token used after the real invitee accepted is found too.
  * Repeating either for the same item finds the same accounts and changes nothing.
@@ -65,6 +90,8 @@ export async function sweepSetups(
     try {
       const proof = await rpc.proveSignup([token.token_id], { email: token.email });
       if (proof?.emailMatch === 'mismatch') await markDirty(db, proof.subject);
+      if (proof?.emailMatch === 'match' && token.kind === 'platform')
+        await acceptSweptPlatform(ctx, token.invitation_id, proof.subject);
     } catch (error) {
       if (stopsRun(ctx, error, 'token')) break;
     }

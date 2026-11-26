@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import type { z } from 'zod';
 import type { SignInMethodSchema } from '@/shared/contracts/users.ts';
+import { IDP_STATUS } from './status-idp.ts';
 
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'accent';
 
@@ -253,6 +254,7 @@ export const STATUS_VOCAB = {
   ...HOLDER_STATUS,
   ...ORIGIN_STATUS,
   ...ROLE_STATUS,
+  ...IDP_STATUS,
   ...RUN_STATUS,
   ...BROADCAST_STATUS,
   ...MARKER_STATUS,

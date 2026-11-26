@@ -1,5 +1,5 @@
 import { classify } from './classify.ts';
-import { desiredState } from './desired.ts';
+import { desiredState, isPlatformAdmin } from './desired.ts';
 import { holdOrReport } from './drain.ts';
 import { closeDrift, endSessions, noteDrift, type Who } from './effects.ts';
 import { idpCodeOf } from './errors.ts';
@@ -36,8 +36,6 @@ export interface ReconcileReport {
   verified: number;
   capped: boolean;
 }
-
-const isAdminRoles = (lastRoles: string): boolean => lastRoles.includes('"admin"');
 
 interface Queued {
   target: Target;
@@ -166,7 +164,7 @@ export async function reconcile(
         await note(m.subject, target, 'unknown_member', true);
         continue;
       }
-      if (isAdminRoles(identity.last_roles)) continue;
+      if (isPlatformAdmin(identity.last_roles)) continue;
       observe(m.subject, target, m.grant ? 'passbook' : 'external');
       if (m.disabled && identity.status === 'active') {
         const fresh = await note(m.subject, target, 'disabled_in_idp', true);
@@ -187,7 +185,8 @@ export async function reconcile(
   for (const e of snapshot.ended) {
     const key = `${e.subject}|${e.role}`;
     if (held.has(key) || admins.has(e.subject)) continue;
-    if (isAdminRoles(identities.get(e.subject)?.last_roles ?? '')) continue;
+    const gone = identities.get(e.subject);
+    if (gone && isPlatformAdmin(gone.last_roles)) continue;
     if (over('ended')) break;
     held.add(key);
     await env.renew();

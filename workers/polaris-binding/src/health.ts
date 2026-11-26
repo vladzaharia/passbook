@@ -1,6 +1,7 @@
 import type { Call } from './call.ts';
 import { keyKind } from './claims.ts';
 import { assertNotFrozen, isFrozen } from './freeze.ts';
+import { aliasIds } from './group-find.ts';
 import { composeRegistry, withoutBlocked } from './group-state.ts';
 import { readTargets, recordAdoptedNames, settlePending } from './health-groups.ts';
 import { alert, budgetUse, logRefusal, type Meta, meta } from './ledger.ts';
@@ -37,6 +38,7 @@ type Probe = Omit<HealthCore, 'checkedAt'>;
 
 /** Does the PassBook client allow exactly the registry groups? Anything else is `client_open`, a warning. */
 async function clientWarnings(env: BindingEnv, r: Routes, registry: Registry, req: Req) {
+  const aliases = await aliasIds(r, req, registry.aliases);
   const res = await req('GET', r.client(env.PASSBOOK_CLIENT_ID));
   if (res.status === 404) return ['client_not_found'];
   if (!ok(res)) throw failure(res);
@@ -53,7 +55,12 @@ async function clientWarnings(env: BindingEnv, r: Routes, registry: Registry, re
     allowed.every(
       (id) =>
         typeof id === 'string' &&
-        registry.ids.concat(registry.custom.map((c) => c.id)).includes(id),
+        registry.ids
+          .concat(
+            registry.custom.map((c) => c.id),
+            aliases,
+          )
+          .includes(id),
     );
   const out = exact ? [] : ['client_open'];
   // A custom group on the PassBook client would let its members sign in.
@@ -111,10 +118,18 @@ async function probe(
   const cfg = settings_(config.body);
   const warnings = await clientWarnings(env, r, registry, req);
   for (const u of registry.unplaced) warnings.push(`role_unplaced:${u.role}`);
+  // A protected role is unplaced while none of its names has an id. Admin unplaced stops every write.
+  const placedRoles = new Set(registry.entries.map((e) => e.role));
+  const unplacedProtected = [
+    ...new Set(registry.unplacedProtected.map((u) => u.role).filter((r) => !placedRoles.has(r))),
+  ];
+  for (const role of unplacedProtected)
+    if (role !== 'platform_admin') warnings.push(`role_unplaced:${role}`);
   if (defaultClaimsManaged(cfg.signupDefaultCustomClaims, settings.claimKeys))
     warnings.push('default_claims_managed');
   return {
     unsafe: [
+      ...(unplacedProtected.includes('platform_admin') ? ['role_unplaced:platform_admin'] : []),
       ...configReasons(cfg, live),
       // Without the key user's id the binding cannot refuse to edit it.
       ...(keySubject ? [] : ['key_user_unknown']),
@@ -212,6 +227,44 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
     };
   }
 
+  /**
+   * The gate of the seven setup writes: not frozen, the deployment's own settings parse, and no recorded group
+   * has been renamed or deleted. Other Polaris ID configuration reasons do not block: these writes only tighten
+   * PassBook's own client, and they must run before the platform admin group is placed, which is the one thing
+   * that keeps every other write refused.
+   */
+  async function requireSetup(
+    m: Meta,
+    fresh = false,
+  ): Promise<{ registry: Registry; settings: Settings }> {
+    await assertNotFrozen(db, m, deps.now());
+    if (own.reasons.length || !base || !settings) {
+      await logRefusal(db, m, deps.now(), 'IDP_UNSAFE_CONFIG');
+      throw new IdpError(
+        'IDP_UNSAFE_CONFIG',
+        `Unsafe binding settings: ${own.reasons.join(', ')}.`,
+      );
+    }
+    const registry = await compose();
+    // A recorded group whose live name changed (or that is gone) is no longer the group the record meant: the
+    // client would be allowed, or locked to, a stranger's group. Other reasons do not block setup. With no
+    // group recorded yet there is nothing to compare, so the probe is not spent.
+    const stale = registry.entries.length
+      ? (await currentHealth(fresh)).unsafe.filter((x) =>
+          /^group_(name_mismatch|not_found):/.test(x),
+        )
+      : [];
+    if (stale.length) {
+      await logRefusal(db, m, deps.now(), 'IDP_UNSAFE_CONFIG');
+      alert('error', 'binding.unsafe_config', { method: m.method, reasons: stale });
+      throw new IdpError(
+        'IDP_UNSAFE_CONFIG',
+        `Unsafe Polaris ID configuration: ${stale.join(', ')}.`,
+      );
+    }
+    return { registry, settings };
+  }
+
   /** The static registry when the settings parse, so a request can be refused before any Polaris ID read. */
   const peek = (): Registry | null => base;
 
@@ -233,12 +286,13 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
       ...core,
       ok: h.unsafe.length === 0 && !frozen,
       layout: env.POCKET_ID_API,
+      transport: deps.transport ?? 'https',
       mode: env.WRITE_MODE === 'live' ? 'live' : 'dry_run',
       frozen,
       budget: await budgetUse(db, deps.now()),
     };
   }
 
-  return { requireWrite, readable, peek, health };
+  return { requireWrite, requireSetup, readable, peek, health };
 }
 export type Gate = ReturnType<typeof createGate>;

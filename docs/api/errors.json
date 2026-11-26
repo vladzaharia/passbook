@@ -1763,6 +1763,15 @@
       ]
     },
     {
+      "code": "GROUP_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "HOLDER_CHANGED",
       "statuses": [
         409
@@ -1891,6 +1900,7 @@
       ],
       "modules": [
         "delivery",
+        "idp",
         "operations",
         "passes",
         "platform",
@@ -2163,9 +2173,63 @@
       ]
     },
     {
+      "code": "IDP_ADMIN_ENDED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_APPLY_FAILED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_CLOSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_RETRIPPED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_BUDGET",
       "statuses": [
         429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BUDGET_LOW",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_CLIENT",
+      "statuses": [
+        409
       ],
       "modules": [
         "idp"
@@ -2190,6 +2254,15 @@
       ]
     },
     {
+      "code": "IDP_DRY_RUN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -2208,7 +2281,34 @@
       ]
     },
     {
+      "code": "IDP_GROUP_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_HOLD_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_MEMBER_EXISTS",
       "statuses": [
         409
       ],
@@ -2226,7 +2326,52 @@
       ]
     },
     {
+      "code": "IDP_NOT_APPLIED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_EXTERNAL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_HELD",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_READY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_WANTED",
       "statuses": [
         409
       ],
@@ -2244,9 +2389,73 @@
       ]
     },
     {
+      "code": "IDP_OFFBOARD_INCOMPLETE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_PLATFORM_ADMIN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_REFUSED",
       "statuses": [
+        409,
         403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_ORG_REFUSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SCIM_FOREIGN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SCIM_MISSING",
+      "statuses": [
+        404
       ],
       "modules": [
         "idp"
@@ -2258,7 +2467,17 @@
         403
       ],
       "modules": [
+        "idp",
         "platform"
+      ]
+    },
+    {
+      "code": "IDP_SYNC_BUSY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -2653,6 +2872,15 @@
       ]
     },
     {
+      "code": "INVITATION_EMAIL_UNVERIFIED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "INVITATION_INVALID",
       "statuses": [
         400
@@ -2660,6 +2888,15 @@
       "modules": [
         "idp",
         "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_NOT_STARTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -2841,6 +3078,7 @@
       ],
       "modules": [
         "dev-access",
+        "idp",
         "orgs"
       ]
     },
@@ -2952,6 +3190,15 @@
       ],
       "modules": [
         "orgs"
+      ]
+    },
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -3258,7 +3505,8 @@
         409
       ],
       "modules": [
-        "developer"
+        "developer",
+        "idp"
       ]
     },
     {
@@ -3870,6 +4118,24 @@
       ]
     },
     {
+      "code": "PLATFORM_INVITE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "PLATFORM_INVITE_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "PRESET_MOVING",
       "statuses": [
         409
@@ -4284,6 +4550,7 @@
         404
       ],
       "modules": [
+        "idp",
         "message-rules"
       ]
     },

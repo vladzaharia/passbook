@@ -87,7 +87,7 @@ const PUBLIC = [
   'POST /auth/magic/request',
   'POST /auth/magic/resend',
   'POST /hooks/connections/:id',
-  // Polaris ID's SCIM push: a bearer token (SCIM_BEARER_TOKEN, constant-time compare) is the credential (modules/idp/scim-auth.ts).
+  // Polaris ID's SCIM push: a bearer token (a hashed idp_scim_tokens row, or SCIM_BEARER_TOKEN while none is active; constant-time compare) is the credential (modules/idp/scim-auth.ts).
   'DELETE /scim/v2/Groups/:id',
   'DELETE /scim/v2/Users/:id',
   'GET /scim/v2/Groups',

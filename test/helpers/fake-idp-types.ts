@@ -6,6 +6,7 @@ import type {
   Target,
 } from '../../src/worker/modules/idp/types.ts';
 import type { FakeAccount, FakeGroup } from './fake-idp-groups.ts';
+import type { FakeSetup } from './fake-idp-setup.ts';
 
 export interface FakeIdp extends IdpRpc {
   /** The `IDP` binding for a test env. */
@@ -18,11 +19,20 @@ export interface FakeIdp extends IdpRpc {
   /** Role groups (seeded: console, developer), custom and adopted groups, by role or key. */
   groupStore: Map<string, FakeGroup>;
   accounts: Map<string, FakeAccount>;
+  /**
+   * Whether the PassBook client lets the account sign in: it is group-restricted, so the account must hold a PassBook
+   * role group (design-1 section 2.3). A custom group does not count.
+   */
+  canSignIn(subject: string): boolean;
+  /** PassBook's client and SCIM connection: seed it, then read what the setup methods changed. */
+  setup: FakeSetup;
   /** Method names called, in order. */
   log: string[];
   /** Writes the binding would have sent to Polaris ID. Dry runs and refusals add none. */
   writes: number;
   frozen: boolean;
+  /** The reason the last freeze call carried (the binding takes a code, never free text). */
+  freezeReason: string | null;
   mode: 'dry_run' | 'live';
   /** Makes the next call to `method` (or any call with `*`) fail as the binding does: `CODE: text`. */
   failNext(code: string, method?: string): void;

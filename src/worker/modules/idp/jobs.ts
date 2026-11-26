@@ -34,7 +34,11 @@ type Gate = Pick<RunEnv, 'dry' | 'blocked'>;
  * A dry run records drift rows and nothing else: no observed state, error codes, hold, session change, sandbox
  * close, sponsorship settle, claim sweep or reconcile mark. Its marks stay, due again after `DRY_DEFER_MS`.
  */
-async function openGate(ctx: ServiceContext, rpc: IdpRpc, job: string): Promise<Gate | null> {
+export async function openGate(
+  ctx: ServiceContext,
+  rpc: IdpRpc,
+  job: string,
+): Promise<Gate | null> {
   try {
     const health = await rpc.health();
     if (health.frozen || !health.ok || health.unsafe.length > 0) {

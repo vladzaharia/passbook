@@ -14,6 +14,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { developerHome } from './home.ts';
+import { pendingInviteOrgs } from './repo-invites.ts';
 import { reopenOwnSandbox } from './reset.ts';
 import { developerLogRoutes } from './routes-logs.ts';
 import { developerSandboxRoutes, STEP_UP_AUTH } from './routes-sandbox.ts';
@@ -43,9 +44,10 @@ register(
     c.header('cache-control', 'no-store');
     if (auth.amr === 'magic_link')
       return c.json({ access: 'email' as const, signInUrl: '/auth/oidc/start?next=/developers' });
-    return c.json({
-      access: hasDeveloperAccess(auth.roles) ? ('yes' as const) : ('none' as const),
-    });
+    if (hasDeveloperAccess(auth.roles)) return c.json({ access: 'yes' as const });
+    const ctx = serviceContext(c);
+    const invitedBy = await pendingInviteOrgs(ctx.env.DB, auth.userId, ctx.clock.now());
+    return c.json({ access: 'none' as const, ...(invitedBy.length ? { invitedBy } : {}) });
   },
 );
 

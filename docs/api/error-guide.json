@@ -3853,8 +3853,26 @@
   },
   "IDP_REFUSED": {
     "title": "Polaris ID refused the change",
-    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID.",
+    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID. Answers 409 when a role or adopted group is deleted, or an account cannot be added to a group here; 403 when Polaris ID itself refuses.",
     "fix": "Ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_CLIENT": {
+    "title": "Polaris ID app needs a change",
+    "when": "PassBook's app in Polaris ID is missing, is not PassBook's, has callbacks that are not PassBook's, is still open to everyone, or would lock admins out of PassBook if restricted.",
+    "fix": "Open setup and follow the reason it shows, or ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_SCIM_FOREIGN": {
+    "title": "User sync points elsewhere",
+    "when": "The owner pointed Polaris ID's user sync at a different address, so PassBook will not change or push to it.",
+    "fix": "Ask the PassBook owner to point it back at PassBook.",
+    "retryable": false
+  },
+  "IDP_SCIM_MISSING": {
+    "title": "User sync not set up",
+    "when": "Polaris ID has no user sync connection for PassBook yet, so there is nothing to push or sync.",
+    "fix": "Run setup to create the connection, then try again.",
     "retryable": false
   },
   "IDP_IN_USE": {
@@ -3879,6 +3897,36 @@
     "title": "Admin roles need the console",
     "when": "A key invited a developer with, or removed one who holds, an org or integration admin role.",
     "fix": "Do it from the console with a recent sign-in.",
+    "retryable": false
+  },
+  "IDP_DRY_RUN": {
+    "title": "Polaris ID changes are in dry run",
+    "when": "The binding to Polaris ID only records what it would change, so a platform invitation cannot be created or sent.",
+    "fix": "Ask the owner to turn dry run off, then try again.",
+    "retryable": false
+  },
+  "INVITATION_EMAIL_UNVERIFIED": {
+    "title": "Email not confirmed",
+    "when": "The Polaris ID made from the invitation has not confirmed the invited address.",
+    "fix": "Confirm the email in Polaris ID, then try again.",
+    "retryable": true
+  },
+  "INVITATION_NOT_STARTED": {
+    "title": "No Polaris ID made yet",
+    "when": "Nobody has finished creating a Polaris ID from this invitation's link.",
+    "fix": "Create the Polaris ID from the invitation page, then confirm.",
+    "retryable": true
+  },
+  "PLATFORM_INVITE_CONFLICT": {
+    "title": "Invitation has ended",
+    "when": "The platform invitation was accepted or revoked already.",
+    "fix": "Send a new invitation if the person still needs access.",
+    "retryable": false
+  },
+  "PLATFORM_INVITE_PENDING": {
+    "title": "Invitation already pending",
+    "when": "This address already has an open platform invitation.",
+    "fix": "Revoke it or use Resend, then invite again.",
     "retryable": false
   }
 }

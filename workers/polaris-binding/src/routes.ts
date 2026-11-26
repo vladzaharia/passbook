@@ -1,5 +1,14 @@
-import { assertId, assertSubject } from './policy.ts';
+import { assertClientId, assertId, assertSubject, refuse } from './policy.ts';
+import { clientIdOk, encodeClientId } from './registry.ts';
 import type { Layout } from './types.ts';
+
+const escapeRegExp = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** A SCIM provider as `readProvider` returns it: its id and the path it was read from. */
+export interface ScimRef {
+  id: string;
+  from: string;
+}
 
 /** Polaris ID routes per layout. Ids are validated here, so no caller text becomes path syntax. */
 export function routes(layout: Layout) {
@@ -7,6 +16,12 @@ export function routes(layout: Layout) {
   const base = admin ? '/api/admin' : '/api';
   const id = (kind: string, v: string) => encodeURIComponent(assertId(kind, v));
   const sub = (v: string) => encodeURIComponent(assertSubject(v));
+  const scimOf = (cid: string) =>
+    `${base}/oidc/clients/${assertClientId(cid)}/scim-service-provider`;
+  const scimId = (p: ScimRef, cid: string) => {
+    if (p?.from !== scimOf(cid)) refuse("The SCIM provider is not the client's own.");
+    return id('provider id', p.id);
+  };
   return {
     groupSearch: (name: string, page = 1) =>
       `${base}/user-groups?search=${encodeURIComponent(name)}&pagination[limit]=100${page > 1 ? `&pagination[page]=${page}` : ''}`,
@@ -20,7 +35,15 @@ export function routes(layout: Layout) {
     group: (gid: string) => `${base}/user-groups/${id('group id', gid)}`,
     config: admin ? '/api/admin/application-configuration' : '/api/application-configuration/all',
     apiKeys: '/api/api-keys',
-    client: (cid: string) => `${base}/oidc/clients/${id('client id', cid)}`,
+    client: (cid: string) => `${base}/oidc/clients/${assertClientId(cid)}`,
+    /** PUT to the client path writes its settings; the allowed groups and the SCIM connection hang off it. */
+    clientGroups: (cid: string) =>
+      `${base}/oidc/clients/${assertClientId(cid)}/allowed-user-groups`,
+    scimOf,
+    scimCreate: `${base}/scim/service-provider`,
+    /** Only the provider read from the client's own SCIM route: an id from anywhere else is refused. */
+    scim: (p: ScimRef, cid: string) => `${base}/scim/service-provider/${scimId(p, cid)}`,
+    scimSync: (p: ScimRef, cid: string) => `${base}/scim/service-provider/${scimId(p, cid)}/sync`,
     signupTokens: `${base}/signup-tokens`,
     signupToken: (tid: string) => `${base}/signup-tokens/${id('token id', tid)}`,
     auditLogs: (page: number) =>
@@ -39,11 +62,17 @@ export type Routes = ReturnType<typeof routes>;
 /**
  * Every request the binding may send, as method and path pattern. `pocketRequest` refuses anything else, so
  * Never allowed: POST or DELETE of users, one-time access tokens, `PUT user-groups/{id}/users` (a whole-group
- * replace), `PUT oidc/clients/{id}/allowed-user-groups`, any OIDC client write, `GET custom-claims/suggestions`
- * (every app's keys), config writes and API key writes. The group and claim writes that are allowed are called
- * only through group-admin.ts and api-claims.ts. A test lists what the RPCs actually send.
+ * replace), `POST oidc/clients`, `DELETE oidc/clients/*`, client secrets, client refresh, any client but the
+ * configured one, `DELETE scim/service-provider/*`, `GET custom-claims/suggestions` (every app's keys), config
+ * writes and API key writes. The group, claim, client and SCIM writes that are allowed are called only through
+ * group-admin.ts, api-claims.ts and setup-*.ts. A test lists what the RPCs actually send.
+ * The client path is the configured client's exact encoded literal. `~` is allowed there and nowhere else:
+ * Polaris ID decodes `~` in every `:id`, so `~bWU` on a user route would reach it as `me`.
  */
-export function allowedRoutes(layout: Layout): { method: string; path: RegExp }[] {
+export function allowedRoutes(
+  layout: Layout,
+  clientId: string,
+): { method: string; path: RegExp }[] {
   const base = layout === 'admin' ? '/api/admin' : '/api';
   const id = '[A-Za-z0-9_-]{1,64}';
   const config =
@@ -63,7 +92,24 @@ export function allowedRoutes(layout: Layout): { method: string; path: RegExp }[
     rule('PUT', `${base}/custom-claims/user-group/${id}`),
     rule('GET', config),
     rule('GET', '/api/api-keys'),
-    rule('GET', `${base}/oidc/clients/${id}`),
+    ...(clientIdOk(clientId)
+      ? [
+          ...['GET', 'PUT'].map((m) =>
+            rule(m, `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}`),
+          ),
+          rule(
+            'PUT',
+            `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}/allowed-user-groups`,
+          ),
+          rule(
+            'GET',
+            `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}/scim-service-provider`,
+          ),
+          rule('POST', `${base}/scim/service-provider`),
+          rule('PUT', `${base}/scim/service-provider/${id}`),
+          rule('POST', `${base}/scim/service-provider/${id}/sync`),
+        ]
+      : []),
     rule('GET', `${base}/users/me`),
     rule('GET', `${base}/users`),
     rule('GET', `${base}/users/${id}`),

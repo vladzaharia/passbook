@@ -22,6 +22,10 @@ export const LIMITS: Record<Bucket, { perMinute: number; perDay: number }> = {
   apply_add_group: { perMinute: 10, perDay: 100 },
   apply_add_group_system: { perMinute: 30, perDay: 500 },
   snapshot_group: { perMinute: 120, perDay: 2000 },
+  setup_read: { perMinute: 6, perDay: 200 },
+  client_write: { perMinute: 3, perDay: 9 },
+  scim_write: { perMinute: 1, perDay: 4 },
+  scim_sync: { perMinute: 1, perDay: 10 },
 };
 const REFUSALS_PER_MINUTE = 30;
 const MINUTE = 60_000;

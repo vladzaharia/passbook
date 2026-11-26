@@ -30,7 +30,7 @@ export function MembersPage() {
             inviteOpen={inviteOpen}
             onInviteOpenChange={setInviteOpen}
           />
-          <MembersDevelopersSlot orgId={membership.orgId} />
+          {personal ? null : <MembersDevelopersSlot orgId={membership.orgId} />}
         </div>
       ) : (
         <SkeletonDetail label="Loading members" />
