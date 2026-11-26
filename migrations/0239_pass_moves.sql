@@ -94,7 +94,7 @@ WHEN NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id
   OR (NEW.pass_id IS OLD.pass_id AND NEW.code_pass_id IS NOT OLD.code_pass_id)
 BEGIN SELECT RAISE(ABORT, 'pass_print_key'); END;
 
--- The replacement of a move joins the webhook feed: the trigger of 0109 with one more kind.
+-- The replacement of a move joins the webhook feed: the trigger of 0238 with one more kind.
 DROP TRIGGER pass_events_feed;
 CREATE TRIGGER pass_events_feed AFTER INSERT ON pass_events
 WHEN NEW.kind IN ('pass.issued', 'pass.updated', 'pass.voided', 'pass.unvoided', 'pass.removed',
@@ -119,7 +119,10 @@ BEGIN
     NEW.kind, NEW.device,
     CASE WHEN NEW.kind IN ('device.registered', 'device.unregistered')
       THEN (SELECT count(*) FROM registrations r WHERE r.pass_id = p.id
-        AND r.credential_generation = p.credential_generation) END,
+        AND r.credential_generation = p.credential_generation)
+        -- Simulated devices count in Test only, Live counts real registrations (0238).
+        + CASE WHEN p.mode = 'test' THEN (SELECT count(*) FROM pass_simulated_devices s
+          WHERE s.pass_id = p.id AND s.removed_at IS NULL) ELSE 0 END END,
     NEW.actor_type, NEW.data, NEW.at
   FROM passes p JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
   WHERE p.id = NEW.pass_id AND p.org_id = NEW.org_id AND p.mode = NEW.mode

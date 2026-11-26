@@ -59755,6 +59755,7 @@
                     "pass.unvoided",
                     "pass.removed",
                     "pass.restored",
+                    "pass.replaced",
                     "pass.installed",
                     "pass.uninstalled",
                     "pass.scanned",
@@ -139235,13 +139236,15 @@
           "FORBIDDEN",
           "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -139649,13 +139652,15 @@
           "FORBIDDEN",
           "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
