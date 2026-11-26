@@ -130119,6 +130119,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "key": "crew",
+                      "kind": "custom",
+                      "name": "passbook_g_crew",
+                      "friendlyName": "Front desk staff",
+                      "members": 4,
+                      "claims": [
+                        "passbook_tier"
+                      ],
+                      "otherClients": 1,
+                      "flags": [],
+                      "rules": 1,
+                      "manual": 2
+                    }
+                  ],
+                  "nextCursor": null
                 }
               }
             }
@@ -130170,6 +130189,18 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformGroupsCreateParams"
+              },
+              "example": {
+                "key": "crew",
+                "friendlyName": "Front desk staff",
+                "rules": [
+                  {
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "orgRoles": [
+                      "org_admin"
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -130181,6 +130212,10 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsCreateResponse"
+                },
+                "example": {
+                  "key": "crew",
+                  "dryRun": false
                 }
               }
             }
@@ -130244,6 +130279,9 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformGroupsEnsureParams"
+              },
+              "example": {
+                "role": "support"
               }
             }
           }
@@ -130255,6 +130293,10 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsEnsureResponse"
+                },
+                "example": {
+                  "key": "support",
+                  "dryRun": false
                 }
               }
             }
@@ -130324,6 +130366,9 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformGroupsUpdateParams"
+              },
+              "example": {
+                "friendlyName": "Front desk team"
               }
             }
           }
@@ -130335,6 +130380,10 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsUpdateResponse"
+                },
+                "example": {
+                  "key": "crew",
+                  "dryRun": false
                 }
               }
             }
@@ -130405,6 +130454,10 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsDeleteResponse"
+                },
+                "example": {
+                  "key": "crew",
+                  "dryRun": false
                 }
               }
             }
@@ -130486,6 +130539,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsRulesListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "orgRoles": [
+                        "org_admin"
+                      ],
+                      "createdAt": 1764000000000
+                    }
+                  ],
+                  "nextCursor": null
                 }
               }
             }
@@ -130545,6 +130611,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformGroupsRulesCreateParams"
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "orgRoles": [
+                  "org_admin"
+                ]
               }
             }
           }
@@ -130556,6 +130628,14 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsRulesCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "orgRoles": [
+                    "org_admin"
+                  ],
+                  "createdAt": 1764000000000
                 }
               }
             }
@@ -130638,6 +130718,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsRulesDeleteResponse"
+                },
+                "example": {
+                  "ok": true
                 }
               }
             }
@@ -130714,6 +130797,18 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsMembersListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+                      "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+                      "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                      "source": "manual",
+                      "createdAt": 1764000000000
+                    }
+                  ],
+                  "nextCursor": null
                 }
               }
             }
@@ -130773,6 +130868,9 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformGroupsMembersCreateParams"
+              },
+              "example": {
+                "userId": "0193a1b2-7c00-7000-8000-0000000000b1"
               }
             }
           }
@@ -130784,6 +130882,13 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsMembersCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+                  "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+                  "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                  "source": "manual",
+                  "createdAt": 1764000000000
                 }
               }
             }
@@ -130871,6 +130976,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformGroupsMembersDeleteResponse"
+                },
+                "example": {
+                  "ok": true
                 }
               }
             }

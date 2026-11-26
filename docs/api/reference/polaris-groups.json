@@ -3,24 +3,24 @@
     "response": {
       "items": [
         {
-          "key": "tier",
-          "kind": "role",
-          "name": "Beta testers",
-          "friendlyName": "Youth coaches",
-          "members": 10,
-          "claims": ["claim"],
-          "otherClients": 29,
-          "flags": ["vip"],
-          "rules": 24,
-          "manual": 13
+          "key": "crew",
+          "kind": "custom",
+          "name": "passbook_g_crew",
+          "friendlyName": "Front desk staff",
+          "members": 4,
+          "claims": ["passbook_tier"],
+          "otherClients": 1,
+          "flags": [],
+          "rules": 1,
+          "manual": 2
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "polaris-groups.postPlatformIdpGroups": {
     "request": {
-      "key": "tier",
+      "key": "crew",
       "friendlyName": "Front desk staff",
       "rules": [
         {
@@ -30,31 +30,31 @@
       ]
     },
     "response": {
-      "key": "tier",
+      "key": "crew",
       "dryRun": false
     }
   },
   "polaris-groups.postPlatformIdpGroupsEnsure": {
     "request": {
-      "role": "console"
+      "role": "support"
     },
     "response": {
-      "key": "tier",
+      "key": "support",
       "dryRun": false
     }
   },
   "polaris-groups.patchPlatformIdpGroupsByKey": {
     "request": {
-      "friendlyName": "Front desk staff"
+      "friendlyName": "Front desk team"
     },
     "response": {
-      "key": "tier",
+      "key": "crew",
       "dryRun": false
     }
   },
   "polaris-groups.deletePlatformIdpGroupsByKey": {
     "response": {
-      "key": "tier",
+      "key": "crew",
       "dryRun": false
     }
   },
@@ -62,13 +62,13 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-c4706c1c9fbf",
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "orgRoles": ["org_admin"],
-          "createdAt": 1794362400000
+          "createdAt": 1764000000000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "polaris-groups.postPlatformIdpGroupsByKeyRules": {
@@ -77,10 +77,10 @@
       "orgRoles": ["org_admin"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-b680a38c0c3c",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgRoles": ["org_admin"],
-      "createdAt": 1794362400000
+      "createdAt": 1764000000000
     }
   },
   "polaris-groups.deletePlatformIdpGroupsByKeyRulesById": {
@@ -92,26 +92,26 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-ebeb96ea8fe8",
-          "subject": "Your Northwind Climbing pass",
-          "userId": "0193a1b2-7c00-7000-8000-000000000011",
+          "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+          "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+          "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "source": "manual",
-          "createdAt": 1794362400000
+          "createdAt": 1764000000000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "polaris-groups.postPlatformIdpGroupsByKeyMembers": {
     "request": {
-      "userId": "0193a1b2-7c00-7000-8000-000000000011"
+      "userId": "0193a1b2-7c00-7000-8000-0000000000b1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-65291c0c71bf",
-      "subject": "Your Northwind Climbing pass",
-      "userId": "0193a1b2-7c00-7000-8000-000000000011",
+      "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+      "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+      "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "source": "manual",
-      "createdAt": 1794362400000
+      "createdAt": 1764000000000
     }
   },
   "polaris-groups.deletePlatformIdpGroupsByKeyMembersById": {

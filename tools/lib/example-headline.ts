@@ -41,6 +41,33 @@ const CLAIMS_VIEW = {
 const CLAIMS_SET = { set: { passbook_tier: { type: 'text', value: 'gold' }, passbook_old: null } };
 const CLAIMS_DONE = { set: ['passbook_tier'], removed: ['passbook_old'], dryRun: false };
 
+const GROUP = {
+  key: 'crew',
+  kind: 'custom',
+  name: 'passbook_g_crew',
+  friendlyName: 'Front desk staff',
+  members: 4,
+  claims: ['passbook_tier'],
+  otherClients: 1,
+  flags: [],
+  rules: 1,
+  manual: 2,
+};
+const GROUP_DONE = { key: 'crew', dryRun: false };
+const RULE = {
+  id: '0193a1b2-7c00-7000-8000-0000000000d1',
+  orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
+  orgRoles: ['org_admin'],
+  createdAt: 1764000000000,
+};
+const MEMBER = {
+  id: '0193a1b2-7c00-7000-8000-4e9c1a7b5d32',
+  subject: 'b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f',
+  userId: '0193a1b2-7c00-7000-8000-0000000000b1',
+  source: 'manual',
+  createdAt: 1764000000000,
+};
+
 /** `<operationId> <request|response>` to its example. */
 export const HEADLINE: Record<string, unknown> = {
   'polaris-claims.getUsersByIdClaims response': CLAIMS_VIEW,
@@ -49,6 +76,30 @@ export const HEADLINE: Record<string, unknown> = {
   'polaris-claims.getPlatformIdpGroupsByKeyClaims response': CLAIMS_VIEW,
   'polaris-claims.patchPlatformIdpGroupsByKeyClaims request': CLAIMS_SET,
   'polaris-claims.patchPlatformIdpGroupsByKeyClaims response': CLAIMS_DONE,
+  'polaris-groups.getPlatformIdpGroups response': { items: [GROUP], nextCursor: null },
+  'polaris-groups.postPlatformIdpGroups request': {
+    key: 'crew',
+    friendlyName: 'Front desk staff',
+    rules: [{ orgId: RULE.orgId, orgRoles: ['org_admin'] }],
+  },
+  'polaris-groups.postPlatformIdpGroups response': GROUP_DONE,
+  'polaris-groups.postPlatformIdpGroupsEnsure request': { role: 'support' },
+  'polaris-groups.postPlatformIdpGroupsEnsure response': { key: 'support', dryRun: false },
+  'polaris-groups.patchPlatformIdpGroupsByKey request': { friendlyName: 'Front desk team' },
+  'polaris-groups.patchPlatformIdpGroupsByKey response': GROUP_DONE,
+  'polaris-groups.deletePlatformIdpGroupsByKey response': GROUP_DONE,
+  'polaris-groups.getPlatformIdpGroupsByKeyRules response': { items: [RULE], nextCursor: null },
+  'polaris-groups.postPlatformIdpGroupsByKeyRules request': {
+    orgId: RULE.orgId,
+    orgRoles: ['org_admin'],
+  },
+  'polaris-groups.postPlatformIdpGroupsByKeyRules response': RULE,
+  'polaris-groups.getPlatformIdpGroupsByKeyMembers response': {
+    items: [MEMBER],
+    nextCursor: null,
+  },
+  'polaris-groups.postPlatformIdpGroupsByKeyMembers request': { userId: MEMBER.userId },
+  'polaris-groups.postPlatformIdpGroupsByKeyMembers response': MEMBER,
   'scan.postScanSignOut request': {
     idempotencyKey: '0193a1b2-7c00-7000-8000-0000000000aa',
     passId: '0193a1b2-7c00-7000-8000-0000000000c1',
