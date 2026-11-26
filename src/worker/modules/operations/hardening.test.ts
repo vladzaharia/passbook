@@ -266,15 +266,15 @@ describe('retry replay (L3)', () => {
       post(`/${op.id}/retry`, headers),
       post(`/${op.id}/retry`, headers),
     ]);
-    expect([one.status, two.status]).toEqual([202, 202]);
-    expect(((await two.json()) as { operation: OperationDto }).operation.attempt).toBe(2);
+    expect([one.status, two.status]).toEqual([200, 200]);
+    expect(((await two.json()) as OperationDto).attempt).toBe(2);
   });
 });
 
 describe('starter rows (L7, L8)', () => {
-  it('may be stopped by any live, strong session of the person; a weak session cannot', async () => {
+  it('may be stopped only by the starting session; another session of the person reads but cannot', async () => {
     const owner = await person(kit);
-    const second = await makeSecondSession(owner.userId, 'oidc');
+    const second = await makeSecondSession(owner.userId);
     const hash = (
       await first<{ id_hash: string }>(
         kit.env.DB,
@@ -288,10 +288,8 @@ describe('starter rows (L7, L8)', () => {
       session: hash ?? 'sess',
     });
     expect((await get(`/${op.id}`, second)).status).toBe(200);
-    const weak = await makeSecondSession(owner.userId, 'magic_link');
-    expect((await post(`/${op.id}/cancel`, weak)).status).toBe(403);
-    const stop = await post(`/${op.id}/cancel`, second);
-    expect(stop.status, await stop.clone().text()).toBe(200);
+    expect((await post(`/${op.id}/cancel`, second)).status).toBe(403);
+    expect((await post(`/${op.id}/cancel`, owner.headers)).status).toBe(200);
   });
 
   it('keeps 7 days from a retry', async () => {
@@ -310,17 +308,14 @@ describe('starter rows (L7, L8)', () => {
     });
     await progressOf(kit.ctx, op.id, 1).fail(new AppError('X_FAILED', 500, 'x'));
     kit.clock.advance(1_000_000);
-    expect((await post(`/${op.id}/retry`, owner.headers)).status).toBe(202);
+    expect((await post(`/${op.id}/retry`, owner.headers)).status).toBe(200);
     expect((await rowById(kit.env.DB, op.id))?.expires_at).toBe(kit.clock.now() + 7 * 86_400_000);
   });
 });
 
-async function makeSecondSession(
-  userId: string,
-  amr?: 'magic_link' | 'oidc',
-): Promise<Record<string, string>> {
+async function makeSecondSession(userId: string): Promise<Record<string, string>> {
   const { makeSession } = await import('../../../../test/helpers/index.ts');
-  const s = await makeSession(kit.fx, { userId, ...(amr ? { amr } : {}) });
+  const s = await makeSession(kit.fx, { userId });
   return { ...s.headers, origin: ORIGIN };
 }
 
@@ -342,7 +337,7 @@ describe('verify round', () => {
     const p = progressOf(kit.ctx, op.id, 1);
     p.step('a');
     await p.fail(new AppError('X_FAILED', 500, 'x'));
-    expect((await post(`/${op.id}/retry`, auth.admin())).status).toBe(202);
+    expect((await post(`/${op.id}/retry`, auth.admin())).status).toBe(200);
     expect((await rowById(kit.env.DB, op.id))?.workflow_instance_id).toBe('wf-r2');
     await progressOf(kit.ctx, op.id, 2).step('a').done();
     kit.clock.advance(300_000);

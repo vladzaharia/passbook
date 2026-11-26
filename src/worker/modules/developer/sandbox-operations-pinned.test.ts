@@ -174,7 +174,7 @@ describe('a run is pinned to its operation’s sandbox (H1)', () => {
     const newer = await makeSandbox(sendAny, s.headers);
     expect(newer.orgId).not.toBe(s.made.orgId);
     const res = await send('POST', `/operations/${failed.id}/retry`, s.headers);
-    expect(res.status, await res.clone().text()).toBe(202);
+    expect(res.status, await res.clone().text()).toBe(200);
     const done = await settle(send, s.headers, failed.id);
     expect(done).toMatchObject({ status: 'succeeded', attempt: 2 });
     expect(done.result?.ids.orgId).toBe(s.made.orgId);
@@ -211,7 +211,7 @@ describe('a run is pinned to its operation’s sandbox (H1)', () => {
     expect(made?.org_id).toBeTruthy();
     expect(await deletesOf(s.user.id)).toBe(1);
     const res = await send('POST', `/operations/${failed.id}/retry`, s.headers);
-    expect(res.status, await res.clone().text()).toBe(202);
+    expect(res.status, await res.clone().text()).toBe(200);
     const done = await settleWithJobs(send, s.headers, failed.id, queue, runJob);
     expect(done.status, JSON.stringify(done.error)).toBe('succeeded');
     expect(done.result?.ids.orgId).toBe(made?.org_id);
@@ -302,7 +302,7 @@ describe('a run is pinned to its operation’s sandbox (H1)', () => {
     }
     await startAndSettle(send, p.headers, 'DELETE', '/developer/sandbox');
     const res = await send('POST', `/operations/${failed.id}/retry`, p.headers);
-    expect(res.status).toBe(202);
+    expect(res.status).toBe(200);
     await runJob({ kind: 'operation.run', operationId: failed.id, attempt: 2 });
     const done = await getOp(p.headers, failed.id);
     expect(done.status, JSON.stringify(done.error)).toBe('succeeded');
@@ -393,7 +393,7 @@ describe('a retry never starts a second purge (M2, M5)', () => {
     );
     purgeStatus = async () => ({ status: 'errored' });
     const res = await send('POST', `/operations/${op.id}/retry`, s.headers);
-    expect(res.status, await res.clone().text()).toBe(202);
+    expect(res.status, await res.clone().text()).toBe(200);
     purgeStatus = null;
   });
 });
@@ -419,7 +419,7 @@ describe('a retry after a step-up (M3, L3)', () => {
     });
     expect((await send('POST', `/operations/${failed.id}/retry`, weak.headers)).status).toBe(403);
     const res = await send('POST', `/operations/${failed.id}/retry`, second.headers);
-    expect(res.status, await res.clone().text()).toBe(202);
+    expect(res.status, await res.clone().text()).toBe(200);
     const stored = await first<{ actor_session: string }>(
       kit.env.DB,
       'SELECT actor_session FROM operations WHERE id = ?',

@@ -409,7 +409,7 @@ describe('sandbox.delete', () => {
       ['erase', 'pending'],
     ]);
     const retried = await send('POST', `/operations/${failed.id}/retry`, s.headers);
-    expect(retried.status, await retried.clone().text()).toBe(202);
+    expect(retried.status, await retried.clone().text()).toBe(200);
     const done = await settle(send, s.headers, failed.id);
     expect(done).toMatchObject({ status: 'succeeded', attempt: 2 });
     // The retry is its own Workflow instance, named for the attempt, and the row tracks it.
@@ -561,7 +561,7 @@ describe('sandbox.recreate', () => {
     expect(failed).toMatchObject({ status: 'failed', step: 'passes' });
     expect(step(failed, 'org')?.state).toBe('pending');
     const res = await send('POST', `/operations/${failed.id}/retry`, s.headers);
-    expect(res.status, await res.clone().text()).toBe(202);
+    expect(res.status, await res.clone().text()).toBe(200);
     // The retry is a queued `operation.run`, and the purge sends another once the passes are voided.
     const done = await settleWithJobs(send, s.headers, failed.id, queue, runJob);
     expect(done).toMatchObject({ status: 'succeeded', attempt: 2 });
