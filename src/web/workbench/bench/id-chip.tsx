@@ -115,6 +115,7 @@ export function IdChip({
         }
       >
         {prefix ? <span className="bench-id-p">{prefix}</span> : null}
+        {prefix ? ' ' : null}
         <span className="bench-id-v">{copied ? BENCH_COPY.id.copied : (text ?? shortId(id))}</span>
       </button>
       {canJump ? (
