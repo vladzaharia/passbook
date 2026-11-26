@@ -873,6 +873,27 @@
     "UNAUTHENTICATED",
     "WORKBENCH_TEST_ONLY"
   ],
+  "connections get /{id}/setup": [
+    "CONNECTION_NOT_FOUND",
+    "CONNECTOR_NOT_FOUND",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "SANDBOX_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "WORKBENCH_TEST_ONLY"
+  ],
+  "connections get /{id}/webhook-arrivals": [
+    "CONNECTION_NOT_FOUND",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "SANDBOX_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "WORKBENCH_TEST_ONLY"
+  ],
   "connections get /{id}/webhook-failures": [
     "CONNECTION_NOT_FOUND",
     "FORBIDDEN",
@@ -1154,6 +1175,7 @@
     "UNSAFE_URL",
     "VALIDATION",
     "WALLET_PROJECTION_UNSUPPORTED",
+    "WEBHOOK_NOT_FOUND",
     "WORKBENCH_TEST_ONLY"
   ],
   "connections post /{id}/probe": [
@@ -1315,6 +1337,17 @@
     "WORKBENCH_TEST_ONLY"
   ],
   "connectors get /": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_REQUIRED",
+    "SANDBOX_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "VALIDATION",
+    "WORKBENCH_TEST_ONLY"
+  ],
+  "connectors get /webhook-push/recipes/{recipe}/setup": [
     "FORBIDDEN",
     "MISSING_SCOPE",
     "NOT_FOUND",
@@ -9166,6 +9199,15 @@
     "WORKBENCH_TEST_ONLY"
   ],
   "webhooks get /": [
+    "FORBIDDEN",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "SANDBOX_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "VALIDATION",
+    "WORKBENCH_TEST_ONLY"
+  ],
+  "webhooks get /setup": [
     "FORBIDDEN",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
