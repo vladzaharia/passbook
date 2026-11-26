@@ -272,9 +272,9 @@ describe('retry replay (L3)', () => {
 });
 
 describe('starter rows (L7, L8)', () => {
-  it('may be stopped only by the starting session; another session of the person reads but cannot', async () => {
+  it('may be stopped by any live, strong session of the person; a weak session cannot', async () => {
     const owner = await person(kit);
-    const second = await makeSecondSession(owner.userId);
+    const second = await makeSecondSession(owner.userId, 'oidc');
     const hash = (
       await first<{ id_hash: string }>(
         kit.env.DB,
@@ -288,8 +288,10 @@ describe('starter rows (L7, L8)', () => {
       session: hash ?? 'sess',
     });
     expect((await get(`/${op.id}`, second)).status).toBe(200);
-    expect((await post(`/${op.id}/cancel`, second)).status).toBe(403);
-    expect((await post(`/${op.id}/cancel`, owner.headers)).status).toBe(200);
+    const weak = await makeSecondSession(owner.userId, 'magic_link');
+    expect((await post(`/${op.id}/cancel`, weak)).status).toBe(403);
+    const stop = await post(`/${op.id}/cancel`, second);
+    expect(stop.status, await stop.clone().text()).toBe(200);
   });
 
   it('keeps 7 days from a retry', async () => {
@@ -313,9 +315,12 @@ describe('starter rows (L7, L8)', () => {
   });
 });
 
-async function makeSecondSession(userId: string): Promise<Record<string, string>> {
+async function makeSecondSession(
+  userId: string,
+  amr?: 'magic_link' | 'oidc',
+): Promise<Record<string, string>> {
   const { makeSession } = await import('../../../../test/helpers/index.ts');
-  const s = await makeSession(kit.fx, { userId });
+  const s = await makeSession(kit.fx, { userId, ...(amr ? { amr } : {}) });
   return { ...s.headers, origin: ORIGIN };
 }
 

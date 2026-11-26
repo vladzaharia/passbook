@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef } from 'react';
+import { Fragment, type KeyboardEvent, type ReactNode, useEffect, useId, useRef } from 'react';
 import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
 import type { StatusTone } from './status-chip.tsx';
 import type { BenchSelection } from './use-selection.ts';
@@ -71,7 +71,7 @@ function Row({
 /**
  * The bench's one list: a listbox with one Tab stop, the selection as its active option. ↑ ↓ (or
  * j k), Home and End move it; Enter and a press open the inspector. Each row has a 3 px tick in its
- * status tone. A row id in `fresh` has just arrived (live): it rises in, then glows. Under 560 px of
+ * status tone (`groupOf` adds a heading per group). A row id in `fresh` has just arrived (live): it rises in, then glows. Under 560 px of
  * width the rows take two lines. The footer counts and loads more.
  */
 export function BenchList<T>({
@@ -84,6 +84,7 @@ export function BenchList<T>({
   fresh,
   footer,
   empty,
+  groupOf,
 }: {
   label: string;
   items: readonly T[];
@@ -95,6 +96,8 @@ export function BenchList<T>({
   footer?: { count: ReactNode; onMore?: () => void; loading?: boolean };
   /** Shown in place of the rows when there are none (a BenchState). */
   empty?: ReactNode;
+  /** A heading above the first row of each run of items with the same group (the console's index). */
+  groupOf?: (item: T) => string | undefined;
 }) {
   const base = useId().replace(/:/g, '');
   const box = useRef<HTMLDivElement>(null);
@@ -150,19 +153,29 @@ export function BenchList<T>({
             onPick={pick}
           />
         ) : null}
-        {items.map((item) => {
+        {items.map((item, i) => {
           const id = idOf(item);
+          const group = groupOf?.(item);
+          const before = items[i - 1];
+          const heading =
+            group !== undefined && (before === undefined || group !== groupOf?.(before));
           return (
-            <Row
-              key={id}
-              base={base}
-              id={id}
-              parts={row(item)}
-              tone={tone?.(item) ?? 'neutral'}
-              selected={id === selectedId}
-              fresh={fresh?.has(id) ?? false}
-              onPick={pick}
-            />
+            <Fragment key={id}>
+              {heading ? (
+                <div className="bench-row-g" aria-hidden="true">
+                  {group}
+                </div>
+              ) : null}
+              <Row
+                base={base}
+                id={id}
+                parts={row(item)}
+                tone={tone?.(item) ?? 'neutral'}
+                selected={id === selectedId}
+                fresh={fresh?.has(id) ?? false}
+                onPick={pick}
+              />
+            </Fragment>
           );
         })}
       </div>

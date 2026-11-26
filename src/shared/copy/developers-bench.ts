@@ -16,6 +16,7 @@ export const BENCH_COPY = {
     create: 'Create sandbox',
     closed: 'Sandbox closed',
     key: 'Key',
+    keyCalls: (name: string) => `Calls with ${name}`,
     runHere: 'Run here',
     runHereHint: 'Console runs use a short-lived token for this sandbox. No key is stored.',
   },

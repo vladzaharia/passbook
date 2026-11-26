@@ -23,7 +23,7 @@ export const SCAN_BUDGET_BYTES = 140_000;
 export const DEV_BUDGET_BYTES = 60_000;
 /**
  * The Try it island, everything its loader pulls (React, the console, its stylesheet), in gzip
- * bytes: 96.3 kB measured (W35: Try it fill, sandbox run). It loads only for a signed-in visitor, so it sits outside the 60 kB.
+ * bytes: 97.7 kB measured (WB6: the response is the bench's code block, id chips and Trace, read on the first Run). It loads only for a signed-in visitor, so it sits outside the 60 kB.
  */
 export const DEV_ISLAND_BUDGET_BYTES = 98_000;
 /**
@@ -37,8 +37,8 @@ export const DEV_SEARCH_BUDGET_BYTES = 135_000;
  * A Workbench island (developers/bench), on top of the portal's initial load, in gzip bytes: React
  * (67.5 kB), the bench primitives (about 32 kB: 21.5 kB script, 10.6 kB styles) and one tool's own
  * code. Measured (WB2): the strip island (`mount`: bench/mount.tsx, with the sandbox chip's OP-2 ring,
- * the bench keys and the shortcuts sheet) 81.0 kB; the Logs island today 92.5 kB. WB3 adds Logs to
- * this line when it moves onto React. Webhooks (140.2 kB) and Keys (127.8 kB) measure above it today:
+ * the bench keys and the shortcuts sheet) 81.0 kB; the Logs island (WB3, on the primitives) is held
+ * to the same line, and measures 109.8 kB; the Console island (WB6, 105.9 kB measured) is on it too. Webhooks (140.2 kB) and Keys (127.8 kB) measure above it today:
  * WB4 and WB5 bring them under it as they swap their own pieces for the primitives.
  */
 export const BENCH_BUDGET_BYTES = 125_000;
@@ -224,6 +224,8 @@ if (import.meta.main) {
     { label: 'quickstart island', name: 'quickstart', budget: QUICKSTART_BUDGET_BYTES },
     { label: 'developers run island', name: 'run-entry', budget: DEV_ISLAND_BUDGET_BYTES },
     { label: 'bench strip island', name: 'mount', budget: BENCH_BUDGET_BYTES, statics: true },
+    { label: 'logs island', name: 'logs-island', budget: BENCH_BUDGET_BYTES, statics: true },
+    { label: 'console island', name: 'console-entry', budget: BENCH_BUDGET_BYTES },
   ];
   for (const { label, name, budget, forbidden = DEV_FORBIDDEN, statics } of islands) {
     const files = (statics ? staticIslandAssets : islandAssets)(read, initial, name);

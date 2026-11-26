@@ -196,7 +196,7 @@ a.wb-stat:hover {
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
-.wb-spark[data-tone="danger"] polyline {
+.wb-spark[data-line="danger"] polyline {
   stroke: var(--pk-danger);
 }
 .wb-meter {
@@ -244,9 +244,14 @@ a.wb-stat:hover {
 /* The sandbox slot under the hero: holds the signed-out card, or the Workbench in its place. */
 .wb-slot {
   min-height: 1px;
+  /* A link to #workbench lands below the sticky bar. */
+  scroll-margin-top: calc(var(--dev-bar) + 16px);
+}
+.wb-slot:focus {
+  outline: none;
 }
 
-/* Reset and Reopen: a consequence confirm and the new key, inline in the head. */
+/* Reset and Reopen: a consequence confirm, inline in the head. */
 .wb-act {
   display: grid;
   gap: 8px;
@@ -259,15 +264,9 @@ a.wb-stat:hover {
 .wb-confirm {
   border-color: var(--pk-warning-border);
 }
-.wb-key-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.wb-key-box code {
-  min-width: 0;
-  overflow-wrap: anywhere;
+/* The run in the confirm uses the card's width: its steps and counts need the room. */
+.wb-confirm:has([data-operation]) {
+  max-width: 40rem;
 }
 .wb .check:not([data-shown="true"]) {
   height: 0;

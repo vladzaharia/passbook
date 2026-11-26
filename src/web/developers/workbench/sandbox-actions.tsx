@@ -1,12 +1,21 @@
-import { Check, Copy, RotateCcw, Unlock } from 'lucide-react';
-import { type ReactNode, useRef, useState } from 'react';
+import { RotateCcw, Unlock } from 'lucide-react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { DeveloperHomeSandbox } from '../../../shared/contracts/developer-home.ts';
+import { SANDBOX_KEY_SHOWN_COPY } from '../../../shared/copy/developer.ts';
 import { resetSandboxConfirm } from '../../lib/confirms-developer.ts';
-import { ActionError, reopenSandbox, resetSandbox } from '../console/sandbox-actions.ts';
+import {
+  type Operation,
+  useClaimOperation,
+  useOperation,
+  useOperationParam,
+} from '../../ui/operation/index.ts';
+import { useCachedOperation } from '../../ui/operation/store.ts';
+import { ActionError, mintKey, reopenSandbox, startReset } from '../console/sandbox-actions.ts';
 import { loadSession } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
-import { copyToClipboard } from '../playground/copy.ts';
+import { doneNoteOf } from '../ui/sandbox-done-note.ts';
+import { SandboxOperation, SandboxOperations, startedOperation } from '../ui/sandbox-operation.tsx';
 
 /** The step-up answer: the sentence and the link to Polaris ID, as the Keys page shows it. */
 function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefined }) {
@@ -17,53 +26,40 @@ function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefi
   );
 }
 
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-
-/** The new key after a reset or reopen: text only, shown once, and gone when the panel is closed. */
-export function NewKey({
-  done,
-  secret,
-  line,
-  onClose,
-}: {
-  done: boolean;
-  secret: string | null;
-  line: string;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    if (secret && (await copyToClipboard(`PASSBOOK_KEY=${secret}\n`))) setCopied(true);
-  };
-  return (
-    <div className="wb-act wb-newkey" role="status">
-      <p className="sm">{line}</p>
-      {secret ? (
-        <div className="wb-key-box">
-          <code className="mono xs">PASSBOOK_KEY={secret}</code>
-          <button type="button" className="btn sm outline" onClick={() => void copy()}>
-            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-        </div>
-      ) : null}
-      <p className="xs muted">{done ? 'Shown once.' : ''}</p>
-      <button type="button" className="btn sm" onClick={onClose}>
-        Done
-      </button>
-    </div>
-  );
-}
-
 /** What a reset or reopen hands back: its sentence and the new key, shown once in the head. */
 export interface Reveal {
   line: string;
   secret: string | null;
+  /** The key was minted before (a reload after it was shown): no sheet, only the line. */
+  shown?: boolean;
+}
+
+/** The reset's panel: it claims `?op` while it shows, and gives the id back when the id names some other kind. */
+function ResetRun({
+  id,
+  onSucceeded,
+  onLeave,
+  onOther,
+}: {
+  id: string;
+  onSucceeded: (done: Operation) => void;
+  onLeave: () => void;
+  /** The id names another kind: this panel steps aside and leaves `?op` to its owner. */
+  onOther: () => void;
+}) {
+  const { operation } = useOperation(id);
+  const ours = !operation || operation.kind === 'sandbox.reset';
+  useEffect(() => {
+    if (!ours) onOther();
+  }, [ours, onOther]);
+  if (!ours) return null;
+  return <SandboxOperation id={id} onSucceeded={onSucceeded} onGone={onLeave} onClose={onLeave} />;
 }
 
 /**
  * Reset: a consequence confirm below the head's buttons (`panel` is the slot it goes in), the Turnstile check, then
- * the new key, which the head shows (`onKey`) so it outlives the refresh the reset causes.
+ * the operation live in the confirm, which `?op` keeps across a reload. When it ends well the new key is minted once
+ * and the head shows it (`onKey`), so it outlives the refresh the reset causes. A key shown before is not minted again.
  */
 export function ResetAction({
   onChanged,
@@ -74,10 +70,49 @@ export function ResetAction({
   onKey: (reveal: Reveal) => void;
   panel: HTMLElement | null;
 }) {
-  const [step, setStep] = useState<'idle' | 'confirm' | 'working'>('idle');
+  const [opId, setOpId] = useOperationParam();
+  // Claimed from the first paint, before the session reads: the tray opens no second sheet for this id.
+  const seen = useCachedOperation(opId);
+  // The id stays claimed after the panel is done with it: the tray's own sheet reads the same address and would open.
+  const [spent, setSpent] = useState<string | null>(null);
+  const claimed = opId ?? spent;
+  useClaimOperation(claimed && (!seen || seen.kind === 'sandbox.reset') ? claimed : null);
+  const [step, setStep] = useState<'idle' | 'confirm' | 'working'>(opId ? 'working' : 'idle');
   const [error, setError] = useState<{ text: string; signInUrl: string | undefined } | null>(null);
   const [showCheck, setShowCheck] = useState(false);
+  /** The reset under way, and the write token its panel's retry and its key use. */
+  const [op, setOp] = useState<{ id: string; csrf: string } | null>(null);
+  /** The reset ended and the key is not minted yet: Try again asks for it. */
+  const [ended, setEnded] = useState<Operation | null>(null);
   const host = useRef<HTMLDivElement>(null);
+  const release = () => {
+    setOp(null);
+    setEnded(null);
+    setStep('idle');
+  };
+  const leave = () => {
+    setSpent(op?.id ?? opId);
+    setOp(null);
+    setEnded(null);
+    setOpId(null);
+    setStep('idle');
+  };
+  // A reload with `?op=` names a run: pick it up again, with a fresh write token.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, on mount.
+  useEffect(() => {
+    if (!opId) return;
+    void loadSession().then((session) => {
+      if (session.kind === 'ready') setOp({ id: opId, csrf: session.csrf });
+      else leave();
+    });
+  }, []);
+  const follow = async (id: string) => {
+    const session = await loadSession();
+    if (session.kind !== 'ready') return false;
+    setOpId(id);
+    setOp({ id, csrf: session.csrf });
+    return true;
+  };
   const run = async () => {
     setStep('working');
     setError(null);
@@ -86,24 +121,12 @@ export function ResetAction({
       if (session.kind !== 'ready' || !host.current) throw new ActionError('Reload and try again.');
       host.current.replaceChildren();
       const token = await verify(host.current, session.siteKey, setShowCheck);
-      const done = await resetSandbox(session.csrf, token);
-      if (done.more) {
-        // The purge ran out of time: no key yet. Asking again resumes it and spends no reset.
-        setError({
-          text: `Part of the data is left (${plural(done.deleted?.passes ?? 0, 'pass', 'passes')} deleted so far). Reset again to finish. It costs no reset.`,
-          signInUrl: undefined,
-        });
-        setStep('confirm');
-        return;
-      }
-      setStep('idle');
-      onKey({
-        secret: done.secret,
-        line: `Reset. Deleted ${plural(done.deleted?.passes ?? 0, 'pass', 'passes')}, ${plural(done.deleted?.captures ?? 0, 'captured event')} and ${plural(done.deleted?.calls ?? 0, 'call')}.${done.kept ? ` ${plural(done.kept, 'pass', 'passes')} could not be deleted yet.` : ''} ${done.resetsLeft ?? 0} left today.`,
-      });
-      // The old calls, counts and keys are gone: the workbench reads the new home now.
-      onChanged();
+      const started = await startReset(session.csrf, token);
+      startedOperation(started);
+      await follow(started.id);
     } catch (e) {
+      // One is already running (another tab, a reload): follow it instead of showing an error.
+      if (e instanceof ActionError && e.operationId && (await follow(e.operationId))) return;
       setError(
         e instanceof ActionError
           ? { text: e.message, signInUrl: e.signInUrl }
@@ -112,31 +135,82 @@ export function ResetAction({
       setStep('confirm');
     }
   };
+  /** The reset ended well: the new key is minted once, here, and the head shows it with what was deleted. */
+  const finish = async (done: Operation) => {
+    const csrf = op?.csrf;
+    if (!csrf) return;
+    setEnded(done);
+    setError(null);
+    let secret: string | null;
+    try {
+      secret = await mintKey(csrf);
+    } catch (e) {
+      setError({
+        text: e instanceof ActionError ? e.message : 'The new key did not arrive. Try again.',
+        signInUrl: e instanceof ActionError ? e.signInUrl : undefined,
+      });
+      return;
+    }
+    const line = `Reset. ${doneNoteOf(done) ?? ''}`.trim();
+    leave();
+    onKey(
+      secret === null
+        ? { secret, line: `${line} ${SANDBOX_KEY_SHOWN_COPY}`, shown: true }
+        : { secret, line },
+    );
+    // The old calls, counts and keys are gone: the workbench reads the new home now.
+    onChanged();
+  };
   const confirm: ReactNode =
     step === 'idle' ? null : (
       <section className="wb-act wb-confirm" aria-label={resetSandboxConfirm.title}>
-        <strong>{resetSandboxConfirm.title}</strong>
-        <p className="sm">{resetSandboxConfirm.description}</p>
-        {error ? <Problem text={error.text} signInUrl={error.signInUrl} /> : null}
-        <div className="wrap-row g2">
-          <button
-            type="button"
-            className="btn sm"
-            disabled={step === 'working'}
-            aria-busy={step === 'working'}
-            onClick={() => void run()}
-          >
-            {step === 'working' ? 'Resetting' : resetSandboxConfirm.confirmLabel}
-          </button>
-          <button
-            type="button"
-            className="btn sm outline"
-            disabled={step === 'working'}
-            onClick={() => setStep('idle')}
-          >
-            Cancel
-          </button>
-        </div>
+        {op ? null : (
+          <>
+            <strong>{resetSandboxConfirm.title}</strong>
+            <p className="sm">{resetSandboxConfirm.description}</p>
+          </>
+        )}
+        {op ? (
+          <SandboxOperations csrf={op.csrf}>
+            <ResetRun
+              id={op.id}
+              onSucceeded={(d) => void finish(d)}
+              onLeave={leave}
+              onOther={release}
+            />
+            {ended && error ? (
+              <>
+                <Problem text={error.text} signInUrl={error.signInUrl} />
+                <button type="button" className="btn sm" onClick={() => void finish(ended)}>
+                  Try again
+                </button>
+              </>
+            ) : null}
+          </SandboxOperations>
+        ) : (
+          <>
+            {error ? <Problem text={error.text} signInUrl={error.signInUrl} /> : null}
+            <div className="wrap-row g2">
+              <button
+                type="button"
+                className="btn sm"
+                disabled={step === 'working'}
+                aria-busy={step === 'working'}
+                onClick={() => void run()}
+              >
+                {step === 'working' ? 'Resetting' : resetSandboxConfirm.confirmLabel}
+              </button>
+              <button
+                type="button"
+                className="btn sm outline"
+                disabled={step === 'working'}
+                onClick={() => setStep('idle')}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
       </section>
     );
   return (

@@ -10,7 +10,7 @@ function Spark({ values, tone }: { values: readonly number[]; tone: 'accent' | '
   return (
     <svg
       className="wb-spark"
-      data-tone={tone}
+      data-line={tone}
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="none"
       aria-hidden
@@ -47,15 +47,17 @@ function Stat({
   );
 }
 
-/** Calls and Errors (24 h, with sparklines; Errors opens Logs), Passes against the cap, Events captured. */
+/** Calls and Errors (24 h, with sparklines; each opens its tool), Passes against the cap, Events captured. */
 export function Stats({
   usage,
   passLimit,
   logs,
+  webhooks,
 }: {
   usage: DeveloperUsage;
   passLimit: number | null;
   logs: string;
+  webhooks: string;
 }) {
   const used = meter(usage.passes, passLimit);
   return (
@@ -83,7 +85,7 @@ export function Stats({
           </span>
         ) : null}
       </Stat>
-      <Stat label="Events captured 24 h" value={count(usage.captures24h)} />
+      <Stat label="Events captured 24 h" value={count(usage.captures24h)} href={webhooks} />
     </div>
   );
 }

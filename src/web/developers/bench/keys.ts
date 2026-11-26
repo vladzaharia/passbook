@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { BenchTool } from './switcher.tsx';
-import { typing } from './toolbar.tsx';
+import { typing } from './typing.ts';
 
 /** What a key does on the bench (design §3.7). Tools bind the ones they have. */
 export type BenchAction =

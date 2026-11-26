@@ -204,7 +204,9 @@ describe('build-developers', () => {
     ];
     expect(rows.length).toBeGreaterThan(500);
     for (const { href } of rows) {
-      const [path = '', anchor] = href.split('#');
+      const [target = '', anchor] = href.split('#');
+      // A query (an event's Webhooks filter) is the tool's own: the page is the path.
+      const path = target.split('?')[0] ?? '';
       // The admin app's own pages are not the portal's.
       if (path.startsWith('/admin/')) continue;
       const page = manifest[path];
