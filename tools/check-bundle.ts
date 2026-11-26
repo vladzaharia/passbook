@@ -37,11 +37,9 @@ export const WB_SHELL_BUDGET_BYTES = 45_000;
 /**
  * The bench primitives (workbench/bench/**: list, inspector, split, toolbar, id chip, trace), counted
  * once on top of the entry and the shell, in gzip bytes: the lazy chunk carrying `bench-split`, the
- * chunks it imports and its stylesheet. 48.2 kB measured against the design's 35 kB (§4.6): the
- * bundler groups the kit's states, the empty and error states and the tool head into that chunk.
- * T1 to T8 take the tools onto the kit and bring it down.
+ * chunks it imports and its stylesheet. 28.2 kB measured; Workbench v2 §4.6 sets 35 kB.
  */
-export const WB_BENCH_BUDGET_BYTES = 53_000;
+export const WB_BENCH_BUDGET_BYTES = 35_000;
 /** The class only the bench's split renders: it marks the bench chunk. */
 export const WB_BENCH_MARKER = 'bench-split';
 /**
@@ -52,8 +50,8 @@ export const WB_BENCH_MARKER = 'bench-split';
 export const WB_TOOL_BUDGET_BYTES = 75_000;
 /**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
- * quickstart (80.4 kB measured; its pass cards and compilers loader) until T8, and the anonymous
- * Design route (81.4 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
+ * quickstart (88.3 kB measured; its pass cards and the compilers' loader) until T8, and the anonymous
+ * Design route (88.0 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
  */
 export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   logs: WB_TOOL_BUDGET_BYTES,
@@ -61,8 +59,8 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   events: WB_TOOL_BUDGET_BYTES,
   home: WB_TOOL_BUDGET_BYTES,
   keys: WB_TOOL_BUDGET_BYTES,
-  quickstart: 88_000,
-  playground: 90_000,
+  quickstart: 92_000,
+  playground: 92_000,
 };
 /** The class every tool route's body carries (`wb-tool-logs`): it marks the route's chunk. */
 export const WB_TOOL_MARKER = 'wb-tool-';

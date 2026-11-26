@@ -154,8 +154,8 @@ describe('check-bundle', () => {
   });
 
   it('holds the bench once and each tool route under its own line', () => {
-    expect(WB_BENCH_BUDGET_BYTES).toBeGreaterThan(35_000);
-    expect(WB_BENCH_BUDGET_BYTES).toBeLessThan(WB_TOOL_BUDGET_BYTES);
+    expect(WB_BENCH_BUDGET_BYTES).toBe(35_000);
+    expect(WB_TOOL_BUDGET_BYTES).toBe(75_000);
     expect(WB_TOOLS_MEASURED.logs).toBe(WB_TOOL_BUDGET_BYTES);
     expect(Object.keys(WB_TOOLS_MEASURED).sort()).toEqual([
       'console',
