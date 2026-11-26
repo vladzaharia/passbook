@@ -40,9 +40,15 @@ import {
   readConfiguredWalletProviderCredentials,
   readGoogleCallbackVerification,
   readWalletProviderRetirementCredentials,
-  revokeWalletProviderAccount,
 } from './account-service.ts';
 import { GOOGLE_WALLET_SCOPE } from './google-credentials.ts';
+import {
+  configureOn,
+  legacyOff,
+  legacyOn,
+  revokeOff,
+  seedLegacyAccount,
+} from './legacy-on-test-fixtures.ts';
 import { saveAccountConfiguration, transitionAccount } from './repo-accounts.ts';
 
 const origin = 'https://wallet.test';
@@ -212,17 +218,15 @@ async function dto(response: Response) {
 describe('wallet provider accounts', () => {
   it('encrypts scoped credentials and preserves a stable Google key without self-approving', async () => {
     const org = await makeOrg(f);
-    const { session } = await member(org.id);
+    const { session, auth } = await member(org.id);
     const scope = { orgId: org.id, mode: 'live' as const, provider: 'google' as const };
     const ctx = createServiceContext(env, { clock });
     expect(
       (await dto(await call('GET', query(org.id, 'live', 'google'), session.headers))).state,
     ).toBe('absent');
-    const response = await call('PUT', '', session.headers, {
-      ...scope,
-      expectedRevision: 0,
-      credentials: google(),
-    });
+    // The route no longer makes a new account (0229): the account is seeded, then read and rotated through it.
+    await seedLegacyAccount(ctx, auth, { ...scope, expectedRevision: 0, credentials: google() });
+    const response = await call('GET', query(org.id, 'live', 'google'), session.headers);
     const text = await response.clone().text();
     const configured = await dto(response);
     expect(configured).toMatchObject({
@@ -288,6 +292,7 @@ describe('wallet provider accounts', () => {
       ),
     ).rejects.toThrow(/Decryption failed/);
     await ensureCredentialRefKeyset(env.DB, env);
+    await legacyOn(env.DB, configured.accountId);
     const expected = { accountId: configured.accountId, accountRevision: 1 };
     const firstSnapshot = await readConfiguredWalletProviderCredentials(ctx, scope, expected);
     if (firstSnapshot?.provider !== 'google') throw new Error('Missing Google snapshot');
@@ -344,6 +349,7 @@ describe('wallet provider accounts', () => {
         })
       ).status,
     ).toBe(409);
+    await legacyOff(env.DB, configured.accountId ?? '');
     expect(
       (await dto(await call('POST', '/revoke', session.headers, { ...scope, expectedRevision: 2 })))
         .state,
@@ -363,6 +369,7 @@ describe('wallet provider accounts', () => {
         credentials: google(),
       }),
     );
+    await legacyOn(env.DB, configured.accountId);
     const restored = await readConfiguredWalletProviderCredentials(ctx, scope, {
       ...expected,
       accountRevision: 4,
@@ -446,13 +453,21 @@ describe('wallet provider accounts', () => {
       ).status,
     ).toBe(422);
     expect((await getWalletProviderReadiness(ctx, scope)).state).toBe('absent');
-    const live = await dto(
-      await call('PUT', '', integration.session.headers, {
-        ...scope,
-        expectedRevision: 0,
-        credentials: google(),
-      }),
-    );
+    // A new account is refused for everyone, an integration manager included (the route only rotates).
+    expect(
+      (
+        await call('PUT', '', integration.session.headers, {
+          ...scope,
+          expectedRevision: 0,
+          credentials: google(),
+        })
+      ).status,
+    ).toBe(410);
+    const live = await seedLegacyAccount(ctx, admin.auth, {
+      ...scope,
+      expectedRevision: 0,
+      credentials: google(),
+    });
     expect(
       (await call('GET', query(other.id, 'live', 'google'), admin.session.headers)).status,
     ).toBe(403);
@@ -464,15 +479,14 @@ describe('wallet provider accounts', () => {
       'absent',
     );
     const testScope = { ...scope, mode: 'test' as const };
-    const test = await dto(
-      await call('PUT', '', testHeaders, {
-        ...testScope,
-        expectedRevision: 0,
-        credentials: google(),
-      }),
+    const test = await seedLegacyAccount(
+      ctx,
+      { ...admin.auth, mode: 'test' },
+      { ...testScope, expectedRevision: 0, credentials: google() },
     );
-    if (!live.accountId || !test.accountId) throw new Error('Missing account IDs');
     await ensureCredentialRefKeyset(env.DB, env);
+    await legacyOn(env.DB, live.accountId);
+    await legacyOn(env.DB, test.accountId);
     const liveSecret = await readConfiguredWalletProviderCredentials(ctx, scope, {
       accountId: live.accountId,
       accountRevision: 1,
@@ -491,6 +505,7 @@ describe('wallet provider accounts', () => {
         { accountId: live.accountId, accountRevision: 1 },
       ),
     ).toBeNull();
+    await legacyOff(env.DB, live.accountId);
     expect(
       (
         await dto(
@@ -511,23 +526,43 @@ describe('wallet provider accounts', () => {
         })
       ).status,
     ).toBe(422);
+    expect(
+      (
+        await call('PUT', '', admin.session.headers, {
+          ...samsungScope,
+          expectedRevision: 0,
+          credentials: samsungCredentials,
+        })
+      ).status,
+    ).toBe(410);
+    await seedLegacyAccount(ctx, admin.auth, {
+      ...samsungScope,
+      expectedRevision: 0,
+      credentials: samsungCredentials,
+    });
     const samsung = await dto(
-      await call('PUT', '', admin.session.headers, {
-        ...samsungScope,
-        expectedRevision: 0,
-        credentials: samsungCredentials,
-      }),
+      await call('GET', query(org.id, 'live', 'samsung'), admin.session.headers),
     );
     expect(samsung).toMatchObject({
       state: 'configured',
       externalApprovalVerified: false,
       issuance: { state: 'disabled', reason: 'not_released' },
     });
+    // An integration manager still rotates an existing account.
+    expect(
+      await dto(
+        await call('PUT', '', integration.session.headers, {
+          ...samsungScope,
+          expectedRevision: 1,
+          credentials: samsungCredentials,
+        }),
+      ),
+    ).toMatchObject({ state: 'configured', revision: 2 });
     expect(
       (
         await call('PUT', '', admin.session.headers, {
           ...samsungScope,
-          expectedRevision: 1,
+          expectedRevision: 2,
           credentials: { ...samsungCredentials, cardId: 'otherCard' },
         })
       ).status,
@@ -536,15 +571,13 @@ describe('wallet provider accounts', () => {
 
   it('does not release Google cleanup credentials without an existing claimed provider operation', async () => {
     const org = await makeOrg(f);
-    const { session } = await member(org.id);
+    const { auth } = await member(org.id);
     const scope = { orgId: org.id, mode: 'live' as const, provider: 'google' as const };
-    const account = await dto(
-      await call('PUT', '', session.headers, {
-        ...scope,
-        expectedRevision: 0,
-        credentials: google(),
-      }),
-    );
+    const account = await configureOn(createServiceContext(env, { clock }), auth, {
+      ...scope,
+      expectedRevision: 0,
+      credentials: google(),
+    });
     if (!account.accountId) throw new Error('Missing account');
     const proof = {
       ...scope,
@@ -603,7 +636,7 @@ describe('wallet provider accounts', () => {
       },
     });
     const ctx = createServiceContext({ ...env, DB: db }, { clock });
-    const configured = await configureWalletProviderAccount(ctx, auth, {
+    const configured = await configureOn(ctx, auth, {
       ...scope,
       expectedRevision: 0,
       credentials: google(),
@@ -631,7 +664,6 @@ describe('wallet provider accounts', () => {
     expect(
       await saveAccountConfiguration(ctx, authority, scope, {
         accountId: configured.accountId,
-        isNew: false,
         expectedRevision: 99,
         credentialId,
         identityHash: 'a'.repeat(64),
@@ -658,15 +690,16 @@ describe('wallet provider accounts', () => {
 
     reportedChanges = 2;
     expect(
-      await configureWalletProviderAccount(ctx, auth, {
+      await configureOn(ctx, auth, {
         ...scope,
         expectedRevision: 1,
         credentials: google(rotatedPem),
       }),
     ).toMatchObject({ state: 'configured', revision: 2 });
-    expect(
-      await revokeWalletProviderAccount(ctx, auth, { ...scope, expectedRevision: 2 }),
-    ).toMatchObject({ state: 'revoked', revision: 3 });
+    expect(await revokeOff(ctx, auth, { ...scope, expectedRevision: 2 })).toMatchObject({
+      state: 'revoked',
+      revision: 3,
+    });
     const events = await all<{ kind: string }>(
       env.DB,
       'SELECT kind FROM wallet_provider_account_events WHERE account_id = ? ORDER BY revision',
@@ -715,23 +748,97 @@ describe('wallet provider accounts', () => {
     });
     const ctx = createServiceContext({ ...env, DB: db }, { clock });
     const scope = { orgId: org.id, mode: 'live' as const, provider: 'google' as const };
+    // A new account cannot be written through the route, so the rotation of a seeded one carries the check.
+    await seedLegacyAccount(createServiceContext(env, { clock }), actor.auth, {
+      ...scope,
+      expectedRevision: 0,
+      credentials: google(),
+    });
+    const before = await first(
+      env.DB,
+      'SELECT id, revision, credential_id FROM wallet_provider_accounts WHERE org_id = ?',
+      [org.id],
+    );
     await expect(
       configureWalletProviderAccount(ctx, actor.auth, {
         ...scope,
-        expectedRevision: 0,
-        credentials: google(),
+        expectedRevision: 1,
+        credentials: google(rotatedPem),
       }),
     ).rejects.toMatchObject({ code: 'ACTOR_CHANGED' });
     expect(injected).toBe(true);
     expect(
-      await first(env.DB, 'SELECT id FROM wallet_provider_accounts WHERE org_id = ?', [org.id]),
-    ).toBeNull();
+      await first(
+        env.DB,
+        'SELECT id, revision, credential_id FROM wallet_provider_accounts WHERE org_id = ?',
+        [org.id],
+      ),
+    ).toEqual(before);
     expect(
       await all(
         env.DB,
         "SELECT id FROM audit_log WHERE org_id = ? AND action LIKE 'wallet_provider.account_%'",
         [org.id],
       ),
-    ).toEqual([]);
+    ).toHaveLength(1);
+  });
+  it('refuses a new legacy account: the route answers 410, the database refuses the pointer and an insert with an envelope', async () => {
+    const org = await makeOrg(f);
+    const { session, auth } = await member(org.id);
+    const scope = { orgId: org.id, mode: 'live' as const, provider: 'google' as const };
+    expect(
+      (
+        await call('PUT', '', session.headers, {
+          ...scope,
+          expectedRevision: 0,
+          credentials: google(),
+        })
+      ).status,
+    ).toBe(410);
+    expect(
+      await first(env.DB, 'SELECT id FROM wallet_provider_accounts WHERE org_id = ?', [org.id]),
+    ).toBeNull();
+    // The same rows the route wrote before: account, envelope, configure event, then the credential pointer.
+    const [accountId, credentialId] = [f.ids.id(), f.ids.id()];
+    const now = clock.now();
+    await run(
+      env.DB,
+      'INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [accountId, org.id, 'live', 'google', now, now],
+    );
+    await run(
+      env.DB,
+      `INSERT INTO wallet_provider_credentials
+       (id, account_id, org_id, mode, provider, kek_version, iv, wrapped_dek, ciphertext, identity_hash, created_at)
+       VALUES (?, ?, ?, 'live', 'google', 1, X'00', X'00', X'00', ?, ?)`,
+      [credentialId, accountId, org.id, 'a'.repeat(64), now],
+    );
+    await run(
+      env.DB,
+      `INSERT INTO wallet_provider_account_events
+       (id, account_id, org_id, mode, provider, revision, kind, credential_id, actor_id, created_at)
+       VALUES (?, ?, ?, 'live', 'google', 1, 'configure', ?, ?, ?)`,
+      [f.ids.id(), accountId, org.id, credentialId, auth.userId, now],
+    );
+    await expect(
+      run(
+        env.DB,
+        'UPDATE wallet_provider_accounts SET credential_id = ?, revision = 1, updated_at = ? WHERE id = ?',
+        [credentialId, now, accountId],
+      ),
+    ).rejects.toThrow(/legacy wallet accounts are closed/);
+    await expect(
+      run(
+        env.DB,
+        `INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, revision, credential_id, created_at, updated_at)
+         VALUES (?, ?, 'test', 'google', 1, ?, ?, ?)`,
+        [f.ids.id(), org.id, credentialId, now, now],
+      ),
+    ).rejects.toThrow(/legacy wallet accounts are closed/);
+    expect(
+      await first(env.DB, 'SELECT credential_id FROM wallet_provider_accounts WHERE id = ?', [
+        accountId,
+      ]),
+    ).toEqual({ credential_id: null });
   });
 });

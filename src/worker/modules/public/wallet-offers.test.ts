@@ -18,7 +18,7 @@ import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { revokeWalletProviderAccount } from '../wallet-providers/account-service.ts';
+import { revokeOff } from '../wallet-providers/legacy-on-test-fixtures.ts';
 import { setupWalletOfferKit } from '../wallet-providers/offers-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -217,7 +217,7 @@ describe('pending native wallets on holder surfaces', () => {
 
   it('keeps both choices unavailable after an account is revoked', async () => {
     const { kit, pass, auth } = fixture;
-    await revokeWalletProviderAccount(kit.ctx, auth, {
+    await revokeOff(kit.ctx, auth, {
       orgId: kit.org.id,
       mode: 'live',
       provider: 'google',

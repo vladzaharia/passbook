@@ -15,11 +15,12 @@ import { ICON_PNG, type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getVersion } from '../templates/repo.ts';
 import {
-  configureWalletProviderAccount,
   getWalletProviderReadiness,
   readConfiguredWalletProviderCredentials,
 } from './account-service.ts';
+import { enrolOn } from './enrolled-test-fixtures.ts';
 import { GOOGLE_WALLET_SCOPE } from './google-credentials.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import type { NativeProvider } from './projection-contract.ts';
 import { computeProjectionPins } from './projection-pins.ts';
 import {
@@ -89,6 +90,8 @@ export async function setupWalletOfferKit(
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
+    /** The accounts are real enrolments (an org credential, checked and verified, On) instead of legacy envelopes. */
+    enrolled?: boolean;
   } = {},
 ) {
   const kit =
@@ -110,16 +113,18 @@ export async function setupWalletOfferKit(
   if (!resolved) throw new Error('Offer fixture session did not resolve.');
   const auth: SessionAuth = { ...resolved, mode: 'live' };
   const identity = await createFixtureIdentity(undefined, { now: new Date(kit.clock.now()) });
+  // Credential identities are unique per mode: each enrolled kit in a shared database gets its own.
+  const unique = options.enrolled ? `${Date.now()}${Math.floor(Math.random() * 1e3)}` : null;
   const google: GoogleWalletCredentials = {
-    issuerId: '33880000000223344',
+    issuerId: unique ? `3388${unique}` : '33880000000223344',
     serviceAccountEmail: 'wallet@example.iam.gserviceaccount.com',
     privateKeyPem: identity.privateKey,
     scopes: [GOOGLE_WALLET_SCOPE],
   };
   const samsung: SamsungWalletCredentials = {
-    partnerId: 'partner',
+    partnerId: unique ? `partner${unique}` : 'partner',
     certificateId: 'ABCD',
-    cardId: 'membership',
+    cardId: unique ? `card${unique}` : 'membership',
     partnerPrivateKeyPem: identity.privateKey,
     partnerCertificatePem: identity.certificate,
     samsungCertificatePem: identity.certificate,
@@ -150,14 +155,24 @@ export async function setupWalletOfferKit(
       : {}),
   });
   async function configure(provider: NativeProvider) {
+    if (options.enrolled) {
+      await enrolOn(
+        kit,
+        auth,
+        provider === 'google'
+          ? { provider, expectedRevision: 0, credentials: google }
+          : { provider, expectedRevision: 0, credentials: samsung },
+      );
+      return getWalletProviderReadiness(kit.ctx, scope(provider));
+    }
     return provider === 'google'
-      ? configureWalletProviderAccount(kit.ctx, auth, {
+      ? configureOn(kit.ctx, auth, {
           ...scope(provider),
           provider,
           expectedRevision: 0,
           credentials: google,
         })
-      : configureWalletProviderAccount(kit.ctx, auth, {
+      : configureOn(kit.ctx, auth, {
           ...scope(provider),
           provider,
           expectedRevision: 0,

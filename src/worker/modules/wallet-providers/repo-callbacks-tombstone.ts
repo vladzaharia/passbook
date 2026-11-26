@@ -76,11 +76,12 @@ export async function claimSamsungTombstoneReplay(
       db,
       `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
       SELECT ?, ?, ? FROM wallet_samsung_tombstones tomb
-      JOIN wallet_provider_account_events approved ON approved.account_id = tomb.account_id
+      LEFT JOIN wallet_provider_account_events approved ON approved.account_id = tomb.account_id
         AND approved.org_id = tomb.org_id AND approved.mode = tomb.mode
         AND approved.provider = 'samsung' AND approved.kind = 'configure'
         AND approved.revision = tomb.account_revision
-      WHERE tomb.ref_hash = ? AND tomb.org_id = ? AND tomb.mode = ? AND tomb.account_id = ?
+      WHERE (approved.id IS NOT NULL OR tomb.credential_version_id IS NOT NULL)
+        AND tomb.ref_hash = ? AND tomb.org_id = ? AND tomb.mode = ? AND tomb.account_id = ?
         AND tomb.account_revision = ? AND tomb.credential_keyset_commitment = ${pinnedKeysetSql}
         AND ${noLiveRef} ON CONFLICT DO NOTHING
       RETURNING token_hash`,

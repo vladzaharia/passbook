@@ -26,8 +26,8 @@ import { toBase64 } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
 import { GOOGLE_WALLET_SCOPE } from './google-credentials.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import { providerIdentityHash } from './projection-contract.ts';
 import {
   insertRuntimeFixtureInvitation,
@@ -177,7 +177,7 @@ export async function runtimeTestFixture() {
   const auth: SessionAuth = resolvedAuth;
 
   async function configuredGoogle(mode: 'live' | 'test' = 'live') {
-    return configureWalletProviderAccount(
+    return configureOn(
       ctx,
       { ...auth, mode },
       {
@@ -209,7 +209,7 @@ export async function runtimeTestFixture() {
     return createGoogleRuntimeOffer(ctx, scope, googleInput);
   }
   async function samsungAccount() {
-    const ready = await configureWalletProviderAccount(ctx, auth, {
+    const ready = await configureOn(ctx, auth, {
       orgId,
       mode: 'live',
       provider: 'samsung',

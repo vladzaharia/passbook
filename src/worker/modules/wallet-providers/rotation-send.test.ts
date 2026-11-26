@@ -5,9 +5,10 @@ import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { readSamsungPromotedRefreshCredentials } from './account-credential-read.ts';
-import { configureWalletProviderAccount, getWalletProviderReadiness } from './account-service.ts';
+import { getWalletProviderReadiness } from './account-service.ts';
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { getWalletInstanceById } from './instance.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { isCurrentApprovedProjection } from './projection-current.ts';
 import { getProjectionRetirementMetadata } from './repo-projection.ts';
@@ -17,7 +18,7 @@ type Kit = Awaited<ReturnType<typeof setupSamsungCallbacks>>;
 async function rotate(t: Kit) {
   const scope = { orgId: t.kit.org.id, mode: 'live' as const, provider: 'samsung' as const };
   const account = await getWalletProviderReadiness(t.kit.ctx, scope);
-  await configureWalletProviderAccount(t.kit.ctx, t.auth, {
+  await configureOn(t.kit.ctx, t.auth, {
     ...scope,
     expectedRevision: account.revision,
     credentials: t.samsung,
