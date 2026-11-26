@@ -224,4 +224,47 @@ describe('the database guards on operations and activation, on an enrolment', ()
       ),
     ).toEqual({ n: 1 });
   });
+  it('refuses an update on an active copy of a held org, and accepts it once the hold is lifted', async () => {
+    const { f } = await fixture();
+    const db = f.kit.env.DB;
+    const orgId = f.kit.org.id;
+    await issueWalletOffer(f.kit.ctx, await tokenOf(f), 'google');
+    const copy = await first<{ id: string; lifecycle: string }>(
+      db,
+      "SELECT id, lifecycle FROM wallet_provider_instances WHERE pass_id = ? AND provider = 'google'",
+      [f.pass.id],
+    );
+    expect(copy?.lifecycle).toBe('active');
+    const nextUpsert = async () =>
+      run(
+        db,
+        `INSERT INTO wallet_provider_instance_operations (id, instance_id, version, kind, request_hash,
+          pass_version, pass_revision, pass_credential_generation, lifecycle_generation, issuing_release_id,
+          projection_release_id, account_revision, adapter_revision, policy_revision, created_at,
+          credential_keyset_commitment, pass_row_version, account_epoch, credential_version_id)
+         SELECT ?, o.instance_id, (SELECT MAX(version) + 1 FROM wallet_provider_instance_operations
+            WHERE instance_id = o.instance_id), 'upsert', ?, o.pass_version, o.pass_revision,
+           o.pass_credential_generation, o.lifecycle_generation, o.issuing_release_id, o.projection_release_id,
+           o.account_revision, o.adapter_revision, o.policy_revision, o.created_at, o.credential_keyset_commitment,
+           p.row_version, a.authority_epoch, o.credential_version_id
+         FROM wallet_provider_instance_operations o
+         JOIN wallet_provider_instances i ON i.id = o.instance_id
+         JOIN passes p ON p.id = i.pass_id
+         JOIN wallet_provider_accounts a ON a.id = i.account_id
+         WHERE o.instance_id = ? ORDER BY o.version DESC LIMIT 1`,
+        [f.kit.ctx.ids.id(), await sha256Hex(f.kit.ctx.ids.token(32)), copy?.id ?? ''],
+      );
+    const hold = (at: number | null) =>
+      withoutTrigger(db, 'wallet_enrolments_step', () =>
+        run(db, 'UPDATE wallet_provider_accounts SET platform_hold_at = ? WHERE org_id = ?', [
+          at,
+          orgId,
+        ]),
+      );
+    await hold(1);
+    await expect(nextUpsert()).rejects.toThrow('provider operation is not authorized');
+    // Positive control: the same insert passes once the hold is lifted, so the refusal was the hold.
+    await hold(null);
+    await nextUpsert();
+  });
 });
