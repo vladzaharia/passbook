@@ -1,5 +1,6 @@
 import { PATHS } from '../../../shared/developers.ts';
 import { RUN_LIMIT, remaining, subscribe } from './budget.ts';
+import { watchBusy } from './chip-busy.ts';
 import { loadSession, onSession, type Session } from './session.ts';
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -74,6 +75,7 @@ function chipFor(session: Session): HTMLElement | null {
     menu.append(link);
   }
   chip.append(head, menu);
+  watchBusy(chip);
   const dismiss = (e: Event) => {
     if (!chip.isConnected) {
       document.removeEventListener('click', dismiss);

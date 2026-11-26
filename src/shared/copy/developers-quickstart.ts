@@ -25,7 +25,8 @@ export const QS_COPY = {
       keyGone: 'Your key was shown once, when the sandbox was made. Roll it to get a new one.',
       closed: 'Your sandbox is closed. Closed for good: there is one per person.',
       check: 'The check did not pass. Try again.',
-      slow: 'Taking longer than usual. Reloading is safe: setup picks up where it stopped.',
+      showKey: 'Show key',
+      keyFailed: "Couldn't make the key. Try again.",
     },
     run: {
       title: 'First call',

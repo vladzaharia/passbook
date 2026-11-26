@@ -124,6 +124,27 @@
   font-size: 12px;
   font-weight: 600;
 }
+/* A sandbox action is running: a ring around the dot. It keeps turning under reduced motion: it carries state. */
+.orgchip[data-busy="true"] .orgchip-dot {
+  position: relative;
+  box-shadow:
+    0 0 0 2px var(--pk-surface-raised),
+    0 0 0 4px color-mix(in srgb, var(--pk-accent) 35%, transparent);
+}
+.orgchip[data-busy="true"] .orgchip-dot::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  border-top-color: var(--pk-accent);
+  animation: dp-chip-spin 1s linear infinite;
+}
+@keyframes dp-chip-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .orgchip-name {
   max-width: 12ch;
   overflow: hidden;

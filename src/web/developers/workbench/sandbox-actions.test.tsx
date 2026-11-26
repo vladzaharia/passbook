@@ -1,9 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactNode, useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const m = vi.hoisted(() => ({
   reset: vi.fn(),
+  mint: vi.fn(),
+  /** What the panel reports when the operation it follows ends well. */
+  done: { current: null as unknown },
   reopen: vi.fn(),
   session: vi.fn(),
   verify: vi.fn(),
@@ -13,13 +17,42 @@ const m = vi.hoisted(() => ({
 vi.mock('../console/sandbox-actions.ts', () => ({
   ActionError: class ActionError extends Error {
     signInUrl?: string;
-    constructor(message: string, signInUrl?: string) {
+    operationId?: string;
+    constructor(message: string, extra: { signInUrl?: string; operationId?: string } = {}) {
       super(message);
-      this.signInUrl = signInUrl;
+      this.signInUrl = extra.signInUrl;
+      this.operationId = extra.operationId;
     }
   },
-  resetSandbox: m.reset,
+  startReset: m.reset,
+  mintKey: m.mint,
   reopenSandbox: m.reopen,
+}));
+// The panel itself is the kit's (its own tests); here it stands for an operation that ends when told to.
+vi.mock('../ui/sandbox-operation.tsx', async (importActual) => ({
+  ...(await importActual<typeof import('../ui/sandbox-operation.tsx')>()),
+  SandboxOperations: ({ children }: { children: ReactNode }) => children,
+  SandboxOperation: ({
+    id,
+    onSucceeded,
+    onClose,
+  }: {
+    id: string;
+    onSucceeded: (op: unknown) => void;
+    onClose: () => void;
+  }) => {
+    useEffect(() => {
+      if (m.done.current) onSucceeded(m.done.current);
+    }, [onSucceeded]);
+    return (
+      <div>
+        <p>Following {id}</p>
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    );
+  },
 }));
 vi.mock('../console/session.ts', () => ({ loadSession: m.session }));
 vi.mock('../console/turnstile.ts', () => ({ verify: m.verify }));
@@ -34,6 +67,7 @@ const closed = (reason: string, until: number | null) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  m.done.current = null;
   m.session.mockResolvedValue(ready);
   m.verify.mockResolvedValue('tok');
 });
@@ -60,13 +94,18 @@ describe('NewKey', () => {
 });
 
 describe('ResetAction', () => {
-  it('confirms, resets, and hands the new key up', async () => {
-    m.reset.mockResolvedValue({
-      secret: 'new',
-      deleted: { passes: 1, captures: 2, calls: 3 },
-      kept: 2,
-      resetsLeft: 2,
-    });
+  it('confirms, follows the operation, mints the key once and hands it up with what was deleted', async () => {
+    m.reset.mockResolvedValue({ id: 'op-r', kind: 'sandbox.reset' });
+    m.mint.mockResolvedValue('new');
+    m.done.current = {
+      id: 'op-r',
+      kind: 'sandbox.reset',
+      steps: [],
+      result: {
+        href: null,
+        ids: { passes: '1', captures: '2', calls: '3', kept: '2', resetsLeft: '2' },
+      },
+    };
     const onKey = vi.fn();
     const onChanged = vi.fn();
     render(<ResetAction onChanged={onChanged} onKey={onKey} panel={null} />);
@@ -75,12 +114,36 @@ describe('ResetAction', () => {
     await user.click(screen.getByRole('button', { name: 'Reset sandbox' }));
     await waitFor(() => expect(onKey).toHaveBeenCalled());
     expect(m.reset).toHaveBeenCalledWith('c', 'tok');
+    expect(m.mint).toHaveBeenCalledWith('c');
     expect(onKey.mock.calls[0]?.[0]).toEqual({
       secret: 'new',
-      line: 'Reset. Deleted 1 pass, 2 captured events and 3 calls. 2 passes could not be deleted yet. 2 left today.',
+      line: 'Reset. Deleted 1 pass, 2 events and 3 calls. 2 passes could not be deleted yet. 2 resets left today.',
     });
     expect(onChanged).toHaveBeenCalled();
     expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('shows the live operation in the confirm, and Close leaves it', async () => {
+    m.reset.mockResolvedValue({ id: 'op-r', kind: 'sandbox.reset' });
+    render(<ResetAction onChanged={vi.fn()} onKey={vi.fn()} panel={null} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    await user.click(screen.getByRole('button', { name: 'Reset sandbox' }));
+    const region = await screen.findByRole('region', { name: 'Reset this sandbox?' });
+    expect(region).toHaveTextContent('Following op-r');
+    expect(screen.queryByRole('button', { name: 'Reset sandbox' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+
+  it('follows a reset that is already running instead of showing an error', async () => {
+    m.reset.mockRejectedValue(new ActionError('Already.', { operationId: 'op-run' }));
+    render(<ResetAction onChanged={vi.fn()} onKey={vi.fn()} panel={null} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    await user.click(screen.getByRole('button', { name: 'Reset sandbox' }));
+    expect(await screen.findByText('Following op-run')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('cancels back to idle', async () => {
@@ -91,20 +154,9 @@ describe('ResetAction', () => {
     expect(screen.queryByRole('button', { name: 'Reset sandbox' })).toBeNull();
   });
 
-  it('says what is left when the purge ran out of time', async () => {
-    m.reset.mockResolvedValue({ more: true, deleted: { passes: 1 } });
-    const onKey = vi.fn();
-    render(<ResetAction onChanged={vi.fn()} onKey={onKey} panel={null} />);
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Reset' }));
-    await user.click(screen.getByRole('button', { name: 'Reset sandbox' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Part of the data is left (1 pass');
-    expect(onKey).not.toHaveBeenCalled();
-  });
-
   it('shows a step-up with its sign-in link, and a failed check in plain words', async () => {
     m.reset
-      .mockRejectedValueOnce(new ActionError('Sign in again.', '/auth/oidc/start'))
+      .mockRejectedValueOnce(new ActionError('Sign in again.', { signInUrl: '/auth/oidc/start' }))
       .mockRejectedValueOnce(new Error('x'));
     render(<ResetAction onChanged={vi.fn()} onKey={vi.fn()} panel={null} />);
     const user = userEvent.setup();
@@ -160,7 +212,7 @@ describe('ReopenAction', () => {
 
   it('says what went wrong, with the step-up link when there is one', async () => {
     m.reopen
-      .mockRejectedValueOnce(new ActionError('Sign in again.', '/auth/oidc/start'))
+      .mockRejectedValueOnce(new ActionError('Sign in again.', { signInUrl: '/auth/oidc/start' }))
       .mockRejectedValueOnce(new Error('x'));
     render(<ReopenAction sandbox={closed('idle', 5)} onChanged={vi.fn()} onKey={vi.fn()} />);
     const user = userEvent.setup();

@@ -3,10 +3,17 @@ import { type ReactNode, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { DeveloperHomeSandbox } from '../../../shared/contracts/developer-home.ts';
 import { resetSandboxConfirm } from '../../lib/confirms-developer.ts';
-import { ActionError, reopenSandbox, resetSandbox } from '../console/sandbox-actions.ts';
+import type { Operation } from '../../ui/operation/index.ts';
+import { ActionError, mintKey, reopenSandbox, startReset } from '../console/sandbox-actions.ts';
 import { loadSession } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
 import { copyToClipboard } from '../playground/copy.ts';
+import {
+  doneNoteOf,
+  SandboxOperation,
+  SandboxOperations,
+  startedOperation,
+} from '../ui/sandbox-operation.tsx';
 
 /** The step-up answer: the sentence and the link to Polaris ID, as the Keys page shows it. */
 function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefined }) {
@@ -16,8 +23,6 @@ function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefi
     </p>
   );
 }
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** The new key after a reset or reopen: text only, shown once, and gone when the panel is closed. */
 export function NewKey({
@@ -77,6 +82,8 @@ export function ResetAction({
   const [step, setStep] = useState<'idle' | 'confirm' | 'working'>('idle');
   const [error, setError] = useState<{ text: string; signInUrl: string | undefined } | null>(null);
   const [showCheck, setShowCheck] = useState(false);
+  /** The reset under way, and the write token its panel's retry uses. */
+  const [op, setOp] = useState<{ id: string; csrf: string } | null>(null);
   const host = useRef<HTMLDivElement>(null);
   const run = async () => {
     setStep('working');
@@ -86,24 +93,18 @@ export function ResetAction({
       if (session.kind !== 'ready' || !host.current) throw new ActionError('Reload and try again.');
       host.current.replaceChildren();
       const token = await verify(host.current, session.siteKey, setShowCheck);
-      const done = await resetSandbox(session.csrf, token);
-      if (done.more) {
-        // The purge ran out of time: no key yet. Asking again resumes it and spends no reset.
-        setError({
-          text: `Part of the data is left (${plural(done.deleted?.passes ?? 0, 'pass', 'passes')} deleted so far). Reset again to finish. It costs no reset.`,
-          signInUrl: undefined,
-        });
-        setStep('confirm');
-        return;
-      }
-      setStep('idle');
-      onKey({
-        secret: done.secret,
-        line: `Reset. Deleted ${plural(done.deleted?.passes ?? 0, 'pass', 'passes')}, ${plural(done.deleted?.captures ?? 0, 'captured event')} and ${plural(done.deleted?.calls ?? 0, 'call')}.${done.kept ? ` ${plural(done.kept, 'pass', 'passes')} could not be deleted yet.` : ''} ${done.resetsLeft ?? 0} left today.`,
-      });
-      // The old calls, counts and keys are gone: the workbench reads the new home now.
-      onChanged();
+      const started = await startReset(session.csrf, token);
+      startedOperation(started);
+      setOp({ id: started.id, csrf: session.csrf });
     } catch (e) {
+      // One is already running (another tab, a reload): follow it instead of showing an error.
+      if (e instanceof ActionError && e.operationId) {
+        const session = await loadSession();
+        if (session.kind === 'ready') {
+          setOp({ id: e.operationId, csrf: session.csrf });
+          return;
+        }
+      }
       setError(
         e instanceof ActionError
           ? { text: e.message, signInUrl: e.signInUrl }
@@ -112,31 +113,59 @@ export function ResetAction({
       setStep('confirm');
     }
   };
+  /** The reset ended well: the new key is minted once, here, and the head shows it with what was deleted. */
+  const finish = async (done: Operation) => {
+    const csrf = op?.csrf;
+    if (!csrf) return;
+    const secret = await mintKey(csrf).catch(() => null);
+    setOp(null);
+    setStep('idle');
+    onKey({ secret, line: `Reset. ${doneNoteOf(done) ?? ''}`.trim() });
+    // The old calls, counts and keys are gone: the workbench reads the new home now.
+    onChanged();
+  };
+  const leave = () => {
+    setOp(null);
+    setStep('idle');
+  };
   const confirm: ReactNode =
     step === 'idle' ? null : (
       <section className="wb-act wb-confirm" aria-label={resetSandboxConfirm.title}>
         <strong>{resetSandboxConfirm.title}</strong>
-        <p className="sm">{resetSandboxConfirm.description}</p>
-        {error ? <Problem text={error.text} signInUrl={error.signInUrl} /> : null}
-        <div className="wrap-row g2">
-          <button
-            type="button"
-            className="btn sm"
-            disabled={step === 'working'}
-            aria-busy={step === 'working'}
-            onClick={() => void run()}
-          >
-            {step === 'working' ? 'Resetting' : resetSandboxConfirm.confirmLabel}
-          </button>
-          <button
-            type="button"
-            className="btn sm outline"
-            disabled={step === 'working'}
-            onClick={() => setStep('idle')}
-          >
-            Cancel
-          </button>
-        </div>
+        {op ? null : <p className="sm">{resetSandboxConfirm.description}</p>}
+        {op ? (
+          <SandboxOperations csrf={op.csrf}>
+            <SandboxOperation
+              id={op.id}
+              onSucceeded={(d) => void finish(d)}
+              onGone={leave}
+              onClose={leave}
+            />
+          </SandboxOperations>
+        ) : (
+          <>
+            {error ? <Problem text={error.text} signInUrl={error.signInUrl} /> : null}
+            <div className="wrap-row g2">
+              <button
+                type="button"
+                className="btn sm"
+                disabled={step === 'working'}
+                aria-busy={step === 'working'}
+                onClick={() => void run()}
+              >
+                {step === 'working' ? 'Resetting' : resetSandboxConfirm.confirmLabel}
+              </button>
+              <button
+                type="button"
+                className="btn sm outline"
+                disabled={step === 'working'}
+                onClick={() => setStep('idle')}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
       </section>
     );
   return (

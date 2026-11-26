@@ -9,6 +9,7 @@ import { copyToClipboard } from '../playground/copy.ts';
 import { ApplePane, PaperPane, WalletPane } from '../playground/panes.tsx';
 import { Seg } from '../playground/seg.tsx';
 import { sourceOf } from '../playground/templates.ts';
+import { SandboxOperations } from '../ui/sandbox-operation.tsx';
 import { MakeSandbox } from './make-sandbox.tsx';
 import type { Fix } from './model.ts';
 import { GhostCard } from './parts.tsx';
@@ -80,6 +81,7 @@ function PreviewCard({ url }: { url: string }) {
 }
 
 function FailCard({ fix, q }: { fix: Fix; q: Quickstart }) {
+  const [repairing, setRepairing] = useState<string | null>(null);
   return (
     <section className="qs-fail wl-buddy-room" data-art-host role="alert">
       <Buddy key="fail" size="sm" at="end" mood="sad" scene="tear" />
@@ -90,12 +92,16 @@ function FailCard({ fix, q }: { fix: Fix; q: Quickstart }) {
       {fix.line ? <p className="sm">{fix.line}</p> : null}
       <div className="row g2 wrap-row">
         {fix.repair && (q.session.kind === 'ready' || q.session.kind === 'none') ? (
-          <MakeSandbox
-            csrf={q.csrf}
-            siteKey={q.session.siteKey}
-            label={QS_COPY.fail.repair}
-            onMade={q.sandboxMade}
-          />
+          <SandboxOperations csrf={q.csrf}>
+            <MakeSandbox
+              csrf={q.csrf}
+              siteKey={q.session.siteKey}
+              label={QS_COPY.fail.repair}
+              onMade={q.sandboxMade}
+              op={repairing}
+              onOp={setRepairing}
+            />
+          </SandboxOperations>
         ) : null}
         {fix.code ? (
           <a className="btn outline" href={`${PATHS.errors}/${fix.code}`}>

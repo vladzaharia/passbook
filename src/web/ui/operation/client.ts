@@ -18,6 +18,12 @@ export interface OperationFilter {
   target?: { type: string; id: string };
 }
 
+/** The API answers an operation itself; a wrapper `{ operation }` (a start's 202 body) is read too. */
+const operationOf = (body: unknown): Operation =>
+  (body && typeof body === 'object' && 'operation' in body
+    ? (body as { operation: Operation }).operation
+    : body) as Operation;
+
 /** What the kit needs from the server; the app, the portal and the developer site each supply one. */
 export interface OperationsClient {
   /** `operation` is null on 304: unchanged since `etag`. */
@@ -88,11 +94,11 @@ export function createFetchClient({
     },
     async cancel(id) {
       const { body } = await send('POST', `/${encodeURIComponent(id)}/cancel`);
-      return (body as { operation: Operation }).operation;
+      return operationOf(body);
     },
     async retry(id) {
       const { body } = await send('POST', `/${encodeURIComponent(id)}/retry`);
-      return (body as { operation: Operation }).operation;
+      return operationOf(body);
     },
   };
 }

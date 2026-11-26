@@ -14,6 +14,7 @@ export {
   type LocalStepDef,
   useLocalOperation,
 } from './local.ts';
+export { useOperationParam } from './op-param.ts';
 export { OperationProgress, type OperationProgressProps } from './operation-progress.tsx';
 export { OperationRow } from './operation-row.tsx';
 export { OperationSheet } from './operation-sheet.tsx';
