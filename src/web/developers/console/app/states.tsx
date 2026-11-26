@@ -1,9 +1,9 @@
 import type { ReactElement } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { PATHS } from '../../../../shared/developers.ts';
-import { BenchState } from '../../bench/state.tsx';
 import type { Session } from '../session.ts';
 import { CreateSandbox } from './create-sandbox.tsx';
+import { LazyState } from './lazy-state.tsx';
 
 const C = CONSOLE_COPY;
 
@@ -17,10 +17,10 @@ export function sessionState(
   tool: boolean,
 ): ReactElement | null {
   if (session.kind === 'failed')
-    return <BenchState scene="failed" title={C.sandboxFailed} onRetry={() => location.reload()} />;
+    return <LazyState scene="failed" title={C.sandboxFailed} onRetry={() => location.reload()} />;
   if (session.kind === 'none')
     return tool ? (
-      <BenchState scene="no-sandbox">
+      <LazyState scene="no-sandbox">
         <CreateSandbox
           csrf={session.csrf}
           siteKey={session.siteKey}
@@ -29,21 +29,21 @@ export function sessionState(
             location.reload();
           }}
         />
-      </BenchState>
+      </LazyState>
     ) : (
-      <BenchState scene="no-sandbox" heading="h3">
+      <LazyState scene="no-sandbox" heading="h3">
         <a className="btn" href={PATHS.console}>
           {C.create}
         </a>
-      </BenchState>
+      </LazyState>
     );
   if (session.kind === 'closed')
     return (
-      <BenchState scene="closed" title={C.closed}>
+      <LazyState scene="closed" title={C.closed}>
         <a className="btn" href={`${PATHS.quickstart}#start-over`}>
           {C.startOver}
         </a>
-      </BenchState>
+      </LazyState>
     );
   return null;
 }

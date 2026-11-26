@@ -6,7 +6,6 @@ import { useMediaQuery } from '../../../lib/media.ts';
 import { BenchSkeleton } from '../../bench/skeleton.tsx';
 import { BenchSlot } from '../../bench/slots.tsx';
 import { BENCH_WIDE, BenchSplit } from '../../bench/split.tsx';
-import { BenchState } from '../../bench/state.tsx';
 import { SearchField, Toolbar } from '../../bench/toolbar.tsx';
 import { useBenchSelection } from '../../bench/use-selection.ts';
 import { MethodPill } from '../../ui/method-pill.tsx';
@@ -15,6 +14,7 @@ import { type Prefill, parseHash } from '../prefill.ts';
 import type { Sandbox } from '../session.ts';
 import type { RunIndex } from '../types.ts';
 import { type IndexOp, idOfOp, OpIndex } from './index-pane.tsx';
+import { LazyState } from './lazy-state.tsx';
 import { Ready } from './ready.tsx';
 
 const C = CONSOLE_COPY;
@@ -109,7 +109,7 @@ export function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string 
   const clear = useCallback(() => setQuery(''), []);
 
   if (index === 'failed')
-    return <BenchState scene="failed" onRetry={() => setAttempt((n) => n + 1)} />;
+    return <LazyState scene="failed" onRetry={() => setAttempt((n) => n + 1)} />;
   if (!index) return <BenchSkeleton rows={8} />;
 
   const prefill = guide && current && guide.id === current.id ? guide.prefill : null;

@@ -1,10 +1,10 @@
 import { TriangleAlert } from 'lucide-react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { BenchList } from '../../bench/list.tsx';
-import { BenchState } from '../../bench/state.tsx';
 import type { BenchSelection } from '../../bench/use-selection.ts';
 import { MethodPill } from '../../ui/method-pill.tsx';
 import type { RunIndexItem } from '../types.ts';
+import { LazyState } from './lazy-state.tsx';
 
 /** An operation in the index with the group it is listed under. */
 export interface IndexOp extends RunIndexItem {
@@ -47,11 +47,11 @@ export function OpIndex({
           ) : undefined,
         })}
         empty={
-          <BenchState scene="no-match" heading="p">
+          <LazyState scene="no-match" heading="p">
             <button type="button" className="btn outline" onClick={onClear}>
               {CONSOLE_COPY.clear}
             </button>
-          </BenchState>
+          </LazyState>
         }
       />
     </div>

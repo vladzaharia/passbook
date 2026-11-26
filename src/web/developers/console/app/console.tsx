@@ -4,7 +4,6 @@ import { useMediaQuery } from '../../../lib/media.ts';
 import { useBenchKeys } from '../../bench/keys.ts';
 import { BenchSkeleton } from '../../bench/skeleton.tsx';
 import { BENCH_TABLET } from '../../bench/split.tsx';
-import { BenchState } from '../../bench/state.tsx';
 import { copyWithFeedback } from '../../shell/copy.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { remaining, subscribe } from '../budget.ts';
@@ -23,6 +22,7 @@ import { loadTemplateInput } from '../template-sample.ts';
 import { tokenHeld } from '../token.ts';
 import type { Json, RunOp } from '../types.ts';
 import { Builder, type Tab } from './builder.tsx';
+import { LazyState } from './lazy-state.tsx';
 import { ResponseView } from './response.tsx';
 import { RunBar } from './run-bar.tsx';
 
@@ -196,7 +196,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
                 onReplay={replay}
               />
             ) : pending || error ? null : (
-              <BenchState scene="console-idle" heading="p" />
+              <LazyState scene="console-idle" heading="p" />
             )}
           </div>
         }

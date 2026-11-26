@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { BenchSkeleton } from '../../bench/skeleton.tsx';
-import { BenchState } from '../../bench/state.tsx';
 import { loadFile } from '../data.ts';
 import type { Prefill } from '../prefill.ts';
 import type { Sandbox } from '../session.ts';
 import { retain } from '../token.ts';
 import type { RunOp } from '../types.ts';
 import { OpConsole } from './console.tsx';
+import { LazyState } from './lazy-state.tsx';
 
 type Loaded = { op: RunOp; origin: string } | 'missing' | null;
 
@@ -53,11 +53,7 @@ export function Ready({
   useEffect(() => retain(csrf), [csrf]);
   if (loaded === 'missing')
     return (
-      <BenchState
-        scene="failed"
-        title={CONSOLE_COPY.loadFailed}
-        onRetry={() => location.reload()}
-      />
+      <LazyState scene="failed" title={CONSOLE_COPY.loadFailed} onRetry={() => location.reload()} />
     );
   if (!loaded) return <BenchSkeleton rows={3} />;
   return (
