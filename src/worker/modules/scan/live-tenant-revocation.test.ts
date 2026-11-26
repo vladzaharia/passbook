@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeSession, runOne } from '../../../../test/helpers/index.ts';
+import { expectSet } from '../../../../test/helpers/landed.ts';
 import { first, run } from '../../platform/db.ts';
 import { revokeSession } from '../auth/repo-sessions.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -23,30 +24,22 @@ describe('live tenant and workspace revocation', () => {
   it('rejects role replacement and same-role revoke/regrant ABA, but accepts a fresh snapshot', async () => {
     const screen = await managedScreen();
     expect((await liveRecipient(kit.ctx, screen.attachment))?.actor.role).toBe('manager');
-    expect(
-      (
-        await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
-          kit.clock.now(),
-          screen.membershipId,
-        ])
-      ).changes,
-      // D1 counts the Polaris ID dirty mark a membership revoke writes.
-    ).toBeGreaterThanOrEqual(1);
+    await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
+      kit.clock.now(),
+      screen.membershipId,
+    ]);
+    await expectSet(kit.env.DB, 'org_memberships', 'id', screen.membershipId);
     await assertClosed(screen.attachment);
     const readerId = await grantScanMembership(kit.fx, kit.org.id, screen.user.id, ['read_only']);
     expect(readerId).not.toBe(screen.membershipId);
     expect(await liveRecipient(kit.ctx, screen.attachment)).toBeNull();
     const reader = await refreshedAttachment(screen);
     expect((await liveRecipient(kit.ctx, reader))?.actor.role).toBe('door');
-    expect(
-      (
-        await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
-          kit.clock.now(),
-          readerId,
-        ])
-      ).changes,
-      // D1 counts the Polaris ID dirty mark a membership revoke writes.
-    ).toBeGreaterThanOrEqual(1);
+    await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at=? WHERE id=?', [
+      kit.clock.now(),
+      readerId,
+    ]);
+    await expectSet(kit.env.DB, 'org_memberships', 'id', readerId);
     const replacementId = await grantScanMembership(kit.fx, kit.org.id, screen.user.id);
     expect(replacementId).not.toBe(screen.membershipId);
     expect(await liveRecipient(kit.ctx, screen.attachment)).toBeNull();

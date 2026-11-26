@@ -5,7 +5,7 @@ import { ConflictError, PreconditionFailedError } from '../../platform/errors.ts
 import { sha256Hex } from '../../platform/ids.ts';
 import { createSession, resolveSession } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { acceptOrgInvitation } from '../orgs/membership-service.ts';
+import { acceptInvitation } from '../idp/invitations/accept.ts';
 import { requireApprovedRelease, type TemplateRelease } from '../templates/releases.ts';
 import { approveAppleRelease } from './apple-release-test-fixtures.ts';
 import { applyConnectionRecord } from './connection-passes.ts';
@@ -72,7 +72,7 @@ async function passOperator(orgId: string) {
       now + 60_000,
     ],
   );
-  await acceptOrgInvitation(kit.ctx, auth, token);
+  await acceptInvitation(kit.ctx, auth, token, 'member');
   return {
     actor: { type: 'user' as const, id: user.id },
     execution: {

@@ -14,7 +14,7 @@ const MAP: [string, string, number, string][] = [
   ['IDP_UPSTREAM', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
   ['IDP_UNSAFE_CONFIG', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
   ['IDP_MISCONFIGURED', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
-  ['IDP_DRIFT', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
+  ['IDP_DRIFT', 'IDP_DRIFT', 503, 'Polaris ID changed while saving. Check and try again.'],
   ['IDP_BREAKER', 'IDP_UNAVAILABLE', 503, UNAVAILABLE],
   ['IDP_BUDGET', 'IDP_BUDGET', 429, 'Too many Polaris ID changes today. Try again tomorrow.'],
   ['IDP_REFUSED', 'IDP_REFUSED', 403, 'Polaris ID refused this change. Ask the PassBook owner.'],
