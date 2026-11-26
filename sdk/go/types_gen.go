@@ -9130,7 +9130,7 @@ type PlatformInvitationsCreateResponse struct {
 	ExpiresAt  int64    `json:"expiresAt"`
 	AcceptedAt *int64   `json:"acceptedAt"`
 	RevokedAt  *int64   `json:"revokedAt"`
-	Link       string   `json:"link"`
+	Link       *string  `json:"link,omitempty"`
 }
 
 type PlatformInvitationsListResponse struct {
@@ -9160,7 +9160,7 @@ type PlatformInvitationsResendResponse struct {
 	ExpiresAt  int64    `json:"expiresAt"`
 	AcceptedAt *int64   `json:"acceptedAt"`
 	RevokedAt  *int64   `json:"revokedAt"`
-	Link       string   `json:"link"`
+	Link       *string  `json:"link,omitempty"`
 }
 
 type PlatformInvitationsRevokeResponse struct {

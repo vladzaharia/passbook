@@ -9658,7 +9658,7 @@ class PlatformInvitationsCreateResponse(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
-    link: str
+    link: str | None = None
 
 class PlatformInvitationsListResponse(_Model):
     items: _List[PlatformInvitationsListResponseItemsItem]
@@ -9685,7 +9685,7 @@ class PlatformInvitationsResendResponse(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
-    link: str
+    link: str | None = None
 
 class PlatformInvitationsRevokeResponse(_Model):
     ok: _Literal[True]

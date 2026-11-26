@@ -7904,7 +7904,7 @@ export type PlatformInvitationsCreateResponse = {
   expiresAt: number;
   acceptedAt: number | null;
   revokedAt: number | null;
-  link: string;
+  link?: string;
 };
 
 export type PlatformInvitationsListResponse = {
@@ -7932,7 +7932,7 @@ export type PlatformInvitationsResendResponse = {
   expiresAt: number;
   acceptedAt: number | null;
   revokedAt: number | null;
-  link: string;
+  link?: string;
 };
 
 export type PlatformInvitationsRevokeResponse = {
