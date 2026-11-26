@@ -25,9 +25,10 @@ export function DesignerSkeleton() {
 export function WalletsSkeleton() {
   return (
     <div className="grid gap-5">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <Skeleton className="h-[4.25rem] rounded-lg" />
         <Skeleton className="h-[4.25rem] rounded-lg" />
+        <Skeleton className="hidden h-[4.25rem] rounded-lg md:block" />
       </div>
       <DesignerSkeleton />
     </div>
