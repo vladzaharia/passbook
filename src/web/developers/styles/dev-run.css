@@ -25,7 +25,7 @@
   }
 }
 /* The Console tool while its session is read: the held slot keeps room, so the page below does not jump. */
-.bench-run[data-hydrating] {
+[data-island="console"][data-hydrating] {
   min-block-size: clamp(20rem, calc(100dvh - 24rem), 40rem);
 }
 .ticket > .body {
@@ -202,16 +202,16 @@ dialog.sheet::backdrop {
 }
 /* The quickstart and the console page hold their signed-out markup the same way. */
 [data-island="quickstart"][data-hydrating],
-[data-island="run"][data-hydrating] {
+[data-island="console"][data-hydrating] {
   visibility: hidden;
 }
 /* While it is held the page shows the loading pattern, not an empty main: the Try it skeleton's bars on a
    raised card, out of the flow so the slot keeps its box. It comes in after 150 ms (a quick answer shows
    no flash) and pulses in opacity only. */
-:is([data-island="quickstart"], [data-island="run"])[data-hydrating] {
+:is([data-island="quickstart"], [data-island="console"])[data-hydrating] {
   position: relative;
 }
-:is([data-island="quickstart"], [data-island="run"])[data-hydrating]::before {
+:is([data-island="quickstart"], [data-island="console"])[data-hydrating]::before {
   content: "";
   visibility: visible;
   position: absolute;
@@ -227,7 +227,7 @@ dialog.sheet::backdrop {
   border-radius: var(--pk-radius-lg);
 }
 @media (prefers-reduced-motion: no-preference) {
-  :is([data-island="quickstart"], [data-island="run"])[data-hydrating]::before {
+  :is([data-island="quickstart"], [data-island="console"])[data-hydrating]::before {
     animation:
       dp-sk-in 200ms ease-out 150ms backwards,
       dp-sk 1.3s ease-in-out 350ms infinite;

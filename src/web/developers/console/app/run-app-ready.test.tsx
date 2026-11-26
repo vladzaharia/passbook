@@ -36,6 +36,7 @@ vi.mock('./index-pane.tsx', () => ({
   ),
 }));
 
+import { ConsoleApp } from './console-app.tsx';
 import { RunApp } from './run-app.tsx';
 
 const sandbox = { id: 's', orgId: 'org-1', orgSlug: 'o', templateId: 't' };
@@ -85,7 +86,7 @@ describe('RunApp with a sandbox', () => {
   it('the console page starts on the hashed operation and follows the picker', async () => {
     location.hash = '#b';
     m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
-    render(<RunApp session={ready} mode="console" />);
+    render(<ConsoleApp session={ready} />);
     expect(await screen.findByText('current b')).toBeInTheDocument();
     expect(await screen.findByText(/console b console/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Reference' })).toBeInTheDocument();
@@ -96,7 +97,7 @@ describe('RunApp with a sandbox', () => {
 
   it('the console page opens on the first read, and says so in the address, when none is linked', async () => {
     m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
-    render(<RunApp session={ready} mode="console" />);
+    render(<ConsoleApp session={ready} />);
     expect(await screen.findByText('current a')).toBeInTheDocument();
     expect(location.hash).toBe('#a');
   });
@@ -104,7 +105,7 @@ describe('RunApp with a sandbox', () => {
   it('keeps a guide link\u2019s prefill for its operation and drops it for another', async () => {
     location.hash = '#b?body=%7B%7D';
     m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
-    render(<RunApp session={ready} mode="console" />);
+    render(<ConsoleApp session={ready} />);
     expect(await screen.findByText(/console b console prefilled/)).toBeInTheDocument();
     await userEvent.setup().click(screen.getByText('pick a'));
     expect(await screen.findByText(/console a console plain/)).toBeInTheDocument();

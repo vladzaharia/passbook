@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ConsoleApp } from './console-app.tsx';
 import { RunApp } from './run-app.tsx';
 
 vi.mock('../data.ts', () => ({
@@ -15,7 +16,7 @@ describe('RunApp without a ready sandbox', () => {
   it('shows an error card with Retry when the sandbox failed to read', async () => {
     const reload = vi.fn();
     vi.stubGlobal('location', { ...location, reload });
-    const { container } = render(<RunApp session={{ kind: 'failed', csrf: 'c' }} mode="console" />);
+    const { container } = render(<ConsoleApp session={{ kind: 'failed', csrf: 'c' }} />);
     await screen.findByRole('button', { name: 'Retry' });
     expect(container.querySelector('.pstate')?.getAttribute('data-scene')).toBe('failed');
     expect(screen.queryByText('No sandbox yet')).toBeNull();
@@ -25,7 +26,7 @@ describe('RunApp without a ready sandbox', () => {
 
   it('shows one compact empty card with Create sandbox on the console page', async () => {
     const { container } = render(
-      <RunApp session={{ kind: 'none', csrf: 'c', siteKey: 's' }} mode="console" />,
+      <ConsoleApp session={{ kind: 'none', csrf: 'c', siteKey: 's' }} />,
     );
     await screen.findByText('No sandbox yet');
     expect(container.querySelector('.pstate')?.getAttribute('data-scene')).toBe('no-sandbox');

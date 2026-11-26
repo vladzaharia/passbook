@@ -159,6 +159,7 @@ describe('islands', () => {
       'account',
       'api-rail',
       'bench-strip',
+      'console',
       'hero-start',
       'keys',
       'logs',
