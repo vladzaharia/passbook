@@ -239,6 +239,7 @@ export type ErrorCode =
   | 'IDP_DRIFT'
   | 'IDP_EMAIL_NOT_PRIMARY'
   | 'IDP_FROZEN'
+  | 'IDP_HOLD_NOT_FOUND'
   | 'IDP_IN_USE'
   | 'IDP_MULTIPLE_ACCOUNTS'
   | 'IDP_NOT_APPLIED'

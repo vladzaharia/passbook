@@ -6,6 +6,7 @@ const errors = {
   IDP_UNAVAILABLE: 'Polaris ID is not reachable. Retry in a few minutes.',
   IDP_SYNC_BUSY: 'Another Polaris ID sync is still running. Retry in a few minutes.',
   IDP_NOT_HELD: 'This role is not paused any more.',
+  IDP_HOLD_NOT_FOUND: 'This role is not paused.',
   IDP_NOT_APPLIED: 'Polaris ID did not add the role. Retry.',
   IDP_APPLY_FAILED: 'Polaris ID did not accept the change. Retry.',
   IDP_BREAKER_RETRIPPED: 'The breaker tripped again. Check the feed, then clear it again.',

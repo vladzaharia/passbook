@@ -2209,6 +2209,15 @@
       ]
     },
     {
+      "code": "IDP_HOLD_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_IN_USE",
       "statuses": [
         409
@@ -2247,11 +2256,6 @@
     {
       "code": "IDP_NOT_HELD",
       "statuses": [
-        404,
-        409
-      ],
-      "primary": [
-        404,
         409
       ],
       "modules": [

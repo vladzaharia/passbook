@@ -38,7 +38,7 @@ function holdOf(op: OperationDto): { userId: string; role: WritableRole } {
   const cut = id.lastIndexOf(':');
   const role = IdpRoleSchema.safeParse(id.slice(cut + 1));
   if (op.target?.type !== 'user_role' || cut < 1 || !role.success)
-    throw new AppError('IDP_NOT_HELD', 404, 'This role is not paused.');
+    throw new AppError('IDP_HOLD_NOT_FOUND', 404, 'This role is not paused.');
   return { userId: id.slice(0, cut), role: role.data };
 }
 
