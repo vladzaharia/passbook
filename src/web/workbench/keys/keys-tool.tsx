@@ -1,18 +1,23 @@
 import { useLocation, useRouter } from '@tanstack/react-router';
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useCallback, useMemo, useState } from 'react';
 import { WORKBENCH_KEY_MAX_MS, WORKBENCH_KEY_SCOPES } from '@/shared/contracts/workbench.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { ApiKeysView } from '../../admin/api-keys/api-keys-page.tsx';
-import { KeyDetailView } from '../../admin/api-keys/key-detail-page.tsx';
 import { type KeysHost, KeysHostProvider } from '../../admin/api-keys/keys-host.tsx';
 import { useSession } from '../../lib/session.ts';
 import { RowLink } from '../../ui/row-link.tsx';
+import { SkeletonRows } from '../../ui/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
 import { useToolHost } from '../host/tool-host.tsx';
 import { ToolPage } from '../shell/tool-page.tsx';
 import { RecentCalls } from './recent-calls.tsx';
 
 const DAY = 86_400_000;
+
+/** A key's page loads when one is opened. */
+const KeyDetailView = lazy(() =>
+  import('../../admin/api-keys/key-detail-page.tsx').then((m) => ({ default: m.KeyDetailView })),
+);
 
 /**
  * Keys in the Workbench: admin's list, wizard and key page on the Workbench token. Test keys only,
@@ -72,7 +77,9 @@ export function KeysTool() {
       <KeysHostProvider value={bound}>
         <div className="wb-tool-keys min-w-0">
           {keyId ? (
-            <KeyDetailView access={bound.access} keyId={keyId} />
+            <Suspense fallback={<SkeletonRows label="Loading API key" />}>
+              <KeyDetailView access={bound.access} keyId={keyId} />
+            </Suspense>
           ) : (
             <ApiKeysView
               access={bound.access}

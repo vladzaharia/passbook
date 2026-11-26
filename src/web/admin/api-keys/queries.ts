@@ -2,7 +2,6 @@ import {
   type InfiniteData,
   useInfiniteQuery,
   useMutation,
-  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import type { z } from 'zod';
@@ -12,8 +11,7 @@ import {
   type CreateApiKeySchema,
   CreatedApiKeySchema,
 } from '@/shared/contracts/api-keys.ts';
-import { MODE_HEADER, pageOf } from '@/shared/contracts/common.ts';
-import { ScannerKindSchema, ScannerSchema } from '@/shared/contracts/scanners.ts';
+import { MODE_HEADER } from '@/shared/contracts/common.ts';
 import { SCOPE_LABEL } from '@/shared/copy/api-key-scopes.ts';
 import { useToolApi, useToolKey, useToolScope } from '@/web/lib/tool-api.tsx';
 
@@ -113,24 +111,3 @@ export function keyState(key: ApiKey, now: number): KeyStateName {
 }
 
 export { SCOPE_LABEL };
-
-const TerminalListSchema = pageOf(
-  ScannerSchema.pick({ id: true, name: true, status: true }).extend({ kind: ScannerKindSchema }),
-);
-
-/** The org's terminals in service: the only devices a scan key can act as. */
-export function useTerminals(orgId: string | null, enabled: boolean) {
-  const api = useToolApi();
-  const root = useKeysRoot();
-  return useQuery({
-    queryKey: [...root, 'terminals', orgId],
-    enabled: enabled && orgId !== null,
-    queryFn: async ({ signal }) => {
-      const page = await api.get('/api/v1/scanners', TerminalListSchema, {
-        query: { orgId: orgId ?? undefined, limit: 100 },
-        signal,
-      });
-      return page.items.filter((s) => s.kind === 'terminal' && s.status !== 'revoked');
-    },
-  });
-}

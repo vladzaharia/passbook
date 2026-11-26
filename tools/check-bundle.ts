@@ -54,13 +54,15 @@ export const WB_TOOL_BUDGET_BYTES = 75_000;
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
  * quickstart (88.3 kB measured; its pass cards and the compilers' loader) until T8, and the anonymous
  * Design route (88.0 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
+ * Keys (104.0 kB measured) is admin's keys list on the kit's DataTable, Radix menus and dialogs, one
+ * implementation for both hosts; the wizard and a key's page are lazy chunks outside the count.
  */
 export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   logs: WB_TOOL_BUDGET_BYTES,
   console: WB_TOOL_BUDGET_BYTES,
   events: WB_TOOL_BUDGET_BYTES,
   home: WB_TOOL_BUDGET_BYTES,
-  keys: WB_TOOL_BUDGET_BYTES,
+  keys: 108_000,
   quickstart: 92_000,
   playground: 92_000,
 };
