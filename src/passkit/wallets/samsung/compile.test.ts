@@ -236,7 +236,7 @@ describe('change text', () => {
     field.changeMessage = 'Now %@ (100%%)';
     const r = compile(v);
     expect(attributes(r).noticeDesc).toContain(`Now ${field.text} (100%)`);
-    expect(lines(r)).toContain(`messaging.notify | text | ${field.path}`);
+    expect(lines(r)).toContain(`messaging.notify | difference | ${field.path}`);
   });
 });
 

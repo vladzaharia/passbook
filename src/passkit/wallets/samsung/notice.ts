@@ -168,6 +168,10 @@ function messageLines(run: Run): Line[] {
   return lines;
 }
 
+/** The change text is a difference from Apple's alert, whatever else the line is. */
+const written = (line: Line): 'text' | 'difference' =>
+  line.capability === 'messaging.notify' ? 'difference' : 'text';
+
 /** Fits the lines in `noticeDesc`. Identity lines are kept whole; display lines yield in order. */
 function assemble(run: Run, lines: Line[]): string {
   const max = SAMSUNG_LIMITS.noticeDesc.max;
@@ -208,7 +212,7 @@ function assemble(run: Run, lines: Line[]): string {
         `Shortened to fit the ${max}-byte notice.`,
       );
     }
-    note(run, line.capability, line.path, 'text', 'Written in the notice.');
+    note(run, line.capability, line.path, written(line), 'Written in the notice.');
     kept.push(text);
     used += measure(text, 'bytes') + 1;
   }
@@ -227,7 +231,7 @@ function dedupe(run: Run, lines: Line[]): Line[] {
       continue;
     }
     seen.identity ||= line.identity;
-    note(run, line.capability, line.path, 'text', 'Same text as an earlier line.');
+    note(run, line.capability, line.path, written(line), 'Same text as an earlier line.');
   }
   return out;
 }
