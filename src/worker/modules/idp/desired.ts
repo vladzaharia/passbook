@@ -35,7 +35,7 @@ export interface Desired {
 
 const asGroup = (key: string): GroupTarget => `g:${key}`;
 
-const isPlatformAdmin = (lastRoles: string): boolean => {
+export const isPlatformAdmin = (lastRoles: string): boolean => {
   try {
     const roles: unknown = JSON.parse(lastRoles);
     return Array.isArray(roles) && roles.includes('admin');

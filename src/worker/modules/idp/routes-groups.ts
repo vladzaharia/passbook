@@ -1,0 +1,252 @@
+import { CursorQuerySchema, OkSchema } from '../../../shared/contracts/common.ts';
+import {
+  CreateGroupMemberSchema,
+  CreateGroupSchema,
+  EnsureGroupSchema,
+  GroupKeyParamSchema,
+  GroupListSchema,
+  GroupMemberListSchema,
+  GroupMemberSchema,
+  GroupResultSchema,
+  GroupRuleInputSchema,
+  GroupRuleListSchema,
+  GroupRuleParamSchema,
+  GroupRuleSchema,
+  UpdateGroupSchema,
+} from '../../../shared/contracts/idp-access.ts';
+import { currentUserId } from '../../platform/auth.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
+import { serviceContext } from '../../platform/service-context.ts';
+import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { addMember, listMembers, removeMember } from './service-group-members.ts';
+import { addRule, endRule, listRules } from './service-group-rules.ts';
+import {
+  createGroup,
+  deleteGroup,
+  ensureRoleGroup,
+  listGroups,
+  updateGroup,
+} from './service-groups.ts';
+
+const TAG = 'polaris groups';
+/** Reads need a platform admin. Writes also need a recent Polaris ID sign-in: the change reaches every app that trusts the group. */
+const READ = { platform: 'platform:groups' } as const;
+const WRITE = {
+  platform: 'platform:groups',
+  signIn: 'oidc',
+  stepUp: { maxAgeSec: STEP_UP_SECONDS },
+} as const;
+
+/** Mount at /api/v1/platform. */
+export const idpGroupsRoutes = createRouter();
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'get',
+    path: '/idp/groups',
+    query: CursorQuerySchema,
+    summary: 'List the Polaris ID groups PassBook manages',
+    response: GroupListSchema,
+    auth: READ,
+  },
+  async (c) => c.json({ items: await listGroups(serviceContext(c)), nextCursor: null }),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/idp/groups',
+    summary: 'Create a custom Polaris ID group',
+    body: CreateGroupSchema,
+    response: GroupResultSchema,
+    status: 201,
+    auth: WRITE,
+  },
+  async (c) =>
+    c.json(await createGroup(serviceContext(c), currentUserId(c), c.req.valid('json')), 201),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/idp/groups/ensure',
+    summary: 'Create a configured role group in Polaris ID',
+    body: EnsureGroupSchema,
+    response: GroupResultSchema,
+    status: 201,
+    auth: WRITE,
+  },
+  async (c) =>
+    c.json(
+      await ensureRoleGroup(serviceContext(c), currentUserId(c), c.req.valid('json').role),
+      201,
+    ),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'patch',
+    path: '/idp/groups/{key}',
+    summary: "Rename a group's display name",
+    params: GroupKeyParamSchema,
+    body: UpdateGroupSchema,
+    response: GroupResultSchema,
+    auth: WRITE,
+  },
+  async (c) =>
+    c.json(
+      await updateGroup(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').key,
+        c.req.valid('json').friendlyName,
+      ),
+    ),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'delete',
+    path: '/idp/groups/{key}',
+    summary: 'Delete an empty custom group PassBook created',
+    params: GroupKeyParamSchema,
+    response: GroupResultSchema,
+    auth: WRITE,
+  },
+  async (c) =>
+    c.json(await deleteGroup(serviceContext(c), currentUserId(c), c.req.valid('param').key)),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'get',
+    path: '/idp/groups/{key}/rules',
+    query: CursorQuerySchema,
+    summary: "List a group's org rules",
+    params: GroupKeyParamSchema,
+    response: GroupRuleListSchema,
+    auth: READ,
+  },
+  async (c) =>
+    c.json({
+      items: await listRules(serviceContext(c), c.req.valid('param').key),
+      nextCursor: null,
+    }),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/idp/groups/{key}/rules',
+    summary: 'Add an org rule: members of the org join the group',
+    params: GroupKeyParamSchema,
+    body: GroupRuleInputSchema,
+    response: GroupRuleSchema,
+    status: 201,
+    auth: WRITE,
+  },
+  async (c) =>
+    c.json(
+      await addRule(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').key,
+        c.req.valid('json'),
+      ),
+      201,
+    ),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'delete',
+    path: '/idp/groups/{key}/rules/{id}',
+    summary: 'End an org rule',
+    params: GroupRuleParamSchema,
+    response: OkSchema,
+    auth: WRITE,
+  },
+  async (c) => {
+    const { key, id } = c.req.valid('param');
+    await endRule(serviceContext(c), currentUserId(c), key, id);
+    return c.json({ ok: true as const });
+  },
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'get',
+    path: '/idp/groups/{key}/members',
+    query: CursorQuerySchema,
+    summary: "List a group's manual members",
+    params: GroupKeyParamSchema,
+    response: GroupMemberListSchema,
+    auth: READ,
+  },
+  async (c) =>
+    c.json({
+      items: await listMembers(serviceContext(c), c.req.valid('param').key),
+      nextCursor: null,
+    }),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/idp/groups/{key}/members',
+    summary: 'Add a manual member, by user or Polaris ID subject',
+    params: GroupKeyParamSchema,
+    body: CreateGroupMemberSchema,
+    response: GroupMemberSchema,
+    status: 201,
+    auth: WRITE,
+  },
+  async (c) =>
+    c.json(
+      await addMember(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').key,
+        c.req.valid('json'),
+      ),
+      201,
+    ),
+);
+
+register(
+  idpGroupsRoutes,
+  TAG,
+  {
+    method: 'delete',
+    path: '/idp/groups/{key}/members/{id}',
+    summary: 'Remove a manual member',
+    params: GroupRuleParamSchema,
+    response: OkSchema,
+    auth: WRITE,
+  },
+  async (c) => {
+    const { key, id } = c.req.valid('param');
+    await removeMember(serviceContext(c), currentUserId(c), key, id);
+    return c.json({ ok: true as const });
+  },
+);

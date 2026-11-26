@@ -10473,6 +10473,7 @@
                 "platform:templates",
                 "platform:audit",
                 "platform:claims",
+                "platform:groups",
                 "brand:manage"
               ]
             }
@@ -10621,6 +10622,7 @@
                         "platform:templates",
                         "platform:audit",
                         "platform:claims",
+                        "platform:groups",
                         "brand:manage"
                       ]
                     }
@@ -10854,6 +10856,7 @@
                         "platform:templates",
                         "platform:audit",
                         "platform:claims",
+                        "platform:groups",
                         "brand:manage"
                       ]
                     }
@@ -11085,6 +11088,7 @@
                     "platform:templates",
                     "platform:audit",
                     "platform:claims",
+                    "platform:groups",
                     "brand:manage"
                   ]
                 }
@@ -11320,6 +11324,7 @@
                 "platform:templates",
                 "platform:audit",
                 "platform:claims",
+                "platform:groups",
                 "brand:manage"
               ]
             }
@@ -11732,6 +11737,7 @@
                 "platform:templates",
                 "platform:audit",
                 "platform:claims",
+                "platform:groups",
                 "brand:manage"
               ]
             }
@@ -64466,6 +64472,535 @@
           "nextCursor"
         ]
       },
+      "PlatformGroupsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "role",
+                    "custom",
+                    "adopted"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "friendlyName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "members": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "claims": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "otherClients": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "flags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "rules": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "manual": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "key",
+                "kind",
+                "name",
+                "friendlyName",
+                "members",
+                "claims",
+                "otherClients",
+                "flags",
+                "rules",
+                "manual"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PlatformGroupsCreateParams": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$"
+          },
+          "friendlyName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgRoles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "org_admin",
+                      "integration_admin",
+                      "template_author",
+                      "template_reviewer",
+                      "template_publisher",
+                      "pass_operator",
+                      "read_only"
+                    ]
+                  },
+                  "minItems": 1,
+                  "maxItems": 7
+                }
+              },
+              "required": [
+                "orgId"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 5
+          }
+        },
+        "required": [
+          "key",
+          "friendlyName"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsCreateResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "dryRun"
+        ]
+      },
+      "PlatformGroupsEnsureParams": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "console",
+              "developer",
+              "support"
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsEnsureResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "dryRun"
+        ]
+      },
+      "PlatformGroupsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "friendlyName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "friendlyName"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "dryRun"
+        ]
+      },
+      "PlatformGroupsDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "dryRun"
+        ]
+      },
+      "PlatformGroupsRulesListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgRoles": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "org_admin",
+                      "integration_admin",
+                      "template_author",
+                      "template_reviewer",
+                      "template_publisher",
+                      "pass_operator",
+                      "read_only"
+                    ]
+                  },
+                  "minItems": 1,
+                  "maxItems": 7
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "orgId",
+                "orgRoles",
+                "createdAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PlatformGroupsRulesCreateParams": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgRoles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org_admin",
+                "integration_admin",
+                "template_author",
+                "template_reviewer",
+                "template_publisher",
+                "pass_operator",
+                "read_only"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 7
+          }
+        },
+        "required": [
+          "orgId"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsRulesCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgRoles": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "org_admin",
+                "integration_admin",
+                "template_author",
+                "template_reviewer",
+                "template_publisher",
+                "pass_operator",
+                "read_only"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 7
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "orgRoles",
+          "createdAt"
+        ]
+      },
+      "PlatformGroupsRulesDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "PlatformGroupsMembersListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "subject": {
+                  "type": "string"
+                },
+                "userId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "manual",
+                    "invitation"
+                  ]
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "subject",
+                "userId",
+                "source",
+                "createdAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PlatformGroupsMembersCreateParams": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "userId"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "subject": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            },
+            "required": [
+              "subject"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "PlatformGroupsMembersCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "subject": {
+            "type": "string"
+          },
+          "userId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "invitation"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "subject",
+          "userId",
+          "source",
+          "createdAt"
+        ]
+      },
+      "PlatformGroupsMembersDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
       "PlatformUsersListResponse": {
         "type": "object",
         "properties": {
@@ -66100,6 +66635,7 @@
                       "platform:templates",
                       "platform:audit",
                       "platform:claims",
+                      "platform:groups",
                       "brand:manage"
                     ]
                   }
@@ -87102,6 +87638,7 @@
                           "platform:templates",
                           "platform:audit",
                           "platform:claims",
+                          "platform:groups",
                           "brand:manage"
                         ]
                       }
@@ -89968,6 +90505,7 @@
                                 "platform:templates",
                                 "platform:audit",
                                 "platform:claims",
+                                "platform:groups",
                                 "brand:manage"
                               ]
                             }
@@ -134084,6 +134622,933 @@
           "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "List the Polaris ID groups PassBook manages",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "key": "crew",
+                      "kind": "custom",
+                      "name": "passbook_g_crew",
+                      "friendlyName": "Front desk staff",
+                      "members": 4,
+                      "claims": [
+                        "passbook_tier"
+                      ],
+                      "otherClients": 1,
+                      "flags": [],
+                      "rules": 1,
+                      "manual": 2
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.getPlatformIdpGroups",
+        "x-sdk": {
+          "resource": "platform.groups",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "Create a custom Polaris ID group",
+        "tags": [
+          "polaris-groups"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsCreateParams"
+              },
+              "example": {
+                "key": "crew",
+                "friendlyName": "Front desk staff",
+                "rules": [
+                  {
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "orgRoles": [
+                      "org_admin"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsCreateResponse"
+                },
+                "example": {
+                  "key": "crew",
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.postPlatformIdpGroups",
+        "x-sdk": {
+          "resource": "platform.groups",
+          "method": "create"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_GROUP_LIMIT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_RULE_EXISTS",
+          "IDP_RULE_LIMIT",
+          "IDP_RULE_ORG_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/ensure": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "Create a configured role group in Polaris ID",
+        "tags": [
+          "polaris-groups"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsEnsureParams"
+              },
+              "example": {
+                "role": "support"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsEnsureResponse"
+                },
+                "example": {
+                  "key": "support",
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.postPlatformIdpGroupsEnsure",
+        "x-sdk": {
+          "resource": "platform.groups",
+          "method": "ensure"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}": {
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "Rename a group's display name",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsUpdateParams"
+              },
+              "example": {
+                "friendlyName": "Front desk team"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsUpdateResponse"
+                },
+                "example": {
+                  "key": "crew",
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
+        "x-sdk": {
+          "resource": "platform.groups",
+          "method": "update"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "GROUP_NOT_FOUND",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "Delete an empty custom group PassBook created",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsDeleteResponse"
+                },
+                "example": {
+                  "key": "crew",
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.deletePlatformIdpGroupsByKey",
+        "x-sdk": {
+          "resource": "platform.groups",
+          "method": "delete"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "GROUP_NOT_FOUND",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/rules": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "List a group's org rules",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsRulesListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "orgRoles": [
+                        "org_admin"
+                      ],
+                      "createdAt": 1764000000000
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.getPlatformIdpGroupsByKeyRules",
+        "x-sdk": {
+          "resource": "platform.groups.rules",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "GROUP_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "Add an org rule: members of the org join the group",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsRulesCreateParams"
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "orgRoles": [
+                  "org_admin"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsRulesCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "orgRoles": [
+                    "org_admin"
+                  ],
+                  "createdAt": 1764000000000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.postPlatformIdpGroupsByKeyRules",
+        "x-sdk": {
+          "resource": "platform.groups.rules",
+          "method": "create"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "GROUP_NOT_FOUND",
+          "IDP_CONFLICT",
+          "IDP_RULE_EXISTS",
+          "IDP_RULE_LIMIT",
+          "IDP_RULE_ORG_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/rules/{id}": {
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "End an org rule",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsRulesDeleteResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
+        "x-sdk": {
+          "resource": "platform.groups.rules",
+          "method": "delete"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "RULE_NOT_FOUND",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/members": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "List a group's manual members",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsMembersListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+                      "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+                      "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                      "source": "manual",
+                      "createdAt": 1764000000000
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
+        "x-sdk": {
+          "resource": "platform.groups.members",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "GROUP_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "Add a manual member, by user or Polaris ID subject",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsMembersCreateParams"
+              },
+              "example": {
+                "userId": "0193a1b2-7c00-7000-8000-0000000000b1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsMembersCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-4e9c1a7b5d32",
+                  "subject": "b8e3f1c2-5d4a-4e7b-9c1d-2a3b4c5d6e7f",
+                  "userId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                  "source": "manual",
+                  "createdAt": 1764000000000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
+        "x-sdk": {
+          "resource": "platform.groups.members",
+          "method": "create"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "GROUP_NOT_FOUND",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_MEMBER_EXISTS",
+          "IDP_MULTIPLE_ACCOUNTS",
+          "IDP_NOT_MANAGED",
+          "IDP_NO_ACCOUNT",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "MEMBER_NOT_FOUND",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/members/{id}": {
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:groups",
+        "summary": "Remove a manual member",
+        "tags": [
+          "polaris-groups"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsMembersDeleteResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
+        "x-sdk": {
+          "resource": "platform.groups.members",
+          "method": "delete"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "MEMBER_NOT_FOUND",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
