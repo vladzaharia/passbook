@@ -10,7 +10,7 @@ import { rotateOwnPassCredentials } from '../holders/service-rotate.ts';
 import { CredentialTransferReissueRequired } from '../passes/credential-transfer.ts';
 import { assertNoActiveHolderOperation, startHolderOperation } from './operations-start.ts';
 import * as repo from './repo.ts';
-import { sourceOf } from './service.ts';
+import { sourceOf } from './service-actions.ts';
 
 async function ownedActive(ctx: ServiceContext, userId: string, passId: string) {
   const row = await repo.getMyPass(ctx.env.DB, userId, passId);

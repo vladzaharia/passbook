@@ -28,7 +28,8 @@ import { makeProviderTestTemplate } from '../wallet-providers/offers-test-fixtur
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
 import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 import { myPassesBundle } from './bundle.ts';
-import { getMyPass, listMyPasses, removeMyPass } from './service.ts';
+import { getMyPass, listMyPasses } from './service.ts';
+import { removeMyPass } from './service-actions.ts';
 
 const ORIGIN = 'https://wallet.test';
 // Storage lasts for the whole file; the credential keyset is immutable, so each case gets its own D1.

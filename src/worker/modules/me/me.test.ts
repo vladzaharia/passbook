@@ -15,7 +15,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { fakeLimiter, harness, type TestHarness } from '../auth/test-support.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
-import { type MeDeps, refreshMyPass, removeMyPass } from './service.ts';
+import { type MeDeps, refreshMyPass, removeMyPass } from './service-actions.ts';
 
 let h: TestHarness;
 const f = () => fixtures(h.env, h.clock);
