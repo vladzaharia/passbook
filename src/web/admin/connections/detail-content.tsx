@@ -28,19 +28,17 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { confirmWord } from '../../ui/typed-confirm-dialog.tsx';
-import { syncNote } from '../operations/notes.ts';
-import { OperationSlot } from '../operations/operation-slot.tsx';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { useConnectionActions, useConnector, useConnectorNames } from './api.ts';
 import { ConfigTab } from './config-tab.tsx';
 import { SettingsTab } from './detail-tabs.tsx';
 import { FileTab } from './files/file-tab.tsx';
-import { markApplyStarted } from './files/use-apply-watch.ts';
 import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
 import { sourceLine } from './labels.ts';
 import { MappingTab } from './mapping-tab.tsx';
 import type { ConnectionDetailSearch } from './search.ts';
+import { runSync, SyncOperation } from './sync-operation.tsx';
 import { type TestOutcome, TestResult } from './test-result.tsx';
 import { WebhookPanel } from './webhook.tsx';
 import { WebhookFailures } from './webhook-failures.tsx';
@@ -95,18 +93,7 @@ export function ConnectionDetail({
       setTest({ kind: 'error', error, at: Date.now() });
     }
   }
-  const sync = () => {
-    if (!canManage) return;
-    void actions.sync
-      .mutateAsync()
-      .then((started) => {
-        markApplyStarted(connectionId);
-        // The operation shows the run; a sync that joined one already open has none, and says so.
-        if (started.operationId) setSyncing(started.operationId);
-        else toast.success('Already syncing');
-      })
-      .catch((error: unknown) => toast.error(error, 'Could not sync'));
-  };
+  const sync = () => canManage && void runSync(actions.sync.mutateAsync, connectionId, setSyncing);
   const sample = test?.kind === 'result' ? test.result.sample : undefined;
 
   return (
@@ -173,13 +160,7 @@ export function ConnectionDetail({
           ) : undefined
         }
       />
-      <OperationSlot
-        kind="connection.sync"
-        orgId={c.orgId}
-        startedId={syncing}
-        onClear={() => setSyncing(null)}
-        doneNote={syncNote}
-      />
+      <SyncOperation orgId={c.orgId} startedId={syncing} onClear={() => setSyncing(null)} />
       {created.shown && canManage ? (
         <div className="mb-6">
           <CreatedCallout

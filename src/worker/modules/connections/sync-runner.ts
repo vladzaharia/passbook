@@ -157,8 +157,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
         staleCode = 'STALE_CONTEXT';
         return false;
       }
-      add(totals, r);
-      report.seen(totals);
+      add(totals, r), report.seen(totals);
       for (const sample of r.samples) if (samples.length < MAX_SAMPLES) samples.push(sample);
       failure ??= r.failure;
       releaseBlocked ??= r.releaseBlocked;
