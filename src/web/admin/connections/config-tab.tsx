@@ -1,6 +1,7 @@
 import { useId, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionDetailSchema } from '@/shared/contracts/connections.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { isApiError } from '../../lib/errors.ts';
 import {
   Button,
@@ -60,6 +61,7 @@ export function ConfigTab({
   onSaved?: () => void;
 }) {
   const actions = useConnectionActions(c.id);
+  const orgZone = useOrgTimeZone(c.orgId);
   const connector = useConnector(c.connectorType, c.orgId);
   const cfgSchema = useMemo(
     () => flattenSchema(connector.data?.configSchema),
@@ -152,6 +154,7 @@ export function ConfigTab({
           <CardHeader title="Connector" />
           <CardBody>
             <SchemaForm
+              orgZone={orgZone}
               schema={cfgSchema}
               value={cfg}
               onChange={setConfig}
@@ -190,6 +193,7 @@ export function ConfigTab({
           <CardBody>
             {replacing ? (
               <SchemaForm
+                orgZone={orgZone}
                 schema={secSchema}
                 hiddenKeys={secretKeysFor(secSchema, String(cfg['auth.type'] ?? 'none'))}
                 value={secrets}
