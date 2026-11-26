@@ -38,6 +38,7 @@ import { registerConnectionProbeRoutes } from './probe-routes.ts';
 import * as service from './service.ts';
 import { registerConnectionSetupRoute } from './setup-routes.ts';
 import { testConfig } from './test-config.ts';
+import { registerWebhookArrivalRoutes } from './webhook-arrivals-routes.ts';
 import { registerConnectionWebhookRoutes } from './webhook-ingress-routes.ts';
 import { registerWebhookRetentionRoutes } from './webhook-retention-routes.ts';
 
@@ -92,6 +93,7 @@ const touchesTrust = async (c: Parameters<typeof peekBody>[0]) => {
 connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
+registerWebhookArrivalRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
 registerConnectionSetupRoute(connectionsRoutes);
 registerConnectionFileRoutes(connectionsRoutes);

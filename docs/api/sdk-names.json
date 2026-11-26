@@ -261,6 +261,10 @@
     "resource": "connections.setup",
     "method": "retrieve"
   },
+  "connections.getConnectionsByIdWebhookArrivals": {
+    "resource": "connections.webhookArrivals",
+    "method": "list"
+  },
   "connections.getConnectionsByIdWebhookFailures": {
     "resource": "connections.webhookFailures",
     "method": "list"

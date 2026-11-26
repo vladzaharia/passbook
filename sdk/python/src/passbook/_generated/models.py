@@ -307,6 +307,10 @@ __all__ = [
     "ConnectionsUploadsUpdateResponseColumnsItem",
     "ConnectionsUploadsUpdateResponsePreview",
     "ConnectionsUploadsUpdateResult",
+    "ConnectionsWebhookArrivalsListItem",
+    "ConnectionsWebhookArrivalsListResponse",
+    "ConnectionsWebhookArrivalsListResponseItemsItem",
+    "ConnectionsWebhookArrivalsListResult",
     "ConnectionsWebhookFailuresListItem",
     "ConnectionsWebhookFailuresListResponse",
     "ConnectionsWebhookFailuresListResponseItemsItem",
@@ -3007,7 +3011,9 @@ class ConnectionsCreateResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3174,7 +3180,9 @@ class ConnectionsListItem(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3226,7 +3234,9 @@ class ConnectionsListResponseItemsItem(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3314,7 +3324,9 @@ class ConnectionsRetrieveResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3372,7 +3384,7 @@ class ConnectionsRetrieveSummaryResponseAttentionItem(_Model):
     id: str
     orgId: str
     name: str
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     lastErrorCode: str | None
     lastErrorAt: int | None
 
@@ -3398,7 +3410,9 @@ class ConnectionsRevokePreviousWebhookSecretResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3445,7 +3459,9 @@ class ConnectionsRotateWebhookSecretResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3736,7 +3752,9 @@ class ConnectionsUpdateResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3862,6 +3880,34 @@ class ConnectionsUploadsUpdateResponseColumnsItem(_Model):
 class ConnectionsUploadsUpdateResponsePreview(_Model):
     header: _List[str]
     rows: _List[_List[str]]
+
+class ConnectionsWebhookArrivalsListItem(_Model):
+    id: str
+    receivedAt: int
+    lastAt: int
+    outcome: _Literal["accepted", "duplicate", "ignored", "rejected"] | str
+    reason: _Literal["signature_missing", "signature_mismatch", "signature_expired", "payload", "too_large", "no_secret", "unknown_type", "thin_event", "test_mode", "unrecognized_shape", "no_ref", "ping", "stale", None] | str
+    topic: str | None
+    contentClass: _Literal["json", "xml", "form", "other"] | str
+    eventRef: str | None
+    usedPrevious: bool
+    count: int
+
+class ConnectionsWebhookArrivalsListResponse(_Model):
+    items: _List[ConnectionsWebhookArrivalsListResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsWebhookArrivalsListResponseItemsItem(_Model):
+    id: str
+    receivedAt: int
+    lastAt: int
+    outcome: _Literal["accepted", "duplicate", "ignored", "rejected"] | str
+    reason: _Literal["signature_missing", "signature_mismatch", "signature_expired", "payload", "too_large", "no_secret", "unknown_type", "thin_event", "test_mode", "unrecognized_shape", "no_ref", "ping", "stale", None] | str
+    topic: str | None
+    contentClass: _Literal["json", "xml", "form", "other"] | str
+    eventRef: str | None
+    usedPrevious: bool
+    count: int
 
 class ConnectionsWebhookFailuresListItem(_Model):
     id: str
@@ -14997,6 +15043,8 @@ ConnectionsUploadsRetrieveResult = ConnectionsUploadsRetrieveResponse
 ConnectionsUploadsUpdateBody = ConnectionsUploadsUpdateParams
 
 ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
+
+ConnectionsWebhookArrivalsListResult = ConnectionsWebhookArrivalsListResponse
 
 ConnectionsWebhookFailuresListResult = ConnectionsWebhookFailuresListResponse
 

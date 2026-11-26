@@ -51060,6 +51060,115 @@
           "state"
         ]
       },
+      "ConnectionsWebhookArrivalsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "receivedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "lastAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "duplicate",
+                    "ignored",
+                    "rejected"
+                  ]
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "signature_missing",
+                    "signature_mismatch",
+                    "signature_expired",
+                    "payload",
+                    "too_large",
+                    "no_secret",
+                    "unknown_type",
+                    "thin_event",
+                    "test_mode",
+                    "unrecognized_shape",
+                    "no_ref",
+                    "ping",
+                    "stale",
+                    null
+                  ]
+                },
+                "topic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 100
+                },
+                "contentClass": {
+                  "type": "string",
+                  "enum": [
+                    "json",
+                    "xml",
+                    "form",
+                    "other"
+                  ]
+                },
+                "eventRef": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 200
+                },
+                "usedPrevious": {
+                  "type": "boolean"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "id",
+                "receivedAt",
+                "lastAt",
+                "outcome",
+                "reason",
+                "topic",
+                "contentClass",
+                "eventRef",
+                "usedPrevious",
+                "count"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "ConnectionsListResponse": {
         "type": "object",
         "properties": {
@@ -51254,11 +51363,40 @@
                   "type": "string",
                   "enum": [
                     "unknown",
+                    "awaiting",
                     "healthy",
                     "degraded",
                     "failing",
                     "paused",
                     "disabled"
+                  ]
+                },
+                "firstVerifiedArrivalAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "warning": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "stale_deliveries"
+                      ]
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "text"
                   ]
                 },
                 "consecutiveFailures": {
@@ -51348,6 +51486,8 @@
                 "requestsPerMinute",
                 "enabled",
                 "health",
+                "firstVerifiedArrivalAt",
+                "warning",
                 "consecutiveFailures",
                 "breakerOpenUntil",
                 "nextRunAt",
@@ -51738,11 +51878,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -51830,6 +51999,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -51876,6 +52047,7 @@
                   "type": "string",
                   "enum": [
                     "unknown",
+                    "awaiting",
                     "healthy",
                     "degraded",
                     "failing",
@@ -55216,11 +55388,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -55451,6 +55652,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -55848,11 +56051,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -55940,6 +56172,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -56657,11 +56891,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -56749,6 +57012,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -56950,11 +57215,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -57039,6 +57333,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -122446,6 +122742,129 @@
         ]
       }
     },
+    "/api/v1/connections/{id}/webhook-arrivals": {
+      "get": {
+        "summary": "List webhook arrivals",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "since",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsWebhookArrivalsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-b642336f0c7e",
+                      "receivedAt": 1795399200000,
+                      "lastAt": 1795399200000,
+                      "outcome": "rejected",
+                      "reason": "signature_mismatch",
+                      "topic": null,
+                      "contentClass": "json",
+                      "eventRef": null,
+                      "usedPrevious": false,
+                      "count": 2
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.getConnectionsByIdWebhookArrivals",
+        "x-sdk": {
+          "resource": "connections.webhookArrivals",
+          "method": "list"
+        },
+        "description": "Lists what the webhook ingress saw for a connection, newest first: the outcome and the reason, never the body. Poll it with since to watch a test event arrive.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/connections": {
       "get": {
         "summary": "List connections",
@@ -122469,6 +122888,7 @@
               "type": "string",
               "enum": [
                 "unknown",
+                "awaiting",
                 "healthy",
                 "degraded",
                 "failing",
@@ -122555,6 +122975,11 @@
                       "requestsPerMinute": 6,
                       "enabled": true,
                       "health": "healthy",
+                      "firstVerifiedArrivalAt": 1795570500000,
+                      "warning": {
+                        "code": "stale_deliveries",
+                        "text": "Your provider is sending old events. Check its clock and retries."
+                      },
                       "consecutiveFailures": 0,
                       "breakerOpenUntil": null,
                       "nextRunAt": 1795571400000,
@@ -122695,6 +123120,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "unknown",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795572000000,
@@ -124702,6 +125132,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -124857,6 +125292,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -125586,6 +126026,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -125726,6 +126171,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,

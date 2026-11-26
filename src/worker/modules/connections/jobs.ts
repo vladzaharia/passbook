@@ -13,6 +13,7 @@ import { type RefreshSnapshot, refreshSnapshotCurrent } from './repo-pass-refres
 import { getPassById } from './repo-passes.ts';
 import { deleteIdleRefVersions } from './repo-ref-versions.ts';
 import { deleteOldRuns, deleteOldWebhookEvents, deleteOldWorkflowRuns } from './repo-sync.ts';
+import { clearOldArrivalRefs, deleteOldArrivals } from './repo-webhook-arrivals.ts';
 import { reconcileConnections as schedule } from './schedule.ts';
 import { dropExpiredPreviousSecrets } from './secret-sweep.ts';
 import { processWebhook } from './webhook-process.ts';
@@ -22,6 +23,7 @@ const DAY_MS = 86_400_000;
 export const RUN_RETENTION_MS = 30 * DAY_MS;
 export const RUNS_KEPT_PER_CONNECTION = 1000;
 export const WEBHOOK_RETENTION_MS = 7 * DAY_MS;
+export const ARRIVAL_RETENTION_MS = 7 * DAY_MS;
 /** A ref's source version is kept this long after its last write. */
 export const REF_VERSION_IDLE_MS = 30 * DAY_MS;
 /** Failed, blocked and ignored retained payloads expire after this, unless an item is unresolved. */
@@ -146,11 +148,16 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
     deleteIdleRefVersions(ctx, now - REF_VERSION_IDLE_MS),
   );
   await step(ctx, 'files', () => dailyConnectionFiles(ctx));
+  const arrivals = await step(ctx, 'arrivals', async () => {
+    const before = now - ARRIVAL_RETENTION_MS;
+    await clearOldArrivalRefs(ctx.env.DB, before);
+    return deleteOldArrivals(ctx.env.DB, before);
+  });
   const secrets = await step(ctx, 'previous_secrets', () => dropExpiredPreviousSecrets(ctx, now));
   await step(ctx, 'prev_secret_counters', () =>
     prune(ctx.env.DB, 'webhook-prev-secret:%', now - DAY_MS),
   );
-  ctx.log.info('connections.retention', { runs, events, workflows, versions, secrets });
+  ctx.log.info('connections.retention', { runs, events, workflows, versions, secrets, arrivals });
 }
 
 /**

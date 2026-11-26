@@ -49,6 +49,8 @@ export const calcomBookings: Recipe = {
   adapt({ body }) {
     const o = obj(body);
     const type = str(o?.triggerEvent);
+    // The Ping test button sends PING with no booking in it (shape UNVERIFIED, see the setup guide).
+    if (type === 'PING') return ignored('ping');
     const payload = obj(o?.payload);
     const created = isoMs(o?.createdAt);
     const uid = ref(payload?.uid);

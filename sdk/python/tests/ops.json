@@ -1199,6 +1199,11 @@
      "requestsPerMinute": 0,
      "enabled": false,
      "health": "unknown",
+     "firstVerifiedArrivalAt": 0,
+     "warning": {
+      "code": "stale_deliveries",
+      "text": "x"
+     },
      "consecutiveFailures": 0,
      "breakerOpenUntil": 0,
      "nextRunAt": 0,
@@ -1259,6 +1264,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -1664,6 +1674,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -1745,6 +1760,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -2316,6 +2336,41 @@
   }
  },
  {
+  "id": "connections.getConnectionsByIdWebhookArrivals",
+  "call": "connections.webhook_arrivals.list",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/webhook-arrivals",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "receivedAt": 0,
+     "lastAt": 0,
+     "outcome": "accepted",
+     "reason": "signature_missing",
+     "topic": "x",
+     "contentClass": "json",
+     "eventRef": "x",
+     "usedPrevious": false,
+     "count": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
   "id": "connections.getConnectionsByIdWebhookFailures",
   "call": "connections.webhook_failures.list",
   "http": "GET",
@@ -2448,6 +2503,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -2505,6 +2565,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,

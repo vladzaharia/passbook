@@ -858,7 +858,12 @@ export type ConnectionsCreateResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1028,7 +1033,12 @@ export type ConnectionsListResponse = {
     maxConcurrency: number | null;
     requestsPerMinute: number | null;
     enabled: boolean;
-    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    firstVerifiedArrivalAt: number | null;
+    warning: {
+      code: "stale_deliveries";
+      text: string;
+    } | null;
     consecutiveFailures: number;
     breakerOpenUntil: number | null;
     nextRunAt: number | null;
@@ -1306,7 +1316,12 @@ export type ConnectionsRetrieveResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1348,7 +1363,7 @@ export type ConnectionsRetrieveSummaryResponse = {
     id: string;
     orgId: string;
     name: string;
-    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
     lastErrorCode: string | null;
     lastErrorAt: number | null;
   }>;
@@ -1386,7 +1401,12 @@ export type ConnectionsRevokePreviousWebhookSecretResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1431,7 +1451,12 @@ export type ConnectionsRotateWebhookSecretResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1682,7 +1707,12 @@ export type ConnectionsUpdateResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1795,6 +1825,22 @@ export type ConnectionsUploadsUpdateResponse = {
   idCandidates: Array<string>;
   createdAt: number;
   expiresAt: number | null;
+};
+
+export type ConnectionsWebhookArrivalsListResponse = {
+  items: Array<{
+    id: string;
+    receivedAt: number;
+    lastAt: number;
+    outcome: "accepted" | "duplicate" | "ignored" | "rejected";
+    reason: "signature_missing" | "signature_mismatch" | "signature_expired" | "payload" | "too_large" | "no_secret" | "unknown_type" | "thin_event" | "test_mode" | "unrecognized_shape" | "no_ref" | "ping" | "stale" | null;
+    topic: string | null;
+    contentClass: "json" | "xml" | "form" | "other";
+    eventRef: string | null;
+    usedPrevious: boolean;
+    count: number;
+  }>;
+  nextCursor: string | null;
 };
 
 export type ConnectionsWebhookFailuresListResponse = {
