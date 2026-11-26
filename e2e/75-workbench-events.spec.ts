@@ -82,7 +82,7 @@ test('L17: the mounted wizard creates, pauses and deletes a Test endpoint', asyn
   await wizard.getByRole('button', { name: 'Add endpoint' }).click();
 
   // The signing secret shows once; Done waits for "I saved the secret".
-  const done = page.getByRole('dialog', { name: /Endpoint added/ });
+  const done = page.getByRole('dialog', { name: /Set up your server/ });
   await expect(done.getByRole('button', { name: 'Done' })).toBeDisabled();
   await settle(page);
   await shots(page, 'events-wizard-secret');

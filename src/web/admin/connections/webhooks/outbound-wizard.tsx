@@ -1,4 +1,3 @@
-import { Webhook } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type {
@@ -6,16 +5,14 @@ import type {
   WebhookEndpointDto,
 } from '@/shared/contracts/webhooks.ts';
 import { isApiError } from '../../../lib/errors.ts';
-import { SecretReveal } from '../../../ui/secret-reveal.tsx';
-import { VerifyGuide } from '../../../ui/webhooks/verify-guide.tsx';
 import { useWizard } from '../../../ui/wizard/use-wizard.ts';
 import { WizardDialog } from '../../../ui/wizard/wizard-dialog.tsx';
 import { useSecretCalls, useValidateEndpoint } from './api.ts';
 import type { TemplateChoices } from './endpoint-fields.tsx';
 import { checkForm, draftOf, emptyForm, type FormState } from './form-state.ts';
 import { endpointHost } from './health.ts';
+import { OUTBOUND_DONE, OutboundDone } from './outbound-done.tsx';
 import { OutboundReview, OutboundStepEvents, OutboundStepWhere } from './outbound-steps.tsx';
-import { TestSend } from './test-send.tsx';
 
 type Created = z.infer<typeof WebhookEndpointCreatedSchema>;
 export type OutboundKind = 'url' | 'capture';
@@ -26,6 +23,8 @@ export type OutboundKind = 'url' | 'capture';
  * Workbench every call it makes rides the Test token.
  */
 export interface OutboundHost {
+  /** The organization the wizard acts in, fixed by the host: it has no chooser. */
+  orgId: string;
   /** A sandbox also offers its built-in capture endpoint, and counts endpoints against its plan. */
   sandbox: boolean;
   quota: { used: number; limit: number | null } | null;
@@ -38,9 +37,9 @@ export interface OutboundHost {
 }
 
 const STEPS = [
-  { id: 'where', title: 'Destination', heading: 'Where to send' },
-  { id: 'events', title: 'Events', heading: 'Choose events' },
-  { id: 'review', title: 'Review' },
+  { id: 'where', title: 'Destination', heading: 'Where to send', group: 'In PassBook' },
+  { id: 'events', title: 'Events', heading: 'Choose events', group: 'In PassBook' },
+  { id: 'review', title: 'Review', group: 'In PassBook' },
 ] as const;
 type StepId = (typeof STEPS)[number]['id'];
 
@@ -55,9 +54,12 @@ const urlProblem = (error: unknown) =>
   isApiError(error) && error.status === 422 ? error.message : undefined;
 
 /**
- * Send events to your server: the outbound path of the Connections wizard, in a dialog. Where, which
- * events, review, then the signing secret once, with the verify guide and a test send. A sandbox may
- * pick its capture endpoint instead of a URL (no secret, nothing leaves PassBook).
+ * The Connections outbound path: the one wizard that sets up a webhook endpoint ("Send events to
+ * your server"). Connections' outbound tile mounts it (webhook-setup W7), and the Workbench mounts it
+ * in Test through a host adapter. Nothing else creates an endpoint. It is built on the shared Wizard
+ * kit and the webhook-setup kit: where, which events, review, then both sides of the setup. PassBook's
+ * side is the signing secret (shown once) and a live test send; your server's side is the guide's
+ * steps. A sandbox may pick its capture endpoint instead of a URL (no secret, nothing leaves PassBook).
  */
 export function OutboundWizard({
   open,
@@ -115,7 +117,7 @@ export function OutboundWizard({
         return;
       }
       try {
-        setCreated(await create(draftOf(form)));
+        setCreated(await create({ ...draftOf(form), orgId: host.orgId }));
       } catch (error) {
         const why = urlProblem(error);
         if (why) setServerUrl(why);
@@ -129,7 +131,7 @@ export function OutboundWizard({
     if (found.url) return;
     setChecking(true);
     try {
-      await validate(draftOf(form));
+      await validate({ ...draftOf(form), orgId: host.orgId });
       setServerUrl(undefined);
     } catch (error) {
       setServerUrl(urlProblem(error));
@@ -159,35 +161,16 @@ export function OutboundWizard({
       result={
         created
           ? {
-              title: 'Endpoint added',
-              icon: <Webhook aria-hidden />,
+              ...OUTBOUND_DONE,
               body: (
-                <SecretReveal
-                  fields={[
-                    {
-                      label: 'Signing secret',
-                      value: created.secret,
-                      copyLabel: 'Copy signing secret',
-                    },
-                  ]}
-                  doneLabel="Done"
+                <OutboundDone
+                  orgId={host.orgId}
+                  created={created}
                   onDone={() => {
                     host.onFinish(created.endpoint);
                     onOpenChange(false);
                   }}
-                >
-                  <details className="text-sm">
-                    <summary className="cursor-pointer text-fg-muted pointer-coarse:min-h-11">
-                      How to verify the signature
-                    </summary>
-                    <VerifyGuide className="pt-3" />
-                  </details>
-                  <TestSend
-                    endpointId={created.endpoint.id}
-                    host={endpointHost(created.endpoint)}
-                    canManage
-                  />
-                </SecretReveal>
+                />
               ),
             }
           : undefined

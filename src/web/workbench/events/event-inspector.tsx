@@ -17,9 +17,9 @@ import { IdChip } from '../bench/id-chip.tsx';
 import { Inspector } from '../bench/inspector.tsx';
 import { BenchTime } from '../bench/time.tsx';
 import { Trace } from '../bench/trace.tsx';
+import { consolePrefillPath } from '../host/prefill.ts';
 import { CaptureView } from './capture-view.tsx';
 import { eventDeliveryRow } from './model.ts';
-import { eventInConsole } from './open-in-console.ts';
 import { useHere } from './use-address.ts';
 import type { FeedEvent } from './use-event-feed.ts';
 import { useCaptures, useDeliveryHost, useEventDeliveries, useEventsApi } from './use-events.ts';
@@ -52,6 +52,10 @@ export function EventInspector({
   onNext?: (() => void) | undefined;
 }) {
   const host = useDeliveryHost();
+  const consoleLink = useMemo(
+    () => consolePrefillPath(orgId, { op: 'events.getEventsById', path: { id: event.id } }),
+    [orgId, event.id],
+  );
   // Replay is one delivery's act: it sits in the delivery opened under the list, not in each row.
   const listHost = useMemo(() => ({ ...host, canManage: false }), [host]);
   const deliveries = useEventDeliveries(event.id);
@@ -83,7 +87,7 @@ export function EventInspector({
       itemKey={event.id}
       id={<IdChip id={event.id} kind="event" />}
       actions={
-        <Link className="btn ghost sm" to={eventInConsole(orgId, event.id)}>
+        <Link className="btn ghost sm" to={consoleLink}>
           <Terminal aria-hidden="true" />
           Open in Console
         </Link>

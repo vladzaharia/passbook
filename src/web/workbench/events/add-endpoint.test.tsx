@@ -78,7 +78,7 @@ describe('the mounted wizard (design §1.10)', () => {
     await user.click(within(d).getByRole('button', { name: 'Next' }));
     await user.click(within(d).getByRole('button', { name: 'Next' }));
     await user.click(within(d).getByRole('button', { name: 'Add endpoint' }));
-    const result = await screen.findByRole('dialog', { name: /Endpoint added/ });
+    const result = await screen.findByRole('dialog', { name: /Set up your server/ });
     const made = view.calls.find(
       (c) => c.method === 'POST' && c.path === '/api/v1/webhook-endpoints' && !c.search,
     );
@@ -91,6 +91,9 @@ describe('the mounted wizard (design §1.10)', () => {
         c.path,
       ).toEqual([]);
     }
+    // Both sides: PassBook's live test, and the steps for your server from the guide.
+    expect(within(result).getByRole('button', { name: 'Send test' })).toBeInTheDocument();
+    expect(await within(result).findByText('Store the secret')).toBeInTheDocument();
     await user.click(within(result).getByRole('checkbox', { name: 'I saved the secret' }));
     await user.click(within(result).getByRole('button', { name: 'Done' }));
     await waitFor(() => expect(here(view)).toBe('/workbench/o/sbx/events?tab=endpoints#we-new'));

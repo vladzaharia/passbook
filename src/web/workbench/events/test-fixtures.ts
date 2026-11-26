@@ -122,6 +122,7 @@ export function eventsHandlers(world: World, calls: Calls[]): Record<string, Fet
     ),
     at('/api/v1/webhook-endpoints/we-new/deliveries', () => json({ items: [], nextCursor: null })),
     at('/api/v1/webhook-endpoints/we-new/tests', () => json({ items: [] })),
+    at('/api/v1/webhook-endpoints/setup', () => json(OUTBOUND_GUIDE)),
     at('/api/v1/templates', () => json({ items: [], nextCursor: null })),
   ];
   for (const e of world.events) {
@@ -171,3 +172,35 @@ export const delivery = (
   replays: 0,
   ...over,
 });
+
+/** The outbound guide the server sends (shared/contracts/connection-setup.ts). */
+const OUTBOUND_GUIDE = {
+  direction: 'outbound',
+  recipe: 'outbound',
+  version: '2026-11-25',
+  checkedAt: '2026-11-25',
+  provider: { name: 'Your server', consoleUrl: null, docs: [] },
+  secret: {
+    origin: 'passbook',
+    allowPaste: false,
+    prefix: 'whsec_',
+    minLength: 38,
+    whereStep: null,
+  },
+  subscriptions: { perWebhook: 'many', topics: [] },
+  steps: [
+    {
+      id: 'store',
+      side: 'provider',
+      title: 'Store the secret',
+      parts: [{ t: 'text', text: "Keep it in your server's environment, not in code." }],
+    },
+  ],
+  test: {
+    kind: 'send',
+    text: 'Send a test from PassBook. Done after one 2xx.',
+    command: null,
+    issues: false,
+  },
+  troubleshooting: {},
+};

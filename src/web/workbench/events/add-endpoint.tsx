@@ -55,13 +55,14 @@ export default function AddEndpointWizard({
   const quota = summary.data?.quotas?.endpoints ?? null;
   const host = useMemo<OutboundHost>(
     () => ({
+      orgId: context.orgId,
       sandbox,
       quota,
       useTemplateChoices: useWorkbenchTemplates,
       ensureCapture: async () => (await api.ensureCapture()).endpoint,
       onFinish,
     }),
-    [sandbox, quota, api, onFinish],
+    [context.orgId, sandbox, quota, api, onFinish],
   );
   return <OutboundWizard open={open} onOpenChange={onOpenChange} host={host} />;
 }

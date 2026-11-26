@@ -79,6 +79,7 @@ describe('Events', () => {
     expect(href).toMatch(/^\/workbench\/o\/sbx\/console\?op=events\.getEventsById&prefill=/);
     const nonce = new URL(href, 'http://x').searchParams.get('prefill');
     expect(JSON.parse(sessionStorage.getItem(`wb-prefill:${nonce}`) ?? '{}')).toEqual({
+      op: 'events.getEventsById',
       path: { id: 'ev2' },
     });
     // Ids travel by nonce; a body never rides the URL.

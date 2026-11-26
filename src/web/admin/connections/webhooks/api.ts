@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { OkSchema } from '@/shared/contracts/common.ts';
+import { SetupGuideSchema } from '@/shared/contracts/connection-setup.ts';
 import type { OverlapHours } from '@/shared/contracts/webhook-secrets.ts';
 import { WebhookTestAttemptListSchema } from '@/shared/contracts/webhook-tests.ts';
 import {
@@ -193,5 +194,18 @@ export function useReplayPreview(id: string, input: ReplayInput, enabled: boolea
     enabled,
     staleTime: 10_000,
     retry: false,
+  });
+}
+
+/** The outbound setup guide: what the receiving server does with each delivery. */
+export function useOutboundSetup(orgId: string | undefined) {
+  const api = useToolApi();
+  const toolKey = useToolKey();
+  return useQuery({
+    queryKey: ['admin', 'webhooks', 'setup', orgId ?? null, ...toolKey] as const,
+    queryFn: ({ signal }) =>
+      api.get(`${BASE}/setup`, SetupGuideSchema, { query: { orgId }, signal }),
+    enabled: Boolean(orgId),
+    staleTime: 5 * 60_000,
   });
 }
