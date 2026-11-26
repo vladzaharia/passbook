@@ -43,7 +43,7 @@
       "result": {
         "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
         "ids": {
-          "tier": "Day pass"
+          "tier": "northwind"
         }
       },
       "revision": 3,
@@ -97,7 +97,7 @@
           "result": {
             "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
             "ids": {
-              "tier": "Day pass"
+              "tier": "northwind"
             }
           },
           "revision": 3,
@@ -152,7 +152,7 @@
       "result": {
         "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
         "ids": {
-          "tier": "Day pass"
+          "tier": "northwind"
         }
       },
       "revision": 3,
@@ -204,7 +204,7 @@
       "result": {
         "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
         "ids": {
-          "tier": "Day pass"
+          "tier": "northwind"
         }
       },
       "revision": 3,

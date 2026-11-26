@@ -34836,7 +34836,8 @@
                 "type": "object",
                 "additionalProperties": {
                   "type": "string",
-                  "maxLength": 80
+                  "maxLength": 80,
+                  "pattern": "^[A-Za-z0-9_.:-]+$"
                 }
               }
             },
@@ -35147,7 +35148,8 @@
                       "type": "object",
                       "additionalProperties": {
                         "type": "string",
-                        "maxLength": 80
+                        "maxLength": 80,
+                        "pattern": "^[A-Za-z0-9_.:-]+$"
                       }
                     }
                   },
@@ -35466,7 +35468,8 @@
                 "type": "object",
                 "additionalProperties": {
                   "type": "string",
-                  "maxLength": 80
+                  "maxLength": 80,
+                  "pattern": "^[A-Za-z0-9_.:-]+$"
                 }
               }
             },
@@ -35772,7 +35775,8 @@
                 "type": "object",
                 "additionalProperties": {
                   "type": "string",
-                  "maxLength": 80
+                  "maxLength": 80,
+                  "pattern": "^[A-Za-z0-9_.:-]+$"
                 }
               }
             },
