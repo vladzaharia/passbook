@@ -231,6 +231,12 @@
     // Request access form: per network, and across all networks (the inbox is the shared resource).
     { "name": "RL_ACCESS", "namespace_id": "1027", "simple": { "limit": 5, "period": 60 } },
     { "name": "RL_ACCESS_ALL", "namespace_id": "1028", "simple": { "limit": 30, "period": 60 } },
+    // Ledger writes for refused webhook deliveries (key: connection id): over budget the row is dropped, never the 401.
+    {
+      "name": "RL_WEBHOOK_LEDGER",
+      "namespace_id": "1030",
+      "simple": { "limit": 30, "period": 60 }
+    },
     { "name": "RL_SIMULATE", "namespace_id": "1032", "simple": { "limit": 60, "period": 60 } }
   ],
 

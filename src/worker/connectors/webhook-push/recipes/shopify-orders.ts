@@ -1,4 +1,5 @@
 import { HOUR_MS, ignored, isoMs, num, obj, type Recipe, record, ref, str } from './shared.ts';
+import { shopifyOrdersSetup } from './shopify-orders.setup.ts';
 
 const TOPICS = [
   'orders/create',
@@ -18,6 +19,10 @@ export const shopifyOrders: Recipe = {
   windowMs: 48 * HOUR_MS,
   topics: TOPICS,
   pasteSecret: true,
+  secretOrigin: 'provider',
+  secretScope: 'account',
+  line: 'Order to pass. Voids when cancelled or refunded.',
+  setup: shopifyOrdersSetup,
   outputFields: {
     orderName: { type: 'string' },
     orderNumber: { type: 'number' },

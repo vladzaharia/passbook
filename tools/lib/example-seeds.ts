@@ -32,6 +32,7 @@ import {
 } from './example-canon.ts';
 import { DEV_ACCESS_SEEDS } from './example-seeds-dev-access.ts';
 import { IDP_SEEDS } from './example-seeds-idp.ts';
+import { SETUP_SEEDS } from './example-seeds-setup.ts';
 import { API, hex, IDS, IMPORT, IMPORT_PLAN, PASS, T, TEMPLATE } from './example-world.ts';
 
 const uuid = (seed: string): string => `0193a1b2-7c00-7000-8000-${hex(seed, 12)}`;
@@ -162,6 +163,7 @@ const READY = {
 export const SEEDS: Record<string, unknown> = {
   ...IDP_SEEDS,
   ...DEV_ACCESS_SEEDS,
+  ...SETUP_SEEDS,
   'pass-imports.postPassImports response': READY,
   'pass-imports.postPassImportsByIdCheck response': READY,
   'pass-imports.postPassImportsByIdCommit request': { skipInvalid: true, email: true },
@@ -669,6 +671,23 @@ export const SEEDS: Record<string, unknown> = {
       },
     ],
     durationMs: 1650,
+  },
+  'connections.getConnectionsByIdWebhookArrivals response': {
+    items: [
+      {
+        id: uuid('webhook-arrival'),
+        receivedAt: T.updated,
+        lastAt: T.updated,
+        outcome: 'rejected',
+        reason: 'signature_mismatch',
+        topic: null,
+        contentClass: 'json',
+        eventRef: null,
+        usedPrevious: false,
+        count: 2,
+      },
+    ],
+    nextCursor: null,
   },
   'connections.getConnectionsByIdWebhookFailures response': {
     items: [

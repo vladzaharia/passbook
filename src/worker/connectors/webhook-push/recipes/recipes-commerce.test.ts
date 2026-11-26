@@ -166,12 +166,15 @@ describe('woocommerce-orders adapter', () => {
     },
   );
 
+  it('the ping form body (not JSON) is a ping', () => {
+    expect(adapt(woo, undefined).ignored).toBe('ping');
+  });
+
   it.each([
     ['no id', order({ id: undefined })],
     ['no status', order({ status: undefined })],
     ['no modified time', order({ date_modified_gmt: undefined })],
     ['array', []],
-    ['the ping form body', undefined],
   ])('unrecognized: %s', (_n, body) => {
     expect(adapt(woo, body).ignored).toBe('unrecognized_shape');
   });
@@ -224,18 +227,17 @@ describe('woocommerce-orders verification', () => {
     await expect(verifyRecipe(woo, ctx(secret), bare, CFG)).rejects.toMatchObject({ code: 'AUTH' });
   });
 
-  it('replayed: a valid MAC on a body modified over 48 hours ago is AUTH', async () => {
+  it('replayed: a valid MAC on a body modified over 48 hours ago is acknowledged as stale, not applied', async () => {
     const old = JSON.stringify(order({ date_modified_gmt: gmt(NOW - 49 * 3_600_000) }));
-    await expect(
-      verifyRecipe(woo, ctx(secret), await wooReq(old, secret), CFG),
-    ).rejects.toMatchObject({
-      code: 'AUTH',
+    expect(await verifyRecipe(woo, ctx(secret), await wooReq(old, secret), CFG)).toMatchObject({
+      ignored: 'stale',
+      refs: [],
     });
   });
 
-  it('the signed ping (form body) is accepted and ignored', async () => {
+  it('the signed ping (form body) is accepted and ignored as a ping', async () => {
     const out = await verifyRecipe(woo, ctx(secret), await wooReq('webhook_id=5', secret), CFG);
-    expect(out.ignored).toBe('unrecognized_shape');
+    expect(out.ignored).toBe('ping');
     expect(out.refs).toEqual([]);
   });
 

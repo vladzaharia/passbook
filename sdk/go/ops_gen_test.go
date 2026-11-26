@@ -282,14 +282,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.list", "GET", "/api/v1/connections", false,
-		"", `{"items":[{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
+		"", `{"items":[{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"connections.create", "POST", "/api/v1/connections", false,
-		`{"orgId":"x","connectorType":"x","name":"x","config":{}}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		`{"orgId":"x","connectorType":"x","name":"x","config":{}}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ConnectionsCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -365,14 +365,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.retrieve", "GET", "/api/v1/connections/id1", false,
-		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0,"runs":[{"id":"x","trigger":"schedule","startedAt":0,"finishedAt":0,"outcome":"running","recordsSeen":0,"passesChanged":0,"passesCreated":0,"passesVoided":0,"recordsFailed":0,"errorCode":"x","httpStatus":0,"durationMs":0}],"metrics":{"p50Ms":0,"p95Ms":0,"errorRate":0,"passCount":0}}`,
+		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0,"runs":[{"id":"x","trigger":"schedule","startedAt":0,"finishedAt":0,"outcome":"running","recordsSeen":0,"passesChanged":0,"passesCreated":0,"passesVoided":0,"recordsFailed":0,"errorCode":"x","httpStatus":0,"durationMs":0}],"metrics":{"p50Ms":0,"p95Ms":0,"errorRate":0,"passCount":0}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Retrieve(ctx, "id1")
 		},
 	},
 	{
 		"connections.update", "PATCH", "/api/v1/connections/id1", false,
-		`{}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		`{}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ConnectionsUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -422,9 +422,13 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.preview", "POST", "/api/v1/connections/id1/preview", false,
-		"", `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0,"waiting":0},"releaseBlocked":"x","window":{"days":0,"limit":0,"since":0,"excluded":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
-		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Connections.Preview(ctx, "id1")
+		`{}`, `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0,"waiting":0},"releaseBlocked":"x","window":{"days":0,"limit":0,"since":0,"excluded":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsPreviewBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.Preview(ctx, "id1", &b)
 		},
 	},
 	{
@@ -446,6 +450,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"connections.setup.retrieve", "GET", "/api/v1/connections/id1/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{},"values":{"endpointUrl":"x","signatureHeader":"x","timestampHeader":"x","hasSecret":false}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Setup.Retrieve(ctx, "id1")
+		},
+	},
+	{
 		"connections.sync", "POST", "/api/v1/connections/id1/sync", false,
 		"", `{"runId":"x","workflowInstanceId":"x"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -457,6 +468,13 @@ var generatedOps = []opCase{
 		"", `{"ok":false,"durationMs":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Test(ctx, "id1")
+		},
+	},
+	{
+		"connections.webhookArrivals.list", "GET", "/api/v1/connections/id1/webhook-arrivals", false,
+		"", `{"items":[{"id":"x","receivedAt":0,"lastAt":0,"outcome":"accepted","reason":"signature_missing","topic":"x","contentClass":"json","eventRef":"x","usedPrevious":false,"count":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.WebhookArrivals.List(ctx, "id1", nil).All(ctx)
 		},
 	},
 	{
@@ -482,14 +500,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.rotateWebhookSecret", "POST", "/api/v1/connections/id1/webhook-secret", false,
-		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.RotateWebhookSecret(ctx, "id1", nil)
 		},
 	},
 	{
 		"connections.revokePreviousWebhookSecret", "DELETE", "/api/v1/connections/id1/webhook-secret/previous", false,
-		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.RevokePreviousWebhookSecret(ctx, "id1")
 		},
@@ -499,6 +517,13 @@ var generatedOps = []opCase{
 		"", `{"items":[{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0},"entitled":false}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connectors.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"connectors.recipeSetup.retrieve", "GET", "/api/v1/connectors/webhook-push/recipes/id1/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connectors.RecipeSetup.Retrieve(ctx, "id1")
 		},
 	},
 	{
@@ -1857,14 +1882,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.retrieve", "GET", "/api/v1/scanning-sessions/id1", false,
-		"", `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		"", `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.ScanningSessions.Retrieve(ctx, "id1")
 		},
 	},
 	{
 		"scanningSessions.update", "PATCH", "/api/v1/scanning-sessions/id1", false,
-		`{}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		`{}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1875,7 +1900,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.devices.create", "POST", "/api/v1/scanning-sessions/id1/devices", false,
-		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x","pairing":{"code":"x","url":"x","expiresAt":0}}`,
+		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x","pairing":{"code":"x","url":"x","expiresAt":0}}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsDevicesCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1886,7 +1911,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.devices.update", "PATCH", "/api/v1/scanning-sessions/id1/devices/id2", false,
-		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}`,
+		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsDevicesUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1897,7 +1922,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.overrideHours", "POST", "/api/v1/scanning-sessions/id1/hold", false,
-		`{"action":"close"}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		`{"action":"close"}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsOverrideHoursBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -2211,6 +2236,13 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.WebhookEndpoints.EnsureCapture(ctx, &b)
+		},
+	},
+	{
+		"webhookEndpoints.setup.retrieve", "GET", "/api/v1/webhook-endpoints/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WebhookEndpoints.Setup.Retrieve(ctx)
 		},
 	},
 	{
