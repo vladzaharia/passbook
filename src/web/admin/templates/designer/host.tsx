@@ -147,6 +147,48 @@ export function DesignerHostProvider({
 const signIn = () =>
   Promise.reject(new ApiError({ status: 401, code: 'unauthorized', detail: 'Sign in to design.' }));
 
+/** A saved version's file: its bytes never change, so a session keeps them. Brand and other paths are fetched fresh. */
+const VERSION_FILE = /\/templates\/[^/]+\/versions\/[^/]+\/assets\//;
+
+const aborted = (signal: AbortSignal) =>
+  signal.reason ?? new DOMException('The file load was cancelled.', 'AbortError');
+
+/** Waits for `file`, or gives up at once when `signal` aborts; the shared request goes on for the others. */
+function untilAborted(file: Promise<Blob>, signal: AbortSignal): Promise<Blob> {
+  if (signal.aborted) return Promise.reject(aborted(signal));
+  return new Promise((resolve, reject) => {
+    const stop = () => reject(aborted(signal));
+    signal.addEventListener('abort', stop, { once: true });
+    file.then(resolve, reject).finally(() => signal.removeEventListener('abort', stop));
+  });
+}
+
+/**
+ * One request per file: callers asking for a path already in flight share it (the card, the images list
+ * and the stamps strip ask for the same files, and a re-render restarts a load), and a saved version's
+ * file stays for the life of the loader. A failure is never kept, so the next ask tries again.
+ */
+export function sharedLoader(
+  fetchFile: (path: string) => Promise<Blob>,
+): DesignerHost['loadAsset'] {
+  const files = new Map<string, Promise<Blob>>();
+  return (path, signal) => {
+    let file = files.get(path);
+    if (!file) {
+      const request = fetchFile(path);
+      file = request;
+      files.set(path, request);
+      request.then(
+        () => {
+          if (!VERSION_FILE.test(path)) files.delete(path);
+        },
+        () => files.delete(path),
+      );
+    }
+    return signal ? untilAborted(file, signal) : file;
+  };
+}
+
 /** No client: every call is refused before it leaves the page. */
 export const signedOutApi: ToolApi = {
   get: signIn,

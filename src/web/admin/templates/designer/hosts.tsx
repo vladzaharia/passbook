@@ -11,6 +11,7 @@ import {
   fetchBytes,
   type IssueTestInput,
   noStep,
+  sharedLoader,
   signedOutApi,
   useDesignerHost,
 } from './host.tsx';
@@ -86,6 +87,24 @@ function TestAdminLink({ place, ...rest }: DesignerLinkProps) {
   return <a href={adminHref(place, orgId, extra)} {...rest} />;
 }
 
+const loaders = new WeakMap<WorkbenchClient, DesignerHost['loadAsset']>();
+
+/** The client's file loader, one per client: the token's session shares what it has already read. */
+function loaderOf(client: WorkbenchClient): DesignerHost['loadAsset'] {
+  let load = loaders.get(client);
+  if (!load) {
+    // The token is bound to this browser's session, so the cookie goes too (R1).
+    load = sharedLoader(async (path) =>
+      fetchBytes(path, {
+        headers: { authorization: `Bearer ${await client.token()}` },
+        credentials: 'same-origin',
+      }),
+    );
+    loaders.set(client, load);
+  }
+  return load;
+}
+
 export interface WorkbenchHostOptions {
   orgId: string;
   orgName?: string | undefined;
@@ -108,14 +127,7 @@ export function workbenchDesignerHost({
     orgName,
     mode: 'test',
     api,
-    loadAsset: async (path, signal) => {
-      // The token is bound to this browser's session, so the cookie goes too (R1).
-      return fetchBytes(path, {
-        headers: { authorization: `Bearer ${await client.token()}` },
-        credentials: 'same-origin',
-        ...(signal ? { signal } : {}),
-      });
-    },
+    loadAsset: loaderOf(client),
     searchPasses: async (q, signal) =>
       (
         await api.get('/api/v1/passes', (await passContracts()).PassListSchema, {
