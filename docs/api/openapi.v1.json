@@ -121648,6 +121648,10 @@
                       "enabled": true,
                       "health": "healthy",
                       "firstVerifiedArrivalAt": 1795570500000,
+                      "warning": {
+                        "code": "stale_deliveries",
+                        "text": "Your provider is sending old events. Check its clock and retries."
+                      },
                       "consecutiveFailures": 0,
                       "breakerOpenUntil": null,
                       "nextRunAt": 1795571400000,
@@ -121789,6 +121793,10 @@
                   "enabled": true,
                   "health": "unknown",
                   "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795572000000,
@@ -123621,6 +123629,10 @@
                   "enabled": true,
                   "health": "healthy",
                   "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -123777,6 +123789,10 @@
                   "enabled": true,
                   "health": "healthy",
                   "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -124507,6 +124523,10 @@
                   "enabled": true,
                   "health": "healthy",
                   "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -124648,6 +124668,10 @@
                   "enabled": true,
                   "health": "healthy",
                   "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,

@@ -120,6 +120,8 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
   connections: {
     // connectors/csv-url: what a test read.
     detail: ['3 rows. Columns: Booking ID, Name, Email, Plan, Valid until'],
+    // shared/copy/connection-warnings.ts
+    'warning.text': ['Your provider is sending old events. Check its clock and retries.'],
   },
   webhooks: {},
   messages: {
