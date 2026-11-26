@@ -1,8 +1,9 @@
 import { env } from 'cloudflare:workers';
+import { run } from '../../platform/db.ts';
 import { envString } from '../../platform/env.ts';
 import { createLogger } from '../../platform/log.ts';
 import { mockProvidersUrl } from './mock-endpoint.ts';
-import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { setWalletProvidersEnabledForTest, setWalletReleaseForTest } from './provider-policy.ts';
 
 /**
  * vite.config.ts defines it (tools/lib/e2e-release.ts) only for a tools/e2e-server.ts build started with
@@ -56,4 +57,38 @@ export function openE2eRelease(source: object = env): boolean {
   setWalletProvidersEnabledForTest(true);
   log.warn('wallet.e2e_release_open', { code: 'WALLET_E2E_RELEASE' });
   return true;
+}
+
+/** The path a rehearsal of the rollback posts to (e2e/73-wallets-journeys.spec.ts). */
+export const E2E_RELEASE_CONTROL = '/__e2e/wallet-release';
+
+/**
+ * The rollback rehearsal on an opened e2e server: both providers in both modes go to `draining` or back to
+ * `released`, in the isolate (RELEASE is frozen) and in the table the database's guards read, as a flip migration
+ * would change both. Anything else answers 400; a server the release refused answers 403.
+ */
+export async function controlE2eRelease(request: Request, source: object): Promise<Response> {
+  const json = (status: number, body: unknown) => Response.json(body, { status });
+  if (e2eReleaseRefusal(source)) return json(403, { error: 'not an e2e release server' });
+  if (request.method !== 'POST') return json(405, { error: 'POST only' });
+  const { state } = (await request.json().catch(() => ({}))) as { state?: unknown };
+  if (state !== 'draining' && state !== 'released')
+    return json(400, { error: 'state is draining or released' });
+  setWalletReleaseForTest(state);
+  await run(
+    (source as { DB: D1Database }).DB,
+    'UPDATE wallet_provider_releases SET state = ?, changed_at = ?',
+    [state, Date.now()],
+  );
+  return json(200, { state });
+}
+
+/** The Worker's first look at a request: null for every build but the e2e release, which folds this away. */
+export async function e2eReleaseControl(
+  request: Request,
+  source: object = env,
+): Promise<Response | null> {
+  if (typeof __WALLET_E2E_RELEASE__ === 'undefined' || __WALLET_E2E_RELEASE__ !== true) return null;
+  if (new URL(request.url).pathname !== E2E_RELEASE_CONTROL) return null;
+  return controlE2eRelease(request, source);
 }

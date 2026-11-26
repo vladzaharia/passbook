@@ -1,7 +1,7 @@
 import { createApp } from './app.ts';
 import { handleScheduled } from './jobs/cron.ts';
 import { handleQueue } from './jobs/queue.ts';
-import { openE2eRelease } from './modules/wallet-providers/e2e-release.ts';
+import { e2eReleaseControl, openE2eRelease } from './modules/wallet-providers/e2e-release.ts';
 import type { AppEnv } from './platform/env.ts';
 import { reportUnsupportedPatterns } from './platform/pattern-report.ts';
 import { createAuthStores } from './stores.ts';
@@ -26,6 +26,8 @@ let app: ReturnType<typeof createApp> | undefined;
 
 export default {
   async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
+    const control = await e2eReleaseControl(request, env);
+    if (control) return control;
     app ??= createApp({ stores: createAuthStores, hostPolicy: true });
     return app.fetch(request, env, ctx);
   },
