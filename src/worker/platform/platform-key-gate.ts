@@ -11,13 +11,33 @@ import {
   UnauthenticatedError,
 } from './errors.ts';
 import { chargePlatformWrite } from './rate-limit.ts';
-import { isRead, type RouteAuth } from './route-auth-spec.ts';
+import { isRead, type RouteAuth, type UnlessRule } from './route-auth-spec.ts';
 
 /** A Platform key: kind `platform` and no org. Both, so a bad row fails either way. */
 const isPlatformKey = (key: ApiKeyAuth): boolean =>
   key.keyKind === 'platform' && key.orgId === null;
 
 /** A key that holds a platform scope may reach `platform` routes only: never a tenant route, whatever else it holds. */
+/**
+ * `key.unless`, given the raw JSON body (null when absent, malformed or not an object). Phrase it as "refuse unless
+ * provably safe": a throw, or a body it cannot read, counts as needing a person.
+ */
+async function needsPerson(c: Context<AppBindings>, unless: UnlessRule): Promise<boolean> {
+  let body: Record<string, unknown> | null = null;
+  try {
+    const parsed: unknown = await c.req.json();
+    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed))
+      body = parsed as Record<string, unknown>;
+  } catch {
+    body = null;
+  }
+  try {
+    return await unless(c, body);
+  } catch {
+    return true;
+  }
+}
+
 export const holdsPlatformScope = (key: ApiKeyAuth): boolean =>
   key.scopes.some((scope) => scope.startsWith('platform:'));
 
@@ -62,11 +82,16 @@ export async function platformKeyGate(
     refuse('MISSING_SCOPE', needed);
     throw new ForbiddenError(`The API key lacks the ${needed} scope.`, 'MISSING_SCOPE');
   }
-  if (decl.key !== true && (await decl.key.unless(c))) {
+  if (decl.key !== true && (await needsPerson(c, decl.key.unless))) {
     refuse('PERSON_REQUIRED', decl.platform);
     throw new PersonRequiredError();
   }
-  if (!isRead(c)) await chargePlatformWrite(c.env, key.keyId);
+  if (!isRead(c))
+    await chargePlatformWrite(c.env, key.keyId).catch((error: unknown) => {
+      // The 429 the caller sees is unchanged; the owner's audit names the key.
+      reportDenied(c, 'RATE_LIMITED', key);
+      throw error;
+    });
   const scoped = { ...key };
   tagPlatformScope(scoped, needed);
   c.set('auth', scoped);

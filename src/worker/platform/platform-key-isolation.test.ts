@@ -3,18 +3,20 @@ import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
+import { REQUIRE_ADMIN_ROUTER_ROUTES } from '../../../test/helpers/platform-routes.ts';
 import { PLATFORM_KEY_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { OrgCapabilitySchema } from '../../shared/contracts/org-membership.ts';
 import { createApp } from '../app.ts';
 import { platformActorOf } from './actor.ts';
 import { isPlatformScope, scopeExercises, type TenantScope } from './api-scopes.ts';
 import { API_SCOPES, type ApiScope } from './auth.ts';
+import { tagPlatformScope } from './auth-capability.ts';
 import { type AppBindings, requestContext } from './context.ts';
 import type { AppEnv } from './env.ts';
 import { handleError } from './error-handler.ts';
 import { createRouter, register } from './openapi.ts';
 import { PLATFORM_WRITE_LIMIT } from './rate-limit.ts';
-import { peekBody, platformKeyOf } from './sign-in-guard.ts';
+import { platformKeyOf } from './sign-in-guard.ts';
 
 const ORIGIN = 'https://wallet.test';
 const Ok = z.object({ ok: z.literal(true) });
@@ -40,7 +42,7 @@ function fixture() {
   declare('get', '/person', { platform: 'platform:users' });
   declare('post', '/offboard', {
     platform: 'platform:users',
-    key: { unless: async (c) => (await peekBody(c)).dryRun !== true },
+    key: { unless: (_c, body) => body?.dryRun !== true },
   });
   register(
     router,
@@ -57,13 +59,13 @@ function fixture() {
     method: string,
     path: string,
     headers: Record<string, string>,
-    body: object = {},
+    body: object | string = {},
   ) => {
     const init: RequestInit = {
       method,
       headers: { ...headers, origin: ORIGIN, 'content-type': 'application/json' },
     };
-    if (method !== 'GET') init.body = JSON.stringify(body);
+    if (method !== 'GET') init.body = typeof body === 'string' ? body : JSON.stringify(body);
     const res = await app.request(`${ORIGIN}${path}`, init, env as AppEnv);
     const json = (await res.json().catch(() => ({}))) as { code?: string; actor?: string };
     return { status: res.status, code: json.code, actor: json.actor };
@@ -153,6 +155,15 @@ describe('a Platform key', () => {
     });
   });
 
+  it('is refused as no Platform key when its kind is absent, even with no org', async () => {
+    const { fake, call } = fixture();
+    const absent = fake.apiKey({ orgId: null, scopes: ['platform:claims'], keyKind: 'absent' });
+    expect(await call('GET', '/claims', absent)).toMatchObject({
+      status: 403,
+      code: 'PLATFORM_KEY_REQUIRED',
+    });
+  });
+
   it('is refused on every person-only route, even with every platform scope', async () => {
     const { fake, call } = fixture();
     const every = fake.platformKey({ scopes: [...PLATFORM_KEY_SCOPES] });
@@ -173,8 +184,9 @@ describe('a Platform key', () => {
     expect(await call('POST', '/offboard', users, { dryRun: true })).toMatchObject({
       status: 200,
     });
-    for (const body of [{ dryRun: false }, {}])
-      expect(await call('POST', '/offboard', users, body)).toMatchObject({
+    // Refused unless provably safe: false, an omitted field (a schema default would fill it in), a string, malformed JSON.
+    for (const body of [{ dryRun: false }, {}, { dryRun: 'true' }, '{"dryRun":', '[]', 'null'])
+      expect(await call('POST', '/offboard', users, body), JSON.stringify(body)).toMatchObject({
         status: 403,
         code: 'PERSON_REQUIRED',
       });
@@ -230,6 +242,30 @@ describe('a Platform key', () => {
   });
 });
 
+describe('platformActorOf', () => {
+  const at = (auth: object) => ({ var: { auth } }) as never;
+  const key = {
+    kind: 'api_key',
+    keyId: 'k',
+    orgId: null,
+    scopes: ['platform:read', 'platform:users'],
+  };
+
+  it('refuses a session that is not an admin', () => {
+    expect(() => platformActorOf(at({ kind: 'session', userId: 'u', roles: ['user'] }))).toThrow();
+  });
+
+  it("builds a key's grant under the scope the route names, never the platform:read the gate verified on a GET", () => {
+    const verified = { ...key };
+    tagPlatformScope(verified, 'platform:read');
+    expect(platformActorOf(at(verified)).principal).toMatchObject({ scope: 'platform:read' });
+    expect(platformActorOf(at(verified), { scope: 'platform:users' }).principal).toMatchObject({
+      scope: 'platform:users',
+    });
+    expect(() => platformActorOf(at(verified), { scope: 'platform:orgs' })).toThrow(/lacks/);
+  });
+});
+
 describe('a Platform key writes within its budget', () => {
   it('is limited to 60 writes a minute per key (429 RATE_LIMITED), reads are free, and another key is unaffected', async () => {
     const { fake, call } = fixture();
@@ -238,20 +274,25 @@ describe('a Platform key writes within its budget', () => {
     for (let i = 0; i < PLATFORM_WRITE_LIMIT; i++)
       expect((await call('POST', '/claims', key)).status, `write ${i + 1}`).toBe(200);
     expect(await call('POST', '/claims', key)).toMatchObject({ status: 429, code: 'RATE_LIMITED' });
+    // The caller sees the plain 429; the owner's audit hook names the key (api_key.refused, own cap).
+    expect(fake.denied).toMatchObject([
+      { code: 'RATE_LIMITED', actorType: 'api_key', actorId: 'budget-key', platformKey: true },
+    ]);
     expect((await call('GET', '/claims', key)).status).toBe(200);
     expect((await call('POST', '/claims', other)).status).toBe(200);
   });
 });
 
 describe('every person-only route of the app refuses a key', () => {
-  it('answers a Platform key holding every platform scope with PERSON_REQUIRED (or 401 behind a session-only router guard)', async () => {
+  it('answers a Platform key holding every platform scope with PERSON_REQUIRED, or 401 only behind a named requireAdmin router', async () => {
     const fake = fakeAuth(ORIGIN);
     const app = createApp({ stores: fake.stores });
-    const person = app.routes.filter((r) => platformKeyOf(r.handler) === 'person');
+    const person = app.routes.filter((r) => platformKeyOf(r.handler)?.mode === 'person');
     expect(person.length).toBeGreaterThan(0);
     const headers = fake.platformKey({ scopes: [...PLATFORM_KEY_SCOPES] });
     const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
     const wrong: string[] = [];
+    const unauthorised: string[] = [];
     for (const r of person) {
       const url = `${ORIGIN}${r.path.replace(/:[A-Za-z0-9_]+/g, 'x')}`;
       const init: RequestInit = {
@@ -261,9 +302,11 @@ describe('every person-only route of the app refuses a key', () => {
       if (!['GET', 'HEAD', 'DELETE'].includes(r.method)) init.body = '{}';
       const res = await app.fetch(new Request(url, init), env as AppEnv, ctx);
       const body = (await res.json().catch(() => ({}))) as { code?: string };
-      if (!(res.status === 403 && body.code === 'PERSON_REQUIRED') && res.status !== 401)
+      if (res.status === 401) unauthorised.push(`${r.method} ${r.path}`);
+      else if (!(res.status === 403 && body.code === 'PERSON_REQUIRED'))
         wrong.push(`${r.method} ${r.path}: ${res.status} ${body.code}`);
     }
     expect(wrong).toEqual([]);
+    expect(unauthorised.sort()).toEqual([...REQUIRE_ADMIN_ROUTER_ROUTES].sort());
   }, 120_000);
 });

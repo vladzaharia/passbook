@@ -465,7 +465,7 @@ export async function makeApiKey(
     /** Limits the key to these templates and pass styles (`api_key_resources`); either list makes it limited. */
     templateIds?: string[];
     passStyles?: string[];
-    /** A platform key lives only while its creator is an active user: default, a new one made for it. */
+    /** A platform key lives only while its creator is an active admin: default, a new one made for it. */
     createdBy?: string;
   } = {},
 ): Promise<ApiKeyFixture> {
@@ -482,17 +482,18 @@ export async function makeApiKey(
   const platform = (options.kind ?? (legacyPlatform ? 'platform' : 'service')) === 'platform';
   const createdBy = options.createdBy ?? (platform ? `creator-${id}` : null);
   if (platform && options.createdBy === undefined)
-    await run(f.env.DB, 'INSERT INTO users (id, primary_email, created_at) VALUES (?, ?, ?)', [
-      `creator-${id}`,
-      `creator-${id}@key-creator.test`,
-      f.clock.now(),
-    ]);
+    await run(
+      f.env.DB,
+      `INSERT INTO users (id, primary_email, created_at, last_roles) VALUES (?, ?, ?, '["admin"]')`,
+      [`creator-${id}`, `creator-${id}@key-creator.test`, f.clock.now()],
+    );
   const insert = async () =>
     run(
       f.env.DB,
       `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at,
-       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier, restricted, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier, restricted, created_by,
+       created_amr, creator_access_revision)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT access_revision FROM users WHERE id = ?))`,
       [
         id,
         options.orgId ?? null,
@@ -510,6 +511,8 @@ export async function makeApiKey(
         options.ipAllow ? JSON.stringify(options.ipAllow) : null,
         options.rateTier ?? null,
         limits.length > 0 ? 1 : 0,
+        createdBy,
+        platform ? 'oidc' : null,
         createdBy,
       ],
     );

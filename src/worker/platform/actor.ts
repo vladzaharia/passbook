@@ -1,9 +1,10 @@
 import type { Context } from 'hono';
+import type { PlatformScope } from './api-scopes.ts';
 import { verifiedPlatformScopeOf } from './auth-capability.ts';
 import type { Check } from './authority-checks.ts';
 import type { Mode, Principal } from './authority-principal.ts';
 import type { AppBindings } from './context.ts';
-import { UnauthenticatedError } from './errors.ts';
+import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 
 /**
  * Who acts, for every route a key shares with a person: the grant principal and checks, the audit actor, the name a
@@ -30,15 +31,18 @@ export interface Actor {
 
 /**
  * A `platform` route's caller: a platform admin session, or a Platform key with the scope the gate verified. A
- * platform grant names no org, so a key's principal never carries one (`target.orgId` is the session's only).
+ * platform grant names no org, so a key's principal never carries one (`orgId` is the session's only). `scope` is the
+ * scope a key's grant needs: the route's own, not the `platform:read` the gate verified on a GET.
  * 401 for anything the gate did not admit.
  */
 export function platformActorOf(
   c: Context<AppBindings>,
-  target: { orgId?: string; mode?: Mode } = {},
+  { scope: wanted, ...target }: { orgId?: string; mode?: Mode; scope?: PlatformScope } = {},
 ): Actor {
   const auth = c.var.auth;
-  if (auth?.kind === 'session')
+  if (auth?.kind === 'session') {
+    // The gate admitted an admin; the audit actor, mail sender and limiter key must not trust anyone else.
+    if (!auth.roles.includes('admin')) throw new ForbiddenError();
     return {
       principal: {
         kind: 'platform',
@@ -55,8 +59,15 @@ export function platformActorOf(
       sender: { kind: 'person', userId: auth.userId },
       rateKey: `user:${auth.userId}`,
     };
-  const scope = auth?.kind === 'api_key' ? verifiedPlatformScopeOf(auth) : undefined;
-  if (auth?.kind !== 'api_key' || !scope || auth.orgId !== null) throw new UnauthenticatedError();
+  }
+  const verified = auth?.kind === 'api_key' ? verifiedPlatformScopeOf(auth) : undefined;
+  if (auth?.kind !== 'api_key' || !verified || auth.orgId !== null)
+    throw new UnauthenticatedError();
+  // On a read the gate verified `platform:read`, which must never stand for a write grant: a handler that builds
+  // one names the route's own scope, and the key must hold it.
+  const scope = wanted ?? verified;
+  if (!auth.scopes.includes(scope))
+    throw new ForbiddenError(`The API key lacks the ${scope} scope.`, 'MISSING_SCOPE');
   return {
     principal: { kind: 'api_key', keyId: auth.keyId, scope },
     checks: [],

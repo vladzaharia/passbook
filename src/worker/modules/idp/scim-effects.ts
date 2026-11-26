@@ -2,7 +2,12 @@ import { bump, read } from '../../platform/counters.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { listLiveSessions, revokeSession, revokeSessionsWithRole } from '../auth/repo-sessions.ts';
+import {
+  endAdminAccess,
+  listLiveSessions,
+  revokeSession,
+  revokeSessionsWithRole,
+} from '../auth/repo-sessions.ts';
 import { idpClient } from './client.ts';
 import { endSessions, noteDrift } from './effects.ts';
 import { idpCodeOf } from './errors.ts';
@@ -129,6 +134,8 @@ async function revoke(ctx: ServiceContext, gate: Gate, r: Revoke): Promise<Step>
     ctx.log.error('idp.scim_breaker', { code: 'IDP_SCIM_BREAKER', limit: SCIM_BREAKER_LIMIT });
     return 'breaker';
   }
+  // A person Polaris ID no longer knows keeps no key made as an admin; a narrower revoke (`before`) leaves them.
+  if (r.before === null) await endAdminAccess(db, identity.user_id);
   const ended =
     r.before === null
       ? await revokeSessionsWithRole(db, identity.user_id, 'user', now)

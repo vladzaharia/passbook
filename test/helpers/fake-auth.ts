@@ -66,7 +66,7 @@ export interface FakeAuth {
     scopes?: ApiScope[];
     mode?: Mode;
     /** Default: `platform` without an org, else `service`. A forged row may pair `platform` with an org. */
-    keyKind?: NonNullable<ApiKeyAuth['keyKind']>;
+    keyKind?: NonNullable<ApiKeyAuth['keyKind']> | 'absent';
     /** Default: a sequential id. A test of a per-key limiter names one no other test of the file spends. */
     keyId?: string;
   }): Record<string, string>;
@@ -95,19 +95,19 @@ async function seedApiKey(
   key: FakeApiKey,
 ): Promise<void> {
   // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules. A platform
-  // key lives only while its creator does, so it is made by an active user of its own.
+  // key lives only while its creator does, so it is made by an active admin of its own.
   const creator = key.auth.orgId === null ? FAKE_KEY_CREATOR : null;
   if (creator)
-    await run(db, 'INSERT OR IGNORE INTO users (id, primary_email, created_at) VALUES (?, ?, ?)', [
-      creator,
-      `${creator}@fake-auth.test`,
-      clock.now(),
-    ]);
+    await run(
+      db,
+      `INSERT OR IGNORE INTO users (id, primary_email, created_at, last_roles) VALUES (?, ?, ?, '["admin"]')`,
+      [creator, `${creator}@fake-auth.test`, clock.now()],
+    );
   const insert = async () =>
     run(
       db,
-      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, expires_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, expires_at, created_by, created_amr, creator_access_revision)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT access_revision FROM users WHERE id = ?))`,
       [
         crypto.randomUUID(),
         key.auth.orgId,
@@ -119,9 +119,13 @@ async function seedApiKey(
         clock.now(),
         key.auth.orgId === null ? 'platform' : 'service',
         // A credential scope counts only on a key that expires within 91 days.
-        key.auth.scopes.some((s) => (CREDENTIAL_SCOPES as readonly string[]).includes(s))
+        key.auth.scopes.some(
+          (s) => (CREDENTIAL_SCOPES as readonly string[]).includes(s) || s.startsWith('platform:'),
+        )
           ? clock.now() + 30 * 86_400_000
           : null,
+        creator,
+        creator ? 'oidc' : null,
         creator,
       ],
     );
@@ -350,7 +354,7 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
           orgId,
           scopes,
           mode,
-          keyKind,
+          ...(keyKind === 'absent' ? {} : { keyKind }),
         },
         prefix,
         seeded: new WeakMap(),

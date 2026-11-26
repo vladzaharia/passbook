@@ -28,6 +28,16 @@ export interface StepUp {
   when?: (c: Context<AppBindings>) => boolean | Promise<boolean>;
 }
 
+/**
+ * `key.unless`: true refuses the request (403 PERSON_REQUIRED). It gets the raw JSON body, null when there is none or
+ * it is malformed, and runs before validation, so a schema default has not filled anything in: write it as "refuse
+ * unless provably safe" (`body?.dryRun !== true`), never "refuse if unsafe" (`body.dryRun === false`).
+ */
+export type UnlessRule = (
+  c: Context<AppBindings>,
+  body: Record<string, unknown> | null,
+) => boolean | Promise<boolean>;
+
 export type RouteAuth =
   /**
    * A bearer API key holding the scope, or else a tenant cookie session. `capability` is what the
@@ -89,7 +99,7 @@ export type RouteAuth =
    */
   | {
       platform: PlatformScope;
-      key?: true | { unless: (c: Context<AppBindings>) => boolean | Promise<boolean> };
+      key?: true | { unless: UnlessRule };
       stepUp?: StepUp;
       signIn?: 'oidc';
     };

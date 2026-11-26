@@ -14,9 +14,16 @@ function roleList(roles: readonly string[]): string {
 }
 
 /**
+ * The key's creator is still the admin who made it: an active user, at the `access_revision` the key recorded (a
+ * disable and re-enable, or the removal of the admin role, moved it), whose last sign-in held the admin role.
+ */
+export const creatorLiveSql = (k: string): string =>
+  `EXISTS(SELECT 1 FROM users c WHERE c.id=${k}.created_by AND c.status='active' AND c.access_revision IS ${k}.creator_access_revision AND json_valid(c.last_roles) AND EXISTS(SELECT 1 FROM json_each(c.last_roles) r WHERE r.value='admin'))`;
+
+/**
  * The key row `k` is in force at `now`: not revoked, not past `expires_at` or `retire_at`, and, for a personal key,
  * its membership is live and its user active (the membership is of the key's org: the insert trigger holds that,
- * and neither row's org moves), a platform key's creator is an active user (it dies with its maker), and a child's parent is neither revoked nor past its `retire_at` (a child never expires after its parent: the insert trigger holds
+ * and neither row's org moves), a platform key's creator is still the admin who made it (`creatorLiveSql`: it dies with its maker, and with their admin role), and a child's parent is neither revoked nor past its `retire_at` (a child never expires after its parent: the insert trigger holds
  * that, so the parent's expiry needs no test here). A key limited to templates or styles is live only with `limited: true`, which the grant actor row passes: its statements enforce the limits (authority-restrict.ts). Every other statement that asks
  * "may this key act" leaves the limit out and so refuses a limited key.
  * One definition for every statement that asks "may this key act".
@@ -24,7 +31,7 @@ function roleList(roles: readonly string[]): string {
 export function keyLive(k: string, now: number, limited = false): Fragment {
   // One line, short aliases: the text rides in every key grant (docs: a tenant grant stays under 2 KB).
   return {
-    sql: `(${k}.revoked_at IS NULL${limited ? '' : ` AND ${k}.restricted=0`} AND (${k}.expires_at IS NULL AND ${k}.retire_at IS NULL OR COALESCE(MIN(${k}.expires_at,${k}.retire_at),${k}.expires_at,${k}.retire_at)>?) AND (${k}.kind<>'personal' OR EXISTS(SELECT 1 FROM org_memberships p JOIN users u ON u.id=p.user_id WHERE p.id=${k}.membership_id AND p.revoked_at IS NULL AND u.status='active')) AND (${k}.kind<>'platform' OR EXISTS(SELECT 1 FROM users c WHERE c.id=${k}.created_by AND c.status='active')) AND NOT EXISTS(SELECT 1 FROM api_keys q WHERE q.id=${k}.parent_key_id AND (q.revoked_at>0 OR q.retire_at<=?)))`,
+    sql: `(${k}.revoked_at IS NULL${limited ? '' : ` AND ${k}.restricted=0`} AND (${k}.expires_at IS NULL AND ${k}.retire_at IS NULL OR COALESCE(MIN(${k}.expires_at,${k}.retire_at),${k}.expires_at,${k}.retire_at)>?) AND (${k}.kind<>'personal' OR EXISTS(SELECT 1 FROM org_memberships p JOIN users u ON u.id=p.user_id WHERE p.id=${k}.membership_id AND p.revoked_at IS NULL AND u.status='active')) AND (${k}.kind<>'platform' OR ${creatorLiveSql(k)}) AND NOT EXISTS(SELECT 1 FROM api_keys q WHERE q.id=${k}.parent_key_id AND (q.revoked_at>0 OR q.retire_at<=?)))`,
     params: [now, now],
   };
 }

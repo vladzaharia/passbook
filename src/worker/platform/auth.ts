@@ -267,11 +267,13 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   if (stepUp)
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   if (oidcOnly) declareOidcOnly(guard);
-  if (platformDecl)
+  if (platformDecl) {
     declarePlatformKey(
       guard,
       !platformDecl.key ? 'person' : platformDecl.key === true ? 'key' : 'conditional',
+      platformDecl.platform,
     );
+  }
   return declareSignIn(guard, level);
 }
 

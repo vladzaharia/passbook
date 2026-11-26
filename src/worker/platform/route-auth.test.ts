@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { type FakeAuth, fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import {
   CreateApiKeySchema,
+  MINTABLE_PLATFORM_SCOPES,
   MINTABLE_SCOPES,
-  PLATFORM_KEY_SCOPES,
 } from '../../shared/contracts/api-keys.ts';
 import { OrgCapabilitySchema, OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
 import { createApp } from '../app.ts';
@@ -338,8 +338,8 @@ describe('mintable scopes', () => {
       'audit:read',
       'members:read',
       'members:write',
-      // The Platform key flavour (platform-keys design K2, K3); none is on a route until a package opts it in.
-      ...PLATFORM_KEY_SCOPES,
+      // A Platform key's scopes join as routes accept them (platform-keys L2); route-inventory.test.ts pins the list.
+      ...MINTABLE_PLATFORM_SCOPES,
     ]);
   });
   it('are all a key can be created with: any other scope is a validation error', () => {
@@ -363,10 +363,7 @@ describe('mintable scopes', () => {
         for (const entry of op.security ?? [])
           for (const scope of (entry as { apiKey?: string[] }).apiKey ?? []) named.add(scope);
     // `scans:write` is the terminal scope: modules/scan/guard-api-key.ts checks it, not a route rule.
-    // A platform scope joins a route's security when that route opts keys in (`key`), not before.
-    const unaccepted = MINTABLE_SCOPES.filter(
-      (s) => !named.has(s) && s !== 'scans:write' && !isPlatformScope(s),
-    );
+    const unaccepted = MINTABLE_SCOPES.filter((s) => !named.has(s) && s !== 'scans:write');
     expect(unaccepted).toEqual([]);
   });
 });

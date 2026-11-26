@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import type { RouterRoute } from 'hono/types';
 import { expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
+import { MINTABLE_PLATFORM_SCOPES } from '../../shared/contracts/api-keys.ts';
 import type { SignInLevel } from '../../shared/sign-in.ts';
 import { createApp } from '../app.ts';
 import { isKnownGuard } from './auth.ts';
@@ -336,27 +337,39 @@ it('lets an email-link session reach only the holder routes, and deny every othe
     expect(levels[route], route).toBe('strict');
 });
 
-/** How each route a `platform` declaration covers treats a key (`key`, `key.unless` or none). */
-function platformKeyRoutes(): Record<'key' | 'conditional' | 'person', string[]> {
-  const found: Record<'key' | 'conditional' | 'person', string[]> = {
+/**
+ * How each route a `platform` declaration covers treats a key (`key`, `key.unless` or none), and the scope it names.
+ * A route under two platform guards is labelled by the most restrictive (person, then conditional, then key).
+ */
+function platformKeyRoutes(): {
+  modes: Record<'key' | 'conditional' | 'person', string[]>;
+  scopes: Set<string>;
+} {
+  const modes: Record<'key' | 'conditional' | 'person', string[]> = {
     key: [],
     conditional: [],
     person: [],
   };
+  const scopes = new Set<string>();
   for (const { key, covering } of coverage()) {
-    const modes = covering.map((g) => platformKeyOf(g.handler)).filter((m) => m !== undefined);
-    const mode = modes.at(-1);
-    if (mode) found[mode].push(key);
+    const decls = covering.map((g) => platformKeyOf(g.handler)).filter((d) => d !== undefined);
+    const mode = (['person', 'conditional', 'key'] as const).find((m) =>
+      decls.some((d) => d.mode === m),
+    );
+    if (!mode) continue;
+    modes[mode].push(key);
+    if (mode !== 'person') for (const d of decls) if (d.mode !== 'person') scopes.add(d.scope);
   }
-  for (const list of Object.values(found)) list.sort();
-  return found;
+  for (const list of Object.values(modes)) list.sort();
+  return { modes, scopes };
 }
 
 /**
  * Every `platform` route has a written decision about keys: here it takes a Platform key, takes one unless the
  * request needs a person (`key: { unless }`), or is person-only (403 PERSON_REQUIRED). The lists are exact, so a new
  * `platform` route fails until it is put on one. Router-level `requireAdmin` routes are not `platform` declarations
- * yet; converting one means adding `auth: { platform, key? }` and listing it here.
+ * yet, so they are not here and a Bearer key gets 401 on them (`REQUIRE_ADMIN_ROUTER_ROUTES`): PK-6 converts each
+ * to `auth: { platform, key? }` and lists it here.
  */
 const PLATFORM_KEY_ROUTES: string[] = [];
 const PLATFORM_KEY_CONDITIONAL: string[] = [];
@@ -378,8 +391,14 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
 ];
 
 it('pins which platform routes take a key and which are person-only', () => {
-  const found = platformKeyRoutes();
-  expect(found.key).toEqual(PLATFORM_KEY_ROUTES);
-  expect(found.conditional).toEqual(PLATFORM_KEY_CONDITIONAL);
-  expect(found.person).toEqual(PERSON_ONLY_PLATFORM_ROUTES);
+  const { modes } = platformKeyRoutes();
+  expect(modes.key).toEqual(PLATFORM_KEY_ROUTES);
+  expect(modes.conditional).toEqual(PLATFORM_KEY_CONDITIONAL);
+  expect(modes.person).toEqual(PERSON_ONLY_PLATFORM_ROUTES);
+});
+
+it('makes a platform scope mintable exactly when a route accepts it by key', () => {
+  const { scopes } = platformKeyRoutes();
+  if (scopes.size > 0) scopes.add('platform:read');
+  expect([...MINTABLE_PLATFORM_SCOPES].sort()).toEqual([...scopes].sort());
 });

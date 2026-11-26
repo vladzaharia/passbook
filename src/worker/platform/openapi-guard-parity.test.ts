@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../test/helpers/index.ts';
+import { REQUIRE_ADMIN_ROUTER_ROUTES } from '../../../test/helpers/platform-routes.ts';
 import { PLATFORM_KEY_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { createApp } from '../app.ts';
 import { ManualClock } from './clock.ts';
@@ -133,9 +134,13 @@ describe('OpenAPI document and guards agree', () => {
         }
         if (op['x-human-only'] === true) {
           const r = await call(method, path, every);
-          // PERSON_REQUIRED, or 401 where a session-only router guard (requireAdmin) answers first.
-          if (r.status !== 401 && !(r.status === 403 && r.code === 'PERSON_REQUIRED'))
-            wrong.push(`${name}: human-only, a Platform key got ${r.status} ${r.code}`);
+          // PERSON_REQUIRED, except under a router-level requireAdmin, which answers 401 first (PK-6 removes those).
+          const behindRouter = REQUIRE_ADMIN_ROUTER_ROUTES.includes(
+            `${method.toUpperCase()} ${path.replace(/\{([^}]+)\}/g, ':$1')}`,
+          );
+          const got = `${r.status} ${r.code}`;
+          if (got !== (behindRouter ? '401 UNAUTHENTICATED' : '403 PERSON_REQUIRED'))
+            wrong.push(`${name}: human-only, a Platform key got ${got}`);
         }
       }
     expect(wrong).toEqual([]);

@@ -1,3 +1,4 @@
+import { auditPlatformKeyRefusal } from './modules/api-keys/refusal-audit.ts';
 import { createApiKeyStore } from './modules/api-keys/service.ts';
 import { recordAudit } from './modules/audit/service.ts';
 import { bumpCounter } from './modules/auth/repo-magic.ts';
@@ -5,7 +6,7 @@ import { createSessionStore } from './modules/auth/sessions.ts';
 import { withTryTokens } from './modules/developer/try-token.ts';
 import { createScannerStore } from './modules/scan/auth-store.ts';
 import type { AuthStores } from './platform/auth.ts';
-import type { Clock } from './platform/clock.ts';
+import { type Clock, systemClock } from './platform/clock.ts';
 import type { AppEnv } from './platform/env.ts';
 import { createDetachedContext } from './platform/service-context.ts';
 
@@ -20,6 +21,14 @@ export function createAuthStores(env: AppEnv, clock?: Clock): AuthStores {
     apiKeys: withTryTokens(env, createApiKeyStore(env, clock), clock),
     scanners: createScannerStore(env, clock),
     async onDenied(event) {
+      // A Platform key's refusals have their own cap and row: `api_key.refused`, naming the key.
+      if (event.platformKey)
+        return auditPlatformKeyRefusal(env, clock ?? systemClock, {
+          keyId: event.actorId,
+          orgId: null,
+          ipPrefix: event.ipPrefix,
+          detail: { code: event.code, route: event.route },
+        });
       const ctx = createDetachedContext(env, { clock });
       const now = ctx.clock.now();
       const n = await bumpCounter(env.DB, 'audit:auth_denied', now - (now % HOUR));
@@ -32,6 +41,8 @@ export function createAuthStores(env: AppEnv, clock?: Clock): AuthStores {
         actorType: event.actorType,
         actorId: event.actorId,
         action: 'auth.denied',
+        // The org of a refused key or scanner sees it in its own log too.
+        orgId: event.orgId ?? null,
         ipPrefix: event.ipPrefix,
         detail: { code: event.code, route: event.route },
       });
