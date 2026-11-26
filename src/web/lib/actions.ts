@@ -43,6 +43,7 @@ import { OPERATION_ACTIONS } from './actions-operations.ts';
 import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { TAG_KEY_ACTIONS } from './actions-tag-keys.ts';
 import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
+import { USER_PASSES_ACTIONS } from './actions-user-passes.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -288,6 +289,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'identity.push_key_rotate': a('Push key rotated', I.rotate, 'info'),
   'identity.push_key_set': a('Push key set', I.pushKey, 'success'),
   ...TEMPLATE_VERSION_ACTIONS,
+  ...USER_PASSES_ACTIONS,
   'user.disable': a('User disabled', UserX, 'warning'),
   'user.email_add': a('Email added', MailPlus, 'success'),
   'user.email_primary': a('Primary email changed', Star, 'info'),

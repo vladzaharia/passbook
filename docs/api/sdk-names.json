@@ -2299,6 +2299,10 @@
     "resource": "platform.users",
     "method": "retrieve"
   },
+  "users.getUsersByIdPasses": {
+    "resource": "platform.users.passes",
+    "method": "list"
+  },
   "users.patchUsersById": {
     "resource": "platform.users",
     "method": "update"

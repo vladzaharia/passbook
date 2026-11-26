@@ -514,6 +514,7 @@
   "users.deleteUsersByIdSessionsBySessionId",
   "users.getUsers",
   "users.getUsersById",
+  "users.getUsersByIdPasses",
   "users.patchUsersById",
   "users.postUsersByIdEmails",
   "users.postUsersByIdEmailsByEmailPrimary",

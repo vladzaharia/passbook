@@ -7949,7 +7949,7 @@ export type PlatformUsersEmailsCreateResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -8000,7 +8000,7 @@ export type PlatformUsersEmailsDeleteResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -8051,7 +8051,7 @@ export type PlatformUsersEmailsMakePrimaryResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -8077,6 +8077,23 @@ export type PlatformUsersListResponse = {
     lastLoginAt: number | null;
     passCount?: number;
     signInMethods?: Array<"oidc" | "magic_link" | "breakglass">;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformUsersPassesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    orgName: string;
+    orgStatus: "active" | "suspended";
+    timeZone: string;
+    templateName: string;
+    status: "active" | "voided";
+    holding: "owned" | "waiting";
+    channels: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+    issuedAt: number;
+    updatedAt: number;
   }>;
   nextCursor: string | null;
 };
@@ -8117,7 +8134,7 @@ export type PlatformUsersRetrieveResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
