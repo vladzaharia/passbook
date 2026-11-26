@@ -1315,6 +1315,10 @@
     "resource": "passes",
     "method": "rotateLink"
   },
+  "passes.postPassesByIdSimulate": {
+    "resource": "passes",
+    "method": "simulate"
+  },
   "passes.postPassesByIdStamps": {
     "resource": "passes.stamps",
     "method": "apply"

@@ -4932,6 +4932,20 @@
     "UNAUTHENTICATED",
     "WORKBENCH_TEST_ONLY"
   ],
+  "passes post /{id}/simulate": [
+    "FORBIDDEN",
+    "MODE_MISMATCH",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "PASS_NOT_FOUND",
+    "SIMULATE_DEVICE_NOT_FOUND",
+    "SIMULATE_NO_DEVICE",
+    "SIMULATE_NO_EMAIL",
+    "SIMULATE_RATE_LIMITED",
+    "SIMULATE_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
   "passes post /{id}/stamps": [
     "ACTOR_CHANGED",
     "ASSET_NOT_FOUND",

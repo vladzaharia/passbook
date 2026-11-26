@@ -1957,6 +1957,15 @@ func (r *PassesResource) SendEmail(ctx context.Context, id string, body *PassesS
 	return &out, nil
 }
 
+// Simulate Send a real Test event for a Test pass: install, scan, push failure and more `POST /api/v1/passes/{id}/simulate`
+func (r *PassesResource) Simulate(ctx context.Context, id string, body *PassesSimulateBody, opts ...RequestOption) (*PassesSimulateResult, error) {
+	var out PassesSimulateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/" + pathEscape(id) + "/simulate", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Unvoid Unvoid a pass `POST /api/v1/passes/{id}/unvoid`
 func (r *PassesResource) Unvoid(ctx context.Context, id string, opts ...RequestOption) (*PassesUnvoidResult, error) {
 	var out PassesUnvoidResult

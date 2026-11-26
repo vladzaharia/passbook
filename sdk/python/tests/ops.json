@@ -7676,6 +7676,31 @@
   }
  },
  {
+  "id": "passes.postPassesByIdSimulate",
+  "call": "passes.simulate",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/simulate",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "event": "installed"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "eventId": "x",
+   "requestId": "x"
+  }
+ },
+ {
   "id": "passes.postPassesByIdStamps",
   "call": "passes.stamps.apply",
   "http": "POST",
@@ -12040,6 +12065,7 @@
      "to": "x",
      "subject": "x",
      "attached": false,
+     "failed": false,
      "createdAt": 0
     }
    ],
@@ -12072,6 +12098,7 @@
    "to": "x",
    "subject": "x",
    "attached": false,
+   "failed": false,
    "createdAt": 0,
    "html": "x",
    "text": "x",

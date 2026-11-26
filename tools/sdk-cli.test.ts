@@ -71,6 +71,14 @@ function fakeApi(pages: () => Capture[], schema: Record<string, unknown> = {}): 
         calls.push({ op: 'update', id, body, options });
         return { id };
       },
+      list: async (query) => {
+        calls.push({ op: 'list', query });
+        return { items: [{ id: 'pass_newest' }] };
+      },
+      simulate: async (id, body) => {
+        calls.push({ op: 'simulate', id, body });
+        return { eventId: 'e1', requestId: 'r1' };
+      },
     },
     requestLogs: { list: async () => ({ items: [] }) },
   };
@@ -369,6 +377,7 @@ describe('passbook passes', () => {
       makeClient: () => ({
         ...fakeApi(() => []),
         passes: {
+          ...fakeApi(() => []).passes,
           create: async () => {
             throw Object.assign(new Error('x'), {
               code: 'VALIDATION',
@@ -418,5 +427,40 @@ describe('versions', () => {
       },
     });
     expect(seen).toEqual([`passbook-cli/${CLI_VERSION}`]);
+  });
+});
+
+describe('passbook trigger', () => {
+  const lines: string[] = [];
+  const io = (extra: Partial<Parameters<typeof run>[1]> = {}) => ({
+    env: { PASSBOOK_KEY: 'pb_test_secret' },
+    out: (l: string) => lines.push(l),
+    err: (l: string) => lines.push(`ERR ${l}`),
+    writeFile: async () => undefined,
+    makeClient: () => fakeApi(() => []),
+    ...extra,
+  });
+
+  it('simulates on the named pass, with the device', async () => {
+    calls.length = 0;
+    lines.length = 0;
+    expect(await run(['trigger', 'uninstalled', '--pass', 'p1', '--device', 'd1'], io())).toBe(0);
+    expect(calls).toEqual([
+      { op: 'simulate', id: 'p1', body: { event: 'uninstalled', deviceId: 'd1' } },
+    ]);
+    expect(JSON.parse(lines.join('\n'))).toEqual({ eventId: 'e1', requestId: 'r1' });
+  });
+
+  it('uses the newest Test pass without --pass, and rejects an unknown event', async () => {
+    calls.length = 0;
+    lines.length = 0;
+    expect(await run(['trigger', 'installed'], io())).toBe(0);
+    expect(calls.at(-1)).toEqual({
+      op: 'simulate',
+      id: 'pass_newest',
+      body: { event: 'installed' },
+    });
+    expect(await run(['trigger', 'exploded'], io())).toBe(1);
+    expect(lines.at(-1)).toMatch(/^ERR trigger needs an event/);
   });
 });

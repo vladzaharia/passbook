@@ -11,6 +11,7 @@ import { removalVersion } from '../passes/repo-remove.ts';
 import { readMode, type ScopeArg } from '../passes/scope.ts';
 import { hashDevice } from './record.ts';
 import { type LatestDeviceEvent, latestDeviceEvents, registrationsOfPass } from './repo.ts';
+import { simulatedDevicesOfPass } from './repo-simulated.ts';
 
 const num = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 const str = (v: unknown): string | null => (typeof v === 'string' ? v : null);
@@ -127,8 +128,9 @@ export async function listPassDevices(
     typeof orgScope === 'object' && orgScope !== null
       ? { ...orgScope, orgId: pass.orgId }
       : pass.orgId;
-  const [registrations, latest, removedVersion] = await Promise.all([
+  const [registrations, simulatedRows, latest, removedVersion] = await Promise.all([
     registrationsOfPass(db, passId, fence),
+    simulatedDevicesOfPass(db, passId, pass.orgId),
     latestDeviceEvents(db, passId, fence),
     pass.removedAt !== null ? removalVersion(db, passId, pinnedScope) : null,
   ]);
@@ -138,6 +140,13 @@ export async function listPassDevices(
       registrations.map(async (r) => [await hashDevice(r.device_id), r.created_at] as const),
     ),
   );
+  // Devices made by Simulate: installed ones count as registered; removed ones show through their ledger row.
+  const simulated = new Map<string, string>();
+  for (const row of simulatedRows) {
+    const hash = await hashDevice(row.id);
+    simulated.set(hash, row.id);
+    if (row.removed_at === null) registeredAt.set(hash, row.created_at);
+  }
   const removal = pass.removedAt !== null ? { at: pass.removedAt, version: removedVersion } : null;
   const hashes = new Set([...registeredAt.keys(), ...seen.keys()]);
   const devices: PassSyncDeviceDto[] = [];
@@ -147,7 +156,9 @@ export async function listPassDevices(
     // A device that unregistered before the removal never had the final version to fetch.
     if (at === null && removal && s.unregistered && s.unregistered.at < removal.at) continue;
     if (at === null && !s.unregistered) continue;
-    devices.push(describe(pass, hash, s, at, removal));
+    const device = describe(pass, hash, s, at, removal);
+    const simulatedId = simulated.get(hash);
+    devices.push(simulatedId ? { ...device, simulated: true, deviceId: simulatedId } : device);
   }
   devices.sort(
     (a, b) =>

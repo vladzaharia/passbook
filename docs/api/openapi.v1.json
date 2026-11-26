@@ -8926,6 +8926,9 @@
           "attached": {
             "type": "boolean"
           },
+          "failed": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -8940,6 +8943,7 @@
           "to",
           "subject",
           "attached",
+          "failed",
           "createdAt"
         ]
       },
@@ -8988,6 +8992,9 @@
           "attached": {
             "type": "boolean"
           },
+          "failed": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -9018,6 +9025,7 @@
           "to",
           "subject",
           "attached",
+          "failed",
           "createdAt",
           "html",
           "text",
@@ -41072,6 +41080,12 @@
                     "deleted",
                     null
                   ]
+                },
+                "simulated": {
+                  "type": "boolean"
+                },
+                "deviceId": {
+                  "type": "string"
                 }
               },
               "required": [
@@ -41130,6 +41144,61 @@
             "maxLength": 200
           }
         }
+      },
+      "PassesSimulateParams": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "installed",
+              "uninstalled",
+              "scanned",
+              "scan_refused",
+              "push_failed",
+              "updated_on_device",
+              "email_failed"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "apple"
+            ]
+          },
+          "deviceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "PassesSimulateResponse": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "deviceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "eventId",
+          "requestId"
+        ]
       },
       "PassImportsMappingsSaveParams": {
         "type": "object",
@@ -116009,6 +116078,103 @@
         ]
       }
     },
+    "/api/v1/passes/{id}/simulate": {
+      "post": {
+        "summary": "Send a real Test event for a Test pass: install, scan, push failure and more",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassesSimulateParams"
+              },
+              "example": {
+                "event": "installed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassesSimulateResponse"
+                },
+                "example": {
+                  "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+                  "requestId": "0193a1b2-7c00-7000-8000-d0545441efe1",
+                  "deviceId": "0193a1b2-7c00-7000-8000-000000000012"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesByIdSimulate",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "simulate"
+        },
+        "description": "Sends a real Test event for a Test pass: installed, uninstalled, scanned, scan_refused, push_failed, updated_on_device or email_failed. It goes down the normal path, so signed Test webhooks carry the returned requestId. Live passes answer 409 SIMULATE_TEST_ONLY; 60 a minute per organization.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SIMULATE_DEVICE_NOT_FOUND",
+          "SIMULATE_NO_DEVICE",
+          "SIMULATE_NO_EMAIL",
+          "SIMULATE_RATE_LIMITED",
+          "SIMULATE_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/pass-imports/mappings": {
       "get": {
         "summary": "A template's saved column mappings",
@@ -119855,6 +120021,7 @@
                       "to": "ada@example.com",
                       "subject": "Your Northwind Climbing pass",
                       "attached": false,
+                      "failed": false,
                       "createdAt": 1795570500000
                     }
                   ],
@@ -119970,6 +120137,7 @@
                   "to": "ada@example.com",
                   "subject": "Your Northwind Climbing pass",
                   "attached": false,
+                  "failed": false,
                   "createdAt": 1795570500000,
                   "html": "<p>Your pass is ready.</p><p>Friday Night Bouldering for Ada Example.</p>",
                   "text": "Your pass is ready. Friday Night Bouldering for Ada Example.",

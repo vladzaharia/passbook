@@ -31,5 +31,7 @@ export interface Api extends LogsApi {
   passes: {
     create(body: object, options?: { idempotencyKey?: string }): Promise<unknown>;
     update(id: string, body: object, options?: { idempotencyKey?: string }): Promise<unknown>;
+    list(query?: { limit?: number }): PromiseLike<{ items: ReadonlyArray<{ id: string }> }>;
+    simulate(id: string, body: { event: string; deviceId?: string }): Promise<unknown>;
   };
 }
