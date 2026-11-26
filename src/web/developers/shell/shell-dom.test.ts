@@ -158,6 +158,7 @@ describe('islands', () => {
     expect(Object.keys(ISLANDS).sort()).toEqual([
       'account',
       'api-rail',
+      'bench-strip',
       'hero-start',
       'keys',
       'logs',

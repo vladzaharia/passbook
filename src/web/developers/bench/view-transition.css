@@ -1,0 +1,105 @@
+/* The tool switch, a cross-document view transition. Every portal page opts in (both pages must);
+   bench-vt.js (bench/transition.ts) skips any navigation that is not from one tool to another, and a
+   page without the bench runs none. The bar and the head hold still, the underline slides to the new
+   tab, and the stage fades and moves 12 px in tab order. */
+@view-transition {
+  navigation: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+html:has(.bench) [data-menubar] {
+  view-transition-name: bench-bar;
+}
+.bench-head {
+  view-transition-name: bench-head;
+}
+.bench-ind {
+  view-transition-name: bench-indicator;
+}
+.bench-title {
+  view-transition-name: bench-title;
+}
+.bench-body {
+  view-transition-name: bench-stage;
+}
+@media (max-width: 719.98px) {
+  .bench-head {
+    view-transition-name: none;
+  }
+  .bench-switch {
+    view-transition-name: bench-head;
+  }
+}
+
+html:not(:has(.bench))::view-transition-group(*),
+html:not(:has(.bench))::view-transition-old(*),
+html:not(:has(.bench))::view-transition-new(*) {
+  animation: none !important;
+}
+
+::view-transition-group(root) {
+  animation-duration: 200ms;
+}
+/* Still: the new bar and head show at once. */
+::view-transition-group(bench-bar),
+::view-transition-group(bench-head),
+::view-transition-new(bench-bar),
+::view-transition-new(bench-head) {
+  animation: none;
+}
+::view-transition-old(bench-bar),
+::view-transition-old(bench-head) {
+  animation: none;
+  opacity: 0;
+}
+::view-transition-group(bench-indicator) {
+  animation-duration: var(--wl-dur-indicator, 280ms);
+  animation-timing-function: var(--wl-ease-move, ease-in-out);
+}
+::view-transition-group(bench-title),
+::view-transition-group(bench-stage) {
+  animation: none;
+}
+::view-transition-old(bench-title),
+::view-transition-old(bench-stage) {
+  animation: bench-vt-out 120ms var(--wl-ease-in, ease-in) both;
+}
+::view-transition-new(bench-title),
+::view-transition-new(bench-stage) {
+  animation: bench-vt-in 200ms var(--wl-ease-out, ease-out) both;
+}
+html:active-view-transition-type(bench-back)::view-transition-old(bench-title),
+html:active-view-transition-type(bench-back)::view-transition-old(bench-stage) {
+  animation-name: bench-vt-out-back;
+}
+html:active-view-transition-type(bench-back)::view-transition-new(bench-title),
+html:active-view-transition-type(bench-back)::view-transition-new(bench-stage) {
+  animation-name: bench-vt-in-back;
+}
+@keyframes bench-vt-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes bench-vt-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@keyframes bench-vt-out {
+  to {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@keyframes bench-vt-out-back {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}

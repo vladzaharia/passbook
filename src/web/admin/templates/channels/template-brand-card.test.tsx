@@ -31,7 +31,7 @@ describe('Template brand card', () => {
       'href',
       '/admin/o/o1/templates/tpl_gym/design',
     );
-    expect(within(await row('Colours')).getByText('Organization')).toBeInTheDocument();
+    expect(within(await row('Colors')).getByText('Organization')).toBeInTheDocument();
     // Support is the organization's alone: no override.
     expect(within(await row('Support')).queryByRole('link')).toBeNull();
   });
@@ -42,7 +42,7 @@ describe('Template brand card', () => {
     expect(within(logo).getByText('This template')).toBeInTheDocument();
     expect(within(logo).getByRole('link', { name: 'Use organization' })).toBeInTheDocument();
     expect(within(await row('Icon')).getByRole('link', { name: 'Override' })).toBeInTheDocument();
-    expect(within(await row('Colours')).getByText('This template')).toBeInTheDocument();
+    expect(within(await row('Colors')).getByText('This template')).toBeInTheDocument();
   });
 
   it('offers no action to someone who cannot author the template', async () => {

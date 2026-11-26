@@ -19,7 +19,7 @@ export const logsIsland: Island = {
     const session = await loadSession();
     if (session.kind === 'out') return;
     if (session.kind === 'ready')
-      return mountLogs(el, loadOps(), document.querySelector<HTMLElement>('[data-logs-live]'));
+      return mountLogs(el, loadOps(), document.querySelector<HTMLElement>('[data-bench-status]'));
     if (session.kind === 'failed') return showFailed(el, () => location.reload());
     showNoSandbox(el, session.kind === 'closed');
   },

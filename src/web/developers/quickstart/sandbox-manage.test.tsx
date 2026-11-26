@@ -193,7 +193,10 @@ describe('Start over and Delete sandbox', () => {
     });
     const done = {
       ...fixtureOperation(SANDBOX_RECREATE, { status: 'succeeded', tail: true, id: 'op-new' }),
-      result: { href: null, ids: { sandboxId: 's2', orgSlug: 'dev-new', templateId: 't2' } },
+      result: {
+        href: null,
+        ids: { sandboxId: 's2', orgId: 'org-2', orgSlug: 'dev-new', templateId: 't2' },
+      },
     };
     const fetchMock = api({
       'POST /developer/sandbox/recreate': json(202, { operation: running }),
@@ -211,7 +214,7 @@ describe('Start over and Delete sandbox', () => {
     await waitFor(
       () =>
         expect(onMade).toHaveBeenCalledWith(
-          { id: 's2', orgSlug: 'dev-new', templateId: 't2' },
+          { id: 's2', orgId: 'org-2', orgSlug: 'dev-new', templateId: 't2' },
           'pbp_test_new',
         ),
       { timeout: 4000 },

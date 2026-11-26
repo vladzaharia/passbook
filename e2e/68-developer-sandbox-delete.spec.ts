@@ -13,7 +13,8 @@ test('Delete sandbox from the chip menu while on the quickstart opens the confir
   await page.waitForURL((u) => u.pathname === '/developers/quickstart');
   await expect(page.getByRole('heading', { level: 1, name: 'Your first pass' })).toBeVisible();
   const create = page.getByRole('button', { name: 'Create sandbox' });
-  const chip = page.locator('summary.orgchip-head');
+  // The bar's sandbox chip (bench/sandbox-chip.tsx, the `bar` variant on docs pages).
+  const chip = page.locator('[data-menubar]').getByRole('button', { name: 'Sandbox menu' });
   await expect(create.or(chip)).toBeVisible();
   if (await create.isVisible()) await create.click();
   // Making it is an operation now: its steps run, the key is minted, and the chip appears when it ends.
@@ -22,12 +23,12 @@ test('Delete sandbox from the chip menu while on the quickstart opens the confir
   await page.evaluate(() => window.scrollTo(0, 0));
 
   await chip.click();
-  await page.getByRole('link', { name: 'Delete sandbox' }).click();
+  await page.getByRole('menuitem', { name: 'Delete sandbox' }).click();
   const confirm = page.getByRole('region', { name: 'Delete this sandbox?' });
   await expect(confirm).toBeVisible();
   await expect(confirm).toBeInViewport();
   await expect(confirm).toBeFocused();
-  await expect(chip.locator('xpath=..')).not.toHaveAttribute('open', '');
+  await expect(chip).toHaveAttribute('aria-expanded', 'false');
   await shots(page, 'sandbox-delete-1-confirm');
 
   // Hold the delete so the working state can be seen.
@@ -76,7 +77,7 @@ test('Delete sandbox from the chip menu while on the quickstart opens the confir
 
   // The page reloads on the signed-in, no-sandbox quickstart: nothing of the sandbox is left.
   await expect(page.getByRole('button', { name: 'Create sandbox' }).first()).toBeVisible();
-  await expect(page.locator('summary.orgchip-head')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sandbox menu' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Delete sandbox' })).toHaveCount(0);
   const read = await page.evaluate(async () => {
     const res = await fetch('/api/v1/developer/sandbox');

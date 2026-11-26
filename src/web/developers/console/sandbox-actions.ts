@@ -66,6 +66,7 @@ async function post(
 
 const sandboxOf = (b: Record<string, unknown>): Sandbox => ({
   id: String(b.id),
+  orgId: String(b.orgId),
   orgSlug: String(b.orgSlug),
   templateId: typeof b.templateId === 'string' ? b.templateId : null,
 });

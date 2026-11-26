@@ -89,6 +89,9 @@
             },
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -210,6 +213,9 @@
             },
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -316,6 +322,9 @@
             },
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -417,6 +426,9 @@
               }
             },
             "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -521,6 +533,9 @@
             },
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -616,6 +631,9 @@
               }
             },
             "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -736,6 +754,9 @@
               "firstDevice"
             ],
             "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -864,6 +885,9 @@
               "cause"
             ],
             "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1070,6 +1094,9 @@
             ],
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -1227,6 +1254,9 @@
             },
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -1350,6 +1380,9 @@
               }
             },
             "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1482,6 +1515,9 @@
             ],
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -1591,6 +1627,9 @@
             ],
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -1699,6 +1738,9 @@
               "printId"
             ],
             "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1823,6 +1865,9 @@
             },
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -1925,6 +1970,9 @@
             },
             "additionalProperties": false
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "const": true
@@ -1990,6 +2038,9 @@
             "type": "object",
             "properties": {},
             "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",

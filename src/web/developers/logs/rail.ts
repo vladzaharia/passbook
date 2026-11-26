@@ -1,23 +1,12 @@
-import type { ApiRail } from '../../../shared/contracts/developer.ts';
 import { RAIL_COPY } from '../../../shared/copy/developers-ops.ts';
-import { fill, getJson, h } from './dom.ts';
+import { loadRail } from '../bench/rail.ts';
+import { fill, h } from './dom.ts';
 import { count } from './format.ts';
 import { icon } from './icons.ts';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const W = 96;
 const H = 24;
-
-let pending: Promise<{ status: number; body: ApiRail | null }> | undefined;
-/** One read of the rail per page: the strip draws it, and the empty log asks it whether there is a key. */
-export const loadRail = () => {
-  pending ??= getJson<ApiRail>('/api/v1/developer/rail').catch(() => ({ status: 0, body: null }));
-  return pending;
-};
-/** For tests: the next loadRail reads again. */
-export const forgetRail = () => {
-  pending = undefined;
-};
 
 /** The last hour as a line over its own area, the busiest five minutes at the top; flat when it was quiet. */
 export function spark(values: readonly number[]): SVGSVGElement {

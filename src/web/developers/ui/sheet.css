@@ -1,6 +1,8 @@
-/* The Keys sheets: New key, Roll and Revoke, and the one-time reveal. */
+/* The portal's one sheet (ui/sheet.tsx): a side panel from 720 px, a bottom sheet below. Then the Keys
+   sheets' insides: New key, Roll and Revoke, and the one-time reveal. */
 /* ---------- Sheet ---------- */
-dialog.ks-sheet {
+/* The phone Try it sheet (shell/sheet.ts, dev-run.css) shares the class: every box rule is restated here. */
+dialog.sheet {
   position: fixed;
   inset: 0 0 0 auto;
   margin: 0;
@@ -11,37 +13,53 @@ dialog.ks-sheet {
   max-height: none;
   border: 0;
   border-left: 1px solid var(--pk-border-strong);
+  border-radius: 0;
   background: var(--pk-surface-page);
   color: var(--pk-text-default);
   overflow: hidden;
 }
-dialog.ks-sheet[open] {
+dialog.sheet[open] {
   display: flex;
   flex-direction: column;
 }
-dialog.ks-sheet::backdrop {
+dialog.sheet::backdrop {
   background: rgb(0 0 0 / 0.55);
 }
 @media (prefers-reduced-motion: no-preference) {
-  dialog.ks-sheet[open] {
-    animation: ks-in var(--wl-dur-card) var(--wl-ease-out);
+  dialog.sheet[open] {
+    animation: sheet-in var(--wl-dur-card) var(--wl-ease-out);
   }
-  dialog.ks-sheet[open]::backdrop {
-    animation: ks-fade var(--wl-dur-card) var(--wl-ease-out);
+  dialog.sheet[open]::backdrop {
+    animation: sheet-fade var(--wl-dur-card) var(--wl-ease-out);
   }
 }
-@keyframes ks-in {
+/* Out: 160 ms to the edge it came from (data-closing, ui/sheet.tsx). Reduced motion: it goes at once. */
+@media (prefers-reduced-motion: no-preference) {
+  dialog.sheet[data-closing] {
+    animation: sheet-out 160ms var(--wl-ease-in) forwards;
+  }
+  dialog.sheet[data-closing]::backdrop {
+    animation: sheet-fade 160ms var(--wl-ease-in) reverse forwards;
+  }
+}
+@keyframes sheet-out {
+  to {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+@keyframes sheet-in {
   from {
     transform: translateX(32px);
     opacity: 0;
   }
 }
-@keyframes ks-fade {
+@keyframes sheet-fade {
   from {
     opacity: 0;
   }
 }
-.ks-h {
+.sheet-h {
   position: relative;
   display: flex;
   align-items: center;
@@ -50,13 +68,13 @@ dialog.ks-sheet::backdrop {
   padding: 16px 12px 14px 20px;
   border-bottom: 1px solid var(--pk-border-subtle);
 }
-.ks-h h2 {
+.sheet-h h2 {
   overflow-wrap: anywhere;
 }
-.ks-grab {
+.sheet-grab {
   display: none;
 }
-.ks-b {
+.sheet-b {
   flex: 1;
   min-block-size: 0;
   overflow: auto;
@@ -65,7 +83,7 @@ dialog.ks-sheet::backdrop {
   gap: 16px;
   align-content: start;
 }
-.ks-f {
+.sheet-f {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -233,8 +251,8 @@ dialog.ks-sheet::backdrop {
   }
 }
 
-@media (max-width: 819px) {
-  dialog.ks-sheet {
+@media (max-width: 719.98px) {
+  dialog.sheet {
     inset: auto 0 0;
     width: 100%;
     height: auto;
@@ -243,7 +261,7 @@ dialog.ks-sheet::backdrop {
     border-top: 1px solid var(--pk-border-strong);
     border-radius: var(--pk-radius-xl) var(--pk-radius-xl) 0 0;
   }
-  .ks-grab {
+  .sheet-grab {
     display: block;
     position: absolute;
     top: 7px;
@@ -255,12 +273,20 @@ dialog.ks-sheet::backdrop {
     background: var(--pk-border-strong);
   }
   @media (prefers-reduced-motion: no-preference) {
-    dialog.ks-sheet[open] {
-      animation: ks-up var(--wl-dur-card) var(--wl-ease-out);
+    dialog.sheet[open] {
+      animation: sheet-up var(--wl-dur-card) var(--wl-ease-out);
+    }
+    dialog.sheet[data-closing] {
+      animation: sheet-down 160ms var(--wl-ease-in) forwards;
     }
   }
 }
-@keyframes ks-up {
+@keyframes sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-up {
   from {
     transform: translateY(100%);
   }

@@ -21,7 +21,7 @@ import { CheckStep } from './check-step.tsx';
 import { takeFresh } from './fresh.ts';
 import { MatchStep } from './match-step.tsx';
 import { ImportResults } from './results.tsx';
-import { STATE_LABEL, STATE_TONE } from './state-tone.ts';
+import { stateBadge } from './state-tone.ts';
 import { IMPORT_STEPS, STEP } from './steps.ts';
 
 function Checking({ onStep }: { onStep: (step: number) => void }) {
@@ -121,9 +121,7 @@ export function ImportDetailPage({ importId }: { importId: string }) {
           },
           { label: imp?.source.name ?? 'Import' },
         ]}
-        meta={
-          imp ? <Badge tone={STATE_TONE[imp.state]}>{STATE_LABEL[imp.state]}</Badge> : undefined
-        }
+        meta={imp ? <Badge tone={stateBadge(imp).tone}>{stateBadge(imp).label}</Badge> : undefined}
       />
       {body}
     </>

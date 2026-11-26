@@ -8,6 +8,7 @@ import { scanLine } from '@/shared/copy/scan.ts';
 import { orgSetupChecks } from '@/shared/org-setup-checks.ts';
 import { copyText } from '@/web/lib/clipboard.ts';
 import { cn } from '@/web/lib/cn.ts';
+import { BELOW_XL, useMediaQuery } from '@/web/lib/media.ts';
 import {
   Badge,
   Callout,
@@ -151,6 +152,18 @@ function BrandForm({
   }
 
   const n = changeCount(patch);
+  // Stacked, the preview follows the brand fields it shows instead of pushing them down.
+  const compact = useMediaQuery(BELOW_XL);
+  const preview = (
+    <PreviewStage
+      orgId={orgId}
+      view={view}
+      draft={draft}
+      draftFacts={draftFacts}
+      sample={sample}
+      saves={saves}
+    />
+  );
   return (
     <>
       <PageHeader
@@ -210,14 +223,7 @@ function BrandForm({
                 })
               }
             />
-            <PreviewStage
-              orgId={orgId}
-              view={view}
-              draft={draft}
-              draftFacts={draftFacts}
-              sample={sample}
-              saves={saves}
-            />
+            {compact ? null : preview}
           </>
         }
       >
@@ -231,6 +237,7 @@ function BrandForm({
           edit={edit}
           setImage={setImage}
         />
+        {compact ? preview : null}
         <SupportCard orgId={orgId} view={view} draft={draft} canEdit={canEdit} edit={edit} />
         <ChannelsCard
           orgId={orgId}

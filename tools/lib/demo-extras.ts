@@ -2,6 +2,7 @@
 // scanning, bundles, join links and the emails they send. Each step is idempotent by name and
 // logs a skip when the API refuses, so one refusal never stops the run.
 import type { Session } from './demo-client.ts';
+import { seedHenrysScanning, seedWebhook } from './demo-sweep-data.ts';
 
 type Ids = { northwind: string; harbor: string; henrys: string; member: string; crew: string };
 const DAY = 86_400_000;
@@ -23,24 +24,8 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
   const inOrg = (path: string, org: string) =>
     owner.all(`${path}${path.includes('?') ? '&' : '?'}orgId=${org}`);
 
-  await step('webhook endpoint', async () => {
-    // The SSRF guard refuses localhost at save time, and create takes no status, so pause it at once.
-    const url = 'https://example.com/passbook-demo';
-    const found = (await inOrg('/api/v1/webhook-endpoints', northwind)).find((e) => e.url === url);
-    const endpoint =
-      found ??
-      (
-        await owner.send('POST', '/api/v1/webhook-endpoints', {
-          orgId: northwind,
-          url,
-          description: 'Demo sink, never called',
-          eventTypes: ['pass.issued', 'pass.updated'],
-        })
-      ).endpoint;
-    if (endpoint.status !== 'paused')
-      await owner.send('PATCH', `/api/v1/webhook-endpoints/${endpoint.id}`, { status: 'paused' });
-    return 'paused';
-  });
+  await step('webhook endpoint', () => seedWebhook(owner, northwind));
+  await step("Henry's scanning", () => seedHenrysScanning(owner, ids.henrys, base));
 
   await step('broadcasts', async () => {
     const have = (await inOrg('/api/v1/broadcasts', northwind)).map((b) => b.name);

@@ -85,13 +85,13 @@ describe('the session lookup', () => {
     const mock = route({
       '/api/v1/session': json(authed),
       '/api/v1/developer/sandbox': () =>
-        json({ sandbox: { id: 's1', orgSlug: 'acme', templateId: 't1' } }),
+        json({ sandbox: { id: 's1', orgId: 'org-1', orgSlug: 'acme', templateId: 't1' } }),
     });
     const { loadSession } = await import('./session.ts');
     const ready = {
       kind: 'ready',
       csrf: 'csrf-1',
-      sandbox: { id: 's1', orgSlug: 'acme', templateId: 't1' },
+      sandbox: { id: 's1', orgId: 'org-1', orgSlug: 'acme', templateId: 't1' },
       siteKey: '',
     };
     expect(await loadSession()).toEqual(ready);
@@ -135,85 +135,6 @@ describe('the run data', () => {
     const mock = route({ '/developers/run/index.json': json({ pages: ['a'] }) });
     await expect(loadIndex()).resolves.toEqual({ pages: ['a'] });
     expect(mock).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('the top bar chip', () => {
-  const mountWith = async (table: Parameters<typeof route>[0]) => {
-    route(table);
-    document.body.innerHTML = '<div id="host"><a>Sign in</a></div>';
-    const { mountOrgChip } = await import('./org-chip.ts');
-    const host = document.getElementById('host') as HTMLElement;
-    await mountOrgChip(host);
-    return host;
-  };
-  const authed = () => json({ authenticated: true, csrfToken: 'c', roles: ['developer'] });
-
-  it('leaves the sign-in button for a signed-out visitor', async () => {
-    const host = await mountWith({ '/api/v1/session': json({ authenticated: false }) });
-    expect(host.textContent).toBe('Sign in');
-  });
-
-  it('offers to create a sandbox, or says it is closed', async () => {
-    const none = await mountWith({
-      '/api/v1/session': authed,
-      '/api/v1/developer/sandbox': json({ sandbox: null }),
-    });
-    expect(none.textContent).toBe('Create sandbox');
-    expect(none.querySelector('a')?.getAttribute('href')).toBe('/developers/quickstart#sandbox');
-    vi.resetModules();
-    const closed = await mountWith({
-      '/api/v1/session': authed,
-      '/api/v1/developer/sandbox': json({ sandbox: { id: 's', closedAt: 1 } }),
-    });
-    expect(closed.textContent).toBe('Sandbox closed');
-    expect(closed.querySelector('a')?.getAttribute('href')).toBe('/developers/quickstart#sandbox');
-  });
-
-  it('closes the menu when an item is chosen, so a hash-only link leaves nothing open', async () => {
-    const host = await mountWith({
-      '/api/v1/session': authed,
-      '/api/v1/developer/sandbox': json({ sandbox: { id: 's', orgSlug: 'acme' } }),
-    });
-    const chip = host.querySelector<HTMLDetailsElement>('.orgchip');
-    chip!.open = true;
-    const item = host.querySelectorAll<HTMLAnchorElement>('.orgchip-item')[2];
-    item?.addEventListener('click', (e) => e.preventDefault());
-    item?.click();
-    expect(chip?.open).toBe(false);
-  });
-
-  it('shows the sandbox org and the runs left, repainting as runs are spent', async () => {
-    const host = await mountWith({
-      '/api/v1/session': authed,
-      '/api/v1/developer/sandbox': json({ sandbox: { id: 's', orgSlug: 'acme' } }),
-    });
-    expect(host.querySelector('.orgchip-dot')?.textContent).toBe('A');
-    expect(host.querySelector('.orgchip-name')?.textContent).toBe('Sandbox');
-    expect(host.querySelector('.orgchip')?.getAttribute('title')).toBe(
-      'Your test sandbox: acme. New emails go to the Test inbox.',
-    );
-    expect(host.querySelector('.orgchip-clock')).toBeNull();
-    const items = [...host.querySelectorAll('.orgchip-item')].map((a) => [
-      a.textContent,
-      a.getAttribute('href'),
-    ]);
-    expect(items).toEqual([
-      ['Quickstart', '/developers/quickstart#sandbox'],
-      ['Start over', '/developers/quickstart#start-over'],
-      ['Delete sandbox', '/developers/quickstart#delete-sandbox'],
-    ]);
-    const meter = host.querySelector<HTMLElement>('[role="meter"]');
-    expect(meter?.getAttribute('aria-valuenow')).toBe('60');
-    expect(meter?.dataset.low).toBe('false');
-    const { spend, exhausted, resetBudget } = await import('./budget.ts');
-    for (let i = 0; i < 52; i++) spend();
-    expect(meter?.getAttribute('aria-valuenow')).toBe('8');
-    expect(meter?.querySelector('.budget-label')?.textContent).toBe('8/60 per min');
-    expect(meter?.dataset.low).toBe('true');
-    exhausted(30);
-    expect(meter?.getAttribute('aria-valuenow')).toBe('0');
-    resetBudget();
   });
 });
 

@@ -4051,6 +4051,7 @@ class EmailFailedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: EmailFailedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class EmailFailedEventData(_Model):
@@ -6574,6 +6575,7 @@ class PassChannelsChangedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassChannelsChangedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassChannelsChangedEventData(_Model):
@@ -7493,6 +7495,7 @@ class PassInstalledEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassInstalledEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassInstalledEventData(_Model):
@@ -7510,6 +7513,7 @@ class PassIssuedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassIssuedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassIssuedEventData(_Model):
@@ -7530,6 +7534,7 @@ class PassPrintVoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintVoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassPrintVoidedEventData(_Model):
@@ -7545,6 +7550,7 @@ class PassPrintedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassPrintedEventData(_Model):
@@ -7561,6 +7567,7 @@ class PassRemovedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRemovedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassRemovedEventData(_Model):
@@ -7577,6 +7584,7 @@ class PassRestoredEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRestoredEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassRestoredEventData(_Model):
@@ -7591,6 +7599,7 @@ class PassScanRefusedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanRefusedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScanRefusedEventData(_Model):
@@ -7610,6 +7619,7 @@ class PassScanUndoneEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanUndoneEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScanUndoneEventData(_Model):
@@ -7626,6 +7636,7 @@ class PassScannedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScannedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScannedEventData(_Model):
@@ -8120,6 +8131,7 @@ class PassUninstalledEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUninstalledEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUninstalledEventData(_Model):
@@ -8138,6 +8150,7 @@ class PassUnvoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUnvoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUnvoidedEventData(_Model):
@@ -8152,6 +8165,7 @@ class PassUpdatedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUpdatedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUpdatedEventData(_Model):
@@ -8198,6 +8212,7 @@ class PassVoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassVoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassVoidedEventData(_Model):
@@ -10017,6 +10032,7 @@ class PushFailedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PushFailedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PushFailedEventData(_Model):
@@ -14230,6 +14246,7 @@ class WebhookTestEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: None = _Field(alias="pass")
     data: WebhookTestEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class WebhookTestEventData(_Model):

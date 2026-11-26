@@ -132,8 +132,8 @@
   }
   .scan-shell[data-surface="operator"] .scan-result-band h1,
   .scan-shell[data-surface="operator"] .scan-result-band[data-layout="custom"] h1 {
-    font-size: 44px;
-    line-height: 48px;
+    font-size: min(44px, 17cqi);
+    line-height: 1.1;
   }
 }
 /* On a phone or portrait tablet the card has the screen: the form waits behind it. */
@@ -164,7 +164,5 @@
   .scan-shell[data-surface="operator"] > .scan-buddy-seat {
     inset-inline: max(20px, calc((100vw - 1120px) / 2)) auto;
     margin-inline: 0;
-    /* The buddy sits on the seat's top edge: a short seat keeps it low, clear of the form. */
-    height: 24px;
   }
 }

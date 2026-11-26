@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import type { ApiRail, RequestLogEntry } from '../../../shared/contracts/developer.ts';
+import { forgetRail } from '../bench/rail.ts';
 import { mountLogs } from './island.ts';
-import { forgetRail } from './rail.ts';
 
 export const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });

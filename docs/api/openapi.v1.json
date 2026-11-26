@@ -67,6 +67,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -177,6 +180,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -251,6 +257,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -320,6 +329,9 @@
                 "maxLength": 300
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -395,6 +407,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -461,6 +476,9 @@
                 "minimum": 0
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -550,6 +568,9 @@
               "deviceCount",
               "firstDevice"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -647,6 +668,9 @@
               "lastDevice",
               "cause"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -797,6 +821,9 @@
               "outcome"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -902,6 +929,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -985,6 +1015,9 @@
                 "maxLength": 300
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1089,6 +1122,9 @@
               "source"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1168,6 +1204,9 @@
               "generation"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1244,6 +1283,9 @@
             "required": [
               "printId"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1329,6 +1371,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1399,6 +1444,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1460,6 +1508,9 @@
           "data": {
             "type": "object",
             "properties": {}
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -84045,55 +84096,22 @@
                   ]
                 },
                 "example": {
-                  "operation": {
-                    "id": "0193a1b2-7c00-7000-8000-2b09c2384426",
-                    "kind": "sandbox.delete",
-                    "status": "succeeded",
-                    "title": "Delete sandbox",
-                    "text": "Removing Test passes · 4 of 12",
-                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                    "mode": "live",
-                    "target": {
-                      "type": "generic",
-                      "id": "0193a1b2-7c00-7000-8000-7713593a699e"
-                    },
-                    "step": "mapping",
-                    "steps": [
-                      {
-                        "key": "tier",
-                        "label": "Remove Test passes",
-                        "state": "done",
-                        "done": 39,
-                        "total": 128,
-                        "detail": "Waiting for Apple",
-                        "until": 1795572600000,
-                        "waitingReason": "due",
-                        "group": "Access",
-                        "startedAt": 1794362400000,
-                        "finishedAt": 1795570500000
-                      }
-                    ],
-                    "attempt": 1,
-                    "cancelable": true,
-                    "cancelRequested": true,
-                    "startedBy": {
-                      "type": "user",
-                      "id": "0193a1b2-7c00-7000-8000-000000000011"
-                    },
-                    "createdAt": 1794362400000,
-                    "startedAt": 1794362400000,
-                    "updatedAt": 1795399200000,
-                    "finishedAt": 1795570500000,
-                    "error": null,
-                    "result": {
-                      "href": "/developers/quickstart",
-                      "ids": {
-                        "tier": "northwind"
-                      }
-                    },
-                    "revision": 3,
-                    "pollAfterMs": 1471
-                  }
+                  "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+                  "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+                  "orgSlug": "northwind-sandbox",
+                  "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+                  "previewOnly": true,
+                  "createdAt": 1794362400000,
+                  "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
+                  "key": {
+                    "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+                    "name": "Sandbox key",
+                    "secret": "pb_test_s4Ndb0xK_northwind-demo-key-do-not-use-4949b36517b4",
+                    "mode": "test",
+                    "expiresAt": 1796954400000
+                  },
+                  "previousKey": null
                 }
               }
             }
@@ -84524,55 +84542,14 @@
                   ]
                 },
                 "example": {
-                  "operation": {
-                    "id": "0193a1b2-7c00-7000-8000-6a8053955efd",
-                    "kind": "sandbox.delete",
-                    "status": "succeeded",
-                    "title": "Delete sandbox",
-                    "text": "Removing Test passes · 4 of 12",
-                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                    "mode": "live",
-                    "target": {
-                      "type": "generic",
-                      "id": "0193a1b2-7c00-7000-8000-eacf4232eb2b"
-                    },
-                    "step": "mapping",
-                    "steps": [
-                      {
-                        "key": "tier",
-                        "label": "Remove Test passes",
-                        "state": "done",
-                        "done": 39,
-                        "total": 128,
-                        "detail": "Waiting for Apple",
-                        "until": 1795572600000,
-                        "waitingReason": "due",
-                        "group": "Access",
-                        "startedAt": 1794362400000,
-                        "finishedAt": 1795570500000
-                      }
-                    ],
-                    "attempt": 1,
-                    "cancelable": true,
-                    "cancelRequested": true,
-                    "startedBy": {
-                      "type": "user",
-                      "id": "0193a1b2-7c00-7000-8000-000000000011"
-                    },
-                    "createdAt": 1794362400000,
-                    "startedAt": 1794362400000,
-                    "updatedAt": 1795399200000,
-                    "finishedAt": 1795570500000,
-                    "error": null,
-                    "result": {
-                      "href": "/developers/quickstart",
-                      "ids": {
-                        "tier": "northwind"
-                      }
-                    },
-                    "revision": 3,
-                    "pollAfterMs": 1471
-                  }
+                  "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+                  "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+                  "orgSlug": "northwind-sandbox",
+                  "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+                  "previewOnly": true,
+                  "createdAt": 1794362400000,
+                  "closedAt": 1795572000000,
+                  "timeZone": "America/Los_Angeles"
                 }
               }
             }
@@ -84675,6 +84652,9 @@
                             "null"
                           ],
                           "minimum": 0
+                        },
+                        "timeZone": {
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -84684,7 +84664,8 @@
                         "templateId",
                         "previewOnly",
                         "createdAt",
-                        "closedAt"
+                        "closedAt",
+                        "timeZone"
                       ]
                     },
                     "turnstileSiteKey": {
@@ -84704,7 +84685,8 @@
                     "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
                     "previewOnly": true,
                     "createdAt": 1794362400000,
-                    "closedAt": null
+                    "closedAt": null,
+                    "timeZone": "America/Los_Angeles"
                   },
                   "turnstileSiteKey": "0x4AAAAAAAdemoNorthwind"
                 }
@@ -84795,15 +84777,6 @@
                   "required": [
                     "key"
                   ]
-                },
-                "example": {
-                  "key": {
-                    "id": "0193a1b2-7c00-7000-8000-000000000021",
-                    "name": "Server integration",
-                    "secret": "whsec_demo_northwind_f6888a",
-                    "mode": "test",
-                    "expiresAt": 1798790399999
-                  }
                 }
               }
             }
@@ -85217,55 +85190,22 @@
                   ]
                 },
                 "example": {
-                  "operation": {
-                    "id": "0193a1b2-7c00-7000-8000-e5d024f6c11c",
-                    "kind": "sandbox.delete",
-                    "status": "succeeded",
-                    "title": "Delete sandbox",
-                    "text": "Removing Test passes · 4 of 12",
-                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                    "mode": "live",
-                    "target": {
-                      "type": "generic",
-                      "id": "0193a1b2-7c00-7000-8000-4cf677d96a71"
-                    },
-                    "step": "mapping",
-                    "steps": [
-                      {
-                        "key": "tier",
-                        "label": "Remove Test passes",
-                        "state": "done",
-                        "done": 39,
-                        "total": 128,
-                        "detail": "Waiting for Apple",
-                        "until": 1795572600000,
-                        "waitingReason": "due",
-                        "group": "Access",
-                        "startedAt": 1794362400000,
-                        "finishedAt": 1795570500000
-                      }
-                    ],
-                    "attempt": 1,
-                    "cancelable": true,
-                    "cancelRequested": true,
-                    "startedBy": {
-                      "type": "user",
-                      "id": "0193a1b2-7c00-7000-8000-000000000011"
-                    },
-                    "createdAt": 1794362400000,
-                    "startedAt": 1794362400000,
-                    "updatedAt": 1795399200000,
-                    "finishedAt": 1795570500000,
-                    "error": null,
-                    "result": {
-                      "href": "/developers/quickstart",
-                      "ids": {
-                        "tier": "northwind"
-                      }
-                    },
-                    "revision": 3,
-                    "pollAfterMs": 1471
-                  }
+                  "id": "0193a1b2-7c00-7000-8000-ba4dfb1a0ac6",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "orgSlug": "northwind-climbing",
+                  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                  "previewOnly": true,
+                  "createdAt": 1794362400000,
+                  "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
+                  "key": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
+                    "name": "Server integration",
+                    "secret": "whsec_demo_northwind_53ec29",
+                    "mode": "test",
+                    "expiresAt": 1798790399999
+                  },
+                  "previousKey": null
                 }
               }
             }
@@ -85727,55 +85667,32 @@
                   ]
                 },
                 "example": {
-                  "operation": {
-                    "id": "0193a1b2-7c00-7000-8000-4574298dee81",
-                    "kind": "sandbox.delete",
-                    "status": "succeeded",
-                    "title": "Delete sandbox",
-                    "text": "Removing Test passes · 4 of 12",
-                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                    "mode": "live",
-                    "target": {
-                      "type": "generic",
-                      "id": "0193a1b2-7c00-7000-8000-189853ce8561"
-                    },
-                    "step": "mapping",
-                    "steps": [
-                      {
-                        "key": "tier",
-                        "label": "Remove Test passes",
-                        "state": "done",
-                        "done": 39,
-                        "total": 128,
-                        "detail": "Waiting for Apple",
-                        "until": 1795572600000,
-                        "waitingReason": "due",
-                        "group": "Access",
-                        "startedAt": 1794362400000,
-                        "finishedAt": 1795570500000
-                      }
-                    ],
-                    "attempt": 1,
-                    "cancelable": true,
-                    "cancelRequested": true,
-                    "startedBy": {
-                      "type": "user",
-                      "id": "0193a1b2-7c00-7000-8000-000000000011"
-                    },
+                  "sandbox": {
+                    "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+                    "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+                    "orgSlug": "northwind-sandbox",
+                    "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+                    "previewOnly": true,
                     "createdAt": 1794362400000,
-                    "startedAt": 1794362400000,
-                    "updatedAt": 1795399200000,
-                    "finishedAt": 1795570500000,
-                    "error": null,
-                    "result": {
-                      "href": "/developers/quickstart",
-                      "ids": {
-                        "tier": "northwind"
-                      }
-                    },
-                    "revision": 3,
-                    "pollAfterMs": 1471
-                  }
+                    "closedAt": null,
+                    "timeZone": "America/Los_Angeles"
+                  },
+                  "key": {
+                    "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
+                    "name": "Sandbox key",
+                    "secret": "pb_test_r3SetK3y_northwind-demo-key-do-not-use-a6e145602636",
+                    "mode": "test",
+                    "expiresAt": 1796954400000
+                  },
+                  "deleted": {
+                    "passes": 9,
+                    "captures": 6,
+                    "calls": 38,
+                    "other": 2
+                  },
+                  "kept": 0,
+                  "more": false,
+                  "resetsLeft": 2
                 }
               }
             }
@@ -86929,6 +86846,9 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "timeZone": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -86938,7 +86858,8 @@
                     "templateId",
                     "previewOnly",
                     "createdAt",
-                    "closedAt"
+                    "closedAt",
+                    "timeZone"
                   ]
                 },
                 "example": {
@@ -86948,7 +86869,8 @@
                   "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "previewOnly": true,
                   "createdAt": 1794362400000,
-                  "closedAt": 1795572000000
+                  "closedAt": 1795572000000,
+                  "timeZone": "America/Los_Angeles"
                 }
               }
             }
@@ -87040,6 +86962,9 @@
                       ],
                       "minimum": 0
                     },
+                    "timeZone": {
+                      "type": "string"
+                    },
                     "key": {
                       "type": [
                         "object",
@@ -87105,6 +87030,7 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
+                    "timeZone",
                     "key",
                     "previousKey"
                   ]
@@ -87117,6 +87043,7 @@
                   "previewOnly": true,
                   "createdAt": 1794362400000,
                   "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
                     "name": "Sandbox key",
@@ -124809,6 +124736,26 @@
             "required": false,
             "name": "type",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "requestId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -125286,6 +125233,26 @@
             },
             "required": false,
             "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "requestId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
             "in": "query"
           }
         ],

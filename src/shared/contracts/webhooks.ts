@@ -1,13 +1,6 @@
 import { z } from 'zod';
 import { ChannelSchema, ChannelSourceSchema } from './channels.ts';
-import {
-  IdSchema,
-  ModeSchema,
-  PageQuerySchema,
-  PlainLineSchema,
-  pageOf,
-  TimestampSchema,
-} from './common.ts';
+import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 
 /** Closed list: a new type is added here, with its data schema, label and group. */
 export const WEBHOOK_EVENT_TYPES = [
@@ -154,6 +147,8 @@ const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass
     mode: ModeSchema,
     pass,
     data: WEBHOOK_DATA_SCHEMAS[type],
+    /** The id of the API request that caused the event (the `x-request-id` it answered with); absent when no request did. */
+    requestId: z.string().optional(),
     /** Only on a sample sent from "Send test": it describes no real pass. */
     sample: z.literal(true).optional(),
   });
@@ -283,11 +278,6 @@ export const WebhookAttemptSchema = z.object({
 export const WebhookDeliveryDetailSchema = WebhookDeliverySchema.extend({
   attemptLog: z.array(WebhookAttemptSchema),
   payload: WebhookEventSchema,
-});
-
-export const WebhookDeliveryListQuerySchema = PageQuerySchema.extend({
-  state: WebhookDeliveryStateSchema.optional(),
-  type: WebhookEventTypeSchema.optional(),
 });
 
 export const WebhookReplaySchema = z

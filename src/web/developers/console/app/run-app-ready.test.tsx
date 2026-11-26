@@ -45,7 +45,7 @@ vi.mock('./picker.tsx', () => ({
 
 import { RunApp } from './run-app.tsx';
 
-const sandbox = { id: 's', orgSlug: 'o', templateId: 't' };
+const sandbox = { id: 's', orgId: 'org-1', orgSlug: 'o', templateId: 't' };
 const ready = { kind: 'ready', csrf: 'c', sandbox, siteKey: 'k' } as const;
 const index = {
   codes: ['X'],

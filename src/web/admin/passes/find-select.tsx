@@ -56,7 +56,7 @@ export function SelectAllBanner({
 export function SelectAllPhone({ onSelect }: { onSelect: () => void }) {
   return (
     <div className="mb-3 md:hidden">
-      <Button variant="outline" className="w-full" onClick={onSelect}>
+      <Button variant="ghost" className="-ml-3" onClick={onSelect}>
         Select all
       </Button>
     </div>

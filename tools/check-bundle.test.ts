@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BENCH_BUDGET_BYTES,
   checkBundle,
   DEV_BUDGET_BYTES,
   DEV_FORBIDDEN,
@@ -133,5 +134,12 @@ describe('check-bundle', () => {
     ]);
     expect(islandAssets(read, ['/assets/developers-A.js'], 'missing')).toEqual([]);
     expect(DEV_ISLAND_BUDGET_BYTES).toBe(98_000);
+  });
+
+  it('a Workbench island holds React, the bench primitives and one tool, under the playground', () => {
+    // React alone is 67.5 kB and the primitives about 32 kB: a tool gets the rest.
+    expect(BENCH_BUDGET_BYTES).toBe(125_000);
+    expect(BENCH_BUDGET_BYTES).toBeGreaterThan(DEV_ISLAND_BUDGET_BYTES);
+    expect(BENCH_BUDGET_BYTES).toBeLessThan(PLAYGROUND_BUDGET_BYTES);
   });
 });

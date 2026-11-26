@@ -137,7 +137,7 @@ export function FixTable({
                   {editable ? (
                     <td className="px-3 py-3 max-sm:hidden">
                       {p.value ? (
-                        <code className="rounded bg-danger-subtle px-1.5 font-mono text-xs text-danger">
+                        <code className="whitespace-nowrap rounded bg-danger-subtle px-1.5 font-mono text-xs text-danger">
                           {p.value}
                         </code>
                       ) : null}

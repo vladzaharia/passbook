@@ -15,6 +15,7 @@ import { previewOutcome } from './scan-preview-outcome.ts';
 import { useOrgLook } from './scan-stage-brand.ts';
 import { StageDiagnostics } from './scan-stage-diagnostics.tsx';
 import { useStageFocus } from './scan-stage-focus.ts';
+import { useRemembered } from './scan-stage-memory.ts';
 import { useStagePreview } from './scan-stage-model.ts';
 import { SourceStatus, StageNotes } from './scan-stage-notes.tsx';
 import { RealPassPicker } from './scan-stage-pass.tsx';
@@ -55,17 +56,21 @@ export function ScanStage({
   onAction,
   phone,
 }: ScanStageProps) {
-  const [role, setRole] = useState<ScanRole>('door');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [device, setDevice] = useState<keyof typeof FRAME_SIZES>('phone');
-  const [marks, setMarks] = useState(true);
-  const [showLocked, setShowLocked] = useState(false);
+  const [role, setRole] = useRemembered<ScanRole>(templateId, 'role', 'door');
+  const [theme, setTheme] = useRemembered<'light' | 'dark'>(templateId, 'theme', 'light');
+  const [device, setDevice] = useRemembered<keyof typeof FRAME_SIZES>(
+    templateId,
+    'device',
+    'phone',
+  );
+  const [marks, setMarks] = useRemembered(templateId, 'marks', true);
+  const [showLocked, setShowLocked] = useRemembered(templateId, 'locked', false);
   const [layout, onLayout] = useFrameLayout();
   const [source, setSource] = useState<'synthetic' | 'real'>('synthetic');
   const [passId, setPassId] = useState<string | null>(null);
   const [request, setRequest] = useState(0);
   const [overrides, setOverrides] = useState<Record<string, Json>>({});
-  const [tabId, setTabId] = useState<string | null>(null);
+  const [tabId, setTabId] = useRemembered<string | null>(templateId, 'tab', null);
   const [now] = useState(() => Date.now());
   const real = useRealPreview(
     orgId,

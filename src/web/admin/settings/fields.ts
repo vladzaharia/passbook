@@ -7,6 +7,8 @@ export interface SettingField {
   label: string;
   kind: FieldKind;
   help?: string;
+  /** Placeholder showing the format of an empty text field. */
+  hint?: string;
   /** Section heading; fields without one render as a flat list. */
   group?: string;
   /** Unit inside a number field ("s", "days"). */

@@ -17,13 +17,9 @@ import {
   useOperation,
   useOperationActions,
 } from '../../ui/operation/index.ts';
-import { OPERATION_STARTED } from '../console/chip-busy.ts';
 
-/** A start's 202: the operation is in the page's cache and the tray, and the sandbox chip starts to ring. */
-export function startedOperation(op: Operation): void {
-  trackOperation(op);
-  window.dispatchEvent(new Event(OPERATION_STARTED));
-}
+/** A start's 202: the operation is in the page's cache and the tray, and the sandbox chip rings through `useActiveOperation`. */
+export const startedOperation = trackOperation;
 
 /** One operations client for the page, with the session's write token (the site has no router or query cache). */
 export function SandboxOperations({ csrf, children }: { csrf: string; children: ReactNode }) {

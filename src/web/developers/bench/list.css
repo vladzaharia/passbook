@@ -1,0 +1,189 @@
+/* The bench list (bench/list.tsx): one listbox, 40 px rows (44 coarse), a 3 px tick in the row's status
+   tone, the selection as a tinted row with an accent hairline. Under 560 px of its own width a row takes
+   two lines. */
+.bench-list {
+  container: bench-list / inline-size;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+  box-shadow: var(--wl-edge, none), var(--pk-elevation-1);
+  overflow: clip;
+}
+/* The rows share the list's columns (subgrid), so leads, titles and statuses line up row to row. */
+.bench-lb {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  column-gap: 12px;
+}
+.bench-lb:focus-visible {
+  outline: none;
+}
+/* One Tab stop: the ring is on the active row, or on the list while nothing is selected. */
+.bench-lb:focus-visible .bench-row[aria-selected="true"],
+.bench-lb:focus-visible:not(:has([aria-selected="true"])) {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+
+.bench-row {
+  --tick: var(--pk-border-strong);
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-areas: "lead title meta trail";
+  align-items: center;
+  min-height: var(--wb-row);
+  padding: 0 16px 0 19px;
+  border-top: 1px solid var(--pk-border-subtle);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color var(--wl-dur-hover) var(--wl-ease-move);
+}
+.bench-row:first-child {
+  border-top: 0;
+}
+.bench-row::before {
+  content: "";
+  position: absolute;
+  inset-block: 7px;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tick);
+}
+.bench-row[data-tone="success"] {
+  --tick: var(--pk-success);
+}
+.bench-row[data-tone="info"] {
+  --tick: var(--pk-info);
+}
+.bench-row[data-tone="warning"] {
+  --tick: var(--pk-warning);
+}
+.bench-row[data-tone="danger"] {
+  --tick: var(--pk-danger);
+}
+.bench-row:hover {
+  background: var(--pk-state-hover-tint);
+}
+.bench-row[aria-selected="true"] {
+  background: var(--pk-state-selected-fill);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--pk-accent) 45%, transparent);
+}
+.bench-row[aria-selected="true"]::before {
+  inset-block: 0;
+}
+
+.bench-row-lead {
+  grid-area: lead;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pk-text-muted);
+  font: 400 12px / 1 var(--pk-font-mono);
+  white-space: nowrap;
+}
+.bench-row-title {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--pk-text-strong);
+  font: 400 13px / 20px var(--pk-font-mono);
+}
+.bench-row-tt {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bench-row-pin {
+  flex: none;
+  padding: 0 6px;
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-accent-subtle);
+  color: var(--pk-accent-fg);
+  font: 500 11px / 18px var(--pk-font-sans);
+}
+.bench-row-meta {
+  grid-area: meta;
+  min-width: 0;
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--pk-text-muted);
+  font-size: 12.5px;
+}
+.bench-row-trail {
+  grid-area: trail;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--pk-text-muted);
+  font: 400 12px / 1 var(--pk-font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* A second trail item (a duration) keeps one width, so the statuses before it line up. */
+.bench-row-trail > * + * {
+  min-width: 6ch;
+  text-align: end;
+}
+
+/* A live arrival: rises 8 px, then glows the accent once. Reduced: a still accent ring (the tool drops
+   `data-fresh` after 4 s). */
+@media (prefers-reduced-motion: no-preference) {
+  .bench-row[data-fresh] {
+    animation:
+      bench-row-in 320ms var(--wl-ease-out) backwards,
+      bench-row-glow var(--wl-dur-highlight) var(--wl-ease-out) 320ms backwards;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bench-row[data-fresh] {
+    box-shadow: inset 0 0 0 1px var(--pk-accent);
+  }
+}
+@keyframes bench-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes bench-row-glow {
+  from {
+    background-color: color-mix(in oklab, var(--pk-accent) 18%, transparent);
+  }
+}
+
+.bench-list-f {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px 6px 19px;
+  border-top: 1px solid var(--pk-border-subtle);
+  color: var(--pk-text-muted);
+  font: 400 12.5px / 1 var(--pk-font-mono);
+}
+
+@container bench-list (max-width: 560px) {
+  .bench-lb {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .bench-row {
+    grid-template-areas:
+      "title title title"
+      "lead meta trail";
+    row-gap: 4px;
+    padding-block: 8px;
+  }
+  .bench-row-meta {
+    max-width: none;
+  }
+}

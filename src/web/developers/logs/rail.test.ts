@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RAIL_COPY } from '../../../shared/copy/developers-ops.ts';
+import { forgetRail, loadRail } from '../bench/rail.ts';
 import { h } from './dom.ts';
-import { forgetRail, loadRail, mountRail, spark } from './rail.ts';
+import { mountRail, spark } from './rail.ts';
 import { json, rail } from './test-support.ts';
 
 afterEach(() => {

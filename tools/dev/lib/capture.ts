@@ -69,6 +69,14 @@ export function listen(page: Page): { consoleErrors: string[]; failedRequests: s
   return { consoleErrors, failedRequests };
 }
 
+/** A tab by name at any width: tabs above 640 px, the Select they become below it. */
+async function clickTab(page: Page, name: string): Promise<void> {
+  const tab = page.getByRole('tab', { name, exact: true });
+  if ((await tab.count()) > 0) return tab.click({ timeout: 10_000 });
+  await page.getByRole('combobox').first().click({ timeout: 10_000 });
+  await page.getByRole('option', { name, exact: true }).click({ timeout: 10_000 });
+}
+
 const SETTLE = '[aria-busy="true"], .wl-skeleton';
 
 async function shoot(
@@ -141,13 +149,12 @@ async function shoot(
           note = [note, 'skeleton still showing'].filter(Boolean).join('; ');
         });
       for (const sel of [route.click ?? []].flat()) {
-        await page
-          .locator(sel)
-          .first()
-          .click({ timeout: 10_000 })
-          .catch(() => {
-            note = [note, `click ${sel} not found`].filter(Boolean).join('; ');
-          });
+        await (sel.startsWith('tab:')
+          ? clickTab(page, sel.slice(4))
+          : page.locator(sel).first().click({ timeout: 10_000 })
+        ).catch(() => {
+          note = [note, `click ${sel} not found`].filter(Boolean).join('; ');
+        });
         await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
       }
       if (status !== null && status >= 400) note = `HTTP ${status}`;

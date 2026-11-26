@@ -142,7 +142,7 @@ export const ISSUE_WORDS: Record<WarningCode, Words> = {
     ['name', 'locales'],
     (p) => `${p.name} has no version for ${p.locales}.`,
   ),
-  LOCAL_TIME: 'A time is in UTC, so holders see it in the wrong zone.',
+  LOCAL_TIME: 'A time has no local offset, so holders may see the wrong hour.',
   LOGO_TEXT_PLATFORM: named(
     'The logo text names the platform. Use your own name.',
     ['name'],

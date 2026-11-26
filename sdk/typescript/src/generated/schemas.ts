@@ -2003,6 +2003,7 @@ export type EmailFailedEvent = {
   data: {
     code?: string | null;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -4826,6 +4827,7 @@ export type PassChannelsChangedEvent = {
     to: "on" | "off";
     source: "pass" | "template" | "org" | "platform";
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -5916,6 +5918,7 @@ export type PassInstalledEvent = {
     deviceCount: number;
     firstDevice: boolean;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -5931,6 +5934,7 @@ export type PassIssuedEvent = {
     version?: number;
     source?: string | null;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -5952,6 +5956,7 @@ export type PassPrintVoidedEvent = {
     printId: string;
     cause?: string | null;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -5968,6 +5973,7 @@ export type PassPrintedEvent = {
     generation: number;
     voided?: number;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -5984,6 +5990,7 @@ export type PassRemovedEvent = {
     message?: boolean;
     runId?: string;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -5998,6 +6005,7 @@ export type PassRestoredEvent = {
   data: {
     version?: number;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -6017,6 +6025,7 @@ export type PassScanRefusedEvent = {
     staffId?: string | null;
     eventId?: string | null;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -6033,6 +6042,7 @@ export type PassScanUndoneEvent = {
     scannerId?: string | null;
     staffId?: string | null;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -6059,6 +6069,7 @@ export type PassScannedEvent = {
     offline?: boolean;
     amount?: number;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -6540,6 +6551,7 @@ export type PassUninstalledEvent = {
     lastDevice: boolean;
     cause: "wallet" | "push_gone";
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -6554,6 +6566,7 @@ export type PassUnvoidedEvent = {
   data: {
     actorType?: string | null;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -6571,6 +6584,7 @@ export type PassUpdatedEvent = {
     source?: string | null;
     notified?: boolean;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -6616,6 +6630,7 @@ export type PassVoidedEvent = {
     actorType?: string | null;
     runId?: string;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -8450,6 +8465,7 @@ export type PushFailedEvent = {
     reason?: string | null;
     code?: string | null;
   };
+  requestId?: string;
   sample?: true;
 };
 
@@ -13345,6 +13361,7 @@ export type WebhookTestEvent = {
   mode: "live" | "test";
   pass: null;
   data: Record<string, unknown>;
+  requestId?: string;
   sample?: true;
 };
 
