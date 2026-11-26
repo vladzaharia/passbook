@@ -12382,6 +12382,10 @@
                 "type": "integer",
                 "minimum": 0
               },
+              "configRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
               "signIn": {
                 "type": "string",
                 "enum": [
@@ -12411,6 +12415,7 @@
               "revoked",
               "lastSeenAt",
               "updatedAt",
+              "configRevision",
               "signIn",
               "adminName"
             ]
@@ -21550,6 +21555,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "configRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "signIn": {
             "type": "string",
             "enum": [
@@ -21579,6 +21588,7 @@
           "revoked",
           "lastSeenAt",
           "updatedAt",
+          "configRevision",
           "signIn",
           "adminName"
         ]
@@ -21696,6 +21706,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "configRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "signIn": {
             "type": "string",
             "enum": [
@@ -21748,6 +21762,7 @@
           "revoked",
           "lastSeenAt",
           "updatedAt",
+          "configRevision",
           "signIn",
           "adminName",
           "pairing"
@@ -50938,6 +50953,16 @@
           "items"
         ]
       },
+      "ConnectionsPreviewParams": {
+        "type": "object",
+        "properties": {
+          "arrivalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "ConnectionsWebhookFailuresListResponse": {
         "type": "object",
         "properties": {
@@ -51058,6 +51083,115 @@
           "ok",
           "resolved",
           "state"
+        ]
+      },
+      "ConnectionsWebhookArrivalsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "receivedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "lastAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "duplicate",
+                    "ignored",
+                    "rejected"
+                  ]
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "signature_missing",
+                    "signature_mismatch",
+                    "signature_expired",
+                    "payload",
+                    "too_large",
+                    "no_secret",
+                    "unknown_type",
+                    "thin_event",
+                    "test_mode",
+                    "unrecognized_shape",
+                    "no_ref",
+                    "ping",
+                    "stale",
+                    null
+                  ]
+                },
+                "topic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 100
+                },
+                "contentClass": {
+                  "type": "string",
+                  "enum": [
+                    "json",
+                    "xml",
+                    "form",
+                    "other"
+                  ]
+                },
+                "eventRef": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 200
+                },
+                "usedPrevious": {
+                  "type": "boolean"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "id",
+                "receivedAt",
+                "lastAt",
+                "outcome",
+                "reason",
+                "topic",
+                "contentClass",
+                "eventRef",
+                "usedPrevious",
+                "count"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "ConnectionsListResponse": {
@@ -51254,11 +51388,40 @@
                   "type": "string",
                   "enum": [
                     "unknown",
+                    "awaiting",
                     "healthy",
                     "degraded",
                     "failing",
                     "paused",
                     "disabled"
+                  ]
+                },
+                "firstVerifiedArrivalAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "warning": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "stale_deliveries"
+                      ]
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "text"
                   ]
                 },
                 "consecutiveFailures": {
@@ -51348,6 +51511,8 @@
                 "requestsPerMinute",
                 "enabled",
                 "health",
+                "firstVerifiedArrivalAt",
+                "warning",
                 "consecutiveFailures",
                 "breakerOpenUntil",
                 "nextRunAt",
@@ -51738,11 +51903,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -51830,6 +52024,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -51876,6 +52072,7 @@
                   "type": "string",
                   "enum": [
                     "unknown",
+                    "awaiting",
                     "healthy",
                     "degraded",
                     "failing",
@@ -51912,6 +52109,462 @@
           "total",
           "byHealth",
           "attention"
+        ]
+      },
+      "ConnectionsSetupRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound"
+            ]
+          },
+          "recipe": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "custom",
+                  "shopify-orders",
+                  "shopify-customers",
+                  "stripe-subscriptions",
+                  "stripe-payments",
+                  "calcom-bookings",
+                  "woocommerce-orders",
+                  "tickettailor-tickets"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "outbound"
+                ]
+              }
+            ]
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "checkedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "consoleUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              },
+              "docs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "url"
+                  ]
+                },
+                "maxItems": 4
+              }
+            },
+            "required": [
+              "name",
+              "consoleUrl",
+              "docs"
+            ]
+          },
+          "secret": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "provider",
+                  "passbook"
+                ]
+              },
+              "allowPaste": {
+                "type": "boolean"
+              },
+              "prefix": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 10
+              },
+              "minLength": {
+                "type": "integer"
+              },
+              "whereStep": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "origin",
+              "allowPaste",
+              "prefix",
+              "minLength",
+              "whereStep"
+            ]
+          },
+          "subscriptions": {
+            "type": "object",
+            "properties": {
+              "perWebhook": {
+                "type": "string",
+                "enum": [
+                  "one",
+                  "many"
+                ]
+              },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "verified": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "required",
+                    "verified"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "perWebhook",
+              "topics"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "provider",
+                    "passbook"
+                  ]
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "text"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "path"
+                            ]
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 60
+                            },
+                            "maxItems": 6
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "items"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "field"
+                            ]
+                          },
+                          "label": {
+                            "type": "string",
+                            "maxLength": 60
+                          },
+                          "value": {
+                            "type": "string",
+                            "maxLength": 400
+                          },
+                          "copy": {
+                            "type": "string",
+                            "enum": [
+                              "endpointUrl",
+                              "secret",
+                              "signatureHeader",
+                              "timestampHeader"
+                            ]
+                          },
+                          "choose": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "label"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "topics"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "t"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "code"
+                            ]
+                          },
+                          "lang": {
+                            "type": "string",
+                            "enum": [
+                              "sh",
+                              "curl",
+                              "ts",
+                              "py",
+                              "go"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "lang",
+                          "code"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "note"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "warn"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      }
+                    ]
+                  },
+                  "maxItems": 12
+                },
+                "verified": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "required": [
+                "id",
+                "side",
+                "title",
+                "parts"
+              ]
+            },
+            "maxItems": 12
+          },
+          "test": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "button",
+                  "ping-on-save",
+                  "cli",
+                  "real-event",
+                  "snippet",
+                  "send"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "command": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              },
+              "issues": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "text",
+              "command",
+              "issues"
+            ]
+          },
+          "troubleshooting": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 400
+            }
+          },
+          "values": {
+            "type": "object",
+            "properties": {
+              "endpointUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "signatureHeader": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "timestampHeader": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "hasSecret": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "endpointUrl",
+              "signatureHeader",
+              "timestampHeader",
+              "hasSecret"
+            ]
+          }
+        },
+        "required": [
+          "direction",
+          "recipe",
+          "version",
+          "checkedAt",
+          "provider",
+          "secret",
+          "subscriptions",
+          "steps",
+          "test",
+          "troubleshooting",
+          "values"
         ]
       },
       "ConnectionsUploadsCreateParams": {
@@ -54760,11 +55413,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -54995,6 +55677,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -55392,11 +56076,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -55484,6 +56197,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -56201,11 +56916,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -56293,6 +57037,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -56494,11 +57240,40 @@
             "type": "string",
             "enum": [
               "unknown",
+              "awaiting",
               "healthy",
               "degraded",
               "failing",
               "paused",
               "disabled"
+            ]
+          },
+          "firstVerifiedArrivalAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "warning": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "stale_deliveries"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
             ]
           },
           "consecutiveFailures": {
@@ -56583,6 +57358,8 @@
           "requestsPerMinute",
           "enabled",
           "health",
+          "firstVerifiedArrivalAt",
+          "warning",
           "consecutiveFailures",
           "breakerOpenUntil",
           "nextRunAt",
@@ -56744,6 +57521,19 @@
                       },
                       "pasteSecret": {
                         "type": "boolean"
+                      },
+                      "line": {
+                        "type": "string"
+                      },
+                      "secretOrigin": {
+                        "type": "string",
+                        "enum": [
+                          "provider",
+                          "passbook"
+                        ]
+                      },
+                      "setupVersion": {
+                        "type": "string"
                       },
                       "entitled": {
                         "type": "boolean"
@@ -57044,6 +57834,19 @@
                 "pasteSecret": {
                   "type": "boolean"
                 },
+                "line": {
+                  "type": "string"
+                },
+                "secretOrigin": {
+                  "type": "string",
+                  "enum": [
+                    "provider",
+                    "passbook"
+                  ]
+                },
+                "setupVersion": {
+                  "type": "string"
+                },
                 "entitled": {
                   "type": "boolean"
                 },
@@ -57185,6 +57988,429 @@
           "entitled"
         ]
       },
+      "ConnectorsRecipeSetupRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound"
+            ]
+          },
+          "recipe": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "custom",
+                  "shopify-orders",
+                  "shopify-customers",
+                  "stripe-subscriptions",
+                  "stripe-payments",
+                  "calcom-bookings",
+                  "woocommerce-orders",
+                  "tickettailor-tickets"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "outbound"
+                ]
+              }
+            ]
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "checkedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "consoleUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              },
+              "docs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "url"
+                  ]
+                },
+                "maxItems": 4
+              }
+            },
+            "required": [
+              "name",
+              "consoleUrl",
+              "docs"
+            ]
+          },
+          "secret": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "provider",
+                  "passbook"
+                ]
+              },
+              "allowPaste": {
+                "type": "boolean"
+              },
+              "prefix": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 10
+              },
+              "minLength": {
+                "type": "integer"
+              },
+              "whereStep": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "origin",
+              "allowPaste",
+              "prefix",
+              "minLength",
+              "whereStep"
+            ]
+          },
+          "subscriptions": {
+            "type": "object",
+            "properties": {
+              "perWebhook": {
+                "type": "string",
+                "enum": [
+                  "one",
+                  "many"
+                ]
+              },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "verified": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "required",
+                    "verified"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "perWebhook",
+              "topics"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "provider",
+                    "passbook"
+                  ]
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "text"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "path"
+                            ]
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 60
+                            },
+                            "maxItems": 6
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "items"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "field"
+                            ]
+                          },
+                          "label": {
+                            "type": "string",
+                            "maxLength": 60
+                          },
+                          "value": {
+                            "type": "string",
+                            "maxLength": 400
+                          },
+                          "copy": {
+                            "type": "string",
+                            "enum": [
+                              "endpointUrl",
+                              "secret",
+                              "signatureHeader",
+                              "timestampHeader"
+                            ]
+                          },
+                          "choose": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "label"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "topics"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "t"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "code"
+                            ]
+                          },
+                          "lang": {
+                            "type": "string",
+                            "enum": [
+                              "sh",
+                              "curl",
+                              "ts",
+                              "py",
+                              "go"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "lang",
+                          "code"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "note"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "warn"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      }
+                    ]
+                  },
+                  "maxItems": 12
+                },
+                "verified": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "required": [
+                "id",
+                "side",
+                "title",
+                "parts"
+              ]
+            },
+            "maxItems": 12
+          },
+          "test": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "button",
+                  "ping-on-save",
+                  "cli",
+                  "real-event",
+                  "snippet",
+                  "send"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "command": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              },
+              "issues": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "text",
+              "command",
+              "issues"
+            ]
+          },
+          "troubleshooting": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 400
+            }
+          }
+        },
+        "required": [
+          "direction",
+          "recipe",
+          "version",
+          "checkedAt",
+          "provider",
+          "secret",
+          "subscriptions",
+          "steps",
+          "test",
+          "troubleshooting"
+        ]
+      },
       "WebhookEndpointsCreateParams": {
         "type": "object",
         "properties": {
@@ -57246,6 +58472,429 @@
         "required": [
           "url",
           "eventTypes"
+        ]
+      },
+      "WebhookEndpointsSetupRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound"
+            ]
+          },
+          "recipe": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "custom",
+                  "shopify-orders",
+                  "shopify-customers",
+                  "stripe-subscriptions",
+                  "stripe-payments",
+                  "calcom-bookings",
+                  "woocommerce-orders",
+                  "tickettailor-tickets"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "outbound"
+                ]
+              }
+            ]
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "checkedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "consoleUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              },
+              "docs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "url"
+                  ]
+                },
+                "maxItems": 4
+              }
+            },
+            "required": [
+              "name",
+              "consoleUrl",
+              "docs"
+            ]
+          },
+          "secret": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "provider",
+                  "passbook"
+                ]
+              },
+              "allowPaste": {
+                "type": "boolean"
+              },
+              "prefix": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 10
+              },
+              "minLength": {
+                "type": "integer"
+              },
+              "whereStep": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "origin",
+              "allowPaste",
+              "prefix",
+              "minLength",
+              "whereStep"
+            ]
+          },
+          "subscriptions": {
+            "type": "object",
+            "properties": {
+              "perWebhook": {
+                "type": "string",
+                "enum": [
+                  "one",
+                  "many"
+                ]
+              },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "verified": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "required",
+                    "verified"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "perWebhook",
+              "topics"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "provider",
+                    "passbook"
+                  ]
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "text"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "path"
+                            ]
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 60
+                            },
+                            "maxItems": 6
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "items"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "field"
+                            ]
+                          },
+                          "label": {
+                            "type": "string",
+                            "maxLength": 60
+                          },
+                          "value": {
+                            "type": "string",
+                            "maxLength": 400
+                          },
+                          "copy": {
+                            "type": "string",
+                            "enum": [
+                              "endpointUrl",
+                              "secret",
+                              "signatureHeader",
+                              "timestampHeader"
+                            ]
+                          },
+                          "choose": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "label"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "topics"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "t"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "code"
+                            ]
+                          },
+                          "lang": {
+                            "type": "string",
+                            "enum": [
+                              "sh",
+                              "curl",
+                              "ts",
+                              "py",
+                              "go"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "lang",
+                          "code"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "note"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "warn"
+                            ]
+                          },
+                          "text": {
+                            "type": "string",
+                            "maxLength": 400
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "text"
+                        ]
+                      }
+                    ]
+                  },
+                  "maxItems": 12
+                },
+                "verified": {
+                  "type": "boolean",
+                  "default": true
+                }
+              },
+              "required": [
+                "id",
+                "side",
+                "title",
+                "parts"
+              ]
+            },
+            "maxItems": 12
+          },
+          "test": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "button",
+                  "ping-on-save",
+                  "cli",
+                  "real-event",
+                  "snippet",
+                  "send"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "command": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              },
+              "issues": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "text",
+              "command",
+              "issues"
+            ]
+          },
+          "troubleshooting": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 400
+            }
+          }
+        },
+        "required": [
+          "direction",
+          "recipe",
+          "version",
+          "checkedAt",
+          "provider",
+          "secret",
+          "subscriptions",
+          "steps",
+          "test",
+          "troubleshooting"
         ]
       },
       "WebhookEndpointsUpdateParams": {
@@ -120675,7 +122324,7 @@
     },
     "/api/v1/connections/{id}/preview": {
       "post": {
-        "summary": "Preview a sync",
+        "summary": "Preview a sync, or what one received webhook made",
         "tags": [
           "connections"
         ],
@@ -120691,6 +122340,19 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsPreviewParams"
+              },
+              "example": {
+                "arrivalId": "0193a1b2-7c00-7000-8000-f3168e33f525"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success",
@@ -120811,7 +122473,8 @@
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WEBHOOK_NOT_FOUND"
         ]
       }
     },
@@ -121130,6 +122793,129 @@
         ]
       }
     },
+    "/api/v1/connections/{id}/webhook-arrivals": {
+      "get": {
+        "summary": "List webhook arrivals",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "since",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsWebhookArrivalsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-b642336f0c7e",
+                      "receivedAt": 1795399200000,
+                      "lastAt": 1795399200000,
+                      "outcome": "rejected",
+                      "reason": "signature_mismatch",
+                      "topic": null,
+                      "contentClass": "json",
+                      "eventRef": null,
+                      "usedPrevious": false,
+                      "count": 2
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.getConnectionsByIdWebhookArrivals",
+        "x-sdk": {
+          "resource": "connections.webhookArrivals",
+          "method": "list"
+        },
+        "description": "Lists what the webhook ingress saw for a connection, newest first: the outcome and the reason, never the body. Poll it with since to watch a test event arrive.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/connections": {
       "get": {
         "summary": "List connections",
@@ -121153,6 +122939,7 @@
               "type": "string",
               "enum": [
                 "unknown",
+                "awaiting",
                 "healthy",
                 "degraded",
                 "failing",
@@ -121239,6 +123026,11 @@
                       "requestsPerMinute": 6,
                       "enabled": true,
                       "health": "healthy",
+                      "firstVerifiedArrivalAt": 1795570500000,
+                      "warning": {
+                        "code": "stale_deliveries",
+                        "text": "Your provider is sending old events. Check its clock and retries."
+                      },
                       "consecutiveFailures": 0,
                       "breakerOpenUntil": null,
                       "nextRunAt": 1795571400000,
@@ -121379,6 +123171,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "unknown",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795572000000,
@@ -121535,6 +123332,182 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/{id}/setup": {
+      "get": {
+        "summary": "A webhook connection's setup guide with its URL filled in; never the secret",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsSetupRetrieveResponse"
+                },
+                "example": {
+                  "direction": "inbound",
+                  "recipe": "shopify-customers",
+                  "version": "2026-11-25",
+                  "checkedAt": "2026-11-25",
+                  "provider": {
+                    "name": "Shopify",
+                    "consoleUrl": null,
+                    "docs": [
+                      {
+                        "label": "Shopify: webhooks",
+                        "url": "https://help.shopify.com/en/manual/orders/notifications/webhooks"
+                      }
+                    ]
+                  },
+                  "secret": {
+                    "origin": "provider",
+                    "allowPaste": true,
+                    "prefix": null,
+                    "minLength": 16,
+                    "whereStep": "secret"
+                  },
+                  "subscriptions": {
+                    "perWebhook": "one",
+                    "topics": [
+                      {
+                        "id": "customers/create",
+                        "label": "Customer creation",
+                        "required": true,
+                        "verified": true
+                      },
+                      {
+                        "id": "customers/update",
+                        "label": null,
+                        "required": true,
+                        "verified": false
+                      }
+                    ]
+                  },
+                  "steps": [
+                    {
+                      "id": "connect",
+                      "side": "provider",
+                      "title": "Add the webhooks",
+                      "parts": [
+                        {
+                          "t": "path",
+                          "items": [
+                            "Settings",
+                            "Notifications",
+                            "Webhooks",
+                            "Create webhook"
+                          ]
+                        },
+                        {
+                          "t": "field",
+                          "label": "Format",
+                          "value": "JSON",
+                          "choose": false
+                        },
+                        {
+                          "t": "field",
+                          "label": "URL",
+                          "copy": "endpointUrl",
+                          "choose": false
+                        },
+                        {
+                          "t": "topics"
+                        }
+                      ],
+                      "verified": true
+                    },
+                    {
+                      "id": "secret",
+                      "side": "provider",
+                      "title": "Copy the signing secret",
+                      "parts": [
+                        {
+                          "t": "text",
+                          "text": "Shopify signs every webhook made in admin with one secret for the store."
+                        }
+                      ],
+                      "verified": false
+                    }
+                  ],
+                  "test": {
+                    "kind": "button",
+                    "text": "Row menu, **Send test**. The sample may not be a real record, so no pass is issued.",
+                    "command": null,
+                    "issues": false
+                  },
+                  "troubleshooting": {
+                    "none": "Check the webhook is listed. Shopify deletes one that keeps failing.",
+                    "signature_mismatch": "The secret isn't the one signing these. Copy it again."
+                  },
+                  "values": {
+                    "endpointUrl": "https://passbook.mobile/hooks/connections/0193a1b2-7c00-7000-8000-5c1e2f3a4b6d",
+                    "signatureHeader": null,
+                    "timestampHeader": null,
+                    "hasSecret": true
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.getConnectionsByIdSetup",
+        "x-sdk": {
+          "resource": "connections.setup",
+          "method": "retrieve"
+        },
+        "description": "A webhook connection's setup guide with its URL and header names filled in. Never returns the secret.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -123210,6 +125183,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -123365,6 +125343,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -124094,6 +126077,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -124234,6 +126222,11 @@
                   "requestsPerMinute": 6,
                   "enabled": true,
                   "health": "healthy",
+                  "firstVerifiedArrivalAt": 1795570500000,
+                  "warning": {
+                    "code": "stale_deliveries",
+                    "text": "Your provider is sending old events. Check its clock and retries."
+                  },
                   "consecutiveFailures": 0,
                   "breakerOpenUntil": null,
                   "nextRunAt": 1795571400000,
@@ -124555,6 +126548,194 @@
         ]
       }
     },
+    "/api/v1/connectors/webhook-push/recipes/{recipe}/setup": {
+      "get": {
+        "summary": "A sender's webhook setup guide, with the URL and secret left for the console to fill",
+        "tags": [
+          "connectors"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "custom",
+                "shopify-orders",
+                "shopify-customers",
+                "stripe-subscriptions",
+                "stripe-payments",
+                "calcom-bookings",
+                "woocommerce-orders",
+                "tickettailor-tickets"
+              ]
+            },
+            "required": true,
+            "name": "recipe",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorsRecipeSetupRetrieveResponse"
+                },
+                "example": {
+                  "direction": "inbound",
+                  "recipe": "shopify-customers",
+                  "version": "2026-11-25",
+                  "checkedAt": "2026-11-25",
+                  "provider": {
+                    "name": "Shopify",
+                    "consoleUrl": null,
+                    "docs": [
+                      {
+                        "label": "Shopify: webhooks",
+                        "url": "https://help.shopify.com/en/manual/orders/notifications/webhooks"
+                      }
+                    ]
+                  },
+                  "secret": {
+                    "origin": "provider",
+                    "allowPaste": true,
+                    "prefix": null,
+                    "minLength": 16,
+                    "whereStep": "secret"
+                  },
+                  "subscriptions": {
+                    "perWebhook": "one",
+                    "topics": [
+                      {
+                        "id": "customers/create",
+                        "label": "Customer creation",
+                        "required": true,
+                        "verified": true
+                      },
+                      {
+                        "id": "customers/update",
+                        "label": null,
+                        "required": true,
+                        "verified": false
+                      }
+                    ]
+                  },
+                  "steps": [
+                    {
+                      "id": "connect",
+                      "side": "provider",
+                      "title": "Add the webhooks",
+                      "parts": [
+                        {
+                          "t": "path",
+                          "items": [
+                            "Settings",
+                            "Notifications",
+                            "Webhooks",
+                            "Create webhook"
+                          ]
+                        },
+                        {
+                          "t": "field",
+                          "label": "Format",
+                          "value": "JSON",
+                          "choose": false
+                        },
+                        {
+                          "t": "field",
+                          "label": "URL",
+                          "copy": "endpointUrl",
+                          "choose": false
+                        },
+                        {
+                          "t": "topics"
+                        }
+                      ],
+                      "verified": true
+                    },
+                    {
+                      "id": "secret",
+                      "side": "provider",
+                      "title": "Copy the signing secret",
+                      "parts": [
+                        {
+                          "t": "text",
+                          "text": "Shopify signs every webhook made in admin with one secret for the store."
+                        }
+                      ],
+                      "verified": false
+                    }
+                  ],
+                  "test": {
+                    "kind": "button",
+                    "text": "Row menu, **Send test**. The sample may not be a real record, so no pass is issued.",
+                    "command": null,
+                    "issues": false
+                  },
+                  "troubleshooting": {
+                    "none": "Check the webhook is listed. Shopify deletes one that keeps failing.",
+                    "signature_mismatch": "The secret isn't the one signing these. Copy it again."
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
+        "x-sdk": {
+          "resource": "connectors.recipeSetup",
+          "method": "retrieve"
+        },
+        "description": "A sender's webhook setup guide: steps, topics, where the secret comes from and fix lines.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/webhook-endpoints": {
       "get": {
         "summary": "List webhook endpoints",
@@ -124805,6 +126986,129 @@
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/webhook-endpoints/setup": {
+      "get": {
+        "summary": "The setup guide for the server that receives webhooks",
+        "tags": [
+          "webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointsSetupRetrieveResponse"
+                },
+                "example": {
+                  "direction": "outbound",
+                  "recipe": "outbound",
+                  "version": "2026-11-25",
+                  "checkedAt": "2026-11-25",
+                  "provider": {
+                    "name": "Your server",
+                    "consoleUrl": null,
+                    "docs": []
+                  },
+                  "secret": {
+                    "origin": "passbook",
+                    "allowPaste": false,
+                    "prefix": null,
+                    "minLength": 38,
+                    "whereStep": null
+                  },
+                  "subscriptions": {
+                    "perWebhook": "many",
+                    "topics": []
+                  },
+                  "steps": [
+                    {
+                      "id": "verify",
+                      "side": "provider",
+                      "title": "Verify each request",
+                      "parts": [
+                        {
+                          "t": "field",
+                          "label": "Signature header",
+                          "value": "x-passbook-signature",
+                          "choose": false
+                        },
+                        {
+                          "t": "warn",
+                          "text": "Use the raw bytes, not re-serialized JSON."
+                        }
+                      ],
+                      "verified": true
+                    }
+                  ],
+                  "test": {
+                    "kind": "send",
+                    "text": "Send a test from PassBook. Done after one 2xx.",
+                    "command": null,
+                    "issues": false
+                  },
+                  "troubleshooting": {
+                    "timeout": "No answer in time. Answer 2xx first, then do the work."
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "webhooks.getWebhookEndpointsSetup",
+        "x-sdk": {
+          "resource": "webhookEndpoints.setup",
+          "method": "retrieve"
+        },
+        "description": "The setup guide for the server that receives webhooks.",
+        "security": [
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
         ]
       }
     },
@@ -135004,6 +137308,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -135442,6 +137747,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -135964,6 +138270,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -136339,6 +138646,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -136726,6 +139034,7 @@
                         "revoked": false,
                         "lastSeenAt": 1795570500000,
                         "updatedAt": 1795399200000,
+                        "configRevision": 3,
                         "signIn": "paired",
                         "adminName": "Sam Rivera"
                       }
@@ -140149,6 +142458,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -144044,6 +146354,7 @@
                     "revoked": false,
                     "lastSeenAt": 1795570500000,
                     "updatedAt": 1795399200000,
+                    "configRevision": 3,
                     "signIn": "paired",
                     "adminName": "Sam Rivera"
                   }
@@ -148755,6 +151066,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -149034,6 +151346,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -149301,6 +151614,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -149594,6 +151908,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -149818,6 +152133,7 @@
                   "revoked": false,
                   "lastSeenAt": 1795570500000,
                   "updatedAt": 1795399200000,
+                  "configRevision": 3,
                   "signIn": "paired",
                   "adminName": "Sam Rivera"
                 }
@@ -150035,6 +152351,7 @@
                   "revoked": false,
                   "lastSeenAt": 1795570500000,
                   "updatedAt": 1795399200000,
+                  "configRevision": 3,
                   "signIn": "paired",
                   "adminName": "Sam Rivera",
                   "pairing": {
