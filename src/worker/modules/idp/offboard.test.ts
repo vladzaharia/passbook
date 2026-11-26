@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { removeFakeIdp } from '../../../../test/helpers/fake-idp.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
+import { removeFakeIdp } from '../../../../test/helpers/fake-idp.ts';
 import { makeApiKey, makeOrg, makeSession } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { OffboardStartedSchema } from '../../../shared/contracts/idp-access.ts';

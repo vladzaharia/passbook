@@ -1146,17 +1146,17 @@ __all__ = [
     "PlatformGroupsClaimsRetrieveResponseClaimsValue",
     "PlatformGroupsClaimsUpdateParams",
     "PlatformGroupsClaimsUpdateResponse",
-    "PlatformIdpCallsResponse",
-    "PlatformIdpCallsResponseItemsItem",
+    "PlatformIdpCallsListResponse",
+    "PlatformIdpCallsListResponseItemsItem",
     "PlatformIdpCheckParams",
     "PlatformIdpCheckResponse",
     "PlatformIdpCheckResponseOperation",
     "PlatformIdpCheckResponseOperationStartedBy",
     "PlatformIdpCheckResponseOperationStepsItem",
-    "PlatformIdpDriftResponse",
-    "PlatformIdpDriftResponseItemsItem",
-    "PlatformIdpFreezeParams",
-    "PlatformIdpFreezeResponse",
+    "PlatformIdpDriftListResponse",
+    "PlatformIdpDriftListResponseItemsItem",
+    "PlatformIdpPauseParams",
+    "PlatformIdpPauseResponse",
     "PlatformIdpRetrieveResponse",
     "PlatformIdpRetrieveResponseBudgetValue",
     "PlatformIdpScimBreakerClearResponse",
@@ -9073,11 +9073,11 @@ class PlatformGroupsClaimsUpdateResponse(_Model):
     removed: _List[str]
     dryRun: bool
 
-class PlatformIdpCallsResponse(_Model):
-    items: _List[PlatformIdpCallsResponseItemsItem]
+class PlatformIdpCallsListResponse(_Model):
+    items: _List[PlatformIdpCallsListResponseItemsItem]
     nextCursor: str | None
 
-class PlatformIdpCallsResponseItemsItem(_Model):
+class PlatformIdpCallsListResponseItemsItem(_Model):
     id: int
     phase: str
     method: str
@@ -9134,21 +9134,21 @@ class PlatformIdpCheckResponseOperationStepsItem(_Model):
     startedAt: int | None
     finishedAt: int | None
 
-class PlatformIdpDriftResponse(_Model):
-    items: _List[PlatformIdpDriftResponseItemsItem]
+class PlatformIdpDriftListResponse(_Model):
+    items: _List[PlatformIdpDriftListResponseItemsItem]
     nextCursor: None
 
-class PlatformIdpDriftResponseItemsItem(_Model):
+class PlatformIdpDriftListResponseItemsItem(_Model):
     id: str
     userId: str | None
     target: str
     kind: str
     foundAt: int
 
-class PlatformIdpFreezeParams(_Model):
+class PlatformIdpPauseParams(_Model):
     reason: str
 
-class PlatformIdpFreezeResponse(_Model):
+class PlatformIdpPauseResponse(_Model):
     result: _Literal["frozen", "already"] | str
 
 class PlatformIdpRetrieveResponse(_Model):

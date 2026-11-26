@@ -4,7 +4,7 @@ import type { SessionAuth } from '../../platform/auth.ts';
 import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { revokeApiKey } from '../api-keys/service.ts';
-import { liveSponsorOf, endSponsor } from '../dev-access/repo-sponsors.ts';
+import { endSponsor, liveSponsorOf } from '../dev-access/repo-sponsors.ts';
 import { closeSandbox } from '../developer/repo-grants.ts';
 import { managerOf } from '../orgs/membership-service.ts';
 import { revokeActiveMembership } from '../orgs/repo-member-writes.ts';

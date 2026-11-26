@@ -8561,12 +8561,12 @@ type PlatformGroupsClaimsUpdateResponse struct {
 	DryRun  bool     `json:"dryRun"`
 }
 
-type PlatformIdpCallsResponse struct {
-	Items      []PlatformIdpCallsResponseItemsItem `json:"items"`
-	NextCursor *string                             `json:"nextCursor"`
+type PlatformIdpCallsListResponse struct {
+	Items      []PlatformIdpCallsListResponseItemsItem `json:"items"`
+	NextCursor *string                                 `json:"nextCursor"`
 }
 
-type PlatformIdpCallsResponseItemsItem struct {
+type PlatformIdpCallsListResponseItemsItem struct {
 	ID     int64   `json:"id"`
 	Phase  string  `json:"phase"`
 	Method string  `json:"method"`
@@ -8629,12 +8629,12 @@ type PlatformIdpCheckResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
-type PlatformIdpDriftResponse struct {
-	Items      []PlatformIdpDriftResponseItemsItem `json:"items"`
-	NextCursor any                                 `json:"nextCursor"`
+type PlatformIdpDriftListResponse struct {
+	Items      []PlatformIdpDriftListResponseItemsItem `json:"items"`
+	NextCursor any                                     `json:"nextCursor"`
 }
 
-type PlatformIdpDriftResponseItemsItem struct {
+type PlatformIdpDriftListResponseItemsItem struct {
 	ID      string  `json:"id"`
 	UserID  *string `json:"userId"`
 	Target  string  `json:"target"`
@@ -8642,11 +8642,11 @@ type PlatformIdpDriftResponseItemsItem struct {
 	FoundAt int64   `json:"foundAt"`
 }
 
-type PlatformIdpFreezeParams struct {
+type PlatformIdpPauseParams struct {
 	Reason string `json:"reason"`
 }
 
-type PlatformIdpFreezeResponse struct {
+type PlatformIdpPauseResponse struct {
 	Result string `json:"result"`
 }
 

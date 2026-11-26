@@ -7415,7 +7415,7 @@ export type PlatformGroupsClaimsUpdateResponse = {
   dryRun: boolean;
 };
 
-export type PlatformIdpCallsResponse = {
+export type PlatformIdpCallsListResponse = {
   items: Array<{
     id: number;
     phase: string;
@@ -7486,7 +7486,7 @@ export type PlatformIdpCheckResponse = {
   };
 };
 
-export type PlatformIdpDriftResponse = {
+export type PlatformIdpDriftListResponse = {
   items: Array<{
     id: string;
     userId: string | null;
@@ -7497,11 +7497,11 @@ export type PlatformIdpDriftResponse = {
   nextCursor: null;
 };
 
-export type PlatformIdpFreezeParams = {
+export type PlatformIdpPauseParams = {
   reason: string;
 };
 
-export type PlatformIdpFreezeResponse = {
+export type PlatformIdpPauseResponse = {
   result: "frozen" | "already";
 };
 

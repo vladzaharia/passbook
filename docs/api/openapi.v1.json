@@ -63880,7 +63880,7 @@
           "breakerOpen"
         ]
       },
-      "PlatformIdpDriftResponse": {
+      "PlatformIdpDriftListResponse": {
         "type": "object",
         "properties": {
           "items": {
@@ -63930,7 +63930,7 @@
           "nextCursor"
         ]
       },
-      "PlatformIdpFreezeParams": {
+      "PlatformIdpPauseParams": {
         "type": "object",
         "properties": {
           "reason": {
@@ -63944,7 +63944,7 @@
         ],
         "additionalProperties": false
       },
-      "PlatformIdpFreezeResponse": {
+      "PlatformIdpPauseResponse": {
         "type": "object",
         "properties": {
           "result": {
@@ -63959,7 +63959,7 @@
           "result"
         ]
       },
-      "PlatformIdpCallsResponse": {
+      "PlatformIdpCallsListResponse": {
         "type": "object",
         "properties": {
           "items": {
@@ -132984,7 +132984,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlatformIdpDriftResponse"
+                  "$ref": "#/components/schemas/PlatformIdpDriftListResponse"
                 }
               }
             }
@@ -133001,8 +133001,8 @@
           }
         },
         "x-sdk": {
-          "resource": "platform.idp",
-          "method": "drift"
+          "resource": "platform.idp.drift",
+          "method": "list"
         },
         "x-sign-in": "idp",
         "x-codes": [
@@ -133031,7 +133031,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlatformIdpFreezeParams"
+                "$ref": "#/components/schemas/PlatformIdpPauseParams"
               }
             }
           }
@@ -133042,7 +133042,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlatformIdpFreezeResponse"
+                  "$ref": "#/components/schemas/PlatformIdpPauseResponse"
                 }
               }
             }
@@ -133060,7 +133060,7 @@
         },
         "x-sdk": {
           "resource": "platform.idp",
-          "method": "freeze"
+          "method": "pause"
         },
         "x-sign-in": "oidc",
         "x-step-up": {
@@ -133124,7 +133124,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlatformIdpCallsResponse"
+                  "$ref": "#/components/schemas/PlatformIdpCallsListResponse"
                 }
               }
             }
@@ -133141,8 +133141,8 @@
           }
         },
         "x-sdk": {
-          "resource": "platform.idp",
-          "method": "calls"
+          "resource": "platform.idp.calls",
+          "method": "list"
         },
         "x-sign-in": "idp",
         "x-codes": [

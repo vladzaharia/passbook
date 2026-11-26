@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { removeFakeIdp } from '../../../../test/helpers/fake-idp.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
+import { removeFakeIdp } from '../../../../test/helpers/fake-idp.ts';
 import { makeApiKey, makeOrg } from '../../../../test/helpers/index.ts';
 import { AccessViewSchema } from '../../../shared/contracts/idp-access.ts';
 import { all, first } from '../../platform/db.ts';
