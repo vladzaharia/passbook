@@ -1,6 +1,6 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import { scopeExercises } from '../../platform/api-scopes.ts';
-import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
+import { type AuthContext, assertOrgAccess, isOwnOnly } from '../../platform/auth.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -98,6 +98,7 @@ export async function readFenceFor(
   capability: 'read' | 'write' = 'read',
 ): Promise<Fence | null> {
   if (row.audience === 'starter') return starterFenceFor(ctx, auth, capability === 'write');
+  if (isOwnOnly(auth)) return null;
   if (row.audience === 'platform') return platformFenceFor(ctx, auth);
   const needed = kindOf(row.kind)?.[capability] ?? null;
   if (!needed || !row.org_id) return null;

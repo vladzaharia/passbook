@@ -43,6 +43,11 @@ export type RouteAuth =
        */
       templateScoped?: true;
       stepUp?: StepUp;
+      /**
+       * `any` also admits a session with no console access (an email link, or Polaris ID without the console
+       * group) as an "own only" caller (`isOwnOnly`): the handler must show it nothing beyond what it started.
+       */
+      signIn?: 'any';
     }
   /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
   | {

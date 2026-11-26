@@ -259,6 +259,8 @@ const SIGN_IN_ANY = [
   'GET /api/v1/me/passes/:id',
   'GET /api/v1/me/passes/:id/barcode',
   'GET /api/v1/me/sessions',
+  'GET /api/v1/operations',
+  'GET /api/v1/operations/:id',
   'GET /api/v1/orgs/memberships/me',
   'POST /api/v1/me/emails',
   'POST /api/v1/me/emails/:email/primary',

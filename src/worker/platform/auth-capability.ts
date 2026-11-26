@@ -34,3 +34,9 @@ export function authorityUnproven(auth: object | undefined): boolean {
   const state = auth ? capabilityState.get(auth) : undefined;
   return state !== undefined && !state.proven;
 }
+
+const ownOnly = new WeakSet<object>();
+/** Marks a principal admitted without console access: the handler may show it only its own. */
+export const markOwnOnly = (auth: object): void => void ownOnly.add(auth);
+export const isOwnOnly = (auth: object | undefined): boolean =>
+  auth !== undefined && ownOnly.has(auth);

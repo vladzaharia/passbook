@@ -177,6 +177,16 @@ export function assertConsoleGroup(c: Context<AppBindings>, session: SessionAuth
   );
 }
 
+/** Whether the session passes the console checks (`idp` level and the console group), without refusing. */
+export function hasConsoleAccess(c: Context<AppBindings>, session: SessionAuth): boolean {
+  return (
+    canUseConsole(session, serviceContext(c).clock.now()) &&
+    (c.env.OIDC_CONSOLE_GROUP_REQUIRED !== 'true' ||
+      session.amr !== 'oidc' ||
+      hasConsoleGroup(session.roles))
+  );
+}
+
 /** `RouteAuth.developer`: the developer role, or a platform admin. */
 export function assertDeveloper(c: Context<AppBindings>, session: SessionAuth): void {
   if (hasDeveloperAccess(session.roles)) return;
