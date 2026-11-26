@@ -8,6 +8,7 @@ import { errorMessage } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
 import { SegmentedControl } from '../../ui/segmented-control.tsx';
 import { toast } from '../../ui/toaster.tsx';
+import { useBenchKeys } from '../bench/keys.ts';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
 import { useToolHost } from '../host/tool-host.tsx';
@@ -31,7 +32,7 @@ const TABS = [
  * Endpoints tab with the Connections wizard's outbound path mounted in this context's Test.
  * Everything runs on the Workbench token through the tool scope.
  */
-export function EventsTool() {
+export function EventsTool({ className }: { className: string }) {
   const { context } = useToolHost();
   const orgId = context.orgId;
   const router = useRouter();
@@ -98,6 +99,9 @@ export function EventsTool() {
     }
   }
 
+  // ⌘↵ sends a test event, as the tool's one action (design §5.4).
+  useBenchKeys({ primary: () => void sendTest() });
+
   const empty = (
     <ToolEmpty
       tool="events"
@@ -127,7 +131,7 @@ export function EventsTool() {
         </Button>
       }
     >
-      <div className="wb-legacy wb-tool-events flex flex-col gap-3">
+      <div className={`${className} flex flex-col gap-3`}>
         <SegmentedControl
           label="Events view"
           options={TABS}

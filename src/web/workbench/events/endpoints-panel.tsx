@@ -1,14 +1,19 @@
-import { useCallback, useEffect } from 'react';
+import { lazy, Suspense, useCallback, useEffect } from 'react';
 import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { useMediaQuery } from '../../lib/media.ts';
 import { BenchList, type BenchRowParts } from '../bench/list.tsx';
+import { BenchSkeleton } from '../bench/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
 import { BENCH_WIDE, BenchSplit } from '../bench/split.tsx';
 import { StatusChip } from '../bench/status-chip.tsx';
 import { useBenchSelection } from '../bench/use-selection.ts';
-import { EndpointInspector } from './endpoint-inspector.tsx';
 import { endpointLabel } from './model.ts';
 import type { EventsParams } from './use-address.ts';
+
+// The inspector carries the table, dialogs and sheets: it loads when something is selected.
+const EndpointInspector = lazy(() =>
+  import('./endpoint-inspector.tsx').then((m) => ({ default: m.EndpointInspector })),
+);
 
 const idOf = (e: WebhookEndpointDto) => e.id;
 
@@ -74,15 +79,17 @@ export function EndpointsPanel({
         }
         pane={
           selected ? (
-            <EndpointInspector
-              endpoint={selected}
-              capture={params.capture}
-              onCapture={(id) => write({ capture: id ?? null }, 'replace')}
-              focusSend={focusSend}
-              onGone={() => select(null)}
-              onPrev={at > 0 ? () => step(-1) : undefined}
-              onNext={at >= 0 && at < endpoints.length - 1 ? () => step(1) : undefined}
-            />
+            <Suspense fallback={<BenchSkeleton rows={4} />}>
+              <EndpointInspector
+                endpoint={selected}
+                capture={params.capture}
+                onCapture={(id) => write({ capture: id ?? null }, 'replace')}
+                focusSend={focusSend}
+                onGone={() => select(null)}
+                onPrev={at > 0 ? () => step(-1) : undefined}
+                onNext={at >= 0 && at < endpoints.length - 1 ? () => step(1) : undefined}
+              />
+            </Suspense>
           ) : null
         }
       />

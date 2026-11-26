@@ -61,8 +61,10 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   events: WB_TOOL_BUDGET_BYTES,
   home: WB_TOOL_BUDGET_BYTES,
   keys: WB_TOOL_BUDGET_BYTES,
-  quickstart: 92_000,
-  playground: 92_000,
+  // Each tool still on `LegacyTool` counts the legacy bench graph itself; the shared bench set shrinks
+  // as tools leave it (T3: 9.1 kB, was 27.5), so these two grew by that much without a change of their own.
+  quickstart: 108_000,
+  playground: 104_000,
 };
 /** The class every tool route's body carries (`wb-tool-logs`): it marks the route's chunk. */
 export const WB_TOOL_MARKER = 'wb-tool-';
@@ -171,7 +173,8 @@ export function toolAssets(
     return { files: [], errors: [`${marker}: ${scripts.length} chunks carry it, want 1`] };
   const base = (scripts[0] as string).replace(/^\/assets\//, '');
   const loader = new RegExp(
-    `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\),__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
+    // A route chunk that also holds code its lazy children share exports more than the component: `.then(e=>e.t)`.
+    `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\)(?:\\.then\\([^)]*\\))?,__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
   );
   for (const f of files) {
     if (!f.endsWith('.js')) continue;

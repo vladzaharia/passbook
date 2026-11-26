@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 import { WEBHOOK_EVENT_TYPES, type WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { BENCH_COPY } from '@/shared/copy/developers-bench.ts';
+import { copyWithFeedback } from '../../developers/shell/copy.ts';
 import { FilterBar, FilterSelect } from '../bench/filter-select.tsx';
 import { shortId } from '../bench/id-chip.tsx';
+import { useBenchKeys } from '../bench/keys.ts';
 import { BenchList, type BenchRowParts } from '../bench/list.tsx';
 import { LiveIndicator, useLiveState } from '../bench/live.tsx';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
@@ -13,12 +15,16 @@ import { BenchTime } from '../bench/time.tsx';
 import { Toolbar } from '../bench/toolbar.tsx';
 import { useBenchSelection } from '../bench/use-selection.ts';
 import { ToolFailed } from '../states/states.tsx';
-import { EventInspector } from './event-inspector.tsx';
 import type { EventsParams } from './use-address.ts';
 import { type FeedEvent, useEventFeed } from './use-event-feed.ts';
 import { useEventsApi } from './use-events.ts';
 
 const TYPES = WEBHOOK_EVENT_TYPES.filter((t) => t !== 'webhook.test');
+// The inspector carries the table, dialogs and sheets: it loads when something is selected.
+const EventInspector = lazy(() =>
+  import('./event-inspector.tsx').then((m) => ({ default: m.EventInspector })),
+);
+
 const idOf = (e: FeedEvent) => e.id;
 
 const rowOf = (e: FeedEvent): BenchRowParts => ({
@@ -53,6 +59,8 @@ export function EventsPanel({
   });
   const { selectedId, selected, pinned, step } = selection;
   const live = useLiveState(feed.paused);
+  // y copies the selected event's id.
+  useBenchKeys({ copyId: () => selected && void copyWithFeedback(selected.id, null) });
   const filters = [params.type, params.request, params.pass].filter(Boolean).length;
   const set = (key: 'type' | 'request' | 'pass', value: string | null) =>
     write({ [key]: value }, 'replace');
@@ -131,17 +139,22 @@ export function EventsPanel({
         }
         pane={
           selected ? (
-            <EventInspector
-              event={selected}
-              orgId={orgId}
-              endpoints={endpoints}
-              open={{ endpoint: params.endpoint, capture: params.capture }}
-              onOpen={(next) =>
-                write({ endpoint: next.endpoint ?? null, capture: next.capture ?? null }, 'replace')
-              }
-              onPrev={at > 0 ? () => step(-1) : undefined}
-              onNext={at >= 0 && at < order.length - 1 ? () => step(1) : undefined}
-            />
+            <Suspense fallback={<BenchSkeleton rows={4} />}>
+              <EventInspector
+                event={selected}
+                orgId={orgId}
+                endpoints={endpoints}
+                open={{ endpoint: params.endpoint, capture: params.capture }}
+                onOpen={(next) =>
+                  write(
+                    { endpoint: next.endpoint ?? null, capture: next.capture ?? null },
+                    'replace',
+                  )
+                }
+                onPrev={at > 0 ? () => step(-1) : undefined}
+                onNext={at >= 0 && at < order.length - 1 ? () => step(1) : undefined}
+              />
+            </Suspense>
           ) : null
         }
       />

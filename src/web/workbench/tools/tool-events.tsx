@@ -10,5 +10,5 @@ import '../events/webhooks.css';
 
 /** Events and webhooks (the tool's body carries `wb-tool-events`, which marks the chunk for the bundle budget). */
 export function EventsPage() {
-  return <EventsTool />;
+  return <EventsTool className="wb-legacy wb-tool-events" />;
 }
