@@ -1803,7 +1803,8 @@ describe('generation fence', () => {
     const step: StepLike = {
       sleep: inner.sleep,
       do: async (name, fn) => {
-        if (name === 'page-1') {
+        // Between the page's apply and its cursor write: the stale advance is what the fence must stop.
+        if (name === 'page-0-cursor') {
           await service.update(kit.sctx, kit.actor, dto.id, {
             mapping: { memberName: { from: '/memberName' } },
           });
@@ -1814,7 +1815,8 @@ describe('generation fence', () => {
     const { run: r, conn } = await sync(dto.id, { generation: 1 }, step);
     expect(r?.outcome).toBe('skipped');
     expect(conn?.generation).toBe(2);
-    expect(conn?.cursor).toBe('0:10');
+    // The mapping change cleared the cursor; the stale run's advance to 0:10 was refused.
+    expect(conn?.cursor).toBeNull();
     expect(conn?.health).toBe('unknown');
     expect(kit.seams.applied).toHaveLength(1);
   });

@@ -228,3 +228,13 @@ export async function fileIdsOf(
   );
   return rows.map((r) => r.id);
 }
+
+/** Connections the org holds, for a check ahead of the create grant. */
+export async function countConnections(db: D1Database, orgId: string): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    'SELECT COUNT(*) AS n FROM connections WHERE org_id = ?',
+    [orgId],
+  );
+  return row?.n ?? 0;
+}

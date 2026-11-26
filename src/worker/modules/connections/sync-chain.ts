@@ -40,6 +40,12 @@ export function noteCapped(sctx: ServiceContext, connectionId: string, samples: 
   samples.push('SYNC_CAPPED: stopped at the run limit; the next run continues');
 }
 
+/** A line the connector asked to show on the run (a listing cut short), kept with the first samples. */
+export function noteListing(samples: string[], note: string): void {
+  samples.length = Math.min(samples.length, 4);
+  samples.push(note);
+}
+
 const count = (n: unknown): boolean => Number.isSafeInteger(n) && (n as number) >= 0;
 
 export function assertSyncChain(chain: SyncChain | undefined): void {

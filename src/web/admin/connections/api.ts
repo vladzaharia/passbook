@@ -69,7 +69,7 @@ export function useConnections(filters: ConnectionFilters, enabled = true) {
 }
 
 /** The Connections list: 50 at a time; Load more fetches the next page. */
-export function useConnectionPages(filters: ConnectionFilters) {
+export function useConnectionPages(filters: ConnectionFilters, live = true) {
   const scope = useOrgScope();
   const allowed = Boolean(
     filters.orgId &&
@@ -92,7 +92,7 @@ export function useConnectionPages(filters: ConnectionFilters) {
       });
     },
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    enabled: allowed,
+    enabled: allowed && live,
     placeholderData: (previous, query) =>
       allowed &&
       scope.orgId &&

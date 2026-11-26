@@ -96,6 +96,8 @@ export async function syncNow(
   actor: Actor,
   id: string,
   authority?: ConnectionAuthority,
+  /** What the run is for, such as an applied file: it gets an instance of its own. */
+  purpose?: string,
 ): Promise<z.infer<typeof SyncNowResponseSchema>> {
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
@@ -103,7 +105,12 @@ export async function syncNow(
   if (!(await isOrgActive(sctx, conn.orgId))) {
     throw new ConflictError('The organization is not active.', 'ORG_INACTIVE');
   }
-  const instanceId = await adminInstanceId(conn, sctx.clock.now(), adminBucketMs(sctx.env));
+  const instanceId = await adminInstanceId(
+    conn,
+    sctx.clock.now(),
+    adminBucketMs(sctx.env),
+    purpose,
+  );
   const started = await startSync(sctx, conn, 'admin', instanceId, actor.id, authority);
   await recordAudit(sctx, {
     orgId: conn.orgId,

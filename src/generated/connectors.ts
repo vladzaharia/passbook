@@ -2,7 +2,8 @@
 import type { AnyConnector } from '../worker/connectors/types.ts';
 import csvUrl from '../worker/connectors/csv-url/index.ts';
 import demo from '../worker/connectors/demo/index.ts';
+import fileUpload from '../worker/connectors/file-upload/index.ts';
 import httpJson from '../worker/connectors/http-json/index.ts';
 import webhookPush from '../worker/connectors/webhook-push/index.ts';
 
-export const connectorDefinitions: readonly AnyConnector[] = [csvUrl, demo, httpJson, webhookPush];
+export const connectorDefinitions: readonly AnyConnector[] = [csvUrl, demo, fileUpload, httpJson, webhookPush];

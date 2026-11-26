@@ -57,7 +57,7 @@ export function paletteActions({
       label: 'New connection',
       icon: Plus,
       onSelect: open(org('/connections/new')),
-      allowed: can(org('/connections/new')),
+      allowed: can(org('/connections/new')) && !membership?.testOnly,
     },
     {
       id: 'new-org',

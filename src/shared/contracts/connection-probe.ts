@@ -8,6 +8,8 @@ const CountSchema = z.number().int().nonnegative();
 /** 0 to 1; higher is likelier. */
 const ScoreSchema = z.number().min(0).max(1);
 const SampleSchema = z.string().max(80);
+/** `$.data[*].email`: what the explorer shows and the user clicks; the pointer is what the config stores. */
+const JsonPathSchema = z.string().max(600);
 
 /** How the REST connector walks a list (`list.pagination` of http-json v2). */
 export const RestPaginationSchema = z.discriminatedUnion('style', [
@@ -29,6 +31,11 @@ export const RestPaginationSchema = z.discriminatedUnion('style', [
     sizeParam: ParamSchema.optional(),
     size: SizeSchema.optional(),
     totalPagesPointer: JsonPointerSchema.optional(),
+    /** A response header with the page count (WooCommerce `X-WP-TotalPages`). */
+    totalPagesHeader: z
+      .string()
+      .regex(/^[A-Za-z][A-Za-z0-9-]{0,63}$/, 'Not a header name.')
+      .optional(),
   }),
   z.object({
     style: z.literal('offset'),
@@ -95,6 +102,7 @@ export const ProbeDetectionsSchema = z.object({
     .array(
       z.object({
         pointer: JsonPointerSchema,
+        jsonPath: JsonPathSchema,
         count: CountSchema,
         score: ScoreSchema,
         reason: z.enum(['root', 'name', 'shape']),
@@ -112,18 +120,31 @@ export const ProbeDetectionsSchema = z.object({
     )
     .max(3),
   id: z
-    .array(z.object({ pointer: JsonPointerSchema, unique: z.boolean(), score: ScoreSchema }))
+    .array(
+      z.object({
+        pointer: JsonPointerSchema,
+        jsonPath: JsonPathSchema,
+        unique: z.boolean(),
+        score: ScoreSchema,
+      }),
+    )
     .max(5),
   updatedAt: z
     .array(
-      z.object({ pointer: JsonPointerSchema, format: RestTimeFormatSchema, score: ScoreSchema }),
+      z.object({
+        pointer: JsonPointerSchema,
+        jsonPath: JsonPathSchema,
+        format: RestTimeFormatSchema,
+        score: ScoreSchema,
+      }),
     )
     .max(5),
-  holderEmail: z.array(z.object({ pointer: JsonPointerSchema })).max(3),
+  holderEmail: z.array(z.object({ pointer: JsonPointerSchema, jsonPath: JsonPathSchema })).max(3),
   fields: z
     .array(
       z.object({
         pointer: JsonPointerSchema,
+        jsonPath: JsonPathSchema,
         label: z.string().max(200),
         type: SourceFieldTypeSchema,
         samples: z.array(SampleSchema).max(3),
