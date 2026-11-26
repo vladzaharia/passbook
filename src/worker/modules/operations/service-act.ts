@@ -164,7 +164,7 @@ export async function retryOperation(
   const fresh = toDto((await rowById(ctx.env.DB, id)) as OperationRow);
   try {
     const launched = runner.relaunch
-      ? await runner.relaunch(ctx, fresh, { instanceId: row.workflow_instance_id })
+      ? await runner.relaunch(ctx, fresh, { instanceId: row.workflow_instance_id }, auth)
       : undefined;
     if (!runner.relaunch) await sendOperationRun(ctx, id, next);
     if (launched?.workflowInstanceId)

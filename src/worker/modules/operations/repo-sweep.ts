@@ -16,19 +16,49 @@ export function runningSilentSince(
   );
 }
 
-/** Waiting rows silent since `before`: the sweep keeps only those that still have steps to do (a lost wake-up). */
+/**
+ * Waiting rows that may have lost their wake-up, filtered here so a crowd of healthy tail-only waits cannot fill the
+ * batch: silent since `before`, no live lease, a non-tail step still pending, and no non-tail step waiting on a
+ * block or until a future time. `tails` is each kind's tail step keys.
+ */
 export function waitingSilentSince(
   db: D1Database,
-  before: number,
-  limit: number,
+  q: {
+    before: number;
+    now: number;
+    limit: number;
+    staleBefore: number;
+    tails: ReadonlyMap<string, readonly string[]>;
+  },
 ): Promise<OperationRow[]> {
-  return all<OperationRow>(
-    db,
-    `SELECT ${COLUMNS} FROM operations
+  const params: Array<string | number> = [q.before, q.now];
+  const tailSql = (): string => {
+    const parts = [...q.tails].map(([kind, keys]) => {
+      params.push(kind, ...keys);
+      return `(operations.kind = ? AND json_extract(j.value, '$.key') IN (${keys.map(() => '?').join(',')}))`;
+    });
+    return parts.length ? parts.join(' OR ') : '0';
+  };
+  const pendingTail = tailSql();
+  const waitingTail = tailSql();
+  params.push(q.now);
+  const lateTail = tailSql();
+  params.push(q.staleBefore, q.limit);
+  // Order matters: params were pushed as the placeholders appear.
+  const sql = `SELECT ${COLUMNS} FROM operations
      WHERE status = 'waiting' AND COALESCE(heartbeat_at, created_at) < ?
-     ORDER BY COALESCE(heartbeat_at, created_at) LIMIT ?`,
-    [before, limit],
-  );
+       AND (lease_until IS NULL OR lease_until <= ?)
+       AND ((EXISTS (SELECT 1 FROM json_each(operations.steps) j
+         WHERE json_extract(j.value, '$.state') = 'pending' AND NOT (${pendingTail}))
+       AND NOT EXISTS (SELECT 1 FROM json_each(operations.steps) j
+         WHERE json_extract(j.value, '$.state') = 'waiting'
+           AND (json_extract(j.value, '$.waitingReason') = 'blocked'
+             OR (NOT (${waitingTail}) AND json_extract(j.value, '$.until') > ?))))
+         OR EXISTS (SELECT 1 FROM json_each(operations.steps) j
+           WHERE json_extract(j.value, '$.state') = 'waiting' AND NOT (${lateTail})
+             AND json_extract(j.value, '$.until') IS NOT NULL AND json_extract(j.value, '$.until') < ?))
+     ORDER BY COALESCE(heartbeat_at, created_at) LIMIT ?`;
+  return all<OperationRow>(db, sql, params);
 }
 
 /** A live runner or Workflow: push the heartbeat out. */

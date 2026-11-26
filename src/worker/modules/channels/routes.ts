@@ -14,6 +14,7 @@ import {
 import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { actorOfAuth } from '../operations/start-org.ts';
 import { setupCan } from '../orgs/pass-setup.ts';
 import { activeMembership } from '../orgs/repo-members.ts';
 import {
@@ -67,7 +68,9 @@ export function registerPassChannelRoutes(passesRoutes: Router): void {
         assertWritableMode(pinned, pass.mode);
         passes.push(pass);
       }
-      return c.json(await bulkPassChannels(ctx, actorFor(c), authority, passes, body));
+      return c.json(
+        await bulkPassChannels(ctx, actorFor(c), authority, passes, body, actorOfAuth(authOf(c))),
+      );
     },
   );
 

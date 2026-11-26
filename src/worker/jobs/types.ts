@@ -137,6 +137,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
     /** The copy that failed the last run and how many times it has: a copy is retried, then skipped, never lost. */
     failedId: z.string().max(64).optional(),
     failures: z.number().int().nonnegative().optional(),
+    /** The operation that shows this run, its attempt, the copies it reaches, and how many are behind it. */
+    operationId: z.string().min(1).max(64).optional(),
+    attempt: z.number().int().positive().optional(),
+    total: z.number().int().nonnegative().optional(),
+    done: z.number().int().nonnegative().optional(),
+    skipped: z.number().int().nonnegative().optional(),
   }),
   /** A claim found a release's wallet art missing: cut and store it again, as publication did. */
   z.object({ kind: z.literal('wallet.google_art'), candidateId: z.string().min(1).max(64) }),
@@ -179,6 +185,9 @@ export const JobSchema = z.discriminatedUnion('kind', [
     passId: z.string().min(1),
     /** The idempotency key and rotation actor id: `channel_bulk:{requestId}`. */
     key: z.string().min(1),
+    /** The operation that shows this replacement, and its attempt. */
+    operationId: z.string().min(1).max(64).optional(),
+    attempt: z.number().int().positive().optional(),
   }),
   /** One combined PDF of staff prints (bulk Print). The prints already exist; the job only renders. */
   z.object({
@@ -186,6 +195,9 @@ export const JobSchema = z.discriminatedUnion('kind', [
     orgId: z.string().min(1),
     jobId: z.string().min(1),
     passIds: z.array(z.string().min(1)).min(1).max(50),
+    /** The operation that shows this job, and its attempt. */
+    operationId: z.string().min(1).max(64).optional(),
+    attempt: z.number().int().positive().optional(),
   }),
   z.object({
     kind: z.literal('template.fork_update'),

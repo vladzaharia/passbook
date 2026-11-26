@@ -5,9 +5,14 @@ import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { runOrgExport } from '../../workflows/org-export.ts';
 import { serialsSince } from '../apple/repo.ts';
+import { toDto } from '../operations/dto.ts';
+import { rowById } from '../operations/repo.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
+import { requestExport } from './export-start.ts';
 import { dailyOrgLifecycle } from './jobs.ts';
 import { fakeStep, populateOrg } from './lifecycle-test-fixtures.ts';
+import { operationRunners } from './operations.ts';
+import { exportRow } from './repo.ts';
 import {
   closeOrg,
   exportLink,
@@ -15,7 +20,6 @@ import {
   openExport,
   readLifecycle,
   reopenOrg,
-  requestExport,
 } from './service.ts';
 
 const DAY = 86_400_000;
@@ -60,6 +64,8 @@ const orgRow = (orgId: string) =>
   );
 const runExport = async (orgId: string, exportId: string) =>
   runOrgExport(kit.env, { orgId, exportId }, fakeStep(), undefined, kit.clock);
+const operationOf = async (id: string | null) =>
+  toDto((await rowById(kit.env.DB, id ?? '')) as never);
 
 describe('close and reopen', () => {
   it('close stops passes updating and opens a 30-day window; reopen restores them and the identity', async () => {
@@ -148,7 +154,12 @@ describe('export', () => {
     );
     const row = await requestExport(kit.ctx, actor, a.orgId, await platform());
     expect(row.state).toBe('queued');
-    expect(started.at(-1)?.params).toEqual({ orgId: a.orgId, exportId: row.id });
+    expect(started.at(-1)?.params).toEqual({
+      orgId: a.orgId,
+      exportId: row.id,
+      operationId: row.operationId,
+      attempt: 1,
+    });
     await expect(requestExport(kit.ctx, actor, a.orgId, await platform())).rejects.toMatchObject({
       code: 'ORG_EXPORT_RUNNING',
     });
@@ -235,6 +246,54 @@ describe('export', () => {
     // Staged parts are gone; only the archive is left.
     const left = await kit.env.BUCKET.list({ prefix: `exports/${a.orgId}/` });
     expect(left.objects.map((o) => o.key)).toEqual([done?.r2_key]);
+  });
+
+  it('shows the export as an operation: counted rows, then Done', async () => {
+    const org = await populateOrg(rk, 'op-ok');
+    const row = await requestExport(kit.ctx, actor, org.orgId, await platform(), 'test');
+    expect(await operationOf(row.operationId)).toMatchObject({
+      kind: 'org.export',
+      orgId: org.orgId,
+      mode: 'test',
+      target: { type: 'export', id: row.id },
+      status: 'queued',
+    });
+    const params = started.at(-1)?.params as Parameters<typeof runOrgExport>[1];
+    await runOrgExport(kit.env, params, fakeStep(), undefined, kit.clock);
+    const op = await operationOf(row.operationId);
+    expect(op).toMatchObject({
+      status: 'succeeded',
+      result: { href: null, ids: { exportId: row.id } },
+    });
+    expect(op.steps.map((s) => s.state)).toEqual(['done', 'done', 'done']);
+    expect(op.steps[0]?.total).toBeGreaterThan(0);
+    expect(op.steps[0]?.done).toBe(op.steps[0]?.total);
+    expect(JSON.stringify(op)).not.toMatch(/@/);
+  });
+
+  it('a failed export fails its operation and Retry starts it over under a new instance', async () => {
+    const org = await populateOrg(rk, 'op-fail');
+    const row = await requestExport(kit.ctx, actor, org.orgId, await platform());
+    const params = started.at(-1)?.params as Parameters<typeof runOrgExport>[1];
+    const step = fakeStep();
+    const inner = step.do.bind(step) as (name: string, ...a: unknown[]) => Promise<unknown>;
+    (step as { do: unknown }).do = async (name: string, ...rest: unknown[]) => {
+      if (name === 'zip') throw new Error('crash');
+      return inner(name, ...rest);
+    };
+    await runOrgExport(kit.env, params, step, undefined, kit.clock);
+    const failed = await operationOf(row.operationId);
+    expect(failed).toMatchObject({
+      status: 'failed',
+      error: { code: 'ORG_EXPORT_FAILED', retryable: true },
+    });
+    const relaunch = operationRunners['org.export']?.relaunch;
+    const launched = await relaunch?.(kit.ctx, failed, { instanceId: row.id }, {
+      kind: 'system',
+    } as never);
+    expect(launched).toEqual({ workflowInstanceId: `${row.id}-r1` });
+    expect(started.at(-1)?.id).toBe(`${row.id}-r1`);
+    expect((await exportRow(kit.env.DB, org.orgId, row.id))?.state).toBe('queued');
   });
 
   it('an export whose org is purged stops writing and fails', async () => {
