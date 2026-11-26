@@ -146,6 +146,13 @@ test('Custom: the payload shape and its example, then the secret and the send sn
   await expect(page.getByRole('tab', { name: 'curl' })).toBeVisible();
   await check(page, 'webhook-custom-connect');
 
+  // Leaving setup: the connection page leads with the same live check and a way back.
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await page.getByRole('button', { name: 'Leave', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Finish setup' })).toBeVisible();
+  await expect(page.getByText('Listening for your system')).toBeVisible();
+  await check(page, 'webhook-awaiting');
+
   const api = await apiAs('admin');
   await api.send('DELETE', `/api/v1/connections/${id}`);
   await api.dispose();
