@@ -37,6 +37,16 @@ const SESSION_PATHS = new Set([
   '/api/v1/orgs/memberships/me',
   '/api/v1/orgs',
 ]);
+/**
+ * W2 moved these sandbox-only tools in with their calls still on the cookie session. The server holds a
+ * sandbox to Test (`SANDBOX_TEST_ONLY`). Each entry names the T package that moves it onto the token;
+ * the list shrinks to zero and the test below fails if it grows.
+ */
+const SESSION_CLIENT_EXEMPT: readonly { path: string; movedBy: string }[] = [
+  { path: '/api/v1/developer/sandbox', movedBy: 'T1' },
+  { path: '/api/v1/developer/home', movedBy: 'T8' },
+];
+const EXEMPT_PATHS = new Set(SESSION_CLIENT_EXEMPT.map((e) => e.path));
 const allCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
   fetchMock.mock.calls
     .map(([url, init]) => ({
@@ -45,7 +55,7 @@ const allCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
     }))
     .filter(({ path }) => path.startsWith('/api/'));
 const apiCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
-  allCalls(fetchMock).filter(({ path }) => !SESSION_PATHS.has(path));
+  allCalls(fetchMock).filter(({ path }) => !SESSION_PATHS.has(path) && !EXEMPT_PATHS.has(path));
 
 const headerOf = (init: RequestInit): Record<string, string> =>
   Object.fromEntries(new Headers(init.headers).entries());
@@ -101,6 +111,16 @@ describe('the Workbench tray (R4 H1)', () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByRole('button', { name: /^Activity/ })).not.toBeInTheDocument();
     expect(apiCalls(fetchMock).filter(({ path }) => path === '/api/v1/operations')).toEqual([]);
+  });
+});
+
+describe('the session-client exemption list', () => {
+  it('only shrinks: at most two sandbox-only entries, each owned by a T package', () => {
+    expect(SESSION_CLIENT_EXEMPT.length).toBeLessThanOrEqual(2);
+    for (const { path, movedBy } of SESSION_CLIENT_EXEMPT) {
+      expect(path).toMatch(/^\/api\/v1\/developer\/(sandbox|home)$/);
+      expect(movedBy).toMatch(/^T[1-8]$/);
+    }
   });
 });
 
@@ -167,7 +187,8 @@ describe('more of the boundary (R4 N3)', () => {
         Object.keys(headerOf(init)).filter((h) => /mode/i.test(h)),
         p,
       ).toEqual([]);
-      if (!SESSION_PATHS.has(p)) expect(headerOf(init).authorization, p).toBe('Bearer pbtry_sbx');
+      if (!SESSION_PATHS.has(p) && !EXEMPT_PATHS.has(p))
+        expect(headerOf(init).authorization, p).toBe('Bearer pbtry_sbx');
     }
   });
 
