@@ -7,7 +7,9 @@ profile: passbook-owner
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
-Yearly, Apple. Use when the platform Pass Type ID certificate nears expiry (Status warns 30 days before). Passes keep working; the pass type ID must match the old one. Other identities rotate in the admin console instead: Identities, Rotate certificate (admin session only; `POST /api/v1/identities/{id}/rotate`). Re-sign all passes is on the same page.
+Legacy identity only: `pass.im.plrs.wallet`, the env-sourced row `platform`. Use it when passes issued on that identity must keep updating near its expiry (2027-11-30; Status warns 30 days before). The connector never orders or renews this pass type, so it is a manual job. The pass type ID must match the old certificate.
+
+Not for `pass.mobile.passbook`, which rotates itself 60 days before expiry. Other identities rotate in the console: Identities, Rotate certificate (`POST /api/v1/identities/{id}/rotate`). To move to the new identity, see [[Platform Identity Switch]]. After [[Platform Identity Retire]] there is nothing to renew.
 
 ## Prerequisites
 
@@ -56,4 +58,4 @@ Commit any `wrangler.jsonc` change, then [[Deploy]].
 
 ## 5. Re-sign
 
-Existing passes are rebuilt with the new certificate from the admin console: Identities, the platform identity, Re-sign all.
+Existing passes on the legacy identity are rebuilt with the new certificate from the console: Identities, the `pass.im.plrs.wallet` identity, Re-sign all.
