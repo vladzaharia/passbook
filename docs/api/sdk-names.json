@@ -1297,6 +1297,22 @@
     "resource": "passViews",
     "method": "replace"
   },
+  "polaris-claims.getPlatformIdpGroupsByKeyClaims": {
+    "resource": "platform.groups.claims",
+    "method": "retrieve"
+  },
+  "polaris-claims.getUsersByIdClaims": {
+    "resource": "platform.users.claims",
+    "method": "retrieve"
+  },
+  "polaris-claims.patchPlatformIdpGroupsByKeyClaims": {
+    "resource": "platform.groups.claims",
+    "method": "update"
+  },
+  "polaris-claims.patchUsersByIdClaims": {
+    "resource": "platform.users.claims",
+    "method": "update"
+  },
   "public.getBByToken": {
     "resource": "public.bundles",
     "method": "retrievePage",

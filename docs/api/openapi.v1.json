@@ -10418,6 +10418,7 @@
                 "platform:status",
                 "platform:templates",
                 "platform:audit",
+                "platform:claims",
                 "brand:manage"
               ]
             }
@@ -10565,6 +10566,7 @@
                         "platform:status",
                         "platform:templates",
                         "platform:audit",
+                        "platform:claims",
                         "brand:manage"
                       ]
                     }
@@ -10797,6 +10799,7 @@
                         "platform:status",
                         "platform:templates",
                         "platform:audit",
+                        "platform:claims",
                         "brand:manage"
                       ]
                     }
@@ -11027,6 +11030,7 @@
                     "platform:status",
                     "platform:templates",
                     "platform:audit",
+                    "platform:claims",
                     "brand:manage"
                   ]
                 }
@@ -11261,6 +11265,7 @@
                 "platform:status",
                 "platform:templates",
                 "platform:audit",
+                "platform:claims",
                 "brand:manage"
               ]
             }
@@ -11672,6 +11677,7 @@
                 "platform:status",
                 "platform:templates",
                 "platform:audit",
+                "platform:claims",
                 "brand:manage"
               ]
             }
@@ -59328,6 +59334,234 @@
         ],
         "additionalProperties": false
       },
+      "PlatformUsersClaimsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {}
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "otherKeys": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "claims",
+          "otherKeys"
+        ]
+      },
+      "PlatformUsersClaimsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "set"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformUsersClaimsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "set",
+          "removed",
+          "dryRun"
+        ]
+      },
+      "PlatformGroupsClaimsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {}
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "otherKeys": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "claims",
+          "otherKeys"
+        ]
+      },
+      "PlatformGroupsClaimsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "set"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsClaimsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "set",
+          "removed",
+          "dryRun"
+        ]
+      },
       "PlatformUsersListResponse": {
         "type": "object",
         "properties": {
@@ -60863,6 +61097,7 @@
                       "platform:status",
                       "platform:templates",
                       "platform:audit",
+                      "platform:claims",
                       "brand:manage"
                     ]
                   }
@@ -81864,6 +82099,7 @@
                           "platform:status",
                           "platform:templates",
                           "platform:audit",
+                          "platform:claims",
                           "brand:manage"
                         ]
                       }
@@ -82542,6 +82778,7 @@
                                 "platform:status",
                                 "platform:templates",
                                 "platform:audit",
+                                "platform:claims",
                                 "brand:manage"
                               ]
                             }
@@ -124305,6 +124542,368 @@
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/claims": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Read a user's Polaris ID claims (the ones PassBook manages)",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersClaimsRetrieveResponse"
+                },
+                "example": {
+                  "claims": {
+                    "passbook_tier": {
+                      "type": "text",
+                      "value": "gold"
+                    }
+                  },
+                  "otherKeys": 2
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.getUsersByIdClaims",
+        "x-sdk": {
+          "resource": "platform.users.claims",
+          "method": "retrieve"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_MULTIPLE_ACCOUNTS",
+          "IDP_NOT_MANAGED",
+          "IDP_NO_ACCOUNT",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      },
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Set or remove a user's Polaris ID claims",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformUsersClaimsUpdateParams"
+              },
+              "example": {
+                "set": {
+                  "passbook_tier": {
+                    "type": "text",
+                    "value": "gold"
+                  },
+                  "passbook_old": null
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersClaimsUpdateResponse"
+                },
+                "example": {
+                  "set": [
+                    "passbook_tier"
+                  ],
+                  "removed": [
+                    "passbook_old"
+                  ],
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.patchUsersByIdClaims",
+        "x-sdk": {
+          "resource": "platform.users.claims",
+          "method": "update"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_MULTIPLE_ACCOUNTS",
+          "IDP_NOT_MANAGED",
+          "IDP_NO_ACCOUNT",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/claims": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Read a Polaris ID group's claims (the ones PassBook manages)",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsRetrieveResponse"
+                },
+                "example": {
+                  "claims": {
+                    "passbook_tier": {
+                      "type": "text",
+                      "value": "gold"
+                    }
+                  },
+                  "otherKeys": 2
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "retrieve"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Set or remove a Polaris ID group's claims",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateParams"
+              },
+              "example": {
+                "set": {
+                  "passbook_tier": {
+                    "type": "text",
+                    "value": "gold"
+                  },
+                  "passbook_old": null
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateResponse"
+                },
+                "example": {
+                  "set": [
+                    "passbook_tier"
+                  ],
+                  "removed": [
+                    "passbook_old"
+                  ],
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "update"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

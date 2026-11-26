@@ -2125,6 +2125,15 @@
       ]
     },
     {
+      "code": "IDP_DRIFT",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -2152,7 +2161,25 @@
       ]
     },
     {
+      "code": "IDP_MULTIPLE_ACCOUNTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NO_ACCOUNT",
       "statuses": [
         409
       ],
