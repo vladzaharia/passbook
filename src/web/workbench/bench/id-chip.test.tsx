@@ -39,14 +39,14 @@ describe('the id chip', () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     render(<IdChip id={REQ} kind="request" prefix="req" />);
-    const face = screen.getByRole('button', { name: `Copy request id ${REQ}` });
-    expect(face.textContent).toBe('req01938a1b…4a5b');
+    const face = screen.getByRole('button', { name: 'Copy request id 01938a1b…4a5b' });
+    expect(face.textContent).toBe('01938a1b…4a5b');
     await act(async () => fireEvent.click(face));
     expect(writeText).toHaveBeenCalledWith(REQ);
-    expect(face.textContent).toBe('reqCopied');
+    expect(face.textContent).toBe('Copied');
     expect(face.dataset.state).toBe('copied');
     act(() => vi.advanceTimersByTime(1600));
-    expect(face.textContent).toBe('req01938a1b…4a5b');
+    expect(face.textContent).toBe('01938a1b…4a5b');
   });
 
   it('opens its menu from the keyboard and gives focus back on Escape', () => {
@@ -149,5 +149,20 @@ describe('the trace', () => {
       { id: 'e1', type: 'pass.issued', status: 200, endpointId: 'cap' },
       { id: 'e2', type: 'pass.updated', status: null, endpointId: 'url' },
     ]);
+  });
+});
+
+describe('the chip is named by what it shows (WCAG 2.5.3)', () => {
+  it('holds its visible text in its accessible name, which axe checks', async () => {
+    const axe = (await import('axe-core')).default;
+    const { container } = render(
+      <>
+        <IdChip id={REQ} kind="request" prefix="req" />
+        <IdChip id="key-1" kind="key" prefix="key" text="Sandbox key" />
+      </>,
+    );
+    const res = await axe.run(container, { runOnly: ['label-content-name-mismatch'] });
+    expect(res.violations).toEqual([]);
+    expect(screen.getByRole('button', { name: 'Copy key id Sandbox key' })).toBeTruthy();
   });
 });
