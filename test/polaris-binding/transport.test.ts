@@ -65,7 +65,12 @@ describe('POLARIS service binding transport', () => {
     await resetLedger();
     expect((await s.api.health()).transport).toBe('https');
     await resetLedger();
-    const bound = { ...baseEnv(), POLARIS: fetcher(s.pocket.fetch as never) };
+    const bound = {
+      ...baseEnv(),
+      POLARIS: fetcher((req) =>
+        s.pocket.fetch(req.url, { method: req.method, headers: req.headers }),
+      ),
+    };
     const api = createApi(bound, depsFor(bound));
     expect((await api.health()).transport).toBe('binding');
   });
