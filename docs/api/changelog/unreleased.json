@@ -1512,6 +1512,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports new operation",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdVersionsByVersionWalletReports",
+    "op": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports",
+    "change": "new operation",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesPreviews",
