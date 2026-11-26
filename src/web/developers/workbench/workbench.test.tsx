@@ -120,7 +120,7 @@ describe('after Reset', () => {
       kind: 'ready',
       csrf: 'c',
       siteKey: 'k',
-      sandbox: { id: 's', orgSlug: 'x', templateId: null },
+      sandbox: { id: 's', orgId: 'org-1', orgSlug: 'x', templateId: null },
     });
     const onChanged = vi.fn();
     const { rerender } = render(
@@ -156,7 +156,7 @@ describe('Reset and Reopen panels', () => {
       kind: 'ready',
       csrf: 'c',
       siteKey: 'k',
-      sandbox: { id: 's', orgSlug: 'x', templateId: null },
+      sandbox: { id: 's', orgId: 'org-1', orgSlug: 'x', templateId: null },
     });
     return (await import('./workbench.tsx')).Workbench;
   };

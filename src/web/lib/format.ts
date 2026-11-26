@@ -2,6 +2,7 @@ import { NO_EMAIL_LABEL } from '../../shared/email.ts';
 import { formatDayIn } from '../../shared/format-date.ts';
 import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shared/time-zone.ts';
 
+export { formatClockIn, formatFullIn, formatStampIn } from '../../shared/format-clock.ts';
 export { formatEndedOn } from '../../shared/format-date.ts';
 
 // Every date and number a person reads in the app, in one locale. Engines join a date and a time
@@ -290,3 +291,34 @@ export function formatMaybeDate(text: string, timeZone: string = DEFAULT_TIME_ZO
 
 /** `1 tag`, `2 tags`: the noun takes an `s` unless the count is 1. */
 export const pluralize = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;
+
+const SHORT_IN = new Map<string, Intl.DateTimeFormat>();
+
+/** Dec 2, on the calendar of `timeZone`: a deadline ("By Dec 2"). */
+export function formatShortDateIn(ms: number, timeZone: string = DEFAULT_TIME_ZONE): string {
+  let formatter = SHORT_IN.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(LOCALE, { month: 'short', day: 'numeric', timeZone });
+    SHORT_IN.set(timeZone, formatter);
+  }
+  return formatter.format(ms);
+}
+
+/** A span read in its largest whole unit: 45 s, 12 min, 6 h, 2 d. */
+export function formatSpan(ms: number): string {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return `${s} s`;
+  if (s < 3600) return `${Math.round(s / 60)} min`;
+  if (s < 86_400) return `${Math.round(s / 3600)} h`;
+  return `${Math.round(s / 86_400)} d`;
+}
+
+/** 0:18, 1:12, 1:02:03: a clock that counts up. */
+export function formatClock(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const h = Math.floor(s / 3600);
+  return h > 0
+    ? `${h}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
+    : `${Math.floor(s / 60)}:${pad(s % 60)}`;
+}

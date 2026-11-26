@@ -55,6 +55,7 @@ describe('Start over and Delete sandbox', () => {
     stubLocation();
     const fetchMock = reply(201, {
       id: 's2',
+      orgId: 'org-2',
       orgSlug: 'dev-new',
       templateId: 't2',
       key: { secret: 'pbp_test_new' },
@@ -68,7 +69,7 @@ describe('Start over and Delete sandbox', () => {
     );
     await waitFor(() =>
       expect(onMade).toHaveBeenCalledWith(
-        { id: 's2', orgSlug: 'dev-new', templateId: 't2' },
+        { id: 's2', orgId: 'org-2', orgSlug: 'dev-new', templateId: 't2' },
         'pbp_test_new',
       ),
     );

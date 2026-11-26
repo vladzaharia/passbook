@@ -2,8 +2,9 @@ import { ExternalLink, MoreHorizontal, Plus, RefreshCw, Zap } from 'lucide-react
 import { useCallback, useEffect, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
 import { KEYS_COPY as C } from '../../../shared/copy/developers-keys.ts';
-import { PATHS } from '../../../shared/developers.ts';
 import { envLine } from '../../../shared/developers-keys.ts';
+import { BenchSlot } from '../bench/slots.tsx';
+import { selectInUrl } from '../bench/url.ts';
 import { type Revealed, RevealSheet } from '../ui/reveal-sheet.tsx';
 import { fetchHome } from '../workbench/api.ts';
 import { keyState, masked } from '../workbench/model.ts';
@@ -61,18 +62,17 @@ export function KeysPage({
   }, []);
   // The address drops #new or #<key id> once the panel closes.
   useEffect(() => {
-    if (panel.kind === 'none') history.replaceState(null, '', PATHS.keys);
+    if (panel.kind === 'none') selectInUrl(null);
   }, [panel.kind]);
 
   return (
     <div className="ks">
-      <header className="ks-head">
-        <h1 className="h1">{C.title}</h1>
-        <span className="pill accent">{C.testOnly}</span>
-        {closed ? null : (
+      <BenchSlot name="count">{C.count(home.keys.length)}</BenchSlot>
+      {closed ? null : (
+        <BenchSlot name="action">
           <button
             type="button"
-            className="btn sm ks-new"
+            className="btn sm"
             disabled={full}
             title={full ? C.limit : undefined}
             onClick={() => setPanel({ kind: 'new' })}
@@ -80,8 +80,8 @@ export function KeysPage({
             <Plus aria-hidden="true" />
             {C.newKey}
           </button>
-        )}
-      </header>
+        </BenchSlot>
+      )}
       {loadError ? (
         <p className="sm muted">
           {C.failed}{' '}

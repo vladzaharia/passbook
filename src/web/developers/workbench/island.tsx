@@ -32,6 +32,7 @@ export async function syncChip(home: DeveloperHome): Promise<void> {
           siteKey,
           sandbox: {
             id: home.sandbox.id,
+            orgId: home.sandbox.orgId,
             orgSlug: home.sandbox.orgSlug,
             templateId: home.sandbox.templateId,
           },

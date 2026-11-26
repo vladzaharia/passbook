@@ -24,8 +24,6 @@ export interface FrameData {
   pager?: PagerLinks;
   /** The page's sections for "On this page"; the column shows from two entries. */
   toc?: readonly TocItem[];
-  /** A tool page: the row of its Workbench siblings. */
-  tools?: boolean;
 }
 
 export const Frame = createContext<FrameData>({ guides: [], path: '' });

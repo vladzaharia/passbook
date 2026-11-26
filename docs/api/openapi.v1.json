@@ -67,6 +67,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -177,6 +180,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -251,6 +257,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -320,6 +329,9 @@
                 "maxLength": 300
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -395,6 +407,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -461,6 +476,9 @@
                 "minimum": 0
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -550,6 +568,9 @@
               "deviceCount",
               "firstDevice"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -647,6 +668,9 @@
               "lastDevice",
               "cause"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -797,6 +821,9 @@
               "outcome"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -902,6 +929,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -985,6 +1015,9 @@
                 "maxLength": 300
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1089,6 +1122,9 @@
               "source"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1168,6 +1204,9 @@
               "generation"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1244,6 +1283,9 @@
             "required": [
               "printId"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1329,6 +1371,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1399,6 +1444,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1460,6 +1508,9 @@
           "data": {
             "type": "object",
             "properties": {}
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -84662,6 +84713,9 @@
                       ],
                       "minimum": 0
                     },
+                    "timeZone": {
+                      "type": "string"
+                    },
                     "key": {
                       "type": [
                         "object",
@@ -84727,6 +84781,7 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
+                    "timeZone",
                     "key",
                     "previousKey"
                   ]
@@ -84739,6 +84794,7 @@
                   "previewOnly": true,
                   "createdAt": 1794362400000,
                   "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
                     "name": "Sandbox key",
@@ -84915,6 +84971,9 @@
                             "null"
                           ],
                           "minimum": 0
+                        },
+                        "timeZone": {
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -84924,7 +84983,8 @@
                         "templateId",
                         "previewOnly",
                         "createdAt",
-                        "closedAt"
+                        "closedAt",
+                        "timeZone"
                       ]
                     },
                     "turnstileSiteKey": {
@@ -84944,7 +85004,8 @@
                     "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
                     "previewOnly": true,
                     "createdAt": 1794362400000,
-                    "closedAt": null
+                    "closedAt": null,
+                    "timeZone": "America/Los_Angeles"
                   },
                   "turnstileSiteKey": "0x4AAAAAAAdemoNorthwind"
                 }
@@ -85033,6 +85094,9 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "timeZone": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -85042,7 +85106,8 @@
                     "templateId",
                     "previewOnly",
                     "createdAt",
-                    "closedAt"
+                    "closedAt",
+                    "timeZone"
                   ]
                 },
                 "example": {
@@ -85052,7 +85117,8 @@
                   "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
                   "previewOnly": true,
                   "createdAt": 1794362400000,
-                  "closedAt": 1795572000000
+                  "closedAt": 1795572000000,
+                  "timeZone": "America/Los_Angeles"
                 }
               }
             }
@@ -85148,6 +85214,9 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "timeZone": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -85157,7 +85226,8 @@
                     "templateId",
                     "previewOnly",
                     "createdAt",
-                    "closedAt"
+                    "closedAt",
+                    "timeZone"
                   ]
                 },
                 "example": {
@@ -85167,7 +85237,8 @@
                   "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
                   "previewOnly": true,
                   "createdAt": 1794362400000,
-                  "closedAt": 1795572000000
+                  "closedAt": 1795572000000,
+                  "timeZone": "America/Los_Angeles"
                 }
               }
             }
@@ -85287,6 +85358,9 @@
                       ],
                       "minimum": 0
                     },
+                    "timeZone": {
+                      "type": "string"
+                    },
                     "key": {
                       "type": [
                         "object",
@@ -85352,6 +85426,7 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
+                    "timeZone",
                     "key",
                     "previousKey"
                   ]
@@ -85364,6 +85439,7 @@
                   "previewOnly": true,
                   "createdAt": 1794362400000,
                   "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-000000000021",
                     "name": "Server integration",
@@ -85568,6 +85644,9 @@
                             "null"
                           ],
                           "minimum": 0
+                        },
+                        "timeZone": {
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -85577,7 +85656,8 @@
                         "templateId",
                         "previewOnly",
                         "createdAt",
-                        "closedAt"
+                        "closedAt",
+                        "timeZone"
                       ]
                     },
                     "key": {
@@ -85674,7 +85754,8 @@
                     "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
                     "previewOnly": true,
                     "createdAt": 1794362400000,
-                    "closedAt": null
+                    "closedAt": null,
+                    "timeZone": "America/Los_Angeles"
                   },
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
@@ -85849,6 +85930,9 @@
                       ],
                       "minimum": 0
                     },
+                    "timeZone": {
+                      "type": "string"
+                    },
                     "key": {
                       "type": [
                         "object",
@@ -85914,6 +85998,7 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
+                    "timeZone",
                     "key",
                     "previousKey"
                   ]
@@ -85926,6 +86011,7 @@
                   "previewOnly": true,
                   "createdAt": 1794362400000,
                   "closedAt": null,
+                  "timeZone": "America/Los_Angeles",
                   "key": {
                     "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
                     "name": "Sandbox key",
@@ -123614,6 +123700,26 @@
             "required": false,
             "name": "type",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "requestId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -124091,6 +124197,26 @@
             },
             "required": false,
             "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "requestId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
             "in": "query"
           }
         ],

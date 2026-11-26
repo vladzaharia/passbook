@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, PageQuerySchema, pageOf, TimestampSchema } from './common.ts';
 import {
   SubscribableEventTypeSchema,
+  WebhookDeliveryStateSchema,
   WebhookEndpointSchema,
   WebhookEventTypeSchema,
 } from './webhooks.ts';
@@ -36,6 +37,9 @@ export const WebhookCaptureSchema = z.object({
 });
 export type WebhookCaptureDto = z.infer<typeof WebhookCaptureSchema>;
 
+/** A Cloudflare ray or a UUID, as `x-request-id` carries it. */
+const RequestIdFilterSchema = z.string().trim().min(1).max(64);
+
 export const WebhookCaptureListSchema = pageOf(WebhookCaptureSchema);
 export const WebhookCaptureListQuerySchema = z.object({
   cursor: z
@@ -44,6 +48,10 @@ export const WebhookCaptureListQuerySchema = z.object({
     .optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   type: WebhookEventTypeSchema.optional(),
+  /** Only captures of events caused by this API request (`x-request-id`). */
+  requestId: RequestIdFilterSchema.optional(),
+  /** Only captures of events of this pass. */
+  passId: IdSchema.optional(),
 });
 
 export const WebhookCaptureParamSchema = z.object({ id: IdSchema, captureId: IdSchema });
@@ -65,3 +73,12 @@ export const CaptureEndpointCreatedSchema = z.object({
 });
 export const CaptureSecretSchema = z.object({ secret: z.string() });
 export const CaptureReplayResultSchema = z.object({ capture: WebhookCaptureSchema });
+
+export const WebhookDeliveryListQuerySchema = PageQuerySchema.extend({
+  state: WebhookDeliveryStateSchema.optional(),
+  type: WebhookEventTypeSchema.optional(),
+  /** Only events caused by this API request (`x-request-id`). */
+  requestId: RequestIdFilterSchema.optional(),
+  /** Only events of this pass. */
+  passId: IdSchema.optional(),
+});

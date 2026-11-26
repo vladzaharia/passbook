@@ -26,6 +26,8 @@ export const DeveloperSandboxSchema = z.object({
   previewOnly: z.literal(true),
   createdAt: TimestampSchema,
   closedAt: TimestampSchema.nullable(),
+  /** The org's IANA time zone, America/Los_Angeles when it has none: show times in it, never UTC. */
+  timeZone: z.string(),
 });
 export type DeveloperSandbox = z.infer<typeof DeveloperSandboxSchema>;
 

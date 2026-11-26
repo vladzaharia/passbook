@@ -28,7 +28,7 @@ describe('codeActivity', () => {
       kind: 'ready',
       csrf: 'c',
       siteKey: '',
-      sandbox: { id: 's', orgSlug: 'o', templateId: null },
+      sandbox: { id: 's', orgId: 'org-1', orgSlug: 'o', templateId: null },
     });
     const fetchMock = vi.fn(async () => Response.json({ items: [], nextCursor: null }));
     vi.stubGlobal('fetch', fetchMock);

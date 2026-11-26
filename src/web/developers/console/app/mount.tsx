@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { subscribe } from '../budget.ts';
-import { budgetMeter } from '../org-chip.ts';
+import { budgetMeter } from '../budget-meter.ts';
 import { RunApp, type RunAppProps } from './run-app.tsx';
 import '../console.css';
 
