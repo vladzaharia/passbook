@@ -33,8 +33,11 @@ export const PLATFORM_KEY_SCOPES = [
  * that opts its first route in, and `route-inventory.test.ts` keeps it equal to what the routes declare, so no key can
  * hold authority no route has reviewed. Empty until the first route converts (PK-2).
  */
-export const MINTABLE_PLATFORM_SCOPES =
-  [] as const satisfies readonly (typeof PLATFORM_KEY_SCOPES)[number][];
+export const MINTABLE_PLATFORM_SCOPES = [
+  'platform:read',
+  'platform:settings',
+  'platform:wallet',
+] as const satisfies readonly (typeof PLATFORM_KEY_SCOPES)[number][];
 
 /**
  * The scopes a key may be minted with: those some route accepts today. A scope joins this list in

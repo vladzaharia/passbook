@@ -14,7 +14,7 @@ import { chargePlatformWrite } from './rate-limit.ts';
 import { isRead, type RouteAuth, type UnlessRule } from './route-auth-spec.ts';
 
 /** A Platform key: kind `platform` and no org. Both, so a bad row fails either way. */
-const isPlatformKey = (key: ApiKeyAuth): boolean =>
+export const isPlatformKey = (key: ApiKeyAuth): boolean =>
   key.keyKind === 'platform' && key.orgId === null;
 
 /**

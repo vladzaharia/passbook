@@ -7375,6 +7375,12 @@
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
+  "settings get /settings": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
   "settings post /reply-to/confirm": [
     "FORBIDDEN",
     "ORG_FORBIDDEN",
@@ -7404,6 +7410,15 @@
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
+    "SETTINGS_CHANGED",
+    "UNAUTHENTICATED",
+    "VALIDATION"
+  ],
+  "settings put /settings": [
+    "FORBIDDEN",
+    "INVALID_SETTING",
+    "MISSING_SCOPE",
+    "ORG_NOT_FOUND",
     "SETTINGS_CHANGED",
     "UNAUTHENTICATED",
     "VALIDATION"
@@ -8402,6 +8417,7 @@
   ],
   "wallet platform get /wallet-release": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_ENROLMENT_HELD",
@@ -8478,6 +8494,7 @@
   "wallet platform post /wallet-release/{provider}/{mode}/enable-ready": [
     "CONFLICT",
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_ENROLMENT_HELD",

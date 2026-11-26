@@ -9,7 +9,7 @@ import { createApp } from '../app.ts';
 import { isKnownGuard } from './auth.ts';
 import { isPublicHandler } from './openapi.ts';
 import { declareKeyAccess, enforcesKeyAccess } from './openapi-security.ts';
-import { platformKeyOf, signInLevelOf } from './sign-in-guard.ts';
+import { isPlatformKeysOwn, platformKeyOf, signInLevelOf } from './sign-in-guard.ts';
 
 // Every route needs a decision: a guard the inventory recognises (requireCaller from `auth`,
 // requireSession, requireAdmin, or a guard declaring key access), `public: true`, or a line below.
@@ -181,7 +181,6 @@ const OWN_GUARD = [
   'POST /api/v1/identities',
   'POST /api/v1/identities/:id/apns-check',
   'POST /api/v1/identities/:id/renew',
-  'POST /api/v1/identities/:id/revoke-certificate',
   'POST /api/v1/identities/:id/rotate',
   'POST /api/v1/orgs/invitations/accept',
   'POST /api/v1/orgs/invitations/preview',
@@ -371,8 +370,16 @@ function platformKeyRoutes(): {
  * yet, so they are not here and a Bearer key gets 401 on them (`REQUIRE_ADMIN_ROUTER_ROUTES`): PK-6 converts each
  * to `auth: { platform, key? }` and lists it here.
  */
-const PLATFORM_KEY_ROUTES: string[] = [];
-const PLATFORM_KEY_CONDITIONAL: string[] = [];
+const PLATFORM_KEY_ROUTES: string[] = [
+  'GET /api/v1/platform/settings',
+  'GET /api/v1/platform/wallet-release',
+];
+const PLATFORM_KEY_CONDITIONAL: string[] = [
+  // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
+  'POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready',
+  // Refused to a key when it names an auth.* or oidc.* setting (P4: it decides who gets in).
+  'PUT /api/v1/platform/settings',
+];
 /** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
 const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'GET /api/v1/audit/platform',
@@ -386,6 +393,10 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'GET /api/v1/users/:id/claims',
   'PATCH /api/v1/platform/idp/groups/:key/claims',
   'PATCH /api/v1/users/:id/claims',
+  // P3: irreversible, every pass the certificate signed stops updating.
+  'POST /api/v1/identities/:id/revoke-certificate',
+  // P3: releasing a legal hold lets a purge run.
+  'POST /api/v1/platform/orgs/:orgId/retention/holds/:holdId/release',
   'PUT /api/v1/platform/entitlement-presets',
   'PUT /api/v1/platform/orgs/:id/entitlements',
 ];
@@ -401,4 +412,13 @@ it('makes a platform scope mintable exactly when a route accepts it by key', () 
   const { scopes } = platformKeyRoutes();
   if (scopes.size > 0) scopes.add('platform:read');
   expect([...MINTABLE_PLATFORM_SCOPES].sort()).toEqual([...scopes].sort());
+});
+
+/** The scope routes a Platform key may read (`platformKeys: 'own'`): only what that key started. Nothing else takes it. */
+it('lets a Platform key into the operations reads and no other scope route', () => {
+  const own = coverage()
+    .filter(({ covering }) => covering.some((g) => isPlatformKeysOwn(g.handler)))
+    .map(({ key }) => key)
+    .sort();
+  expect(own).toEqual(['GET /api/v1/operations', 'GET /api/v1/operations/:id']);
 });

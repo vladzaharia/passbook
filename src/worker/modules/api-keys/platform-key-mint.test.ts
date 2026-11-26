@@ -3,7 +3,10 @@ import { keyState } from '../../../../test/helpers/admin-key.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
-import { PLATFORM_KEY_SCOPES } from '../../../shared/contracts/api-keys.ts';
+import {
+  MINTABLE_PLATFORM_SCOPES,
+  PLATFORM_KEY_SCOPES,
+} from '../../../shared/contracts/api-keys.ts';
 import { grant } from '../../platform/authority.ts';
 import { refusal } from '../../platform/authority-ext-fixtures.ts';
 import { setupGrant } from '../../platform/authority-test-fixtures.ts';
@@ -42,10 +45,12 @@ const platformBody = (scopes: string[], days = 30) => ({
 });
 
 describe('which platform scopes can be minted', () => {
-  it('is none until a route accepts one: the request fails validation, for a platform admin too', async () => {
+  it('is only what a route accepts by key: any other fails validation, for a platform admin too', async () => {
     const session = await platformSession();
     const before = await keyRows();
-    for (const scope of PLATFORM_KEY_SCOPES)
+    for (const scope of PLATFORM_KEY_SCOPES.filter(
+      (s) => !MINTABLE_PLATFORM_SCOPES.some((m) => m === s),
+    ))
       expect((await create(session.headers, platformBody([scope]))).status, scope).toBe(422);
     expect(await keyRows()).toBe(before);
   });

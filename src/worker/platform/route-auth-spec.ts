@@ -60,6 +60,7 @@ export type RouteAuth =
       templateScoped?: true;
       stepUp?: StepUp;
       signIn?: never;
+      platformKeys?: never;
     }
   /**
    * A key with the scope, or any session: one with no console access (an email link, or Polaris ID without the
@@ -75,6 +76,11 @@ export type RouteAuth =
       stepUp?: never;
       tillKey?: never;
       templateScoped?: never;
+      /**
+       * A Platform key (any platform scope) may call it, on reads only, and the handler shows it only the rows that key
+       * started. Only the operations routes take it; the route inventory lists them.
+       */
+      platformKeys?: 'own';
     }
   /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
   | {

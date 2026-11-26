@@ -1909,6 +1909,55 @@ class PassViewsResource:
         return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
 
 
+class PlatformSettingsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformSettingsRetrieveResult:
+        """Read the platform settings `GET /api/v1/platform/settings`"""
+        return self._core.request("GET", "/api/v1/platform/settings", result=m.PlatformSettingsRetrieveResult, **opts)
+
+    def update(
+        self,
+        body: m.PlatformSettingsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformSettingsUpdateResult:
+        """Update the platform settings; sign-in settings (auth.*, oidc.*) are a person signed in with Polaris ID only `PUT /api/v1/platform/settings`"""
+        return self._core.request("PUT", "/api/v1/platform/settings", body=body, result=m.PlatformSettingsUpdateResult, **opts)
+
+
+class PlatformWalletReleaseResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def enable_ready(
+        self,
+        provider: _Literal["google", "samsung"],
+        mode: _Literal["live", "test"],
+        body: m.PlatformWalletReleaseEnableReadyBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletReleaseEnableReadyResult:
+        """Turn on the reviewed ready enrollments of a released provider (dry run unless apply; a key may only dry run) `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready`"""
+        return self._core.request("POST", f"/api/v1/platform/wallet-release/{_p(provider)}/{_p(mode)}/enable-ready", body=body, result=m.PlatformWalletReleaseEnableReadyResult, **opts)
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletReleaseRetrieveResult:
+        """Read what Google and Samsung would issue once released, per mode `GET /api/v1/platform/wallet-release`"""
+        return self._core.request("GET", "/api/v1/platform/wallet-release", result=m.PlatformWalletReleaseRetrieveResult, **opts)
+
+
+class PlatformResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.settings = PlatformSettingsResource(core)
+        self.wallet_release = PlatformWalletReleaseResource(core)
+
+
 class RollCallsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2930,6 +2979,7 @@ class Resources:
         self.print_jobs = PrintJobsResource(core)
         self.bulk_runs = BulkRunsResource(core)
         self.pass_views = PassViewsResource(core)
+        self.platform = PlatformResource(core)
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)

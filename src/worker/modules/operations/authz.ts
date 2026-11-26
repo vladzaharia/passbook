@@ -1,6 +1,7 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import { scopeExercises } from '../../platform/api-scopes.ts';
 import { type AuthContext, assertOrgAccess, isOwnOnly } from '../../platform/auth.ts';
+import { verifiedPlatformScopeOf } from '../../platform/auth-capability.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -13,7 +14,13 @@ import {
 } from '../passes/repo-authority.ts';
 import { kindOf } from './registry.ts';
 import type { OperationRow } from './repo.ts';
-import { type Fence, orgFence, platformFence, starterFence } from './repo-fence.ts';
+import {
+  type Fence,
+  orgFence,
+  platformFence,
+  platformKeyFence,
+  starterFence,
+} from './repo-fence.ts';
 
 /**
  * The fence that lets `auth` read org rows of `capability` in `orgId`, or null. Null is also "no such org":
@@ -79,6 +86,16 @@ export function platformFenceFor(ctx: ServiceContext, auth: AuthContext): Fence 
   );
 }
 
+/**
+ * A Platform key (`platformKeys: 'own'`): only what that key started. The gate tagged the platform scope it holds;
+ * the fence checks the key is live and its creator still an admin. Sessions and org keys never get this fence.
+ */
+export function platformKeyFenceFor(ctx: ServiceContext, auth: AuthContext): Fence | null {
+  const scope = auth.kind === 'api_key' ? verifiedPlatformScopeOf(auth) : undefined;
+  if (auth.kind !== 'api_key' || !scope || auth.orgId !== null) return null;
+  return platformKeyFence({ kind: 'api_key', keyId: auth.keyId, scope }, ctx.clock.now());
+}
+
 /** Starter rows: the person who started them; an own-only session only what its own session started. Never a key. */
 export function starterFenceFor(
   ctx: ServiceContext,
@@ -101,6 +118,8 @@ export async function readFenceFor(
   row: Pick<OperationRow, 'audience' | 'org_id' | 'kind'>,
   capability: 'read' | 'write' = 'read',
 ): Promise<Fence | null> {
+  if (verifiedPlatformScopeOf(auth))
+    return capability === 'read' ? platformKeyFenceFor(ctx, auth) : null;
   if (row.audience === 'starter') return starterFenceFor(ctx, auth, capability === 'write');
   if (isOwnOnly(auth)) return null;
   if (row.audience === 'platform') return platformFenceFor(ctx, auth);

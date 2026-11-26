@@ -44,6 +44,15 @@ export const platformKeyOf = (
   guard: object,
 ): { mode: PlatformKeyMode; scope: string } | undefined => platformKeys.get(guard);
 
+const platformKeysOwn = new WeakSet<object>();
+
+/** Marks a `scope` guard a Platform key may pass for reads (`platformKeys: 'own'`), so the route inventory lists it. */
+export function declarePlatformKeysOwn<T extends object>(guard: T): T {
+  platformKeysOwn.add(guard);
+  return guard;
+}
+export const isPlatformKeysOwn = (guard: object): boolean => platformKeysOwn.has(guard);
+
 /** The level a guard enforces, or undefined when it is no session guard. */
 export const signInLevelOf = (guard: object): SignInLevel | undefined => levels.get(guard);
 

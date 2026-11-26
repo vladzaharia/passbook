@@ -2023,6 +2023,76 @@ func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceB
 	return &out, nil
 }
 
+type PlatformSettingsResource struct {
+	c *core
+}
+
+func newPlatformSettingsResource(c *core) *PlatformSettingsResource {
+	return &PlatformSettingsResource{
+		c: c,
+	}
+}
+
+// Retrieve Read the platform settings `GET /api/v1/platform/settings`
+func (r *PlatformSettingsResource) Retrieve(ctx context.Context, opts ...RequestOption) (*PlatformSettingsRetrieveResult, error) {
+	var out PlatformSettingsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/settings"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Update the platform settings; sign-in settings (auth.*, oidc.*) are a person signed in with Polaris ID only `PUT /api/v1/platform/settings`
+func (r *PlatformSettingsResource) Update(ctx context.Context, body *PlatformSettingsUpdateBody, opts ...RequestOption) (*PlatformSettingsUpdateResult, error) {
+	var out PlatformSettingsUpdateResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/platform/settings", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformWalletReleaseResource struct {
+	c *core
+}
+
+func newPlatformWalletReleaseResource(c *core) *PlatformWalletReleaseResource {
+	return &PlatformWalletReleaseResource{
+		c: c,
+	}
+}
+
+// EnableReady Turn on the reviewed ready enrollments of a released provider (dry run unless apply; a key may only dry run) `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready`
+func (r *PlatformWalletReleaseResource) EnableReady(ctx context.Context, provider string, mode string, body *PlatformWalletReleaseEnableReadyBody, opts ...RequestOption) (*PlatformWalletReleaseEnableReadyResult, error) {
+	var out PlatformWalletReleaseEnableReadyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/wallet-release/" + pathEscape(provider) + "/" + pathEscape(mode) + "/enable-ready", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Read what Google and Samsung would issue once released, per mode `GET /api/v1/platform/wallet-release`
+func (r *PlatformWalletReleaseResource) Retrieve(ctx context.Context, opts ...RequestOption) (*PlatformWalletReleaseRetrieveResult, error) {
+	var out PlatformWalletReleaseRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/wallet-release"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformResource struct {
+	c             *core
+	Settings      *PlatformSettingsResource
+	WalletRelease *PlatformWalletReleaseResource
+}
+
+func newPlatformResource(c *core) *PlatformResource {
+	return &PlatformResource{
+		c:             c,
+		Settings:      newPlatformSettingsResource(c),
+		WalletRelease: newPlatformWalletReleaseResource(c),
+	}
+}
+
 type RollCallsResource struct {
 	c *core
 }
@@ -3042,6 +3112,7 @@ type Resources struct {
 	PrintJobs            *PrintJobsResource
 	BulkRuns             *BulkRunsResource
 	PassViews            *PassViewsResource
+	Platform             *PlatformResource
 	RollCalls            *RollCallsResource
 	ScanEvents           *ScanEventsResource
 	ScanSetups           *ScanSetupsResource
@@ -3081,6 +3152,7 @@ func newResources(c *core) Resources {
 		PrintJobs:            newPrintJobsResource(c),
 		BulkRuns:             newBulkRunsResource(c),
 		PassViews:            newPassViewsResource(c),
+		Platform:             newPlatformResource(c),
 		RollCalls:            newRollCallsResource(c),
 		ScanEvents:           newScanEventsResource(c),
 		ScanSetups:           newScanSetupsResource(c),

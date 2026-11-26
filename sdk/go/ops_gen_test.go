@@ -1529,6 +1529,42 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.settings.retrieve", "GET", "/api/v1/platform/settings", false,
+		"", `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Settings.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.settings.update", "PUT", "/api/v1/platform/settings", false,
+		`{"values":{}}`, `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformSettingsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Settings.Update(ctx, &b)
+		},
+	},
+	{
+		"platform.walletRelease.retrieve", "GET", "/api/v1/platform/wallet-release", false,
+		"", `{"releases":[{"provider":"google","mode":"live","state":"dark","credentials":[{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}],"enrolments":[{"orgId":"x","orgName":"x","status":"issuing","blocks":["plan"]}],"templates":{"ready":0,"withOmissions":0,"awaitingReview":0,"none":0},"instances":{"open":0,"retired":0}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletRelease.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.walletRelease.enableReady", "POST", "/api/v1/platform/wallet-release/id1/id2/enable-ready", false,
+		`{}`, `{"applied":false,"enrolments":[{"orgId":"x","orgName":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletReleaseEnableReadyBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletRelease.EnableReady(ctx, "id1", "id2", &b)
+		},
+	},
+	{
 		"rollCalls.retrieveOpen", "GET", "/api/v1/roll-calls", false,
 		"", `{"rollCall":{"id":"x","placeNames":["x"],"startedAt":0,"startedBy":"x","endedAt":0,"endedBy":"x","rev":0,"serverNow":0,"counts":{"total":0,"present":0,"out":0,"unconfirmed":0,"notConfirmedOut":0,"late":0,"inNow":0,"tappedIn":0},"people":[{"passId":"x","holder":"x","plan":"x","host":"x","place":"x","placeName":"x","since":0,"basis":"in_now","presence":"in","late":false,"mark":{"status":"present","by":"x","at":0},"notConfirmedOut":false}]}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

@@ -28,6 +28,7 @@ import {
   type SettingRow,
   type SettingsAdmin,
   type SettingsAuthority,
+  type SettingsKey,
   writeScope,
 } from './repo.ts';
 
@@ -219,7 +220,7 @@ export async function updateSettings(
   actor: Actor,
   input: { scope: string; values: Record<string, unknown>; configRevision?: number | undefined },
   authority?: SettingsAuthority,
-  admin?: SettingsAdmin,
+  admin?: SettingsAdmin | SettingsKey,
 ): Promise<SettingEntry[]> {
   const { scope } = input;
   const orgId = orgIdOfScope(scope);

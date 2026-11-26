@@ -9,6 +9,7 @@ import {
   isMarkedOwnOnly,
   isOwnOnly,
   proveCapability,
+  tagPlatformScope,
   verifiedScopeOf,
   verifiedScopes,
 } from './auth-capability.ts';
@@ -19,7 +20,7 @@ import { csrfGuard } from './csrf.ts';
 import { noteKeyRefused, reportDenied } from './denied.ts';
 import { ForbiddenError, IdpSignInRequiredError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
-import { holdsPlatformScope, platformKeyGate } from './platform-key-gate.ts';
+import { holdsPlatformScope, isPlatformKey, platformKeyGate } from './platform-key-gate.ts';
 import { enforceRateLimit } from './rate-limit.ts';
 import {
   isRead,
@@ -36,6 +37,7 @@ import {
   assertStepUp,
   declareOidcOnly,
   declarePlatformKey,
+  declarePlatformKeysOwn,
   declareSignIn,
   declareStepUp,
   hasConsoleAccess,
@@ -193,6 +195,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
   const level: SignInLevel = 'human' in auth || 'scope' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const ownOnlyAdmitted = 'scope' in auth && auth.signIn === 'any';
+  const platformKeysOwn = 'scope' in auth && auth.platformKeys === 'own';
   if (
     ownOnlyAdmitted &&
     ('capability' in auth || 'session' in auth || 'stepUp' in auth || 'tillKey' in auth)
@@ -212,6 +215,17 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       if (!key) {
         noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+      }
+      // `platformKeys: 'own'`: a Platform key reads here, and the handler shows it only what it started.
+      const platformScope =
+        platformKeysOwn && isRead(c) && isPlatformKey(key)
+          ? key.scopes.find((s) => s.startsWith('platform:'))
+          : undefined;
+      if (platformScope) {
+        const scoped = { ...key };
+        tagPlatformScope(scoped, platformScope);
+        c.set('auth', scoped);
+        return next();
       }
       const needed = neededScope(rule, c, key.scopes);
       // Platform scopes never open a tenant route, even on a row that also holds a tenant scope.
@@ -267,6 +281,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   if (stepUp)
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   if (oidcOnly) declareOidcOnly(guard);
+  if (platformKeysOwn) declarePlatformKeysOwn(guard);
   if (platformDecl) {
     declarePlatformKey(
       guard,

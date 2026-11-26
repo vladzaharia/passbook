@@ -3395,6 +3395,12 @@
     "fix": "Remove the unsupported features or release without this provider.",
     "retryable": false
   },
+  "WALLET_RELEASE_READY_CHANGED": {
+    "title": "Ready list changed",
+    "when": "The ready enrollments changed since the dry run, or an earlier apply committed part of them.",
+    "fix": "Run the dry run again: it lists what is still Off. Then apply those orgs.",
+    "retryable": true
+  },
   "WALLET_RUN_BUSY": {
     "title": "Run busy",
     "when": "Another job holds this run.",

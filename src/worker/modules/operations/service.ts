@@ -6,7 +6,13 @@ import type {
 import { type AuthContext, isOwnOnly } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { orgFenceFor, platformFenceFor, readFenceFor, starterFenceFor } from './authz.ts';
+import {
+  orgFenceFor,
+  platformFenceFor,
+  platformKeyFenceFor,
+  readFenceFor,
+  starterFenceFor,
+} from './authz.ts';
 import { toDto } from './dto.ts';
 import { orgKinds } from './registry.ts';
 import type { OperationRow } from './repo.ts';
@@ -107,11 +113,16 @@ export async function listOperations(
     limit: query.limit + 1,
   };
   const fences: { fence: Fence; kinds: string[] | null }[] = [];
-  const starter = starterFenceFor(ctx, auth);
-  if (starter) fences.push({ fence: starter, kinds: null });
-  const platform = own ? null : platformFenceFor(ctx, auth);
-  if (platform) fences.push({ fence: platform, kinds: null });
-  for (const org of own ? [] : await orgFences(ctx, auth, orgId)) fences.push(org);
+  // A Platform key lists only what it started: its fence is its whole audience.
+  const keyFence = platformKeyFenceFor(ctx, auth);
+  if (keyFence) fences.push({ fence: keyFence, kinds: null });
+  else {
+    const starter = starterFenceFor(ctx, auth);
+    if (starter) fences.push({ fence: starter, kinds: null });
+    const platform = own ? null : platformFenceFor(ctx, auth);
+    if (platform) fences.push({ fence: platform, kinds: null });
+    for (const org of own ? [] : await orgFences(ctx, auth, orgId)) fences.push(org);
+  }
   const rows: OperationRow[] = [];
   for (const { fence, kinds } of fences)
     rows.push(...(await listFenced(ctx.env.DB, fence, { ...base, actor, kinds })));

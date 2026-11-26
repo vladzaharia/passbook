@@ -9008,6 +9008,89 @@ type PlatformSettingsRetrieveImpactResponse struct {
 	EmailOnlyUsers int64 `json:"emailOnlyUsers"`
 }
 
+type PlatformSettingsRetrieveResponse struct {
+	Items          []PlatformSettingsRetrieveResponseItemsItem `json:"items"`
+	ConfigRevision *int64                                      `json:"configRevision,omitempty"`
+	Oidc           *PlatformSettingsRetrieveResponseOidc       `json:"oidc,omitempty"`
+	Released       *PlatformSettingsRetrieveResponseReleased   `json:"released,omitempty"`
+}
+
+type PlatformSettingsRetrieveResponseItemsItem struct {
+	Scope             string   `json:"scope"`
+	Key               string   `json:"key"`
+	Value             any      `json:"value,omitempty"`
+	Default           any      `json:"default,omitempty"`
+	Source            string   `json:"source"`
+	Ceiling           *int64   `json:"ceiling,omitempty"`
+	BlockedByPlatform *bool    `json:"blockedByPlatform,omitempty"`
+	BlockedByPlan     *bool    `json:"blockedByPlan,omitempty"`
+	PlanBlocked       []string `json:"planBlocked,omitempty"`
+	UpdatedAt         *int64   `json:"updatedAt"`
+	UpdatedBy         *string  `json:"updatedBy"`
+}
+
+type PlatformSettingsRetrieveResponseOidc struct {
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
+}
+
+type PlatformSettingsRetrieveResponseReleased struct {
+	Google  bool `json:"google"`
+	Samsung bool `json:"samsung"`
+}
+
+type PlatformSettingsRetrieveResult = PlatformSettingsRetrieveResponse
+
+type PlatformSettingsUpdateBody = PlatformSettingsUpdateParams
+
+type PlatformSettingsUpdateParams struct {
+	Values         map[string]any `json:"values"`
+	ConfigRevision *int64         `json:"configRevision,omitempty"`
+}
+
+type PlatformSettingsUpdateResponse struct {
+	Items          []PlatformSettingsUpdateResponseItemsItem `json:"items"`
+	ConfigRevision *int64                                    `json:"configRevision,omitempty"`
+	Oidc           *PlatformSettingsUpdateResponseOidc       `json:"oidc,omitempty"`
+	Released       *PlatformSettingsUpdateResponseReleased   `json:"released,omitempty"`
+}
+
+type PlatformSettingsUpdateResponseItemsItem struct {
+	Scope             string   `json:"scope"`
+	Key               string   `json:"key"`
+	Value             any      `json:"value,omitempty"`
+	Default           any      `json:"default,omitempty"`
+	Source            string   `json:"source"`
+	Ceiling           *int64   `json:"ceiling,omitempty"`
+	BlockedByPlatform *bool    `json:"blockedByPlatform,omitempty"`
+	BlockedByPlan     *bool    `json:"blockedByPlan,omitempty"`
+	PlanBlocked       []string `json:"planBlocked,omitempty"`
+	UpdatedAt         *int64   `json:"updatedAt"`
+	UpdatedBy         *string  `json:"updatedBy"`
+}
+
+type PlatformSettingsUpdateResponseOidc struct {
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
+}
+
+type PlatformSettingsUpdateResponseReleased struct {
+	Google  bool `json:"google"`
+	Samsung bool `json:"samsung"`
+}
+
+type PlatformSettingsUpdateResult = PlatformSettingsUpdateResponse
+
 type PlatformStatusListIncidentsResponse struct {
 	Items      []PlatformStatusListIncidentsResponseItemsItem `json:"items"`
 	NextCursor *string                                        `json:"nextCursor"`
@@ -9737,6 +9820,8 @@ type PlatformWalletEnrollmentsListResponseItemsItem struct {
 	UpdatedAt int64          `json:"updatedAt"`
 }
 
+type PlatformWalletReleaseEnableReadyBody = PlatformWalletReleaseEnableReadyParams
+
 type PlatformWalletReleaseEnableReadyParams struct {
 	Apply  *bool    `json:"apply,omitempty"`
 	OrgIds []string `json:"orgIds,omitempty"`
@@ -9751,6 +9836,8 @@ type PlatformWalletReleaseEnableReadyResponseEnrolmentsItem struct {
 	OrgID   string `json:"orgId"`
 	OrgName string `json:"orgName"`
 }
+
+type PlatformWalletReleaseEnableReadyResult = PlatformWalletReleaseEnableReadyResponse
 
 type PlatformWalletReleaseRetrieveResponse struct {
 	Releases []PlatformWalletReleaseRetrieveResponseReleasesItem `json:"releases"`
@@ -9813,6 +9900,8 @@ type PlatformWalletReleaseRetrieveResponseReleasesItemTemplates struct {
 	AwaitingReview int64 `json:"awaitingReview"`
 	None           int64 `json:"none"`
 }
+
+type PlatformWalletReleaseRetrieveResult = PlatformWalletReleaseRetrieveResponse
 
 type PrintJobsCreateBody = PrintJobsCreateParams
 
