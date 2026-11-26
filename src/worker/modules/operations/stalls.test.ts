@@ -14,7 +14,7 @@ let undo: () => void;
 
 beforeEach(async () => {
   kit = await setupKit();
-  undo = registerTestKinds({});
+  undo = registerTestKinds({ run: async () => {} });
 });
 afterEach(() => undo());
 
