@@ -40,14 +40,6 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
-    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.deleteSandbox",
-    "op": "DELETE /api/v1/developer/sandbox",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
@@ -3390,14 +3382,6 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
-    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandbox",
-    "op": "POST /api/v1/developer/sandbox",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "POST /api/v1/developer/sandbox response 201 removed",
     "class": "breaking",
     "operationId": "developer.postSandbox",
@@ -3428,15 +3412,7 @@
     "operationId": "developer.postSandboxKey",
     "op": "POST /api/v1/developer/sandbox/key",
     "change": "new operation",
-    "note": "Mints the sandbox key once, after create, reset or start over ends. A second call answers 409 SANDBOX_KEY_SHOWN while the key is live."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandboxRecreate",
-    "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
@@ -3801,190 +3777,6 @@
     "note": "Up to 100 passes a call. more is true while passes remain: send the same request again."
   },
   {
-    "key": "POST /api/v1/operations/{id}/cancel 200.attempt: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.attempt: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.cancelable: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.cancelable: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.cancelRequested: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.cancelRequested: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.createdAt: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.createdAt: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.error: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.error: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.finishedAt: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.finishedAt: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.id: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.id: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.kind: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.kind: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.mode: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.mode: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.operation: field added",
-    "class": "additive",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.operation: field added",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.orgId: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.orgId: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.pollAfterMs: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.pollAfterMs: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.result: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.result: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.revision: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.revision: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.startedAt: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.startedAt: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.startedBy: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.startedBy: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.status: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.status: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.step: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.step: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.steps: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.steps: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.target: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.target: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.text: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.text: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.title: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.title: field removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/cancel 200.updatedAt: field removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdCancel",
-    "op": "POST /api/v1/operations/{id}/cancel",
-    "change": "200.updatedAt: field removed",
-    "note": ""
-  },
-  {
     "key": "POST /api/v1/operations/{id}/cancel new operation",
     "class": "additive",
     "operationId": "operations.postOperationsByIdCancel",
@@ -3999,14 +3791,6 @@
     "op": "POST /api/v1/operations/{id}/retry",
     "change": "new operation",
     "note": "New. Retries a failed operation under the same id with the next attempt. Takes an Idempotency-Key. 409 OPERATION_NOT_RETRYABLE or OPERATION_RUNNING."
-  },
-  {
-    "key": "POST /api/v1/operations/{id}/retry response 200 removed",
-    "class": "breaking",
-    "operationId": "operations.postOperationsByIdRetry",
-    "op": "POST /api/v1/operations/{id}/retry",
-    "change": "response 200 removed",
-    "note": ""
   },
   {
     "key": "POST /api/v1/orgs 201.kind: field added",

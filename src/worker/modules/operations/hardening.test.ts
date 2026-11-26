@@ -266,8 +266,8 @@ describe('retry replay (L3)', () => {
       post(`/${op.id}/retry`, headers),
       post(`/${op.id}/retry`, headers),
     ]);
-    expect([one.status, two.status]).toEqual([202, 202]);
-    expect(((await two.json()) as { operation: OperationDto }).operation.attempt).toBe(2);
+    expect([one.status, two.status]).toEqual([200, 200]);
+    expect(((await two.json()) as OperationDto).attempt).toBe(2);
   });
 });
 
@@ -310,7 +310,7 @@ describe('starter rows (L7, L8)', () => {
     });
     await progressOf(kit.ctx, op.id, 1).fail(new AppError('X_FAILED', 500, 'x'));
     kit.clock.advance(1_000_000);
-    expect((await post(`/${op.id}/retry`, owner.headers)).status).toBe(202);
+    expect((await post(`/${op.id}/retry`, owner.headers)).status).toBe(200);
     expect((await rowById(kit.env.DB, op.id))?.expires_at).toBe(kit.clock.now() + 7 * 86_400_000);
   });
 });
@@ -342,7 +342,7 @@ describe('verify round', () => {
     const p = progressOf(kit.ctx, op.id, 1);
     p.step('a');
     await p.fail(new AppError('X_FAILED', 500, 'x'));
-    expect((await post(`/${op.id}/retry`, auth.admin())).status).toBe(202);
+    expect((await post(`/${op.id}/retry`, auth.admin())).status).toBe(200);
     expect((await rowById(kit.env.DB, op.id))?.workflow_instance_id).toBe('wf-r2');
     await progressOf(kit.ctx, op.id, 2).step('a').done();
     kit.clock.advance(300_000);

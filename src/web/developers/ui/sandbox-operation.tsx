@@ -19,7 +19,7 @@ import {
 } from '../../ui/operation/index.ts';
 import { OPERATION_STARTED } from '../bench/operation-started.ts';
 
-/** A start's 202: the operation is in the page's cache and the tray, and the sandbox chip starts to ring. */
+/** A start's 202: the operation is in the page's cache and the tray, and the strip's chip looks again, so it rings at once. */
 export function startedOperation(op: Operation): void {
   trackOperation(op);
   window.dispatchEvent(new Event(OPERATION_STARTED));

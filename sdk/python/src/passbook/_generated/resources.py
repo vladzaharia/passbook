@@ -1096,7 +1096,7 @@ class OperationsResource:
         id: str,
         **opts: _Unpack[RequestOptions],
     ) -> m.OperationsRetryResult:
-        """Retry a failed operation under the same id with the next attempt. Answers 202 with the operation. `POST /api/v1/operations/{id}/retry`"""
+        """Retry a failed operation under the same id with the next attempt `POST /api/v1/operations/{id}/retry`"""
         return self._core.request("POST", f"/api/v1/operations/{_p(id)}/retry", idempotent=True, result=m.OperationsRetryResult, **opts)
 
 

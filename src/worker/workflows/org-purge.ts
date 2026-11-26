@@ -1,7 +1,7 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
 import { unvoidedPassCount } from '../modules/developer/repo-sandbox-op.ts';
 import { progressOf } from '../modules/operations/progress.ts';
-import type { Progress } from '../modules/operations/progress-types.ts';
+import { type Progress, WORKFLOW_WRITER } from '../modules/operations/progress-types.ts';
 import {
   beginPurge,
   deletePassesPage,
@@ -67,7 +67,7 @@ export async function runOrgPurge(
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'org-purge', orgId },
   });
-  const progress = progressOf(ctx, params.operationId, params.attempt ?? 1);
+  const progress = progressOf(ctx, params.operationId, params.attempt ?? 1, WORKFLOW_WRITER);
   try {
     const out = await purge(ctx, params, step, providerRounds, progress);
     // An operation that already ended ignores this: only a purge that stopped before the grace fails it.
