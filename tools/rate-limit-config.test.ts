@@ -17,4 +17,14 @@ describe('RL_API_KEY policy', () => {
     expect(Number(entry?.[1])).toBe(Number(limit));
     expect(Number(entry?.[2])).toBe(Number(window));
   });
+
+  it('keeps the Platform key write limit equal to its binding', () => {
+    const entry =
+      /"name":\s*"RL_PLATFORM_WRITE"[^}]*"simple":\s*\{\s*"limit":\s*(\d+),\s*"period":\s*(\d+)/.exec(
+        read('wrangler.jsonc'),
+      );
+    const source = read('src/worker/platform/rate-limit.ts');
+    expect(Number(entry?.[1])).toBe(Number(/PLATFORM_WRITE_LIMIT = (\d+)/.exec(source)?.[1]));
+    expect(Number(entry?.[2])).toBe(Number(/WINDOW_SECONDS = (\d+)/.exec(source)?.[1]));
+  });
 });

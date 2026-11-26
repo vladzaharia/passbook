@@ -484,7 +484,7 @@ describe('resend invitation', () => {
       t.env.DB,
       'INSERT OR REPLACE INTO counters (key, window_start, count) VALUES (?, ?, ?)',
       [
-        `invite:actor:${manager.user.id}`,
+        `invite:actor:user:${manager.user.id}`,
         t.f.clock.now() - (t.f.clock.now() % hour),
         ACTOR_HOURLY_INVITES,
       ],

@@ -1275,6 +1275,82 @@ class OrgsResource:
         return self._core.request("PATCH", f"/api/v1/orgs/{_p(org_id)}/pass-setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.OrgsUpdatePassSetupResult, **opts)
 
 
+class InvitationsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        body: m.InvitationsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsCreateResult:
+        """Invite an organization member `POST /api/v1/orgs/{id}/invitations`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/invitations", body=body, result=m.InvitationsCreateResult, **opts)
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.InvitationsListItem]:
+        """List organization invitations `GET /api/v1/orgs/{id}/invitations`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/invitations", query={"cursor": cursor}, result=m.InvitationsListResult, cursor_param="cursor", **opts)
+
+    def resend(
+        self,
+        id: str,
+        invitation_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsResendResult:
+        """Resend an organization invitation `POST /api/v1/orgs/{id}/invitations/{invitationId}/resend`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/invitations/{_p(invitation_id)}/resend", result=m.InvitationsResendResult, **opts)
+
+    def revoke(
+        self,
+        id: str,
+        invitation_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsRevokeResult:
+        """Revoke an organization invitation `DELETE /api/v1/orgs/{id}/invitations/{invitationId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/invitations/{_p(invitation_id)}", result=m.InvitationsRevokeResult, **opts)
+
+
+class MembershipsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.MembershipsListItem]:
+        """List organization memberships `GET /api/v1/orgs/{id}/memberships`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/memberships", query={"cursor": cursor}, result=m.MembershipsListResult, cursor_param="cursor", **opts)
+
+    def revoke(
+        self,
+        id: str,
+        membership_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.MembershipsRevokeResult:
+        """Revoke an organization membership `DELETE /api/v1/orgs/{id}/memberships/{membershipId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", result=m.MembershipsRevokeResult, **opts)
+
+    def update_roles(
+        self,
+        id: str,
+        membership_id: str,
+        body: m.MembershipsUpdateRolesBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.MembershipsUpdateRolesResult:
+        """Change an organization member's roles `PATCH /api/v1/orgs/{id}/memberships/{membershipId}`"""
+        return self._core.request("PATCH", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", body=body, result=m.MembershipsUpdateRolesResult, **opts)
+
+
 class PassImportsMappingsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1973,6 +2049,55 @@ class PassViewsResource:
     ) -> m.PassViewsReplaceResult:
         """Replace the saved views of the passes list `PUT /api/v1/passes/views`"""
         return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
+
+
+class PlatformSettingsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformSettingsRetrieveResult:
+        """Read the platform settings `GET /api/v1/platform/settings`"""
+        return self._core.request("GET", "/api/v1/platform/settings", result=m.PlatformSettingsRetrieveResult, **opts)
+
+    def update(
+        self,
+        body: m.PlatformSettingsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformSettingsUpdateResult:
+        """Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.* `PUT /api/v1/platform/settings`"""
+        return self._core.request("PUT", "/api/v1/platform/settings", body=body, result=m.PlatformSettingsUpdateResult, **opts)
+
+
+class PlatformWalletReleaseResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def enable_ready(
+        self,
+        provider: _Literal["google", "samsung"],
+        mode: _Literal["live", "test"],
+        body: m.PlatformWalletReleaseEnableReadyBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletReleaseEnableReadyResult:
+        """Turn on the reviewed ready enrollments of a released provider (dry run unless apply; a key may only dry run) `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready`"""
+        return self._core.request("POST", f"/api/v1/platform/wallet-release/{_p(provider)}/{_p(mode)}/enable-ready", body=body, result=m.PlatformWalletReleaseEnableReadyResult, **opts)
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletReleaseRetrieveResult:
+        """Read what Google and Samsung would issue once released, per mode `GET /api/v1/platform/wallet-release`"""
+        return self._core.request("GET", "/api/v1/platform/wallet-release", result=m.PlatformWalletReleaseRetrieveResult, **opts)
+
+
+class PlatformResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.settings = PlatformSettingsResource(core)
+        self.wallet_release = PlatformWalletReleaseResource(core)
 
 
 class RequestLogsResource:
@@ -3038,11 +3163,14 @@ class Resources:
         self.developer_invitations = DeveloperInvitationsResource(core)
         self.developers = DevelopersResource(core)
         self.orgs = OrgsResource(core)
+        self.invitations = InvitationsResource(core)
+        self.memberships = MembershipsResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)
         self.bulk_runs = BulkRunsResource(core)
         self.pass_views = PassViewsResource(core)
+        self.platform = PlatformResource(core)
         self.request_logs = RequestLogsResource(core)
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)

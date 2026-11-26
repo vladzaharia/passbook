@@ -26,8 +26,9 @@ import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
 import { orgIdOfScope } from './registry.ts';
 import { listSettings, settingsImpact, settingsRevision, updateSettings } from './service.ts';
+import { changesSignIn } from './sign-in-settings.ts';
 
-const ScopedSettingsListSchema = SettingsListSchema.extend({
+export const ScopedSettingsListSchema = SettingsListSchema.extend({
   oidc: SettingsListSchema.shape.oidc.optional(),
 });
 
@@ -54,12 +55,7 @@ settingsRoutes.put(
   '/',
   requireStepUp(STEP_UP_SECONDS, async (c) => {
     const { scope, values } = await peekBody(c);
-    return (
-      scope === 'platform' &&
-      typeof values === 'object' &&
-      values !== null &&
-      Object.keys(values).some((key) => key.startsWith('auth.') || key.startsWith('oidc.'))
-    );
+    return scope === 'platform' && changesSignIn(values);
   }),
 );
 
@@ -82,7 +78,7 @@ async function scopeAuthority(
   return authority;
 }
 
-function oidcInfo(c: Context<AppBindings>) {
+export function oidcInfo(c: Context<AppBindings>) {
   return {
     issuer: c.env.OIDC_ISSUER,
     platformAdminGroup: configuredNames(c.env, 'OIDC_PLATFORM_ADMIN_GROUP'),
@@ -94,7 +90,7 @@ function oidcInfo(c: Context<AppBindings>) {
   };
 }
 
-const releaseInfo = () => ({
+export const releaseInfo = () => ({
   google: walletProviderEnabled('google'),
   samsung: walletProviderEnabled('samsung'),
 });

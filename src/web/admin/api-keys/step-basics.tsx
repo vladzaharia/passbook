@@ -71,7 +71,9 @@ export function StepBasics({
         </FormField>
         <div>
           <p className="text-sm font-medium text-fg">Organization</p>
-          <p className="mt-2 text-sm text-fg-strong">{orgName}</p>
+          <p className="mt-2 text-sm text-fg-strong">
+            {orgId !== null ? orgName : form.onPlatform ? 'Platform' : 'All organizations'}
+          </p>
           {errors.orgId ? <p className="mt-1 text-xs text-danger">{errors.orgId}</p> : null}
         </div>
       </div>

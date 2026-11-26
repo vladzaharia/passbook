@@ -268,7 +268,8 @@ describe('tenant audit access', () => {
     expect((await get(`?orgId=${north.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(403);
     expect((await get(`?orgId=${south.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(403);
     expect((await get(`?orgId=${north.id}`, fake.apiKey({ scopes: [] }))).status).toBe(403);
-    expect((await get('', fake.apiKey(), true)).status).toBe(401);
+    // A Platform key meets the person-only platform log with 403, not the old 401 (design K4).
+    await expectProblem(await get('', fake.apiKey(), true), 403, 'PERSON_REQUIRED');
   });
 
   it('masks foreign actors and targets, and does not turn ID filters into association oracles', async () => {

@@ -175,10 +175,52 @@ Org names and the sender name reject controls, line separators and bidi marks at
 - Offboarding also revokes organization memberships: each org's Members list, or `DELETE /api/v1/orgs/{id}/memberships/{membershipId}` (`org_admin`, or a platform admin acting as one). A removed `wallet_admins` group does not remove a membership, and a member keeps tenant access until revoked. Revoke the person's API keys and pending invitations in the same pass.
 - Role changes in Polaris ID reach a live session only when it ends. A Polaris ID session for a non-admin lasts 7 days idle and 30 days absolute, an admin's 1 h and 12 h. Back-channel logout (Polaris ID P6) is the fix; until then revoke sessions by hand.
 - `OIDC_REQUIRE_AMR` ships empty. Set it to `phr` once Polaris ID 2.19.3 or later is confirmed to emit `amr`, and keep emailed login codes off in Polaris ID until then: with them on, mailbox access makes a strong session. See `docs/operations.md`.
-- Platform API keys made before 0142 have no expiry or IP list. They keep working and log `API_KEY_PLATFORM_UNBOUNDED` on each use; the console shows "No expiry". Revoke and reissue them. New platform keys need an expiry of 90 days or less and an IP list.
+- Platform API keys made before 0142 have no expiry or IP list. They keep working and log `API_KEY_PLATFORM_UNBOUNDED` on each use; the console shows "No expiry". Revoke and reissue them. New platform keys need an IP list and an expiry of 30 days or less (90 with `platform:read` alone).
 - A platform key cannot act in a personal organization, and only its owner exports it. A platform admin may still close or reopen one. Reads of a personal organization's passes by a platform key are not blocked yet.
 - An org export link lasts 1 hour and works once. Pass and bundle links go to another address only when an org admin sends them.
 - Deploy and apply new D1 migrations yourself. Agents never deploy or use `--remote`.
+
+## Platform keys
+
+A Platform key (`kind = platform`, no organization, `pbo_`) acts on the control plane. See [Platform Keys](runbooks/platform-keys.md).
+
+**Isolation.** The route gate (key kind and organization), the mint and an insert trigger (no organization-bound row holds a `platform:*` scope, and no row mixes platform and organization scopes), and the grant SQL (a platform grant refuses a key that has an organization) each refuse an organization credential on a platform route. A platform scope is never read as tenant authority.
+
+**Guards.**
+
+| Guard | Rule |
+| --- | --- |
+| Mint | A platform admin in a Polaris ID session (not break-glass), sign-in within 10 minutes. The mint is the step-up: a key never steps up. |
+| Scopes | `platform:*` only, never with an organization scope. Live only, standard rate tier. |
+| Expiry | At most 30 days; 90 with `platform:read` alone. |
+| IP range | Required, no wider than a /8. A refusal is `INVALID_API_KEY` with no reason. |
+| Creator | Live only while the creator is an active user, checked at the gate and again in the grant. |
+| Rate | The standard tier plus 60 writes a minute per key on platform routes. |
+| Audit | Every write records `api_key`, the key id and no organization; refusals record `auth.denied`. |
+| Browser | `KEY_IN_BROWSER` applies. |
+
+**Person-only: never a key** (403 `PERSON_REQUIRED`). Criteria: P1 a safety brake whose release is a judgment; P2 undoes a decision the Polaris ID owner made; P3 irreversible, or fans out across every organization; P4 changes who can sign in or moves a sign-in identity; P5 mints a credential that outlives the key.
+
+| Route | Why |
+| --- | --- |
+| Freeze Polaris ID | P1: the emergency stop, lifted only in Polaris ID. |
+| Clear the SCIM breaker | P1: clearing it is a decision about what tripped it. |
+| Offboard, `dryRun: false` | P3: ends memberships, grants, keys and sessions. A dry run is allowed. |
+| Lift a hold; remove an external role | P2: overrules the Polaris ID owner. |
+| Wallet release enable-ready, `apply: true` | P3: turns on issuing for every ready organization. A dry run is allowed. |
+| Platform settings naming `auth.*` or `oidc.*` | P4: decides who gets in. Every other setting is allowed. |
+| Revoke a signing certificate | P3: every pass it signed stops updating. |
+| Add, remove or promote a person's email | P4. Revoking sessions is allowed. |
+| Release a retention hold | P3: a purge can then run. |
+| Mint or rotate a platform key | P5. |
+| Personal organization, creator organization, enrolment hold and release, migration resolve grants | P2 and P3: SQL-fenced to a platform admin session. |
+| Close, reopen and export an organization, export link | P3: strict session routes, never platform routes. |
+
+Declared per route: a platform route without `key` is person-only, and `route-inventory.test.ts` fails until each platform route is on one list. A key never makes, promotes, demotes or removes an administrator, on platform routes or on organization member routes (403 `KEY_CANNOT_ADMINISTER`, checked in the service and in the grant). `PATCH /api/v1/users/{id}` by a key refuses a platform admin target (409 `IDP_PLATFORM_ADMIN`), and `POST /api/v1/orgs` by a key refuses `addMe`.
+
+The Polaris ID platform routes (groups, claims, users, status, invitations) take keys only once their conversion lands; until then every one of them is person-only.
+
+Platform operations stay out of the public developer portal; the SDKs carry them as `pb.platform.*`.
 
 ## Save to this phone
 

@@ -30,6 +30,8 @@ export interface ApiKeyRow {
   last_ip_prefix: string | null;
   /** How the creating person signed in (`oidc`, `magic_link`, `breakglass`). Null: made by a key, or before 0169. */
   created_amr: Amr | null;
+  /** The creator's `users.access_revision` at mint, for a platform key; null on every other key. Set once (0231). */
+  creator_access_revision?: number | null;
 }
 
 /** The key a rotation replaces: it retires at `retireAt` in the batch that mints its successor. */

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { useWizard, WizardDialog } from '@/web/ui/index.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
+import { keyReach } from './key-kind-fields.ts';
 import { KeyReview } from './key-review.tsx';
 import { type ApiKey, useCreateKey } from './queries.ts';
 import type { SCOPES } from './scope-rows.tsx';
@@ -27,6 +28,7 @@ export interface CreateKeyDialogProps {
   orgName: string;
   capabilities: readonly OrgCapability[] | null;
   developerOrg: boolean;
+  idp?: boolean;
 }
 
 export function CreateKeyDialog({
@@ -37,16 +39,17 @@ export function CreateKeyDialog({
   orgName,
   capabilities,
   developerOrg,
+  idp = true,
 }: CreateKeyDialogProps) {
   const create = useCreateKey(principal);
-  const form = useKeyForm(open, orgId, capabilities, developerOrg);
+  const form = useKeyForm(open, orgId, capabilities, developerOrg, idp);
   const [created, setCreated] = useState<ApiKey & { secret: string }>();
   const summaries = keySummaries(form);
   const w = useWizard({
     open,
     steps: STEPS.map((s) => ({ ...s, summary: summaries[s.id] })),
     errors: form.errors,
-    hints: HINTS,
+    hints: form.onPlatform && !idp ? { ...HINTS, access: 'Sign in with Polaris ID.' } : HINTS,
     fieldStep: FIELD_STEP,
     onFinish: async () =>
       setCreated(
@@ -56,6 +59,7 @@ export function CreateKeyDialog({
           scopes: form.role ? [] : (form.scopes as (typeof SCOPES)[number][]),
           ...(form.role ? { roles: [form.role] } : {}),
           ...(orgId !== null ? { kind: form.kind } : {}),
+          ...(form.onPlatform ? { kind: 'platform' as const } : {}),
           ...(form.ipAllow.length ? { ipAllow: form.ipAllow } : {}),
           ...(form.scansWrite ? { terminalIds: form.terminalIds } : {}),
           mode: form.keyMode,
@@ -64,7 +68,11 @@ export function CreateKeyDialog({
       ),
   });
   const organization =
-    created?.orgId === null ? 'Platform' : created?.orgId === orgId ? orgName : created?.orgId;
+    created?.orgId === null
+      ? keyReach(created)
+      : created?.orgId === orgId
+        ? orgName
+        : created?.orgId;
 
   return (
     <WizardDialog

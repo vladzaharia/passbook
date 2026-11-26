@@ -156,6 +156,11 @@
     { "name": "RL_ACCESS", "namespace_id": "2027", "simple": { "limit": 5, "period": 60 } },
     { "name": "RL_ACCESS_ALL", "namespace_id": "2028", "simple": { "limit": 30, "period": 60 } },
     {
+      "name": "RL_PLATFORM_WRITE",
+      "namespace_id": "2029",
+      "simple": { "limit": 60, "period": 60 }
+    },
+    {
       "name": "RL_WEBHOOK_LEDGER",
       "namespace_id": "2030",
       "simple": { "limit": 30, "period": 60 }

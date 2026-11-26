@@ -77,6 +77,8 @@ function OrgKeys() {
         orgName: name,
         // The member's own capabilities: the server answers a token the same way (key-access.test.ts).
         canManage: caps.includes('integrations:manage'),
+        // Platform keys are not the Workbench's: no identity-provider choice here.
+        idp: false,
         capabilities: caps,
         developerOrg: true,
         canAudit: caps.includes('audit:read'),

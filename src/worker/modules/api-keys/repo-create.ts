@@ -8,6 +8,7 @@ import {
 } from '../../platform/api-scopes.ts';
 import { grant } from '../../platform/authority.ts';
 import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.ts';
+import { first } from '../../platform/db.ts';
 import { withinLimit } from '../../platform/entitlements.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -127,8 +128,15 @@ export async function createKey(
       ...(rotating ? { checks: [replacedKey(key, replaces)] } : {}),
     });
     // A platform grant injects no tenant: a platform key names its own (null) org and mode.
-    const platformColumns = ['id', ...PLATFORM_KEY_TENANT, ...columns];
-    const platformValues = [key.id, null, key.mode, ...values];
+    // The creator's revision now: a key made against an older one is dead on arrival, never live past it.
+    const revision = await first<{ r: number }>(
+      ctx.env.DB,
+      'SELECT access_revision AS r FROM users WHERE id = ?',
+      [authority.userId],
+    );
+    if (!revision) throw new ForbiddenError();
+    const platformColumns = ['id', ...PLATFORM_KEY_TENANT, ...columns, 'creator_access_revision'];
+    const platformValues = [key.id, null, key.mode, ...values, revision.r];
     g.insertSelect('api_keys', platformColumns, platformValues);
     g.add(grantedAudit(g, ctx, audit));
     if (rotating) retireOld(g, replaces);

@@ -50,7 +50,7 @@ describe('access', () => {
     });
     await expectProblem(await create(link.headers, body), 403, 'IDP_SIGN_IN_REQUIRED');
     const keyed = await makeApiKey(f());
-    expect((await create(keyed.headers, body)).status).toBe(401);
+    await expectProblem(await create(keyed.headers, body), 403, 'PERSON_REQUIRED');
     const old = await makeSession(f(), {
       userId: user.id,
       roles: ['admin', 'user'],

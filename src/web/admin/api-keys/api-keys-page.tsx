@@ -63,6 +63,7 @@ export function ApiKeysView({
       orgName={access.orgName}
       capabilities={access.capabilities}
       developerOrg={access.developerOrg}
+      idp={access.idp}
       canManage={canManage}
       createRequested={createRequested}
       onCreateRequestHandled={onCreateRequestHandled}
@@ -76,6 +77,7 @@ function ScopedApiKeys({
   orgName,
   capabilities,
   developerOrg,
+  idp,
   canManage,
   createRequested,
   onCreateRequestHandled,
@@ -85,6 +87,7 @@ function ScopedApiKeys({
   orgName: string;
   capabilities: readonly OrgCapability[] | null;
   developerOrg: boolean;
+  idp: boolean;
   canManage: boolean;
   createRequested: boolean;
   onCreateRequestHandled: () => void;
@@ -204,6 +207,7 @@ function ScopedApiKeys({
             orgName={orgName}
             capabilities={capabilities}
             developerOrg={developerOrg}
+            idp={idp}
           />
         </Suspense>
       ) : null}

@@ -28,7 +28,7 @@ describe('access', () => {
     const key = await makeApiKey(f());
     for (const [method, path] of routes) {
       expect((await start(path, method, {})).status).toBe(401);
-      expect((await start(path, method, key.headers)).status).toBe(401);
+      await expectProblem(await start(path, method, key.headers), 403, 'PERSON_REQUIRED');
       await expectProblem(
         await start(path, method, (await admin(['user'])).headers),
         403,

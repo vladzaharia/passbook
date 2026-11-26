@@ -1,4 +1,74 @@
 {
+  "settings.getPlatformSettings": {
+    "description": "The platform settings with their effective values, and who manages sign-in. A Platform key reads them with platform:read or platform:settings.",
+    "response": {
+      "items": [
+        {
+          "scope": "platform",
+          "key": "tier",
+          "value": "standard",
+          "default": "standard",
+          "source": "org",
+          "ceiling": 24,
+          "planBlocked": ["mobile"],
+          "updatedAt": 1795399200000,
+          "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
+        }
+      ],
+      "configRevision": 3,
+      "oidc": {
+        "issuer": "https://id.example.com",
+        "platformAdminGroup": ["passbook-admins"],
+        "adminGroup": ["northwind-admins"],
+        "developerGroup": ["northwind-developers"],
+        "userGroup": ["northwind-staff"],
+        "platformAdminPinned": 29,
+        "consoleGroupRequired": false
+      },
+      "released": {
+        "google": false,
+        "samsung": false
+      }
+    }
+  },
+  "settings.putPlatformSettings": {
+    "description": "Change platform settings; null resets one to its default. A Platform key holding platform:settings may change any setting except sign-in (auth.* and oidc.*), which needs a person signed in with Polaris ID: 403 PERSON_REQUIRED.",
+    "request": {
+      "values": {
+        "tier": null
+      },
+      "configRevision": 3
+    },
+    "response": {
+      "items": [
+        {
+          "scope": "platform",
+          "key": "tier",
+          "value": "standard",
+          "default": "standard",
+          "source": "org",
+          "ceiling": 24,
+          "planBlocked": ["mobile"],
+          "updatedAt": 1795399200000,
+          "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
+        }
+      ],
+      "configRevision": 3,
+      "oidc": {
+        "issuer": "https://id.example.com",
+        "platformAdminGroup": ["passbook-admins"],
+        "adminGroup": ["northwind-admins"],
+        "developerGroup": ["northwind-developers"],
+        "userGroup": ["northwind-staff"],
+        "platformAdminPinned": 29,
+        "consoleGroupRequired": false
+      },
+      "released": {
+        "google": false,
+        "samsung": false
+      }
+    }
+  },
   "settings.getSettings": {
     "response": {
       "items": [

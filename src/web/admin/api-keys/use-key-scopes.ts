@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { holdableScopes } from '@/shared/developers-keys.ts';
+import { isPlatformScope } from './key-kind-fields.ts';
 import { SCOPE_LABEL } from './queries.ts';
 
 type Kind = 'service' | 'personal';
@@ -30,6 +31,15 @@ export function useKeyScopes(
     reset() {
       setRemoved([]);
       setScopes([...initial]);
+    },
+    /** Switch a platform-page key between Platform and All organizations: the other side's ticks go, once said. */
+    switchFlavour(platformSide: boolean) {
+      const own = (s: string) => isPlatformScope(s) === platformSide;
+      const gone = scopes.filter((s) => !own(s));
+      // The untouched default is not worth a note.
+      setRemoved(gone.filter((s) => s !== 'platform:read' && !initial.includes(s)));
+      const kept = scopes.filter(own);
+      setScopes(kept.length ? kept : platformSide ? ['platform:read'] : [...initial]);
     },
     /** Call with the kind and mode the key is about to have. */
     reconcile(kind: Kind, mode: Mode) {
