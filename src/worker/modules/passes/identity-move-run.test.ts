@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { fixtureIdentity } from '../../../../test/helpers/env.ts';
 import { deviceToken, makeApiKey } from '../../../../test/helpers/index.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { createApp } from '../../app.ts';
@@ -105,9 +106,10 @@ describe('starting a move', () => {
       `INSERT INTO signing_identities
          (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, cert_pem, not_after,
           provenance, purpose, apns_health, is_default, issuing, created_at)
-       VALUES ('slot-bad', NULL, 'Root', 'pass.mobile.passbook', 'TEAM123456', 'db', 'cred-bad', 'PEM', ?,
+       VALUES ('slot-bad', NULL, 'Root', 'pass.mobile.passbook', 'TEAM123456', 'db', 'cred-bad', ?, ?,
          'platform', 'passes', 'healthy', 0, 1, 1)`,
-      [kit.clock.now() + 90 * DAY],
+      // A certificate under the Worker's own intermediate, so only the key is bad.
+      [(await fixtureIdentity()).certificate, kit.clock.now() + 90 * DAY],
     );
     const input = { orgId: org.id, fromIdentityId: 'platform', toIdentityId: 'slot-bad' };
     expect(await previewIdentityMove(job(), input)).toMatchObject({
