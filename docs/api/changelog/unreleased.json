@@ -238,7 +238,7 @@
     "operationId": "polaris-operations.deleteUsersByIdHoldsByRole",
     "op": "DELETE /api/v1/users/{id}/holds/{role}",
     "change": "new operation",
-    "note": "Restore a role the Polaris ID owner paused. Answers 202 with an operation (idp.restore). Platform admin session, Polaris ID sign-in and step-up; no key."
+    "note": "Restore a role the Polaris ID owner paused. Answers 202 with an operation (idp.restore). Platform admin session only."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
@@ -1577,6 +1577,14 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
+    "key": "GET /api/v1/platform/wallet-credentials 200.release: field removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.getPlatformWalletCredentials",
+    "op": "GET /api/v1/platform/wallet-credentials",
+    "change": "200.release: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",
@@ -1873,6 +1881,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "GET /api/v1/templates/{id}/candidates 200.current: field removed",
+    "class": "breaking",
+    "operationId": "templates.getTemplatesByIdCandidates",
+    "op": "GET /api/v1/templates/{id}/candidates",
+    "change": "200.current: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/templates/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdChannels",
@@ -1895,6 +1911,22 @@
     "op": "GET /api/v1/templates/{id}/channels",
     "change": "200.overrides: field added",
     "note": "overrides counts the template's passes with their own choice, per channel."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/releases 200.active.googleReview: field removed",
+    "class": "breaking",
+    "operationId": "templates.getTemplatesByIdReleases",
+    "op": "GET /api/v1/templates/{id}/releases",
+    "change": "200.active.googleReview: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/releases 200.items[].googleReview: field removed",
+    "class": "breaking",
+    "operationId": "templates.getTemplatesByIdReleases",
+    "op": "GET /api/v1/templates/{id}/releases",
+    "change": "200.items[].googleReview: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/templates/{id}/releases/impact 200.passes: count meaning changed",
@@ -1927,6 +1959,14 @@
     "op": "GET /api/v1/templates/{id}/versions/{version}",
     "change": "200.report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports operation removed",
+    "class": "breaking",
+    "operationId": "templates.getTemplatesByIdVersionsByVersionWalletReports",
+    "op": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
@@ -2239,6 +2279,14 @@
     "op": "GET /b/{token}/{passId}",
     "change": "new operation",
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
+  },
+  {
+    "key": "GET /b/{token}/wallet/google operation removed",
+    "class": "breaking",
+    "operationId": "public.getBByTokenWalletGoogle",
+    "op": "GET /b/{token}/wallet/google",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "Pass input: required issue path",
@@ -4134,7 +4182,7 @@
     "operationId": "polaris-operations.postPlatformIdpReconcile",
     "op": "POST /api/v1/platform/idp/reconcile",
     "change": "new operation",
-    "note": "Check now, or a dry run with dryRun. Answers 202 with an operation (idp.check or idp.dry_run). Platform admin session, Polaris ID sign-in and step-up; no key."
+    "note": "Check now, or a dry run with dryRun. Answers 202 with an operation (idp.check, idp.dry_run). Platform admin session only."
   },
   {
     "key": "POST /api/v1/platform/idp/scim-breaker/clear new operation",
@@ -4142,7 +4190,7 @@
     "operationId": "polaris-operations.postPlatformIdpScimBreakerClear",
     "op": "POST /api/v1/platform/idp/scim-breaker/clear",
     "change": "new operation",
-    "note": "Clear the latched SCIM breaker. Answers 202 with an operation (idp.breaker_clear), or 409 IDP_BREAKER_CLOSED when it is not tripped. Platform admin session, Polaris ID sign-in and step-up; no key."
+    "note": "Clear the latched SCIM breaker. Answers 202 with an operation (idp.breaker_clear). Platform admin session only."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -4887,6 +4935,22 @@
     "op": "POST /api/v1/templates/{id}/release",
     "change": "new operation",
     "note": "Releases a saved version to Test and Live in one call, with dryRun to preview. Test follows Live; Idempotency-Key is required."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/releases 201.googleReview: field removed",
+    "class": "breaking",
+    "operationId": "templates.postTemplatesByIdReleases",
+    "op": "POST /api/v1/templates/{id}/releases",
+    "change": "201.googleReview: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/releases/rollback 201.googleReview: field removed",
+    "class": "breaking",
+    "operationId": "templates.postTemplatesByIdReleasesRollback",
+    "op": "POST /api/v1/templates/{id}/releases/rollback",
+    "change": "201.googleReview: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/templates/{id}/restore 200.openReview: field added",
