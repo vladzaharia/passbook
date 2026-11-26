@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
+import { resolveOrgTimeZone } from '@/shared/time-zone.ts';
 import { isWbTool, SANDBOX_ONLY, WB_TOOLS, type WbTool } from '@/shared/workbench.ts';
 import { useSession } from '../../lib/session.ts';
 import { sessionJson } from './session-fetch.ts';
@@ -15,9 +16,18 @@ export const ContextsSchema = z.object({
       name: z.string(),
       slug: z.string().optional(),
       closed: z.boolean().optional(),
+      timeZone: z.string().optional(),
     })
     .nullable(),
-  orgs: z.array(z.object({ orgId: z.string(), name: z.string(), slug: z.string(), tools: Tools })),
+  orgs: z.array(
+    z.object({
+      orgId: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      timeZone: z.string().optional(),
+      tools: Tools,
+    }),
+  ),
 });
 
 export interface WbContext {
@@ -27,6 +37,8 @@ export interface WbContext {
   /** The areas shown here, in nav order; the nav drops the rest and never reorders. */
   tools: readonly WbTool[];
   closed: boolean;
+  /** The org's IANA zone: every time shows in it. */
+  timeZone: string;
 }
 
 /** The sandbox first (pinned), then orgs; each with its allowed areas in nav order. */
@@ -39,6 +51,7 @@ export function toContexts(body: z.infer<typeof ContextsSchema>): WbContext[] {
       kind: 'sandbox',
       tools: WB_TOOLS,
       closed: body.sandbox.closed ?? false,
+      timeZone: resolveOrgTimeZone(body.sandbox.timeZone),
     });
   }
   for (const org of body.orgs) {
@@ -49,6 +62,7 @@ export function toContexts(body: z.infer<typeof ContextsSchema>): WbContext[] {
       kind: 'org',
       tools: WB_TOOLS.filter((t) => allowed.has(t) && !SANDBOX_ONLY.has(t)),
       closed: false,
+      timeZone: resolveOrgTimeZone(org.timeZone),
     });
   }
   return list;

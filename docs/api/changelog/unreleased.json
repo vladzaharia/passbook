@@ -1313,6 +1313,14 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events optional parameter query:order added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "optional parameter query:order added",
+    "note": "order=desc reads the newest events first in one page. Its nextCursor is the newest event's: pass it as after to read what comes next."
+  },
+  {
     "key": "GET /api/v1/events optional parameter query:requestId added",
     "class": "additive",
     "operationId": "events.getEvents",
