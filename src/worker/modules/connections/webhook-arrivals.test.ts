@@ -324,7 +324,7 @@ describe('arrival ledger: abuse bounds', () => {
     for (let i = 0; i < REJECTS_KEPT + 15; i++) {
       kit.clock.advance(MINUTE);
       await expect(
-        send(id, await wooReq('{}', { sig: i % 2 === 0 ? false : true, key: 'wrong' })),
+        send(id, await wooReq('{}', { sig: i % 2 !== 0, key: 'wrong' })),
       ).rejects.toBeTruthy();
     }
     const all_ = await rows(id);
