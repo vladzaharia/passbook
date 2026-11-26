@@ -117,7 +117,28 @@ describe('personal images never go to Samsung (Q18)', () => {
     const r = compile(v);
     expect(attributes(r).bgImage).toBeUndefined();
     expect(r.items).toContainEqual(
-      expect.objectContaining({ capability: 'image.strip', support: 'omitted' }),
+      expect.objectContaining({
+        capability: 'image.strip',
+        support: 'omitted',
+        message: 'The image has no public address.',
+      }),
+    );
+  });
+
+  it('says a strip of the wrong size is the problem, not its address', async () => {
+    const v = await view('starter-store-card');
+    v.images.apple.strip = [
+      { name: 'strip@2x.png', slot: 'strip', scale: 2, personal: false, width: 1125, height: 432 },
+    ];
+    const r = compile(v);
+    expect(attributes(r).bgImage).toBeUndefined();
+    expect(r.items).toContainEqual(
+      expect.objectContaining({
+        capability: 'image.strip',
+        support: 'omitted',
+        message:
+          'The strip (background) image is 1125 x 432; Samsung needs 888 x 555 (888:555). Replace it.',
+      }),
     );
   });
 });

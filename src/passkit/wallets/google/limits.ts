@@ -38,4 +38,4 @@ export const MIN_MODULE_IMAGE = { width: 1860 } as const;
 
 export const DEFAULT_LANGUAGE = 'en';
 /** Bump with any change to compiled output: it joins the release candidate digest. */
-export const COMPILER_REVISION = 6;
+export const COMPILER_REVISION = 7;
