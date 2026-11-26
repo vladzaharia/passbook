@@ -22,6 +22,7 @@ import { prefixed } from './config-schema.ts';
 import { CreatedStep } from './created-step.tsx';
 import { takeConnectionPrefill, wizardStart } from './import-handoff.ts';
 import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
+import { useRestSample } from './rest/use-mapping-seed.ts';
 import { TemplateSelect } from './template-select.tsx';
 import { TestModeNote } from './test-mode-note.tsx';
 import { useConnectionCreation } from './use-connection-creation.ts';
@@ -95,20 +96,18 @@ export function CreateConnectionWizard() {
       ? template.data
       : undefined;
 
+  const [restSample, setRestSample] = useRestSample(selectedTemplate, rows, setRows, setLife);
   const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
-
   const info = connector.data;
   const { cfgErrors, secErrors, shownSecrets } = useWizardConfig(info, draft);
   const mapped = fromRows(rows);
   const lifeError = lifecycleError(life);
   const sender = useWizardRecipe({ info, draft, setDraft, setRows, setLife });
+  const declared = Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {});
+  const tested = test?.kind === 'result' ? test.result.sample : undefined;
   const sample =
-    test?.kind === 'result' && test.result.sample
-      ? test.result.sample
-      : Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {}).map((k) => ({
-          pointer: `/${k}`,
-        }));
+    tested ?? (restSample.length > 0 ? restSample : declared.map((k) => ({ pointer: `/${k}` })));
   const targets = selectedTemplate
     ? targetsOf(flatFields(describeSchema(selectedTemplate.inputSchema)))
     : [];
@@ -119,7 +118,6 @@ export function CreateConnectionWizard() {
     if (!caps) return;
     setLife((l) => ({ ...l, mode: caps.poll ? 'poll' : caps.webhook ? 'webhook' : 'manual' }));
   }, [info]);
-
   const create = useConnectionCreation({
     currentScope,
     life,
@@ -219,6 +217,7 @@ export function CreateConnectionWizard() {
             onType={(t) => {
               if (t === type) return;
               setType(t);
+              setRestSample([]);
               setDraft((d) => ({ ...d, config: {}, secrets: {} }));
             }}
             onCommit={next}
@@ -248,6 +247,7 @@ export function CreateConnectionWizard() {
               test={test}
               onTest={onTested}
               onRecipe={sender.pick}
+              onSample={setRestSample}
               secretError={sender.secretError}
             />
           ) : connector.isError ? (

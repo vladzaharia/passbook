@@ -77,11 +77,16 @@ describe('configuration of a REST connection', () => {
         },
       } satisfies Record<string, FetchHandler>,
     });
-    expect(await screen.findByText('Pagination: next link')).toBeVisible();
+    // The explorer shows what is stored: the paging style and the filter, as real controls.
+    expect(await screen.findByRole('radio', { name: 'Next link' })).toBeChecked();
+    expect(screen.getByLabelText('Next link', { selector: 'input[type=text]' })).toHaveValue(
+      '/links/next',
+    );
+    expect(screen.getByRole('switch', { name: 'Only fetch changes' })).toBeChecked();
+    expect(screen.getByLabelText('Query parameter')).toHaveValue('updated_since');
     expect(screen.getByText('List parameters: 1')).toBeVisible();
-    expect(screen.getByText('Updated since: updated_since')).toBeVisible();
     expect(screen.getByText('Headers: 1')).toBeVisible();
-    expect(screen.queryByLabelText('Pagination')).toBeNull();
+    expect(screen.queryByText('Pagination: next link')).toBeNull();
     expect(screen.queryByLabelText('Headers')).toBeNull();
 
     const url = screen.getByLabelText(/Base URL/);
