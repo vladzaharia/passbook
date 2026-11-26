@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetModeForTests } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { reach, reachStep } from '../sessions/wizard-test-nav.ts';
 import { scannerFixture } from '../test-fixtures.ts';
 import type { InsideApi } from './inside-api.ts';
 import { InsideSheet } from './inside-sheet.tsx';
@@ -46,7 +47,7 @@ describe('session pickers', () => {
       await within(dialog).findByRole('textbox', { name: 'Session name' }),
       'Pool door',
     );
-    await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
+    await reachStep(user, dialog, 'Set where it scans');
     await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
     const tree = await screen.findByRole('list', { name: 'Zones' });
     expect(
@@ -63,10 +64,10 @@ describe('session pickers', () => {
     await user.click(within(dialog).getByRole('radio', { name: /^Out/ }));
     await user.click(within(dialog).getByRole('switch', { name: 'Desk actions' }));
     expect(within(dialog).getByText(/signed by the staff member/)).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('tab', { name: 'Customer screen' }));
+    await reachStep(user, dialog, 'Set the customer screen');
     await user.type(within(dialog).getByRole('textbox', { name: 'Welcome' }), 'Tap to enter');
     await user.click(within(dialog).getByRole('switch', { name: 'Greet by first name' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
+    await user.click(await reach(user, dialog, 'Create session'));
     await waitFor(() => expect(writes).toHaveLength(1));
     expect(writes[0]).toMatchObject({
       name: 'Pool door',
@@ -85,13 +86,13 @@ describe('session pickers', () => {
       await within(dialog).findByRole('textbox', { name: 'Session name' }),
       'Pool door',
     );
-    await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
+    await reachStep(user, dialog, 'Set where it scans');
     await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
     expect(await screen.findByText('No zones yet.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'New zone' }));
     expect(await screen.findByRole('dialog', { name: 'New zone' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    await user.click(within(dialog).getByRole('tab', { name: 'Passes' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Passes/ }));
     expect(within(dialog).getByRole('textbox', { name: 'Session name' })).toHaveValue('Pool door');
   });
 
@@ -116,16 +117,16 @@ describe('session pickers', () => {
     };
     const { dialog, writes, user } = await openNew({ '/api/v1/scan-events': () => page([gala]) });
     await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Gate');
-    await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
+    await reachStep(user, dialog, 'Set where it scans');
     await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
     await user.click(await screen.findByRole('checkbox', { name: 'Gym' }));
     await user.keyboard('{Escape}');
     await user.click(within(dialog).getByRole('button', { name: 'Remove Gym' }));
     expect(within(dialog).getByText('Any zone')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('tab', { name: 'Passes' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Passes/ }));
     await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(await within(dialog).findByRole('checkbox', { name: /Gala/ }));
-    await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
+    await reachStep(user, dialog, 'Set where it scans');
     expect(within(dialog).getByRole('button', { name: 'Choose zones' })).toBeDisabled();
     expect(
       within(dialog).getByText('Events check in once. Zones don’t apply.'),
@@ -141,7 +142,8 @@ describe('session pickers', () => {
           404,
         ),
     });
-    await user.click(await within(dialog).findByRole('tab', { name: 'Access' }));
+    await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Gate');
+    await reachStep(user, dialog, 'Set where it scans');
     await waitFor(() =>
       expect(
         within(dialog).queryByRole('button', { name: 'Choose zones' }),

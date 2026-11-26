@@ -41,6 +41,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <Link
                 key={item.to}
                 to={item.to}
+                search={item.search}
                 onClick={onNavigate}
                 activeOptions={{ exact: item.section === '' }}
                 aria-current={active ? 'page' : undefined}

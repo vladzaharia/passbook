@@ -50606,6 +50606,1340 @@
           "ok"
         ]
       },
+      "ConnectionsProbeConfigParams": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "connectorType": {
+            "type": "string",
+            "enum": [
+              "http-json"
+            ]
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "secrets": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "list",
+              "record"
+            ]
+          },
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "next": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "orgId",
+          "connectorType",
+          "config",
+          "target"
+        ]
+      },
+      "ConnectionsProbeConfigResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "errorCode": {
+            "type": "string",
+            "enum": [
+              "AUTH",
+              "FORBIDDEN",
+              "NOT_FOUND",
+              "RATE_LIMITED",
+              "TIMEOUT",
+              "UPSTREAM",
+              "UNSAFE_URL",
+              "REDIRECT_BLOCKED",
+              "NOT_JSON",
+              "TOO_LARGE",
+              "NO_RECORDS",
+              "OFF_ORIGIN",
+              "CONFIG"
+            ]
+          },
+          "retryAfterMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "request": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET"
+                ]
+              },
+              "url": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "status": {
+                "type": "integer"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "contentType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "method",
+              "url",
+              "status",
+              "bytes",
+              "contentType"
+            ]
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "body": {},
+          "pruned": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "arrays": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "shown": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "total",
+                    "shown"
+                  ]
+                },
+                "maxItems": 500
+              },
+              "strings": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "depthCut": {
+                "type": "boolean"
+              },
+              "nodesCut": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "arrays",
+              "strings",
+              "depthCut",
+              "nodesCut"
+            ]
+          },
+          "detections": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "records": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "reason": {
+                      "type": "string",
+                      "enum": [
+                        "root",
+                        "name",
+                        "shape"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "count",
+                    "score",
+                    "reason"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "pagination": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "confidence": {
+                      "type": "string",
+                      "enum": [
+                        "high",
+                        "medium",
+                        "low"
+                      ]
+                    },
+                    "config": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "style"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "cursor"
+                              ]
+                            },
+                            "param": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "cursorPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            },
+                            "hasMorePointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            },
+                            "from": {
+                              "type": "string",
+                              "enum": [
+                                "body",
+                                "last-id"
+                              ],
+                              "default": "body"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "param",
+                            "cursorPointer"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "next-link"
+                              ]
+                            },
+                            "nextPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "nextPointer"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "link-header"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "style"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "page"
+                              ]
+                            },
+                            "param": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "start": {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                  "enum": [
+                                    0
+                                  ]
+                                },
+                                {
+                                  "type": "number",
+                                  "enum": [
+                                    1
+                                  ]
+                                }
+                              ]
+                            },
+                            "sizeParam": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "size": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 1000
+                            },
+                            "totalPagesPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            },
+                            "totalPagesHeader": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z][A-Za-z0-9-]{0,63}$"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "param",
+                            "start"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "offset"
+                              ]
+                            },
+                            "param": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "sizeParam": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "size": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 1000
+                            },
+                            "totalPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "param",
+                            "sizeParam",
+                            "size"
+                          ]
+                        }
+                      ]
+                    },
+                    "evidence": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "confidence",
+                    "config",
+                    "evidence"
+                  ]
+                },
+                "maxItems": 3
+              },
+              "id": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "unique": {
+                      "type": "boolean"
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "unique",
+                    "score"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "updatedAt": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "iso",
+                        "unix",
+                        "unix-ms"
+                      ]
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "format",
+                    "score"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "holderEmail": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath"
+                  ]
+                },
+                "maxItems": 3
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "number",
+                        "boolean",
+                        "date",
+                        "email",
+                        "url",
+                        "list"
+                      ]
+                    },
+                    "samples": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      "maxItems": 3
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "string",
+                            "maxLength": 80
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "count"
+                        ]
+                      },
+                      "maxItems": 20
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "label",
+                    "type",
+                    "samples"
+                  ]
+                },
+                "maxItems": 100
+              },
+              "rateLimit": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "windowSeconds": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "remaining": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "required": [
+              "records",
+              "pagination",
+              "id",
+              "updatedAt",
+              "holderEmail",
+              "fields",
+              "rateLimit"
+            ]
+          },
+          "page": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "from": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "to": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "overlap": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "next": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 4096
+              }
+            },
+            "required": [
+              "index",
+              "from",
+              "to",
+              "overlap",
+              "next"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "durationMs",
+          "request",
+          "headers",
+          "pruned",
+          "detections",
+          "page"
+        ]
+      },
+      "ConnectionsProbeParams": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "secrets": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "list",
+              "record"
+            ]
+          },
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "next": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "target"
+        ]
+      },
+      "ConnectionsProbeResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "errorCode": {
+            "type": "string",
+            "enum": [
+              "AUTH",
+              "FORBIDDEN",
+              "NOT_FOUND",
+              "RATE_LIMITED",
+              "TIMEOUT",
+              "UPSTREAM",
+              "UNSAFE_URL",
+              "REDIRECT_BLOCKED",
+              "NOT_JSON",
+              "TOO_LARGE",
+              "NO_RECORDS",
+              "OFF_ORIGIN",
+              "CONFIG"
+            ]
+          },
+          "retryAfterMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "request": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET"
+                ]
+              },
+              "url": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "status": {
+                "type": "integer"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "contentType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "method",
+              "url",
+              "status",
+              "bytes",
+              "contentType"
+            ]
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "body": {},
+          "pruned": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "arrays": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "shown": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "total",
+                    "shown"
+                  ]
+                },
+                "maxItems": 500
+              },
+              "strings": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "depthCut": {
+                "type": "boolean"
+              },
+              "nodesCut": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "arrays",
+              "strings",
+              "depthCut",
+              "nodesCut"
+            ]
+          },
+          "detections": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "records": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "reason": {
+                      "type": "string",
+                      "enum": [
+                        "root",
+                        "name",
+                        "shape"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "count",
+                    "score",
+                    "reason"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "pagination": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "confidence": {
+                      "type": "string",
+                      "enum": [
+                        "high",
+                        "medium",
+                        "low"
+                      ]
+                    },
+                    "config": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "style"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "cursor"
+                              ]
+                            },
+                            "param": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "cursorPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            },
+                            "hasMorePointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            },
+                            "from": {
+                              "type": "string",
+                              "enum": [
+                                "body",
+                                "last-id"
+                              ],
+                              "default": "body"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "param",
+                            "cursorPointer"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "next-link"
+                              ]
+                            },
+                            "nextPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "nextPointer"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "link-header"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "style"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "page"
+                              ]
+                            },
+                            "param": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "start": {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                  "enum": [
+                                    0
+                                  ]
+                                },
+                                {
+                                  "type": "number",
+                                  "enum": [
+                                    1
+                                  ]
+                                }
+                              ]
+                            },
+                            "sizeParam": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "size": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 1000
+                            },
+                            "totalPagesPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            },
+                            "totalPagesHeader": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z][A-Za-z0-9-]{0,63}$"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "param",
+                            "start"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "style": {
+                              "type": "string",
+                              "enum": [
+                                "offset"
+                              ]
+                            },
+                            "param": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "sizeParam": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_.$[\\]-]{1,60}$"
+                            },
+                            "size": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 1000
+                            },
+                            "totalPointer": {
+                              "type": "string",
+                              "maxLength": 500,
+                              "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                            }
+                          },
+                          "required": [
+                            "style",
+                            "param",
+                            "sizeParam",
+                            "size"
+                          ]
+                        }
+                      ]
+                    },
+                    "evidence": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "confidence",
+                    "config",
+                    "evidence"
+                  ]
+                },
+                "maxItems": 3
+              },
+              "id": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "unique": {
+                      "type": "boolean"
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "unique",
+                    "score"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "updatedAt": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "iso",
+                        "unix",
+                        "unix-ms"
+                      ]
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "format",
+                    "score"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "holderEmail": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath"
+                  ]
+                },
+                "maxItems": 3
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^(?:\\/(?:[^~/]|~[01])*)*$"
+                    },
+                    "jsonPath": {
+                      "type": "string",
+                      "maxLength": 600
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "number",
+                        "boolean",
+                        "date",
+                        "email",
+                        "url",
+                        "list"
+                      ]
+                    },
+                    "samples": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      "maxItems": 3
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "string",
+                            "maxLength": 80
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "count"
+                        ]
+                      },
+                      "maxItems": 20
+                    }
+                  },
+                  "required": [
+                    "pointer",
+                    "jsonPath",
+                    "label",
+                    "type",
+                    "samples"
+                  ]
+                },
+                "maxItems": 100
+              },
+              "rateLimit": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "windowSeconds": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "remaining": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "required": [
+              "records",
+              "pagination",
+              "id",
+              "updatedAt",
+              "holderEmail",
+              "fields",
+              "rateLimit"
+            ]
+          },
+          "page": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "from": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "to": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "overlap": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "next": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 4096
+              }
+            },
+            "required": [
+              "index",
+              "from",
+              "to",
+              "overlap",
+              "next"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "durationMs",
+          "request",
+          "headers",
+          "pruned",
+          "detections",
+          "page"
+        ]
+      },
       "ConnectionsRetrieveResponse": {
         "type": "object",
         "properties": {
@@ -116576,6 +117910,487 @@
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/probe": {
+      "post": {
+        "summary": "Probe an unsaved REST configuration",
+        "tags": [
+          "connections"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsProbeConfigParams"
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "connectorType": "http-json",
+                "config": {
+                  "baseUrl": "https://api.northwind.example/v1",
+                  "auth": {
+                    "type": "bearer"
+                  },
+                  "list": {
+                    "path": "/customers",
+                    "query": [
+                      {
+                        "name": "limit",
+                        "value": "2"
+                      }
+                    ],
+                    "recordsPointer": "/data",
+                    "idPointer": "/id",
+                    "pagination": {
+                      "style": "cursor",
+                      "param": "starting_after",
+                      "from": "last-id",
+                      "hasMorePointer": "/has_more"
+                    }
+                  }
+                },
+                "secrets": {
+                  "token": "nw_live_••••3f9c"
+                },
+                "target": "list"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsProbeConfigResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "durationMs": 312,
+                  "request": {
+                    "method": "GET",
+                    "url": "https://api.northwind.example/v1/customers?limit=2",
+                    "status": 200,
+                    "bytes": 1184,
+                    "contentType": "application/json"
+                  },
+                  "headers": {
+                    "content-type": "application/json",
+                    "x-ratelimit-limit": "100",
+                    "x-ratelimit-remaining": "99"
+                  },
+                  "body": {
+                    "object": "list",
+                    "has_more": true,
+                    "data": [
+                      {
+                        "id": "cus_1001",
+                        "email": "ada@example.com",
+                        "full_name": "Ada Example",
+                        "created": "2026-02-03T10:00:00Z"
+                      },
+                      {
+                        "id": "cus_1002",
+                        "email": "grace@example.com",
+                        "full_name": "Grace Okafor",
+                        "created": "2026-02-04T09:30:00Z"
+                      }
+                    ]
+                  },
+                  "pruned": {
+                    "arrays": [],
+                    "strings": 0,
+                    "depthCut": false,
+                    "nodesCut": false
+                  },
+                  "detections": {
+                    "records": [
+                      {
+                        "pointer": "/data",
+                        "jsonPath": "$.data[*]",
+                        "count": 2,
+                        "score": 0.75,
+                        "reason": "name"
+                      }
+                    ],
+                    "pagination": [
+                      {
+                        "confidence": "high",
+                        "config": {
+                          "style": "cursor",
+                          "param": "starting_after",
+                          "from": "last-id",
+                          "hasMorePointer": "/has_more",
+                          "cursorPointer": ""
+                        },
+                        "evidence": "field:/has_more"
+                      }
+                    ],
+                    "id": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "unique": true,
+                        "score": 0.95
+                      }
+                    ],
+                    "updatedAt": [
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "format": "iso",
+                        "score": 0.5
+                      }
+                    ],
+                    "holderEmail": [
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email"
+                      }
+                    ],
+                    "fields": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "label": "id",
+                        "type": "text",
+                        "samples": [
+                          "cus_1001",
+                          "cus_1002"
+                        ]
+                      },
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email",
+                        "label": "email",
+                        "type": "email",
+                        "samples": [
+                          "ada@example.com",
+                          "grace@example.com"
+                        ]
+                      },
+                      {
+                        "pointer": "/name",
+                        "jsonPath": "$.data[*].name",
+                        "label": "name",
+                        "type": "text",
+                        "samples": [
+                          "Ada Example",
+                          "Grace Okafor"
+                        ]
+                      },
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "label": "created",
+                        "type": "date",
+                        "samples": [
+                          "2026-02-03T10:00:00Z",
+                          "2026-02-04T09:30:00Z"
+                        ]
+                      }
+                    ],
+                    "rateLimit": {
+                      "limit": 100,
+                      "remaining": 99
+                    }
+                  },
+                  "page": {
+                    "index": 1,
+                    "from": 1,
+                    "to": 2,
+                    "overlap": 0,
+                    "next": "p1.eyJwIjp7ImMiOiJjdXNfMTAwMiJ9LCJrIjoxLCJuIjoyLCJpZHMiOlsiMXN6Il19"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.postConnectionsProbe",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "probeConfig"
+        },
+        "description": "Fetches one sample page or record from a REST API with an unsaved configuration, through the same request and pagination code as a sync, and returns it with the detected records array, ID and updated-at fields, pagination style and JSONPath candidates. Secrets are used once and never stored; error bodies are never returned. Send the previous answer's page.next as next to prove page 2. Limits: 10 a minute per caller, 60 an hour per organization.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_UNKNOWN",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "UNSAFE_URL",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/connections/{id}/probe": {
+      "post": {
+        "summary": "Probe a saved REST connection",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsProbeParams"
+              },
+              "example": {
+                "target": "list",
+                "next": "p1.eyJwIjp7ImMiOiJjdXNfMTAwMiJ9LCJrIjoxLCJuIjoyLCJpZHMiOlsiMXN6Il19"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsProbeResponse"
+                },
+                "example": {
+                  "ok": true,
+                  "durationMs": 312,
+                  "request": {
+                    "method": "GET",
+                    "url": "https://api.northwind.example/v1/customers?limit=2",
+                    "status": 200,
+                    "bytes": 1184,
+                    "contentType": "application/json"
+                  },
+                  "headers": {
+                    "content-type": "application/json",
+                    "x-ratelimit-limit": "100",
+                    "x-ratelimit-remaining": "99"
+                  },
+                  "body": {
+                    "object": "list",
+                    "has_more": true,
+                    "data": [
+                      {
+                        "id": "cus_1001",
+                        "email": "ada@example.com",
+                        "full_name": "Ada Example",
+                        "created": "2026-02-03T10:00:00Z"
+                      },
+                      {
+                        "id": "cus_1002",
+                        "email": "grace@example.com",
+                        "full_name": "Grace Okafor",
+                        "created": "2026-02-04T09:30:00Z"
+                      }
+                    ]
+                  },
+                  "pruned": {
+                    "arrays": [],
+                    "strings": 0,
+                    "depthCut": false,
+                    "nodesCut": false
+                  },
+                  "detections": {
+                    "records": [
+                      {
+                        "pointer": "/data",
+                        "jsonPath": "$.data[*]",
+                        "count": 2,
+                        "score": 0.75,
+                        "reason": "name"
+                      }
+                    ],
+                    "pagination": [
+                      {
+                        "confidence": "high",
+                        "config": {
+                          "style": "cursor",
+                          "param": "starting_after",
+                          "from": "last-id",
+                          "hasMorePointer": "/has_more",
+                          "cursorPointer": ""
+                        },
+                        "evidence": "field:/has_more"
+                      }
+                    ],
+                    "id": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "unique": true,
+                        "score": 0.95
+                      }
+                    ],
+                    "updatedAt": [
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "format": "iso",
+                        "score": 0.5
+                      }
+                    ],
+                    "holderEmail": [
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email"
+                      }
+                    ],
+                    "fields": [
+                      {
+                        "pointer": "/id",
+                        "jsonPath": "$.data[*].id",
+                        "label": "id",
+                        "type": "text",
+                        "samples": [
+                          "cus_1001",
+                          "cus_1002"
+                        ]
+                      },
+                      {
+                        "pointer": "/email",
+                        "jsonPath": "$.data[*].email",
+                        "label": "email",
+                        "type": "email",
+                        "samples": [
+                          "ada@example.com",
+                          "grace@example.com"
+                        ]
+                      },
+                      {
+                        "pointer": "/name",
+                        "jsonPath": "$.data[*].name",
+                        "label": "name",
+                        "type": "text",
+                        "samples": [
+                          "Ada Example",
+                          "Grace Okafor"
+                        ]
+                      },
+                      {
+                        "pointer": "/created",
+                        "jsonPath": "$.data[*].created",
+                        "label": "created",
+                        "type": "date",
+                        "samples": [
+                          "2026-02-03T10:00:00Z",
+                          "2026-02-04T09:30:00Z"
+                        ]
+                      }
+                    ],
+                    "rateLimit": {
+                      "limit": 100,
+                      "remaining": 99
+                    }
+                  },
+                  "page": {
+                    "index": 2,
+                    "from": 3,
+                    "to": 3,
+                    "overlap": 0,
+                    "next": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.postConnectionsByIdProbe",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "probe"
+        },
+        "description": "Probes a saved REST connection with its stored configuration and secrets, or with the config and secrets in the request. Stored secrets are never sent to a new host: a config on another origin needs new secrets. Same answer and limits as the unsaved probe.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
+        "x-codes": [
+          "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_UNKNOWN",
+          "FILE_CELL_TOO_LONG",
+          "FILE_DAMAGED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "UNSAFE_URL",
           "VALIDATION"
         ]
       }

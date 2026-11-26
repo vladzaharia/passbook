@@ -70,7 +70,13 @@ describe('User tags card', () => {
       '/api/v1/nfc/passes/p9/tags': () => page([]),
     });
     await user.click(await screen.findByRole('button', { name: TAG_COPY.assign }));
-    expect(await screen.findByText('Organization')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Pick the organization' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Organization/ })).toBeInTheDocument();
+    const next = screen.getByRole('button', { name: 'Next' });
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText('Pick an organization.')).toBeInTheDocument();
   });
 
   it('shows the empty state', async () => {

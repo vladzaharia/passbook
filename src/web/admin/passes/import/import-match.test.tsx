@@ -16,7 +16,7 @@ describe('match columns', () => {
     const user = userEvent.setup();
     const posts: unknown[] = [];
     await open(importDto(), { '/api/v1/pass-imports/imp1/check': post(posts) });
-    expect(await screen.findByText('Match columns')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Match the columns' })).toBeTruthy();
     expect(screen.getByRole('combobox', { name: /Column for Member name/ })).toBeTruthy();
     expect(screen.getByRole('combobox', { name: /Column for Holder email: Email/ })).toBeTruthy();
     expect(screen.getByText(/columns used/)).toBeTruthy();
@@ -43,7 +43,7 @@ describe('match columns', () => {
     const user = userEvent.setup();
     const posts: unknown[] = [];
     await open(importDto(), { '/api/v1/pass-imports/imp1/check': post(posts) });
-    await screen.findByText('Match columns');
+    await screen.findByRole('heading', { name: 'Match the columns' });
     await user.click(screen.getByRole('combobox', { name: /Existing passes/ }));
     await user.click(await screen.findByRole('option', { name: 'Update when email matches' }));
     await user.click(screen.getByRole('combobox', { name: /Column for Holder email/ }));
@@ -56,7 +56,7 @@ describe('match columns', () => {
   it('hides the keep-edited switch for Always create new', async () => {
     const user = userEvent.setup();
     await open(importDto());
-    await screen.findByText('Match columns');
+    await screen.findByRole('heading', { name: 'Match the columns' });
     await user.click(screen.getByRole('combobox', { name: /Existing passes/ }));
     await user.click(await screen.findByRole('option', { name: 'Always create new' }));
     expect(screen.queryByText("Don't overwrite edits made in the console")).toBeNull();

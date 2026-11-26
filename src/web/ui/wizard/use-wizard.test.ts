@@ -322,4 +322,49 @@ describe('useWizard', () => {
     act(() => result.current.frame.onStep(0));
     expect(result.current.id).toBe('a');
   });
+
+  it('jumps ahead, marking the steps behind it done, and never past an invalid step to Review', async () => {
+    const { result, rerender } = setup();
+    rerender(ok);
+    act(() => result.current.jump('c'));
+    expect(result.current.id).toBe('c');
+    expect(result.current.steps.map((s) => s.state)).toEqual(['done', 'done', 'current', 'todo']);
+    // Review was reached, then an earlier step went bad: Review lands on that step with its errors.
+    await submit(result);
+    act(() => result.current.go('a'));
+    rerender({ bad: { a: false, b: true, c: false } });
+    act(() => result.current.go('c'));
+    await submit(result);
+    expect(result.current.id).toBe('b');
+    expect(result.current.errors).toEqual({ pick: 'Pick one.' });
+    expect(result.current.primary).toBe('next');
+  });
+
+  it('gives the page Wizard each step state and a blocked press that shows the errors', () => {
+    const { result } = setup();
+    expect(result.current.frame.states).toEqual(['current', 'todo', 'todo', 'todo']);
+    act(() => result.current.frame.onBlocked());
+    expect(result.current.errors).toEqual({ name: 'Required.' });
+  });
+
+  it('holds Next on a wait for its own step only', async () => {
+    const { result, rerender } = renderHook(
+      (props: { wait: boolean }) =>
+        useWizard<Id>({
+          steps: STEPS,
+          errors: { a: props.wait ? { wait: 'Loading.' } : undefined },
+          fieldStep: {},
+          onFinish: () => undefined,
+        }),
+      { initialProps: { wait: false } },
+    );
+    await submit(result);
+    await submit(result);
+    expect(result.current.id).toBe('c');
+    rerender({ wait: true });
+    expect(result.current.blocked).toBe(false);
+    expect(result.current.steps[0]?.state).toBe('done');
+    act(() => result.current.go('a'));
+    expect(result.current.blocked).toBe(true);
+  });
 });

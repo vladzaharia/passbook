@@ -158,12 +158,12 @@ export function initialDraft(
 
 /** The rail: Event doors skip When. */
 export const STEPS = [
-  { id: 'where', title: 'Where' },
-  { id: 'admits', title: 'Who gets in' },
-  { id: 'when', title: 'When' },
-  { id: 'scanners', title: 'Who scans' },
-  { id: 'devices', title: 'Devices' },
-  { id: 'review', title: 'Review' },
+  { id: 'where', title: 'Where', heading: 'Where it scans' },
+  { id: 'admits', title: 'Who gets in', heading: 'Pick who gets in' },
+  { id: 'when', title: 'When', heading: 'Set the hours' },
+  { id: 'scanners', title: 'Who scans', heading: 'Pick the staff' },
+  { id: 'devices', title: 'Devices', heading: 'Set up devices' },
+  { id: 'review', title: 'Review', heading: 'Check and set up' },
 ] as const;
 export type StepId = (typeof STEPS)[number]['id'];
 
@@ -172,12 +172,6 @@ export const eventCount = (d: Draft): number =>
 /** An event door admits events alone: the event's window decides when it is open. */
 export const skipsWhen = (d: Draft): boolean =>
   d.preset === 'event_night' && !d.any && eventCount(d) > 0;
-
-/** Next and Back hop over a skipped step. */
-export function stepAfter(d: Draft, at: number, dir: 1 | -1): number {
-  const next = at + dir;
-  return STEPS[next]?.id === 'when' && skipsWhen(d) ? next + dir : next;
-}
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 export function hoursProblem(h: HoursDraft): string | undefined {

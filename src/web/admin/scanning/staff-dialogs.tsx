@@ -1,192 +1,16 @@
-import { DoorOpen, ShieldCheck, Store } from 'lucide-react';
-import { useId, useState } from 'react';
 import type { z } from 'zod';
-import type { ScanRole } from '@/shared/contracts/scan.ts';
 import {
-  CreateScanStaffSchema,
   ScanStaffSchema,
   StaffPinSchema,
   UpdateScanStaffSchema,
 } from '@/shared/contracts/scanners.ts';
 import { api } from '@/web/lib/api.ts';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import {
-  Button,
-  Callout,
-  ConfirmDialog,
-  CopyButton,
-  Dialog,
-  DialogContent,
-  Form,
-  FormField,
-  Input,
-  OptionTile,
-  useFormErrors,
-} from '@/web/ui/index.ts';
+import { ConfirmDialog, Dialog, DialogContent, SecretReveal } from '@/web/ui/index.ts';
 import { issued } from './scanner-api.ts';
 
 export type ScanStaff = z.infer<typeof ScanStaffSchema>;
 
-const CreatedStaffSchema = StaffPinSchema.extend({ staff: ScanStaffSchema });
-const staffPath = (id: string) => `/api/v1/scan-staff/${encodeURIComponent(id)}`;
-
-const ROLES = [
-  { value: 'door', label: 'Door', description: 'Look up passes and check in.', icon: DoorOpen },
-  { value: 'desk', label: 'Desk', description: 'Also add, take and use up.', icon: Store },
-  {
-    value: 'manager',
-    label: 'Manager',
-    description: 'Set values and override check-ins and undos.',
-    icon: ShieldCheck,
-  },
-] as const;
-
-/** These writes deliberately bypass the mutation cache: create and reset return one-time PINs. */
-export function StaffFormDialog({
-  orgId,
-  staff,
-  onClose,
-  onSaved,
-  onCreated,
-  onUncertain,
-}: {
-  orgId: string;
-  staff?: ScanStaff;
-  onClose: () => void;
-  onSaved: () => void;
-  onCreated: (name: string, pin: string) => void;
-  onUncertain: () => void;
-}) {
-  const formId = useId();
-  const roleGroup = useId();
-  const [name, setName] = useState(staff?.name ?? '');
-  const [role, setRole] = useState<ScanRole>(staff?.role ?? 'door');
-  const [busy, setBusy] = useState(false);
-  const [uncertain, setUncertain] = useState(false);
-  const [error, setError] = useState('');
-  const [confirmRole, setConfirmRole] = useState(false);
-  const check = useFormErrors({
-    name: CreateScanStaffSchema.safeParse({ orgId, name, role }).success
-      ? undefined
-      : 'Enter a name of up to 40 plain-text characters.',
-  });
-  const dirty = name !== (staff?.name ?? '') || role !== (staff?.role ?? 'door');
-
-  async function save() {
-    const parsed = CreateScanStaffSchema.safeParse({ orgId, name, role });
-    if (!parsed.success) return;
-    setError('');
-    setBusy(true);
-    try {
-      if (staff) {
-        const body = UpdateScanStaffSchema.parse({
-          name: parsed.data.name,
-          role: parsed.data.role,
-        });
-        await api.patch(staffPath(staff.id), ScanStaffSchema, body, { query: { orgId } });
-        onSaved();
-      } else {
-        const created = await api.post('/api/v1/scan-staff', CreatedStaffSchema, parsed.data);
-        onCreated(created.staff.name, issued(created.pin));
-      }
-    } catch (cause) {
-      if (isApiError(cause) && (cause.status === 0 || cause.status >= 500)) {
-        setUncertain(true);
-        setError(
-          staff
-            ? 'Could not confirm whether changes were saved. Check the staff list before trying again.'
-            : 'Could not confirm whether staff was added. Check the staff list before trying again; if the PIN is missing, reset it.',
-        );
-        onUncertain();
-      } else {
-        setError(errorMessage(cause));
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function submit() {
-    if (uncertain || busy) return;
-    if (staff && role !== staff.role) setConfirmRole(true);
-    else void save();
-  }
-
-  return (
-    <>
-      <Dialog
-        open
-        dirty={dirty && !busy && !uncertain}
-        onOpenChange={(open) => !open && !busy && onClose()}
-      >
-        <DialogContent
-          title={staff ? `Edit ${staff.name}` : 'Add staff'}
-          description="Staff and their PINs are shared across live and test."
-          closeButton={!busy}
-          footer={
-            <>
-              <Button variant="outline" disabled={busy} onClick={onClose}>
-                {uncertain ? 'Close' : 'Cancel'}
-              </Button>
-              <Button
-                type="submit"
-                form={formId}
-                loading={busy}
-                disabled={!name.trim() || uncertain}
-              >
-                {staff ? 'Save changes' : 'Add staff'}
-              </Button>
-            </>
-          }
-        >
-          <Form {...check.form} id={formId} className="grid gap-4" onValid={submit}>
-            {error ? <Callout tone="danger">{error}</Callout> : null}
-            <FormField label="Name" required error={check.errors.name}>
-              {(props) => (
-                <Input
-                  {...props}
-                  value={name}
-                  maxLength={40}
-                  placeholder="Sam K."
-                  disabled={busy || uncertain}
-                  onChange={(event) => {
-                    setName(event.target.value);
-                  }}
-                />
-              )}
-            </FormField>
-            <fieldset className="grid gap-2" disabled={busy || uncertain}>
-              <legend className="mb-2 text-sm font-medium text-fg-strong">Role</legend>
-              {ROLES.map((option) => (
-                <OptionTile
-                  key={option.value}
-                  name={roleGroup}
-                  value={option.value}
-                  label={option.label}
-                  description={option.description}
-                  icon={option.icon}
-                  checked={role === option.value}
-                  onSelect={() => setRole(option.value)}
-                  disabled={busy || uncertain}
-                />
-              ))}
-            </fieldset>
-          </Form>
-        </DialogContent>
-      </Dialog>
-      {staff ? (
-        <ConfirmDialog
-          open={confirmRole}
-          onOpenChange={setConfirmRole}
-          title={`Change ${staff.name}'s role?`}
-          description="Their scanner permissions change in both live and test."
-          confirmLabel="Change role"
-          onConfirm={save}
-        />
-      ) : null}
-    </>
-  );
-}
+export const staffPath = (id: string) => `/api/v1/scan-staff/${encodeURIComponent(id)}`;
 
 export function StaffStatusDialog({
   orgId,
@@ -262,6 +86,7 @@ export function StaffResetDialog({
   );
 }
 
+/** A PIN, shown once: copy it, say it is saved, then Done. */
 export function StaffPinDialog({
   name,
   pin,
@@ -273,19 +98,14 @@ export function StaffPinDialog({
 }) {
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent title={`${name}'s PIN`} footer={<Button onClick={onClose}>Done</Button>}>
-        <div className="flex flex-col gap-4">
-          <Callout tone="warning">Shown once.</Callout>
-          <div className="flex items-center justify-center gap-2">
-            <output
-              aria-label="PIN"
-              className="select-all rounded-md border border-border bg-surface-sunken px-4 py-3 font-mono text-4xl font-semibold tracking-[0.2em] text-fg-strong tabular-nums"
-            >
-              {pin}
-            </output>
-            <CopyButton value={pin} label="Copy PIN" />
-          </div>
-        </div>
+      <DialogContent title={`${name}'s PIN`}>
+        <SecretReveal
+          savedLabel="I saved the PIN"
+          onDone={onClose}
+          fields={[
+            { label: 'PIN', value: pin, secret: false, copyLabel: 'Copy PIN', sheen: false },
+          ]}
+        />
       </DialogContent>
     </Dialog>
   );

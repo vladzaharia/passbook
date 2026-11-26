@@ -7,7 +7,7 @@ import type {
   EligibleTemplateList,
 } from '@/shared/contracts/template-releases.ts';
 import type { TemplateVersionDetailSchema } from '@/shared/contracts/templates.ts';
-import type { UnsavedChangesDialog } from '../../ui/index.ts';
+import type { UnsavedChangesDialog, WizardModel } from '../../ui/index.ts';
 import type { LivePreviewState } from './new-pass-preview.tsx';
 import type { OrgOption } from './new-pass-steps.tsx';
 import type { FormValues } from './schema-form/index.ts';
@@ -62,7 +62,7 @@ export interface NewPassRelease {
   schema: unknown;
 }
 
-interface ReviewedPass {
+export interface ReviewedPass {
   principalId: string;
   orgId: string;
   mode: 'live' | 'test';
@@ -88,9 +88,10 @@ export interface NewPassDraft {
   setSend: Setter<boolean>;
   validEmail: boolean;
   inputErrors: Partial<Record<string, string>>;
-  step: number;
-  at: StepId;
+  reviewed: ReviewedPass | undefined;
   setReviewed: Setter<ReviewedPass | undefined>;
+  /** The organization was picked on the wizard's first step, so that step stays in its rail. */
+  orgChosen: boolean;
   setConflict: Setter<boolean>;
   releaseReady: boolean;
   readyToCreate: boolean;
@@ -130,13 +131,12 @@ interface CreateIntent {
 type CreateMutation = {
   isPending: boolean;
   reset: () => void;
-  mutate: (intent: CreateIntent) => void;
+  mutateAsync: (intent: CreateIntent) => Promise<unknown>;
 } & ({ isError: true; error: Error } | { isError: false; error: Error | null });
 
 export interface NewPassCreation {
   payload: DraftPayload;
   create: CreateMutation;
-  fieldErrors: Record<string, string> | undefined;
   onCancel: () => void;
 }
 
@@ -145,21 +145,23 @@ export interface NewPassWizardModel {
   sessionReady: boolean;
   templateId: string | undefined;
   setPendingTemplateCommit: Setter<string | undefined>;
-  steps: { id: StepId; title: string }[];
+  wizard: WizardModel<StepId>;
   access: NewPassScope;
   releaseData: NewPassRelease;
   draft: NewPassDraft;
   creation: NewPassCreation;
-  check: {
-    errors: Partial<Record<string, string>>;
-    form: { invalid: boolean; onInvalid: () => void };
-    reset: () => void;
-  };
+  /** Field errors the step shows: the wizard's shown client errors, then the server's. */
+  errors: Partial<Record<string, string>>;
+  /** Server errors on the details fields, by the schema's own keys. */
+  fieldErrors: Record<string, string> | undefined;
   emailError: string | undefined;
   hiddenKeys: Set<string>;
-  go: (to: number) => void;
-  index: (id: StepId) => number;
-  advance: () => void;
+  /** The Create step's own button label. */
+  finishLabel: string;
+  /** Why Create is off, in a line the review card shows. */
+  notReady: string | undefined;
+  /** A deep link is about to land on Details: the step it leaves is not drawn. */
+  settling: boolean;
   live: LivePreviewState;
   name: string | undefined;
 }
