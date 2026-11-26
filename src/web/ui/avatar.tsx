@@ -49,7 +49,7 @@ export interface EntityAvatarProps {
 }
 
 /**
- * Users: initials on a hue from their id. Orgs: a monogram on the org accent with a 1 px foil
+ * Users: initials on a hue from their id. Orgs: two-letter initials (so "Harbor Lights" and "Henry's Gym" differ) on the org accent with a 1 px foil
  * edge. Decorative: the name sits next to it.
  */
 export function EntityAvatar({ kind, id, name, accent, size = 24, className }: EntityAvatarProps) {
@@ -78,7 +78,7 @@ export function EntityAvatar({ kind, id, name, accent, size = 24, className }: E
       )}
     >
       <span
-        data-initials={initialsOf(name).slice(0, 1)}
+        data-initials={initialsOf(name)}
         style={
           (own
             ? { background: own, color: onColor(own) }
