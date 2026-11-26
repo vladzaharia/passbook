@@ -1,0 +1,122 @@
+/* A group's count pops when it changes, not when the page opens (the change count remounts it). */
+@keyframes wr-count-pop {
+  40% {
+    transform: scale(1.35);
+  }
+}
+.wr-count {
+  animation: wr-count-pop var(--wl-dur-enter) var(--wl-ease-spring);
+}
+.wr {
+  position: relative;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wr-count {
+    animation: none;
+  }
+}
+
+/* The wallet tile: mini card, name and type, status. */
+.wt {
+  position: relative;
+  display: flex;
+  min-height: 4.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-lg, 0.75rem);
+  background-color: var(--pk-surface-raised);
+  padding: 0.75rem 0.875rem;
+}
+.wt-card {
+  --wt-fill: var(--pk-accent);
+  position: relative;
+  flex: none;
+  width: 2.125rem;
+  height: 2.875rem;
+  border-radius: 0.5rem;
+  background: var(--wt-fill);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--pk-fg-strong) 14%, transparent);
+  transition: transform var(--wl-dur-hover) var(--wl-ease-out);
+}
+.wt-card[data-target="samsung"] {
+  width: 3.25rem;
+  height: 2.125rem;
+  border-radius: 0.375rem;
+}
+.wt-card[data-target="apple"] {
+  border-radius: 0.375rem;
+}
+.wt-dot {
+  position: absolute;
+  top: 0.375rem;
+  left: 0.375rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.9);
+}
+.wt-card[data-target="apple"] .wt-dot {
+  border-radius: 2px;
+}
+.wt-code {
+  position: absolute;
+  right: 0.375rem;
+  bottom: 0.375rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.85);
+}
+.wt-card[data-target="samsung"] .wt-code {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+@media (max-width: 1023px) {
+  .wt-source {
+    display: none;
+  }
+}
+
+/* A blocked wallet shows its report and no card: a hatched outline holds the card's place. */
+.wm-blocked-card {
+  display: grid;
+  min-height: 14rem;
+  place-items: center;
+  border: 1px dashed var(--pk-border-strong);
+  border-radius: var(--pk-radius-lg, 0.75rem);
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}
+
+/* A tile in a narrow column (the import report's side panel): the pill drops under the name. */
+.wt-host {
+  container-type: inline-size;
+}
+@container (max-width: 24rem) {
+  .wt-static {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0.375rem;
+  }
+  .wt-static > .wt-card {
+    grid-row: 1 / 3;
+  }
+  .wt-static > :nth-child(3) {
+    grid-column: 2;
+    justify-self: start;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .wt-static .wt-pill {
+    white-space: normal;
+    text-align: left;
+    height: auto;
+  }
+}
+.wt-apple {
+  border: 1px dashed var(--pk-border-strong);
+}

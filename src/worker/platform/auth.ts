@@ -6,6 +6,8 @@ import type { SignInLevel } from '../../shared/sign-in.ts';
 import {
   authorityUnproven,
   capabilityState,
+  isMarkedOwnOnly,
+  isOwnOnly,
   proveCapability,
   verifiedScopeOf,
   verifiedScopes,
@@ -34,6 +36,7 @@ import {
   declareOidcOnly,
   declareSignIn,
   declareStepUp,
+  hasConsoleAccess,
   signInUrlFor,
 } from './sign-in-guard.ts';
 
@@ -161,7 +164,7 @@ function requireAdminRole(c: Context<AppBindings>, session: SessionAuth): void {
 
 export type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
 export { methodScope } from './route-auth-spec.ts';
-export { authorityUnproven, proveCapability, verifiedScopeOf };
+export { authorityUnproven, isMarkedOwnOnly, isOwnOnly, proveCapability, verifiedScopeOf };
 
 /**
  * The single place a route's `auth` is evaluated.
@@ -184,7 +187,13 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const sessionKind = sessionKindOf(auth);
   const stepUp = auth.stepUp;
   const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
-  const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
+  const level: SignInLevel = 'human' in auth || 'scope' in auth ? (auth.signIn ?? 'idp') : 'idp';
+  const ownOnlyAdmitted = 'scope' in auth && auth.signIn === 'any';
+  if (
+    ownOnlyAdmitted &&
+    ('capability' in auth || 'session' in auth || 'stepUp' in auth || 'tillKey' in auth)
+  )
+    throw new Error("signIn: 'any' cannot combine with capability, session, stepUp or tillKey");
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const sent = rule ? bearerOf(c) : null;
     if (sent === 'empty') throw apiKeyMissing();
@@ -229,13 +238,14 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       throw new IdpSignInRequiredError(signInUrlFor(c));
     }
     if (developer) assertDeveloper(c, session);
-    if (sessionKind === 'tenant') assertConsoleGroup(c, session);
+    const consoleAccess = !ownOnlyAdmitted || hasConsoleAccess(c, session);
+    if (sessionKind === 'tenant' && consoleAccess) assertConsoleGroup(c, session);
     if (sessionKind === 'admin') requireAdminRole(c, session);
     // After the role check: a person who could not do this anyway is not sent through a passkey prompt.
     if (stepUp && (!stepUp.when || (await stepUp.when(c))))
       assertStepUp(c, session, stepUp.maxAgeSec);
     if (sessionKind !== 'plain') {
-      const principal = { ...session, mode: modeFromRequest(c) };
+      const principal = { ...session, mode: modeFromRequest(c), consoleAccess };
       if (capability) capabilityState.set(principal, { capability, proven: false });
       trackFeatures(principal, feature, undefined);
       c.set('auth', principal);

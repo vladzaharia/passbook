@@ -8,6 +8,7 @@ import type {
   CompileResult,
   FidelityReport,
   WalletCompiler,
+  WalletPassView,
   WalletTarget,
 } from '@/passkit/wallets/types.ts';
 import { resolveWalletView } from '@/passkit/wallets/view.ts';
@@ -18,6 +19,8 @@ import type { PreviewSource } from './types.ts';
 export interface WalletOut {
   compiled: CompileResult;
   report: FidelityReport;
+  /** The view both compilers read: roles, fields and art as the report was built from them. */
+  view: WalletPassView;
 }
 export type WalletTargetOut = Record<Extract<WalletTarget, 'google' | 'samsung'>, WalletOut>;
 
@@ -90,7 +93,7 @@ export function compileWallets(
         ? { compile: { portalUrl: samsungPortalUrl(origin, where.website) } }
         : {}),
     });
-    out[target] = { compiled, report };
+    out[target] = { compiled, report, view };
   }
   return out;
 }

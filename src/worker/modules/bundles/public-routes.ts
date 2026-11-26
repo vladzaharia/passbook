@@ -45,8 +45,9 @@ import {
   fenceBundleStream,
   recordBundleEvents,
 } from './public-service.ts';
+import { registerBundleGoogleRoute } from './public-wallet.ts';
 import { bundleSwRoutes } from './routes-sw.ts';
-import { bundleWalletLocation, bundleWalletProviders } from './wallet-links.ts';
+import { bundleWalletLocation, bundleWalletProviders, googleBundleParts } from './wallet-links.ts';
 
 /** /b: bearer-link bundle page, its .pkpasses and per-pass files. No sign-in. */
 export const bundlePublicRoutes = createRouter();
@@ -105,6 +106,16 @@ register(
         mode: bundle.mode,
         items,
         addAllHref: `/b/${token}/passes.pkpasses`,
+        googleAllHrefs: Array.from(
+          {
+            length: googleBundleParts(
+              items.filter(
+                (i) => i.state === 'active' && i.walletOffers?.some((w) => w.provider === 'google'),
+              ).length,
+            ),
+          },
+          (_, part) => `/b/${token}/wallet/google?part=${part}`,
+        ),
         publicUrl: `${baseUrl(c.env)}/b/${token}`,
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(ctx, bundle.org_id),
@@ -306,3 +317,4 @@ register(
 );
 
 registerMemberPage(bundlePublicRoutes);
+registerBundleGoogleRoute(bundlePublicRoutes);

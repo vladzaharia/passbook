@@ -6,7 +6,12 @@ import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import type { WalletCredential } from '@/shared/contracts/wallet-providers.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { credential, enrolment, renderOrgAccounts } from './wallet-accounts-test-fixtures.ts';
+import {
+  credential,
+  enrolment,
+  renderOrgAccounts,
+  walletRelease,
+} from './wallet-accounts-test-fixtures.ts';
 
 const MANAGE: OrgCapability[] = ['org:read', 'integrations:read', 'integrations:manage'];
 beforeEach(() => {
@@ -152,7 +157,8 @@ describe('migration', () => {
   });
   const handlers = (resolve: (body: unknown) => Response) => ({
     '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
-    '/api/v1/platform/wallet-credentials': () => json({ items: [], nextCursor: null }),
+    '/api/v1/platform/wallet-credentials': () =>
+      json({ items: [], nextCursor: null, release: walletRelease() }),
     '/api/v1/platform/wallet-enrolments': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials/migrate': (_u: URL, init: RequestInit | undefined) =>
       init?.method === 'POST'

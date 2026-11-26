@@ -1,7 +1,9 @@
 import {
   ArchiveRestore,
+  Asterisk,
   Ban,
   Copy,
+  Crosshair,
   Download,
   ExternalLink,
   Eye,
@@ -60,6 +62,11 @@ export const ACTION_ICON = {
   edit: Pencil,
   /** Open the visual designer: its own verb, not a field edit. */
   design: PenTool,
+  /** A wallet report row: jump to its source, leave it out on purpose (and undo), require it. */
+  goTo: Crosshair,
+  leaveOut: EyeOff,
+  showAgain: Eye,
+  require: Asterisk,
 } as const satisfies Record<string, LucideIcon>;
 
 export const THEME_ICON = { system: Monitor, light: Sun, dark: Moon } as const;
