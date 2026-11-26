@@ -58306,9 +58306,6 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
-                "title": {
-                  "type": "string"
-                },
                 "templateName": {
                   "type": "string"
                 },
@@ -58325,7 +58322,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -58505,6 +58501,13 @@
                     "voided"
                   ]
                 },
+                "holding": {
+                  "type": "string",
+                  "enum": [
+                    "owned",
+                    "waiting"
+                  ]
+                },
                 "channels": {
                   "type": "array",
                   "items": {
@@ -58536,6 +58539,7 @@
                 "timeZone",
                 "templateName",
                 "status",
+                "holding",
                 "channels",
                 "issuedAt",
                 "updatedAt"
@@ -58785,9 +58789,6 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
-                "title": {
-                  "type": "string"
-                },
                 "templateName": {
                   "type": "string"
                 },
@@ -58804,7 +58805,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -59086,9 +59086,6 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
-                "title": {
-                  "type": "string"
-                },
                 "templateName": {
                   "type": "string"
                 },
@@ -59105,7 +59102,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -59387,9 +59383,6 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
-                "title": {
-                  "type": "string"
-                },
                 "templateName": {
                   "type": "string"
                 },
@@ -59406,7 +59399,6 @@
               },
               "required": [
                 "id",
-                "title",
                 "templateName",
                 "orgName",
                 "status"
@@ -122807,7 +122799,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": false,
             "name": "cursor",
