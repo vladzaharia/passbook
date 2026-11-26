@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { operationsKitCss, playgroundKitCss, searchKitCss } from './lib/playground-kit.ts';
+import {
+  operationsKitCss,
+  playgroundKitCss,
+  searchKitCss,
+  webhookSetupKitCss,
+} from './lib/playground-kit.ts';
 
 const root = resolve(import.meta.dirname, '..');
 
@@ -47,5 +52,24 @@ describe('generated operations kit CSS (the developer site activity tray)', () =
       expect(css, cls).toContain(cls);
     expect(css).not.toMatch(/(^|\})(html|body|\*),?(:before|:after|::backdrop)?\{/);
     expect(css).not.toContain('22rem}');
+  });
+});
+
+describe('generated webhook-setup kit CSS (the developer site Workbench and docs)', () => {
+  it('is what the generator makes from the kit sources today (run `npm run gen`)', async () => {
+    const generated = readFileSync(resolve(root, 'src/generated/webhook-setup-kit.css'), 'utf8');
+    expect(generated).toBe(await webhookSetupKitCss(root));
+  });
+
+  it('carries the kit parts and the button variants in px, without preflight', () => {
+    const css = readFileSync(resolve(root, 'src/generated/webhook-setup-kit.css'), 'utf8');
+    for (const cls of [
+      '.grid-cols-\\[minmax\\(0\\,1fr\\)_22rem\\]',
+      '.font-mono',
+      '.min-h-11',
+      '.rounded-md',
+    ])
+      expect(css, cls).toContain(cls);
+    expect(css).not.toMatch(/(^|\})(html|body|\*),?(:before|:after|::backdrop)?\{/);
   });
 });

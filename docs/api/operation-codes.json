@@ -802,6 +802,23 @@
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
+  "connections get /{id}/setup": [
+    "CONNECTION_NOT_FOUND",
+    "CONNECTOR_NOT_FOUND",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
+  "connections get /{id}/webhook-arrivals": [
+    "CONNECTION_NOT_FOUND",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
   "connections get /{id}/webhook-failures": [
     "CONNECTION_NOT_FOUND",
     "FORBIDDEN",
@@ -1063,7 +1080,8 @@
     "UNAUTHENTICATED",
     "UNSAFE_URL",
     "VALIDATION",
-    "WALLET_PROJECTION_UNSUPPORTED"
+    "WALLET_PROJECTION_UNSUPPORTED",
+    "WEBHOOK_NOT_FOUND"
   ],
   "connections post /{id}/probe": [
     "CONNECTION_NOT_FOUND",
@@ -1212,6 +1230,15 @@
     "UNAUTHENTICATED"
   ],
   "connectors get /": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_REQUIRED",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "VALIDATION"
+  ],
+  "connectors get /webhook-push/recipes/{recipe}/setup": [
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
@@ -8807,6 +8834,13 @@
     "WEBHOOK_ENDPOINT_NOT_FOUND"
   ],
   "webhooks get /": [
+    "FORBIDDEN",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "VALIDATION"
+  ],
+  "webhooks get /setup": [
     "FORBIDDEN",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",

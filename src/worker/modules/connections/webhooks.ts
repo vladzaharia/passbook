@@ -19,6 +19,7 @@ import { captureConnectionRelease, logRecordsSkipped } from './records.ts';
 import { getConnection } from './repo.ts';
 import { classify, prepare } from './runtime.ts';
 import { MAX_RECORDS_PER_STEP } from './sync.ts';
+import { recordArrival, rejectReason } from './webhook-arrivals.ts';
 import { pinWebhookKeyContext } from './webhook-key-context.ts';
 import { redispatchStagedWebhook } from './webhook-redispatch.ts';
 import {
@@ -57,6 +58,8 @@ export async function receiveWebhook(
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
     const { code } = classify(error);
+    const reason = rejectReason(error);
+    if (reason) await recordArrival(sctx, conn, req, { outcome: 'rejected', reason });
     if (code === 'AUTH') {
       throw new UnauthenticatedError('The webhook signature is invalid.', 'WEBHOOK_SIGNATURE');
     }
@@ -79,6 +82,11 @@ export async function receiveWebhook(
   }
   if (verified.ignored) {
     // Acknowledged so the sender does not retry or disable the endpoint; nothing is stored or applied.
+    await recordArrival(sctx, conn, req, {
+      outcome: 'ignored',
+      reason: verified.ignored,
+      usedPrevious: verified.usedPreviousSecret === true,
+    });
     sctx.log.info('connection.webhook_ignored', {
       connectionId,
       code: 'WEBHOOK_EVENT_IGNORED',
@@ -92,12 +100,14 @@ export async function receiveWebhook(
     (verified.signedAt === undefined ||
       !withinWindow(sctx.clock.now(), verified.signedAt, MAX_REPLAY_AGE_MS, BODY_FUTURE_SKEW_MS))
   ) {
+    await recordArrival(sctx, conn, req, { outcome: 'rejected', reason: 'signature_expired' });
     throw new UnauthenticatedError('The webhook signature is invalid.', 'WEBHOOK_SIGNATURE');
   }
 
   // A far-future source version would pin the ref: every later record would read as stale.
   const horizon = sctx.clock.now() + BODY_FUTURE_SKEW_MS;
   if (Object.values(verified.versions ?? {}).some((v) => !(Number.isFinite(v) && v <= horizon))) {
+    await recordArrival(sctx, conn, req, { outcome: 'rejected', reason: 'payload' });
     throw new BadRequestError('The webhook body is invalid.', 'WEBHOOK_PAYLOAD');
   }
 
@@ -126,6 +136,11 @@ export async function receiveWebhook(
     });
     throw new UnavailableError('Could not accept the webhook. Retry later.', 'WEBHOOK_UNAVAILABLE');
   }
+  await recordArrival(sctx, conn, req, {
+    outcome: staged === 'duplicate' ? 'duplicate' : 'accepted',
+    eventId: verified.eventId,
+    usedPrevious: verified.usedPreviousSecret === true,
+  });
   if (staged === 'redispatch') {
     await redispatchStagedWebhook(
       sctx,
