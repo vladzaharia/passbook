@@ -175,7 +175,9 @@ function StepPicker({ wizard, line }: { wizard: WizardRail; line: ReactNode }) {
               aria-current={s.state === 'current' ? 'step' : undefined}
               onSelect={() => wizard.go(s.id)}
             >
-              <StepMarker state={s.state} n={n} size="sm" />
+              <span aria-hidden className="inline-flex">
+                <StepMarker state={s.state} n={n} size="sm" />
+              </span>
               <span className="min-w-0 flex-1 truncate">{s.title}</span>
               {word ? <span className="text-xs text-fg-muted">{word}</span> : null}
             </DropdownMenuItem>

@@ -54,9 +54,13 @@ describe('template release actions', () => {
     expect(within(dialog).getByText('5')).toBeInTheDocument();
     expect(within(dialog).getByText('6')).toBeInTheDocument();
     const confirm = within(dialog).getByRole('button', { name: 'Restore' });
-    expect(confirm).toBeDisabled();
+    // The form never hard-disables its submit: a press with no reason names the field and sends nothing.
+    await user.click(confirm);
+    expect(await within(dialog).findByText('Give a reason.')).toBeInTheDocument();
+    expect(confirm).not.toBeDisabled();
     await user.type(reason, '   ');
-    expect(confirm).toBeDisabled();
+    await user.click(confirm);
+    expect(await within(dialog).findByText('Give a reason.')).toBeInTheDocument();
     expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
     await user.clear(reason);
     await user.type(reason, '  Barcode regression  ');
