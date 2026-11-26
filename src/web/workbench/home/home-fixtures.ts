@@ -122,17 +122,6 @@ const progress = (over: Partial<DeveloperHome['progress'] & object> = {}) => ({
   ...over,
 });
 
-export const homeNone: DeveloperHome = {
-  ...base(),
-  state: 'none',
-  sandbox: null,
-  quotas: null,
-  progress: null,
-  usage: null,
-  keys: [],
-  endpoints: [],
-};
-
 export const homeFresh: DeveloperHome = { ...base(), state: 'open', progress: progress() };
 
 const pass = (i: number, title: string, subtitle: string) => ({
@@ -219,16 +208,4 @@ export const homeDone: DeveloperHome = {
     doneMs: 202_000,
     next: null,
   }),
-};
-
-export const homeClosed: DeveloperHome = {
-  ...homeDone,
-  state: 'closed',
-  sandbox: {
-    ...(homeDone.sandbox as NonNullable<DeveloperHome['sandbox']>),
-    closedAt: NOW - 2 * DAY,
-    closeReason: 'user',
-    reopenUntil: NOW + 28 * DAY,
-  },
-  keys: [],
 };
