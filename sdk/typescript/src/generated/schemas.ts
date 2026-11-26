@@ -1044,6 +1044,236 @@ export type ConnectionsListResponse = {
   nextCursor: string | null;
 };
 
+export type ConnectionsProbeConfigParams = {
+  orgId: string;
+  connectorType: "http-json";
+  config: Record<string, unknown>;
+  secrets?: Record<string, string>;
+  target: "list" | "record";
+  ref?: string;
+  next?: string;
+};
+
+export type ConnectionsProbeConfigResponse = {
+  ok: boolean;
+  errorCode?: "AUTH" | "FORBIDDEN" | "NOT_FOUND" | "RATE_LIMITED" | "TIMEOUT" | "UPSTREAM" | "UNSAFE_URL" | "REDIRECT_BLOCKED" | "NOT_JSON" | "TOO_LARGE" | "NO_RECORDS" | "OFF_ORIGIN" | "CONFIG";
+  retryAfterMs?: number;
+  durationMs: number;
+  request: {
+    method: "GET";
+    url: string;
+    status: number;
+    bytes: number;
+    contentType: string | null;
+  } | null;
+  headers: Record<string, string>;
+  body?: unknown;
+  pruned: {
+    arrays: Array<{
+      pointer: string;
+      total: number;
+      shown: number;
+    }>;
+    strings: number;
+    depthCut: boolean;
+    nodesCut: boolean;
+  } | null;
+  detections: {
+    records: Array<{
+      pointer: string;
+      jsonPath: string;
+      count: number;
+      score: number;
+      reason: "root" | "name" | "shape";
+    }>;
+    pagination: Array<{
+      confidence: "high" | "medium" | "low";
+      config: {
+        style: "none";
+      } | {
+        style: "cursor";
+        param: string;
+        cursorPointer: string;
+        hasMorePointer?: string;
+        from?: "body" | "last-id";
+      } | {
+        style: "next-link";
+        nextPointer: string;
+      } | {
+        style: "link-header";
+      } | {
+        style: "page";
+        param: string;
+        start: 0 | 1;
+        sizeParam?: string;
+        size?: number;
+        totalPagesPointer?: string;
+        totalPagesHeader?: string;
+      } | {
+        style: "offset";
+        param: string;
+        sizeParam: string;
+        size: number;
+        totalPointer?: string;
+      };
+      evidence: string;
+    }>;
+    id: Array<{
+      pointer: string;
+      jsonPath: string;
+      unique: boolean;
+      score: number;
+    }>;
+    updatedAt: Array<{
+      pointer: string;
+      jsonPath: string;
+      format: "iso" | "unix" | "unix-ms";
+      score: number;
+    }>;
+    holderEmail: Array<{
+      pointer: string;
+      jsonPath: string;
+    }>;
+    fields: Array<{
+      pointer: string;
+      jsonPath: string;
+      label: string;
+      type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+      samples: Array<string>;
+      values?: Array<{
+        value: string;
+        count: number;
+      }>;
+    }>;
+    rateLimit: {
+      limit?: number;
+      windowSeconds?: number;
+      remaining?: number;
+    } | null;
+  } | null;
+  page: {
+    index: number;
+    from: number;
+    to: number;
+    overlap: number;
+    next: string | null;
+  } | null;
+};
+
+export type ConnectionsProbeParams = {
+  config?: Record<string, unknown>;
+  secrets?: Record<string, string>;
+  target: "list" | "record";
+  ref?: string;
+  next?: string;
+};
+
+export type ConnectionsProbeResponse = {
+  ok: boolean;
+  errorCode?: "AUTH" | "FORBIDDEN" | "NOT_FOUND" | "RATE_LIMITED" | "TIMEOUT" | "UPSTREAM" | "UNSAFE_URL" | "REDIRECT_BLOCKED" | "NOT_JSON" | "TOO_LARGE" | "NO_RECORDS" | "OFF_ORIGIN" | "CONFIG";
+  retryAfterMs?: number;
+  durationMs: number;
+  request: {
+    method: "GET";
+    url: string;
+    status: number;
+    bytes: number;
+    contentType: string | null;
+  } | null;
+  headers: Record<string, string>;
+  body?: unknown;
+  pruned: {
+    arrays: Array<{
+      pointer: string;
+      total: number;
+      shown: number;
+    }>;
+    strings: number;
+    depthCut: boolean;
+    nodesCut: boolean;
+  } | null;
+  detections: {
+    records: Array<{
+      pointer: string;
+      jsonPath: string;
+      count: number;
+      score: number;
+      reason: "root" | "name" | "shape";
+    }>;
+    pagination: Array<{
+      confidence: "high" | "medium" | "low";
+      config: {
+        style: "none";
+      } | {
+        style: "cursor";
+        param: string;
+        cursorPointer: string;
+        hasMorePointer?: string;
+        from?: "body" | "last-id";
+      } | {
+        style: "next-link";
+        nextPointer: string;
+      } | {
+        style: "link-header";
+      } | {
+        style: "page";
+        param: string;
+        start: 0 | 1;
+        sizeParam?: string;
+        size?: number;
+        totalPagesPointer?: string;
+        totalPagesHeader?: string;
+      } | {
+        style: "offset";
+        param: string;
+        sizeParam: string;
+        size: number;
+        totalPointer?: string;
+      };
+      evidence: string;
+    }>;
+    id: Array<{
+      pointer: string;
+      jsonPath: string;
+      unique: boolean;
+      score: number;
+    }>;
+    updatedAt: Array<{
+      pointer: string;
+      jsonPath: string;
+      format: "iso" | "unix" | "unix-ms";
+      score: number;
+    }>;
+    holderEmail: Array<{
+      pointer: string;
+      jsonPath: string;
+    }>;
+    fields: Array<{
+      pointer: string;
+      jsonPath: string;
+      label: string;
+      type: "text" | "number" | "boolean" | "date" | "email" | "url" | "list";
+      samples: Array<string>;
+      values?: Array<{
+        value: string;
+        count: number;
+      }>;
+    }>;
+    rateLimit: {
+      limit?: number;
+      windowSeconds?: number;
+      remaining?: number;
+    } | null;
+  } | null;
+  page: {
+    index: number;
+    from: number;
+    to: number;
+    overlap: number;
+    next: string | null;
+  } | null;
+};
+
 export type ConnectionsRetrieveResponse = {
   id: string;
   orgId: string;
@@ -7455,7 +7685,7 @@ export type PlatformUsersEmailsCreateResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -7506,7 +7736,7 @@ export type PlatformUsersEmailsDeleteResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -7557,7 +7787,7 @@ export type PlatformUsersEmailsMakePrimaryResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -7583,6 +7813,23 @@ export type PlatformUsersListResponse = {
     lastLoginAt: number | null;
     passCount?: number;
     signInMethods?: Array<"oidc" | "magic_link" | "breakglass">;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformUsersPassesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    orgName: string;
+    orgStatus: "active" | "suspended";
+    timeZone: string;
+    templateName: string;
+    status: "active" | "voided";
+    holding: "owned" | "waiting";
+    channels: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+    issuedAt: number;
+    updatedAt: number;
   }>;
   nextCursor: string | null;
 };
@@ -7623,7 +7870,7 @@ export type PlatformUsersRetrieveResponse = {
   }>;
   passes: Array<{
     id: string;
-    title: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";

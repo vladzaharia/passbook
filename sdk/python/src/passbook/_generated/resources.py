@@ -533,6 +533,23 @@ class ConnectionsResource:
         """Preview a sync `POST /api/v1/connections/{id}/preview`"""
         return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", result=m.ConnectionsPreviewResult, **opts)
 
+    def probe(
+        self,
+        id: str,
+        body: m.ConnectionsProbeBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsProbeResult:
+        """Probe a saved REST connection `POST /api/v1/connections/{id}/probe`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/probe", body=body, result=m.ConnectionsProbeResult, **opts)
+
+    def probe_config(
+        self,
+        body: m.ConnectionsProbeConfigBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsProbeConfigResult:
+        """Probe an unsaved REST configuration `POST /api/v1/connections/probe`"""
+        return self._core.request("POST", "/api/v1/connections/probe", body=body, result=m.ConnectionsProbeConfigResult, **opts)
+
     def retrieve(
         self,
         id: str,

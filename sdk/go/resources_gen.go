@@ -541,6 +541,24 @@ func (r *ConnectionsResource) Preview(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
+// Probe Probe a saved REST connection `POST /api/v1/connections/{id}/probe`
+func (r *ConnectionsResource) Probe(ctx context.Context, id string, body *ConnectionsProbeBody, opts ...RequestOption) (*ConnectionsProbeResult, error) {
+	var out ConnectionsProbeResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/probe", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ProbeConfig Probe an unsaved REST configuration `POST /api/v1/connections/probe`
+func (r *ConnectionsResource) ProbeConfig(ctx context.Context, body *ConnectionsProbeConfigBody, opts ...RequestOption) (*ConnectionsProbeConfigResult, error) {
+	var out ConnectionsProbeConfigResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/probe", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Retrieve Connection with runs and metrics `GET /api/v1/connections/{id}`
 func (r *ConnectionsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsRetrieveResult, error) {
 	var out ConnectionsRetrieveResult

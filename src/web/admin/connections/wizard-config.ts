@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { ConnectorInfoSchema } from '@/shared/contracts/connections.ts';
 import { cleanValues, validateValues } from '../passes/schema-form/index.ts';
-import { flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
+import { flattenSchema, WIZARD_HIDDEN, withoutOpaque } from './config-schema.ts';
+import { restErrors } from './rest/rest-values.ts';
 import type { ConfigDraft } from './wizard-steps.tsx';
 
 type Connector = z.infer<typeof ConnectorInfoSchema>;
@@ -18,7 +19,10 @@ export function useWizardConfig(info: Connector | undefined, draft: ConfigDraft)
         .map(([k, v]) => [k, String(v)]),
     );
   }, [info, draft.secrets, authType]);
-  const cfgErrors = flat ? validateValues(flat, draft.config) : {};
+  const cfgErrors = {
+    ...(flat ? validateValues(withoutOpaque(flat), draft.config) : {}),
+    ...(info?.type === 'http-json' ? restErrors(draft.config) : {}),
+  };
   const secErrors = useMemo(() => {
     const schema = info?.secretSchema;
     if (!schema) return {};

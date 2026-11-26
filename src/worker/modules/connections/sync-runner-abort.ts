@@ -45,3 +45,24 @@ export async function recordAbort(
     sctx.log.error('connection.sync_abort_record_failed', { code: 'INTERNAL' });
   }
 }
+
+/** The connection is gone: the workflow completes without a run record. */
+export async function markGone(
+  sctx: ServiceContext,
+  step: { do<T>(name: string, fn: () => Promise<T>): Promise<T> },
+  p: Parameters<typeof assertSyncAuthority>[1] & { instanceId: string },
+): Promise<void> {
+  await step.do('mark-gone', async () => {
+    await assertSyncAuthority(sctx, p);
+    await setWorkflowStatus(
+      sctx.env.DB,
+      p.instanceId,
+      'complete',
+      sctx.clock.now(),
+      null,
+      undefined,
+      p.credentialKeysetCommitment,
+      p,
+    );
+  });
+}

@@ -88,8 +88,9 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
         <span className="tabular-nums">{formatCount(row.original.passCount)}</span>
         {row.original.primaryEmail ? (
           <MetaLink
-            to="/admin/passes"
-            search={{ q: row.original.primaryEmail }}
+            to="/admin/users/$userId"
+            params={{ userId: row.original.id }}
+            hash="passes"
             aria-label={`Find passes for ${row.original.primaryEmail}`}
             className="inline-flex items-center text-xs text-accent-fg pointer-coarse:min-h-11"
           >

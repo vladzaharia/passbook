@@ -9,9 +9,11 @@ import {
   UserDetailSchema,
   UserListQuerySchema,
   UserListSchema,
+  UserPassesQuerySchema,
+  UserPassListSchema,
   UserSchema,
 } from '../../../shared/contracts/index.ts';
-import { currentUserId, requireAdmin } from '../../platform/auth.ts';
+import { currentUserId, requireAdmin, requireStrictSession } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
@@ -21,6 +23,7 @@ import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts'
 import { makePrimaryEmail, removeEmail, requestEmailProof } from './emails.ts';
 import { getUserDetail, listUsers, setUserStatus } from './service.ts';
 import { revokeUserSession, revokeUserSessions } from './sessions.ts';
+import { listPassesOfUser } from './user-passes.ts';
 
 type C = Context<AppBindings>;
 /** The requester's own session id hash, so the detail can mark "This device". */
@@ -30,6 +33,8 @@ export const usersRoutes = createRouter();
 guard(usersRoutes, requireAdmin);
 // Adding an email to someone's account is how it is taken over: a recent sign-in.
 usersRoutes.post('/:id/emails', requireStepUp(STEP_UP_SECONDS));
+// A support read across organizations: a strong sign-in, whatever the admin role's source.
+usersRoutes.get('/:id/passes', requireStrictSession);
 usersRoutes.use('*', limitBody(64 * 1024));
 
 register(
@@ -42,7 +47,7 @@ register(
     query: UserListQuerySchema,
     response: UserListSchema,
   },
-  async (c) => c.json(await listUsers(serviceContext(c), c.req.valid('query'))),
+  async (c) => c.json(await listUsers(serviceContext(c), c.req.valid('query'), currentUserId(c))),
 );
 register(
   usersRoutes,
@@ -55,7 +60,35 @@ register(
     response: UserDetailSchema,
   },
   async (c) =>
-    c.json(await getUserDetail(serviceContext(c), c.req.valid('param').id, ownSession(c))),
+    c.json(
+      await getUserDetail(
+        serviceContext(c),
+        c.req.valid('param').id,
+        ownSession(c),
+        currentUserId(c),
+      ),
+    ),
+);
+register(
+  usersRoutes,
+  'users',
+  {
+    method: 'get',
+    path: '/{id}/passes',
+    summary: "List a user's passes in every organization",
+    params: IdParamSchema,
+    query: UserPassesQuerySchema,
+    response: UserPassListSchema,
+  },
+  async (c) =>
+    c.json(
+      await listPassesOfUser(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').id,
+        c.req.valid('query'),
+      ),
+    ),
 );
 register(
   usersRoutes,

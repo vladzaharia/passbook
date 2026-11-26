@@ -22,7 +22,6 @@ import { useUserTagList } from './tags-extra-api.ts';
 
 interface UserPass {
   id: string;
-  title: string;
   orgName: string;
   status: string;
 }

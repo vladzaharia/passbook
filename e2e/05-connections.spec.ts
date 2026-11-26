@@ -22,6 +22,8 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await page.getByRole('button', { name: 'Next' }).click();
 
   await page.getByLabel(/^Name/).fill(name);
+  // The wizard starts on Gym members; this spec asserts Classic's m-00N refs and holder emails.
+  await page.getByRole('radio', { name: /Classic/ }).check({ force: true });
   await page.getByLabel('Records', { exact: true }).fill('3');
   await page.getByLabel('Holder domain', { exact: true }).fill(domain);
   await page.getByRole('button', { name: 'Next' }).click();
