@@ -7413,11 +7413,11 @@ export type PlatformGroupsClaimsUpdateResponse = {
   dryRun: boolean;
 };
 
-export type PlatformIdpReconcileParams = {
+export type PlatformIdpCheckParams = {
   dryRun?: boolean;
 };
 
-export type PlatformIdpReconcileResponse = {
+export type PlatformIdpCheckResponse = {
   operation: {
     id: string;
     kind: string;

@@ -1146,11 +1146,11 @@ __all__ = [
     "PlatformGroupsClaimsRetrieveResponseClaimsValue",
     "PlatformGroupsClaimsUpdateParams",
     "PlatformGroupsClaimsUpdateResponse",
-    "PlatformIdpReconcileParams",
-    "PlatformIdpReconcileResponse",
-    "PlatformIdpReconcileResponseOperation",
-    "PlatformIdpReconcileResponseOperationStartedBy",
-    "PlatformIdpReconcileResponseOperationStepsItem",
+    "PlatformIdpCheckParams",
+    "PlatformIdpCheckResponse",
+    "PlatformIdpCheckResponseOperation",
+    "PlatformIdpCheckResponseOperationStartedBy",
+    "PlatformIdpCheckResponseOperationStepsItem",
     "PlatformIdpScimBreakerClearResponse",
     "PlatformIdpScimBreakerClearResponseOperation",
     "PlatformIdpScimBreakerClearResponseOperationStartedBy",
@@ -9008,13 +9008,13 @@ class PlatformGroupsClaimsUpdateResponse(_Model):
     removed: _List[str]
     dryRun: bool
 
-class PlatformIdpReconcileParams(_Model):
+class PlatformIdpCheckParams(_Model):
     dryRun: bool | None = None
 
-class PlatformIdpReconcileResponse(_Model):
-    operation: PlatformIdpReconcileResponseOperation
+class PlatformIdpCheckResponse(_Model):
+    operation: PlatformIdpCheckResponseOperation
 
-class PlatformIdpReconcileResponseOperation(_Model):
+class PlatformIdpCheckResponseOperation(_Model):
     id: str
     kind: str
     status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
@@ -9024,11 +9024,11 @@ class PlatformIdpReconcileResponseOperation(_Model):
     mode: _Literal["live", "test", None] | str
     target: _Dict[str, _Any] | None
     step: str | None
-    steps: _List[PlatformIdpReconcileResponseOperationStepsItem]
+    steps: _List[PlatformIdpCheckResponseOperationStepsItem]
     attempt: int
     cancelable: bool
     cancelRequested: bool
-    startedBy: PlatformIdpReconcileResponseOperationStartedBy
+    startedBy: PlatformIdpCheckResponseOperationStartedBy
     createdAt: int
     startedAt: int | None
     updatedAt: int
@@ -9038,11 +9038,11 @@ class PlatformIdpReconcileResponseOperation(_Model):
     revision: int
     pollAfterMs: int
 
-class PlatformIdpReconcileResponseOperationStartedBy(_Model):
+class PlatformIdpCheckResponseOperationStartedBy(_Model):
     type: _Literal["user", "api_key", "system"] | str
     id: str | None
 
-class PlatformIdpReconcileResponseOperationStepsItem(_Model):
+class PlatformIdpCheckResponseOperationStepsItem(_Model):
     key: str
     label: str
     state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str

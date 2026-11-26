@@ -8559,45 +8559,45 @@ type PlatformGroupsClaimsUpdateResponse struct {
 	DryRun  bool     `json:"dryRun"`
 }
 
-type PlatformIdpReconcileParams struct {
+type PlatformIdpCheckParams struct {
 	DryRun *bool `json:"dryRun,omitempty"`
 }
 
-type PlatformIdpReconcileResponse struct {
-	Operation PlatformIdpReconcileResponseOperation `json:"operation"`
+type PlatformIdpCheckResponse struct {
+	Operation PlatformIdpCheckResponseOperation `json:"operation"`
 }
 
-type PlatformIdpReconcileResponseOperation struct {
-	ID              string                                           `json:"id"`
-	Kind            string                                           `json:"kind"`
-	Status          string                                           `json:"status"`
-	Title           string                                           `json:"title"`
-	Text            string                                           `json:"text"`
-	OrgID           *string                                          `json:"orgId"`
-	Mode            *string                                          `json:"mode"`
-	Target          map[string]any                                   `json:"target"`
-	Step            *string                                          `json:"step"`
-	Steps           []PlatformIdpReconcileResponseOperationStepsItem `json:"steps"`
-	Attempt         int64                                            `json:"attempt"`
-	Cancelable      bool                                             `json:"cancelable"`
-	CancelRequested bool                                             `json:"cancelRequested"`
-	StartedBy       PlatformIdpReconcileResponseOperationStartedBy   `json:"startedBy"`
-	CreatedAt       int64                                            `json:"createdAt"`
-	StartedAt       *int64                                           `json:"startedAt"`
-	UpdatedAt       int64                                            `json:"updatedAt"`
-	FinishedAt      *int64                                           `json:"finishedAt"`
-	Error           map[string]any                                   `json:"error"`
-	Result          map[string]any                                   `json:"result"`
-	Revision        int64                                            `json:"revision"`
-	PollAfterMs     int64                                            `json:"pollAfterMs"`
+type PlatformIdpCheckResponseOperation struct {
+	ID              string                                       `json:"id"`
+	Kind            string                                       `json:"kind"`
+	Status          string                                       `json:"status"`
+	Title           string                                       `json:"title"`
+	Text            string                                       `json:"text"`
+	OrgID           *string                                      `json:"orgId"`
+	Mode            *string                                      `json:"mode"`
+	Target          map[string]any                               `json:"target"`
+	Step            *string                                      `json:"step"`
+	Steps           []PlatformIdpCheckResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                        `json:"attempt"`
+	Cancelable      bool                                         `json:"cancelable"`
+	CancelRequested bool                                         `json:"cancelRequested"`
+	StartedBy       PlatformIdpCheckResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                        `json:"createdAt"`
+	StartedAt       *int64                                       `json:"startedAt"`
+	UpdatedAt       int64                                        `json:"updatedAt"`
+	FinishedAt      *int64                                       `json:"finishedAt"`
+	Error           map[string]any                               `json:"error"`
+	Result          map[string]any                               `json:"result"`
+	Revision        int64                                        `json:"revision"`
+	PollAfterMs     int64                                        `json:"pollAfterMs"`
 }
 
-type PlatformIdpReconcileResponseOperationStartedBy struct {
+type PlatformIdpCheckResponseOperationStartedBy struct {
 	Type string  `json:"type"`
 	ID   *string `json:"id"`
 }
 
-type PlatformIdpReconcileResponseOperationStepsItem struct {
+type PlatformIdpCheckResponseOperationStepsItem struct {
 	Key           string  `json:"key"`
 	Label         string  `json:"label"`
 	State         string  `json:"state"`

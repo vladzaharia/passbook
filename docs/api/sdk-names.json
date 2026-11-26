@@ -1365,7 +1365,7 @@
   },
   "polaris-operations.postPlatformIdpReconcile": {
     "resource": "platform.idp",
-    "method": "reconcile"
+    "method": "check"
   },
   "polaris-operations.postPlatformIdpScimBreakerClear": {
     "resource": "platform.idp.scimBreaker",
