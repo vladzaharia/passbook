@@ -53,6 +53,16 @@ describe('the org request log', () => {
       expect(everything, secret).not.toContain(secret);
   });
 
+  it('stores a path without terminal escape characters', async () => {
+    const { org, key } = await realOrg();
+    await t.call('/passes/%1B%5D52%3Bc%3BAAAA%07', { headers: key.headers });
+    await t.settle();
+    const [row] = await t.rows(org.id);
+    expect(String(row?.path)).toContain('?');
+    expect(String(row?.path).charCodeAt(String(row?.path).indexOf('?'))).toBe(63);
+    expect([...String(row?.path)].every((c) => (c.codePointAt(0) ?? 0) >= 32)).toBe(true);
+  });
+
   it('lists by passId and version, Test only, to a key with logs:read', async () => {
     const { org, key } = await realOrg();
     const id = t.kit.f.ids.id();

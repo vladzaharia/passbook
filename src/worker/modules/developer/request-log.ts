@@ -20,6 +20,12 @@ const NOT_LOGGED = /^\/api\/v1\/(?:developer\/(?:logs|rail)|request-logs)(?:\/|$
 /** The pass, template or key a path names. */
 const RESOURCE =
   /\/(?:passes|templates|api-keys)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
+/** A decoded path may carry control characters, which a terminal would act on: each becomes `?`. */
+const printable = (text: string): string =>
+  Array.from(text, (ch) => {
+    const c = ch.codePointAt(0) ?? 0;
+    return c < 32 || (c >= 127 && c < 160) ? '?' : ch;
+  }).join('');
 const VERSION = /^\d{4}-\d{2}-\d{2}$/;
 const CODE = /^[A-Z0-9_]{2,64}$/;
 
@@ -140,9 +146,7 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
     method: c.req.method,
     route: c.req.routePath === '/*' ? null : c.req.routePath,
     // Hono decodes the path, so an escape sequence in it is stripped before it is stored and printed.
-    path: redactString(c.req.path)
-      .replace(/[\u0000-\u001f\u007f-\u009f]/g, '?')
-      .slice(0, 300),
+    path: printable(redactString(c.req.path)).slice(0, 300),
     query: redactQuery(new URL(c.req.url).search),
     status: res.status,
     durationMs: c.var.clock.now() - started,

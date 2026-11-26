@@ -48,15 +48,22 @@ const wait = (ms: number, signal?: AbortSignal) =>
     );
   });
 
+/** Terminal escapes and other control characters, which a server-sent path or code must not carry to the screen. */
+const printable = (text: string): string =>
+  Array.from(text, (ch) => {
+    const c = ch.codePointAt(0) ?? 0;
+    return c < 32 || (c >= 127 && c < 160) ? '?' : ch;
+  }).join('');
+
 export const logLine = (l: LogLine): string =>
   [
     new Date(l.at).toISOString().slice(11, 19),
     l.method.padEnd(6),
     l.status,
-    l.path.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'),
+    printable(l.path),
     `${l.durationMs} ms`,
-    (l.code ?? '').replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'),
-    l.requestId.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'),
+    printable(l.code ?? ''),
+    printable(l.requestId),
   ]
     .join('  ')
     .replace(/ {2}(?= {2}|$)/g, '')
