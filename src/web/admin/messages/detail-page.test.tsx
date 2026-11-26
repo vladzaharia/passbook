@@ -172,7 +172,9 @@ describe('Message detail', () => {
         expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${otherMembership.orgId}`);
         await waitFor(() => expect(templateScopes).toContain(otherMembership.orgId));
       } else {
-        expect(await screen.findByText('Message not found')).toBeInTheDocument();
+        expect(
+          await screen.findByText('Message not found', { ignore: '[role="status"]' }),
+        ).toBeInTheDocument();
         expect(new URLSearchParams(router.state.location.searchStr).has('orgId')).toBe(false);
         expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${messageOrg.id}`);
         expect(screen.queryByText('Cached message')).not.toBeInTheDocument();
@@ -199,7 +201,9 @@ describe('Message detail', () => {
         },
       },
     });
-    expect(await screen.findByText('Message not found')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Message not found', { ignore: '[role="status"]' }),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Private message')).not.toBeInTheDocument();
     expect(dependent).toEqual([]);
   });
@@ -253,7 +257,9 @@ describe('Message detail', () => {
         },
       });
 
-      expect(await screen.findByText('Message not found')).toBeInTheDocument();
+      expect(
+        await screen.findByText('Message not found', { ignore: '[role="status"]' }),
+      ).toBeInTheDocument();
       expect(detailRequests).toBeGreaterThan(0);
       const initialDetailRequests = detailRequests;
       await act(async () => {
@@ -313,7 +319,9 @@ describe('Message detail', () => {
         search: { orgId: messageOrg.id },
       });
     });
-    expect(await screen.findByText('Message not found')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Message not found', { ignore: '[role="status"]' }),
+    ).toBeInTheDocument();
     expect(queryClient.getQueryData(['admin', 'broadcasts', 'detail', 'b1'])).toMatchObject({
       orgId: otherMembership.orgId,
       name: 'Private draft',
