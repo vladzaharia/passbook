@@ -60,7 +60,7 @@ export function openE2eRelease(source: object = env): boolean {
 }
 
 /** The path a rehearsal of the rollback posts to (e2e/73-wallets-journeys.spec.ts). */
-export const E2E_RELEASE_CONTROL = '/__e2e/wallet-release';
+const E2E_RELEASE_CONTROL = '/__e2e/wallet-release';
 
 /**
  * The rollback rehearsal on an opened e2e server: both providers in both modes go to `draining` or back to

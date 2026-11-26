@@ -24,6 +24,12 @@ describe('mock provider endpoint', () => {
     ).toBe('http://localhost:5175/US/wltex/cards/c1/updates');
   });
 
+  it("moves Google's callback key download to the fake, and leaves it alone outside dev", () => {
+    const keys = 'https://pay.google.com/gp/m/issuer/keys';
+    expect(mockProviderInput(dev, keys)).toBe('http://localhost:5175/gp/m/issuer/keys');
+    expect(mockProviderInput({ PUBLIC_BASE_URL: 'https://passbook.mobile' }, keys)).toBe(keys);
+  });
+
   it('leaves other hosts alone', () => {
     expect(mockProviderInput(dev, 'https://example.com/x')).toBe('https://example.com/x');
   });

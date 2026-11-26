@@ -65,6 +65,16 @@ Each layer stands alone. Opening the providers in production would need all of t
 Even then, every provider call would go to a loopback mock that a deployed Worker cannot reach
 (`global_fetch_strictly_public`).
 
+## What the opened server also does
+
+- **Rollback rehearsal.** `POST /__e2e/wallet-release {"state": "draining" | "released"}` moves every provider and mode,
+  in the isolate (`RELEASE` is frozen) and in `wallet_provider_releases`, as a flip migration would change both.
+  `e2e/73-wallets-journeys.spec.ts` uses it to prove that voids still flow and nothing new issues, updates or messages.
+  The handler lives behind the same build define and runtime signals as the release, so a production bundle carries no
+  trace of it; `e2e-release.test.ts` covers it.
+- **Callback keys.** Google's callback root keys are downloaded through `providerFetch`, so the mock serves
+  `/gp/m/issuer/keys` (`POST /__mock/google-keys` sets them). A spec signs save callbacks with their private halves.
+
 ## Running
 
     npm run test:e2e:wallets            # playwright.wallets.config.ts starts the server with WALLET_E2E_RELEASE=1
