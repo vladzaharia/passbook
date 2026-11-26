@@ -1,4 +1,4 @@
-import { runOp } from '../console/run-spec.ts';
+import { runOp } from '../../workbench/console/run-spec.ts';
 import { buildChangelog } from './changelog.ts';
 import { errorStatuses, errorStatusLabels } from './error-status.ts';
 import { minimalExample } from './example.ts';

@@ -27,7 +27,7 @@ interface Renderer {
   sitemap(origin: string, urls: string[]): string;
 }
 
-/** The anonymous playground's data (src/web/developers/playground/build.tsx). */
+/** The anonymous playground's data (src/web/workbench/playground/build.tsx). */
 interface PreviewBuilder {
   blueprintPreviews(root: string, origin: string): { json: string; files: OutFile[] };
 }
@@ -93,7 +93,7 @@ export async function buildDevelopers(
     ).module;
   const module = await load<Renderer>('src/web/developers/render.tsx');
   const previews = (
-    await load<PreviewBuilder>('src/web/developers/playground/build.tsx')
+    await load<PreviewBuilder>('src/web/workbench/playground/build.tsx')
   ).blueprintPreviews(root, origin);
   const rendered: OutFile[] = module.renderSite(
     site,

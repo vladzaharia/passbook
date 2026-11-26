@@ -2,7 +2,7 @@ import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { clock } from '../logs/format.ts';
+import { clock } from '../../workbench/logs/format.ts';
 import { statusText } from '../ui/status-text.ts';
 import { type Activity, codeActivity } from './net.ts';
 import type { SearchIndex } from './types.ts';

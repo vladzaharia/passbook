@@ -2,12 +2,10 @@ import { lazy, type ReactNode, Suspense, useMemo } from 'react';
 import { createFetchClient, OperationsProvider } from '../../ui/operation/client.ts';
 import { trackOperation } from '../../ui/operation/store.ts';
 import type { Operation } from '../../ui/operation/types.ts';
-import { OPERATION_STARTED } from '../bench/operation-started.ts';
 
-/** A start's 202: the operation is in the page's cache and the tray, and the strip's chip looks again, so it rings at once. */
+/** A start's 202: the operation is in the page's cache and the tray. */
 export function startedOperation(op: Operation): void {
   trackOperation(op);
-  window.dispatchEvent(new Event(OPERATION_STARTED));
 }
 
 /** One operations client for the page, with the session's write token (the site has no router or query cache). */

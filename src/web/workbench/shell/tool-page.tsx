@@ -1,9 +1,10 @@
 import { Eye } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { WB_AREA, WB_SHELL_COPY, WB_TAB_TITLE } from '@/shared/copy/workbench-shell.ts';
 import type { WbTool } from '@/shared/workbench.ts';
 import { useDocumentTitle } from '../../lib/route-focus.tsx';
 import { Button } from '../../ui/button.tsx';
+import { type BenchSlots, BenchSlotsContext } from '../bench/slots.tsx';
 import { SEEN_AREAS, type SeenArea } from '../host/summary.ts';
 import { GlyphTile } from './area-button.tsx';
 import { markSeen } from './attention.ts';
@@ -30,6 +31,14 @@ export interface ToolPageProps {
 export function ToolPage({ tool, count, primary, toolbar, children }: ToolPageProps) {
   const { context, attention, seenAt } = useWbShell();
   const { title } = WB_AREA[tool];
+  const [countEl, setCount] = useState<HTMLElement | null>(null);
+  const [actionEl, setAction] = useState<HTMLElement | null>(null);
+  const [bar, setBar] = useState<HTMLElement | null>(null);
+  const [status, setStatus] = useState<HTMLElement | null>(null);
+  const slots = useMemo<BenchSlots>(
+    () => ({ count: countEl, action: actionEl, toolbar: bar, status }),
+    [countEl, actionEl, bar, status],
+  );
   useDocumentTitle(WB_TAB_TITLE[tool] ?? title);
   const area = isSeenArea(tool) && attention[tool] ? tool : null;
   return (
@@ -43,6 +52,8 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
           {title}
         </h1>
         {count ? <span className="font-mono text-[0.8125rem] text-fg-muted">{count}</span> : null}
+        <span ref={setCount} className="font-mono text-[0.8125rem] text-fg-muted empty:hidden" />
+        <div ref={setStatus} className="empty:hidden" />
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {area && context ? (
             <Button
@@ -55,10 +66,15 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
             </Button>
           ) : null}
           {primary}
+          <div ref={setAction} className="contents" />
         </div>
       </header>
-      {toolbar ? <div className="flex flex-wrap items-center gap-2">{toolbar}</div> : null}
-      <div className="min-w-0">{children}</div>
+      <div ref={setBar} className="flex flex-wrap items-center gap-2 empty:hidden">
+        {toolbar}
+      </div>
+      <div className="min-w-0">
+        <BenchSlotsContext.Provider value={slots}>{children}</BenchSlotsContext.Provider>
+      </div>
     </div>
   );
 }

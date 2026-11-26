@@ -1,4 +1,4 @@
-import type { RunOp } from '../console/types.ts';
+import type { RunOp } from '../../workbench/console/types.ts';
 
 /** The slice of OpenAPI the portal reads, and the view models it builds. Build-time only. */
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };

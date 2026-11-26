@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { enterContext } from '../../workbench/host/entry.ts';
-import { ToolPlaceholder } from '../../workbench/tools/placeholder.tsx';
+import { PlaygroundPage } from '../../workbench/tools/tool-playground.tsx';
 
 /**
  * `/workbench/design`: signed in, Design in the remembered context; signed out, the Playground
@@ -8,5 +8,5 @@ import { ToolPlaceholder } from '../../workbench/tools/placeholder.tsx';
  */
 export const Route = createFileRoute('/workbench/design')({
   beforeLoad: ({ context, location }) => enterContext(context.queryClient, 'design', location),
-  component: () => <ToolPlaceholder tool="design" />,
+  component: PlaygroundPage,
 });

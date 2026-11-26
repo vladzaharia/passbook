@@ -72,12 +72,12 @@ describe('kit lint', () => {
 
   it('copies through CopyButton or copyText, never the clipboard directly', () => {
     // developers/shell/copy.ts: the portal's first load cannot carry React and the toaster.
-    // developers/playground/copy.ts: the island says "Copied" in place; the portal has no toaster.
+    // workbench/playground/copy.ts: the page says "Copied" in place; the portal has no toaster.
     const allowed = new Set([
       'ui/copy-button.tsx',
       'lib/clipboard.ts',
       'developers/shell/copy.ts',
-      'developers/playground/copy.ts',
+      'workbench/playground/copy.ts',
     ]);
     for (const { path, text } of files) {
       if (allowed.has(path)) continue;
@@ -105,7 +105,7 @@ describe('kit lint', () => {
   it('shows status on the Workbench tools only through the bench StatusChip', () => {
     // Every tool is on the bench: a file that breaks the rule goes on this list only while it moves.
     const pending = new Set<string>([]);
-    const tools = /^developers\/(console|webhooks|logs|keys|workbench)\//;
+    const tools = /^workbench\/(console|webhooks|logs|keys|home)\//;
     const classes = /\bclass(?:Name)?[=:]\s*\{?\s*[`'"][^`'"]*\b(?:pill|[a-z]+-(?:code|status))\b/;
     for (const { path, text } of files) {
       if (!tools.test(path) || pending.has(path)) continue;

@@ -1,0 +1,100 @@
+/* What the moved tools were written against: the portal's element classes (`.btn`, `.card`, `.row`,
+   `.mono`, the code and quickstart parts) and its roles. The portal's page resets stay out: the
+   Workbench has its own. Each tool's body carries `.wb-legacy`. T1 to T8 retire this as the tools
+   move onto the kit. */
+@import "./legacy-btn.css";
+@import "../../developers/styles/dev-controls.css";
+@import "../../developers/styles/dev-layout.css";
+@import "../../developers/styles/dev-code.css";
+@import "../../developers/styles/dev-code-extras.css";
+@import "../../developers/styles/dev-code-head.css";
+@import "../../developers/styles/dev-ticket.css";
+@import "../../developers/styles/dev-ops.css";
+@import "../../developers/styles/dev-home.css";
+
+/* Portal-only roles, derived from tokens. Dark first; light follows the OS or the saved choice. */
+:root {
+  --dp-violet: var(--polaris-key-violet-dark);
+  --dp-gold: var(--polaris-key-gold-dark);
+  --dp-stage: radial-gradient(
+    120% 90% at 50% 0%,
+    color-mix(in oklab, var(--pk-accent) 9%, var(--pk-surface-raised)),
+    var(--pk-surface-page) 70%
+  );
+  --dp-glass: rgb(255 255 255 / 0.04);
+  --syn-key: var(--pk-info);
+  --syn-str: var(--pk-success);
+  --syn-lit: var(--pk-accent-fg);
+  --syn-num: var(--pk-warning);
+  --syn-kw: var(--dp-violet);
+  --syn-fn: var(--pk-text-strong);
+  --syn-com: var(--pk-text-subtle);
+  --syn-pun: var(--pk-text-muted);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --dp-violet: var(--polaris-key-violet-light);
+    --dp-gold: var(--polaris-key-gold-light);
+    --dp-stage: radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--pk-accent) 7%, var(--pk-surface-raised)),
+      var(--pk-surface-sunken) 75%
+    );
+    --dp-glass: rgb(6 9 18 / 0.025);
+  }
+}
+[data-theme="light"] {
+  --dp-violet: var(--polaris-key-violet-light);
+  --dp-gold: var(--polaris-key-gold-light);
+  --dp-stage: radial-gradient(
+    120% 90% at 50% 0%,
+    color-mix(in oklab, var(--pk-accent) 7%, var(--pk-surface-raised)),
+    var(--pk-surface-sunken) 75%
+  );
+  --dp-glass: rgb(6 9 18 / 0.025);
+}
+
+:root {
+  --dev-bar: 0px;
+}
+.wb-legacy {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--pk-text-default);
+}
+.wb-legacy :is(h1, h2, h3, h4, p) {
+  margin: 0;
+}
+.wb-legacy :is(h1, h2, h3) {
+  color: var(--pk-text-strong);
+  text-wrap: balance;
+}
+.wb-legacy :is(code, kbd, pre) {
+  font-family: var(--pk-font-mono);
+}
+.wb-legacy a:not(.btn) {
+  color: var(--pk-accent-fg);
+}
+.wb-legacy button {
+  font: inherit;
+  color: inherit;
+}
+.wb-legacy svg.lucide,
+.wb-legacy .btn svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.wb-tool-playground {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}

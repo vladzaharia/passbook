@@ -1,6 +1,6 @@
 import { PATHS } from '../../../shared/developers.ts';
 import { missTerm } from '../../../shared/developers-search.ts';
-import { loadSession } from '../console/session.ts';
+import { loadSession } from '../../workbench/console/session.ts';
 import type { SearchIndex } from './types.ts';
 
 /**

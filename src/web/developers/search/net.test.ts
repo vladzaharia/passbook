@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Session } from '../console/session.ts';
+import type { Session } from '../../workbench/console/session.ts';
 
 const loadSession = vi.fn<() => Promise<Session>>();
-vi.mock('../console/session.ts', () => ({ loadSession: () => loadSession() }));
+vi.mock('../../workbench/console/session.ts', () => ({ loadSession: () => loadSession() }));
 
 afterEach(() => {
   loadSession.mockReset();
