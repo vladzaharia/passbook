@@ -108,6 +108,7 @@ export async function recordAdoptedNames(
     ...base.entries.map((e) => e.name),
     ...base.unplaced.map((u) => u.name),
     ...base.unplacedProtected.map((u) => u.name),
+    ...base.aliases,
   ];
   const refused: string[] = [];
   for (const a of settings.adopt.filter((x) => !known.has(x.key))) {

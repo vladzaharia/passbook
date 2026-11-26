@@ -30,6 +30,8 @@ export function setupRunner(s: Shared) {
       lease: string;
       bucket: Bucket;
       check?: (registry: Registry) => void;
+      /** Reads health again instead of trusting the cache: for the writes that decide who can sign in. */
+      fresh?: boolean;
     },
     ctx: unknown,
     fn: (x: Run) => Promise<T>,
@@ -41,7 +43,7 @@ export function setupRunner(s: Shared) {
       return assertCtx(ctx);
     });
     const m = ctxMeta(o.method, c, { delta: o.delta });
-    const { registry, settings } = await s.gate.requireSetup(m);
+    const { registry, settings } = await s.gate.requireSetup(m, o.fresh);
     await s.call.guard(m, () => o.check?.(registry));
     const dry = c.dryRun;
     return s.call.ledgered(dry ? 'preview' : o.bucket, m, (req) =>

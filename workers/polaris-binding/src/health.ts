@@ -233,7 +233,10 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
    * PassBook's own client, and they must run before the platform admin group is placed, which is the one thing
    * that keeps every other write refused.
    */
-  async function requireSetup(m: Meta): Promise<{ registry: Registry; settings: Settings }> {
+  async function requireSetup(
+    m: Meta,
+    fresh = false,
+  ): Promise<{ registry: Registry; settings: Settings }> {
     await assertNotFrozen(db, m, deps.now());
     if (own.reasons.length || !base || !settings) {
       await logRefusal(db, m, deps.now(), 'IDP_UNSAFE_CONFIG');
@@ -247,7 +250,9 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
     // client would be allowed, or locked to, a stranger's group. Other reasons do not block setup. With no
     // group recorded yet there is nothing to compare, so the probe is not spent.
     const stale = registry.entries.length
-      ? (await currentHealth()).unsafe.filter((x) => /^group_(name_mismatch|not_found):/.test(x))
+      ? (await currentHealth(fresh)).unsafe.filter((x) =>
+          /^group_(name_mismatch|not_found):/.test(x),
+        )
       : [];
     if (stale.length) {
       await logRefusal(db, m, deps.now(), 'IDP_UNSAFE_CONFIG');

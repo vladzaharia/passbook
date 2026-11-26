@@ -37,6 +37,7 @@ export function setupClientApi(s: Shared): ClientApi {
           delta: 'client_groups',
           lease: 'setup:client',
           bucket: 'client_write',
+          fresh: true,
           check: (registry) => {
             if (unplacedRoles(registry).length) refuse('A role group is not placed.');
           },
@@ -72,6 +73,7 @@ export function setupClientApi(s: Shared): ClientApi {
           delta: 'client_restrict',
           lease: 'setup:client',
           bucket: 'client_write',
+          fresh: true,
         },
         ctx,
         async ({ req, dry, registry, note }) => {

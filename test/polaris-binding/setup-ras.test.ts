@@ -254,3 +254,31 @@ describe('L5: callbacks that are not PassBook own', () => {
     expect(callbacksOurs(c, 'plain')).toBe(false);
   });
 });
+
+describe('N1: the writes that decide sign-in read health fresh', () => {
+  it.each([
+    ['allowClientGroups', (h: H) => h.api.allowClientGroups(run('n1'))],
+    ['restrictClient', (h: H) => h.api.restrictClient(run('n1'))],
+  ])('%s refuses a rename inside the health cache window', async (_n, call) => {
+    const h = setupCimd('v2');
+    h.pocket.s.client.restricted = false;
+    expect((await h.api.health()).ok).toBe(true);
+    h.pocket.s.groupNames['g-admins'] = 'someone_elses_group';
+    await expect(call(h)).rejects.toMatchObject({ code: 'IDP_UNSAFE_CONFIG' });
+    expect(writes(h)).toEqual([]);
+  });
+});
+
+describe('N3: an alias group is never adopted as a writable group', () => {
+  it('ADOPT_GROUPS naming the alias group is refused', async () => {
+    const h = setupCimd('v2', {
+      patch: {
+        GROUPS: JSON.stringify({ aliases: ['staff'], ...JSON.parse(groupsJson()) }),
+        ADOPT_GROUPS: JSON.stringify({ crew: 'g-other' }),
+      },
+    });
+    const health = await h.api.health();
+    expect(health.warnings).toContain('blocked:g:crew');
+    expect((await rows('idp_groups')).some((g) => g.key === 'crew')).toBe(false);
+  });
+});
