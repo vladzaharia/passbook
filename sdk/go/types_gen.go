@@ -9014,6 +9014,7 @@ type PlatformWalletCredentialsChecksRetrieveResponse struct {
 type PlatformWalletCredentialsListResponse struct {
 	Items      []PlatformWalletCredentialsListResponseItemsItem `json:"items"`
 	NextCursor *string                                          `json:"nextCursor"`
+	Release    PlatformWalletCredentialsListResponseRelease     `json:"release"`
 }
 
 type PlatformWalletCredentialsListResponseItemsItem struct {
@@ -9043,6 +9044,57 @@ type PlatformWalletCredentialsListResponseItemsItemLastCheck2 struct {
 	Ok   bool   `json:"ok"`
 	Code string `json:"code"`
 	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsListResponseRelease struct {
+	Google  PlatformWalletCredentialsListResponseReleaseGoogle  `json:"google"`
+	Samsung PlatformWalletCredentialsListResponseReleaseSamsung `json:"samsung"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogle struct {
+	Live any `json:"live"`
+	Test any `json:"test"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleLive1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleLive2 struct {
+	State string `json:"state"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleTest1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleTest2 struct {
+	State string `json:"state"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsung struct {
+	Live any `json:"live"`
+	Test any `json:"test"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungLive1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungLive2 struct {
+	State string `json:"state"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungTest1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungTest2 struct {
+	State string `json:"state"`
 }
 
 type PlatformWalletCredentialsMigrateResponse struct {

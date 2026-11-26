@@ -1214,6 +1214,17 @@ __all__ = [
     "PlatformWalletCredentialsListResponseItemsItem",
     "PlatformWalletCredentialsListResponseItemsItemLastCheck1",
     "PlatformWalletCredentialsListResponseItemsItemLastCheck2",
+    "PlatformWalletCredentialsListResponseRelease",
+    "PlatformWalletCredentialsListResponseReleaseGoogle",
+    "PlatformWalletCredentialsListResponseReleaseGoogleLive1",
+    "PlatformWalletCredentialsListResponseReleaseGoogleLive2",
+    "PlatformWalletCredentialsListResponseReleaseGoogleTest1",
+    "PlatformWalletCredentialsListResponseReleaseGoogleTest2",
+    "PlatformWalletCredentialsListResponseReleaseSamsung",
+    "PlatformWalletCredentialsListResponseReleaseSamsungLive1",
+    "PlatformWalletCredentialsListResponseReleaseSamsungLive2",
+    "PlatformWalletCredentialsListResponseReleaseSamsungTest1",
+    "PlatformWalletCredentialsListResponseReleaseSamsungTest2",
     "PlatformWalletCredentialsMigrateResponse",
     "PlatformWalletCredentialsResolveMigrationParams",
     "PlatformWalletCredentialsResolveMigrationResponse",
@@ -9365,6 +9376,7 @@ class PlatformWalletCredentialsChecksRetrieveResponse(_Model):
 class PlatformWalletCredentialsListResponse(_Model):
     items: _List[PlatformWalletCredentialsListResponseItemsItem]
     nextCursor: str | None
+    release: PlatformWalletCredentialsListResponseRelease
 
 class PlatformWalletCredentialsListResponseItemsItem(_Model):
     id: str
@@ -9391,6 +9403,46 @@ class PlatformWalletCredentialsListResponseItemsItemLastCheck2(_Model):
     ok: _Literal[False]
     code: str
     at: int
+
+class PlatformWalletCredentialsListResponseRelease(_Model):
+    google: PlatformWalletCredentialsListResponseReleaseGoogle
+    samsung: PlatformWalletCredentialsListResponseReleaseSamsung
+
+class PlatformWalletCredentialsListResponseReleaseGoogle(_Model):
+    live: PlatformWalletCredentialsListResponseReleaseGoogleLive1 | PlatformWalletCredentialsListResponseReleaseGoogleLive2
+    test: PlatformWalletCredentialsListResponseReleaseGoogleTest1 | PlatformWalletCredentialsListResponseReleaseGoogleTest2
+
+class PlatformWalletCredentialsListResponseReleaseGoogleLive1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PlatformWalletCredentialsListResponseReleaseGoogleLive2(_Model):
+    state: _Literal["enabled"] | str
+
+class PlatformWalletCredentialsListResponseReleaseGoogleTest1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PlatformWalletCredentialsListResponseReleaseGoogleTest2(_Model):
+    state: _Literal["enabled"] | str
+
+class PlatformWalletCredentialsListResponseReleaseSamsung(_Model):
+    live: PlatformWalletCredentialsListResponseReleaseSamsungLive1 | PlatformWalletCredentialsListResponseReleaseSamsungLive2
+    test: PlatformWalletCredentialsListResponseReleaseSamsungTest1 | PlatformWalletCredentialsListResponseReleaseSamsungTest2
+
+class PlatformWalletCredentialsListResponseReleaseSamsungLive1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PlatformWalletCredentialsListResponseReleaseSamsungLive2(_Model):
+    state: _Literal["enabled"] | str
+
+class PlatformWalletCredentialsListResponseReleaseSamsungTest1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PlatformWalletCredentialsListResponseReleaseSamsungTest2(_Model):
+    state: _Literal["enabled"] | str
 
 class PlatformWalletCredentialsMigrateResponse(_Model):
     queued: int

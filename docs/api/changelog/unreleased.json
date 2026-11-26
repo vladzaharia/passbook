@@ -221,7 +221,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"scan-setup:read\" added",
-    "note": "A key can hold scan-setup:read to read the org\u2019s managed scanner and screen setups."
+    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
@@ -1158,6 +1158,14 @@
     "op": "GET /api/v1/platform/wallet-credentials",
     "change": "200.items[].lastCheck: field added",
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
+  },
+  {
+    "key": "GET /api/v1/platform/wallet-credentials 200.release: field added",
+    "class": "additive",
+    "operationId": "",
+    "op": "GET /api/v1/platform/wallet-credentials",
+    "change": "200.release: field added",
+    "note": "Release state per provider and mode (issuance), so platform pages can say a wallet isn't released yet."
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -4579,13 +4587,5 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
-  },
-  {
-    "key": "GET /api/v1/platform/wallet-credentials 200.release: field added",
-    "class": "additive",
-    "operationId": "",
-    "op": "GET /api/v1/platform/wallet-credentials",
-    "change": "200.release: field added",
-    "note": "Release state per provider and mode (issuance), so platform pages can say a wallet isn't released yet."
   }
 ]
