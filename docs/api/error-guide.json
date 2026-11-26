@@ -1607,12 +1607,6 @@
     "fix": "Send the status change in its own request, then the other edits.",
     "retryable": false
   },
-  "ORG_TEST_ONLY": {
-    "title": "Organization is test-only",
-    "when": "A Live request named a developer sandbox organization, which never holds Live.",
-    "fix": "Send the request in Test mode, or use an organization with live access.",
-    "retryable": false
-  },
   "PAIRING_INVALID": {
     "title": "Pairing code invalid",
     "when": "The pairing code is wrong, used or expired.",
@@ -2403,12 +2397,6 @@
     "title": "Key used for another setup",
     "when": "This Idempotency-Key went with a different body.",
     "fix": "Use a new key for a different setup.",
-    "retryable": false
-  },
-  "SCAN_ZONE_LIVE_ONLY": {
-    "title": "Live key needed",
-    "when": "Zones are shared with live mode, so a test key cannot make or change them.",
-    "fix": "Use a live key.",
     "retryable": false
   },
   "SCAN_MODE_LIVE_ONLY": {

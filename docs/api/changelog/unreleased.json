@@ -326,7 +326,7 @@
     "operationId": "workbench.deleteToken",
     "op": "DELETE /api/v1/workbench/token",
     "change": "new operation",
-    "note": ""
+    "note": "Ends this session's Workbench tokens for the org; signing out ends them too."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"logs:read\" added",
@@ -334,7 +334,7 @@
     "operationId": "api-keys.getApiKeys",
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
@@ -358,7 +358,7 @@
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
@@ -382,7 +382,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
@@ -854,7 +854,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].apiVersion: field added",
-    "note": ""
+    "note": "apiVersion is the PassBook-Version date the call pinned."
   },
   {
     "key": "GET /api/v1/developer/home 200.calls[].client: field added",
@@ -870,7 +870,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].flags: field added",
-    "note": ""
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
   },
   {
     "key": "GET /api/v1/developer/home 200.calls[].resourceId: field added",
@@ -878,7 +878,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].resourceId: field added",
-    "note": ""
+    "note": "resourceId is the pass, template or key the call touched."
   },
   {
     "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"logs:read\" added",
@@ -886,7 +886,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.keys[].scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"nfc:keys\" added",
@@ -918,7 +918,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.quotas: field added",
-    "note": ""
+    "note": "Quotas: what the sandbox holds against its plan caps (passes, templates, endpoints, keys)."
   },
   {
     "key": "GET /api/v1/developer/home new operation",
@@ -934,7 +934,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.bodiesRecorded: field added",
-    "note": ""
+    "note": "bodiesRecorded says whether the organization records request bodies in Test (a sandbox always does; other organizations by setting)."
   },
   {
     "key": "GET /api/v1/developer/logs 200.items[].apiVersion: field added",
@@ -942,7 +942,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.items[].apiVersion: field added",
-    "note": ""
+    "note": "apiVersion is the PassBook-Version date the call pinned."
   },
   {
     "key": "GET /api/v1/developer/logs 200.items[].flags: field added",
@@ -950,7 +950,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.items[].flags: field added",
-    "note": ""
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
   },
   {
     "key": "GET /api/v1/developer/logs 200.items[].resourceId: field added",
@@ -958,7 +958,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.items[].resourceId: field added",
-    "note": ""
+    "note": "resourceId is the pass, template or key the call touched."
   },
   {
     "key": "GET /api/v1/developer/logs optional parameter query:passId added",
@@ -966,7 +966,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "optional parameter query:passId added",
-    "note": ""
+    "note": "passId filters to the calls that touched a pass, template or key."
   },
   {
     "key": "GET /api/v1/developer/logs optional parameter query:portal added",
@@ -982,7 +982,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "optional parameter query:version added",
-    "note": ""
+    "note": "version filters to the calls that pinned a PassBook-Version date."
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.apiVersion: field added",
@@ -990,7 +990,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.apiVersion: field added",
-    "note": ""
+    "note": "apiVersion is the PassBook-Version date the call pinned."
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.bodiesRecorded: field added",
@@ -998,7 +998,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.bodiesRecorded: field added",
-    "note": ""
+    "note": "bodiesRecorded says whether the organization records request bodies in Test (a sandbox always does; other organizations by setting)."
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.bodiesTruncated: field added",
@@ -1006,7 +1006,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.bodiesTruncated: field added",
-    "note": ""
+    "note": "bodiesTruncated is true when a stored body was cut at 8 KB or was too large to keep. Bodies are shown only to a reader who can also read passes."
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.flags: field added",
@@ -1014,7 +1014,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.flags: field added",
-    "note": ""
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.resourceId: field added",
@@ -1022,7 +1022,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.resourceId: field added",
-    "note": ""
+    "note": "resourceId is the pass, template or key the call touched."
   },
   {
     "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"logs:read\" added",
@@ -1030,7 +1030,7 @@
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:claims\" added",
@@ -1062,7 +1062,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.id: field added",
-    "note": ""
+    "note": "The id as stored. The lookup also takes ids of keys, events, endpoints, captures, delivery attempts and operations."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"capture\" added",
@@ -1070,7 +1070,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"capture\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"delivery\" added",
@@ -1078,7 +1078,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"delivery\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"device_pass\" added",
@@ -1086,7 +1086,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"device_pass\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"endpoint\" added",
@@ -1094,7 +1094,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"endpoint\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"event\" added",
@@ -1102,7 +1102,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"event\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"key\" added",
@@ -1110,7 +1110,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"key\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"live\" added",
@@ -1118,7 +1118,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"live\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"operation\" added",
@@ -1126,7 +1126,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"operation\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"sandbox\" added",
@@ -1134,7 +1134,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"sandbox\" added",
-    "note": ""
+    "note": "New kind of object the id lookup names."
   },
   {
     "key": "GET /api/v1/developer/resolve new operation",
@@ -1150,7 +1150,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "optional parameter query:orgId added",
-    "note": ""
+    "note": "orgId looks in an organization where you may use Test. Omit it for your own sandbox."
   },
   {
     "key": "GET /api/v1/developer/sandbox 200.sandbox.timeZone: field added",
@@ -1318,7 +1318,7 @@
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "optional parameter query:requestId added",
-    "note": ""
+    "note": "requestId keeps the events that call caused: the x-request-id the response carried."
   },
   {
     "key": "GET /api/v1/events/{id} 200|0.requestId: field added",
@@ -1478,7 +1478,7 @@
     "operationId": "events.getEventsByIdDeliveries",
     "op": "GET /api/v1/events/{id}/deliveries",
     "change": "new operation",
-    "note": ""
+    "note": "Where one event was sent: its delivery to each endpoint, with state and last attempt. Needs passes:read."
   },
   {
     "key": "GET /api/v1/identities 200|0.items[].handle: field added",
@@ -1862,7 +1862,7 @@
     "operationId": "organization-memberships.getOrgsByIdMemberships",
     "op": "GET /api/v1/orgs/{id}/memberships",
     "change": "200.items[].capabilities[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
   },
   {
     "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
@@ -1942,7 +1942,7 @@
     "operationId": "organization-memberships.getOrgsMembershipsMe",
     "op": "GET /api/v1/orgs/memberships/me",
     "change": "200.items[].capabilities[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
   },
   {
     "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
@@ -2030,7 +2030,7 @@
     "operationId": "passes.getPassesByIdDevices",
     "op": "GET /api/v1/passes/{id}/devices",
     "change": "200.devices[].deviceId: field added",
-    "note": ""
+    "note": "Devices made by Simulate carry deviceId, the id the simulate call returned."
   },
   {
     "key": "GET /api/v1/passes/{id}/devices 200.devices[].simulated: field added",
@@ -2038,7 +2038,7 @@
     "operationId": "passes.getPassesByIdDevices",
     "op": "GET /api/v1/passes/{id}/devices",
     "change": "200.devices[].simulated: field added",
-    "note": ""
+    "note": "Devices made by Simulate carry simulated: true."
   },
   {
     "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
@@ -2230,7 +2230,7 @@
     "operationId": "workbench.listRequestLogs",
     "op": "GET /api/v1/request-logs",
     "change": "new operation",
-    "note": ""
+    "note": "Lists an organization's Test calls for 7 days, with filters and an after cursor to tail."
   },
   {
     "key": "GET /api/v1/request-logs/{id} new operation",
@@ -2238,7 +2238,7 @@
     "operationId": "workbench.getRequestLog",
     "op": "GET /api/v1/request-logs/{id}",
     "change": "new operation",
-    "note": ""
+    "note": "Reads one Test call, with redacted bodies for 24 hours where the organization records them."
   },
   {
     "key": "GET /api/v1/resolve new operation",
@@ -2246,7 +2246,7 @@
     "operationId": "workbench.getResolve",
     "op": "GET /api/v1/resolve",
     "change": "new operation",
-    "note": ""
+    "note": "What an id is in your Test data. kind live means it exists in Live; open it in admin. Browser and try token only, no key."
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -2686,7 +2686,7 @@
     "operationId": "sandbox.getTestInbox",
     "op": "GET /api/v1/test-inbox",
     "change": "200.items[].failed: field added",
-    "note": ""
+    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
   },
   {
     "key": "GET /api/v1/test-inbox/{id} 200.failed: field added",
@@ -2694,7 +2694,7 @@
     "operationId": "sandbox.getTestInboxById",
     "op": "GET /api/v1/test-inbox/{id}",
     "change": "200.failed: field added",
-    "note": ""
+    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
   },
   {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
@@ -3006,7 +3006,7 @@
     "operationId": "workbench.getContexts",
     "op": "GET /api/v1/workbench/contexts",
     "change": "new operation",
-    "note": ""
+    "note": "The sandbox and organizations where you may use Test, with the tools your roles read in each. Browser only."
   },
   {
     "key": "GET /api/v1/workbench/summary new operation",
@@ -3014,7 +3014,7 @@
     "operationId": "workbench.getSummary",
     "op": "GET /api/v1/workbench/summary",
     "change": "new operation",
-    "note": ""
+    "note": "Navigation counts for one Test context: errors, failed deliveries, emails, expiring keys, quickstart and sandbox quotas. Browser only."
   },
   {
     "key": "GET /b/{token}/{passId} new operation",
@@ -3309,7 +3309,7 @@
     "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
     "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
     "change": "200.capabilities[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
   },
   {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",
@@ -3541,7 +3541,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:claims\" added",
@@ -3589,7 +3589,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"members:read\" added",
@@ -3661,7 +3661,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
@@ -3685,7 +3685,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3709,7 +3709,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3733,7 +3733,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
@@ -3757,7 +3757,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3781,7 +3781,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -4662,7 +4662,7 @@
     "operationId": "invitations.postInvitationsAccept",
     "op": "POST /api/v1/invitations/accept",
     "change": "200.membership.capabilities[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
   },
   {
     "key": "POST /api/v1/invitations/accept new operation",
@@ -5086,7 +5086,7 @@
     "operationId": "organization-memberships.postOrgsInvitationsAccept",
     "op": "POST /api/v1/orgs/invitations/accept",
     "change": "200.capabilities[]: enum value \"logs:read\" added",
-    "note": ""
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
   },
   {
     "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
@@ -5230,7 +5230,7 @@
     "operationId": "passes.postPassesByIdSimulate",
     "op": "POST /api/v1/passes/{id}/simulate",
     "change": "new operation",
-    "note": ""
+    "note": "Simulate sends a real Test event for a Test pass; its signed webhooks carry the returned requestId. Live passes answer 409 SIMULATE_TEST_ONLY."
   },
   {
     "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
@@ -6542,7 +6542,7 @@
     "operationId": "workbench.postToken",
     "op": "POST /api/v1/workbench/token",
     "change": "new operation",
-    "note": ""
+    "note": "A 15-minute Test-only token for one org, bound to your session: your sandbox key, or you on x-workbench: test operations. Live: 403 WORKBENCH_TEST_ONLY."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
