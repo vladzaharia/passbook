@@ -130,7 +130,7 @@ describe('api keys page', () => {
       'true',
     );
     expect(within(dialog).getByRole('heading', { name: 'Name the key' })).toBeInTheDocument();
-    expect(within(dialog).getByText('Platform')).toBeInTheDocument();
+    expect(within(dialog).getByText('All organizations')).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
     await next(user, dialog);
@@ -151,7 +151,7 @@ describe('api keys page', () => {
       within(dialog).getByRole('button', { name: 'Remove 203.0.113.0/24' }),
     ).toBeInTheDocument();
     await next(user, dialog);
-    expect(await within(dialog).findByText('Platform: all organizations')).toBeInTheDocument();
+    expect(await within(dialog).findByText('All organizations')).toBeInTheDocument();
     expect(body).toEqual({});
     await user.click(within(dialog).getByRole('button', { name: 'Edit basics' }));
     expect(within(dialog).getByLabelText(/Name/)).toHaveValue('CI key');
@@ -273,7 +273,7 @@ describe('api keys page', () => {
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: 'New API key' });
     await waitFor(() => expect(router.state.location.search.new).toBeUndefined());
-    expect(within(dialog).getByText('Platform')).toBeInTheDocument();
+    expect(within(dialog).getByText('All organizations')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull());
     await user.click(screen.getByRole('button', { name: 'New API key' }));

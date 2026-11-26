@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { countQueries } from '../../jobs/query-counter.ts';
-import { all, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { membership, person, revokeMembership, standardOrg } from './access-test-fixtures.ts';
 import { idpClient } from './client.ts';
 import { drainIdp, reconcileIdp } from './jobs.ts';
@@ -90,12 +90,21 @@ describe('reconcile: what Polaris ID shows', () => {
     await membership(r.f, org.id, p);
     await drainIdp(r.ctx);
     await session(r, p.id, ['user', 'console']);
+    const revision = async () =>
+      (
+        await first<{ r: number }>(env.DB, 'SELECT access_revision AS r FROM users WHERE id = ?', [
+          p.id,
+        ])
+      )?.r ?? 0;
+    const before = await revision();
     const a = r.fake.accounts.get(p.subject);
     if (a) a.disabled = true;
     await clearMarks();
     await reconcileIdp(r.ctx);
     expect(await driftKinds(p.subject)).toEqual(['disabled_in_idp:console']);
     expect(await liveSessions(p.id)).toEqual([]);
+    // The account is off in Polaris ID: the keys the person made as an admin (recorded at this revision) end with it.
+    expect(await revision()).toBeGreaterThan(before);
   });
 });
 

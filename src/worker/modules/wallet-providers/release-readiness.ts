@@ -5,14 +5,13 @@ import type {
   WalletReleaseMode,
   WalletReleaseReport,
 } from '../../../shared/contracts/wallet-release.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
+import type { Actor } from '../../platform/actor.ts';
 import { grant, grantedBatch } from '../../platform/authority.ts';
 import { entitled } from '../../platform/authority-entitled.ts';
-import { AppError, ConflictError, ForbiddenError } from '../../platform/errors.ts';
+import { AppError, ConflictError, PersonRequiredError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { withLastChecks } from './credential-service.ts';
-import { adminOf } from './enrolment-hold.ts';
 import { planEnable } from './enrolment-service.ts';
 import type { WalletProvider } from './instance-types.ts';
 import { WalletProviderDisabledError, walletProviderReleaseState } from './provider-policy.ts';
@@ -29,11 +28,6 @@ import { mapWalletWriteError } from './wallet-write-errors.ts';
 type Mode = 'live' | 'test';
 const PROVIDERS: readonly WalletProvider[] = ['google', 'samsung'];
 const MODES: readonly Mode[] = ['test', 'live'];
-
-function admin(auth: SessionAuth): void {
-  if (auth?.kind !== 'session' || !auth.roles.includes('admin'))
-    throw new ForbiddenError('Admin access is required.');
-}
 
 type Plan = Awaited<ReturnType<typeof planEnable>>;
 
@@ -123,11 +117,7 @@ async function readMode(
 }
 
 /** `GET /platform/wallet-release`: what each provider and mode would issue once released. Reads only. */
-export async function releaseReport(
-  ctx: ServiceContext,
-  auth: SessionAuth,
-): Promise<WalletReleaseReport> {
-  admin(auth);
+export async function releaseReport(ctx: ServiceContext): Promise<WalletReleaseReport> {
   const releases: WalletReleaseMode[] = [];
   for (const provider of PROVIDERS)
     for (const mode of MODES) {
@@ -153,16 +143,18 @@ const changed = () =>
  */
 export async function enableReady(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  actor: Actor,
   provider: WalletProvider,
   mode: Mode,
   input: { apply: boolean; orgIds?: string[] | undefined },
 ): Promise<EnableReadyResult> {
-  admin(auth);
   const read = await readMode(ctx, provider, mode);
   const ready = read.enrolments.filter((e) => e.status === 'ready');
   const enrolments = ready.map((e) => ({ orgId: e.orgId, orgName: e.orgName }));
   if (!input.apply) return { applied: false, enrolments };
+  // The gate refuses a key's apply; the grant below is a person's.
+  const by = actor.principal;
+  if (by.kind !== 'platform') throw new PersonRequiredError();
   const reviewed = [...new Set(input.orgIds ?? [])].sort();
   const now = ready.map((e) => e.orgId).sort();
   if (reviewed.length !== now.length || reviewed.some((id, i) => id !== now[i])) throw changed();
@@ -171,7 +163,7 @@ export async function enableReady(
   const grants = ready.map((e) => {
     const plan = read.plans.get(e.orgId);
     if (!plan) throw new Error('Enable plan missing for a ready enrolment.');
-    const principal = adminOf(auth, { orgId: e.orgId, mode, provider });
+    const principal = { ...by, orgId: e.orgId, mode };
     const g = grant(ctx, {
       purpose: 'org_mode.wallet.enrolment_enable',
       principal,

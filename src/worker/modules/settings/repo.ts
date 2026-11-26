@@ -52,6 +52,12 @@ export interface SettingsAdmin {
   sessionId: string;
 }
 
+/** A Platform key holding `platform:settings`: the other principal of a platform-scope save. */
+export interface SettingsKey {
+  keyId: string;
+  scope: 'platform:settings';
+}
+
 const COLUMNS = ['key', 'value', 'updated_by', 'updated_at'];
 const UPDATE = ['value', 'updated_by', 'updated_at'];
 
@@ -71,7 +77,7 @@ export async function writeScope(
   by: string | null,
   revision: number | null,
   authority?: SettingsAuthority,
-  admin?: SettingsAdmin,
+  admin?: SettingsAdmin | SettingsKey,
   floors: readonly FloorWrite[] = [],
   platformRev?: number,
 ): Promise<boolean> {
@@ -88,11 +94,14 @@ export async function writeScope(
   const entries = Object.entries(upserts).map(([key, value]) => [key, JSON.stringify(value)]);
 
   if (orgId === null) {
-    // Platform settings need a live admin session at commit; there is no ungated platform write.
+    // Platform settings need a live admin session or Platform key at commit; there is no ungated platform write.
     if (!admin) return false;
     const g = grant(ctx, {
       purpose: 'platform.settings.update',
-      principal: { kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId },
+      principal:
+        'keyId' in admin
+          ? { kind: 'api_key', keyId: admin.keyId, scope: admin.scope }
+          : { kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId },
       target: scope,
       ...(platformRev === undefined
         ? {}

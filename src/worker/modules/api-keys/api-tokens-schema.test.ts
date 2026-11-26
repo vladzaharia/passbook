@@ -60,6 +60,7 @@ describe('existing keys under migration 0142', () => {
       kind: 'api_key',
       keyId: id,
       orgId: org.id,
+      keyKind: 'service',
       scopes: ['passes:read', 'templates:read'],
       mode: 'live',
     });

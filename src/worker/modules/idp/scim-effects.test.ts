@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { adminKey, keyState } from '../../../../test/helpers/admin-key.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { Person } from './access-test-fixtures.ts';
 import { drainIdp } from './jobs.ts';
@@ -113,6 +114,21 @@ describe('SCIM effects: a revocation owed is not lost', () => {
       expect(await mirror(scimId)).toMatchObject({ revoke_pending: 0 });
     });
   }
+
+  it('ends the keys the person made as an admin when the sweep confirms the account is off', async () => {
+    const s = await scimRig({ mode: 'dry_run' });
+    const { p, scimId } = await pushed(s);
+    const key = await adminKey(s.r.f, p.id);
+    expect(await keyState(s.r.f, key)).toEqual({ gate: true, grant: true });
+    ownerOff(s, p);
+    await off(s, scimId, p);
+    expect(await mirror(scimId)).toMatchObject({ revoke_pending: 1 });
+    expect(await keyState(s.r.f, key), 'still gated').toEqual({ gate: true, grant: true });
+    s.r.fake.mode = 'live';
+    await drainIdp(s.r.ctx);
+    expect(await mirror(scimId)).toMatchObject({ revoke_pending: 0 });
+    expect(await keyState(s.r.f, key)).toEqual({ gate: false, grant: false });
+  });
 
   it('records a DELETE the same way, and a switch back on clears it', async () => {
     const s = await scimRig({ mode: 'dry_run' });

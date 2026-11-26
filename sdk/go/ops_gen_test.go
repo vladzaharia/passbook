@@ -967,6 +967,63 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"invitations.list", "GET", "/api/v1/orgs/id1/invitations", false,
+		"", `{"items":[{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"invitations.create", "POST", "/api/v1/orgs/id1/invitations", false,
+		`{"email":"x","roles":["org_admin"]}`, `{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b InvitationsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Invitations.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"invitations.revoke", "DELETE", "/api/v1/orgs/id1/invitations/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.Revoke(ctx, "id1", "id2")
+		},
+	},
+	{
+		"invitations.resend", "POST", "/api/v1/orgs/id1/invitations/id2/resend", false,
+		"", `{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.Resend(ctx, "id1", "id2")
+		},
+	},
+	{
+		"memberships.list", "GET", "/api/v1/orgs/id1/memberships", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","orgSlug":"x","userId":"x","roles":["org_admin"],"capabilities":["org:read"],"createdAt":0,"revokedAt":0,"userName":"x","userEmail":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Memberships.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"memberships.updateRoles", "PATCH", "/api/v1/orgs/id1/memberships/id2", false,
+		`{"roles":["org_admin"]}`, `{"id":"x","orgId":"x","orgName":"x","orgSlug":"x","userId":"x","roles":["org_admin"],"capabilities":["org:read"],"createdAt":0,"revokedAt":0,"userName":"x","userEmail":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b MembershipsUpdateRolesBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Memberships.UpdateRoles(ctx, "id1", "id2", &b)
+		},
+	},
+	{
+		"memberships.revoke", "DELETE", "/api/v1/orgs/id1/memberships/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Memberships.Revoke(ctx, "id1", "id2")
+		},
+	},
+	{
 		"orgs.plan.retrieve", "GET", "/api/v1/orgs/id1/plan", false,
 		"", `{"orgId":"x","preset":"x","label":"x","limits":[{"key":"api","limit":0,"used":0}],"features":[{"key":"apple","level":"x"}],"footer":"full"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1569,6 +1626,42 @@ var generatedOps = []opCase{
 		"", `{"id":"x","orgId":"x","templateId":"x","templateVersion":"x","identityId":"x","serial":"x","title":"x","subtitle":"x","externalId":"x","status":"active","version":0,"connectionId":"x","syncErrorCode":"x","holderEmail":"x","holderState":"unassigned","ownerUserId":"x","modifiedAt":0,"createdAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Passes.Void(ctx, "id1")
+		},
+	},
+	{
+		"platform.settings.retrieve", "GET", "/api/v1/platform/settings", false,
+		"", `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Settings.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.settings.update", "PUT", "/api/v1/platform/settings", false,
+		`{"values":{}}`, `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformSettingsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Settings.Update(ctx, &b)
+		},
+	},
+	{
+		"platform.walletRelease.retrieve", "GET", "/api/v1/platform/wallet-release", false,
+		"", `{"releases":[{"provider":"google","mode":"live","state":"dark","credentials":[{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}],"enrolments":[{"orgId":"x","orgName":"x","status":"issuing","blocks":["plan"]}],"templates":{"ready":0,"withOmissions":0,"awaitingReview":0,"none":0},"instances":{"open":0,"retired":0}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletRelease.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.walletRelease.enableReady", "POST", "/api/v1/platform/wallet-release/id1/id2/enable-ready", false,
+		`{}`, `{"applied":false,"enrolments":[{"orgId":"x","orgName":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletReleaseEnableReadyBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletRelease.EnableReady(ctx, "id1", "id2", &b)
 		},
 	},
 	{

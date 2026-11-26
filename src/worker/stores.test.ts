@@ -55,15 +55,15 @@ describe('createAuthStores', () => {
       403,
       'FORBIDDEN',
     );
-    expect(
-      (
-        await send('/api/v1/passes/p1', {
-          method: 'PATCH',
-          headers: { ...key.headers, 'content-type': 'application/json' },
-          body: '{}',
-        })
-      ).status,
-    ).toBe(403);
+    const patch = (headers: Record<string, string>) =>
+      send('/api/v1/passes/p1', {
+        method: 'PATCH',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: '{}',
+      });
+    expect((await patch(scoped.headers)).status).toBe(403);
+    // A Platform key's refusals are audited apart, as api_key.refused naming the key.
+    expect((await patch(key.headers)).status).toBe(403);
     expect(
       (await send('/api/v1/passes', { headers: { authorization: 'Bearer wlt_unknown_key' } }))
         .status,
@@ -77,6 +77,11 @@ describe('createAuthStores', () => {
       ['api_key', 'MISSING_SCOPE'],
     ]);
     expect(JSON.parse(rows[0]?.detail ?? '{}').route).toBe('/api/v1/users');
+    const refused = await all<{ actor_id: string }>(
+      env.DB,
+      "SELECT actor_id FROM audit_log WHERE action = 'api_key.refused'",
+    );
+    expect(refused.map((r) => r.actor_id)).toEqual([key.id]);
     expect(JSON.stringify(rows)).not.toMatch(/@|wlt_/);
   });
 });

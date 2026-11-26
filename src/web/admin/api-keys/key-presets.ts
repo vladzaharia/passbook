@@ -33,4 +33,5 @@ export const AREA_LABEL: Record<string, string> = {
   nfc: 'Scanning',
   'api-keys': 'API keys',
   audit: 'Audit',
+  platform: 'Platform',
 };

@@ -49,6 +49,8 @@ const GROUPS: Record<string, (typeof GROUP_ORDER)[number]> = {
   requestLogs: 'Organization',
   developerInvitations: 'Organization',
   developers: 'Organization',
+  memberships: 'Organization',
+  invitations: 'Organization',
 };
 
 const LABELS: Record<string, string> = {

@@ -55,7 +55,7 @@ describe('column classification', () => {
         const lists = triggers.flatMap(
           ({ sql }) => /UPDATE OF ([\w, ]+) ON/.exec(sql)?.[1]?.split(', ') ?? [],
         );
-        expect(lists.toSorted()).toEqual(bump.toSorted());
+        expect(lists.filter((c) => !t.gated?.includes(c)).toSorted()).toEqual(bump.toSorted());
       });
     }
 
