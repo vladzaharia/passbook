@@ -7455,6 +7455,7 @@ export type PlatformUsersEmailsCreateResponse = {
   }>;
   passes: Array<{
     id: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -7505,6 +7506,7 @@ export type PlatformUsersEmailsDeleteResponse = {
   }>;
   passes: Array<{
     id: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -7555,6 +7557,7 @@ export type PlatformUsersEmailsMakePrimaryResponse = {
   }>;
   passes: Array<{
     id: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";
@@ -7637,6 +7640,7 @@ export type PlatformUsersRetrieveResponse = {
   }>;
   passes: Array<{
     id: string;
+    title?: string;
     templateName: string;
     orgName: string;
     status: "active" | "voided";

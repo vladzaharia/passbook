@@ -303,6 +303,7 @@
           "timeZone": "America/Los_Angeles",
           "templateName": "Monthly membership",
           "status": "active",
+          "holding": "owned",
           "channels": ["mobile"],
           "issuedAt": 1795570500000,
           "updatedAt": 1795399200000

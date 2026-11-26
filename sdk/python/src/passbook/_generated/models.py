@@ -9108,6 +9108,7 @@ class PlatformUsersEmailsCreateResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsCreateResponsePassesItem(_Model):
     id: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9162,6 +9163,7 @@ class PlatformUsersEmailsDeleteResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsDeleteResponsePassesItem(_Model):
     id: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9216,6 +9218,7 @@ class PlatformUsersEmailsMakePrimaryResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsMakePrimaryResponsePassesItem(_Model):
     id: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9302,6 +9305,7 @@ class PlatformUsersRetrieveResponseIdentitiesItem(_Model):
 
 class PlatformUsersRetrieveResponsePassesItem(_Model):
     id: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str

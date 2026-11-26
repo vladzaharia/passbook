@@ -8721,10 +8721,11 @@ type PlatformUsersEmailsCreateResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsCreateResponsePassesItem struct {
-	ID           string `json:"id"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsCreateResponseRecentAuditItem struct {
@@ -8781,10 +8782,11 @@ type PlatformUsersEmailsDeleteResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsDeleteResponsePassesItem struct {
-	ID           string `json:"id"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsDeleteResponseRecentAuditItem struct {
@@ -8841,10 +8843,11 @@ type PlatformUsersEmailsMakePrimaryResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsMakePrimaryResponsePassesItem struct {
-	ID           string `json:"id"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsMakePrimaryResponseRecentAuditItem struct {
@@ -8937,10 +8940,11 @@ type PlatformUsersRetrieveResponseIdentitiesItem struct {
 }
 
 type PlatformUsersRetrieveResponsePassesItem struct {
-	ID           string `json:"id"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersRetrieveResponseRecentAuditItem struct {
