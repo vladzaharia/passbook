@@ -67,6 +67,16 @@ createServer(async (req, res) => {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
   const body = chunks.length ? Buffer.concat(chunks) : undefined;
+  // A journey run invites its own admin, journey.admin+<run>@example.com, and signs in as `journey-admin+<run>`.
+  const hint = new URL(req.url ?? '/', issuer).searchParams.get('login_hint');
+  const run = /^journey-admin\+([a-z0-9]{1,24})$/.exec(hint ?? '')?.[1];
+  if (run)
+    oidc.addUser({
+      sub: hint as string,
+      email: `journey.admin+${run}@example.com`,
+      name: 'Journey Admin',
+      groups: ['wallet_users'],
+    });
   const response = await oidc.handle(
     new Request(`${issuer}${req.url}`, {
       method: req.method,

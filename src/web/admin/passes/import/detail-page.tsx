@@ -1,12 +1,11 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { orgPath } from '../../../lib/scope.ts';
 import {
   Badge,
-  Buddy,
   Button,
   Card,
   CardBody,
@@ -16,6 +15,12 @@ import {
   Skeleton,
   Stepper,
 } from '../../../ui/index.ts';
+import {
+  type LocalOperationDef,
+  OperationProgress,
+  useLocalOperation,
+} from '../../../ui/operation/index.ts';
+import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
 import { useImport } from './api.ts';
 import { CheckStep } from './check-step.tsx';
 import { takeFresh } from './fresh.ts';
@@ -24,16 +29,22 @@ import { ImportResults } from './results.tsx';
 import { stateBadge } from './state-tone.ts';
 import { IMPORT_STEPS, STEP } from './steps.ts';
 
-function Checking({ onStep }: { onStep: (step: number) => void }) {
+const CHECK_DEF: LocalOperationDef = {
+  kind: 'import.check',
+  title: 'Check import',
+  steps: [{ key: 'check', label: 'Check rows', active: C.match.checking }],
+};
+
+/** The check is one request with no status of its own: one running step until the state moves on. */
+function Checking({ onStep, orgId }: { onStep: (step: number) => void; orgId: string }) {
+  const { operation, driver } = useLocalOperation(CHECK_DEF, useOrgTimeZone(orgId));
+  useEffect(() => driver.step('check'), [driver]);
   return (
     <div className="flex flex-col gap-6">
       <Stepper steps={IMPORT_STEPS} current={STEP.check} onStep={onStep} />
       <Card>
-        <CardBody className="flex items-center gap-4">
-          <Buddy scene="inspect" size="sm" className="shrink-0" />
-          <p role="status" className="text-sm text-fg-muted">
-            {C.match.checking}
-          </p>
+        <CardBody>
+          <OperationProgress operation={operation} />
         </CardBody>
       </Card>
     </div>
@@ -72,7 +83,7 @@ export function ImportDetailPage({ importId }: { importId: string }) {
           }
         />
       );
-    else if (imp.state === 'checking') body = <Checking onStep={goto} />;
+    else if (imp.state === 'checking') body = <Checking onStep={goto} orgId={orgId} />;
     else if (
       imp.state === 'committing' ||
       ((imp.state === 'done' || imp.state === 'failed') && imp.progress)

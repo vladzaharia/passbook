@@ -176,7 +176,7 @@
   }
   .scan-result-band {
     display: block;
-    width: min(360px, 55%);
+    width: min(400px, 55%);
     padding: 32px;
     min-height: 240px;
   }
@@ -197,6 +197,8 @@
   .scan-result-band p {
     font-size: 20px;
     line-height: 26px;
+    /* Two sentences ("... Front desk. Check ID.") split evenly, never one short line on its own. */
+    text-wrap: balance;
   }
   .scan-verdict-glyph,
   .scan-result-band[data-layout="stack"] .scan-verdict-glyph {
