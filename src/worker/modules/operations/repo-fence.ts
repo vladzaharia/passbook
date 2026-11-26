@@ -42,6 +42,21 @@ export function platformFence(
   };
 }
 
+/** Rows a live Platform key started itself: no org, and never a session's, another key's or the system's. */
+export function platformKeyFence(
+  principal: Extract<Principal, { kind: 'api_key' }>,
+  now: number,
+): Fence {
+  const { ctes, params } = authorityPredicate(principal, { scope: 'platform', now });
+  return {
+    ctes,
+    ctesParams: params,
+    where: `o.audience IN ('platform', 'starter') AND o.org_id IS NULL AND o.actor_type = 'api_key'
+      AND o.actor_id = ? AND EXISTS (SELECT 1 FROM actor_ok)`,
+    whereParams: [principal.keyId],
+  };
+}
+
 /**
  * Rows a person started, for the live session that asks. A key never reads these.
  * `writer`: stopping or retrying needs the person's own live, strong session (a step-up replaces the one that started it).

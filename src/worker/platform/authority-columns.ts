@@ -9,6 +9,8 @@ export interface EpochTable {
   /** epoch column -> the columns whose change moves it */
   epochs: Record<string, string[]>;
   conditional?: string[];
+  /** Volatile columns a trigger bumps the epoch on only under a condition (not on every change). */
+  gated?: string[];
   volatile: string[];
   fixed: string[];
   /** The package that adds this table's bump trigger; WP0 ships only its guards. */
@@ -82,6 +84,7 @@ export const EPOCH_TABLES: EpochTable[] = [
   {
     table: 'users',
     epochs: { access_revision: ['status'] },
+    gated: ['last_roles'],
     volatile: [
       'id',
       'name',

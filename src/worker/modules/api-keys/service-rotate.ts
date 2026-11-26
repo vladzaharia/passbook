@@ -1,6 +1,7 @@
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
+import { assertPlatformMintSession } from './platform-key.ts';
 import { getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import { terminalsOf } from './repo-family.ts';
@@ -68,6 +69,9 @@ export async function rotateApiKey(
   // The successor keeps the old expiry: a credential key with none, or with more than 90 days left, is replaced, not rotated.
   assertCredentialKey(parseScopes(old.scopes), old.kind, old.mode, old.expires_at, now);
   assertOrgBoundScopes(parseScopes(old.scopes), old.kind);
+  // A Platform key's successor is made in a Polaris ID session too (it keeps the old expiry, so the cap holds).
+  if (parseScopes(old.scopes).some((s) => s.startsWith('platform:')))
+    assertPlatformMintSession(authority);
   const { prefix, label, secret, hash } = await newSecret(ctx, old.kind, old.mode);
   const row: ApiKeyRow = {
     ...old,

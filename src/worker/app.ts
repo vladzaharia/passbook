@@ -20,6 +20,7 @@ import { holdersRoutes } from './modules/holders/routes.ts';
 import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { platformIdentityRoutes } from './modules/identities/routes-platform.ts';
+import { identityRevokeRoutes } from './modules/identities/routes-revoke.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
 import { platformInvitationRoutes } from './modules/idp/invitations/platform-routes.ts';
@@ -61,6 +62,7 @@ import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
 import { previewRoutes } from './modules/public/routes-preview.ts';
 import { retentionPlatformRoutes, retentionRoutes } from './modules/retention/routes.ts';
+import { retentionPlatformReleaseRoutes } from './modules/retention/routes-platform-release.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
 import { rollCallRoutes } from './modules/scan/roll-call/routes-api.ts';
 import { scanRoutes } from './modules/scan/routes.ts';
@@ -76,6 +78,7 @@ import { scanShellSwRoutes } from './modules/scan/routes-shell-sw.ts';
 import { scanStaffRoutes } from './modules/scan/routes-staff.ts';
 import { scanZonesRoutes } from './modules/scan/routes-zones.ts';
 import { settingsRoutes } from './modules/settings/routes.ts';
+import { platformSettingsRoutes } from './modules/settings/routes-platform.ts';
 import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
 import { templateReviewsRoutes } from './modules/templates/routes-reviews.ts';
@@ -200,6 +203,15 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', retentionRoutes);
   app.route('/api/v1/orgs', orgLifecycleRoutes);
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
+  // Platform routes that declare their own key access come before the first router-level `requireAdmin`, which
+  // ignores a Bearer key (walletPlatformRoutes, below it).
+  app.route('/api/v1/platform', platformSettingsRoutes);
+  app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
+  // Polaris ID routes are person-only (`{ platform }` with no `key`): a key is refused with PERSON_REQUIRED. PK-2a converts them.
+  app.route('/api/v1/platform', idpOperationRoutes);
+  app.route('/api/v1/platform', idpPlatformRoutes);
+  app.route('/api/v1/platform', idpGroupsRoutes);
+  app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', platformEntitlementsRoutes);
   app.route('/api/v1/platform', platformPersonalLabelsRoutes);
@@ -222,6 +234,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/connectors', connectorsRoutes);
   app.route('/api/v1/webhook-endpoints', webhookEndpointsRoutes);
   app.route('/api/v1/events', eventFeedRoutes);
+  app.route('/api/v1/identities', identityRevokeRoutes);
   app.route('/api/v1/identities', identitiesRoutes);
   app.route('/api/v1/identity-runs', identityRunsRoutes);
   app.route('/api/v1/wallet-identities', walletIdentitiesRoutes);
@@ -237,10 +250,6 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/users', userHoldRoutes);
   app.route('/api/v1/users', userAccessRoutes);
   app.route('/api/v1/platform', groupClaimsRoutes);
-  app.route('/api/v1/platform', idpOperationRoutes);
-  app.route('/api/v1/platform', idpPlatformRoutes);
-  app.route('/api/v1/platform', idpGroupsRoutes);
-  app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);

@@ -49,8 +49,6 @@ guard(
   ),
 );
 
-// Revoking a certificate is irreversible: a recent sign-in.
-identitiesRoutes.post('/:id/revoke-certificate', requireStepUp(STEP_UP_SECONDS));
 // Uploading or replacing a signing certificate and key, or the push key, hands over what signs every pass.
 identitiesRoutes.post('/', requireStepUp(STEP_UP_SECONDS));
 identitiesRoutes.post('/:id/rotate', requireStepUp(STEP_UP_SECONDS));

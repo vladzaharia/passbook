@@ -1,6 +1,6 @@
 import { WizardReview, type WizardReviewSection } from '@/web/ui/index.ts';
 import { ROLE_LABELS } from '../orgs/org-roles.ts';
-import { EXPIRY } from './key-kind-fields.ts';
+import { EXPIRY, PLATFORM_KEY_NEVER } from './key-kind-fields.ts';
 import { SCOPE_LABEL } from './queries.ts';
 import type { KeyForm, StepId } from './use-key-form.ts';
 
@@ -23,7 +23,10 @@ export function KeyReview({
       title: 'Basics',
       items: [
         { label: 'Name', value: form.name.trim() },
-        { label: 'Organization', value: orgId === null ? 'Platform: all organizations' : orgName },
+        {
+          label: 'Organization',
+          value: orgId !== null ? orgName : form.onPlatform ? 'Platform' : 'All organizations',
+        },
         ...(orgId === null
           ? []
           : [
@@ -51,6 +54,7 @@ export function KeyReview({
         ...(form.scansWrite && orgId !== null
           ? [{ label: 'Terminals', value: String(form.terminalIds.length) }]
           : []),
+        ...(form.onPlatform ? [{ label: "Keys can't", value: PLATFORM_KEY_NEVER }] : []),
       ],
     },
     {

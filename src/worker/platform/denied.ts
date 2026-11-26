@@ -6,9 +6,22 @@ import { ipPrefix } from './ip.ts';
 import { serviceContext } from './service-context.ts';
 
 export interface DeniedEvent {
-  code: 'FORBIDDEN' | 'CSRF_ORIGIN' | 'CSRF_TOKEN' | 'MISSING_SCOPE' | 'IDP_SIGN_IN_REQUIRED';
+  code:
+    | 'FORBIDDEN'
+    | 'CSRF_ORIGIN'
+    | 'CSRF_TOKEN'
+    | 'MISSING_SCOPE'
+    | 'IDP_SIGN_IN_REQUIRED'
+    | 'PLATFORM_KEY_REQUIRED'
+    | 'PERSON_REQUIRED'
+    | 'KEY_CANNOT_ADMINISTER'
+    | 'RATE_LIMITED';
   actorType: 'user' | 'api_key' | 'scanner';
   actorId: string;
+  /** The org of the refused key or scanner, when it has one. */
+  orgId?: string | null;
+  /** The refused principal is a Platform key: its refusals are audited apart (`api_key.refused`). */
+  platformKey?: true;
   ipPrefix: string | null;
   /** Route template, never the concrete path. */
   route: string;
@@ -31,6 +44,10 @@ export function reportDenied(
     actorType: auth.kind === 'session' ? 'user' : auth.kind === 'scanner' ? 'scanner' : 'api_key',
     actorId:
       auth.kind === 'session' ? auth.userId : auth.kind === 'scanner' ? auth.scannerId : auth.keyId,
+    ...(auth.kind === 'session' ? {} : { orgId: auth.orgId }),
+    ...(auth.kind === 'api_key' && auth.keyKind === 'platform'
+      ? { platformKey: true as const }
+      : {}),
     ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')),
     route: c.req.matchedRoutes.findLast((r) => r.method !== 'ALL')?.path ?? c.req.routePath,
   };
@@ -51,7 +68,11 @@ export function noteKeyRefused(
   c: Context<AppBindings>,
   refusal:
     | { code: 'INVALID_API_KEY'; token: string }
-    | { code: 'MISSING_SCOPE'; keyId: string; scope: string | null },
+    | {
+        code: 'MISSING_SCOPE' | 'PLATFORM_KEY_REQUIRED' | 'PERSON_REQUIRED';
+        keyId: string;
+        scope: string | null;
+      },
 ): void {
   c.set(
     'refusal',

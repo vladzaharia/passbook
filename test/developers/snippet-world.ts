@@ -149,7 +149,7 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
       ],
     );
   const CREDENTIAL_PATH =
-    /^\/api\/v1\/(?:scanners\/[^/]+\/(?:pairing|token)|scan-staff(?:\/.*)?|nfc\/keysets(?:\/.*)?|orgs\/[^/]+\/developer(?:-invitations|s)(?:\/.*)?)$/;
+    /^\/api\/v1\/(?:scanners\/[^/]+\/(?:pairing|token)|scan-staff(?:\/.*)?|nfc\/keysets(?:\/.*)?|orgs\/[^/]+\/(?:developer(?:-invitations|s)|memberships|invitations)(?:\/.*)?)$/;
   const app = createApp({
     stores: {
       ...denyAllStores,

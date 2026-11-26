@@ -33,6 +33,7 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/templates/previews',
   '/api/v1/delivery',
   '/api/v1/settings',
+  '/api/v1/platform/settings',
   '/api/v1/scan/passes/{passId}/notes',
   '/api/v1/scan/devices',
   '/api/v1/identities/{id}/certificates',

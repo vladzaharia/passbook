@@ -6,7 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { revokeApiKey } from '../api-keys/service.ts';
 import { endSponsor, liveSponsorOf } from '../dev-access/repo-sponsors.ts';
 import { closeSandbox } from '../developer/repo-grants.ts';
-import { managerOf } from '../orgs/membership-service.ts';
+import { managerOf } from '../orgs/actor.ts';
 import { revokeActiveMembership } from '../orgs/repo-member-writes.ts';
 import { setUserStatus } from '../users/service.ts';
 import { offboardable, offboardPlan } from './offboard-plan.ts';

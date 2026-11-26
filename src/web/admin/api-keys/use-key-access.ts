@@ -20,6 +20,8 @@ export type KeyAccess =
       developerOrg: boolean;
       /** The audit log, where a key's activity is read from. */
       canAudit: boolean;
+      /** False in a break-glass or email session: it makes no Platform key. */
+      idp: boolean;
     };
 
 /**
@@ -64,5 +66,6 @@ export function useKeyAccess(): KeyAccess {
     capabilities: platform ? null : (membership?.capabilities ?? []),
     canManage: platform || Boolean(membership?.capabilities.includes('integrations:manage')),
     canAudit: platform || Boolean(membership?.capabilities.includes('audit:read')),
+    idp: session.authed?.amr === 'oidc',
   };
 }

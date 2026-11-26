@@ -3,12 +3,13 @@ import { Hono } from 'hono';
 import type { RouterRoute } from 'hono/types';
 import { expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
+import { MINTABLE_PLATFORM_SCOPES } from '../../shared/contracts/api-keys.ts';
 import type { SignInLevel } from '../../shared/sign-in.ts';
 import { createApp } from '../app.ts';
 import { isKnownGuard } from './auth.ts';
 import { isPublicHandler } from './openapi.ts';
 import { declareKeyAccess, enforcesKeyAccess } from './openapi-security.ts';
-import { signInLevelOf } from './sign-in-guard.ts';
+import { isPlatformKeysOwn, platformKeyOf, signInLevelOf } from './sign-in-guard.ts';
 
 // Every route needs a decision: a guard the inventory recognises (requireCaller from `auth`,
 // requireSession, requireAdmin, or a guard declaring key access), `public: true`, or a line below.
@@ -180,7 +181,6 @@ const OWN_GUARD = [
   'POST /api/v1/identities',
   'POST /api/v1/identities/:id/apns-check',
   'POST /api/v1/identities/:id/renew',
-  'POST /api/v1/identities/:id/revoke-certificate',
   'POST /api/v1/identities/:id/rotate',
   'POST /api/v1/orgs/invitations/accept',
   'POST /api/v1/orgs/invitations/preview',
@@ -335,4 +335,117 @@ it('lets an email-link session reach only the holder routes, and deny every othe
     'POST /api/v1/orgs/:orgId/close',
   ])
     expect(levels[route], route).toBe('strict');
+});
+
+/**
+ * How each route a `platform` declaration covers treats a key (`key`, `key.unless` or none), and the scope it names.
+ * A route under two platform guards is labelled by the most restrictive (person, then conditional, then key).
+ */
+function platformKeyRoutes(): {
+  modes: Record<'key' | 'conditional' | 'person', string[]>;
+  scopes: Set<string>;
+} {
+  const modes: Record<'key' | 'conditional' | 'person', string[]> = {
+    key: [],
+    conditional: [],
+    person: [],
+  };
+  const scopes = new Set<string>();
+  for (const { key, covering } of coverage()) {
+    const decls = covering.map((g) => platformKeyOf(g.handler)).filter((d) => d !== undefined);
+    const mode = (['person', 'conditional', 'key'] as const).find((m) =>
+      decls.some((d) => d.mode === m),
+    );
+    if (!mode) continue;
+    modes[mode].push(key);
+    if (mode !== 'person') for (const d of decls) if (d.mode !== 'person') scopes.add(d.scope);
+  }
+  for (const list of Object.values(modes)) list.sort();
+  return { modes, scopes };
+}
+
+/**
+ * Every `platform` route has a written decision about keys: here it takes a Platform key, takes one unless the
+ * request needs a person (`key: { unless }`), or is person-only (403 PERSON_REQUIRED). The lists are exact, so a new
+ * `platform` route fails until it is put on one. Router-level `requireAdmin` routes are not `platform` declarations
+ * yet, so they are not here and a Bearer key gets 401 on them (`REQUIRE_ADMIN_ROUTER_ROUTES`): PK-6 converts each
+ * to `auth: { platform, key? }` and lists it here.
+ */
+const PLATFORM_KEY_ROUTES: string[] = [
+  'GET /api/v1/platform/settings',
+  'GET /api/v1/platform/wallet-release',
+];
+const PLATFORM_KEY_CONDITIONAL: string[] = [
+  // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
+  'POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready',
+  // Refused to a key when it names an auth.* or oidc.* setting (P4: it decides who gets in).
+  'PUT /api/v1/platform/settings',
+];
+/** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
+const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  'DELETE /api/v1/platform/idp/groups/:key',
+  'DELETE /api/v1/platform/idp/groups/:key/members/:id',
+  'DELETE /api/v1/platform/idp/groups/:key/rules/:id',
+  'DELETE /api/v1/platform/invitations/:id',
+  'DELETE /api/v1/users/:id/holds/:role',
+  'GET /api/v1/audit/platform',
+  'GET /api/v1/audit/platform/export',
+  'GET /api/v1/metrics/platform/developer',
+  'GET /api/v1/platform/apple-calls',
+  'GET /api/v1/platform/entitlement-presets',
+  'GET /api/v1/platform/idp',
+  'GET /api/v1/platform/idp/calls',
+  'GET /api/v1/platform/idp/drift',
+  'GET /api/v1/platform/idp/groups',
+  'GET /api/v1/platform/idp/groups/:key/claims',
+  'GET /api/v1/platform/idp/groups/:key/members',
+  'GET /api/v1/platform/idp/groups/:key/rules',
+  'GET /api/v1/platform/invitations',
+  'GET /api/v1/platform/orgs/:id/entitlements',
+  'GET /api/v1/platform/personal-org-labels',
+  'GET /api/v1/users/:id/access',
+  'GET /api/v1/users/:id/claims',
+  'PATCH /api/v1/platform/idp/groups/:key',
+  'PATCH /api/v1/platform/idp/groups/:key/claims',
+  'PATCH /api/v1/users/:id/claims',
+  // P3: irreversible, every pass the certificate signed stops updating.
+  'POST /api/v1/identities/:id/revoke-certificate',
+  'POST /api/v1/platform/idp/freeze',
+  'POST /api/v1/platform/idp/groups',
+  'POST /api/v1/platform/idp/groups/:key/members',
+  'POST /api/v1/platform/idp/groups/:key/rules',
+  'POST /api/v1/platform/idp/groups/ensure',
+  'POST /api/v1/platform/idp/reconcile',
+  'POST /api/v1/platform/idp/scim-breaker/clear',
+  'POST /api/v1/platform/invitations',
+  'POST /api/v1/platform/invitations/:id/resend',
+  // P3: releasing a legal hold lets a purge run.
+  'POST /api/v1/platform/orgs/:orgId/retention/holds/:holdId/release',
+  'POST /api/v1/users/:id/offboard',
+  'POST /api/v1/users/:id/roles',
+  'POST /api/v1/users/:id/roles/:role/remove-external',
+  'PUT /api/v1/platform/entitlement-presets',
+  'PUT /api/v1/platform/orgs/:id/entitlements',
+];
+
+it('pins which platform routes take a key and which are person-only', () => {
+  const { modes } = platformKeyRoutes();
+  expect(modes.key).toEqual(PLATFORM_KEY_ROUTES);
+  expect(modes.conditional).toEqual(PLATFORM_KEY_CONDITIONAL);
+  expect(modes.person).toEqual(PERSON_ONLY_PLATFORM_ROUTES);
+});
+
+it('makes a platform scope mintable exactly when a route accepts it by key', () => {
+  const { scopes } = platformKeyRoutes();
+  if (scopes.size > 0) scopes.add('platform:read');
+  expect([...MINTABLE_PLATFORM_SCOPES].sort()).toEqual([...scopes].sort());
+});
+
+/** The scope routes a Platform key may read (`platformKeys: 'own'`): only what that key started. Nothing else takes it. */
+it('lets a Platform key into the operations reads and no other scope route', () => {
+  const own = coverage()
+    .filter(({ covering }) => covering.some((g) => isPlatformKeysOwn(g.handler)))
+    .map(({ key }) => key)
+    .sort();
+  expect(own).toEqual(['GET /api/v1/operations', 'GET /api/v1/operations/:id']);
 });

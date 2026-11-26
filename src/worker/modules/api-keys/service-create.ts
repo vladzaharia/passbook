@@ -16,6 +16,7 @@ import { orgIsActive } from '../orgs/repo.ts';
 import { orgIsDeveloper } from '../orgs/repo-entitlements.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId, delegableScopes } from './access.ts';
 import { attenuate } from './attenuate.ts';
+import { assertPlatformKey } from './platform-key.ts';
 import { countOpenChildren, getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
@@ -74,7 +75,8 @@ export function assertCredentialKey(
 
 /** Setup, template and audit scopes belong to one organization (a template scope acts as a member of it): a platform key never holds them. */
 export function assertOrgBoundScopes(scopes: readonly string[], kind: ApiKeyKind): void {
-  const orgOnly = ['org:write', 'wallet:write', 'audit:read', 'logs:read', 'nfc:read', 'nfc:write'];
+  const orgOnly =
+    'org:write wallet:write audit:read logs:read nfc:read nfc:write members:read'.split(' ');
   if (
     kind === 'platform' &&
     scopes.some(
@@ -273,6 +275,7 @@ export async function createApiKey(
   await assertAuditScope(ctx.env.DB, orgId, held, mode);
   assertCredentialKey(held, kind, mode, input.expiresAt, now);
   assertOrgBoundScopes(held, kind);
+  assertPlatformKey(authority, kind, mode, held, input.expiresAt, now);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),

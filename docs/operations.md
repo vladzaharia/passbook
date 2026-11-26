@@ -314,6 +314,20 @@ Redirects are uncached, so no browser loops. Everyone signs in again. A pass add
 between keeps calling passbook.mobile's web service, and Wallet does not follow redirects: its
 holder re-adds it from a new link.
 
+## Platform keys
+
+Runbook: [Platform Keys](runbooks/platform-keys.md). A Platform key (`pbo_`, no organization) holds `platform:*` scopes and reaches the key-callable `/api/v1/platform/*` routes for the owner's automation. It never reaches organization routes. The other flavour, All organizations, holds organization scopes only and never reaches a platform route; the two are never mixed on one key.
+
+- Scopes today: `platform:read` (every `GET` of a key-callable platform route), `platform:settings` (platform settings except `auth.*` and `oidc.*`), `platform:wallet` (the wallet release report and the enable-ready dry run). `platform:groups` and `platform:claims` exist but no route takes them by key yet.
+- Mint: a platform admin in a Polaris ID session (not break-glass) with a sign-in in the last 10 minutes. Live only, standard rate tier, an IP range (no wider than a /8), expiry at most 30 days (90 with `platform:read` alone). A key never mints or rotates a platform key.
+- Live only while its creator is an active user: disabling the creator stops it at once, and offboarding revokes it.
+- Rotate and revoke are a person's, in Platform > API keys. Rotate with an overlap so the automation swaps its secret first.
+- Limits: 60 writes a minute per key on platform routes (`RL_PLATFORM_WRITE`, 429 `RATE_LIMITED`) on top of the standard tier. Platform writes accept `Idempotency-Key`.
+- Refusals: outside the range, expired, revoked or creator disabled is 401 `INVALID_API_KEY` with no reason; a missing scope is 403 `MISSING_SCOPE`; an organization key on a platform route is 403 `PLATFORM_KEY_REQUIRED`; a route a key never calls is 403 `PERSON_REQUIRED`. Each refusal is audited as `auth.denied`.
+- Audit: every write records `api_key`, the key id and no organization. Filter the platform audit log by key to see what a key changed.
+- Demo: `node tools/seed-demo.ts` seeds "Ops status" into the local database and prints the file holding its secret, never the secret.
+- Organization member routes (invite, resend, revoke, change role) take an organization key with `members:write` (or `members:read` to list) for roles that do not administer. A key never makes, promotes, demotes or removes an administrator (403 `KEY_CANNOT_ADMINISTER`).
+
 ## Break-glass admin
 
 Admin sign-in for when Polaris ID is down.
@@ -463,14 +477,14 @@ with only this statement (any other way of writing the table fails check-migrati
 UPDATE wallet_provider_releases SET state = 'released', changed_at = <ms> WHERE provider = 'google' AND mode = 'test';
 ```
 
-Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin): a platform credential with a
+Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin, or a Platform key with `platform:read` or `platform:wallet`): a platform credential with a
 passing check, no `legacy` enrolment, the intended orgs `issuing` or `ready`, templates released. The deploy
 prints `Wallet release: google test -> released (<migration>)` and runs the wallet migration gate before it
 migrates, and again before it serves for as long as any wallet is released. It refuses when it cannot read the
 pending migrations. It migrates before it serves, and both sides must say `released`, so every step in between
 is dark.
 
-**After the flip**, turn on the orgs that set up before it (a recent sign-in is required). The Release card on Platform > Wallet accounts runs the dry run and the apply with exactly this list; the route is:
+**After the flip**, turn on the orgs that set up before it (a recent sign-in is required). The Release card on Platform > Wallet accounts runs the dry run and the apply with exactly this list. A Platform key with `platform:wallet` may run the dry run; the apply is a person's (403 `PERSON_REQUIRED` for a key). The route is:
 `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that were never
 On and would turn On (plan, source, fresh check, Live round trip, no hold, channel not blocked). An enrolment the
 org switched Off (`org_off`) or a released hold cleared (`hold_released`) stays Off: only the org turns it back
