@@ -12,6 +12,8 @@ export interface MembershipRow {
   user_name: string | null;
   /** Null for an account whose primary email is the no-verified-email placeholder. */
   user_email: string | null;
+  /** 1 when the Polaris ID owner took the console role PassBook added. */
+  access_paused?: number;
   roles: string;
   created_at: number;
   revoked_at: number | null;
@@ -82,7 +84,8 @@ export function orgMembers(
     db,
     `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
        CASE WHEN (${f.sql}) THEN ${knownEmailSql('u.primary_email')}
-         ELSE COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') END AS user_email
+         ELSE COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') END AS user_email,
+       EXISTS (SELECT 1 FROM idp_target_state s WHERE s.user_id = m.user_id AND s.target = 'console' AND s.held_at IS NOT NULL) AS access_paused
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
      WHERE m.org_id = ? AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active' AND ${m.sql} ORDER BY m.created_at, m.id`,
     [...f.params, orgId, ...m.params],
@@ -127,7 +130,8 @@ export function memberRowById(db: D1Database, orgId: string, id: string) {
   return first<MembershipRow>(
     db,
     `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
-       COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email
+       COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email,
+       EXISTS (SELECT 1 FROM idp_target_state s WHERE s.user_id = m.user_id AND s.target = 'console' AND s.held_at IS NOT NULL) AS access_paused
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
      WHERE m.org_id = ? AND m.id = ?`,
     [orgId, id],

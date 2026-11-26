@@ -11,7 +11,13 @@ import {
 import type { Check } from './authority-checks.ts';
 import { tenantSql } from './authority-cond.ts';
 import { AuthorityError } from './authority-error.ts';
-import { actorSql, Binds, type GrantScope, type Principal } from './authority-principal.ts';
+import {
+  actorSql,
+  assertNoInactiveOk,
+  Binds,
+  type GrantScope,
+  type Principal,
+} from './authority-principal.ts';
 import type { SqlValue } from './db.ts';
 import type { LimitHit } from './errors.ts';
 
@@ -121,6 +127,7 @@ export async function limitHitOf(
 ): Promise<LimitHit | null> {
   for (const check of checks) {
     if (!check.limit) continue;
+    assertNoInactiveOk(principal);
     const b = new Binds();
     const actor = actorSql(principal, now, b);
     const key = b.bind(check.limit.key);

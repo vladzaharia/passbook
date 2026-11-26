@@ -14,6 +14,7 @@ import { claimsOfInvitation } from '../repo-invite-claims.ts';
 import { subjectsOfUser } from '../repo-sources.ts';
 import { challengeNeeds, invalidInvitation } from './challenge.ts';
 import { claimAccount } from './claim-existing.ts';
+import { INVITE_REASON } from './reasons.ts';
 import { acceptedBy, hasEmail, setupsOf } from './repo-resolve.ts';
 import { acceptDeveloper, acceptMember } from './repo-writes.ts';
 import { type Invite, maskEmail, resolveInvite } from './resolve.ts';
@@ -50,7 +51,7 @@ async function settleAccepted(
   proven: readonly string[],
 ): Promise<void> {
   const db = ctx.env.DB;
-  await withdrawSetups(ctx, invite.kind, invite.row.id, 'invitation.accepted');
+  await withdrawSetups(ctx, invite.kind, invite.row.id, INVITE_REASON.accepted);
   const parent = invite.kind === 'member' ? { org: invite.row.id } : { developer: invite.row.id };
   const claimed = (await claimsOfInvitation(db, parent)).map((c) => c.subject);
   for (const subject of new Set([...proven, ...claimed])) await markDirty(db, subject);

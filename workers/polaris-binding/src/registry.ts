@@ -1,3 +1,4 @@
+import { ALIASES_KEY, parseAliases } from './aliases.ts';
 import { listedKeyOk } from './claims.ts';
 import {
   type BindingEnv,
@@ -8,6 +9,48 @@ import {
 } from './types.ts';
 
 export const ID = /^[A-Za-z0-9_-]{1,64}$/;
+/** PassBook's CIMD client id is its metadata URL (Polaris ID: the client's id is the URL itself). */
+const CIMD_PATH = '/auth/oidc/client-metadata.json';
+const PLAIN_CLIENT = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
+
+/** A CIMD metadata URL in its canonical form, or a plain registered client id. Nothing else. */
+export function clientIdOk(v: unknown): v is string {
+  if (typeof v !== 'string') return false;
+  if (PLAIN_CLIENT.test(v)) return !v.includes('..');
+  if (v.length > 512) return false;
+  try {
+    const u = new URL(v);
+    return (
+      u.protocol === 'https:' &&
+      !u.username &&
+      !u.password &&
+      !u.search &&
+      !u.hash &&
+      u.pathname === CIMD_PATH &&
+      u.href === v
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The client id as one admin path segment. Polaris ID takes a CIMD id as `~` + base64url, and decodes `~` in
+ * every `:id` segment, so this is the only segment that may carry one.
+ */
+export function encodeClientId(v: string): string {
+  if (!clientIdOk(v)) throw new Error('Invalid client id.');
+  if (PLAIN_CLIENT.test(v)) return v;
+  let bin = '';
+  for (const b of new TextEncoder().encode(v)) bin += String.fromCharCode(b);
+  return `~${btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+}
+
+/** PassBook's own origin, derived from a CIMD client id. A plain registered id has none. */
+export function passbookOrigin(v: string): string | null {
+  return clientIdOk(v) && !PLAIN_CLIENT.test(v) ? new URL(v).origin : null;
+}
+
 export const GROUP_KEY = /^[a-z][a-z0-9_]{1,39}$/;
 const ROLES: readonly Role[] = [...WRITABLE_ROLES, 'platform_admin', 'users'];
 const PROTECTED_ROLES: readonly Role[] = ['platform_admin', 'users'];
@@ -38,16 +81,25 @@ export interface Custom {
   deleting?: boolean;
 }
 
+/** A protected group the config names without an id: `placeRoleGroups` records it when it exists. */
+export interface UnplacedProtected {
+  role: Role;
+  name: string;
+}
+
 export interface Registry {
   entries: Entry[];
   writable: Entry[];
   unplaced: Unplaced[];
+  unplacedProtected: UnplacedProtected[];
   /** Groups the binding never writes. */
   protectedIds: string[];
   /** Platform admin groups: their members are never edited. */
   adminIds: string[];
   /** Role and protected group ids (the PassBook client allows exactly these). */
   ids: string[];
+  /** Names of groups the main Worker's sign-in also accepts: found by exact name and allowed on the client, never created, renamed or written. */
+  aliases: string[];
   custom: Custom[];
   /** Every id the binding may write: role groups and custom or adopted groups. */
   managedIds: string[];
@@ -70,14 +122,22 @@ export interface Settings {
 
 const text = (v: unknown): string => (typeof v === 'string' ? v : '');
 
-function build(entries: Entry[], unplaced: Unplaced[], custom: Custom[]): Registry {
+function build(
+  entries: Entry[],
+  unplaced: Unplaced[],
+  custom: Custom[],
+  unplacedProtected: UnplacedProtected[] = [],
+  aliases: string[] = [],
+): Registry {
   const writable = entries.filter((e) => !e.protected);
   const ids = entries.map((e) => e.id);
   return {
     entries,
     writable,
     unplaced,
+    unplacedProtected,
     ids,
+    aliases,
     custom,
     protectedIds: entries.filter((e) => e.protected).map((e) => e.id),
     adminIds: entries.filter((e) => e.role === 'platform_admin').map((e) => e.id),
@@ -95,23 +155,30 @@ function build(entries: Entry[], unplaced: Unplaced[], custom: Custom[]): Regist
   };
 }
 
-/** Adds the groups the binding recorded: role groups it created, custom and adopted groups. */
+/** Adds the groups the binding recorded: role groups it created or adopted, protected groups it found, custom and adopted groups. */
 export function withRecorded(
   base: Registry,
-  roles: { role: WritableRole; id: string; name: string }[],
+  roles: { role: Role; id: string; name: string; protected?: boolean }[],
   custom: Custom[],
 ): Registry {
   const entries = [
     ...base.entries,
     ...roles
-      .filter((r) => !base.entries.some((e) => e.role === r.role))
-      .map((r) => ({ role: r.role, id: r.id, name: r.name, protected: false })),
+      .filter((r) =>
+        r.protected
+          ? !base.entries.some((e) => e.id === r.id)
+          : !base.entries.some((e) => e.role === r.role),
+      )
+      .map((r) => ({ role: r.role, id: r.id, name: r.name, protected: r.protected === true })),
   ];
-  const placed = new Set(roles.map((r) => r.role));
+  const placed = new Set(roles.filter((r) => !r.protected).map((r) => r.role));
+  const placedNames = new Set(roles.filter((r) => r.protected).map((r) => r.name));
   return build(
     entries,
     base.unplaced.filter((u) => !placed.has(u.role)),
     custom,
+    base.unplacedProtected.filter((u) => !placedNames.has(u.name)),
+    base.aliases,
   );
 }
 
@@ -187,8 +254,12 @@ export function parseRegistry(env: BindingEnv): {
   if (!prefix) reasons.add('env_group_prefix');
   const entries: Entry[] = [];
   const unplaced: Unplaced[] = [];
-  const names: string[] = [];
+  const unplacedProtected: UnplacedProtected[] = [];
+  const aliases = parseAliases((raw as Record<string, unknown>)[ALIASES_KEY] ?? []);
+  if (!aliases) return bad('env_groups');
+  const names: string[] = [...aliases];
   for (const [role, value] of Object.entries(raw)) {
+    if (role === ALIASES_KEY) continue;
     if (!ROLES.includes(role as Role)) return bad('env_groups');
     const isProtected = PROTECTED_ROLES.includes(role as Role);
     // The protected roles may list several groups, for the window where a group is renamed.
@@ -208,8 +279,12 @@ export function parseRegistry(env: BindingEnv): {
       // A writable name that reads as an admin group is a misconfigured admin group.
       if (!isProtected && /admin/i.test(v.name)) reasons.add('group_admin_name');
       names.push(v.name);
-      const noId = v.id === undefined || v.id === null;
-      if (noId && !isProtected) {
+      const noId = v.id === undefined || v.id === null || v.id === '';
+      if (noId && isProtected) {
+        unplacedProtected.push({ role: role as Role, name: v.name });
+        continue;
+      }
+      if (noId) {
         const friendly = typeof v.friendlyName === 'string' ? v.friendlyName : v.name;
         if (friendly.length < 2 || friendly.length > 50) return bad('env_groups');
         unplaced.push({ role: role as WritableRole, name: v.name, friendlyName: friendly });
@@ -223,8 +298,14 @@ export function parseRegistry(env: BindingEnv): {
   if ((!entries.some((e) => !e.protected) && !unplaced.length) || new Set(ids).size !== ids.length)
     return bad('env_groups');
   // Without the admin group nothing can tell an admin from a member, so there is no write at all.
-  if (!entries.some((e) => e.role === 'platform_admin')) return bad('env_groups');
-  const protectedNames = entries.filter((e) => e.protected).map((e) => e.name);
+  const hasAdmin =
+    entries.some((e) => e.role === 'platform_admin') ||
+    unplacedProtected.some((u) => u.role === 'platform_admin');
+  if (!hasAdmin) return bad('env_groups');
+  const protectedNames = [
+    ...entries.filter((e) => e.protected).map((e) => e.name),
+    ...unplacedProtected.map((u) => u.name),
+  ];
   if (
     [
       ...entries.filter((e) => !e.protected).map((e) => e.name),
@@ -235,7 +316,11 @@ export function parseRegistry(env: BindingEnv): {
   if (new Set(names).size !== names.length && !reasons.has('group_protected'))
     return bad('env_groups');
   const settings = parseSettings(env, reasons, ids, names);
-  return { registry: build(entries, unplaced, []), settings, reasons: [...reasons] };
+  return {
+    registry: build(entries, unplaced, [], unplacedProtected, aliases),
+    settings,
+    reasons: [...reasons],
+  };
 }
 
 export type { Target };

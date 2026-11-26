@@ -183,11 +183,13 @@ export const QS_COPY = {
     },
     noaccess: {
       title: 'No developer access',
-      line: 'Ask your Polaris ID admin to add you to the passbook_developers group.',
+      line: 'An organization admin can invite you as a developer.',
       copy: 'Copy request',
       copied: 'Copied',
       request: (email: string) =>
-        `Please add ${email} to the passbook_developers group so I can use the PassBook developer portal.`,
+        `Please invite ${email} to PassBook as a developer: Admin → Members → Invite member, with Developer access.`,
+      invited: (orgs: readonly string[]) =>
+        `${orgs.join(', ')} invited you. Open the invitation email to finish.`,
       cta: 'Use another Polaris ID',
       passes: 'My passes',
       signedInAs: (email: string) => `Signed in as ${email}`,

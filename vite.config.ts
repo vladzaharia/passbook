@@ -275,6 +275,21 @@ export default defineConfig(({ command }) => ({
       remoteBindings: false,
       // tools/e2e-server.ts migrates a fresh database here on every start.
       ...(e2e ? { persistState: { path: '.wrangler/e2e-state' } } : {}),
+      // e2e only: the real Polaris ID binding over the mock Polaris ID (test/idp-e2e/worker.ts), reached as the IDP binding.
+      ...(e2e
+        ? {
+            auxiliaryWorkers: [
+              {
+                configPath: './test/idp-e2e/wrangler.jsonc',
+                config: {
+                  vars: {
+                    MOCK_POLARIS_URL: process.env.MOCK_POLARIS_URL ?? 'http://localhost:5174',
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
       // Merged into wrangler.jsonc (arrays append). The build keeps the file's config as is.
       config: (c: { vars?: Record<string, unknown>; ratelimits?: RateLimitConfig[] }) => ({
         // Local runs only see the .dev.vars secrets that `secrets.required` names (tools/lib/dev-secrets.ts).
@@ -286,8 +301,19 @@ export default defineConfig(({ command }) => ({
           : {}),
         ...(e2e
           ? {
+              // Appends to the file's services: the main Worker's IDP binding, to the aux Worker above (the plugin names it for the environment).
+              services: [
+                {
+                  binding: 'IDP',
+                  // The aux config's name (test/idp-e2e/wrangler.jsonc) plus the `-e2e` the plugin adds for the environment.
+                  service: 'polaris-binding-e2e-e2e',
+                  entrypoint: 'PolarisBinding',
+                },
+              ],
               vars: {
                 ...c.vars,
+                // Declared so the e2e vars file can set it: Polaris ID's SCIM push (test/mock-oidc/scim-push.ts).
+                SCIM_BEARER_TOKEN: '',
                 SIGNER_PLATFORM_INTERMEDIATE: '',
                 ADMIN_SYNC_BUCKET_MS: '',
                 // Declared so the e2e vars file can set it (resolver-memo.ts); empty everywhere else.

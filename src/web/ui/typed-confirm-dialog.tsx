@@ -32,6 +32,8 @@ export function TypedConfirmDialog({
   word,
   confirmLabel,
   onConfirm,
+  blocked = false,
+  children,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,6 +42,10 @@ export function TypedConfirmDialog({
   word: string;
   confirmLabel: string;
   onConfirm: () => Promise<unknown>;
+  /** Keeps the confirm off whatever is typed: a plan still loading, or a refusal the dialog lists. */
+  blocked?: boolean;
+  /** Shown above the field, for what the act will do. */
+  children?: ReactNode;
 }) {
   if (import.meta.env.DEV && UUID.test(word.trim())) {
     throw new Error('TypedConfirmDialog: use a human word (title, slug or "delete"), not an id.');
@@ -47,7 +53,7 @@ export function TypedConfirmDialog({
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const matches = same(typed, word);
+  const matches = !blocked && same(typed, word);
   useEffect(() => {
     if (!open) {
       setTyped('');
@@ -92,7 +98,12 @@ export function TypedConfirmDialog({
           </>
         }
       >
-        <FormField label={`Type ${word} to confirm`} error={error}>
+        {children}
+        <FormField
+          label={`Type ${word} to confirm`}
+          error={error}
+          className={children ? 'mt-4' : undefined}
+        >
           {(c) => (
             <div className="relative">
               <Input

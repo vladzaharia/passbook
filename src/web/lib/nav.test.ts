@@ -19,6 +19,20 @@ describe('admin navigation per scope', () => {
     );
   });
 
+  it('adds Groups to the platform console only while Polaris ID is connected', () => {
+    const flat = (polaris: boolean) =>
+      adminNavGroups(PLATFORM, true, undefined, { polaris })
+        .flat()
+        .map((i) => i.label);
+    expect(flat(false)).not.toContain('Groups');
+    expect(flat(true)).toContain('Groups');
+    expect(
+      adminNavGroups(PLATFORM, true)
+        .flat()
+        .map((i) => i.label),
+    ).not.toContain('Groups');
+  });
+
   it('lists the platform console for a platform admin', () => {
     const groups = adminNavGroups(PLATFORM, true);
     expect(labels(groups)).toEqual([

@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { vi } from 'vitest';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
+import { resetScimTokenCache } from './scim-auth.ts';
 import { rig } from './sync-test-fixtures.ts';
 
 export const TOKEN = `scim-test-token-${'x'.repeat(32)}`;
@@ -10,7 +11,14 @@ export const TOKEN = `scim-test-token-${'x'.repeat(32)}`;
 export async function scimRig(options: Parameters<typeof rig>[0] = { mode: 'live' }) {
   const r = await rig(options);
   Object.assign(r.f.env, { SCIM_BEARER_TOKEN: TOKEN });
+  // Tokens are never deleted while live: retire, then remove.
+  await run(
+    env.DB,
+    "UPDATE idp_scim_tokens SET state = 'retired', retired_at = 0 WHERE state != 'retired'",
+  );
+  resetScimTokenCache();
   for (const sql of [
+    'DELETE FROM idp_scim_tokens',
     'DELETE FROM idp_directory_users',
     'DELETE FROM idp_directory_groups',
     'DELETE FROM idp_dirty',

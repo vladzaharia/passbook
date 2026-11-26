@@ -38,19 +38,21 @@ export async function challengedInvite(
 ): Promise<Invite> {
   const invite = await resolveInvite(ctx, input.token);
   if (invite?.state !== 'pending' || invite.late) throw invalidInvitation();
+  await assertHuman(ctx, ip, input.turnstileToken);
+  await assertIdpReady(ctx, challengeNeeds(invite));
+  return invite;
+}
+
+/** The page's Turnstile check, the same for every kind of invitation. */
+export async function assertHuman(
+  ctx: ServiceContext,
+  ip: string | null,
+  turnstileToken: string,
+): Promise<void> {
   if (
-    !(await verifyTurnstile(
-      ctx.env,
-      input.turnstileToken,
-      ip,
-      ctx.log,
-      fetch,
-      TURNSTILE_INVITE_ACTION,
-    ))
+    !(await verifyTurnstile(ctx.env, turnstileToken, ip, ctx.log, fetch, TURNSTILE_INVITE_ACTION))
   ) {
     ctx.log.warn('invitation.turnstile_failed', { code: 'TURNSTILE_FAILED' });
     throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
   }
-  await assertIdpReady(ctx, challengeNeeds(invite));
-  return invite;
 }

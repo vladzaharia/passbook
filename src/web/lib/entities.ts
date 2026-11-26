@@ -28,6 +28,7 @@ import {
   Sparkles,
   Ticket,
   User,
+  UsersRound,
   Webhook,
   Workflow,
 } from 'lucide-react';
@@ -54,6 +55,8 @@ export const ENTITY = {
   },
   connection: { label: 'Connection', plural: 'connections', icon: Cable, art: 'plugs' },
   user: { label: 'User', plural: 'users', icon: User, art: 'people' },
+  /** A Polaris ID group PassBook manages. It borrows the people art. */
+  group: { label: 'Group', plural: 'groups', icon: UsersRound, art: 'people' },
   org: { label: 'Organization', plural: 'organizations', icon: Building2, art: 'building' },
   identity: {
     label: 'Apple identity',

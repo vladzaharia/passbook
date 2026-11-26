@@ -3,7 +3,7 @@ import { INVITE_SECRET } from '../invitation-link.ts';
 import { TimestampSchema } from './common.ts';
 import { OrgMembershipSchema, OrgRoleSchema } from './org-membership.ts';
 
-/** The one invitation page's family: member and developer invitations today, platform ones next. The secret is the credential. */
+/** The one invitation page's family: member, developer and platform invitations. The secret is the credential. */
 export const InvitationSecretSchema = z.string().regex(INVITE_SECRET);
 
 export const InvitationTokenSchema = z.strictObject({ token: InvitationSecretSchema });
@@ -15,8 +15,11 @@ export const InvitationChallengeSchema = z.strictObject({
 });
 
 export const InvitationPreviewSchema = z.object({
-  kind: z.enum(['member', 'developer']),
-  orgName: z.string(),
+  kind: z.enum(['member', 'developer', 'platform']),
+  /** The org the person joins; null for a platform invitation. */
+  orgName: z.string().nullable(),
+  /** Platform invitations: the groups the person gets, by display name. */
+  groups: z.array(z.string()),
   /** The org roles the person joins with; empty for developer access alone. */
   roles: z.array(OrgRoleSchema),
   developer: z.boolean(),
@@ -40,8 +43,12 @@ export const InvitationClaimSchema = z.object({ ok: z.literal(true) });
 export const InvitationAcceptSchema = z.object({
   /** `refresh`: the person gained a Polaris ID group; one more sign-in picks it up. */
   outcome: z.enum(['joined', 'refresh']),
-  kind: z.enum(['member', 'developer']),
-  orgName: z.string(),
+  kind: z.enum(['member', 'developer', 'platform']),
+  orgName: z.string().nullable(),
   membership: OrgMembershipSchema.nullable(),
 });
 export type InvitationAccept = z.infer<typeof InvitationAcceptSchema>;
+
+/** What `confirm` answers once the person has finished creating their Polaris ID and the invited address matched. */
+export const InvitationConfirmSchema = z.object({ outcome: z.literal('joined') });
+export type InvitationConfirm = z.infer<typeof InvitationConfirmSchema>;

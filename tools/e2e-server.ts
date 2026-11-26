@@ -18,6 +18,7 @@ const release = process.env.WALLET_E2E_RELEASE === '1';
 
 // Own vars file (picked up via CLOUDFLARE_ENV=e2e) so a developer's .dev.vars (other issuer, port,
 // client id) can never leak into the run. Regenerated every start; throwaway fixture keys only.
+const scimToken = randomBytes(24).toString('hex');
 const varsFile = resolve(root, '.dev.vars.e2e');
 rmSync(varsFile, { force: true });
 const fixture = await createFixtureIdentity();
@@ -37,6 +38,8 @@ writeDevVars(varsFile, {
   BREAKGLASS_TOKEN_SHA256: createHash('sha256').update('wbg_e2e-breakglass-token').digest('hex'),
   // The webhook URL check and sender answer this host without DNS (loopback PUBLIC_BASE_URL only, see resolver-memo.ts).
   WEBHOOK_TEST_DNS: 'hooks.example.com=93.184.216.34',
+  // Polaris ID's SCIM push to /scim/v2 (test/mock-oidc/scim-push.ts); throwaway.
+  SCIM_BEARER_TOKEN: scimToken,
   // The scanner document, off in production until M1.
   SCAN_ENABLED: '1',
   // Provider calls go to test/mock-wallets (honoured only on http loopback, see mock-endpoint.ts).
@@ -54,6 +57,9 @@ const env = {
   PUBLIC_BASE_URL: e2eOrigin,
   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
   WALLET_MOCK_PROVIDERS_URL: walletsUrl,
+  // The mock Polaris ID shares the OIDC mock's server; the aux binding Worker calls it (vite.config.ts).
+  MOCK_POLARIS_URL: oidcIssuer,
+  SCIM_BEARER_TOKEN: scimToken,
 };
 
 execFileSync('node', ['tools/build-templates.ts'], { cwd: root, stdio: 'inherit' });
@@ -64,6 +70,23 @@ rmSync(state, { recursive: true, force: true });
 execFileSync(
   'npx',
   ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local', '--persist-to', state],
+  { cwd: root, stdio: 'inherit' },
+);
+// The Polaris ID binding's own D1 (test/idp-e2e/wrangler.jsonc), with the migration the real Worker deploys.
+execFileSync(
+  'npx',
+  [
+    'wrangler',
+    'd1',
+    'migrations',
+    'apply',
+    'polaris-binding-e2e',
+    '--local',
+    '--persist-to',
+    state,
+    '--config',
+    'test/idp-e2e/wrangler.jsonc',
+  ],
   { cwd: root, stdio: 'inherit' },
 );
 // Mock Pocket ID verifies its emails, and with trust off a first sign-in needs a mail round trip.

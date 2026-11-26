@@ -1,3 +1,5 @@
+import type { SetupRpc } from './setup-types.ts';
+
 /** Codes carried as the `CODE: ` prefix of an RPC error message (custom error fields do not cross RPC). */
 export const IDP_CODES = [
   'IDP_REFUSED',
@@ -13,6 +15,8 @@ export const IDP_CODES = [
   'IDP_BREAKER',
   'IDP_NOT_MANAGED',
   'IDP_IN_USE',
+  'IDP_CLIENT',
+  'IDP_SCIM_FOREIGN',
 ] as const;
 export type IdpCode = (typeof IDP_CODES)[number];
 
@@ -28,6 +32,8 @@ export class IdpError extends Error {
 export interface BindingEnv {
   DB: D1Database;
   POCKET_ID_API_KEY: string;
+  /** Optional service binding to the Polaris ID Worker (same account). When set, every admin API request goes through it. */
+  POLARIS?: Fetcher;
   POCKET_ID_ORIGIN: string;
   /** `v2` is Polaris ID on Pocket ID v2.19.x (`/api/...`); `admin` is the next release (`/api/admin/...`). */
   POCKET_ID_API: string;
@@ -107,6 +113,10 @@ export const BUCKETS = [
   'apply_add_group',
   'apply_add_group_system',
   'snapshot_group',
+  'setup_read',
+  'client_write',
+  'scim_write',
+  'scim_sync',
 ] as const;
 export type Bucket = (typeof BUCKETS)[number];
 
@@ -122,6 +132,8 @@ export interface Health {
   /** Live group name per registry role, or null when the group was not found. */
   groups: Record<string, string | null>;
   layout: string;
+  /** How requests reach Polaris ID: the `POLARIS` service binding or public HTTPS. */
+  transport: 'binding' | 'https';
   /** Every group read answered 404: the key or `POCKET_ID_API` points at the wrong route layout. */
   layoutSuspect: boolean;
   /** Epoch ms of the nearest expiry among the key owner's keys, or null. */
@@ -230,7 +242,7 @@ export interface CallRow {
 }
 
 /** The RPC surface of the `polaris-binding` Worker, and nothing else. No method takes a Polaris ID group id or name. */
-export interface IdpRpc {
+export interface IdpRpc extends SetupRpc {
   health(): Promise<Health>;
   groups(): Promise<ManagedGroup[]>;
   createGroup(
