@@ -132,6 +132,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     class: 'created',
     roles: new Set(),
     grants: new Set(),
+    pending: new Set(),
+    confirmedAt: new Map(),
     disabled: false,
     isAdmin: false,
     emailVerified: false,
@@ -202,6 +204,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
         ...rest,
         roles: new Set(roles),
         grants: new Set(),
+        pending: new Set(),
+        confirmedAt: new Map(),
       });
     },
     async health(): Promise<IdpHealth> {
@@ -234,7 +238,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
       groupsApi.assertTargets(targets);
       if (dry(ctx.dryRun, 'createSignup')) return { dryRun: true };
       write();
-      const tokenId = `tok-${++n}`;
+      const tokenId = `${options.tokenPrefix ?? 'tok'}-${++n}`;
       const signup = {
         tokenId,
         url: `https://id.test/st/secret-${n}`,
@@ -298,4 +302,9 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
 /** Gives a test env the `IDP` binding, backed by the fake. */
 export function installFakeIdp(env: object, idp: FakeIdp): void {
   Object.assign(env, { IDP: idp.binding });
+}
+
+/** Takes the `IDP` binding away again: the deploy before Polaris ID is wired. */
+export function removeFakeIdp(env: object): void {
+  delete (env as { IDP?: unknown }).IDP;
 }

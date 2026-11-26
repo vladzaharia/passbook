@@ -8524,6 +8524,26 @@ type PlatformEntitlementPresetsUpdateResponsePreset struct {
 	Values      map[string]any `json:"values"`
 }
 
+type PlatformGroupsClaimsRetrieveResponse struct {
+	Claims    map[string]PlatformGroupsClaimsRetrieveResponseClaimsValue `json:"claims"`
+	OtherKeys int64                                                      `json:"otherKeys"`
+}
+
+type PlatformGroupsClaimsRetrieveResponseClaimsValue struct {
+	Type  string `json:"type"`
+	Value any    `json:"value,omitempty"`
+}
+
+type PlatformGroupsClaimsUpdateParams struct {
+	Set map[string]map[string]any `json:"set"`
+}
+
+type PlatformGroupsClaimsUpdateResponse struct {
+	Set     []string `json:"set"`
+	Removed []string `json:"removed"`
+	DryRun  bool     `json:"dryRun"`
+}
+
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
 	Range       string                                              `json:"range"`
@@ -9057,6 +9077,26 @@ type PlatformTemplatesAssignParams struct {
 
 type PlatformTemplatesShareParams struct {
 	Shared bool `json:"shared"`
+}
+
+type PlatformUsersClaimsRetrieveResponse struct {
+	Claims    map[string]PlatformUsersClaimsRetrieveResponseClaimsValue `json:"claims"`
+	OtherKeys int64                                                     `json:"otherKeys"`
+}
+
+type PlatformUsersClaimsRetrieveResponseClaimsValue struct {
+	Type  string `json:"type"`
+	Value any    `json:"value,omitempty"`
+}
+
+type PlatformUsersClaimsUpdateParams struct {
+	Set map[string]map[string]any `json:"set"`
+}
+
+type PlatformUsersClaimsUpdateResponse struct {
+	Set     []string `json:"set"`
+	Removed []string `json:"removed"`
+	DryRun  bool     `json:"dryRun"`
 }
 
 type PlatformUsersEmailsCreateParams struct {

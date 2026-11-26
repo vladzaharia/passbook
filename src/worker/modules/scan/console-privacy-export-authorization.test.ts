@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
+import { expectSet } from '../../../../test/helpers/landed.ts';
 import { first, run } from '../../platform/db.ts';
 import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn, recordedNoMatch } from './console-privacy-actions-test-fixtures.ts';
@@ -23,10 +24,13 @@ const revoke = (revoked: 'membership' | 'session') => async (db: D1Database) => 
       ? 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?'
       : 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?';
   const id = revoked === 'membership' ? adminMembershipId : adminSessionId;
-  // A membership revoke also marks the user's Polaris ID subject, and D1 counts trigger writes.
-  const { changes } = await run(db, sql, [kit.clock.now(), id]);
-  if (revoked === 'membership') expect(changes).toBeGreaterThanOrEqual(1);
-  else expect(changes).toBe(1);
+  await run(db, sql, [kit.clock.now(), id]);
+  await expectSet(
+    db,
+    revoked === 'membership' ? 'org_memberships' : 'sessions',
+    revoked === 'membership' ? 'id' : 'id_hash',
+    id,
+  );
 };
 
 describe('scan console and feed privacy', () => {

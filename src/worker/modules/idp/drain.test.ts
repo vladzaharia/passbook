@@ -188,10 +188,45 @@ describe('drain: the owner wins', () => {
     const p = await person(r.f);
     r.fake.addAccount(p.subject);
     r.fake.accounts.get(p.subject)?.grants.add('console');
+    r.fake.accounts.get(p.subject)?.pending.add('console');
     await membership(r.f, org.id, p);
     await drainIdp(r.ctx);
     expect(roles(r, p.subject)).toEqual(['console']);
     expect((await stateRows(p.subject))[0]?.held_at).toBeNull();
+  });
+
+  it('holds a confirmed grant whose role the owner took before the first drain, never adding it again', async () => {
+    const r = await rig();
+    const org = await standardOrg(r.f);
+    const p = await person(r.f);
+    r.fake.addAccount(p.subject);
+    r.fake.accounts.get(p.subject)?.grants.add('console');
+    await membership(r.f, org.id, p);
+    await drainIdp(r.ctx);
+    expect(roles(r, p.subject)).toEqual([]);
+    expect(calls(r.fake, 'apply')).toBe(0);
+    expect((await stateRows(p.subject))[0]?.held_at).not.toBeNull();
+  });
+
+  it('holds a grant confirmed after an earlier observed absence when the owner took the role', async () => {
+    const r = await rig();
+    const org = await standardOrg(r.f);
+    const p = await person(r.f);
+    r.fake.addAccount(p.subject);
+    const a = r.fake.accounts.get(p.subject);
+    a?.grants.add('console');
+    a?.confirmedAt.set('console', 2000);
+    await membership(r.f, org.id, p);
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO idp_target_state (subject, target, observed, presence, observed_at)
+       VALUES (?, 'console', 0, 'none', 1000)`,
+    )
+      .bind(p.subject)
+      .run();
+    await drainIdp(r.ctx);
+    expect(roles(r, p.subject)).toEqual([]);
+    expect(calls(r.fake, 'apply')).toBe(0);
+    expect((await stateRows(p.subject))[0]?.held_at).not.toBeNull();
   });
 
   it('ends a grant for a role that is gone and no longer wanted, without a hold', async () => {

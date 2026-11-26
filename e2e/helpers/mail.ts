@@ -48,10 +48,9 @@ export async function nextOrgInvitationToken(
     const fresh = textFiles().filter((f) => !before.has(f));
     for (const file of fresh) {
       const text = readFileSync(file, 'utf8');
-      const token =
-        /https?:\/\/[^\s<>"']+\/api\/v1\/orgs\/invitations\/accept#([A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])/.exec(
-          text,
-        )?.[1];
+      const token = /https?:\/\/[^\s<>"']+\/invite#(m_[A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])/.exec(
+        text,
+      )?.[1];
       if (token) return token;
     }
     await delay(200);

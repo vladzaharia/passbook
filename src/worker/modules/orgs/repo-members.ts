@@ -1,6 +1,5 @@
-import { all, first, type SqlValue, stmt } from '../../platform/db.ts';
+import { all, first, type SqlValue } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
 
 export interface MembershipRow {
   id: string;
@@ -141,21 +140,6 @@ export function invitationById(db: D1Database, orgId: string, id: string) {
     [orgId, id],
   );
 }
-export function invitationByHash(db: D1Database, hash: string) {
-  return first<InvitationRow>(
-    db,
-    'SELECT id, org_id, email, roles, created_at, expires_at, revoked_at, accepted_at FROM org_invitations WHERE token_hash = ?',
-    [hash],
-  );
-}
-export function invitationOrgName(db: D1Database, hash: string) {
-  return first<{ name: string }>(
-    db,
-    `SELECT o.name FROM org_invitations i JOIN orgs o ON o.id = i.org_id
- WHERE i.token_hash = ? AND i.revoked_at IS NULL AND i.accepted_at IS NULL AND o.status = 'active'`,
-    [hash],
-  );
-}
 /** The name a person gave, or null: an invitation names its sender only by that, never an address. */
 export async function userName(db: D1Database, userId: string): Promise<string | null> {
   const row = await first<{ name: string | null }>(db, 'SELECT name FROM users WHERE id = ?', [
@@ -172,47 +156,6 @@ export function activePrincipal(db: D1Database, userId: string, orgId: string) {
     db,
     `SELECT 1 AS ok FROM users u JOIN orgs o ON o.id = ? WHERE u.id = ? AND u.status = 'active' AND o.status = 'active' AND o.personal_user_id IS NULL`,
     [orgId, userId],
-  );
-}
-export function acceptMembership(
-  db: D1Database,
-  id: string,
-  hash: string,
-  userId: string,
-  now: number,
-) {
-  return stmt(
-    db,
-    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at, joined_at)
- SELECT ?, i.org_id, u.id, i.id, i.roles, ?, ? FROM org_invitations i
- JOIN orgs o ON o.id = i.org_id AND o.status = 'active'
- JOIN users u ON u.id = ? AND u.status = 'active'
- JOIN user_emails e ON e.user_id = u.id AND e.email = i.email
- WHERE i.token_hash = ? AND i.revoked_at IS NULL AND i.accepted_at IS NULL AND i.expires_at > ?
- AND NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.org_id = i.org_id AND m.user_id = u.id AND m.revoked_at IS NULL)`,
-    [id, now, now, userId, hash, now],
-  );
-}
-export function consumeInvitation(db: D1Database, hash: string, now: number) {
-  return stmt(
-    db,
-    'UPDATE org_invitations SET accepted_at = ? WHERE token_hash = ? AND changes() = 1',
-    [now, hash],
-  );
-}
-export function mutationAudit(
-  ctx: ServiceContext,
-  orgId: string,
-  userId: string,
-  action: string,
-  targetType: string,
-  targetId: string,
-) {
-  return stmt(
-    ctx.env.DB,
-    `INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
- SELECT ?, ?, 'user', ?, ?, ?, ?, ?, NULL, NULL WHERE changes() = 1`,
-    [ctx.clock.now(), orgId, userId, action, targetType, targetId, ctx.requestId],
   );
 }
 export function pendingInvitationFor(db: D1Database, orgId: string, email: string, now: number) {
