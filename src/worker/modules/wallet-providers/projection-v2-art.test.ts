@@ -78,6 +78,36 @@ describe('review sizes art the way publication does', () => {
     });
   });
 
+  it('asks Images for the width alone when it downscales, so a resizer that keeps the aspect meets the plan', async () => {
+    const hero = 'wallets/google/hero.png';
+    // 1125 x 432 into 1032 wide is 396.29 high: a 1032 x 396 box would come back 1031 wide.
+    const kit = await setup(
+      { [hero]: makePng(1125, 432) },
+      { schema: 1, google: { images: { hero } } },
+    );
+    const version = await getVersion(S.env.DB, kit.templateId, kit.version);
+    if (!version) throw new Error('Version missing.');
+    const asked: unknown[] = [];
+    const result = makePng(1032, 396);
+    const images = {
+      input: () => ({
+        transform: (size: unknown) => {
+          asked.push(size);
+          return {
+            output: async () => ({ image: () => new Response(result as BufferSource).body }),
+          };
+        },
+      }),
+    };
+    const ctx = createServiceContext(
+      { ...S.env, IMAGES: images as unknown as ImagesBinding },
+      { clock: S.clock },
+    );
+    const stored = await computeProjectionPins(ctx, 'google', version, 'store');
+    expect(asked).toEqual([{ width: 1032, fit: 'scale-down' }]);
+    expect(stored.art.sizes.get(hero)).toEqual({ width: 1032, height: 396 });
+  });
+
   it('fails publication with a coded error when the cut is not the size review assumed', async () => {
     const hero = 'wallets/google/hero.png';
     const kit = await setup(
