@@ -7894,6 +7894,66 @@ export type PlatformWalletEnrollmentsListResponse = {
   nextCursor: string | null;
 };
 
+export type PlatformWalletReleaseEnableReadyParams = {
+  apply?: boolean;
+};
+
+export type PlatformWalletReleaseEnableReadyResponse = {
+  applied: boolean;
+  enrolments: Array<{
+    orgId: string;
+    orgName: string;
+  }>;
+};
+
+export type PlatformWalletReleaseRetrieveResponse = {
+  releases: Array<{
+    provider: "google" | "samsung";
+    mode: "live" | "test";
+    state: "dark" | "draining" | "released";
+    credentials: Array<{
+      id: string;
+      scope: "platform" | "org";
+      orgId: string | null;
+      mode: "live" | "test";
+      provider: "google" | "samsung";
+      identityHint: string;
+      provenance: "platform" | "managed" | "own";
+      revision: number;
+      verifiedAt: number | null;
+      revokedAt: number | null;
+      createdAt: number;
+      updatedAt: number;
+      cardTypes: Array<string>;
+      lastCheck: {
+        ok: true;
+        code: null;
+        at: number;
+      } | {
+        ok: false;
+        code: string;
+        at: number;
+      } | null;
+    }>;
+    enrolments: Array<{
+      orgId: string;
+      orgName: string;
+      status: "issuing" | "ready" | "blocked";
+      blocks: Array<"plan" | "source" | "verified" | "check" | "round_trip" | "hold" | "revoked" | "legacy" | "channel_off" | "org">;
+    }>;
+    templates: {
+      ready: number;
+      withOmissions: number;
+      awaitingReview: number;
+      none: number;
+    };
+    instances: {
+      open: number;
+      retired: number;
+    };
+  }>;
+};
+
 export type PrintJobsCreateParams = {
   ids: Array<string>;
   orgId: string;
