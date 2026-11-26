@@ -1,12 +1,11 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { errorMessage, isApiError } from '../../lib/errors.ts';
+import { isApiError } from '../../lib/errors.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
   ErrorState,
   PageHeader,
-  SkeletonKeyValue,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
   Wizard,
@@ -17,19 +16,19 @@ import { markCreated } from '../passes/created.tsx';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplate } from '../templates/api.ts';
 import { useConnector, useConnectors } from './api.ts';
-import { prefixed } from './config-schema.ts';
+import { ConnectorStep } from './connector-picker.tsx';
+import { buildTiles, type ConnectorTile, tileKey } from './connector-tiles.ts';
 import { CreatedStep } from './created-step.tsx';
-import { UploadConfig } from './files/upload-config.tsx';
 import { useUploadDraft } from './files/use-upload-draft.ts';
 import { takeConnectionPrefill, wizardStart } from './import-handoff.ts';
-import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
+import { type Lifecycle, lifecycleError } from './lifecycle-fields.tsx';
 import { useRestSample } from './rest/use-mapping-seed.ts';
 import { useConnectionCreation } from './use-connection-creation.ts';
 import { useWizardRecipe } from './use-wizard-recipe.ts';
+import { WizardBody } from './wizard-body.tsx';
 import { useWizardConfig } from './wizard-config.ts';
-import { WizardMapping } from './wizard-mapping.tsx';
-import { ReviewStep, WizardAside } from './wizard-review.tsx';
-import { type ConfigDraft, ConfigStep, ConnectorStep } from './wizard-steps.tsx';
+import { WizardAside } from './wizard-review.tsx';
+import type { ConfigDraft } from './wizard-steps.tsx';
 import { useTestOutcome } from './wizard-test.tsx';
 
 const STEPS = [
@@ -100,12 +99,13 @@ export function CreateConnectionWizard() {
   const upload = useUploadDraft({ orgId, setDraft, onSample: setRestSample });
   const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
+
   const info = connector.data;
   const isUpload = info?.capabilities.upload === true;
   const { cfgErrors, secErrors, shownSecrets } = useWizardConfig(info, draft);
   const mapped = fromRows(rows);
   const lifeError = lifecycleError(life);
-  const sender = useWizardRecipe({ info, draft, setDraft, setRows, setLife });
+  const sender = useWizardRecipe({ info, draft, setRows, setLife });
   const declared = Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {});
   const tested = test?.kind === 'result' ? test.result.sample : undefined;
   const sample =
@@ -120,6 +120,28 @@ export function CreateConnectionWizard() {
     if (!caps) return;
     setLife((l) => ({ ...l, mode: caps.poll ? 'poll' : caps.webhook ? 'webhook' : 'manual' }));
   }, [info]);
+
+  const catalog = connectors.data?.items;
+  const tiles = useMemo(() => buildTiles(catalog ?? []), [catalog]);
+  const recipeNow = draft.config.recipe as string | undefined;
+  const pickTile = (tile: ConnectorTile) => {
+    if (tile.key === tileKey(type, recipeNow)) return;
+    const hadSender = tileKey(type, recipeNow) !== type;
+    setType(tile.type);
+    setRestSample([]);
+    setDraft((d) => ({
+      ...d,
+      config: tile.recipe ? { recipe: tile.recipe } : {},
+      secrets: {},
+      signingSecret: '',
+    }));
+    // A sender seeds the mapping, holder email and void rules; leaving one clears them.
+    if (tile.recipe || hadSender) {
+      const recipes = catalog?.find((c) => c.type === tile.type)?.recipes;
+      sender.seed(recipes?.find((r) => r.id === tile.recipe));
+    }
+  };
+
   const create = useConnectionCreation({
     currentScope,
     life,
@@ -199,7 +221,7 @@ export function CreateConnectionWizard() {
         steps={STEPS}
         current={step}
         onStep={setStep}
-        aside={<WizardAside connector={info} sample={sample} step={step} />}
+        aside={<WizardAside connector={info} sender={sender.recipe} sample={sample} step={step} />}
         asideLabel="Connector"
         onCancel={() => void navigate({ to: '/admin/connections' })}
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
@@ -213,15 +235,11 @@ export function CreateConnectionWizard() {
       >
         {step === 0 ? (
           <ConnectorStep
-            connectors={connectors.data?.items ?? []}
+            tiles={tiles}
             loading={connectors.isPending}
             type={type}
-            onType={(t) => {
-              if (t === type) return;
-              setType(t);
-              setRestSample([]);
-              setDraft((d) => ({ ...d, config: {}, secrets: {} }));
-            }}
+            recipe={recipeNow}
+            onPick={pickTile}
             onCommit={next}
             orgs={orgId ? null : orgList}
             orgId={orgId}
@@ -232,93 +250,39 @@ export function CreateConnectionWizard() {
         {step === 0 && connectors.isError ? (
           <ErrorState inline error={connectors.error} onRetry={() => void connectors.refetch()} />
         ) : null}
-        {step === 1 ? (
-          info && orgId && isUpload ? (
-            <UploadConfig
-              upload={upload}
-              draft={draft}
-              onChange={setDraft}
-              showErrors={showErrors}
-              idError={cfgErrors.idColumn ?? serverFields['config.idColumn']}
-            />
-          ) : info && orgId ? (
-            <ConfigStep
-              key={orgId}
-              connector={info}
-              orgId={orgId}
-              draft={draft}
-              onChange={setDraft}
-              showErrors={showErrors}
-              serverErrors={{
-                config: prefixed(serverFields, 'config.'),
-                secrets: prefixed(serverFields, 'secrets.'),
-                signing: serverFields.webhookSecret,
-              }}
-              test={test}
-              onTest={onTested}
-              onRecipe={sender.pick}
-              onSample={setRestSample}
-              secretError={sender.secretError}
-            />
-          ) : connector.isError ? (
-            <ErrorState inline error={connector.error} onRetry={() => void connector.refetch()} />
-          ) : (
-            <SkeletonKeyValue label="Loading connector" />
-          )
-        ) : null}
-        {step === 2 ? (
-          <WizardMapping
-            info={info}
-            orgId={orgId}
-            templateOrg={templateOrg}
-            life={life}
-            setLife={setLife}
-            draft={draft}
-            test={test}
-            onTest={onTested}
-            rows={rows}
-            setRows={setRows}
-            errors={showErrors ? mapped.errors : {}}
-            targets={targets}
-            sources={sample}
-          />
-        ) : null}
-        {step === 3 ? (
-          <LifecycleFields
-            value={life}
-            onChange={setLife}
-            capabilities={info?.capabilities}
-            defaultMinutes={defaultMinutes}
-            error={showErrors ? lifeError : undefined}
-          />
-        ) : null}
-        {step === 4 ? (
-          <>
-            <ReviewStep
-              orgName={orgName}
-              connector={info}
-              name={draft.name}
-              life={life}
-              templateName={selectedTemplate?.name}
-              mappings={Object.keys(mapped.mapping).length}
-              defaultMinutes={defaultMinutes}
-              upload={isUpload}
-              onEdit={setStep}
-            />
-            {blockCreate ? (
-              <p className="text-sm text-danger">
-                Creating passes needs a template and mappings. Turn it off or add them.
-              </p>
-            ) : null}
-            {currentCreate && create.isError ? (
-              <p className="text-sm text-danger">
-                {Object.keys(serverFields).length > 0
-                  ? 'Fix the highlighted fields on Configuration.'
-                  : errorMessage(create.error)}
-              </p>
-            ) : null}
-          </>
-        ) : null}
+        <WizardBody
+          step={step}
+          info={info}
+          connector={connector}
+          orgId={orgId}
+          orgName={orgName}
+          draft={draft}
+          setDraft={setDraft}
+          showErrors={showErrors}
+          serverFields={serverFields}
+          test={test}
+          onTested={onTested}
+          secretError={sender.secretError}
+          life={life}
+          setLife={setLife}
+          lifeError={lifeError}
+          templateOrg={templateOrg}
+          selectedTemplateName={selectedTemplate?.name}
+          rows={rows}
+          setRows={setRows}
+          mapped={mapped}
+          sample={sample}
+          targets={targets}
+          cfgErrors={cfgErrors}
+          defaultMinutes={defaultMinutes}
+          blockCreate={blockCreate}
+          createFailed={currentCreate && create.isError}
+          createError={create.error}
+          setStep={setStep}
+          isUpload={isUpload}
+          upload={upload}
+          onSample={setRestSample}
+        />
       </Wizard>
       <UnsavedChangesDialog blocker={guard} />
     </>

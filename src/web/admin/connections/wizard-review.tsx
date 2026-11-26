@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
-import type { ConnectorInfoSchema } from '@/shared/contracts/connections.ts';
+import type { ConnectorInfoSchema, RecipeInfo } from '@/shared/contracts/connections.ts';
 import { connectorIcon, ENTITY } from '../../lib/entities.ts';
 import {
   Button,
@@ -22,6 +22,7 @@ import {
 import type { SourceField } from '../mapping/mapping.ts';
 import { MODE_LABEL } from './labels.ts';
 import { type Lifecycle, scheduled } from './lifecycle-fields.tsx';
+import { recipeLine } from './recipe-copy.ts';
 
 type Connector = z.infer<typeof ConnectorInfoSchema>;
 
@@ -150,10 +151,13 @@ export function ReviewStep({
  */
 export function WizardAside({
   connector,
+  sender,
   sample,
   step,
 }: {
   connector: Connector | undefined;
+  /** The sender fixed by a tile; it names the aside in place of the webhook connector. */
+  sender?: RecipeInfo | undefined;
   sample: readonly SourceField[];
   /** The wizard's step: the empty sample hint belongs to Configuration and Mapping only. */
   step: number;
@@ -170,9 +174,13 @@ export function WizardAside({
             <Icon className="size-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-fg-strong">{connector.displayName}</p>
-            {connector.description ? (
-              <p className="mt-0.5 text-xs text-fg-muted">{connector.description}</p>
+            <p className="text-sm font-medium text-fg-strong">
+              {sender?.label ?? connector.displayName}
+            </p>
+            {sender || connector.description ? (
+              <p className="mt-0.5 text-xs text-fg-muted">
+                {sender ? recipeLine(sender.id) : connector.description}
+              </p>
             ) : null}
           </div>
         </div>

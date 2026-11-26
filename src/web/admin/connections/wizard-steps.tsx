@@ -1,22 +1,12 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { ConnectorInfoSchema, RecipeId } from '@/shared/contracts/connections.ts';
 import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
-import { connectorIcon } from '../../lib/entities.ts';
-import {
-  Card,
-  CardBody,
-  FormField,
-  Input,
-  OptionTile,
-  RadioGroup,
-  Select,
-  SkeletonRows,
-} from '../../ui/index.ts';
+import { Card, CardBody, FormField, Input, RadioGroup } from '../../ui/index.ts';
 import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
 import { recipeHidden } from './recipe-copy.ts';
-import { RecipePicker, SigningSecretField } from './recipe-picker.tsx';
+import { SigningSecretField } from './recipe-picker.tsx';
 import type { SampleField } from './rest/mapping-seed.ts';
 import { WizardRest } from './rest/wizard-rest.tsx';
 import { secretSchema } from './secret-schema.ts';
@@ -24,103 +14,6 @@ import type { TestOutcome } from './test-result.tsx';
 import { WizardTest } from './wizard-test.tsx';
 
 type Connector = z.infer<typeof ConnectorInfoSchema>;
-
-export function ConnectorStep({
-  connectors,
-  loading,
-  type,
-  onType,
-  onCommit,
-  orgs,
-  orgId,
-  onOrg,
-  showErrors,
-}: {
-  connectors: readonly Connector[];
-  loading: boolean;
-  type: string | undefined;
-  onType: (type: string) => void;
-  onCommit: () => void;
-  /** Shown only when the top-bar scope does not set the org. */
-  orgs: { id: string; name: string }[] | null;
-  orgId: string | undefined;
-  onOrg: (id: string) => void;
-  /** Next was pressed with no org or no connector. */
-  showErrors?: boolean;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-6">
-      {orgs ? (
-        <FormField
-          label="Organization"
-          required
-          error={showErrors && !orgId ? 'Choose an organization.' : undefined}
-        >
-          {(c) => (
-            <Select
-              {...c}
-              className="sm:max-w-sm"
-              value={orgId}
-              placeholder="Choose an organization"
-              onValueChange={onOrg}
-              options={orgs.map((o) => ({ value: o.id, label: o.name }))}
-            />
-          )}
-        </FormField>
-      ) : null}
-      {loading ? (
-        <SkeletonRows rows={3} label="Loading connectors" />
-      ) : (
-        <fieldset className="min-w-0">
-          <legend className="mb-2 text-sm font-medium text-fg">Connector</legend>
-          <div
-            role="radiogroup"
-            aria-label="Connector"
-            aria-invalid={showErrors && !type ? true : undefined}
-            aria-describedby={showErrors && !type ? 'connector-error' : undefined}
-            className="grid grid-cols-1 gap-2 sm:grid-cols-2"
-          >
-            {connectors.map((c) => {
-              const Icon = connectorIcon(c.type);
-              const picked = c.type === type;
-              return (
-                <OptionTile
-                  key={c.type}
-                  name="connector"
-                  value={c.type}
-                  label={c.displayName}
-                  className="items-center"
-                  checked={picked}
-                  onSelect={onType}
-                  onCommit={() => {
-                    onType(c.type);
-                    onCommit();
-                  }}
-                  media={
-                    <span
-                      aria-hidden
-                      key={picked ? 'on' : 'off'}
-                      className={`inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-sunken ${
-                        picked ? 'wl-glyph-bounce text-accent-fg' : 'text-fg-muted'
-                      }`}
-                    >
-                      <Icon className="size-5" />
-                    </span>
-                  }
-                />
-              );
-            })}
-          </div>
-          {showErrors && !type ? (
-            <p id="connector-error" className="mt-2 text-xs text-danger">
-              Choose a connector.
-            </p>
-          ) : null}
-        </fieldset>
-      )}
-    </div>
-  );
-}
 
 export interface ConfigDraft {
   name: string;
@@ -140,7 +33,6 @@ export function ConfigStep({
   serverErrors,
   test,
   onTest,
-  onRecipe,
   onSample,
   secretError,
 }: {
@@ -157,8 +49,6 @@ export function ConfigStep({
   };
   test: TestOutcome | undefined;
   onTest: (outcome: TestOutcome) => void;
-  /** Picks a sender: the wizard seeds the mapping and void rules from it. */
-  onRecipe: (id: RecipeId) => void;
   /** The REST sample's fields, for the Mapping step. */
   onSample?: (fields: SampleField[]) => void;
   secretError?: string | undefined;
@@ -170,12 +60,6 @@ export function ConfigStep({
   const authType = String(draft.config['auth.type'] ?? 'none');
   const recipe = (draft.config.recipe as RecipeId | undefined) ?? 'custom';
   const offered = connector.recipes.length > 0;
-  const customEntitled = connector.entitled !== false;
-  const firstEntitled = connector.recipes.find((r) => r.entitled !== false)?.id;
-  // A plan that lists senders but not a custom one starts on its first sender.
-  useEffect(() => {
-    if (offered && !customEntitled && recipe === 'custom' && firstEntitled) onRecipe(firstEntitled);
-  }, [offered, customEntitled, recipe, firstEntitled, onRecipe]);
   const hidden = useMemo(
     () =>
       new Set([
@@ -236,14 +120,6 @@ export function ConfigStep({
             />
           )}
         </FormField>
-        {offered ? (
-          <RecipePicker
-            recipes={connector.recipes}
-            customEntitled={customEntitled}
-            value={recipe}
-            onChange={onRecipe}
-          />
-        ) : null}
         {recipe !== 'custom' && connector.recipes.find((r) => r.id === recipe)?.pasteSecret ? (
           <SigningSecretField
             recipe={recipe}
