@@ -4,31 +4,16 @@ import {
   BulkReissueSchema,
 } from '../../../shared/contracts/index.ts';
 import { BulkPassRequestSchema } from '../../../shared/contracts/pass-selection.ts';
-import { bump } from '../../platform/counters.ts';
-import {
-  ForbiddenError,
-  NotFoundError,
-  RateLimitedError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
+import { actorOfAuth } from '../operations/start-org.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction, selectBulkPasses } from './bulk-actions.ts';
 import { resolveFilterPasses } from './find.ts';
 import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
+import { limitKeyReissues } from './key-reissue-limit.ts';
 import { getPass } from './repo-read-pass.ts';
-
-const REISSUES_PER_KEY_HOUR = 6;
-const HOUR_MS = 60 * 60_000;
-
-/** A key starts at most six rebuilds an hour: each one rebuilds and pushes a whole template. */
-async function limitKeyReissues(ctx: ReturnType<typeof svc>, keyId: string): Promise<void> {
-  const now = ctx.clock.now();
-  const window = Math.floor(now / HOUR_MS) * HOUR_MS;
-  if ((await bump(ctx.env.DB, `bulk-reissue:key:${keyId}`, window)) > REISSUES_PER_KEY_HOUR)
-    throw new RateLimitedError(Math.ceil((window + HOUR_MS - now) / 1000));
-}
 
 /** Many-pass actions: void, email or remove a selection, and template-wide reissues. */
 export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
@@ -154,6 +139,7 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
         !orgId && auth.kind === 'session'
           ? { userId: auth.userId, sessionId: auth.sessionId }
           : undefined;
+      let operationId: string | null = null;
       const workflowInstanceId = await startBulkReissue(
         ctx,
         actorFor(c),
@@ -162,9 +148,22 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
           ...(authority ? { authority } : {}),
           ...(platformSession ? { platformSession } : {}),
           mode,
+          // A user-started rebuild shows as an operation; branding and system runs have their own screens.
+          ...(body.cause === undefined ||
+          body.cause === 'resign' ||
+          body.cause === 'template_upgrade'
+            ? {
+                operation: {
+                  actor: actorOfAuth(auth),
+                  onStarted: (op: { id: string }) => {
+                    operationId = op.id;
+                  },
+                },
+              }
+            : {}),
         },
       );
-      return c.json({ workflowInstanceId }, 202);
+      return c.json({ workflowInstanceId, operationId }, 202);
     },
   );
 }

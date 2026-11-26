@@ -30,6 +30,9 @@ export interface ReissueParams {
   cause: 'template_upgrade' | 'resign' | 'branding';
   /** Who started the run; absent for system runs. Re-checked before every page. */
   principal?: ReissuePrincipal;
+  /** The operation that shows this run (a user-started one); absent for system runs. */
+  operationId?: string;
+  operationAttempt?: number;
 }
 
 export interface ReissuePageResult {

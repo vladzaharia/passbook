@@ -288,7 +288,9 @@ describe('export', () => {
       error: { code: 'ORG_EXPORT_FAILED', retryable: true },
     });
     const relaunch = operationRunners['org.export']?.relaunch;
-    const launched = await relaunch?.(kit.ctx, failed, { instanceId: row.id });
+    const launched = await relaunch?.(kit.ctx, failed, { instanceId: row.id }, {
+      kind: 'system',
+    } as never);
     expect(launched).toEqual({ workflowInstanceId: `${row.id}-r1` });
     expect(started.at(-1)?.id).toBe(`${row.id}-r1`);
     expect((await exportRow(kit.env.DB, org.orgId, row.id))?.state).toBe('queued');

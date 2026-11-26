@@ -2,7 +2,8 @@
 
 import type { OperationKindDef } from '../shared/operations/define.ts';
 import * as k0 from '../shared/operations/kinds/org-export.ts';
-import * as k1 from '../shared/operations/kinds/sandbox.ts';
+import * as k1 from '../shared/operations/kinds/passes-reissue.ts';
+import * as k2 from '../shared/operations/kinds/sandbox.ts';
 
 /** Every declared operation kind. */
-export const OPERATION_KINDS: readonly OperationKindDef[] = [...(Object.values(k0) as OperationKindDef[]), ...(Object.values(k1) as OperationKindDef[])];
+export const OPERATION_KINDS: readonly OperationKindDef[] = [...(Object.values(k0) as OperationKindDef[]), ...(Object.values(k1) as OperationKindDef[]), ...(Object.values(k2) as OperationKindDef[])];
