@@ -2126,6 +2126,15 @@
       ]
     },
     {
+      "code": "IDP_CLIENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_CONFLICT",
       "statuses": [
         409
@@ -2201,6 +2210,15 @@
       "code": "IDP_REFUSED",
       "statuses": [
         403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SCIM_FOREIGN",
+      "statuses": [
+        409
       ],
       "modules": [
         "idp"

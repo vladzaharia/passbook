@@ -1,3 +1,5 @@
+import type { SetupRpc } from './setup-types.ts';
+
 /** Codes carried as the `CODE: ` prefix of an RPC error message (custom error fields do not cross RPC). */
 export const IDP_CODES = [
   'IDP_REFUSED',
@@ -240,7 +242,7 @@ export interface CallRow {
 }
 
 /** The RPC surface of the `polaris-binding` Worker, and nothing else. No method takes a Polaris ID group id or name. */
-export interface IdpRpc {
+export interface IdpRpc extends SetupRpc {
   health(): Promise<Health>;
   groups(): Promise<ManagedGroup[]>;
   createGroup(

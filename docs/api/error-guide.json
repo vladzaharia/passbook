@@ -3857,6 +3857,18 @@
     "fix": "Ask the PassBook owner.",
     "retryable": false
   },
+  "IDP_CLIENT": {
+    "title": "Polaris ID app needs a change",
+    "when": "PassBook's app in Polaris ID is missing, is not PassBook's, is still open to everyone, or would lock admins out of PassBook if restricted.",
+    "fix": "Open setup and follow the reason it shows, or ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_SCIM_FOREIGN": {
+    "title": "User sync points elsewhere",
+    "when": "The owner pointed Polaris ID's user sync at a different address, so PassBook will not change or push to it.",
+    "fix": "Ask the PassBook owner to point it back at PassBook.",
+    "retryable": false
+  },
   "IDP_IN_USE": {
     "title": "Group still in use",
     "when": "The Polaris ID group still has members or apps, so it cannot be deleted.",

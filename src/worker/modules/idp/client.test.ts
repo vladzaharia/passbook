@@ -3,7 +3,7 @@ import { createFakeIdp } from '../../../../test/helpers/fake-idp.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { Logger } from '../../platform/log.ts';
 import { idpClient, idpConfigured } from './client.ts';
-import { idpCodeOf, IDP_UNAVAILABLE_MESSAGE as UNAVAILABLE } from './errors.ts';
+import { idpCodeOf, idpReasonOf, IDP_UNAVAILABLE_MESSAGE as UNAVAILABLE } from './errors.ts';
 import { IDP_CODES, type WriteCtx } from './types.ts';
 
 const ctx: WriteCtx = { ref: 'r', reason: 'test', actor: { kind: 'system', job: 'test' } };
@@ -20,8 +20,13 @@ const MAP: [string, string, number, string][] = [
   ['IDP_REFUSED', 'IDP_REFUSED', 403, 'Polaris ID refused this change. Ask the PassBook owner.'],
   ['IDP_NOT_FOUND', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
   ['IDP_CONFLICT', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
-  ['IDP_CLIENT', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
-  ['IDP_SCIM_FOREIGN', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
+  ['IDP_CLIENT', 'IDP_CLIENT', 409, "PassBook's Polaris ID app needs a change first. Check setup."],
+  [
+    'IDP_SCIM_FOREIGN',
+    'IDP_SCIM_FOREIGN',
+    409,
+    'Polaris ID sends users somewhere other than PassBook. Ask the PassBook owner.',
+  ],
   ['IDP_FROZEN', 'IDP_FROZEN', 503, 'Polaris ID changes are paused. Ask the PassBook owner.'],
   ['IDP_NOT_MANAGED', 'IDP_NOT_MANAGED', 409, "PassBook doesn't manage this Polaris ID account."],
   ['IDP_IN_USE', 'IDP_IN_USE', 409, 'This group still has members or apps.'],
@@ -115,6 +120,13 @@ describe('idpClient', () => {
       client.snapshot(ctx),
       client.freeze('why', ctx),
       client.calls(0),
+      client.setupStatus(),
+      client.placeRoleGroups(ctx),
+      client.allowClientGroups(ctx),
+      client.restrictClient(ctx),
+      client.setClientLogo(ctx),
+      client.ensureScim('t', ctx),
+      client.syncScim(ctx),
     ];
     for (const call of calls)
       await expect(call).rejects.toMatchObject({ code: 'IDP_UNAVAILABLE', status: 503 });
@@ -131,5 +143,18 @@ describe('idpClient', () => {
     expect(await client.apply('sub-1', { remove: ['developer'] }, ctx)).toMatchObject({
       removed: ['developer'],
     });
+  });
+
+  it('passes setup reasons through unchanged', async () => {
+    const idp = createFakeIdp();
+    const client = idpClient({ IDP: idp.binding });
+    const err = await client.restrictClient(ctx).catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: 'IDP_CLIENT', status: 409 });
+    expect(idpReasonOf(err)).toBe('client_lockout');
+    expect(idpReasonOf(new Error('IDP_CLIENT: Polaris ID said no.'))).toBeNull();
+    idp.setup.client.ours = false;
+    expect(idpReasonOf(await client.allowClientGroups(ctx).catch((e: unknown) => e))).toBe(
+      'client_not_ours',
+    );
   });
 });

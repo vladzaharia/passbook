@@ -33,7 +33,7 @@ export interface SetupStatus {
 
 /**
  * The seven setup RPCs. None takes a Polaris ID id, name, URL or endpoint; the only caller value is a fresh SCIM
- * token. Kept apart from `IdpRpc` in types.ts until the main Worker's client and fake model them (AS-2).
+ * token. Part of `IdpRpc` (types.ts extends it) so the main Worker's type-equality test covers them.
  */
 export interface SetupRpc {
   /** Reads the PassBook client, its SCIM connection and the unplaced role groups. Hashes are SHA-256 hex of candidate SCIM tokens. */

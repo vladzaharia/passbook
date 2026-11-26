@@ -19,6 +19,16 @@ export function idpCodeOf(error: unknown): IdpCode | null {
   return null;
 }
 
+/** The reason after the binding's code (`client_lockout`, `no_scim_provider`, `role_unplaced:console`), or null. Reasons are stable words, never ids or Polaris ID text. */
+export function idpReasonOf(error: unknown): string | null {
+  for (let e: unknown = error, depth = 0; e instanceof Error && depth < 4; depth++) {
+    const reason = /^IDP_[A-Z_]+: ?([a-z][a-z_]*(?::[a-z_]+)?)$/.exec(e.message)?.[1];
+    if (reason) return reason;
+    e = e.cause;
+  }
+  return null;
+}
+
 /** Maps an RPC failure to an AppError. The binding sends its code as the message prefix; its text never reaches users, but the error keeps it as `cause`. */
 export function mapIdpError(error: unknown, log?: Logger): AppError {
   if (error instanceof AppError) return error;
@@ -43,10 +53,22 @@ export function mapIdpError(error: unknown, log?: Logger): AppError {
         cause,
       );
     case 'IDP_NOT_FOUND':
-    case 'IDP_CLIENT':
-    case 'IDP_SCIM_FOREIGN':
     case 'IDP_CONFLICT':
       return new AppError('IDP_CONFLICT', 409, 'Polaris ID changed. Try again.', cause);
+    case 'IDP_CLIENT':
+      return new AppError(
+        'IDP_CLIENT',
+        409,
+        "PassBook's Polaris ID app needs a change first. Check setup.",
+        cause,
+      );
+    case 'IDP_SCIM_FOREIGN':
+      return new AppError(
+        'IDP_SCIM_FOREIGN',
+        409,
+        'Polaris ID sends users somewhere other than PassBook. Ask the PassBook owner.',
+        cause,
+      );
     case 'IDP_FROZEN':
       return new AppError(
         'IDP_FROZEN',
