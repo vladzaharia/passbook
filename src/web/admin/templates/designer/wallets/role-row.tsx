@@ -123,5 +123,3 @@ export function RoleRow({
     </li>
   );
 }
-
-export const roleLabel = (r: Row['role']): string => ROLE_LABEL[r];

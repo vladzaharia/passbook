@@ -22,17 +22,6 @@ export type WalletsOp =
   | { op: 'wallets-required'; id: string; on: boolean }
   | { op: 'wallets-image'; target: WalletTarget; slot: string; asset: DraftAsset | null };
 
-export const WALLETS_OPS = [
-  'wallets-role',
-  'wallets-roles',
-  'wallets-type',
-  'wallets-class-key',
-  'wallets-subtype',
-  'wallets-omit',
-  'wallets-required',
-  'wallets-image',
-] as const;
-
 export const artPath = (target: WalletTarget, slot: string): string =>
   `wallets/${target}/${slot}.png`;
 

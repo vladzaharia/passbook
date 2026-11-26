@@ -65,5 +65,3 @@ export function fieldRows(
     };
   });
 }
-
-export const ownLabel = (role: WalletRole): string => ROLE_LABEL[role];
