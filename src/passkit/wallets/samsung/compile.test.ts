@@ -53,6 +53,16 @@ describe('fidelity report', () => {
   });
 });
 
+describe('store card title', () => {
+  it('is the organization, never the balance the card face already shows', async () => {
+    const v = await view('starter-store-card');
+    const a = attributes(compile(v));
+    expect(a.balance).toBe('25 USD');
+    expect(a.title).toBe(v.org);
+    expect(a.title).not.toBe(a.balance);
+  });
+});
+
 describe('type selection', () => {
   it('maps eventTicket, coupon and storeCard to their own types', async () => {
     expect(compile(await view('starter-event-ticket')).type).toBe('ticket');
