@@ -62,6 +62,18 @@ test('the Console: opens on a read, runs with Cmd+Enter, and its request id open
   const rid = await page.locator('.cr-h .bench-id-c').getAttribute('title');
   expect(rid).toBeTruthy();
   await shots(page, 'console-response', true);
+  // Each part's stylesheet came with its part (the tabs, the page, the lazy response): none is bare markup.
+  const style = (selector: string, prop: string) =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
+  expect(await style('.bench-tab', 'min-height')).toBe('36px');
+  expect(await style('.console-op', 'display')).toBe('flex');
+  expect(await style('.runbar', 'display')).toBe('flex');
+  expect(await style('.cr', 'display')).toBe('grid');
+  expect(await style('.cr-trace', 'border-top-style')).toBe('dashed');
+  expect(await style('.bench-code', 'border-top-width')).not.toBe('');
 
   // The request id opens that request in Logs.
   await page.getByRole('link', { name: 'View in Logs' }).click();
