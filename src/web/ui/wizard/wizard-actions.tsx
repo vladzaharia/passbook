@@ -64,9 +64,7 @@ export function WizardButtons({
         variant="ghost"
         disabled={working}
         className={
-          keepCancel && !menu?.length
-            ? 'mr-auto max-sm:order-2 max-sm:w-full'
-            : 'max-sm:hidden sm:mr-auto'
+          keepCancel && !menu ? 'mr-auto max-sm:order-2 max-sm:w-full' : 'max-sm:hidden sm:mr-auto'
         }
         onClick={onCancel}
       >
@@ -85,7 +83,7 @@ export function WizardButtons({
           </Button>
         ))}
       <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:basis-full max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
-        {menu?.length ? (
+        {menu ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

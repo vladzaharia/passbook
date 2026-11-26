@@ -247,7 +247,7 @@ export function ProviderWizard({
       ? [{ label: 'Copy URL', phoneOnly: true, onSelect: () => void copyText(url, 'URL') }]
       : id === 'test' && !verified
         ? [{ label: 'Skip for now', onSelect: open }]
-        : undefined;
+        : [];
   return (
     <>
       <Wizard
