@@ -16,8 +16,6 @@ export function SandboxOperations({ csrf, children }: { csrf: string; children: 
   return <OperationsProvider client={client}>{children}</OperationsProvider>;
 }
 
-export { doneNoteOf } from './sandbox-done-note.ts';
-
 import type { SandboxOperationProps } from './sandbox-operation-types.ts';
 
 // The panel (the operations kit, its art and styles) is a chunk of its own: the pages that only start an operation stay small.

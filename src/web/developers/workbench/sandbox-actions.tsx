@@ -14,12 +14,8 @@ import { useCachedOperation } from '../../ui/operation/store.ts';
 import { ActionError, mintKey, reopenSandbox, startReset } from '../console/sandbox-actions.ts';
 import { loadSession } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
-import {
-  doneNoteOf,
-  SandboxOperation,
-  SandboxOperations,
-  startedOperation,
-} from '../ui/sandbox-operation.tsx';
+import { doneNoteOf } from '../ui/sandbox-done-note.ts';
+import { SandboxOperation, SandboxOperations, startedOperation } from '../ui/sandbox-operation.tsx';
 
 /** The step-up answer: the sentence and the link to Polaris ID, as the Keys page shows it. */
 function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefined }) {
