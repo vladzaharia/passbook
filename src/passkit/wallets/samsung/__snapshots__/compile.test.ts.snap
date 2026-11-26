@@ -58,7 +58,11 @@ Membership status: Active
 From Henry’s: Welcome to Henry’s.
 About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
 Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
-Henry’s Gymnasium: https://henrysgymnasium.com/",
+Henry’s Gymnasium: https://henrysgymnasium.com/
+Your home club is now Capitol Hill.
+Your membership is now All-Inclusive Wellness.
+Your membership status is now Active.
+Welcome to Henry’s.",
       "providerName": "Henry’s Gymnasium",
       "title": "Alex Morgan",
     },
@@ -76,6 +80,9 @@ Henry’s Gymnasium: https://henrysgymnasium.com/",
     "field.back | text | backFields.status-poster",
     "field.back | text | backFields.message-poster",
     "field.back | text | backFields.terms-poster",
+    "messaging.notify | difference | secondaryFields.homeClub",
+    "messaging.notify | difference | footerFields.membership-poster",
+    "messaging.notify | difference | backFields.status-poster",
     "field.header | text | headerFields.memberId",
     "field.primary | text | primaryFields.memberName-poster",
     "field.primary | text | primaryFields.homeClub-poster",
@@ -86,6 +93,10 @@ Henry’s Gymnasium: https://henrysgymnasium.com/",
     "field.back | text | backFields.terms",
     "field.back | text | backFields.directions-capitol-hill-poster",
     "field.back | text | backFields.website-poster",
+    "messaging.notify | difference | primaryFields.homeClub-poster",
+    "messaging.notify | difference | secondaryFields.membership",
+    "messaging.notify | difference | backFields.status",
+    "messaging.notify | difference | backFields.message",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],
@@ -121,7 +132,11 @@ Membership status: Active
 From Henry’s: Welcome to Henry’s.
 About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
 Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
-Henry’s Gymnasium: https://henrysgymnasium.com/",
+Henry’s Gymnasium: https://henrysgymnasium.com/
+Your home club is now Capitol Hill.
+Your membership is now All-Inclusive Wellness.
+Your membership status is now Active.
+Welcome to Henry’s.",
       "providerName": "Henry’s Gymnasium",
       "title": "Alex Morgan",
     },
@@ -139,6 +154,9 @@ Henry’s Gymnasium: https://henrysgymnasium.com/",
     "field.back | text | backFields.status-poster",
     "field.back | text | backFields.message-poster",
     "field.back | text | backFields.terms-poster",
+    "messaging.notify | difference | secondaryFields.homeClub",
+    "messaging.notify | difference | footerFields.membership-poster",
+    "messaging.notify | difference | backFields.status-poster",
     "field.header | text | headerFields.memberId",
     "field.primary | text | primaryFields.memberName-poster",
     "field.primary | text | primaryFields.homeClub-poster",
@@ -149,6 +167,10 @@ Henry’s Gymnasium: https://henrysgymnasium.com/",
     "field.back | text | backFields.terms",
     "field.back | text | backFields.directions-capitol-hill-poster",
     "field.back | text | backFields.website-poster",
+    "messaging.notify | difference | primaryFields.homeClub-poster",
+    "messaging.notify | difference | secondaryFields.membership",
+    "messaging.notify | difference | backFields.status",
+    "messaging.notify | difference | backFields.message",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],
@@ -175,7 +197,8 @@ exports[`samsung compiler over every starter and baked template > starter-access
 Valid until: Jan 1, 2030
 Member: MEMBER-0001
 Hours: Any time, every day.
-Terms: Show this card at the door. It's for you only.",
+Terms: Show this card at the door. It's for you only.
+Your plan is now 24/7 Member.",
       "providerName": "PassBook",
       "title": "Alex Morgan",
     },
@@ -194,6 +217,7 @@ Terms: Show this card at the door. It's for you only.",
     "field.auxiliary | text | auxiliaryFields.member",
     "field.back | text | backFields.hours",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.plan",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
@@ -225,7 +249,9 @@ New York: JFK
 Passenger: Alex Morgan
 Departs: 6/1/30, 8:00 AM
 Boards: 7:15 AM
-Terms: Be at the gate 30 minutes before departure.",
+Terms: Be at the gate 30 minutes before departure.
+Your gate is now B12.
+Departure is now 6/1/30, 8:00 AM.",
       "providerName": "PassBook",
       "startDate": "1906556400000",
       "title": "SFO",
@@ -252,6 +278,8 @@ Terms: Be at the gate 30 minutes before departure.",
     "field.secondary | text | secondaryFields.departs",
     "field.auxiliary | text | auxiliaryFields.boardsAt",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.gate",
+    "messaging.notify | difference | secondaryFields.departs",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],
@@ -279,7 +307,9 @@ What: Cut and colour
 With: Sam
 Where: Soho
 Name: Ana Rivera
-Terms: Please arrive on time. Show the code at the desk.",
+Terms: Please arrive on time. Show the code at the desk.
+Your booking is now Booked.
+Your booking is now 11/24/30, 9:30 AM.",
       "providerName": "PassBook",
       "startDate": "1921761000000",
       "title": "2030-11-24T09:30:00-05:00",
@@ -300,6 +330,8 @@ Terms: Please arrive on time. Show the code at the desk.",
     "field.auxiliary | text | auxiliaryFields.where",
     "field.auxiliary | text | auxiliaryFields.holder",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.status",
+    "messaging.notify | difference | primaryFields.when",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
@@ -374,7 +406,8 @@ Holder: Ana Rivera
 Valid until: Mar 15, 2028
 Number: 77310
 Issued: Mar 15, 2026
-Terms: Scan the code to check this credential. It's valid only while it shows Active.",
+Terms: Scan the code to check this credential. It's valid only while it shows Active.
+Your credential is now Active.",
       "providerName": "PassBook",
       "title": "CPR / AED Provider",
     },
@@ -394,6 +427,7 @@ Terms: Scan the code to check this credential. It's valid only while it shows Ac
     "field.auxiliary | text | auxiliaryFields.number",
     "field.auxiliary | text | auxiliaryFields.issued",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.status",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
@@ -472,7 +506,9 @@ Name: Alex Morgan
 Room: Main hall
 Doors: 6:00 PM
 Admission: General
-Terms: No re-entry. Ticket is non-transferable.",
+Terms: No re-entry. Ticket is non-transferable.
+The event is now on Jun 1, 2030.
+The event now starts at 7:00 PM.",
       "providerName": "PassBook",
       "reservationNumber": "SNAPSHOT-SCAN-CODE",
       "startDate": "1906596000000",
@@ -504,6 +540,8 @@ Terms: No re-entry. Ticket is non-transferable.",
     "field.additionalInfo | text | additionalInfoFields.doors",
     "field.additionalInfo | text | additionalInfoFields.admission",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.date",
+    "messaging.notify | difference | secondaryFields.time",
     "image.background | omitted | background",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
@@ -531,7 +569,9 @@ exports[`samsung compiler over every starter and baked template > starter-generi
 Status: Active
 Since: Jan 1, 2026
 Guests left: 4
-Terms: Present the barcode when asked.",
+Terms: Present the barcode when asked.
+Your tier is now Plus.
+Your status is now Active.",
       "providerName": "PassBook",
       "title": "Alex Morgan",
     },
@@ -550,6 +590,8 @@ Terms: Present the barcode when asked.",
     "field.secondary | text | secondaryFields.since",
     "field.auxiliary | text | auxiliaryFields.guests",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.tier",
+    "messaging.notify | difference | headerFields.status",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
@@ -770,7 +812,9 @@ Name: Ana Rivera
 Gate: Gate B
 Parking: 1 left
 Locker: None left
-Terms: Keep your wristband on. Show the code at each gate.",
+Terms: Keep your wristband on. Show the code at each gate.
+1 left.
+None left.",
       "providerName": "PassBook",
       "reservationNumber": "SNAPSHOT-SCAN-CODE",
       "startDate": "1907427600000",
@@ -800,6 +844,8 @@ Terms: Keep your wristband on. Show the code at each gate.",
     "field.auxiliary | text | auxiliaryFields.parking",
     "field.auxiliary | text | auxiliaryFields.locker",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | auxiliaryFields.parking",
+    "messaging.notify | difference | auxiliaryFields.locker",
     "image.background | omitted | background",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
@@ -831,7 +877,8 @@ exports[`samsung compiler over every starter and baked template > starter-pack 1
       "noticeDesc": "Left: 7
 Name: Dana Ortiz
 Valid until: Nov 18, 2030
-Terms: Show the code each time. Packs don't refund.",
+Terms: Show the code each time. Packs don't refund.
+7 left.",
       "notificationYn": "Y",
       "title": "10 washes",
     },
@@ -851,6 +898,7 @@ Terms: Show the code each time. Packs don't refund.",
     "field.secondary | text | secondaryFields.holder",
     "field.secondary | text | secondaryFields.expires",
     "field.back | text | backFields.fine",
+    "messaging.notify | difference | headerFields.left",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],
@@ -879,7 +927,8 @@ Type: Monthly
 Bay: 14
 Name: Lee Park
 Status: Active
-Terms: Display as the operator requires. Cameras read plates, not this code.",
+Terms: Display as the operator requires. Cameras read plates, not this code.
+Your permit is now Active.",
       "providerName": "PassBook",
       "title": "AB12 CDE",
     },
@@ -900,6 +949,7 @@ Terms: Display as the operator requires. Cameras read plates, not this code.",
     "field.auxiliary | text | auxiliaryFields.holder",
     "field.back | text | backFields.status",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | backFields.status",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
@@ -928,7 +978,8 @@ Collect by: 7:30 PM
 Where: Bay 3
 Name: Mia Kent
 Items: 2 mains, 1 side
-Terms: Show the code to collect. Bring ID if asked.",
+Terms: Show the code to collect. Bring ID if asked.
+Order status: Ready.",
       "providerName": "PassBook",
       "title": "4K7M",
     },
@@ -949,6 +1000,7 @@ Terms: Show the code to collect. Bring ID if asked.",
     "field.auxiliary | text | auxiliaryFields.holder",
     "field.back | text | backFields.items",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.status",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
@@ -976,7 +1028,8 @@ exports[`samsung compiler over every starter and baked template > starter-poster
 Alex Morgan
 Since: Jan 1, 2026
 Plan: Annual
-Terms: Present the barcode when asked.",
+Terms: Present the barcode when asked.
+Your tier is now Plus.",
       "providerName": "PassBook",
       "title": "Alex Morgan",
     },
@@ -993,11 +1046,13 @@ Terms: Present the barcode when asked.",
     "field.header | text | headerFields.tier-poster",
     "field.footer | text | footerFields.since-poster",
     "field.back | text | backFields.terms-poster",
+    "messaging.notify | difference | headerFields.tier-poster",
     "field.header | text | headerFields.tier",
     "field.primary | text | primaryFields.holder-poster",
     "field.secondary | text | secondaryFields.since",
     "field.additionalInfo | text | additionalInfoFields.plan-poster",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.tier",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],
@@ -1113,7 +1168,9 @@ exports[`samsung compiler over every starter and baked template > starter-store-
       "noticeDesc": "Member ID: CARD-0001
 Tier: Gold
 Name: Alex Morgan
-Terms: Balance is not redeemable for cash.",
+Terms: Balance is not redeemable for cash.
+Your tier is now Gold.
+Your balance is now 25 USD.",
       "providerName": "PassBook",
       "title": "25 USD",
     },
@@ -1131,6 +1188,8 @@ Terms: Balance is not redeemable for cash.",
     "field.header | text | headerFields.tier",
     "field.secondary | text | secondaryFields.holder",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.tier",
+    "messaging.notify | difference | primaryFields.balance",
     "relevance.beacons | unsupported | beacons",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
@@ -1161,7 +1220,8 @@ Venue: Northfield Museum
 Until: 2:30 PM
 Party: Admits 3
 Entrance: B
-Terms: Arrive within your slot. Show the code at the entrance.",
+Terms: Arrive within your slot. Show the code at the entrance.
+Your slot is now 2:00 PM.",
       "providerName": "PassBook",
       "reservationNumber": "SNAPSHOT-SCAN-CODE",
       "startDate": "1921518000000",
@@ -1182,6 +1242,7 @@ Terms: Arrive within your slot. Show the code at the entrance.",
     "field.auxiliary | text | auxiliaryFields.party",
     "field.auxiliary | text | auxiliaryFields.entrance",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.slot",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],
@@ -1212,7 +1273,10 @@ Departs: 11/21/30, 7:15 AM
 Board by: 6:55 AM
 Party: Admits 3
 Vehicle: AB12 CDE
-Terms: Be at the quay by the board-by time. Show the code to board.",
+Terms: Be at the quay by the board-by time. Show the code to board.
+Status is now On time.
+Lane is now 4.
+Now departs 11/21/30, 7:15 AM.",
       "providerName": "PassBook",
       "startDate": "1921493700000",
       "title": "Newport",
@@ -1236,6 +1300,9 @@ Terms: Be at the quay by the board-by time. Show the code to board.",
     "field.auxiliary | text | auxiliaryFields.party",
     "field.auxiliary | text | auxiliaryFields.vehicle",
     "field.back | text | backFields.terms",
+    "messaging.notify | difference | headerFields.status",
+    "messaging.notify | difference | headerFields.lane",
+    "messaging.notify | difference | secondaryFields.departs",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],

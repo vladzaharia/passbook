@@ -228,6 +228,18 @@ describe('state, time and the envelope', () => {
   });
 });
 
+describe('change text', () => {
+  it("writes a notifying field's change message into the notice with its value filled in", async () => {
+    const v = await view('starter-store-card');
+    const field = v.fields[0];
+    if (!field) throw new Error('fixture has no field');
+    field.changeMessage = 'Now %@ (100%%)';
+    const r = compile(v);
+    expect(attributes(r).noticeDesc).toContain(`Now ${field.text} (100%)`);
+    expect(lines(r)).toContain(`messaging.notify | difference | ${field.path}`);
+  });
+});
+
 describe('author choices', () => {
   it('leaves a field out when it is named in omit and reports it', async () => {
     const v = await view('starter-store-card', {

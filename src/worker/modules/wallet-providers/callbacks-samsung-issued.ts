@@ -73,6 +73,12 @@ export async function answerSamsungIssuedRef(
       orgId: ref.orgId,
       event: event ?? 'unknown',
     });
+    if (method === 'POST' && event === 'ADDED' && !countryHint)
+      ctx.log.warn('wallet.callback_state', {
+        code: 'WALLET_SAMSUNG_NO_MARKET',
+        provider: 'samsung',
+        orgId: ref.orgId,
+      });
     return method === 'GET' ? { kind: 'missing' } : { kind: 'accepted' };
   }
   return null;
