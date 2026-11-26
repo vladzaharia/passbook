@@ -1,4 +1,4 @@
-import { loadSession } from '../console/session.ts';
+import { loadSession } from '../../workbench/console/session.ts';
 import { type ExampleKind, type Personal, personalize } from '../model/ids.ts';
 
 interface Sandbox {

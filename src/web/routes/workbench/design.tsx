@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useSession } from '../../lib/session.ts';
 import { enterContext } from '../../workbench/host/entry.ts';
 import { WorkbenchEntry } from '../../workbench/states/entry.tsx';
-import { ToolPlaceholder } from '../../workbench/tools/placeholder.tsx';
+import { PlaygroundPage } from '../../workbench/tools/tool-playground.tsx';
 
 /**
  * `/workbench/design`: signed in, Design in the remembered context, else the chooser (the same
@@ -10,7 +10,7 @@ import { ToolPlaceholder } from '../../workbench/tools/placeholder.tsx';
  */
 function DesignEntry() {
   const { authed } = useSession();
-  return authed ? <WorkbenchEntry /> : <ToolPlaceholder tool="design" />;
+  return authed ? <WorkbenchEntry /> : <PlaygroundPage />;
 }
 
 export const Route = createFileRoute('/workbench/design')({

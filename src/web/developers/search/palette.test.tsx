@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PATHS } from '../../../shared/developers.ts';
 import { installDomShims } from '../../lib/test-utils.tsx';
-import type { Session } from '../console/session.ts';
+import type { Session } from '../../workbench/console/session.ts';
 import { loadInputs } from '../model/load.ts';
 import { buildSite } from '../model/site.ts';
 import { buildSearchIndex } from './build.ts';
@@ -16,7 +16,7 @@ const DEMO = 'pb_test_demo_demo_demo_demo';
 vi.mock('./nav.ts', () => ({ goTo: vi.fn(), openTab: vi.fn() }));
 // The sandbox's count is read only with a sandbox: signed out (the default here) nothing is asked.
 let session: Session = { kind: 'out' };
-vi.mock('../console/session.ts', () => ({
+vi.mock('../../workbench/console/session.ts', () => ({
   loadSession: async () => session,
   onSession: () => () => undefined,
 }));
