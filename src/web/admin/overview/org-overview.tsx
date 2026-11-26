@@ -159,7 +159,7 @@ export function OrgOverviewPage({
       <div className="flex flex-col gap-6">
         {sandbox ? <SandboxCard /> : null}
         {orgId && !path && !(empty && setup.isPending && !dismissed && !sandbox) ? (
-          <OrgCounts orgId={orgId} caps={caps} />
+          <OrgCounts orgId={orgId} caps={caps} sandbox={sandbox} />
         ) : null}
         {orgId && caps.includes('org:read') && !sandbox ? (
           <OrgPlanCard orgId={orgId} orgName={membership?.orgName} />

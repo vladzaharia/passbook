@@ -240,6 +240,8 @@ test('a developer sandbox has no Connections: hidden from the nav, a direct URL 
   await expect(nav.getByRole('link', { name: 'Passes' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Connections' })).toHaveCount(0);
   await expect(nav.getByRole('link', { name: 'Webhooks' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /webhook endpoints?$/i })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('link', { name: /connections?$/i })).toHaveCount(0);
   await shots(page, 'live-only-sandbox-nav');
   // On a phone the nav is in the menu: open it for the 390 shots.
   const dir = process.env.SHOTS_DIR;
