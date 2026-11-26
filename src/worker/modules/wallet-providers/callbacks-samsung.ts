@@ -17,7 +17,11 @@ import {
   unauthenticated,
 } from './callbacks-samsung-types.ts';
 import { authenticateSamsungTombstone } from './callbacks-tombstone.ts';
-import { walletProviderReleaseReason } from './provider-policy.ts';
+import {
+  walletProviderEnabled,
+  walletProviderReleaseReason,
+  walletProviderRevokes,
+} from './provider-policy.ts';
 import { findSamsungFetchSnapshot } from './repo-callbacks.ts';
 
 /** Only the exact configured partner endpoint is admitted, with no path normalization aliases. */
@@ -35,14 +39,13 @@ export async function handleSamsungCallback(
   const refId = match[2];
   if (!refId) throw new BadRequestError();
   const method = request.method;
-  // Credentials cannot be opened while disabled, so nothing can be verified or promoted: the
-  // answer is constant, carries no state and records nothing.
-  const disabled = walletProviderReleaseReason('samsung');
-  if (disabled) {
+  // Dark everywhere: credentials cannot be opened, so nothing can be verified or promoted; the answer is constant,
+  // carries no state and records nothing. Draining still answers the cards it has (below).
+  if (!walletProviderRevokes('samsung')) {
     ctx.log.info('wallet.callback_ignored', {
       code: 'WALLET_PROVIDER_DISABLED',
       provider: 'samsung',
-      reason: disabled,
+      reason: walletProviderReleaseReason('samsung'),
     });
     return method === 'GET' ? { kind: 'missing' } : { kind: 'accepted' };
   }
@@ -65,10 +68,12 @@ export async function handleSamsungCallback(
   const snapshot = await findSamsungFetchSnapshot(ctx.env.DB, refHash, ctx.clock.now(), false);
   // An authentic request for a ref we do not serve is answered, not rejected: Get Card Data
   // documents 204 for it, Send Card State only 200.
-  if (snapshot) {
+  // Only a released mode serves card data or promotes; while draining a card is answered as an issued ref (no card
+  // data, a holder's state recorded, never promoted).
+  if (snapshot && walletProviderEnabled('samsung', snapshot.mode)) {
     const live = await serveSamsungLive(ctx, input, snapshot);
     if (live) return live;
-  } else if (await authenticateSamsungTombstone(ctx, request, refId, refHash))
+  } else if (!snapshot && (await authenticateSamsungTombstone(ctx, request, refId, refHash)))
     return method === 'GET' ? { kind: 'missing' } : { kind: 'accepted' };
   const issued = await answerSamsungIssuedRef(ctx, input);
   if (issued) return issued;

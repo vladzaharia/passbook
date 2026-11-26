@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import {
   CreatedDeveloperSandboxSchema,
   DeveloperSandboxSchema,
@@ -392,8 +393,14 @@ describe('a developer org never holds Live', () => {
         [name],
       );
       expect(guard.length, `${name} guard trigger`).toBeGreaterThan(0);
+      // 0229 recreated the instance insert guard, which fires before the developer one; it is lifted for this
+      // table so the developer org's own Live guard is what refuses the row.
+      const attempt = () =>
+        run(kit.env.DB, `INSERT INTO ${name} (org_id, mode) VALUES (?, 'live')`, [s.made.orgId]);
       const insert = expect(
-        run(kit.env.DB, `INSERT INTO ${name} (org_id, mode) VALUES (?, 'live')`, [s.made.orgId]),
+        name === 'wallet_provider_instances'
+          ? withoutTrigger(kit.env.DB, 'wallet_provider_generation_insert_guard', attempt)
+          : attempt(),
         name,
       );
       if (othersFirst.has(name)) await insert.rejects.toThrow();

@@ -20,7 +20,11 @@ import {
   WalletMigrationResolvedSchema,
   type WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
-import { PlatformWalletCredentialListSchema } from '@/shared/contracts/wallet-release.ts';
+import {
+  EnableReadyResultSchema,
+  PlatformWalletCredentialListSchema,
+  WalletReleaseReportSchema,
+} from '@/shared/contracts/wallet-release.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 
@@ -55,6 +59,40 @@ export function usePlatformCredentials() {
         signal,
       }),
   });
+}
+
+/** Every provider and mode, as the owner reads it before a flip. */
+export function useWalletRelease() {
+  return useQuery({
+    queryKey: [...KEY, 'release'],
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/platform/wallet-release', WalletReleaseReportSchema, { signal }),
+  });
+}
+
+/**
+ * The enable-ready dry run and its apply. Plain calls: a step-up answer opens the kit's dialog and the
+ * caller runs the act again. An apply names the dry run's `orgIds`, so a changed list is a 409.
+ */
+export function useEnableReady() {
+  const client = useQueryClient();
+  const path = (provider: WalletProvider, mode: Mode) =>
+    `/api/v1/platform/wallet-release/${provider}/${mode}/enable-ready`;
+  return {
+    dryRun: (provider: WalletProvider, mode: Mode) =>
+      api.post(path(provider, mode), EnableReadyResultSchema, { apply: false }),
+    apply: async (provider: WalletProvider, mode: Mode, orgIds: string[]) => {
+      try {
+        return await api.post(path(provider, mode), EnableReadyResultSchema, {
+          apply: true,
+          orgIds,
+        });
+      } finally {
+        // A partial apply leaves earlier batches On: the report must show what is left either way.
+        await client.invalidateQueries({ queryKey: KEY });
+      }
+    },
+  };
 }
 
 export function usePlatformEnrolments(provider: WalletProvider) {

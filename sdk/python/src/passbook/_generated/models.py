@@ -1322,6 +1322,17 @@ __all__ = [
     "PlatformWalletCredentialsUpsertResponseLastCheck2",
     "PlatformWalletEnrollmentsListResponse",
     "PlatformWalletEnrollmentsListResponseItemsItem",
+    "PlatformWalletReleaseEnableReadyParams",
+    "PlatformWalletReleaseEnableReadyResponse",
+    "PlatformWalletReleaseEnableReadyResponseEnrolmentsItem",
+    "PlatformWalletReleaseRetrieveResponse",
+    "PlatformWalletReleaseRetrieveResponseReleasesItem",
+    "PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItem",
+    "PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck1",
+    "PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck2",
+    "PlatformWalletReleaseRetrieveResponseReleasesItemEnrolmentsItem",
+    "PlatformWalletReleaseRetrieveResponseReleasesItemInstances",
+    "PlatformWalletReleaseRetrieveResponseReleasesItemTemplates",
     "PrintJobsCreateBody",
     "PrintJobsCreateParams",
     "PrintJobsCreateResponse",
@@ -10168,6 +10179,72 @@ class PlatformWalletEnrollmentsListResponseItemsItem(_Model):
     state: _Literal["off", "on", "held", "revoked"] | str
     hold: _Dict[str, _Any] | None
     updatedAt: int
+
+class PlatformWalletReleaseEnableReadyParams(_Model):
+    apply: bool | None = None
+    orgIds: _List[str] | None = None
+
+class PlatformWalletReleaseEnableReadyResponse(_Model):
+    applied: bool
+    enrolments: _List[PlatformWalletReleaseEnableReadyResponseEnrolmentsItem]
+
+class PlatformWalletReleaseEnableReadyResponseEnrolmentsItem(_Model):
+    orgId: str
+    orgName: str
+
+class PlatformWalletReleaseRetrieveResponse(_Model):
+    releases: _List[PlatformWalletReleaseRetrieveResponseReleasesItem]
+
+class PlatformWalletReleaseRetrieveResponseReleasesItem(_Model):
+    provider: _Literal["google", "samsung"] | str
+    mode: _Literal["live", "test"] | str
+    state: _Literal["dark", "draining", "released"] | str
+    credentials: _List[PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItem]
+    enrolments: _List[PlatformWalletReleaseRetrieveResponseReleasesItemEnrolmentsItem]
+    templates: PlatformWalletReleaseRetrieveResponseReleasesItemTemplates
+    instances: PlatformWalletReleaseRetrieveResponseReleasesItemInstances
+
+class PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItem(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+    lastCheck: PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck1 | PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck2 | None
+
+class PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
+
+class PlatformWalletReleaseRetrieveResponseReleasesItemEnrolmentsItem(_Model):
+    orgId: str
+    orgName: str
+    status: _Literal["issuing", "ready", "blocked"] | str
+    blocks: _List[_Literal["plan", "source", "verified", "check", "round_trip", "hold", "revoked", "legacy", "channel_off", "org", "org_off", "hold_released"] | str]
+
+class PlatformWalletReleaseRetrieveResponseReleasesItemInstances(_Model):
+    open: int
+    retired: int
+
+class PlatformWalletReleaseRetrieveResponseReleasesItemTemplates(_Model):
+    ready: int
+    withOmissions: int
+    awaitingReview: int
+    none: int
 
 class PrintJobsCreateParams(_Model):
     ids: _List[str]

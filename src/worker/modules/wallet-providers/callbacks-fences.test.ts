@@ -8,10 +8,12 @@ import { getHolderPass } from '../holders/repo.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
-import { configureWalletProviderAccount, getWalletProviderReadiness } from './account-service.ts';
+import { getWalletProviderReadiness } from './account-service.ts';
 import { ensureSamsungFetchRef, getSamsungRefreshTarget } from './callbacks-ref.ts';
 import { replaceCallbackKeysetForTest, setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
+import { darkRows } from './release-test-fixtures.ts';
 import { findSamsungFetchSnapshot, samsungFetchSnapshotCurrent } from './repo-callbacks.ts';
 import { claimSamsungFetch, claimSamsungReceipt } from './repo-callbacks-events.ts';
 
@@ -215,6 +217,7 @@ describe('Samsung callback authority fences', () => {
       },
     };
     expect(await whileDisabledForTest(ensureSamsungFetchRef, noMint, binding)).toBeNull();
+    await darkRows(t.kit.env.DB);
     await expect(
       run(
         t.kit.env.DB,
@@ -249,7 +252,7 @@ describe('Samsung callback authority fences', () => {
       provider: 'samsung' as const,
     };
     const account = await getWalletProviderReadiness(rotated.kit.ctx, scope);
-    await configureWalletProviderAccount(rotated.kit.ctx, rotated.auth, {
+    await configureOn(rotated.kit.ctx, rotated.auth, {
       ...scope,
       expectedRevision: account.revision,
       credentials: rotated.samsung,

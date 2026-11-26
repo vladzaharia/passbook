@@ -11,14 +11,13 @@ import {
 } from '../passes/credential-keyset.ts';
 import { withKitDatabase } from '../passes/pass-test-fixtures.ts';
 import {
-  configureWalletProviderAccount,
   getWalletProviderReadiness,
   readWalletProviderRetirementCredentials,
-  revokeWalletProviderAccount,
 } from './account-service.ts';
 import { googleObjectIds } from './google-ids.ts';
 import { dropGoogleAccessToken } from './google-oauth.ts';
 import { readWalletPassSnapshot, walletClaimHash } from './instance.ts';
+import { configureOn, revokeOff } from './legacy-on-test-fixtures.ts';
 import { setupWalletOfferKit as setupOfferFixture } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
@@ -206,7 +205,7 @@ describe('existing provider instance runtime', () => {
     expect(await projectionReleaseBindingValid(db, binding)).toBe(true);
 
     // A key rotation under the same identity keeps the approved release current.
-    await configureWalletProviderAccount(f.kit.ctx, f.auth, {
+    await configureOn(f.kit.ctx, f.auth, {
       orgId: f.binding.orgId,
       mode: f.binding.mode,
       provider: 'samsung',
@@ -215,7 +214,7 @@ describe('existing provider instance runtime', () => {
     });
     expect(await projectionReleaseBindingValid(db, binding)).toBe(true);
     // A revoke voids it, and a new configure does not bring it back.
-    await revokeWalletProviderAccount(f.kit.ctx, f.auth, {
+    await revokeOff(f.kit.ctx, f.auth, {
       orgId: f.binding.orgId,
       mode: f.binding.mode,
       provider: 'samsung',
@@ -1100,14 +1099,14 @@ describe('existing provider instance runtime', () => {
         scope.credentialKeysetCommitment,
       ],
     );
-    const rotated = await configureWalletProviderAccount(f.kit.ctx, f.auth, {
+    const rotated = await configureOn(f.kit.ctx, f.auth, {
       orgId: scope.orgId,
       mode: scope.mode,
       provider: 'samsung',
       expectedRevision: scope.accountRevision,
       credentials: f.samsung,
     });
-    await revokeWalletProviderAccount(f.kit.ctx, f.auth, {
+    await revokeOff(f.kit.ctx, f.auth, {
       orgId: scope.orgId,
       mode: scope.mode,
       provider: 'samsung',

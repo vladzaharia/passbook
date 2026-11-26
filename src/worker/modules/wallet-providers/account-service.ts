@@ -12,10 +12,7 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { randomBytes, toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import {
-  ensureCredentialRefKeyset,
-  requireCredentialRefKeyset,
-} from '../passes/credential-keyset.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import {
@@ -186,13 +183,14 @@ export async function configureWalletProviderAccount(
   if (authority.kind !== 'session') throw new ForbiddenError();
   if (await isNewModelAccount(ctx.env.DB, scope.orgId, scope.mode, scope.provider)) throw moved();
   await validateCredentials(data, ctx.clock.now());
+  // The legacy route only rotates an existing envelope; a new account is an enrolment on an org credential.
   const row = await findAccount(ctx.env.DB, scope);
-  if ((row?.revision ?? 0) !== data.expectedRevision) throw changed();
-  if (row) await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-  else await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const current = row ? await currentAccount(ctx, scope, row.id) : null;
-  if (current && current.revision !== data.expectedRevision) throw changed();
-  const previous = current?.credential_id ? await decryptAccount(ctx, current) : null;
+  if (!row?.credential_id) throw moved();
+  if (row.revision !== data.expectedRevision) throw changed();
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const current = await currentAccount(ctx, scope, row.id);
+  if (current.revision !== data.expectedRevision) throw changed();
+  const previous = current.credential_id ? await decryptAccount(ctx, current) : null;
   let stored: StoredCredentials;
   if (data.provider === 'google') {
     if (
@@ -224,7 +222,7 @@ export async function configureWalletProviderAccount(
       );
     stored = { version: 1, provider: 'samsung', credentials: data.credentials };
   }
-  const accountId = row?.id ?? ctx.ids.id();
+  const accountId = row.id;
   const credentialId = ctx.ids.id();
   const envelope = await encryptSecret(
     await loadKekRing(ctx.env),
@@ -238,7 +236,6 @@ export async function configureWalletProviderAccount(
   if (
     !(await saveAccountConfiguration(ctx, authority, scope, {
       accountId,
-      isNew: !row,
       expectedRevision: data.expectedRevision,
       credentialId,
       identityHash: await storedIdentityHash(stored),

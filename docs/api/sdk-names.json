@@ -2620,5 +2620,13 @@
   "connections.deleteConnectionsByIdFilesByFileId": {
     "resource": "connections.files",
     "method": "delete"
+  },
+  "wallet-platform.getPlatformWalletRelease": {
+    "resource": "platform.walletRelease",
+    "method": "retrieve"
+  },
+  "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady": {
+    "resource": "platform.walletRelease",
+    "method": "enableReady"
   }
 }

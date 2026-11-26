@@ -14,6 +14,8 @@ export interface HistoricalSamsungRef {
   promotedAt: number | null;
   retiredAt?: number | null;
   envelope: Envelope;
+  /** Insert with the reference guard in place. */
+  keepGuard?: boolean;
 }
 
 export interface HistoricalProviderInstance {
@@ -30,6 +32,8 @@ export interface HistoricalProviderInstance {
   operationId: string;
   now: number;
   retirementRequestedAt?: number | null;
+  /** Insert with the generation guard in place (the release row must be open); default drops it for the insert. */
+  keepGuard?: boolean;
   /** Optional pre-existing upsert; absent when the caller seeds its own historical operation. */
   upsert?: { requestHash: string; state: 'pending' | 'succeeded' };
 }
@@ -44,7 +48,7 @@ export async function insertHistoricalProviderInstance(
   );
   if (!trigger?.sql) throw new Error('Missing provider generation guard');
   const statements = [
-    stmt(db, 'DROP TRIGGER wallet_provider_generation_insert_guard'),
+    stmt(db, input.keepGuard ? 'SELECT 1' : 'DROP TRIGGER wallet_provider_generation_insert_guard'),
     stmt(
       db,
       `INSERT INTO wallet_provider_instances
@@ -53,12 +57,14 @@ export async function insertHistoricalProviderInstance(
       SELECT ?, p.id, p.org_id, p.mode, a.provider, a.id, r.id, p.credential_generation,
         ?, 'active', 1, ?, ?, ?, ?
       FROM passes p JOIN wallet_provider_accounts a ON a.id = ? AND a.org_id = p.org_id
-        AND a.mode = p.mode AND a.provider = ? AND a.credential_id IS NOT NULL AND a.revoked_at IS NULL
+        AND a.mode = p.mode AND a.provider = ? AND COALESCE(a.credential_id, a.credential_source_id) IS NOT NULL
+        AND a.revoked_at IS NULL
       JOIN template_releases r ON r.id = ? AND r.org_id = p.org_id AND r.mode = p.mode
         AND r.provider = a.provider AND r.template_id = p.template_id AND r.version = p.template_version
         AND r.source = 'approved'
       JOIN template_candidates c ON c.id = r.candidate_id AND c.source_release_id = p.release_id
-        AND c.provider_account_id = a.id AND c.provider_account_revision = a.revision
+        AND c.provider_account_id = a.id
+        AND c.provider_account_revision = CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END
         AND c.candidate_hash = r.candidate_hash
       JOIN template_approvals approval ON approval.id = r.approval_id AND approval.candidate_id = c.id
         AND approval.candidate_hash = c.candidate_hash AND approval.reviewer_id != c.author_id
@@ -80,7 +86,7 @@ export async function insertHistoricalProviderInstance(
         input.credentialGeneration,
       ],
     ),
-    stmt(db, trigger.sql),
+    stmt(db, input.keepGuard ? 'SELECT 1' : trigger.sql),
   ];
   if (input.upsert)
     statements.splice(
@@ -91,10 +97,13 @@ export async function insertHistoricalProviderInstance(
         `INSERT INTO wallet_provider_instance_operations
     (id, instance_id, version, kind, request_hash, pass_version, pass_revision, pass_credential_generation,
      lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-     policy_revision, credential_keyset_commitment, state, attempts, created_at, pass_row_version, account_epoch)
+     policy_revision, credential_keyset_commitment, state, attempts, created_at, pass_row_version, account_epoch,
+     credential_version_id)
     SELECT ?, i.id, 1, 'upsert', ?, p.version, p.revision, p.credential_generation, p.lifecycle_generation,
-      p.release_id, r.id, a.revision, r.adapter_revision, r.audience_policy_revision, ?, ?, ?, ?,
-      p.row_version, a.authority_epoch
+      p.release_id, r.id, CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END,
+      r.adapter_revision, r.audience_policy_revision, ?, ?, ?, ?,
+      p.row_version, a.authority_epoch,
+      (SELECT sc.current_version_id FROM wallet_credentials sc WHERE sc.id = a.credential_source_id)
     FROM wallet_provider_instances i JOIN passes p ON p.id = i.pass_id
       JOIN wallet_provider_accounts a ON a.id = i.account_id
       JOIN template_releases r ON r.id = i.identity_projection_release_id
@@ -120,6 +129,7 @@ async function insertHistoricalArtifact(
   db: D1Database,
   guard: 'wallet_provider_generation_samsung_ref' | 'wallet_provider_generation_offer_insert',
   statement: D1PreparedStatement,
+  keepGuard = false,
 ) {
   const trigger = await first<{ sql: string }>(
     db,
@@ -128,9 +138,9 @@ async function insertHistoricalArtifact(
   );
   if (!trigger?.sql) throw new Error('Missing provider artifact guard');
   const result = await batch(db, [
-    stmt(db, `DROP TRIGGER ${guard}`),
+    stmt(db, keepGuard ? 'SELECT 1' : `DROP TRIGGER ${guard}`),
     statement,
-    stmt(db, trigger.sql),
+    stmt(db, keepGuard ? 'SELECT 1' : trigger.sql),
   ]);
   if (result[1]?.meta.changes !== 1) throw new Error('Missing historical provider artifact');
 }
@@ -147,8 +157,11 @@ export async function insertHistoricalSamsungRef(
       db,
       `INSERT INTO wallet_samsung_fetch_refs
     (id, ref_hash, instance_id, created_at, last_offered_at, initial_expires_at, promoted_at, retired_at,
-     credential_keyset_commitment, kek_version, iv, wrapped_dek, ciphertext)
-    SELECT ?, ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM wallet_provider_instances i
+     credential_keyset_commitment, kek_version, iv, wrapped_dek, ciphertext, credential_version_id)
+    SELECT ?, ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+      (SELECT sc.current_version_id FROM wallet_provider_accounts sa
+        JOIN wallet_credentials sc ON sc.id = sa.credential_source_id WHERE sa.id = i.account_id)
+    FROM wallet_provider_instances i
     WHERE i.id = ? AND i.provider = 'samsung' AND i.account_id IS NOT NULL`,
       [
         input.id,
@@ -166,6 +179,7 @@ export async function insertHistoricalSamsungRef(
         input.instanceId,
       ],
     ),
+    input.keepGuard,
   );
 }
 

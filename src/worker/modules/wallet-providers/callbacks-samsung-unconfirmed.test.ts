@@ -2,11 +2,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import {
-  configureWalletProviderAccount,
-  getWalletProviderReadiness,
-  revokeWalletProviderAccount,
-} from './account-service.ts';
+import { getWalletProviderReadiness } from './account-service.ts';
 import {
   getSamsungRefreshTarget,
   inspectSamsungRefRetirement,
@@ -23,6 +19,7 @@ import {
   requestWalletRetirement,
   retireWalletInstance,
 } from './instance.ts';
+import { configureOn, revokeOff } from './legacy-on-test-fixtures.ts';
 import { onWalletPassRetired } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { queueWalletOperation } from './queue-test-fixtures.ts';
@@ -199,7 +196,7 @@ describe('issued-ref callbacks and the credential they verified under', () => {
     const identity = await createFixtureIdentity(undefined, {
       now: new Date(t.kit.clock.now()),
     });
-    await configureWalletProviderAccount(t.kit.ctx, t.auth, {
+    await configureOn(t.kit.ctx, t.auth, {
       ...scope,
       expectedRevision: account.revision,
       credentials: same
@@ -260,7 +257,7 @@ describe('issued-ref callbacks and the credential they verified under', () => {
       [t.operation.instanceId],
     );
     const account = await getWalletProviderReadiness(t.kit.ctx, scope);
-    await revokeWalletProviderAccount(t.kit.ctx, t.auth, {
+    await revokeOff(t.kit.ctx, t.auth, {
       ...scope,
       expectedRevision: account.revision,
     });

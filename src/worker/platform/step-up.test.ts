@@ -304,6 +304,7 @@ describe('step-up route inventory', () => {
         "POST /api/v1/platform/idp/groups/:key/rules",
         "POST /api/v1/platform/idp/groups/ensure",
         "POST /api/v1/platform/wallet-credentials/:id/rotate-key",
+        "POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready",
         "POST /api/v1/users/:id/emails",
         "POST /api/v1/webhook-endpoints",
         "POST /api/v1/webhook-endpoints/:id/captures/secret",
