@@ -9,6 +9,7 @@ const MAP: Record<Health, { status: string; label: string }> = {
   degraded: { status: 'degraded', label: 'Degraded' },
   failing: { status: 'failing', label: 'Failing' },
   unknown: { status: 'not_configured', label: 'Unknown' },
+  awaiting: { status: 'not_configured', label: 'Waiting for first event' },
   paused: { status: 'not_configured', label: 'Paused' },
   disabled: { status: 'not_configured', label: 'Disabled' },
 };

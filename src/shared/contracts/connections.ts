@@ -5,6 +5,8 @@ export const ConnectionModeSchema = z.enum(['poll', 'webhook', 'hybrid', 'manual
 export type ConnectionMode = z.infer<typeof ConnectionModeSchema>;
 export const ConnectionHealthSchema = z.enum([
   'unknown',
+  /** A webhook connection that has not yet received a verified delivery. */
+  'awaiting',
   'healthy',
   'degraded',
   'failing',
@@ -74,6 +76,12 @@ export const RecipeInfoSchema = z.object({
   category: ConnectorCategorySchema.default('apis'),
   /** True when the sender generates the secret and the admin pastes it. */
   pasteSecret: z.boolean(),
+  /** One line for the picker: what the sender's record becomes. */
+  line: z.string().optional(),
+  /** Who makes the signing secret: the sender (paste it here) or PassBook (paste it there). */
+  secretOrigin: z.enum(['provider', 'passbook']).optional(),
+  /** Version of the sender's setup guide (`GET /connectors/webhook-push/recipes/{recipe}/setup`). */
+  setupVersion: z.string().optional(),
   /** Whether the org's plan allows this recipe. Always true without an org. */
   entitled: z.boolean(),
   outputFields: z.record(
@@ -157,6 +165,10 @@ export const ConnectionSchema = z.object({
   requestsPerMinute: z.number().int().nullable(),
   enabled: z.boolean(),
   health: ConnectionHealthSchema,
+  /** When the first correctly signed delivery arrived; null until then, and always null without a webhook. */
+  firstVerifiedArrivalAt: TimestampSchema.nullable(),
+  /** Set while the provider keeps sending events older than its window; health is not changed. */
+  warning: z.object({ code: z.literal('stale_deliveries'), text: z.string() }).nullable(),
   consecutiveFailures: z.number().int(),
   breakerOpenUntil: TimestampSchema.nullable(),
   nextRunAt: TimestampSchema.nullable(),

@@ -82,7 +82,11 @@ export type WebhookIgnoreKind =
   | 'thin_event'
   | 'test_mode'
   | 'unrecognized_shape'
-  | 'no_ref';
+  | 'no_ref'
+  /** A signed connectivity test (WooCommerce, Cal.com): nothing to issue. */
+  | 'ping'
+  /** Signed correctly, but its body time is outside the recipe's window: a sample or a replay. */
+  | 'stale';
 
 /**
  * What a verified webhook hands to ingress. `eventId` is required and always derived from signed
@@ -197,6 +201,9 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
 /** A finer cause inside a code, for the probe and logs. A closed list: upstream text never reaches it. */
 export type ConnectorErrorReason = 'OFF_ORIGIN' | 'CURSOR_TOO_LONG' | 'PAGE_TOO_LARGE';
 
+/** Why a webhook was refused, for the arrival ledger only. A closed list: the HTTP answer never carries it. */
+export type ConnectorErrorDetail = 'missing' | 'mismatch' | 'expired' | 'no_secret' | 'too_large';
+
 export type ConnectorErrorCode =
   | 'AUTH'
   | 'FORBIDDEN'
@@ -213,6 +220,7 @@ export class ConnectorError extends Error {
   readonly retryAfterMs?: number;
   readonly httpStatus?: number;
   readonly reason?: ConnectorErrorReason;
+  readonly detail?: ConnectorErrorDetail;
   constructor(
     code: ConnectorErrorCode,
     options: {
@@ -220,6 +228,7 @@ export class ConnectorError extends Error {
       retryAfterMs?: number;
       httpStatus?: number;
       reason?: ConnectorErrorReason;
+      detail?: ConnectorErrorDetail;
     } = {},
   ) {
     super(code);
@@ -229,6 +238,7 @@ export class ConnectorError extends Error {
     if (options.retryAfterMs !== undefined) this.retryAfterMs = options.retryAfterMs;
     if (options.httpStatus !== undefined) this.httpStatus = options.httpStatus;
     if (options.reason !== undefined) this.reason = options.reason;
+    if (options.detail !== undefined) this.detail = options.detail;
   }
 }
 

@@ -6,7 +6,7 @@ export async function listConnections(
   db: D1Database,
   q: {
     orgId?: string | undefined;
-    health?: Health | undefined;
+    health?: Health | 'awaiting' | undefined;
     q?: string | undefined;
     cursor?: string | undefined;
     limit: number;
@@ -25,8 +25,15 @@ export async function listConnections(
     params.push(q.orgId);
   }
   if (q.health) {
-    where.push('health = ?');
-    params.push(q.health);
+    // `awaiting` is not stored: it is an unknown webhook connection with no verified delivery yet.
+    const awaiting = `mode IN ('webhook', 'hybrid') AND NOT EXISTS (
+      SELECT 1 FROM connection_webhook_arrivals a WHERE a.connection_id = connections.id AND a.outcome <> 'rejected' AND COALESCE(a.reason, '') <> 'stale')`;
+    if (q.health === 'awaiting') where.push(`health = 'unknown' AND ${awaiting}`);
+    else if (q.health === 'unknown') where.push(`health = 'unknown' AND NOT (${awaiting})`);
+    else {
+      where.push('health = ?');
+      params.push(q.health);
+    }
   }
   if (q.cursor) {
     where.push('id < ?');

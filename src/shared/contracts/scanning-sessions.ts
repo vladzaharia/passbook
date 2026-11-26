@@ -76,7 +76,6 @@ export const NativeScannerCapabilitiesSchema = z.strictObject({
   hardware: z.array(NativeHardwareEntrySchema).max(16).optional(),
 });
 export type NativeScannerCapabilities = z.infer<typeof NativeScannerCapabilitiesSchema>;
-
 export const ScanDeviceCapabilitiesSchema = z.strictObject({
   width: z.number().int().min(1).max(32768),
   height: z.number().int().min(1).max(32768),
@@ -258,6 +257,7 @@ export const ScanningDeviceSchema = z.object({
   revoked: z.boolean(),
   lastSeenAt: TimestampSchema.nullable(),
   updatedAt: TimestampSchema,
+  configRevision: TimestampSchema,
   signIn: z.enum(['paired', 'admin']),
   adminName: z.string().nullable(),
 });
