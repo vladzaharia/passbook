@@ -7,11 +7,13 @@ import type {
 import { isAlone } from '../../../shared/template-release-state.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { verifiedScopes } from '../../platform/auth-capability.ts';
+import { viaToken } from '../../platform/auth-workbench.ts';
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   orgTestOnly,
+  workbenchTestOnly,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/repo-fence.ts';
@@ -105,8 +107,13 @@ export async function prepare(
   }
   const sandbox = await isPreviewOnlyOrg(ctx.env.DB, orgId);
   const keyMode: Mode[] | null = auth.kind === 'api_key' ? [auth.mode] : null;
+  // A Workbench token releases to Test only: `modes` defaults to `['test']` and may not name Live.
+  const token = viaToken(auth);
   const wanted =
-    body.modes ?? keyMode ?? (sandbox ? (['test'] as Mode[]) : (['live', 'test'] as Mode[]));
+    body.modes ??
+    keyMode ??
+    (sandbox || token ? (['test'] as Mode[]) : (['live', 'test'] as Mode[]));
+  if (token && wanted.includes('live')) throw workbenchTestOnly();
   if (keyMode && wanted.some((m) => !keyMode.includes(m))) throw keyTestOnly();
   if (wanted.includes('live') && sandbox) throw orgTestOnly();
   const modes = (['test', 'live'] as const).filter((m) => wanted.includes(m));

@@ -8,13 +8,15 @@ import {
   RotatedApiKeySchema,
 } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
+import { viaToken } from '../../platform/auth-workbench.ts';
+import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
 import { authOf, orgIdOf } from '../passes/http.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
 import { idempotentSecret } from './idempotent-secret.ts';
+import { getKey } from './repo.ts';
 import { isOwnPersonalKey } from './service.ts';
 import { getApiKey, getApiKeyActivity } from './service-detail.ts';
 import { rotateApiKey } from './service-rotate.ts';
@@ -44,6 +46,9 @@ export async function authorizeKey(
   id: string,
   capability: 'integrations:read' | 'integrations:manage' | 'audit:read',
 ): Promise<ApiKeyAuthority> {
+  // Under a Workbench token a Live key, or one of another org, is not found.
+  if (viaToken(auth) && (await getKey(ctx.env.DB, id, orgId))?.mode !== 'test')
+    throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
   if (auth?.kind === 'api_key') return authorizeApiKeys(ctx, auth, orgId, 'integrations:manage');
   const member = orgId === null ? null : await authorizeApiKeys(ctx, auth, orgId, 'org:read');
   if (member && (await isOwnPersonalKey(ctx, id, orgId, member))) return member;

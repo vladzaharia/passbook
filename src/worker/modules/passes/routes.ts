@@ -12,6 +12,7 @@ import {
   RotateLinkResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { methodScope, modeOf } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
@@ -84,7 +85,7 @@ register(
         ? q.orgId
         : auth.kind === 'api_key' && auth.orgId !== null
           ? auth.orgId
-          : undefined;
+          : workbenchPinOf(auth)?.orgId;
     if (orgId === undefined)
       throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
     if (orgId === null) {

@@ -15,12 +15,14 @@ import {
   type ScopeRule,
   verifiedScopeOf,
 } from '../../platform/auth.ts';
+import { assertWorkbenchOrg, workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import {
   ForbiddenError,
   orgTestOnly,
   UnauthenticatedError,
   ValidationError,
+  workbenchTestOnly,
 } from '../../platform/errors.ts';
 import { enforceFeatures } from '../../platform/feature-guard.ts';
 import { declareKeyAccess, keyAccessOf } from '../../platform/openapi-security.ts';
@@ -95,6 +97,11 @@ export async function tenantAuthorityOf(
   /** `tillKey`: the call site is one a till's `scans:write` key may reach as `passes:operate` (roll call). */
   options: { tillKey?: true } = {},
 ): Promise<TenantPassWrite> {
+  // A Workbench token acts in its own org only (any other is not found), and in Test only, even when a
+  // handler re-reads the principal under a requested mode.
+  assertWorkbenchOrg(auth, orgId);
+  if (workbenchPinOf(auth) && auth.kind !== 'scanner' && auth.mode !== 'test')
+    throw workbenchTestOnly();
   const orgAccessRevision = await tenantOrgAccessRevision(ctx.env.DB, orgId);
   if (orgAccessRevision === null) throw new ForbiddenError();
   let authority: TenantPassWrite;
@@ -169,6 +176,9 @@ export function requireTenantSessionOrApiKey(
 /** Org and mode for by-id access (see PassScope). */
 export function passScopeOf(c: C): PassScope {
   const auth = authOf(c);
+  // A member token reads like a key: its org and Test only, so a Live id is not found.
+  const pin = workbenchPinOf(auth);
+  if (pin) return { orgId: pin.orgId, mode: 'test', principal: 'api_key' };
   return {
     orgId: auth.kind === 'api_key' ? auth.orgId : null,
     mode: modeOf(auth),
@@ -190,8 +200,13 @@ export function orgIdOf<T extends string | null = string>(
   auth: AuthContext,
   orgId: T | undefined,
 ): T | string {
-  if (orgId === null) return orgId as T;
-  const resolved = orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+  if (orgId === null) {
+    assertWorkbenchOrg(auth, null);
+    return orgId as T;
+  }
+  const pin = workbenchPinOf(auth);
+  if (pin && orgId !== undefined) assertWorkbenchOrg(auth, orgId);
+  const resolved = orgId ?? pin?.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
   if (!resolved)
     throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
   return resolved;

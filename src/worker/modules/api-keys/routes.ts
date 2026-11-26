@@ -10,13 +10,15 @@ import {
   RetiredApiKeySchema,
 } from '../../../shared/contracts/index.ts';
 import { requireCaller } from '../../platform/auth.ts';
+import { viaToken } from '../../platform/auth-workbench.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { BadRequestError } from '../../platform/errors.ts';
+import { BadRequestError, workbenchTestOnly } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import {
   assertStrictSignIn,
+  peekBody,
   requireStepUp,
   STEP_UP_SECONDS,
 } from '../../platform/sign-in-guard.ts';
@@ -26,6 +28,17 @@ import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
 import { idempotentSecret } from './idempotent-secret.ts';
 import { authorizeKey, registerKeyFamilyRoutes } from './routes-family.ts';
 import { createApiKey, listApiKeys, retireApiKey, revokeApiKey } from './service.ts';
+
+/** Under a Workbench token a new key is a Test key: `mode` left out means Test, and Live is refused. */
+async function testOnlyUnderToken<T extends { mode: 'live' | 'test' }>(
+  c: Parameters<typeof peekBody>[0],
+  input: T,
+): Promise<T> {
+  if (!viaToken(c.var.auth)) return input;
+  if ((await peekBody(c)).mode === undefined) return { ...input, mode: 'test' };
+  if (input.mode !== 'test') throw workbenchTestOnly();
+  return input;
+}
 
 export const apiKeysRoutes = createRouter();
 // A signed-in member, or a key holding `api-keys:write` (it reaches its own children). `me` is the key route's.
@@ -124,7 +137,7 @@ register(
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const input = c.req.valid('json');
+    const input = await testOnlyUnderToken(c, c.req.valid('json'));
     // A member makes their own personal key with any role; every other key needs `integrations:manage`.
     const capability = input.kind === 'personal' ? 'org:read' : 'integrations:manage';
     const authority = await authorizeApiKeys(ctx, c.var.auth, input.orgId, capability);

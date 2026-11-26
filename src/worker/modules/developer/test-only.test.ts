@@ -47,7 +47,7 @@ const send = (method: string, path: string, headers: Record<string, string>, bod
     },
     kit.env,
   );
-describe('ORG_TEST_ONLY', () => {
+describe('SANDBOX_TEST_ONLY', () => {
   it('refuses Live on a developer org in every console router family, and allows Test', async () => {
     const user = await makeUser(kit.f);
     const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
@@ -68,7 +68,7 @@ describe('ORG_TEST_ONLY', () => {
     ];
     for (const [family, method, path, body] of families) {
       const live = await send(method, path, session.headers, body);
-      await expectProblem(live, 409, 'ORG_TEST_ONLY');
+      await expectProblem(live, 409, 'SANDBOX_TEST_ONLY');
       expect(live.status, family).toBe(409);
       const test = await send(
         method,
