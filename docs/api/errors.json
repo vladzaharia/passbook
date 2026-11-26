@@ -4252,6 +4252,15 @@
       ]
     },
     {
+      "code": "SANDBOX_ENDPOINT_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
       "code": "SANDBOX_EXISTS",
       "statuses": [
         409

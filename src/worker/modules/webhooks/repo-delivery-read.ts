@@ -25,6 +25,8 @@ export interface DueDelivery {
   /** The pass row is gone or soft-deleted. */
   passGone: boolean;
   orgActive: boolean;
+  /** The org is a developer sandbox, read with the delivery so a send needs no query of its own. */
+  sandbox: boolean;
 }
 
 interface DueRaw {
@@ -34,6 +36,7 @@ interface DueRaw {
   pass_found: string | null;
   pass_deleted_at: number | null;
   org_status: string | null;
+  org_kind: string | null;
   seq: number;
   event_id: string;
   org_id: string;
@@ -58,7 +61,7 @@ export async function nextDue(
 ): Promise<DueDelivery | null> {
   const r = await first<DueRaw>(
     db,
-    `SELECT d.attempts, d.replays, p.test_data_quarantined AS quarantined, p.id AS pass_found, p.deleted_at AS pass_deleted_at, o.status AS org_status,
+    `SELECT d.attempts, d.replays, p.test_data_quarantined AS quarantined, p.id AS pass_found, p.deleted_at AS pass_deleted_at, o.status AS org_status, o.kind AS org_kind,
        f.seq, f.event_id, f.org_id, f.mode, f.pass_id, f.template_id, f.external_id, f.type, f.kind,
        f.device, f.device_count, f.actor_type, f.data, f.at
      FROM webhook_deliveries d
@@ -77,6 +80,7 @@ export async function nextDue(
     quarantined: r.quarantined !== 0,
     passGone: r.pass_found === null || r.pass_deleted_at !== null,
     orgActive: r.org_status === 'active',
+    sandbox: r.org_kind === 'developer',
     feed: {
       seq: r.seq,
       eventId: r.event_id,

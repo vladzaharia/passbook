@@ -171,7 +171,7 @@ export async function attemptDelivery(
     return cancel('WEBHOOK_TENANT_MISMATCH');
   }
 
-  if (!(await sendAllowed(ctx, endpoint))) {
+  if (!(await sendAllowed(ctx, endpoint, due.sandbox))) {
     await rescheduleStmt(db, k, ctx.clock.now() + HOST_DEFER_MS, null, 'RATE_LIMITED').run();
     return 'deferred';
   }

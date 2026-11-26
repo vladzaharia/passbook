@@ -6383,5 +6383,13 @@
     "op": "POST /api/v1/orgs/invitations/accept",
     "change": "200.capabilities[]: enum value \"logs:read\" added",
     "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+  },
+  {
+    "key": "webhook sandbox delivery",
+    "class": "notable",
+    "operationId": "",
+    "op": "webhook sandbox delivery",
+    "change": "Test endpoints deliver to their URL",
+    "note": "A sandbox's URL endpoints deliver signed Test events, 60 a minute, with Live's address checks. A fourth endpoint is 409 SANDBOX_ENDPOINT_LIMIT."
   }
 ]
