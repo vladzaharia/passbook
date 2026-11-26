@@ -198,6 +198,11 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // ignores a Bearer key (walletPlatformRoutes, below it).
   app.route('/api/v1/platform', platformSettingsRoutes);
   app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
+  // Polaris ID routes are person-only (`{ platform }` with no `key`): a key is refused with PERSON_REQUIRED. PK-2a converts them.
+  app.route('/api/v1/platform', idpOperationRoutes);
+  app.route('/api/v1/platform', idpPlatformRoutes);
+  app.route('/api/v1/platform', idpGroupsRoutes);
+  app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', platformEntitlementsRoutes);
   app.route('/api/v1/platform', platformPersonalLabelsRoutes);
@@ -234,10 +239,6 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/users', userHoldRoutes);
   app.route('/api/v1/users', userAccessRoutes);
   app.route('/api/v1/platform', groupClaimsRoutes);
-  app.route('/api/v1/platform', idpOperationRoutes);
-  app.route('/api/v1/platform', idpPlatformRoutes);
-  app.route('/api/v1/platform', idpGroupsRoutes);
-  app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);
