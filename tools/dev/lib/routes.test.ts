@@ -1,7 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { fillPath, filterRoutes, parseRoutes, placeholdersOf, shotName } from './routes.ts';
+import {
+  fillPath,
+  filterRoutes,
+  parseRoutes,
+  placeholdersOf,
+  shotName,
+  withCompanions,
+} from './routes.ts';
 
 describe('visual-sweep routes', () => {
   it('lists the placeholders in a path', () => {
@@ -54,6 +61,17 @@ describe('visual-sweep routes', () => {
     expect(new Set(names).size).toBe(names.length);
     const bad = routes.filter((r) => r.click !== undefined && ![r.click].flat().every(Boolean));
     expect(bad).toEqual([]);
+  });
+
+  it('adds scanner.json to a scanning run', () => {
+    const d = 'tools/dev/visual-routes';
+    expect(withCompanions([`${d}/scanning.json`])).toEqual([
+      `${d}/scanning.json`,
+      `${d}/scanner.json`,
+    ]);
+    const both = [`${d}/scanner.json`, `${d}/scanning.json`];
+    expect(withCompanions(both)).toEqual(both);
+    expect(withCompanions([`${d}/admin.json`])).toEqual([`${d}/admin.json`]);
   });
 
   it('validates click', () => {
