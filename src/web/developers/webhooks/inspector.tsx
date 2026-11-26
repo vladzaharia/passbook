@@ -63,10 +63,7 @@ function Attempts({ row, detail }: { row: Row; detail: DeliveryDetailDto | null 
     return (
       <div className="wh-pane">
         <span className="wh-line">
-          <StatusChip status={row.status} tone={toneOfRow(row)}>
-            {row.status ?? stateWord(row)}
-          </StatusChip>{' '}
-          {row.meta}
+          {row.status ? <StatusChip status={row.status} /> : null} {row.meta}
         </span>
       </div>
     );
