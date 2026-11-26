@@ -19,6 +19,7 @@ import {
   FileNotFoundError,
   rejectFile,
 } from './files-errors.ts';
+import { assertRoomForConnection } from './files-limit.ts';
 import {
   decodeContent,
   describeColumns,
@@ -263,6 +264,8 @@ export async function prepareBind(
   const row = await requireDraft(ctx, orgId, fileId);
   if (!row.columnLabels.some((label) => pointerOf(label) === idColumn))
     throw new FileIdColumnMissingError();
+  // Binding parses the file again and writes its pages: it spends the allowance like an upload.
+  await takeUpload(ctx, orgId);
   const bytes = await readSource(ctx, orgId, fileId);
   if (!bytes) throw new FileExpiredError();
   const file = parseFile(
@@ -316,5 +319,6 @@ export async function bindOf(
   if (!def.capabilities.upload || fileId === undefined) return undefined;
   const idColumn = (config as { idColumn?: unknown }).idColumn;
   if (typeof idColumn !== 'string') throw new FileIdColumnMissingError();
+  await assertRoomForConnection(ctx, orgId);
   return prepareBind(ctx, orgId, fileId, idColumn);
 }
