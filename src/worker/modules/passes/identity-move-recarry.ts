@@ -10,7 +10,8 @@ import { type MoveRow, moveById, setCarriedState } from './repo-identity-move.ts
 import {
   checkInOf,
   copyCheckIn,
-  dropCopy,
+  dropCheckIn,
+  dropSealed,
   readState,
   sealedOf,
 } from './repo-identity-move-state.ts';
@@ -129,11 +130,11 @@ async function applyTaken(
     state.notes.filter((n) => has(`note:${n.idempotency_key}`)),
   );
   if (has('checkin')) {
-    await dropCopy(db, 'pass_check_in', made.id);
+    await dropCheckIn(db, made.id);
     await copyCheckIn(db, old, made.id, ctx.clock.now());
   }
   if (has('personalization')) {
-    await dropCopy(db, 'pass_personalizations', made.id);
+    await dropSealed(db, made.id);
     await copyPersonalization(ctx, old, made);
   }
   return rows.length > 0;
