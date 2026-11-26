@@ -7,7 +7,6 @@ import type {
   WalletPassView,
   WalletRole,
 } from '@/passkit/wallets/types.ts';
-import { ROLE_LABEL } from '@/shared/copy/wallets.ts';
 import type { WalletName } from './roles-model.ts';
 
 export type Destination =

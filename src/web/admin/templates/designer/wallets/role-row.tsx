@@ -1,7 +1,7 @@
 import { Lock, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import type { ViewField } from '@/passkit/wallets/types.ts';
-import { ROLE_LABEL, WALLETS_COPY } from '@/shared/copy/wallets.ts';
+import { WALLETS_COPY } from '@/shared/copy/wallets.ts';
 import { cn } from '../../../../lib/cn.ts';
 import { useChangeCount } from '../../../../lib/motion.ts';
 import { Button, Input } from '../../../../ui/index.ts';
