@@ -67,13 +67,12 @@ export function AreaButton({
         {attentionIn ? <span className="wb-attn-dot" /> : null}
       </span>
       {/* Every area is one word, and the name never truncates below its first (design §7). */}
-      <span className="whitespace-nowrap">{area}</span>{' '}
-      <ChevronDown aria-hidden className="size-4 shrink-0 text-fg-muted" />{' '}
-      <TestTag context={context} />
+      <span className="whitespace-nowrap">{area}</span> <TestTag context={context} />
       {/* The name is the visible words plus these: "Logs Test, change area. Attention in Events". */}
       <span className="sr-only">
         {areaButtonTail(attentionIn ? WB_AREA[attentionIn].label : undefined)}
       </span>
+      <ChevronDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
     </button>
   );
 }

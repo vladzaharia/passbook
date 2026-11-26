@@ -4,8 +4,8 @@ import { type WbTool, wbPath } from '@/shared/workbench.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import {
   contextsQuery,
+  entryTarget,
   keepTool,
-  pickContext,
   rememberedContext,
   type WbContext,
 } from './contexts.ts';
@@ -30,7 +30,7 @@ export async function enterContext(
     // The layout renders the failure with Retry; no redirect from here.
     return;
   }
-  const target = pickContext(list, rememberedContext(session.user.id));
+  const target = entryTarget(list, tool, rememberedContext(session.user.id));
   if (!target) return;
   const path = wbPath(target.orgId, keepTool(target, tool));
   throw redirect({

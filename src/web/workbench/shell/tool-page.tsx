@@ -44,12 +44,12 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
         </h1>
         {count ? <span className="font-mono text-[0.8125rem] text-fg-muted">{count}</span> : null}
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          {area && context ? (
+          {area && context && seenAt !== undefined ? (
             <Button
               variant="ghost"
               size="sm"
               iconStart={<Eye aria-hidden />}
-              onClick={() => markSeen(context.orgId, area, seenAt())}
+              onClick={() => markSeen(context.orgId, area, seenAt)}
             >
               {WB_SHELL_COPY.markSeen}
             </Button>

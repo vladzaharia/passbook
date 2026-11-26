@@ -1,5 +1,6 @@
 import { KeyRound } from 'lucide-react';
 import { POLARIS_ID_COPY } from '@/shared/copy/sign-in.ts';
+import { STATE_COPY } from '@/shared/copy/states.ts';
 import { WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { Buddy } from '../../ui/art/index.ts';
 import { Button } from '../../ui/button.tsx';
@@ -36,6 +37,23 @@ export function SessionGoneBanner() {
           <a href={`/login?next=${encodeURIComponent(here)}&reason=expired`}>
             {WB_STATES.sessionExpired.action}
           </a>
+        </Button>
+      }
+    />
+  );
+}
+
+/** A background refresh of the contexts failed: the open tool stays, this says so. */
+export function StaleContextsNotice({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Callout
+      tone="warning"
+      title={WB_STATES.failed.stale}
+      actionsAside
+      className="mb-4"
+      actions={
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          {STATE_COPY.retry}
         </Button>
       }
     />

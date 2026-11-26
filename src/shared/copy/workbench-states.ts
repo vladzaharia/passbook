@@ -37,6 +37,8 @@ export const WB_STATES = {
     network: 'Could not reach PassBook. Check your connection.',
     access: 'You do not have access to this.',
     server: 'PassBook could not answer. Try again.',
+    noContext: 'Choose a sandbox or organization first.',
+    stale: 'Could not refresh your contexts.',
   },
 } as const;
 

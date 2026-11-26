@@ -9,8 +9,8 @@ export interface WbShell {
   contexts: readonly WbContext[];
   tool: WbTool | null;
   attention: AttentionMap;
-  /** The summary's server time: what Mark seen records. */
-  seenAt: () => number;
+  /** The summary's server time, what Mark seen records; none until the summary has answered. */
+  seenAt: number | undefined;
   openShortcuts: () => void;
   openPalette: () => void;
 }
@@ -20,7 +20,7 @@ export const WbShellContext = createContext<WbShell>({
   contexts: [],
   tool: null,
   attention: {},
-  seenAt: () => Date.now(),
+  seenAt: undefined,
   openShortcuts: () => undefined,
   openPalette: () => undefined,
 });

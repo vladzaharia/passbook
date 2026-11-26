@@ -1,9 +1,11 @@
 // Runs after `vite build`: the initial load (entry plus modulepreloads) stays under budget and
 // carries no admin-only library, and the Worker carries no e2e provider release.
+
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { e2eReleaseProblems } from './lib/e2e-release.ts';
+import { markedAssets } from './lib/marked-assets.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
@@ -148,38 +150,6 @@ export function staticIslandAssets(
     if (file) seen.add(`/assets/${file}`);
   }
   return [...seen];
-}
-
-/**
- * A lazy chunk found by a literal only it carries (`wb-shell`), with every chunk it imports
- * statically and the stylesheets that carry the literal too (`.wb-shell`), minus the initial load.
- * `files` are `/assets/x` urls; more than one script carrying the literal is an error.
- */
-export function markedAssets(
-  read: (url: string) => string,
-  files: readonly string[],
-  initial: readonly string[],
-  marker: string,
-): { files: string[]; errors: string[] } {
-  const skip = new Set(initial);
-  const scripts = files.filter(
-    (f) => f.endsWith('.js') && !skip.has(f) && read(f).includes(marker),
-  );
-  if (scripts.length !== 1)
-    return {
-      files: [],
-      errors: [`${marker}: ${scripts.length} chunks carry it (${scripts.join(', ')}), want 1`],
-    };
-  const seen = new Set<string>();
-  const walk = (url: string) => {
-    if (seen.has(url) || skip.has(url)) return;
-    seen.add(url);
-    for (const m of read(url).matchAll(/(?:from|import)\s*"\.\/([\w.-]+\.js)"/g))
-      walk(`/assets/${m[1]}`);
-  };
-  walk(scripts[0] as string);
-  for (const f of files) if (f.endsWith('.css') && read(f).includes(`.${marker}`)) seen.add(f);
-  return { files: [...seen], errors: [] };
 }
 
 export function checkBundle(

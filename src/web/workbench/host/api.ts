@@ -17,8 +17,9 @@ export interface ToolRequest {
 type Method = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /**
- * Every tenant call from a Workbench page (design §2.3, L13): a bearer Workbench token,
- * `credentials: 'omit'` so no session cookie rides along, and no mode header (the token is Test).
+ * Every tenant call from a Workbench page (design §2.3, L13): a bearer Workbench token, the
+ * session cookie the server binds that token to (`same-origin`), and no mode header (the token is
+ * Test). A refused token is never answered with a cookie-only call.
  * Its methods are the session client's, so it fits `lib/tool-api.tsx`'s `ToolApi` (DC1's tool
  * scope) and a shared tool runs on it unchanged.
  */
@@ -52,8 +53,8 @@ export interface ToolApiDeps {
   orgId: string;
   /** The org's current token (token.ts). */
   token: () => Promise<string>;
-  /** Forget a refused token. */
-  drop: () => void;
+  /** Forget a refused token (the one that was sent, so a newer one stays). */
+  drop: (used?: string) => void;
   /** The session behind the token is gone: the mint itself was refused. */
   onSessionGone?: () => void;
   fetch?: typeof fetch;
@@ -72,7 +73,15 @@ export function buildQuery(path: string, query?: Query): string {
   return qs ? `${path}${path.includes('?') ? '&' : '?'}${qs}` : path;
 }
 
-export function createToolApi(deps: ToolApiDeps): WorkbenchApi {
+/**
+ * `fetch` with the org's Workbench token: any case of the mode header stripped, `authorization`
+ * set last, the cookie sent only because the server binds the token to it. A 401 drops the token
+ * and mints once more; then the answer stands. A token that cannot be had throws: there is no
+ * cookie-only attempt.
+ */
+export function createBearerFetch(
+  deps: ToolApiDeps,
+): (url: string, init?: RequestInit) => Promise<Response> {
   const doFetch = deps.fetch ?? ((input, init) => fetch(input, init));
 
   async function bearer(): Promise<string> {
@@ -84,6 +93,32 @@ export function createToolApi(deps: ToolApiDeps): WorkbenchApi {
     }
   }
 
+  const attempt = async (url: string, init: RequestInit) => {
+    const headers = new Headers(init.headers);
+    for (const key of [...headers.keys()]) if (MODE_HEADER.test(key)) headers.delete(key);
+    const token = await bearer();
+    headers.set('authorization', `Bearer ${token}`);
+    const res = await doFetch(url, {
+      ...init,
+      headers: Object.fromEntries(headers.entries()),
+      credentials: 'same-origin',
+    });
+    return { res, token };
+  };
+  return async (url, init = {}) => {
+    let sent = await attempt(url, init);
+    // An expired or revoked token: mint once more, then let the error stand.
+    if (sent.res.status === 401) {
+      deps.drop(sent.token);
+      sent = await attempt(url, init);
+    }
+    return sent.res;
+  };
+}
+
+export function createToolApi(deps: ToolApiDeps): WorkbenchApi {
+  const bearerFetch = createBearerFetch(deps);
+
   async function send(method: string, path: string, body: unknown, opts: ToolRequest = {}) {
     const headers: Record<string, string> = { accept: 'application/json' };
     for (const [key, value] of Object.entries(opts.headers ?? {}))
@@ -94,29 +129,19 @@ export function createToolApi(deps: ToolApiDeps): WorkbenchApi {
     const timeout = opts.timeoutMs === undefined ? undefined : AbortSignal.timeout(opts.timeoutMs);
     const signal =
       timeout && opts.signal ? AbortSignal.any([opts.signal, timeout]) : (timeout ?? opts.signal);
-    const attempt = async () => {
-      try {
-        return await doFetch(url, {
-          method,
-          headers: { ...headers, authorization: `Bearer ${await bearer()}` },
-          body: body === undefined ? undefined : JSON.stringify(body),
-          credentials: 'omit',
-          signal,
-        });
-      } catch (cause) {
-        if (opts.signal?.aborted || cause instanceof ApiError) throw cause;
-        if (timeout?.aborted)
-          throw new ApiError({ status: 0, code: 'timeout', detail: STATE_COPY.timeout });
-        throw new ApiError({ status: 0, code: 'network', detail: STATE_COPY.network });
-      }
-    };
-    let res = await attempt();
-    // An expired or revoked token: mint once more, then let the error stand.
-    if (res.status === 401) {
-      deps.drop();
-      res = await attempt();
+    try {
+      return await bearerFetch(url, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal,
+      });
+    } catch (cause) {
+      if (opts.signal?.aborted || cause instanceof ApiError) throw cause;
+      if (timeout?.aborted)
+        throw new ApiError({ status: 0, code: 'timeout', detail: STATE_COPY.timeout });
+      throw new ApiError({ status: 0, code: 'network', detail: STATE_COPY.network });
     }
-    return res;
   }
 
   const json =

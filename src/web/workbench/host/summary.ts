@@ -37,6 +37,9 @@ export function useWorkbenchSummary(
     queryFn: ({ signal }) =>
       (api as WorkbenchApi).get(SUMMARY_PATH, SummarySchema, { query, signal }),
     enabled: api !== null,
+    // A seen mark changes the key: the other areas keep showing their counts meanwhile, in this org only.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[2] === api?.orgId ? previous : undefined,
     // Every 30 s while the tab is visible (react-query pauses the interval when hidden).
     refetchInterval: SUMMARY_POLL_MS,
     refetchIntervalInBackground: false,

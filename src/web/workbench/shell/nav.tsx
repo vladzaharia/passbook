@@ -5,9 +5,10 @@ import { WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
 import { type WbTool, wbPath } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
 import { ActiveIndicator } from '../../ui/active-indicator.tsx';
+import { CountUp } from '../../ui/count-up.tsx';
 import { type Attention, type AttentionMap, useArrive } from './attention.ts';
 import { GO_CHORD } from './keys.ts';
-import { contextFreePath, type NavGroup } from './nav-model.ts';
+import { contextFreePath, type NavGroup, PUBLIC_AREAS } from './nav-model.ts';
 
 const LINK =
   'wb-nav-link relative flex min-h-8 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium pointer-coarse:min-h-11 transition-[color,background-color] duration-(--wl-dur-hover)';
@@ -33,13 +34,13 @@ function Meta({ attention, known }: { attention: Attention | undefined; known: b
           data-kind="danger"
           className={cn('wb-meta', arrivals > 0 && 'wb-arrive')}
         >
-          {attention.value}
+          <CountUp value={attention.value} />
         </span>
       );
     case 'count':
       return (
         <span key={arrivals} aria-hidden className={cn('wb-meta', arrivals > 0 && 'wb-arrive')}>
-          {attention.value}
+          <CountUp value={attention.value} />
         </span>
       );
     case 'running':
@@ -66,8 +67,10 @@ function Meta({ attention, known }: { attention: Attention | undefined; known: b
 
 export interface WorkbenchNavProps {
   groups: readonly NavGroup[];
-  /** Null signed out: only the public areas link, the rest are plain items that open sign-in. */
+  /** The context's org; none in the chooser or signed out (areas then open the context-free path). */
   orgId: string | null;
+  /** Signed out: only the public areas link; the rest are plain items (design §6). */
+  signedOut: boolean;
   current: WbTool | null;
   attention: AttentionMap;
   /** The summary has answered once: a later rise is an arrival. */
@@ -80,6 +83,7 @@ export interface WorkbenchNavProps {
 export function WorkbenchNav({
   groups,
   orgId,
+  signedOut,
   current,
   attention,
   known,
@@ -120,7 +124,13 @@ export function WorkbenchNav({
               LINK,
               active ? 'text-fg-strong' : 'text-fg hover:bg-state-hover-tint hover:text-fg-strong',
             );
-            // Signed out, the public areas open and the rest show the one sign-in state.
+            // Signed out, only the public areas are links; a deep link to the rest shows the one sign-in state.
+            if (signedOut && !PUBLIC_AREAS.has(tool))
+              return (
+                <span key={tool} data-plain className={cn(LINK, 'text-fg-muted')}>
+                  {body}
+                </span>
+              );
             const to = orgId ? wbPath(orgId, tool) : contextFreePath(tool);
             return (
               <Link

@@ -220,4 +220,23 @@ describe('OperationTray', () => {
       expect(await screen.findByRole('dialog', { name: 'Create sandbox' })).toBeInTheDocument();
     });
   });
+
+  it('lists only what its host includes', async () => {
+    const mine = {
+      ...fixtureOperation(SANDBOX_CREATE, { status: 'running', id: 'op_in' }),
+      text: 'In scope',
+      orgId: 'a',
+    };
+    const other = {
+      ...fixtureOperation(SANDBOX_CREATE, { status: 'running', id: 'op_out' }),
+      text: 'Out of scope',
+      orgId: 'b',
+    };
+    trackOperation(mine);
+    trackOperation(other);
+    const { container } = mount(client(), <OperationTray include={(op) => op.orgId === 'a'} />);
+    await settle();
+    expect(screen.getByLabelText('Activity, 1 running')).toBeInTheDocument();
+    expect(container.textContent).not.toContain('Out of scope');
+  });
 });

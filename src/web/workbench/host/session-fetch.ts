@@ -16,6 +16,8 @@ export async function sessionJson<S extends z.ZodType>(
     body?: unknown;
     csrf?: string;
     signal?: AbortSignal;
+    /** Sees the response before its body is read (the mint reads the server's `Date`). */
+    onResponse?: (res: Response) => void;
   } = {},
 ): Promise<z.infer<S>> {
   const headers: Record<string, string> = { accept: 'application/json' };
@@ -34,6 +36,7 @@ export async function sessionJson<S extends z.ZodType>(
     if (init.signal?.aborted) throw cause;
     throw new ApiError({ status: 0, code: 'network', detail: STATE_COPY.network });
   }
+  init.onResponse?.(res);
   return readJson(res, schema, path);
 }
 

@@ -2,10 +2,13 @@ import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'r
 import { PATHS } from '@/shared/developers.ts';
 import { useSession } from '../../lib/session.ts';
 import { ToolScopeProvider } from '../../lib/tool-api.tsx';
-import { createToolApi, type WorkbenchApi } from './api.ts';
+import type { OperationsClient } from '../../ui/operation/client.ts';
+import { createToolApi, type ToolApiDeps, type WorkbenchApi } from './api.ts';
 import type { WbContext } from './contexts.ts';
+import { createTestOperationsClient } from './operations.ts';
+import { refusingApi } from './refusing.ts';
 import { markSessionGone } from './session-gone.ts';
-import { dropToken, dueIn, workbenchToken } from './token.ts';
+import { dropToken, dueIn, onTokenMinted, workbenchToken } from './token.ts';
 
 /**
  * What every Workbench tool builds on (design §1.8): the context it runs in, the token client
@@ -17,6 +20,8 @@ export interface ToolHost {
   context: WbContext;
   mode: 'test';
   api: WorkbenchApi;
+  /** The activity tray's client: the same token. */
+  operations: OperationsClient;
   links: { admin: string; docs: string };
 }
 
@@ -26,10 +31,13 @@ const HostContext = createContext<ToolHost | null>(null);
 export const adminLink = (orgId: string): string =>
   `/admin/o/${encodeURIComponent(orgId)}?mode=test`;
 
-/** Keeps the org's token fresh while the tab is visible: due at 12 minutes, renewed then. */
-function useRenewal(orgId: string, csrf: string | undefined) {
+/**
+ * Keeps the org's token fresh while the tab is visible: the server's lifetime, 12 minutes in. It
+ * plans again after every mint, whoever made it, and when the tab becomes visible.
+ */
+function useRenewal(orgId: string | undefined, csrf: string | undefined) {
   useEffect(() => {
-    if (!csrf) return;
+    if (!orgId || !csrf) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const plan = () => {
       clearTimeout(timer);
@@ -37,45 +45,55 @@ function useRenewal(orgId: string, csrf: string | undefined) {
       if (wait === null || document.visibilityState !== 'visible') return;
       timer = setTimeout(() => {
         if (document.visibilityState === 'visible')
-          void workbenchToken(orgId, csrf).then(plan, () => undefined);
+          void workbenchToken(orgId, csrf, true).catch(() => undefined);
       }, wait);
     };
     plan();
+    const off = onTokenMinted(plan);
     document.addEventListener('visibilitychange', plan);
     return () => {
       clearTimeout(timer);
+      off();
       document.removeEventListener('visibilitychange', plan);
     };
   }, [orgId, csrf]);
 }
 
+/**
+ * Pins the one tool scope for every Workbench page (design §1.8, H2). With a context: its token
+ * client and Test. Without one (the chooser, signed out): a client that refuses every call, still
+ * Test, so a tool there can never reach the session client. The shell stays mounted as the context
+ * changes: the provider never changes the tree's shape.
+ */
 export function ToolHostProvider({
   context,
   children,
 }: {
-  context: WbContext;
+  context: WbContext | null;
   children: ReactNode;
 }) {
   const csrf = useSession().authed?.csrfToken;
-  const { orgId } = context;
-  const value = useMemo<ToolHost>(
-    () => ({
+  const orgId = context?.orgId;
+  const value = useMemo<ToolHost | null>(() => {
+    if (!context) return null;
+    const deps: ToolApiDeps = {
+      orgId: context.orgId,
+      token: () => workbenchToken(context.orgId, csrf ?? ''),
+      drop: (used) => dropToken(context.orgId, used),
+      onSessionGone: markSessionGone,
+    };
+    return {
       context,
       mode: 'test',
-      api: createToolApi({
-        orgId,
-        token: () => workbenchToken(orgId, csrf ?? ''),
-        drop: () => dropToken(orgId),
-        onSessionGone: markSessionGone,
-      }),
-      links: { admin: adminLink(orgId), docs: PATHS.home },
-    }),
-    [context, orgId, csrf],
-  );
+      api: createToolApi(deps),
+      operations: createTestOperationsClient(deps),
+      links: { admin: adminLink(context.orgId), docs: PATHS.home },
+    };
+  }, [context, csrf]);
   useRenewal(orgId, csrf);
   return (
     <HostContext.Provider value={value}>
-      <ToolScopeProvider api={value.api} mode="test" orgId={orgId}>
+      <ToolScopeProvider api={value?.api ?? refusingApi} mode="test" orgId={orgId}>
         {children}
       </ToolScopeProvider>
     </HostContext.Provider>

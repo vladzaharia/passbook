@@ -104,7 +104,11 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
   `CommandPalette`. Its own parts: the mark (the buddy's face and "Workbench"), the context
   switcher, the grouped nav with attention meta, the area button below 1024, tool heads with
   glyph tiles (`ToolPage`) and one announcement queue. An org's Test tones the bar as admin's
-  Test does; a sandbox keeps the plain bar.
+  Test does; a sandbox keeps the plain bar. The shell never remounts when the context changes.
+  Its tray is `ActivityTray` given the token's operations client and a filter to the context's
+  Test operations (none without a context); `ToolHostProvider` always pins a tool scope, a
+  refusing client where there is no context. Signed out there is one Sign in (the sidebar card
+  or the stage state), never one in the bar too.
 - The account menu (`ui/layout/account-menu.tsx`): name and email; the spaces the session can use,
   current one checked (My passes, Account, Admin, Workbench, Developers); a space's own items
   (the Workbench's Keyboard shortcuts); Theme; Sign out. Signed out: Sign

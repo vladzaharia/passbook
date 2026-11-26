@@ -100,6 +100,16 @@ export function pickContext(list: readonly WbContext[], remembered?: string): Wb
   );
 }
 
+/** Where a context-free path to `tool` lands: the sandbox for its own areas (Quickstart, Sandbox), else `pickContext`. */
+export function entryTarget(
+  list: readonly WbContext[],
+  tool: WbTool,
+  remembered?: string,
+): WbContext | null {
+  const sandbox = list.find((c) => c.kind === 'sandbox');
+  return SANDBOX_ONLY.has(tool) && sandbox ? sandbox : pickContext(list, remembered);
+}
+
 /** Switching keeps the area when the new context has it, else Home (design §2.1). */
 export function keepTool(target: WbContext, tool: WbTool): WbTool {
   return target.tools.includes(tool) ? tool : 'home';

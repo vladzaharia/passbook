@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowUpRight, BookOpen, Keyboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { nowIn, WB_AREA, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
+import { WB_AREA, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
 import { PATHS } from '@/shared/developers.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import {
@@ -13,7 +13,6 @@ import {
 import type { WbContext } from '../host/contexts.ts';
 import { keepTool } from '../host/contexts.ts';
 import { adminLink } from '../host/tool-host.tsx';
-import { useAnnounce } from './announcer.tsx';
 import { GO_CHORD } from './keys.ts';
 import { AREA_ICON } from './nav-model.ts';
 import { useWbShell } from './shell-context.ts';
@@ -40,7 +39,6 @@ export function WorkbenchPalette({
   singleKeys: boolean;
 }) {
   const navigate = useNavigate();
-  const announce = useAnnounce();
   const { context, contexts, tool, openShortcuts } = useWbShell();
   const [query, setQuery] = useState('');
 
@@ -68,7 +66,6 @@ export function WorkbenchPalette({
     : [];
   const switchTo = (target: WbContext) => () => {
     void navigate({ to: wbPath(target.orgId, keepTool(target, tool ?? 'home')) });
-    announce(nowIn(target.name));
   };
   const others: CommandItem[] = contexts
     .filter((c) => c.orgId !== context?.orgId)

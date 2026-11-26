@@ -9,13 +9,13 @@ import {
   initialAssets,
   islandAssets,
   MARKETING_FORBIDDEN,
-  markedAssets,
   PLAYGROUND_BUDGET_BYTES,
   SCAN_BUDGET_BYTES,
   SCAN_FORBIDDEN,
   WB_SHELL_BUDGET_BYTES,
   WB_SHELL_MARKER,
 } from './check-bundle.ts';
+import { markedAssets } from './lib/marked-assets.ts';
 
 const html = `<script type="module" crossorigin src="/assets/index.js"></script>
 <link rel="modulepreload" crossorigin href="/assets/ui.js">

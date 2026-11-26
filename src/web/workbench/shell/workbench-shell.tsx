@@ -5,11 +5,13 @@ import {
   type MouseEvent,
   type ReactNode,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
-import { WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
+import { nowIn, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
 import { PATHS } from '@/shared/developers.ts';
 import { WB_HOME, WB_TOOLS, type WbTool, wbPath } from '@/shared/workbench.ts';
 import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
@@ -21,7 +23,7 @@ import { AppShell, type AppShellProps } from '../../ui/layout/app-shell.tsx';
 import { MenubarSearch, shortcutHint } from '../../ui/layout/menubar.tsx';
 import { UserMenu } from '../../ui/layout/user-menu.tsx';
 import { useMineOperations } from '../../ui/operation/store.ts';
-import { isTerminal } from '../../ui/operation/types.ts';
+import { isTerminal, type Operation } from '../../ui/operation/types.ts';
 import type { WbContext } from '../host/contexts.ts';
 import { useSessionGone } from '../host/session-gone.ts';
 import { useWorkbenchSummary } from '../host/summary.ts';
@@ -53,7 +55,9 @@ export interface WorkbenchShellProps {
   /** The context the path names, when it is one of them. */
   context: WbContext | null;
   tool: WbTool | null;
-  /** Signed out: where Sign in returns. */
+  /** Signed out: only Design and Quickstart link, and the bar offers no second Sign in. */
+  signedOut: boolean;
+  /** Signed out on a public area: where the sidebar's Sign in returns. */
   signedOutNext: string | null;
   children: ReactNode;
 }
@@ -74,7 +78,14 @@ function RouteArrivals() {
  * from 1024, the sheet below), Menubar, UserMenu, OperationTray (ActivityTray) and CommandPalette.
  * An org's Test tones the bar as admin's Test does; a sandbox keeps the plain bar.
  */
-function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchShellProps) {
+function Shell({
+  contexts,
+  context,
+  tool,
+  signedOut,
+  signedOutNext,
+  children,
+}: WorkbenchShellProps) {
   const navigate = useNavigate();
   const host = useOptionalToolHost();
   const singleKeys = useSingleKeys();
@@ -84,13 +95,29 @@ function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchSh
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const marks = useSeenMarks(context?.orgId);
   const summary = useWorkbenchSummary(host?.api ?? null, marks);
+  // The tray and the Activity count read one scope: this context's Test operations, never Live ones
+  // the same browser started in admin.
+  const orgId = context?.orgId;
+  const inContext = useCallback(
+    (op: Operation) => op.mode === 'test' && op.orgId === orgId,
+    [orgId],
+  );
   const mine = useMineOperations();
-  const running = mine.filter((op) => op.orgId === context?.orgId && !isTerminal(op.status)).length;
+  const running = mine.filter((op) => inContext(op) && !isTerminal(op.status)).length;
   const attention = useMemo(
     () => (context ? navAttention(summary.data, running) : {}),
     [context, summary.data, running],
   );
   const done = quickstartDone(summary.data);
+  const announce = useAnnounce();
+  const lastContext = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    // A context change says so, in the one queue; the first resolved view and a signed-out one do not.
+    if (contexts.length === 0) return;
+    const before = lastContext.current;
+    lastContext.current = orgId ?? null;
+    if (before !== undefined && orgId && before !== orgId && context) announce(nowIn(context.name));
+  }, [orgId, context, contexts.length, announce]);
   const tools = context?.tools ?? WB_TOOLS;
   const origin = useOrigin();
   const sessionGone = useSessionGone();
@@ -119,7 +146,7 @@ function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchSh
       contexts,
       tool,
       attention,
-      seenAt: () => summary.data?.now ?? Date.now(),
+      seenAt: summary.data?.now,
       openShortcuts: () => setShortcutsOpen(true),
       openPalette: () => setPaletteOpen(true),
     }),
@@ -133,6 +160,7 @@ function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchSh
   const nav = {
     groups: navGroups(tools, done),
     orgId: context?.orgId ?? null,
+    signedOut,
     current: tool,
     attention,
     known: summary.isSuccess,
@@ -173,16 +201,17 @@ function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchSh
       <>
         <a
           href={PATHS.home}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-fg-muted wl-colors hover:bg-state-hover-tint hover:text-fg-strong max-lg:hidden"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-fg-muted wl-colors hover:bg-state-hover-tint hover:text-fg-strong max-sm:hidden"
         >
           <BookOpen aria-hidden className="size-4" />
           {WB_SHELL_COPY.docs}
         </a>
-        <ActivityTray />
+        {host ? <ActivityTray client={host.operations} include={inContext} /> : null}
       </>
     ),
     tone,
-    account: (
+    // Signed out, the one Sign in is the sidebar card or the stage state, never a second in the bar.
+    account: signedOut ? null : (
       <UserMenu
         extra={
           <Suspense fallback={null}>

@@ -78,7 +78,7 @@ export function NavColumn({
           </Link>
         ) : null}
         {inSheet ? (
-          <a href={PATHS.home} className={FOOT_LINK}>
+          <a href={PATHS.home} className={cn(FOOT_LINK, 'sm:hidden')}>
             <BookOpen aria-hidden className="size-4" />
             {WB_SHELL_COPY.docs}
           </a>

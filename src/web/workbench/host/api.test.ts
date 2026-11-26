@@ -1,8 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { ApiError } from '../../lib/errors.ts';
-import { createToolApi } from './api.ts';
-import { dropToken, forgetTokens, RENEW_MS, renewAt, TOKEN_PATH, workbenchToken } from './token.ts';
+import { createBearerFetch, createToolApi } from './api.ts';
+import {
+  dropToken,
+  dueIn,
+  forgetTokens,
+  onTokenMinted,
+  RENEW_MS,
+  renewAt,
+  serverTtl,
+  TOKEN_PATH,
+  workbenchToken,
+} from './token.ts';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -13,7 +23,7 @@ afterEach(() => {
 });
 
 describe('the Workbench client (L13)', () => {
-  it('sends a bearer, omits credentials and never a mode header', async () => {
+  it('sends a bearer, binds the cookie and never sends a mode header', async () => {
     const fetch = vi.fn(async () => json({ ok: true }));
     const api = createToolApi({
       orgId: 'org_1',
@@ -32,7 +42,7 @@ describe('the Workbench client (L13)', () => {
     );
     const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/api/v1/passes?dryRun=true');
-    expect(init.credentials).toBe('omit');
+    expect(init.credentials).toBe('same-origin');
     const headers = init.headers as Record<string, string>;
     expect(headers.authorization).toBe('Bearer pbtry_abc');
     expect(headers['idempotency-key']).toBe('k1');
@@ -108,8 +118,10 @@ describe('the Workbench token', () => {
     dropToken('org_1');
     await workbenchToken('org_1', 'csrf-1');
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(renewAt(now, now + 15 * 60_000)).toBe(now + RENEW_MS);
-    expect(renewAt(now, now + 5 * 60_000)).toBe(now + 2 * 60_000);
+    expect(renewAt(now, 15 * 60_000)).toBe(now + RENEW_MS);
+    expect(renewAt(now, 5 * 60_000)).toBe(now + 2 * 60_000);
+    // Never sooner than a minute, whatever the server says.
+    expect(renewAt(now, 2 * 60_000)).toBe(now + 60_000);
   });
 
   it('never uses a token minted for another org or not in Test', async () => {
@@ -127,5 +139,141 @@ describe('the Workbench token', () => {
       ),
     );
     await expect(workbenchToken('org_1', 'c')).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
+let minted = 0;
+const mintResponse = (orgId: string, serverNow: number, ttl = 15 * 60_000) =>
+  new Response(
+    JSON.stringify({
+      token: `pbtry_${orgId}_${minted++}`,
+      orgId,
+      mode: 'test',
+      expiresAt: serverNow + ttl,
+      subject: 'member',
+    }),
+    {
+      status: 200,
+      headers: { 'content-type': 'application/json', date: new Date(serverNow).toUTCString() },
+    },
+  );
+
+describe('renewal on the server clock (R4 M3)', () => {
+  it('counts the lifetime from the server Date, so a fast or slow device clock changes nothing', async () => {
+    vi.useFakeTimers();
+    try {
+      const server = Date.UTC(2026, 10, 26, 12, 0, 0);
+      for (const offset of [20 * 60_000, -20 * 60_000]) {
+        forgetTokens();
+        vi.setSystemTime(server + offset);
+        const fetch = vi.fn(async () => mintResponse('org_1', server));
+        vi.stubGlobal('fetch', fetch);
+        await workbenchToken('org_1', 'c');
+        await workbenchToken('org_1', 'c');
+        await workbenchToken('org_1', 'c');
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(dueIn('org_1')).toBe(RENEW_MS);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('reads the lifetime from Date and expiresAt, and assumes 15 minutes without a Date', () => {
+    const server = Date.UTC(2026, 10, 26, 12, 0, 0);
+    expect(serverTtl(server + 5 * 60_000, new Date(server).toUTCString())).toBe(5 * 60_000);
+    expect(serverTtl(server, null)).toBe(15 * 60_000);
+  });
+
+  it('tells subscribers after every mint, so the renewal timer plans again', async () => {
+    const server = Date.now();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => mintResponse('org_1', server)),
+    );
+    const seen = vi.fn();
+    const off = onTokenMinted(seen);
+    await workbenchToken('org_1', 'c');
+    expect(seen).toHaveBeenCalledTimes(1);
+    await workbenchToken('org_1', 'c', true);
+    expect(seen).toHaveBeenCalledTimes(2);
+    off();
+  });
+
+  it('L3: a late 401 for the old token leaves the new one held', async () => {
+    const server = Date.now();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => mintResponse('org_1', server)),
+    );
+    const first = await workbenchToken('org_1', 'c');
+    const second = await workbenchToken('org_1', 'c', true);
+    dropToken('org_1', first);
+    expect(dueIn('org_1')).not.toBeNull();
+    dropToken('org_1', second);
+    expect(dueIn('org_1')).toBeNull();
+  });
+
+  it('L4: a mint that was in flight when the person changed never lands', async () => {
+    let release: (res: Response) => void = () => undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>((resolve) => (release = resolve))),
+    );
+    const pending = workbenchToken('org_1', 'c');
+    forgetTokens();
+    release(mintResponse('org_1', Date.now()));
+    await expect(pending).rejects.toThrow(/superseded/);
+    expect(dueIn('org_1')).toBeNull();
+  });
+});
+
+describe('the token never gives way to the cookie (R1 M1, L14)', () => {
+  it('sends the bound cookie with the bearer, strips every case of the mode header, sets authorization last', async () => {
+    const fetch = vi.fn(async () => json({ ok: true }));
+    const call = createBearerFetch({
+      orgId: 'org_1',
+      token: async () => 'pbtry_good',
+      drop: () => undefined,
+      fetch,
+    });
+    await call('/api/v1/passes', {
+      headers: { 'x-passbook-MODE': 'live', Authorization: 'Bearer pbk_attacker' },
+    });
+    const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.credentials).toBe('same-origin');
+    const headers = init.headers as Record<string, string>;
+    expect(headers.authorization).toBe('Bearer pbtry_good');
+    expect(Object.keys(headers).filter((h) => /mode/i.test(h))).toEqual([]);
+  });
+
+  it('a token that cannot be minted sends no request at all, not a cookie-only one', async () => {
+    const fetch = vi.fn();
+    const call = createBearerFetch({
+      orgId: 'org_1',
+      token: async () => {
+        throw new ApiError({ status: 401, code: 'unauthenticated' });
+      },
+      drop: () => undefined,
+      fetch,
+    });
+    await expect(call('/api/v1/passes')).rejects.toBeInstanceOf(ApiError);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('after a 401 and a failed re-mint, still no cookie-only request', async () => {
+    let n = 0;
+    const fetch = vi.fn(async () => json({}, 401));
+    const call = createBearerFetch({
+      orgId: 'org_1',
+      token: async () => {
+        if (n++ > 0) throw new ApiError({ status: 401, code: 'unauthenticated' });
+        return 't1';
+      },
+      drop: () => undefined,
+      fetch,
+    });
+    await expect(call('/api/v1/passes')).rejects.toBeInstanceOf(ApiError);
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

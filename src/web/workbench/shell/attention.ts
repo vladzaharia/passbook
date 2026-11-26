@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ATTENTION_LABEL } from '@/shared/copy/workbench-shell.ts';
 import { WB_TOOLS, type WbTool } from '@/shared/workbench.ts';
 import type { SeenArea, WbSummary } from '../host/summary.ts';
+import { personKey } from './person.ts';
 
 /**
  * The nav shows attention, never totals (design §1.6). Each item's meta, what it reads as in its
@@ -56,7 +57,7 @@ export const quickstartDone = (summary: WbSummary | undefined): boolean =>
 
 // Seen marks: per org and area, the newest counted row's time this person has seen. They ride as
 // `since[area]` on the summary. Navigation alone never sets one, and a failed load never does.
-const seenKey = (orgId: string) => `wb-seen:${orgId}`;
+const seenKey = (orgId: string) => `${personKey('wb-seen')}:${orgId}`;
 const subs = new Set<() => void>();
 const snapshots = new Map<
   string,
@@ -70,7 +71,7 @@ function read(orgId: string): Partial<Record<SeenArea, number>> {
   } catch {
     raw = null;
   }
-  const cached = snapshots.get(orgId);
+  const cached = snapshots.get(seenKey(orgId));
   if (cached && cached.raw === raw) return cached.value;
   let value: Partial<Record<SeenArea, number>> = {};
   try {
@@ -79,7 +80,7 @@ function read(orgId: string): Partial<Record<SeenArea, number>> {
     // A mangled mark counts everything again: never fewer than there are.
     value = {};
   }
-  snapshots.set(orgId, { raw, value });
+  snapshots.set(seenKey(orgId), { raw, value });
   return value;
 }
 

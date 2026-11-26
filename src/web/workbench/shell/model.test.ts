@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { WB_TOOLS } from '@/shared/workbench.ts';
 import {
   ContextsSchema,
+  entryTarget,
   keepTool,
   nearestTool,
   pickContext,
@@ -53,6 +54,16 @@ describe('contexts', () => {
     expect(keepTool(sbx, 'sandbox')).toBe('sandbox');
     expect(nearestTool('inbox', nw.tools)).toBe('events');
     expect(nearestTool('design', ['home'])).toBe('home');
+  });
+
+  it("L8: the sandbox's own areas enter the sandbox even when an org is remembered", () => {
+    expect(entryTarget(contexts, 'sandbox', 'ac')?.orgId).toBe('sbx');
+    expect(entryTarget(contexts, 'quickstart', 'nw')?.orgId).toBe('sbx');
+    expect(entryTarget(contexts, 'logs', 'nw')?.orgId).toBe('nw');
+    // No sandbox: the remembered org, then the chooser.
+    const orgs = contexts.filter((c) => c.kind === 'org');
+    expect(entryTarget(orgs, 'sandbox', 'ac')?.orgId).toBe('ac');
+    expect(entryTarget(orgs, 'sandbox', undefined)).toBeNull();
   });
 });
 

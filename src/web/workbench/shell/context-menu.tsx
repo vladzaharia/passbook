@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowUpRight, BookOpen, Check } from 'lucide-react';
-import { nowIn, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
+import { WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
 import { PATHS } from '@/shared/developers.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
@@ -15,7 +15,6 @@ import {
 } from '../../ui/dropdown-menu.tsx';
 import { keepTool, type WbContext } from '../host/contexts.ts';
 import { adminLink } from '../host/tool-host.tsx';
-import { useAnnounce } from './announcer.tsx';
 import {
   type ContextSwitcherProps,
   Monogram,
@@ -33,12 +32,10 @@ export function ContextMenu({
   defaultOpen,
 }: ContextSwitcherProps & { defaultOpen: boolean }) {
   const navigate = useNavigate();
-  const announce = useAnnounce();
   const go = (target: WbContext) => {
     onNavigate?.();
     if (target.orgId === context.orgId) return;
     void navigate({ to: wbPath(target.orgId, keepTool(target, tool ?? 'home')) });
-    announce(nowIn(target.name));
   };
   return (
     <DropdownMenu modal={false} defaultOpen={defaultOpen}>

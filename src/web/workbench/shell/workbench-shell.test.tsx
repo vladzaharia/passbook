@@ -1,47 +1,9 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { json, renderApp } from '../../lib/test-utils.tsx';
+import { renderApp } from '../../lib/test-utils.tsx';
 import { forgetTokens } from '../host/token.ts';
 import { setSingleKeys } from './prefs.ts';
-
-const CONTEXTS = {
-  sandbox: { orgId: 'sbx', name: 'dev-4f8c673e' },
-  orgs: [
-    {
-      orgId: 'nw',
-      name: 'Northwind',
-      slug: 'nw',
-      tools: ['design', 'passes', 'console', 'logs', 'events', 'inbox', 'activity', 'keys'],
-    },
-  ],
-};
-
-function handlers(summary: Record<string, unknown> = {}, contexts: unknown = CONTEXTS) {
-  return {
-    '/api/v1/workbench/contexts': () => json(contexts),
-    '/api/v1/workbench/token': (_url: URL, init?: RequestInit) => {
-      const { orgId } = JSON.parse(String(init?.body)) as { orgId: string };
-      return json({
-        token: `pbtry_${orgId}`,
-        orgId,
-        mode: 'test',
-        expiresAt: Date.now() + 900_000,
-        subject: 'member',
-      });
-    },
-    '/api/v1/workbench/summary': () =>
-      json({
-        quickstart: null,
-        errors: 0,
-        failedDeliveries: 0,
-        listening: false,
-        inboxNew: 0,
-        keysExpiring: 0,
-        ...summary,
-      }),
-    '/api/v1/operations': () => json({ items: [] }),
-  };
-}
+import { handlers } from './test-fixtures.ts';
 
 afterEach(() => {
   forgetTokens();
@@ -108,7 +70,7 @@ describe('WorkbenchShell', () => {
     expect(within(nav()).getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
 
-  it('L13: tenant calls carry the bearer, omit the cookie and send no mode', async () => {
+  it('L13: tenant calls carry the bearer, the bound cookie and no mode', async () => {
     const { fetchMock } = await renderApp('/workbench/o/nw', {
       session: 'developer',
       handlers: handlers(),
@@ -120,7 +82,7 @@ describe('WorkbenchShell', () => {
     );
     const call = fetchMock.mock.calls.find(([u]) => String(u).includes('/workbench/summary'));
     const init = call?.[1] as RequestInit;
-    expect(init.credentials).toBe('omit');
+    expect(init.credentials).toBe('same-origin');
     expect((init.headers as Record<string, string>).authorization).toBe('Bearer pbtry_nw');
     expect(Object.keys(init.headers as object).some((h) => /mode/i.test(h))).toBe(false);
   });
