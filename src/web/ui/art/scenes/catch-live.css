@@ -1,0 +1,80 @@
+/* catch-live (the test delivery arrived): catch.css's envelope, squash and joy eyes at 1.6 s, then
+   the pass peeks up and a check pops. Once; both hold, and a still buddy draws them. */
+[data-scene="catch-live"] [data-env] {
+  transform-box: view-box;
+  transform-origin: 48px 31px;
+}
+[data-scene="catch-live"] [data-check] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-scene="catch-live"] [data-check] circle {
+  fill: var(--art-a);
+  stroke: none;
+}
+[data-scene="catch-live"] [data-part="c2"] {
+  translate: 0 -6px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene="catch-live"]:not([data-run]) [data-check] {
+    opacity: 0;
+  }
+  [data-scene="catch-live"]:not([data-run]) [data-part="c2"] {
+    translate: 0 0;
+  }
+  [data-scene="catch-live"][data-run]
+    .wl-art
+    :is([data-env], [data-body], [data-fan], [data-look], [data-part="joy"]) {
+    animation: var(--wl-s-cl) 1.6s ease-out;
+  }
+  [data-scene="catch-live"][data-run] .wl-art [data-env] {
+    --wl-s-cl: wl-s-catch-env;
+  }
+  [data-scene="catch-live"][data-run] .wl-art [data-body] {
+    --wl-s-cl: wl-s-catch-body;
+  }
+  [data-scene="catch-live"][data-run] .wl-art [data-fan] {
+    --wl-s-cl: wl-s-catch-jolt;
+  }
+  [data-scene="catch-live"][data-run] .wl-art [data-look] {
+    --wl-s-cl: wl-s-catch-look;
+  }
+  [data-scene="catch-live"][data-run] .wl-art [data-part="joy"] {
+    --wl-s-cl: wl-s-catch-joy;
+  }
+  [data-scene="catch-live"][data-run] .wl-art [data-part="c2"] {
+    animation: wl-s-proof-peek 1.6s ease-out;
+  }
+  [data-scene="catch-live"][data-run] .wl-art [data-check] {
+    animation: wl-s-proof-pop 1.6s ease-out backwards;
+  }
+}
+@keyframes wl-s-proof-peek {
+  0%,
+  30% {
+    translate: 0 0;
+  }
+  44% {
+    translate: 0 -9px;
+  }
+  54%,
+  100% {
+    translate: 0 -6px;
+  }
+}
+@keyframes wl-s-proof-pop {
+  0%,
+  46% {
+    scale: 0;
+    opacity: 0;
+  }
+  60% {
+    scale: 1.3;
+    opacity: 1;
+  }
+  72%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+}
