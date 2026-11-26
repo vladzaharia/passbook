@@ -22,7 +22,7 @@ export const PASS_FIX_COPY = {
     names: {
       BRAND_LOGO: 'Logo',
       BRAND_ICON: 'Icon',
-      BRAND_COLORS: 'Colours',
+      BRAND_COLORS: 'Colors',
       BRAND_CONTRAST: 'Contrast',
       ACCENT_CONTRAST: 'Accent',
       SUPPORT_MISSING: 'Support',

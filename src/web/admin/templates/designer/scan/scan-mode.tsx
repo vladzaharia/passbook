@@ -130,6 +130,7 @@ export function ScanMode({
         templateId={templateId}
         orgId={orgId ?? undefined}
         readOnly={readOnly}
+        previewOnPhone={false}
         structure={
           <ScanOutline
             doc={doc}

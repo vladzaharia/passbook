@@ -195,6 +195,7 @@ function Loaded({
             {canBrand ? (
               <SwitchRow
                 label="Use for all passes"
+                help="Also sets this logo and colour as your pass brand."
                 checked={brandAll}
                 onCheckedChange={setForAll}
               />
@@ -202,7 +203,7 @@ function Loaded({
             <div className="flex justify-end gap-2 border-t border-border pt-4">
               {phone ? null : (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => {
                     const next = name.trim();
                     if (!next) return setError('Enter a name.');

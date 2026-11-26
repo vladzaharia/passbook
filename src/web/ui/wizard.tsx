@@ -90,7 +90,7 @@ export function WizardBar({
       data-static=""
       className="wl-bar fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface-overlay pb-[env(safe-area-inset-bottom)] shadow-elevation-3 lg:left-60"
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-safe py-3 sm:[--wl-gutter:1.5rem]">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-safe py-3 max-sm:flex-wrap sm:[--wl-gutter:1.5rem]">
         <WizardButtons
           keepCancel
           first={!onBack}
@@ -198,7 +198,10 @@ export function Wizard({
       }
     : undefined;
   return (
-    <div data-staged={staged || undefined} className="wl-wizard flex min-w-0 flex-col gap-6 pb-24">
+    <div
+      data-staged={staged || undefined}
+      className="wl-wizard flex min-w-0 flex-col gap-6 pb-24 max-sm:pb-40"
+    >
       <div className="@container">
         <div className="flex flex-col gap-5 @[43.5rem]:flex-row @[43.5rem]:gap-8">
           <div className="@[43.5rem]:sticky @[43.5rem]:top-[calc(4.5rem+env(safe-area-inset-top))] @[43.5rem]:self-start">

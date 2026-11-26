@@ -16,16 +16,16 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-accent text-accent-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-accent),var(--wl-hover-mix)_12%)] hover:not-disabled:not-aria-disabled:shadow-[var(--wl-glow-accent)] focus-visible:shadow-[var(--wl-glow-accent)] disabled:not-aria-busy:bg-state-hover-tint disabled:not-aria-busy:text-fg-muted disabled:not-aria-busy:shadow-none aria-disabled:not-aria-busy:bg-state-hover-tint aria-disabled:not-aria-busy:text-fg-muted aria-disabled:not-aria-busy:shadow-none',
+          'bg-accent text-accent-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-accent),var(--wl-hover-mix)_12%)] hover:not-disabled:not-aria-disabled:shadow-[var(--wl-glow-accent)] focus-visible:shadow-[var(--wl-glow-accent)] disabled:not-aria-busy:bg-state-hover-tint disabled:not-aria-busy:text-fg disabled:not-aria-busy:shadow-none aria-disabled:not-aria-busy:bg-state-hover-tint aria-disabled:not-aria-busy:text-fg aria-disabled:not-aria-busy:shadow-none',
         secondary:
-          'bg-state-hover-tint text-fg-strong hover:not-disabled:not-aria-disabled:bg-surface-sunken disabled:not-aria-busy:opacity-50 aria-disabled:not-aria-busy:opacity-50',
+          'bg-state-hover-tint text-fg-strong hover:not-disabled:not-aria-disabled:bg-surface-sunken disabled:not-aria-busy:opacity-65 aria-disabled:not-aria-busy:opacity-65',
         outline:
-          'border border-border-strong bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-state-hover-tint hover:not-disabled:not-aria-disabled:text-fg-strong disabled:not-aria-busy:opacity-50 aria-disabled:not-aria-busy:opacity-50',
+          'border border-border-strong bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-state-hover-tint hover:not-disabled:not-aria-disabled:text-fg-strong disabled:not-aria-busy:opacity-65 aria-disabled:not-aria-busy:opacity-65',
         ghost:
-          'bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-state-hover-tint hover:not-disabled:not-aria-disabled:text-fg-strong disabled:not-aria-busy:opacity-50 aria-disabled:not-aria-busy:opacity-50',
+          'bg-transparent text-fg hover:not-disabled:not-aria-disabled:bg-state-hover-tint hover:not-disabled:not-aria-disabled:text-fg-strong disabled:not-aria-busy:opacity-65 aria-disabled:not-aria-busy:opacity-65',
         danger:
-          'bg-danger text-danger-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-danger),var(--wl-hover-mix)_12%)] disabled:not-aria-busy:bg-state-hover-tint disabled:not-aria-busy:text-fg-muted disabled:not-aria-busy:shadow-none aria-disabled:not-aria-busy:bg-state-hover-tint aria-disabled:not-aria-busy:text-fg-muted aria-disabled:not-aria-busy:shadow-none',
-        link: 'min-h-6 min-w-0 px-0 text-accent-fg underline-offset-4 hover:underline disabled:not-aria-busy:opacity-50 aria-disabled:not-aria-busy:opacity-50',
+          'bg-danger text-danger-on shadow-elevation-1 hover:not-disabled:not-aria-disabled:bg-[color-mix(in_oklab,var(--pk-danger),var(--wl-hover-mix)_12%)] disabled:not-aria-busy:bg-state-hover-tint disabled:not-aria-busy:text-fg disabled:not-aria-busy:shadow-none aria-disabled:not-aria-busy:bg-state-hover-tint aria-disabled:not-aria-busy:text-fg aria-disabled:not-aria-busy:shadow-none',
+        link: 'min-h-6 min-w-0 px-0 text-accent-fg underline-offset-4 hover:underline disabled:not-aria-busy:opacity-65 aria-disabled:not-aria-busy:opacity-65',
       },
       // Text is 14 px at every size; on touch every size is 44 tall (ui-consistency.md).
       size: {

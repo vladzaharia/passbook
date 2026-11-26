@@ -37,10 +37,10 @@ export function whereText(row: Source): string {
   return row.scannerId || row.actor.type === 'scanner' ? 'Scanner' : 'Admin scan';
 }
 
-/** Never claims nobody signed in unless the row says a scanner took it with no staff on it. */
+/** A dash when no staff member is on the row: a column of "Not signed in" is noise. */
 export function whoText(row: Source & Pick<ScanRecordDto, 'staffName' | 'staffId'>): string {
   if (row.actor.type === 'user') return 'Admin';
   if (row.staffName) return row.staffName;
   if (row.staffId) return 'Staff';
-  return row.scannerId ? 'Not signed in' : '—';
+  return '—';
 }

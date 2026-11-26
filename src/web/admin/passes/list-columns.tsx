@@ -95,6 +95,7 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
           to="/admin/passes/$passId"
           params={{ passId: p.id }}
           inactive={p.status === 'voided'}
+          title={nameOf(p)}
         >
           {nameOf(p)}
         </RowLink>

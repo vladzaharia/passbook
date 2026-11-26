@@ -54,7 +54,7 @@ const RULE_LABEL = {
 } as const;
 
 export const ruleLabel = (draft: SessionDraft) =>
-  draft.checkIn.mode ? RULE_LABEL[draft.checkIn.mode] : 'Pass or template rules';
+  draft.checkIn.mode ? RULE_LABEL[draft.checkIn.mode] : 'Pass rules';
 
 export function sessionSummaries(draft: SessionDraft) {
   const zones = draft.zoneIds?.length ?? 0;
