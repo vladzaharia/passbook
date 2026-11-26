@@ -1,11 +1,9 @@
+import { type ReactNode, useMemo } from 'react';
 import { vi } from 'vitest';
-import type {
-  ApiRail,
-  RequestLogDetail,
-  RequestLogEntry,
-} from '../../../shared/contracts/developer.ts';
-import { forgetRail } from '../bench/rail.ts';
+import type { RequestLogDetail, RequestLogEntry } from '../../../shared/contracts/developer.ts';
+import { ToolScopeProvider } from '../../lib/tool-api.tsx';
 import { resetBenchZone } from '../bench/zone.ts';
+import { createToolApi } from '../host/api.ts';
 import { forgetDetails } from './use-detail.ts';
 
 export const json = (body: unknown, status = 200) =>
@@ -44,53 +42,69 @@ export const detail = (n: number, over: Partial<RequestLogDetail> = {}): Request
 });
 
 export const page = (items: unknown[], extra: Record<string, unknown> = {}) =>
-  json({ items, nextCursor: null, capped: null, ...extra });
+  json({ items, nextCursor: null, capped: null, bodiesRecorded: true, ...extra });
 
-export const rail: ApiRail = {
-  mode: 'test',
-  scopes: ['passes:read', 'passes:write'],
-  tier: 'standard',
-  limitPerMinute: 1200,
-  callsLastHour: 3456,
-  series: [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1],
-  key: { id: 'key-12345678-xyz', name: 'Sandbox key', prefix: 'pb_test_ab12' },
-};
+/** The org's Test keys, as `GET /api-keys` lists them. */
+export const keyRows = [
+  {
+    id: 'key-12345678-xyz',
+    name: 'Sandbox key',
+    prefix: 'pb_test_ab12',
+    mode: 'test',
+    revokedAt: null,
+  },
+  { id: 'key-live', name: 'Live key', prefix: 'pb_live_cd34', mode: 'live', revokedAt: null },
+];
 
-/** A fetch that answers by path: the log lists in order, one row by id, the rail, the operation index. */
+/** A fetch that answers by path: the log lists in order, one row by id, the keys, the operation index. */
 export function stubApi(opts: {
   lists: Response[];
   rows?: Record<string, RequestLogDetail>;
   status?: number;
+  keys?: unknown[];
 }) {
   const calls: string[] = [];
+  const auths: (string | null)[] = [];
   const lists = [...opts.lists];
   vi.stubGlobal('reportError', vi.fn());
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo | URL) => {
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       calls.push(url);
-      if (url.includes('/developer/rail')) return json(rail);
+      auths.push(new Headers(init?.headers).get('authorization'));
+      if (url.includes('/api/v1/api-keys')) return json({ items: opts.keys ?? keyRows });
       if (url.includes('/webhook-endpoints?'))
         return json({ items: [{ id: 'ep-1', target: 'capture' }] });
       if (url.includes('/captures?requestId='))
         return json({ items: [{ eventId: 'evt-1', type: 'pass.issued', status: 200 }] });
-      if (url.includes('/developer/session') || url.endsWith('/api/v1/session'))
-        return json({ authenticated: false });
       if (url.includes('logs-ops')) return json({ 'POST /api/v1/passes/{id}': 'passes.update' });
-      const one = /\/developer\/logs\/([^?]+)/.exec(url);
+      const one = /\/request-logs\/([^?]+)/.exec(url);
       if (one) {
         const row = opts.rows?.[decodeURIComponent(one[1] as string)];
         return row ? json(row) : json({ code: 'NOT_FOUND' }, 404);
       }
-      if (url.includes('/developer/logs')) {
-        if (opts.status) return json({}, opts.status);
+      if (url.includes('/api/v1/request-logs')) {
+        if (opts.status) return json({ code: 'BOOM' }, opts.status);
         return (lists.length > 1 ? lists.shift() : lists[0])?.clone() ?? json({}, 500);
       }
       return json({}, 404);
     }),
   );
-  return calls;
+  return Object.assign(calls, { auths });
+}
+
+/** The Workbench's token client, pinned the way the host pins it: every call carries the bearer. */
+export function Scoped({ children }: { children: ReactNode }) {
+  const api = useMemo(
+    () => createToolApi({ orgId: 'nw', token: async () => 'pbtry_nw', drop: () => undefined }),
+    [],
+  );
+  return (
+    <ToolScopeProvider api={api} client="workbench:nw" mode="test" orgId="nw">
+      {children}
+    </ToolScopeProvider>
+  );
 }
 
 /** The page as a visitor in a wide window: the pane is beside the list, and a close is immediate. */
@@ -103,8 +117,7 @@ export function wideWindow() {
 }
 
 export function reset() {
-  forgetRail();
   forgetDetails();
   resetBenchZone();
-  history.replaceState(null, '', '/developers/logs');
+  history.replaceState(null, '', '/workbench/o/nw/logs');
 }
