@@ -106,6 +106,7 @@ export function WizardBody(p: {
           errors={showErrors ? mapped.errors : {}}
           targets={targets}
           sources={sample}
+          dataset={info?.type === 'demo' ? draft.config.dataset : undefined}
         />
       ) : null}
       {step === 3 ? (

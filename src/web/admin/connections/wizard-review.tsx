@@ -20,6 +20,8 @@ import {
   KeyValue,
 } from '../../ui/index.ts';
 import type { SourceField } from '../mapping/mapping.ts';
+import { datasetOfSample } from './demo/datasets.ts';
+import { RecordCard } from './demo/record-card.tsx';
 import { MODE_LABEL } from './labels.ts';
 import { type Lifecycle, scheduled } from './lifecycle-fields.tsx';
 import { recipeLine } from './recipe-copy.ts';
@@ -185,7 +187,14 @@ export function WizardAside({
           </div>
         </div>
       ) : null}
-      {sample.length ? (
+      {connector?.type === 'demo' &&
+      sample.some((f) => f.preview !== undefined) &&
+      datasetOfSample(sample) ? (
+        <RecordCard
+          dataset={datasetOfSample(sample) as NonNullable<ReturnType<typeof datasetOfSample>>}
+          sample={sample.map((f) => ({ pointer: f.pointer, preview: f.preview ?? '' }))}
+        />
+      ) : sample.length ? (
         <div className="flex min-w-0 flex-col gap-3 border-t border-border pt-5">
           <p className="text-xs font-medium text-fg-muted">Sample record</p>
           <KeyValue

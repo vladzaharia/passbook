@@ -25,6 +25,7 @@ export function WizardMapping({
   errors,
   targets,
   sources,
+  dataset,
 }: {
   info: z.infer<typeof ConnectorInfoSchema> | undefined;
   orgId: string | undefined;
@@ -39,6 +40,8 @@ export function WizardMapping({
   errors: Record<string, string>;
   targets: TargetField[];
   sources: readonly SourceField[];
+  /** A demo dataset: templates made from its blueprints come first. */
+  dataset?: unknown;
 }) {
   return (
     <>
@@ -46,6 +49,7 @@ export function WizardMapping({
         orgId={orgId}
         value={life.defaultTemplateId}
         disabled={!templateOrg}
+        dataset={dataset}
         onChange={(defaultTemplateId) => setLife((l) => ({ ...l, defaultTemplateId }))}
       />
       {info && orgId && !info.capabilities.upload ? (
