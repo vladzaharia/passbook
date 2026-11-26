@@ -2637,6 +2637,22 @@
     "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
   },
   {
+    "key": "POST /api/v1/connections/{id}/probe new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdProbe",
+    "op": "POST /api/v1/connections/{id}/probe",
+    "change": "new operation",
+    "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
+  },
+  {
+    "key": "POST /api/v1/connections/probe new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsProbe",
+    "op": "POST /api/v1/connections/probe",
+    "change": "new operation",
+    "note": "Probe an unsaved REST config: one sample page or record, with detected records, ID, pagination and JSONPaths. 10 a minute per caller, 60 an hour per org."
+  },
+  {
     "key": "POST /api/v1/connections/test-config 200.columns: field added",
     "class": "additive",
     "operationId": "connections.postConnectionsTestConfig",

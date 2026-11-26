@@ -180,6 +180,8 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
     changes: { ref: string; record?: UpstreamRecord; deleted?: boolean }[];
     cursor: string;
     hasMore: boolean;
+    /** One line for the run's detail: the listing stopped short of the end and the next run continues. */
+    note?: string;
   }>;
   /** Throws ConnectorError('AUTH') when the signature is invalid. */
   verifyWebhook?(ctx: ConnectorContext<C, S>, req: Request): Promise<WebhookDelivery>;

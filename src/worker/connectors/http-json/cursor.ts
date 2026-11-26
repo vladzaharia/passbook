@@ -25,7 +25,7 @@ export interface CursorState {
   w?: number;
 }
 
-function b64urlEncode(text: string): string {
+export function b64urlEncode(text: string): string {
   const bytes = new TextEncoder().encode(text);
   let binary = '';
   for (let i = 0; i < bytes.length; i += 0x8000) {
@@ -34,7 +34,7 @@ function b64urlEncode(text: string): string {
   return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
 }
 
-function b64urlDecode(text: string): string {
+export function b64urlDecode(text: string): string {
   const std = text.replaceAll('-', '+').replaceAll('_', '/');
   const bytes = Uint8Array.from(atob(std), (c) => c.charCodeAt(0));
   return new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes);
@@ -45,7 +45,7 @@ const num = (v: unknown): number | undefined =>
 const text = (v: unknown): string | undefined =>
   typeof v === 'string' && v.length <= MAX_VALUE_CHARS ? v : undefined;
 
-function pageOf(raw: unknown): PageState | null {
+export function pageOf(raw: unknown): PageState | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
   const o = raw as Record<string, unknown>;
   const page: PageState = {};

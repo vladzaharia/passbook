@@ -114,7 +114,12 @@ const pagination = z.discriminatedUnion('style', [
     sizeParam: paramName.optional(),
     size: z.number().int().min(1).max(1000).optional(),
     totalPagesPointer: pointer.optional(),
-    totalPagesHeader: z.string().refine(isAllowedHeaderName).optional(),
+    // Only its number is ever shown, and a credential-like name is refused.
+    totalPagesHeader: z
+      .string()
+      .refine(isAllowedHeaderName, 'Header not allowed.')
+      .refine((n) => safeName(n) && !/location|www-authenticate/i.test(n), USE_AUTH)
+      .optional(),
   }),
   z.object({
     style: z.literal('offset'),
@@ -141,7 +146,14 @@ const list = z
       'x-placeholder': '/members',
     }),
     query: z
-      .array(z.object({ name: paramName.refine(safeName, USE_AUTH), value: plainSafe }))
+      .array(
+        z.object({
+          name: paramName
+            .refine(safeName, USE_AUTH)
+            .refine((n) => n.toLowerCase() !== '_method', 'Parameter not allowed.'),
+          value: plainSafe,
+        }),
+      )
       .max(10)
       .default([]),
     listing: z.enum(['full', 'feed']).default('full'),

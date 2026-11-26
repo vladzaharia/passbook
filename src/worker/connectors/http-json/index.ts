@@ -8,7 +8,7 @@ import { type Config, config, type Secrets, secrets } from './config.ts';
 import { decodeCursor, encodeCursor } from './cursor.ts';
 import { highest, maxOf, sinceParam } from './incremental.ts';
 import { migrate } from './migrate.ts';
-import { advance, pageUrl } from './pagination.ts';
+import { advance, pageUrl, repeatOf } from './pagination.ts';
 import { exhaustedUntil, holdUntil } from './rate-limit.ts';
 import { assertCredential, authParamOf, endpoint, getJson } from './request.ts';
 
@@ -17,14 +17,8 @@ const MAX_WEBHOOK_REFS = 100;
 const MAX_PAGE_RECORDS = 1000;
 /** Serialized changes of one page; the Workflows step result limit is 1 MiB. */
 const MAX_PAGE_JSON = 900_000;
-
-/** A short digest of the page's whole ref list. */
-async function pageSignature(refs: readonly string[]): Promise<string> {
-  const bytes = new TextEncoder().encode(refs.join('\n'));
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-  const hex = Array.from(digest.slice(0, 8), (b) => b.toString(16).padStart(2, '0')).join('');
-  return `${refs.length}:${hex}`;
-}
+const note = (pages: number) =>
+  `MAX_PAGES: stopped at ${pages} pages; the next run continues. Raise the page limit or set a larger page size.`;
 
 function asRecord(value: Json | undefined): UpstreamRecord {
   if (value === null || typeof value !== 'object' || Array.isArray(value) || value === undefined) {
@@ -146,14 +140,11 @@ const definition: ConnectorDefinition<Config, Secrets> = {
     const w = exhaustedUntil(page.headers, ctx.now());
     const m = inc ? highest(items, inc, state.m, ctx.now()) : undefined;
     const pages = (state.p?.k ?? 0) + 1;
-    // The same records, in the same order, as the page before: the API ignores our paging.
-    const sig = changes.length > 0 ? await pageSignature(changes.map((c) => c.ref)) : undefined;
-    // One record can legitimately sit on two pages in a row while the data moves, so a one-record
-    // page must repeat twice (marked "+" once) before the listing ends; a longer page ends it at once.
-    const before = state.p?.s;
-    const same = sig !== undefined && before?.replace(/\+$/, '') === sig;
-    const repeated = step.more && same && (changes.length > 1 || before?.endsWith('+') === true);
-    const stored = same && !repeated && sig !== undefined ? `${sig}+` : sig;
+    const { repeated, stored } = await repeatOf(
+      changes.map((c) => c.ref),
+      state.p?.s,
+      step.more,
+    );
     if (repeated) ctx.log('rest.repeat_page', { pages });
     const capped = step.more && !repeated && pages >= list.maxPages;
     if (capped) ctx.log('rest.max_pages', { pages });
@@ -174,6 +165,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
           changes,
           cursor: encodeCursor({ p: step.next, ...hold, ...seen, ...keep }),
           hasMore: false,
+          note: note(pages),
         };
       const end = repeated ? h : maxOf(h, m);
       return {
@@ -186,6 +178,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
       changes,
       cursor: encodeCursor({ p: capped ? step.next : step.rest, ...keep }),
       hasMore: false,
+      ...(capped ? { note: note(pages) } : {}),
     };
   },
 

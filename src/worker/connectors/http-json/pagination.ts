@@ -1,8 +1,11 @@
 import type { Json } from '../../../shared/contracts/common.ts';
+import { nextFromLinkHeader } from '../../../shared/rest/link-header.ts';
 import { offOrigin } from '../lib/egress.ts';
 import { getPointer } from '../lib/pointer.ts';
 import type { ListConfig } from './config.ts';
 import type { PageState } from './cursor.ts';
+
+export { nextFromLinkHeader };
 
 /** What one page tells us about the next. */
 export interface Advance {
@@ -22,18 +25,6 @@ export interface PageResult {
 
 const asKey = (v: unknown): string | null =>
   typeof v === 'string' && v !== '' ? v : typeof v === 'number' ? String(v) : null;
-
-/** The `rel="next"` target of a Link header, or null. */
-export function nextFromLinkHeader(header: string | null): string | null {
-  if (!header) return null;
-  for (const part of header.split(/,\s*(?=<)/)) {
-    const m = /^\s*<([^>]*)>(.*)$/.exec(part);
-    if (!m) continue;
-    const rels = /;\s*rel\s*=\s*"?([^";]+)"?/i.exec(m[2] ?? '')?.[1]?.split(/\s+/) ?? [];
-    if (rels.some((r) => r.toLowerCase() === 'next')) return m[1] ?? null;
-  }
-  return null;
-}
 
 /** The URL of the first or next request. A next link or Link header already carries its own query. */
 export function pageUrl(base: URL, list: ListConfig, p: PageState | null, since?: string): URL {
@@ -149,4 +140,28 @@ export function advance(
       return { more, next: { n }, rest: { n } };
     }
   }
+}
+
+/** A short digest of the page's whole ref list. */
+async function pageSignature(refs: readonly string[]): Promise<string> {
+  const bytes = new TextEncoder().encode(refs.join('\n'));
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  const hex = Array.from(digest.slice(0, 8), (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${refs.length}:${hex}`;
+}
+
+/**
+ * Whether this page repeats the one before (the API ignores our paging), and the signature to store with
+ * the next state. The same records in the same order end the listing; one record can legitimately sit on two
+ * pages in a row while the data moves, so a one-record page must repeat twice (marked "+" once) first.
+ */
+export async function repeatOf(
+  refs: readonly string[],
+  before: string | undefined,
+  more: boolean,
+): Promise<{ repeated: boolean; stored: string | undefined }> {
+  const sig = refs.length > 0 ? await pageSignature(refs) : undefined;
+  const same = sig !== undefined && before?.replace(/\+$/, '') === sig;
+  const repeated = more && same && (refs.length > 1 || before?.endsWith('+') === true);
+  return { repeated, stored: same && !repeated && sig !== undefined ? `${sig}+` : sig };
 }
