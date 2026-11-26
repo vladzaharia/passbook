@@ -3,6 +3,7 @@ import { zlibSync } from 'fflate';
 import { envString } from '../../platform/env.ts';
 import { createLogger } from '../../platform/log.ts';
 import { crc32 } from '../templates/package/hash.ts';
+import { parsePng } from '../templates/package/png.ts';
 import { setArtTransformForTest } from './assets.ts';
 import { mockProvidersUrl } from './mock-endpoint.ts';
 import { setWalletProvidersEnabledForTest, setWalletReleaseForTest } from './provider-policy.ts';
@@ -55,9 +56,14 @@ function pngChunk(type: string, data: Uint8Array): Uint8Array {
 
 /** A plain RGBA PNG of exactly the size asked for: the local Images binding cannot cut, this stands in. */
 async function stubCut(
-  _bytes: Uint8Array,
-  { width, height }: { width: number; height: number },
+  bytes: Uint8Array,
+  size: { width: number; height?: number },
 ): Promise<Uint8Array> {
+  const { width } = size;
+  // A downscale names only its width: the height follows the source's aspect.
+  const source = parsePng(bytes);
+  const height =
+    size.height ?? ('error' in source ? width : Math.round((source.height * width) / source.width));
   const header = new Uint8Array(13);
   const view = new DataView(header.buffer);
   view.setUint32(0, width);
