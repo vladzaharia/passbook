@@ -118042,6 +118042,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
           "FILE_CELL_TOO_LONG",
@@ -118056,7 +118057,6 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION"
         ]
       }
@@ -118276,6 +118276,7 @@
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
           "FILE_CELL_TOO_LONG",
@@ -118292,7 +118293,6 @@
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION"
         ]
       }
