@@ -11,6 +11,8 @@ export interface ApiErrorInit {
   signInUrl?: string;
   /** A 429's Retry-After, in seconds. */
   retryAfter?: number;
+  /** OPERATION_RUNNING: the operation that already runs, to show instead of an error. */
+  operationId?: string;
 }
 
 export class ApiError extends Error {
@@ -24,6 +26,8 @@ export class ApiError extends Error {
   readonly signInUrl: string | undefined;
   /** A 429's Retry-After, in seconds; absent when the server sent none. */
   readonly retryAfter: number | undefined;
+  /** OPERATION_RUNNING: the operation already running (only the one that started it is told). */
+  readonly operationId: string | undefined;
 
   constructor(init: ApiErrorInit) {
     super(init.detail ?? init.title ?? init.code);
@@ -35,6 +39,7 @@ export class ApiError extends Error {
     this.fields = init.fields ?? {};
     this.signInUrl = init.signInUrl;
     this.retryAfter = init.retryAfter;
+    this.operationId = init.operationId;
   }
 
   get isForbidden(): boolean {
@@ -83,6 +88,7 @@ export function problemToError(status: number, body: unknown, retryAfter?: numbe
       requestId: p.requestId,
       fields,
       signInUrl: p.signInUrl,
+      ...(p.operationId ? { operationId: p.operationId } : {}),
       ...(retryAfter !== undefined ? { retryAfter } : {}),
     });
   }

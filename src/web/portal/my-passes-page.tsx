@@ -28,7 +28,6 @@ import { MyPassesStack, type StackItem } from './my-passes-stack.tsx';
 import { PassDetailPage } from './pass-detail-page.tsx';
 import { PassNotices } from './pass-notices.tsx';
 import { type MyPass, toView } from './pass-view.ts';
-import { useRemovalStatus } from './removal-status.ts';
 import { pickWithTransition, stackNavigation } from './stack-motion.ts';
 import { frontOf, groupPasses } from './stack-order.ts';
 import { StackPanel } from './stack-panel.tsx';
@@ -104,8 +103,6 @@ export function MyPassesPage({ selectedId }: { selectedId?: string }) {
   const query = useInfiniteQuery(myPassesQuery);
   const pages = query.data?.pages;
   const passes = useMemo(() => pages?.flatMap((p) => p.items) ?? [], [pages]);
-  const pending = pages?.[0]?.pendingRemovals;
-  useRemovalStatus(pending);
   const dealt = useArrival(query.isPending);
   const bundle = pages?.[0]?.bundle ?? null;
   const addable = bundle?.count ?? 0;
@@ -225,7 +222,10 @@ export function MyPassesPage({ selectedId }: { selectedId?: string }) {
       ) : (
         <PageHeader title="My passes" actions={actions ?? undefined} />
       )}
-      <PassNotices pending={pending?.length ?? 0} reissue={pages?.[0]?.reissueRequired ?? []} />
+      <PassNotices
+        pending={pages?.[0]?.pendingRemovals.length ?? 0}
+        reissue={pages?.[0]?.reissueRequired ?? []}
+      />
       {body}
     </>
   );

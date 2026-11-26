@@ -15,6 +15,7 @@ import { addLine, showsAddQr } from '@/shared/device.ts';
 import { copyText } from '../lib/clipboard.ts';
 import { cn } from '../lib/cn.ts';
 import { lostPhoneConfirm } from '../lib/confirms.ts';
+import { isApiError } from '../lib/errors.ts';
 import { sessionQuery } from '../lib/session.ts';
 import {
   Buddy,
@@ -32,6 +33,7 @@ import {
 import { Scan } from './add/scan.tsx';
 import { lostPhone, myPassesKey, removePass, resendPass } from './api.ts';
 import { browserDevice } from './device.ts';
+import { useHolderOperations } from './holder-operations.tsx';
 import type { Refresh } from './refresh-button.tsx';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
@@ -94,15 +96,27 @@ export function ShowQrButton({ passTitle, url }: { passTitle: string; url: strin
   );
 }
 
+/** A second tap while the first runs shows that one; anything else is an error. */
+function useShowRunning() {
+  const { follow } = useHolderOperations();
+  return (error: unknown, title: string) => {
+    if (isApiError(error) && error.code === 'OPERATION_RUNNING' && error.operationId)
+      follow(error.operationId);
+    else toast.error(error, title);
+  };
+}
+
 function useRemovePass(passId: string, onRemoved?: () => void) {
   const client = useQueryClient();
+  const { follow } = useHolderOperations();
+  const showRunning = useShowRunning();
   const currentUser = () => {
     const state = client.getQueryState(sessionQuery.queryKey);
     return state?.status === 'success' && state.data?.authenticated
       ? state.data.user.id
       : undefined;
   };
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: () => removePass(passId),
     onMutate: () => currentUser(),
     onSuccess: async (result, _variables, userId) => {
@@ -110,28 +124,38 @@ function useRemovePass(passId: string, onRemoved?: () => void) {
       await client.invalidateQueries({ queryKey: myPassesKey, exact: true });
       if (currentUser() !== userId) return;
       if (result.state === 'pending') {
-        toast.info(HOLDER_COPY.removalStarted);
+        // Its steps and the wait for the wallets are the operation's: the sheet shows them.
+        if (result.operationId) follow(result.operationId, { restart: () => mutation.mutate() });
+        else toast.info(HOLDER_COPY.removalStarted);
       } else {
         toast.success('Removed from your passes');
       }
       onRemoved?.();
     },
+    onError: (error) => showRunning(error, 'Could not remove'),
   });
+  return mutation;
 }
 
 /** Send it again, and I lost my phone: both act on the signed-in holder's own pass. */
 function useHolderHelp(passId: string) {
   const client = useQueryClient();
+  const { follow } = useHolderOperations();
+  const showRunning = useShowRunning();
   const resend = useMutation({
     mutationFn: () => resendPass(passId),
-    onSuccess: () => toast.success(HOLDER_COPY.sendAgainSent),
-    onError: (error) => toast.error(error, 'Could not send'),
+    onSuccess: (res) => {
+      if (res.operationId) follow(res.operationId, { restart: () => resend.mutate() });
+      else toast.success(HOLDER_COPY.sendAgainSent);
+    },
+    onError: (error) => showRunning(error, 'Could not send'),
   });
   const lost = useMutation({
     mutationFn: () => lostPhone(passId),
-    onSuccess: async () => {
+    onSuccess: async (res) => {
       await client.invalidateQueries({ queryKey: myPassesKey });
-      toast.success(HOLDER_COPY.lostPhoneDone);
+      if (res.operationId) follow(res.operationId, { restart: () => lost.mutate() });
+      else toast.success(HOLDER_COPY.lostPhoneDone);
     },
   });
   return { resend, lost };

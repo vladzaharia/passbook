@@ -1,4 +1,8 @@
 import type { OperationKindDef } from '../../../shared/operations/define.ts';
+import { holderLostPhone } from '../../../shared/operations/kinds/holder-lost-phone.ts';
+import { holderRefresh } from '../../../shared/operations/kinds/holder-refresh.ts';
+import { holderRemove } from '../../../shared/operations/kinds/holder-remove.ts';
+import { holderResend } from '../../../shared/operations/kinds/holder-resend.ts';
 import {
   sandboxCreate,
   sandboxDelete,
@@ -27,6 +31,10 @@ export const SANDBOX_CREATE = fromKind(sandboxCreate);
 export const SANDBOX_DELETE = fromKind(sandboxDelete);
 export const SANDBOX_RESET = fromKind(sandboxReset);
 export const SANDBOX_RECREATE = fromKind(sandboxRecreate);
+export const HOLDER_REFRESH = fromKind(holderRefresh);
+export const HOLDER_REMOVE = fromKind(holderRemove);
+export const HOLDER_LOST_PHONE = fromKind(holderLostPhone);
+export const HOLDER_RESEND = fromKind(holderResend);
 
 /** A step that waits on someone else: the waiting state. */
 export const APPLE_SETUP: LocalOperationDef = {
