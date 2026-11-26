@@ -4,13 +4,14 @@ import { consolePrefillPath, PREFILL_KEY, readPrefill, writePrefill } from './pr
 afterEach(() => sessionStorage.clear());
 
 describe('prefill', () => {
-  it('stores under wb-prefill:<nonce>, reads once and deletes', () => {
+  it('stores under wb-prefill:<nonce>, deletes the stored entry on the first read', () => {
     const nonce = writePrefill({ op: 'passes.getPasses', query: { limit: '5' } }, 'n1');
     expect(nonce).toBe('n1');
     expect(sessionStorage.getItem(`${PREFILL_KEY}n1`)).toContain('passes.getPasses');
     expect(readPrefill('n1')).toEqual({ op: 'passes.getPasses', query: { limit: '5' } });
     expect(sessionStorage.getItem(`${PREFILL_KEY}n1`)).toBeNull();
-    expect(readPrefill('n1')).toBeNull();
+    // A remount in the same page still has it.
+    expect(readPrefill('n1')).toEqual({ op: 'passes.getPasses', query: { limit: '5' } });
   });
 
   it('makes a nonce when none is given, keeps path and body, and reads nothing for an unknown one', () => {

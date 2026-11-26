@@ -12,8 +12,7 @@ import {
   tsString,
 } from './code-literals.ts';
 import type { Lang } from './highlight.ts';
-import { pathValue } from './ids.ts';
-import { bodyOf, queryOf, type SampleOp, tsSample } from './sample-ts.ts';
+import { bodyOf, idFor, queryOf, type SampleOp, tsSample } from './sample-ts.ts';
 import type { Example } from './types.ts';
 
 export interface Sample {
@@ -34,7 +33,7 @@ const bodyJson = (op: SampleOp) => jsonText(bodyOf(op) ?? {});
 function target(op: SampleOp, base: string): string {
   const type = (name: string) => op.fields.find((f) => f.where === 'path' && f.name === name)?.type;
   const path = op.path.replace(/\{(\w+)\}/g, (_, n: string) =>
-    pathValue(op.path, n, type(n) ?? 'string'),
+    idFor(op, op.path, n, type(n) ?? 'string'),
   );
   const query = Object.entries(queryOf(op))
     .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`)
@@ -170,7 +169,7 @@ function pathArgs(op: SampleOp, literal: (v: string, numeric: boolean) => string
   const type = (name: string) => op.fields.find((f) => f.where === 'path' && f.name === name)?.type;
   return [...op.path.matchAll(/\{(\w+)\}/g)].map((m) => {
     const t = type(m[1] ?? '') ?? 'string';
-    return literal(pathValue(op.path, m[1] ?? '', t), /^(integer|number)/.test(t));
+    return literal(idFor(op, op.path, m[1] ?? '', t), /^(integer|number)/.test(t));
   });
 }
 

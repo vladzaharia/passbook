@@ -104,8 +104,8 @@ export function IdChip({
         type="button"
         className="bench-id-c"
         title={id}
-        // The name holds the text the chip shows (WCAG 2.5.3); the quiet prefix is not text, the kind word names it.
-        aria-label={BENCH_COPY.id.copy(word, text ?? shortId(id))}
+        // The name starts with what is drawn (WCAG 2.5.3), then says what the button does.
+        aria-label={`${prefix ? `${prefix} ` : ''}${text ?? shortId(id)}, ${BENCH_COPY.id.copy(word, id)}`}
         onClick={() =>
           void copyWithFeedback(id, button.current).then((ok) => {
             if (!ok) return;
@@ -114,8 +114,8 @@ export function IdChip({
           })
         }
       >
-        {/* The prefix is drawn by CSS: text in the button would have to be in its name (WCAG 2.5.3). */}
-        {prefix ? <span className="bench-id-p" aria-hidden="true" data-p={prefix} /> : null}
+        {prefix ? <span className="bench-id-p">{prefix}</span> : null}
+        {prefix ? ' ' : null}
         <span className="bench-id-v">{copied ? BENCH_COPY.id.copied : (text ?? shortId(id))}</span>
       </button>
       {canJump ? (

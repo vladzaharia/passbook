@@ -40,14 +40,14 @@ describe('the id chip', () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     render(<IdChip id={REQ} kind="request" prefix="req" />);
-    const face = screen.getByRole('button', { name: 'Copy request id 01938a1b…4a5b' });
-    expect(face.textContent).toBe('01938a1b…4a5b');
+    const face = screen.getByRole('button', { name: new RegExp(`, Copy request id ${REQ}$`) });
+    expect(face.textContent).toBe('req 01938a1b…4a5b');
     await act(async () => fireEvent.click(face));
     expect(writeText).toHaveBeenCalledWith(REQ);
-    expect(face.textContent).toBe('Copied');
+    expect(face.textContent).toBe('req Copied');
     expect(face.dataset.state).toBe('copied');
     act(() => vi.advanceTimersByTime(1600));
-    expect(face.textContent).toBe('01938a1b…4a5b');
+    expect(face.textContent).toBe('req 01938a1b…4a5b');
   });
 
   it('opens its menu from the keyboard and gives focus back on Escape', () => {
@@ -163,6 +163,6 @@ describe('the chip is named by what it shows (WCAG 2.5.3)', () => {
     );
     const res = await axe(container, { runOnly: ['label-content-name-mismatch'] });
     expect(res.violations).toEqual([]);
-    expect(screen.getByRole('button', { name: 'Copy key id Sandbox key' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'key Sandbox key, Copy key id key-1' })).toBeTruthy();
   });
 });

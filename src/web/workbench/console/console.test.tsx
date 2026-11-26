@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OpConsole } from './app/console.tsx';
 import { resetBudget } from './budget.ts';
+import { tryClient } from './client.ts';
 import { resetTemplateInput } from './template-sample.ts';
 import { fakeNetwork, json, passesCreate, passesVoid, TOKEN } from './test-support.ts';
 import { resetToken } from './token.ts';
 
 const props = {
   origin: 'https://passbook.mobile',
-  csrf: 'csrf-1',
+  client: tryClient('c'),
   templateId: null,
   codes: new Set(['PASS_CONFLICT']),
 } as const;
@@ -80,7 +81,9 @@ describe('the response on the bench', () => {
     await run();
     await screen.findByText('201 Created');
     // The header and the Trace each hold the chip.
-    expect(screen.getAllByRole('button', { name: /^Copy request id / })).toHaveLength(2);
+    expect(
+      screen.getAllByRole('button', { name: new RegExp(`, Copy request id ${RID}$`) }),
+    ).toHaveLength(2);
     expect(screen.getByRole('link', { name: 'View in Logs' })).toHaveAttribute(
       'href',
       `/developers/logs?source=all#${RID}`,

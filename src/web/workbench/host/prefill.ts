@@ -12,38 +12,41 @@ export interface Prefill {
   body?: unknown;
 }
 
-/** `wb-prefill:<nonce>`: read once, then deleted. */
+/** `wb-prefill:<nonce>`: deleted from storage on its first read. */
 export const PREFILL_KEY = 'wb-prefill:';
 
-/** Stores a prefill and returns its nonce; null when storage is blocked (the link then names only the operation). */
-export function writePrefill(prefill: Prefill, nonce: string = crypto.randomUUID()): string | null {
+/** A nonce read once stays readable for this page: a remount must not lose it. */
+const seen = new Map<string, Prefill | null>();
+
+/** Stores a prefill and returns its nonce. Blocked storage keeps it in memory for this page. */
+export function writePrefill(prefill: Prefill, nonce: string = crypto.randomUUID()): string {
   try {
     sessionStorage.setItem(`${PREFILL_KEY}${nonce}`, JSON.stringify(prefill));
-    return nonce;
   } catch {
-    // Storage is blocked: the Console still opens on the operation, without the inputs.
-    return null;
+    seen.set(nonce, prefill);
   }
+  return nonce;
 }
 
-/** The prefill a nonce names, once: the entry is deleted as it is read. Null for an unknown or broken one. */
+/** The prefill a nonce names. Null for an unknown or broken one. */
 export function readPrefill(nonce: string): Prefill | null {
-  const key = `${PREFILL_KEY}${nonce}`;
+  if (seen.has(nonce)) return seen.get(nonce) ?? null;
+  let found: Prefill | null = null;
   try {
+    const key = `${PREFILL_KEY}${nonce}`;
     const raw = sessionStorage.getItem(key);
     sessionStorage.removeItem(key);
-    if (raw === null) return null;
-    const found = JSON.parse(raw) as Prefill;
-    return typeof found === 'object' && found !== null && typeof found.op === 'string'
-      ? found
-      : null;
+    const parsed = raw === null ? null : (JSON.parse(raw) as Prefill);
+    if (typeof parsed === 'object' && parsed !== null && typeof parsed.op === 'string')
+      found = parsed;
   } catch {
-    return null;
+    // Blocked storage or a value that is not ours: no prefill.
   }
+  seen.set(nonce, found);
+  return found;
 }
 
 /** The Console link for a prefill, in this context's Test. */
 export function consolePrefillPath(orgId: string, prefill: Prefill): string {
-  const nonce = writePrefill(prefill);
-  return wbPath(orgId, 'console', { query: { op: prefill.op, prefill: nonce ?? undefined } });
+  return wbPath(orgId, 'console', { query: { op: prefill.op, prefill: writePrefill(prefill) } });
 }

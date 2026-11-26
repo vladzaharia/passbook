@@ -1,3 +1,4 @@
+import { prefillFromCurl } from '../../developers/guide/model.ts';
 import { refName, resolve } from '../../developers/model/schema.ts';
 import type {
   Dict,
@@ -14,7 +15,9 @@ import {
   type RunIndex,
   type RunOp,
   type RunParam,
+  type RunSample,
   type RunSchema,
+  type RunSdk,
 } from './types.ts';
 
 const asDict = (v: unknown): Dict => (v && typeof v === 'object' ? (v as Dict) : {});
@@ -100,9 +103,35 @@ function params(doc: RawDoc, op: RawOp): RunParam[] {
   return rows.sort((a, b) => Number(b.required) - Number(a.required));
 }
 
+/** The guides' snippets that call this operation, with the body and query each one sends. */
+function samples(view: Omit<OpView, 'run'>): Record<string, RunSample> | undefined {
+  const out: Record<string, RunSample> = {};
+  for (const e of view.examples ?? []) {
+    if (!e.curl) continue;
+    try {
+      out[e.id] = prefillFromCurl(e.curl, e.id);
+    } catch {
+      // A snippet that is not a plain curl call has nothing to open the console with.
+    }
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function sdkOf(view: Omit<OpView, 'run'>): RunSdk {
+  return {
+    call: view.sdkCall,
+    ...(view.paged ? { paged: true as const } : {}),
+    ...(view.cursorList ? { cursorList: true as const } : {}),
+    ...(view.noContent ? { noContent: true as const } : {}),
+    ...(view.binary ? { binary: true as const } : {}),
+    ...(view.download ? { download: true as const } : {}),
+  };
+}
+
 export function runOp(doc: RawDoc, view: Omit<OpView, 'run'>, op: RawOp, method: Method): RunOp {
   const body = asDict(asDict(asDict(op.requestBody).content)['application/json']);
   const sdk = op['x-sdk'];
+  const snippets = samples(view);
   return {
     id: op.operationId,
     anchor: view.anchor,
@@ -118,6 +147,9 @@ export function runOp(doc: RawDoc, view: Omit<OpView, 'run'>, op: RawOp, method:
     params: params(doc, op),
     body: body.schema ? slim(doc, body.schema) : null,
     example: view.requestExample as Json | undefined,
+    wb: op['x-workbench'] === 'test',
+    sdk: sdkOf(view),
+    ...(snippets ? { samples: snippets } : {}),
   };
 }
 
@@ -138,6 +170,7 @@ export function runIndex(site: Site): RunIndex {
           path: o.path,
           title: o.title,
           destructive: o.run.destructive,
+          wb: o.run.wb,
         })),
       ),
     })),

@@ -2,6 +2,7 @@ import { Repeat } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { PATHS } from '../../../../shared/developers.ts';
+import { wbPath } from '../../../../shared/workbench.ts';
 import { Stamp } from '../../../developers/ui/stamp.tsx';
 import { statusText } from '../../../developers/ui/status-text.ts';
 import { BenchCode } from '../../bench/code-block.tsx';
@@ -9,8 +10,10 @@ import { IdChip } from '../../bench/id-chip.tsx';
 import { Trace, traceNodes } from '../../bench/trace.tsx';
 import { type CausedEvent, loadRequestEvents } from '../../bench/trace-events.ts';
 import { RUN_LIMIT, remaining as runsLeft } from '../budget.ts';
-import { COPY_LANGS, copyAs, type Sent } from '../copy-as.ts';
-import { EVENTS_AFTER_MS, showsSecret, tokenGet } from '../events.ts';
+import type { ConsoleClient } from '../client.ts';
+import type { Sent } from '../copy-as.ts';
+import { EVENTS_AFTER_MS, showsSecret } from '../events.ts';
+import type { Line } from '../lines.ts';
 import type { Outcome } from '../send.ts';
 import '../response.css';
 
@@ -18,7 +21,11 @@ const C = CONSOLE_COPY;
 const header = (o: Outcome, name: string) => o.headers.find(([n]) => n === name)?.[1];
 
 /** The webhook events one call caused, read once after a write succeeds. A failed read leaves the Trace without them. */
-function useCausedEvents(o: Outcome, method: string, csrf: string): readonly CausedEvent[] {
+function useCausedEvents(
+  o: Outcome,
+  method: string,
+  client: ConsoleClient,
+): readonly CausedEvent[] {
   const [events, setEvents] = useState<readonly CausedEvent[]>([]);
   useEffect(() => {
     setEvents([]);
@@ -26,7 +33,7 @@ function useCausedEvents(o: Outcome, method: string, csrf: string): readonly Cau
     const rid = o.requestId;
     let on = true;
     const timer = setTimeout(() => {
-      loadRequestEvents(rid, tokenGet(csrf)).then(
+      loadRequestEvents(rid, client.get).then(
         (found) => on && setEvents(found),
         (error: unknown) => reportError(error),
       );
@@ -35,7 +42,7 @@ function useCausedEvents(o: Outcome, method: string, csrf: string): readonly Cau
       on = false;
       clearTimeout(timer);
     };
-  }, [o, method, csrf]);
+  }, [o, method, client]);
   return events;
 }
 
@@ -49,21 +56,27 @@ export function ResponseView({
   at,
   sent,
   codes,
-  csrf,
+  client,
+  lines,
+  caption,
   onReplay,
 }: {
   outcome: Outcome;
   at: number;
   sent: Sent;
   codes: ReadonlySet<string>;
-  csrf: string;
+  client: ConsoleClient;
+  /** The request in every language, for Copy as. */
+  lines: Line[];
+  /** The buddy's line: what went wrong, or "Pass issued". */
+  caption?: string | null | undefined;
   /** Sends the same request again with the same Idempotency-Key. */
   onReplay?: (() => void) | undefined;
 }) {
   const label = statusText(o.status, o.statusText);
   const remaining = header(o, 'ratelimit-remaining');
   const replay = header(o, 'idempotent-replayed');
-  const events = useCausedEvents(o, sent.method, csrf);
+  const events = useCausedEvents(o, sent.method, client);
   const facts: [string, string][] = [
     // The server sends RateLimit-Remaining on 429 only; otherwise the page's own count is the gauge.
     remaining ? ['RateLimit-Remaining', remaining] : [C.runsLeft, `${runsLeft()}/${RUN_LIMIT}`],
@@ -94,11 +107,20 @@ export function ResponseView({
         <Stamp key={at} status={label} tone={o.status < 400 ? 'ok' : 'bad'} />
         <span className="mono xs muted">{o.ms} ms</span>
         {o.requestId ? <IdChip id={o.requestId} kind="request" prefix="req" /> : null}
+        {caption ? (
+          <span className="cr-cap" data-kind={o.status < 400 ? 'ok' : 'bad'}>
+            {caption}
+          </span>
+        ) : null}
         <span className="push" />
         {o.requestId ? (
           <a
             className="btn outline sm"
-            href={`${PATHS.logs}?source=all#${encodeURIComponent(o.requestId)}`}
+            href={
+              client.orgId
+                ? wbPath(client.orgId, 'logs', { hash: o.requestId })
+                : `${PATHS.logs}?source=all#${encodeURIComponent(o.requestId)}`
+            }
           >
             {C.viewInLogs}
           </a>
@@ -130,11 +152,7 @@ export function ResponseView({
           body={o.json !== undefined ? JSON.stringify(o.json, null, 2) : o.text}
           codes={codes}
           empty={C.noBody}
-          items={COPY_LANGS.map((l) => ({
-            key: l.lang,
-            label: l.label,
-            text: () => copyAs(l.lang, sent),
-          }))}
+          items={lines.map((l) => ({ key: l.lang, label: l.label, text: () => l.code }))}
         />
       </div>
       {o.truncated ? <p className="xs muted cr-note">{C.truncated}</p> : null}

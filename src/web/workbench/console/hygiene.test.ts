@@ -39,8 +39,8 @@ describe('the page never stores, shows or addresses the try token', () => {
     const readers = files.filter(
       (f) => /\btoken\(/.test(text(f)) && !f.endsWith('console/token.ts'),
     );
-    expect(readers.map((f) => f.slice(wb.length + 1))).toEqual(['console/send.ts']);
-    const send = text(join(wb, 'console/send.ts'));
+    expect(readers.map((f) => f.slice(wb.length + 1))).toEqual(['console/client.ts']);
+    const send = text(join(wb, 'console/client.ts'));
     expect(send.match(/Bearer /g)).toHaveLength(1);
     // biome-ignore lint/suspicious/noTemplateCurlyInString: the source text being matched
     expect(send).toContain('authorization: `Bearer ${bearer}`');

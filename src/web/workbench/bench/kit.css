@@ -84,9 +84,6 @@
 .bench-id-p {
   color: var(--pk-text-subtle);
 }
-.bench-id-p::before {
-  content: attr(data-p);
-}
 .bench-id-v {
   min-width: 0;
   overflow: hidden;
