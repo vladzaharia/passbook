@@ -2,7 +2,6 @@ import type { z } from 'zod';
 import type {
   ConnectionRunsQuerySchema,
   ConnectionsSummarySchema,
-  SyncNowResponseSchema,
   TestConnectionResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import type { Actor } from '../../platform/context.ts';
@@ -21,6 +20,7 @@ import { classify, prepare } from './runtime.ts';
 import { adminBucketMs, adminInstanceId, startSync } from './schedule.ts';
 import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
 import { auditActor, requireConnection } from './service.ts';
+import type { SyncOperation } from './sync-operation.ts';
 import { firstRecord, sampleFields } from './test-config.ts';
 import { assertModeSupported, requireConnector } from './validate.ts';
 
@@ -98,7 +98,9 @@ export async function syncNow(
   authority?: ConnectionAuthority,
   /** What the run is for, such as an applied file: it gets an instance of its own. */
   purpose?: string,
-): Promise<z.infer<typeof SyncNowResponseSchema>> {
+  /** Reports the run as an operation; a retry passes the one it restarts. */
+  operation?: SyncOperation,
+): Promise<{ runId: string; workflowInstanceId: string }> {
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
   if (!conn.enabled) throw new ConflictError('The connection is disabled.', 'CONNECTION_DISABLED');
@@ -111,7 +113,7 @@ export async function syncNow(
     adminBucketMs(sctx.env),
     purpose,
   );
-  const started = await startSync(sctx, conn, 'admin', instanceId, actor.id, authority);
+  const started = await startSync(sctx, conn, 'admin', instanceId, actor.id, authority, operation);
   await recordAudit(sctx, {
     orgId: conn.orgId,
     ...auditActor(actor),

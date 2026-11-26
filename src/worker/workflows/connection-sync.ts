@@ -16,6 +16,9 @@ export interface ConnectionSyncParams {
   runId?: string;
   /** Set on a continuation instance (id `<runId>-c<seq>`) started by a hand-off. */
   chain?: SyncChain;
+  /** The operation that shows this run; absent for scheduled and webhook runs. */
+  operationId?: string;
+  operationAttempt?: number;
 }
 
 /** Instance id: sync-<connectionId>-<next_run_at>. Owner: connections module. */

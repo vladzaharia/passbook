@@ -21,7 +21,9 @@ const relaunch: NonNullable<OperationRunner['relaunch']> = async (ctx, op, _prev
   const authority = await tenantAuthorityOf(ctx, caller, op.orgId, 'passes:operate');
   const instanceId = await startBulkReissue(
     ctx,
-    { type: caller.kind === 'session' ? 'user' : 'api_key', id: actorOfAuth(caller).id },
+    caller.kind === 'session'
+      ? { type: 'user', id: caller.userId }
+      : { type: 'api_key', id: caller.keyId },
     {
       orgId: op.orgId,
       ...(target.type === 'identity'

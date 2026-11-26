@@ -4,9 +4,10 @@
 // biome-ignore-all assist/source/organizeImports: generated
 // biome-ignore-all lint: generated
 import type { OperationRunners } from '../modules/operations/registry.ts';
-import { operationRunners as r0 } from '../modules/developer/operations.ts';
-import { operationRunners as r1 } from '../modules/org-lifecycle/operations.ts';
-import { operationRunners as r2 } from '../modules/passes/operations.ts';
+import { operationRunners as r0 } from '../modules/connections/operations.ts';
+import { operationRunners as r1 } from '../modules/developer/operations.ts';
+import { operationRunners as r2 } from '../modules/org-lifecycle/operations.ts';
+import { operationRunners as r3 } from '../modules/passes/operations.ts';
 
 /** Run, retry and cancel hooks by kind. */
-export const OPERATION_RUNNERS: OperationRunners = { ...r0, ...r1, ...r2 };
+export const OPERATION_RUNNERS: OperationRunners = { ...r0, ...r1, ...r2, ...r3 };

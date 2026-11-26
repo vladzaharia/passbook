@@ -274,7 +274,12 @@ export const ResolveWebhookFailureResponseSchema = z.object({
   /** `resolved` when no other item is left; otherwise the chunk stays replayable. */
   state: z.enum(['failed', 'blocked', 'resolved']),
 });
-export const SyncNowResponseSchema = z.object({ runId: IdSchema, workflowInstanceId: z.string() });
+export const SyncNowResponseSchema = z.object({
+  runId: IdSchema,
+  workflowInstanceId: z.string(),
+  /** The operation that shows the run; null when the sync joined a run that was already open. */
+  operationId: IdSchema.nullable(),
+});
 export const WebhookAckSchema = z.object({ accepted: z.literal(true) });
 
 export const ConnectionRunsQuerySchema = z.object({

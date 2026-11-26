@@ -3,6 +3,7 @@ import { envString } from '../../platform/env.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { failStarted } from '../operations/start-org.ts';
 import {
   ensureCredentialRefKeyset,
   requireCredentialRefKeyset,
@@ -22,6 +23,7 @@ import { SyncRunOpenError } from './repo-sync-enqueue.ts';
 import { openRunOf } from './repo-sync-open.ts';
 import { closeLostRun, instanceLost, STUCK_MS } from './run-lost.ts';
 import { alreadyExists, continuationId } from './sync-chain.ts';
+import { type SyncOperation, syncOperation } from './sync-operation.ts';
 
 const DUE_BATCH = 100;
 const ADMIN_BUCKET_MS = 30_000;
@@ -116,6 +118,8 @@ export async function startSync(
   instanceId: string,
   actorId: string | null = null,
   authority?: ConnectionAuthority,
+  /** A user's Sync now reports as an operation: a new one for `actor`, or the one a retry restarts. */
+  operation?: SyncOperation,
 ): Promise<{ runId: string; workflowInstanceId: string }> {
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
   await assertConnectionAuthority(sctx, authority);
@@ -172,6 +176,11 @@ export async function startSync(
   if (!committed) {
     throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
   }
+  // The operation comes before the Workflow, so its first write finds the row.
+  const op =
+    operation && authority
+      ? await syncOperation(sctx, conn, authority.mode, instanceId, operation)
+      : null;
   // No user principal enters the workflow; after launch it runs as the connection.
   try {
     await sctx.env.CONNECTION_SYNC.create({
@@ -183,10 +192,14 @@ export async function startSync(
         credentialKeysetCommitment,
         trigger,
         runId: instanceId,
+        ...(op ? { operationId: op.id, operationAttempt: op.attempt } : {}),
       },
     });
   } catch (error) {
-    if (!alreadyExists(error)) throw error;
+    if (!alreadyExists(error)) {
+      if (op && !operation?.existing) await failStarted(sctx, op, error);
+      throw error;
+    }
   }
   return { runId: instanceId, workflowInstanceId: instanceId };
 }
