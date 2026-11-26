@@ -6,9 +6,12 @@ import {
   ConnectorListSchema,
   CursorQuerySchema,
   IdSchema,
+  RecipeSetupParamSchema,
+  SetupGuideSchema,
 } from '../../../shared/contracts/index.ts';
 import { connectors } from '../../connectors/registry.ts';
 import type { AnyConnector } from '../../connectors/types.ts';
+import { SETUP_GUIDES } from '../../connectors/webhook-push/recipes/index.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { type Entitlements, entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
@@ -99,6 +102,23 @@ export function registerConnectorCatalogRoutes(router: OpenAPIHono<AppBindings>)
       if (!def) throw new NotFoundError('Connector type not found.', 'CONNECTOR_NOT_FOUND');
       if (orgId === undefined) return c.json(connectorInfo(def));
       return c.json(flagged(await entitlementsOf(serviceContext(c), orgId), def));
+    },
+  );
+  register(
+    router,
+    'connectors',
+    {
+      method: 'get',
+      path: '/webhook-push/recipes/{recipe}/setup',
+      summary:
+        "A sender's webhook setup guide, with the URL and secret left for the console to fill",
+      params: RecipeSetupParamSchema,
+      query: ConnectionOrgQuerySchema,
+      response: SetupGuideSchema,
+    },
+    async (c) => {
+      await authorizeCatalog(c, c.req.valid('query').orgId);
+      return c.json(SETUP_GUIDES[c.req.valid('param').recipe]);
     },
   );
 }
