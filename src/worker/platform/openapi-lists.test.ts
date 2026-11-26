@@ -46,6 +46,8 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/scan/activity',
   '/api/v1/scan/scans',
   '/api/v1/platform/idp/drift',
+  // The setup checklist: a fixed list of items, not rows to page.
+  '/api/v1/platform/idp/setup',
 ]);
 /** Streams keep `after`: a position in an ordered log, not a page. */
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);
