@@ -32,6 +32,30 @@
     "note": "Discard a pending revision and its stored file."
   },
   {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.firstVerifiedArrivalAt: field removed",
+    "class": "breaking",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.firstVerifiedArrivalAt: field removed",
+    "note": ""
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.health: enum value \"awaiting\" removed",
+    "note": ""
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.warning: field removed",
+    "class": "breaking",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.warning: field removed",
+    "note": ""
+  },
+  {
     "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsUploadsByFileId",
@@ -190,6 +214,14 @@
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.configRevision: field removed",
+    "note": ""
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"console\" added",
@@ -416,6 +448,54 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "GET /api/v1/connections 200.items[].firstVerifiedArrivalAt: field removed",
+    "class": "breaking",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].firstVerifiedArrivalAt: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connections 200.items[].health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].health: enum value \"awaiting\" removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connections 200.items[].warning: field removed",
+    "class": "breaking",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].warning: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connections param query:health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "param query:health: enum value \"awaiting\" removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field removed",
+    "class": "breaking",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
     "class": "additive",
     "operationId": "connections.getConnectionsById",
@@ -438,6 +518,14 @@
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.warning: field removed",
+    "class": "breaking",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.warning: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/connections/{id}/files new operation",
@@ -470,6 +558,30 @@
     "op": "GET /api/v1/connections/{id}/runs",
     "change": "200.items[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/setup operation removed",
+    "class": "breaking",
+    "operationId": "connections.getConnectionsByIdSetup",
+    "op": "GET /api/v1/connections/{id}/setup",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals operation removed",
+    "class": "breaking",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connections/summary 200.attention[].health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.getConnectionsSummary",
+    "op": "GET /api/v1/connections/summary",
+    "change": "200.attention[].health: enum value \"awaiting\" removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/connections/uploads/{fileId} new operation",
@@ -528,6 +640,30 @@
     "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].line: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].line: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].secretOrigin: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].secretOrigin: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].setupVersion: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].setupVersion: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
@@ -574,6 +710,38 @@
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.recipes[].entitled: field added",
     "note": "Each recipe lists whether the plan allows it for new connections. Always true without an org."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].line: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].line: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].secretOrigin: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].secretOrigin: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].setupVersion: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].setupVersion: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup operation removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
+    "op": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/access new operation",
@@ -1864,6 +2032,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.device.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.configRevision: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scan/visitors operation removed",
     "class": "breaking",
     "operationId": "scan.getScanVisitors",
@@ -1910,6 +2086,14 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].configRevision: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
@@ -2448,6 +2632,14 @@
     "note": "List the recent test sends of a webhook endpoint (sample event type, status, code and timing, kept 7 days), newest first."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/setup operation removed",
+    "class": "breaking",
+    "operationId": "webhooks.getWebhookEndpointsSetup",
+    "op": "GET /api/v1/webhook-endpoints/setup",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "GET /b/{token}/{passId} new operation",
     "class": "additive",
     "operationId": "public.getBByTokenByPassId",
@@ -2613,6 +2805,30 @@
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.version: optional input field added",
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field removed",
+    "class": "breaking",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field removed",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" removed",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.warning: field removed",
+    "class": "breaking",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.warning: field removed",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
@@ -2807,6 +3023,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].configRevision: field removed",
+    "note": ""
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -2845,6 +3069,14 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.configRevision: field removed",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
@@ -3533,6 +3765,30 @@
     "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
+    "key": "POST /api/v1/connections 201.firstVerifiedArrivalAt: field removed",
+    "class": "breaking",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.firstVerifiedArrivalAt: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/connections 201.health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.health: enum value \"awaiting\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/connections 201.warning: field removed",
+    "class": "breaking",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.warning: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/connections body.fileId: optional input field added",
     "class": "additive",
     "operationId": "connections.postConnections",
@@ -3565,12 +3821,44 @@
     "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
   },
   {
+    "key": "POST /api/v1/connections/{id}/preview request body removed",
+    "class": "breaking",
+    "operationId": "connections.postConnectionsByIdPreview",
+    "op": "POST /api/v1/connections/{id}/preview",
+    "change": "request body removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/connections/{id}/probe new operation",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdProbe",
     "op": "POST /api/v1/connections/{id}/probe",
     "change": "new operation",
     "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.firstVerifiedArrivalAt: field removed",
+    "class": "breaking",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.firstVerifiedArrivalAt: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.health: enum value \"awaiting\" removed",
+    "class": "breaking",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.health: enum value \"awaiting\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.warning: field removed",
+    "class": "breaking",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.warning: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/connections/probe new operation",
@@ -4597,6 +4885,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/device 200.device.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.configRevision: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/device body.capabilities.draftFailures: optional input field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -4653,6 +4949,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.configRevision: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
     "class": "additive",
     "operationId": "scan.postScanPairPreview",
@@ -4691,6 +4995,14 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.configRevision: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/scans/{scanId}/undo 200.exitAllowed: field added",
@@ -4757,12 +5069,28 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.configRevision: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.draftFailures: field added",
     "class": "additive",
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.capabilities.draftFailures: field added",
     "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.configRevision: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/staff/pin new operation",
@@ -4885,6 +5213,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].configRevision: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessions",
@@ -4915,6 +5251,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.configRevision: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
@@ -4955,6 +5299,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].configRevision: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].configRevision: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",

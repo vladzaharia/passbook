@@ -16,7 +16,6 @@ import { developerOrgRoutes } from './modules/dev-access/routes-org.ts';
 import { developerPortalRoutes } from './modules/developer/portal.ts';
 import { requestLog } from './modules/developer/request-log.ts';
 import { developerRoutes } from './modules/developer/routes.ts';
-import { requestLogRoutes } from './modules/workbench/routes-logs.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
@@ -87,6 +86,7 @@ import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-st
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
+import { requestLogRoutes } from './modules/workbench/routes-logs.ts';
 import { apiVersionGate } from './platform/api-version.ts';
 import { type AuthStores, denyAllStores, SESSION_COOKIE } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
