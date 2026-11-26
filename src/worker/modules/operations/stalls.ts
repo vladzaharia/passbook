@@ -15,8 +15,6 @@ const MIN_STALL_MS = 60_000;
 const BATCH = 100;
 /** A timed wait is a lost wake-up this long after its end (the longest gap between looks is 15 min). */
 const LOST_LOOK_GRACE_MS = 20 * 60_000;
-/** A timed wait is a lost wake-up this long after its end (the longest gap between looks is 15 min). */
-const LOST_LOOK_GRACE_MS = 20 * 60_000;
 const DEAD_WORKFLOW = new Set(['errored', 'terminated']);
 
 const stalled = () => new AppError('OPERATION_STALLED', 500, 'The operation stopped responding.');
