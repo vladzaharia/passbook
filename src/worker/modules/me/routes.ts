@@ -16,6 +16,7 @@ import {
   ProblemSchema,
   RefreshResponseSchema,
   RemovePassResponseSchema,
+  RemovePassStartedSchema,
   ResendResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, requireHolderSession } from '../../platform/auth.ts';
@@ -156,11 +157,11 @@ meRoutes.openapi(
     responses: {
       200: {
         description: 'Removal completed',
-        content: { 'application/json': { schema: RemovePassResponseSchema } },
+        content: { 'application/json': { schema: RemovePassStartedSchema } },
       },
       202: {
         description: 'Removal pending wallet credential retirement',
-        content: { 'application/json': { schema: RemovePassResponseSchema } },
+        content: { 'application/json': { schema: RemovePassStartedSchema } },
       },
       default: {
         description: 'Error',
@@ -209,7 +210,7 @@ register(
     summary: 'Replace my pass code and link, and email it to me',
     params: IdParamSchema,
     status: 202,
-    response: RemovePassResponseSchema,
+    response: RemovePassStartedSchema,
   },
   async (c) =>
     c.json(

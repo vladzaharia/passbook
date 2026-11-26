@@ -125,7 +125,10 @@ export const RemovePassResponseSchema = z.object({
   /** Null when the credential could not change and the pass was unlinked without a transfer. */
   transferId: IdSchema.nullable(),
   state: z.enum(['pending', 'completed']),
-  /** The start of a removal or lost-phone request: its progress, at GET /operations/{id}. Never on the receipt. */
+});
+/** The start of a removal or a lost-phone request: the receipt, and the operation that shows its progress. */
+export const RemovePassStartedSchema = RemovePassResponseSchema.extend({
+  /** Read it at GET /operations/{id}; only the holder's own session can. */
   operationId: IdSchema.optional(),
 });
 export const RefreshResponseSchema = z.object({
