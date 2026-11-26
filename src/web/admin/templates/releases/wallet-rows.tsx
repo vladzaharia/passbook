@@ -47,6 +47,20 @@ function releasedState(
       meta: '',
     };
   const source = candidates.find((c) => c.id === active.candidateId);
+  if (active.googleReview === 'rejected')
+    return {
+      status: 'off',
+      pill: 'warning',
+      label: 'Rejected by Google',
+      meta: versionLabel(versions, active.version),
+    };
+  if (active.googleReview === 'waiting')
+    return {
+      status: 'on',
+      pill: 'neutral',
+      label: 'Waiting for Google review',
+      meta: versionLabel(versions, active.version),
+    };
   return {
     status: 'active',
     pill: 'success',

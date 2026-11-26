@@ -26,6 +26,7 @@ import {
   scopedTemplate,
   verifiedCandidate,
 } from './projection-service-support.ts';
+import { googleReleaseReviews } from './repo-google-class-write.ts';
 import { projectionReleaseBindingValid } from './repo-projection.ts';
 import {
   getProjectionCandidate,
@@ -169,5 +170,14 @@ export async function listProjectionReleases(
     scope.mode,
     native.provider,
   );
-  return { items, active, nextCursor: null };
+  if (native.provider !== 'google') return { items, active, nextCursor: null };
+  const reviews = await googleReleaseReviews(
+    ctx.env.DB,
+    [...items, ...(active ? [active] : [])].map((r) => r.id),
+  );
+  const reviewed = (r: TemplateRelease): TemplateRelease => {
+    const googleReview = reviews.get(r.id);
+    return googleReview ? { ...r, googleReview } : r;
+  };
+  return { items: items.map(reviewed), active: active && reviewed(active), nextCursor: null };
 }

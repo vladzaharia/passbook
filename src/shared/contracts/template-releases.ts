@@ -81,6 +81,8 @@ export const TemplateReleaseSchema = z.object({
   accountId: IdSchema.optional(),
   accountRevision: z.number().int().positive().optional(),
   providerIdentityHash: z.string().optional(),
+  /** Google releases: the review of the classes the release wrote. Absent until one is written. */
+  googleReview: z.enum(['waiting', 'rejected', 'approved']).optional(),
 });
 export type TemplateRelease = z.infer<typeof TemplateReleaseSchema>;
 
