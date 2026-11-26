@@ -117,12 +117,20 @@ export async function startOperation(
   ctx: ServiceContext,
   input: StartInput,
 ): Promise<OperationDto> {
+  return (await startOperationOnce(ctx, input)).operation;
+}
+
+/** As `startOperation`, and says whether this call inserted the row: only the call that did runs the work. */
+export async function startOperationOnce(
+  ctx: ServiceContext,
+  input: StartInput,
+): Promise<{ operation: OperationDto; created: boolean }> {
   const db = ctx.env.DB;
   if (input.id) {
     const existing = await rowById(db, input.id);
     if (existing) {
       if (!sameRequest(existing, input)) throw reused();
-      return toDto(existing);
+      return { operation: toDto(existing), created: false };
     }
   }
   const { id, stmt } = startOperationStmt(ctx, input);
@@ -133,7 +141,7 @@ export async function startOperation(
     const same = input.id ? await rowById(db, id) : null;
     if (same) {
       if (!sameRequest(same, input)) throw reused();
-      return toDto(same);
+      return { operation: toDto(same), created: false };
     }
     const key = dedupeKeyOf(input);
     const active = key ? await activeByDedupe(db, key) : null;
@@ -146,5 +154,5 @@ export async function startOperation(
     });
   }
   const row = (await rowById(db, id)) as OperationRow;
-  return toDto(row);
+  return { operation: toDto(row), created: true };
 }

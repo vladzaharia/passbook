@@ -119,3 +119,19 @@ export async function claimLease(
   );
   return changes === 1;
 }
+
+/** The runner hands the operation on (a start over waits for its purge): the next `operation.run` can claim it. */
+export async function releaseLease(
+  db: D1Database,
+  id: string,
+  attempt: number,
+  owner: string | null,
+): Promise<void> {
+  await run(
+    db,
+    `UPDATE operations SET lease_until = NULL, lease_owner = NULL
+     WHERE id = ? AND attempt = ? AND status IN ('queued', 'running', 'waiting')
+       AND (lease_owner IS NULL OR lease_owner = ?)`,
+    [id, attempt, owner ?? ''],
+  );
+}

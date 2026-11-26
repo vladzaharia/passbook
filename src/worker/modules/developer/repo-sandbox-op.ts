@@ -49,3 +49,7 @@ export const captureTotal = async (db: D1Database, orgId: string, stamp: number)
       [orgId, stamp],
     )
   )?.n ?? 0;
+
+/** An org id already in use (a deleted sandbox's org keeps its row): a retried create must not insert it again. */
+export const orgExists = async (db: D1Database, orgId: string): Promise<boolean> =>
+  (await first(db, 'SELECT 1 AS x FROM orgs WHERE id = ?', [orgId])) !== null;

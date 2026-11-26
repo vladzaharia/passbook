@@ -1,4 +1,6 @@
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
+import { isStrongAmr } from '../../../shared/sign-in.ts';
+import { hasDeveloperAccess } from '../../../shared/spaces.ts';
 import type { AuthContext, SessionAuth } from '../../platform/auth.ts';
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
@@ -21,6 +23,9 @@ async function sessionOf(ctx: ServiceContext, opId: string): Promise<SessionAuth
   const hash = (await rowById(ctx.env.DB, opId))?.actor_session;
   const session = hash ? await resolveSessionByHash(ctx.env, ctx.clock, hash) : null;
   if (!session) throw ended();
+  // The start asked for developer access: a person taken out of the group finishes nothing.
+  if (!hasDeveloperAccess(session.roles))
+    throw new ForbiddenError('Developer access is required.', 'DEVELOPER_ACCESS_REQUIRED');
   return session;
 }
 
@@ -53,6 +58,9 @@ const retryRules =
   (first: string, check?: (ctx: ServiceContext, session: SessionAuth) => Promise<unknown>) =>
   async (ctx: ServiceContext, op: OperationDto, caller: AuthContext) => {
     const session = sessionOnly(caller);
+    // As the start route: a developer, signed in strongly.
+    if (!hasDeveloperAccess(session.roles) || !isStrongAmr(session.amr))
+      throw new ForbiddenError('Developer access is required.', 'DEVELOPER_ACCESS_REQUIRED');
     await enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${session.userId}`);
     if (check && !stepDone(op, first)) await check(ctx, session);
   };
@@ -73,20 +81,26 @@ const workflow: NonNullable<OperationRunner['workflow']> = async (ctx, instanceI
 };
 
 /** A delete relaunches the purge as its own instance, `<opId>-r<attempt>`, after the sandbox half is done again. */
-const relaunchDelete: NonNullable<OperationRunner['relaunch']> = async (ctx, op) => {
+const relaunchDelete: NonNullable<OperationRunner['relaunch']> = async (ctx, op, previous) => {
   const row = await rowById(ctx.env.DB, op.id);
-  const old = row?.workflow_instance_id;
+  const old = previous.instanceId;
   if (old && typeof ctx.env.ORG_PURGE?.get === 'function') {
+    // Only a definite "gone" or a finished instance lets a second one start; a status that cannot be read is alive.
     const state = await ctx.env.ORG_PURGE.get(old)
       .then((i) => i.status())
-      .catch(() => null);
-    if (state && !DEAD.has(state.status))
+      .catch((error: unknown) =>
+        error instanceof Error && /not[ _.]found/i.test(`${error.name} ${error.message}`)
+          ? { status: 'errored' }
+          : { status: 'unknown' },
+      );
+    if (!DEAD.has(state.status))
       throw new ConflictError('The cleanup is still running.', 'OPERATION_RUNNING');
   }
   const by = { userId: op.startedBy.id ?? '', sessionIdHash: row?.actor_session ?? '' };
   const progress = progressOf(ctx, op.id, op.attempt);
-  const orgId = (await deleteHalf(ctx, by, progress)) ?? op.target?.id;
+  const orgId = op.target?.id;
   if (!orgId) throw new AppError('SANDBOX_NOT_FOUND', 404, 'Sandbox not found.');
+  await deleteHalf(ctx, by, progress, orgId);
   const instanceId = `${op.id}-r${op.attempt}`;
   if (await startPurge(ctx, op, orgId, instanceId, true)) return { workflowInstanceId: instanceId };
   await progress.step('passes').skip();

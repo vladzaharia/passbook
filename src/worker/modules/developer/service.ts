@@ -34,6 +34,7 @@ import {
   ticketOf,
 } from './repo.ts';
 import { closeSandbox, insertSandbox } from './repo-grants.ts';
+import { orgExists } from './repo-sandbox-op.ts';
 
 /** The quickstart's blueprint, and how long its test key lives. */
 const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';
@@ -211,12 +212,17 @@ export async function provisionSandbox(
     let row = await sandboxOfUser(db, session.userId);
     // A closed sandbox is not remade; the person deletes it first (delete.ts) to start over.
     if (row?.closed_at != null) throw new ConflictError(SANDBOX_EXISTS_COPY, 'SANDBOX_EXISTS');
+    // The operation named its org: a different sandbox is a newer one, which this run did not start.
+    if (row && options.orgId && row.org_id !== options.orgId)
+      throw new ConflictError('The sandbox changed. Reload and retry.', 'SANDBOX_CONFLICT');
     const now = ctx.clock.now();
     const fresh = row === null;
     if (!row) {
       const email = await primaryEmailOf(db, session.userId);
       if (!email) throw new NotFoundError('Account not found.', 'USER_NOT_FOUND');
-      const orgId = options.orgId ?? ctx.ids.id();
+      // A retry whose sandbox was deleted meanwhile finds its org's row still there: it starts a new org.
+      const orgId =
+        options.orgId && !(await orgExists(db, options.orgId)) ? options.orgId : ctx.ids.id();
       const slug = `dev-${ctx.ids.id().replaceAll('-', '').slice(-12)}`;
       await insertSandbox(ctx, {
         id: ctx.ids.id(),

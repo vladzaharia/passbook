@@ -4,7 +4,6 @@ import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { OrgPurgeParams } from '../../workflows/org-purge.ts';
 import type { Progress } from '../operations/progress-types.ts';
-import { orgDay } from '../org-lifecycle/org-day.ts';
 import { type SandboxRow, sandboxOfUser } from './repo.ts';
 import { deletesSince } from './repo-grants-delete.ts';
 import { DELETES_PER_DAY, deleteSandbox } from './repo-grants-reset.ts';
@@ -44,9 +43,11 @@ export async function deleteHalf(
   ctx: ServiceContext,
   by: { userId: string; sessionIdHash: string },
   progress: Progress,
+  /** The org this operation is about. The person's current sandbox may be a newer one: it is not ours to delete. */
+  orgId: string,
 ): Promise<string | null> {
   const row = await sandboxOfUser(ctx.env.DB, by.userId);
-  if (!row) return null;
+  if (!row || row.org_id !== orgId) return null;
   const close = progress.step('close');
   const keyCount = await liveKeyCount(ctx.env.DB, row.org_id);
   await deleteSandbox(ctx, { id: row.id, orgId: row.org_id }, by);
@@ -60,23 +61,8 @@ export async function deleteHalf(
 }
 
 /**
- * The org purge instance of an attempt. The first uses the day's name, so the daily sweep that finds the org due
- * cannot start a second; a retry names its own (`<opId>-r<attempt>`).
- */
-export async function purgeInstanceId(
-  ctx: ServiceContext,
-  op: Pick<OperationDto, 'id' | 'attempt'>,
-  orgId: string,
-  now: number,
-): Promise<string> {
-  return op.attempt === 1
-    ? `org-purge-${orgId}-${await orgDay(ctx, orgId, now)}`
-    : `${op.id}-r${op.attempt}`;
-}
-
-/**
  * Starts the org purge for the operation: it reports `passes` and the `erase` wait, and with `finish` it also
- * ends the operation. A runner that holds a lease passes its token, so the purge's writes are the runner's own. False when this Worker has no purge Workflow (a test, a script): the caller skips the step.
+ * ends the operation. False when this Worker has no purge Workflow (a test, a script): the caller skips the step.
  * A start that fails is thrown: the operation stops on `passes` and Retry starts it again.
  */
 export async function startPurge(
@@ -85,7 +71,6 @@ export async function startPurge(
   orgId: string,
   instanceId: string,
   finish: boolean,
-  lease?: string,
 ): Promise<boolean> {
   const binding = ctx.env.ORG_PURGE;
   if (!binding) return false;
@@ -94,7 +79,6 @@ export async function startPurge(
     operationId: op.id,
     attempt: op.attempt,
     finish,
-    ...(lease ? { lease } : {}),
   };
   try {
     await binding.create({ id: instanceId, params });
@@ -103,7 +87,11 @@ export async function startPurge(
     const running =
       typeof binding.get === 'function' ? await binding.get(instanceId).catch(() => null) : null;
     if (running) return true;
-    ctx.log.warn('developer.sandbox_purge_deferred', { orgId, code: 'ORG_PURGE_START', error });
+    ctx.log.warn('developer.sandbox_purge_deferred', {
+      orgId,
+      code: 'ORG_PURGE_START',
+      cause: error instanceof Error ? error.name : 'unknown',
+    });
     throw new AppError('SANDBOX_PURGE_START', 500, 'The cleanup did not start.');
   }
   return true;

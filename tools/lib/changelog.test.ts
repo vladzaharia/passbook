@@ -273,6 +273,8 @@ describe('versionedBreaks for a session-only status', () => {
   it('refuses it by default, and when the operation has no security at all', () => {
     expect(versionedBreaks(broken, pending)).toEqual(broken);
     expect(sessionOnly({ paths: { '/a': { post: {} } } }, 'POST /a')).toBe(false);
+    // An empty requirement is anonymous access, not the session.
+    expect(sessionOnly({ paths: { '/a': { post: { security: [{}] } } } }, 'POST /a')).toBe(false);
   });
 });
 

@@ -6,15 +6,23 @@ import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { createServiceContext } from '../../platform/service-context.ts';
+import { createJobContext, createServiceContext } from '../../platform/service-context.ts';
 import { type OrgPurgeParams, runOrgPurge } from '../../workflows/org-purge.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { handleOperationRun } from '../operations/jobs.ts';
 import { kindOf } from '../operations/kinds.ts';
 import { progressOf } from '../operations/progress.ts';
 import { startOperation } from '../operations/start.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
-import { makeSandbox, settle, startAndSettle } from './sandbox-test-fixtures.ts';
+import {
+  captureQueue,
+  makeSandbox,
+  settle,
+  settleWithJobs,
+  startAndSettle,
+  startAndSettleWithJobs,
+} from './sandbox-test-fixtures.ts';
 
 /**
  * The four sandbox kinds as the page sees them: the steps and counts each reports, a stop on the exact step and
@@ -26,6 +34,9 @@ let kit: BlueprintKit;
 let app: ReturnType<typeof createApp>;
 /** What the next purge start does: run the Workflow's steps, or fail as a missing binding would. */
 let purgeStart: 'run' | 'fail' = 'run';
+const queue = captureQueue();
+const runJob = (job: { kind: 'operation.run'; operationId: string; attempt: number }) =>
+  handleOperationRun(job, createJobContext(kit.env, 'test', { clock: kit.clock }));
 const sleeping = {
   async do(_name: string, a: unknown, b?: unknown) {
     return ((typeof a === 'function' ? a : b) as () => unknown)();
@@ -43,7 +54,7 @@ beforeAll(async () => {
   kit = await blueprintKit();
   kit.env.TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
   // The retry's `operation.run` goes nowhere: a test runs the job's entry itself, on its own clock.
-  Object.assign(kit.env, { ORG_PURGE: { create: purges }, JOBS: { send: async () => {} } });
+  Object.assign(kit.env, { ORG_PURGE: { create: purges }, JOBS: queue.binding });
   (kit.env as { RL_REFRESH: unknown }).RL_REFRESH = { limit: async () => ({ success: true }) };
   app = createApp({
     stores: {
@@ -503,9 +514,15 @@ describe('sandbox.reset', () => {
 describe('sandbox.recreate', () => {
   it('runs the old sandbox’s steps, then the new one’s, and ends without a key', async () => {
     const s = await sandboxOf();
-    const op = await startAndSettle(send, s.headers, 'POST', '/developer/sandbox/recreate', {
-      turnstileToken: 'ok',
-    });
+    const op = await startAndSettleWithJobs(
+      send,
+      s.headers,
+      'POST',
+      '/developer/sandbox/recreate',
+      { turnstileToken: 'ok' },
+      queue,
+      runJob,
+    );
     expect(op).toMatchObject({
       kind: 'sandbox.recreate',
       status: 'succeeded',
@@ -545,14 +562,8 @@ describe('sandbox.recreate', () => {
     expect(step(failed, 'org')?.state).toBe('pending');
     const res = await send('POST', `/operations/${failed.id}/retry`, s.headers);
     expect(res.status, await res.clone().text()).toBe(202);
-    // The retry is a queued `operation.run`; the job's own entry runs it, as the queue would.
-    const { handleOperationRun } = await import('../operations/jobs.ts');
-    const { createJobContext } = await import('../../platform/service-context.ts');
-    await handleOperationRun(
-      { kind: 'operation.run', operationId: failed.id, attempt: 2 },
-      createJobContext(kit.env, 'test', { clock: kit.clock }),
-    );
-    const done = await get(s.headers, failed.id);
+    // The retry is a queued `operation.run`, and the purge sends another once the passes are voided.
+    const done = await settleWithJobs(send, s.headers, failed.id, queue, runJob);
     expect(done).toMatchObject({ status: 'succeeded', attempt: 2 });
     expect(done.steps.filter((x) => x.state !== 'done').map((x) => x.key)).toEqual(['erase']);
   });

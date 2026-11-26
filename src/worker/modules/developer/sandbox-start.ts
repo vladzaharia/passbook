@@ -7,7 +7,7 @@ import { runInRequest } from '../operations/jobs.ts';
 import { progressOf } from '../operations/progress.ts';
 import type { Progress } from '../operations/progress-types.ts';
 import { rowById } from '../operations/repo.ts';
-import { operationIdFor, startOperation } from '../operations/start.ts';
+import { operationIdFor, startOperationOnce } from '../operations/start.ts';
 
 export type SandboxKind =
   | 'sandbox.create'
@@ -21,8 +21,8 @@ interface Spec {
   orgId: string;
   /** The `Idempotency-Key` header: a repeat answers the first operation and starts nothing. */
   idempotencyKey: string | undefined;
-  /** A delete is its Workflow's: that instance, and no lease or backstop job. */
-  workflowInstanceId?: string;
+  /** A delete is its Workflow's: its first instance is named for the operation, and there is no lease or backstop job. */
+  workflow?: true;
   work: (op: OperationDto, progress: Progress) => Promise<void>;
 }
 
@@ -38,23 +38,39 @@ export async function startSandboxOp(
 ): Promise<OperationDto> {
   const id = spec.idempotencyKey
     ? await operationIdFor(principalOf(auth), spec.kind, spec.idempotencyKey)
-    : undefined;
-  const known = id ? await rowById(ctx.env.DB, id) : null;
+    : ctx.ids.id();
+  const known = await rowById(ctx.env.DB, id);
   if (known) return toDto(known);
-  const op = await startOperation(ctx, {
-    ...(id ? { id } : {}),
+  const { operation: op, created } = await startOperationOnce(ctx, {
+    id,
     kind: spec.kind,
     target: { type: 'sandbox', id: spec.orgId },
     actor: { type: 'user', id: auth.userId },
     session: auth.sessionId,
     subject: { userId: auth.userId },
-    ...(spec.workflowInstanceId
-      ? { workflowInstanceId: spec.workflowInstanceId }
-      : { lease: true as const }),
+    // Named for the operation and attempt: the day's sweep can never hold the same name.
+    ...(spec.workflow ? { workflowInstanceId: `${id}-r1` } : { lease: true as const }),
   });
+  // Two starts with one key race to insert: only the one that inserted runs the work.
+  if (!created) return op;
   const run = () => spec.work(op, progressOf(ctx, op.id, op.attempt));
-  if (spec.workflowInstanceId)
+  if (spec.workflow)
     ctx.waitUntil(run().catch((error) => progressOf(ctx, op.id, op.attempt).fail(error)));
   else await runInRequest(ctx, op.id, op.attempt, run);
   return op;
+}
+
+/** The operation an earlier start with this `Idempotency-Key` made, for a replay answered before any check. */
+export async function replayOf(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  kinds: readonly SandboxKind[],
+  key: string | undefined,
+): Promise<OperationDto | null> {
+  if (!key) return null;
+  for (const kind of kinds) {
+    const row = await rowById(ctx.env.DB, await operationIdFor(principalOf(auth), kind, key));
+    if (row) return toDto(row);
+  }
+  return null;
 }

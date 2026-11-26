@@ -77,3 +77,61 @@ export async function makeSandbox(
     previousKey: null,
   });
 }
+
+/** A queue binding for a test: it keeps the jobs it is sent, and `runQueued` runs them as the consumer would. */
+export function captureQueue() {
+  const jobs: { kind: string; operationId?: string; attempt?: number; delayed?: true }[] = [];
+  return {
+    jobs,
+    binding: {
+      send: async (job: (typeof jobs)[number], options?: { delaySeconds?: number }) => {
+        jobs.push({ ...job, ...(options?.delaySeconds ? { delayed: true as const } : {}) });
+      },
+    },
+  };
+}
+
+/**
+ * Settles an operation that hands on through the queue (a start over): each `operation.run` job it queues is
+ * run in place, until the operation ends. A delayed job is the backstop: a test runs that one itself.
+ */
+export async function settleWithJobs(
+  send: Send,
+  headers: Record<string, string>,
+  id: string,
+  queue: ReturnType<typeof captureQueue>,
+  run: (job: { kind: 'operation.run'; operationId: string; attempt: number }) => Promise<void>,
+): Promise<OperationDto> {
+  let done = 0;
+  for (let i = 0; i < 20; i++) {
+    const op = await settle(
+      send,
+      headers,
+      id,
+      (o) => ended(o) || queue.jobs.filter((j) => j.operationId === id && !j.delayed).length > done,
+    );
+    if (ended(op)) return op;
+    const mine = queue.jobs.filter((j) => j.operationId === id && !j.delayed);
+    for (const job of mine.slice(done)) {
+      await run({ kind: 'operation.run', operationId: id, attempt: job.attempt ?? 1 });
+    }
+    done = mine.length;
+  }
+  throw new Error('The operation did not end.');
+}
+
+/** Starts an operation and settles it through the queue. */
+export async function startAndSettleWithJobs(
+  send: Send,
+  headers: Record<string, string>,
+  method: string,
+  path: string,
+  body: unknown,
+  queue: ReturnType<typeof captureQueue>,
+  run: Parameters<typeof settleWithJobs>[4],
+): Promise<OperationDto> {
+  const res = await send(method, path, headers, body);
+  expect(res.status, await res.clone().text()).toBe(202);
+  const started = OperationSchema.parse(((await res.json()) as { operation: unknown }).operation);
+  return settleWithJobs(send, headers, started.id, queue, run);
+}
