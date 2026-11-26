@@ -86850,7 +86850,8 @@
                   "requestBody": null,
                   "responseBody": "{\"items\":[],\"nextCursor\":null}",
                   "bodiesExpireAt": 1796175300000,
-                  "bodiesRecorded": true
+                  "bodiesRecorded": true,
+                  "bodiesTruncated": false
                 }
               }
             }
@@ -91201,7 +91202,8 @@
                   "requestBody": null,
                   "responseBody": "{\"items\":[],\"nextCursor\":null}",
                   "bodiesExpireAt": 1796175300000,
-                  "bodiesRecorded": true
+                  "bodiesRecorded": true,
+                  "bodiesTruncated": false
                 }
               }
             }
