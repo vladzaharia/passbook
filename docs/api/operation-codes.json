@@ -8024,7 +8024,9 @@
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
-  "users get /": [],
+  "users get /": [
+    "UNAUTHENTICATED"
+  ],
   "users get /{id}": [
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"

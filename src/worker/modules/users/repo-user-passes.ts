@@ -20,39 +20,60 @@ export interface UserPassRow {
 /** Verified addresses only (`user_emails`); an unproven primary email is a claim, not proof. */
 export const MAX_EMAILS = 20;
 export const verifiedEmails = (db: D1Database, userId: string) =>
-  all<{ email: string }>(db, 'SELECT email FROM user_emails WHERE user_id = ? LIMIT ?', [
-    userId,
-    MAX_EMAILS,
-  ]).then((rows) => rows.map((r) => r.email));
+  all<{ email: string }>(
+    db,
+    'SELECT email FROM user_emails WHERE user_id = ? ORDER BY verified_at DESC, email LIMIT ?',
+    [userId, MAX_EMAILS + 1],
+  ).then((rows) => rows.map((r) => r.email));
 
-const FILTERS = `p.id < ?2 AND p.deleted_at IS NULL AND p.mode = 'live' AND p.test_data_quarantined = 0
-  AND o.status IN ('active', 'suspended')
-  AND (o.personal_user_id IS NULL OR o.personal_user_id = ?4)`;
+/** Rows one branch reads from its index before it stops and answers with a "more" cursor. */
+export const SCAN_CAP = 500;
+
+const INDEXED = `p.id < ?2 AND p.deleted_at IS NULL AND p.mode = 'live' AND p.test_data_quarantined = 0`;
+const UNINDEXED = `o.status IN ('active', 'suspended')
+  AND (o.personal_user_id IS NULL OR o.personal_user_id = ?2)`;
+
+export interface Branch {
+  ids: string[];
+  /** Set when the walk hit the cap with too few matches: ids below it were not read. */
+  scannedTo: string | null;
+}
 
 /**
- * The newest `limit` ids of one branch, in index order (`passes_owner_live`, `passes_waiting_live`).
- * `holder` is the owner id, or a verified address for the waiting branch. Waiting passes made by a
- * public join link are left out: anyone could have typed the address.
+ * The newest `limit` matching ids of one branch, in index order (`passes_owner_live`,
+ * `passes_waiting_live`). Only the index-covered rows are walked, at most `cap`; the org and join
+ * checks then run on those. `holder` is the owner id, or a verified address for the waiting branch.
+ * Waiting passes made by a public join link are left out: anyone could have typed the address.
  */
-export const branchIds = (
+export async function branchIds(
   db: D1Database,
   kind: 'owner' | 'waiting',
   holder: string,
   cursor: string,
   limit: number,
   viewerId: string,
-) =>
-  all<{ id: string }>(
+  cap = SCAN_CAP,
+): Promise<Branch> {
+  const scanned = await all<{ id: string }>(
+    db,
+    `SELECT p.id FROM passes p
+     WHERE ${kind === 'owner' ? 'p.owner_user_id = ?1' : 'p.owner_user_id IS NULL AND p.holder_email = ?1'}
+       AND ${INDEXED}
+     ORDER BY p.id DESC LIMIT ?3`,
+    [holder, cursor, cap],
+  );
+  if (scanned.length === 0) return { ids: [], scannedTo: null };
+  const kept = await all<{ id: string }>(
     db,
     `SELECT p.id FROM passes p JOIN orgs o ON o.id = p.org_id
-     WHERE ${
-       kind === 'owner'
-         ? 'p.owner_user_id = ?1'
-         : 'p.owner_user_id IS NULL AND p.holder_email = ?1 AND NOT EXISTS (SELECT 1 FROM join_marks j WHERE j.pass_id = p.id)'
-     } AND ${FILTERS}
-     ORDER BY p.id DESC LIMIT ?3`,
-    [holder, cursor, limit, viewerId],
+     WHERE p.id IN (SELECT value FROM json_each(?1)) AND ${UNINDEXED.replace('?2', '?3')}
+       ${kind === 'waiting' ? 'AND NOT EXISTS (SELECT 1 FROM join_marks j WHERE j.pass_id = p.id)' : ''}
+     ORDER BY p.id DESC LIMIT ?2`,
+    [JSON.stringify(scanned.map((r) => r.id)), limit, viewerId],
   );
+  const capped = scanned.length === cap && kept.length < limit;
+  return { ids: kept.map((r) => r.id), scannedTo: capped ? (scanned.at(-1)?.id ?? null) : null };
+}
 
 /** The page's rows, read by id only: the correlated lookups run for at most `limit` passes. */
 export const passesByIds = (db: D1Database, ids: readonly string[]) =>

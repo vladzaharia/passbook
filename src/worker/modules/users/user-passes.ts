@@ -5,7 +5,7 @@ import { resolveOrgTimeZone } from '../../../shared/time-zone.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { viewerOrgName } from '../orgs/personal-names.ts';
-import { branchIds, passesByIds, verifiedEmails } from './repo-user-passes.ts';
+import { branchIds, MAX_EMAILS, passesByIds, verifiedEmails } from './repo-user-passes.ts';
 import { requireUser } from './service.ts';
 
 type Page = z.infer<typeof UserPassListSchema>;
@@ -24,13 +24,24 @@ export async function listPassesOfUser(
   const db = ctx.env.DB;
   const cursor = query.cursor ?? '~';
   const want = query.limit + 1;
-  const emails = await verifiedEmails(db, userId);
+  const found = await verifiedEmails(db, userId);
+  if (found.length > MAX_EMAILS)
+    ctx.log.warn('users.passes_email_cap', { code: 'USER_PASSES_EMAIL_CAP', userId });
+  const emails = found.slice(0, MAX_EMAILS);
   // Each branch's newest `want` hold the newest `want` overall; at most (1 + emails) x want ids.
   const branches = await Promise.all([
     branchIds(db, 'owner', userId, cursor, want, actorId),
     ...emails.map((email) => branchIds(db, 'waiting', email, cursor, want, actorId)),
   ]);
-  const ids = [...new Set(branches.flat().map((r) => r.id))].sort().reverse().slice(0, want);
+  // A capped branch is complete only above where it stopped; the page ends there and the cursor
+  // resumes from it.
+  const floor = branches.reduce<string | null>(
+    (low, b) => (b.scannedTo && (!low || b.scannedTo > low) ? b.scannedTo : low),
+    null,
+  );
+  const all = [...new Set(branches.flatMap((b) => b.ids))].sort().reverse();
+  const ids = (floor ? all.filter((id) => id > floor) : all).slice(0, want);
+  const more = ids.length > query.limit;
   const rows = ids.length ? await passesByIds(db, ids) : [];
   const page = rows.slice(0, query.limit);
   await recordAudit(ctx, {
@@ -61,6 +72,6 @@ export async function listPassesOfUser(
       issuedAt: r.created_at,
       updatedAt: r.modified_at,
     })),
-    nextCursor: ids.length > query.limit ? (page.at(-1)?.id ?? null) : null,
+    nextCursor: more ? (page.at(-1)?.id ?? null) : floor,
   };
 }

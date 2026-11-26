@@ -11,6 +11,7 @@ import {
 } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { harness, type TestHarness } from '../auth/test-support.ts';
+import { branchIds } from './repo-user-passes.ts';
 
 let h: TestHarness;
 const f = () => fixtures(h.env, h.clock);
@@ -235,7 +236,7 @@ describe('GET /api/v1/users/{id}/passes', () => {
     expect(holding).toEqual({ [owned.id]: 'owned', [waiting.id]: 'waiting' });
   });
 
-  it('counts only active wallet copies', async () => {
+  it('does not count a ready wallet instance as a copy', async () => {
     const a = await admin();
     const person = await makeUser(f());
     const org = await makeOrg(f());
@@ -244,9 +245,25 @@ describe('GET /api/v1/users/{id}/passes', () => {
       template: makeTemplate().resolved,
       ownerUserId: person.id,
     });
-    const before = await read(person.id, a.headers);
-    expect(before.items[0]?.channels).toEqual([]);
-    expect(pass.id).toBe(before.items[0]?.id);
+    const now = h.clock.now();
+    // Issuance guards are not under test: only how the list reads a row.
+    const guards = await h.env.DB.prepare(
+      "SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'wallet_provider_instances'",
+    ).all<{ name: string }>();
+    for (const g of guards.results)
+      await h.env.DB.prepare(`DROP TRIGGER IF EXISTS ${g.name}`).run();
+    const instance = (provider: string, lifecycle: string) =>
+      run(
+        h.env.DB,
+        `INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, credential_generation,
+           lifecycle, desired_version, created_at, updated_at)
+         VALUES (?, ?, ?, 'live', ?, 1, ?, 0, ?, ?)`,
+        [crypto.randomUUID(), pass.id, org.id, provider, lifecycle, now, now],
+      );
+    // A ready instance has saved nothing yet.
+    await instance('google', 'ready');
+    const body = await read(person.id, a.headers);
+    expect(body.items[0]?.channels).toEqual([]);
   });
 
   it('pages exactly across the owner and address branches, within the indexes', async () => {
@@ -308,6 +325,15 @@ describe('GET /api/v1/users/{id}/passes', () => {
       roles: ['admin', 'user'],
       amr: 'magic_link',
     });
+    // Inside the grace window requireAdmin lets it through; the strict guard is what refuses.
+    await run(h.env.DB, 'INSERT INTO console_email_grace (user_id, created_at) VALUES (?, 1)', [
+      person.id,
+    ]);
+    await run(
+      h.env.DB,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'auth.consoleEmailUntil', ?, 1)",
+      [String(h.clock.now() + 86_400_000)],
+    );
     const res = await h.call(`/api/v1/users/${person.id}/passes`, { headers: s.headers });
     expect([401, 403]).toContain(res.status);
   });
@@ -322,5 +348,65 @@ describe('GET /api/v1/users/{id}/passes', () => {
       headers: a.headers,
     });
     expect(res.status).toBe(422);
+  });
+
+  it('leaves out deleted, test and closed-org passes from the user page, and its counts match', async () => {
+    const a = await admin();
+    const person = await makeUser(f());
+    const tpl = makeTemplate().resolved;
+    const org = await makeOrg(f());
+    const closed = await makeOrg(f());
+    const personal = await makeOrg(f(), { personalUserId: (await makeUser(f())).id });
+    const live = await makePass(f(), { orgId: org.id, template: tpl, ownerUserId: person.id });
+    const gone = await makePass(f(), { orgId: org.id, template: tpl, ownerUserId: person.id });
+    await makePass(f(), { orgId: org.id, template: tpl, ownerUserId: person.id, mode: 'test' });
+    await makePass(f(), { orgId: closed.id, template: tpl, ownerUserId: person.id });
+    await makePass(f(), { orgId: personal.id, template: tpl, ownerUserId: person.id });
+    await run(h.env.DB, 'UPDATE passes SET deleted_at = 1 WHERE id = ?', [gone.id]);
+    await run(h.env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [closed.id]);
+    const detail = (await (
+      await h.call(`/api/v1/users/${person.id}`, { headers: a.headers })
+    ).json()) as { passes: { id: string }[]; passCount: number };
+    expect(detail.passes.map((p) => p.id)).toEqual([live.id]);
+    expect(detail.passCount).toBe(1);
+    const list = (await (
+      await h.call('/api/v1/users?limit=200', { headers: a.headers })
+    ).json()) as {
+      items: { id: string; passCount: number }[];
+    };
+    expect(list.items.find((u) => u.id === person.id)?.passCount).toBe(1);
+  });
+
+  it('stops the walk at its cap and resumes from a cursor', async () => {
+    const person = await makeUser(f());
+    const tpl = makeTemplate().resolved;
+    const org = await makeOrg(f());
+    const closed = await makeOrg(f());
+    const live = await makePass(f(), { orgId: org.id, template: tpl, ownerUserId: person.id });
+    const hidden: string[] = [];
+    for (let i = 0; i < 4; i++)
+      hidden.push(
+        (await makePass(f(), { orgId: closed.id, template: tpl, ownerUserId: person.id })).id,
+      );
+    await run(h.env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [closed.id]);
+    // Ids are not in creation order here: walk in id order.
+    const order = [live.id, ...hidden].sort().reverse();
+    const liveAt = order.indexOf(live.id);
+    const cap = Math.max(liveAt, 1);
+    const first = await branchIds(h.env.DB, 'owner', person.id, '~', 2, 'viewer', cap);
+    if (liveAt === 0) {
+      expect(first.ids).toEqual([live.id]);
+      return;
+    }
+    expect(first.ids).toEqual([]);
+    expect(first.scannedTo).toBe(order[cap - 1]);
+    let cursor = first.scannedTo ?? '';
+    const found: string[] = [];
+    for (let n = 0; n < 5 && cursor; n++) {
+      const next = await branchIds(h.env.DB, 'owner', person.id, cursor, 2, 'viewer', cap);
+      found.push(...next.ids);
+      cursor = next.scannedTo ?? '';
+    }
+    expect(found).toEqual([live.id]);
   });
 });

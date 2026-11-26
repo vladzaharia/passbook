@@ -54,12 +54,17 @@ function methodsOf(facts: repo.UserFacts | undefined): SignInMethod[] {
   return out;
 }
 
-export async function listUsers(ctx: ServiceContext, query: z.infer<typeof UserListQuerySchema>) {
+export async function listUsers(
+  ctx: ServiceContext,
+  query: z.infer<typeof UserListQuerySchema>,
+  viewerId = '',
+) {
   const rows = await repo.listUsers(ctx.env.DB, query);
   const page = rows.slice(0, query.limit);
   const facts = await repo.factsFor(
     ctx.env.DB,
     page.map((r) => r.id),
+    viewerId,
   );
   return {
     items: page.map(
@@ -93,9 +98,9 @@ export async function getUserDetail(
     repo.identitiesOf(db, id),
     repo.listRecentSessions(db, id),
     repo.ownedPasses(db, id, viewerId),
-    repo.ownedPassCount(db, id),
+    repo.ownedPassCount(db, id, viewerId),
     repo.recentAudit(db, id),
-    repo.factsFor(db, [id]),
+    repo.factsFor(db, [id], viewerId),
   ]);
   return {
     ...toUser(user),

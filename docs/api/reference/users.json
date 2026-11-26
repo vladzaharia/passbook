@@ -61,7 +61,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-42d7551c0b15",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -140,7 +139,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-9f970a1ed4fc",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -202,7 +200,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-f8ee46f35f20",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -264,7 +261,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-c427695ea03d",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"

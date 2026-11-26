@@ -67,7 +67,7 @@ export const UserDetailSchema = UserSchema.extend({
     z.object({
       id: IdSchema,
       /** Deprecated: never sent (holder personalization). Read passes from GET /users/{id}/passes. */
-      title: z.string().optional(),
+      title: z.string().optional().meta({ deprecated: true }),
       templateName: z.string(),
       orgName: z.string(),
       status: PassStatusSchema,

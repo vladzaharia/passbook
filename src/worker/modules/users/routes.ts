@@ -47,7 +47,7 @@ register(
     query: UserListQuerySchema,
     response: UserListSchema,
   },
-  async (c) => c.json(await listUsers(serviceContext(c), c.req.valid('query'))),
+  async (c) => c.json(await listUsers(serviceContext(c), c.req.valid('query'), currentUserId(c))),
 );
 register(
   usersRoutes,
