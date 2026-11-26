@@ -52,7 +52,7 @@
       {
         "key": "flight",
         "label": "Flight",
-        "value": "WA100"
+        "value": "ZA1100"
       },
       {
         "changeMessage": "Your gate is now %@.",
@@ -111,7 +111,7 @@
     }
   ],
   "semantics": {
-    "airlineCode": "WA",
+    "airlineCode": "ZA1",
     "departureAirportCode": "SFO",
     "departureCityName": "San Francisco",
     "departureGate": "B12",

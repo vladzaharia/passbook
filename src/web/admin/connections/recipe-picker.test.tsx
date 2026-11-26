@@ -8,6 +8,7 @@ const STRIPE = {
   id: 'stripe-subscriptions',
   label: 'Stripe subscriptions',
   pasteSecret: true,
+  entitled: true,
   outputFields: { status: { type: 'string' }, plan: { type: 'string' } },
   mapping: { tier: { from: '/plan' } },
   holderEmailField: '/email',
@@ -22,6 +23,7 @@ const CAL = {
 };
 const WEBHOOK = {
   ...CONNECTOR,
+  entitled: true,
   type: 'webhook-push',
   displayName: 'Webhook push',
   description: 'Your system sends signed records.',
@@ -46,14 +48,14 @@ type User = ReturnType<typeof userEvent.setup>;
 const next = (user: User) =>
   user.click(screen.getByRole('button', { name: /^(Next|Create( without mappings)?)$/ }));
 
-function setup(posts: Record<string, unknown>[]) {
+function setup(posts: Record<string, unknown>[], connector: Record<string, unknown> = WEBHOOK) {
   return renderApp('/admin/connections/new', {
     session: 'admin',
     memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
     handlers: {
       '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
-      '/api/v1/connectors': () => json({ items: [WEBHOOK], nextCursor: null }),
-      '/api/v1/connectors/webhook-push': () => json(WEBHOOK),
+      '/api/v1/connectors': () => json({ items: [connector], nextCursor: null }),
+      '/api/v1/connectors/webhook-push': () => json(connector),
       '/api/v1/templates': () => json({ items: [], nextCursor: null }),
       '/api/v1/connections': (_u: URL, init?: RequestInit) => {
         if ((init?.method ?? 'GET') === 'POST') {
@@ -128,5 +130,19 @@ describe('webhook sender picker', () => {
     expect(posts[0]?.webhookSecret).toMatch(/^[0-9a-f]{64}$/);
     expect(await screen.findByText(/subscribe to: BOOKING_CREATED/)).toBeInTheDocument();
     expect(screen.getByText('Signing secret')).toBeInTheDocument();
+  });
+
+  it('hides the senders a plan leaves out, Custom included', async () => {
+    const user = userEvent.setup();
+    await setup([], {
+      ...WEBHOOK,
+      entitled: false,
+      recipes: [STRIPE, { ...CAL, entitled: false }],
+    });
+    await user.click(await screen.findByRole('radio', { name: /Webhook push/ }));
+    await next(user);
+    expect(await screen.findByRole('radio', { name: /Stripe subscriptions/ })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: /Custom/ })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /Cal.com/ })).toBeNull();
   });
 });

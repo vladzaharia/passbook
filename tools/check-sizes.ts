@@ -6,7 +6,16 @@ const root = resolve(import.meta.dirname, '..');
 export const MAX_LINES = 330;
 
 /** Files allowed over the limit. Every entry names an owner and a reason. */
-export const ALLOWLIST: Record<string, { owner: string; reason: string }> = {};
+export const ALLOWLIST: Record<string, { owner: string; reason: string }> = {
+  'test/helpers/factories.ts': {
+    owner: 'foundation',
+    reason: 'one factory per table, split when next touched',
+  },
+  'test/helpers/fake-auth.ts': {
+    owner: 'foundation',
+    reason: 'four lines over, split when next touched',
+  },
+};
 
 const TEST_FILE = /\.test\.tsx?$/;
 /** Modules that exist for tests; production code must not import them. */
@@ -68,11 +77,15 @@ export function boundaryImports(rel: string, text: string): string[] {
 
 if (import.meta.main) {
   const problems: string[] = [];
-  for (const file of sources(join(root, 'src'))) {
+  for (const file of ['src', 'workers', 'test/helpers'].flatMap((d) => [
+    ...sources(join(root, d)),
+  ])) {
     const rel = relative(root, file);
     const text = readFileSync(file, 'utf8');
     const long = tooLong(rel, text);
     if (long) problems.push(long);
+    // Test helpers may import test-only modules; the boundaries are for production code.
+    if (rel.startsWith('test/')) continue;
     problems.push(...testOnlyImports(rel, text));
     problems.push(...boundaryImports(rel, text));
   }

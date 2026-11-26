@@ -182,6 +182,25 @@ __all__ = [
     "ConnectionsCreateResult",
     "ConnectionsDeleteResponse",
     "ConnectionsDeleteResult",
+    "ConnectionsFilesApplyResponse",
+    "ConnectionsFilesApplyResponseFile",
+    "ConnectionsFilesApplyResponseFileSkipped",
+    "ConnectionsFilesApplyResult",
+    "ConnectionsFilesDeleteResponse",
+    "ConnectionsFilesDeleteResult",
+    "ConnectionsFilesListItem",
+    "ConnectionsFilesListItemSkipped",
+    "ConnectionsFilesListResponse",
+    "ConnectionsFilesListResponseItemsItem",
+    "ConnectionsFilesListResponseItemsItemSkipped",
+    "ConnectionsFilesListResult",
+    "ConnectionsFilesUploadBody",
+    "ConnectionsFilesUploadParams",
+    "ConnectionsFilesUploadResponse",
+    "ConnectionsFilesUploadResponse1",
+    "ConnectionsFilesUploadResponse1Skipped",
+    "ConnectionsFilesUploadResponse2",
+    "ConnectionsFilesUploadResult",
     "ConnectionsListItem",
     "ConnectionsListItemMappingValue",
     "ConnectionsListItemMappingValueTransform",
@@ -245,6 +264,24 @@ __all__ = [
     "ConnectionsUpdateResponseMappingValueTransform",
     "ConnectionsUpdateResponseVoidWhenItem",
     "ConnectionsUpdateResult",
+    "ConnectionsUploadsCreateBody",
+    "ConnectionsUploadsCreateParams",
+    "ConnectionsUploadsCreateResponse",
+    "ConnectionsUploadsCreateResponseColumnsItem",
+    "ConnectionsUploadsCreateResponsePreview",
+    "ConnectionsUploadsCreateResult",
+    "ConnectionsUploadsDeleteResponse",
+    "ConnectionsUploadsDeleteResult",
+    "ConnectionsUploadsRetrieveResponse",
+    "ConnectionsUploadsRetrieveResponseColumnsItem",
+    "ConnectionsUploadsRetrieveResponsePreview",
+    "ConnectionsUploadsRetrieveResult",
+    "ConnectionsUploadsUpdateBody",
+    "ConnectionsUploadsUpdateParams",
+    "ConnectionsUploadsUpdateResponse",
+    "ConnectionsUploadsUpdateResponseColumnsItem",
+    "ConnectionsUploadsUpdateResponsePreview",
+    "ConnectionsUploadsUpdateResult",
     "ConnectionsWebhookFailuresListItem",
     "ConnectionsWebhookFailuresListResponse",
     "ConnectionsWebhookFailuresListResponseItemsItem",
@@ -293,6 +330,22 @@ __all__ = [
     "DeliveriesListResponse",
     "DeliveriesListResponseItemsItem",
     "DeliveriesListResult",
+    "DeveloperInvitationsCreateBody",
+    "DeveloperInvitationsCreateParams",
+    "DeveloperInvitationsCreateResponse",
+    "DeveloperInvitationsCreateResult",
+    "DeveloperInvitationsListItem",
+    "DeveloperInvitationsListResponse",
+    "DeveloperInvitationsListResponseItemsItem",
+    "DeveloperInvitationsListResult",
+    "DeveloperInvitationsRevokeResponse",
+    "DeveloperInvitationsRevokeResult",
+    "DevelopersListItem",
+    "DevelopersListResponse",
+    "DevelopersListResponseItemsItem",
+    "DevelopersListResult",
+    "DevelopersRemoveResponse",
+    "DevelopersRemoveResult",
     "EmailFailedEvent",
     "EmailFailedEventData",
     "EventPage",
@@ -2088,7 +2141,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write", "audit:read"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write", "audit:read", "members:read", "members:write"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -2789,6 +2842,7 @@ class ConnectionsCreateParams(_Model):
     intervalSeconds: int | None = None
     maxConcurrency: int | None = None
     requestsPerMinute: int | None = None
+    fileId: str | None = None
 
 class ConnectionsCreateParamsMappingValue(_Model):
     from_: str = _Field(alias="from")
@@ -2853,6 +2907,122 @@ class ConnectionsCreateResponseVoidWhenItem(_Model):
 
 class ConnectionsDeleteResponse(_Model):
     ok: _Literal[True]
+
+class ConnectionsFilesApplyResponse(_Model):
+    file: ConnectionsFilesApplyResponseFile
+    runId: str
+    workflowInstanceId: str
+
+class ConnectionsFilesApplyResponseFile(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesApplyResponseFileSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesApplyResponseFileSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class ConnectionsFilesListItem(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesListItemSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesListItemSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesListResponse(_Model):
+    items: _List[ConnectionsFilesListResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsFilesListResponseItemsItem(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesListResponseItemsItemSkipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+
+class ConnectionsFilesListResponseItemsItemSkipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesUploadParams(_Model):
+    name: str
+    content: str
+    encoding: _Literal["utf8", "base64"] | str
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsFilesUploadResponse1(_Model):
+    id: str
+    connectionId: str
+    revision: int
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheet: str | None
+    bytes: int
+    rows: int
+    skipped: ConnectionsFilesUploadResponse1Skipped
+    diff: _Dict[str, _Any] | None
+    applied: bool
+    createdBy: str | None
+    createdByName: str | None
+    createdAt: int
+    expiresAt: int | None
+    supersededAt: int | None
+    unchanged: _Literal[False]
+    runId: str | None = None
+
+class ConnectionsFilesUploadResponse1Skipped(_Model):
+    noId: int
+    duplicate: int
+
+class ConnectionsFilesUploadResponse2(_Model):
+    unchanged: _Literal[True]
 
 class ConnectionsListItem(_Model):
     id: str
@@ -3182,6 +3352,7 @@ class ConnectionsTestConfigParams(_Model):
     voidWhen: _List[ConnectionsTestConfigParamsVoidWhenItem] | None = None
     autoCreate: bool | None = None
     defaultTemplateId: str | None = None
+    fileId: str | None = None
 
 class ConnectionsTestConfigParamsMappingValue(_Model):
     from_: str = _Field(alias="from")
@@ -3334,6 +3505,107 @@ class ConnectionsUpdateResponseVoidWhenItem(_Model):
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
+class ConnectionsUploadsCreateParams(_Model):
+    name: str
+    content: str
+    encoding: _Literal["utf8", "base64"] | str
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsUploadsCreateResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsCreateResponseColumnsItem]
+    preview: ConnectionsUploadsCreateResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsCreateResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsCreateResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
+
+class ConnectionsUploadsDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class ConnectionsUploadsRetrieveResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsRetrieveResponseColumnsItem]
+    preview: ConnectionsUploadsRetrieveResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsRetrieveResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsRetrieveResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
+
+class ConnectionsUploadsUpdateParams(_Model):
+    sheet: str | None = None
+    recordsPointer: str | None = None
+
+class ConnectionsUploadsUpdateResponse(_Model):
+    id: str
+    orgId: str
+    state: _Literal["draft", "pending", "current", "superseded", "expired", "discarded"] | str
+    name: str
+    format: _Literal["csv", "xlsx", "json", "ndjson"] | str
+    sheets: _List[str]
+    sheet: str | None
+    recordsPointer: str | None
+    bytes: int
+    rows: int
+    columns: _List[ConnectionsUploadsUpdateResponseColumnsItem]
+    preview: ConnectionsUploadsUpdateResponsePreview
+    idCandidates: _List[str]
+    createdAt: int
+    expiresAt: int | None
+
+class ConnectionsUploadsUpdateResponseColumnsItem(_Model):
+    pointer: str
+    label: str
+    type: _Literal["text", "number", "boolean", "date", "email", "url", "list"] | str
+    samples: _List[str]
+    blanks: int
+    duplicates: int
+
+class ConnectionsUploadsUpdateResponsePreview(_Model):
+    header: _List[str]
+    rows: _List[_List[str]]
+
 class ConnectionsWebhookFailuresListItem(_Model):
     id: str
     eventRef: str
@@ -3373,12 +3645,15 @@ class ConnectorsListItem(_Model):
     version: int
     displayName: str
     description: str | None = None
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
+    order: int | None = None
     capabilities: ConnectorsListItemCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
     outputFields: _Dict[str, ConnectorsListItemOutputFieldsValue]
     defaults: ConnectorsListItemDefaults
     recipes: _List[ConnectorsListItemRecipesItem] | None = None
+    entitled: bool
 
 class ConnectorsListItemCapabilities(_Model):
     poll: bool
@@ -3386,6 +3661,7 @@ class ConnectorsListItemCapabilities(_Model):
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
+    upload: bool | None = None
 
 class ConnectorsListItemDefaults(_Model):
     intervalSeconds: int
@@ -3400,7 +3676,9 @@ class ConnectorsListItemOutputFieldsValue(_Model):
 class ConnectorsListItemRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
+    entitled: bool
     outputFields: _Dict[str, ConnectorsListItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListItemRecipesItemMappingValue]
     holderEmailField: str
@@ -3432,12 +3710,15 @@ class ConnectorsListResponseItemsItem(_Model):
     version: int
     displayName: str
     description: str | None = None
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
+    order: int | None = None
     capabilities: ConnectorsListResponseItemsItemCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
     outputFields: _Dict[str, ConnectorsListResponseItemsItemOutputFieldsValue]
     defaults: ConnectorsListResponseItemsItemDefaults
     recipes: _List[ConnectorsListResponseItemsItemRecipesItem] | None = None
+    entitled: bool
 
 class ConnectorsListResponseItemsItemCapabilities(_Model):
     poll: bool
@@ -3445,6 +3726,7 @@ class ConnectorsListResponseItemsItemCapabilities(_Model):
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
+    upload: bool | None = None
 
 class ConnectorsListResponseItemsItemDefaults(_Model):
     intervalSeconds: int
@@ -3459,7 +3741,9 @@ class ConnectorsListResponseItemsItemOutputFieldsValue(_Model):
 class ConnectorsListResponseItemsItemRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
+    entitled: bool
     outputFields: _Dict[str, ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListResponseItemsItemRecipesItemMappingValue]
     holderEmailField: str
@@ -3487,12 +3771,15 @@ class ConnectorsRetrieveResponse(_Model):
     version: int
     displayName: str
     description: str | None = None
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
+    order: int | None = None
     capabilities: ConnectorsRetrieveResponseCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
     outputFields: _Dict[str, ConnectorsRetrieveResponseOutputFieldsValue]
     defaults: ConnectorsRetrieveResponseDefaults
     recipes: _List[ConnectorsRetrieveResponseRecipesItem] | None = None
+    entitled: bool
 
 class ConnectorsRetrieveResponseCapabilities(_Model):
     poll: bool
@@ -3500,6 +3787,7 @@ class ConnectorsRetrieveResponseCapabilities(_Model):
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
+    upload: bool | None = None
 
 class ConnectorsRetrieveResponseDefaults(_Model):
     intervalSeconds: int
@@ -3514,7 +3802,9 @@ class ConnectorsRetrieveResponseOutputFieldsValue(_Model):
 class ConnectorsRetrieveResponseRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
+    entitled: bool
     outputFields: _Dict[str, ConnectorsRetrieveResponseRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsRetrieveResponseRecipesItemMappingValue]
     holderEmailField: str
@@ -3609,6 +3899,70 @@ class DeliveriesListResponseItemsItem(_Model):
     errorCode: str | None
     createdAt: int
     finishedAt: int | None
+
+class DeveloperInvitationsCreateParams(_Model):
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
+
+class DeveloperInvitationsCreateResponse(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    state: _Literal["pending", "revoked", "expired"] | str
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+
+class DeveloperInvitationsListItem(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    state: _Literal["pending", "revoked", "expired"] | str
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+
+class DeveloperInvitationsListResponse(_Model):
+    items: _List[DeveloperInvitationsListResponseItemsItem]
+    nextCursor: str | None
+
+class DeveloperInvitationsListResponseItemsItem(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    state: _Literal["pending", "revoked", "expired"] | str
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+
+class DeveloperInvitationsRevokeResponse(_Model):
+    ok: _Literal[True]
+
+class DevelopersListItem(_Model):
+    userId: str
+    name: str | None
+    email: str | None
+    since: int
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None
+
+class DevelopersListResponse(_Model):
+    items: _List[DevelopersListResponseItemsItem]
+    nextCursor: str | None
+    available: bool
+    limit: int | None
+
+class DevelopersListResponseItemsItem(_Model):
+    userId: str
+    name: str | None
+    email: str | None
+    since: int
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None
+
+class DevelopersRemoveResponse(_Model):
+    ok: _Literal[True]
 
 class EmailFailedEvent(_Model):
     id: str
@@ -5988,7 +6342,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
@@ -6005,7 +6359,7 @@ class OrgsPlanRetrieveResponseFeaturesItem(_Model):
     level: str | None
 
 class OrgsPlanRetrieveResponseLimitsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     limit: int | None
     used: int | None
 
@@ -8632,7 +8986,7 @@ class PlatformOrgsEntitlementsRetrieveResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsRetrieveResponsePresetsItem]
 
 class PlatformOrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -8665,7 +9019,7 @@ class PlatformOrgsEntitlementsUpdateResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsUpdateResponsePresetsItem]
 
 class PlatformOrgsEntitlementsUpdateResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -13796,6 +14150,18 @@ ConnectionsCreateResult = ConnectionsCreateResponse
 
 ConnectionsDeleteResult = ConnectionsDeleteResponse
 
+ConnectionsFilesApplyResult = ConnectionsFilesApplyResponse
+
+ConnectionsFilesDeleteResult = ConnectionsFilesDeleteResponse
+
+ConnectionsFilesListResult = ConnectionsFilesListResponse
+
+ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
+
+ConnectionsFilesUploadResponse = ConnectionsFilesUploadResponse1 | ConnectionsFilesUploadResponse2
+
+ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
+
 ConnectionsListResult = ConnectionsListResponse
 
 ConnectionsPreviewResult = ConnectionPreview
@@ -13822,6 +14188,18 @@ ConnectionsUpdateBody = ConnectionsUpdateParams
 
 ConnectionsUpdateResult = ConnectionsUpdateResponse
 
+ConnectionsUploadsCreateBody = ConnectionsUploadsCreateParams
+
+ConnectionsUploadsCreateResult = ConnectionsUploadsCreateResponse
+
+ConnectionsUploadsDeleteResult = ConnectionsUploadsDeleteResponse
+
+ConnectionsUploadsRetrieveResult = ConnectionsUploadsRetrieveResponse
+
+ConnectionsUploadsUpdateBody = ConnectionsUploadsUpdateParams
+
+ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
+
 ConnectionsWebhookFailuresListResult = ConnectionsWebhookFailuresListResponse
 
 ConnectionsWebhookFailuresReplayResult = ConnectionsWebhookFailuresReplayResponse
@@ -13833,6 +14211,18 @@ ConnectorsListResult = ConnectorsListResponse
 ConnectorsRetrieveResult = ConnectorsRetrieveResponse
 
 DeliveriesListResult = DeliveriesListResponse
+
+DeveloperInvitationsCreateBody = DeveloperInvitationsCreateParams
+
+DeveloperInvitationsCreateResult = DeveloperInvitationsCreateResponse
+
+DeveloperInvitationsListResult = DeveloperInvitationsListResponse
+
+DeveloperInvitationsRevokeResult = DeveloperInvitationsRevokeResponse
+
+DevelopersListResult = DevelopersListResponse
+
+DevelopersRemoveResult = DevelopersRemoveResponse
 
 EventsListResult = EventPage
 

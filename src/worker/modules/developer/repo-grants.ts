@@ -92,6 +92,8 @@ export async function closeSandbox(
   ctx: ServiceContext,
   orgId: string,
   by?: { userId: string; sessionIdHash: string },
+  /** Why a close with no session closed: idle (the default) or by the platform (`admin`). */
+  reason: 'idle' | 'admin' = 'idle',
 ): Promise<boolean> {
   const now = ctx.clock.now();
   const checks = by
@@ -123,7 +125,7 @@ export async function closeSandbox(
   // The idle sweep revokes too: a reopen must not bring back a key nobody has watched for a month.
   g.update('api_keys', { set: { revoked_at: now }, where: { org_id: orgId, revoked_at: null } });
   g.update('developer_sandboxes', {
-    set: { closed_at: now, close_reason: by ? 'user' : 'idle' },
+    set: { closed_at: now, close_reason: by ? 'user' : reason },
     where: by
       ? { org_id: orgId, user_id: by.userId, closed_at: null }
       : { org_id: orgId, closed_at: null },
@@ -135,7 +137,7 @@ export async function closeSandbox(
     action: 'developer_sandbox.close',
     targetType: 'org',
     targetId: orgId,
-    detail: { reason: by ? 'user' : 'idle' },
+    detail: { reason: by ? 'user' : reason },
   });
   const [closed] = await g.commit();
   return (closed?.results.length ?? 0) > 0;

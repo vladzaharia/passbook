@@ -101,8 +101,17 @@ function detect(text: string): ParsedCsv['delimiter'] {
 /** Inverse of the export guard: `'=x` was `=x`. */
 const unguard = (v: string) => (/^'(?:[ \t\r\n]*[=+\-@]|[\t\r])/.test(v) ? v.slice(1) : v);
 
-function records(text: string, delimiter: string): string[][] {
+/** A row wider than this is refused while tokenising, whatever the caller's column limit. */
+const HARD_COLUMNS = 1000;
+
+/** Stands for every blank line, so numbering is kept without storing a row for each. */
+const BLANK: string[] = [''];
+
+function records(text: string, delimiter: string, maxRows: number, maxColumns: number): string[][] {
+  const widest = Math.min(HARD_COLUMNS, Math.max(maxColumns * 10, 100));
   const out: string[][] = [];
+  const rawCeiling = maxRows * 2 + 10_000;
+  let filled = 0;
   let row: string[] = [];
   let cell = '';
   let i = 0;
@@ -125,17 +134,34 @@ function records(text: string, delimiter: string): string[][] {
       }
     } else if (ch === delimiter) {
       row.push(cell);
+      if (row.length > widest)
+        throw new CsvError('IMPORT_TOO_MANY_COLUMNS', `Use at most ${maxColumns} columns.`);
       cell = '';
       i++;
     } else if (ch === '\n' || ch === '\r') {
       row.push(cell);
-      out.push(row);
+      if (row.every((c) => c.trim() === '')) out.push(BLANK);
+      else {
+        out.push(row);
+        // The header is row one. Blank rows do not count against the cap, only against the raw ceiling.
+        if (++filled > maxRows + 1)
+          throw new CsvError('IMPORT_TOO_MANY_ROWS', `Use at most ${maxRows} rows.`);
+      }
+      if (out.length > rawCeiling)
+        throw new CsvError('IMPORT_TOO_MANY_ROWS', `Use at most ${maxRows} rows.`);
       row = [];
       cell = '';
       i += ch === '\r' && text[i + 1] === '\n' ? 2 : 1;
     } else {
-      cell += ch;
-      i++;
+      // One slice per run: appending character by character builds a rope that costs ~35x the text.
+      let end = i + 1;
+      while (end < n) {
+        const c = text[end];
+        if (c === delimiter || c === '\n' || c === '\r') break;
+        end++;
+      }
+      cell += text.slice(i, end);
+      i = end;
     }
   }
   if (cell !== '' || row.length) {
@@ -155,7 +181,7 @@ export function parseCsv(input: string | Uint8Array, limits: Partial<CsvLimits> 
   const text = decode(input, maxBytes);
   if (text.trim() === '') throw new CsvError('IMPORT_FILE_EMPTY', 'The file is empty.');
   const delimiter = detect(text);
-  const all = records(text, delimiter);
+  const all = records(text, delimiter, maxRows, maxColumns);
   const first = all[0] ?? [];
   const header = first.map((h) => unguard(h).trim());
   if (header.length > maxColumns) {

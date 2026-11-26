@@ -31,12 +31,13 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/auth/repo-sessions.ts': {
     reason:
-      "sign-in creates the session (no principal exists yet); idle slide is on the allowlist; sign-out revokes the caller's own session",
+      "sign-in creates the session (no principal exists yet); idle slide is on the allowlist; sign-out revokes the caller's own session; the Polaris ID sync ends sessions whose role the owner took away (a system job, no principal)",
     writes: [
       'sessions:52e6852de8c6',
       'sessions:b0a06a56c10d',
       'sessions:2c6fe2b1d5d5',
       'sessions:d0c2564ed9b5',
+      'sessions:d1f3be895ab6',
     ],
   },
   'src/worker/modules/auth/repo.ts': {
@@ -280,13 +281,19 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'retention_receipts:726f943d12d9',
     ],
   },
+  'src/worker/modules/keys/repo-rewrap-captures.ts': {
+    reason:
+      'cron keys.rewrap replaces the packed envelope header of a captured test email in place (the body is never read), a compare-and-set on the header it read; platform job with no tenant principal (docs/design/authority-epochs.md, 7.2)',
+    writes: ['captured_emails:511fe05ea909'],
+  },
   'src/worker/modules/keys/repo-rewrap.ts': {
     reason:
       'cron keys.rewrap moves an envelope to the newest KEK (kek_version and wrapped_dek only), a compare-and-set on the envelope it read; platform job with no tenant principal, and no authority column changes (docs/design/authority-epochs.md, 7.2)',
     writes: [
-      'captured_emails:511fe05ea909',
       'connection_webhook_retention:84821c1d359b',
+      'nfc_tag_admin_keys:b7a64cd1c448',
       'nfc_tag_keys:2c11078e8a24',
+      'nfc_tag_programs:b2f73549fcdc',
       'nfc_tag_sun:7326dc55a42b',
       'wallet_credential_versions:7751be830869',
       'webhook_endpoint_secrets:b1f2bc9c7907',

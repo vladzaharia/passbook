@@ -85,7 +85,7 @@ export const OrgInvitationSchema = z.object({
 export type OrgInvitation = z.infer<typeof OrgInvitationSchema>;
 export const OrgInvitationListSchema = pageOf(OrgInvitationSchema);
 
-const InvitationEmailSchema = z
+export const InvitationEmailSchema = z
   .string()
   .transform(normalizeEmail)
   .refine((email) => strictEmail(email) !== null, 'Enter a valid email address.');

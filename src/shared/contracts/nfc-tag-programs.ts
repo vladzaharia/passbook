@@ -35,6 +35,7 @@ export const TAG_PROGRAM_ERROR_CODES = [
   'TAG_NOT_424',
   'TAG_KNOWN',
   'TAG_NOT_GENUINE',
+  'TAG_PROGRAM_BUSY',
   'TAG_PROGRAM_EXPIRED',
   'TAG_PROGRAM_FAILED',
   'TAG_PROGRAM_RATE_LIMITED',
@@ -108,12 +109,35 @@ export const TagProgramResultSchema = z.strictObject({
   enrollmentId: IdSchema.optional(),
 });
 
+/** The reasons a programmed tag is left a spare: what a pass, a person or a tag type refuses. `TAG_BIND_REFUSED` is any other. */
+export const TAG_PROGRAM_BIND_REFUSALS = [
+  'PASS_NOT_FOUND',
+  'TAG_ASSIGN_FORBIDDEN',
+  'TAG_NO_ACCOUNT',
+  'TAG_HOLDER_CHANGED',
+  'TAG_PASS_REMOVED',
+  'TAG_PASS_VOIDED',
+  'TAG_PASS_EXPIRED',
+  'TAG_ASSURANCE_LOW',
+  'TAG_TYPE_NOT_FOUND',
+  'TAG_TYPE_ARCHIVED',
+  'TAG_TYPE_SYSTEM',
+  'TAG_TYPE_CHOOSE',
+  'TAG_TYPE_MISMATCH',
+  'TAG_USE_MISMATCH',
+  'TAG_TYPE_SCOPE',
+  'TAG_TYPE_LIMIT',
+  'TAG_BIND_REFUSED',
+] as const;
+export const TagProgramBindRefusalSchema = z.enum(TAG_PROGRAM_BIND_REFUSALS);
+export type TagProgramBindRefusal = z.infer<typeof TagProgramBindRefusalSchema>;
+
 export const TagProgramDoneSchema = z.object({
   state: TagProgramStateSchema,
   tag: z.object({ id: IdSchema, hint: z.string().regex(/^[0-9A-F]{4}$/) }).nullable(),
   binding: TagBindingSchema.nullable(),
   /** Why the tag was set up but not assigned. */
-  refusal: TagProgramErrorCodeSchema.nullable(),
+  refusal: TagProgramBindRefusalSchema.nullable(),
 });
 
 export const TagProgramAbortWhySchema = z.enum(['lost', 'cancelled', 'timeout']);

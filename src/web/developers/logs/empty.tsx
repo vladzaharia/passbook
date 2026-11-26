@@ -18,15 +18,31 @@ interface FirstCallProps {
   origin: string;
   /** The sandbox has a key to call with; without one the card says so, once, and links to make one. */
   hasKey: boolean;
-  /** Calls exist from the portal (Run here, its own reads): offer them. */
-  onPortal?: () => void;
+  /** Calls exist from the portal (Run here, its own reads): how many, and the way to show them. */
+  portal?: { count: number; show: () => void };
+}
+
+/** Calls exist, all from the portal and hidden by default: say so, and show them in one tap. */
+function HiddenCalls({ count, show }: { count: number; show: () => void }) {
+  return (
+    <section className="card logs-first" aria-labelledby="logs-first-t">
+      <Buddy mood="curious" size="sm" scene="inspect" prop={<LogArt size="sm" />} />
+      <h2 id="logs-first-t" className="h2">
+        {E.hidden(count)}
+      </h2>
+      <button type="button" className="btn outline" onClick={show}>
+        {E.showHidden}
+      </button>
+    </section>
+  );
 }
 
 /**
  * Nothing logged yet: the buddy looks over the empty log, and the card holds the one thing to do next, the call
  * itself ready to copy, or the way to a key when there is none.
  */
-function FirstCall({ origin, hasKey, onPortal }: FirstCallProps) {
+function FirstCall({ origin, hasKey, portal }: FirstCallProps) {
+  if (portal) return <HiddenCalls {...portal} />;
   return (
     <section className="card logs-first" aria-labelledby="logs-first-t">
       <Buddy mood="curious" size="sm" scene="inspect" prop={<LogArt size="sm" />} />
@@ -55,11 +71,6 @@ function FirstCall({ origin, hasKey, onPortal }: FirstCallProps) {
         <a className="btn outline" href={PATHS.console}>
           {E.console}
         </a>
-        {onPortal ? (
-          <button type="button" className="btn ghost" onClick={onPortal}>
-            {E.portal}
-          </button>
-        ) : null}
       </div>
     </section>
   );

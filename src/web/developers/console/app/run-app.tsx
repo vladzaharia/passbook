@@ -108,7 +108,13 @@ function fromHash(index: RunIndex): { item: RunIndexItem | null; prefill: Prefil
   const { id, prefill } = parseHash(location.hash);
   for (const g of index.groups)
     for (const i of g.items) if (i.id === id) return { item: i, prefill };
-  return { item: index.groups[0]?.items[0] ?? null, prefill: null };
+  return { item: safeStart(index), prefill: null };
+}
+
+/** With no link to one, the console opens on a read: the first GET in reference order, never a write. */
+export function safeStart(index: RunIndex): RunIndexItem | null {
+  for (const g of index.groups) for (const i of g.items) if (i.method === 'get') return i;
+  return null;
 }
 
 /** The full-page console: a picker beside the console for the chosen operation. */

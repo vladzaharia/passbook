@@ -1319,6 +1319,204 @@
   }
  },
  {
+  "id": "connections.postConnectionsUploads",
+  "call": "connections.uploads.create",
+  "http": "POST",
+  "path": "/api/v1/connections/uploads",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "name": "x",
+   "content": "x",
+   "encoding": "utf8"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheets": [
+    "x"
+   ],
+   "sheet": "x",
+   "recordsPointer": "x",
+   "bytes": 0,
+   "rows": 0,
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "type": "text",
+     "samples": [
+      "x"
+     ],
+     "blanks": 0,
+     "duplicates": 0
+    }
+   ],
+   "preview": {
+    "header": [
+     "x"
+    ],
+    "rows": [
+     [
+      "x"
+     ]
+    ]
+   },
+   "idCandidates": [
+    "x"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "connections.getConnectionsUploadsByFileId",
+  "call": "connections.uploads.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connections/uploads/{fileId}",
+  "pathParams": [
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheets": [
+    "x"
+   ],
+   "sheet": "x",
+   "recordsPointer": "x",
+   "bytes": 0,
+   "rows": 0,
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "type": "text",
+     "samples": [
+      "x"
+     ],
+     "blanks": 0,
+     "duplicates": 0
+    }
+   ],
+   "preview": {
+    "header": [
+     "x"
+    ],
+    "rows": [
+     [
+      "x"
+     ]
+    ]
+   },
+   "idCandidates": [
+    "x"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "connections.patchConnectionsUploadsByFileId",
+  "call": "connections.uploads.update",
+  "http": "PATCH",
+  "path": "/api/v1/connections/uploads/{fileId}",
+  "pathParams": [
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheets": [
+    "x"
+   ],
+   "sheet": "x",
+   "recordsPointer": "x",
+   "bytes": 0,
+   "rows": 0,
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "type": "text",
+     "samples": [
+      "x"
+     ],
+     "blanks": 0,
+     "duplicates": 0
+    }
+   ],
+   "preview": {
+    "header": [
+     "x"
+    ],
+    "rows": [
+     [
+      "x"
+     ]
+    ]
+   },
+   "idCandidates": [
+    "x"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "connections.deleteConnectionsUploadsByFileId",
+  "call": "connections.uploads.delete",
+  "http": "DELETE",
+  "path": "/api/v1/connections/uploads/{fileId}",
+  "pathParams": [
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
   "id": "connections.getConnectionsById",
   "call": "connections.retrieve",
   "http": "GET",
@@ -1475,6 +1673,217 @@
   "cursor": null,
   "result": {
    "ok": true
+  }
+ },
+ {
+  "id": "connections.getConnectionsByIdFiles",
+  "call": "connections.files.list",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/files",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "connectionId": "x",
+     "revision": 0,
+     "state": "draft",
+     "name": "x",
+     "format": "csv",
+     "sheet": "x",
+     "bytes": 0,
+     "rows": 0,
+     "skipped": {
+      "noId": 0,
+      "duplicate": 0
+     },
+     "diff": {
+      "added": 0,
+      "changed": 0,
+      "removed": 0,
+      "examples": {
+       "added": [
+        "x"
+       ],
+       "changed": [
+        "x"
+       ],
+       "removed": [
+        "x"
+       ]
+      }
+     },
+     "applied": false,
+     "createdBy": "x",
+     "createdByName": "x",
+     "createdAt": 0,
+     "expiresAt": 0,
+     "supersededAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdFiles",
+  "call": "connections.files.upload",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/files",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "name": "x",
+   "content": "x",
+   "encoding": "utf8"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "connectionId": "x",
+   "revision": 0,
+   "state": "draft",
+   "name": "x",
+   "format": "csv",
+   "sheet": "x",
+   "bytes": 0,
+   "rows": 0,
+   "skipped": {
+    "noId": 0,
+    "duplicate": 0
+   },
+   "diff": {
+    "added": 0,
+    "changed": 0,
+    "removed": 0,
+    "examples": {
+     "added": [
+      "x"
+     ],
+     "changed": [
+      "x"
+     ],
+     "removed": [
+      "x"
+     ]
+    }
+   },
+   "applied": false,
+   "createdBy": "x",
+   "createdByName": "x",
+   "createdAt": 0,
+   "expiresAt": 0,
+   "supersededAt": 0,
+   "unchanged": false
+  }
+ },
+ {
+  "id": "connections.deleteConnectionsByIdFilesByFileId",
+  "call": "connections.files.delete",
+  "http": "DELETE",
+  "path": "/api/v1/connections/{id}/files/{fileId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdFilesByFileIdApply",
+  "call": "connections.files.apply",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/files/{fileId}/apply",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "fileId",
+    "py": "file_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "file": {
+    "id": "x",
+    "connectionId": "x",
+    "revision": 0,
+    "state": "draft",
+    "name": "x",
+    "format": "csv",
+    "sheet": "x",
+    "bytes": 0,
+    "rows": 0,
+    "skipped": {
+     "noId": 0,
+     "duplicate": 0
+    },
+    "diff": {
+     "added": 0,
+     "changed": 0,
+     "removed": 0,
+     "examples": {
+      "added": [
+       "x"
+      ],
+      "changed": [
+       "x"
+      ],
+      "removed": [
+       "x"
+      ]
+     }
+    },
+    "applied": false,
+    "createdBy": "x",
+    "createdByName": "x",
+    "createdAt": 0,
+    "expiresAt": 0,
+    "supersededAt": 0
+   },
+   "runId": "x",
+   "workflowInstanceId": "x"
   }
  },
  {
@@ -1851,7 +2260,8 @@
       "maxConcurrency": 0,
       "requestsPerMinute": 0,
       "timeoutMs": 0
-     }
+     },
+     "entitled": false
     }
    ],
    "nextCursor": null
@@ -1891,7 +2301,8 @@
     "maxConcurrency": 0,
     "requestsPerMinute": 0,
     "timeoutMs": 0
-   }
+   },
+   "entitled": false
   }
  },
  {
@@ -3115,11 +3526,17 @@
   }
  },
  {
-  "id": "operations.getOperations",
-  "call": "operations.list",
+  "id": "developer-invitations.getOrgsByIdDeveloperInvitations",
+  "call": "developer_invitations.list",
   "http": "GET",
-  "path": "/api/v1/operations",
-  "pathParams": [],
+  "path": "/api/v1/orgs/{id}/developer-invitations",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
   "query": [],
   "binary": false,
   "idempotent": false,
@@ -3129,65 +3546,84 @@
    "items": [
     {
      "id": "x",
-     "kind": "x",
-     "status": "queued",
-     "title": "x",
-     "text": "x",
      "orgId": "x",
-     "mode": "live",
-     "target": {
-      "type": "x",
-      "id": "x"
-     },
-     "step": "x",
-     "steps": [
-      {
-       "key": "x",
-       "label": "x",
-       "state": "pending",
-       "done": 0,
-       "total": 0,
-       "detail": "x",
-       "until": 0,
-       "waitingReason": "blocked",
-       "group": "x",
-       "startedAt": 0,
-       "finishedAt": 0
-      }
+     "email": "x",
+     "roles": [
+      "org_admin"
      ],
-     "attempt": 0,
-     "cancelable": false,
-     "cancelRequested": false,
-     "startedBy": {
-      "type": "user",
-      "id": "x"
-     },
+     "state": "pending",
      "createdAt": 0,
-     "startedAt": 0,
-     "updatedAt": 0,
-     "finishedAt": 0,
-     "error": {
-      "code": "x",
-      "message": "x",
-      "step": "x",
-      "retryable": false
-     },
-     "result": {
-      "href": "x",
-      "ids": {}
-     },
-     "revision": 0,
-     "pollAfterMs": 0
+     "expiresAt": 0,
+     "revokedAt": 0
     }
    ],
    "nextCursor": null
   }
  },
  {
-  "id": "operations.getOperationsById",
-  "call": "operations.retrieve",
+  "id": "developer-invitations.postOrgsByIdDeveloperInvitations",
+  "call": "developer_invitations.create",
+  "http": "POST",
+  "path": "/api/v1/orgs/{id}/developer-invitations",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "email": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "email": "x",
+   "roles": [
+    "org_admin"
+   ],
+   "state": "pending",
+   "createdAt": 0,
+   "expiresAt": 0,
+   "revokedAt": 0
+  }
+ },
+ {
+  "id": "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId",
+  "call": "developer_invitations.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/orgs/{id}/developer-invitations/{invitationId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "invitationId",
+    "py": "invitation_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "developer-invitations.getOrgsByIdDevelopers",
+  "call": "developers.list",
   "http": "GET",
-  "path": "/api/v1/operations/{id}",
+  "path": "/api/v1/orgs/{id}/developers",
   "pathParams": [
    {
     "name": "id",
@@ -3199,69 +3635,38 @@
   "binary": false,
   "idempotent": false,
   "raw": false,
-  "cursor": null,
+  "cursor": "cursor",
   "result": {
-   "id": "x",
-   "kind": "x",
-   "status": "queued",
-   "title": "x",
-   "text": "x",
-   "orgId": "x",
-   "mode": "live",
-   "target": {
-    "type": "x",
-    "id": "x"
-   },
-   "step": "x",
-   "steps": [
+   "items": [
     {
-     "key": "x",
-     "label": "x",
-     "state": "pending",
-     "done": 0,
-     "total": 0,
-     "detail": "x",
-     "until": 0,
-     "waitingReason": "blocked",
-     "group": "x",
-     "startedAt": 0,
-     "finishedAt": 0
+     "userId": "x",
+     "name": "x",
+     "email": "x",
+     "since": 0,
+     "roles": [
+      "org_admin"
+     ]
     }
    ],
-   "attempt": 0,
-   "cancelable": false,
-   "cancelRequested": false,
-   "startedBy": {
-    "type": "user",
-    "id": "x"
-   },
-   "createdAt": 0,
-   "startedAt": 0,
-   "updatedAt": 0,
-   "finishedAt": 0,
-   "error": {
-    "code": "x",
-    "message": "x",
-    "step": "x",
-    "retryable": false
-   },
-   "result": {
-    "href": "x",
-    "ids": {}
-   },
-   "revision": 0,
-   "pollAfterMs": 0
+   "nextCursor": null,
+   "available": false,
+   "limit": 0
   }
  },
  {
-  "id": "operations.postOperationsByIdCancel",
-  "call": "operations.cancel",
-  "http": "POST",
-  "path": "/api/v1/operations/{id}/cancel",
+  "id": "developer-invitations.deleteOrgsByIdDevelopersByUserId",
+  "call": "developers.remove",
+  "http": "DELETE",
+  "path": "/api/v1/orgs/{id}/developers/{userId}",
   "pathParams": [
    {
     "name": "id",
     "py": "id",
+    "integer": false
+   },
+   {
+    "name": "userId",
+    "py": "user_id",
     "integer": false
    }
   ],
@@ -3271,126 +3676,7 @@
   "raw": false,
   "cursor": null,
   "result": {
-   "id": "x",
-   "kind": "x",
-   "status": "queued",
-   "title": "x",
-   "text": "x",
-   "orgId": "x",
-   "mode": "live",
-   "target": {
-    "type": "x",
-    "id": "x"
-   },
-   "step": "x",
-   "steps": [
-    {
-     "key": "x",
-     "label": "x",
-     "state": "pending",
-     "done": 0,
-     "total": 0,
-     "detail": "x",
-     "until": 0,
-     "waitingReason": "blocked",
-     "group": "x",
-     "startedAt": 0,
-     "finishedAt": 0
-    }
-   ],
-   "attempt": 0,
-   "cancelable": false,
-   "cancelRequested": false,
-   "startedBy": {
-    "type": "user",
-    "id": "x"
-   },
-   "createdAt": 0,
-   "startedAt": 0,
-   "updatedAt": 0,
-   "finishedAt": 0,
-   "error": {
-    "code": "x",
-    "message": "x",
-    "step": "x",
-    "retryable": false
-   },
-   "result": {
-    "href": "x",
-    "ids": {}
-   },
-   "revision": 0,
-   "pollAfterMs": 0
-  }
- },
- {
-  "id": "operations.postOperationsByIdRetry",
-  "call": "operations.retry",
-  "http": "POST",
-  "path": "/api/v1/operations/{id}/retry",
-  "pathParams": [
-   {
-    "name": "id",
-    "py": "id",
-    "integer": false
-   }
-  ],
-  "query": [],
-  "binary": false,
-  "idempotent": true,
-  "raw": false,
-  "cursor": null,
-  "result": {
-   "id": "x",
-   "kind": "x",
-   "status": "queued",
-   "title": "x",
-   "text": "x",
-   "orgId": "x",
-   "mode": "live",
-   "target": {
-    "type": "x",
-    "id": "x"
-   },
-   "step": "x",
-   "steps": [
-    {
-     "key": "x",
-     "label": "x",
-     "state": "pending",
-     "done": 0,
-     "total": 0,
-     "detail": "x",
-     "until": 0,
-     "waitingReason": "blocked",
-     "group": "x",
-     "startedAt": 0,
-     "finishedAt": 0
-    }
-   ],
-   "attempt": 0,
-   "cancelable": false,
-   "cancelRequested": false,
-   "startedBy": {
-    "type": "user",
-    "id": "x"
-   },
-   "createdAt": 0,
-   "startedAt": 0,
-   "updatedAt": 0,
-   "finishedAt": 0,
-   "error": {
-    "code": "x",
-    "message": "x",
-    "step": "x",
-    "retryable": false
-   },
-   "result": {
-    "href": "x",
-    "ids": {}
-   },
-   "revision": 0,
-   "pollAfterMs": 0
+   "ok": true
   }
  },
  {

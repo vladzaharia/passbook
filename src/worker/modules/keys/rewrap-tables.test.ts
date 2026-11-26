@@ -123,6 +123,11 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
     calls: { encryptSecret: 2 },
     tables: ['nfc_tag_keys', 'nfc_tag_sun'],
   },
+  // The intended and admin keys are places; the session is ephemeral (a minute, never rewrapped).
+  'modules/nfc/program-seal.ts': {
+    calls: { encryptSecret: 3 },
+    tables: ['nfc_tag_programs', 'nfc_tag_admin_keys'],
+  },
   'modules/passes/create-records.ts': { calls: { sealPart: 2 }, tables: SEALS },
   'modules/passes/create-row.ts': { calls: { issueToken: 2 }, tables: SEALS },
   'modules/passes/credential-transfer.ts': {

@@ -58,6 +58,7 @@ function limitKind(from: number | null, to: number | null): ImpactKind {
   return to < from ? 'down' : 'up';
 }
 
+/** A shorter connector allow-list stops new connections only: existing REST connections keep running. */
 function listKind(key: EntitlementKey, from: string[], to: string[]): ImpactKind {
   const def = entitlementDef(key);
   if (def.kind !== 'list') return 'changed';

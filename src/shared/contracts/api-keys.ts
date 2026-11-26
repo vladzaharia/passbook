@@ -38,11 +38,14 @@ export const MINTABLE_SCOPES = [
   'nfc:keys',
   'api-keys:write',
   'audit:read',
+  'members:read',
+  'members:write',
 ] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
-/** Scopes that mint or reset device credentials: named in `scopes` only, never through a role or a parent key, live and one org. */
+/** Scopes that mint or reset device credentials, or invite people into developer access: named in `scopes` only, never through a role or a parent key, live and one org. */
 export const CREDENTIAL_SCOPES = [
   'scanning:admin',
   'nfc:keys',
+  'members:write',
 ] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
 /** Review and release run in Test only (a Live key may only request review): a Live key never holds these, named or through a role. */
 export const TEST_ONLY_SCOPES = [

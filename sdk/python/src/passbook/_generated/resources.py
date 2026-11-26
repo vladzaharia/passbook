@@ -357,6 +357,89 @@ class BundlesResource:
         return self._core.request("POST", f"/api/v1/bundles/{_p(id)}/send-email", body=body, idempotent=True, result=m.BundlesSendEmailResult, **opts)
 
 
+class ConnectionsUploadsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        body: m.ConnectionsUploadsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsCreateResult:
+        """Upload a file as a draft `POST /api/v1/connections/uploads`"""
+        return self._core.request("POST", "/api/v1/connections/uploads", body=body, result=m.ConnectionsUploadsCreateResult, **opts)
+
+    def delete(
+        self,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsDeleteResult:
+        """Discard a draft upload `DELETE /api/v1/connections/uploads/{fileId}`"""
+        return self._core.request("DELETE", f"/api/v1/connections/uploads/{_p(file_id)}", result=m.ConnectionsUploadsDeleteResult, **opts)
+
+    def retrieve(
+        self,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsRetrieveResult:
+        """Read a draft upload `GET /api/v1/connections/uploads/{fileId}`"""
+        return self._core.request("GET", f"/api/v1/connections/uploads/{_p(file_id)}", result=m.ConnectionsUploadsRetrieveResult, **opts)
+
+    def update(
+        self,
+        file_id: str,
+        body: m.ConnectionsUploadsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsUploadsUpdateResult:
+        """Read a draft again with another sheet or records path `PATCH /api/v1/connections/uploads/{fileId}`"""
+        return self._core.request("PATCH", f"/api/v1/connections/uploads/{_p(file_id)}", body=body, result=m.ConnectionsUploadsUpdateResult, **opts)
+
+
+class ConnectionsFilesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def apply(
+        self,
+        id: str,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsFilesApplyResult:
+        """Apply a pending revision and sync `POST /api/v1/connections/{id}/files/{fileId}/apply`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}/apply", result=m.ConnectionsFilesApplyResult, **opts)
+
+    def delete(
+        self,
+        id: str,
+        file_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsFilesDeleteResult:
+        """Discard a pending revision `DELETE /api/v1/connections/{id}/files/{fileId}`"""
+        return self._core.request("DELETE", f"/api/v1/connections/{_p(id)}/files/{_p(file_id)}", result=m.ConnectionsFilesDeleteResult, **opts)
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ConnectionsFilesListItem]:
+        """Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`"""
+        return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/files", query={"cursor": cursor, "limit": limit}, result=m.ConnectionsFilesListResult, cursor_param="cursor", **opts)
+
+    def upload(
+        self,
+        id: str,
+        body: m.ConnectionsFilesUploadBody | _Dict[str, _Any],
+        *,
+        apply: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsFilesUploadResult:
+        """Upload a new revision of a connection file `POST /api/v1/connections/{id}/files`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/files", body=body, query={"apply": apply}, result=m.ConnectionsFilesUploadResult, **opts)
+
+
 class ConnectionsRunsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -409,6 +492,8 @@ class ConnectionsWebhookFailuresResource:
 class ConnectionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.uploads = ConnectionsUploadsResource(core)
+        self.files = ConnectionsFilesResource(core)
         self.runs = ConnectionsRunsResource(core)
         self.webhook_failures = ConnectionsWebhookFailuresResource(core)
 
@@ -868,47 +953,61 @@ class NfcResource:
         self.tag_types = NfcTagTypesResource(core)
 
 
-class OperationsResource:
+class DeveloperInvitationsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
 
-    def cancel(
+    def create(
         self,
         id: str,
+        body: m.DeveloperInvitationsCreateBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
-    ) -> m.OperationsCancelResult:
-        """Stop an operation: a queued one at once, a running one at its next safe point `POST /api/v1/operations/{id}/cancel`"""
-        return self._core.request("POST", f"/api/v1/operations/{_p(id)}/cancel", result=m.OperationsCancelResult, **opts)
+    ) -> m.DeveloperInvitationsCreateResult:
+        """Invite a developer `POST /api/v1/orgs/{id}/developer-invitations`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/developer-invitations", body=body, result=m.DeveloperInvitationsCreateResult, **opts)
 
     def list(
         self,
+        id: str,
         *,
-        active: _Literal["true", "false"] | None = None,
-        mine: _Literal["true", "false"] | None = None,
-        kind: str | None = None,
-        target: str | None = None,
         cursor: str | None = None,
-        limit: int | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.OperationsListItem]:
-        """List operations: started by you, in an organization you read, or platform-wide for admins `GET /api/v1/operations`"""
-        return self._core.paginate("GET", "/api/v1/operations", query={"active": active, "mine": mine, "kind": kind, "target": target, "cursor": cursor, "limit": limit}, result=m.OperationsListResult, cursor_param="cursor", **opts)
+    ) -> Page[m.DeveloperInvitationsListItem]:
+        """List developer invitations `GET /api/v1/orgs/{id}/developer-invitations`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/developer-invitations", query={"cursor": cursor}, result=m.DeveloperInvitationsListResult, cursor_param="cursor", **opts)
 
-    def retrieve(
+    def revoke(
         self,
         id: str,
+        invitation_id: str,
         **opts: _Unpack[RequestOptions],
-    ) -> m.OperationsRetrieveResult:
-        """Read an operation. An unchanged revision answers 304 when If-None-Match carries its ETag `GET /api/v1/operations/{id}`"""
-        return self._core.request("GET", f"/api/v1/operations/{_p(id)}", result=m.OperationsRetrieveResult, **opts)
+    ) -> m.DeveloperInvitationsRevokeResult:
+        """Revoke a developer invitation `DELETE /api/v1/orgs/{id}/developer-invitations/{invitationId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/developer-invitations/{_p(invitation_id)}", result=m.DeveloperInvitationsRevokeResult, **opts)
 
-    def retry(
+
+class DevelopersResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
         self,
         id: str,
+        *,
+        cursor: str | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> m.OperationsRetryResult:
-        """Retry a failed operation under the same id with the next attempt `POST /api/v1/operations/{id}/retry`"""
-        return self._core.request("POST", f"/api/v1/operations/{_p(id)}/retry", idempotent=True, result=m.OperationsRetryResult, **opts)
+    ) -> Page[m.DevelopersListItem]:
+        """List the developers an organization vouches for `GET /api/v1/orgs/{id}/developers`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/developers", query={"cursor": cursor}, result=m.DevelopersListResult, cursor_param="cursor", **opts)
+
+    def remove(
+        self,
+        id: str,
+        user_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.DevelopersRemoveResult:
+        """Remove a developer `DELETE /api/v1/orgs/{id}/developers/{userId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/developers/{_p(user_id)}", result=m.DevelopersRemoveResult, **opts)
 
 
 class OrgsEntitlementsResource:
@@ -2654,7 +2753,8 @@ class Resources:
         self.holders = HoldersResource(core)
         self.message_rules = MessageRulesResource(core)
         self.nfc = NfcResource(core)
-        self.operations = OperationsResource(core)
+        self.developer_invitations = DeveloperInvitationsResource(core)
+        self.developers = DevelopersResource(core)
         self.orgs = OrgsResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)

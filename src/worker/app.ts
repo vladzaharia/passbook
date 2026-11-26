@@ -12,6 +12,7 @@ import { bundlePublicRoutes } from './modules/bundles/public-routes.ts';
 import { bundlesRoutes } from './modules/bundles/routes.ts';
 import { connectionsRoutes, connectorsRoutes, hooksRoutes } from './modules/connections/routes.ts';
 import { deliveryRoutes } from './modules/delivery/routes.ts';
+import { developerOrgRoutes } from './modules/dev-access/routes-org.ts';
 import { developerPortalRoutes } from './modules/developer/portal.ts';
 import { requestLog } from './modules/developer/request-log.ts';
 import { developerRoutes } from './modules/developer/routes.ts';
@@ -171,6 +172,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/developer', developerRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
+  app.route('/api/v1/orgs', developerOrgRoutes);
   app.route('/api/v1/orgs', passSetupRoutes);
   app.route('/api/v1/orgs', passSetupWriteRoutes);
   app.route('/api/v1/orgs', orgsRoutes);

@@ -14,6 +14,7 @@ const CREATES = ['BOOKING_CREATED', 'BOOKING_PAID', 'BOOKING_RESCHEDULED'];
 export const calcomBookings: Recipe = {
   id: 'calcom-bookings',
   label: 'Cal.com bookings',
+  category: 'bookings',
   verifier: 'calcom',
   topicHeader: null,
   idPrefix: 'calcom',

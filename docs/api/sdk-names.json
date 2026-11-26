@@ -319,6 +319,26 @@
     "resource": "deliveries",
     "method": "list"
   },
+  "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId": {
+    "resource": "developerInvitations",
+    "method": "revoke"
+  },
+  "developer-invitations.deleteOrgsByIdDevelopersByUserId": {
+    "resource": "developers",
+    "method": "remove"
+  },
+  "developer-invitations.getOrgsByIdDeveloperInvitations": {
+    "resource": "developerInvitations",
+    "method": "list"
+  },
+  "developer-invitations.getOrgsByIdDevelopers": {
+    "resource": "developers",
+    "method": "list"
+  },
+  "developer-invitations.postOrgsByIdDeveloperInvitations": {
+    "resource": "developerInvitations",
+    "method": "create"
+  },
   "developer.deleteSandbox": {
     "resource": "developer.sandbox",
     "method": "close",
@@ -2464,5 +2484,37 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
+  },
+  "connections.postConnectionsUploads": {
+    "resource": "connections.uploads",
+    "method": "create"
+  },
+  "connections.getConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "retrieve"
+  },
+  "connections.patchConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "update"
+  },
+  "connections.deleteConnectionsUploadsByFileId": {
+    "resource": "connections.uploads",
+    "method": "delete"
+  },
+  "connections.postConnectionsByIdFiles": {
+    "resource": "connections.files",
+    "method": "upload"
+  },
+  "connections.getConnectionsByIdFiles": {
+    "resource": "connections.files",
+    "method": "list"
+  },
+  "connections.postConnectionsByIdFilesByFileIdApply": {
+    "resource": "connections.files",
+    "method": "apply"
+  },
+  "connections.deleteConnectionsByIdFilesByFileId": {
+    "resource": "connections.files",
+    "method": "delete"
   }
 }

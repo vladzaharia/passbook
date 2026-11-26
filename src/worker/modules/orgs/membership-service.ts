@@ -316,7 +316,8 @@ export async function acceptOrgInvitation(
       id,
     ),
   ]);
-  if (result[0]?.meta.changes !== 1 || result[1]?.meta.changes !== 1) throw invalidLink();
+  // D1 counts rows a trigger writes (the Polaris ID dirty marks), so a write is `>= 1`, never `=== 1`.
+  if ((result[0]?.meta.changes ?? 0) < 1 || (result[1]?.meta.changes ?? 0) < 1) throw invalidLink();
   const membership = await getOrgAccess(ctx, auth.userId, invitation.org_id);
   if (!membership || membership.id !== id) throw changed();
   return membership;

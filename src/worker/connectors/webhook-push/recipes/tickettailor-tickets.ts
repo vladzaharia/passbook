@@ -8,6 +8,7 @@ const TOPICS = ['ISSUED_TICKET.CREATED', 'ISSUED_TICKET.UPDATED'];
 export const tickettailorTickets: Recipe = {
   id: 'tickettailor-tickets',
   label: 'Ticket Tailor tickets',
+  category: 'bookings',
   verifier: 'tickettailor',
   topicHeader: null,
   idPrefix: 'tickettailor',
