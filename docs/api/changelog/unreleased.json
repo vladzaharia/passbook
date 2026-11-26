@@ -80,6 +80,15 @@
     "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
   },
   {
+    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in.",
+    "unversioned": true
+  },
+  {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
     "class": "additive",
     "operationId": "identities.deleteIdentitiesByIdPushKey",
@@ -176,6 +185,38 @@
     "note": "Deletes a saved column mapping by name."
   },
   {
+    "key": "DELETE /api/v1/platform/idp/groups/{key} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKey",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}",
+    "change": "new operation",
+    "note": "Delete a custom Polaris ID group PassBook made, when it has no members, rules or other apps. A platform admin session, signed in with Polaris ID recently."
+  },
+  {
+    "key": "DELETE /api/v1/platform/idp/groups/{key}/members/{id} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}/members/{id}",
+    "change": "new operation",
+    "note": "Remove a manual member from a Polaris ID group."
+  },
+  {
+    "key": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id}",
+    "change": "new operation",
+    "note": "End an org rule on a Polaris ID group; its members leave the group."
+  },
+  {
+    "key": "DELETE /api/v1/platform/invitations/{id} new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.deletePlatformInvitationsById",
+    "op": "DELETE /api/v1/platform/invitations/{id}",
+    "change": "new operation",
+    "note": "Revoke a platform invitation: its unused signup links are withdrawn."
+  },
+  {
     "key": "DELETE /api/v1/scan/draft new operation",
     "class": "additive",
     "operationId": "scan.deleteScanDraft",
@@ -264,6 +305,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "DELETE /api/v1/users/{id}/holds/{role} new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.deleteUsersByIdHoldsByRole",
+    "op": "DELETE /api/v1/users/{id}/holds/{role}",
+    "change": "new operation",
+    "note": "Restore a role the Polaris ID owner paused. Answers 202 with an operation (idp.restore). Platform admin session only."
+  },
+  {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeys",
@@ -272,12 +321,28 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
@@ -294,6 +359,14 @@
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -720,6 +793,14 @@
     "note": "A sender's webhook setup guide as data: steps, topics, secret origin and fix lines. Steps with verified: false may differ at the sender."
   },
   {
+    "key": "GET /api/v1/developer/access 200.invitedBy: field added",
+    "class": "additive",
+    "operationId": "developer.getAccess",
+    "op": "GET /api/v1/developer/access",
+    "change": "200.invitedBy: field added",
+    "note": "With access none: the orgs that invited a verified address of this account as a developer."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
@@ -752,6 +833,14 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "GET /api/v1/developer/home new operation",
     "class": "additive",
     "operationId": "developer.getHome",
@@ -774,6 +863,14 @@
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -1472,6 +1569,14 @@
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/memberships 200.items[].accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.getOrgsByIdMemberships",
+    "op": "GET /api/v1/orgs/{id}/memberships",
+    "change": "200.items[].accessPaused: field added",
+    "note": "True while the Polaris ID owner has paused the member's console access. Absent otherwise."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
     "class": "notable",
     "operationId": "entitlements.getOrgsByIdPlan",
@@ -1688,12 +1793,68 @@
     "note": "Platform admins list every preset with its values, revision, organization count and pendingOrgs."
   },
   {
+    "key": "GET /api/v1/platform/idp new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdp",
+    "op": "GET /api/v1/platform/idp",
+    "change": "new operation",
+    "note": "Polaris ID status: connected, mode, paused, key expiry, budgets, last SCIM change, open differences. Platform admin session."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/calls new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpCalls",
+    "op": "GET /api/v1/platform/idp/calls",
+    "change": "new operation",
+    "note": "The binding's ledger of Polaris ID calls from a time, paged by cursor. Platform admin session."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/drift new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpDrift",
+    "op": "GET /api/v1/platform/idp/drift",
+    "change": "new operation",
+    "note": "Open differences between Polaris ID and PassBook. Platform admin session."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroups",
+    "op": "GET /api/v1/platform/idp/groups",
+    "change": "new operation",
+    "note": "List the Polaris ID groups PassBook manages, with member counts and where members come from."
+  },
+  {
     "key": "GET /api/v1/platform/idp/groups/{key}/claims new operation",
     "class": "additive",
     "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
     "op": "GET /api/v1/platform/idp/groups/{key}/claims",
     "change": "new operation",
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups/{key}/members new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
+    "op": "GET /api/v1/platform/idp/groups/{key}/members",
+    "change": "new operation",
+    "note": "List a group's manual members."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups/{key}/rules new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyRules",
+    "op": "GET /api/v1/platform/idp/groups/{key}/rules",
+    "change": "new operation",
+    "note": "List a group's org rules."
+  },
+  {
+    "key": "GET /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "List platform invitations with their state."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -2224,6 +2385,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/users/{id}/access new operation",
+    "class": "additive",
+    "operationId": "polaris-access.getUsersByIdAccess",
+    "op": "GET /api/v1/users/{id}/access",
+    "change": "new operation",
+    "note": "A user's Polaris ID access per role: wanted and why, what Polaris ID showed, any pause. Platform admin session."
+  },
+  {
     "key": "GET /api/v1/users/{id}/claims new operation",
     "class": "additive",
     "operationId": "polaris-claims.getUsersByIdClaims",
@@ -2743,6 +2912,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "200.accessPaused: field added",
+    "note": "True while the Polaris ID owner has paused the member's console access. Absent otherwise."
+  },
+  {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",
     "class": "additive",
     "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
@@ -2757,6 +2934,14 @@
     "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
     "change": "new operation",
     "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
+  },
+  {
+    "key": "PATCH /api/v1/platform/idp/groups/{key} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
+    "op": "PATCH /api/v1/platform/idp/groups/{key}",
+    "change": "new operation",
+    "note": "Change a group's display name. The group's name never changes."
   },
   {
     "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -2967,6 +3152,14 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
     "class": "additive",
     "operationId": "api-keys.createApiKeys",
@@ -3063,12 +3256,28 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3079,12 +3288,28 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3095,12 +3320,28 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -3733,6 +3974,15 @@
     "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
+    "key": "POST /api/v1/developer/sandbox response 201 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandbox",
+    "op": "POST /api/v1/developer/sandbox",
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in.",
+    "unversioned": true
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
     "class": "additive",
     "operationId": "developer.postSandboxClose",
@@ -3749,6 +3999,14 @@
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/key new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxKey",
+    "op": "POST /api/v1/developer/sandbox/key",
+    "change": "new operation",
+    "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
     "class": "additive",
     "operationId": "developer.postSandboxRecreate",
@@ -3763,6 +4021,15 @@
     "op": "POST /api/v1/developer/sandbox/recreate",
     "change": "new operation",
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate response 201 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
@@ -3795,6 +4062,15 @@
     "op": "POST /api/v1/developer/sandbox/reset",
     "change": "new operation",
     "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
@@ -3925,6 +4201,14 @@
     "note": "Retries a failed or cancelled provisioning run."
   },
   {
+    "key": "POST /api/v1/invitations/accept 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Accepting a platform invitation with developer access answers kind platform, orgName null."
+  },
+  {
     "key": "POST /api/v1/invitations/accept new operation",
     "class": "additive",
     "operationId": "invitations.postInvitationsAccept",
@@ -3939,6 +4223,30 @@
     "op": "POST /api/v1/invitations/claim-existing",
     "change": "new operation",
     "note": "Give the Polaris ID account that has the invited address the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/invitations/confirm new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsConfirm",
+    "op": "POST /api/v1/invitations/confirm",
+    "change": "new operation",
+    "note": "Finish a platform invitation after creating a Polaris ID; accepted when the account's verified address is the invited one."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.groups: field added",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.groups: field added",
+    "note": "Platform invitations list the groups they give, by display name; empty for other kinds."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Invitations come in a third kind, platform, with orgName null."
   },
   {
     "key": "POST /api/v1/invitations/preview new operation",
@@ -4443,6 +4751,78 @@
     "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
     "change": "new operation",
     "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/freeze new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.postPlatformIdpFreeze",
+    "op": "POST /api/v1/platform/idp/freeze",
+    "change": "new operation",
+    "note": "Pause every Polaris ID change. Platform admin session, Polaris ID sign-in and step-up; never a key."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroups",
+    "op": "POST /api/v1/platform/idp/groups",
+    "change": "new operation",
+    "note": "Create a custom Polaris ID group, optionally with org rules. 409 IDP_CONFLICT when the key or name is taken; a rule on a personal org or sandbox is refused."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/{key}/members new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
+    "op": "POST /api/v1/platform/idp/groups/{key}/members",
+    "change": "new operation",
+    "note": "Add a manual member by user or Polaris ID subject."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/{key}/rules new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyRules",
+    "op": "POST /api/v1/platform/idp/groups/{key}/rules",
+    "change": "new operation",
+    "note": "Add an org rule: members of the org join the group. A personal org or sandbox is refused."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/ensure new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsEnsure",
+    "op": "POST /api/v1/platform/idp/groups/ensure",
+    "change": "new operation",
+    "note": "Create a configured role group in Polaris ID."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/reconcile new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpReconcile",
+    "op": "POST /api/v1/platform/idp/reconcile",
+    "change": "new operation",
+    "note": "Check now, or a dry run with dryRun. Answers 202 with an operation (idp.check, idp.dry_run). Platform admin session only."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/scim-breaker/clear new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpScimBreakerClear",
+    "op": "POST /api/v1/platform/idp/scim-breaker/clear",
+    "change": "new operation",
+    "note": "Clear the latched SCIM breaker. Answers 202 with an operation (idp.breaker_clear). Platform admin session only."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Invite a person to Polaris ID groups, with developer access if chosen. The invitation link is returned once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "new operation",
+    "note": "Send a platform invitation again on a new row with a new link; the old one is revoked."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -5525,6 +5905,30 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/users/{id}/offboard new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdOffboard",
+    "op": "POST /api/v1/users/{id}/offboard",
+    "change": "new operation",
+    "note": "Offboard a user. dryRun answers 200 with the plan; else 202 with an operation (idp.offboard). Admin session, Polaris ID sign-in, step-up."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRoles",
+    "op": "POST /api/v1/users/{id}/roles",
+    "change": "new operation",
+    "note": "Grant or revoke the developer or support role. Platform admin session, Polaris ID sign-in and step-up."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles/{role}/remove-external new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRolesByRoleRemoveExternal",
+    "op": "POST /api/v1/users/{id}/roles/{role}/remove-external",
+    "change": "new operation",
+    "note": "Remove a role added in Polaris ID. 409 IDP_NOT_EXTERNAL when PassBook did not find it there. Platform admin session, Polaris ID sign-in and step-up."
+  },
+  {
     "key": "POST /api/v1/visitors operation removed",
     "class": "breaking",
     "operationId": "visitors.postVisitors",
@@ -5891,409 +6295,5 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
-  },
-  {
-    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
-    "class": "breaking",
-    "operationId": "developer.deleteSandbox",
-    "op": "DELETE /api/v1/developer/sandbox",
-    "change": "response 200 removed",
-    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in.",
-    "unversioned": true
-  },
-  {
-    "key": "DELETE /api/v1/platform/idp/groups/{key} new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.deletePlatformIdpGroupsByKey",
-    "op": "DELETE /api/v1/platform/idp/groups/{key}",
-    "change": "new operation",
-    "note": "Delete a custom Polaris ID group PassBook made, when it has no members, rules or other apps. A platform admin session, signed in with Polaris ID recently."
-  },
-  {
-    "key": "DELETE /api/v1/platform/idp/groups/{key}/members/{id} new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
-    "op": "DELETE /api/v1/platform/idp/groups/{key}/members/{id}",
-    "change": "new operation",
-    "note": "Remove a manual member from a Polaris ID group."
-  },
-  {
-    "key": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id} new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
-    "op": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id}",
-    "change": "new operation",
-    "note": "End an org rule on a Polaris ID group; its members leave the group."
-  },
-  {
-    "key": "DELETE /api/v1/platform/invitations/{id} new operation",
-    "class": "additive",
-    "operationId": "platform-invitations.deletePlatformInvitationsById",
-    "op": "DELETE /api/v1/platform/invitations/{id}",
-    "change": "new operation",
-    "note": "Revoke a platform invitation: its unused signup links are withdrawn."
-  },
-  {
-    "key": "DELETE /api/v1/users/{id}/holds/{role} new operation",
-    "class": "additive",
-    "operationId": "polaris-operations.deleteUsersByIdHoldsByRole",
-    "op": "DELETE /api/v1/users/{id}/holds/{role}",
-    "change": "new operation",
-    "note": "Restore a role the Polaris ID owner paused. Answers 202 with an operation (idp.restore). Platform admin session only."
-  },
-  {
-    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.getApiKeys",
-    "op": "GET /api/v1/api-keys",
-    "change": "200.items[].scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.getApiKeysById",
-    "op": "GET /api/v1/api-keys/{id}",
-    "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.getApiKeysMe",
-    "op": "GET /api/v1/api-keys/me",
-    "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "GET /api/v1/developer/access 200.invitedBy: field added",
-    "class": "additive",
-    "operationId": "developer.getAccess",
-    "op": "GET /api/v1/developer/access",
-    "change": "200.invitedBy: field added",
-    "note": "With access none: the orgs that invited a verified address of this account as a developer."
-  },
-  {
-    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "developer.getHome",
-    "op": "GET /api/v1/developer/home",
-    "change": "200.keys[].scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "developer.getRail",
-    "op": "GET /api/v1/developer/rail",
-    "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "GET /api/v1/orgs/{id}/memberships 200.items[].accessPaused: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.getOrgsByIdMemberships",
-    "op": "GET /api/v1/orgs/{id}/memberships",
-    "change": "200.items[].accessPaused: field added",
-    "note": "True while the Polaris ID owner has paused the member's console access. Absent otherwise."
-  },
-  {
-    "key": "GET /api/v1/platform/idp new operation",
-    "class": "additive",
-    "operationId": "polaris-platform.getPlatformIdp",
-    "op": "GET /api/v1/platform/idp",
-    "change": "new operation",
-    "note": "Polaris ID status: connected, mode, paused, key expiry, budgets, last SCIM change, open differences. Platform admin session."
-  },
-  {
-    "key": "GET /api/v1/platform/idp/calls new operation",
-    "class": "additive",
-    "operationId": "polaris-platform.getPlatformIdpCalls",
-    "op": "GET /api/v1/platform/idp/calls",
-    "change": "new operation",
-    "note": "The binding's ledger of Polaris ID calls from a time, paged by cursor. Platform admin session."
-  },
-  {
-    "key": "GET /api/v1/platform/idp/drift new operation",
-    "class": "additive",
-    "operationId": "polaris-platform.getPlatformIdpDrift",
-    "op": "GET /api/v1/platform/idp/drift",
-    "change": "new operation",
-    "note": "Open differences between Polaris ID and PassBook. Platform admin session."
-  },
-  {
-    "key": "GET /api/v1/platform/idp/groups new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.getPlatformIdpGroups",
-    "op": "GET /api/v1/platform/idp/groups",
-    "change": "new operation",
-    "note": "List the Polaris ID groups PassBook manages, with member counts and where members come from."
-  },
-  {
-    "key": "GET /api/v1/platform/idp/groups/{key}/members new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
-    "op": "GET /api/v1/platform/idp/groups/{key}/members",
-    "change": "new operation",
-    "note": "List a group's manual members."
-  },
-  {
-    "key": "GET /api/v1/platform/idp/groups/{key}/rules new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyRules",
-    "op": "GET /api/v1/platform/idp/groups/{key}/rules",
-    "change": "new operation",
-    "note": "List a group's org rules."
-  },
-  {
-    "key": "GET /api/v1/platform/invitations new operation",
-    "class": "additive",
-    "operationId": "platform-invitations.getPlatformInvitations",
-    "op": "GET /api/v1/platform/invitations",
-    "change": "new operation",
-    "note": "List platform invitations with their state."
-  },
-  {
-    "key": "GET /api/v1/users/{id}/access new operation",
-    "class": "additive",
-    "operationId": "polaris-access.getUsersByIdAccess",
-    "op": "GET /api/v1/users/{id}/access",
-    "change": "new operation",
-    "note": "A user's Polaris ID access per role: wanted and why, what Polaris ID showed, any pause. Platform admin session."
-  },
-  {
-    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.accessPaused: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
-    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
-    "change": "200.accessPaused: field added",
-    "note": "True while the Polaris ID owner has paused the member's console access. Absent otherwise."
-  },
-  {
-    "key": "PATCH /api/v1/platform/idp/groups/{key} new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
-    "op": "PATCH /api/v1/platform/idp/groups/{key}",
-    "change": "new operation",
-    "note": "Change a group's display name. The group's name never changes."
-  },
-  {
-    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.postApiKeys",
-    "op": "POST /api/v1/api-keys",
-    "change": "201.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.postApiKeysByIdRotate",
-    "op": "POST /api/v1/api-keys/{id}/rotate",
-    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.postApiKeysByIdRotate",
-    "op": "POST /api/v1/api-keys/{id}/rotate",
-    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.postApiKeysByIdRotate",
-    "op": "POST /api/v1/api-keys/{id}/rotate",
-    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.postApiKeysMeRotate",
-    "op": "POST /api/v1/api-keys/me/rotate",
-    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.postApiKeysMeRotate",
-    "op": "POST /api/v1/api-keys/me/rotate",
-    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
-    "class": "notable",
-    "operationId": "api-keys.postApiKeysMeRotate",
-    "op": "POST /api/v1/api-keys/me/rotate",
-    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
-    "note": "New scope platform:groups. Only a platform admin session acts on it; no key can hold it."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox response 201 removed",
-    "class": "breaking",
-    "operationId": "developer.postSandbox",
-    "op": "POST /api/v1/developer/sandbox",
-    "change": "response 201 removed",
-    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in.",
-    "unversioned": true
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/key new operation",
-    "class": "additive",
-    "operationId": "developer.postSandboxKey",
-    "op": "POST /api/v1/developer/sandbox/key",
-    "change": "new operation",
-    "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/recreate response 201 removed",
-    "class": "breaking",
-    "operationId": "developer.postSandboxRecreate",
-    "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "response 201 removed",
-    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in.",
-    "unversioned": true
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/reset response 200 removed",
-    "class": "breaking",
-    "operationId": "developer.postSandboxReset",
-    "op": "POST /api/v1/developer/sandbox/reset",
-    "change": "response 200 removed",
-    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in.",
-    "unversioned": true
-  },
-  {
-    "key": "POST /api/v1/invitations/accept 200.kind: enum value \"platform\" added",
-    "class": "notable",
-    "operationId": "invitations.postInvitationsAccept",
-    "op": "POST /api/v1/invitations/accept",
-    "change": "200.kind: enum value \"platform\" added",
-    "note": "Accepting a platform invitation with developer access answers kind platform, orgName null."
-  },
-  {
-    "key": "POST /api/v1/invitations/confirm new operation",
-    "class": "additive",
-    "operationId": "invitations.postInvitationsConfirm",
-    "op": "POST /api/v1/invitations/confirm",
-    "change": "new operation",
-    "note": "Finish a platform invitation after creating a Polaris ID; accepted when the account's verified address is the invited one."
-  },
-  {
-    "key": "POST /api/v1/invitations/preview 200.groups: field added",
-    "class": "additive",
-    "operationId": "invitations.postInvitationsPreview",
-    "op": "POST /api/v1/invitations/preview",
-    "change": "200.groups: field added",
-    "note": "Platform invitations list the groups they give, by display name; empty for other kinds."
-  },
-  {
-    "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
-    "class": "notable",
-    "operationId": "invitations.postInvitationsPreview",
-    "op": "POST /api/v1/invitations/preview",
-    "change": "200.kind: enum value \"platform\" added",
-    "note": "Invitations come in a third kind, platform, with orgName null."
-  },
-  {
-    "key": "POST /api/v1/platform/idp/freeze new operation",
-    "class": "additive",
-    "operationId": "polaris-platform.postPlatformIdpFreeze",
-    "op": "POST /api/v1/platform/idp/freeze",
-    "change": "new operation",
-    "note": "Pause every Polaris ID change. Platform admin session, Polaris ID sign-in and step-up; never a key."
-  },
-  {
-    "key": "POST /api/v1/platform/idp/groups new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.postPlatformIdpGroups",
-    "op": "POST /api/v1/platform/idp/groups",
-    "change": "new operation",
-    "note": "Create a custom Polaris ID group, optionally with org rules. 409 IDP_CONFLICT when the key or name is taken; a rule on a personal org or sandbox is refused."
-  },
-  {
-    "key": "POST /api/v1/platform/idp/groups/{key}/members new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
-    "op": "POST /api/v1/platform/idp/groups/{key}/members",
-    "change": "new operation",
-    "note": "Add a manual member by user or Polaris ID subject."
-  },
-  {
-    "key": "POST /api/v1/platform/idp/groups/{key}/rules new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyRules",
-    "op": "POST /api/v1/platform/idp/groups/{key}/rules",
-    "change": "new operation",
-    "note": "Add an org rule: members of the org join the group. A personal org or sandbox is refused."
-  },
-  {
-    "key": "POST /api/v1/platform/idp/groups/ensure new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.postPlatformIdpGroupsEnsure",
-    "op": "POST /api/v1/platform/idp/groups/ensure",
-    "change": "new operation",
-    "note": "Create a configured role group in Polaris ID."
-  },
-  {
-    "key": "POST /api/v1/platform/idp/reconcile new operation",
-    "class": "additive",
-    "operationId": "polaris-operations.postPlatformIdpReconcile",
-    "op": "POST /api/v1/platform/idp/reconcile",
-    "change": "new operation",
-    "note": "Check now, or a dry run with dryRun. Answers 202 with an operation (idp.check, idp.dry_run). Platform admin session only."
-  },
-  {
-    "key": "POST /api/v1/platform/idp/scim-breaker/clear new operation",
-    "class": "additive",
-    "operationId": "polaris-operations.postPlatformIdpScimBreakerClear",
-    "op": "POST /api/v1/platform/idp/scim-breaker/clear",
-    "change": "new operation",
-    "note": "Clear the latched SCIM breaker. Answers 202 with an operation (idp.breaker_clear). Platform admin session only."
-  },
-  {
-    "key": "POST /api/v1/platform/invitations new operation",
-    "class": "additive",
-    "operationId": "platform-invitations.postPlatformInvitations",
-    "op": "POST /api/v1/platform/invitations",
-    "change": "new operation",
-    "note": "Invite a person to Polaris ID groups, with developer access if chosen. The invitation link is returned once."
-  },
-  {
-    "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
-    "class": "additive",
-    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
-    "op": "POST /api/v1/platform/invitations/{id}/resend",
-    "change": "new operation",
-    "note": "Send a platform invitation again on a new row with a new link; the old one is revoked."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/offboard new operation",
-    "class": "additive",
-    "operationId": "polaris-access.postUsersByIdOffboard",
-    "op": "POST /api/v1/users/{id}/offboard",
-    "change": "new operation",
-    "note": "Offboard a user. dryRun answers 200 with the plan; else 202 with an operation (idp.offboard). Admin session, Polaris ID sign-in, step-up."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/roles new operation",
-    "class": "additive",
-    "operationId": "polaris-access.postUsersByIdRoles",
-    "op": "POST /api/v1/users/{id}/roles",
-    "change": "new operation",
-    "note": "Grant or revoke the developer or support role. Platform admin session, Polaris ID sign-in and step-up."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/roles/{role}/remove-external new operation",
-    "class": "additive",
-    "operationId": "polaris-access.postUsersByIdRolesByRoleRemoveExternal",
-    "op": "POST /api/v1/users/{id}/roles/{role}/remove-external",
-    "change": "new operation",
-    "note": "Remove a role added in Polaris ID. 409 IDP_NOT_EXTERNAL when PassBook did not find it there. Platform admin session, Polaris ID sign-in and step-up."
   }
 ]
