@@ -8,7 +8,10 @@ import {
   TimestampSchema,
 } from './common.ts';
 
-/** `POST /developer/sandbox`: the Turnstile token of the widget with action `developer_sandbox`. */
+/**
+ * `POST /developer/sandbox` and `/recreate`: the Turnstile token of the widget with action `developer_sandbox`.
+ * Both answer 202 with an operation (`kind` `sandbox.create`, `sandbox.recreate`); follow it at `/operations/{id}`.
+ */
 export const CreateDeveloperSandboxSchema = z.object({
   turnstileToken: z.string().min(1).max(4096),
   /** When this browser session first opened the quickstart (ms). The server clamps it to the last 24 hours. */
@@ -31,54 +34,39 @@ export const DeveloperSandboxSchema = z.object({
 });
 export type DeveloperSandbox = z.infer<typeof DeveloperSandboxSchema>;
 
+/** A test key and its secret, shown once. */
+export const SandboxKeySchema = z.object({
+  id: IdSchema,
+  name: z.string(),
+  secret: z.string(),
+  mode: z.literal('test'),
+  expiresAt: TimestampSchema,
+});
+export type SandboxKey = z.infer<typeof SandboxKeySchema>;
+
 /**
- * The create response: the sandbox and its test key, whose secret is shown once. A retry that finds the key already
- * made has no secret to show: `key` is null and `previousKey` names it, so the page offers "Roll key".
+ * The reopen response: the sandbox and its new test key, whose secret is shown once. `previousKey` names a key
+ * that already exists when there is none to show.
  */
 export const CreatedDeveloperSandboxSchema = DeveloperSandboxSchema.extend({
-  key: z
-    .object({
-      id: IdSchema,
-      name: z.string(),
-      secret: z.string(),
-      mode: z.literal('test'),
-      expiresAt: TimestampSchema,
-    })
-    .nullable(),
+  key: SandboxKeySchema.nullable(),
   previousKey: z.object({ id: IdSchema, name: z.string() }).nullable(),
 });
 export type CreatedDeveloperSandbox = z.infer<typeof CreatedDeveloperSandboxSchema>;
+
+/**
+ * `POST /developer/sandbox/key`: the sandbox's key, once. Making, resetting or starting over a sandbox ends
+ * without a secret (an operation never holds one); this call mints it. A second call answers
+ * 409 `SANDBOX_KEY_SHOWN` while the key is live: roll it.
+ */
+export const SandboxKeyResponseSchema = z.object({ key: SandboxKeySchema });
+export type SandboxKeyResponse = z.infer<typeof SandboxKeyResponseSchema>;
 
 /** `POST /developer/sandbox/reset`: the same check as making a sandbox. */
 export const ResetDeveloperSandboxSchema = z.object({
   turnstileToken: z.string().min(1).max(4096),
 });
 export type ResetDeveloperSandbox = z.infer<typeof ResetDeveloperSandboxSchema>;
-
-/**
- * What a reset did: the sandbox, the new key (the secret shown once; the old key is revoked when the reset starts),
- * the rows deleted, the test passes that could not be deleted now (`kept`: a hold or an unfinished retirement) and
- * the resets left today. `more`: the time ran out before the purge finished, so there is no new key yet; ask again
- * (it resumes and costs no reset).
- */
-export const SandboxResetSchema = z.object({
-  sandbox: DeveloperSandboxSchema,
-  key: CreatedDeveloperSandboxSchema.shape.key,
-  deleted: z.object({
-    passes: z.number().int().nonnegative(),
-    captures: z.number().int().nonnegative(),
-    calls: z.number().int().nonnegative(),
-    other: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe('Bundles, captured emails, imports, broadcasts, rules and idempotency records.'),
-  }),
-  kept: z.number().int().nonnegative(),
-  more: z.boolean(),
-  resetsLeft: z.number().int().min(0).max(3),
-});
-export type SandboxReset = z.infer<typeof SandboxResetSchema>;
 
 /**
  * `POST /developer/try-token`: a 15-minute bearer for the portal's Try it, bound to the session and the sandbox's

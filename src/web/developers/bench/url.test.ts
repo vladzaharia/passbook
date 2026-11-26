@@ -21,6 +21,11 @@ describe('the bench address', () => {
     expect(history.length).toBe(before);
   });
 
+  it('leaves a tool\u2019s own tail after ? out of the id', () => {
+    expect(selectedId('#passes.getPasses?body=%7B%7D&q.limit=5')).toBe('passes.getPasses');
+    expect(selectedId('#a%3Fb')).toBe('a?b');
+  });
+
   it('reads no selection from an empty hash', () => {
     expect(selectedId('')).toBeNull();
     expect(selectedId('#')).toBeNull();

@@ -22,6 +22,8 @@ export function connection(over: Record<string, unknown> = {}) {
     requestsPerMinute: null,
     enabled: true,
     health: 'degraded',
+    firstVerifiedArrivalAt: null,
+    warning: null,
     consecutiveFailures: 2,
     breakerOpenUntil: null,
     nextRunAt: null,

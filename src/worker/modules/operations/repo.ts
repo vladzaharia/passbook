@@ -54,6 +54,7 @@ export interface NewOperationRow {
   dedupeKey: string | null;
   workflowInstanceId: string | null;
   leaseUntil: number | null;
+  leaseOwner: string | null;
   now: number;
   expiresAt: number | null;
 }
@@ -63,8 +64,8 @@ export function insertOperationStmt(db: D1Database, r: NewOperationRow): D1Prepa
   return stmt(
     db,
     `INSERT INTO operations (id, kind, audience, org_id, mode, target_type, target_id, steps, actor_type,
-       actor_id, actor_session, dedupe_key, workflow_instance_id, lease_until, created_at, updated_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       actor_id, actor_session, dedupe_key, workflow_instance_id, lease_until, lease_owner, created_at, updated_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       r.id,
       r.kind,
@@ -80,6 +81,7 @@ export function insertOperationStmt(db: D1Database, r: NewOperationRow): D1Prepa
       r.dedupeKey,
       r.workflowInstanceId,
       r.leaseUntil,
+      r.leaseOwner,
       r.now,
       r.now,
       r.expiresAt,
@@ -118,4 +120,20 @@ export async function claimLease(
     [until, owner, now, id, attempt, now],
   );
   return changes === 1;
+}
+
+/** The runner hands the operation on (a start over waits for its purge): the next `operation.run` can claim it. */
+export async function releaseLease(
+  db: D1Database,
+  id: string,
+  attempt: number,
+  owner: string | null,
+): Promise<void> {
+  await run(
+    db,
+    `UPDATE operations SET lease_until = NULL, lease_owner = NULL
+     WHERE id = ? AND attempt = ? AND status IN ('queued', 'running', 'waiting')
+       AND (lease_owner IS NULL OR lease_owner = ?)`,
+    [id, attempt, owner ?? ''],
+  );
 }

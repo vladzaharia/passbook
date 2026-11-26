@@ -6,6 +6,7 @@ import type { Quickstart } from './use-quickstart.ts';
 
 vi.mock('./make-sandbox.tsx', () => ({
   MakeSandbox: ({ label }: { label: string }) => <button type="button">{label}</button>,
+  CreatePanel: ({ id }: { id: string }) => <p>Following {id}</p>,
 }));
 
 const sandbox = { id: 's', orgSlug: 'dev-1', templateId: 'tpl-1' };
@@ -47,10 +48,37 @@ describe('the sandbox step', () => {
   });
 
   it('waits quietly until the home is read', () => {
-    const { container } = render(
-      <SandboxStep q={quickstart(null)} state="current" onNext={() => undefined} />,
-    );
+    render(<SandboxStep q={quickstart(null)} state="current" onNext={() => undefined} />);
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
-    expect(container.querySelector('.qs-spin')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: 'Show key' })).toBeNull();
+  });
+
+  it('offers Show key when the sandbox is made and no key was ever minted', () => {
+    render(
+      <SandboxStep
+        q={quickstart({ ...homeFresh, keys: [] })}
+        state="current"
+        onNext={() => undefined}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Show key' })).toBeTruthy();
+  });
+
+  it('follows the create operation a reload names, in place of the key and the retry', () => {
+    window.history.replaceState(null, '', '/developers/quickstart?op=op-create');
+    try {
+      render(
+        <SandboxStep
+          q={quickstart({ ...homeFresh, endpoints: [], keys: [] })}
+          state="current"
+          onNext={() => undefined}
+        />,
+      );
+      expect(screen.getByText('Following op-create')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Show key' })).toBeNull();
+    } finally {
+      window.history.replaceState(null, '', '/');
+    }
   });
 });

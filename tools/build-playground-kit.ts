@@ -1,7 +1,7 @@
 // Part of `npm run gen`: the developer playground embeds kit components (channel previews, wallet
 // report), so it gets their utility classes as src/generated/playground-kit.css; the ⌘K palette gets
 // src/generated/search-kit.css, the shared top bar and account menu get src/generated/menubar-kit.css, and the activity tray
-// island gets src/generated/operations-kit.css.
+// island gets src/generated/operations-kit.css, and the webhook-setup kit gets src/generated/webhook-setup-kit.css.
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -9,6 +9,7 @@ import {
   operationsKitCss,
   playgroundKitCss,
   searchKitCss,
+  webhookSetupKitCss,
 } from './lib/playground-kit.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -24,3 +25,6 @@ console.log(`menubar kit: ${menubar.length} bytes`);
 const operations = await operationsKitCss(root);
 writeFileSync(resolve(root, 'src/generated/operations-kit.css'), operations);
 console.log(`operations kit: ${operations.length} bytes`);
+const webhookSetup = await webhookSetupKitCss(root);
+writeFileSync(resolve(root, 'src/generated/webhook-setup-kit.css'), webhookSetup);
+console.log(`webhook-setup kit: ${webhookSetup.length} bytes`);

@@ -211,6 +211,8 @@ __all__ = [
     "ConnectionsListResponseItemsItemMappingValueTransform",
     "ConnectionsListResponseItemsItemVoidWhenItem",
     "ConnectionsListResult",
+    "ConnectionsPreviewBody",
+    "ConnectionsPreviewParams",
     "ConnectionsPreviewResult",
     "ConnectionsProbeBody",
     "ConnectionsProbeConfigBody",
@@ -244,6 +246,23 @@ __all__ = [
     "ConnectionsRunsListResponse",
     "ConnectionsRunsListResponseItemsItem",
     "ConnectionsRunsListResult",
+    "ConnectionsSetupRetrieveResponse",
+    "ConnectionsSetupRetrieveResponseProvider",
+    "ConnectionsSetupRetrieveResponseProviderDocsItem",
+    "ConnectionsSetupRetrieveResponseSecret",
+    "ConnectionsSetupRetrieveResponseStepsItem",
+    "ConnectionsSetupRetrieveResponseStepsItemPartsItem1",
+    "ConnectionsSetupRetrieveResponseStepsItemPartsItem2",
+    "ConnectionsSetupRetrieveResponseStepsItemPartsItem3",
+    "ConnectionsSetupRetrieveResponseStepsItemPartsItem4",
+    "ConnectionsSetupRetrieveResponseStepsItemPartsItem5",
+    "ConnectionsSetupRetrieveResponseStepsItemPartsItem6",
+    "ConnectionsSetupRetrieveResponseStepsItemPartsItem7",
+    "ConnectionsSetupRetrieveResponseSubscriptions",
+    "ConnectionsSetupRetrieveResponseSubscriptionsTopicsItem",
+    "ConnectionsSetupRetrieveResponseTest",
+    "ConnectionsSetupRetrieveResponseValues",
+    "ConnectionsSetupRetrieveResult",
     "ConnectionsSyncResponse",
     "ConnectionsSyncResult",
     "ConnectionsTestConfigBody",
@@ -290,6 +309,10 @@ __all__ = [
     "ConnectionsUploadsUpdateResponseColumnsItem",
     "ConnectionsUploadsUpdateResponsePreview",
     "ConnectionsUploadsUpdateResult",
+    "ConnectionsWebhookArrivalsListItem",
+    "ConnectionsWebhookArrivalsListResponse",
+    "ConnectionsWebhookArrivalsListResponseItemsItem",
+    "ConnectionsWebhookArrivalsListResult",
     "ConnectionsWebhookFailuresListItem",
     "ConnectionsWebhookFailuresListResponse",
     "ConnectionsWebhookFailuresListResponseItemsItem",
@@ -318,6 +341,22 @@ __all__ = [
     "ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue",
     "ConnectorsListResponseItemsItemRecipesItemVoidWhenItem",
     "ConnectorsListResult",
+    "ConnectorsRecipeSetupRetrieveResponse",
+    "ConnectorsRecipeSetupRetrieveResponseProvider",
+    "ConnectorsRecipeSetupRetrieveResponseProviderDocsItem",
+    "ConnectorsRecipeSetupRetrieveResponseSecret",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItem",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem1",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem2",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem3",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem4",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem5",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem6",
+    "ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem7",
+    "ConnectorsRecipeSetupRetrieveResponseSubscriptions",
+    "ConnectorsRecipeSetupRetrieveResponseSubscriptionsTopicsItem",
+    "ConnectorsRecipeSetupRetrieveResponseTest",
+    "ConnectorsRecipeSetupRetrieveResult",
     "ConnectorsRetrieveResponse",
     "ConnectorsRetrieveResponseCapabilities",
     "ConnectorsRetrieveResponseDefaults",
@@ -2055,6 +2094,22 @@ __all__ = [
     "WebhookEndpointsSendTestBody",
     "WebhookEndpointsSendTestParams",
     "WebhookEndpointsSendTestResult",
+    "WebhookEndpointsSetupRetrieveResponse",
+    "WebhookEndpointsSetupRetrieveResponseProvider",
+    "WebhookEndpointsSetupRetrieveResponseProviderDocsItem",
+    "WebhookEndpointsSetupRetrieveResponseSecret",
+    "WebhookEndpointsSetupRetrieveResponseStepsItem",
+    "WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem1",
+    "WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem2",
+    "WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem3",
+    "WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem4",
+    "WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem5",
+    "WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem6",
+    "WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem7",
+    "WebhookEndpointsSetupRetrieveResponseSubscriptions",
+    "WebhookEndpointsSetupRetrieveResponseSubscriptionsTopicsItem",
+    "WebhookEndpointsSetupRetrieveResponseTest",
+    "WebhookEndpointsSetupRetrieveResult",
     "WebhookEndpointsTestsListResult",
     "WebhookEndpointsUpdateBody",
     "WebhookEndpointsUpdateParams",
@@ -2984,7 +3039,9 @@ class ConnectionsCreateResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3151,7 +3208,9 @@ class ConnectionsListItem(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3203,7 +3262,9 @@ class ConnectionsListResponseItemsItem(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3228,6 +3289,9 @@ class ConnectionsListResponseItemsItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
+
+class ConnectionsPreviewParams(_Model):
+    arrivalId: str | None = None
 
 class ConnectionsProbeConfigParams(_Model):
     orgId: str
@@ -3291,7 +3355,9 @@ class ConnectionsRetrieveResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3349,7 +3415,7 @@ class ConnectionsRetrieveSummaryResponseAttentionItem(_Model):
     id: str
     orgId: str
     name: str
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
     lastErrorCode: str | None
     lastErrorAt: int | None
 
@@ -3375,7 +3441,9 @@ class ConnectionsRevokePreviousWebhookSecretResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3422,7 +3490,9 @@ class ConnectionsRotateWebhookSecretResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3483,6 +3553,95 @@ class ConnectionsRunsListResponseItemsItem(_Model):
     errorDetail: str | None = None
     httpStatus: int | None
     durationMs: int | None
+
+class ConnectionsSetupRetrieveResponse(_Model):
+    direction: _Literal["inbound", "outbound"] | str
+    recipe: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str | _Literal["outbound"] | str
+    version: str
+    checkedAt: str
+    provider: ConnectionsSetupRetrieveResponseProvider
+    secret: ConnectionsSetupRetrieveResponseSecret
+    subscriptions: ConnectionsSetupRetrieveResponseSubscriptions
+    steps: _List[ConnectionsSetupRetrieveResponseStepsItem]
+    test: ConnectionsSetupRetrieveResponseTest
+    troubleshooting: _Dict[str, str]
+    values: ConnectionsSetupRetrieveResponseValues
+
+class ConnectionsSetupRetrieveResponseProvider(_Model):
+    name: str
+    consoleUrl: str | None
+    docs: _List[ConnectionsSetupRetrieveResponseProviderDocsItem]
+
+class ConnectionsSetupRetrieveResponseProviderDocsItem(_Model):
+    label: str
+    url: str
+
+class ConnectionsSetupRetrieveResponseSecret(_Model):
+    origin: _Literal["provider", "passbook"] | str
+    allowPaste: bool
+    prefix: str | None
+    minLength: int
+    whereStep: str | None
+
+class ConnectionsSetupRetrieveResponseStepsItem(_Model):
+    id: str
+    side: _Literal["provider", "passbook"] | str
+    title: str
+    parts: _List[ConnectionsSetupRetrieveResponseStepsItemPartsItem1 | ConnectionsSetupRetrieveResponseStepsItemPartsItem2 | ConnectionsSetupRetrieveResponseStepsItemPartsItem3 | ConnectionsSetupRetrieveResponseStepsItemPartsItem4 | ConnectionsSetupRetrieveResponseStepsItemPartsItem5 | ConnectionsSetupRetrieveResponseStepsItemPartsItem6 | ConnectionsSetupRetrieveResponseStepsItemPartsItem7]
+    verified: bool | None = None
+
+class ConnectionsSetupRetrieveResponseStepsItemPartsItem1(_Model):
+    t: _Literal["text"] | str
+    text: str
+
+class ConnectionsSetupRetrieveResponseStepsItemPartsItem2(_Model):
+    t: _Literal["path"] | str
+    items: _List[str]
+
+class ConnectionsSetupRetrieveResponseStepsItemPartsItem3(_Model):
+    t: _Literal["field"] | str
+    label: str
+    value: str | None = None
+    copy_: _Literal["endpointUrl", "secret", "signatureHeader", "timestampHeader"] | str | None = _Field(default=None, alias="copy")
+    choose: bool | None = None
+
+class ConnectionsSetupRetrieveResponseStepsItemPartsItem4(_Model):
+    t: _Literal["topics"] | str
+
+class ConnectionsSetupRetrieveResponseStepsItemPartsItem5(_Model):
+    t: _Literal["code"] | str
+    lang: _Literal["sh", "curl", "ts", "py", "go"] | str
+    code: str
+
+class ConnectionsSetupRetrieveResponseStepsItemPartsItem6(_Model):
+    t: _Literal["note"] | str
+    text: str
+
+class ConnectionsSetupRetrieveResponseStepsItemPartsItem7(_Model):
+    t: _Literal["warn"] | str
+    text: str
+
+class ConnectionsSetupRetrieveResponseSubscriptions(_Model):
+    perWebhook: _Literal["one", "many"] | str
+    topics: _List[ConnectionsSetupRetrieveResponseSubscriptionsTopicsItem]
+
+class ConnectionsSetupRetrieveResponseSubscriptionsTopicsItem(_Model):
+    id: str
+    label: str | None
+    required: bool
+    verified: bool
+
+class ConnectionsSetupRetrieveResponseTest(_Model):
+    kind: _Literal["button", "ping-on-save", "cli", "real-event", "snippet", "send"] | str
+    text: str
+    command: str | None
+    issues: bool
+
+class ConnectionsSetupRetrieveResponseValues(_Model):
+    endpointUrl: str | None
+    signatureHeader: str | None
+    timestampHeader: str | None
+    hasSecret: bool
 
 class ConnectionsSyncResponse(_Model):
     runId: str
@@ -3624,7 +3783,9 @@ class ConnectionsUpdateResponse(_Model):
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | str
+    firstVerifiedArrivalAt: int | None
+    warning: _Dict[str, _Any] | None
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -3751,6 +3912,34 @@ class ConnectionsUploadsUpdateResponsePreview(_Model):
     header: _List[str]
     rows: _List[_List[str]]
 
+class ConnectionsWebhookArrivalsListItem(_Model):
+    id: str
+    receivedAt: int
+    lastAt: int
+    outcome: _Literal["accepted", "duplicate", "ignored", "rejected"] | str
+    reason: _Literal["signature_missing", "signature_mismatch", "signature_expired", "payload", "too_large", "no_secret", "unknown_type", "thin_event", "test_mode", "unrecognized_shape", "no_ref", "ping", "stale", None] | str
+    topic: str | None
+    contentClass: _Literal["json", "xml", "form", "other"] | str
+    eventRef: str | None
+    usedPrevious: bool
+    count: int
+
+class ConnectionsWebhookArrivalsListResponse(_Model):
+    items: _List[ConnectionsWebhookArrivalsListResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsWebhookArrivalsListResponseItemsItem(_Model):
+    id: str
+    receivedAt: int
+    lastAt: int
+    outcome: _Literal["accepted", "duplicate", "ignored", "rejected"] | str
+    reason: _Literal["signature_missing", "signature_mismatch", "signature_expired", "payload", "too_large", "no_secret", "unknown_type", "thin_event", "test_mode", "unrecognized_shape", "no_ref", "ping", "stale", None] | str
+    topic: str | None
+    contentClass: _Literal["json", "xml", "form", "other"] | str
+    eventRef: str | None
+    usedPrevious: bool
+    count: int
+
 class ConnectionsWebhookFailuresListItem(_Model):
     id: str
     eventRef: str
@@ -3823,6 +4012,9 @@ class ConnectorsListItemRecipesItem(_Model):
     label: str
     category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
+    line: str | None = None
+    secretOrigin: _Literal["provider", "passbook"] | str | None = None
+    setupVersion: str | None = None
     entitled: bool
     outputFields: _Dict[str, ConnectorsListItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListItemRecipesItemMappingValue]
@@ -3888,6 +4080,9 @@ class ConnectorsListResponseItemsItemRecipesItem(_Model):
     label: str
     category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
+    line: str | None = None
+    secretOrigin: _Literal["provider", "passbook"] | str | None = None
+    setupVersion: str | None = None
     entitled: bool
     outputFields: _Dict[str, ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListResponseItemsItemRecipesItemMappingValue]
@@ -3910,6 +4105,88 @@ class ConnectorsListResponseItemsItemRecipesItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
+
+class ConnectorsRecipeSetupRetrieveResponse(_Model):
+    direction: _Literal["inbound", "outbound"] | str
+    recipe: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str | _Literal["outbound"] | str
+    version: str
+    checkedAt: str
+    provider: ConnectorsRecipeSetupRetrieveResponseProvider
+    secret: ConnectorsRecipeSetupRetrieveResponseSecret
+    subscriptions: ConnectorsRecipeSetupRetrieveResponseSubscriptions
+    steps: _List[ConnectorsRecipeSetupRetrieveResponseStepsItem]
+    test: ConnectorsRecipeSetupRetrieveResponseTest
+    troubleshooting: _Dict[str, str]
+
+class ConnectorsRecipeSetupRetrieveResponseProvider(_Model):
+    name: str
+    consoleUrl: str | None
+    docs: _List[ConnectorsRecipeSetupRetrieveResponseProviderDocsItem]
+
+class ConnectorsRecipeSetupRetrieveResponseProviderDocsItem(_Model):
+    label: str
+    url: str
+
+class ConnectorsRecipeSetupRetrieveResponseSecret(_Model):
+    origin: _Literal["provider", "passbook"] | str
+    allowPaste: bool
+    prefix: str | None
+    minLength: int
+    whereStep: str | None
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItem(_Model):
+    id: str
+    side: _Literal["provider", "passbook"] | str
+    title: str
+    parts: _List[ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem1 | ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem2 | ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem3 | ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem4 | ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem5 | ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem6 | ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem7]
+    verified: bool | None = None
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem1(_Model):
+    t: _Literal["text"] | str
+    text: str
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem2(_Model):
+    t: _Literal["path"] | str
+    items: _List[str]
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem3(_Model):
+    t: _Literal["field"] | str
+    label: str
+    value: str | None = None
+    copy_: _Literal["endpointUrl", "secret", "signatureHeader", "timestampHeader"] | str | None = _Field(default=None, alias="copy")
+    choose: bool | None = None
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem4(_Model):
+    t: _Literal["topics"] | str
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem5(_Model):
+    t: _Literal["code"] | str
+    lang: _Literal["sh", "curl", "ts", "py", "go"] | str
+    code: str
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem6(_Model):
+    t: _Literal["note"] | str
+    text: str
+
+class ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem7(_Model):
+    t: _Literal["warn"] | str
+    text: str
+
+class ConnectorsRecipeSetupRetrieveResponseSubscriptions(_Model):
+    perWebhook: _Literal["one", "many"] | str
+    topics: _List[ConnectorsRecipeSetupRetrieveResponseSubscriptionsTopicsItem]
+
+class ConnectorsRecipeSetupRetrieveResponseSubscriptionsTopicsItem(_Model):
+    id: str
+    label: str | None
+    required: bool
+    verified: bool
+
+class ConnectorsRecipeSetupRetrieveResponseTest(_Model):
+    kind: _Literal["button", "ping-on-save", "cli", "real-event", "snippet", "send"] | str
+    text: str
+    command: str | None
+    issues: bool
 
 class ConnectorsRetrieveResponse(_Model):
     type: str
@@ -3949,6 +4226,9 @@ class ConnectorsRetrieveResponseRecipesItem(_Model):
     label: str
     category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
+    line: str | None = None
+    secretOrigin: _Literal["provider", "passbook"] | str | None = None
+    setupVersion: str | None = None
     entitled: bool
     outputFields: _Dict[str, ConnectorsRetrieveResponseRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsRetrieveResponseRecipesItemMappingValue]
@@ -4018,6 +4298,7 @@ class CreatedScanningDevice(_Model):
     revoked: bool
     lastSeenAt: int | None
     updatedAt: int
+    configRevision: int
     signIn: _Literal["paired", "admin"] | str
     adminName: str | None
     pairing: _Dict[str, _Any] | None
@@ -12081,6 +12362,7 @@ class ScanningDevice(_Model):
     revoked: bool
     lastSeenAt: int | None
     updatedAt: int
+    configRevision: int
     signIn: _Literal["paired", "admin"] | str
     adminName: str | None
 
@@ -14582,6 +14864,88 @@ class WebhookEndpointsRotateSecretResponse(_Model):
 class WebhookEndpointsSendTestParams(_Model):
     type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str | None = None
 
+class WebhookEndpointsSetupRetrieveResponse(_Model):
+    direction: _Literal["inbound", "outbound"] | str
+    recipe: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str | _Literal["outbound"] | str
+    version: str
+    checkedAt: str
+    provider: WebhookEndpointsSetupRetrieveResponseProvider
+    secret: WebhookEndpointsSetupRetrieveResponseSecret
+    subscriptions: WebhookEndpointsSetupRetrieveResponseSubscriptions
+    steps: _List[WebhookEndpointsSetupRetrieveResponseStepsItem]
+    test: WebhookEndpointsSetupRetrieveResponseTest
+    troubleshooting: _Dict[str, str]
+
+class WebhookEndpointsSetupRetrieveResponseProvider(_Model):
+    name: str
+    consoleUrl: str | None
+    docs: _List[WebhookEndpointsSetupRetrieveResponseProviderDocsItem]
+
+class WebhookEndpointsSetupRetrieveResponseProviderDocsItem(_Model):
+    label: str
+    url: str
+
+class WebhookEndpointsSetupRetrieveResponseSecret(_Model):
+    origin: _Literal["provider", "passbook"] | str
+    allowPaste: bool
+    prefix: str | None
+    minLength: int
+    whereStep: str | None
+
+class WebhookEndpointsSetupRetrieveResponseStepsItem(_Model):
+    id: str
+    side: _Literal["provider", "passbook"] | str
+    title: str
+    parts: _List[WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem1 | WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem2 | WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem3 | WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem4 | WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem5 | WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem6 | WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem7]
+    verified: bool | None = None
+
+class WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem1(_Model):
+    t: _Literal["text"] | str
+    text: str
+
+class WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem2(_Model):
+    t: _Literal["path"] | str
+    items: _List[str]
+
+class WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem3(_Model):
+    t: _Literal["field"] | str
+    label: str
+    value: str | None = None
+    copy_: _Literal["endpointUrl", "secret", "signatureHeader", "timestampHeader"] | str | None = _Field(default=None, alias="copy")
+    choose: bool | None = None
+
+class WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem4(_Model):
+    t: _Literal["topics"] | str
+
+class WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem5(_Model):
+    t: _Literal["code"] | str
+    lang: _Literal["sh", "curl", "ts", "py", "go"] | str
+    code: str
+
+class WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem6(_Model):
+    t: _Literal["note"] | str
+    text: str
+
+class WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem7(_Model):
+    t: _Literal["warn"] | str
+    text: str
+
+class WebhookEndpointsSetupRetrieveResponseSubscriptions(_Model):
+    perWebhook: _Literal["one", "many"] | str
+    topics: _List[WebhookEndpointsSetupRetrieveResponseSubscriptionsTopicsItem]
+
+class WebhookEndpointsSetupRetrieveResponseSubscriptionsTopicsItem(_Model):
+    id: str
+    label: str | None
+    required: bool
+    verified: bool
+
+class WebhookEndpointsSetupRetrieveResponseTest(_Model):
+    kind: _Literal["button", "ping-on-save", "cli", "real-event", "snippet", "send"] | str
+    text: str
+    command: str | None
+    issues: bool
+
 class WebhookEndpointsUpdateParams(_Model):
     url: str | None = None
     description: _Literal[""] | str | str | None = None
@@ -14760,6 +15124,8 @@ ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 
 ConnectionsListResult = ConnectionsListResponse
 
+ConnectionsPreviewBody = ConnectionsPreviewParams
+
 ConnectionsPreviewResult = ConnectionPreview
 
 ConnectionsProbeBody = ConnectionsProbeParams
@@ -14779,6 +15145,8 @@ ConnectionsRevokePreviousWebhookSecretResult = ConnectionsRevokePreviousWebhookS
 ConnectionsRotateWebhookSecretResult = ConnectionsRotateWebhookSecretResponse
 
 ConnectionsRunsListResult = ConnectionsRunsListResponse
+
+ConnectionsSetupRetrieveResult = ConnectionsSetupRetrieveResponse
 
 ConnectionsSyncResult = ConnectionsSyncResponse
 
@@ -14804,6 +15172,8 @@ ConnectionsUploadsUpdateBody = ConnectionsUploadsUpdateParams
 
 ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
 
+ConnectionsWebhookArrivalsListResult = ConnectionsWebhookArrivalsListResponse
+
 ConnectionsWebhookFailuresListResult = ConnectionsWebhookFailuresListResponse
 
 ConnectionsWebhookFailuresReplayResult = ConnectionsWebhookFailuresReplayResponse
@@ -14811,6 +15181,8 @@ ConnectionsWebhookFailuresReplayResult = ConnectionsWebhookFailuresReplayRespons
 ConnectionsWebhookFailuresResolveResult = ConnectionsWebhookFailuresResolveResponse
 
 ConnectorsListResult = ConnectorsListResponse
+
+ConnectorsRecipeSetupRetrieveResult = ConnectorsRecipeSetupRetrieveResponse
 
 ConnectorsRetrieveResult = ConnectorsRetrieveResponse
 
@@ -15429,6 +15801,8 @@ WebhookEndpointsRotateSecretResult = WebhookEndpointsRotateSecretResponse
 WebhookEndpointsSendTestBody = WebhookEndpointsSendTestParams
 
 WebhookEndpointsSendTestResult = WebhookTestResult
+
+WebhookEndpointsSetupRetrieveResult = WebhookEndpointsSetupRetrieveResponse
 
 WebhookEndpointsTestsListResult = WebhookTestAttemptPage
 

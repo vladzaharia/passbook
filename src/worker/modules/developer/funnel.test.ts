@@ -1,9 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import {
-  CreatedDeveloperSandboxSchema,
-  DeveloperFunnelSchema,
-} from '../../../shared/contracts/developer.ts';
+import { DeveloperFunnelSchema } from '../../../shared/contracts/developer.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { first, run } from '../../platform/db.ts';
@@ -12,6 +9,7 @@ import { createSessionStore } from '../auth/sessions.ts';
 import { percentile } from '../metrics/developer-funnel.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { clampViewedAt } from './funnel.ts';
+import { makeSandbox, startAndSettle } from './sandbox-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 const DAY = 86_400_000;
@@ -62,16 +60,18 @@ const send = (method: string, path: string, headers: Record<string, string>, bod
     kit.env,
   );
 
+/** `send` for the paths the sandbox helpers use: they name `/developer/...` and the app mounts it under `/api/v1`. */
+const api = (method: string, path: string, headers: Record<string, string>, body?: unknown) =>
+  send(method, `/api/v1${path}`, headers, body);
+
 async function person(withSandbox: boolean, viewedAt?: number) {
   const user = await makeUser(kit.f);
   const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
   if (!withSandbox) return { user, headers: session.headers, made: null };
-  const res = await send('POST', '/api/v1/developer/sandbox', session.headers, {
+  const made = await makeSandbox(api, session.headers, {
     turnstileToken: 'ok',
     ...(viewedAt === undefined ? {} : { viewedAt }),
   });
-  expect(res.status, await res.clone().text()).toBe(201);
-  const made = CreatedDeveloperSandboxSchema.parse(await res.json());
   return {
     user,
     headers: session.headers,
@@ -339,10 +339,10 @@ describe('what the funnel counts', () => {
     points.length = 0;
     const p = await person(true);
     expect(events('dev.sandbox')).toHaveLength(1);
-    const again = await send('POST', '/api/v1/developer/sandbox', p.headers, {
+    const again = await startAndSettle(api, p.headers, 'POST', '/developer/sandbox', {
       turnstileToken: 'ok',
     });
-    expect(again.status).toBe(201);
+    expect(again.status).toBe('succeeded');
     expect(events('dev.sandbox')).toHaveLength(1);
   });
 

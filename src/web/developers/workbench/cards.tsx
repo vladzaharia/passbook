@@ -6,10 +6,18 @@ import type {
   DeveloperLiveOrg,
 } from '../../../shared/contracts/developer-home.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
+import { BENCH_HOME_COPY as H } from '../../../shared/copy/developers-bench-home.ts';
 import { ROLE_LABELS } from '../../admin/orgs/org-roles.ts';
-import { ago, hostOf, keyState, left, masked } from './model.ts';
+import { IdChip } from '../bench/id-chip.tsx';
+import { StatusChip } from '../bench/status-chip.tsx';
+import { BenchTime } from '../bench/time.tsx';
+import { hostOf, keyState, masked } from './model.ts';
 
-const KEY_STATE = { active: null, rolling: 'Rolling', expired: 'Expired' } as const;
+const KEY_STATE = {
+  active: null,
+  rolling: { text: H.states.rolling, tone: 'neutral' },
+  expired: { text: H.states.expired, tone: 'warning' },
+} as const;
 
 export function Keys({
   keys,
@@ -45,17 +53,28 @@ export function Keys({
             return (
               <div key={k.id} className="lrow wb-key">
                 <span className="stack g1 wb-key-main">
-                  <span className="strong sm">{k.name}</span>
-                  <code className="xs muted">{masked(k)}</code>
+                  <a className="strong sm wb-key-name" href={`${href}#${encodeURIComponent(k.id)}`}>
+                    {k.name}
+                  </a>
+                  <IdChip id={k.id} kind="key" text={masked(k)} />
                   <span className="xs muted">
-                    {k.lastUsedAt !== null ? `Used ${ago(k.lastUsedAt, now)}` : 'Not used'}
-                    {k.expiresAt !== null && k.expiresAt > now
-                      ? ` · ${left(k.expiresAt, now)} left`
-                      : ''}
+                    {k.lastUsedAt !== null ? (
+                      <>
+                        {H.key.used} <BenchTime at={k.lastUsedAt} now={now} mode="ago" />
+                      </>
+                    ) : (
+                      H.key.unused
+                    )}
+                    {k.expiresAt !== null && k.expiresAt > now ? (
+                      <>
+                        {' · '}
+                        {H.key.expires} <BenchTime at={k.expiresAt} now={now} mode="until" />
+                      </>
+                    ) : null}
                   </span>
                 </span>
-                {state ? <span className="pill neutral">{state}</span> : null}
-                <a className="btn sm outline" href={`${href}#${k.id}`}>
+                {state ? <StatusChip tone={state.tone}>{state.text}</StatusChip> : null}
+                <a className="btn sm outline" href={`${href}#${encodeURIComponent(k.id)}`}>
                   Roll
                 </a>
               </div>
@@ -100,10 +119,10 @@ export function Passes({ passes }: { passes: DeveloperHomePass[] }) {
   );
 }
 
-function EndpointRow({ e, now }: { e: DeveloperHomeEndpoint; now: number }) {
+function EndpointRow({ e, now, href }: { e: DeveloperHomeEndpoint; now: number; href: string }) {
   const capture = e.target === 'capture';
   return (
-    <div className="lrow wb-ep">
+    <a className="lrow wb-ep" href={`${href}?endpoint=${encodeURIComponent(e.id)}`}>
       {capture ? (
         <Inbox aria-hidden className="wb-ep-icon" />
       ) : (
@@ -118,17 +137,21 @@ function EndpointRow({ e, now }: { e: DeveloperHomeEndpoint; now: number }) {
         </span>
       </span>
       {e.status !== 'active' ? (
-        <span className="pill neutral">{e.status === 'paused' ? 'Paused' : 'Disabled'}</span>
+        <StatusChip tone="neutral">
+          {e.status === 'paused' ? H.states.paused : H.states.disabled}
+        </StatusChip>
       ) : null}
-      <span
-        className="wb-ep-last xs muted"
-        data-ok={e.lastOk === null ? undefined : String(e.lastOk)}
-      >
-        {e.lastAt === null
-          ? 'Nothing yet'
-          : `${e.lastOk ? 'OK' : 'Failed'} · ${ago(e.lastAt, now)}`}
-      </span>
-    </div>
+      {e.lastAt === null ? (
+        <span className="wb-ep-last xs muted">{H.hook.none}</span>
+      ) : (
+        <span className="wb-ep-last xs muted">
+          <StatusChip tone={e.lastOk ? 'success' : 'danger'}>
+            {e.lastOk ? H.hook.ok : H.hook.failed}
+          </StatusChip>{' '}
+          <BenchTime at={e.lastAt} now={now} mode="ago" />
+        </span>
+      )}
+    </a>
   );
 }
 
@@ -156,7 +179,7 @@ export function Webhooks({
       ) : (
         <div className="list">
           {endpoints.map((e) => (
-            <EndpointRow key={e.id} e={e} now={now} />
+            <EndpointRow key={e.id} e={e} now={now} href={href} />
           ))}
         </div>
       )}

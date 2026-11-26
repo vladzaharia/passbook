@@ -25,6 +25,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'workflow_release_snapshots',
   'connection_webhook_legacy_sources',
   'connection_webhook_replays',
+  'connection_webhook_arrivals',
   'wallet_provider_accounts',
   'wallet_provider_credentials',
   'wallet_provider_account_events',

@@ -17,25 +17,41 @@ const has = (found: Partial<Record<string, string>> | undefined, waiting = true)
  * field errors land. No JSX; WizardDialog and the page Wizard draw it.
  */
 export function useWizard<Id extends string>(options: WizardOptions<Id>): WizardModel<Id> {
-  const { steps, errors, hints, fieldStep, onFinish, mode = 'create', open, dirty } = options;
+  const {
+    steps,
+    errors,
+    hints,
+    fieldStep,
+    onFinish,
+    mode = 'create',
+    open,
+    dirty,
+    lockedBefore,
+    lockedReason,
+  } = options;
   const edit = mode === 'edit';
   const formId = useId();
+  const lockedAt = lockedBefore ? steps.findIndex((s) => s.id === lockedBefore) : -1;
+  const isLocked = (i: number) => i < lockedAt && !steps[i]?.skip;
+  // A locked step is hopped like a skipped one: Back stops at the first open step.
+  const reachable = steps.map((s, i) => ({ skip: s.skip || isLocked(i) }));
   const firstIndex = Math.max(
     0,
-    steps.findIndex((s) => !s.skip),
+    reachable.findIndex((s) => !s.skip),
   );
   const [passed, setPassed] = useState<ReadonlySet<Id>>(new Set());
   const [shown, setShown] = useState<ReadonlySet<Id>>(new Set());
   const [formError, setFormError] = useState<string>();
   const [finishing, setFinishing] = useState(false);
   const [refused, setRefused] = useState(0);
-  const nav = useWizardNav(steps, firstIndex, () => setFormError(undefined));
+  const nav = useWizardNav(reachable, firstIndex, () => setFormError(undefined));
   const { index, reached, motion, move, hop } = nav;
   const running = useRef(false);
   const server = useServerFields();
 
   const current = steps[index] ?? steps[firstIndex];
-  const bad = (id: Id) => has(errors[id], id === current?.id);
+  const lockedIds = new Set(steps.filter((_, i) => isLocked(i)).map((s) => s.id));
+  const bad = (id: Id) => !lockedIds.has(id) && has(errors[id], id === current?.id);
   const serverSteps = new Set<string>();
   for (const field of Object.keys(server.fields)) {
     const at = fieldStep[field];
@@ -48,11 +64,16 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
     if (!s) return 'todo';
     if (s.skip && i !== index) return 'skipped';
     if (i === index) return 'current';
+    if (isLocked(i)) return 'done';
     const visited = edit || passed.has(s.id);
     if (serverSteps.has(s.id) || (visited && bad(s.id))) return 'invalid';
     return visited ? 'done' : 'todo';
   };
-  const views = steps.map((s, i) => ({ ...s, state: stateOf(i) }));
+  const views = steps.map((s, i) => ({
+    ...s,
+    ...(isLocked(i) ? { locked: true } : {}),
+    state: stateOf(i),
+  }));
   const last = edit || index >= lastIndex;
   // The step that finishes answers for every step: an earlier one may have turned invalid since.
   const firstBad = steps.findIndex((s) => !s.skip && bad(s.id));
@@ -93,7 +114,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
   function go(to: number | Id) {
     const at = typeof to === 'number' ? to : steps.findIndex((s) => s.id === to);
     const target = steps[at];
-    if (!target || at === index || target.skip) return;
+    if (!target || at === index || target.skip || isLocked(at)) return;
     if (!edit && at > index) {
       if (current && bad(current.id)) return refuse();
       if (stateOf(at) !== 'done' && stateOf(at) !== 'invalid') return;
@@ -104,7 +125,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
   function jump(to: number | Id) {
     const at = typeof to === 'number' ? to : steps.findIndex((s) => s.id === to);
     const target = steps[at];
-    if (!target || target.skip || at === index) return;
+    if (!target || target.skip || at === index || isLocked(at)) return;
     setPassed((p) => {
       const next = new Set(p);
       for (const s of steps.slice(0, at)) if (!s.skip) next.add(s.id);
@@ -218,6 +239,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
     clearServer: server.clear,
     primary,
     finishing,
+    lockedReason,
     form: {
       id: formId,
       invalid: blocked,
@@ -232,7 +254,8 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
       },
     },
     frame: {
-      steps,
+      steps: steps.map((s, i) => (isLocked(i) ? { ...s, locked: true } : s)),
+      lockedReason,
       current: index,
       onStep: go,
       skipped: steps.filter((s) => s.skip).map((s) => s.id),

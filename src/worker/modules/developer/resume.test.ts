@@ -1,15 +1,18 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
-import { all, first } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { NOOP } from '../operations/progress-types.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
-import { createSandbox, type SandboxStep } from './service.ts';
+import { mintSandboxKeyOnce } from './sandbox-key.ts';
+import { provisionSandbox, type SandboxStep } from './service.ts';
 
 /**
  * Provisioning is resumable: a request that dies after any step leaves a sandbox a retry by the same person
- * completes (membership, ticket, release, key), never a 409. The key is minted once.
+ * completes (membership, ticket, release, capture), never a 409. Provisioning mints no key: it is minted once
+ * afterwards, and a second mint is a 409.
  */
 let kit: BlueprintKit;
 beforeAll(async () => {
@@ -44,14 +47,16 @@ const failAfter = (step: SandboxStep) => ({
   },
 });
 
-const STEPS: SandboxStep[] = ['org', 'template', 'candidate', 'approval', 'release', 'key'];
+const STEPS: SandboxStep[] = ['org', 'template', 'candidate', 'approval', 'release', 'capture'];
+const provision = (auth: SessionAuth, step?: SandboxStep) =>
+  provisionSandbox(ctx(), auth, NOOP, step ? { hooks: failAfter(step) } : {});
 
 describe('a retry after a failure at each step', () => {
   it.each(STEPS)('completes what is missing after %s', async (step) => {
     const { auth, userId } = await session();
-    await expect(createSandbox(ctx(), auth, failAfter(step))).rejects.toBeInstanceOf(Injected);
+    await expect(provision(auth, step)).rejects.toBeInstanceOf(Injected);
 
-    const retry = await createSandbox(ctx(), auth);
+    const retry = await provision(auth);
     const orgId = retry.orgId;
     expect(retry.previewOnly).toBe(true);
     expect(retry.templateId).not.toBeNull();
@@ -77,28 +82,27 @@ describe('a retry after a failure at each step', () => {
     expect(
       await count('SELECT count(*) AS n FROM template_candidates WHERE org_id = ?', orgId),
     ).toBe(1);
+    expect(
+      await count(
+        "SELECT count(*) AS n FROM webhook_endpoints WHERE org_id = ? AND target = 'capture'",
+        orgId,
+      ),
+    ).toBe(1);
 
-    // The key exists exactly once. Where the first request died before minting it, the retry shows the secret;
-    // where it died after (the response was lost), there is no secret and the key is named for "Roll key".
-    const keys = await all<{ id: string }>(
-      kit.env.DB,
-      "SELECT id FROM api_keys WHERE org_id = ? AND kind = 'personal'",
-      [orgId],
-    );
-    expect(keys).toHaveLength(1);
-    if (step === 'key') {
-      expect(retry.key).toBeNull();
-      expect(retry.previousKey?.id).toBe(keys[0]?.id);
-    } else {
-      expect(retry.key?.secret).toMatch(/^pbp_test_/);
-      expect(retry.key?.id).toBe(keys[0]?.id);
-      expect(retry.previousKey).toBeNull();
-    }
-
-    // A further call changes nothing and never shows a second secret.
-    const again = await createSandbox(ctx(), auth);
-    expect(again.key).toBeNull();
-    expect(again.previousKey?.id).toBe(keys[0]?.id);
+    // No attempt made a key: it is minted once, afterwards, and never a second time.
+    expect(
+      await count(
+        "SELECT count(*) AS n FROM api_keys WHERE org_id = ? AND kind = 'personal'",
+        orgId,
+      ),
+    ).toBe(0);
+    const key = await mintSandboxKeyOnce(ctx(), auth);
+    expect(key.secret).toMatch(/^pbp_test_/);
+    await expect(mintSandboxKeyOnce(ctx(), auth)).rejects.toMatchObject({
+      code: 'SANDBOX_KEY_SHOWN',
+    });
+    // A further provision changes nothing.
+    await provision(auth);
     expect(await count('SELECT count(*) AS n FROM api_keys WHERE org_id = ?', orgId)).toBe(1);
   });
 });

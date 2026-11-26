@@ -257,6 +257,14 @@
     "resource": "connections.runs",
     "method": "list"
   },
+  "connections.getConnectionsByIdSetup": {
+    "resource": "connections.setup",
+    "method": "retrieve"
+  },
+  "connections.getConnectionsByIdWebhookArrivals": {
+    "resource": "connections.webhookArrivals",
+    "method": "list"
+  },
   "connections.getConnectionsByIdWebhookFailures": {
     "resource": "connections.webhookFailures",
     "method": "list"
@@ -321,6 +329,10 @@
   },
   "connectors.getConnectorsByType": {
     "resource": "connectors",
+    "method": "retrieve"
+  },
+  "connectors.getConnectorsWebhookPushRecipesByRecipeSetup": {
+    "resource": "connectors.recipeSetup",
     "method": "retrieve"
   },
   "delivery.getDelivery": {
@@ -416,6 +428,12 @@
   "developer.postSandboxRecreate": {
     "resource": "developer.sandbox",
     "method": "replace",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.postSandboxKey": {
+    "resource": "developer.sandbox",
+    "method": "reveal",
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
@@ -2516,6 +2534,10 @@
   "webhooks.getWebhookEndpointsByIdTests": {
     "resource": "webhookEndpoints.tests",
     "method": "list"
+  },
+  "webhooks.getWebhookEndpointsSetup": {
+    "resource": "webhookEndpoints.setup",
+    "method": "retrieve"
   },
   "webhooks.patchWebhookEndpointsById": {
     "resource": "webhookEndpoints",

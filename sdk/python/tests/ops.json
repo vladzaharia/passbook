@@ -1199,6 +1199,11 @@
      "requestsPerMinute": 0,
      "enabled": false,
      "health": "unknown",
+     "firstVerifiedArrivalAt": 0,
+     "warning": {
+      "code": "stale_deliveries",
+      "text": "x"
+     },
      "consecutiveFailures": 0,
      "breakerOpenUntil": 0,
      "nextRunAt": 0,
@@ -1259,6 +1264,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -1664,6 +1674,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -1745,6 +1760,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -2002,6 +2022,7 @@
    }
   ],
   "query": [],
+  "body": {},
   "binary": false,
   "idempotent": false,
   "raw": false,
@@ -2194,6 +2215,84 @@
   }
  },
  {
+  "id": "connections.getConnectionsByIdSetup",
+  "call": "connections.setup.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/setup",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "direction": "inbound",
+   "recipe": "custom",
+   "version": "x",
+   "checkedAt": "x",
+   "provider": {
+    "name": "x",
+    "consoleUrl": "x",
+    "docs": [
+     {
+      "label": "x",
+      "url": "x"
+     }
+    ]
+   },
+   "secret": {
+    "origin": "provider",
+    "allowPaste": false,
+    "prefix": "x",
+    "minLength": 0,
+    "whereStep": "x"
+   },
+   "subscriptions": {
+    "perWebhook": "one",
+    "topics": [
+     {
+      "id": "x",
+      "label": "x",
+      "required": false,
+      "verified": false
+     }
+    ]
+   },
+   "steps": [
+    {
+     "id": "x",
+     "side": "provider",
+     "title": "x",
+     "parts": [
+      {
+       "t": "text",
+       "text": "x"
+      }
+     ]
+    }
+   ],
+   "test": {
+    "kind": "button",
+    "text": "x",
+    "command": "x",
+    "issues": false
+   },
+   "troubleshooting": {},
+   "values": {
+    "endpointUrl": "x",
+    "signatureHeader": "x",
+    "timestampHeader": "x",
+    "hasSecret": false
+   }
+  }
+ },
+ {
   "id": "connections.postConnectionsByIdSync",
   "call": "connections.sync",
   "http": "POST",
@@ -2235,6 +2334,41 @@
   "result": {
    "ok": false,
    "durationMs": 0
+  }
+ },
+ {
+  "id": "connections.getConnectionsByIdWebhookArrivals",
+  "call": "connections.webhook_arrivals.list",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/webhook-arrivals",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "receivedAt": 0,
+     "lastAt": 0,
+     "outcome": "accepted",
+     "reason": "signature_missing",
+     "topic": "x",
+     "contentClass": "json",
+     "eventRef": "x",
+     "usedPrevious": false,
+     "count": 0
+    }
+   ],
+   "nextCursor": null
   }
  },
  {
@@ -2370,6 +2504,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -2427,6 +2566,11 @@
    "requestsPerMinute": 0,
    "enabled": false,
    "health": "unknown",
+   "firstVerifiedArrivalAt": 0,
+   "warning": {
+    "code": "stale_deliveries",
+    "text": "x"
+   },
    "consecutiveFailures": 0,
    "breakerOpenUntil": 0,
    "nextRunAt": 0,
@@ -2474,6 +2618,78 @@
     }
    ],
    "nextCursor": null
+  }
+ },
+ {
+  "id": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
+  "call": "connectors.recipe_setup.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connectors/webhook-push/recipes/{recipe}/setup",
+  "pathParams": [
+   {
+    "name": "recipe",
+    "py": "recipe",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "direction": "inbound",
+   "recipe": "custom",
+   "version": "x",
+   "checkedAt": "x",
+   "provider": {
+    "name": "x",
+    "consoleUrl": "x",
+    "docs": [
+     {
+      "label": "x",
+      "url": "x"
+     }
+    ]
+   },
+   "secret": {
+    "origin": "provider",
+    "allowPaste": false,
+    "prefix": "x",
+    "minLength": 0,
+    "whereStep": "x"
+   },
+   "subscriptions": {
+    "perWebhook": "one",
+    "topics": [
+     {
+      "id": "x",
+      "label": "x",
+      "required": false,
+      "verified": false
+     }
+    ]
+   },
+   "steps": [
+    {
+     "id": "x",
+     "side": "provider",
+     "title": "x",
+     "parts": [
+      {
+       "t": "text",
+       "text": "x"
+      }
+     ]
+    }
+   ],
+   "test": {
+    "kind": "button",
+    "text": "x",
+    "command": "x",
+    "issues": false
+   },
+   "troubleshooting": {}
   }
  },
  {
@@ -10435,6 +10651,7 @@
      "revoked": false,
      "lastSeenAt": 0,
      "updatedAt": 0,
+     "configRevision": 0,
      "signIn": "paired",
      "adminName": "x"
     }
@@ -10528,6 +10745,7 @@
      "revoked": false,
      "lastSeenAt": 0,
      "updatedAt": 0,
+     "configRevision": 0,
      "signIn": "paired",
      "adminName": "x"
     }
@@ -10588,6 +10806,7 @@
    "revoked": false,
    "lastSeenAt": 0,
    "updatedAt": 0,
+   "configRevision": 0,
    "signIn": "paired",
    "adminName": "x",
    "pairing": {
@@ -10656,6 +10875,7 @@
    "revoked": false,
    "lastSeenAt": 0,
    "updatedAt": 0,
+   "configRevision": 0,
    "signIn": "paired",
    "adminName": "x"
   }
@@ -10749,6 +10969,7 @@
      "revoked": false,
      "lastSeenAt": 0,
      "updatedAt": 0,
+     "configRevision": 0,
      "signIn": "paired",
      "adminName": "x"
     }
@@ -12320,6 +12541,72 @@
     "createdAt": 0
    },
    "secret": "x"
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsSetup",
+  "call": "webhook_endpoints.setup.retrieve",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/setup",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "direction": "inbound",
+   "recipe": "custom",
+   "version": "x",
+   "checkedAt": "x",
+   "provider": {
+    "name": "x",
+    "consoleUrl": "x",
+    "docs": [
+     {
+      "label": "x",
+      "url": "x"
+     }
+    ]
+   },
+   "secret": {
+    "origin": "provider",
+    "allowPaste": false,
+    "prefix": "x",
+    "minLength": 0,
+    "whereStep": "x"
+   },
+   "subscriptions": {
+    "perWebhook": "one",
+    "topics": [
+     {
+      "id": "x",
+      "label": "x",
+      "required": false,
+      "verified": false
+     }
+    ]
+   },
+   "steps": [
+    {
+     "id": "x",
+     "side": "provider",
+     "title": "x",
+     "parts": [
+      {
+       "t": "text",
+       "text": "x"
+      }
+     ]
+    }
+   ],
+   "test": {
+    "kind": "button",
+    "text": "x",
+    "command": "x",
+    "issues": false
+   },
+   "troubleshooting": {}
   }
  },
  {
