@@ -23,7 +23,7 @@ const files = [
 ];
 const islandFiles = [
   ...files,
-  ...['webhooks', 'playground', 'logs', 'quickstart', 'home'].flatMap((d) => sources(join(wb, d))),
+  ...['playground', 'logs', 'quickstart', 'home'].flatMap((d) => sources(join(wb, d))),
   ...sources(join(dev, 'search')),
 ];
 const text = (f: string) => readFileSync(f, 'utf8');

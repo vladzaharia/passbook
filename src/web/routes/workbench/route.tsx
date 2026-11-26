@@ -70,8 +70,8 @@ function WorkbenchLayout() {
   let body: ReactNode = <Outlet />;
   if (isPending) body = <SkeletonRows label="Loading" />;
   // An email link opens the holder's spaces only: the Workbench waits for Polaris ID.
-  else if (authed && authed.amr !== 'oidc' && !ownGate)
-    body = <PolarisIdRequired space="The Workbench" next={href} />;
+  else if (authed && authed.amr !== 'oidc')
+    body = ownGate ? <Outlet /> : <PolarisIdRequired space="The Workbench" next={href} />;
   else if (!authed) {
     if (!signedOutPublic) body = <SignInState next={href} />;
   } else if (contexts.isPending) body = <SkeletonRows label="Loading" />;

@@ -52,7 +52,7 @@ describe('bench states', () => {
   it('signed out is the BX2 gate with the tool line and the way back', () => {
     render(<BenchGate tool="logs" />);
     const signIn = screen.getByRole('link', { name: 'Sign in' });
-    expect(signIn.getAttribute('href')).toBe('/login?next=%2Fdevelopers%2Flogs');
+    expect(signIn.getAttribute('href')).toBe('/login?next=%2Fworkbench%2Flogs');
     expect(screen.getByText('See every request your key made.')).toBeTruthy();
   });
 

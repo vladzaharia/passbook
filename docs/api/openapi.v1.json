@@ -133983,6 +133983,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsSetup",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.setup",
           "method": "retrieve"
