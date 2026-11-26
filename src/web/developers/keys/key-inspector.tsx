@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import type { DeveloperHomeKey } from '../../../shared/contracts/developer-home.ts';
@@ -171,8 +172,11 @@ export function KeyInspector({
           </>
         ) : null}
       </dl>
-      <section className="ksi-sec" aria-label={C.facts.scopes(k.scopes.length)}>
-        <h3 className="ksi-h">{C.facts.scopes(k.scopes.length)}</h3>
+      <details className="ksi-sec ksi-more" open={k.scopes.length <= 6}>
+        <summary className="ksi-h">
+          {C.facts.scopes(k.scopes.length)}
+          <ChevronDown aria-hidden="true" />
+        </summary>
         <ul className="ksi-scopes">
           {k.scopes.map((s) => (
             <li key={s}>
@@ -180,7 +184,7 @@ export function KeyInspector({
             </li>
           ))}
         </ul>
-      </section>
+      </details>
       <section className="ksi-sec" aria-labelledby={`ksi-r-${k.id}`}>
         <div className="ksi-rh">
           <h3 className="ksi-h" id={`ksi-r-${k.id}`}>

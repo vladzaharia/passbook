@@ -108,3 +108,30 @@
 .ksi-call .bench-time {
   color: var(--pk-text-muted);
 }
+.ksi-more > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 28px;
+  cursor: pointer;
+  list-style: none;
+}
+.ksi-more > summary::-webkit-details-marker {
+  display: none;
+}
+.ksi-more > summary:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+  border-radius: var(--pk-radius-sm);
+}
+.ksi-more > summary svg {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--wl-dur-hover) var(--wl-ease-move);
+}
+.ksi-more[open] > summary svg {
+  transform: rotate(180deg);
+}
+.ksi-more[open] > summary {
+  margin-bottom: 8px;
+}
