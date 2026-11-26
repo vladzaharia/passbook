@@ -5698,6 +5698,32 @@
     "IDP_SCIM_MISSING",
     "UNAUTHENTICATED"
   ],
+  "polaris setup get /idp/setup": [
+    "IDP_BUDGET",
+    "IDP_CLIENT",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "IDP_SCIM_FOREIGN",
+    "IDP_SCIM_MISSING"
+  ],
+  "polaris setup post /idp/scim-token/rotate": [
+    "FORBIDDEN",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "MISSING_SCOPE",
+    "OPERATION_RUNNING",
+    "UNAUTHENTICATED"
+  ],
+  "polaris setup post /idp/setup": [
+    "FORBIDDEN",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "MISSING_SCOPE",
+    "OPERATION_RUNNING",
+    "UNAUTHENTICATED"
+  ],
   "public get /wallet/samsung/{offer}": [
     "IDENTITY_EXPIRED",
     "IDENTITY_NOT_CONFIGURED",

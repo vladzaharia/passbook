@@ -14,6 +14,7 @@
   "scripts": {
     "dev": "node tools/build-templates.ts && node tools/dev-vars.ts && vite dev",
     "dev:vars": "node tools/dev-vars.ts",
+    "binding:first-deploy": "node tools/binding-first-deploy.ts",
     "build": "node tools/build-templates.ts && vite build && node tools/build-developers.ts && node tools/check-bundle.ts && wrangler deploy --dry-run --outdir .wrangler/dry-run && node tools/stamp-build.ts",
     "gen": "node tools/build-templates.ts && node tools/build-ssr-tokens.ts && node tools/build-ssr-kit.ts && node tools/build-ssr-holder.ts && node tools/build-playground-kit.ts && node tools/gen-wallet-capabilities.ts && node tools/gen-operation-kinds.ts && node tools/gen-error-catalog.ts && node tools/gen-op-codes.ts && node tools/gen-webhook-vectors.ts && node tools/gen-changelog.ts && node tools/gen-sdk-ts.ts && node tools/gen-sdk-py.ts && node tools/gen-sdk-go.ts && node tools/gen-snippets.ts && node tools/build-test-schema.ts && wrangler types --strict-vars=false",
     "gen:demo-words": "node tools/gen-demo-words.ts",

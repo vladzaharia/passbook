@@ -23,6 +23,7 @@ describe.each(['v2', 'admin'] as const)('setupStatus (%s layout)', (layout) => {
       callbacksOurs: true,
       restricted: true,
       missingRoles: ['developer', 'platform_admin', 'users'],
+      aliases: [],
       otherGroups: 1,
       logo: false,
       darkLogo: false,

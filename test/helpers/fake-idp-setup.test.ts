@@ -16,6 +16,17 @@ const sha = async (t: string): Promise<string> =>
     .join('');
 
 describe('fake IDP setup', () => {
+  it('reports the alias group: absent, existing, then allowed', async () => {
+    const idp = createFakeIdp();
+    const aliases = async () => (await idp.setupStatus()).client.aliases;
+    expect(await aliases()).toEqual([{ name: 'wallet_org_admins', exists: false, allowed: false }]);
+    idp.setup.alias.exists = true;
+    expect(await aliases()).toEqual([{ name: 'wallet_org_admins', exists: true, allowed: false }]);
+    await idp.placeRoleGroups(ctx);
+    await idp.allowClientGroups(ctx);
+    expect(await aliases()).toEqual([{ name: 'wallet_org_admins', exists: true, allowed: true }]);
+  });
+
   it('walks place, allow, restrict, logo, scim, sync', async () => {
     const idp = createFakeIdp();
     expect((await idp.placeRoleGroups(ctx)).roles).toEqual({

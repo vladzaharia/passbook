@@ -7,6 +7,8 @@ profile: passbook-polaris-binding
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
+Settings, Polaris ID shows the key expiry; rotate before it. First turn-on: [[Polaris Binding Turn On]].
+
 Rotate the Polaris ID API key every 90 days. `health().keyExpiresAt` is the nearest expiry among the binding user's keys. Order: create the new key, set it, check health, then revoke the old one.
 
 ## Prerequisites

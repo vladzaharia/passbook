@@ -8205,6 +8205,161 @@
   }
  },
  {
+  "id": "polaris-setup.postPlatformIdpScimTokenRotate",
+  "call": "platform.idp.scim_token.rotate",
+  "http": "POST",
+  "path": "/api/v1/platform/idp/scim-token/rotate",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "operation": {
+    "id": "x",
+    "kind": "x",
+    "status": "queued",
+    "title": "x",
+    "text": "x",
+    "orgId": "x",
+    "mode": "live",
+    "target": {
+     "type": "x",
+     "id": "x"
+    },
+    "step": "x",
+    "steps": [
+     {
+      "key": "x",
+      "label": "x",
+      "state": "pending",
+      "done": 0,
+      "total": 0,
+      "detail": "x",
+      "until": 0,
+      "waitingReason": "blocked",
+      "group": "x",
+      "startedAt": 0,
+      "finishedAt": 0
+     }
+    ],
+    "attempt": 0,
+    "cancelable": false,
+    "cancelRequested": false,
+    "startedBy": {
+     "type": "user",
+     "id": "x"
+    },
+    "createdAt": 0,
+    "startedAt": 0,
+    "updatedAt": 0,
+    "finishedAt": 0,
+    "error": {
+     "code": "x",
+     "message": "x",
+     "step": "x",
+     "retryable": false
+    },
+    "result": {
+     "href": "x",
+     "ids": {}
+    },
+    "revision": 0,
+    "pollAfterMs": 0
+   }
+  }
+ },
+ {
+  "id": "polaris-setup.getPlatformIdpSetup",
+  "call": "platform.idp.setup.retrieve",
+  "http": "GET",
+  "path": "/api/v1/platform/idp/setup",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "mode": "dry_run",
+   "items": [
+    {
+     "key": "binding",
+     "status": "done"
+    }
+   ]
+  }
+ },
+ {
+  "id": "polaris-setup.postPlatformIdpSetup",
+  "call": "platform.idp.setup.start",
+  "http": "POST",
+  "path": "/api/v1/platform/idp/setup",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "operation": {
+    "id": "x",
+    "kind": "x",
+    "status": "queued",
+    "title": "x",
+    "text": "x",
+    "orgId": "x",
+    "mode": "live",
+    "target": {
+     "type": "x",
+     "id": "x"
+    },
+    "step": "x",
+    "steps": [
+     {
+      "key": "x",
+      "label": "x",
+      "state": "pending",
+      "done": 0,
+      "total": 0,
+      "detail": "x",
+      "until": 0,
+      "waitingReason": "blocked",
+      "group": "x",
+      "startedAt": 0,
+      "finishedAt": 0
+     }
+    ],
+    "attempt": 0,
+    "cancelable": false,
+    "cancelRequested": false,
+    "startedBy": {
+     "type": "user",
+     "id": "x"
+    },
+    "createdAt": 0,
+    "startedAt": 0,
+    "updatedAt": 0,
+    "finishedAt": 0,
+    "error": {
+     "code": "x",
+     "message": "x",
+     "step": "x",
+     "retryable": false
+    },
+    "result": {
+     "href": "x",
+     "ids": {}
+    },
+    "revision": 0,
+    "pollAfterMs": 0
+   }
+  }
+ },
+ {
   "id": "settings.getPlatformSettings",
   "call": "platform.settings.retrieve",
   "http": "GET",

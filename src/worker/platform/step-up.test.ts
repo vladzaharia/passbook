@@ -312,6 +312,8 @@ describe('step-up route inventory', () => {
         "POST /api/v1/platform/idp/groups/ensure",
         "POST /api/v1/platform/idp/reconcile",
         "POST /api/v1/platform/idp/scim-breaker/clear",
+        "POST /api/v1/platform/idp/scim-token/rotate",
+        "POST /api/v1/platform/idp/setup",
         "POST /api/v1/platform/invitations",
         "POST /api/v1/platform/invitations/:id/resend",
         "POST /api/v1/platform/wallet-credentials/:id/rotate-key",

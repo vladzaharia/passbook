@@ -31,6 +31,7 @@ const RULES: Rule[] = [
   // A Polaris ID start answers the same operation (platform area).
   [/^polaris-operations\./, /(^|\.)operation\.kind$/, 'idp.check'],
   [/^polaris-access\./, /(^|\.)operation\.kind$/, 'idp.offboard'],
+  [/^polaris-setup\./, /(^|\.)operation\.kind$/, 'idp.setup'],
   // The binding's ledger: who made a call, and the open difference it found.
   [/^polaris-platform\./, /\.items\[\d+\]\.actor$/, 'idp_sync'],
   [/^polaris-platform\./, /\.items\[\d+\]\.kind$/, 'unknown_member'],
