@@ -140,7 +140,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
       .getByRole('button', { name: 'Open request' }),
   );
   await page.getByRole('menuitem', { name: 'Logs', exact: true }).click();
-  await page.waitForURL(/\/workbench\/o\/[^/]+\/logs#/);
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/logs\?source=all#/);
   await openMenu(
     page,
     page

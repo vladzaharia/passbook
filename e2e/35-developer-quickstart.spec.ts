@@ -83,8 +83,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     manifest: { sample: Record<string, unknown> };
   };
   const input = { ...template.manifest.sample, attendee: 'Casey River', ticketId: 'QS-1042' };
-  // A bad first line: the page marks it with the problem. The request log redacts a body's input and
-  // issues, so the page names the server's own words and the error page, not the missing field.
+  // A bad first line: the page marks it with the problem and the field to change.
   const { ticketId: _gone, ...broken } = input;
   const bad = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-bad' },
@@ -92,9 +91,9 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   });
   expect(bad.status()).toBe(422);
   await expect(page.getByText('422 INVALID')).toBeVisible();
-  const fix = page.getByRole('alert').filter({ hasText: 'The pass input is invalid.' });
-  await expect(fix).toBeVisible();
-  await expect(fix.getByRole('link', { name: 'PASS_INPUT_INVALID' })).toBeVisible();
+  // The log blanks the request's input (R3) but keeps the problem's own issue list: the page names the field.
+  await expect(page.getByRole('alert').filter({ hasText: 'ticketId is required.' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: '"ticketId": "QS-1042"' })).toBeVisible();
 
   const made = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-good' },
