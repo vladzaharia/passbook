@@ -1,6 +1,12 @@
 import type { Check } from './authority-checks.ts';
 import { AuthorityError } from './authority-error.ts';
-import { actorSql, Binds, type GrantScope, type Principal } from './authority-principal.ts';
+import {
+  actorSql,
+  assertNoInactiveOk,
+  Binds,
+  type GrantScope,
+  type Principal,
+} from './authority-principal.ts';
 import { hasTemplateRef, restrictRow } from './authority-restrict.ts';
 import { GUARDED_TABLES } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
@@ -20,6 +26,7 @@ export function authorityPredicate(
   principal: Principal,
   options: { scope: GrantScope; now: number; checks?: Check[] },
 ): AuthorityPredicate {
+  assertNoInactiveOk(principal);
   const b = new Binds(principal.kind === 'api_key');
   const actor = actorSql(principal, options.now, b);
   const checks = (options.checks ?? []).map((c) => `COALESCE((${c.ok(b, options.scope)}), 0) = 1`);

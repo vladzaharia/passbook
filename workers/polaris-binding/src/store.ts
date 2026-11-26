@@ -89,7 +89,10 @@ export async function recordProof(
   ]);
 }
 
-export type HealthCore = Omit<Health, 'budget' | 'layout' | 'ok' | 'mode' | 'frozen'> & {
+export type HealthCore = Omit<
+  Health,
+  'budget' | 'layout' | 'transport' | 'ok' | 'mode' | 'frozen'
+> & {
   keySubject: string | null;
   /** Targets (`g:<key>`) whose group is renamed, gone or refused: writes to them stop. */
   blocked: string[];
@@ -143,4 +146,9 @@ export async function writeHealth(db: D1Database, h: HealthCore): Promise<void> 
       JSON.stringify(h.blocked),
     )
     .run();
+}
+
+/** Forgets the cached health read, so the next write re-reads Polaris ID after a setup change. */
+export async function invalidateHealth(db: D1Database): Promise<void> {
+  await db.prepare('DELETE FROM idp_health WHERE id = 1').run();
 }

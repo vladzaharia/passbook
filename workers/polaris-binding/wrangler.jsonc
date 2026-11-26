@@ -10,11 +10,11 @@
   "preview_urls": false,
   "upload_source_maps": true,
   "vars": {
-    "POCKET_ID_ORIGIN": "https://id.example.invalid",
+    "POCKET_ID_ORIGIN": "https://id.plrs.im",
     // v2 is Polaris ID on Pocket ID v2.19.x (/api/...); admin is the next release (/api/admin/...).
     "POCKET_ID_API": "v2",
-    // The PassBook OIDC client's id in Polaris ID, for the group-restriction check.
-    "PASSBOOK_CLIENT_ID": "",
+    // The PassBook OIDC client's id in Polaris ID: its CIMD metadata URL (or a registered client's plain id).
+    "PASSBOOK_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     // dry_run computes and ledgers every write and sends none. The owner sets live after a dry-run week.
     "WRITE_MODE": "dry_run",
     "GROUP_PREFIX": "passbook_",
@@ -25,8 +25,8 @@
     "ADOPT_GROUPS": "{}",
     // Exact claim keys outside passbook_* the binding may write. Keep empty unless an app needs a bare key.
     "CLAIM_KEYS": "[]",
-    // Role registry. Ids are placeholders until the owner fills them in (docs/operations.md, Polaris ID binding).
-    "GROUPS": "{\"console\":{\"id\":\"\",\"name\":\"passbook_console\"},\"developer\":{\"id\":\"\",\"name\":\"passbook_developers\"},\"platform_admin\":{\"id\":\"\",\"name\":\"passbook_platform_admins\",\"protected\":true},\"users\":{\"id\":\"\",\"name\":\"passbook_users\",\"protected\":true}}"
+    // Role registry by exact group name. placeRoleGroups finds or makes each group and records its id in D1; a protected role may list several names.
+    "GROUPS": "{\"aliases\":[\"wallet_org_admins\"],\"console\":{\"name\":\"passbook_console\"},\"developer\":{\"name\":\"passbook_developers\"},\"platform_admin\":[{\"name\":\"wallet_admins\",\"protected\":true},{\"name\":\"passbook_platform_admins\",\"protected\":true}],\"users\":[{\"name\":\"wallet_users\",\"protected\":true},{\"name\":\"passbook_users\",\"protected\":true}]}"
   },
   "d1_databases": [
     {
@@ -37,6 +37,9 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Polaris ID is the `pocket-id` Worker in this account: admin calls go through the binding, not public HTTPS.
+  // POCKET_ID_ORIGIN stays the request URL and Host. Remove this entry to use public HTTPS (health().transport shows which).
+  "services": [{ "binding": "POLARIS", "service": "pocket-id" }],
   "secrets": { "required": ["POCKET_ID_API_KEY"] },
   // Traces would record request attributes of calls that carry the key; logs are enough.
   "observability": { "enabled": true, "traces": { "enabled": false } }

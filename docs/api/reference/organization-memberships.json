@@ -142,7 +142,8 @@
       "createdAt": 1794362400000,
       "revokedAt": null,
       "userName": "Sam Rivera",
-      "userEmail": "sam@example.com"
+      "userEmail": "sam@example.com",
+      "accessPaused": false
     }
   },
   "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend": {

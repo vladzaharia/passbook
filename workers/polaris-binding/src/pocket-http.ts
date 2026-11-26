@@ -1,3 +1,4 @@
+import { alert } from './ledger.ts';
 import { allowedRoutes } from './routes.ts';
 import { type BindingEnv, IdpError } from './types.ts';
 
@@ -7,6 +8,8 @@ const MAX_BODY = 256 * 1024;
 export interface Deps {
   fetch: typeof fetch;
   now: () => number;
+  /** Which transport `fetch` uses; absent means public HTTPS. */
+  transport?: 'binding' | 'https';
 }
 
 export interface PocketResponse {
@@ -19,6 +22,8 @@ export type Req = (
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   payload?: unknown,
+  /** Only the SCIM sync asks for more than the default: Polaris ID answers when the push ends. */
+  timeoutMs?: number,
 ) => Promise<PocketResponse>;
 
 async function readCapped(res: Response): Promise<string> {
@@ -55,6 +60,7 @@ export async function pocketRequest(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   payload?: unknown,
+  timeoutMs = TIMEOUT_MS,
 ): Promise<PocketResponse> {
   // The key travels on every request, reads included: the origin must be https, bare and exactly the setting.
   let origin: URL;
@@ -73,7 +79,9 @@ export async function pocketRequest(
   const url = new URL(path, env.POCKET_ID_ORIGIN);
   const layout = env.POCKET_ID_API === 'admin' ? 'admin' : 'v2';
   if (
-    !allowedRoutes(layout).some((r) => r.method === method && r.path.test(url.pathname)) ||
+    !allowedRoutes(layout, env.PASSBOOK_CLIENT_ID).some(
+      (r) => r.method === method && r.path.test(url.pathname),
+    ) ||
     url.origin !== env.POCKET_ID_ORIGIN ||
     !url.pathname.startsWith('/api/') ||
     !path.startsWith('/api/') ||
@@ -86,7 +94,7 @@ export async function pocketRequest(
     res = await deps.fetch(url.toString(), {
       method,
       redirect: 'manual',
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: {
         'x-api-key': env.POCKET_ID_API_KEY,
         accept: 'application/json',
@@ -95,6 +103,8 @@ export async function pocketRequest(
       ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
     });
   } catch {
+    // Fail closed: a bound transport never falls back to public HTTPS.
+    alert('error', 'binding.upstream_unreachable', { transport: deps.transport ?? 'https' });
     throw new IdpError('IDP_UPSTREAM', 'Polaris ID was unreachable.');
   }
   let raw: string;

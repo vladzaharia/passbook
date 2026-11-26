@@ -39,11 +39,14 @@ export function signupApi(s: Shared): SignupApi {
         ...sp.groups.map((g) => `g:${g}` as const),
       ];
       const mm = { ...m, role: targets.join(','), delta: 'signup' };
+      // A role the config lists without an id may be placed by now: only the composed registry can tell.
       const peeked = gate.peek();
       if (peeked)
         await call.guard(mm, () =>
           mappedIds(
-            targets.filter((t) => !t.startsWith('g:')),
+            targets.filter(
+              (t) => !t.startsWith('g:') && !peeked.unplaced.some((u) => u.role === t),
+            ),
             peeked,
           ),
         );

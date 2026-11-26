@@ -31,8 +31,8 @@ import { identitiesOfSubjects } from './repo-sync.ts';
 export const SCIM_BREAKER_LIMIT = 20;
 const BREAKER_WINDOW_MS = 600_000;
 /** A tripped breaker stays open this long, or until a platform admin deletes its counter row (docs/operations.md). */
-const BREAKER_LATCH_MS = 86_400_000;
-const BREAKER_KEY = 'idp:scim:breaker';
+export const BREAKER_LATCH_MS = 86_400_000;
+export const BREAKER_KEY = 'idp:scim:breaker';
 const HOUR = 3_600_000;
 /** `lookup` calls a push may spend an hour on confirming deactivations and admin removals. */
 export const SCIM_LOOKUPS_PER_HOUR = 60;

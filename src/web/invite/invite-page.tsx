@@ -122,7 +122,7 @@ function Choices({
   polaris: boolean;
   weak: boolean;
   canAccept: boolean;
-  orgName: string;
+  orgName: string | null;
 }) {
   // Already signed in (by email link, or as someone else): signing in again leads. A stranger starts with an account.
   const signIn = (
@@ -143,7 +143,7 @@ function Choices({
     <div className="flex flex-col gap-3">
       {weak ? (
         <p role="status" className="text-sm text-fg-muted">
-          {copy.signInLine.replace('{org}', orgName)}
+          {copy.signInLine.replace('{org}', orgName ?? 'PassBook')}
         </p>
       ) : null}
       {weak ? signIn : null}

@@ -69,6 +69,8 @@ export const OrgMemberSchema = OrgMembershipSchema.extend({
   userName: z.string().nullable(),
   /** The address to show; null for an account with no verified email (never the placeholder). */
   userEmail: z.string().nullable(),
+  /** The Polaris ID owner paused this member's console access. Only present while paused. */
+  accessPaused: z.boolean().optional(),
 });
 export type OrgMember = z.infer<typeof OrgMemberSchema>;
 export const OrgMemberListSchema = pageOf(OrgMemberSchema);

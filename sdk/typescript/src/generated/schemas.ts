@@ -30,7 +30,7 @@ export type ApiKeyCurrent = {
   orgId: string | null;
   name: string;
   prefix: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdAt: number;
   lastUsedAt: number | null;
@@ -46,7 +46,7 @@ export type ApiKeyDetail = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -81,7 +81,7 @@ export type ApiKeyMinted = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -112,7 +112,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -136,7 +136,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -160,7 +160,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -201,7 +201,7 @@ export type ApiKeysListResponse = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -3118,6 +3118,7 @@ export type MembershipsListResponse = {
     revokedAt: number | null;
     userName: string | null;
     userEmail: string | null;
+    accessPaused?: boolean;
   }>;
   nextCursor: string | null;
 };
@@ -3144,6 +3145,7 @@ export type MembershipsUpdateRolesResponse = {
   revokedAt: number | null;
   userName: string | null;
   userEmail: string | null;
+  accessPaused?: boolean;
 };
 
 export type MessageRulesCountDueParams = {
@@ -7620,6 +7622,323 @@ export type PlatformGroupsClaimsUpdateResponse = {
   dryRun: boolean;
 };
 
+export type PlatformGroupsCreateParams = {
+  key: string;
+  friendlyName: string;
+  rules?: Array<{
+    orgId: string;
+    orgRoles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  }>;
+};
+
+export type PlatformGroupsCreateResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsDeleteResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsEnsureParams = {
+  role: "console" | "developer" | "support";
+};
+
+export type PlatformGroupsEnsureResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsListResponse = {
+  items: Array<{
+    key: string;
+    kind: "role" | "custom" | "adopted";
+    name: string;
+    friendlyName: string | null;
+    members: number | null;
+    claims: Array<string>;
+    otherClients: number | null;
+    flags: Array<string>;
+    rules: number;
+    manual: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsMembersCreateParams = {
+  userId: string;
+} | {
+  subject: string;
+};
+
+export type PlatformGroupsMembersCreateResponse = {
+  id: string;
+  subject: string;
+  userId: string | null;
+  source: "manual" | "invitation";
+  createdAt: number;
+};
+
+export type PlatformGroupsMembersDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformGroupsMembersListResponse = {
+  items: Array<{
+    id: string;
+    subject: string;
+    userId: string | null;
+    source: "manual" | "invitation";
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsRulesCreateParams = {
+  orgId: string;
+  orgRoles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+};
+
+export type PlatformGroupsRulesCreateResponse = {
+  id: string;
+  orgId: string;
+  orgRoles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only"> | null;
+  createdAt: number;
+};
+
+export type PlatformGroupsRulesDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformGroupsRulesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    orgRoles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only"> | null;
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsUpdateParams = {
+  friendlyName: string;
+};
+
+export type PlatformGroupsUpdateResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformIdpCallsListResponse = {
+  items: Array<{
+    id: number;
+    phase: string;
+    method: string;
+    target: string | null;
+    actor: string | null;
+    reason: string | null;
+    status: string | null;
+    at: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformIdpCheckParams = {
+  dryRun?: boolean;
+};
+
+export type PlatformIdpCheckResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
+export type PlatformIdpDriftListResponse = {
+  items: Array<{
+    id: string;
+    userId: string | null;
+    target: string;
+    kind: string;
+    foundAt: number;
+  }>;
+  nextCursor: null;
+};
+
+export type PlatformIdpPauseParams = {
+  reason: string;
+};
+
+export type PlatformIdpPauseResponse = {
+  result: "frozen" | "already";
+};
+
+export type PlatformIdpRetrieveResponse = {
+  connected: boolean;
+  mode: "dry_run" | "live" | null;
+  frozen: boolean | null;
+  keyExpiresAt: number | null;
+  problems: Array<string>;
+  budget: Record<string, {
+    day: number;
+    limit: number;
+  }>;
+  lastScimAt: number | null;
+  drift: Record<string, number>;
+  breakerOpen: boolean;
+};
+
+export type PlatformIdpScimBreakerClearResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
+export type PlatformInvitationsCreateParams = {
+  email: string;
+  groups?: Array<string>;
+  developer?: boolean;
+};
+
+export type PlatformInvitationsCreateResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  link?: string;
+};
+
+export type PlatformInvitationsListResponse = {
+  items: Array<{
+    id: string;
+    email: string;
+    groups: Array<string>;
+    developer: boolean;
+    state: "pending" | "accepted" | "expired" | "revoked";
+    createdAt: number;
+    expiresAt: number;
+    acceptedAt: number | null;
+    revokedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformInvitationsResendResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  link?: string;
+};
+
+export type PlatformInvitationsRevokeResponse = {
+  ok: true;
+};
+
 export type PlatformMetricsRetrieveOverviewResponse = {
   source: "analytics_engine" | "d1";
   range: "24h" | "7d" | "30d";
@@ -8095,6 +8414,39 @@ export type PlatformTemplatesShareParams = {
   shared: boolean;
 };
 
+export type PlatformUsersAccessRetrieveResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grantedAt: number | null;
+    error: string | null;
+  }>;
+};
+
 export type PlatformUsersClaimsRetrieveResponse = {
   claims: Record<string, {
     type: "text" | "number" | "boolean" | "json";
@@ -8273,6 +8625,59 @@ export type PlatformUsersEmailsMakePrimaryResponse = {
   }>;
 };
 
+export type PlatformUsersHoldsDeleteResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
 export type PlatformUsersListResponse = {
   items: Array<{
     id: string;
@@ -8286,6 +8691,99 @@ export type PlatformUsersListResponse = {
     signInMethods?: Array<"oidc" | "magic_link" | "breakglass">;
   }>;
   nextCursor: string | null;
+};
+
+export type PlatformUsersOffboardParams = {
+  dryRun?: boolean;
+};
+
+export type PlatformUsersOffboardResponse = {
+  plan: {
+    userId: string;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+      membershipId: string;
+    }>;
+    kept: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grants: Array<"developer" | "support">;
+    personalKeys: number;
+    platformKeys: Array<string>;
+    sessions: number;
+    sandboxOrgId: string | null;
+    removes: Array<"console" | "developer" | "support">;
+    external: Array<"console" | "developer" | "support">;
+    blockers: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+      code: "LAST_ORG_ADMIN";
+    }>;
+  };
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  } | null;
 };
 
 export type PlatformUsersPassesListResponse = {
@@ -8353,6 +8851,77 @@ export type PlatformUsersRetrieveResponse = {
     action: string;
     actorType: string;
     actorId: string | null;
+  }>;
+};
+
+export type PlatformUsersRolesRemoveExternalResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grantedAt: number | null;
+    error: string | null;
+  }>;
+};
+
+export type PlatformUsersRolesSetParams = {
+  role: "developer" | "support";
+  grant: boolean;
+};
+
+export type PlatformUsersRolesSetResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grantedAt: number | null;
+    error: string | null;
   }>;
 };
 
