@@ -1577,6 +1577,14 @@
     "note": "Release state per provider and mode (issuance), so platform pages can say a wallet isn't released yet."
   },
   {
+    "key": "GET /api/v1/platform/wallet-release operation removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.getPlatformWalletRelease",
+    "op": "GET /api/v1/platform/wallet-release",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",
@@ -4215,6 +4223,14 @@
     "op": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key",
     "change": "new operation",
     "note": "Starts a service account key rotation."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready operation removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady",
+    "op": "POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan-setups 200.staff.name, adminUser.name: now nullable",
