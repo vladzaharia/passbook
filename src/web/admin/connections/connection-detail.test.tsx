@@ -194,7 +194,7 @@ describe('connection detail', () => {
       ),
     });
     const tabs = await screen.findByRole('tablist');
-    const slot = container.querySelector('header [role="status"]');
+    const slot = container.querySelector('header [role="status"]:not([aria-label="Activity"])');
     expect(slot).not.toBeNull();
     await user.click(screen.getByRole('button', { name: 'Test' }));
     expect(await screen.findByText('Test passed')).toBeInTheDocument();
