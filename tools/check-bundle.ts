@@ -70,6 +70,13 @@ const WB_CHUNK = new RegExp(`/(${[WB_BENCH_CHUNK, WB_HOST_CHUNK, WB_KIT_CHUNK].j
  */
 export const WB_TOOL_BUDGET_BYTES = 75_000;
 /**
+ * The Design route (workbench/design on the designer core), on top of the entry, the shell, the bench
+ * and the kit, in gzip bytes. The core loads Scan, Wallets, Paper, the stamps compositor, the Code
+ * tab, the JSON editor, the local validators and every section but Template and Style on demand
+ * (the note atop admin/templates/designer/designer-body.tsx names what stays eager). 210 kB measured.
+ */
+export const WB_DESIGN_BUDGET_BYTES = 230_000;
+/**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
  * quickstart (79.7 kB measured; its pass cards and the compilers' loader) until T8, and the anonymous
  * Design route (84.8 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
@@ -80,6 +87,7 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   events: WB_TOOL_BUDGET_BYTES,
   home: WB_TOOL_BUDGET_BYTES,
   keys: WB_TOOL_BUDGET_BYTES,
+  design: WB_DESIGN_BUDGET_BYTES,
   quickstart: 92_000,
   playground: 92_000,
 };
@@ -190,7 +198,7 @@ export function toolAssets(
     return { files: [], errors: [`${marker}: ${scripts.length} chunks carry it, want 1`] };
   const base = (scripts[0] as string).replace(/^\/assets\//, '');
   const loader = new RegExp(
-    `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\),__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
+    `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\)(?:\\.then\\([^)]*\\))?,__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
   );
   for (const f of files) {
     if (!f.endsWith('.js')) continue;

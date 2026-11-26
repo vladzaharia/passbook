@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { PassDetailSchema, PassListSchema } from '@/shared/contracts/passes.ts';
 import { ReleaseResultSchema } from '@/shared/contracts/template-release-flow.ts';
 import { TemplateReleaseListSchema } from '@/shared/contracts/template-releases.ts';
 import { ApiError } from '../../../lib/errors.ts';
@@ -46,9 +45,13 @@ export function releaseInTest(
   );
 }
 
+/** Pass contracts are only needed when a pass is issued or searched, not when the designer opens. */
+const passContracts = () => import('@/shared/contracts/passes.ts');
+
 /** A Test pass from the template's active Test release, with no email unless one is named. */
 export async function issueTestPass(api: ToolApi, orgId: string, request: IssueTestInput) {
   const { templateId, input, holderEmail } = request;
+  const { PassDetailSchema } = await passContracts();
   const { active } = await api.get(`${tpl(templateId)}/releases`, TemplateReleaseListSchema, {
     query: { orgId, mode: 'test', provider: 'apple' },
   });
@@ -115,7 +118,7 @@ export function workbenchDesignerHost({
     },
     searchPasses: async (q, signal) =>
       (
-        await api.get('/api/v1/passes', PassListSchema, {
+        await api.get('/api/v1/passes', (await passContracts()).PassListSchema, {
           query: { q, orgId, limit: SEARCH_LIMIT },
           ...(signal ? { signal } : {}),
         })

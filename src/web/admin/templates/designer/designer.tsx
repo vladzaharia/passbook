@@ -129,18 +129,29 @@ export function Designer({
 
   useDraftPersistence(readOnly ? null : draftKey, version, state.doc, dirty);
 
-  const { issues, blocking } = useDesignerIssues(state.doc, readOnly, check.data?.report.issues);
+  const { issues, blocking, ready, loadFailed } = useDesignerIssues(
+    state.doc,
+    readOnly,
+    check.data?.report.issues,
+  );
+  const checking = (readOnly ? false : check.checking) || !ready;
   const blocked = () =>
-    check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
+    !ready || check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
       ? null
       : blocking;
-  const live = useRef({ blocked, checking: check.checking });
-  live.current = { blocked, checking: check.checking };
+  const live = useRef({ blocked, checking: check.checking || !ready });
+  live.current = { blocked, checking: check.checking || !ready };
   const issuesList = (
     <Issues
       issues={issues}
-      checking={readOnly ? false : check.checking}
-      failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
+      checking={checking}
+      failed={
+        check.isError && !readOnly
+          ? errorMessage(check.error)
+          : loadFailed
+            ? 'The checks did not load. Reload the page.'
+            : undefined
+      }
     />
   );
   const created = useCreateFlow(create, blocked);

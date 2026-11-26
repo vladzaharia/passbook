@@ -11,6 +11,7 @@ import {
   SCAN_FORBIDDEN,
   toolAssets,
   WB_BENCH_BUDGET_BYTES,
+  WB_DESIGN_BUDGET_BYTES,
   WB_HOST_BUDGET_BYTES,
   WB_KIT_BUDGET_BYTES,
   WB_SHELL_BUDGET_BYTES,
@@ -151,6 +152,16 @@ describe('check-bundle', () => {
     const tool = toolAssets(read, all, new Set(['/assets/list-C.js']), 'logs');
     expect(tool.errors).toEqual([]);
     expect(tool.files).toEqual(['/assets/logs-B.js', '/assets/logs-B.css', '/assets/rail-D.js']);
+    // A route chunk that lazy chunks also import is loaded as `import(...).then(e=>e.t)`.
+    const shared: Record<string, string> = {
+      '/assets/main-A.js':
+        'x(()=>import(`./design-E.js`).then(e=>e.t),__vite__mapDeps([0,1]));const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/design-E.js","assets/rail-D.js"])))=>i',
+      '/assets/design-E.js': 'cn("wb-tool-design")',
+      '/assets/rail-D.js': 'rail',
+    };
+    expect(
+      toolAssets((u) => shared[u] ?? '', Object.keys(shared), new Set(), 'design').files,
+    ).toEqual(['/assets/design-E.js', '/assets/rail-D.js']);
     expect(toolAssets(read, all, new Set(), 'console').errors[0]).toMatch(/0 chunks carry it/);
     expect(toolAssets(read, all, new Set(), 'keys').errors[0]).toMatch(/no loader lists/);
   });
@@ -183,9 +194,12 @@ describe('check-bundle', () => {
     expect(WB_HOST_BUDGET_BYTES).toBe(15_000);
     expect(WB_KIT_BUDGET_BYTES).toBe(25_000);
     expect(WB_TOOL_BUDGET_BYTES).toBe(75_000);
+    expect(WB_DESIGN_BUDGET_BYTES).toBe(230_000);
     expect(WB_TOOLS_MEASURED.logs).toBe(WB_TOOL_BUDGET_BYTES);
+    expect(WB_TOOLS_MEASURED.design).toBe(WB_DESIGN_BUDGET_BYTES);
     expect(Object.keys(WB_TOOLS_MEASURED).sort()).toEqual([
       'console',
+      'design',
       'events',
       'home',
       'keys',

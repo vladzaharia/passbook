@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import { useDesigner } from '../../admin/templates/designer/context.tsx';
 import { type InputSpec, readInputs } from '../../admin/templates/designer/inputs.ts';
@@ -6,10 +6,13 @@ import { Button } from '../../ui/button.tsx';
 import { FormField } from '../../ui/field.tsx';
 import { Input, Textarea } from '../../ui/input.tsx';
 import { Select } from '../../ui/select.tsx';
+import { Skeleton } from '../../ui/skeleton.tsx';
 import { Switch } from '../../ui/switch.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs.tsx';
 import { IssueTestPass } from './issue.tsx';
-import { parseSample, sampleText } from './sample.ts';
+
+/** The JSON editor loads when its toggle first turns on. */
+const SampleJson = lazy(() => import('./sample-json.tsx'));
 
 const HTML_TYPE: Partial<Record<InputSpec['type'], string>> = {
   email: 'email',
@@ -105,45 +108,6 @@ function SampleForm() {
   );
 }
 
-/** The same sample as JSON. Text being typed stays yours; a valid object becomes the sample at once. */
-function SampleJson() {
-  const { doc, edit, readOnly } = useDesigner();
-  const canonical = sampleText(doc);
-  const [text, setText] = useState(canonical);
-  const [problem, setProblem] = useState<string | null>(null);
-  // An outside change (Undo, a restored draft) replaces the text unless it is what was just typed.
-  useEffect(() => {
-    setText((now) => {
-      const parsed = parseSample(now);
-      return parsed.ok && JSON.stringify(parsed.sample) === JSON.stringify(JSON.parse(canonical))
-        ? now
-        : canonical;
-    });
-    setProblem(null);
-  }, [canonical]);
-  return (
-    <FormField label={WB_DESIGN.jsonInput} error={problem ?? undefined}>
-      {(control) => (
-        <Textarea
-          {...control}
-          className="font-mono text-xs"
-          rows={14}
-          spellCheck={false}
-          value={text}
-          disabled={readOnly}
-          onChange={(e) => {
-            setText(e.target.value);
-            const parsed = parseSample(e.target.value);
-            if (!parsed.ok) return setProblem(parsed.problem);
-            setProblem(null);
-            edit({ op: 'sample-set', sample: parsed.sample }, 'sample-json');
-          }}
-        />
-      )}
-    </FormField>
-  );
-}
-
 /**
  * The structure column in the Workbench (design §1.8): Data, the sample input with a JSON toggle,
  * beside Design, the section editor. Both stay mounted so a section opened from the card still
@@ -172,7 +136,19 @@ export function DataPanel({ structure }: { structure: ReactNode }) {
         ) : null}
       </div>
       <TabsContent value="data" forceMount hidden={tab !== 'data'}>
-        {json ? <SampleJson /> : <SampleForm />}
+        {json ? (
+          <Suspense
+            fallback={
+              <FormField label={WB_DESIGN.jsonInput}>
+                {() => <Skeleton className="h-[15.25rem] w-full rounded-md" />}
+              </FormField>
+            }
+          >
+            <SampleJson />
+          </Suspense>
+        ) : (
+          <SampleForm />
+        )}
         <div className="mt-4">
           <IssueTestPass />
         </div>
