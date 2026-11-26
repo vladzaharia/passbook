@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { IdChip, jumpTargets, shortId } from './id-chip.tsx';
-import { loadRequestEvents } from './trace-events.ts';
 import { Trace, traceNodes } from './trace.tsx';
+import { loadRequestEvents } from './trace-events.ts';
 
 const REQ = '01938a1b-2c3d-7e4f-8a9b-0c1d2e3f4a5b';
 const KEY = '01938a1b-0000-7000-8000-00000000a1f3';
@@ -89,7 +89,9 @@ describe('the id chip', () => {
     vi.stubGlobal('fetch', async () => new Response('{}', { status: 404 }));
     render(<IdChip id={REQ} />);
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Open object' })));
-    expect(screen.getByRole('menuitem', { name: 'Not in your sandbox' }).getAttribute('aria-disabled')).toBe('true');
+    expect(
+      screen.getByRole('menuitem', { name: 'Not in your sandbox' }).getAttribute('aria-disabled'),
+    ).toBe('true');
     // A name that cannot be resolved has no menu at all, only Copy.
     cleanup();
     render(<IdChip id="not-an-id" />);
@@ -108,9 +110,16 @@ describe('the trace', () => {
     const nav = screen.getByRole('navigation', { name: 'Trace' });
     const chips = [...nav.querySelectorAll('.bench-id-v')].map((c) => c.textContent);
     expect(chips).toEqual(['Default pbp_test_PB8a…', 'POST /passes 201', 'pass.issued']);
-    expect([...nav.querySelectorAll('.bench-trace-a')].map((a) => a.textContent)).toEqual(['→', '→']);
+    expect([...nav.querySelectorAll('.bench-trace-a')].map((a) => a.textContent)).toEqual([
+      '→',
+      '→',
+    ]);
     cleanup();
-    render(<Trace nodes={traceNodes({ request: { id: null, method: 'GET', path: '/x', status: 200 } })} />);
+    render(
+      <Trace
+        nodes={traceNodes({ request: { id: null, method: 'GET', path: '/x', status: 200 } })}
+      />,
+    );
     expect(screen.queryByRole('navigation', { name: 'Trace' })).toBeNull();
     expect(container.textContent).not.toContain('unknown');
   });
@@ -118,7 +127,12 @@ describe('the trace', () => {
   it('finds the events one request caused across capture and URL endpoints, each once', async () => {
     const get = vi.fn(async (path: string): Promise<unknown> => {
       if (path.startsWith('/webhook-endpoints?'))
-        return { items: [{ id: 'cap', target: 'capture' }, { id: 'url', target: 'url' }] };
+        return {
+          items: [
+            { id: 'cap', target: 'capture' },
+            { id: 'url', target: 'url' },
+          ],
+        };
       if (path.includes('/cap/captures'))
         return { items: [{ eventId: 'e1', type: 'pass.issued', status: 200 }] };
       return {

@@ -75,18 +75,27 @@ describe('the toolbar', () => {
     const bar = slot.querySelector('search');
     expect(bar?.getAttribute('aria-label')).toBe('Filter logs');
     expect(bar?.lastElementChild?.textContent).toBe('Kept 7 days');
-    expect((screen.getByRole('searchbox', { name: 'Search paths' }) as HTMLInputElement).value).toBe('pass');
+    expect(
+      (screen.getByRole('searchbox', { name: 'Search paths' }) as HTMLInputElement).value,
+    ).toBe('pass');
     const status = screen.getByRole('combobox', { name: 'Status' }) as HTMLSelectElement;
     expect(status.value).toBe('4xx');
     expect(status.closest('.bench-fs')?.hasAttribute('data-set')).toBe(true);
-    expect(screen.getByRole('combobox', { name: 'Method' }).closest('.bench-fs')?.hasAttribute('data-set')).toBe(false);
+    expect(
+      screen
+        .getByRole('combobox', { name: 'Method' })
+        .closest('.bench-fs')
+        ?.hasAttribute('data-set'),
+    ).toBe(false);
   });
 
   it('sets and clears filters in the query in place; Clear keeps the search and the selection', () => {
     wide(true);
     const before = history.length;
     render(<LogsToolbar />);
-    fireEvent.change(screen.getByRole('combobox', { name: 'Method' }), { target: { value: 'GET' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Method' }), {
+      target: { value: 'GET' },
+    });
     expect(new URLSearchParams(location.search).get('method')).toBe('GET');
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(location.search).toBe('?path=pass');

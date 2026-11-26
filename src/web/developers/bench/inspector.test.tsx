@@ -22,7 +22,11 @@ afterEach(() => {
 /** `width`: which of the frame's breakpoints match; reduced motion so a close is immediate. */
 const media = (width: number) =>
   vi.stubGlobal('matchMedia', (q: string) => ({
-    matches: q.includes('1180') ? width >= 1180 : q.includes('720') ? width >= 720 : q.includes('reduce'),
+    matches: q.includes('1180')
+      ? width >= 1180
+      : q.includes('720')
+        ? width >= 720
+        : q.includes('reduce'),
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
   }));
@@ -65,7 +69,9 @@ describe('the inspector', () => {
     media(1440);
     render(<Request />);
     const pane = screen.getByRole('complementary', { name: 'Request' });
-    expect(within(pane).getByRole('heading', { level: 2 }).textContent).toBe('GET /passes?limit=abc');
+    expect(within(pane).getByRole('heading', { level: 2 }).textContent).toBe(
+      'GET /passes?limit=abc',
+    );
     expect(within(pane).queryByRole('button', { name: 'Close' })).toBeNull();
     expect(within(pane).queryByRole('button', { name: 'Previous' })).toBeNull();
     expect(pane.querySelector('.bench-insp')?.getAttribute('data-shape')).toBe('side');

@@ -19,7 +19,11 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const key = (k: string, target: EventTarget | null = document.body, mods: Partial<BenchKey> = {}) => ({
+const key = (
+  k: string,
+  target: EventTarget | null = document.body,
+  mods: Partial<BenchKey> = {},
+) => ({
   key: k,
   metaKey: false,
   ctrlKey: false,
@@ -49,8 +53,12 @@ describe('bench keys', () => {
       'tool:keys',
       null,
     ]);
-    expect(resolveBenchKey(key('Enter', document.body, { metaKey: true }), false).action).toBe('primary');
-    expect(resolveBenchKey(key('Enter', document.body, { ctrlKey: true }), false).action).toBe('primary');
+    expect(resolveBenchKey(key('Enter', document.body, { metaKey: true }), false).action).toBe(
+      'primary',
+    );
+    expect(resolveBenchKey(key('Enter', document.body, { ctrlKey: true }), false).action).toBe(
+      'primary',
+    );
   });
 
   it('leaves typing alone, except Esc and ⌘↵; a focused control keeps Enter', () => {

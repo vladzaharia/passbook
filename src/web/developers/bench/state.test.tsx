@@ -60,7 +60,11 @@ describe('bench states', () => {
     render(<BenchSkeleton rows={3} />);
     const status = screen.getByRole('status', { name: 'Loading' });
     expect(status.querySelectorAll('.bench-skel-r')).toHaveLength(3);
-    expect([...status.querySelectorAll('.bench-skel-r')].every((r) => r.getAttribute('aria-hidden') === 'true')).toBe(true);
+    expect(
+      [...status.querySelectorAll('.bench-skel-r')].every(
+        (r) => r.getAttribute('aria-hidden') === 'true',
+      ),
+    ).toBe(true);
   });
 });
 

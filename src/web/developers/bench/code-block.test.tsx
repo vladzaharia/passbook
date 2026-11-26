@@ -39,9 +39,13 @@ describe('a body in the bench', () => {
   });
 
   it('draws anything else as lines, and an absent body as one quiet line', () => {
-    const { rerender } = render(<BenchCode label="Request" body="[redacted: 2 MB]" empty="No body" />);
+    const { rerender } = render(
+      <BenchCode label="Request" body="[redacted: 2 MB]" empty="No body" />,
+    );
     expect(parseBody('[redacted: 2 MB]')).toBeUndefined();
-    expect(screen.getByRole('region', { name: 'Request' }).textContent).toContain('[redacted: 2 MB]');
+    expect(screen.getByRole('region', { name: 'Request' }).textContent).toContain(
+      '[redacted: 2 MB]',
+    );
     rerender(<BenchCode label="Request" body={null} empty="No body" />);
     expect(screen.getByText('No body').tagName).toBe('P');
     expect(document.querySelector('.code')).toBeNull();
@@ -68,7 +72,9 @@ describe('the sheet', () => {
   it('plays its way out before it closes; under reduced motion it closes at once', () => {
     vi.useFakeTimers();
     const motion = (reduce: boolean) =>
-      vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce') ? reduce : false }));
+      vi.stubGlobal('matchMedia', (q: string) => ({
+        matches: q.includes('reduce') ? reduce : false,
+      }));
     motion(false);
     const onClose = vi.fn();
     render(
