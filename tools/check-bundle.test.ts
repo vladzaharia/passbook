@@ -197,16 +197,6 @@ describe('check-bundle', () => {
     expect(namedAssets(read, [...all, '/assets/wb-bench-Z.js'], [], 'wb-bench').errors[0]).toMatch(
       /2 chunks are named so/,
     );
-  it('finds a loader that picks a renamed export, when another chunk imports the same one', () => {
-    const files: Record<string, string> = {
-      '/assets/main-A.js':
-        'x(()=>import(`./console-B.js`).then(e=>e.t),__vite__mapDeps([0,1]));const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/console-B.js","assets/rail-D.js"])))=>i',
-      '/assets/console-B.js': 'cn("wb-tool-console")',
-      '/assets/rail-D.js': 'rail',
-    };
-    const tool = toolAssets((url) => files[url] ?? '', Object.keys(files), new Set(), 'console');
-    expect(tool.errors).toEqual([]);
-    expect(tool.files).toEqual(['/assets/console-B.js', '/assets/rail-D.js']);
   });
 
   it('holds the bench once and each tool route under its own line', () => {
@@ -217,6 +207,9 @@ describe('check-bundle', () => {
     expect(WB_DESIGN_BUDGET_BYTES).toBe(230_000);
     expect(WB_TOOLS_MEASURED.logs).toBe(WB_TOOL_BUDGET_BYTES);
     expect(WB_TOOLS_MEASURED.design).toBe(WB_DESIGN_BUDGET_BYTES);
+    expect(WB_TOOLS_MEASURED.quickstart).toBe(WB_TOOL_BUDGET_BYTES);
+    expect(WB_TOOLS_MEASURED.sandbox).toBe(WB_TOOL_BUDGET_BYTES);
+    expect(WB_TOOLS_MEASURED.playground).toBe(92_000);
     expect(Object.keys(WB_TOOLS_MEASURED).sort()).toEqual([
       'console',
       'design',

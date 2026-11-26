@@ -15,7 +15,7 @@ const D = QS_COPY.done;
 
 /** The finished quickstart: the pass, the time it took, the .env and where to go next. It replaces the steps. */
 export function Done({ q }: { q: Quickstart }) {
-  const { pass, template, templateId, secret, progress, sandbox } = q;
+  const { pass, template, templateId, secret, progress } = q;
   const source = useMemo(
     () => (pass && template ? sourceOf(template, pass.built, pass.input) : null),
     [pass, template],

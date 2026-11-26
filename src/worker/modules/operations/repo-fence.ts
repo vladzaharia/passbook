@@ -45,7 +45,7 @@ export function platformFence(
 /**
  * Rows a person started, for the live session that asks. A key never reads these, but for one condition:
  * `pinnedSandbox`: a sandbox Workbench token (a key, no session) reads what the sandbox's owner started for
- * that sandbox: their sandbox rows whose target is the org, while the sandbox is open. It never writes.
+ * that sandbox: their sandbox rows whose target is the org, while the sandbox is open. Stop and retry pass the same fence, then the kind's `tokenActs`.
  * `writer`: stopping or retrying needs the person's own live, strong session (a step-up replaces the one that started it).
  * `ownSession`: an own-only session (an email link) sees only what its own session started.
  * `pinnedOrg`: a member Workbench token sees only the person's rows in that org's Test mode.

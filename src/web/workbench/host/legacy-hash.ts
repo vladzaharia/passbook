@@ -1,5 +1,6 @@
 import { redirect } from '@tanstack/react-router';
 import { type WbTool, wbHref } from '@/shared/workbench.ts';
+import type { Json } from '../../developers/model/types.ts';
 import { writePrefill } from './prefill.ts';
 
 /** The Quickstart hashes of the old docs page: the sandbox's own area now. */
@@ -28,7 +29,7 @@ export function legacyHref(
   }
   if (!op) return null;
   const query: Record<string, string> = {};
-  let body: unknown;
+  let body: Json | undefined;
   for (const [k, v] of new URLSearchParams(hash.slice(at + 1))) {
     if (k === 'body') {
       try {
@@ -41,7 +42,6 @@ export function legacyHref(
   if (body === undefined && Object.keys(query).length === 0)
     return wbHref('console', { query: { op } });
   const id = writePrefill({ op, query, body }, nonce());
-  if (!id) return wbHref('console', { query: { op } });
   return wbHref('console', { query: { op, prefill: id } });
 }
 

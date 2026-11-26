@@ -44,13 +44,11 @@ const SESSION_PATHS = new Set([
   '/api/v1/developer/home',
 ]);
 /**
- * W2 moved these sandbox-only tools in with their calls still on the cookie session. The server holds a
- * sandbox to Test (`SANDBOX_TEST_ONLY`). Each entry names the T package that moves it onto the token;
- * the list shrinks to zero and the test below fails if it grows.
+ * Calls a tool may still make on the cookie session instead of the token. Every tool is on the token
+ * now: the sandbox's lifecycle, key mint and Home read are account-level and live in SESSION_PATHS.
+ * The list must stay empty; an entry needs a written reason and fails the test below.
  */
-const SESSION_CLIENT_EXEMPT: readonly { path: string; movedBy: string }[] = [
-  { path: '/api/v1/developer/sandbox', movedBy: 'T1' },
-];
+const SESSION_CLIENT_EXEMPT: readonly { path: string; reason: string }[] = [];
 const EXEMPT_PATHS = new Set(SESSION_CLIENT_EXEMPT.map((e) => e.path));
 const allCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
   fetchMock.mock.calls
@@ -127,12 +125,8 @@ describe('the Workbench tray (R4 H1)', () => {
 });
 
 describe('the session-client exemption list', () => {
-  it('only shrinks: at most one sandbox-only entry, owned by a T package', () => {
-    expect(SESSION_CLIENT_EXEMPT.length).toBeLessThanOrEqual(1);
-    for (const { path, movedBy } of SESSION_CLIENT_EXEMPT) {
-      expect(path).toMatch(/^\/api\/v1\/developer\/sandbox$/);
-      expect(movedBy).toMatch(/^T[1-8]$/);
-    }
+  it('is empty: no tool reads the sandbox on the session', () => {
+    expect(SESSION_CLIENT_EXEMPT).toEqual([]);
   });
 });
 

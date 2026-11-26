@@ -1,4 +1,5 @@
 import { wbPath } from '@/shared/workbench.ts';
+import type { Json } from '../../developers/model/types.ts';
 
 /**
  * What a Workbench link hands the Console (design §4.3, DM6): the operation and its inputs. The URL
@@ -9,7 +10,7 @@ export interface Prefill {
   op: string;
   path?: Record<string, string>;
   query?: Record<string, string>;
-  body?: unknown;
+  body?: Json;
 }
 
 /** `wb-prefill:<nonce>`: deleted from storage on its first read. */

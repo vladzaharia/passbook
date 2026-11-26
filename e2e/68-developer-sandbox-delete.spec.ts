@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { startOidcAs } from './helpers/auth.ts';
+import { shots } from './helpers/shots.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 /** The developer role's sandbox is made here if no earlier spec made it; a spec that deletes it leaves none. */

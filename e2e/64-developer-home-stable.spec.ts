@@ -108,6 +108,7 @@ test.describe('signed out', () => {
       expect(fit.length).toBeGreaterThan(0);
       expect(fit.every((d) => d === 0)).toBe(true);
     }
+    await expect(page.locator('[data-buddy]')).toHaveCount(1);
     await shots(page, 'home-signed-out');
     await axeClean(page);
   });

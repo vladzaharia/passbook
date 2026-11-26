@@ -55,7 +55,7 @@ async function starter(
   return id;
 }
 
-describe('operations under a sandbox token: its owner’s sandbox rows, read only', () => {
+describe('operations under a sandbox token: its owner’s sandbox rows', () => {
   it('lists and reads the sandbox create, reset and delete rows; nothing of another org, person or audience', async () => {
     const d = await t.developer();
     const other = await t.developer();
@@ -125,11 +125,41 @@ describe('operations under a sandbox token: its owner’s sandbox rows, read onl
       expect((await t.call('GET', `/operations/${id}`, client)).status, id).toBe(200);
     for (const id of Object.values(hidden))
       expect((await t.call('GET', `/operations/${id}`, client)).status, id).toBe(404);
-    // Read only: no stop, no retry.
-    for (const id of Object.values(mine))
+    // The sandbox kinds declare `tokenActs`: the token stops and retries them on its own sandbox rows.
+    for (const id of Object.values(mine)) {
+      const retry = await t.call('POST', `/operations/${id}/retry`, client, {});
+      expect(retry.status, `retry ${id}`).not.toBe(403);
+      expect(retry.status, `retry ${id}`).not.toBe(404);
+    }
+    // Rows outside the fence stay not found, whatever the verb.
+    for (const id of Object.values(hidden))
       for (const verb of ['retry', 'cancel'])
         expect((await t.call('POST', `/operations/${id}/${verb}`, client, {})).status, id).toBe(
-          403,
+          404,
         );
+  });
+
+  it('stops and retries only a kind that declares tokenActs, even on its own sandbox row', async () => {
+    const d = await t.developer();
+    const sandbox = d.made.orgId;
+    const me = { actorId: d.user.id, actorSession: await sha256Hex(d.session.cookieValue) };
+    // `test.starter` does not declare tokenActs; a row of it that targets the sandbox is in the fence.
+    const plain = await starter(`sb-plain-${sandbox}`, {
+      kind: 'test.starter',
+      target: sandbox,
+      ...me,
+    });
+    const { token } = await t.wbMint(d.browser, sandbox);
+    const client = t.asClient(token);
+    const read = await t.call('GET', `/operations/${plain}`, client);
+    expect(read.status).toBe(200);
+    const dto = (await read.json()) as { cancelable: boolean; error: { retryable: boolean } };
+    expect(dto.cancelable).toBe(false);
+    expect(dto.error.retryable).toBe(false);
+    for (const verb of ['retry', 'cancel']) {
+      const res = await t.call('POST', `/operations/${plain}/${verb}`, client, {});
+      expect(res.status, verb).toBe(403);
+      expect(((await res.json()) as { code: string }).code, verb).toBe('WORKBENCH_TEST_ONLY');
+    }
   });
 });

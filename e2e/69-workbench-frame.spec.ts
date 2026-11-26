@@ -63,7 +63,6 @@ test('signed in, every tool opens in the same frame and nothing scrolls sideways
     await create.click();
     await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
   }
-}
 
   for (const [width, height] of VIEWS) {
     await page.setViewportSize({ width, height });
