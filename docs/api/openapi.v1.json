@@ -12382,6 +12382,10 @@
                 "type": "integer",
                 "minimum": 0
               },
+              "configRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
               "signIn": {
                 "type": "string",
                 "enum": [
@@ -12411,6 +12415,7 @@
               "revoked",
               "lastSeenAt",
               "updatedAt",
+              "configRevision",
               "signIn",
               "adminName"
             ]
@@ -21550,6 +21555,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "configRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "signIn": {
             "type": "string",
             "enum": [
@@ -21579,6 +21588,7 @@
           "revoked",
           "lastSeenAt",
           "updatedAt",
+          "configRevision",
           "signIn",
           "adminName"
         ]
@@ -21696,6 +21706,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "configRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "signIn": {
             "type": "string",
             "enum": [
@@ -21748,6 +21762,7 @@
           "revoked",
           "lastSeenAt",
           "updatedAt",
+          "configRevision",
           "signIn",
           "adminName",
           "pairing"
@@ -137257,6 +137272,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -137695,6 +137711,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -138217,6 +138234,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -138592,6 +138610,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -138979,6 +138998,7 @@
                         "revoked": false,
                         "lastSeenAt": 1795570500000,
                         "updatedAt": 1795399200000,
+                        "configRevision": 3,
                         "signIn": "paired",
                         "adminName": "Sam Rivera"
                       }
@@ -142402,6 +142422,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -146297,6 +146318,7 @@
                     "revoked": false,
                     "lastSeenAt": 1795570500000,
                     "updatedAt": 1795399200000,
+                    "configRevision": 3,
                     "signIn": "paired",
                     "adminName": "Sam Rivera"
                   }
@@ -151008,6 +151030,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -151287,6 +151310,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -151554,6 +151578,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -151847,6 +151872,7 @@
                       "revoked": false,
                       "lastSeenAt": 1795570500000,
                       "updatedAt": 1795399200000,
+                      "configRevision": 3,
                       "signIn": "paired",
                       "adminName": "Sam Rivera"
                     }
@@ -152071,6 +152097,7 @@
                   "revoked": false,
                   "lastSeenAt": 1795570500000,
                   "updatedAt": 1795399200000,
+                  "configRevision": 3,
                   "signIn": "paired",
                   "adminName": "Sam Rivera"
                 }
@@ -152288,6 +152315,7 @@
                   "revoked": false,
                   "lastSeenAt": 1795570500000,
                   "updatedAt": 1795399200000,
+                  "configRevision": 3,
                   "signIn": "paired",
                   "adminName": "Sam Rivera",
                   "pairing": {

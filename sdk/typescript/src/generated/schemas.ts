@@ -2112,6 +2112,7 @@ export type CreatedScanningDevice = {
   revoked: boolean;
   lastSeenAt: number | null;
   updatedAt: number;
+  configRevision: number;
   signIn: "paired" | "admin";
   adminName: string | null;
   pairing: {
@@ -10833,6 +10834,7 @@ export type ScanWorkspace = {
     revoked: boolean;
     lastSeenAt: number | null;
     updatedAt: number;
+    configRevision: number;
     signIn: "paired" | "admin";
     adminName: string | null;
   };
@@ -11267,6 +11269,7 @@ export type ScanningDevice = {
   revoked: boolean;
   lastSeenAt: number | null;
   updatedAt: number;
+  configRevision: number;
   signIn: "paired" | "admin";
   adminName: string | null;
 };

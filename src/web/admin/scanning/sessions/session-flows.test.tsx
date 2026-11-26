@@ -302,7 +302,7 @@ describe('session configuration flows', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Save device' }));
     await waitFor(() =>
       expect(s.saved()).toMatchObject({
-        revision: managedSession.updatedAt,
+        revision: managedSession.devices[0]?.configRevision,
         overrides: { direction: 'out', lookup: false },
       }),
     );

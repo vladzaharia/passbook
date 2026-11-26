@@ -4267,6 +4267,7 @@ class CreatedScanningDevice(_Model):
     revoked: bool
     lastSeenAt: int | None
     updatedAt: int
+    configRevision: int
     signIn: _Literal["paired", "admin"] | str
     adminName: str | None
     pairing: _Dict[str, _Any] | None
@@ -12237,6 +12238,7 @@ class ScanningDevice(_Model):
     revoked: bool
     lastSeenAt: int | None
     updatedAt: int
+    configRevision: int
     signIn: _Literal["paired", "admin"] | str
     adminName: str | None
 
