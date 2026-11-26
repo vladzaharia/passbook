@@ -201,3 +201,32 @@ export async function hasActiveMembership(db: Db, userId: string): Promise<boole
     ])) !== null
   );
 }
+
+/**
+ * A removal waits on its own wallet transfer: pending, asked for by this holder, taking the pass off every account,
+ * and made no later than the operation. Another person's later transfer on the pass is not its wait.
+ */
+export async function hasPendingOwnRemoval(
+  db: Db,
+  passId: string,
+  userId: string,
+  operationAt: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 FROM pass_credential_transfers
+       WHERE pass_id = ? AND state = 'pending' AND requested_by_type = 'user' AND requested_by_id = ?
+         AND target_owner_user_id IS NULL AND requested_at <= ?`,
+      [passId, userId, operationAt],
+    )) !== null
+  );
+}
+
+/** How a session began: its method and when. Null when it is gone. */
+export const sessionBirth = (db: Db, idHash: string) =>
+  first<{ amr: string; created_at: number; auth_time: number | null }>(
+    db,
+    'SELECT amr, created_at, auth_time FROM sessions WHERE id_hash = ? AND revoked_at IS NULL',
+    [idHash],
+  );

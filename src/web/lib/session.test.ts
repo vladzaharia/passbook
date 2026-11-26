@@ -3,6 +3,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
+import { fixtureOperation, HOLDER_RESEND } from '../ui/operation/fixtures.test-support.ts';
+import { cachedOperation, trackOperation } from '../ui/operation/store.ts';
 import { fetchPreview } from './preview-batch.ts';
 import { clearSavedPasses } from './saved-passes.ts';
 import { leaveSignedOut, membershipsQuery, sessionQuery, useInvalidateSession } from './session.ts';
@@ -161,6 +163,24 @@ describe('session and membership scope', () => {
 
     await client.fetchQuery({ ...sessionQuery, staleTime: 0 });
     await rejected;
+  });
+
+  it("drops the old account's operations from the cache when the account changes, and on sign-out", async () => {
+    const client = clientWith('user');
+    const session = sessionFixture('user');
+    if (!session.authenticated) throw new Error('Expected an authenticated fixture');
+    stubFetch({
+      '/api/v1/session': () => json({ ...session, user: { ...session.user, id: 'u2' } }),
+    });
+    const op = fixtureOperation(HOLDER_RESEND, { status: 'running', at: 'mail', id: 'op-a' });
+    trackOperation(op);
+    expect(cachedOperation('op-a')).toBeDefined();
+    await client.fetchQuery({ ...sessionQuery, staleTime: 0 });
+    expect(cachedOperation('op-a')).toBeUndefined();
+
+    trackOperation(op);
+    leaveSignedOut('/login');
+    expect(cachedOperation('op-a')).toBeUndefined();
   });
 
   it('cancels queued template previews before sign-out navigation', async () => {

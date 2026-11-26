@@ -28,7 +28,7 @@ async function setup() {
   const stranger = await makeUser(kit.fx);
   const pass = await kit.scanPass(templateId, {}, { holderEmail: user.primaryEmail });
   const theirs = await kit.scanPass(templateId, {}, { holderEmail: stranger.primaryEmail });
-  const mine = await makeSession(kit.fx, { userId: user.id });
+  const mine = await makeSession(kit.fx, { userId: user.id, amr: 'magic_link' });
   const app = createApp({
     clock: kit.clock,
     stores: { ...denyAllStores, sessions: createSessionStore(kit.env, kit.clock) },
@@ -44,7 +44,7 @@ async function setup() {
     for (const job of queued.splice(0))
       if (job.kind === 'pass.holder_mail') await runJob(job, jobCtxOf(kit));
   };
-  const lostPhone = await makeSession(kit.fx, { userId: user.id });
+  const lostPhone = await makeSession(kit.fx, { userId: user.id, amr: 'magic_link' });
   return { lostPhone, mine, drain, queued, kit, templateId, user, pass, theirs, post, mails };
 }
 

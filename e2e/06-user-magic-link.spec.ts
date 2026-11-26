@@ -49,7 +49,12 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   await tile.getByRole('button', { name: 'More actions' }).click();
   await expect(page.getByRole('menuitem', { name: /Refreshing|Refresh in \d+s/ })).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.getByText('Pass updated')).toBeVisible({ timeout: 30_000 });
+  // The activity tray's toast says it ended (its live region says it too, for screen readers).
+  await expect(
+    page.getByRole('region', { name: /Notifications/ }).getByText('Pass updated'),
+  ).toBeVisible({
+    timeout: 30_000,
+  });
   const mine = await page.evaluate(async () => (await fetch('/api/v1/me/passes')).json());
   const row = mine.items.find((p: { id: string }) => p.id === pass.id);
   expect(row.lastRefreshedAt).toBeGreaterThanOrEqual(row.refreshRequestedAt);

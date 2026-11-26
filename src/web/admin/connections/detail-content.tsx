@@ -33,12 +33,12 @@ import { useConnectionActions, useConnector, useConnectorNames } from './api.ts'
 import { ConfigTab } from './config-tab.tsx';
 import { SettingsTab } from './detail-tabs.tsx';
 import { FileTab } from './files/file-tab.tsx';
-import { markApplyStarted } from './files/use-apply-watch.ts';
 import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
 import { sourceLine } from './labels.ts';
 import { MappingTab } from './mapping-tab.tsx';
 import type { ConnectionDetailSearch } from './search.ts';
+import { runSync, SyncOperation } from './sync-operation.tsx';
 import { type TestOutcome, TestResult } from './test-result.tsx';
 import { WebhookPanel } from './webhook.tsx';
 import { WebhookFailures } from './webhook-failures.tsx';
@@ -60,6 +60,7 @@ export function ConnectionDetail({
   const orgs = useOrgOptions();
   const [del, setDel] = useState(false);
   const [test, setTest] = useState<TestOutcome>();
+  const [syncing, setSyncing] = useState<string | null>(null);
   const created = useCreated(`connection:${connectionId}`);
   const connector = useConnector(c.connectorType, c.orgId);
   const connectorName = useConnectorNames(c.orgId);
@@ -92,16 +93,7 @@ export function ConnectionDetail({
       setTest({ kind: 'error', error, at: Date.now() });
     }
   }
-  const sync = () => {
-    if (!canManage) return;
-    void actions.sync
-      .mutateAsync()
-      .then(() => {
-        markApplyStarted(connectionId);
-        toast.success('Sync started');
-      })
-      .catch((error: unknown) => toast.error(error, 'Could not sync'));
-  };
+  const sync = () => canManage && void runSync(actions.sync.mutateAsync, connectionId, setSyncing);
   const sample = test?.kind === 'result' ? test.result.sample : undefined;
 
   return (
@@ -168,6 +160,7 @@ export function ConnectionDetail({
           ) : undefined
         }
       />
+      <SyncOperation orgId={c.orgId} startedId={syncing} onClear={() => setSyncing(null)} />
       {created.shown && canManage ? (
         <div className="mb-6">
           <CreatedCallout

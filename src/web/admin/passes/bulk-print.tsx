@@ -1,19 +1,14 @@
 import { Printer } from 'lucide-react';
-import { useState } from 'react';
-import {
-  BulkPrintStartedSchema,
-  BulkPrintStatusSchema,
-  PRINT_BULK_MAX,
-} from '@/shared/contracts/prints.ts';
+import { useRef, useState } from 'react';
+import { BulkPrintStartedSchema, PRINT_BULK_MAX } from '@/shared/contracts/prints.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
 import { api } from '../../lib/api.ts';
 import { modeHeaders } from '../../lib/mode.ts';
-import { Button, DropdownMenuItem, toast } from '../../ui/index.ts';
-
-const POLL_MS = 2000;
-const POLL_TRIES = 60;
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const plural = (n: number) => `${n} ${n === 1 ? 'ticket' : 'tickets'}`;
+import { DropdownMenuItem, toast } from '../../ui/index.ts';
+import { OperationSheet } from '../../ui/operation/index.ts';
+import { AdminOperations } from '../operations/admin-operation.tsx';
+import { printNote } from '../operations/notes.ts';
+import { useOrgTimeZone } from '../settings/use-org-time-zone.ts';
 
 /** The PDF goes through fetch so Test mode's header travels with it; a plain link would not carry it. */
 async function savePdf(orgId: string, jobId: string): Promise<void> {
@@ -30,65 +25,26 @@ async function savePdf(orgId: string, jobId: string): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-/** Waits for the render job, then offers the PDF. Runs on after the selection is gone. */
-async function whenReady(
-  orgId: string,
-  jobId: string,
-  count: number,
-  preparing: string | number,
-  startSkipped: number,
-  why: string,
-): Promise<void> {
-  const path = `/api/v1/passes/bulk-print/${encodeURIComponent(jobId)}`;
-  for (let i = 0; i < POLL_TRIES; i++) {
-    await wait(POLL_MS);
-    const status = await api.get(path, BulkPrintStatusSchema, { query: { orgId } });
-    if (status.state === 'failed') {
-      toast.dismiss(preparing);
-      throw new Error(PRINT_COPY.bulkFailed);
-    }
-    if (status.state === 'ready') {
-      toast.dismiss(preparing);
-      toast.action(
-        PRINT_COPY.bulkReady(
-          plural(status.count || count),
-          status.lossy,
-          startSkipped + status.skipped,
-          why,
-        ),
-        {
-          label: PRINT_COPY.bulkDownload,
-          onClick: () =>
-            void savePdf(orgId, jobId).catch((e: unknown) =>
-              toast.error(e, PRINT_COPY.couldNotPrint),
-            ),
-        },
-      );
-      return;
-    }
-  }
-  toast.dismiss(preparing);
-  throw new Error(PRINT_COPY.bulkSlow);
-}
-
 /**
- * Bulk Print of a selection: prints the passes that have no active print, then one combined PDF.
- * `menu` renders a menu item (below lg), `button` a bar button.
+ * Bulk Print of a selection: prints the passes that have no active print, then one combined PDF. The job shows as
+ * an operation in a sheet (the tray takes over when it is closed); Download is the same authorized call as ever.
+ * The hook keeps the sheet outside the menu, which unmounts when it closes.
  */
-export function BulkPrintAction({
+export function useBulkPrint({
   ids,
   orgId,
   disabled,
-  as,
 }: {
   ids: string[];
   orgId: string | undefined;
   disabled: boolean;
-  as: 'button' | 'menu';
 }) {
   const [busy, setBusy] = useState(false);
+  const [opId, setOpId] = useState<string | null>(null);
+  const zone = useOrgTimeZone(orgId);
   const tooLong = ids.length > PRINT_BULK_MAX;
   const off = disabled || !orgId || tooLong || busy;
+  const jobRef = useRef<string | null>(null);
   async function run() {
     if (!orgId) return;
     setBusy(true);
@@ -101,34 +57,51 @@ export function BulkPrintAction({
         toast.warning(PRINT_COPY.bulkNone);
         return;
       }
-      const left = started.skipped.length;
-      const why = [...new Set(started.skipped.map((s) => s.reason).filter(Boolean))].join('; ');
-      const preparing = toast.info(PRINT_COPY.bulkPreparing(plural(started.count), left, why));
-      void whenReady(orgId, started.jobId, started.count, preparing, left, why).catch(
-        (e: unknown) => toast.error(e, PRINT_COPY.couldNotPrint),
-      );
+      // The job is queued, but nothing can show it: say so instead of leaving the person guessing.
+      if (!started.operationId) {
+        toast.info(PRINT_COPY.bulkSlow);
+        return;
+      }
+      jobRef.current = started.jobId;
+      setOpId(started.operationId);
     } catch (error) {
       toast.error(error, PRINT_COPY.couldNotPrint);
     } finally {
       setBusy(false);
     }
   }
-  const title = tooLong ? PRINT_COPY.bulkCap(PRINT_BULK_MAX) : undefined;
-  return as === 'menu' ? (
-    <DropdownMenuItem disabled={off} title={title} onSelect={() => void run()}>
+  const panel = (
+    <AdminOperations>
+      <OperationSheet
+        id={opId}
+        zone={zone}
+        doneNote={printNote}
+        onClose={() => setOpId(null)}
+        next={{
+          label: PRINT_COPY.bulkDownload,
+          onClick: () => {
+            if (orgId && jobRef.current)
+              void savePdf(orgId, jobRef.current).catch((e: unknown) =>
+                toast.error(e, PRINT_COPY.couldNotPrint),
+              );
+          },
+        }}
+      />
+    </AdminOperations>
+  );
+  return {
+    off,
+    run: () => void run(),
+    title: tooLong ? PRINT_COPY.bulkCap(PRINT_BULK_MAX) : undefined,
+    panel,
+  };
+}
+
+export function PrintMenuItem({ print }: { print: ReturnType<typeof useBulkPrint> }) {
+  return (
+    <DropdownMenuItem disabled={print.off} title={print.title} onSelect={print.run}>
       <Printer aria-hidden />
       {PRINT_COPY.print}
     </DropdownMenuItem>
-  ) : (
-    <span title={title}>
-      <Button
-        variant="outline"
-        disabled={off}
-        iconStart={<Printer aria-hidden />}
-        onClick={() => void run()}
-      >
-        {PRINT_COPY.print}
-      </Button>
-    </span>
   );
 }

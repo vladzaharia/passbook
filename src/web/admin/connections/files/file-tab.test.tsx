@@ -157,7 +157,7 @@ describe('File tab', () => {
         ),
       '/api/v1/connections/c1/sync': (u) => {
         syncs.push(u.pathname);
-        return json({ runId: 'r9', workflowInstanceId: 'w9' });
+        return json({ runId: 'r9', workflowInstanceId: 'w9', operationId: null });
       },
     });
     expect(await screen.findByText('Not applied yet')).toBeInTheDocument();

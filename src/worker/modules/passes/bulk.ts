@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import {
   AppError,
@@ -9,12 +10,14 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { failStarted, startOrgOperation, startPlatformOperation } from '../operations/start-org.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import { getTemplate } from '../templates/repo.ts';
 import { isNotFound, resolveTemplate } from './builder.ts';
 import type { ReissueParams } from './bulk-reissue-page.ts';
 import { depsOf } from './deps.ts';
 import type { TenantPassWrite } from './http.ts';
+import { encodeReissue } from './reissue-target.ts';
 import {
   activeBulkRun,
   insertPlatformAdminBulkWorkflowRun,
@@ -63,6 +66,12 @@ export async function startBulkReissue(
     platformSession?: Pick<SessionAuth, 'userId' | 'sessionId'>;
     /** Release claimed by a scheduled single-scope upgrade. */
     expectedRelease?: { id: string; generation: number };
+    /** A user-started run reports as an operation: a new one for `actor`, or the one a retry restarts. */
+    operation?: {
+      actor: { type: 'user' | 'api_key' | 'system'; id: string | null };
+      existing?: Pick<OperationDto, 'id' | 'attempt'>;
+      onStarted?: (op: Pick<OperationDto, 'id' | 'attempt'>) => void;
+    };
   },
 ): Promise<string> {
   const cause = body.cause ?? 'template_upgrade';
@@ -215,9 +224,40 @@ export async function startBulkReissue(
     cause,
     ...(principal ? { principal } : {}),
   };
+  // The row comes before the Workflow, so its first write finds it.
+  const reported = options?.operation && options.mode ? options.operation : null;
+  const kind = options?.platformSession ? 'passes.reissue_platform' : 'passes.reissue';
+  const target = { type: 'reissue', id: encodeReissue({ ...body, cause }) };
+  const op = reported
+    ? (reported.existing ??
+      (orgId !== null && options?.mode
+        ? await startOrgOperation(ctx, reported.actor, {
+            kind,
+            orgId,
+            mode: options.mode,
+            target,
+            workflowInstanceId: instanceId,
+          })
+        : await startPlatformOperation(ctx, reported.actor, {
+            kind,
+            target,
+            workflowInstanceId: instanceId,
+          })))
+    : null;
+  if (op) {
+    params.operationId = op.id;
+    params.operationAttempt = op.attempt;
+    reported?.onStarted?.(op);
+  }
   try {
     await ctx.env.BULK_REISSUE.create({ id: instanceId, params });
   } catch (error) {
+    if (op && !reported?.existing)
+      await failStarted(
+        ctx,
+        op,
+        new UnavailableError('The rebuild did not start.', 'WORKFLOW_START'),
+      );
     ctx.log.error('passes.workflow_start_failed', {
       orgId: body.orgId ?? null,
       code: 'WORKFLOW_START_FAILED',

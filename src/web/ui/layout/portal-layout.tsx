@@ -1,4 +1,5 @@
 import { Outlet } from '@tanstack/react-router';
+import { HolderOperationsProvider } from '../../portal/holder-operations.tsx';
 import { ActivityTray } from './activity-tray.tsx';
 import { AppShell, type AppShellProps } from './app-shell.tsx';
 import { UserMenu } from './user-menu.tsx';
@@ -13,8 +14,10 @@ export const PORTAL_BAR: NonNullable<AppShellProps['bar']> = {
 
 export function PortalLayout() {
   return (
-    <AppShell bar={PORTAL_BAR} width="holder" holder>
-      <Outlet />
-    </AppShell>
+    <HolderOperationsProvider>
+      <AppShell bar={PORTAL_BAR} width="holder" holder>
+        <Outlet />
+      </AppShell>
+    </HolderOperationsProvider>
   );
 }

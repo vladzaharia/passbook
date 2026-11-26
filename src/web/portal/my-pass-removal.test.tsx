@@ -1,24 +1,33 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { MyPassListSchema } from '@/shared/contracts/me.ts';
-import { sessionQuery } from '../lib/session.ts';
-import { json, renderApp, sessionFixture } from '../lib/test-utils.tsx';
-import { pollDelay } from './api.ts';
+import { json, renderApp } from '../lib/test-utils.tsx';
+import { fixtureOperation, HOLDER_REMOVE } from '../ui/operation/fixtures.test-support.ts';
+import { resetOperationCache } from '../ui/operation/store.ts';
 import { passFixture } from './fixtures.ts';
 
-function deferred<T>() {
-  let resolve!: (value: T | PromiseLike<T>) => void;
-  const promise = new Promise<T>((done) => {
-    resolve = done;
-  });
-  return { promise, resolve };
-}
+afterEach(() => {
+  vi.unstubAllGlobals();
+  resetOperationCache();
+  window.history.replaceState(null, '', '/');
+});
 
-afterEach(() => vi.unstubAllGlobals());
+/** The removal as the server reports it: waiting on the wallets, or done. */
+const removalOp = (status: 'waiting' | 'succeeded') => {
+  const op = fixtureOperation(HOLDER_REMOVE, { status, at: 'wallets', id: 'op-1' });
+  if (status === 'succeeded') return op;
+  return {
+    ...op,
+    target: { type: 'pass', id: 'p1' },
+    steps: op.steps.map((s) =>
+      s.key === 'wallets' ? { ...s, until: null, detail: 'Waiting for your wallets' } : s,
+    ),
+    text: 'Waiting for your wallets',
+  };
+};
 
 describe('pass removal', () => {
-  it('shows a pending removal without claiming it completed, including after reload', async () => {
+  it('shows a pending removal as an operation that waits for the wallets, and ends done', async () => {
     const user = userEvent.setup();
     let state: 'available' | 'pending' | 'completed' = 'available';
     const handlers = {
@@ -30,33 +39,63 @@ describe('pass removal', () => {
         }),
       '/api/v1/me/passes/p1': () => {
         state = 'pending';
-        return json({ transferId: 'transfer-1', state: 'pending' }, 202);
+        return json({ transferId: 'transfer-1', state: 'pending', operationId: 'op-1' }, 202);
       },
-      '/api/v1/me/pass-removals/transfer-1': () =>
-        json({ transferId: 'transfer-1', state: state === 'completed' ? 'completed' : 'pending' }),
+      '/api/v1/operations/op-1': () =>
+        json(removalOp(state === 'completed' ? 'succeeded' : 'waiting')),
     };
-    const first = await renderApp('/', { handlers });
+    await renderApp('/', { handlers });
     await user.click(await screen.findByRole('button', { name: 'More actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Remove from My passes' }));
     await user.click(
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remove' }),
     );
+    // The sheet says what the removal waits for; the page does not claim it is done.
+    const sheet = await screen.findByRole('dialog', { name: 'Remove pass' });
+    expect(await within(sheet).findAllByText('Waiting for your wallets')).not.toHaveLength(0);
     expect(await screen.findByText(/Removing 1 pass\./)).toBeInTheDocument();
     expect(screen.queryByText('Removed from your passes')).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
 
-    first.unmount();
-    const reloaded = await renderApp('/', { handlers });
-    expect(await screen.findByText(/Removing 1 pass\./)).toBeInTheDocument();
+    // The wallets let go: the operation ends, so the list is fetched again and the notice goes.
     state = 'completed';
-    await act(() => reloaded.queryClient.invalidateQueries({ queryKey: ['me', 'passes'] }));
-    await waitFor(() => expect(screen.queryByText(/Removing 1 pass\./)).toBeNull());
-    expect(await screen.findByText('Removed from your passes')).toBeVisible();
+    await waitFor(() => expect(screen.queryByText(/Removing 1 pass\./)).toBeNull(), {
+      timeout: 4000,
+    });
+    expect(await within(sheet).findAllByText('Pass removed')).not.toHaveLength(0);
+  });
+
+  it('a reload with the operation in the URL brings the same sheet back', async () => {
+    window.history.replaceState(null, '', '/?op=op-1');
+    await renderApp('/', {
+      handlers: {
+        '/api/v1/me/passes': () =>
+          json({
+            items: [],
+            nextCursor: null,
+            pendingRemovals: [{ passId: 'p1', transferId: 'transfer-1' }],
+          }),
+        '/api/v1/operations/op-1': () => json(removalOp('waiting')),
+      },
+    });
+    const sheet = await screen.findByRole('dialog', { name: 'Remove pass' });
+    expect(await within(sheet).findAllByText('Waiting for your wallets')).not.toHaveLength(0);
+  });
+
+  it('shows nothing of an operation the server will not read to this person', async () => {
+    window.history.replaceState(null, '', '/?op=someone-elses');
+    await renderApp('/', {
+      handlers: {
+        '/api/v1/me/passes': () => json({ items: [passFixture()], nextCursor: null }),
+      },
+    });
+    await screen.findByRole('button', { name: 'More actions' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByText('Removed from your passes')).toBeNull();
   });
 
   it('does not infer completion merely because a pending notice disappeared', async () => {
     let visible = true;
-    let checked = false;
+    let receipts = 0;
     const view = await renderApp('/', {
       handlers: {
         '/api/v1/me/passes': () =>
@@ -66,55 +105,17 @@ describe('pass removal', () => {
             pendingRemovals: visible ? [{ passId: 'p1', transferId: 'transfer-1' }] : [],
           }),
         '/api/v1/me/pass-removals/transfer-1': () => {
-          checked = true;
-          return json({ transferId: 'transfer-1', state: 'pending' });
+          receipts++;
+          return json({ transferId: 'transfer-1', state: 'completed' });
         },
       },
     });
     expect(await screen.findByText(/Removing 1 pass\./)).toBeVisible();
     visible = false;
     await act(() => view.queryClient.invalidateQueries({ queryKey: ['me', 'passes'] }));
-    await waitFor(() => expect(checked).toBe(true));
-    expect(screen.queryByText('Removed from your passes')).toBeNull();
-  });
-
-  it('does not notify another account when a receipt resolves after a switch', async () => {
-    let visible = true;
-    let started = false;
-    const receipt = deferred<Response>();
-    const view = await renderApp('/', {
-      handlers: {
-        '/api/v1/me/passes': () =>
-          json({
-            items: [],
-            nextCursor: null,
-            pendingRemovals: visible ? [{ passId: 'p1', transferId: 'transfer-1' }] : [],
-          }),
-        '/api/v1/me/pass-removals/transfer-1': () => {
-          started = true;
-          return receipt.promise;
-        },
-      },
-    });
-    await screen.findByText(/Removing 1 pass\./);
-    visible = false;
-    await act(() => view.queryClient.invalidateQueries({ queryKey: ['me', 'passes'] }));
-    await waitFor(() => expect(started).toBe(true));
-    const other = sessionFixture('user');
-    if (!other.authenticated) throw new Error('Expected a signed-in user');
-    act(() => {
-      const updatedSession: typeof other = {
-        ...other,
-        user: { ...other.user, id: 'another-user' },
-      };
-      view.queryClient.setQueryData(sessionQuery.queryKey, updatedSession);
-    });
-    await act(async () => {
-      receipt.resolve(json({ transferId: 'transfer-1', state: 'completed' }));
-      const tick = deferred<void>();
-      setTimeout(tick.resolve, 0);
-      await tick.promise;
-    });
+    await waitFor(() => expect(screen.queryByText(/Removing 1 pass\./)).toBeNull());
+    // Only the operation says a removal is done: no receipt read, no toast.
+    expect(receipts).toBe(0);
     expect(screen.queryByText('Removed from your passes')).toBeNull();
   });
 
@@ -162,20 +163,5 @@ describe('pass removal', () => {
     );
     expect(within(notice).queryByRole('button')).toBeNull();
     expect(screen.queryByText('Removed from your passes')).toBeNull();
-  });
-
-  it('keeps polling while a removal is pending, backing off to a minute', () => {
-    const page = MyPassListSchema.parse({
-      items: [],
-      nextCursor: null,
-      pendingRemovals: [{ passId: 'p1', transferId: 'transfer-1' }],
-    });
-    const data = { pages: [page], pageParams: [undefined] };
-    expect(pollDelay(data, 1)).toBe(3000);
-    expect(pollDelay(data, 4)).toBeGreaterThan(pollDelay(data, 2) as number);
-    expect(pollDelay(data, 100)).toBe(60_000);
-    expect(
-      pollDelay({ pages: [{ ...page, pendingRemovals: [] }], pageParams: [undefined] }, 1),
-    ).toBe(false);
   });
 });

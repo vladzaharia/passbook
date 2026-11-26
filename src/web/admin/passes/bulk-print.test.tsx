@@ -4,115 +4,118 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const m = vi.hoisted(() => ({
   post: vi.fn(),
-  get: vi.fn(),
-  toast: {
-    error: vi.fn(),
-    warning: vi.fn(),
-    info: vi.fn(() => 'prep'),
-    dismiss: vi.fn(),
-    action: vi.fn((_message: string, _action: { onClick: () => void }) => undefined),
-  },
+  toast: { error: vi.fn(), warning: vi.fn() },
 }));
-vi.mock('../../lib/api.ts', () => ({ api: { post: m.post, get: m.get } }));
-vi.mock('../../lib/mode.ts', () => ({ modeHeaders: () => ({}) }));
+vi.mock('../../lib/api.ts', async (orig) => ({
+  ...(await orig<object>()),
+  api: { post: m.post, get: vi.fn() },
+}));
 vi.mock('../../ui/index.ts', async (orig) => ({ ...(await orig<object>()), toast: m.toast }));
+vi.mock('../settings/use-org-time-zone.ts', () => ({
+  useOrgTimeZone: () => 'America/Los_Angeles',
+}));
 
-import { BulkPrintAction } from './bulk-print.tsx';
+import { printsBulk } from '../../../shared/operations/kinds/prints-bulk.ts';
+import { fixtureOperation } from '../../ui/operation/fixtures.test-support.ts';
+import { resetOperationCache } from '../../ui/operation/store.ts';
+import { useBulkPrint } from './bulk-print.tsx';
 
+const def = {
+  kind: printsBulk.kind,
+  title: printsBulk.title,
+  doneTitle: printsBulk.doneTitle,
+  failTitle: printsBulk.failTitle,
+  steps: printsBulk.steps.map((s) => ({ key: s.key, label: s.label, active: s.active })),
+};
+
+function Harness(props: { ids: string[]; orgId: string | undefined; disabled: boolean }) {
+  const print = useBulkPrint(props);
+  return (
+    <>
+      <button type="button" disabled={print.off} title={print.title} onClick={print.run}>
+        Print
+      </button>
+      {print.panel}
+    </>
+  );
+}
 const props = { ids: ['a', 'b'], orgId: 'o1' as string | undefined, disabled: false };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetOperationCache();
 });
-afterEach(() => {
-  vi.useRealTimers();
-  vi.unstubAllGlobals();
-});
+afterEach(() => vi.unstubAllGlobals());
 
-describe('BulkPrintAction', () => {
+const answer = (body: unknown) =>
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify(body), {
+          headers: { 'content-type': 'application/json', etag: '"op:1"' },
+        }),
+    ),
+  );
+
+describe('bulk Print', () => {
   it('is off without an organization, while disabled, and over the cap', () => {
-    const { rerender } = render(<BulkPrintAction {...props} orgId={undefined} as="button" />);
+    const { rerender } = render(<Harness {...props} orgId={undefined} />);
     expect(screen.getByRole('button', { name: 'Print' })).toBeDisabled();
-    rerender(<BulkPrintAction {...props} disabled as="button" />);
+    rerender(<Harness {...props} disabled />);
     expect(screen.getByRole('button', { name: 'Print' })).toBeDisabled();
-    rerender(
-      <BulkPrintAction
-        {...props}
-        ids={Array.from({ length: 5000 }, (_, i) => String(i))}
-        as="button"
-      />,
-    );
+    rerender(<Harness {...props} ids={Array.from({ length: 5000 }, (_, i) => String(i))} />);
     expect(screen.getByRole('button', { name: 'Print' })).toBeDisabled();
   });
 
-  it('says so when nothing can be printed', async () => {
-    m.post.mockResolvedValue({ count: 0, skipped: [], jobId: 'j' });
-    render(<BulkPrintAction {...props} as="button" />);
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Print' }));
+  it('says so when nothing can be printed, and reports a refused start', async () => {
+    m.post.mockResolvedValueOnce({ count: 0, skipped: [], jobId: '', operationId: null });
+    render(<Harness {...props} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Print' }));
     await waitFor(() => expect(m.toast.warning).toHaveBeenCalled());
-    expect(m.get).not.toHaveBeenCalled();
-  });
-
-  it('reports a refused start', async () => {
-    m.post.mockRejectedValue(new Error('no'));
-    render(<BulkPrintAction {...props} as="button" />);
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Print' }));
+    m.post.mockRejectedValueOnce(new Error('no'));
+    await user.click(screen.getByRole('button', { name: 'Print' }));
     await waitFor(() => expect(m.toast.error).toHaveBeenCalled());
     expect(m.toast.error.mock.calls[0]?.[1]).toBe('Could not print');
   });
 
-  it('waits for the render, then offers the PDF, which is fetched with the mode header', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    m.post.mockResolvedValue({
-      count: 2,
-      skipped: [{ reason: 'Printing is off' }, { reason: 'Printing is off' }],
-      jobId: 'j1',
-    });
-    m.get
-      .mockResolvedValueOnce({ state: 'running' })
-      .mockResolvedValueOnce({ state: 'ready', count: 2, lossy: false, skipped: 0 });
-    const fetchMock = vi.fn(async (_url: string) => new Response('pdf'));
-    vi.stubGlobal('fetch', fetchMock);
+  it('shows the job live, with its count, and no poll of its own', async () => {
+    m.post.mockResolvedValue({ count: 2, skipped: [], jobId: 'j1', operationId: 'op-1' });
+    answer(
+      fixtureOperation(def, {
+        status: 'running',
+        at: 'pages',
+        counts: { done: 1, total: 2 },
+        id: 'op-1',
+      }),
+    );
+    render(<Harness {...props} />);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Print' }));
+    expect(await screen.findByText('Preparing tickets · 1 of 2')).toBeInTheDocument();
+    expect(m.post).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers the PDF when it is done, fetched with the mode header', async () => {
+    m.post.mockResolvedValue({ count: 2, skipped: [], jobId: 'j1', operationId: 'op-1' });
+    const done = {
+      ...fixtureOperation(def, { status: 'succeeded', id: 'op-1' }),
+      result: { href: null, ids: { jobId: 'j1', count: '2', skipped: '0', lossy: '0' } },
+    };
+    answer(done);
+    render(<Harness {...props} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Print' }));
+    const download = await screen.findByRole('button', { name: 'Download' });
+    expect(screen.getByText('2 tickets ready')).toBeInTheDocument();
+    const pdf = vi.fn(async (_url: string) => new Response('pdf'));
+    vi.stubGlobal('fetch', pdf);
     vi.stubGlobal(
       'URL',
       Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: vi.fn() }),
     );
-    render(<BulkPrintAction {...props} as="button" />);
-    await userEvent
-      .setup({ advanceTimers: vi.advanceTimersByTime })
-      .click(screen.getByRole('button', { name: 'Print' }));
-    await vi.advanceTimersByTimeAsync(4100);
-    await waitFor(() => expect(m.toast.action).toHaveBeenCalled());
-    expect(m.toast.dismiss).toHaveBeenCalledWith('prep');
-    const action = m.toast.action.mock.calls[0]?.[1] as { onClick: () => void };
-    action.onClick();
-    await vi.advanceTimersByTimeAsync(10);
-    expect(fetchMock.mock.calls[0]?.[0]).toContain('/bulk-print/j1/pdf?orgId=o1');
-  });
-
-  it('reports a failed render and a PDF that cannot be fetched', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    m.post.mockResolvedValue({ count: 1, skipped: [], jobId: 'j2' });
-    m.get.mockResolvedValueOnce({ state: 'failed' });
-    render(<BulkPrintAction {...props} as="button" />);
-    await userEvent
-      .setup({ advanceTimers: vi.advanceTimersByTime })
-      .click(screen.getByRole('button', { name: 'Print' }));
-    await vi.advanceTimersByTimeAsync(2100);
-    await waitFor(() => expect(m.toast.error).toHaveBeenCalled());
-    expect(String(m.toast.error.mock.calls[0]?.[0])).toContain('PDF could not be made');
-  });
-
-  it('gives up with a slow-PDF note after a minute of polling', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    m.post.mockResolvedValue({ count: 1, skipped: [], jobId: 'j3' });
-    m.get.mockResolvedValue({ state: 'running' });
-    render(<BulkPrintAction {...props} as="button" />);
-    await userEvent
-      .setup({ advanceTimers: vi.advanceTimersByTime })
-      .click(screen.getByRole('button', { name: 'Print' }));
-    await vi.advanceTimersByTimeAsync(125_000);
-    await waitFor(() => expect(m.toast.error).toHaveBeenCalled());
-    expect(String(m.toast.error.mock.calls[0]?.[0])).toContain('taking long');
+    await user.click(download);
+    await waitFor(() => expect(pdf).toHaveBeenCalled());
+    expect(pdf.mock.calls[0]?.[0]).toContain('/bulk-print/j1/pdf?orgId=o1');
   });
 });
