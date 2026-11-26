@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSandbox } from '../console/create.ts';
+import { startSandbox } from '../console/create.ts';
 import { beacon } from './beacon.ts';
 import { markViewed, readViewedAt } from './viewed.ts';
 
@@ -38,10 +38,10 @@ describe('the page-view time', () => {
     const at = Date.now() - 5_000;
     markViewed(at);
     const fetchFn = vi.fn(async () =>
-      Response.json({ id: 's', orgSlug: 'dev-x', templateId: 't', key: null }, { status: 201 }),
+      Response.json({ operation: { id: 'op', kind: 'sandbox.create' } }, { status: 202 }),
     );
     vi.stubGlobal('fetch', fetchFn);
-    await createSandbox('csrf', 'token');
+    await startSandbox('csrf', 'token');
     const body = JSON.parse(
       String(
         (fetchFn.mock.calls[0] as unknown[])[1] &&

@@ -50,22 +50,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.wb-status[data-tone="success"] {
-  color: var(--pk-success);
-  background: var(--pk-success-subtle);
-}
-.wb-status[data-tone="info"] {
-  color: var(--pk-info);
-  background: var(--pk-info-subtle);
-}
-.wb-status[data-tone="warning"] {
-  color: var(--pk-warning);
-  background: var(--pk-warning-subtle);
-}
-.wb-status[data-tone="danger"] {
-  color: var(--pk-danger);
-  background: var(--pk-danger-subtle);
-}
 .wb-call-ms {
   min-width: 48px;
   text-align: right;
@@ -98,12 +82,6 @@
   height: 16px;
   flex: none;
   color: var(--pk-text-muted);
-}
-.wb-ep-last[data-ok="true"] {
-  color: var(--pk-success);
-}
-.wb-ep-last[data-ok="false"] {
-  color: var(--pk-danger);
 }
 
 /* The three latest passes, fanned like a hand of tickets. */

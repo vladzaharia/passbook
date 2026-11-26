@@ -4,12 +4,18 @@ import type {
   DeveloperHome,
   DeveloperHomeSandbox,
 } from '../../../shared/contracts/developer-home.ts';
+import { BENCH_HOME_COPY as H } from '../../../shared/copy/developers-bench-home.ts';
+import { KEYS_COPY } from '../../../shared/copy/developers-keys.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { envLine } from '../../../shared/developers-keys.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
+import { StatusChip } from '../bench/status-chip.tsx';
+import { BenchTime } from '../bench/time.tsx';
+import { RevealSheet } from '../ui/reveal-sheet.tsx';
 import { Calls } from './calls.tsx';
 import { GoLive, Keys, Passes, Webhooks } from './cards.tsx';
-import { ago, left, type Source } from './model.ts';
-import { NewKey, ReopenAction, ResetAction, type Reveal } from './sandbox-actions.tsx';
+import type { Source } from './model.ts';
+import { ReopenAction, ResetAction, type Reveal } from './sandbox-actions.tsx';
 import { Stats } from './stats.tsx';
 import { Track } from './track.tsx';
 
@@ -27,7 +33,7 @@ export interface WorkbenchLinks {
 export const DEFAULT_LINKS: WorkbenchLinks = {
   quickstart: PATHS.quickstart,
   sandbox: `${PATHS.quickstart}#sandbox`,
-  keys: `${PATHS.home}/keys`,
+  keys: PATHS.keys,
   logs: PATHS.logs,
   webhooks: PATHS.webhooks,
   admin: (orgId, page) => `/admin/o/${orgId}${page ? `/${page}` : ''}`,
@@ -57,9 +63,15 @@ function Head({
   onChanged: () => void;
 }) {
   const closed = sandbox.closedAt !== null;
-  // Below the buttons: the reset confirm goes in `slot`; a new key is held here so a refresh of the home keeps it.
+  // Below the buttons: the reset confirm goes in `slot`. The new key is held here, so a refresh of the home keeps its
+  // sheet; the sentence about what changed stays after the sheet is done.
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   const [reveal, setReveal] = useState<Reveal | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const onKey = (next: Reveal) => {
+    setReveal(next);
+    setNote(next.line);
+  };
   return (
     <header className="card wb-head">
       <Buddy
@@ -73,20 +85,20 @@ function Head({
         <span className="eyebrow">Sandbox</span>
         <h2 className="h1 wb-name">{sandbox.name}</h2>
         <span className="wrap-row g2">
-          <span className="pill accent">Test only</span>
-          <span className="pill neutral">Previews only</span>
-          {closed ? <span className="pill neutral">Closed</span> : null}
+          <StatusChip tone="info">{H.testOnly}</StatusChip>
+          <StatusChip tone="neutral">{H.previewsOnly}</StatusChip>
+          {closed ? <StatusChip tone="neutral">{H.closed}</StatusChip> : null}
         </span>
       </div>
       <div className="wrap-row g2 wb-head-actions">
         {closed ? (
-          <ReopenAction sandbox={sandbox} onChanged={onChanged} onKey={setReveal} />
+          <ReopenAction sandbox={sandbox} onChanged={onChanged} onKey={onKey} />
         ) : (
           <>
             <a className="btn sm" href={`${links.keys}#new`}>
               New key
             </a>
-            <ResetAction onChanged={onChanged} onKey={setReveal} panel={slot} />
+            <ResetAction onChanged={onChanged} onKey={onKey} panel={slot} />
           </>
         )}
         <a className="btn sm outline" href={links.admin(sandbox.orgId)}>
@@ -95,17 +107,31 @@ function Head({
       </div>
       {closed ? (
         <p className="sm muted wb-closed" data-testid="wb-closed">
-          Closed {ago(sandbox.closedAt ?? now, now)} ago.{' '}
-          {sandbox.reopenUntil !== null
-            ? `Reopen within ${left(sandbox.reopenUntil, now)}.`
-            : 'It can no longer reopen.'}
+          {H.closedLine.ago} <BenchTime at={sandbox.closedAt ?? now} now={now} mode="ago" />.{' '}
+          {sandbox.reopenUntil !== null ? (
+            <>
+              {H.closedLine.reopen} <BenchTime at={sandbox.reopenUntil} now={now} mode="until" />.
+            </>
+          ) : (
+            H.closedLine.gone
+          )}
         </p>
       ) : null}
       <div ref={setSlot} className="wb-act-slot" />
-      {reveal ? (
-        <div className="wb-act-slot">
-          <NewKey done secret={reveal.secret} line={reveal.line} onClose={() => setReveal(null)} />
-        </div>
+      {note ? (
+        <p className="sm muted wb-closed" role="status">
+          {note}
+        </p>
+      ) : null}
+      {reveal && !reveal.shown ? (
+        <RevealSheet
+          revealed={{ name: H.newKeyTitle, secret: reveal.secret }}
+          labels={KEYS_COPY.reveal}
+          prefix="PASSBOOK_KEY="
+          copyAs={envLine}
+          onDone={() => setReveal(null)}
+          onHide={() => setReveal((r) => (r ? { ...r, secret: null } : r))}
+        />
       ) : null}
     </header>
   );
@@ -145,7 +171,12 @@ export function Workbench({
     <div className="wb" data-state={home.state}>
       <Head sandbox={sandbox} now={now} links={links} wave={wave} onChanged={onChanged} />
       {home.state === 'open' ? <Track progress={progress} quickstart={links.quickstart} /> : null}
-      <Stats usage={usage} passLimit={sandbox.limits.passes} logs={links.logs} />
+      <Stats
+        usage={usage}
+        passLimit={sandbox.limits.passes}
+        logs={links.logs}
+        webhooks={links.webhooks}
+      />
       <div className="wb-grid">
         <Calls calls={home.calls} now={now} logs={links.logs} load={loadCalls} />
         <Keys keys={home.keys} now={now} href={links.keys} closed={home.state === 'closed'} />

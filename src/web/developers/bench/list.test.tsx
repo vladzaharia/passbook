@@ -150,3 +150,33 @@ describe('the bench list', () => {
     expect(screen.getByText('No requests yet.')).toBeTruthy();
   });
 });
+
+describe('the bench list groups', () => {
+  it('draws a heading above each run of one group, outside the options', () => {
+    const rows = [
+      { id: 'a', path: '/passes', status: 200 },
+      { id: 'b', path: '/passes/{id}', status: 200 },
+      { id: 'c', path: '/templates', status: 200 },
+    ];
+    const group = (c: Call) => (c.id === 'c' ? 'Templates' : 'Passes');
+    function Grouped() {
+      const selection = useBenchSelection({ items: rows, idOf });
+      return (
+        <BenchList
+          label="Operations"
+          items={rows}
+          idOf={idOf}
+          row={(c) => ({ title: c.path })}
+          selection={selection}
+          groupOf={group}
+        />
+      );
+    }
+    const { container } = render(<Grouped />);
+    expect([...container.querySelectorAll('.bench-row-g')].map((g) => g.textContent)).toEqual([
+      'Passes',
+      'Templates',
+    ]);
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+  });
+});

@@ -64,14 +64,6 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
-    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.deleteSandbox",
-    "op": "DELETE /api/v1/developer/sandbox",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
@@ -80,12 +72,13 @@
     "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
   },
   {
-    "key": "DELETE /api/v1/developer/sandbox response 202 removed",
+    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
     "op": "DELETE /api/v1/developer/sandbox",
-    "change": "response 202 removed",
-    "note": ""
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
@@ -3733,20 +3726,13 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
-    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandbox",
-    "op": "POST /api/v1/developer/sandbox",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox response 202 removed",
+    "key": "POST /api/v1/developer/sandbox response 201 removed",
     "class": "breaking",
     "operationId": "developer.postSandbox",
     "op": "POST /api/v1/developer/sandbox",
-    "change": "response 202 removed",
-    "note": ""
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
@@ -3765,20 +3751,12 @@
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/key operation removed",
-    "class": "breaking",
+    "key": "POST /api/v1/developer/sandbox/key new operation",
+    "class": "additive",
     "operationId": "developer.postSandboxKey",
     "op": "POST /api/v1/developer/sandbox/key",
-    "change": "operation removed",
-    "note": ""
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandboxRecreate",
-    "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "change": "new operation",
+    "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
@@ -3789,12 +3767,13 @@
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/recreate response 202 removed",
+    "key": "POST /api/v1/developer/sandbox/recreate response 201 removed",
     "class": "breaking",
     "operationId": "developer.postSandboxRecreate",
     "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "response 202 removed",
-    "note": ""
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
@@ -3829,12 +3808,13 @@
     "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/reset response 202 removed",
+    "key": "POST /api/v1/developer/sandbox/reset response 200 removed",
     "class": "breaking",
     "operationId": "developer.postSandboxReset",
     "op": "POST /api/v1/developer/sandbox/reset",
-    "change": "response 202 removed",
-    "note": ""
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",

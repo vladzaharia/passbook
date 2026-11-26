@@ -94,7 +94,7 @@ export function VerifyPanel({
   const failed = useMemo(() => (steps ? firstFailure(steps)?.step : undefined), [steps]);
   return (
     <>
-      <div className="card-b stack g3">
+      <div className="wh-pane">
         <div className="row g2 wrap-row">
           <span className="muted sm">Secret</span>
           <span className="mono sm" data-secret>
@@ -158,7 +158,7 @@ export function VerifyPanel({
             </span>
           </div>
         ) : (
-          <p className="card-b muted sm">
+          <p className="wh-pane muted sm">
             {error ? 'Could not read the signing secret.' : 'Checking…'}
           </p>
         )}

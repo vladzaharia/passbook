@@ -61,6 +61,8 @@ export interface RunIndexItem {
   method: RunOp['method'];
   path: string;
   title: string;
+  /** The Run button asks twice: the index marks it. */
+  destructive: boolean;
 }
 
 /** `/developers/run/index.json`: every runnable operation by group, and the catalog's codes. */

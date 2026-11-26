@@ -12,6 +12,7 @@ export const sandboxQuota = (feature: string, used: number, limit: number): stri
     .replace('{limit}', String(limit));
 
 export const SANDBOX_EXISTS_COPY = 'You already have a sandbox.';
+export const SANDBOX_KEY_SHOWN_COPY = 'Your key was shown once. Roll it to get a new one.';
 export const SANDBOX_HUMAN_ONLY_COPY = 'Sign in to make a sandbox.';
 export const SANDBOX_CHECK_COPY = 'Check failed. Reload and try again.';
 export const SANDBOX_TEMPLATE_NAME = 'Quickstart ticket';

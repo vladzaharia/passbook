@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useSyncExternalStore } from 'react';
 import type { Operation } from './types.ts';
 
 // The page's operations by id, so a start mutation can put its 202 body here and every panel,
@@ -61,11 +61,12 @@ export function resetOperationCache(): void {
   ops.clear();
   mine.clear();
   panels.clear();
+  claims.clear();
   emit();
 }
 
 // Panels mounted now, by operation id (like ui/art/presence.ts): while one shows, the end of its
-// operation needs no completion toast.
+// operation needs no completion toast, and the tray opens no sheet for the same `?op`.
 const panels = new Map<string, number>();
 
 export function useRegisterOperationPanel(id: string | null): void {
@@ -81,6 +82,32 @@ export function useRegisterOperationPanel(id: string | null): void {
     };
   }, [id]);
 }
+
+// Ids an inline panel on the page owns (it restores from `?op`): the tray opens no sheet for them. Apart from
+// `panels`, so the tray's own sheet, which draws a panel too, cannot claim the id it is trying to open.
+const claims = new Map<string, number>();
+
+/** A panel drawn inline claims the `?op` id it restores, even before it has the operation. Layout effect: before paint. */
+export function useClaimOperation(id: string | null): void {
+  useLayoutEffect(() => {
+    if (!id) return;
+    claims.set(id, (claims.get(id) ?? 0) + 1);
+    emit();
+    return () => {
+      const n = (claims.get(id) ?? 1) - 1;
+      if (n <= 0) claims.delete(id);
+      else claims.set(id, n);
+      emit();
+    };
+  }, [id]);
+}
+
+export const useOperationClaimed = (id: string | null): boolean =>
+  useSyncExternalStore(
+    subscribe,
+    () => (id ? (claims.get(id) ?? 0) > 0 : false),
+    () => false,
+  );
 
 export const isOperationOnScreen = (id: string): boolean => (panels.get(id) ?? 0) > 0;
 

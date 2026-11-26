@@ -11,7 +11,7 @@ import {
   membershipCapability,
   tenantOrgAccessRevision,
 } from '../passes/repo-authority.ts';
-import { kindOf } from './registry.ts';
+import { kindOf } from './kinds.ts';
 import type { OperationRow } from './repo.ts';
 import { type Fence, orgFence, platformFence, starterFence } from './repo-fence.ts';
 
@@ -86,11 +86,10 @@ export function starterFenceFor(
   writer = false,
 ): Fence | null {
   return auth.kind === 'session'
-    ? starterFence(
-        { userId: auth.userId, sessionId: auth.sessionId },
-        ctx.clock.now(),
-        writer || isOwnOnly(auth),
-      )
+    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), {
+        writer,
+        ownSession: isOwnOnly(auth),
+      })
     : null;
 }
 

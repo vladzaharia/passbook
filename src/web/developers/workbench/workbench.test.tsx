@@ -1,24 +1,40 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { fixtureOperation, SANDBOX_RESET } from '../../ui/operation/fixtures.test-support.ts';
 import { updateSession } from '../console/session.ts';
 import { homeClosed, homeDone, homeFresh, homeNone, homeProgressed } from './home-fixtures.ts';
 import { mount } from './index.tsx';
 import { WorkbenchIsland } from './island.tsx';
-import { ago, duration, keyState, left, masked, meter, sparkPoints, ticksOf } from './model.ts';
+import { duration, keyState, masked, meter, sparkPoints, ticksOf } from './model.ts';
 import { Workbench } from './workbench.tsx';
 
 const noCalls = async () => [];
+/** A reset that has ended well, as the server answers it: what it deleted is in the result ids. */
+const resetOp = {
+  ...fixtureOperation(SANDBOX_RESET, { status: 'succeeded', id: 'op-reset' }),
+  result: {
+    href: null,
+    ids: { passes: '1', captures: '1', calls: '38', other: '0', kept: '0', resetsLeft: '2' },
+  },
+};
+beforeAll(() => {
+  // jsdom has no modal dialogs.
+  Object.assign(HTMLDialogElement.prototype, {
+    showModal(this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    },
+    close(this: HTMLDialogElement) {
+      this.removeAttribute('open');
+    },
+  });
+});
 afterEach(() => vi.unstubAllGlobals());
 
 describe('workbench model', () => {
   it('formats the time and the clocks without the device clock', () => {
     expect(duration(222_000)).toBe('3:42');
     expect(duration(3_725_000)).toBe('1:02:05');
-    expect(ago(1000, 30_000)).toBe('now');
-    expect(ago(0, 5 * 60_000)).toBe('5 min');
-    expect(left(10 * 86_400_000, 0)).toBe('10 d');
-    expect(left(1000, 0)).toBe('<1 min');
   });
 
   it('builds ticks from the server track, sign-in first', () => {
@@ -78,11 +94,26 @@ describe('Workbench', () => {
     expect(screen.getByText('of 500')).toBeTruthy();
   });
 
+  it('opens each row in its tool with the item selected', () => {
+    render(<Workbench home={homeDone} loadCalls={noCalls} />);
+    const hrefs = [...document.querySelectorAll<HTMLAnchorElement>('a[href]')].map((a) =>
+      a.getAttribute('href'),
+    );
+    const first = homeDone.calls[0];
+    const key = homeDone.keys[0];
+    const hook = homeDone.endpoints[0];
+    expect(hrefs).toContain(`/developers/logs?source=all#${first?.id}`);
+    expect(hrefs).toContain(`/developers/keys#${key?.id}`);
+    expect(hrefs).toContain(`/developers/webhooks?endpoint=${hook?.id}`);
+  });
+
   it('closed: no track, no New key, the reopen window', () => {
     render(<Workbench home={homeClosed} loadCalls={noCalls} />);
     expect(screen.queryByRole('heading', { name: 'Quickstart' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'New key' })).toBeNull();
-    expect(screen.getByTestId('wb-closed').textContent).toBe('Closed 2 d ago. Reopen within 28 d.');
+    expect(screen.getByTestId('wb-closed').textContent).toBe(
+      'Closed 2 days ago. Reopen in 28 days.',
+    );
     expect(screen.getByText('Keys stopped when the sandbox closed.')).toBeTruthy();
   });
 
@@ -107,12 +138,11 @@ describe('after Reset', () => {
     vi.doMock('../console/turnstile.ts', () => ({ verify: async () => 'token' }));
     vi.doMock('../console/sandbox-actions.ts', async (orig) => ({
       ...(await orig<typeof import('../console/sandbox-actions.ts')>()),
-      resetSandbox: async () => ({
-        secret: 'pbp_test_NEW',
-        deleted: { passes: 1, captures: 1, calls: 38 },
-        resetsLeft: 2,
-      }),
+      startReset: async () => resetOp,
+      mintKey: async () => 'pbp_test_NEW',
     }));
+    // The panel follows the operation by id: the server says it is done, with what it deleted.
+    vi.stubGlobal('fetch', async () => Response.json(resetOp));
     vi.resetModules();
     const { Workbench: Fresh } = await import('./workbench.tsx');
     const { updateSession: set } = await import('../console/session.ts');
@@ -130,7 +160,7 @@ describe('after Reset', () => {
     expect(within(calls).getAllByRole('link').length).toBeGreaterThan(5);
     await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
     await userEvent.click(screen.getByRole('button', { name: 'Reset sandbox' }));
-    await screen.findByText(/Reset\. Deleted 1 pass/);
+    await screen.findByText(/Reset\. Deleted 1 pass/, {}, { timeout: 4000 });
     expect(onChanged).toHaveBeenCalledTimes(1);
     // The refreshed home has no calls: the card follows it at once.
     rerender(
@@ -147,7 +177,8 @@ describe('Reset and Reopen panels', () => {
     vi.doMock('../console/turnstile.ts', () => ({ verify: async () => 'token' }));
     vi.doMock('../console/sandbox-actions.ts', async (orig) => ({
       ...(await orig<typeof import('../console/sandbox-actions.ts')>()),
-      resetSandbox: async () => ({ secret: 'pbp_test_NEW', deleted: { passes: 0 }, resetsLeft: 2 }),
+      startReset: async () => resetOp,
+      mintKey: async () => 'pbp_test_NEW',
       reopenSandbox: async () => ({ secret: 'pbp_test_REOPENED' }),
     }));
     vi.resetModules();
@@ -184,9 +215,11 @@ describe('Reset and Reopen panels', () => {
     await screen.findByText('Reopened. Your key was replaced.');
     expect(onChanged).toHaveBeenCalledTimes(1);
     rerender(<Fresh home={homeProgressed} loadCalls={noCalls} onChanged={onChanged} />);
-    expect(screen.getByText(/PASSBOOK_KEY=pbp_test_REOPENED/)).toBeTruthy();
+    expect(screen.getByTestId('ks-secret').textContent).toBe('PASSBOOK_KEY=pbp_test_REOPENED');
     await userEvent.click(screen.getByRole('button', { name: 'Done' }));
     expect(screen.queryByText(/pbp_test_REOPENED/)).toBeNull();
+    // The sentence stays after the sheet is done.
+    expect(screen.getByText('Reopened. Your key was replaced.')).toBeTruthy();
   });
 });
 

@@ -22,7 +22,7 @@ afterEach(() => {
 const PASS = '01938a1b-2c3d-7e4f-8a9b-0c1d2e3f4a5b';
 
 describe('a body in the bench', () => {
-  it('draws JSON as the tree under the one block header, each id an IdChip', () => {
+  it('draws JSON as the tree under the one block header, each id an IdChip', async () => {
     render(
       <BenchCode
         label="Response"
@@ -34,7 +34,10 @@ describe('a body in the bench', () => {
     expect(within(block).getByText('Response').className).toBe('code-label');
     expect(within(block).getAllByRole('button', { name: 'Copy response' })).toHaveLength(1);
     const tree = screen.getByRole('region', { name: 'Response' });
-    expect(within(tree).getByRole('button', { name: `Copy object id ${PASS}` })).toBeTruthy();
+    // The chip arrives as its own chunk, after the id shows as plain text.
+    expect(
+      await within(tree).findByRole('button', { name: `Copy object id ${PASS}` }),
+    ).toBeTruthy();
     expect(within(tree).getByRole('button', { name: 'Open object' })).toBeTruthy();
   });
 

@@ -7,6 +7,7 @@ import { run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { makeSandbox } from '../developer/sandbox-test-fixtures.ts';
 import { createFakeQueue } from '../passes/pass-test-fixtures.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { runLane } from './deliver.ts';
@@ -40,13 +41,8 @@ beforeEach(() => {
 });
 
 type Json = any;
-const call = async (
-  method: string,
-  path: string,
-  headers: Record<string, string>,
-  body?: unknown,
-): Promise<[number, Json]> => {
-  const res = await app.request(
+const send = (method: string, path: string, headers: Record<string, string>, body?: unknown) =>
+  app.request(
     `${ORIGIN}/api/v1${path}`,
     {
       method,
@@ -60,6 +56,13 @@ const call = async (
     },
     kit.env,
   );
+const call = async (
+  method: string,
+  path: string,
+  headers: Record<string, string>,
+  body?: unknown,
+): Promise<[number, Json]> => {
+  const res = await send(method, path, headers, body);
   const text = await res.text();
   return [res.status, text ? JSON.parse(text) : {}];
 };
@@ -67,11 +70,8 @@ const call = async (
 async function sandbox() {
   const user = await makeUser(kit.f);
   const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
-  const [status, made] = await call('POST', '/developer/sandbox', session.headers, {
-    turnstileToken: 'ok',
-  });
-  expect(status).toBe(201);
-  return { ...made, session, key: { authorization: `Bearer ${made.key.secret}` } };
+  const made = await makeSandbox(send, session.headers);
+  return { ...made, session, key: { authorization: `Bearer ${made.key?.secret}` } };
 }
 
 describe('sandbox time zone', () => {
