@@ -325,7 +325,7 @@ describe('who may turn an enrolment on', () => {
     const kit = await patchAs(org.id, ['org:read', 'brand:manage', 'wallet:write'], {
       brand: { accent: '#112233' },
     });
-    expect(kit.status).toBe(200);
+    expect(kit).toMatchObject({ status: 403, json: { code: 'MODE_LIVE_REQUIRED' } });
   });
 
   it('a member with integrations:manage only may turn an account on, nothing else', async () => {
@@ -403,11 +403,10 @@ describe('who may turn an enrolment on', () => {
     expect(stage.status).toBe(403);
   });
 
-  it('a Test key changes brand-kit fields only, unless the org is a sandbox', async () => {
+  it('a Test key changes nothing Live shares, unless the org is a sandbox', async () => {
     const { org } = await ready();
-    const kit = await patchAs(org.id, ['org:read', 'org:write'], { brand: { accent: '#112233' } });
-    expect(kit.status).toBe(200);
     for (const body of [
+      { brand: { accent: '#112233' } },
       { brand: { name: 'Renamed' } },
       { brand: { support: { url: 'https://help.example.com' } } },
       { brand: { support: { email: 'help@acme.test' } } },
@@ -423,6 +422,7 @@ describe('who may turn an enrolment on', () => {
     }
     const box = await ready({ sandbox: true });
     for (const body of [
+      { brand: { accent: '#112233' } },
       { channels: { mobile: 'blocked' } },
       { brand: { name: 'Renamed' } },
       { brand: { support: { email: 'help@acme.test' } } },

@@ -44,7 +44,12 @@ export async function devActorOf(
   }
   if (auth.kind !== 'api_key') throw new UnauthenticatedError();
   const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
-  if (authority.kind !== 'api_key' || authority.mode !== 'live') throw new ForbiddenError();
+  if (authority.kind !== 'api_key') throw new ForbiddenError();
+  if (authority.mode !== 'live')
+    throw new ForbiddenError(
+      'Use a live key to manage members.',
+      capability === 'members:manage' ? 'MODE_LIVE_REQUIRED' : undefined,
+    );
   return {
     principal: tenantPrincipal(authority),
     checks: capabilityChecks(authority),

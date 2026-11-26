@@ -17,6 +17,7 @@ import { requestActor } from '../audit/http.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
 import { stageBrandAsset } from './pass-setup-stage.ts';
 import { assertOrgBoundKey, patchPassSetup } from './pass-setup-write.ts';
+import { assertSharedWrite } from './shared-write.ts';
 
 /**
  * Mount at /api/v1/orgs, beside `passSetupRoutes`. A key writes with `org:write` or, for the brand kit alone,
@@ -120,7 +121,9 @@ register(
   async (c) => {
     const { orgId } = c.req.valid('param');
     const ctx = serviceContext(c);
-    assertOrgBoundKey(await tenantAuthorityOf(ctx, authOf(c), orgId, 'org:manage'));
+    const authority = await tenantAuthorityOf(ctx, authOf(c), orgId, 'org:manage');
+    assertOrgBoundKey(authority);
+    await assertSharedWrite(ctx, authority, orgId, 'the brand kit');
     return c.json(await stageBrandAsset(ctx, orgId, c.req.valid('json')), 201);
   },
 );

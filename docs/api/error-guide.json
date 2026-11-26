@@ -1399,7 +1399,7 @@
   },
   "MODE_LIVE_REQUIRED": {
     "title": "Live key required",
-    "when": "A Test key tried to change channels, support, email or the name of an organization that also has Live passes. A Test key may change the brand kit only.",
+    "when": "A Test key tried to change state that Live also reads (the brand kit, setup, zones, tag types, saved import mappings or members) in an organization that also has Live passes. A sandbox organization allows it.",
     "fix": "Use a live key for this change.",
     "retryable": false
   },

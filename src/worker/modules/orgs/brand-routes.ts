@@ -16,6 +16,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
 import { brandKitOf } from './brand.ts';
 import { deleteWebLogo, putWebLogo, updateBrandKit } from './brand-web.ts';
+import { assertSharedWrite } from './shared-write.ts';
 
 /**
  * /api/v1/brand: the org's brand kit. A key needs `brand:manage`; a session needs `org:read` to
@@ -48,7 +49,10 @@ async function authorize(
   const orgId = orgOf(auth, requested);
   if (!auth || auth.kind === 'scanner') throw new ForbiddenError();
   assertOrgAccess(auth, orgId);
-  return { orgId, authority: await tenantAuthorityOf(serviceContext(c), auth, orgId, capability) };
+  const ctx = serviceContext(c);
+  const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
+  if (capability === 'org:manage') await assertSharedWrite(ctx, authority, orgId, 'the brand kit');
+  return { orgId, authority };
 }
 
 register(
