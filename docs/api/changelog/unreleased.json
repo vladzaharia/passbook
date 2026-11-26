@@ -1984,6 +1984,14 @@
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
   },
   {
+    "key": "GET /api/v1/users/{id}/passes operation removed",
+    "class": "breaking",
+    "operationId": "users.getUsersByIdPasses",
+    "op": "GET /api/v1/users/{id}/passes",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/visitors operation removed",
     "class": "breaking",
     "operationId": "visitors.getVisitors",
