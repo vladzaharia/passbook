@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
@@ -63,12 +64,14 @@ export function WalletReportColumn({
   env,
   issues,
   templateOff,
+  templateId,
   allReady,
   onPass,
 }: {
   env: WalletEnv;
   issues: readonly ValidationIssue[];
   templateOff: boolean;
+  templateId: string;
   /** Every listed wallet is Ready: the buddy counts them, once. */
   allReady: boolean;
   onPass: () => void;
@@ -104,9 +107,21 @@ export function WalletReportColumn({
         typeLine={`${type} · ${typeof set.type === 'string' && set.type !== 'off' ? C.setHere : C.automatic}${required}`}
         issues={<Problems issues={issues} onOther={onPass} />}
         note={
-          templateOff
-            ? `${scanLine(TEMPLATE_BRAND_COPY.designer.channelOff, { channel: CHANNEL_LABEL[target] })}`
-            : undefined
+          templateOff ? (
+            <>
+              {scanLine(TEMPLATE_BRAND_COPY.designer.channelOff, {
+                channel: CHANNEL_LABEL[target],
+              }).replace(' Change it in Channels and brand.', '')}{' '}
+              <Link
+                to="/admin/templates/$templateId"
+                params={{ templateId }}
+                search={{ tab: 'channels' }}
+                className="font-medium text-accent-fg underline"
+              >
+                Channels and brand
+              </Link>
+            </>
+          ) : undefined
         }
         rowMenu={
           readOnly

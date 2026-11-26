@@ -173,8 +173,28 @@ test('Pass mode panes use the shared report and open the tab', async ({ page }) 
   await page.goto(design());
   await page.getByRole('radio', { name: 'Samsung', exact: true }).click();
   await expect(page.getByTestId('samsung-report')).toBeVisible();
-  await shots(page, 'wallets-pass-pane');
-  // The phone width in the shots remounts the stage: pick the pane again.
+  // The phone layout remounts the stage, so each size loads the page and picks the pane afresh.
+  const dir = process.env.SHOTS_DIR ?? process.env.D12_SHOTS;
+  if (dir)
+    for (const [width, height] of [
+      [1440, 900],
+      [834, 1112],
+      [390, 844],
+    ] as const)
+      for (const scheme of ['light', 'dark'] as const) {
+        await page.setViewportSize({ width, height });
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.goto(design());
+        await page.getByRole('radio', { name: 'Samsung', exact: true }).click();
+        await expect(page.getByTestId('samsung-report')).toBeVisible();
+        await page.screenshot({
+          path: `${dir}/wallets-pass-pane-${width}-${scheme}.png`,
+          fullPage: true,
+        });
+      }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto(design());
   await page.getByRole('radio', { name: 'Samsung', exact: true }).click();
   await page.getByRole('button', { name: 'Edit in Wallets' }).click();
   await expect(page.getByRole('radio', { name: 'Wallets' })).toBeChecked();

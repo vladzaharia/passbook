@@ -1,5 +1,5 @@
 /*
- * FacePair: both faces side by side from 27.5rem of room (two cards of at least 13rem and a
+ * FacePair: both faces side by side from 34rem of room (two cards that fit their art and a
  * 1.5rem gap), else the chosen face alone with its toggle. The width is the pair's own container,
  * not the viewport.
  */
@@ -64,7 +64,7 @@
     min-height: 2.75rem;
   }
 }
-@container fp (width < 27.5rem) {
+@container fp (width < 34rem) {
   /* One cell holds both faces, so the box is as tall as the taller and the toggle never moves. */
   .fp-faces {
     max-width: 22rem;

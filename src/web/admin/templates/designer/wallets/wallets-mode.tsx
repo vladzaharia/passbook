@@ -145,6 +145,7 @@ export function WalletsMode({
                 env={env}
                 issues={issues ?? NO_ISSUES}
                 templateOff={channels.templateOff.has(focused)}
+                templateId={templateId}
                 allReady={allReady}
                 onPass={onPass}
               />

@@ -211,6 +211,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .wm-lock,
+  .wm-fade > *,
   .wallets-mode,
   .wt-tiles > .wt,
   .wm-deal,
