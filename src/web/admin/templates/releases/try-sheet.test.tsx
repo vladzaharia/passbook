@@ -75,6 +75,9 @@ it('releases to Test, makes a sample pass for the admin with no email, and waits
   await waitFor(() =>
     expect(sheet.querySelector('p[role=status]')).toHaveTextContent('Waiting for your phone'),
   );
+  expect(within(sheet).getByRole('list', { name: 'Try on my phone' })).toHaveTextContent(
+    'Add it to your phone',
+  );
   const [release, pass] = calls.map((c) => ({
     body: JSON.parse(String(c.init?.body)) as Record<string, unknown>,
     headers: new Headers(c.init?.headers),
@@ -131,8 +134,8 @@ it('names the step that failed and offers another try', async () => {
   });
   await user.click(await screen.findByRole('button', { name: 'Try on my phone' }));
   const sheet = await screen.findByRole('dialog', { name: 'Try on my phone' });
-  const steps = await within(sheet).findByRole('list', { name: 'Progress' });
+  const steps = await within(sheet).findByRole('list', { name: 'Try on my phone' });
   await waitFor(() => expect(steps).toHaveTextContent('Make your pass (failed)'));
-  expect(steps).toHaveTextContent('Release v2 to Test (done)');
-  expect(within(sheet).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  expect(steps).toHaveTextContent('Release to Test (done)');
+  expect(within(sheet).getByRole('button', { name: 'Retry' })).toBeInTheDocument();
 });

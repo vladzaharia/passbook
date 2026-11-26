@@ -2,18 +2,13 @@ import { Send } from 'lucide-react';
 import { useMemo } from 'react';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import { useSession } from '../../../lib/session.ts';
-import {
-  Badge,
-  Buddy,
-  Button,
-  Sheet,
-  SheetContent,
-  Skeleton,
-  StepList,
-} from '../../../ui/index.ts';
+import { Badge, Button, Sheet, SheetContent, Skeleton } from '../../../ui/index.ts';
+import { OperationProgress } from '../../../ui/operation/index.ts';
+import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
 import { useTemplate } from '../api.ts';
 import { nextAction } from './next-action.ts';
 import { useOnPhone, useTryFlow } from './try-flow.ts';
+import { useTryOperation } from './try-operation.ts';
 import { Stage } from './try-stage.tsx';
 
 /**
@@ -60,7 +55,6 @@ export default function TrySheet({
             label={name(version)}
             sample={detail.data.sample}
             email={user?.primaryEmail ?? null}
-            holder={user?.name ?? user?.primaryEmail ?? undefined}
             onClose={onClose}
             onRelease={onRelease}
           />
@@ -81,7 +75,6 @@ function Body({
   label,
   sample,
   email,
-  holder,
   onClose,
   onRelease,
 }: {
@@ -91,7 +84,6 @@ function Body({
   label: string;
   sample: Record<string, unknown>;
   email: string | null;
-  holder: string | undefined;
   onClose: () => void;
   onRelease: (version: string) => void;
 }) {
@@ -99,73 +91,25 @@ function Body({
     () => ({ templateId, orgId, version, sample, email }),
     [templateId, orgId, version, sample, email],
   );
-  const { phase, retry, attempt } = useTryFlow(input);
+  const zone = useOrgTimeZone(orgId);
+  const { phase, retry } = useTryFlow(input);
   const watch = useOnPhone(phase.step === 'waiting' ? phase.pass.id : undefined);
+  const operation = useTryOperation(phase, watch, zone);
   const made = phase.step === 'waiting';
-  const released = phase.step === 'making' || made;
   const release = made ? nextAction(phase.result.state.next, label) : null;
-  // One live region for the whole sheet: it exists before its text changes, so it is announced.
-  const said =
-    phase.step === 'releasing'
-      ? `Releasing ${label} to Test`
-      : phase.step === 'making'
-        ? 'Making your pass'
-        : phase.step === 'failed'
-          ? phase.message
-          : watch.on
-            ? 'On your phone'
-            : watch.gaveUp
-              ? 'Not on your phone yet'
-              : 'Waiting for your phone';
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <p role="status" className="sr-only">
-        {said}
-      </p>
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <StepList
-          label="Progress"
-          items={[
-            {
-              id: 'release',
-              label: `Release ${label} to Test`,
-              state:
-                phase.step === 'failed' && phase.at === 'releasing'
-                  ? 'failed'
-                  : released || phase.step === 'failed'
-                    ? 'done'
-                    : 'working',
-            },
-            ...(released || (phase.step === 'failed' && phase.at === 'making')
-              ? [
-                  {
-                    id: 'make',
-                    label: 'Make your pass',
-                    state: made
-                      ? ('done' as const)
-                      : phase.step === 'failed'
-                        ? ('failed' as const)
-                        : ('working' as const),
-                    detail: made ? holder : undefined,
-                  },
-                ]
-              : []),
-          ]}
+        <OperationProgress
+          operation={operation}
+          zone={zone}
+          {...(phase.step === 'failed' ? { onRetry: retry } : {})}
         />
-        <div className="relative mt-16">
-          <div aria-hidden>
-            <Buddy
-              key={watch.on ? 'on' : phase.step === 'failed' ? 'failed' : 'wait'}
-              mood={watch.on ? 'happy' : phase.step === 'failed' ? 'sad' : 'curious'}
-              scene={watch.on ? 'cheer' : phase.step === 'failed' ? 'plug' : 'tuck'}
-              replay={attempt}
-              size="sm"
-            />
+        {phase.step !== 'failed' ? (
+          <div className="rounded-lg border border-border bg-surface-raised px-4 py-4">
+            <Stage phase={phase} watch={watch} />
           </div>
-          <div className="rounded-lg border border-border bg-surface-raised px-4 pt-8 pb-4">
-            <Stage phase={phase} watch={watch} onRetry={retry} />
-          </div>
-        </div>
+        ) : null}
       </div>
       <div className="flex justify-end gap-2 border-t border-border p-4">
         <Button variant="ghost" onClick={onClose}>

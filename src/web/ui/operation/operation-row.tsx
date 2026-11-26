@@ -20,11 +20,14 @@ export function OperationRow({
   operation: op,
   now,
   onOpen,
+  elapsed = true,
   className,
 }: {
   operation: Operation;
   now: number;
   onOpen?: (op: Operation) => void;
+  /** Off for a standing state (a list that is current), where a clock says nothing. */
+  elapsed?: boolean;
   className?: string;
 }) {
   const entry = OPERATION_STATUS[op.status];
@@ -50,9 +53,11 @@ export function OperationRow({
         <span className="flex items-baseline justify-between gap-3">
           <span className="truncate text-sm font-medium text-fg-strong">{op.title}</span>
           <span className="sr-only">{entry.label}</span>
-          <span aria-hidden className="shrink-0 font-mono text-xs tabular-nums text-fg-muted">
-            {formatClock(elapsedMs(op, now))}
-          </span>
+          {elapsed ? (
+            <span aria-hidden className="shrink-0 font-mono text-xs tabular-nums text-fg-muted">
+              {formatClock(elapsedMs(op, now))}
+            </span>
+          ) : null}
         </span>
         <span className="truncate text-xs text-fg-muted">{line}</span>
         {share !== null && op.status === 'running' ? (

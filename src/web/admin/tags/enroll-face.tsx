@@ -1,5 +1,11 @@
+import { useEffect } from 'react';
 import { TAG_COPY, TAG_ERROR_COPY } from '@/shared/copy/tags.ts';
-import { Callout, StepList, useNow } from '@/web/ui/index.ts';
+import { Callout, useNow } from '@/web/ui/index.ts';
+import {
+  type LocalOperationDef,
+  OperationProgress,
+  useLocalOperation,
+} from '@/web/ui/operation/index.ts';
 import { formatCountdown } from '../scanning/scanners/labels.ts';
 import type { Enrollment } from './enroll-api.ts';
 import { EnrollArt } from './enroll-art.tsx';
@@ -48,25 +54,32 @@ export function endedOutcome(
   }
 }
 
-function Steps({ current }: { current: 0 | 1 | 2 }) {
-  return (
-    <div className="mx-auto">
-      <StepList
-        label="Request progress"
-        size="sm"
-        items={D.steps.map((label, i) => ({
-          id: label,
-          label,
-          state:
-            i < current || (i === current && current === 2)
-              ? 'done'
-              : i === current
-                ? 'working'
-                : 'todo',
-        }))}
-      />
-    </div>
-  );
+const [SENT, ON_SCREEN, READ] = D.steps;
+const DEF: LocalOperationDef = {
+  kind: 'nfc.enroll',
+  title: 'Assign a tag',
+  doneTitle: D.done,
+  steps: [
+    { key: 'sent', label: SENT, active: 'Sending to the scanner' },
+    { key: 'screen', label: ON_SCREEN, active: 'Opening on the scanner' },
+    { key: 'read', label: READ, active: 'Waiting for the tap' },
+  ],
+};
+
+/** The request's three steps as the shared progress panel's operation, moved by the polled state. */
+function useEnrollOperation(shown: boolean, ask: string) {
+  const { operation, driver } = useLocalOperation(DEF);
+  useEffect(() => {
+    if (!shown) {
+      driver.complete('sent');
+      driver.step('screen');
+    } else {
+      driver.complete('sent');
+      driver.complete('screen');
+      driver.wait('read', ask);
+    }
+  }, [driver, shown, ask]);
+  return operation;
 }
 
 /** A ring that drains over the request's life: state, so it moves under reduced motion too. */
@@ -108,28 +121,19 @@ export function WaitingFace({
   const now = useNow(1000);
   const left = enrollment.expiresAt - now;
   const shown = enrollment.shownAt !== null;
-  const step = shown ? 1 : 0;
+  const operation = useEnrollOperation(shown, fill(ios ? D.waitIos : D.wait, { scanner }));
   const slow = !shown && now - enrollment.createdAt > SLOW_MS;
   const tagError = enrollment.errorCode ? TAG_ERROR_COPY[enrollment.errorCode] : null;
-  const label = D.steps[step];
   return (
     <div className="wl-enroll-face flex flex-col gap-4 text-center">
       <EnrollArt stage="waiting" />
-      <div className="flex flex-col gap-1">
-        <p className="text-base font-medium text-fg-strong">
-          {fill(ios ? D.waitIos : D.wait, { scanner })}
-        </p>
-        <p className="text-sm text-fg-muted">{summary}</p>
-      </div>
+      <p className="text-sm text-fg-muted">{summary}</p>
       {tagError ? (
         <Callout tone="warning" className="text-left">
           {tagError}
         </Callout>
       ) : null}
-      <Steps current={tagError ? 1 : step} />
-      <p role="status" className="sr-only">
-        {label}
-      </p>
+      <OperationProgress operation={operation} buddy={false} className="text-left" />
       {slow ? <p className="text-sm text-fg-muted">{fill(D.slow, { scanner })}</p> : null}
       <p className="flex items-center justify-center gap-2 text-sm text-fg-muted">
         <Ring left={left} total={enrollment.expiresAt - enrollment.createdAt} />
