@@ -106,22 +106,23 @@ export const identitiesOf = (db: Db, userId: string) =>
 
 export interface OwnedPassRow {
   id: string;
-  title: string;
   template_name: string;
-  org_name: string;
+  name: string;
+  personal_user_id: string | null;
   status: 'active' | 'voided';
 }
 
-export const ownedPasses = (db: Db, userId: string) =>
+/** Another person's personal organization is not listed to a platform admin; the viewer's own is. */
+export const ownedPasses = (db: Db, userId: string, viewerId: string) =>
   all<OwnedPassRow>(
     db,
-    `SELECT p.id, COALESCE(p.display_title, p.serial) AS title,
-            COALESCE(t.name, p.template_id) AS template_name, o.name AS org_name, p.status
+    `SELECT p.id, COALESCE(t.name, p.template_id) AS template_name, o.name, o.personal_user_id, p.status
      FROM passes p
      JOIN orgs o ON o.id = p.org_id
      LEFT JOIN templates t ON t.id = p.template_id
-     WHERE p.owner_user_id = ? ORDER BY p.id DESC LIMIT 100`,
-    [userId],
+     WHERE p.owner_user_id = ? AND (o.personal_user_id IS NULL OR o.personal_user_id = ?)
+     ORDER BY p.id DESC LIMIT 100`,
+    [userId, viewerId],
   );
 
 export async function ownedPassCount(db: Db, userId: string): Promise<number> {

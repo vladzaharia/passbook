@@ -49,6 +49,9 @@ export function useUserPasses(id: string) {
           signal,
         }),
       getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+      // Each read is audited: no refetch on focus, and a page stays fresh for a while.
+      staleTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
     }),
   );
 }

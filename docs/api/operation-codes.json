@@ -8026,6 +8026,7 @@
   ],
   "users get /": [],
   "users get /{id}": [
+    "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "users get /{id}/passes": [

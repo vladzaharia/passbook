@@ -62,11 +62,10 @@ export const UserDetailSchema = UserSchema.extend({
       method: z.string(),
     }),
   ),
-  /** First 100 owned passes (title falls back to the serial); `passCount` is the total. */
+  /** First 100 owned passes, with no holder title; `passCount` is the total. */
   passes: z.array(
     z.object({
       id: IdSchema,
-      title: z.string(),
       templateName: z.string(),
       orgName: z.string(),
       status: PassStatusSchema,
@@ -87,7 +86,7 @@ export const UpdateUserSchema = z.object({ status: z.enum(['active', 'disabled']
 export const AddUserEmailSchema = z.object({ email: z.string().max(254) });
 
 export const UserPassesQuerySchema = z.object({
-  cursor: z.string().optional(),
+  cursor: IdSchema.optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 /** One pass of a person, in any organization. No holder personalization, title or link. */
@@ -101,7 +100,9 @@ export const UserPassSchema = z.object({
   timeZone: z.string(),
   templateName: z.string(),
   status: PassStatusSchema,
-  /** Wallets that hold a copy. */
+  /** Owned: they claimed it. Waiting: issued to a verified address of theirs, not yet claimed. */
+  holding: z.enum(['owned', 'waiting']),
+  /** Wallets with an active copy. */
   channels: z.array(ChannelSchema),
   issuedAt: TimestampSchema,
   updatedAt: TimestampSchema,

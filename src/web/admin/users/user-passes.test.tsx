@@ -26,6 +26,7 @@ const pass = (over: Record<string, unknown>) => ({
   timeZone: 'America/Los_Angeles',
   templateName: 'Gym pass',
   status: 'active',
+  holding: 'owned',
   channels: ['apple'],
   issuedAt: Date.UTC(2026, 10, 1, 3),
   updatedAt: Date.UTC(2026, 10, 2, 3),
@@ -44,7 +45,13 @@ describe('user passes section', () => {
       memberships: [membershipFixture('o1', { orgName: 'Northwind' })],
       handlers: open([
         pass({}),
-        pass({ id: 'p2', orgId: 'o9', orgName: 'Elsewhere', timeZone: 'Asia/Tokyo' }),
+        pass({
+          id: 'p2',
+          orgId: 'o9',
+          orgName: 'Elsewhere',
+          timeZone: 'Asia/Tokyo',
+          holding: 'waiting',
+        }),
       ]),
     });
     const list = await screen.findByRole('list', { name: 'Passes' });
@@ -62,6 +69,8 @@ describe('user passes section', () => {
     expect(rows[1]).toHaveTextContent('Issued Nov 1, 2026');
     expect(rows[1]).toHaveTextContent('Open the org to see details');
     expect(rows[0]).not.toHaveTextContent('Open the org to see details');
+    expect(rows[1]).toHaveTextContent('Waiting for sign-in');
+    expect(rows[0]).not.toHaveTextContent('Waiting for sign-in');
   });
 
   it('shows the empty state', async () => {

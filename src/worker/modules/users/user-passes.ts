@@ -4,7 +4,8 @@ import type { UserPassesQuerySchema, UserPassListSchema } from '../../../shared/
 import { resolveOrgTimeZone } from '../../../shared/time-zone.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { listUserPasses } from './repo-user-passes.ts';
+import { viewerOrgName } from '../orgs/personal-names.ts';
+import { branchIds, passesByIds, verifiedEmails } from './repo-user-passes.ts';
 import { requireUser } from './service.ts';
 
 type Page = z.infer<typeof UserPassListSchema>;
@@ -20,7 +21,17 @@ export async function listPassesOfUser(
   query: z.infer<typeof UserPassesQuerySchema>,
 ): Promise<Page> {
   await requireUser(ctx, userId);
-  const rows = await listUserPasses(ctx.env.DB, userId, query.cursor, query.limit + 1);
+  const db = ctx.env.DB;
+  const cursor = query.cursor ?? '~';
+  const want = query.limit + 1;
+  const emails = await verifiedEmails(db, userId);
+  // Each branch's newest `want` hold the newest `want` overall; at most (1 + emails) x want ids.
+  const branches = await Promise.all([
+    branchIds(db, 'owner', userId, cursor, want, actorId),
+    ...emails.map((email) => branchIds(db, 'waiting', email, cursor, want, actorId)),
+  ]);
+  const ids = [...new Set(branches.flat().map((r) => r.id))].sort().reverse().slice(0, want);
+  const rows = ids.length ? await passesByIds(db, ids) : [];
   const page = rows.slice(0, query.limit);
   await recordAudit(ctx, {
     actorType: 'user',
@@ -34,11 +45,12 @@ export async function listPassesOfUser(
     items: page.map((r) => ({
       id: r.id,
       orgId: r.org_id,
-      orgName: r.org_name,
+      orgName: viewerOrgName(r, actorId),
       orgStatus: r.org_status,
       timeZone: resolveOrgTimeZone(r.time_zone),
       templateName: r.template_name,
       status: r.status,
+      holding: r.owned ? ('owned' as const) : ('waiting' as const),
       channels: (
         [
           [r.has_apple, 'apple'],
@@ -49,6 +61,6 @@ export async function listPassesOfUser(
       issuedAt: r.created_at,
       updatedAt: r.modified_at,
     })),
-    nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
+    nextCursor: ids.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }

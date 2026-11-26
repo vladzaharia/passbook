@@ -13,7 +13,7 @@ import {
   UserPassListSchema,
   UserSchema,
 } from '../../../shared/contracts/index.ts';
-import { currentUserId, requireAdmin } from '../../platform/auth.ts';
+import { currentUserId, requireAdmin, requireStrictSession } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
@@ -33,6 +33,8 @@ export const usersRoutes = createRouter();
 guard(usersRoutes, requireAdmin);
 // Adding an email to someone's account is how it is taken over: a recent sign-in.
 usersRoutes.post('/:id/emails', requireStepUp(STEP_UP_SECONDS));
+// A support read across organizations: a strong sign-in, whatever the admin role's source.
+usersRoutes.get('/:id/passes', requireStrictSession);
 usersRoutes.use('*', limitBody(64 * 1024));
 
 register(
@@ -58,7 +60,14 @@ register(
     response: UserDetailSchema,
   },
   async (c) =>
-    c.json(await getUserDetail(serviceContext(c), c.req.valid('param').id, ownSession(c))),
+    c.json(
+      await getUserDetail(
+        serviceContext(c),
+        c.req.valid('param').id,
+        ownSession(c),
+        currentUserId(c),
+      ),
+    ),
 );
 register(
   usersRoutes,
