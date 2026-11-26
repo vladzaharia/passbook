@@ -70,13 +70,14 @@ describe('expression depth of the largest wallet-provider predicates', () => {
   // terms 55 -> 56, binding terms 159 -> 162). All stay far below remote D1's limit of 100.
   // 0222 (sole approval for wallet classes) put `approval.kind = 'sole' OR` in front of each independence
   // predicate: revoke depth 26 -> 27 and terms 56 -> 58; the three triggers below grew the same way.
+  // 0230 (Samsung system release): the exemption's `provider IN (...)` is one group deeper: revoke depth 27 -> 28.
   // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32, CTE 25 -> 26.
   // 0229: the revoke identity check also accepts a Samsung enrolment (repo-instance-current.ts), one more `OR`
   // group on the epoch checks: 25 -> 26 and 32 -> 34 terms, 27 -> 28 and 50 -> 52, check 32 -> 33 and 51 -> 53, CTE 26 -> 27. The Samsung revoke identity then compares the partner of the pinned
   // version (L-N2): epoch checks 29/36 and 31/54, check 36/55, CTE 30.
   it.each([
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
-    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 27, 58],
+    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 28, 58],
     ['release binding', bindingSql, 49, 162],
     ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 29, 36],
     ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 31, 54],
@@ -129,7 +130,8 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`. 0229: an enrolment account's tombstone is
       // proved by its pinned credential version instead of a configure event (37 -> 46, 33 -> 42, with the account's identity).
       wallet_samsung_tombstones_approved_insert: [46, 42],
-      wallet_samsung_tombstone_keyset_insert: [39, 37],
+      // 0230: one more OR/AND pair for the system exemption: terms 37 -> 39.
+      wallet_samsung_tombstone_keyset_insert: [39, 39],
       // 0229 recreated these: the release gate on the insert guard, the epoch pin and enrolment terms on the
       // successor and the candidate, the enrolment On and not held terms on the operation guard.
       wallet_provider_generation_insert_guard: [21, 38],
@@ -164,8 +166,9 @@ describe('expression depth of the largest wallet-provider predicates', () => {
     );
     expect(views).toHaveLength(2);
     const ceiling: Record<string, [number, number]> = {
-      // 0199 made the evidence optional (33/75); 0222 added the sole approval clause (33/77).
-      wallet_provider_retirement_complete_base: [33, 77],
+      // 0199 made the evidence optional (33/75); 0222 added the sole approval clause (33/77); 0230 the system
+      // exemption (33/79).
+      wallet_provider_retirement_complete_base: [33, 79],
       template_provider_apple_sources: [37, 41],
     };
     for (const v of views) {
