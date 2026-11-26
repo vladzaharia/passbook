@@ -1,11 +1,4 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import '../../../generated/operations-kit.css';
-import '../../styles/kit-controls.css';
-import '../../styles/kit-motion.css';
-import '../../ui/art/scenes/common.css';
-import '../../ui/art/scenes/busy.css';
-import '../../ui/art/scenes/cheer.css';
-import '../../ui/art/scenes/sorry.css';
 import { sessionOperationsClient } from '../../lib/operations-client.ts';
 import {
   type Operation,
