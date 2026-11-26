@@ -1,5 +1,5 @@
 import { QrCode, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
 import { surfaceFor } from '@/shared/scan-surfaces.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
@@ -37,6 +37,7 @@ export function DeviceSheet({
   onPair: () => void;
   onRevoke: () => void;
 }) {
+  const formId = useId();
   const [discard, setDiscard] = useState(false);
   const [name, setName] = useState(device.name);
   const [surface, setSurface] = useState(device.surface);
@@ -85,8 +86,39 @@ export function DeviceSheet({
         <SheetContent
           title={`${canManage ? 'Configure' : 'Device'} ${device.name}`}
           className="sm:w-[440px]"
+          footer={
+            canManage ? (
+              <>
+                <Button
+                  type="submit"
+                  form={formId}
+                  loading={save.isPending}
+                  disabled={!dirty || changed || device.revoked}
+                >
+                  Save device
+                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  {device.signIn === 'paired' && !device.revoked ? (
+                    <Button variant="outline" iconStart={<QrCode aria-hidden />} onClick={onPair}>
+                      {device.paired ? 'Pair again' : 'Pair device'}
+                    </Button>
+                  ) : null}
+                  {!device.revoked ? (
+                    <Button
+                      variant="ghost"
+                      className="text-danger"
+                      aria-label="Revoke device"
+                      onClick={onRevoke}
+                    >
+                      Revoke
+                    </Button>
+                  ) : null}
+                </div>
+              </>
+            ) : null
+          }
         >
-          <Form {...check.form} className="grid gap-6 p-4" onValid={submit}>
+          <Form {...check.form} id={formId} className="grid gap-6 p-4" onValid={submit}>
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={device.online && !device.revoked ? 'success' : 'neutral'}>
                 {device.revoked
@@ -222,34 +254,6 @@ export function DeviceSheet({
                 </>
               )}
             </fieldset>
-            {canManage ? (
-              <div className="sticky bottom-0 z-10 -mx-4 -mb-4 grid gap-2 border-t border-border bg-surface-raised px-4 py-4 shadow-[0_-10px_10px_-10px_rgb(0_0_0/0.25)]">
-                <Button
-                  type="submit"
-                  loading={save.isPending}
-                  disabled={!dirty || changed || device.revoked}
-                >
-                  Save device
-                </Button>
-                <div className="grid grid-cols-2 gap-3">
-                  {device.signIn === 'paired' && !device.revoked ? (
-                    <Button variant="outline" iconStart={<QrCode aria-hidden />} onClick={onPair}>
-                      {device.paired ? 'Pair again' : 'Pair device'}
-                    </Button>
-                  ) : null}
-                  {!device.revoked ? (
-                    <Button
-                      variant="ghost"
-                      className="text-danger"
-                      aria-label="Revoke device"
-                      onClick={onRevoke}
-                    >
-                      Revoke
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
           </Form>
         </SheetContent>
       </Sheet>
