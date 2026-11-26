@@ -8896,11 +8896,11 @@ type PlatformUsersEmailsCreateResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsCreateResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsCreateResponseRecentAuditItem struct {
@@ -8957,11 +8957,11 @@ type PlatformUsersEmailsDeleteResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsDeleteResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsDeleteResponseRecentAuditItem struct {
@@ -9018,11 +9018,11 @@ type PlatformUsersEmailsMakePrimaryResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsMakePrimaryResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsMakePrimaryResponseRecentAuditItem struct {
@@ -9063,6 +9063,25 @@ type PlatformUsersListResponseItemsItem struct {
 	SignInMethods []string `json:"signInMethods,omitempty"`
 }
 
+type PlatformUsersPassesListResponse struct {
+	Items      []PlatformUsersPassesListResponseItemsItem `json:"items"`
+	NextCursor *string                                    `json:"nextCursor"`
+}
+
+type PlatformUsersPassesListResponseItemsItem struct {
+	ID           string   `json:"id"`
+	OrgID        string   `json:"orgId"`
+	OrgName      string   `json:"orgName"`
+	OrgStatus    string   `json:"orgStatus"`
+	TimeZone     string   `json:"timeZone"`
+	TemplateName string   `json:"templateName"`
+	Status       string   `json:"status"`
+	Holding      string   `json:"holding"`
+	Channels     []string `json:"channels"`
+	IssuedAt     int64    `json:"issuedAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+}
+
 type PlatformUsersRetrieveResponse struct {
 	ID            string                                         `json:"id"`
 	Name          *string                                        `json:"name"`
@@ -9096,11 +9115,11 @@ type PlatformUsersRetrieveResponseIdentitiesItem struct {
 }
 
 type PlatformUsersRetrieveResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersRetrieveResponseRecentAuditItem struct {
