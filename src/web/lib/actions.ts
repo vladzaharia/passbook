@@ -46,7 +46,6 @@ import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
 import { USER_PASSES_ACTIONS } from './actions-user-passes.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
-
 export interface ActionEntry {
   label: string;
   icon: LucideIcon;
