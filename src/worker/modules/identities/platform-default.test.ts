@@ -6,6 +6,7 @@ import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { checkIdentityRow } from './check.ts';
 import { resolveDefaultPlatform } from './db-resolver.ts';
 import { setPlatformDefault } from './platform-default.ts';
+import { listPlatformIdentities } from './platform-status.ts';
 import { getIdentityRow } from './repo.ts';
 import { ensurePlatformIdentity } from './repo-platform.ts';
 import { defaultPlatformPassIdentity, switchDefault } from './repo-platform-default.ts';
@@ -248,6 +249,69 @@ describe('setPlatformDefault', () => {
       notReady,
     );
     expect(await flags(id)).toMatchObject({ is_default: 1 });
+  });
+});
+
+describe('platform readiness in the list', () => {
+  const readinessOf = async (id: string) =>
+    (await listPlatformIdentities(kit.ctx)).items.find((i) => i.id === id)?.readiness;
+
+  it('reports each check the switch makes, and agrees with whether the switch refuses', async () => {
+    const id = await slotRow();
+    expect(await readinessOf(id)).toMatchObject({
+      eligible: true,
+      certificate: true,
+      issuing: true,
+      pushHealthy: true,
+      pushProbeAt: null,
+      pushProbeFresh: false,
+      deviceTest: false,
+      ready: false,
+    });
+    await expect(setPlatformDefault(kit.ctx, actor, id)).rejects.toMatchObject(notReady);
+
+    await probed(id, 25 * 3_600_000);
+    expect(await readinessOf(id)).toMatchObject({ pushProbeFresh: false, ready: false });
+    await probed(id);
+    await registerOn(id, 'dev-9', kit.org.id);
+    expect(await readinessOf(id)).toMatchObject({
+      pushProbeAt: kit.clock.now(),
+      pushProbeFresh: true,
+      deviceTest: false,
+      ready: false,
+    });
+    await registerOn(id, 'dev-8', await personalOrg());
+    expect(await readinessOf(id)).toMatchObject({ deviceTest: true, ready: true });
+    expect(await setPlatformDefault(kit.ctx, actor, id)).toEqual({ changed: true });
+  });
+
+  it('marks a failing push, a stopped row and an expired certificate', async () => {
+    const failing = await slotRow({ health: 'failing' });
+    expect(await readinessOf(failing)).toMatchObject({ pushHealthy: false, ready: false });
+    const stopped = await slotRow({ id: 'slot-b', passType: 'pass.mobile.passbook.b', issuing: 0 });
+    expect(await readinessOf(stopped)).toMatchObject({ issuing: false, ready: false });
+    const expired = await slotRow({
+      id: 'slot-c',
+      passType: 'pass.mobile.passbook.c',
+      notAfter: kit.clock.now() - 1,
+    });
+    expect(await readinessOf(expired)).toMatchObject({ certificate: false, ready: false });
+    const devtest = await slotRow({
+      id: 'slot-d',
+      passType: 'pass.mobile.passbook.devtest',
+      purpose: 'device_test',
+    });
+    expect(await readinessOf(devtest)).toMatchObject({ eligible: false, ready: false });
+  });
+
+  it('holds the legacy row to its certificate only', async () => {
+    expect(await readinessOf('platform')).toMatchObject({
+      eligible: true,
+      issuing: null,
+      pushHealthy: null,
+      pushProbeFresh: null,
+      deviceTest: null,
+    });
   });
 });
 

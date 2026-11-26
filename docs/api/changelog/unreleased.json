@@ -1817,6 +1817,14 @@
     "note": "Lists recorded Apple provisioning calls."
   },
   {
+    "key": "GET /api/v1/platform/apple/identities 200.items[].readiness: field added",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleIdentities",
+    "op": "GET /api/v1/platform/apple/identities",
+    "change": "200.items[].readiness: field added",
+    "note": "Each platform identity reports the checks Make default runs: certificate, issuing, push, probe within 24 hours, device test."
+  },
+  {
     "key": "GET /api/v1/platform/apple/identities new operation",
     "class": "additive",
     "operationId": "wallet-identities.getPlatformAppleIdentities",

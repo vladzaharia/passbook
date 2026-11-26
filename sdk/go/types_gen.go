@@ -8843,6 +8843,7 @@ type PlatformAppleIdentitiesListResponseItemsItem struct {
 	RegistrationCount  int64                                                     `json:"registrationCount"`
 	OpenRunID          *string                                                   `json:"openRunId"`
 	Dormant            bool                                                      `json:"dormant"`
+	Readiness          PlatformAppleIdentitiesListResponseItemsItemReadiness     `json:"readiness"`
 }
 
 type PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem struct {
@@ -8856,6 +8857,17 @@ type PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem struct {
 	RetiredAt   *int64 `json:"retiredAt"`
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItemReadiness struct {
+	Eligible       bool   `json:"eligible"`
+	Certificate    bool   `json:"certificate"`
+	Issuing        *bool  `json:"issuing"`
+	PushHealthy    *bool  `json:"pushHealthy"`
+	PushProbeAt    *int64 `json:"pushProbeAt"`
+	PushProbeFresh *bool  `json:"pushProbeFresh"`
+	DeviceTest     *bool  `json:"deviceTest"`
+	Ready          bool   `json:"ready"`
 }
 
 type PlatformAppleIdentitiesListResponseOpenRunsItem struct {

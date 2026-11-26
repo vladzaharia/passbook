@@ -19,12 +19,19 @@ export interface MoveInput {
 }
 
 /** The identities and the org of a move, refused early: a move to an identity that cannot issue never starts. */
-async function checked(ctx: ServiceContext, input: MoveInput) {
+async function checked(ctx: ServiceContext, input: MoveInput, keyless = false) {
   const org = await getOrg(ctx.env.DB, input.orgId);
   if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const { identities } = depsOf(ctx.env);
-  const from = await identities.byId(input.fromIdentityId);
-  const to = await identities.forOrg(input.orgId, input.toIdentityId, ctx.clock.now());
+  // A dry run reads metadata only: the signing key is checked when the move starts and when it issues.
+  const peek = keyless && identities.peekById && identities.peekForOrg;
+  const from = peek
+    ? await identities.peekById?.(input.fromIdentityId)
+    : await identities.byId(input.fromIdentityId);
+  const to = peek
+    ? await identities.peekForOrg?.(input.orgId, input.toIdentityId, ctx.clock.now())
+    : await identities.forOrg(input.orgId, input.toIdentityId, ctx.clock.now());
+  if (!from || !to) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
   if (from.id === to.id)
     throw new ConflictError('The passes are already on that identity.', 'IDENTITY_MOVE_SAME');
   return { fromId: from.id, toId: to.id };
@@ -35,7 +42,7 @@ export async function previewIdentityMove(
   ctx: ServiceContext,
   input: MoveInput,
 ): Promise<MoveCounts & { toIdentityId: string }> {
-  const { fromId, toId } = await checked(ctx, input);
+  const { fromId, toId } = await checked(ctx, input, true);
   return { ...(await countCandidates(ctx.env.DB, input.orgId, fromId)), toIdentityId: toId };
 }
 

@@ -7641,6 +7641,16 @@ export type PlatformAppleIdentitiesListResponse = {
     registrationCount: number;
     openRunId: string | null;
     dormant: boolean;
+    readiness: {
+      eligible: boolean;
+      certificate: boolean;
+      issuing: boolean | null;
+      pushHealthy: boolean | null;
+      pushProbeAt: number | null;
+      pushProbeFresh: boolean | null;
+      deviceTest: boolean | null;
+      ready: boolean;
+    };
   }>;
   openRuns: Array<{
     slot: "root" | "devtest";

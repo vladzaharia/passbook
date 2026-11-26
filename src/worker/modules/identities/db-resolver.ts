@@ -177,10 +177,59 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
     return resolveRow(env, row);
   };
 
+  /** The row an id names, without its key: the legacy id stands for the env identity when it has no row. */
+  const peekRow = async (
+    id: string,
+  ): Promise<{ id: string; orgId: string | null; purpose: string }> => {
+    const row = await getIdentityRow(env.DB, id);
+    if (row) {
+      if (row.source !== 'env' && !row.cert_pem) throw notFound();
+      return { id: row.id, orgId: row.org_id, purpose: row.purpose };
+    }
+    if (id === PLATFORM_IDENTITY_ID && envIdentityPresent(env))
+      return { id, orgId: null, purpose: 'passes' };
+    throw notFound();
+  };
+
   return {
     platform,
     byId,
     byRow: (row) => resolveRow(env, row),
+    async peekById(id) {
+      return { id: (await peekRow(id)).id };
+    },
+    async peekForOrg(orgId, identityId, now) {
+      const scoped = async (id: string) => {
+        const meta = await peekRow(id);
+        if (meta.purpose !== 'passes') throw notFound();
+        if (meta.orgId !== null && meta.orgId !== orgId) throw notFound();
+        return meta.id;
+      };
+      if (identityId) {
+        const id = await scoped(identityId);
+        const refused = await refusal(env, id, now);
+        if (refused) throw refused;
+        return { id };
+      }
+      const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
+      if (orgDefault) {
+        const refused = await refusal(env, orgDefault, now);
+        if (!refused) return { id: await scoped(orgDefault) };
+        if (refused.code !== 'IDENTITY_RETIRED') {
+          await scoped(orgDefault);
+          throw refused;
+        }
+      }
+      const fallback = await getDefaultRow(env.DB);
+      if (fallback && fallback.purpose !== 'passes') throw notFound();
+      if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
+        if (!(await refusal(env, fallback.id, now))) return { id: (await peekRow(fallback.id)).id };
+      }
+      const id = (await peekRow(PLATFORM_IDENTITY_ID)).id;
+      const refused = await refusal(env, id, now);
+      if (refused) throw refused;
+      return { id };
+    },
     async forOrg(orgId, identityId, now) {
       // An org may use its own identities and global ones, never another org's.
       const scoped = async (id: string) => {

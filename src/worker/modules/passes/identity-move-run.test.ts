@@ -84,6 +84,35 @@ describe('starting a move', () => {
     );
   });
 
+  it('previews against a root whose key cannot be decrypted; starting still refuses', async () => {
+    const { org } = await orgWithPasses(kit, 2);
+    await run(
+      kit.env.DB,
+      "INSERT OR IGNORE INTO credentials (id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at) VALUES ('cred-bad', 'pass_signer', 1, x'00', x'00', x'00', 1)",
+    );
+    await run(
+      kit.env.DB,
+      `INSERT INTO signing_identities
+         (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, cert_pem, not_after,
+          provenance, purpose, apns_health, is_default, issuing, created_at)
+       VALUES ('slot-bad', NULL, 'Root', 'pass.mobile.passbook', 'TEAM123456', 'db', 'cred-bad', 'PEM', ?,
+         'platform', 'passes', 'healthy', 0, 1, 1)`,
+      [kit.clock.now() + 90 * DAY],
+    );
+    const input = { orgId: org.id, fromIdentityId: 'platform', toIdentityId: 'slot-bad' };
+    expect(await previewIdentityMove(job(), input)).toMatchObject({
+      passes: 2,
+      toIdentityId: 'slot-bad',
+    });
+    await expect(startIdentityMove(job(), ADMIN, input)).rejects.toMatchObject({
+      code: 'IDENTITY_KEY_UNREADABLE',
+    });
+    await run(kit.env.DB, "UPDATE signing_identities SET issuing = 0 WHERE id = 'slot-bad'");
+    await expect(previewIdentityMove(job(), input)).rejects.toMatchObject({
+      code: 'IDENTITY_RETIRED',
+    });
+  });
+
   it('refuses a move to the identity the passes are on, and an unknown org', async () => {
     const { org } = await orgWithPasses(kit, 1);
     await expect(

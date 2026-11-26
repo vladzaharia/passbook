@@ -134,6 +134,23 @@ export const PushKeyInputSchema = z.object({
   p8: z.string().min(1).max(4_000),
 });
 
+/**
+ * What making an identity the default checks (`setPlatformDefault`), as facts. `null`: the row is not
+ * held to it (the legacy row needs only its certificate). `deviceTest` is a registration from a platform
+ * admin's personal org.
+ */
+export const PlatformReadinessSchema = z.object({
+  eligible: z.boolean(),
+  certificate: z.boolean(),
+  issuing: z.boolean().nullable(),
+  pushHealthy: z.boolean().nullable(),
+  pushProbeAt: TimestampSchema.nullable(),
+  pushProbeFresh: z.boolean().nullable(),
+  deviceTest: z.boolean().nullable(),
+  ready: z.boolean(),
+});
+export type PlatformReadiness = z.infer<typeof PlatformReadinessSchema>;
+
 /** A platform identity row: the identity plus what the platform view needs (design 8). */
 export const PlatformIdentitySchema = IdentitySchema.extend({
   /** `null` for the legacy deployment identity. */
@@ -145,6 +162,7 @@ export const PlatformIdentitySchema = IdentitySchema.extend({
   openRunId: IdSchema.nullable(),
   /** The legacy identity once it signs nothing and is not the default. */
   dormant: z.boolean(),
+  readiness: PlatformReadinessSchema,
 });
 export type PlatformIdentityDto = z.infer<typeof PlatformIdentitySchema>;
 export const PlatformIdentityListSchema = z.object({
