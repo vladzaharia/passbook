@@ -9,8 +9,11 @@
   box-shadow: var(--wl-edge, none), var(--pk-elevation-1);
   overflow: clip;
 }
+/* The rows share the list's columns (subgrid), so leads, titles and statuses line up row to row. */
 .bench-lb {
-  display: block;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  column-gap: 12px;
 }
 .bench-lb:focus-visible {
   outline: none;
@@ -25,11 +28,11 @@
 .bench-row {
   --tick: var(--pk-border-strong);
   position: relative;
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: subgrid;
   grid-template-areas: "lead title meta trail";
   align-items: center;
-  column-gap: 12px;
   min-height: var(--wb-row);
   padding: 0 16px 0 19px;
   border-top: 1px solid var(--pk-border-subtle);
@@ -125,6 +128,11 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* A second trail item (a duration) keeps one width, so the statuses before it line up. */
+.bench-row-trail > * + * {
+  min-width: 6ch;
+  text-align: end;
+}
 
 /* A live arrival: rises 8 px, then glows the accent once. Reduced: a still accent ring (the tool drops
    `data-fresh` after 4 s). */
@@ -165,8 +173,10 @@
 }
 
 @container bench-list (max-width: 560px) {
-  .bench-row {
+  .bench-lb {
     grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .bench-row {
     grid-template-areas:
       "title title title"
       "lead meta trail";

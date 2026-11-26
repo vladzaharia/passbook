@@ -78,10 +78,10 @@ export const BENCH_COPY = {
     list: [
       ['g c · g w · g l · g k', 'Console, Webhooks, Logs, Keys'],
       ['/', 'Search'],
-      ['j k · ↓ ↑', 'Move the selection'],
+      ['j · k · ↓ · ↑', 'Move the selection'],
       ['Enter', 'Open'],
       ['Esc', 'Close, or clear the search'],
-      ['[ ]', 'Previous or next item'],
+      ['[ · ]', 'Previous or next item'],
       ['⌘ Enter', 'Run or send'],
       ['y', 'Copy the id'],
       ['c', 'Copy as curl'],
