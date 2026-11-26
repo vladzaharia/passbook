@@ -1,6 +1,6 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import { scopeExercises } from '../../platform/api-scopes.ts';
-import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
+import { type AuthContext, assertOrgAccess, isOwnOnly } from '../../platform/auth.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -79,14 +79,18 @@ export function platformFenceFor(ctx: ServiceContext, auth: AuthContext): Fence 
   );
 }
 
-/** Starter rows: only the session of the person who started them. Never a key. */
+/** Starter rows: the person who started them; an own-only session only what its own session started. Never a key. */
 export function starterFenceFor(
   ctx: ServiceContext,
   auth: AuthContext,
   writer = false,
 ): Fence | null {
   return auth.kind === 'session'
-    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), writer)
+    ? starterFence(
+        { userId: auth.userId, sessionId: auth.sessionId },
+        ctx.clock.now(),
+        writer || isOwnOnly(auth),
+      )
     : null;
 }
 
@@ -98,6 +102,7 @@ export async function readFenceFor(
   capability: 'read' | 'write' = 'read',
 ): Promise<Fence | null> {
   if (row.audience === 'starter') return starterFenceFor(ctx, auth, capability === 'write');
+  if (isOwnOnly(auth)) return null;
   if (row.audience === 'platform') return platformFenceFor(ctx, auth);
   const needed = kindOf(row.kind)?.[capability] ?? null;
   if (!needed || !row.org_id) return null;

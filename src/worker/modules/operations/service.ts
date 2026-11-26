@@ -3,7 +3,7 @@ import type {
   OperationDto,
   OperationListQuerySchema,
 } from '../../../shared/contracts/operations.ts';
-import type { AuthContext } from '../../platform/auth.ts';
+import { type AuthContext, isOwnOnly } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgFenceFor, platformFenceFor, readFenceFor, starterFenceFor } from './authz.ts';
@@ -88,6 +88,10 @@ export async function listOperations(
         id: query.target.slice(query.target.indexOf(':') + 1),
       }
     : null;
+  // A session without console access (a holder) lists only what it started: no other filter, no other audience.
+  const own = isOwnOnly(auth);
+  if (own && (query.mine !== true || query.orgId || query.kind || query.target))
+    throw new ForbiddenError();
   const orgId = query.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
   const actor =
     query.mine === true && auth.kind !== 'scanner'
@@ -105,9 +109,9 @@ export async function listOperations(
   const fences: { fence: Fence; kinds: string[] | null }[] = [];
   const starter = starterFenceFor(ctx, auth);
   if (starter) fences.push({ fence: starter, kinds: null });
-  const platform = platformFenceFor(ctx, auth);
+  const platform = own ? null : platformFenceFor(ctx, auth);
   if (platform) fences.push({ fence: platform, kinds: null });
-  for (const org of await orgFences(ctx, auth, orgId)) fences.push(org);
+  for (const org of own ? [] : await orgFences(ctx, auth, orgId)) fences.push(org);
   const rows: OperationRow[] = [];
   for (const { fence, kinds } of fences)
     rows.push(...(await listFenced(ctx.env.DB, fence, { ...base, actor, kinds })));
