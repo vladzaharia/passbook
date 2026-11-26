@@ -370,17 +370,52 @@ const PLATFORM_KEY_CONDITIONAL: string[] = [
   // Refused to a key when it names an auth.* or oidc.* setting (P4: it decides who gets in).
   'PUT /api/v1/platform/settings',
 ];
-/** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
+/**
+ * Person-only by design (§2.3): no `key`, each with its criterion. A follow-up that adds keys never touches this list.
+ */
 const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  // P3: hard-deletes the identity, its credential and the team's last push key.
   'DELETE /api/v1/identities/:id',
-  'DELETE /api/v1/identities/:id/push-key',
+  // P3: closes the org with platform authority, the act §2.3 lists as person-only.
   'DELETE /api/v1/orgs/:id',
+  // P4: moves a person's sign-in identity.
+  'DELETE /api/v1/users/:id/emails/:email',
+  // P2: restores a role the Polaris ID owner paused.
+  'DELETE /api/v1/users/:id/holds/:role',
+  // P3: irreversible, every pass the certificate signed stops updating.
+  'POST /api/v1/identities/:id/revoke-certificate',
+  // P1: the emergency stop, lifted only in Polaris ID.
+  'POST /api/v1/platform/idp/freeze',
+  // P1: clearing the breaker is a decision about what tripped it.
+  'POST /api/v1/platform/idp/scim-breaker/clear',
+  // P3: releasing a legal hold lets a purge run.
+  'POST /api/v1/platform/orgs/:orgId/retention/holds/:holdId/release',
+  // P2/P3: PLATFORM_ADMIN_PURPOSES, SQL-fenced to a platform session.
+  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/hold',
+  // P2/P3: PLATFORM_ADMIN_PURPOSES, SQL-fenced to a platform session.
+  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/release',
+  // P3: irreversible, a revoked credential stops issuing.
+  'POST /api/v1/platform/wallet-credentials/:id/revoke',
+  // P2/P3: PLATFORM_ADMIN_PURPOSES (migration resolve).
+  'POST /api/v1/platform/wallet-credentials/migrate/resolve',
+  // P4: moves a person's sign-in identity.
+  'POST /api/v1/users/:id/emails',
+  // P4: moves a person's sign-in identity.
+  'POST /api/v1/users/:id/emails/:email/primary',
+  // P2: removes a role the Polaris ID owner added in Polaris ID.
+  'POST /api/v1/users/:id/roles/:role/remove-external',
+];
+
+/**
+ * Person-only today only because the route's service takes a session, not a decision about keys: PK-6b and PK-2a move each
+ * to `PLATFORM_KEY_ROUTES` (or `PLATFORM_KEY_CONDITIONAL`), emptying this list. Never put a `PERSON_ONLY_PLATFORM_ROUTES` entry here.
+ */
+const PLATFORM_KEY_DEFERRED: string[] = [
+  'DELETE /api/v1/identities/:id/push-key',
   'DELETE /api/v1/platform/idp/groups/:key',
   'DELETE /api/v1/platform/idp/groups/:key/members/:id',
   'DELETE /api/v1/platform/idp/groups/:key/rules/:id',
   'DELETE /api/v1/platform/invitations/:id',
-  'DELETE /api/v1/users/:id/emails/:email',
-  'DELETE /api/v1/users/:id/holds/:role',
   'DELETE /api/v1/users/:id/sessions/:sessionId',
   'GET /api/v1/audit/platform',
   'GET /api/v1/audit/platform/export',
@@ -427,40 +462,26 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'POST /api/v1/identities',
   'POST /api/v1/identities/:id/apns-check',
   'POST /api/v1/identities/:id/renew',
-  // P3: irreversible, every pass the certificate signed stops updating.
-  'POST /api/v1/identities/:id/revoke-certificate',
   'POST /api/v1/identities/:id/rotate',
   'POST /api/v1/orgs',
   'POST /api/v1/orgs/:id/status',
-  'POST /api/v1/platform/idp/freeze',
   'POST /api/v1/platform/idp/groups',
   'POST /api/v1/platform/idp/groups/:key/members',
   'POST /api/v1/platform/idp/groups/:key/rules',
   'POST /api/v1/platform/idp/groups/ensure',
   'POST /api/v1/platform/idp/reconcile',
-  'POST /api/v1/platform/idp/scim-breaker/clear',
   'POST /api/v1/platform/invitations',
   'POST /api/v1/platform/invitations/:id/resend',
   'POST /api/v1/platform/orgs/:orgId/retention/holds',
-  // P3: releasing a legal hold lets a purge run.
-  'POST /api/v1/platform/orgs/:orgId/retention/holds/:holdId/release',
   'POST /api/v1/platform/orgs/:orgId/wallet-accounts/google/managed',
   'POST /api/v1/platform/orgs/:orgId/wallet-accounts/google/managed/complete',
-  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/hold',
-  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/release',
   'POST /api/v1/platform/wallet-credentials/:id/check',
-  'POST /api/v1/platform/wallet-credentials/:id/revoke',
   'POST /api/v1/platform/wallet-credentials/:id/rotate-key',
   'POST /api/v1/platform/wallet-credentials/migrate',
-  'POST /api/v1/platform/wallet-credentials/migrate/resolve',
   'POST /api/v1/status/incidents',
   'POST /api/v1/status/incidents/:id/resolve',
-  // P4: moves a person's sign-in identity.
-  'POST /api/v1/users/:id/emails',
-  'POST /api/v1/users/:id/emails/:email/primary',
   'POST /api/v1/users/:id/offboard',
   'POST /api/v1/users/:id/roles',
-  'POST /api/v1/users/:id/roles/:role/remove-external',
   'POST /api/v1/users/:id/sessions/revoke',
   'PUT /api/v1/identities/:id/push-key',
   'PUT /api/v1/platform/entitlement-presets',
@@ -473,7 +494,8 @@ it('pins which platform routes take a key and which are person-only', () => {
   const { modes } = platformKeyRoutes();
   expect(modes.key).toEqual(PLATFORM_KEY_ROUTES);
   expect(modes.conditional).toEqual(PLATFORM_KEY_CONDITIONAL);
-  expect(modes.person).toEqual(PERSON_ONLY_PLATFORM_ROUTES);
+  expect(modes.person).toEqual([...PERSON_ONLY_PLATFORM_ROUTES, ...PLATFORM_KEY_DEFERRED].sort());
+  expect(PERSON_ONLY_PLATFORM_ROUTES.filter((r) => PLATFORM_KEY_DEFERRED.includes(r))).toEqual([]);
 });
 
 it('makes a platform scope mintable exactly when a route accepts it by key', () => {

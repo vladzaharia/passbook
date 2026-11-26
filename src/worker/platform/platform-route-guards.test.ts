@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { createApp } from '../app.ts';
+import { isKnownGuard } from './auth.ts';
 import type { AppEnv } from './env.ts';
 import { platformKeyOf, stepUpOf } from './sign-in-guard.ts';
 
@@ -97,3 +98,23 @@ it('answers an admin whose sign-in is stale 403 STEP_UP_REQUIRED where a step-up
   }
   expect(wrong).toEqual([]);
 }, 120_000);
+
+it('runs no raw step-up guard ahead of a platform route declaration', () => {
+  // A raw `requireStepUp` reads `c.var.auth`, which only the declaration's `requireCaller` sets here: ahead of it the
+  // guard sees no principal and lets a stale session through. Put the step-up in `auth.stepUp` instead.
+  const app = createApp({ stores: fakeAuth(ORIGIN).stores });
+  const declaredAt = new Map<string, number>();
+  app.routes.forEach((r, i) => {
+    if (platformKeyOf(r.handler) && !declaredAt.has(`${r.method} ${r.path}`))
+      declaredAt.set(`${r.method} ${r.path}`, i);
+  });
+  expect(declaredAt.size).toBeGreaterThan(0);
+  const raw = app.routes
+    .map((r, i) => ({ r, i }))
+    .filter(({ r, i }) => {
+      const at = declaredAt.get(`${r.method} ${r.path}`);
+      return at !== undefined && i < at && stepUpOf(r.handler) && !isKnownGuard(r.handler);
+    })
+    .map(({ r }) => `${r.method} ${r.path}`);
+  expect(raw).toEqual([]);
+});
