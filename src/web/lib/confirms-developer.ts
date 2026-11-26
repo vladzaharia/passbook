@@ -26,3 +26,9 @@ export const deleteSandboxConfirm: ConfirmCopy = {
     'Passes, keys, webhooks and logs are deleted. You can make a new sandbox after. 3 a day.',
   typed: false,
 };
+
+/** What the page says while a delete or start over runs: one call, so no steps are claimed. */
+export const sandboxWorking = {
+  delete: { title: 'Deleting your sandbox', detail: 'Passes, keys, webhooks and logs are going.' },
+  'start-over': { title: 'Making a new sandbox', detail: 'The old one is deleted first.' },
+} as const;

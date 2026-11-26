@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import { BROADCAST_MESSAGE_MAX } from '@/shared/contracts/broadcasts.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { zoneLabel } from '../../lib/timezones.ts';
 import {
   CheckboxField,
@@ -98,12 +99,15 @@ export function ChangeSection({
   onChange,
   details,
   error,
+  orgId,
 }: {
   state: ComposerState;
   onChange: Patch;
   details: readonly TemplateDetailDto[];
   error?: string | undefined;
+  orgId?: string | undefined;
 }) {
+  const orgZone = useOrgTimeZone(orgId);
   const fields = useMemo(() => commonFields(details), [details]);
   const schema = commonSchema(details, state.fields);
   const toggle = (key: string, on: boolean) => {
@@ -133,6 +137,7 @@ export function ChangeSection({
       </fieldset>
       {schema && state.fields.length > 0 ? (
         <SchemaForm
+          orgZone={orgZone}
           schema={schema}
           value={state.values}
           onChange={(values) => onChange({ values })}
