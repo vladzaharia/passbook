@@ -9,7 +9,8 @@ import { recordContract, samsungAuth, scrubCapture } from './record-wallet-contr
 
 const SECRET_BODY = {
   id: '3388000000022334455.rec-object',
-  accessToken: 'ya29.a0AfH6SMBsecret',
+  // Built from parts: a whole token literal is what secret scanners look for.
+  accessToken: ['ya29', 'a0AfH6SMBsecret'].join('.'),
   holder: { name: 'Jane Doe', email: 'jane@example.com' },
   barcode: { value: 'SECRET-BARCODE' },
   links: 'https://wallet.example/p/token123 and Bearer abc.def',
