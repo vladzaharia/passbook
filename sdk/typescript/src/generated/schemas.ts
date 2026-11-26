@@ -7256,6 +7256,7 @@ export type PassesRetrieveProviderStatusResponse = {
       event: "saved" | "removed";
       at: number;
     };
+    classReview?: "waiting" | "rejected" | "approved";
     issuance: {
       state: "disabled";
       reason: "not_released";
@@ -7277,6 +7278,7 @@ export type PassesRetrieveProviderStatusResponse = {
       event: "saved" | "removed";
       at: number;
     };
+    classReview?: "waiting" | "rejected" | "approved";
     issuance: {
       state: "disabled";
       reason: "not_released";
@@ -11958,6 +11960,36 @@ export type TemplatesCandidatesListResponse = {
     }>;
   }>;
   nextCursor: string | null;
+  current?: {
+    version: string;
+    sourceReleaseId: string;
+    report: {
+      schema: 1;
+      target: "google" | "samsung";
+      type: string;
+      compilerRevision: number;
+      status: {
+        kind: "off";
+      } | {
+        kind: "ready";
+      } | {
+        kind: "omissions";
+        count: number;
+      } | {
+        kind: "blocked";
+        reason: string;
+      };
+      items: Array<{
+        capability: "type" | "field.header" | "field.primary" | "field.secondary" | "field.auxiliary" | "field.additionalInfo" | "field.footer" | "field.back" | "field.link" | "barcode.format" | "barcode.format.qr" | "barcode.format.pdf417" | "barcode.format.aztec" | "barcode.format.code128" | "barcode.format.code39" | "barcode.format.codabar" | "barcode.format.ean13" | "barcode.format.i2of5" | "barcode.altText" | "colors.background" | "colors.foreground" | "colors.label" | "image.logo" | "image.icon" | "image.strip" | "image.artwork" | "image.background" | "image.thumbnail" | "image.personal" | "relevance.dates" | "relevance.locations" | "relevance.beacons" | "relevance.maxDistance" | "validity.expiration" | "void.visual" | "messaging.notify" | "updates.push" | "upcoming.multi" | "links.featured" | "localization.strings" | "localization.images" | "sharing" | "nfc" | "personalization" | "text.length" | "role.title" | "role.subtitle" | "role.eventName" | "role.eventStart" | "role.eventEnd" | "role.doorsOpen" | "role.venueName" | "role.venueAddress" | "role.venueLocation" | "role.seat" | "role.row" | "role.section" | "role.gate" | "role.ticketHolder" | "role.ticketNumber" | "role.confirmationCode" | "role.eventId" | "role.memberId" | "role.memberName" | "role.tier" | "role.points" | "role.pointsLabel" | "role.balance" | "role.giftCardNumber" | "role.giftCardPin" | "role.offerTitle" | "role.offerDetails" | "role.finePrint" | "role.redemptionChannel" | "role.validFrom" | "role.validUntil" | "role.appLink" | "role.support";
+        path: string;
+        support: "native" | "text" | "difference" | "omitted" | "unsupported";
+        severity: "difference" | "omission" | "blocked";
+        group: "holder" | "door" | "look" | "absent";
+        chosen: boolean;
+        message: string;
+      }>;
+    };
+  };
 };
 
 export type TemplatesCandidatesPromoteParams = {
@@ -12405,6 +12437,7 @@ export type TemplatesReleasesCreateResponse = {
   accountId?: string;
   accountRevision?: number;
   providerIdentityHash?: string;
+  googleReview?: "waiting" | "rejected" | "approved";
 };
 
 export type TemplatesReleasesListResponse = {
@@ -12431,6 +12464,7 @@ export type TemplatesReleasesListResponse = {
     accountId?: string;
     accountRevision?: number;
     providerIdentityHash?: string;
+    googleReview?: "waiting" | "rejected" | "approved";
   } | null;
   items: Array<{
     id: string;
@@ -12455,6 +12489,7 @@ export type TemplatesReleasesListResponse = {
     accountId?: string;
     accountRevision?: number;
     providerIdentityHash?: string;
+    googleReview?: "waiting" | "rejected" | "approved";
   }>;
   nextCursor: string | null;
   promotable?: Array<string>;
@@ -12534,6 +12569,7 @@ export type TemplatesReleasesRollbackResponse = {
   accountId?: string;
   accountRevision?: number;
   providerIdentityHash?: string;
+  googleReview?: "waiting" | "rejected" | "approved";
 };
 
 export type TemplatesRetrieveStampsImpactResponse = {

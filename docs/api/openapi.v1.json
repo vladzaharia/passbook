@@ -33362,6 +33362,262 @@
               "string",
               "null"
             ]
+          },
+          "current": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "sourceReleaseId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "report": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "number",
+                    "enum": [
+                      1
+                    ]
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "google",
+                      "samsung"
+                    ]
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "compilerRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "status": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "off"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "ready"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "omissions"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "count"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "blocked"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "reason"
+                        ]
+                      }
+                    ]
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "capability": {
+                          "type": "string",
+                          "enum": [
+                            "type",
+                            "field.header",
+                            "field.primary",
+                            "field.secondary",
+                            "field.auxiliary",
+                            "field.additionalInfo",
+                            "field.footer",
+                            "field.back",
+                            "field.link",
+                            "barcode.format",
+                            "barcode.format.qr",
+                            "barcode.format.pdf417",
+                            "barcode.format.aztec",
+                            "barcode.format.code128",
+                            "barcode.format.code39",
+                            "barcode.format.codabar",
+                            "barcode.format.ean13",
+                            "barcode.format.i2of5",
+                            "barcode.altText",
+                            "colors.background",
+                            "colors.foreground",
+                            "colors.label",
+                            "image.logo",
+                            "image.icon",
+                            "image.strip",
+                            "image.artwork",
+                            "image.background",
+                            "image.thumbnail",
+                            "image.personal",
+                            "relevance.dates",
+                            "relevance.locations",
+                            "relevance.beacons",
+                            "relevance.maxDistance",
+                            "validity.expiration",
+                            "void.visual",
+                            "messaging.notify",
+                            "updates.push",
+                            "upcoming.multi",
+                            "links.featured",
+                            "localization.strings",
+                            "localization.images",
+                            "sharing",
+                            "nfc",
+                            "personalization",
+                            "text.length",
+                            "role.title",
+                            "role.subtitle",
+                            "role.eventName",
+                            "role.eventStart",
+                            "role.eventEnd",
+                            "role.doorsOpen",
+                            "role.venueName",
+                            "role.venueAddress",
+                            "role.venueLocation",
+                            "role.seat",
+                            "role.row",
+                            "role.section",
+                            "role.gate",
+                            "role.ticketHolder",
+                            "role.ticketNumber",
+                            "role.confirmationCode",
+                            "role.eventId",
+                            "role.memberId",
+                            "role.memberName",
+                            "role.tier",
+                            "role.points",
+                            "role.pointsLabel",
+                            "role.balance",
+                            "role.giftCardNumber",
+                            "role.giftCardPin",
+                            "role.offerTitle",
+                            "role.offerDetails",
+                            "role.finePrint",
+                            "role.redemptionChannel",
+                            "role.validFrom",
+                            "role.validUntil",
+                            "role.appLink",
+                            "role.support"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "support": {
+                          "type": "string",
+                          "enum": [
+                            "native",
+                            "text",
+                            "difference",
+                            "omitted",
+                            "unsupported"
+                          ]
+                        },
+                        "severity": {
+                          "type": "string",
+                          "enum": [
+                            "difference",
+                            "omission",
+                            "blocked"
+                          ]
+                        },
+                        "group": {
+                          "type": "string",
+                          "enum": [
+                            "holder",
+                            "door",
+                            "look",
+                            "absent"
+                          ]
+                        },
+                        "chosen": {
+                          "type": "boolean"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "capability",
+                        "path",
+                        "support",
+                        "severity",
+                        "group",
+                        "chosen",
+                        "message"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "schema",
+                  "target",
+                  "type",
+                  "compilerRevision",
+                  "status",
+                  "items"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "sourceReleaseId",
+              "report"
+            ]
           }
         },
         "required": [
@@ -34018,6 +34274,14 @@
               },
               "providerIdentityHash": {
                 "type": "string"
+              },
+              "googleReview": {
+                "type": "string",
+                "enum": [
+                  "waiting",
+                  "rejected",
+                  "approved"
+                ]
               }
             },
             "required": [
@@ -34168,6 +34432,14 @@
                 },
                 "providerIdentityHash": {
                   "type": "string"
+                },
+                "googleReview": {
+                  "type": "string",
+                  "enum": [
+                    "waiting",
+                    "rejected",
+                    "approved"
+                  ]
                 }
               },
               "required": [
@@ -34388,6 +34660,14 @@
           },
           "providerIdentityHash": {
             "type": "string"
+          },
+          "googleReview": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "rejected",
+              "approved"
+            ]
           }
         },
         "required": [
@@ -34806,6 +35086,14 @@
           },
           "providerIdentityHash": {
             "type": "string"
+          },
+          "googleReview": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "rejected",
+              "approved"
+            ]
           }
         },
         "required": [
@@ -60584,6 +60872,14 @@
                     ],
                     "additionalProperties": false
                   },
+                  "classReview": {
+                    "type": "string",
+                    "enum": [
+                      "waiting",
+                      "rejected",
+                      "approved"
+                    ]
+                  },
                   "issuance": {
                     "oneOf": [
                       {
@@ -60741,6 +61037,14 @@
                       "at"
                     ],
                     "additionalProperties": false
+                  },
+                  "classReview": {
+                    "type": "string",
+                    "enum": [
+                      "waiting",
+                      "rejected",
+                      "approved"
+                    ]
                   },
                   "issuance": {
                     "oneOf": [
@@ -92848,7 +93152,6 @@
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PLATFORM_CREDENTIAL_MISSING",
-          "WALLET_PREPARING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
@@ -92991,7 +93294,6 @@
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PLATFORM_CREDENTIAL_MISSING",
-          "WALLET_PREPARING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
@@ -93134,7 +93436,6 @@
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PLATFORM_CREDENTIAL_MISSING",
-          "WALLET_PREPARING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
@@ -101905,8 +102206,10 @@
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WALLET_ART_MISMATCH"
         ]
       },
       "post": {
@@ -161447,6 +161750,84 @@
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
           "WALLET_ART_MISMATCH",
+          "WALLET_PROJECTION_UNSUPPORTED"
+        ]
+      }
+    },
+    "/b/{token}/wallet/google": {
+      "get": {
+        "summary": "Add the bundle to Google Wallet with one save link",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 31,
+              "default": 0
+            },
+            "required": false,
+            "name": "part",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "public.getBByTokenWalletGoogle",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "addToGoogleWallet",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "ASSET_SLOT",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "LINK_NOT_FOUND",
+          "NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
+          "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "TOKEN_SEAL_MISMATCH",
+          "VALIDATION",
+          "WALLET_ART_MISMATCH",
+          "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
