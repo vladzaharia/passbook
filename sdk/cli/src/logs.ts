@@ -53,10 +53,10 @@ export const logLine = (l: LogLine): string =>
     new Date(l.at).toISOString().slice(11, 19),
     l.method.padEnd(6),
     l.status,
-    l.path,
+    l.path.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'),
     `${l.durationMs} ms`,
-    l.code ?? '',
-    l.requestId,
+    (l.code ?? '').replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'),
+    l.requestId.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'),
   ]
     .join('  ')
     .replace(/ {2}(?= {2}|$)/g, '')

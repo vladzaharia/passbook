@@ -25,6 +25,7 @@ export interface LogRow {
   resource_id: string | null;
   api_version: string | null;
   flags: number;
+  bodies_truncated: number;
   has_bodies: number;
   request_body: string | null;
   response_body: string | null;
@@ -54,6 +55,8 @@ export interface NewLog {
   apiVersion?: string | null;
   /** `FLAG_*` bits: which of the three headers the call carried. */
   flags?: number;
+  /** A stored body was cut at 8 KB. */
+  bodiesTruncated?: boolean;
   requestBody: string | null;
   responseBody: string | null;
 }
@@ -77,12 +80,12 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
     await run(
       db,
       `INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code,
-         duration_ms, at, has_bodies, request_body, response_body, client, resource_id, api_version, flags)
+         duration_ms, at, has_bodies, request_body, response_body, client, resource_id, api_version, flags, bodies_truncated)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
          CASE WHEN ?5 = 'test' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
          CASE WHEN ?5 = 'test' THEN ?15 END,
          CASE WHEN ?5 = 'test' THEN ?16 END, ?17
-         , ?18, ?19, ?20
+         , ?18, ?19, ?20, ?21
        FROM orgs o WHERE o.id = ?2
          AND COALESCE((SELECT CASE WHEN b.hour = CAST(?14 AS INTEGER) / 3600000 THEN b.hour_rows ELSE 0 END
                        FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${HOUR_ROWS_CAP}
@@ -108,6 +111,7 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
         l.resourceId ?? null,
         l.apiVersion ?? null,
         l.flags ?? 0,
+        l.bodiesTruncated ? 1 : 0,
       ],
     )
   ).changes > 0;
@@ -180,7 +184,7 @@ const readable = (now: number) => `(has_bodies = 1 AND at >= ${now - LOG_BODY_MS
 
 const LIST_COLUMNS = (now: number) =>
   `id, org_id, key_id, via, client, mode, request_id, method, route, path, query, status, code, duration_ms, at,
-   resource_id, api_version, flags,
+   resource_id, api_version, flags, bodies_truncated,
    CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies`;
 
 export const listLogs = (
@@ -203,11 +207,11 @@ export const getLog = (db: D1Database, orgId: string, id: string, now: number) =
   first<LogRow>(
     db,
     `SELECT id, org_id, key_id, via, client, mode, request_id, method, route, path, query, status, code, duration_ms, at,
-       resource_id, api_version, flags,
+       resource_id, api_version, flags, bodies_truncated,
        CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies,
        CASE WHEN ${readable(now)} THEN request_body END AS request_body,
        CASE WHEN ${readable(now)} THEN response_body END AS response_body
-     FROM request_log WHERE org_id = ? AND (id = ? OR request_id = ? COLLATE NOCASE) AND at >= ?
+     FROM request_log WHERE org_id = ? AND mode = 'test' AND (id = ? OR request_id = ? COLLATE NOCASE) AND at >= ?
      ORDER BY id = ? DESC, id DESC LIMIT 1`,
     [orgId, id, id, now - LOG_META_MS, id],
   );
@@ -229,6 +233,17 @@ export const purgeBodies = async (db: D1Database, cutoff: number, limit: number)
       `UPDATE request_log SET request_body = NULL, response_body = NULL, has_bodies = 0
        WHERE rowid IN (SELECT rowid FROM request_log WHERE has_bodies = 1 AND at < ? LIMIT ?)`,
       [cutoff, limit],
+    )
+  ).changes;
+
+/** Blanks every stored body of one org: its admin turned recording off. */
+export const purgeOrgBodies = async (db: D1Database, orgId: string) =>
+  (
+    await run(
+      db,
+      `UPDATE request_log SET request_body = NULL, response_body = NULL, has_bodies = 0
+       WHERE org_id = ? AND has_bodies = 1`,
+      [orgId],
     )
   ).changes;
 

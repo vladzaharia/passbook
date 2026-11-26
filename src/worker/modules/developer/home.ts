@@ -217,7 +217,7 @@ export async function developerHome(
       retireAt: k.retire_at,
       sandboxKey: k.id === sandboxKey?.id,
     })),
-    calls: calls.map(entryOf),
+    calls: calls.map((r) => entryOf(r)),
     endpoints: endpoints.map(endpointOf),
     passes: await Promise.all(
       passes.map(async (p) => ({

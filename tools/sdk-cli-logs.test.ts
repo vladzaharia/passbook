@@ -82,6 +82,14 @@ describe('logs --follow', () => {
     expect(filtered.at(-1)?.after).toBe('id-003');
   });
 
+  it('prints no control or escape character from a server path', () => {
+    const out = logLine(
+      line(1, { path: '/api/v1/passes/\u001b]52;c;AAAA\u0007', code: 'X\u001b[2J' }),
+    );
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: the point of the test
+    expect(out).not.toMatch(/[\u0000-\u001f\u007f-\u009f]/);
+  });
+
   it('is the logs command: needs --follow and a valid --status', async () => {
     const errs: string[] = [];
     const io = {

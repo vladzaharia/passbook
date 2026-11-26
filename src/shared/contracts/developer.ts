@@ -116,6 +116,8 @@ export const RequestLogDetailSchema = RequestLogEntrySchema.extend({
   bodiesExpireAt: TimestampSchema.nullable(),
   /** Whether the org records bodies: false reads "Bodies off for this org". */
   bodiesRecorded: z.boolean(),
+  /** A stored body was cut at 8 KB, or was too large to keep. */
+  bodiesTruncated: z.boolean(),
 });
 export type RequestLogDetail = z.infer<typeof RequestLogDetailSchema>;
 

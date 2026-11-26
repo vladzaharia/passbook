@@ -8984,6 +8984,7 @@ export type RequestLogsRetrieveResponse = {
   responseBody: string | null;
   bodiesExpireAt: number | null;
   bodiesRecorded: boolean;
+  bodiesTruncated: boolean;
 };
 
 export type RetentionReceiptsDownloadResponse = {

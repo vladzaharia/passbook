@@ -39,6 +39,7 @@ export const detail = (n: number, over: Partial<RequestLogDetail> = {}): Request
   responseBody: '{"id":"p1","ok":true}',
   bodiesExpireAt: Date.now() + 3_600_000,
   bodiesRecorded: true,
+  bodiesTruncated: false,
   ...over,
 });
 

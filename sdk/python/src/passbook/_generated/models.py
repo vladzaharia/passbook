@@ -10732,6 +10732,7 @@ class RequestLogsRetrieveResponse(_Model):
     responseBody: str | None
     bodiesExpireAt: int | None
     bodiesRecorded: bool
+    bodiesTruncated: bool
 
 class RequestLogsRetrieveResponseFlags(_Model):
     idempotencyKey: bool

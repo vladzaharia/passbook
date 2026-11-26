@@ -46,7 +46,10 @@ export async function orgOfCaller(
   return sandbox.org_id;
 }
 
-export const entryOf = (r: Omit<LogRow, 'request_body' | 'response_body'>): Entry => ({
+export const entryOf = (
+  r: Omit<LogRow, 'request_body' | 'response_body'>,
+  showBodies = true,
+): Entry => ({
   id: r.id,
   requestId: r.request_id,
   at: r.at,
@@ -61,7 +64,7 @@ export const entryOf = (r: Omit<LogRow, 'request_body' | 'response_body'>): Entr
   mode: r.mode,
   via: r.via,
   client: r.client,
-  hasBodies: r.has_bodies === 1,
+  hasBodies: showBodies && r.has_bodies === 1,
   resourceId: r.resource_id,
   apiVersion: r.api_version,
   flags: {
@@ -91,13 +94,15 @@ export async function listOrgRequestLog(
   ctx: ServiceContext,
   orgId: string,
   query: Query & { key?: string },
+  /** False: the reader cannot also read passes, so bodies are not offered. */
+  showBodies = true,
 ): Promise<Page> {
   const { cursor, limit, key, ...rest } = query;
   const filter = { ...rest, ...(key && !rest.keyId ? { keyId: key } : {}) };
   const rows = await listLogs(ctx.env.DB, orgId, filter, limit + 1, ctx.clock.now(), cursor);
   const page = rows.slice(0, limit);
   return {
-    items: page.map(entryOf),
+    items: page.map((r) => entryOf(r, showBodies)),
     nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
     capped: await logCap(ctx.env.DB, orgId, ctx.clock.now()),
     bodiesRecorded: await bodiesRecorded(ctx, orgId),
@@ -116,14 +121,17 @@ export async function getOrgRequestLog(
   ctx: ServiceContext,
   orgId: string,
   id: string,
+  /** False: the reader cannot also read passes in this org: metadata only. */
+  showBodies = true,
 ): Promise<Detail> {
   const row = await getLog(ctx.env.DB, orgId, id, ctx.clock.now());
   if (!row) throw new NotFoundError('Request not found.', 'REQUEST_LOG_NOT_FOUND');
   return {
-    ...entryOf(row),
-    requestBody: row.request_body,
-    responseBody: row.response_body,
-    bodiesExpireAt: row.has_bodies === 1 ? row.at + LOG_BODY_MS : null,
+    ...entryOf(row, showBodies),
+    requestBody: showBodies ? row.request_body : null,
+    responseBody: showBodies ? row.response_body : null,
+    bodiesExpireAt: showBodies && row.has_bodies === 1 ? row.at + LOG_BODY_MS : null,
+    bodiesTruncated: showBodies && row.bodies_truncated === 1,
     bodiesRecorded: await bodiesRecorded(ctx, orgId),
   };
 }

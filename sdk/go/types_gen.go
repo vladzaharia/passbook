@@ -10453,28 +10453,29 @@ type RequestLogsListResponseItemsItemFlags struct {
 }
 
 type RequestLogsRetrieveResponse struct {
-	ID             string                           `json:"id"`
-	RequestID      string                           `json:"requestId"`
-	At             int64                            `json:"at"`
-	Method         string                           `json:"method"`
-	Route          *string                          `json:"route"`
-	Path           string                           `json:"path"`
-	Query          *string                          `json:"query"`
-	Status         int64                            `json:"status"`
-	Code           *string                          `json:"code"`
-	DurationMs     int64                            `json:"durationMs"`
-	KeyID          *string                          `json:"keyId"`
-	Mode           string                           `json:"mode"`
-	Via            string                           `json:"via"`
-	Client         *string                          `json:"client"`
-	HasBodies      bool                             `json:"hasBodies"`
-	ResourceID     *string                          `json:"resourceId"`
-	APIVersion     *string                          `json:"apiVersion"`
-	Flags          RequestLogsRetrieveResponseFlags `json:"flags"`
-	RequestBody    *string                          `json:"requestBody"`
-	ResponseBody   *string                          `json:"responseBody"`
-	BodiesExpireAt *int64                           `json:"bodiesExpireAt"`
-	BodiesRecorded bool                             `json:"bodiesRecorded"`
+	ID              string                           `json:"id"`
+	RequestID       string                           `json:"requestId"`
+	At              int64                            `json:"at"`
+	Method          string                           `json:"method"`
+	Route           *string                          `json:"route"`
+	Path            string                           `json:"path"`
+	Query           *string                          `json:"query"`
+	Status          int64                            `json:"status"`
+	Code            *string                          `json:"code"`
+	DurationMs      int64                            `json:"durationMs"`
+	KeyID           *string                          `json:"keyId"`
+	Mode            string                           `json:"mode"`
+	Via             string                           `json:"via"`
+	Client          *string                          `json:"client"`
+	HasBodies       bool                             `json:"hasBodies"`
+	ResourceID      *string                          `json:"resourceId"`
+	APIVersion      *string                          `json:"apiVersion"`
+	Flags           RequestLogsRetrieveResponseFlags `json:"flags"`
+	RequestBody     *string                          `json:"requestBody"`
+	ResponseBody    *string                          `json:"responseBody"`
+	BodiesExpireAt  *int64                           `json:"bodiesExpireAt"`
+	BodiesRecorded  bool                             `json:"bodiesRecorded"`
+	BodiesTruncated bool                             `json:"bodiesTruncated"`
 }
 
 type RequestLogsRetrieveResponseFlags struct {

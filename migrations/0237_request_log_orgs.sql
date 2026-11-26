@@ -6,6 +6,7 @@
 -- flags: which of Idempotency-Key (1), If-Match (2) and PassBook-Version (4) the call carried. Never their values.
 ALTER TABLE request_log ADD COLUMN resource_id TEXT;
 ALTER TABLE request_log ADD COLUMN api_version TEXT;
+ALTER TABLE request_log ADD COLUMN bodies_truncated INTEGER NOT NULL DEFAULT 0 CHECK (bodies_truncated IN (0, 1));
 ALTER TABLE request_log ADD COLUMN flags INTEGER NOT NULL DEFAULT 0 CHECK (flags BETWEEN 0 AND 7);
 CREATE INDEX request_log_org_resource ON request_log (org_id, resource_id, id DESC) WHERE resource_id IS NOT NULL;
 

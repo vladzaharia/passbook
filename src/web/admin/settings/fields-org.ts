@@ -69,7 +69,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
   },
   {
     key: 'requestLog.bodies',
-    group: 'Developers',
+    group: 'Privacy',
     label: 'Record request bodies in Test',
     kind: 'boolean',
     schema: O['requestLog.bodies'],

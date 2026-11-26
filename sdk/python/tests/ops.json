@@ -7981,7 +7981,8 @@
    "requestBody": "x",
    "responseBody": "x",
    "bodiesExpireAt": 0,
-   "bodiesRecorded": false
+   "bodiesRecorded": false,
+   "bodiesTruncated": false
   }
  },
  {

@@ -889,6 +889,14 @@
     "note": "bodiesRecorded says whether the organization records request bodies in Test (a sandbox always does; other organizations by setting)."
   },
   {
+    "key": "GET /api/v1/developer/logs/{id} 200.bodiesTruncated: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.bodiesTruncated: field added",
+    "note": "bodiesTruncated is true when a stored body was cut at 8 KB or was too large to keep. Bodies are shown only to a reader who can also read passes."
+  },
+  {
     "key": "GET /api/v1/developer/logs/{id} 200.flags: field added",
     "class": "additive",
     "operationId": "developer.getLog",

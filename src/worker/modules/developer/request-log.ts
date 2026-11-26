@@ -64,7 +64,7 @@ async function readCapped(
 const isJson = (type: string | null) => /json/i.test(type ?? '');
 
 /** The stored form of one body, from a copy of its stream taken before the handler or the runtime consumed it. */
-function stored(read: Read | null, type: string | null): string {
+function stored(read: Read | null, type: string | null): { text: string; truncated: boolean } {
   return read
     ? redactBody(read.text, type, read.bytes)
     : redactBody('', type, BODY_READ_MAX_BYTES + 1);
@@ -82,17 +82,17 @@ function codeOf(read: Read | null): string | null {
 }
 
 /** What the request body will be: nothing, a copy of its stream, or a one-line marker (not JSON, or too large). */
-type Sent = { copy: ReadableStream<Uint8Array> } | { marker: string } | null;
+type Sent = { copy: ReadableStream<Uint8Array> } | { marker: string; truncated: boolean } | null;
 
 function sentOf(c: { req: { raw: Request; header(name: string): string | undefined } }): Sent {
   const raw = c.req.raw;
   if (!raw.body) return null;
   const type = c.req.header('content-type') ?? null;
-  if (!isJson(type)) return { marker: redactBody('', type, 0) };
+  if (!isJson(type)) return { marker: redactBody('', type, 0).text, truncated: false };
   // No length (chunked): copied and read up to the cap, which `readCapped` enforces.
   const length = Number(c.req.header('content-length') ?? 0);
   if (length > BODY_READ_MAX_BYTES)
-    return { marker: redactBody('', type, BODY_READ_MAX_BYTES + 1) };
+    return { marker: redactBody('', type, BODY_READ_MAX_BYTES + 1).text, truncated: true };
   const copy = raw.clone().body;
   return copy ? { copy } : null;
 }
@@ -139,7 +139,10 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
     requestId: c.var.requestId,
     method: c.req.method,
     route: c.req.routePath === '/*' ? null : c.req.routePath,
-    path: redactString(c.req.path).slice(0, 300),
+    // Hono decodes the path, so an escape sequence in it is stripped before it is stored and printed.
+    path: redactString(c.req.path)
+      .replace(/[\u0000-\u001f\u007f-\u009f]/g, '?')
+      .slice(0, 300),
     query: redactQuery(new URL(c.req.url).search),
     status: res.status,
     durationMs: c.var.clock.now() - started,
@@ -181,15 +184,18 @@ export async function writeLog(
   // Not JSON: nothing of it is read, only its type is noted.
   if (received && !receivedJson) await received.cancel();
   if (sent && 'copy' in sent && !record) await sent.copy.cancel();
+  const requestStored =
+    !record || !sent
+      ? null
+      : 'marker' in sent
+        ? { text: sent.marker, truncated: sent.truncated }
+        : stored(sentRead, 'application/json');
+  const responseStored = record && received ? stored(receivedRead, type) : null;
   await insertLog(ctx.env.DB, {
     ...row,
-    requestBody:
-      !record || !sent
-        ? null
-        : 'marker' in sent
-          ? sent.marker
-          : stored(sentRead, 'application/json'),
-    responseBody: record && received ? stored(receivedRead, type) : null,
+    requestBody: requestStored?.text ?? null,
+    responseBody: responseStored?.text ?? null,
+    bodiesTruncated: Boolean(requestStored?.truncated || responseStored?.truncated),
     code: receivedJson && row.status >= 400 ? codeOf(receivedRead) : null,
   });
 }

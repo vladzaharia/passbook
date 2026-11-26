@@ -60,7 +60,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   outbox: BOOKKEEPING,
   pass_assets: DERIVED,
   request_log:
-    'API call metadata kept 7 days, with Test bodies of a developer org for 24 hours: no org content',
+    'Test call metadata kept 7 days, with redacted bodies for 24 hours where the org records them: no org content',
   request_log_budget: BOOKKEEPING,
   pass_attach_blocks: 'holder mail preference',
   pass_auth_seals: SEALED,

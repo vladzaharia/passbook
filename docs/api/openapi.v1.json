@@ -22774,6 +22774,9 @@
           },
           "bodiesRecorded": {
             "type": "boolean"
+          },
+          "bodiesTruncated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -22798,7 +22801,8 @@
           "requestBody",
           "responseBody",
           "bodiesExpireAt",
-          "bodiesRecorded"
+          "bodiesRecorded",
+          "bodiesTruncated"
         ]
       },
       "OrgsEntitlementsRetrieveResponse": {
@@ -86789,6 +86793,9 @@
                     },
                     "bodiesRecorded": {
                       "type": "boolean"
+                    },
+                    "bodiesTruncated": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -86813,7 +86820,8 @@
                     "requestBody",
                     "responseBody",
                     "bodiesExpireAt",
-                    "bodiesRecorded"
+                    "bodiesRecorded",
+                    "bodiesTruncated"
                   ]
                 },
                 "example": {

@@ -157,6 +157,7 @@ export const CALL = {
   responseBody: '{"items":[],"nextCursor":null}',
   bodiesExpireAt: T.recent + 7 * DAY,
   bodiesRecorded: true,
+  bodiesTruncated: false,
 };
 /** The developer's day, by local hour of the last 24: work from 08:00 to 22:00, busiest after lunch. */
 const HOURS = Array.from({ length: 24 }, (_, i) =>
