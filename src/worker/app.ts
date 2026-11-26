@@ -19,6 +19,7 @@ import { developerRoutes } from './modules/developer/routes.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
+import { platformIdentityRoutes } from './modules/identities/routes-platform.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
 import { invitationRoutes } from './modules/idp/invitations/routes.ts';
@@ -212,6 +213,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/identity-runs', identityRunsRoutes);
   app.route('/api/v1/wallet-identities', walletIdentitiesRoutes);
   app.route('/api/v1/orgs', identityProvisionRoutes);
+  app.route('/api/v1/platform/apple/identities', platformIdentityRoutes);
   app.route('/api/v1/platform', platformAppleRoutes);
   app.route('/api/v1/wallet-providers/accounts', walletProviderAccountRoutes);
   app.route('/api/v1/wallet-providers/passes', walletProviderStatusRoutes);

@@ -127002,6 +127002,8 @@
           "IDENTITY_EXISTS",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -128575,6 +128577,698 @@
           "STALE",
           "STEP_UP_REQUIRED",
           "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/apple/identities": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "The platform's own Apple identities, with their setup runs",
+        "tags": [
+          "platform-identities"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "orgId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "passTypeIdentifier": {
+                            "type": "string"
+                          },
+                          "teamIdentifier": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "env",
+                              "db"
+                            ]
+                          },
+                          "certSha256": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "certSubject": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "certSerial": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "notBefore": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "notAfter": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "daysRemaining": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "apnsBinding": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "apnsAvailable": {
+                            "type": "boolean"
+                          },
+                          "pushMethod": {
+                            "type": "string",
+                            "enum": [
+                              "certificate",
+                              "key",
+                              "none"
+                            ],
+                            "default": "none"
+                          },
+                          "pushKey": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "keyId": {
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "rotatedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "identityCount": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "dependentCount": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "default": null,
+                            "required": [
+                              "keyId",
+                              "createdAt",
+                              "rotatedAt",
+                              "identityCount",
+                              "dependentCount"
+                            ]
+                          },
+                          "apnsHealth": {
+                            "type": "string",
+                            "enum": [
+                              "unknown",
+                              "healthy",
+                              "failing"
+                            ]
+                          },
+                          "apnsCheckedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "default": null
+                          },
+                          "apnsReason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "passCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0
+                          },
+                          "nfcEnabled": {
+                            "type": "boolean"
+                          },
+                          "nfcKeys": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "identityId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "orgId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "keyId": {
+                                  "type": "string",
+                                  "pattern": "^[0-9a-f]{8}$"
+                                },
+                                "state": {
+                                  "type": "string",
+                                  "enum": [
+                                    "active",
+                                    "retiring",
+                                    "retired"
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "activatedAt": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "retiredAt": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 0
+                                },
+                                "passCount": {
+                                  "type": "integer"
+                                },
+                                "passesLeft": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "identityId",
+                                "orgId",
+                                "keyId",
+                                "state",
+                                "createdAt",
+                                "activatedAt",
+                                "retiredAt",
+                                "passCount",
+                                "passesLeft"
+                              ]
+                            },
+                            "default": []
+                          },
+                          "isDefault": {
+                            "type": "boolean"
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "platform",
+                              "managed",
+                              "own"
+                            ],
+                            "default": "own"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "provisioning",
+                              "active",
+                              "renewing",
+                              "expiring",
+                              "expired",
+                              "retired",
+                              "failed"
+                            ],
+                            "default": "active"
+                          },
+                          "rotation": {
+                            "type": "string",
+                            "enum": [
+                              "auto",
+                              "csr",
+                              "manual"
+                            ],
+                            "default": "manual"
+                          },
+                          "issuing": {
+                            "type": "boolean",
+                            "default": true
+                          },
+                          "nextRotationAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "default": null
+                          },
+                          "handle": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "slot": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "root",
+                              "devtest",
+                              null
+                            ]
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "passes",
+                              "device_test"
+                            ]
+                          },
+                          "managed": {
+                            "type": "string",
+                            "enum": [
+                              "connector",
+                              "deployment"
+                            ]
+                          },
+                          "registrationCount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "openRunId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "dormant": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "orgId",
+                          "label",
+                          "passTypeIdentifier",
+                          "teamIdentifier",
+                          "source",
+                          "certSha256",
+                          "certSubject",
+                          "certSerial",
+                          "notBefore",
+                          "notAfter",
+                          "daysRemaining",
+                          "apnsBinding",
+                          "apnsAvailable",
+                          "apnsHealth",
+                          "nfcEnabled",
+                          "isDefault",
+                          "createdAt",
+                          "slot",
+                          "purpose",
+                          "managed",
+                          "registrationCount",
+                          "openRunId",
+                          "dormant"
+                        ]
+                      }
+                    },
+                    "openRuns": {
+                      "type": "object",
+                      "properties": {
+                        "root": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "devtest": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "root",
+                        "devtest"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "openRuns"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "platform-identities.getPlatformAppleIdentities",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Set up a platform identity slot (Idempotency-Key)",
+        "tags": [
+          "platform-identities"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string",
+                    "enum": [
+                      "root",
+                      "devtest"
+                    ]
+                  }
+                },
+                "required": [
+                  "slot"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org",
+                        "wallet_credential"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "platform-identities.postPlatformAppleIdentities",
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/apple/identities/{id}/default": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Make an identity the platform default (Idempotency-Key)",
+        "tags": [
+          "platform-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "identityId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "identityId",
+                    "changed"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "platform-identities.postPlatformAppleIdentitiesByIdDefault",
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

@@ -1,0 +1,76 @@
+{
+  "platform-identities.getPlatformAppleIdentities": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "label": "Northwind signing identity",
+          "passTypeIdentifier": "pass.mobile.passbook.northwind",
+          "teamIdentifier": "A1B2C3D4E5",
+          "source": "db",
+          "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+          "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+          "certSerial": "2e91b094e6a40a1f",
+          "notBefore": 1767168000000,
+          "notAfter": 1798790399999,
+          "daysRemaining": 37,
+          "apnsBinding": "production",
+          "apnsAvailable": true,
+          "pushMethod": "certificate",
+          "pushKey": null,
+          "apnsHealth": "healthy",
+          "apnsCheckedAt": 1795570500000,
+          "apnsReason": "BadDeviceToken",
+          "passCount": 131,
+          "nfcEnabled": false,
+          "nfcKeys": [],
+          "isDefault": true,
+          "createdAt": 1767168000000,
+          "kind": "managed",
+          "status": "active",
+          "rotation": "auto",
+          "issuing": true,
+          "nextRotationAt": 1796198399999,
+          "handle": "northwind",
+          "slot": "root",
+          "purpose": "passes",
+          "managed": "connector",
+          "registrationCount": 8,
+          "openRunId": "0193a1b2-7c00-7000-8000-000000000023",
+          "dormant": false
+        }
+      ],
+      "openRuns": {
+        "root": "root",
+        "devtest": "devtest"
+      }
+    }
+  },
+  "platform-identities.postPlatformAppleIdentities": {
+    "request": {
+      "slot": "root"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "rotate",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "state": "succeeded",
+      "step": "done",
+      "attempt": 1,
+      "waitingFor": null,
+      "errorCode": null,
+      "createdAt": 1795571820000,
+      "updatedAt": 1795571940000,
+      "finishedAt": 1795571940000
+    }
+  },
+  "platform-identities.postPlatformAppleIdentitiesByIdDefault": {
+    "response": {
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "changed": false
+    }
+  }
+}
