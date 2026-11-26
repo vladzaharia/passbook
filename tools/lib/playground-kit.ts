@@ -112,7 +112,7 @@ ${kit}
     .code.replace(/\/\*![^*]*\*\/\s*/, '')
     .trim();
   // The developer site's root font size is 14 px: its bar must not shrink with it, so type, radius
-  // and rem become px (the type and radius tokens are rem, resolved from the generated tokens).
+  // and rem become px (a rem inside an escaped class selector, `w-[calc(100%-1rem)]`, stays: it must match the markup) (the type and radius tokens are rem, resolved from the generated tokens).
   const tokens = new Map(
     [
       ...readFileSync(resolve(root, 'src/generated/ssr-tokens.css'), 'utf8').matchAll(
@@ -127,7 +127,7 @@ ${kit}
           (all, name) => tokens.get(name) ?? all,
         )
         .replace(
-          /(?<![\\.\w[])(-?\d*\.?\d+)rem/g,
+          /(?<![\\.\w[])(-?\d*\.?\d+)rem(?!\\)/g,
           (_, n) => `${Number((Number.parseFloat(n) * 16).toFixed(3))}px`,
         )
     : built;

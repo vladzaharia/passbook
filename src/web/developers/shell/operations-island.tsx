@@ -1,6 +1,7 @@
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import '../../../generated/operations-kit.css';
+import '../styles/dev-operations.css';
 import '../../styles/kit-controls.css';
 import '../../styles/kit-motion.css';
 import '../../ui/art/scenes/common.css';
