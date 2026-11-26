@@ -311,9 +311,8 @@
   },
   {
     "role": "org",
-    "path": "/admin/connections/webhooks/{endpointId}",
-    "name": "legacy-webhook-detail",
-    "filterOrg": "northwindId"
+    "path": "/admin/connections/webhooks/{endpointId}?orgId={northwindId}",
+    "name": "legacy-webhook-detail"
   },
   {
     "role": "org",
