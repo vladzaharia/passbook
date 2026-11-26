@@ -419,6 +419,12 @@
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
+  "developer.postSandboxKey": {
+    "resource": "developer.sandbox",
+    "method": "mintKey",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
   "developer.postSandboxReopen": {
     "resource": "developer.sandbox",
     "method": "reopen",

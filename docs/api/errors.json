@@ -3175,6 +3175,7 @@
         409
       ],
       "modules": [
+        "developer",
         "operations"
       ]
     },
@@ -3193,6 +3194,7 @@
         500
       ],
       "modules": [
+        "developer",
         "operations"
       ]
     },
@@ -3243,7 +3245,8 @@
       ],
       "modules": [
         "developer",
-        "org-lifecycle"
+        "org-lifecycle",
+        "workflows"
       ]
     },
     {
@@ -3311,6 +3314,15 @@
       "modules": [
         "dev-access",
         "orgs"
+      ]
+    },
+    {
+      "code": "ORG_PURGE_BLOCKED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workflows"
       ]
     },
     {
@@ -4175,6 +4187,15 @@
       ]
     },
     {
+      "code": "SANDBOX_KEY_SHOWN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
       "code": "SANDBOX_NOT_CLOSED",
       "statuses": [
         409
@@ -4199,6 +4220,15 @@
       ],
       "modules": [
         "sandbox"
+      ]
+    },
+    {
+      "code": "SANDBOX_PURGE_START",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "developer"
       ]
     },
     {
@@ -4232,6 +4262,24 @@
       "code": "SANDBOX_RESET_LIMIT",
       "statuses": [
         429
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_SESSION_ENDED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_TEMPLATE_FAILED",
+      "statuses": [
+        500
       ],
       "modules": [
         "developer"

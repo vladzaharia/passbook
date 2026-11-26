@@ -26,7 +26,10 @@ export interface Pending {
   op: string;
   change: string;
   note: string;
-  /** A breaking change that ships to every client without a PassBook-Version: a fix that stops a request reaching more than it asked. */
+  /**
+   * A breaking change that ships to every client without a PassBook-Version: a fix that stops a request reaching more than it
+   * asked, or a status code that only a signed-in browser session ever receives (no key, so no integration, calls it).
+   */
   unversioned?: boolean;
 }
 
@@ -102,12 +105,16 @@ export const hasNewVersion = (next: Versions, base: Versions | null): boolean =>
 
 /** The breaking changes no `unversioned` entry of unreleased.json covers, and that are not a removal at a Sunset. */
 export const versionedBreaks = (broken: string[], pending: Pending[]): string[] => {
-  // Only a request-side tightening may ship unversioned; a removed field or the like still needs a version.
+  // Only a request-side tightening, or a status only a browser session receives, may ship unversioned; a removed field or the like still needs a version.
   const free = new Set(
     pending
       .filter((p) => p.unversioned && p.change.endsWith(': unknown keys now refused'))
       .map((p) => p.key),
   );
+  // A route no key can call changes its status (a sandbox action now answers 202): the break is named in the notes.
+  for (const p of pending)
+    if (p.unversioned && /^response \d{3} removed$/.test(p.change))
+      free.add(`${p.op}: ${p.change}`);
   // Removing an operation on or after the Sunset the base announced reaches every client whatever its version.
   return broken.filter((b) => !free.has(b) && !b.includes(`: ${SUNSET_REMOVAL} `));
 };

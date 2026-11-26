@@ -230,6 +230,23 @@ describe('versions', () => {
   });
 });
 
+describe('versionedBreaks for a session-only status', () => {
+  it('lets an unversioned response status removal through, and keeps one that is not marked', () => {
+    const pending = [
+      {
+        key: 'POST /a response 201 removed',
+        op: 'POST /a',
+        change: 'response 201 removed',
+        unversioned: true,
+      },
+      { key: 'POST /b response 201 removed', op: 'POST /b', change: 'response 201 removed' },
+    ] as Pending[];
+    expect(
+      versionedBreaks(['POST /a: response 201 removed', 'POST /b: response 201 removed'], pending),
+    ).toEqual(['POST /b: response 201 removed']);
+  });
+});
+
 describe('versionedBreaks at a Sunset', () => {
   it('lets a removal at the Sunset through without a version, and keeps the rest', () => {
     expect(

@@ -48,6 +48,15 @@
     "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
   },
   {
+    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (kind sandbox.delete) and the work runs after the answer; follow it at GET /api/v1/operations/{id}. A browser session calls it, no key: no version opt-in.",
+    "unversioned": true
+  },
+  {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
     "class": "additive",
     "operationId": "identities.deleteIdentitiesByIdPushKey",
@@ -2797,6 +2806,15 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
+    "key": "POST /api/v1/developer/sandbox response 201 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandbox",
+    "op": "POST /api/v1/developer/sandbox",
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (kind sandbox.create), not 201 with the key. The key is minted once afterwards by POST /api/v1/developer/sandbox/key. A browser session calls it, no key: no version opt-in.",
+    "unversioned": true
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/close new operation",
     "class": "additive",
     "operationId": "developer.postSandboxClose",
@@ -2805,12 +2823,29 @@
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/key new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxKey",
+    "op": "POST /api/v1/developer/sandbox/key",
+    "change": "new operation",
+    "note": "Mints the sandbox key once, after create, reset or start over ends. A second call answers 409 SANDBOX_KEY_SHOWN while the key is live."
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
     "class": "additive",
     "operationId": "developer.postSandboxRecreate",
     "op": "POST /api/v1/developer/sandbox/recreate",
     "change": "new operation",
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate response 201 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (kind sandbox.recreate), not 201 with the key; the key is minted once afterwards. A browser session calls it, no key: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
@@ -2827,6 +2862,15 @@
     "op": "POST /api/v1/developer/sandbox/reset",
     "change": "new operation",
     "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (kind sandbox.reset); the counts, resets left and key arrive as steps, result ids and POST /api/v1/developer/sandbox/key. The 25 second budget and `more` are gone: the work runs to the end. A browser session calls it, no key: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
