@@ -2,19 +2,12 @@ import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { formatClockIn, formatStampIn, todayKey } from '../../lib/format.ts';
-import { benchZone } from '../bench/zone.ts';
+import { clock } from '../logs/format.ts';
 import { statusText } from '../ui/status-text.ts';
 import { type Activity, codeActivity } from './net.ts';
 import type { SearchIndex } from './types.ts';
 
 const P = SEARCH_COPY.preview;
-
-/** The org zone's clock today, the date and time before. */
-const lastAt = (at: number): string =>
-  todayKey(benchZone(), at) === todayKey(benchZone(), Date.now())
-    ? formatClockIn(at, benchZone())
-    : formatStampIn(at, benchZone());
 
 function Actions({ href, second }: { href: string; second?: { label: string; href: string } }) {
   return (
@@ -76,13 +69,13 @@ function ErrorPane({ code, index }: { code: string; index: SearchIndex }) {
                   {activity.count}
                   {activity.more ? '+' : ''}
                 </span>{' '}
-                in the last 24 h{activity.lastAt ? `, last at ${lastAt(activity.lastAt)}` : null}
+                in the last 24 h{activity.lastAt ? `, last at ${clock(activity.lastAt)}` : ''}
               </>
             )}
           </p>
         </>
       ) : null}
-      <Actions href={e.href} second={{ label: P.log, href: `${PATHS.logs}?code=${e.code}` }} />
+      <Actions href={e.href} second={{ label: P.log, href: `${PATHS.logs}#code=${e.code}` }} />
     </div>
   );
 }
