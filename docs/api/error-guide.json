@@ -1823,6 +1823,12 @@
     "fix": "Wait a minute, then call POST /api/v1/settings/reply-to/resend again.",
     "retryable": false
   },
+  "REQUEST_LOG_NOT_FOUND": {
+    "title": "Request not found",
+    "when": "The log id or request id is not one of this organization's Test calls from the last 7 days.",
+    "fix": "List the calls with GET /request-logs and use an id from the list. Calls older than 7 days are gone.",
+    "retryable": false
+  },
   "RETENTION_CHANGED": {
     "title": "Retention changed",
     "when": "The retention policy changed while the request ran.",
