@@ -1692,6 +1692,13 @@ __all__ = [
     "TemplatesCandidatesListItem",
     "TemplatesCandidatesListItemApprovalsItem",
     "TemplatesCandidatesListResponse",
+    "TemplatesCandidatesListResponseCurrent",
+    "TemplatesCandidatesListResponseCurrentReport",
+    "TemplatesCandidatesListResponseCurrentReportItemsItem",
+    "TemplatesCandidatesListResponseCurrentReportStatus1",
+    "TemplatesCandidatesListResponseCurrentReportStatus2",
+    "TemplatesCandidatesListResponseCurrentReportStatus3",
+    "TemplatesCandidatesListResponseCurrentReportStatus4",
     "TemplatesCandidatesListResponseItemsItem",
     "TemplatesCandidatesListResponseItemsItemApprovalsItem",
     "TemplatesCandidatesListResult",
@@ -8594,6 +8601,7 @@ class PassesRetrieveProviderStatusResponseProviders1(_Model):
     priorGenerationRetirementPending: bool
     installation: _Literal["unknown"] | str
     reported: PassesRetrieveProviderStatusResponseProviders1Reported | None = None
+    classReview: _Literal["waiting", "rejected", "approved"] | str | None = None
     issuance: PassesRetrieveProviderStatusResponseProviders1Issuance1 | PassesRetrieveProviderStatusResponseProviders1Issuance2
 
 class PassesRetrieveProviderStatusResponseProviders1Issuance1(_Model):
@@ -8614,6 +8622,7 @@ class PassesRetrieveProviderStatusResponseProviders2(_Model):
     priorGenerationRetirementPending: bool
     installation: _Literal["unknown"] | str
     reported: PassesRetrieveProviderStatusResponseProviders2Reported | None = None
+    classReview: _Literal["waiting", "rejected", "approved"] | str | None = None
     issuance: PassesRetrieveProviderStatusResponseProviders2Issuance1 | PassesRetrieveProviderStatusResponseProviders2Issuance2
 
 class PassesRetrieveProviderStatusResponseProviders2Issuance1(_Model):
@@ -12466,6 +12475,43 @@ class TemplatesCandidatesListItemApprovalsItem(_Model):
 class TemplatesCandidatesListResponse(_Model):
     items: _List[TemplatesCandidatesListResponseItemsItem]
     nextCursor: str | None
+    current: TemplatesCandidatesListResponseCurrent | None = None
+
+class TemplatesCandidatesListResponseCurrent(_Model):
+    version: str
+    sourceReleaseId: str
+    report: TemplatesCandidatesListResponseCurrentReport
+
+class TemplatesCandidatesListResponseCurrentReport(_Model):
+    schema_: _Literal[1] = _Field(alias="schema")
+    target: _Literal["google", "samsung"] | str
+    type: str
+    compilerRevision: int
+    status: TemplatesCandidatesListResponseCurrentReportStatus1 | TemplatesCandidatesListResponseCurrentReportStatus2 | TemplatesCandidatesListResponseCurrentReportStatus3 | TemplatesCandidatesListResponseCurrentReportStatus4
+    items: _List[TemplatesCandidatesListResponseCurrentReportItemsItem]
+
+class TemplatesCandidatesListResponseCurrentReportItemsItem(_Model):
+    capability: _Literal["type", "field.header", "field.primary", "field.secondary", "field.auxiliary", "field.additionalInfo", "field.footer", "field.back", "field.link", "barcode.format", "barcode.format.qr", "barcode.format.pdf417", "barcode.format.aztec", "barcode.format.code128", "barcode.format.code39", "barcode.format.codabar", "barcode.format.ean13", "barcode.format.i2of5", "barcode.altText", "colors.background", "colors.foreground", "colors.label", "image.logo", "image.icon", "image.strip", "image.artwork", "image.background", "image.thumbnail", "image.personal", "relevance.dates", "relevance.locations", "relevance.beacons", "relevance.maxDistance", "validity.expiration", "void.visual", "messaging.notify", "updates.push", "upcoming.multi", "links.featured", "localization.strings", "localization.images", "sharing", "nfc", "personalization", "text.length", "role.title", "role.subtitle", "role.eventName", "role.eventStart", "role.eventEnd", "role.doorsOpen", "role.venueName", "role.venueAddress", "role.venueLocation", "role.seat", "role.row", "role.section", "role.gate", "role.ticketHolder", "role.ticketNumber", "role.confirmationCode", "role.eventId", "role.memberId", "role.memberName", "role.tier", "role.points", "role.pointsLabel", "role.balance", "role.giftCardNumber", "role.giftCardPin", "role.offerTitle", "role.offerDetails", "role.finePrint", "role.redemptionChannel", "role.validFrom", "role.validUntil", "role.appLink", "role.support"] | str
+    path: str
+    support: _Literal["native", "text", "difference", "omitted", "unsupported"] | str
+    severity: _Literal["difference", "omission", "blocked"] | str
+    group: _Literal["holder", "door", "look", "absent"] | str
+    chosen: bool
+    message: str
+
+class TemplatesCandidatesListResponseCurrentReportStatus1(_Model):
+    kind: _Literal["off"] | str
+
+class TemplatesCandidatesListResponseCurrentReportStatus2(_Model):
+    kind: _Literal["ready"] | str
+
+class TemplatesCandidatesListResponseCurrentReportStatus3(_Model):
+    kind: _Literal["omissions"] | str
+    count: int
+
+class TemplatesCandidatesListResponseCurrentReportStatus4(_Model):
+    kind: _Literal["blocked"] | str
+    reason: str
 
 class TemplatesCandidatesListResponseItemsItem(_Model):
     id: str
@@ -12960,6 +13006,7 @@ class TemplatesReleasesCreateResponse(_Model):
     accountId: str | None = None
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
+    googleReview: _Literal["waiting", "rejected", "approved"] | str | None = None
 
 class TemplatesReleasesListItem(_Model):
     id: str
@@ -12984,6 +13031,7 @@ class TemplatesReleasesListItem(_Model):
     accountId: str | None = None
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
+    googleReview: _Literal["waiting", "rejected", "approved"] | str | None = None
 
 class TemplatesReleasesListResponse(_Model):
     active: _Dict[str, _Any] | None
@@ -13014,6 +13062,7 @@ class TemplatesReleasesListResponseItemsItem(_Model):
     accountId: str | None = None
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
+    googleReview: _Literal["waiting", "rejected", "approved"] | str | None = None
 
 class TemplatesReleasesRetrieveImpactResponse(_Model):
     fromVersion: str | None
@@ -13094,6 +13143,7 @@ class TemplatesReleasesRollbackResponse(_Model):
     accountId: str | None = None
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
+    googleReview: _Literal["waiting", "rejected", "approved"] | str | None = None
 
 class TemplatesRetrieveStampsImpactResponse(_Model):
     passes: int

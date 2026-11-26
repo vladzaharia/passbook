@@ -8090,6 +8090,7 @@ type PassesRetrieveProviderStatusResponseProviders1 struct {
 	PriorGenerationRetirementPending bool                                                    `json:"priorGenerationRetirementPending"`
 	Installation                     string                                                  `json:"installation"`
 	Reported                         *PassesRetrieveProviderStatusResponseProviders1Reported `json:"reported,omitempty"`
+	ClassReview                      *string                                                 `json:"classReview,omitempty"`
 	Issuance                         any                                                     `json:"issuance"`
 }
 
@@ -8114,6 +8115,7 @@ type PassesRetrieveProviderStatusResponseProviders2 struct {
 	PriorGenerationRetirementPending bool                                                    `json:"priorGenerationRetirementPending"`
 	Installation                     string                                                  `json:"installation"`
 	Reported                         *PassesRetrieveProviderStatusResponseProviders2Reported `json:"reported,omitempty"`
+	ClassReview                      *string                                                 `json:"classReview,omitempty"`
 	Issuance                         any                                                     `json:"issuance"`
 }
 
@@ -12744,6 +12746,50 @@ type TemplatesCandidatesListQuery struct {
 type TemplatesCandidatesListResponse struct {
 	Items      []TemplatesCandidatesListResponseItemsItem `json:"items"`
 	NextCursor *string                                    `json:"nextCursor"`
+	Current    *TemplatesCandidatesListResponseCurrent    `json:"current,omitempty"`
+}
+
+type TemplatesCandidatesListResponseCurrent struct {
+	Version         string                                       `json:"version"`
+	SourceReleaseID string                                       `json:"sourceReleaseId"`
+	Report          TemplatesCandidatesListResponseCurrentReport `json:"report"`
+}
+
+type TemplatesCandidatesListResponseCurrentReport struct {
+	Schema           int64                                                   `json:"schema"`
+	Target           string                                                  `json:"target"`
+	Type             string                                                  `json:"type"`
+	CompilerRevision int64                                                   `json:"compilerRevision"`
+	Status           any                                                     `json:"status"`
+	Items            []TemplatesCandidatesListResponseCurrentReportItemsItem `json:"items"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportItemsItem struct {
+	Capability string `json:"capability"`
+	Path       string `json:"path"`
+	Support    string `json:"support"`
+	Severity   string `json:"severity"`
+	Group      string `json:"group"`
+	Chosen     bool   `json:"chosen"`
+	Message    string `json:"message"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus1 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus2 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus3 struct {
+	Kind  string `json:"kind"`
+	Count int64  `json:"count"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus4 struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
 }
 
 type TemplatesCandidatesListResponseItemsItem struct {
@@ -13336,6 +13382,7 @@ type TemplatesReleasesCreateResponse struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesReleasesCreateResult = TemplatesReleasesCreateResponse
@@ -13363,6 +13410,7 @@ type TemplatesReleasesListItem struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesReleasesListQuery struct {
@@ -13401,6 +13449,7 @@ type TemplatesReleasesListResponseItemsItem struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesReleasesReleaseBody = ReleaseTemplate
@@ -13507,6 +13556,7 @@ type TemplatesReleasesRollbackResponse struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesRetrieveInputSchemaResult = TemplateInputSchema
