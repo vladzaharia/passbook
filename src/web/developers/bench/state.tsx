@@ -102,7 +102,12 @@ export function BenchState({
   const s = SCENES[scene];
   const words = title ?? s.title;
   return (
-    <section className="card pstate bench-state" data-scene={scene} aria-label={words}>
+    <section
+      className="card pstate bench-state"
+      data-scene={scene}
+      data-prop={s.prop ? '' : undefined}
+      aria-label={words}
+    >
       <Buddy mood={s.mood} size="sm" at="end" scene={s.scene} prop={s.prop?.()} replay={replay} />
       <Heading className="h2 pstate-t">{words}</Heading>
       {children || onRetry ? (

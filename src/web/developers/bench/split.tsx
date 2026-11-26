@@ -51,6 +51,8 @@ function PaneDialog({
       opener.current = document.activeElement;
       delete d.dataset.closing;
       d.showModal();
+      // The content may name where focus starts (the Inspector's title); otherwise the dialog's own pick.
+      d.querySelector<HTMLElement>('[data-pane-focus]')?.focus();
       return;
     }
     if (open || !d.open) return;

@@ -9,36 +9,51 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
   gap: 8px;
-  min-height: 52px;
-  padding: 10px 12px 10px 16px;
+  padding: 12px 12px 12px 16px;
   border-bottom: 1px solid var(--pk-border-subtle);
   background: var(--pk-surface-raised);
 }
+.bench-insp-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
 .bench-insp-t {
+  flex: 1;
   min-width: 0;
   margin: 0;
+  padding-block: 2px;
   overflow-wrap: anywhere;
   color: var(--pk-text-strong);
   font: 500 14px / 20px var(--pk-font-mono);
 }
+.bench-insp-t:focus {
+  outline: none;
+}
+.bench-insp-nav {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+  margin-block: -6px;
+}
+.bench-insp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
 .bench-insp-s,
 .bench-insp-id,
-.bench-insp-a,
-.bench-insp-nav {
+.bench-insp-a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   min-width: 0;
 }
-.bench-insp-sp {
-  flex: 1 0 0;
-}
-.bench-insp-x {
-  margin-inline-start: 4px;
+.bench-insp-a {
+  margin-inline-start: auto;
 }
 .bench-insp-f {
   display: flex;

@@ -9,9 +9,10 @@ const C = BENCH_COPY.inspector;
 
 /**
  * The selected item, in the pane WB1's grid gives it: a sticky side pane from 1180 px, a drawer from
- * 720, a bottom sheet below (BenchSplit with `bare`). The header holds the title (mono), the status,
- * the IdChip and the actions; in a drawer or sheet also Previous, Next and Close. Then the tabs, the
- * body (a focusable region that fades in when the item changes) and the Trace.
+ * 720, a bottom sheet below (BenchSplit with `bare`). The header's first line is the title (mono) and,
+ * in a drawer or sheet, Previous, Next and Close; its second the status, the IdChip and the actions.
+ * Then the facts, the tabs, the body (a focusable region that fades in when the item changes) and
+ * the Trace.
  * `[` and `]` step through the list from anywhere inside it.
  */
 export function Inspector({
@@ -70,47 +71,59 @@ export function Inspector({
     // biome-ignore lint/a11y/noStaticElementInteractions: [ and ] reach the list from any control inside
     <div className="bench-insp" data-shape={shape} onKeyDown={onKey}>
       <header className="bench-insp-h">
-        <h2 className="bench-insp-t">{title}</h2>
-        {status ? <span className="bench-insp-s">{status}</span> : null}
-        {id ? <span className="bench-insp-id">{id}</span> : null}
-        <span className="bench-insp-sp" />
-        {actions ? <span className="bench-insp-a">{actions}</span> : null}
-        {floating && (onPrev || onNext) ? (
-          <span className="bench-insp-nav">
-            <button
-              type="button"
-              className="iconbtn"
-              aria-label={C.prev}
-              aria-keyshortcuts="["
-              title={`${C.prev} ([)`}
-              disabled={!onPrev}
-              onClick={onPrev}
-            >
-              <ChevronUp aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="iconbtn"
-              aria-label={C.next}
-              aria-keyshortcuts="]"
-              title={`${C.next} (])`}
-              disabled={!onNext}
-              onClick={onNext}
-            >
-              <ChevronDown aria-hidden="true" />
-            </button>
-          </span>
-        ) : null}
-        {floating && close ? (
-          <button
-            type="button"
-            className="iconbtn bench-insp-x"
-            aria-label={C.close}
-            aria-keyshortcuts="Escape"
-            onClick={close}
-          >
-            <X aria-hidden="true" />
-          </button>
+        <div className="bench-insp-top">
+          {/* Focus lands on the title when a drawer or sheet opens (split.tsx): it is read first. */}
+          <h2 className="bench-insp-t" tabIndex={-1} data-pane-focus="">
+            {title}
+          </h2>
+          {floating ? (
+            <span className="bench-insp-nav">
+              {onPrev || onNext ? (
+                <>
+                  <button
+                    type="button"
+                    className="iconbtn"
+                    aria-label={C.prev}
+                    aria-keyshortcuts="["
+                    title={`${C.prev} ([)`}
+                    disabled={!onPrev}
+                    onClick={onPrev}
+                  >
+                    <ChevronUp aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="iconbtn"
+                    aria-label={C.next}
+                    aria-keyshortcuts="]"
+                    title={`${C.next} (])`}
+                    disabled={!onNext}
+                    onClick={onNext}
+                  >
+                    <ChevronDown aria-hidden="true" />
+                  </button>
+                </>
+              ) : null}
+              {close ? (
+                <button
+                  type="button"
+                  className="iconbtn"
+                  aria-label={C.close}
+                  aria-keyshortcuts="Escape"
+                  onClick={close}
+                >
+                  <X aria-hidden="true" />
+                </button>
+              ) : null}
+            </span>
+          ) : null}
+        </div>
+        {status || id || actions ? (
+          <div className="bench-insp-meta">
+            {status ? <span className="bench-insp-s">{status}</span> : null}
+            {id ? <span className="bench-insp-id">{id}</span> : null}
+            {actions ? <span className="bench-insp-a">{actions}</span> : null}
+          </div>
         ) : null}
       </header>
       {facts ? <div className="bench-insp-f">{facts}</div> : null}

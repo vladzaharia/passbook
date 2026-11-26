@@ -154,6 +154,16 @@
   margin-inline-start: auto;
 }
 
+/* ---------- Tablet: the note gives way and the search narrows, so the filters keep to two rows at most ---------- */
+@media (max-width: 1179.98px) {
+  .bench-search {
+    flex-basis: 14rem;
+  }
+  .bench-tb-n {
+    display: none;
+  }
+}
+
 /* ---------- Phone: the search takes the row, Filters (n) beside it ---------- */
 @media (max-width: 719.98px) {
   .bench-tb {
@@ -162,9 +172,6 @@
   .bench-search {
     flex: 1 1 auto;
     min-width: 0;
-  }
-  .bench-tb-n {
-    display: none;
   }
 }
 /* Touch: 44 px controls in the same 52 px row. */
