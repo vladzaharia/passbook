@@ -1392,16 +1392,16 @@
     "method": "retrieve"
   },
   "polaris-platform.getPlatformIdpCalls": {
-    "resource": "platform.idp",
-    "method": "calls"
+    "resource": "platform.idp.calls",
+    "method": "list"
   },
   "polaris-platform.getPlatformIdpDrift": {
-    "resource": "platform.idp",
-    "method": "drift"
+    "resource": "platform.idp.drift",
+    "method": "list"
   },
   "polaris-platform.postPlatformIdpFreeze": {
     "resource": "platform.idp",
-    "method": "freeze"
+    "method": "pause"
   },
   "public.getBByToken": {
     "resource": "public.bundles",

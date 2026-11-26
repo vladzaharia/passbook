@@ -10,7 +10,7 @@ import { managerOf } from '../orgs/membership-service.ts';
 import { revokeActiveMembership } from '../orgs/repo-member-writes.ts';
 import { setUserStatus } from '../users/service.ts';
 import { offboardable, offboardPlan } from './offboard-plan.ts';
-import { limited, needBinding, startIdpOp } from './ops-start.ts';
+import { limited, needBinding, replay, startIdpOp } from './ops-start.ts';
 import { revokeAllGrants } from './repo-role-grants.ts';
 
 export const offboardTarget = (userId: string) => ({ type: 'user', id: userId });
@@ -94,6 +94,11 @@ export async function startOffboard(
   dryRun: boolean,
   idempotencyKey: string | undefined,
 ): Promise<{ plan: OffboardPlan; operation: OperationDto | null }> {
+  // A replay is answered before any state check: the offboard it made has already emptied the plan.
+  const known = dryRun
+    ? null
+    : await replay(ctx, auth, 'idp.offboard', idempotencyKey, offboardTarget(userId));
+  if (known) return { plan: await offboardPlan(ctx, userId), operation: known };
   const plan = await checked(ctx, userId);
   if (dryRun) return { plan, operation: null };
   const [blocker] = plan.blockers;

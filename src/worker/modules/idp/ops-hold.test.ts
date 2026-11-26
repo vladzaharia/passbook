@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { bump } from '../../platform/counters.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import {
   admin,
   installOpsRig,
@@ -88,6 +88,34 @@ describe('restore', () => {
     expect(two.id).toBe(one.id);
     expect(rig.queue.jobs).toHaveLength(1);
   });
+  it('answers a replay after the pause is gone, and refuses the key for another user', async () => {
+    const p = await paused();
+    const q = await paused();
+    const a = await admin();
+    const headers = { ...a.headers, 'idempotency-key': 'restore-2' };
+    const one = await opOf(await start(url(p.user.id), 'DELETE', headers));
+    await runNext(one);
+    const again = await opOf(await start(url(p.user.id), 'DELETE', headers));
+    expect(again.id).toBe(one.id);
+    await expectProblem(
+      await start(url(q.user.id), 'DELETE', headers),
+      409,
+      'IDEMPOTENCY_KEY_REUSED',
+    );
+  });
+
+  it('keeps the pause for a user who is off', async () => {
+    const p = await paused();
+    await run(rig.h.env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [p.user.id]);
+    const a = await admin();
+    await expectProblem(await start(url(p.user.id), 'DELETE', a.headers), 409, 'IDP_NOT_WANTED');
+    const row = await first<{ held_at: number | null }>(
+      rig.h.env.DB,
+      'SELECT held_at FROM idp_target_state WHERE subject = ? AND target = ?',
+      [p.subject, 'console'],
+    );
+    expect(row?.held_at).not.toBeNull();
+  });
 });
 
 describe('SCIM breaker clear', () => {
@@ -120,5 +148,28 @@ describe('SCIM breaker clear', () => {
       "SELECT action FROM audit_log WHERE action = 'idp.breaker_clear'",
     );
     expect(audit).toHaveLength(1);
+  });
+});
+
+describe('SCIM breaker clear, pinned to its trip', () => {
+  it('leaves a trip that came after the one it was started for', async () => {
+    const clear = (headers: Record<string, string>) =>
+      start('/api/v1/platform/idp/scim-breaker/clear', 'POST', headers);
+    await bump(rig.h.env.DB, BREAKER_KEY, rig.h.clock.now());
+    const a = await admin();
+    const op = await opOf(await clear(a.headers));
+    // A new trip lands before the run.
+    rig.h.clock.advance(60_000);
+    await bump(rig.h.env.DB, BREAKER_KEY, rig.h.clock.now());
+    await runNext(op);
+    const done = await read(op.id, a.headers);
+    expect(done.error?.code).toBe('IDP_BREAKER_RETRIPPED');
+    const left = await first<{ n: number }>(
+      rig.h.env.DB,
+      'SELECT count(*) AS n FROM counters WHERE key = ?',
+      [BREAKER_KEY],
+    );
+    expect(left?.n).toBe(1);
+    expect((await start(`/api/v1/operations/${op.id}/retry`, 'POST', a.headers)).status).toBe(409);
   });
 });
