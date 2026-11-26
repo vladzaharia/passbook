@@ -17,21 +17,13 @@ import {
   UploadTemplateQuerySchema,
   UploadTemplateResponseSchema,
 } from '../../../shared/contracts/index.ts';
-import { requireCaller } from '../../platform/auth.ts';
 import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
-import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { registerTemplateChannelRoutes } from '../channels/routes.ts';
-import {
-  authOf,
-  orgIdOf,
-  requireTenantSession,
-  requireTenantSessionOrApiKey,
-} from '../passes/http.ts';
+import { authOf, orgIdOf } from '../passes/http.ts';
 import { registerTemplateScanSetup } from '../scan/routes-template-setup.ts';
 import { eligibleTemplates } from './eligible.ts';
 import { cloneTemplate } from './fork.ts';
@@ -40,6 +32,7 @@ import { assignOrg } from './org-assignment.ts';
 import { registerTemplateReleaseFlow } from './release-flow-route.ts';
 import { TemplateScopeQuerySchema } from './route-scope.ts';
 import { registerBlueprints } from './routes-blueprints.ts';
+import { templatesGuard } from './routes-guard.ts';
 import {
   registerInputSchema,
   registerLifecycle,
@@ -59,41 +52,7 @@ import { VERSION_BODY_LIMIT } from './version-files.ts';
 export const templatesRoutes = createRouter({ bodyLimit: false });
 /** The archive upload and the version save (base64 images) have their own caps below. */
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
-/** Writes that declare their own `auth` (keys included): the router guard leaves them to it. */
-const OWN_AUTH_WRITES =
-  /^\/api\/v1\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|release|review|review-requests|preview)\/?$/;
-
-// A version save and its dry run also take a Workbench token (Test only: design §2.3), through the same
-// `requireCaller` path the token's other writes use. A plain API key still gets the session guard's 401.
-const VERSION_SAVE = /^\/api\/v1\/templates\/[^/]+\/versions\/?$/;
-const tokenVersionSave = requireCaller({
-  scope: 'templates:write',
-  capability: 'templates:author',
-});
-
-// Template reads allow scoped API keys; mutations require a session and are authorized per org.
-// The scan setup route declares its own `auth` (a session or a `scanning:write` key).
-const SCAN_SETUP = /^\/api\/v1\/templates\/[^/]+\/scan-setup$/;
-templatesRoutes.use(
-  '*',
-  declareKeyAccess(
-    async (c, next) =>
-      c.req.method === 'POST' && (SCAN_SETUP.test(c.req.path) || OWN_AUTH_WRITES.test(c.req.path))
-        ? next()
-        : c.req.method === 'POST' &&
-            VERSION_SAVE.test(c.req.path) &&
-            c.req.header('authorization')?.toLowerCase().includes(TRY_TOKEN_PREFIX)
-          ? tokenVersionSave(c, next)
-          : c.req.method === 'GET'
-            ? requireTenantSessionOrApiKey(
-                /\/templates\/eligible\/?$/.test(c.req.path)
-                  ? ['templates:read', 'passes:read']
-                  : 'templates:read',
-              )(c, next)
-            : requireTenantSession(c, next),
-    { read: ['templates:read'] },
-  ),
-);
+templatesRoutes.use('*', templatesGuard);
 templatesRoutes.use(
   '/uploads',
   bodyLimit({
