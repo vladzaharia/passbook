@@ -9,6 +9,8 @@ import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
   corrupt,
   decryptAccount,
+  type KeyOnlyAccount,
+  openAccount,
   type StoredCredentials,
   snapshotWalletCredentialContext,
 } from './account-credential-material.ts';
@@ -59,11 +61,12 @@ const isSamsung = (stored: StoredCredentials): stored is Samsung => stored.provi
 async function candidates(
   ctx: ServiceContext,
   row: Parameters<typeof enrolmentOf>[0] & { pin_version_id: string | null },
-  stored: StoredCredentials,
+  stored: StoredCredentials | KeyOnlyAccount,
 ): Promise<Samsung[]> {
+  if (!row.pin_version_id && stored.credentials === null) throw corrupt();
   const all = row.pin_version_id
     ? await historicalSources(ctx, enrolmentOf(row), stored, row.pin_version_id)
-    : [stored];
+    : [stored as StoredCredentials];
   if (!all.every(isSamsung)) throw corrupt();
   return all;
 }
@@ -95,7 +98,7 @@ export async function readSamsungTombstoneVerification(
     throw new ValidationError();
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findSamsungTombstoneCredential(ctx.env.DB, pinned);
-  const stored = row ? await decryptAccount(ctx, row) : null;
+  const stored = row ? await openAccount(ctx, row) : null;
   const found = row && stored ? await candidates(ctx, row, stored) : [];
   const [first, ...later] = found;
   if (!row || !first) return null;
@@ -155,7 +158,7 @@ export async function readSamsungIssuedRefVerification(
     throw new ValidationError();
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findSamsungIssuedRefCredential(ctx.env.DB, { ...pinned, operated: true });
-  const stored = row ? await decryptAccount(ctx, row) : null;
+  const stored = row ? await openAccount(ctx, row) : null;
   if (!row || !stored) return null;
   if (stored.provider !== 'samsung') throw corrupt();
   const found = await candidates(ctx, row, stored);

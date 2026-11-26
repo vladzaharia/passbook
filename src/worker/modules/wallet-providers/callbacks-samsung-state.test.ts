@@ -5,6 +5,7 @@ import { getSamsungRefreshTarget } from './callbacks-ref.ts';
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
 import { queueWalletOperation } from './queue-test-fixtures.ts';
+import { darkRows } from './release-test-fixtures.ts';
 import { findSamsungPromotedRefreshAccount } from './repo-accounts.ts';
 import { listSamsungCountryHints, putSamsungFetchRef } from './repo-callbacks.ts';
 import { inspectSamsungRetirement } from './repo-callbacks-retirement.ts';
@@ -548,6 +549,7 @@ describe('Samsung gate', () => {
       expiresAt: now + 60_000,
     };
     expect(await whileDisabledForTest(putSamsungFetchRef, t.kit.env.DB, scope, input)).toBeNull();
+    await darkRows(t.kit.env.DB);
     await expect(
       run(
         t.kit.env.DB,

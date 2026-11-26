@@ -12,7 +12,7 @@ import {
 import { type GoogleValidatedAccount, validateGoogleAccount } from './google-credentials.ts';
 import { providerIdentityHash } from './projection-contract.ts';
 import { isCurrentApprovedProjection } from './projection-current.ts';
-import { assertWalletProviderEnabled } from './provider-policy.ts';
+import { assertWalletProviderEnabled, assertWalletProviderRevokes } from './provider-policy.ts';
 import { releaseCardType } from './repo-card-type.ts';
 import { type ValidatedSamsungCredentials, validateSamsungCredentials } from './samsung.ts';
 
@@ -173,8 +173,10 @@ async function snapshot(
   provider: Provider,
   purpose?: RuntimeCredentialPurpose,
 ): Promise<WalletProviderCredentialSnapshot> {
-  // Every provider credential read, hence every outbound provider call, passes this gate.
-  assertWalletProviderEnabled(provider, scope.mode);
+  // Every provider credential read, hence every outbound provider call, passes this gate. A revoke reads under
+  // `retirement`, which draining still allows.
+  if (purpose?.kind === 'retirement') assertWalletProviderRevokes(provider, scope.mode);
+  else assertWalletProviderEnabled(provider, scope.mode);
   // A developer org never reads a provider credential, so it never mints, signs or calls out.
   await assertNotPreviewOnly(ctx.env.DB, scope.orgId);
   try {

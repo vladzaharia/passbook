@@ -38,7 +38,6 @@ export async function saveAccountConfiguration(
   scope: WalletProviderScope,
   input: {
     accountId: string;
-    isNew: boolean;
     expectedRevision: number;
     credentialId: string;
     /** `storedIdentityHash` of the new credential; the account epoch moves when it differs from the old one. */
@@ -53,14 +52,6 @@ export async function saveAccountConfiguration(
   const legacyAt = `a.id = ? AND a.org_id = {org} AND a.mode = {mode} AND a.provider = ?
       AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0`;
   const at = [input.accountId, scope.provider, input.expectedRevision];
-  if (input.isNew)
-    g.include(
-      writePart(
-        `INSERT INTO ${ACCOUNT} (id, org_id, mode, provider, revision, created_at, updated_at)
-        SELECT ?, {org}, {mode}, ?, 0, ?, ? WHERE {grant} ON CONFLICT DO NOTHING`,
-        [input.accountId, scope.provider, now, now],
-      ),
-    );
   g.include(
     writePart(
       `INSERT INTO wallet_provider_credentials

@@ -865,7 +865,10 @@ describe('revoking a new-model enrolment', () => {
         [uid(), org.id, revision, credential],
       );
     await refused(insert(1, null), /CHECK constraint failed/);
-    await refused(insert(0, 'legacy-credential'), /CHECK constraint failed/);
+    // The CHECK is under test; the database's own refusal of a new legacy row (0229) fires first, so it is lifted.
+    await withoutTrigger(db(), 'wallet_provider_accounts_no_new_legacy_insert', () =>
+      refused(insert(0, 'legacy-credential'), /CHECK constraint failed/),
+    );
   });
 });
 

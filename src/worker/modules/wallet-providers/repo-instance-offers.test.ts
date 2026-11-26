@@ -3,6 +3,7 @@ import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
+import { darkRows } from './release-test-fixtures.ts';
 import { consumeOffer, insertOffer, readOffer } from './repo-instance-offers.ts';
 import { seedHistoricalOfferRef } from './runtime-historical-fixtures.ts';
 
@@ -34,6 +35,7 @@ describe('wallet offer reference keyset authority', () => {
   it('binds insertion, reads and consumption to the pinned instance and operation commitment', async () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
+    await darkRows(db);
     const now = t.kit.clock.now();
     const commitment = await requireCredentialRefKeyset(db, t.kit.env);
     const other = commitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);

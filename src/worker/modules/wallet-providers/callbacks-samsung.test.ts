@@ -17,10 +17,11 @@ import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { setDownloadToken } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
-import { configureWalletProviderAccount, getWalletProviderReadiness } from './account-service.ts';
+import { getWalletProviderReadiness } from './account-service.ts';
 import { ensureSamsungFetchRef } from './callbacks-ref.ts';
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { consumeWalletOfferRef, readWalletPassSnapshot, walletOfferFresh } from './instance.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { offerPassSnapshot } from './offers-eligibility.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
@@ -320,7 +321,7 @@ describe('Samsung authenticated callback route', () => {
       provider: 'samsung' as const,
     };
     const account = await getWalletProviderReadiness(rotated.kit.ctx, scope);
-    await configureWalletProviderAccount(rotated.kit.ctx, rotated.auth, {
+    await configureOn(rotated.kit.ctx, rotated.auth, {
       ...scope,
       expectedRevision: account.revision,
       credentials: rotated.samsung,

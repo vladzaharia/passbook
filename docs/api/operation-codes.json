@@ -8454,6 +8454,13 @@
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
+  "wallet platform get /wallet-release": [
+    "FORBIDDEN",
+    "UNAUTHENTICATED",
+    "WALLET_ACCOUNT_CONFLICT",
+    "WALLET_ENROLMENT_HELD",
+    "WALLET_ENROLMENT_PREREQUISITE"
+  ],
   "wallet platform post /orgs/{orgId}/wallet-accounts/google/managed": [
     "NOT_FOUND",
     "ORG_NOT_FOUND",
@@ -8521,6 +8528,15 @@
     "NOT_FOUND",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT"
+  ],
+  "wallet platform post /wallet-release/{provider}/{mode}/enable-ready": [
+    "CONFLICT",
+    "FORBIDDEN",
+    "UNAUTHENTICATED",
+    "WALLET_ACCOUNT_CONFLICT",
+    "WALLET_ENROLMENT_HELD",
+    "WALLET_ENROLMENT_PREREQUISITE",
+    "WALLET_RELEASE_READY_CHANGED"
   ],
   "wallet platform put /wallet-credentials": [
     "CONFLICT",

@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
 import { e2eOrigin, e2ePorts } from './lib/e2e-ports.ts';
-import { ISSUANCE_GUARDS } from './lib/e2e-release.ts';
+import { E2E_RELEASE_SQL } from './lib/e2e-release.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const children: ChildProcess[] = [];
@@ -82,7 +82,8 @@ execFileSync(
   ],
   { cwd: root, stdio: 'inherit' },
 );
-// The e2e release: this throwaway database drops the triggers that refuse provider issuance. Production keeps them.
+// The e2e release: this throwaway database releases every provider and mode (wallet_provider_releases), so the
+// issuance guards run with their real bodies. Production changes the rows only through a flip migration.
 if (release)
   execFileSync(
     'npx',
@@ -95,7 +96,7 @@ if (release)
       '--persist-to',
       state,
       '--command',
-      ISSUANCE_GUARDS.map((name) => `DROP TRIGGER ${name};`).join(' '),
+      E2E_RELEASE_SQL,
     ],
     { cwd: root, stdio: 'inherit' },
   );

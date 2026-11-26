@@ -1,8 +1,9 @@
 // PE5e: projection candidates, approvals, releases and evidence follow the account authority_epoch, not
 // its revision (0148). A key rotation under the same identity keeps them; an identity change voids them.
 import { describe, expect, it } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first, run } from '../../platform/db.ts';
-import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
+import { configureOn, revokeOff } from './legacy-on-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import {
   approveOf,
@@ -24,14 +25,14 @@ installV2Env();
 const revisionOf = async (kit: Kit) => (await findAccount(S.env.DB, kit.scope))?.revision ?? -1;
 const epochOf = async (kit: Kit) => (await findAccount(S.env.DB, kit.scope))?.authority_epoch ?? -1;
 const rotate = async (kit: Kit) =>
-  configureWalletProviderAccount(kit.ctx, kit.author, {
+  configureOn(kit.ctx, kit.author, {
     ...kit.scope,
     expectedRevision: await revisionOf(kit),
     credentials: S.google,
   });
 /** The service keeps the issuer immutable, so an identity change is a revoke and a new configure. */
 const revoke = async (kit: Kit) =>
-  revokeWalletProviderAccount(kit.ctx, kit.author, {
+  revokeOff(kit.ctx, kit.author, {
     ...kit.scope,
     expectedRevision: await revisionOf(kit),
   });
@@ -114,7 +115,9 @@ describe('projection approvals and the account epoch', () => {
 });
 
 describe('0141 exemption scope', () => {
-  it('limits the version-author exemption to Google in the approval and release triggers', async () => {
+  // 0141 limited the system author's version-author exemption to Google. 0230 (Samsung system release) extends it to
+  // the platform's own Samsung candidates and to no other provider or author.
+  it('limits the version-author exemption to the platform author and Google or Samsung in the approval and release triggers', async () => {
     for (const name of [
       'template_provider_approvals_insert',
       'template_approvals_insert',
@@ -126,8 +129,12 @@ describe('0141 exemption scope', () => {
         [name],
       );
       expect(row?.sql, name).toContain(
+        "c.author_id = 'system:wallet-projection' AND c.provider IN ('google', 'samsung')",
+      );
+      expect(row?.sql, name).not.toContain(
         "c.author_id = 'system:wallet-projection' AND c.provider = 'google'",
       );
+      expect(row?.sql, name).not.toMatch(/system:wallet-projection'\s+OR/);
     }
   });
 });
@@ -138,13 +145,17 @@ describe('wallet_provider_accounts no-replace', () => {
     await revoke(kit);
     const before = await epochOf(kit);
     expect(before).toBeGreaterThan(1);
-    await expect(
-      run(
-        S.env.DB,
-        'INSERT OR REPLACE INTO wallet_provider_accounts SELECT * FROM wallet_provider_accounts WHERE id = ?',
-        [(await findAccount(S.env.DB, kit.scope))?.id],
-      ),
-    ).rejects.toThrow(/provider account identity is immutable/);
+    // The replace re-inserts a legacy row, which the database also refuses outright (0229); this is the identity rule.
+    const id = (await findAccount(S.env.DB, kit.scope))?.id;
+    await withoutTrigger(S.env.DB, 'wallet_provider_accounts_no_new_legacy_insert', () =>
+      expect(
+        run(
+          S.env.DB,
+          'INSERT OR REPLACE INTO wallet_provider_accounts SELECT * FROM wallet_provider_accounts WHERE id = ?',
+          [id],
+        ),
+      ).rejects.toThrow(/provider account identity is immutable/),
+    );
     expect(await epochOf(kit)).toBe(before);
   });
 });
