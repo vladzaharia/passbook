@@ -51,6 +51,29 @@ export function assertTokenIds(value: unknown): string[] {
   return [...new Set((value as unknown[]).map((v) => assertId('token id', v)))];
 }
 
+/** At most two SHA-256 hex digests: the candidate SCIM tokens `setupStatus` compares with the live one. */
+export function assertTokenHashes(value: unknown): string[] {
+  if (value === undefined) return [];
+  if (
+    !Array.isArray(value) ||
+    value.length > 2 ||
+    value.some((h) => typeof h !== 'string' || !/^[0-9a-f]{64}$/.test(h))
+  )
+    refuse('Invalid token hashes.');
+  return value as string[];
+}
+
+/** A SCIM token: base64url, 43 to 128 chars. The message never carries the value. */
+export function assertScimToken(value: unknown): string {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(value)) refuse('Invalid token.');
+  return value as string;
+}
+
+export async function sha256Hex(text: string): Promise<string> {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 const REASON = /^[a-z][a-z0-9_]{0,39}$/;
 export function assertReason(value: unknown): string {
   if (typeof value !== 'string' || !REASON.test(value)) refuse('Invalid reason.');

@@ -13,6 +13,8 @@ export const IDP_CODES = [
   'IDP_BREAKER',
   'IDP_NOT_MANAGED',
   'IDP_IN_USE',
+  'IDP_CLIENT',
+  'IDP_SCIM_FOREIGN',
 ] as const;
 export type IdpCode = (typeof IDP_CODES)[number];
 

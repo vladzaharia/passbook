@@ -104,7 +104,11 @@ export async function recordAdoptedNames(
   const known = new Set(
     (await listGroupRows(db)).filter((x) => x.kind === 'adopted').map((x) => x.key),
   );
-  const taken = [...base.entries.map((e) => e.name), ...base.unplaced.map((u) => u.name)];
+  const taken = [
+    ...base.entries.map((e) => e.name),
+    ...base.unplaced.map((u) => u.name),
+    ...base.unplacedProtected.map((u) => u.name),
+  ];
   const refused: string[] = [];
   for (const a of settings.adopt.filter((x) => !known.has(x.key))) {
     const name = await nameFromList(req, r, a.id);

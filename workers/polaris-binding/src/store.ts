@@ -147,3 +147,8 @@ export async function writeHealth(db: D1Database, h: HealthCore): Promise<void> 
     )
     .run();
 }
+
+/** Forgets the cached health read, so the next write re-reads Polaris ID after a setup change. */
+export async function invalidateHealth(db: D1Database): Promise<void> {
+  await db.prepare('DELETE FROM idp_health WHERE id = 1').run();
+}

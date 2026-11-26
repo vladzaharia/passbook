@@ -111,10 +111,18 @@ async function probe(
   const cfg = settings_(config.body);
   const warnings = await clientWarnings(env, r, registry, req);
   for (const u of registry.unplaced) warnings.push(`role_unplaced:${u.role}`);
+  // A protected role is unplaced while none of its names has an id. Admin unplaced stops every write.
+  const placedRoles = new Set(registry.entries.map((e) => e.role));
+  const unplacedProtected = [
+    ...new Set(registry.unplacedProtected.map((u) => u.role).filter((r) => !placedRoles.has(r))),
+  ];
+  for (const role of unplacedProtected)
+    if (role !== 'platform_admin') warnings.push(`role_unplaced:${role}`);
   if (defaultClaimsManaged(cfg.signupDefaultCustomClaims, settings.claimKeys))
     warnings.push('default_claims_managed');
   return {
     unsafe: [
+      ...(unplacedProtected.includes('platform_admin') ? ['role_unplaced:platform_admin'] : []),
       ...configReasons(cfg, live),
       // Without the key user's id the binding cannot refuse to edit it.
       ...(keySubject ? [] : ['key_user_unknown']),
@@ -212,6 +220,23 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
     };
   }
 
+  /**
+   * The gate of the seven setup writes: not frozen and the deployment's own settings parse. Polaris ID's
+   * configuration is not read: these writes only tighten PassBook's own client, and they must run before the
+   * platform admin group is placed, which is the one thing that keeps every other write refused.
+   */
+  async function requireSetup(m: Meta): Promise<{ registry: Registry; settings: Settings }> {
+    await assertNotFrozen(db, m, deps.now());
+    if (own.reasons.length || !base || !settings) {
+      await logRefusal(db, m, deps.now(), 'IDP_UNSAFE_CONFIG');
+      throw new IdpError(
+        'IDP_UNSAFE_CONFIG',
+        `Unsafe binding settings: ${own.reasons.join(', ')}.`,
+      );
+    }
+    return { registry: await compose(), settings };
+  }
+
   /** The static registry when the settings parse, so a request can be refused before any Polaris ID read. */
   const peek = (): Registry | null => base;
 
@@ -240,6 +265,6 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
     };
   }
 
-  return { requireWrite, readable, peek, health };
+  return { requireWrite, requireSetup, readable, peek, health };
 }
 export type Gate = ReturnType<typeof createGate>;

@@ -24,6 +24,13 @@ export function routes(layout: Layout) {
     config: admin ? '/api/admin/application-configuration' : '/api/application-configuration/all',
     apiKeys: '/api/api-keys',
     client: (cid: string) => `${base}/oidc/clients/${assertClientId(cid)}`,
+    /** PUT to the client path writes its settings; the allowed groups and the SCIM connection hang off it. */
+    clientGroups: (cid: string) =>
+      `${base}/oidc/clients/${assertClientId(cid)}/allowed-user-groups`,
+    scimOf: (cid: string) => `${base}/oidc/clients/${assertClientId(cid)}/scim-service-provider`,
+    scimCreate: `${base}/scim/service-provider`,
+    scim: (pid: string) => `${base}/scim/service-provider/${id('provider id', pid)}`,
+    scimSync: (pid: string) => `${base}/scim/service-provider/${id('provider id', pid)}/sync`,
     signupTokens: `${base}/signup-tokens`,
     signupToken: (tid: string) => `${base}/signup-tokens/${id('token id', tid)}`,
     auditLogs: (page: number) =>
@@ -42,9 +49,10 @@ export type Routes = ReturnType<typeof routes>;
 /**
  * Every request the binding may send, as method and path pattern. `pocketRequest` refuses anything else, so
  * Never allowed: POST or DELETE of users, one-time access tokens, `PUT user-groups/{id}/users` (a whole-group
- * replace), `PUT oidc/clients/{id}/allowed-user-groups`, any OIDC client write, `GET custom-claims/suggestions`
- * (every app's keys), config writes and API key writes. The group and claim writes that are allowed are called
- * only through group-admin.ts and api-claims.ts. A test lists what the RPCs actually send.
+ * replace), `POST oidc/clients`, `DELETE oidc/clients/*`, client secrets, client refresh, any client but the
+ * configured one, `DELETE scim/service-provider/*`, `GET custom-claims/suggestions` (every app's keys), config
+ * writes and API key writes. The group, claim, client and SCIM writes that are allowed are called only through
+ * group-admin.ts, api-claims.ts and setup-*.ts. A test lists what the RPCs actually send.
  * The client path is the configured client's exact encoded literal. `~` is allowed there and nowhere else:
  * Polaris ID decodes `~` in every `:id`, so `~bWU` on a user route would reach it as `me`.
  */
@@ -72,7 +80,22 @@ export function allowedRoutes(
     rule('GET', config),
     rule('GET', '/api/api-keys'),
     ...(clientIdOk(clientId)
-      ? [rule('GET', `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}`)]
+      ? [
+          ...['GET', 'PUT'].map((m) =>
+            rule(m, `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}`),
+          ),
+          rule(
+            'PUT',
+            `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}/allowed-user-groups`,
+          ),
+          rule(
+            'GET',
+            `${base}/oidc/clients/${escapeRegExp(encodeClientId(clientId))}/scim-service-provider`,
+          ),
+          rule('POST', `${base}/scim/service-provider`),
+          rule('PUT', `${base}/scim/service-provider/${id}`),
+          rule('POST', `${base}/scim/service-provider/${id}/sync`),
+        ]
       : []),
     rule('GET', `${base}/users/me`),
     rule('GET', `${base}/users`),

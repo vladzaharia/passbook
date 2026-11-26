@@ -45,6 +45,11 @@ export function encodeClientId(v: string): string {
   return `~${btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
 }
 
+/** PassBook's own origin, derived from a CIMD client id. A plain registered id has none. */
+export function passbookOrigin(v: string): string | null {
+  return clientIdOk(v) && !PLAIN_CLIENT.test(v) ? new URL(v).origin : null;
+}
+
 export const GROUP_KEY = /^[a-z][a-z0-9_]{1,39}$/;
 const ROLES: readonly Role[] = [...WRITABLE_ROLES, 'platform_admin', 'users'];
 const PROTECTED_ROLES: readonly Role[] = ['platform_admin', 'users'];
@@ -75,10 +80,17 @@ export interface Custom {
   deleting?: boolean;
 }
 
+/** A protected group the config names without an id: `placeRoleGroups` records it when it exists. */
+export interface UnplacedProtected {
+  role: Role;
+  name: string;
+}
+
 export interface Registry {
   entries: Entry[];
   writable: Entry[];
   unplaced: Unplaced[];
+  unplacedProtected: UnplacedProtected[];
   /** Groups the binding never writes. */
   protectedIds: string[];
   /** Platform admin groups: their members are never edited. */
@@ -107,13 +119,19 @@ export interface Settings {
 
 const text = (v: unknown): string => (typeof v === 'string' ? v : '');
 
-function build(entries: Entry[], unplaced: Unplaced[], custom: Custom[]): Registry {
+function build(
+  entries: Entry[],
+  unplaced: Unplaced[],
+  custom: Custom[],
+  unplacedProtected: UnplacedProtected[] = [],
+): Registry {
   const writable = entries.filter((e) => !e.protected);
   const ids = entries.map((e) => e.id);
   return {
     entries,
     writable,
     unplaced,
+    unplacedProtected,
     ids,
     custom,
     protectedIds: entries.filter((e) => e.protected).map((e) => e.id),
@@ -132,23 +150,29 @@ function build(entries: Entry[], unplaced: Unplaced[], custom: Custom[]): Regist
   };
 }
 
-/** Adds the groups the binding recorded: role groups it created, custom and adopted groups. */
+/** Adds the groups the binding recorded: role groups it created or adopted, protected groups it found, custom and adopted groups. */
 export function withRecorded(
   base: Registry,
-  roles: { role: WritableRole; id: string; name: string }[],
+  roles: { role: Role; id: string; name: string; protected?: boolean }[],
   custom: Custom[],
 ): Registry {
   const entries = [
     ...base.entries,
     ...roles
-      .filter((r) => !base.entries.some((e) => e.role === r.role))
-      .map((r) => ({ role: r.role, id: r.id, name: r.name, protected: false })),
+      .filter((r) =>
+        r.protected
+          ? !base.entries.some((e) => e.id === r.id)
+          : !base.entries.some((e) => e.role === r.role),
+      )
+      .map((r) => ({ role: r.role, id: r.id, name: r.name, protected: r.protected === true })),
   ];
-  const placed = new Set(roles.map((r) => r.role));
+  const placed = new Set(roles.filter((r) => !r.protected).map((r) => r.role));
+  const placedNames = new Set(roles.filter((r) => r.protected).map((r) => r.name));
   return build(
     entries,
     base.unplaced.filter((u) => !placed.has(u.role)),
     custom,
+    base.unplacedProtected.filter((u) => !placedNames.has(u.name)),
   );
 }
 
@@ -224,6 +248,7 @@ export function parseRegistry(env: BindingEnv): {
   if (!prefix) reasons.add('env_group_prefix');
   const entries: Entry[] = [];
   const unplaced: Unplaced[] = [];
+  const unplacedProtected: UnplacedProtected[] = [];
   const names: string[] = [];
   for (const [role, value] of Object.entries(raw)) {
     if (!ROLES.includes(role as Role)) return bad('env_groups');
@@ -245,8 +270,12 @@ export function parseRegistry(env: BindingEnv): {
       // A writable name that reads as an admin group is a misconfigured admin group.
       if (!isProtected && /admin/i.test(v.name)) reasons.add('group_admin_name');
       names.push(v.name);
-      const noId = v.id === undefined || v.id === null;
-      if (noId && !isProtected) {
+      const noId = v.id === undefined || v.id === null || v.id === '';
+      if (noId && isProtected) {
+        unplacedProtected.push({ role: role as Role, name: v.name });
+        continue;
+      }
+      if (noId) {
         const friendly = typeof v.friendlyName === 'string' ? v.friendlyName : v.name;
         if (friendly.length < 2 || friendly.length > 50) return bad('env_groups');
         unplaced.push({ role: role as WritableRole, name: v.name, friendlyName: friendly });
@@ -260,8 +289,14 @@ export function parseRegistry(env: BindingEnv): {
   if ((!entries.some((e) => !e.protected) && !unplaced.length) || new Set(ids).size !== ids.length)
     return bad('env_groups');
   // Without the admin group nothing can tell an admin from a member, so there is no write at all.
-  if (!entries.some((e) => e.role === 'platform_admin')) return bad('env_groups');
-  const protectedNames = entries.filter((e) => e.protected).map((e) => e.name);
+  const hasAdmin =
+    entries.some((e) => e.role === 'platform_admin') ||
+    unplacedProtected.some((u) => u.role === 'platform_admin');
+  if (!hasAdmin) return bad('env_groups');
+  const protectedNames = [
+    ...entries.filter((e) => e.protected).map((e) => e.name),
+    ...unplacedProtected.map((u) => u.name),
+  ];
   if (
     [
       ...entries.filter((e) => !e.protected).map((e) => e.name),
@@ -272,7 +307,11 @@ export function parseRegistry(env: BindingEnv): {
   if (new Set(names).size !== names.length && !reasons.has('group_protected'))
     return bad('env_groups');
   const settings = parseSettings(env, reasons, ids, names);
-  return { registry: build(entries, unplaced, []), settings, reasons: [...reasons] };
+  return {
+    registry: build(entries, unplaced, [], unplacedProtected),
+    settings,
+    reasons: [...reasons],
+  };
 }
 
 export type { Target };

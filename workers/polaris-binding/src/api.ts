@@ -8,11 +8,15 @@ import { createGate } from './health.ts';
 import { readCalls } from './ledger.ts';
 import type { Deps } from './pocket-http.ts';
 import { routes } from './routes.ts';
+import { setupClientApi } from './setup-client.ts';
+import { setupGroupsApi } from './setup-groups.ts';
+import { setupScimApi } from './setup-scim.ts';
+import { setupStatusApi } from './setup-status.ts';
 import type { Shared } from './shared.ts';
-import type { BindingEnv, IdpRpc } from './types.ts';
+import type { BindingEnv, IdpRpc, SetupRpc } from './types.ts';
 
 /** The binding's RPC methods over injectable I/O. The entrypoint class only delegates here. */
-export function createApi(env: BindingEnv, deps: Deps): IdpRpc {
+export function createApi(env: BindingEnv, deps: Deps): IdpRpc & SetupRpc {
   const r = routes(env.POCKET_ID_API === 'admin' ? 'admin' : 'v2');
   const call = createCall(env, deps);
   const gate = createGate(env, deps, call, r);
@@ -32,6 +36,10 @@ export function createApi(env: BindingEnv, deps: Deps): IdpRpc {
     ...directoryApi(shared),
     ...groupAdminApi(shared),
     ...claimsApi(shared),
+    ...setupStatusApi(shared),
+    ...setupGroupsApi(shared),
+    ...setupClientApi(shared),
+    ...setupScimApi(shared),
     calls: (since, afterId) => readCalls(env.DB, Number(since), Number(afterId ?? 0)),
   };
 }
