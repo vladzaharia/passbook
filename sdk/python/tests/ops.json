@@ -4117,6 +4117,285 @@
   }
  },
  {
+  "id": "operations.getOperations",
+  "call": "operations.list",
+  "http": "GET",
+  "path": "/api/v1/operations",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "kind": "x",
+     "status": "queued",
+     "title": "x",
+     "text": "x",
+     "orgId": "x",
+     "mode": "live",
+     "target": {
+      "type": "x",
+      "id": "x"
+     },
+     "step": "x",
+     "steps": [
+      {
+       "key": "x",
+       "label": "x",
+       "state": "pending",
+       "done": 0,
+       "total": 0,
+       "detail": "x",
+       "until": 0,
+       "waitingReason": "blocked",
+       "group": "x",
+       "startedAt": 0,
+       "finishedAt": 0
+      }
+     ],
+     "attempt": 0,
+     "cancelable": false,
+     "cancelRequested": false,
+     "startedBy": {
+      "type": "user",
+      "id": "x"
+     },
+     "createdAt": 0,
+     "startedAt": 0,
+     "updatedAt": 0,
+     "finishedAt": 0,
+     "error": {
+      "code": "x",
+      "message": "x",
+      "step": "x",
+      "retryable": false
+     },
+     "result": {
+      "href": "x",
+      "ids": {}
+     },
+     "revision": 0,
+     "pollAfterMs": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "operations.getOperationsById",
+  "call": "operations.retrieve",
+  "http": "GET",
+  "path": "/api/v1/operations/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "kind": "x",
+   "status": "queued",
+   "title": "x",
+   "text": "x",
+   "orgId": "x",
+   "mode": "live",
+   "target": {
+    "type": "x",
+    "id": "x"
+   },
+   "step": "x",
+   "steps": [
+    {
+     "key": "x",
+     "label": "x",
+     "state": "pending",
+     "done": 0,
+     "total": 0,
+     "detail": "x",
+     "until": 0,
+     "waitingReason": "blocked",
+     "group": "x",
+     "startedAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "attempt": 0,
+   "cancelable": false,
+   "cancelRequested": false,
+   "startedBy": {
+    "type": "user",
+    "id": "x"
+   },
+   "createdAt": 0,
+   "startedAt": 0,
+   "updatedAt": 0,
+   "finishedAt": 0,
+   "error": {
+    "code": "x",
+    "message": "x",
+    "step": "x",
+    "retryable": false
+   },
+   "result": {
+    "href": "x",
+    "ids": {}
+   },
+   "revision": 0,
+   "pollAfterMs": 0
+  }
+ },
+ {
+  "id": "operations.postOperationsByIdCancel",
+  "call": "operations.cancel",
+  "http": "POST",
+  "path": "/api/v1/operations/{id}/cancel",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "kind": "x",
+   "status": "queued",
+   "title": "x",
+   "text": "x",
+   "orgId": "x",
+   "mode": "live",
+   "target": {
+    "type": "x",
+    "id": "x"
+   },
+   "step": "x",
+   "steps": [
+    {
+     "key": "x",
+     "label": "x",
+     "state": "pending",
+     "done": 0,
+     "total": 0,
+     "detail": "x",
+     "until": 0,
+     "waitingReason": "blocked",
+     "group": "x",
+     "startedAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "attempt": 0,
+   "cancelable": false,
+   "cancelRequested": false,
+   "startedBy": {
+    "type": "user",
+    "id": "x"
+   },
+   "createdAt": 0,
+   "startedAt": 0,
+   "updatedAt": 0,
+   "finishedAt": 0,
+   "error": {
+    "code": "x",
+    "message": "x",
+    "step": "x",
+    "retryable": false
+   },
+   "result": {
+    "href": "x",
+    "ids": {}
+   },
+   "revision": 0,
+   "pollAfterMs": 0
+  }
+ },
+ {
+  "id": "operations.postOperationsByIdRetry",
+  "call": "operations.retry",
+  "http": "POST",
+  "path": "/api/v1/operations/{id}/retry",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "kind": "x",
+   "status": "queued",
+   "title": "x",
+   "text": "x",
+   "orgId": "x",
+   "mode": "live",
+   "target": {
+    "type": "x",
+    "id": "x"
+   },
+   "step": "x",
+   "steps": [
+    {
+     "key": "x",
+     "label": "x",
+     "state": "pending",
+     "done": 0,
+     "total": 0,
+     "detail": "x",
+     "until": 0,
+     "waitingReason": "blocked",
+     "group": "x",
+     "startedAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "attempt": 0,
+   "cancelable": false,
+   "cancelRequested": false,
+   "startedBy": {
+    "type": "user",
+    "id": "x"
+   },
+   "createdAt": 0,
+   "startedAt": 0,
+   "updatedAt": 0,
+   "finishedAt": 0,
+   "error": {
+    "code": "x",
+    "message": "x",
+    "step": "x",
+    "retryable": false
+   },
+   "result": {
+    "href": "x",
+    "ids": {}
+   },
+   "revision": 0,
+   "pollAfterMs": 0
+  }
+ },
+ {
   "id": "developer-invitations.getOrgsByIdDeveloperInvitations",
   "call": "developer_invitations.list",
   "http": "GET",

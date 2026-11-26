@@ -4377,6 +4377,213 @@ export type NfcTagsUpdateResponse = {
   } | null;
 };
 
+export type OperationsCancelResponse = {
+  id: string;
+  kind: string;
+  status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  title: string;
+  text: string;
+  orgId: string | null;
+  mode: "live" | "test" | null;
+  target: {
+    type: string;
+    id: string;
+  } | null;
+  step: string | null;
+  steps: Array<{
+    key: string;
+    label: string;
+    state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+    done: number | null;
+    total: number | null;
+    detail: string | null;
+    until: number | null;
+    waitingReason: "blocked" | "due" | null;
+    group: string | null;
+    startedAt: number | null;
+    finishedAt: number | null;
+  }>;
+  attempt: number;
+  cancelable: boolean;
+  cancelRequested: boolean;
+  startedBy: {
+    type: "user" | "api_key" | "system";
+    id: string | null;
+  };
+  createdAt: number;
+  startedAt: number | null;
+  updatedAt: number;
+  finishedAt: number | null;
+  error: {
+    code: string;
+    message: string;
+    step: string | null;
+    retryable: boolean;
+  } | null;
+  result: {
+    href: string | null;
+    ids: Record<string, string>;
+  } | null;
+  revision: number;
+  pollAfterMs: number;
+};
+
+export type OperationsListResponse = {
+  items: Array<{
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type OperationsRetrieveResponse = {
+  id: string;
+  kind: string;
+  status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  title: string;
+  text: string;
+  orgId: string | null;
+  mode: "live" | "test" | null;
+  target: {
+    type: string;
+    id: string;
+  } | null;
+  step: string | null;
+  steps: Array<{
+    key: string;
+    label: string;
+    state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+    done: number | null;
+    total: number | null;
+    detail: string | null;
+    until: number | null;
+    waitingReason: "blocked" | "due" | null;
+    group: string | null;
+    startedAt: number | null;
+    finishedAt: number | null;
+  }>;
+  attempt: number;
+  cancelable: boolean;
+  cancelRequested: boolean;
+  startedBy: {
+    type: "user" | "api_key" | "system";
+    id: string | null;
+  };
+  createdAt: number;
+  startedAt: number | null;
+  updatedAt: number;
+  finishedAt: number | null;
+  error: {
+    code: string;
+    message: string;
+    step: string | null;
+    retryable: boolean;
+  } | null;
+  result: {
+    href: string | null;
+    ids: Record<string, string>;
+  } | null;
+  revision: number;
+  pollAfterMs: number;
+};
+
+export type OperationsRetryResponse = {
+  id: string;
+  kind: string;
+  status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  title: string;
+  text: string;
+  orgId: string | null;
+  mode: "live" | "test" | null;
+  target: {
+    type: string;
+    id: string;
+  } | null;
+  step: string | null;
+  steps: Array<{
+    key: string;
+    label: string;
+    state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+    done: number | null;
+    total: number | null;
+    detail: string | null;
+    until: number | null;
+    waitingReason: "blocked" | "due" | null;
+    group: string | null;
+    startedAt: number | null;
+    finishedAt: number | null;
+  }>;
+  attempt: number;
+  cancelable: boolean;
+  cancelRequested: boolean;
+  startedBy: {
+    type: "user" | "api_key" | "system";
+    id: string | null;
+  };
+  createdAt: number;
+  startedAt: number | null;
+  updatedAt: number;
+  finishedAt: number | null;
+  error: {
+    code: string;
+    message: string;
+    step: string | null;
+    retryable: boolean;
+  } | null;
+  result: {
+    href: string | null;
+    ids: Record<string, string>;
+  } | null;
+  revision: number;
+  pollAfterMs: number;
+};
+
 export type Org = {
   id: string;
   slug: string;
@@ -8205,6 +8412,7 @@ export type Problem = {
   limit?: number;
   used?: number;
   signInUrl?: string;
+  operationId?: string;
 };
 
 export type PushFailedEvent = {
