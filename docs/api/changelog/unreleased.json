@@ -1726,7 +1726,7 @@
     "operationId": "wallet-identities.getPlatformAppleIdentities",
     "op": "GET /api/v1/platform/apple/identities",
     "change": "200.items[].readiness: field added",
-    "note": "Each platform identity reports the checks that making it the default makes: certificate, issuing, push health, a push probe within 24 hours and a device test in a platform admin's personal org."
+    "note": "Each platform identity reports the checks Make default runs: certificate, issuing, push, probe within 24 hours, device test."
   },
   {
     "key": "GET /api/v1/platform/apple/identities new operation",
