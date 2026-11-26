@@ -15,8 +15,9 @@ describe('legacyHref', () => {
       body: { input: { a: 1 } },
       query: { dry: '1' },
     });
-    // Read once: the second read finds nothing.
-    expect(readPrefill('n1')).toBeNull();
+    // The stored entry is gone after the first read; a remount in the same page still has it.
+    expect(sessionStorage.getItem('wb-prefill:n1')).toBeNull();
+    expect(readPrefill('n1')).not.toBeNull();
   });
 
   it('keeps a plain operation as `?op=` and drops a body that is not JSON', () => {

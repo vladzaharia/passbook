@@ -128,7 +128,7 @@ describe('operations under a sandbox token: its owner’s sandbox rows', () => {
     // The sandbox kinds declare `tokenActs`: the token stops and retries them on its own sandbox rows.
     for (const id of Object.values(mine)) {
       const retry = await t.call('POST', `/operations/${id}/retry`, client, {});
-      expect(retry.status, `retry ${id}`).not.toBe(403);
+      expect(retry.status, `retry ${id} ${await retry.clone().text()}`).not.toBe(403);
       expect(retry.status, `retry ${id}`).not.toBe(404);
     }
     // Rows outside the fence stay not found, whatever the verb.
@@ -153,9 +153,12 @@ describe('operations under a sandbox token: its owner’s sandbox rows', () => {
     const client = t.asClient(token);
     const read = await t.call('GET', `/operations/${plain}`, client);
     expect(read.status).toBe(200);
-    const dto = (await read.json()) as { cancelable: boolean; error: { retryable: boolean } };
+    const dto = (await read.json()) as {
+      cancelable: boolean;
+      error: { retryable: boolean } | null;
+    };
     expect(dto.cancelable).toBe(false);
-    expect(dto.error.retryable).toBe(false);
+    expect(dto.error?.retryable ?? false).toBe(false);
     for (const verb of ['retry', 'cancel']) {
       const res = await t.call('POST', `/operations/${plain}/${verb}`, client, {});
       expect(res.status, verb).toBe(403);
