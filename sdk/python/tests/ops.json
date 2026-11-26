@@ -2311,7 +2311,8 @@
   "cursor": null,
   "result": {
    "runId": "x",
-   "workflowInstanceId": "x"
+   "workflowInstanceId": "x",
+   "operationId": "x"
   }
  },
  {
@@ -6161,7 +6162,8 @@
      "id": "x",
      "code": "x"
     }
-   ]
+   ],
+   "operationId": "x"
   }
  },
  {
@@ -6219,7 +6221,8 @@
   "raw": false,
   "cursor": null,
   "result": {
-   "workflowInstanceId": "x"
+   "workflowInstanceId": "x",
+   "operationId": "x"
   }
  },
  {
@@ -12021,7 +12024,8 @@
   "cursor": null,
   "result": {
    "reissueId": "x",
-   "instances": 0
+   "instances": 0,
+   "operationId": "x"
   }
  },
  {

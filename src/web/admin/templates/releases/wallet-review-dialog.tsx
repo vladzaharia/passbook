@@ -18,7 +18,7 @@ import {
 import { useReleaseLists } from './api.ts';
 import { PROVIDER } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
-import { type Omission, walletReview } from './wallet-review.ts';
+import { newestRelease, type Omission, walletReview } from './wallet-review.ts';
 import { useWalletApproval } from './wallet-review-api.ts';
 
 export interface WalletReviewDialogProps {
@@ -111,7 +111,12 @@ export default function WalletReviewDialog({
   const loading = !candidates.isError && !releases.isError && (!candidates.data || !releases.data);
   const review =
     current && releases.data && candidates.data
-      ? walletReview(current, releases.data.active, candidates.data.items)
+      ? walletReview(
+          current,
+          releases.data.active,
+          candidates.data.items,
+          newestRelease(releases.data.items),
+        )
       : null;
   const author = capabilities.includes('templates:author');
   const reviewer = capabilities.includes('templates:review');
@@ -136,7 +141,11 @@ export default function WalletReviewDialog({
     (max, r) => Math.max(max, r.generation),
     0,
   );
-  const canApprove = reviewer && (author || existing !== undefined);
+  // Approving your own work is refused unless you are alone (`approvalKind`): the list says whose
+  // work it is, `alone` is the release state's. A new candidate would be yours.
+  const ownWork = existing ? existing.selfAuthored === true : true;
+  const mustRequest = ownWork && !alone;
+  const canApprove = reviewer && (author || existing !== undefined) && !mustRequest;
 
   async function submit(mode: 'approve' | 'release' | 'request') {
     if (!current) return;
@@ -227,7 +236,16 @@ export default function WalletReviewDialog({
           ) : (
             <>
               {review.kind === 'review' ? (
-                <Callout tone="warning" title="Review needed: new omission" />
+                <Callout
+                  tone="warning"
+                  title={
+                    pending.length > 0 ? 'Review needed: new omission' : 'Review needed: new type'
+                  }
+                >
+                  {review.typeChanged
+                    ? `Now ${review.typeChanged.to}, approved as ${review.typeChanged.from}.`
+                    : null}
+                </Callout>
               ) : null}
               {items.length === 0 ? (
                 <EmptyState art="wallet" title="Nothing is left out" />
@@ -276,7 +294,13 @@ export default function WalletReviewDialog({
                   You are the only reviewer. This approves your own work.
                 </Callout>
               ) : null}
-              {open && !canApprove && !existing ? (
+              {open && mustRequest && reviewer ? (
+                <Callout tone="info">
+                  {existing
+                    ? 'Another reviewer must approve this. Review is requested.'
+                    : 'Another reviewer must approve this. Request a review.'}
+                </Callout>
+              ) : open && !canApprove && !existing ? (
                 <Callout tone="info">No review is requested yet.</Callout>
               ) : null}
             </>

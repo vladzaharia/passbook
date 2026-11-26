@@ -151,25 +151,29 @@
   "me.deleteMePassesById": {
     "response": {
       "transferId": "0193a1b2-7c00-7000-8000-0cc606e8ee52",
-      "state": "completed"
+      "state": "completed",
+      "operationId": "0193a1b2-7c00-7000-8000-63650d8198ea"
     }
   },
   "me.postMePassesByIdRefresh": {
     "response": {
       "accepted": true,
       "requestedAt": 1795570500000,
-      "cooldownSeconds": 16
+      "cooldownSeconds": 16,
+      "operationId": "0193a1b2-7c00-7000-8000-89e7b376f249"
     }
   },
   "me.postMePassesByIdResend": {
     "response": {
-      "ok": true
+      "ok": true,
+      "operationId": "0193a1b2-7c00-7000-8000-0ad5c2baa7ca"
     }
   },
   "me.postMePassesByIdLostPhone": {
     "response": {
       "transferId": "0193a1b2-7c00-7000-8000-252b8f18d5c4",
-      "state": "completed"
+      "state": "completed",
+      "operationId": "0193a1b2-7c00-7000-8000-4cacc5e67167"
     }
   },
   "me.getMePassRemovalsById": {
@@ -250,6 +254,11 @@
     }
   },
   "me.deleteMeSessionsById": {
+    "response": {
+      "ok": true
+    }
+  },
+  "me.postMePassesByIdLostPhoneConfirmation": {
     "response": {
       "ok": true
     }

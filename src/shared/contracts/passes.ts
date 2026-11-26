@@ -321,4 +321,8 @@ export const BulkReissueSchema = z
     message: 'templateId is required unless re-signing an identity.',
     path: ['templateId'],
   });
-export const BulkReissueResponseSchema = z.object({ workflowInstanceId: z.string() });
+export const BulkReissueResponseSchema = z.object({
+  workflowInstanceId: z.string(),
+  /** The operation that shows the run; null for a run with no operation (a platform-wide rebuild). */
+  operationId: z.string().nullable(),
+});

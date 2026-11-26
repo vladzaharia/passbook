@@ -55,6 +55,8 @@ export const TemplateCandidateSchema = z.object({
   accountRevision: z.number().int().positive().optional(),
   providerIdentityHash: z.string().optional(),
   projection: z.unknown().optional(),
+  /** Wallet lists, for a signed-in person: approving this would be their own work (`approvalKind`'s rule). */
+  selfAuthored: z.boolean().optional(),
   approvals: z.array(TemplateApprovalSchema),
 });
 export type TemplateCandidate = z.infer<typeof TemplateCandidateSchema>;
@@ -99,6 +101,8 @@ export type TemplateCandidateCurrent = z.infer<typeof TemplateCandidateCurrentSc
 export const TemplateCandidateListSchema = pageOf(TemplateCandidateSchema).extend({
   /** Google and Samsung lists only; absent when there is no Apple release or the report did not compile. */
   current: TemplateCandidateCurrentSchema.optional(),
+  /** Google and Samsung lists, for a caller who can review the template: the wallet's state for this organization and mode. */
+  wallet: z.enum(['on', 'off', 'not_released']).optional(),
 });
 export type TemplateCandidateList = z.infer<typeof TemplateCandidateListSchema>;
 export const TemplateReleaseListSchema = z.object({

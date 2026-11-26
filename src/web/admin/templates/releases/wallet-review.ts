@@ -26,7 +26,17 @@ export type WalletReview =
       approved: ReadonlySet<string>;
       /** Omissions with no approval yet: all of them before a release, the new ones after it. */
       pending: readonly Omission[];
+      /** The compiled type moved off the approved one: a Q21 pause the omissions do not show. */
+      typeChanged?: { from: string; to: string };
     };
+
+/** The compiled type a schema 2 candidate pinned. */
+function pinnedType(candidate: TemplateCandidate | undefined): string | undefined {
+  const projection = candidate?.projection as { schema?: unknown; type?: unknown } | undefined;
+  return projection?.schema === 2 && typeof projection.type === 'string'
+    ? projection.type
+    : undefined;
+}
 
 /** The omissions a schema 2 candidate pinned; none for schema 1 or no candidate. */
 function pinnedKeys(candidate: TemplateCandidate | undefined): Set<string> {
@@ -46,6 +56,8 @@ export function walletReview(
   current: TemplateCandidateCurrent,
   active: TemplateRelease | null,
   candidates: readonly TemplateCandidate[],
+  /** The newest release of an older version: the approval a new omission is new against. */
+  previous: TemplateRelease | null = null,
 ): WalletReview {
   const { report } = current;
   if (report.status.kind === 'off') return { kind: 'off' };
@@ -62,21 +74,44 @@ export function walletReview(
     }))
     .filter((item, at, all) => all.findIndex((other) => other.key === item.key) === at)
     .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-  const serving = active?.version === current.version ? active : null;
-  const approved = serving
-    ? pinnedKeys(candidates.find((c) => c.id === serving.candidateId))
-    : new Set<string>();
+  // A release of an older version also counts: the passes move to the newest Apple release, and
+  // an omission its approval did not cover has no approved projection to offer from (Q21).
+  const serving = active?.version === current.version;
+  const prior = active ?? previous;
+  const source = prior ? candidates.find((c) => c.id === prior.candidateId) : undefined;
+  const approved = prior ? pinnedKeys(source) : new Set<string>();
   const pending = items.filter((item) => !approved.has(item.key));
-  const kind = serving
-    ? pending.length > 0
+  // The offer paths pause on a changed type too (Q21), so the row must not read Released.
+  const from = pinnedType(source);
+  const typeChanged = serving && from !== undefined && from !== report.type;
+  const kind = prior
+    ? pending.length > 0 || typeChanged
       ? 'review'
-      : 'released'
+      : serving
+        ? 'released'
+        : items.length > 0
+          ? 'omissions'
+          : 'ready'
     : items.length > 0
       ? 'omissions'
       : 'ready';
-  return { kind, items, approved, pending };
+  return {
+    kind,
+    items,
+    approved,
+    pending,
+    ...(typeChanged && from !== undefined ? { typeChanged: { from, to: report.type } } : {}),
+  };
 }
 
 /** The fidelity words of the report: "Ready" or "Ready with omissions (n)". */
 export const fidelityWords = (count: number): string =>
   count > 0 ? `Ready with omissions (${count})` : 'Ready';
+
+/** The newest release in the list, active or not (a new Apple release leaves the wallet's older one behind). */
+export function newestRelease(items: readonly TemplateRelease[]): TemplateRelease | null {
+  return items.reduce<TemplateRelease | null>(
+    (best, r) => (best && best.generation >= r.generation ? best : r),
+    null,
+  );
+}

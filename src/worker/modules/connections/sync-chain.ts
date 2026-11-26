@@ -1,5 +1,6 @@
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { setWorkflowInstance } from '../operations/repo-write.ts';
 import type { Totals } from './records.ts';
 import type { ConnectionRow } from './repo.ts';
 import { syncRunCurrent } from './repo-runs.ts';
@@ -81,6 +82,8 @@ export async function handOff(
     trigger: 'schedule' | 'webhook' | 'admin';
     runId: string;
     instanceId: string;
+    operationId?: string | undefined;
+    operationAttempt?: number | undefined;
   },
   chain: SyncChain,
 ): Promise<{ started: true } | { started: false; staleCode: StaleCode }> {
@@ -117,11 +120,17 @@ export async function handOff(
         trigger: p.trigger,
         runId: p.runId,
         chain,
+        ...(p.operationId
+          ? { operationId: p.operationId, operationAttempt: p.operationAttempt }
+          : {}),
       },
     });
   } catch (error) {
     if (!alreadyExists(error)) throw error;
   }
+  // The stall sweep asks about the instance that runs now, not the one that handed over.
+  if (p.operationId)
+    await setWorkflowInstance(sctx.env.DB, p.operationId, p.operationAttempt ?? 1, child);
   await setChainTip(sctx.env.DB, tip);
   sctx.log.info('connection.sync_handoff', { connectionId: p.connectionId, seq: chain.seq });
   return { started: true };

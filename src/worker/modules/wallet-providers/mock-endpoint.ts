@@ -2,6 +2,8 @@ import { envString } from '../../platform/env.ts';
 
 const PROVIDER_ORIGINS = new Set([
   'https://oauth2.googleapis.com',
+  // Google's callback signing keys (google-callback-crypto.ts); the save page is the same origin.
+  'https://pay.google.com',
   'https://walletobjects.googleapis.com',
   'https://tsapi-card.walletsvc.samsung.com',
 ]);

@@ -7,7 +7,7 @@
     "src/web/marketing/pages/*.ts!",
     "src/web/developers/render.tsx!",
     "src/web/scan/camera/decode-worker.ts!",
-    "src/web/ui/operation/{index,story-main}.ts*",
+    "src/web/ui/operation/{index,story-main,story-jobs-main}.ts*",
     "src/web/ui/webhook-setup/{index,story-main}.ts*",
     "tools/dev/operation-story/vite.config.ts",
     "tools/dev/webhook-setup-story/vite.config.ts",

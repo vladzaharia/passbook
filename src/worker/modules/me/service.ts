@@ -3,14 +3,11 @@ import type { Personalization } from '../../../passkit/types.ts';
 import type { MyPassSchema, MyTag } from '../../../shared/contracts/index.ts';
 import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
-import { checkRateLimit } from '../../platform/rate-limit.ts';
+import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type HolderChannels, holderChannels, holderChannelsMany } from '../channels/gate.ts';
 import { voidedAt } from '../events/repo-voided.ts';
-import { removePassFromUser } from '../holders/service-remove.ts';
 import { assetNamesOf } from '../passes/detail.ts';
-import { requestRefresh } from '../passes/pass-service-refresh.ts';
 import { canPresent } from '../public/presentation.ts';
 import { supportContacts } from '../public/service.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
@@ -21,13 +18,6 @@ import * as repo from './repo.ts';
 import { tagsByPass } from './repo-tags.ts';
 
 export type MyPassDto = z.infer<typeof MyPassSchema>;
-
-/** Seams from other modules, injectable for tests. */
-export interface MeDeps {
-  requestRefresh: typeof requestRefresh;
-  removePassFromUser: typeof removePassFromUser;
-}
-const defaultDeps: MeDeps = { requestRefresh, removePassFromUser };
 
 // A stuck pass is read on every list: the first log per pass is the error, repeats are warnings.
 const logged = new Set<string>();
@@ -203,7 +193,7 @@ export async function listMyPasses(
   };
 }
 
-async function ownedRow(
+export async function ownedRow(
   ctx: ServiceContext,
   userId: string,
   passId: string,
@@ -233,73 +223,4 @@ export async function getMyPass(ctx: ServiceContext, userId: string, passId: str
     }
     row = current;
   }
-}
-
-export async function refreshMyPass(
-  ctx: ServiceContext,
-  userId: string,
-  passId: string,
-  deps: MeDeps = defaultDeps,
-) {
-  const row = await ownedRow(ctx, userId, passId);
-  if (row.status === 'voided') throw new ConflictError('This pass is voided.', 'PASS_VOIDED');
-  if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `refresh:${passId}`))) {
-    throw new RateLimitedError();
-  }
-  const { requestedAt, cooldownSeconds } = await deps.requestRefresh(
-    ctx,
-    passId,
-    { type: 'user', id: userId },
-    {
-      orgId: row.org_id,
-      mode: row.mode,
-      identityId: row.identity_id,
-      templateId: row.template_id,
-      templateVersion: row.template_version,
-      releaseId: row.release_id,
-      version: row.version,
-      credentialGeneration: row.credential_generation,
-      lifecycleGeneration: row.lifecycle_generation,
-      linkGeneration: row.link_generation,
-      status: row.status,
-      connectionId: row.connection_id,
-      externalRef: row.external_ref,
-      ownerUserId: userId,
-    },
-  );
-  return { accepted: true as const, requestedAt, cooldownSeconds };
-}
-
-/** The pass as the holder saw it: the transfer refuses if it moved since. */
-export const sourceOf = (userId: string, row: repo.MyPassRow) => ({
-  orgId: row.org_id,
-  mode: row.mode,
-  holderEmail: row.holder_email,
-  ownerUserId: userId,
-  version: row.version,
-  revision: row.revision,
-  rowVersion: row.row_version,
-  credentialGeneration: row.credential_generation,
-  lifecycleGeneration: row.lifecycle_generation,
-  releaseId: row.release_id,
-  downloadToken: row.download_token,
-  linkGeneration: row.link_generation,
-});
-
-export async function removeMyPass(
-  ctx: ServiceContext,
-  userId: string,
-  sessionId: string,
-  passId: string,
-  deps: MeDeps = defaultDeps,
-) {
-  const row = await repo.getPassForRemoval(ctx.env.DB, userId, passId);
-  if (!row) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return deps.removePassFromUser(ctx, passId, userId, sessionId, sourceOf(userId, row));
-}
-
-export async function getMyRemoval(ctx: ServiceContext, userId: string, transferId: string) {
-  const transfer = await repo.getMyRemoval(ctx.env.DB, userId, transferId);
-  if (!transfer) throw new NotFoundError('Removal not found.', 'REMOVAL_NOT_FOUND');
-  return transfer;
 }

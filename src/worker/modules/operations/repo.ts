@@ -137,3 +137,13 @@ export async function releaseLease(
     [id, attempt, owner ?? ''],
   );
 }
+
+/** The active operation a Workflow instance reports to, if one was made for it. */
+export function activeByInstance(db: D1Database, instanceId: string): Promise<OperationRow | null> {
+  return first<OperationRow>(
+    db,
+    `SELECT ${COLUMNS} FROM operations
+     WHERE workflow_instance_id = ? AND status IN ('queued', 'running', 'waiting') ORDER BY created_at DESC LIMIT 1`,
+    [instanceId],
+  );
+}

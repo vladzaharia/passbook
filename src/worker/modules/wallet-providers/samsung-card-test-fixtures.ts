@@ -30,7 +30,7 @@ export async function decryptCard(
   const plain = await crypto.subtle.decrypt(
     {
       name: 'AES-GCM',
-      iv: fromBase64Url(iv),
+      iv: fromBase64Url(iv) as BufferSource,
       additionalData: new TextEncoder().encode(header),
       tagLength: 128,
     },

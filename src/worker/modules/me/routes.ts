@@ -16,6 +16,7 @@ import {
   ProblemSchema,
   RefreshResponseSchema,
   RemovePassResponseSchema,
+  RemovePassStartedSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, requireHolderSession } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
@@ -29,8 +30,9 @@ import { recordCopy } from '../channels/gate.ts';
 import { assertPassSnapshot } from '../public/snapshot.ts';
 import { myPassesBundle } from './bundle.ts';
 import { assertOwnerPass, presentationForOwner } from './presentation.ts';
+import { registerMyPassHelp } from './routes-help.ts';
 import { registerMyEmailList, registerMySessionList } from './routes-lists.ts';
-import { getMyPass, getMyRemoval, listMyPasses, refreshMyPass, removeMyPass } from './service.ts';
+import { getMyPass, listMyPasses } from './service.ts';
 import {
   addMyEmail,
   makeMyEmailPrimary,
@@ -38,7 +40,7 @@ import {
   revokeAllMySessions,
   revokeMySession,
 } from './service-account.ts';
-import { lostMyPhone, resendMyPass } from './service-help.ts';
+import { getMyRemoval, refreshMyPass, removeMyPass } from './service-actions.ts';
 import { reportMyTagLost } from './service-tags.ts';
 
 type C = Context<AppBindings>;
@@ -135,7 +137,15 @@ register(
     response: RefreshResponseSchema,
   },
   async (c) =>
-    c.json(await refreshMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id), 202),
+    c.json(
+      await refreshMyPass(
+        serviceContext(c),
+        currentUserId(c),
+        sessionId(c),
+        c.req.valid('param').id,
+      ),
+      202,
+    ),
 );
 meRoutes.openapi(
   createRoute({
@@ -147,11 +157,11 @@ meRoutes.openapi(
     responses: {
       200: {
         description: 'Removal completed',
-        content: { 'application/json': { schema: RemovePassResponseSchema } },
+        content: { 'application/json': { schema: RemovePassStartedSchema } },
       },
       202: {
         description: 'Removal pending wallet credential retirement',
-        content: { 'application/json': { schema: RemovePassResponseSchema } },
+        content: { 'application/json': { schema: RemovePassStartedSchema } },
       },
       default: {
         description: 'Error',
@@ -169,37 +179,7 @@ meRoutes.openapi(
     return result.state === 'pending' ? c.json(result, 202) : c.json(result, 200);
   },
 );
-register(
-  meRoutes,
-  'me',
-  {
-    method: 'post',
-    path: '/passes/{id}/resend',
-    summary: 'Email my pass to me again',
-    params: IdParamSchema,
-    status: 202,
-    response: OkSchema,
-  },
-  async (c) =>
-    c.json(await resendMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id), 202),
-);
-register(
-  meRoutes,
-  'me',
-  {
-    method: 'post',
-    path: '/passes/{id}/lost-phone',
-    summary: 'Replace my pass code and link, and email it to me',
-    params: IdParamSchema,
-    status: 202,
-    response: RemovePassResponseSchema,
-  },
-  async (c) =>
-    c.json(
-      await lostMyPhone(serviceContext(c), currentUserId(c), sessionId(c), c.req.valid('param').id),
-      202,
-    ),
-);
+registerMyPassHelp(meRoutes);
 register(
   meRoutes,
   'me',

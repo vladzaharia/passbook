@@ -20,6 +20,8 @@ import {
   TwoPane,
   toast,
 } from '@/web/ui/index.ts';
+import { rebuildNote } from '../../operations/notes.ts';
+import { OperationSlot } from '../../operations/operation-slot.tsx';
 import { useOrgNames } from '../../orgs/queries.ts';
 import { CreatedCallout, useCreated } from '../../passes/created.tsx';
 import { attentionTone, expiryPhrase } from './attention.ts';
@@ -47,6 +49,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const resign = useResignIdentityPasses(identityId);
   const created = useCreated(`identity:${identityId}`);
   const [confirm, setConfirm] = useState<'delete' | 'resign'>();
+  const [resigning, setResigning] = useState<string | null>(null);
   const [stopping, setStopping] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [pushKeyOpen, setPushKeyOpen] = useState(false);
@@ -158,6 +161,12 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
           }
         />
       ) : null}
+      <OperationSlot
+        kind="passes.reissue_platform"
+        startedId={resigning}
+        onClear={() => setResigning(null)}
+        doneNote={(op) => rebuildNote(op)}
+      />
       <TwoPane aside={<OverviewCard identity={identity} orgName={orgName} />}>
         {created.shown ? (
           // Next: pick it as an organization's signing identity in its authorized workspace.
@@ -220,8 +229,9 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         confirmLabel="Re-sign"
         destructive
         onConfirm={async () => {
-          await resign.mutateAsync();
-          toast.success('Re-sign started');
+          const started = await resign.mutateAsync();
+          if (started.operationId) setResigning(started.operationId);
+          else toast.success('Re-sign started');
         }}
       />
       <ConfirmDialog

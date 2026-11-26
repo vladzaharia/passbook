@@ -508,7 +508,8 @@
     "description": "Syncs now instead of waiting for the schedule.",
     "response": {
       "runId": "0193a1b2-7c00-7000-8000-000000000023",
-      "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c",
+      "operationId": "0193a1b2-7c00-7000-8000-77cfb49fba0e"
     }
   },
   "connections.getConnectionsByIdRuns": {
