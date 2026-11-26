@@ -592,7 +592,7 @@ Only archived templates may be listed; the wait ignores them.
 
 ### Wallet migration gate
 
-Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. Since 0226 a legacy account never issues; the gate keeps the flip honest. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
+Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. A legacy account issues with no enrolment, so a flip waits until none is left. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
 
 ```sql wallet-migration-gate
 SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a

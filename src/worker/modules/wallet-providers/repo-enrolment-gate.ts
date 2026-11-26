@@ -55,7 +55,8 @@ export function walletEnrolmentIssuesSql(
     throw new Error('Invalid trusted wallet enrolment identifier');
   return `EXISTS (SELECT 1 FROM wallet_provider_accounts gate_a WHERE gate_a.org_id = ${orgSql}
     AND gate_a.mode = ${modeSql} AND gate_a.provider = ${providerSql}
-    AND gate_a.revoked_at IS NULL AND gate_a.platform_hold_at IS NULL AND gate_a.enabled_at IS NOT NULL)
+    AND gate_a.revoked_at IS NULL AND gate_a.platform_hold_at IS NULL
+    AND ((gate_a.credential_id IS NOT NULL AND gate_a.credential_source_id IS NULL) OR gate_a.enabled_at IS NOT NULL))
     AND EXISTS (SELECT 1 FROM org_entitlement_values gate_e WHERE gate_e.org_id = ${orgSql}
     AND gate_e.key = 'wallet.' || ${providerSql} AND gate_e.value = '1')
     AND ${notPreviewOnlySql(orgSql)}`;

@@ -2,7 +2,7 @@
 // its revision (0148). A key rotation under the same identity keeps them; an identity change voids them.
 import { describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
-import { configureOn, revokeOff } from './legacy-on-test-fixtures.ts';
+import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import {
   approveOf,
@@ -24,14 +24,14 @@ installV2Env();
 const revisionOf = async (kit: Kit) => (await findAccount(S.env.DB, kit.scope))?.revision ?? -1;
 const epochOf = async (kit: Kit) => (await findAccount(S.env.DB, kit.scope))?.authority_epoch ?? -1;
 const rotate = async (kit: Kit) =>
-  configureOn(kit.ctx, kit.author, {
+  configureWalletProviderAccount(kit.ctx, kit.author, {
     ...kit.scope,
     expectedRevision: await revisionOf(kit),
     credentials: S.google,
   });
 /** The service keeps the issuer immutable, so an identity change is a revoke and a new configure. */
 const revoke = async (kit: Kit) =>
-  revokeOff(kit.ctx, kit.author, {
+  revokeWalletProviderAccount(kit.ctx, kit.author, {
     ...kit.scope,
     expectedRevision: await revisionOf(kit),
   });

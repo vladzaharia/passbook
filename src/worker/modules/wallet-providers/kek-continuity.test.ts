@@ -26,6 +26,7 @@ import { makeRsaPem } from '../identities/push-key-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import {
+  configureWalletProviderAccount,
   readConfiguredWalletProviderCredentials,
   readGoogleCallbackVerification,
 } from './account-service.ts';
@@ -42,7 +43,6 @@ import {
   readWalletPassSnapshot,
   walletClaimHash,
 } from './instance.ts';
-import { configureOn } from './legacy-on-test-fixtures.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { approveProjectionCandidate, createProjectionCandidate } from './projection-service.ts';
@@ -282,7 +282,7 @@ describe('provider identity continuity across KEK rotation', () => {
     );
     const scope = { orgId: f.orgId, mode: 'live' as const, provider: 'google' as const };
     await ensureCredentialRefKeyset(initialCtx.env.DB, initialCtx.env);
-    const account = await configureOn(initialCtx, f.auth, {
+    const account = await configureWalletProviderAccount(initialCtx, f.auth, {
       ...scope,
       expectedRevision: 0,
       credentials: f.google,
@@ -300,7 +300,7 @@ describe('provider identity continuity across KEK rotation', () => {
       { ...other.env, KEK_V1, KEK_V2: undefined, KEK_V3: undefined },
       { clock: other.clock },
     );
-    const otherAccount = await configureOn(otherCtx, other.auth, {
+    const otherAccount = await configureWalletProviderAccount(otherCtx, other.auth, {
       orgId: other.orgId,
       mode: 'live',
       provider: 'google',
@@ -344,7 +344,7 @@ describe('provider identity continuity across KEK rotation', () => {
       { ...f.env, KEK_V1, KEK_V2, KEK_V3: undefined },
       { clock: f.clock },
     );
-    const rotated = await configureOn(rolloverCtx, f.auth, {
+    const rotated = await configureWalletProviderAccount(rolloverCtx, f.auth, {
       ...scope,
       expectedRevision: account.revision,
       credentials: f.rotatedGoogle,
@@ -420,7 +420,7 @@ describe('provider identity continuity across KEK rotation', () => {
       }),
     ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
     await expect(
-      configureOn(retiredV1Ctx, f.auth, {
+      configureWalletProviderAccount(retiredV1Ctx, f.auth, {
         ...scope,
         expectedRevision: rotated.revision,
         credentials: f.google,
@@ -451,7 +451,7 @@ describe('provider identity continuity across KEK rotation', () => {
       initialCtx.env.DB,
       initialCtx.env,
     );
-    const account = await configureOn(initialCtx, f.auth, {
+    const account = await configureWalletProviderAccount(initialCtx, f.auth, {
       ...scope,
       expectedRevision: 0,
       credentials: f.google,
@@ -495,7 +495,7 @@ describe('provider identity continuity across KEK rotation', () => {
       readGoogleCallbackVerification(missingCtx, { ...scope, ...expected }),
     ).rejects.toMatchObject({ code: 'WALLET_CREDENTIALS_UNAVAILABLE' });
     await expect(
-      configureOn(missingCtx, f.auth, {
+      configureWalletProviderAccount(missingCtx, f.auth, {
         ...scope,
         expectedRevision: account.revision,
         credentials: f.rotatedGoogle,

@@ -13,7 +13,7 @@ import { rotateLink } from '../passes/pass-service-delivery.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { revokeOff } from './legacy-on-test-fixtures.ts';
+import { revokeWalletProviderAccount } from './account-service.ts';
 import { issueWalletOffer, listWalletOffers, redeemSamsungOffer } from './offers.ts';
 import { eligibleWalletProvider, offerPassSnapshot } from './offers-eligibility.ts';
 import {
@@ -259,7 +259,7 @@ describe('native wallet availability', () => {
       [f.pass.orgId],
     );
     if (!account) throw new Error('Missing Samsung account fixture.');
-    await revokeOff(f.kit.ctx, f.auth, {
+    await revokeWalletProviderAccount(f.kit.ctx, f.auth, {
       orgId: f.pass.orgId,
       mode: 'live',
       provider: 'samsung',

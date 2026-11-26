@@ -9,7 +9,6 @@ import { createSessionStore } from '../auth/sessions.ts';
 import { configureWalletProviderAccount } from './account-service.ts';
 import { savePlatformCredential } from './credential-service.ts';
 import { enableEnrolment, setEnrolmentSource } from './enrolment-service.ts';
-import { legacyOn } from './legacy-on-test-fixtures.ts';
 import { setWalletReleaseForTest } from './provider-policy.ts';
 import { addCheck } from './repo-wallet-credentials-test-fixtures.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
@@ -99,7 +98,7 @@ describe('GET /platform/wallet-release', () => {
     const noPlan = await org('no_plan');
     const legacy = await k.org();
     const lm = await k.member(legacy.id, 'test');
-    const configured = await configureWalletProviderAccount(k.ctx, lm.auth, {
+    await configureWalletProviderAccount(k.ctx, lm.auth, {
       orgId: legacy.id,
       mode: 'test',
       provider: 'google',
@@ -123,14 +122,6 @@ describe('GET /platform/wallet-release', () => {
     expect(by(off.id)).toMatchObject({ status: 'ready', blocks: [] });
     expect(by(noPlan.id)).toMatchObject({ status: 'blocked', blocks: ['plan'] });
     expect(by(legacy.id)).toMatchObject({ status: 'blocked', blocks: ['legacy'] });
-    // A legacy envelope turned On by hand still reads as legacy: it never issues.
-    await legacyOn(env.DB, configured.accountId);
-    const again = (await (
-      await call(await headers(['admin', 'user']), 'GET', '/wallet-release')
-    ).json()) as Report;
-    expect(googleTest(again)?.enrolments.find((e) => e.orgId === legacy.id)?.status).toBe(
-      'blocked',
-    );
     expect(g?.instances).toEqual({ open: 0, retired: 0 });
   });
 

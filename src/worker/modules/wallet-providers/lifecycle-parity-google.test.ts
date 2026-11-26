@@ -7,9 +7,8 @@ import { getHolderPass } from '../holders/repo.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { removePass, restorePass } from '../passes/remove.ts';
 import { deletePass, unvoidPass, updatePass, voidPass } from '../passes/service.ts';
-import { getWalletProviderReadiness } from './account-service.ts';
+import { configureWalletProviderAccount, getWalletProviderReadiness } from './account-service.ts';
 import { fixture, mock, restore, tokenOf } from './google-runtime-test-fixtures.ts';
-import { configureOn } from './legacy-on-test-fixtures.ts';
 import { issueWalletOffer } from './offers.ts';
 import { drainWalletProviderSync } from './sync.ts';
 
@@ -218,7 +217,7 @@ describe('6.1 Google: keyset rotation and event roll-over', () => {
       mode: 'live',
       provider: 'google',
     });
-    await configureOn(f.kit.ctx, f.auth, {
+    await configureWalletProviderAccount(f.kit.ctx, f.auth, {
       orgId: f.kit.org.id,
       mode: 'live',
       provider: 'google',
@@ -242,7 +241,7 @@ describe('6.1 Google: keyset rotation and event roll-over', () => {
         provider: 'google',
       });
       // The new version is sealed under the new current key; the retained sealed copy still opens.
-      await configureOn(f.kit.ctx, f.auth, {
+      await configureWalletProviderAccount(f.kit.ctx, f.auth, {
         orgId: f.kit.org.id,
         mode: 'live',
         provider: 'google',

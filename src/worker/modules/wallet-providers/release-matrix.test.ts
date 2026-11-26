@@ -193,7 +193,7 @@ describe('the database guards open one pair at a time', () => {
 });
 
 describe('the org layer behind one released pair', () => {
-  it('issues only for an org On in that pair; the plan, developer orgs and legacy rows stay shut', async () => {
+  it('issues only for an org On in that pair; the plan and developer orgs stay shut', async () => {
     const admin = await k.admin('test');
     const saved = await savePlatformCredential(k.ctx, admin.auth, {
       mode: 'test',
@@ -239,7 +239,9 @@ describe('the org layer behind one released pair', () => {
       expectedRevision: 0,
       credentials: k.google('777000667'),
     });
-    expect(await reason(legacy.id, 'google', 'test')).toBe('not_enrolled');
+    // A legacy envelope still issues with no enrolment (its removal waits on REV-1); the readiness report names it
+    // `legacy` and a flip's deploy refuses while one exists (wallet-migration-gate).
+    expect(await reason(legacy.id, 'google', 'test')).toBeNull();
     // Draining shuts the open org too.
     await release('google', 'test', 'draining');
     expect(await reason(open.id, 'google', 'test')).toBe('not_released');

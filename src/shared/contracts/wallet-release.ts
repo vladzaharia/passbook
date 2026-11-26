@@ -7,9 +7,10 @@ export const WalletReleaseStateSchema = z.enum(['dark', 'draining', 'released'])
 export type WalletReleaseState = z.infer<typeof WalletReleaseStateSchema>;
 
 /**
- * Why an enrolment would not issue once released: the plan lacks the wallet (developer orgs included), a step of
- * enabling is missing (source, verified, check, round_trip), the platform holds it, it is revoked, it is a legacy
- * envelope with no source, the org blocked the channel, or the org is not active.
+ * Why an enrolment is not ready for the release: the plan lacks the wallet (developer orgs included), a step of
+ * enabling is missing (source, verified, check, round_trip), the platform holds it, it is revoked, the org blocked
+ * the channel, or the org is not active. `legacy` is an envelope with no source: it would issue with no enrolment,
+ * so a flip's deploy refuses while one exists (wallet-migration-gate).
  */
 export const WalletReleaseBlockSchema = z.enum([
   'plan',

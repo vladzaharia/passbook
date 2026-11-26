@@ -59,15 +59,16 @@ export function walletProviderRevokes(provider: WalletProvider, mode?: Mode): bo
 }
 
 /**
- * An enrolment may issue when it is On, not revoked and not held. A legacy envelope with no enrolment never
- * issues (0226). Test counts like Live.
+ * An enrolment may issue when it is not revoked or held, and is either a legacy envelope row with no
+ * enrolment (unchanged) or has an enrolment (a source, migrated or new) that is On. Test counts like Live.
  */
 export function walletEnrolmentIssues(row: EnrolmentGateRow | null): boolean {
   return (
     row !== null &&
     row.revoked_at === null &&
     (row.platform_hold_at ?? null) === null &&
-    (row.enabled_at ?? null) !== null
+    ((row.credential_id !== null && (row.credential_source_id ?? null) === null) ||
+      (row.enabled_at ?? null) !== null)
   );
 }
 

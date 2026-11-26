@@ -50,57 +50,22 @@ export async function requireE2eRelease(admin: Api): Promise<void> {
 }
 
 /**
- * The org's Test enrolment, On: its own credential (an issuer per run, so object ids are this run's own), a
- * passing check against the mock (which verifies it), the credential as the source, then enable. Only an
- * enrolment that is On issues (migration 0226); the legacy account route has no part in it.
+ * Configures the org's Test account. Provider projections and offers read this account model today
+ * (`getWalletProviderReadiness`); a credential plus enrolment alone reads as `absent` there (CW12 status).
  */
-async function enrolTestAccount(
+async function configureTestAccount(
   admin: Api,
   orgId: string,
   credential: Record<string, unknown> & { provider: Provider },
 ): Promise<void> {
   const { provider, ...credentials } = credential;
-  const base = `/api/v1/orgs/${encodeURIComponent(orgId)}`;
-  const saved = await admin.send<{ id: string }>(
+  const account = await admin.send<{ state: string }>(
     'PUT',
-    `${base}/wallet-credentials`,
-    { provider, expectedRevision: 0, credentials },
+    '/api/v1/wallet-providers/accounts',
+    { orgId, mode: 'test', provider, expectedRevision: 0, credentials },
     TEST,
   );
-  const checks = `${base}/wallet-credentials/${encodeURIComponent(saved.id)}`;
-  const { checkId } = await admin.send<{ checkId: string }>(
-    'POST',
-    `${checks}/check`,
-    undefined,
-    TEST,
-  );
-  await expect
-    .poll(
-      async () =>
-        (
-          await admin.send<{ status: string }>(
-            'GET',
-            `${checks}/checks/${encodeURIComponent(checkId)}`,
-            undefined,
-            TEST,
-          )
-        ).status,
-      { message: `the ${provider} credential check`, timeout: 30_000 },
-    )
-    .toBe('ok');
-  const source = await admin.send<{ enrolmentRevision: number }>(
-    'PUT',
-    `${base}/wallet-enrolments/${provider}`,
-    { source: 'org', expectedRevision: 0 },
-    TEST,
-  );
-  const on = await admin.send<{ state: string }>(
-    'POST',
-    `${base}/wallet-enrolments/${provider}/enable`,
-    { expectedRevision: source.enrolmentRevision },
-    TEST,
-  );
-  expect(on.state).toBe('on');
+  expect(account.state).toBe('configured');
 }
 
 /**
@@ -117,7 +82,7 @@ export async function walletOrg(
   // provider projections need it: one pass from the seed org makes it.
   await createPass(admin, readSeed().org.id);
   const org = await createOrgWithRoles(admin, { slug, name: `Wallets ${slug}` });
-  await enrolTestAccount(admin, org.id, credential);
+  await configureTestAccount(admin, org.id, credential);
   const made = await admin.send<{ id: string; versions: { version: string }[] }>(
     'POST',
     `/api/v1/templates/${encodeURIComponent(BLUEPRINT)}/use`,

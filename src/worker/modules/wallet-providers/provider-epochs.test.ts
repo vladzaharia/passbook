@@ -4,10 +4,10 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { makePass, makeTemplate, withoutTrigger } from '../../../../test/helpers/index.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import { storedIdentityHash } from './account-credential-material.ts';
+import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
 import { seedLegacy } from './credential-migrate-test-fixtures.ts';
 import { saveOrgCredential } from './credential-service.ts';
 import { revokeEnrolment, setEnrolmentSource } from './enrolment-service.ts';
-import { configureOn, revokeOff } from './legacy-on-test-fixtures.ts';
 import { findAccount } from './repo-accounts.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
 
@@ -191,7 +191,7 @@ describe('account authority_epoch (service)', () => {
     const org = await k.org();
     const m = await k.member(org.id, 'live');
     const scope = { orgId: org.id, mode: 'live' as const, provider: 'google' as const };
-    await configureOn(k.ctx, m.auth, {
+    await configureWalletProviderAccount(k.ctx, m.auth, {
       ...scope,
       expectedRevision: 0,
       credentials: k.google(),
@@ -215,7 +215,7 @@ describe('account authority_epoch (service)', () => {
       ).map((c) => c.identity_hash);
     expect(await identities()).toEqual([identity]);
 
-    await configureOn(k.ctx, m.auth, {
+    await configureWalletProviderAccount(k.ctx, m.auth, {
       ...scope,
       expectedRevision: 1,
       credentials: k.google(),
@@ -223,7 +223,7 @@ describe('account authority_epoch (service)', () => {
     expect(await identities()).toEqual([identity, identity]);
     expect((await findAccount(db, scope))?.authority_epoch, 'rotation').toBe(2);
 
-    await revokeOff(k.ctx, m.auth, { ...scope, expectedRevision: 2 });
+    await revokeWalletProviderAccount(k.ctx, m.auth, { ...scope, expectedRevision: 2 });
     expect((await findAccount(db, scope))?.authority_epoch, 'revoke').toBe(3);
   });
 
@@ -231,7 +231,7 @@ describe('account authority_epoch (service)', () => {
     const org = await k.org();
     const m = await k.member(org.id, 'test');
     const scope = { orgId: org.id, mode: 'test' as const, provider: 'samsung' as const };
-    await configureOn(k.ctx, m.auth, {
+    await configureWalletProviderAccount(k.ctx, m.auth, {
       ...scope,
       expectedRevision: 0,
       credentials: k.samsung(),
