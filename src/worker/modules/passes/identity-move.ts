@@ -4,16 +4,17 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordPassEvent } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
-import { resolveTemplate } from './builder.ts';
 import { createPassRow, stableStringify } from './create.ts';
 import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
 import { depsOf } from './deps.ts';
 import { linksOf } from './detail.ts';
-import { uniqueExternalIds } from './external-id.ts';
 import { carryEdits, messageKey, without } from './identity-move-carry.ts';
+import { moveVoidCommit } from './identity-move-repoint.ts';
 import { gone, revokeReplacement, SYSTEM } from './identity-move-revoke.ts';
+import { carryState, stageFiles } from './identity-move-state.ts';
 import { publishPass } from './publish.ts';
 import {
   DAY_MS,
@@ -24,6 +25,8 @@ import {
   moveByNewPass,
   setState,
 } from './repo-identity-move.ts';
+import { keptReason } from './repo-identity-move-candidates.ts';
+import { readRepoint, readState } from './repo-identity-move-state.ts';
 import {
   arm,
   claimReminder,
@@ -69,28 +72,32 @@ export async function issueReplacement(
     return 'kept' as const;
   };
   let made = await getPass(db, row.new_pass_id);
+  const live = old && !gone(old) && old.identityId === row.from_identity_id ? old : null;
+  // The images are copied before the replacement exists: one that is gone keeps the pass where it is.
+  const state = live ? await readState(db, live.id) : null;
+  const files = live && state ? await stageFiles(ctx, live, row.new_pass_id, state) : null;
   if (!made) {
-    if (gone(old) || !old || old.identityId !== row.from_identity_id) return keep('old_gone');
-    const release = await requireApprovedRelease(ctx, old.templateId, old.orgId, 'live', 'apple');
-    const template = await resolveTemplate(ctx, old.orgId, old.templateId, release.version);
-    if (old.externalId !== null && uniqueExternalIds(template.manifest)) return keep('external_id');
+    if (!live) return keep('old_gone');
+    if (!files) return keep('files_missing');
+    const release = await requireApprovedRelease(ctx, live.templateId, live.orgId, 'live', 'apple');
     const plan = await stampMovePlan(
       ctx,
-      { orgId: old.orgId, templateId: old.templateId, version: release.version },
-      [old.templateVersion],
+      { orgId: live.orgId, templateId: live.templateId, version: release.version },
+      [live.templateVersion],
     );
+    // The external id moves in the batch that voids the old pass, so no two active passes ever share it.
     made = await createPassRow(ctx, {
-      orgId: old.orgId,
-      templateId: old.templateId,
+      orgId: live.orgId,
+      templateId: live.templateId,
       templateVersion: release.version,
       releaseId: release.id,
       releaseGeneration: release.generation,
       identityId: row.to_identity_id,
-      input: plan(old).personalization ?? old.personalization,
-      holderEmail: old.holderEmail,
-      externalId: old.externalId,
+      input: plan(live).personalization ?? live.personalization,
+      holderEmail: live.holderEmail,
+      externalId: null,
       passId: row.new_pass_id,
-      sendEmail: old.holderEmail !== null,
+      sendEmail: live.holderEmail !== null,
       source: 'manual',
       mode: 'live',
       execution: { kind: 'system' },
@@ -98,6 +105,19 @@ export async function issueReplacement(
     });
   } else if (made.orgId !== row.org_id || made.identityId !== row.to_identity_id)
     throw new AppError('IDENTITY_MOVE_CONFLICT', 409, 'The replacement id is taken.');
+  // What the old pass holds besides its fields goes along; the replacement is signed again with it.
+  if (live && state && files && (await carryState(ctx, live, made, state, files)))
+    await publishPass(ctx, {
+      passId: made.id,
+      orgScope: row.org_id,
+      cause: 'admin',
+      source: 'move',
+      sourceRef: `carry:${row.id}`,
+      actor: SYSTEM,
+      force: true,
+      notify: false,
+      mutate: () => ({}),
+    });
   // A rerun after the pass was made: the mail intent is durable, so asking again only queues what is missing.
   if (made.holderEmail) await scheduleRequiredIssuanceDelivery(ctx, made.id);
   const at = now();
@@ -180,22 +200,41 @@ export async function voidDue(
       await setState(db, row.id, ['registered'], { state: 'kept', reason: 'new_gone' }, now);
       return 'kept';
     }
+    // The old pass took on something the move cannot carry since it was planned: it stays, alone.
+    const why = await keptReason(db, row.old_pass_id);
+    if (why !== null) {
+      await revokeReplacement(ctx, row, why);
+      return 'kept';
+    }
     return reschedule(db, fresh, now);
   }
   try {
     const old = await getPass(db, row.old_pass_id, row.org_id);
     if (old?.status === 'active' && old.removedAt === null && old.deletedAt === null) {
       await carryEdits(ctx, row, old);
+      const made = await getPass(db, row.new_pass_id, row.org_id);
+      if (!made) throw new AppError('IDENTITY_MOVE_CONFLICT', 409, 'The replacement is gone.');
       await setPassStatus(ctx, SYSTEM, old.id, 'voided', row.org_id, undefined, {
         source: 'move',
         sourceRef: voidRef(row.id),
+        // The external id and everything the pass owns move in the void's own batch.
+        ...(old.externalId === null ? {} : { externalId: null }),
+        commit: moveVoidCommit(ctx, row, { old, made, plan: await readRepoint(db, old.id) }),
       });
     } else if (!(old && (await voidedByMove(db, row)))) {
       // Someone else revoked the old pass: the replacement is revoked with it.
       await revokeReplacement(ctx, row);
       return 'kept';
     }
-    await finishVoid(db, row.id, ctx.clock.now());
+    if (await finishVoid(db, row.id, ctx.clock.now()))
+      await recordPassEvent(ctx, {
+        orgId: row.org_id,
+        passId: row.old_pass_id,
+        mode: row.mode,
+        kind: 'pass.replaced',
+        actor: SYSTEM,
+        data: { replacedBy: row.new_pass_id },
+      });
     return 'voided';
   } catch (error) {
     await setState(db, row.id, ['registered'], { state: 'registered' }, ctx.clock.now());

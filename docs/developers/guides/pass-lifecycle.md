@@ -41,6 +41,14 @@ A removed pass is also `voided`: `removedAt` tells the two apart. Voiding a remo
 | `rotate-link` | The download and public links. The pass itself is unchanged. | Stops working. |
 | `bulk-reissue` | Rebuilds every pass of a template. | Replaced. |
 
+## A pass that was replaced
+
+An identity move (a new signing identity for an organization) issues a new pass for each holder and voids the old one 24 hours after the new one is added on the same device. The old pass carries the move's `replacedBy`: the new pass's id, in the `pass.replaced` event.
+
+- `PATCH`, `stamps` and `renew` on the old id are forwarded to the new pass, and the answer is the new pass with an `X-Forwarded-From` header. Switch to the new id.
+- A connection sync or bind of the old pass is `409` [PASS_REPLACED](/developers/errors/PASS_REPLACED); the message names the new pass.
+- The `externalId` moves to the new pass in the same step, so it is never on two active passes.
+
 ## Void and undo
 
 {{run void-pass}}

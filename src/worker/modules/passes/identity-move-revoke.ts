@@ -14,7 +14,11 @@ export const gone = (p: Pass | null): boolean =>
  * never lives on, and the row stops (no timer, no reminder). One step each: a rerun finds the replacement gone
  * and only closes the row.
  */
-export async function revokeReplacement(ctx: ServiceContext, row: MoveRow): Promise<void> {
+export async function revokeReplacement(
+  ctx: ServiceContext,
+  row: MoveRow,
+  reason = 'old_revoked',
+): Promise<void> {
   const made = await getPass(ctx.env.DB, row.new_pass_id, row.org_id);
   if (made && !gone(made))
     await setPassStatus(ctx, SYSTEM, made.id, 'voided', row.org_id, undefined, {
@@ -25,8 +29,8 @@ export async function revokeReplacement(ctx: ServiceContext, row: MoveRow): Prom
     ctx.env.DB,
     row.id,
     ['issued', 'notified', 'registered', 'kept'],
-    { state: 'kept', reason: 'old_revoked' },
+    { state: 'kept', reason },
     ctx.clock.now(),
   );
-  ctx.log.info('identity_move.old_revoked', { moveId: row.id });
+  ctx.log.info('identity_move.old_revoked', { moveId: row.id, reason });
 }

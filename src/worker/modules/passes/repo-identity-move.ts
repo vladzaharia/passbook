@@ -35,6 +35,8 @@ export interface MoveRow {
   void_at: number | null;
   claim_until: number | null;
   voided_at: number | null;
+  replaced_by: string | null;
+  replaced_at: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -48,7 +50,7 @@ export interface MoveParams {
 
 export const COLUMNS = `id, op_id, org_id, mode, from_identity_id, to_identity_id, old_pass_id, new_pass_id, state,
   reason, copied_hash, copied_input, made_input, conflicts, told_at, emailed_at, remind_at, reminded_at, registered_at, armed_device, void_at, claim_until,
-  voided_at, created_at, updated_at`;
+  voided_at, replaced_by, replaced_at, created_at, updated_at`;
 
 /**
  * A registration of the replacement (`r`) that counts: its current credential, on a device that also holds the

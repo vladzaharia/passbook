@@ -3692,6 +3692,15 @@
       ]
     },
     {
+      "code": "PASS_REPLACED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "PASS_SETUP_CHANGED",
       "statuses": [
         409

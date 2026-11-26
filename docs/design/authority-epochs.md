@@ -550,7 +550,7 @@ Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed h
 
 **WP-OP:** `operations/{repo,repo-write}.ts` (progress rows grant nothing; `SET updated_at = ?` stamps only)
 
-**WP-IM:** `passes/{repo-identity-move,repo-identity-move-candidates,repo-identity-move-timers}.ts` (identity-move rows grant nothing; `SET updated_at = ?` stamps only)
+**WP-IM:** `passes/{repo-identity-move,repo-identity-move-candidates,repo-identity-move-state,repo-identity-move-timers,repo-pass-replaced}.ts` (identity-move rows grant nothing; `SET updated_at = ?` stamps only)
 
 **WP-T:** `templates/{repo-authority,repo-eligible,repo-imports,repo-release-write,repo-releases,repo-source,repo-stale,repo-sync-release,repo-sync,repo-upload}.ts`
 

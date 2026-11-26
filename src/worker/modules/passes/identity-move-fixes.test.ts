@@ -358,13 +358,18 @@ describe('the rest of R-B', () => {
     const { org, passes } = await orgWithPasses(kit, 3);
     await run(
       kit.env.DB,
-      "INSERT INTO pass_assets (pass_id, name, r2_key, sha1, size, created_at) VALUES (?, 'strip', 'k', 's', 1, 1)",
+      "INSERT INTO connections (id, org_id, connector_type, name, created_at, updated_at) VALUES ('c-l4', ?, 'x', 'c', 1, 1)",
+      [org.id],
+    );
+    await run(
+      kit.env.DB,
+      "UPDATE passes SET connection_id = 'c-l4', external_ref = 'r' WHERE id = ?",
       [(passes[0] as { id: string }).id],
     );
     expect(await countCandidates(kit.env.DB, org.id, 'platform')).toMatchObject({
       passes: 2,
       holders: 2,
-      kept: { assets: 1 },
+      kept: { connection: 1 },
     });
     // The plan keeps the same pass for the same reason.
     const planned = await candidates(kit.env.DB, {
@@ -374,7 +379,7 @@ describe('the rest of R-B', () => {
       limit: 10,
     });
     expect(planned.filter((c) => c.reason !== null)).toEqual([
-      { id: (passes[0] as { id: string }).id, reason: 'assets' },
+      { id: (passes[0] as { id: string }).id, reason: 'connection' },
     ]);
   });
 

@@ -6,6 +6,7 @@ import {
   type MoveRow,
   ON_OLD_DEVICE,
 } from './repo-identity-move.ts';
+import { KEPT } from './repo-identity-move-candidates.ts';
 
 /** The oldest registration of the replacement that counts, or null when none does. */
 export function firstRegistration(
@@ -67,9 +68,9 @@ export function dueVoids(db: D1Database, now: number, limit: number): Promise<Mo
 }
 
 /**
- * Takes the right to void, only while it still holds: a current registration at least 24 hours old, and a
- * replacement that is still an active pass. One statement, so a register or an unregister racing the timer
- * lands on one side of it.
+ * Takes the right to void, only while it still holds: a current registration at least 24 hours old, a
+ * replacement that is still an active pass, and an old pass that can still move (the plan's kept reasons are
+ * read again here). One statement, so a register or an unregister racing the timer lands on one side of it.
  */
 export async function claimVoid(
   db: D1Database,
@@ -84,7 +85,8 @@ export async function claimVoid(
        AND EXISTS (SELECT 1 FROM passes n WHERE n.id = pass_moves.new_pass_id AND n.status = 'active'
          AND n.deleted_at IS NULL AND n.removed_at IS NULL)
        AND EXISTS (SELECT 1 FROM registrations r JOIN passes n ON n.id = r.pass_id
-         WHERE r.pass_id = pass_moves.new_pass_id AND ${ON_OLD_DEVICE} AND r.created_at <= ?)`,
+         WHERE r.pass_id = pass_moves.new_pass_id AND ${ON_OLD_DEVICE} AND r.created_at <= ?)
+       AND (SELECT ${KEPT} FROM passes p WHERE p.id = pass_moves.old_pass_id) IS NULL`,
     [until, now, id, now, now, now - DAY_MS],
   );
   return changes === 1;
@@ -116,12 +118,14 @@ export async function reschedule(
   return 'waiting';
 }
 
+/** The old pass is replaced: from here writes by its id go to `replaced_by`. True when this call closed the row. */
 export async function finishVoid(db: D1Database, id: string, now: number): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE pass_moves SET state = 'voided', voided_at = ?, claim_until = NULL, updated_at = ?
+    `UPDATE pass_moves SET state = 'voided', voided_at = ?, replaced_by = new_pass_id, replaced_at = ?,
+       claim_until = NULL, updated_at = ?
      WHERE id = ? AND state = 'registered'`,
-    [now, now, id],
+    [now, now, now, id],
   );
   return changes === 1;
 }
