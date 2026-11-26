@@ -45,6 +45,8 @@ export interface SchemaFormProps {
   collapseEmpty?: boolean;
   /** The saved value of a field being edited, by key: "Was Monthly" under it. */
   was?: Readonly<Record<string, string>> | undefined;
+  /** The org's zone, for date-times the template gives no zone. */
+  orgZone?: string | undefined;
 }
 
 /**
@@ -66,6 +68,7 @@ export function SchemaForm({
   maxImageBytes = 256 * 1024,
   collapseEmpty = false,
   was,
+  orgZone,
 }: SchemaFormProps) {
   const groups = useMemo(
     () =>
@@ -182,6 +185,7 @@ export function SchemaForm({
                       disabled={disabled || owned}
                       maxImageBytes={maxImageBytes}
                       zone={formZone}
+                      orgZone={orgZone}
                     />
                   </FormSpan>
                 );
@@ -234,6 +238,7 @@ export function SchemaForm({
                         disabled={disabled || owned}
                         maxImageBytes={maxImageBytes}
                         zone={formZone}
+                        orgZone={orgZone}
                       />
                     )}
                   </FormField>

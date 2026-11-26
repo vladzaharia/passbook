@@ -39,6 +39,8 @@ export interface InputProps {
   maxImageBytes: number;
   /** The template's time zone input, when it has one. */
   zone?: string | undefined;
+  /** The org's zone: where a date-time with no venue zone and no written offset is read. */
+  orgZone?: string | undefined;
 }
 
 export function Control({
@@ -50,6 +52,7 @@ export function Control({
   disabled,
   maxImageBytes,
   zone,
+  orgZone,
 }: InputProps) {
   const text = typeof value === 'string' ? value : value == null ? '' : String(value);
   const common = { ...control, disabled, onBlur, placeholder: field.placeholder };
@@ -128,6 +131,7 @@ export function Control({
           value={text}
           onValue={onValue}
           zone={zone}
+          orgZone={orgZone}
           clearLabel={field.required ? undefined : field.noneLabel}
         />
       );
