@@ -43,6 +43,7 @@ function shownConfig(c: ConnectionRow): Shown {
 export function toDto(
   env: AppEnv,
   c: ConnectionRow,
+  firstVerifiedArrivalAt: number | null,
   onIssue?: (code: NonNullable<Shown['issue']>) => void,
 ): ConnectionDto {
   const shown = shownConfig(c);
@@ -86,7 +87,11 @@ export function toDto(
     maxConcurrency: c.maxConcurrency,
     requestsPerMinute: c.requestsPerMinute,
     enabled: c.enabled,
-    health: c.health,
+    health:
+      c.health === 'unknown' && firstVerifiedArrivalAt === null && webhookUrl(env, c) !== null
+        ? 'awaiting'
+        : c.health,
+    firstVerifiedArrivalAt,
     consecutiveFailures: c.consecutiveFailures,
     breakerOpenUntil: c.breakerOpenUntil,
     nextRunAt: c.nextRunAt,

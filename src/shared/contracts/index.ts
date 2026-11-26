@@ -4,6 +4,7 @@ export * from './broadcasts.ts';
 export * from './bundles.ts';
 export * from './channels.ts';
 export * from './common.ts';
+export * from './connection-arrivals.ts';
 export * from './connection-files.ts';
 export * from './connection-preview.ts';
 export * from './connection-probe.ts';

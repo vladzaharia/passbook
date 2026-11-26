@@ -37,6 +37,7 @@ import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import { registerConnectionProbeRoutes } from './probe-routes.ts';
 import * as service from './service.ts';
 import { testConfig } from './test-config.ts';
+import { registerWebhookArrivalRoutes } from './webhook-arrivals-routes.ts';
 import { registerConnectionWebhookRoutes } from './webhook-ingress-routes.ts';
 import { registerWebhookRetentionRoutes } from './webhook-retention-routes.ts';
 
@@ -91,6 +92,7 @@ const touchesTrust = async (c: Parameters<typeof peekBody>[0]) => {
 connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
+registerWebhookArrivalRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
 registerConnectionFileRoutes(connectionsRoutes);
 // A probe that brings its own config or secrets reads through the stored credential: it asks what PATCH asks.
