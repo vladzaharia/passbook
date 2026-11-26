@@ -460,6 +460,19 @@ describe('GET /platform/apple-calls', () => {
     await expectProblem(await call('/api/v1/platform/apple-calls', member), 403, 'FORBIDDEN');
   });
 
+  it('answers 503 with a stable code when the provisioner call fails', async () => {
+    bindApple({
+      calls: async () => {
+        throw new Error('binding down');
+      },
+    });
+    await expectProblem(
+      await call('/api/v1/platform/apple-calls', admin),
+      503,
+      'APPLE_PROVISIONER_UNAVAILABLE',
+    );
+  });
+
   it('reads as unavailable without the binding', async () => {
     bindApple(undefined);
     const res = await call('/api/v1/platform/apple-calls', admin);

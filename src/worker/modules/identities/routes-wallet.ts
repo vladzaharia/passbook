@@ -4,7 +4,7 @@ import {
   WalletIdentityListQuerySchema,
   WalletIdentityListSchema,
 } from '../../../shared/contracts/identities.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { UnavailableError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { isPlatformAdmin, requireOrgAccess } from './access.ts';
@@ -49,5 +49,19 @@ register(
     response: AppleCallListSchema,
     auth: { platform: 'platform:identities' },
   },
-  async (c) => c.json(await listAppleCalls(serviceContext(c).env, c.req.valid('query').since)),
+  async (c) => {
+    const ctx = serviceContext(c);
+    try {
+      return c.json(await listAppleCalls(ctx.env, c.req.valid('query').since));
+    } catch (cause) {
+      ctx.log.error('apple.calls_unavailable', {
+        code: 'APPLE_PROVISIONER_UNAVAILABLE',
+        message: cause instanceof Error ? cause.message : String(cause),
+      });
+      throw new UnavailableError(
+        'The Apple provisioner is not reachable. Try again shortly.',
+        'APPLE_PROVISIONER_UNAVAILABLE',
+      );
+    }
+  },
 );
