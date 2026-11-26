@@ -225,6 +225,59 @@ describe('try token reach', () => {
     expect(await me.json()).toMatchObject({ mode: 'test', orgId: d.made.orgId });
   });
 
+  it('is Test only, in the sandbox org only, whatever mode a caller asks for', async () => {
+    const d = await developer();
+    const { token } = await mint(d.browser);
+    const asked = { ...page(d, token), 'x-passbook-mode': 'live' };
+    // Every key the token can list is a Test key of the sandbox org, with the mode asked by header or by query.
+    for (const [path, headers] of [
+      [`/api-keys?orgId=${d.made.orgId}`, asked],
+      [`/api-keys?orgId=${d.made.orgId}&mode=live`, asked],
+      [`/api-keys?orgId=${d.made.orgId}&mode=live`, page(d, token)],
+    ] as const) {
+      const res = await send('GET', path, headers);
+      if (res.status !== 200) {
+        expect([400, 403, 409], path).toContain(res.status);
+        continue;
+      }
+      const keys = ((await res.json()) as { items: { mode: string; orgId: string }[] }).items;
+      expect(keys.length, path).toBeGreaterThan(0);
+      for (const k of keys) expect(k, path).toMatchObject({ mode: 'test', orgId: d.made.orgId });
+    }
+    // It cannot mint a Live key in the sandbox, nor a key in another org.
+    const mintKey = (orgId: string, mode: string) =>
+      t.app.request(
+        `${ORIGIN}/api/v1/api-keys`,
+        {
+          method: 'POST',
+          headers: {
+            ...asked,
+            'content-type': 'application/json',
+            'idempotency-key': crypto.randomUUID(),
+          },
+          body: JSON.stringify({
+            orgId,
+            name: 'x',
+            scopes: ['passes:read'],
+            expiresAt: t.kit.clock.now() + 86_400_000,
+            kind: 'personal',
+            mode,
+          }),
+        },
+        t.kit.env,
+      );
+    const live = await mintKey(d.made.orgId, 'live');
+    expect(live.status, await live.clone().text()).toBeGreaterThanOrEqual(400);
+    const other = await developer();
+    const foreign = await mintKey(other.made.orgId, 'test');
+    expect(foreign.status, await foreign.clone().text()).toBeGreaterThanOrEqual(400);
+    // Passes read in Live mode answer from Test rows or refuse: never a Live row.
+    const pass = await send('GET', '/passes?mode=live', asked);
+    if (pass.status === 200)
+      for (const row of ((await pass.json()) as { items: { mode?: string }[] }).items)
+        expect(row.mode ?? 'test').toBe('test');
+  });
+
   it('resolves only a sandbox Test key of the same person and a live session', async () => {
     const d = await developer();
     const exp = t.kit.clock.now() + TRY_TOKEN_TTL_MS;
