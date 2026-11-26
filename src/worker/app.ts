@@ -212,6 +212,9 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', idpPlatformRoutes);
   app.route('/api/v1/platform', idpGroupsRoutes);
   app.route('/api/v1/platform', platformInvitationRoutes);
+  // Person-only too, and before `walletPlatformRoutes`' `requireAdmin`: a key gets PERSON_REQUIRED.
+  app.route('/api/v1/platform/apple/identities', platformIdentityRoutes);
+  app.route('/api/v1/platform/apple/identity-moves', identityMoveRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', platformEntitlementsRoutes);
   app.route('/api/v1/platform', platformPersonalLabelsRoutes);
@@ -239,8 +242,6 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/identity-runs', identityRunsRoutes);
   app.route('/api/v1/wallet-identities', walletIdentitiesRoutes);
   app.route('/api/v1/orgs', identityProvisionRoutes);
-  app.route('/api/v1/platform/apple/identities', platformIdentityRoutes);
-  app.route('/api/v1/platform/apple/identity-moves', identityMoveRoutes);
   app.route('/api/v1/platform', platformAppleRoutes);
   app.route('/api/v1/wallet-providers/accounts', walletProviderAccountRoutes);
   app.route('/api/v1/wallet-providers/passes', walletProviderStatusRoutes);
