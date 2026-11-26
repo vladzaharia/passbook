@@ -49,7 +49,7 @@ import {
 } from './repo-releases.ts';
 import { testReleasedVersions } from './repo-sole-reviewer.ts';
 import { isPlatformAdmin } from './service-access.ts';
-import { approvalKind } from './sole-reviewer.ts';
+import { approvalKind, soleAuditDetail } from './sole-reviewer.ts';
 
 export type { TemplateRelease } from '../../../shared/contracts/template-releases.ts';
 export { createCandidate } from './releases-create.ts';
@@ -116,6 +116,7 @@ export async function approveCandidate(
     candidateHash: candidate.candidateHash,
     mode: body.mode,
     provider: body.provider,
+    ...(await soleAuditDetail(ctx, body.orgId, kind)),
   });
   return toApproval(
     approval,

@@ -297,7 +297,7 @@ describe('scope map', () => {
 describe('mintable scopes', () => {
   const body = { orgId: 'org-1', name: 'k', scopes: ['passes:read'] };
   // `scanning:write` joined when POST /templates/{id}/scan-setup began to accept it (WP4); `api-keys:write` when
-  // the key routes began to accept a key (WP6); `scan-setup:read` when GET /scan-setups did; `nfc:keys` when the keyset routes began to accept a key. `templates:write`, `templates:review` and `templates:publish` when Test keys began to release templates; `audit:read` when the org audit routes began to accept a key; `members:read` and `members:write` when the developer invitation routes did.
+  // the key routes began to accept a key (WP6); `scan-setup:read` when GET /scan-setups did; `nfc:keys` when the keyset routes began to accept a key; `nfc:read` and `nfc:write` when the tag routes did. `templates:write`, `templates:review` and `templates:publish` when Test keys began to release templates; `audit:read` when the org audit routes began to accept a key; `members:read` and `members:write` when the developer invitation routes did.
   it('are a subset of the scopes, and today they are exactly the ones that existed, plus the template write, review and publish, brand kit, scanning setup and key management ones', () => {
     expect([...MINTABLE_SCOPES]).toEqual([
       ...Object.keys(LEGACY_SCOPE_CAPABILITY).flatMap((scope) =>
@@ -313,6 +313,8 @@ describe('mintable scopes', () => {
       'scan-setup:read',
       'scanning:admin',
       'nfc:keys',
+      'nfc:read',
+      'nfc:write',
       'api-keys:write',
       'audit:read',
       'members:read',

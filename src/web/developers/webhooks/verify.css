@@ -109,13 +109,3 @@
   color: var(--pk-text-default);
   font-size: 12px;
 }
-.wh-lang {
-  background: none;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-}
-.wh-lang[aria-selected="true"] {
-  color: var(--pk-text-strong);
-  box-shadow: inset 0 -2px 0 var(--pk-accent);
-}

@@ -1,3 +1,5 @@
+import { CODE_COPY } from '../../../shared/copy/developers-code.ts';
+
 const RESET_MS = 1500;
 
 /** The text a copy button stands for: the visible sample, the response, the path or the command. */
@@ -44,25 +46,92 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
+/** The page's one polite live region: "Copied", said once per copy whoever copied. */
+export function announce(message: string): void {
+  let region = document.getElementById('dev-live');
+  if (!region) {
+    region = document.createElement('div');
+    region.id = 'dev-live';
+    region.className = 'sr';
+    region.setAttribute('role', 'status');
+    region.setAttribute('aria-live', 'polite');
+    document.body.append(region);
+  }
+  const live = region;
+  // Emptied first so the same words read again on the next copy.
+  live.textContent = '';
+  setTimeout(() => {
+    live.textContent = message;
+  }, 30);
+  setTimeout(() => {
+    if (live.textContent === message) live.textContent = '';
+  }, 2000);
+}
+
+/** Copy, flash the check and say so. `button` is the one that shows the state. */
+export async function copyWithFeedback(text: string, button: HTMLElement | null): Promise<boolean> {
+  const ok = await copyToClipboard(text);
+  announce(ok ? CODE_COPY.copied : CODE_COPY.copyFailed);
+  if (button) {
+    button.dataset.state = ok ? 'copied' : 'failed';
+    setTimeout(() => delete button.dataset.state, RESET_MS);
+  }
+  return ok;
+}
+
+function closeMenus(except?: Element | null): void {
+  for (const t of document.querySelectorAll<HTMLElement>(
+    '[data-menu-toggle][aria-expanded="true"]',
+  )) {
+    if (t.closest('.menu') === except) continue;
+    t.setAttribute('aria-expanded', 'false');
+    t.closest('.menu')?.querySelector('.menu-list')?.setAttribute('hidden', '');
+  }
+}
+
+/** "Copy as" and Wrap on prerendered blocks; the islands' React menus are their own. */
+function onMenuClick(target: Element): boolean {
+  const wrap = target.closest<HTMLElement>('[data-wrap-toggle]');
+  if (wrap) {
+    const on = wrap.getAttribute('aria-pressed') !== 'true';
+    wrap.setAttribute('aria-pressed', String(on));
+    wrap.closest('.code')?.toggleAttribute('data-wrap', on);
+    return true;
+  }
+  const toggle = target.closest<HTMLElement>('[data-menu-toggle]');
+  if (!toggle) {
+    if (!target.closest('.menu')) closeMenus();
+    return false;
+  }
+  const menu = toggle.closest('.menu');
+  const open = toggle.getAttribute('aria-expanded') !== 'true';
+  closeMenus(menu);
+  toggle.setAttribute('aria-expanded', String(open));
+  menu?.querySelector('.menu-list')?.toggleAttribute('hidden', !open);
+  return true;
+}
+
 // Not the kit's copyText: that toasts through sonner and React, which the portal's first load cannot afford.
 export function initCopy(): void {
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const open = document.querySelector<HTMLElement>('[data-menu-toggle][aria-expanded="true"]');
+    if (!open) return;
+    closeMenus();
+    open.focus();
+  });
   document.addEventListener('click', async (event) => {
-    const button = (event.target as Element).closest<HTMLElement>('[data-copy], [data-copy-as]');
+    const target = event.target as Element;
+    if (onMenuClick(target)) return;
+    const button = target.closest<HTMLElement>('[data-copy], [data-copy-as]');
     if (!button) return;
-    // An icon button is named by its label; a "Copy as" button by its text, which the state suffix extends.
-    const label = button.getAttribute('aria-label');
     const text = button.dataset.copyAs ? sampleFor(button) : textFor(button);
-    if (await copyToClipboard(text)) {
-      button.dataset.state = 'copied';
-      if (label) button.setAttribute('aria-label', 'Copied');
-    } else {
-      button.dataset.state = 'failed';
-      if (label)
-        button.setAttribute('aria-label', 'Could not copy. Allow clipboard access and try again.');
-    }
-    setTimeout(() => {
-      delete button.dataset.state;
-      if (label) button.setAttribute('aria-label', label);
-    }, RESET_MS);
+    const inMenu = button.closest('.menu');
+    closeMenus();
+    // A pick from the menu shows its state on the block's Copy button.
+    const shown = inMenu
+      ? (button.closest('.code')?.querySelector<HTMLElement>('.copy') ?? button)
+      : button;
+    await copyWithFeedback(text, shown);
   });
 }

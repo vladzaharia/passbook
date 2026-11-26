@@ -1,67 +1,6 @@
 /* Code, the ticket, the stamp, parameters and the errors table. One syntax theme for pages,
    islands and .md twins: token classes from model/highlight.ts. */
 
-.code {
-  position: relative;
-  border: 1px solid var(--pk-border-subtle);
-  border-radius: var(--pk-radius-lg);
-  background: var(--pk-surface-sunken);
-  overflow: hidden;
-}
-.code-h {
-  overflow-x: auto;
-  scrollbar-width: none;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 40px;
-  padding: 0 6px 0 8px;
-  border-bottom: 1px solid var(--pk-border-subtle);
-  background: var(--dp-glass);
-}
-.code-h .copy {
-  margin-left: auto;
-  flex: none;
-}
-.tab-wrap {
-  display: contents;
-}
-.tab {
-  flex: none;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 5px;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--pk-text-muted);
-  position: relative;
-  cursor: pointer;
-}
-.tab:hover {
-  color: var(--pk-text-strong);
-}
-.tab[aria-current],
-.tab-radio:checked + .tab {
-  color: var(--pk-text-strong);
-}
-.tab[aria-current]::after,
-.tab-radio:checked + .tab::after {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: -6px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--pk-accent);
-}
-.tab-radio:focus-visible + .tab {
-  outline: 2px solid var(--pk-focus);
-  outline-offset: -2px;
-}
 .samples .panel {
   display: none;
 }
@@ -165,9 +104,11 @@ pre.src .ln.hl {
 .cmd .copy {
   margin-left: auto;
 }
+.copy[data-state="copied"],
 [data-copy][data-state="copied"] {
   color: var(--pk-success);
 }
+.copy[data-state="failed"],
 [data-copy][data-state="failed"] {
   color: var(--pk-danger);
 }
@@ -258,46 +199,6 @@ pre.src .ln.hl {
 }
 .page-errors {
   margin-top: 48px;
-}
-.soon-dot {
-  width: 6px;
-  height: 6px;
-  margin: -6px 0 0 4px;
-  border-radius: 50%;
-  background: var(--pk-accent);
-  flex: none;
-}
-
-.code-f {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 12px;
-  padding: 6px 12px;
-  border-top: 1px solid var(--pk-border-subtle);
-  background: var(--dp-glass);
-}
-.linkbtn {
-  font: inherit;
-  font-size: 12.5px;
-  color: var(--pk-text-muted);
-  background: none;
-  border: 0;
-  padding: 2px 0;
-  cursor: pointer;
-}
-.linkbtn:hover {
-  color: var(--pk-text-strong);
-}
-.linkbtn:focus-visible {
-  outline: 2px solid var(--pk-focus);
-  outline-offset: 2px;
-}
-.linkbtn[data-state="copied"]::after {
-  content: " · copied";
-}
-.linkbtn[data-state="failed"]::after {
-  content: " · blocked";
 }
 .examples {
   display: grid;

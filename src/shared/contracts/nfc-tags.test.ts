@@ -206,8 +206,17 @@ describe('access business', () => {
     ).toBe(false);
   });
 
-  it('signs out with a tag state', () => {
-    expect(SignOutRequestSchema.parse({ idempotencyKey: key, passId: 'p' }).tag).toBe('none');
+  it('signs out by pass or by a tapped tag, not both or neither', () => {
+    expect(SignOutRequestSchema.safeParse({ idempotencyKey: key, passId: 'p' }).success).toBe(true);
+    const read = { uid: '04a1b2c3', tech: 'a', source: 'native' };
+    expect(SignOutRequestSchema.safeParse({ idempotencyKey: key, read }).success).toBe(true);
+    expect(SignOutRequestSchema.safeParse({ idempotencyKey: key }).success).toBe(false);
+    expect(SignOutRequestSchema.safeParse({ idempotencyKey: key, passId: 'p', read }).success).toBe(
+      false,
+    );
+    expect(SignOutRequestSchema.safeParse({ idempotencyKey: key, read, tag: 'none' }).success).toBe(
+      false,
+    );
   });
 });
 

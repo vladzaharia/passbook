@@ -13,12 +13,13 @@ const OPEN = new Set([
   'post /api/v1/scan/resolve',
   'post /api/v1/scan/actions',
   'post /api/v1/scan/scans/{scanId}/undo',
+  'post /api/v1/scan/sign-out',
 ]);
 // The pairing routes read no credential: the router answers them before any scan guard.
 const UNGUARDED = /^\/api\/v1\/scan\/(?:pair|unpair)/;
 
 describe('every /api/v1/scan route, as a key', () => {
-  it('opens resolve, actions and undo only', async () => {
+  it('opens resolve, actions, undo and sign-out only', async () => {
     const k = await t.till();
     const doc = (await (
       await t.app.request(`${ORIGIN}/api/v1/openapi.json`, { headers: t.adminHeaders }, kit.env)

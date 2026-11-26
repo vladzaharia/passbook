@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "api-keys:write" | "audit:read" | "members:read" | "members:write">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "members:read" | "members:write">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;
@@ -8224,6 +8224,7 @@ export type ReviewTemplate = {
   orgId?: string;
   version: string;
   release?: boolean;
+  alone?: boolean;
   note?: string;
 };
 
@@ -12167,6 +12168,7 @@ export type TerminalActParams = {
   approval?: {
     staffId?: string;
     pin: string;
+    alone?: boolean;
   };
 };
 
@@ -12216,6 +12218,29 @@ export type TerminalScansUndoParams = {
     staffId?: string;
     pin: string;
   };
+};
+
+export type TerminalSignOutEverywhereParams = {
+  idempotencyKey: string;
+  passId?: string;
+  read?: {
+    uid?: string;
+    uidRandom?: boolean;
+    tech: "a" | "b" | "isodep" | "unknown";
+    ndef?: {
+      type: "U" | "T";
+      value: string;
+    };
+    source: "native" | "webnfc";
+  };
+  tag?: "returned" | "not_returned" | "none";
+};
+
+export type TerminalSignOutEverywhereResponse = {
+  passId: string;
+  stayMs: number | null;
+  stillInside: number;
+  tag: "returned" | "not_returned" | "none";
 };
 
 export type WalletAccountsGoogleManagedCreateParams = {

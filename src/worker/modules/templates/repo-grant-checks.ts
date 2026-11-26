@@ -53,7 +53,7 @@ export const candidateTemplate = (
  * A candidate of the actor's org that this reviewer may approve: same hash, its version still the
  * author's, and an active template. A `peer` approval needs a reviewer who is neither the candidate
  * nor the version author; a `test` one a Test-mode candidate; a `sole` one the org's only eligible
- * reviewer with no reviewer removed in the last 7 days (counted here, at commit).
+ * reviewer (counted here, at commit).
  */
 export const approvable = (
   candidateId: string,
@@ -61,7 +61,6 @@ export const approvable = (
   reviewerId: string,
   membershipId: string,
   kind: ApprovalKind,
-  now: number,
   testOnly = false,
 ): Check =>
   check(
@@ -78,11 +77,7 @@ export const approvable = (
           AND (c.version_author_id IS NULL OR c.version_author_id != ${p(reviewerId)})`
             : kind === 'test'
               ? `c.mode = 'test'`
-              : soleReviewerSql(
-                  'c.org_id',
-                  () => p(reviewerId),
-                  () => p(now),
-                )
+              : soleReviewerSql('c.org_id', () => p(reviewerId))
         }
         AND v.created_by IS c.version_author_id AND t.status = 'active')`,
   );
@@ -146,8 +141,9 @@ export const publishable = (f: PublishFacts): Check =>
         AND (t.status = 'active' OR (c.mode = 'live' AND t.org_id = c.org_id))
         AND ${
           f.action === 'release'
-            ? `(ap.kind != 'sole' OR NOT EXISTS (SELECT 1 FROM org_memberships m
-          WHERE m.org_id = c.org_id AND m.created_at > ap.created_at AND ${reviews('m')}))`
+            ? `(ap.kind != 'sole' OR (NOT EXISTS (SELECT 1 FROM org_memberships m
+          WHERE m.org_id = c.org_id AND m.created_at > ap.created_at AND ${reviews('m')})
+          AND ${soleReviewerSql('c.org_id', () => 'ap.reviewer_id')}))`
             : '1'
         }
         AND (ap.kind != 'peer' OR (ap.reviewer_id != c.author_id

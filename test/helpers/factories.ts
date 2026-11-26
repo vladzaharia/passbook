@@ -42,6 +42,7 @@ export async function makeOrg(
   overrides: Partial<OrgRow> & {
     preset?: string;
     kind?: 'developer';
+    /** A personal org: the marker can only be set at creation. */
     personalUserId?: string;
   } = {},
 ): Promise<OrgRow> {
@@ -55,15 +56,15 @@ export async function makeOrg(
   const now = f.clock.now();
   await run(
     f.env.DB,
-    'INSERT INTO orgs (id, slug, name, kind, personal_user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO orgs (id, slug, name, kind, created_at, updated_at, personal_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [
       row.id,
       row.slug,
       row.name,
       overrides.kind ?? 'standard',
+      now,
+      now,
       overrides.personalUserId ?? null,
-      now,
-      now,
     ],
   );
   // Every org has an entitlements row; a test org is `legacy` (every flag on, no limits) unless it says otherwise.

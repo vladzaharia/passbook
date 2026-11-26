@@ -307,5 +307,11 @@
         "refused": "Send them to the desk."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "half",
+    "barcode": "qr",
+    "kind": "coupon"
   }
 }

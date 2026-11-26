@@ -71,7 +71,8 @@ export const FULL_SANDBOX = { id: 'full', label: 'Full sandbox' } as const;
 
 /**
  * Admin's last preset: everything a key can hold except key minting, the terminal scope, the credential scopes and the
- * audit log (those are ticked on purpose, never by a preset), and, in Live, the Test-only scopes.
+ * audit log (those are ticked on purpose, never by a preset), and, in Live, the Test-only scopes. It does include
+ * `nfc:read` and `nfc:write` (owner decision: full means full); roles and `ROLE_PRESETS` never carry them.
  */
 export function fullAccess(mode: Mode) {
   return {
@@ -88,6 +89,8 @@ const ORG_ONLY: readonly string[] = [
   'org:write',
   'wallet:write',
   'audit:read',
+  'nfc:read',
+  'nfc:write',
   ...TEMPLATE_ACT_AS_SCOPES,
 ];
 
@@ -114,6 +117,8 @@ export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number],
   'scan-setup:read': 'scanning:read',
   'scanning:admin': 'scanning:manage',
   'nfc:keys': 'scanning:manage',
+  'nfc:read': 'passes:read',
+  'nfc:write': 'passes:operate',
   'api-keys:write': 'integrations:manage',
   'audit:read': 'audit:read',
   'members:read': 'members:read',

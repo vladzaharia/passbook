@@ -63,7 +63,7 @@ describe('the prerendered portal', () => {
       'Reference',
     ]);
     expect(lit(`${PATHS.changelog}.html`)).toEqual([]);
-    expect(body(`${PATHS.console}.html`)).toContain('Sign in to try');
+    expect(body(`${PATHS.console}.html`)).toContain('Run any call against your sandbox.');
   });
 
   it('puts one tree on every page, with the page lit and its group open', () => {

@@ -23,7 +23,7 @@ export function registerScanSignOutRoute(scanRoutes: OpenAPIHono<AppBindings>): 
     {
       method: 'post',
       path: '/sign-out',
-      summary: 'Sign someone out: out of every place they are in',
+      summary: 'Sign someone out: out of every place, and collect a lent tag',
       body: SignOutRequestSchema,
       response: SignOutResultSchema,
     },

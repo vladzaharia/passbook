@@ -15,7 +15,9 @@ import {
   bindChecks,
   type TagActor,
   type TagAuthority,
+  tagActorOf,
   tagGrant,
+  tagKeyIdOf,
 } from './repo-tags-write.ts';
 import { UID_SYSTEM } from './systems/uid.ts';
 
@@ -189,7 +191,8 @@ export async function bindTag(
       holderOwner: pass.ownerUserId,
       clearsLost: tag?.lostAt != null,
       source: 'admin',
-      actor: { type: 'user', id: authority.userId } satisfies TagActor,
+      actor: tagActorOf(authority) satisfies TagActor,
+      keyId: tagKeyIdOf(authority),
       scannerId: null,
       orgId,
       mode,

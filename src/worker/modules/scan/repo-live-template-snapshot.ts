@@ -79,7 +79,8 @@ function releaseSql(alias: string): string {
       'versionAuthorId', c.version_author_id, 'createdAt', c.created_at)
       FROM template_candidates c WHERE c.id=${alias}.candidate_id)),
     'approval', json((SELECT json_object('id', a.id, 'candidateId', a.candidate_id,
-      'candidateHash', a.candidate_hash, 'reviewerId', a.reviewer_id)
+      'candidateHash', a.candidate_hash, 'reviewerId', a.reviewer_id,
+      'kind', a.kind)
       FROM template_approvals a WHERE a.id=${alias}.approval_id))
   ) END`;
 }
