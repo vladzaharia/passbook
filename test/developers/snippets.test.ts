@@ -49,8 +49,18 @@ const ABSENT = new Set(['DNS_FAILED', 'VISITOR_HOST_UNKNOWN']);
 const reached = (c: Call) =>
   ABSENT.has(c.code ?? '') || (c.status < 500 && ![400, 401, 403, 405, 422].includes(c.status));
 
-/** Zones belong to the org, not a mode: a test key may not write them, and the world's key is a test key. */
-const LIVE_ONLY = new Set(['scan-zones.postScanZones']);
+/** The org's brand, zones, tag types and saved mappings belong to it, not a mode: a test key may not write them, and the world's key is a test key. */
+const LIVE_ONLY = new Map([
+  ['scan-zones.postScanZones', 'SCAN_ZONE_LIVE_ONLY'],
+  ['brand.patchBrand', 'MODE_LIVE_REQUIRED'],
+  ['brand.putBrandWebLogo', 'MODE_LIVE_REQUIRED'],
+  ['brand.deleteBrandWebLogo', 'MODE_LIVE_REQUIRED'],
+  ['nfc-tags.postNfcTagTypes', 'MODE_LIVE_REQUIRED'],
+  ['pass-imports.putPassImportsMappings', 'MODE_LIVE_REQUIRED'],
+  ['pass-imports.deletePassImportsMappings', 'MODE_LIVE_REQUIRED'],
+  ['pass-setup.patchOrgsByOrgIdPassSetup', 'MODE_LIVE_REQUIRED'],
+  ['pass-setup.postOrgsByOrgIdBrandAssets', 'MODE_LIVE_REQUIRED'],
+]);
 
 /** Google and Samsung ship dark: the reissue route answers WALLET_PROVIDER_DISABLED until a provider is released. */
 const DARK_PROVIDER = new Set(['wallet-providers.postWalletProvidersReissue']);
@@ -62,7 +72,7 @@ function failures(id: string, calls: Call[]): string[] {
     .filter(
       (c) =>
         !reached(c) &&
-        !(LIVE_ONLY.has(id) && c.code === 'SCAN_ZONE_LIVE_ONLY') &&
+        !(LIVE_ONLY.get(id) === c.code) &&
         !(DARK_PROVIDER.has(id) && c.code === 'WALLET_PROVIDER_DISABLED'),
     )
     .map((c) => `${id}: ${c.method} ${c.path} ${c.status} ${c.code} ${c.detail ?? ''}`);

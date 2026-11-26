@@ -324,6 +324,7 @@
   "auth post /magic/resend": [],
   "brand delete /web-logo": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
@@ -333,6 +334,7 @@
   ],
   "brand get /": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
@@ -342,6 +344,7 @@
   "brand patch /": [
     "BRAND_MARK_NOT_ALLOWED",
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
@@ -351,6 +354,7 @@
   ],
   "brand put /web-logo": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
@@ -1284,6 +1288,7 @@
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
+    "MODE_LIVE_REQUIRED",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
@@ -1293,12 +1298,14 @@
     "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
     "FORBIDDEN",
     "LAST_ORG_ADMIN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "developer invitations get /{id}/developer-invitations": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1310,6 +1317,7 @@
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1326,6 +1334,7 @@
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",
@@ -2662,6 +2671,7 @@
   ],
   "nfc-tags get /tag-types": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED",
@@ -2730,6 +2740,7 @@
     "FEATURE_NOT_INCLUDED",
     "FORBIDDEN",
     "LINEAGE_CHANGED",
+    "MODE_LIVE_REQUIRED",
     "ORG_ACCESS_CHANGED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
@@ -2839,6 +2850,7 @@
     "FEATURE_NOT_INCLUDED",
     "FORBIDDEN",
     "LINEAGE_CHANGED",
+    "MODE_LIVE_REQUIRED",
     "ORG_ACCESS_CHANGED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
@@ -2866,6 +2878,7 @@
     "FEATURE_NOT_INCLUDED",
     "FORBIDDEN",
     "LINEAGE_CHANGED",
+    "MODE_LIVE_REQUIRED",
     "ORG_ACCESS_CHANGED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
@@ -3270,6 +3283,7 @@
     "IMAGE_INVALID",
     "IMAGE_SCALE",
     "IMAGE_SIZE",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED",
@@ -3277,6 +3291,7 @@
   ],
   "pass-imports delete /mappings": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
@@ -3541,6 +3556,7 @@
   "pass-imports put /mappings": [
     "FORBIDDEN",
     "IMPORT_MAPPINGS_FULL",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_REQUIRED",
     "ORG_TEST_ONLY",
@@ -6846,6 +6862,7 @@
   ],
   "scan-zones patch /{id}": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "SCAN_MODE_LIVE_ONLY",
@@ -6884,6 +6901,7 @@
   ],
   "scan-zones post /{id}/archive": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "SCAN_MODE_LIVE_ONLY",
@@ -6898,6 +6916,7 @@
   ],
   "scan-zones post /{id}/restore": [
     "FORBIDDEN",
+    "MODE_LIVE_REQUIRED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "SCAN_MODE_LIVE_ONLY",

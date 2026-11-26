@@ -8,6 +8,7 @@ import {
   SavedImportMappingsResultSchema,
 } from '../../../shared/contracts/pass-imports.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { assertSharedWrite } from '../orgs/shared-write.ts';
 import { authOf, type C, orgIdOf, svc, tenantAuthorityOf } from './http.ts';
 import { deleteSaved, putSaved, readMappings } from './import-mappings.ts';
 
@@ -52,6 +53,7 @@ export function registerImportMappings(router: Router): void {
     async (c) => {
       const { templateId, ...mapping } = c.req.valid('json');
       const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
+      await assertSharedWrite(svc(c), authority, authority.orgId, 'saved mappings');
       return c.json({ saved: await putSaved(svc(c), authority, templateId, mapping) });
     },
   );
@@ -69,6 +71,7 @@ export function registerImportMappings(router: Router): void {
     async (c) => {
       const q = c.req.valid('query');
       const authority = await authorityFor(c, q.orgId, 'passes:operate');
+      await assertSharedWrite(svc(c), authority, authority.orgId, 'saved mappings');
       return c.json({ saved: await deleteSaved(svc(c), authority, q.templateId, q.name) });
     },
   );
