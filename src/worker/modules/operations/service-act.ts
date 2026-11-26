@@ -140,7 +140,8 @@ export async function retryOperation(
       stepKey: null,
       retryKey,
       // The retrying session takes the row over: a step-up revoked the one that started it.
-      actorSession: row.audience === 'starter' && auth.kind === 'session' ? auth.sessionId : null,
+      actorSession:
+        row.audience === 'starter' && auth.kind === 'session' ? auth.sessionId : row.actor_session,
       expiresAt: row.audience === 'starter' ? now + KEEP_MS.starter : null,
     });
   } catch (error) {

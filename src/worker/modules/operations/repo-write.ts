@@ -153,7 +153,7 @@ export async function resetForRetry(
     steps: string;
     stepKey: string | null;
     retryKey: string | null;
-    /** A starter row's new owning session (the retrying one), or null to keep it. */
+    /** The row's owning session: the retrying one for a starter row (a step-up replaced the first), else unchanged. */
     actorSession: string | null;
     /** A starter operation keeps its 7 days from the retry; others get an expiry when they end. */
     expiresAt: number | null;
@@ -165,7 +165,7 @@ export async function resetForRetry(
        error_code = NULL, error_step = NULL, error_retryable = NULL, result = NULL, finished_at = NULL,
        workflow_instance_id = NULL,
        expires_at = ?, cancel_requested = 0, lease_until = NULL, lease_owner = NULL, resends = 0,
-       heartbeat_at = ?, retry_key = ?, actor_session = COALESCE(?, actor_session),
+       heartbeat_at = ?, retry_key = ?, actor_session = ?,
        revision = revision + 1, updated_at = ?
      WHERE id = ? AND attempt = ? AND status = 'failed' AND error_retryable = 1`,
     [r.steps, r.stepKey, r.expiresAt, r.now, r.retryKey, r.actorSession, r.now, r.id, r.attempt],
