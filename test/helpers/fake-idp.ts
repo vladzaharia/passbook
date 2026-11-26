@@ -166,6 +166,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
   });
 
   const setup = newFakeSetup();
+  const signInRoles = ['console', 'developer', 'support', 'platform_admin'];
   const setupApi = setupMethods({
     setup,
     groups,
@@ -181,10 +182,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     signups,
     accounts,
     groupStore: groups,
-    canSignIn: (subject) =>
-      ['console', 'developer', 'support', 'platform_admin'].some((r) =>
-        accounts.get(subject)?.roles.has(r as never),
-      ),
+    canSignIn: (subject) => signInRoles.some((r) => accounts.get(subject)?.roles.has(r as never)),
     log,
     writes: 0,
     frozen: false,
