@@ -20,6 +20,7 @@ export interface ListInputProps {
   disabled?: boolean | undefined;
   maxImageBytes: number;
   zone?: string | undefined;
+  orgZone?: string | undefined;
 }
 
 let nextId = 0;
@@ -48,6 +49,7 @@ export function ListInput({
   disabled,
   maxImageBytes,
   zone,
+  orgZone,
 }: ListInputProps) {
   const def = field.rows;
   const rows: Row[] = Array.isArray(value) ? (value as Row[]) : [];
@@ -266,6 +268,7 @@ export function ListInput({
                               disabled={disabled}
                               maxImageBytes={maxImageBytes}
                               zone={zone}
+                              orgZone={orgZone}
                             />
                           )}
                         </FormField>

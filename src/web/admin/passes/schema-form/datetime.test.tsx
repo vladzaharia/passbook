@@ -91,6 +91,28 @@ describe('SchemaForm datetime widget', () => {
     expect(screen.getByLabelText('Expires')).toHaveValue('2027-01-31T23:59');
   });
 
+  it('reads a stored Z value in the default zone, never UTC, when no zone is set', () => {
+    render(<Harness onValue={vi.fn()} initial={{ expires: '2026-11-29T05:06:00.000Z' }} />);
+    expect(screen.getByLabelText('Expires')).toHaveValue('2026-11-28T21:06');
+    expect(screen.getByText(/Nov 28, 2026, 9:06 PM, Los Angeles/)).toBeInTheDocument();
+    expect(screen.queryByText(/UTC/)).toBeNull();
+  });
+
+  it('reads a stored Z value in the org zone when one is given', () => {
+    render(
+      <TooltipProvider>
+        <SchemaForm
+          schema={schema}
+          value={{ expires: '2026-11-29T05:06:00.000Z' }}
+          orgZone="Asia/Kolkata"
+          hiddenKeys={new Set(['voided'])}
+          onChange={vi.fn()}
+        />
+      </TooltipProvider>,
+    );
+    expect(screen.getByLabelText('Expires')).toHaveValue('2026-11-29T10:36');
+  });
+
   it('hides the date and zone while No date is checked', async () => {
     const user = userEvent.setup();
     render(<Harness onValue={vi.fn()} initial={{ expires: '2027-01-31T23:59:00-08:00' }} />);

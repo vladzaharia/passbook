@@ -92,7 +92,7 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
       templateIds: [crew],
       opensAt: Date.now() - 3_600_000,
       closesAt: Date.now() + 5 * 3_600_000,
-      timeZone: 'UTC',
+      timeZone: 'America/Los_Angeles',
       reentry: true,
       capacity: 500,
     });
@@ -109,7 +109,7 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
       name: 'Gate A',
       kind: 'device',
       accepts: { eventId },
-      timeZone: 'UTC',
+      timeZone: 'America/Los_Angeles',
     });
     if (!made.pairing) return 'created, no pairing code';
     await new (owner.constructor as new (b: string) => Session)(base).send(
@@ -132,7 +132,7 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
       (await owner.send('POST', '/api/v1/scanning-sessions', {
         orgId: northwind,
         name: 'Front door',
-        timeZone: 'UTC',
+        timeZone: 'America/Los_Angeles',
         accepts: { templateIds: [member] },
       }));
     frontDoorId = session.id;
@@ -180,7 +180,7 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
     await owner.send('POST', '/api/v1/scanning-sessions', {
       orgId: northwind,
       name: 'Evening classes',
-      timeZone: 'UTC',
+      timeZone: 'America/Los_Angeles',
       accepts: { templateIds: [member] },
       hours: Object.fromEntries(days.map((d) => [d, ['18:00-22:00']])),
     });
@@ -197,7 +197,7 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
       name: 'Lobby monitor',
       kind: 'device',
       deviceRole: 'monitor',
-      timeZone: 'UTC',
+      timeZone: 'America/Los_Angeles',
       watch: { allOrg: true },
     });
     return 'created, watches the org';

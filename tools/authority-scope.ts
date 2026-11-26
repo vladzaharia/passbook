@@ -141,7 +141,8 @@ const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
 // 31: outbound webhooks add repo-delivery-state.ts and repo-retention.ts (design-webhooks.md section 11.3);
 // the trust pack adds retention/repo-receipts.ts and retention/repo-sweep.ts;
 // 32: delivery channels add channels/repo.ts, the insert-once copy evidence (design-channels.md N3).
-export const RAW_WRITE_ALLOWLIST_LIMIT = 32;
+// 33: keys.rewrap's captured-email mechanism moves to repo-rewrap-captures.ts so repo-rewrap.ts holds the tag programming places under the size limit.
+export const RAW_WRITE_ALLOWLIST_LIMIT = 33;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
 const TENANT_TABLES = new Set([

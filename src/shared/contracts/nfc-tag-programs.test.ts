@@ -102,7 +102,7 @@ describe('tag program contracts', () => {
         state: 'programmed',
         tag: { id: 't', hint: 'AB12' },
         binding: null,
-        refusal: 'TAG_KNOWN',
+        refusal: 'PASS_NOT_FOUND',
       }).success,
     ).toBe(true);
   });

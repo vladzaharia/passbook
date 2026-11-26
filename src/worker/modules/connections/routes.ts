@@ -17,6 +17,7 @@ import {
   UpdateConnectionSchema,
 } from '../../../shared/contracts/index.ts';
 import { methodScope, modeOf } from '../../platform/auth.ts';
+import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { actorOf } from '../../platform/context.ts';
 import { NotFoundError } from '../../platform/errors.ts';
@@ -29,6 +30,7 @@ import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeConnection, authorizeStoredConnection as authorizeStored } from './access.ts';
 import * as actions from './actions.ts';
 import { registerConnectorCatalogRoutes } from './catalog-routes.ts';
+import { registerConnectionFileRoutes } from './files-routes.ts';
 import { registerConnectionListRoutes } from './list-routes.ts';
 import { previewUnsaved } from './preview.ts';
 import { registerConnectionPreviewRoute } from './preview-routes.ts';
@@ -59,7 +61,12 @@ function assertLive(c: C): void {
 }
 
 /** /api/v1/connections */
-export const connectionsRoutes = createRouter();
+export const connectionsRoutes = createRouter({ bodyLimit: false });
+// A file upload is JSON with the file inside: base64 of 5 MB plus the envelope.
+const UPLOAD_BODY_BYTES = 7 * 1024 * 1024;
+connectionsRoutes.use('*', defaultBodyLimit(/\/connections\/(?:uploads|[^/]+\/files)\/?$/));
+connectionsRoutes.use('/uploads', limitBody(UPLOAD_BODY_BYTES));
+connectionsRoutes.use('/:id/files', limitBody(UPLOAD_BODY_BYTES));
 registerConnectionPreviewRoute(connectionsRoutes);
 // The preview route (above) takes read scopes on a POST; this guard documents the rest.
 guard(
@@ -84,6 +91,7 @@ connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
+registerConnectionFileRoutes(connectionsRoutes);
 register(
   connectionsRoutes,
   'connections',

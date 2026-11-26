@@ -38,6 +38,18 @@ describe('the session lookup', () => {
     expect(await load()).toEqual({ kind: 'out' });
   });
 
+  it('reads the session and the sandbox past any cache, so a deleted sandbox is not shown again', async () => {
+    const mock = route({
+      '/api/v1/session': json(authed),
+      '/api/v1/developer/sandbox': json({ sandbox: null }),
+    });
+    await load();
+    for (const call of mock.mock.calls) {
+      expect((call as unknown as [string, RequestInit])[1].cache).toBe('no-store');
+    }
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
   it('is signed out when the sandbox route says 401', async () => {
     route({ '/api/v1/session': json(authed), '/api/v1/developer/sandbox': json({}, 401) });
     expect(await load()).toEqual({ kind: 'out' });
@@ -156,6 +168,19 @@ describe('the top bar chip', () => {
     });
     expect(closed.textContent).toBe('Sandbox closed');
     expect(closed.querySelector('a')?.getAttribute('href')).toBe('/developers/quickstart#sandbox');
+  });
+
+  it('closes the menu when an item is chosen, so a hash-only link leaves nothing open', async () => {
+    const host = await mountWith({
+      '/api/v1/session': authed,
+      '/api/v1/developer/sandbox': json({ sandbox: { id: 's', orgSlug: 'acme' } }),
+    });
+    const chip = host.querySelector<HTMLDetailsElement>('.orgchip');
+    chip!.open = true;
+    const item = host.querySelectorAll<HTMLAnchorElement>('.orgchip-item')[2];
+    item?.addEventListener('click', (e) => e.preventDefault());
+    item?.click();
+    expect(chip?.open).toBe(false);
   });
 
   it('shows the sandbox org and the runs left, repainting as runs are spent', async () => {

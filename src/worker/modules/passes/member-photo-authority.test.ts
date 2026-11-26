@@ -107,7 +107,8 @@ describe('member photo tenant authority', () => {
                   membershipId,
                   kit.clock.now(),
                 ).run();
-                expect(result.meta.changes).toBe(1);
+                // D1 counts the Polaris ID dirty mark a membership revoke writes.
+                expect(result.meta.changes).toBeGreaterThanOrEqual(1);
                 await grantKitMembership(kit, pass.orgId, userId);
               }
               return target.batch(statements);
@@ -210,7 +211,8 @@ describe('member photo tenant authority', () => {
             membershipId,
             kit.clock.now(),
           ).run();
-          expect(result.meta.changes).toBe(1);
+          // D1 counts the Polaris ID dirty mark a membership revoke writes.
+          expect(result.meta.changes).toBeGreaterThanOrEqual(1);
         }
         return resolve(...args);
       });

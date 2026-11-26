@@ -9,6 +9,7 @@ import { formatEventTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope, useResourceOrg } from '@/web/lib/org-filter.tsx';
 import { useSession } from '@/web/lib/session.ts';
+import { zoneLabel } from '@/web/lib/timezones.ts';
 import {
   Button,
   Callout,
@@ -221,7 +222,7 @@ function EventDetail({
                 <h2 className="font-semibold">Event</h2>
                 <KeyValue
                   items={[
-                    { label: 'Time zone', value: event.timeZone },
+                    { label: 'Time zone', value: zoneLabel(event.timeZone) },
                     { label: 'Capacity', value: event.capacity ?? 'No limit' },
                     { label: 'Re-entry', value: event.reentry ? 'Allowed' : 'Off' },
                     {

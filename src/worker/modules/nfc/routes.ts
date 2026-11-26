@@ -150,7 +150,13 @@ for (const [action, summary, act] of [
   register(
     nfcRoutes,
     TAG,
-    { method: 'post', path: `/tags/{id}/${action}`, summary, params: IdParam, response: TagSchema },
+    {
+      method: 'post',
+      path: `/tags/{id}/${action}` as const,
+      summary,
+      params: IdParam,
+      response: TagSchema,
+    },
     async (c) => {
       const id = c.req.valid('param').id;
       const { ctx, authority } = await actingIn(

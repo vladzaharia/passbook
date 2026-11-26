@@ -110,7 +110,7 @@ export function seedTags(db: DatabaseSync) {
       kind: 'device',
       name: 'Door',
       settings: '{}',
-      time_zone: 'UTC',
+      time_zone: 'America/Los_Angeles',
       created_at: 1,
       updated_at: 1,
     });

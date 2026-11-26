@@ -29,6 +29,7 @@ export const FEATURE_GROUPS: readonly { title: string; keys: readonly Entitlemen
       'passes.changesPerDay',
       'email.perDay',
       'members',
+      'members.developers',
     ],
   },
   {

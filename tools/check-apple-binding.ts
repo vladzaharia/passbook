@@ -118,6 +118,19 @@ function trackCopy(node: ts.Node, sf: ts.SourceFile): void {
 export function findAppleBinding(rel: string, text: string): string[] {
   if (ALLOWED.test(rel)) return [];
   if (READ_ONLY.test(rel)) return findReadOnlyViolations(rel, text);
+  return findBinding('APPLE', rel, text, CLIENT_SPECIFIER);
+}
+
+/**
+ * Lines naming the service binding `name` (`.name`, `['name']`, a destructured `name`) or reaching it
+ * indirectly; with `clientSpecifier`, also lines importing that client. Shared with check-idp-binding.ts.
+ */
+export function findBinding(
+  name: string,
+  rel: string,
+  text: string,
+  clientSpecifier?: RegExp,
+): string[] {
   const sf = ts.createSourceFile(rel, text, ts.ScriptTarget.Latest, true);
   const found: string[] = [];
   const consts = new Map<string, string>();
@@ -131,10 +144,10 @@ export function findAppleBinding(rel: string, text: string): string[] {
   const visit = (node: ts.Node): void => {
     trackCopy(node, sf);
     const direct =
-      (ts.isPropertyAccessExpression(node) && node.name.text === 'APPLE') ||
+      (ts.isPropertyAccessExpression(node) && node.name.text === name) ||
       (ts.isElementAccessExpression(node) &&
-        constString(node.argumentExpression, consts) === 'APPLE') ||
-      (ts.isBindingElement(node) && (node.propertyName ?? node.name).getText(sf) === 'APPLE');
+        constString(node.argumentExpression, consts) === name) ||
+      (ts.isBindingElement(node) && (node.propertyName ?? node.name).getText(sf) === name);
     // Reading the env by a computed key or whole: needs a name to be safe, so only reviewed files may.
     const indirect =
       !DYNAMIC_ENV_OK.test(rel) &&
@@ -154,7 +167,8 @@ export function findAppleBinding(rel: string, text: string): string[] {
         : ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword
           ? node.arguments[0]
           : undefined;
-    const clientImport = spec && ts.isStringLiteralLike(spec) && CLIENT_SPECIFIER.test(spec.text);
+    const clientImport =
+      clientSpecifier && spec && ts.isStringLiteralLike(spec) && clientSpecifier.test(spec.text);
     if (hit || clientImport)
       found.push(`${rel}:${sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1}`);
     ts.forEachChild(node, visit);

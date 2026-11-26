@@ -4,6 +4,7 @@ import {
   TagProgramReauthedSchema,
   TagProgramReauthSchema,
   TagProgramResultSchema,
+  type TagProgramStart,
   TagProgramStartedSchema,
   TagProgramStartSchema,
   TagProgramStepSchema,
@@ -21,9 +22,17 @@ import {
   splitResponse,
 } from '../apdu.ts';
 import { authFinish, authFirstApdu, authPart2, type Ev2Session } from '../ev2.ts';
-import type { RelayServer } from './relay-server.ts';
 
 export type Send = (apdu: Uint8Array) => Promise<Uint8Array>;
+
+/** What a hold talks to: the reference relay, or the product's service behind an adapter. */
+export interface RelayPort {
+  start(req: TagProgramStart): Promise<{ id: string; resume: boolean; apdus: string[] }>;
+  auth(id: string, req: { responses: string[] }): Promise<unknown>;
+  reauth(id: string, req: { responses: string[] }): Promise<unknown>;
+  probe(id: string, req: { responses: string[] }): Promise<unknown>;
+  result(id: string, req: { responses: string[]; url: string }): Promise<unknown>;
+}
 
 const hex = bytesToHex;
 const h = (s: string) => hexToBytes(s) as Uint8Array;
@@ -48,7 +57,7 @@ let holds = 0;
  * start, auth, probe/reauth, script and result. Every message is parsed with the contract schemas. The
  * same call resumes after a tear, because the server keeps the row.
  */
-export async function programTag(send: Send, server: RelayServer): Promise<string> {
+export async function programTag(send: Send, server: RelayPort): Promise<string> {
   expectSw(splitResponse(await send(selectNdefApp())), 0x9000);
   const hw = expectSw(splitResponse(await send(native(INS.getVersion))), SW.more).data;
   const sw = expectSw(splitResponse(await send(native(INS.additional))), SW.more).data;

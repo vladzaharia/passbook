@@ -1,0 +1,47 @@
+.wnote {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.wnote-face {
+  flex: none;
+  width: 44px;
+  height: auto;
+}
+.wnote-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+/* An honest bar: it moves while the call runs, and says nothing about how far along it is. */
+.wnote-bar {
+  position: relative;
+  height: 4px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--pk-border-subtle);
+}
+.wnote-bar::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  width: 35%;
+  border-radius: inherit;
+  background: var(--pk-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wnote-bar::after {
+    animation: wnote-slide 1.2s ease-in-out infinite;
+  }
+  @keyframes wnote-slide {
+    from {
+      inset-inline-start: -35%;
+    }
+    to {
+      inset-inline-start: 100%;
+    }
+  }
+}

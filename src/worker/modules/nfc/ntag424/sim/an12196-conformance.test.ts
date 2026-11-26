@@ -67,7 +67,7 @@ describe('the simulator answers AN12196 literally', () => {
       h('7614281A'),
       h('6924E8D09722659A2E7DEC68E66312B8'),
     ];
-    const sim = new Ntag424Sim({ random: () => queue.shift() as Uint8Array });
+    const sim = new Ntag424Sim({ random: () => queue.shift() as Uint8Array, isoInSession: 'keep' });
     const ndef = sim.tag.files.get(2);
     if (!ndef) throw new Error('no file 02');
     Object.assign(ndef, { option: 0x43, rw: 0x0, change: 0x0, read: 0xe, write: 0x0 });
