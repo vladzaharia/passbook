@@ -27,6 +27,7 @@ export * from './org-membership.ts';
 export * from './org-plan.ts';
 export * from './orgs.ts';
 export * from './passes.ts';
+export * from './platform-invitations.ts';
 export * from './prints.ts';
 export * from './public.ts';
 export * from './retention.ts';

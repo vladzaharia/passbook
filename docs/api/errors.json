@@ -2200,6 +2200,15 @@
       ]
     },
     {
+      "code": "IDP_DRY_RUN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -2791,6 +2800,15 @@
       ]
     },
     {
+      "code": "INVITATION_EMAIL_UNVERIFIED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "INVITATION_INVALID",
       "statuses": [
         400
@@ -2798,6 +2816,15 @@
       "modules": [
         "idp",
         "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_NOT_STARTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -3988,6 +4015,24 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "PLATFORM_INVITE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "PLATFORM_INVITE_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {

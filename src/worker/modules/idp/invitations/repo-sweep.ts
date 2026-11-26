@@ -8,7 +8,7 @@ export interface Cursor {
 }
 
 export interface EndedSetup {
-  kind: InviteRow['kind'];
+  kind: InviteRow['kind'] | 'platform';
   id: string;
   /** When nothing the invitation made can still be in flight: its window ended and its last token expired. */
   ended: number;
@@ -18,6 +18,8 @@ export interface ExpiredToken {
   token_id: string;
   email: string;
   due: number;
+  kind: InviteRow['kind'] | 'platform';
+  invitation_id: string;
 }
 
 /** A signup token is good for an hour; this is the slack for clocks that differ between this Worker and Polaris ID. */
@@ -45,6 +47,12 @@ export const endedSetups = (db: D1Database, after: Cursor, now: number, limit: n
              (SELECT MAX(s.expires_at) FROM developer_invite_setups s WHERE s.invitation_id = d.id) + ${SKEW})
        FROM developer_invitations d
        WHERE EXISTS (SELECT 1 FROM developer_invite_setups s WHERE s.invitation_id = d.id)
+       UNION ALL
+       SELECT 'platform', p.id,
+         MAX(COALESCE(p.accepted_at, p.revoked_at, p.claim_until),
+             (SELECT MAX(s.expires_at) FROM platform_invitation_setups s WHERE s.invitation_id = p.id) + ${SKEW})
+       FROM platform_invitations p
+       WHERE EXISTS (SELECT 1 FROM platform_invitation_setups s WHERE s.invitation_id = p.id)
      ) WHERE (ended > ? OR (ended = ? AND kind || ':' || id > ?)) AND ended <= ?
      ORDER BY ended, kind, id LIMIT ?`,
     [after.at, after.at, after.key, now, limit],
@@ -57,12 +65,15 @@ export const endedSetups = (db: D1Database, after: Cursor, now: number, limit: n
 export const expiredTokens = (db: D1Database, after: Cursor, now: number, limit: number) =>
   all<ExpiredToken>(
     db,
-    `SELECT token_id, email, due FROM (
-       SELECT s.idp_token_id AS token_id, i.email, s.expires_at + ${SKEW} AS due
+    `SELECT token_id, email, due, kind, invitation_id FROM (
+       SELECT s.idp_token_id AS token_id, i.email, s.expires_at + ${SKEW} AS due, 'member' AS kind, i.id AS invitation_id
        FROM org_invitation_setups s JOIN org_invitations i ON i.id = s.invitation_id
        UNION ALL
-       SELECT s.idp_token_id, d.email, s.expires_at + ${SKEW}
+       SELECT s.idp_token_id, d.email, s.expires_at + ${SKEW}, 'developer', d.id
        FROM developer_invite_setups s JOIN developer_invitations d ON d.id = s.invitation_id
+       UNION ALL
+       SELECT s.idp_token_id, p.email, s.expires_at + ${SKEW}, 'platform', p.id
+       FROM platform_invitation_setups s JOIN platform_invitations p ON p.id = s.invitation_id
      ) WHERE (due > ? OR (due = ? AND token_id > ?)) AND due <= ?
      ORDER BY due, token_id LIMIT ?`,
     [after.at, after.at, after.key, now, limit],

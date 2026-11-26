@@ -621,6 +621,12 @@
     "sdk": false,
     "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
   },
+  "invitations.postInvitationsConfirm": {
+    "resource": "invitationPage",
+    "method": "confirm",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret is the credential."
+  },
   "invitations.postInvitationsPreview": {
     "resource": "invitationPage",
     "method": "preview",
@@ -1374,6 +1380,22 @@
   "passes.putPassesViews": {
     "resource": "passViews",
     "method": "replace"
+  },
+  "platform-invitations.deletePlatformInvitationsById": {
+    "resource": "platform.invitations",
+    "method": "revoke"
+  },
+  "platform-invitations.getPlatformInvitations": {
+    "resource": "platform.invitations",
+    "method": "list"
+  },
+  "platform-invitations.postPlatformInvitations": {
+    "resource": "platform.invitations",
+    "method": "create"
+  },
+  "platform-invitations.postPlatformInvitationsByIdResend": {
+    "resource": "platform.invitations",
+    "method": "resend"
   },
   "polaris-access.getUsersByIdAccess": {
     "resource": "platform.users.access",
