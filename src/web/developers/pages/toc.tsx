@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 
-/** The frame's pieces around a page's content: crumbs, the Workbench row, Prev/Next, "On this page". */
+/** The frame's pieces around a page's content: crumbs, Prev/Next, "On this page". */
 
 export interface Crumb {
   label: string;
@@ -74,23 +74,6 @@ export const TOOL_PATH = {
   logs: PATHS.logs,
   keys: PATHS.keys,
 } as const;
-
-/** The Workbench's pages as a row on each of them: tool pages have no left tree at 1181 px and up. */
-export function ToolsRow({ path }: { path: string }) {
-  return (
-    <nav className="tools" aria-label={DEV_COPY.frame.workbench}>
-      {DEV_COPY.workbench.map((w) => (
-        <a
-          key={w.key}
-          href={TOOL_PATH[w.key]}
-          aria-current={TOOL_PATH[w.key] === path ? 'page' : undefined}
-        >
-          {w.label}
-        </a>
-      ))}
-    </nav>
-  );
-}
 
 export interface TocItem {
   id: string;

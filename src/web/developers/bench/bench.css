@@ -1,0 +1,313 @@
+/* The Workbench frame (bench/frame.tsx): one bench under the top bar, the same boxes on every tool.
+   Breakpoints: 720 and 1180 only (the gutter also steps at 640). */
+:root {
+  --wb-max: 1600px;
+  --wb-gutter: 16px;
+  --wb-head: 48px;
+  --wb-title: 56px;
+  --wb-toolbar: 52px;
+  --wb-row: 40px;
+  --wb-index: 18rem;
+  --wb-inspector: clamp(26rem, 38vw, 38rem);
+  --wb-gap: 16px;
+}
+@media (min-width: 640px) {
+  :root {
+    --wb-gutter: 24px;
+  }
+}
+@media (min-width: 720px) {
+  :root {
+    --wb-head: 52px;
+  }
+}
+@media (min-width: 1180px) {
+  :root {
+    --wb-gutter: 32px;
+  }
+}
+@media (pointer: coarse) {
+  :root {
+    --wb-row: 44px;
+  }
+}
+/* An #id lands below the head and the toolbar. */
+html:has(.bench) {
+  scroll-padding-top: calc(var(--dev-bar) + var(--wb-head) + var(--wb-toolbar) + 8px);
+}
+
+/* ---------- Frame ---------- */
+.bench {
+  /* Content up to 1600 px, centred, with the gutter outside it; the bands run edge to edge. */
+  --bench-pad: max(var(--wb-gutter), calc((100% - var(--wb-max)) / 2));
+  --wb-tb: var(--wb-toolbar);
+  /* What sticks: the bar, the head and the toolbar. A pane or index sticks under all three. */
+  --wb-sticky: calc(var(--dev-bar) + var(--wb-head) + var(--wb-tb));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  width: 100%;
+}
+.bench:has(> .bench-toolbar:empty) {
+  --wb-tb: 0px;
+}
+.bench > * {
+  min-width: 0;
+  padding-inline: var(--bench-pad);
+}
+.bench-head,
+.bench-toolbar {
+  background: color-mix(in oklab, var(--pk-surface-page) 90%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--pk-border-subtle);
+}
+.bench-head {
+  position: sticky;
+  top: var(--dev-bar);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: var(--wb-head);
+}
+
+/* ---------- Switcher ---------- */
+.bench-switch {
+  display: flex;
+  align-self: stretch;
+  flex: none;
+  gap: 4px;
+  /* The first tab's text lines up with the h1 under it. */
+  margin-inline-start: -12px;
+}
+.bench-switch a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pk-text-muted);
+  white-space: nowrap;
+}
+.bench-switch a:hover {
+  color: var(--pk-text-strong);
+  text-decoration: none;
+}
+.bench-switch a[aria-current] {
+  color: var(--pk-text-strong);
+}
+.bench-switch a:focus-visible {
+  outline-offset: -4px;
+  border-radius: var(--pk-radius-md);
+}
+.bench-switch-t {
+  position: relative;
+}
+/* The current tab's underline sits on the head's rule; a hovered tab shows a quiet one. */
+.bench-ind,
+.bench-switch a:not([aria-current]):hover::after {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--pk-accent);
+}
+.bench-switch a:not([aria-current]):hover::after {
+  content: "";
+  background: var(--pk-border-strong);
+}
+
+/* ---------- Strip ---------- */
+.bench-strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+/* The island's placeholder keeps a box, so it comes into view and mounts. */
+.bench-ctx {
+  display: flex;
+  min-width: 0;
+  min-inline-size: 1px;
+  min-block-size: 1px;
+}
+.bench-status:empty {
+  display: none;
+}
+.bench-status .logs-live {
+  margin: 0;
+}
+
+/* ---------- Title row and toolbar ---------- */
+.bench-title {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: var(--wb-title);
+  padding-block: 12px 4px;
+}
+.bench-title h1 {
+  margin: 0;
+  min-width: 0;
+}
+.bench-count {
+  font-family: var(--pk-font-mono);
+  font-size: 13px;
+  color: var(--pk-text-muted);
+}
+.bench-count:empty {
+  display: none;
+}
+.bench-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+.bench-toolbar {
+  position: sticky;
+  top: calc(var(--dev-bar) + var(--wb-head));
+  z-index: 11;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--wb-toolbar);
+}
+/* A tool with no toolbar yet: the slot keeps its place and takes no room. */
+.bench-toolbar:empty {
+  position: static;
+  min-height: 0;
+  background: none;
+  backdrop-filter: none;
+  border: 0;
+}
+.bench-body {
+  padding-block: 16px 48px;
+}
+.bench-body:focus {
+  outline: none;
+}
+/* The footer keeps the bench's left edge. */
+body:has(.bench) > .foot {
+  max-width: none;
+  padding-inline: max(var(--wb-gutter), calc((100% - var(--wb-max)) / 2));
+}
+
+/* ---------- Phone: the head is the switcher, the strip drops under the title ---------- */
+@media (max-width: 719.98px) {
+  .bench {
+    grid-template-areas: "switch" "title" "strip" "toolbar" "body";
+  }
+  .bench-head {
+    display: contents;
+  }
+  .bench-switch {
+    grid-area: switch;
+    position: sticky;
+    top: var(--dev-bar);
+    z-index: 12;
+    align-items: center;
+    height: var(--wb-head);
+    margin: 0;
+    padding-inline: var(--bench-pad);
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    background: color-mix(in oklab, var(--pk-surface-page) 90%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--pk-border-subtle);
+  }
+  .bench-switch::-webkit-scrollbar {
+    display: none;
+  }
+  /* A segmented bar: the lit segment is the indicator. */
+  .bench-switch a {
+    flex: 1 0 auto;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: var(--pk-radius-md);
+    scroll-snap-align: start;
+  }
+  .bench-switch a:not([aria-current]):hover::after {
+    content: none;
+  }
+  .bench-ind {
+    inset: 0;
+    height: auto;
+    border-radius: var(--pk-radius-md);
+    background: var(--pk-accent-subtle);
+    box-shadow: inset 0 0 0 1px var(--pk-accent-border, var(--pk-accent));
+  }
+  .bench-title {
+    grid-area: title;
+    min-height: 52px;
+    padding-block: 10px 2px;
+  }
+  .bench-strip {
+    grid-area: strip;
+    justify-content: flex-start;
+    padding-inline: var(--bench-pad);
+  }
+  /* The key gives way first; the strip never clips (its menu hangs below it). */
+  .bench-status {
+    flex: none;
+  }
+  .bench-strip:has(.bench-ctx > *) {
+    padding-block: 2px 8px;
+  }
+  .bench-toolbar {
+    grid-area: toolbar;
+  }
+  .bench-body {
+    grid-area: body;
+  }
+}
+@media (max-width: 719.98px) and (pointer: coarse) {
+  .bench-switch a {
+    min-height: 40px;
+  }
+}
+@media (min-width: 720px) and (pointer: coarse) {
+  .bench-switch a {
+    min-height: 44px;
+  }
+}
+
+/* ---------- Body: the list and the pane (bench/split.tsx) ---------- */
+.bench-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--wb-gap);
+  align-items: start;
+}
+.bench-main {
+  min-width: 0;
+}
+.bench-pane {
+  min-width: 0;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+}
+@media (min-width: 1180px) {
+  .bench-split[data-layout="split"] {
+    grid-template-columns: minmax(0, 1fr) var(--wb-inspector);
+  }
+  .bench-split[data-layout="index"] {
+    grid-template-columns: var(--wb-index) minmax(0, 1fr);
+  }
+  .bench-pane {
+    position: sticky;
+    top: calc(var(--wb-sticky) + 8px);
+    max-height: calc(100dvh - var(--wb-sticky) - 16px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}

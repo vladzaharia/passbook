@@ -171,9 +171,6 @@ export function ProtocolsView({ site }: { site: Site }) {
 export function WebhooksView({ site }: { site: Site }) {
   return (
     <div className="wh">
-      <div className="wh-head">
-        <h1 className="h1">Webhook tester</h1>
-      </div>
       <div
         className="stack g4"
         data-island="webhook-tester"

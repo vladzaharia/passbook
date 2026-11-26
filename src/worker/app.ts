@@ -33,6 +33,7 @@ import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { tagPageRoutes } from './modules/nfc/tag-page.ts';
+import { operationsRoutes } from './modules/operations/routes.ts';
 import {
   orgClosedRoutes,
   orgExportDownloadRoutes,
@@ -192,6 +193,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);
   app.route('/api/v1/template-reviews', templateReviewsRoutes);
+  app.route('/api/v1/operations', operationsRoutes);
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/pass-imports', passImportRoutes);
   app.route('/api/v1/bundles', bundlesRoutes);

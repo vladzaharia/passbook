@@ -23,10 +23,11 @@ const open = async (session: Session) => {
 };
 
 describe('the keys page without keys to list', () => {
-  it('keeps its heading and offers Create sandbox when there is no sandbox', async () => {
+  it('offers Create sandbox when there is no sandbox, under the frame heading', async () => {
     await open({ kind: 'none', csrf: 'c', siteKey: 's' });
-    expect(await screen.findByRole('heading', { level: 1, name: KEYS_COPY.title })).toBeTruthy();
-    expect(screen.getByText(KEYS_COPY.noSandbox)).toBeTruthy();
+    expect(await screen.findByText(KEYS_COPY.noSandbox)).toBeTruthy();
+    // The bench frame has the page's one h1.
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
     expect(screen.getByRole('link', { name: KEYS_COPY.create }).getAttribute('href')).toContain(
       '#sandbox',
     );
@@ -34,15 +35,14 @@ describe('the keys page without keys to list', () => {
 
   it('says the keys stopped for a closed sandbox', async () => {
     await open({ kind: 'closed', csrf: 'c', siteKey: '' });
-    expect(await screen.findByRole('heading', { level: 1, name: KEYS_COPY.title })).toBeTruthy();
-    expect(screen.getByText(KEYS_COPY.closed)).toBeTruthy();
+    expect(await screen.findByText(KEYS_COPY.closed)).toBeTruthy();
   });
 
   it('shows an error with Retry, not an empty state, when the sandbox did not load', async () => {
     const reload = vi.fn();
     vi.stubGlobal('location', { ...location, reload });
     await open({ kind: 'failed', csrf: 'c' });
-    expect(await screen.findByRole('heading', { level: 1, name: KEYS_COPY.title })).toBeTruthy();
+    expect(await screen.findByText(KEYS_COPY.failed)).toBeTruthy();
     expect(screen.queryByText(KEYS_COPY.noSandbox)).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(reload).toHaveBeenCalled());

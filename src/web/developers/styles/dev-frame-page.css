@@ -1,4 +1,4 @@
-/* The page's own frame: crumbs, the Workbench row, "On this page", Previous and next. Loads before dev-responsive. */
+/* The page's own frame: crumbs, "On this page", Previous and next. Loads before dev-responsive. */
 /* ---------- Crumbs, and what they replace ---------- */
 .crumbs ol {
   display: flex;
@@ -53,46 +53,6 @@
 }
 .main > .eyebrow {
   margin-bottom: 4px;
-}
-
-/* ---------- The Workbench's pages, as a row on each of them ---------- */
-.tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-/* Tool pages with no .main: the row keeps the kit gutter, at the page's widest. */
-main:not(.main) > .tools {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 12px var(--wl-gutter) 0;
-}
-.tools a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--pk-text-muted);
-  border-bottom: 2px solid transparent;
-}
-.tools a:first-child {
-  padding-left: 0;
-}
-.tools a:hover {
-  color: var(--pk-text-strong);
-  text-decoration: none;
-}
-.tools a[aria-current] {
-  color: var(--pk-text-strong);
-  border-bottom-color: var(--pk-accent);
-}
-@media (pointer: coarse) {
-  .tools a {
-    min-height: 44px;
-  }
 }
 
 /* ---------- On this page: from 1280 px ---------- */

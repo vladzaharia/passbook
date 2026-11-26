@@ -40,12 +40,6 @@
   border-radius: 4px;
   background: rgb(0 0 0 / 0.16);
 }
-.btn.danger,
-.btn.danger:not(.outline):is(:hover, :focus-visible):not(:disabled) {
-  background: var(--pk-danger);
-  color: var(--pk-danger-on);
-  box-shadow: none;
-}
 .spin {
   width: 14px;
   height: 14px;

@@ -907,6 +907,22 @@
     "resource": "holders",
     "method": "offboard"
   },
+  "operations.getOperations": {
+    "resource": "operations",
+    "method": "list"
+  },
+  "operations.getOperationsById": {
+    "resource": "operations",
+    "method": "retrieve"
+  },
+  "operations.postOperationsByIdCancel": {
+    "resource": "operations",
+    "method": "cancel"
+  },
+  "operations.postOperationsByIdRetry": {
+    "resource": "operations",
+    "method": "retry"
+  },
   "org-lifecycle.getOrgExportsByExportIdDownload": {
     "resource": "orgExports",
     "method": "download",

@@ -1,0 +1,6 @@
+/* The site has no preflight: lists in the tray's sheet keep the kit's own layout, not the browser's indent. */
+[role="dialog"] ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

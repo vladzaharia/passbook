@@ -1,10 +1,12 @@
 import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
 import type { CreatedDeveloperSandbox, DeveloperSandbox } from '../../../shared/contracts/index.ts';
+import { TimeZoneSchema } from '../../../shared/contracts/scan-base.ts';
 import {
   SANDBOX_EXISTS_COPY,
   SANDBOX_KEY_NAME,
   SANDBOX_TEMPLATE_NAME,
 } from '../../../shared/copy/developer.ts';
+import { resolveOrgTimeZone } from '../../../shared/time-zone.ts';
 import { isPlatformScope } from '../../platform/api-scopes.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { actorOf } from '../../platform/context.ts';
@@ -67,6 +69,12 @@ export async function mintSandboxKey(
   };
 }
 
+/** The org's zone, or the default when unset or no longer valid. */
+function zoneOf(stored: string | null): string {
+  const zone = TimeZoneSchema.safeParse(stored === null ? null : JSON.parse(stored));
+  return resolveOrgTimeZone(zone.success ? zone.data : null);
+}
+
 export const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbox => ({
   id: row.id,
   orgId: row.org_id,
@@ -75,6 +83,7 @@ export const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbo
   previewOnly: true,
   createdAt: row.created_at,
   closedAt: row.closed_at,
+  timeZone: zoneOf(row.time_zone),
 });
 
 /** The steps of provisioning, in order. A test fails the request after one to prove a retry completes the rest. */

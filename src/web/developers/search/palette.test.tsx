@@ -313,7 +313,7 @@ describe('the preview', () => {
       kind: 'ready',
       csrf: 'c',
       siteKey: '',
-      sandbox: { id: 's', orgSlug: 'o', templateId: null },
+      sandbox: { id: 's', orgId: 'org-1', orgSlug: 'o', templateId: null },
     };
     stubFetch({
       '/api/v1/developer/logs': () =>

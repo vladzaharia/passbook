@@ -1,8 +1,6 @@
 import type { z } from 'zod';
-import type {
-  WebhookDeliveryListQuerySchema,
-  WebhookReplaySchema,
-} from '../../../shared/contracts/webhooks.ts';
+import type { WebhookDeliveryListQuerySchema } from '../../../shared/contracts/webhook-captures.ts';
+import type { WebhookReplaySchema } from '../../../shared/contracts/webhooks.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Actor } from '../../platform/context.ts';
 import {
@@ -97,6 +95,8 @@ export async function deliveries(
   const { rows, hasMore } = await listDeliveries(ctx.env.DB, fenceOf(access), endpointId, {
     state: q.state,
     type: q.type,
+    requestId: q.requestId,
+    passId: q.passId,
     before: await seqCursor(ctx, fenceOf(access), q.cursor),
     limit: q.limit,
   });

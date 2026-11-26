@@ -2,6 +2,7 @@ import { NO_EMAIL_LABEL } from '../../shared/email.ts';
 import { formatDayIn } from '../../shared/format-date.ts';
 import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shared/time-zone.ts';
 
+export { formatClockIn, formatFullIn, formatStampIn } from '../../shared/format-clock.ts';
 export { formatEndedOn } from '../../shared/format-date.ts';
 
 // Every date and number a person reads in the app, in one locale. Engines join a date and a time
@@ -291,15 +292,16 @@ export function formatMaybeDate(text: string, timeZone: string = DEFAULT_TIME_ZO
 /** `1 tag`, `2 tags`: the noun takes an `s` unless the count is 1. */
 export const pluralize = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;
 
-/** `40 s`, `12 min`, `1 h 32 min`, `7 d 15 h`: a stay in the unit a person would say; days drop the minutes. */
-export function formatStay(ms: number): string {
-  const min = 60_000;
-  if (ms < min) return `${Math.max(1, Math.round(ms / 1000))} s`;
-  const total = Math.round(ms / min);
-  const days = Math.floor(total / 1440);
-  const hours = Math.floor((total % 1440) / 60);
-  const mins = total % 60;
-  if (days > 0) return hours === 0 ? `${days} d` : `${days} d ${hours} h`;
-  if (hours === 0) return `${mins} min`;
-  return mins === 0 ? `${hours} h` : `${hours} h ${mins} min`;
+const SHORT_IN = new Map<string, Intl.DateTimeFormat>();
+
+/** Dec 2, on the calendar of `timeZone`: a deadline ("By Dec 2"). */
+export function formatShortDateIn(ms: number, timeZone: string = DEFAULT_TIME_ZONE): string {
+  let formatter = SHORT_IN.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(LOCALE, { month: 'short', day: 'numeric', timeZone });
+    SHORT_IN.set(timeZone, formatter);
+  }
+  return formatter.format(ms);
 }
+
+export { formatClock, formatSpan, formatStay } from './format-duration.ts';

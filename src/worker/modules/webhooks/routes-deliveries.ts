@@ -1,10 +1,10 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { IdParamSchema, IdSchema } from '../../../shared/contracts/common.ts';
+import { WebhookDeliveryListQuerySchema } from '../../../shared/contracts/webhook-captures.ts';
 import { WebhookTestAttemptListSchema } from '../../../shared/contracts/webhook-tests.ts';
 import {
   WebhookDeliveryDetailSchema,
-  WebhookDeliveryListQuerySchema,
   WebhookDeliveryListSchema,
   WebhookReplayResultSchema,
   WebhookReplaySchema,

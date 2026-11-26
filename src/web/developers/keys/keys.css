@@ -1,27 +1,13 @@
 /* The Keys page (island): a table, the Live keys card and three sheets. Portal tokens only. */
-.ks-slot {
-  /* The page column: the same 960 px and gutters as every other portal page, so the heading lines up. */
-  max-width: 960px;
-  margin-inline: auto;
-  padding: 32px 40px 64px;
-}
+/* The bench frame (bench/frame.tsx) sets the width and gutter; the phone keeps room under the last card. */
 @media (max-width: 720px) {
   .ks-slot {
-    padding: 20px 16px 96px;
+    padding-bottom: 96px;
   }
 }
 .ks {
   display: grid;
   gap: 16px;
-}
-.ks-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
-.ks-new {
-  margin-left: auto;
 }
 .ks-err {
   color: var(--pk-danger);
