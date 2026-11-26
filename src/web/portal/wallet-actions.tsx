@@ -111,10 +111,6 @@ function confirmationDue(passId: string): boolean {
   return Date.now() - sent >= RESEND_AFTER_MS;
 }
 
-function markConfirmation(passId: string): void {
-  sessionStorage.setItem(confirmKey(passId), String(Date.now()));
-}
-
 /** A second tap while the first runs shows that one; anything else is an error. */
 function useShowRunning() {
   const { follow } = useHolderOperations();
@@ -179,7 +175,7 @@ function useHolderHelp(passId: string) {
         // One link at a time: a second tap inside the cooldown only says to look in the inbox.
         if (!confirmationDue(passId)) return null;
         await sendLostPhoneConfirmation(passId);
-        markConfirmation(passId);
+        sessionStorage.setItem(confirmKey(passId), String(Date.now()));
         return null;
       }
     },
