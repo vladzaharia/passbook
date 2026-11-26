@@ -6,6 +6,7 @@ import { ApiError } from '../../../lib/errors.ts';
 import type { ToolApi } from '../../../lib/tool-api.tsx';
 import {
   adminHref,
+  type DesignerExtras,
   type DesignerHost,
   type DesignerLinkProps,
   fetchBytes,
@@ -86,6 +87,8 @@ export interface WorkbenchHostOptions {
   orgId: string;
   orgName?: string | undefined;
   client: WorkbenchClient;
+  /** The Workbench's panels around the core (workbench/design). */
+  extras?: DesignerExtras | undefined;
 }
 
 /** An org's Test in the Workbench: every call and file carries the token; never Live. */
@@ -93,6 +96,7 @@ export function workbenchDesignerHost({
   orgId,
   orgName,
   client,
+  extras,
 }: WorkbenchHostOptions): DesignerHost {
   const { api } = client;
   return {
@@ -122,12 +126,16 @@ export function workbenchDesignerHost({
     useReleaseStep: useWorkbenchReleaseStep,
     release: (templateId, version, key) => releaseInTest(api, orgId, templateId, version, key),
     issueTest: (input) => issueTestPass(api, orgId, input),
+    ...(extras ? { extras } : {}),
   };
 }
 
 /** The Workbench host, built once per org and client. */
-export function useWorkbenchDesignerHost({ orgId, orgName, client }: WorkbenchHostOptions) {
-  return useMemo(() => workbenchDesignerHost({ orgId, orgName, client }), [orgId, orgName, client]);
+export function useWorkbenchDesignerHost({ orgId, orgName, client, extras }: WorkbenchHostOptions) {
+  return useMemo(
+    () => workbenchDesignerHost({ orgId, orgName, client, extras }),
+    [orgId, orgName, client, extras],
+  );
 }
 
 /** A blueprint's own files by name, as the anonymous page bundles them. */

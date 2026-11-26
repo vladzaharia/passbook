@@ -78,7 +78,7 @@ export function Designer({
   const templateId = template.id;
   const name = template.name;
   const phone = useMediaQuery(PHONE);
-  const { orgId: selectedOrg, allows } = useDesignerHost();
+  const { orgId: selectedOrg, allows, extras } = useDesignerHost();
   // A host that cannot edit gets a read-only designer whatever the page asked for.
   const readOnly = useMemo<ReadOnlyDesign | undefined>(
     () =>
@@ -238,6 +238,13 @@ export function Designer({
           assetBase={base_}
           stripUrl={stamps.stripUrl}
         />
+        {extras && phone && !readOnly && allows.save ? (
+          <extras.PhoneBar
+            dirty={create ? created.made === null : dirty}
+            saving={create ? created.saving : flow.saving}
+            onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
+          />
+        ) : null}
         {phone || readOnly || !allows.save ? null : (
           <SaveBar
             dirty={create ? created.made === null : dirty}

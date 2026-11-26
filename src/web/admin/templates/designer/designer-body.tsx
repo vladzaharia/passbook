@@ -4,6 +4,7 @@ import { Button, Callout } from '../../../ui/index.ts';
 import type { Op } from './apply.ts';
 import type { ReadOnlyDesign } from './designer.tsx';
 import type { DesignerMode } from './designer-modes.tsx';
+import { useDesignerHost } from './host.tsx';
 import { DesignerLayout } from './layout.tsx';
 import { type DesignDoc, previewTargetOf } from './model.ts';
 import { Outline } from './outline.tsx';
@@ -70,6 +71,7 @@ export function DesignerModeView({
   assetBase: string;
   stripUrl: string | null;
 }) {
+  const extras = useDesignerHost().extras;
   const shown = readOnly ? readOnly.passJson : passJson;
   const busy = readOnly ? false : checking;
   if (mode === 'wallets')
@@ -98,7 +100,8 @@ export function DesignerModeView({
     <DesignerLayout
       templateId={templateId}
       readOnly={Boolean(readOnly)}
-      structure={<Outline />}
+      structure={extras ? <extras.Panel structure={<Outline />} /> : <Outline />}
+      below={extras ? <extras.Code /> : undefined}
       preview={
         <DesignerStage
           manifest={doc.manifest}

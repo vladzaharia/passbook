@@ -4,11 +4,11 @@ import { ACTIONS } from '@/web/lib/actions.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { useMemberships } from '@/web/lib/session.ts';
+import { EntityPicker } from '@/web/ui/entity-picker.tsx';
 import {
   Button,
   Combobox,
   type ComboboxOption,
-  EntityPicker,
   IconButton,
   Input,
   Label,

@@ -9,8 +9,9 @@ import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx'
 import type { PreviewChannel } from '../../../channel-previews/types.ts';
 import { Button } from '../../../ui/button.tsx';
 import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
-import { useTemplateChannels } from '../channels/api.ts';
+import { useTemplateChannels } from '../channels/reads.ts';
 import { useDesignerMaybe } from './context.tsx';
+import { useDesignerHost } from './host.tsx';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
 import { PaperPreview } from './paper-preview.tsx';
@@ -50,6 +51,7 @@ export function DesignerStage({
     orgId,
   });
   const timeZone = useOrgTimeZone(orgId);
+  const peek = useDesignerHost().extras?.Peek;
   const openWallets = useDesignerMaybe()?.openWallets;
   const walletAction = openWallets
     ? (target: 'google' | 'samsung') => (
@@ -86,7 +88,7 @@ export function DesignerStage({
         ]),
     ) as Partial<Record<PreviewChannel, string>>;
   }, [channels.data]);
-  return (
+  const previews = (
     <ChannelPreviews
       source={source}
       channels={effective}
@@ -112,5 +114,13 @@ export function DesignerStage({
         />
       }
     />
+  );
+  if (!peek) return previews;
+  const Peek = peek;
+  return (
+    <div className="relative">
+      {previews}
+      <Peek source={source} />
+    </div>
   );
 }

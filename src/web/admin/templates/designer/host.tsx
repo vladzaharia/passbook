@@ -11,6 +11,7 @@ import type { z } from 'zod';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { PassDetailDto, PassListSchema } from '@/shared/contracts/passes.ts';
 import type { ReleaseResult } from '@/shared/contracts/template-release-flow.ts';
+import type { PreviewSource } from '../../../channel-previews/types.ts';
 import { ApiError } from '../../../lib/errors.ts';
 import { type ToolApi, ToolScopeProvider } from '../../../lib/tool-api.tsx';
 import type { Crumb } from '../../../ui/index.ts';
@@ -61,6 +62,26 @@ export interface IssueTestInput {
   holderEmail?: string | undefined;
 }
 
+/**
+ * What a host adds around the core, each rendered inside the designer (so it reads `useDesigner`).
+ * Admin has none and renders exactly as before; the Workbench fills them (Data panel, Code,
+ * Try on my phone, the phone layout, the wallet-note peek).
+ */
+export interface DesignerExtras {
+  /** The structure column: the host's tabs around the section editor. */
+  Panel: ComponentType<{ structure: ReactNode }>;
+  /** Under the stage: the code that makes the pass. */
+  Code: ComponentType;
+  /** The head, in place of the page header: the template, then the actions the core offers. */
+  Head: ComponentType<{ name: string; actions: ReactNode }>;
+  /** Phone width: replaces the "preview only" notice. */
+  Phone: ComponentType<{ preview: ReactNode; issues: ReactNode }>;
+  /** Phone width: the bar fixed to the bottom, with the save the core runs. */
+  PhoneBar: ComponentType<{ dirty: boolean; saving: boolean; onSave: () => void }>;
+  /** At the stage's corner; sees what each wallet drops. */
+  Peek: ComponentType<{ source: PreviewSource | null }>;
+}
+
 export type PassHit = z.infer<typeof PassListSchema>['items'][number];
 
 export interface DesignerHost {
@@ -88,6 +109,7 @@ export interface DesignerHost {
   release?: (templateId: string, version: string, idempotencyKey: string) => Promise<ReleaseResult>;
   /** Issue a Test pass from the template's Test release. */
   issueTest?: (input: IssueTestInput) => Promise<PassDetailDto>;
+  extras?: DesignerExtras;
 }
 
 const HostContext = createContext<DesignerHost | null>(null);
