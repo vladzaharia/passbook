@@ -9,6 +9,7 @@ import {
   onModeChange,
   resetModeForTests,
   setMode,
+  setTestOnlyOrgs,
 } from './mode.ts';
 import { createQueryClient } from './query-client.ts';
 import { json, sessionFixture } from './test-utils.tsx';
@@ -119,6 +120,32 @@ describe('switching mode', () => {
     client.setQueryData(['passes', 'list'], { items: ['test pass'] });
     setMode('live');
     await Promise.resolve();
+    expect(client.getQueryData(['passes', 'list'])).toBeUndefined();
+  });
+});
+
+describe('sandbox grants arriving', () => {
+  afterEach(() => {
+    setTestOnlyOrgs([]);
+    trackCurrentPath(() => '/');
+  });
+
+  it('keep the cache when the page they apply to is not open', async () => {
+    const client = createQueryClient();
+    client.setQueryData(['workbench', 'contexts', 'u1'], ['context']);
+    trackCurrentPath(() => '/workbench/o/sbx/console');
+    setTestOnlyOrgs(['sbx']);
+    await Promise.resolve();
+    expect(client.getQueryData(['workbench', 'contexts', 'u1'])).toEqual(['context']);
+  });
+
+  it('switch the mode and empty the cache when the open sandbox page turns Test', async () => {
+    const client = createQueryClient();
+    client.setQueryData(['passes', 'list'], { items: ['live pass'] });
+    trackCurrentPath(() => '/admin/o/sbx/passes');
+    setTestOnlyOrgs(['sbx']);
+    await Promise.resolve();
+    expect(getMode()).toBe('test');
     expect(client.getQueryData(['passes', 'list'])).toBeUndefined();
   });
 });

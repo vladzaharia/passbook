@@ -30,7 +30,7 @@ export type ApiKeyCurrent = {
   orgId: string | null;
   name: string;
   prefix: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdAt: number;
   lastUsedAt: number | null;
@@ -46,7 +46,7 @@ export type ApiKeyDetail = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -81,7 +81,7 @@ export type ApiKeyMinted = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -112,7 +112,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -136,7 +136,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -160,7 +160,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "members:read" | "members:write">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "logs:read" | "members:read" | "members:write">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;
@@ -201,7 +201,7 @@ export type ApiKeysListResponse = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -735,6 +735,7 @@ export type CapturedEmail = {
   to: string;
   subject: string;
   attached: boolean;
+  failed: boolean;
   createdAt: number;
 };
 
@@ -747,6 +748,7 @@ export type CapturedEmailDetail = {
   to: string;
   subject: string;
   attached: boolean;
+  failed: boolean;
   createdAt: number;
   html: string;
   text: string;
@@ -2215,6 +2217,25 @@ export type EventPage = {
   hasMore: boolean;
 };
 
+export type EventsListDeliveriesResponse = {
+  items: Array<{
+    eventId: string;
+    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+    passId: string;
+    externalId: string | null;
+    state: "pending" | "delivered" | "failed" | "cancelled";
+    attempts: number;
+    nextAt: number;
+    lastStatus: number | null;
+    lastError: string | null;
+    lastAttemptAt: number | null;
+    finishedAt: number | null;
+    replays: number;
+    endpointId: string;
+    target: "url" | "capture";
+  }>;
+};
+
 export type HoldersAssignParams = {
   passId: string;
   email: string;
@@ -3113,7 +3134,7 @@ export type MembershipsListResponse = {
     testOnly?: boolean;
     userId: string;
     roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
-    capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read">;
+    capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read" | "logs:read">;
     createdAt: number;
     revokedAt: number | null;
     userName: string | null;
@@ -3140,7 +3161,7 @@ export type MembershipsUpdateRolesResponse = {
   testOnly?: boolean;
   userId: string;
   roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
-  capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read">;
+  capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read" | "logs:read">;
   createdAt: number;
   revokedAt: number | null;
   userName: string | null;
@@ -7311,6 +7332,8 @@ export type PassesDevicesListResponse = {
       reason: string | null;
     } | null;
     removal: "pending" | "fetched" | "deleted" | null;
+    simulated?: boolean;
+    deviceId?: string;
   }>;
   removal: {
     removedAt: number;
@@ -7511,6 +7534,18 @@ export type PassesSendEmailParams = {
 
 export type PassesSendEmailResponse = {
   ok: true;
+};
+
+export type PassesSimulateParams = {
+  event: "installed" | "uninstalled" | "scanned" | "scan_refused" | "push_failed" | "updated_on_device" | "email_failed";
+  platform?: "apple";
+  deviceId?: string;
+};
+
+export type PassesSimulateResponse = {
+  eventId: string;
+  requestId: string;
+  deviceId?: string;
 };
 
 export type PassesStampsApplyParams = {
@@ -9499,6 +9534,66 @@ export type ReleaseTemplate = {
     test?: number;
   };
   request?: boolean;
+};
+
+export type RequestLogsListResponse = {
+  items: Array<{
+    id: string;
+    requestId: string;
+    at: number;
+    method: string;
+    route: string | null;
+    path: string;
+    query: string | null;
+    status: number;
+    code: string | null;
+    durationMs: number;
+    keyId: string | null;
+    mode: "live" | "test";
+    via: "try";
+    client: string | null;
+    hasBodies: boolean;
+    resourceId: string | null;
+    apiVersion: string | null;
+    flags: {
+      idempotencyKey: boolean;
+      ifMatch: boolean;
+      version: boolean;
+    };
+  }>;
+  nextCursor: string | null;
+  capped: "hour" | "total" | null;
+  bodiesRecorded: boolean;
+};
+
+export type RequestLogsRetrieveResponse = {
+  id: string;
+  requestId: string;
+  at: number;
+  method: string;
+  route: string | null;
+  path: string;
+  query: string | null;
+  status: number;
+  code: string | null;
+  durationMs: number;
+  keyId: string | null;
+  mode: "live" | "test";
+  via: "try";
+  client: string | null;
+  hasBodies: boolean;
+  resourceId: string | null;
+  apiVersion: string | null;
+  flags: {
+    idempotencyKey: boolean;
+    ifMatch: boolean;
+    version: boolean;
+  };
+  requestBody: string | null;
+  responseBody: string | null;
+  bodiesExpireAt: number | null;
+  bodiesRecorded: boolean;
+  bodiesTruncated: boolean;
 };
 
 export type RetentionReceiptsDownloadResponse = {

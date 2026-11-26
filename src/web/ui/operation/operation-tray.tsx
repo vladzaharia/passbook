@@ -58,12 +58,15 @@ export function OperationTray({
   onNavigate = (href) => window.location.assign(href),
   zone,
   notify,
+  include,
   className,
 }: {
   onNavigate?: (href: string) => void;
   zone?: string;
   /** Completion toasts; off where the host has no toaster. */
   notify?: boolean;
+  /** The operations this tray lists; the host's scope (the Workbench lists its context's Test ones). */
+  include?: (op: Operation) => boolean;
   className?: string;
 }) {
   const phone = useMediaQuery(PHONE);
@@ -79,7 +82,7 @@ export function OperationTray({
     if (href) onNavigate(href);
     else setDetail(op.id);
   };
-  const { active, recent, unseen, markSeen } = useTray({ notify, onOpen: openOp });
+  const { active, recent, unseen, markSeen } = useTray({ notify, onOpen: openOp, include });
   const now = useNow(1000, active.length > 0);
   const busy = active.length > 0;
   const visible = busy || unseen > 0 || open;

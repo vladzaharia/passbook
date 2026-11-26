@@ -40,6 +40,8 @@ const NOT_COLLECTIONS = new Set([
   // Found once the filter read named schemas: each is a capped list, not a collection to page.
   '/api/v1/passes/views',
   '/api/v1/webhook-endpoints/{id}/tests',
+  // One row per endpoint of an event: capped by the endpoint limit.
+  '/api/v1/events/{id}/deliveries',
   '/api/v1/scan/activity',
   '/api/v1/scan/scans',
   '/api/v1/platform/idp/drift',

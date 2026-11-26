@@ -9,26 +9,22 @@ test('Delete sandbox from the chip menu while on the quickstart opens the confir
 }) => {
   test.setTimeout(150_000);
   await stubTurnstile(page);
-  await startOidcAs(page, 'developer', '/developers/quickstart');
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
-  await expect(page.getByRole('heading', { level: 1, name: 'Your first pass' })).toBeVisible();
+  await startOidcAs(page, 'developer', '/workbench/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
+  await expect(page.getByRole('heading', { level: 1, name: 'Quickstart' })).toBeVisible();
   const create = page.getByRole('button', { name: 'Create sandbox' });
-  // The bar's sandbox chip (bench/sandbox-chip.tsx, the `bar` variant on docs pages).
-  const chip = page.locator('[data-menubar]').getByRole('button', { name: 'Sandbox menu' });
-  await expect(create.or(chip)).toBeVisible();
+  // The sandbox step's Delete sandbox (the Workbench has no bar chip: the step carries the menu's actions).
+  const del = page.locator('main').getByRole('button', { name: 'Delete sandbox' });
+  await expect(create.or(del)).toBeVisible();
   if (await create.isVisible()) await create.click();
-  // Making it is an operation now: its steps run, the key is minted, and the chip appears when it ends.
-  await expect(chip).toBeVisible({ timeout: 60_000 });
-  // The confirm is far down the page: hold the scroll at the top to prove the menu brings it into view.
-  await page.evaluate(() => window.scrollTo(0, 0));
+  // Making it is an operation now: its steps run, the key is minted, and Delete appears when it ends.
+  await expect(del).toBeVisible({ timeout: 60_000 });
 
-  await chip.click();
-  await page.getByRole('menuitem', { name: 'Delete sandbox' }).click();
+  await del.click();
   const confirm = page.getByRole('region', { name: 'Delete this sandbox?' });
   await expect(confirm).toBeVisible();
   await expect(confirm).toBeInViewport();
   await expect(confirm).toBeFocused();
-  await expect(chip).toHaveAttribute('aria-expanded', 'false');
   await shots(page, 'sandbox-delete-1-confirm');
 
   // Hold the delete so the working state can be seen.

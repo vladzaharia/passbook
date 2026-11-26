@@ -17,7 +17,7 @@ import { TemplateChannelsResponseSchema } from '@/shared/contracts/channels.ts';
 import { channelReason } from '@/shared/copy/channels.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
 import { FitBox } from '../../../channel-previews/fit-box.tsx';
-import { api } from '../../../lib/api.ts';
+import { useToolApi, useToolKey, useToolMode } from '../../../lib/tool-api.tsx';
 import { PAPER_CSS } from '../../../paper/css.ts';
 import { drawPaperCode, type PaperDrawing } from '../../../paper/drawing.ts';
 import { PaperTicket } from '../../../paper/ticket.tsx';
@@ -34,6 +34,7 @@ import {
   Skeleton,
 } from '../../../ui/index.ts';
 import { useBrandMark } from '../../brand/api.ts';
+import { useLoadedUrls } from './assets.ts';
 import { previewAssetMap } from './images.ts';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
@@ -61,8 +62,12 @@ const WIDTH: Record<PaperSize, string> = {
 
 /** The template's own paper state in this mode: platform, organization and template levels. */
 function useTemplatePaper(templateId: string | undefined, orgId: string | undefined) {
+  const api = useToolApi();
+  const mode = useToolMode();
+  const toolKey = useToolKey();
   return useQuery({
-    queryKey: ['admin', 'templates', 'paper', templateId, orgId],
+    // The template's channels are per mode: a Live answer never shows in Test.
+    queryKey: ['admin', 'templates', 'paper', templateId, orgId, mode, ...toolKey],
     enabled: Boolean(templateId),
     retry: false,
     queryFn: ({ signal }) =>
@@ -154,7 +159,9 @@ export function PaperPreview({
       return null;
     }
   }, [passJson, manifest, saved, assets, timeZone]);
-  const urls = useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]);
+  const urls = useLoadedUrls(
+    useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]),
+  );
   const files = useMemo(() => {
     const url = (name: string | undefined) => (name ? urls[name] : undefined);
     return {

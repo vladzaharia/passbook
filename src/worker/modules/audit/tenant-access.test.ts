@@ -204,7 +204,7 @@ describe('tenant audit access', () => {
     const user = await makeUser(f);
     await addMember(f, sandbox.id, user.id);
     const live = fake.user(user.id);
-    await expectProblem(await get(`?orgId=${sandbox.id}`, live), 409, 'ORG_TEST_ONLY');
+    await expectProblem(await get(`?orgId=${sandbox.id}`, live), 409, 'SANDBOX_TEST_ONLY');
     const test = fake.session({ userId: user.id, mode: 'test' });
     expect((await get(`?orgId=${sandbox.id}`, test)).status).toBe(200);
     await run(appEnv.DB, 'UPDATE sessions SET revoked_at = ? WHERE user_id = ?', [

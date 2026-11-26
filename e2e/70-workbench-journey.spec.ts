@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 /** The Workbench as one bench. Needs the prerendered portal: `WALLET_E2E_PREVIEW=1` (tools/e2e-server.ts builds it). */
-const TOOLS = ['console', 'webhooks', 'logs', 'keys'] as const;
+const TOOLS = ['console', 'events', 'logs', 'keys'] as const;
 const VIEWS = [
   [1440, 900],
   [834, 1112],
@@ -23,9 +23,9 @@ async function signIn(page: Page) {
       headers: { ...response.headers(), location: location.toString() },
     });
   });
-  await page.goto('/developers/quickstart');
+  await page.goto('/workbench/quickstart');
   await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
   await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -57,24 +57,17 @@ async function openMenu(page: Page, trigger: Locator) {
   await expect(page.getByRole('menu')).toBeVisible();
 }
 
-test('the frame: h1, switcher and toolbar sit in the same boxes on all four tools', async ({
-  page,
-}) => {
+test('the frame: h1 and sidebar sit in the same boxes on all four tools', async ({ page }) => {
   await signIn(page);
   for (const [width, height] of VIEWS) {
     await page.setViewportSize({ width, height });
-    const seen: Record<'switcher' | 'h1' | 'toolbar', Box[]> = {
-      switcher: [],
-      h1: [],
-      toolbar: [],
-    };
+    const seen: Record<'switcher' | 'h1', Box[]> = { switcher: [], h1: [] };
     for (const tool of TOOLS) {
-      await page.goto(`/developers/${tool}`);
-      await page.waitForLoadState('networkidle');
+      await page.goto(`/workbench/${tool}`);
       await expect(page.locator('h1')).toBeVisible();
-      seen.switcher.push(await box(page, 'nav[aria-label="Workbench"]'));
+      // The sidebar is the nav from 1024; below it the sheet holds it.
+      if (width >= 1024) seen.switcher.push(await box(page, 'nav[aria-label="Workbench"]'));
       seen.h1.push(await box(page, 'h1'));
-      seen.toolbar.push(await box(page, '[data-bench-toolbar]'));
       // The buddy's props (a cable, a lens) never scroll the page sideways.
       const sideways = await page.evaluate(
         () => document.documentElement.scrollWidth - window.innerWidth,
@@ -82,12 +75,8 @@ test('the frame: h1, switcher and toolbar sit in the same boxes on all four tool
       expect(sideways, `${tool} at ${width}`).toBeLessThanOrEqual(0);
     }
     for (const [part, boxes] of Object.entries(seen)) {
-      // A name is as wide as its letters, and a tool's own filters may wrap at a tablet width: the place is shared.
-      const place = boxes.map((b) => {
-        if (part === 'h1') return { ...b, width: 0 };
-        if (part === 'toolbar') return { ...b, height: 0 };
-        return b;
-      });
+      // A name is as wide as its letters: the place is shared.
+      const place = boxes.map((b) => (part === 'h1' ? { ...b, width: 0 } : b));
       const first = place[0];
       for (const [i, b] of place.entries())
         expect(b, `${part} on ${TOOLS[i]} at ${width}`).toEqual(first);
@@ -103,7 +92,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
   await page.setViewportSize({ width: 1440, height: 900 });
 
   // 1. Console: issue a pass, a write that causes pass.issued.
-  await page.goto('/developers/console#passes.postPasses');
+  await page.goto('/workbench/console#passes.postPasses');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Console');
   const run = page.getByRole('button', { name: /^Run/ }).first();
   await expect(run).toBeEnabled();
@@ -114,7 +103,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
 
   // 2. Logs: the request id from the response opens that request, selected.
   await page.getByRole('link', { name: 'View in Logs' }).click();
-  await page.waitForURL(/\/developers\/logs\?source=all#/);
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/logs\?source=all#/);
   expect(decodeURIComponent(new URL(page.url()).hash.slice(1))).toBe(requestId);
   const trace = page.getByRole('navigation', { name: 'Trace' });
   await expect(trace).toBeVisible();
@@ -136,7 +125,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
     trace.locator('[data-kind="request"]').getByRole('button', { name: 'Open request' }),
   );
   await page.getByRole('menuitem', { name: 'Events it caused' }).click();
-  await page.waitForURL(/\/developers\/webhooks\?request=/);
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/events\?request=/);
   expect(new URL(page.url()).searchParams.get('request')).toBe(requestId);
   const list = page.getByRole('listbox');
   await expect(list.getByRole('option').first()).toBeVisible({ timeout: 15_000 });
@@ -154,7 +143,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
       .getByRole('button', { name: 'Open request' }),
   );
   await page.getByRole('menuitem', { name: 'Logs', exact: true }).click();
-  await page.waitForURL(/\/developers\/logs\?source=all#/);
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/logs\?source=all#/);
   await openMenu(
     page,
     page
@@ -163,7 +152,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
       .getByRole('button', { name: 'Open key' }),
   );
   await page.getByRole('menuitem', { name: 'Keys', exact: true }).click();
-  await page.waitForURL(/\/developers\/keys#/);
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/keys#/);
   expect(decodeURIComponent(new URL(page.url()).hash.slice(1))).toBe(keyId);
   await expect(page.locator('[role="option"][aria-selected="true"]')).toBeVisible();
 });
@@ -174,8 +163,7 @@ test('axe: no serious findings on any tool at three widths', async ({ page }) =>
   for (const [width, height] of VIEWS) {
     await page.setViewportSize({ width, height });
     for (const tool of TOOLS) {
-      await page.goto(`/developers/${tool}`);
-      await page.waitForLoadState('networkidle');
+      await page.goto(`/workbench/${tool}`);
       await expect(page.locator('h1')).toBeVisible();
       const { violations } = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])

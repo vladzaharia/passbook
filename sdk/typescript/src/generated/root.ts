@@ -21,6 +21,7 @@ import { PassesResource } from './resources/passes.ts';
 import { PrintJobsResource } from './resources/print-jobs.ts';
 import { BulkRunsResource } from './resources/bulk-runs.ts';
 import { PassViewsResource } from './resources/pass-views.ts';
+import { RequestLogsResource } from './resources/request-logs.ts';
 import { RollCallsResource } from './resources/roll-calls.ts';
 import { ScanEventsResource } from './resources/scan-events.ts';
 import { ScanSetupsResource } from './resources/scan-setups.ts';
@@ -59,6 +60,7 @@ export class Resources {
   readonly printJobs: PrintJobsResource;
   readonly bulkRuns: BulkRunsResource;
   readonly passViews: PassViewsResource;
+  readonly requestLogs: RequestLogsResource;
   readonly rollCalls: RollCallsResource;
   readonly scanEvents: ScanEventsResource;
   readonly scanSetups: ScanSetupsResource;
@@ -95,6 +97,7 @@ export class Resources {
     this.printJobs = new PrintJobsResource(core);
     this.bulkRuns = new BulkRunsResource(core);
     this.passViews = new PassViewsResource(core);
+    this.requestLogs = new RequestLogsResource(core);
     this.rollCalls = new RollCallsResource(core);
     this.scanEvents = new ScanEventsResource(core);
     this.scanSetups = new ScanSetupsResource(core);

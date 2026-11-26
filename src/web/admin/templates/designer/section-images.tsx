@@ -7,6 +7,7 @@ import { ImageSlotRow } from '../../passes/detail/image-slot-row.tsx';
 import { slotNeeds } from '../../passes/detail/image-slots.ts';
 import '../../passes/passes.css';
 import { MAX_ASSET_BYTES, TOO_BIG } from '../../passes/png.ts';
+import { useLoadedUrl } from './assets.ts';
 import { useDesigner } from './context.tsx';
 import { isSlotImage, placeImage, previewAssetMap } from './images.ts';
 import { SLOT_LABEL, slotsOf } from './model.ts';
@@ -27,7 +28,9 @@ function SlotDrop({ slot }: { slot: string }) {
   const [problem, setProblem] = useState<string>();
   const [soft, setSoft] = useState<string>();
   const current = doc.assets.find((a) => isSlotImage(a, slot));
-  const url = current ? previewAssetMap([current], assetBase)[current.name] : undefined;
+  const url = useLoadedUrl(
+    current ? previewAssetMap([current], assetBase)[current.name] : undefined,
+  );
   // With stamps the strip is the background they are drawn on.
   const behindStamps = slot === 'strip' && doc.manifest.stamps !== undefined;
   const label = behindStamps ? 'Strip background' : (SLOT_LABEL[slot] ?? slot);

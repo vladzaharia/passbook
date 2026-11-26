@@ -91,7 +91,11 @@ export function OrgWorkspacePage({
         ) : null}
         <OrgFacts org={org} />
         {canManage ? <OrgForm org={org} canChooseIdentity={isAdmin} /> : null}
-        <OrgSettingsSections orgId={org.id} canManage={canManage} />
+        <OrgSettingsSections
+          orgId={org.id}
+          canManage={canManage}
+          sandbox={org.kind === 'developer'}
+        />
         {canManage ? <DataCard orgId={org.id} /> : null}
       </div>
     </SaveBarGroup>

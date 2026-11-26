@@ -3,7 +3,7 @@ import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { ScanDisplay } from '@/shared/contracts/scan-display.ts';
 import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { PHONE, useMediaQuery } from '../../../../lib/media.ts';
-import { useMode } from '../../../../lib/mode.ts';
+import { useToolMode } from '../../../../lib/tool-api.tsx';
 import { ConfirmDialog, toast } from '../../../../ui/index.ts';
 import { useDesigner } from '../context.tsx';
 import { DesignerLayout } from '../layout.tsx';
@@ -28,7 +28,7 @@ export function ScanMode({
   issues: ReactNode;
 }) {
   const { doc, state, edit, select, dispatch, readOnly } = useDesigner();
-  const mode = useMode();
+  const mode = useToolMode();
   const timeZone = useOrgTimeZone(orgId ?? undefined);
   const phone = useMediaQuery(PHONE);
   const root = useRef<HTMLDivElement>(null);
@@ -128,7 +128,6 @@ export function ScanMode({
     <div ref={root} onKeyDown={onKeyDown}>
       <DesignerLayout
         templateId={templateId}
-        orgId={orgId ?? undefined}
         readOnly={readOnly}
         previewOnPhone={false}
         structure={

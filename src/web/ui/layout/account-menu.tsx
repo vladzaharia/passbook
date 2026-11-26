@@ -7,6 +7,7 @@ import {
   type LucideIcon,
   Ticket,
   UserRound,
+  Wrench,
 } from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
 import type { Space } from '@/shared/spaces.ts';
@@ -77,6 +78,7 @@ const SPACE_ICON: Record<Space, LucideIcon> = {
   passes: Ticket,
   account: UserRound,
   admin: LayoutDashboard,
+  workbench: Wrench,
   developers: Code,
 };
 
@@ -84,6 +86,7 @@ export const SPACE_LABEL: Record<Space, string> = {
   passes: 'My passes',
   account: 'Account',
   admin: 'Admin',
+  workbench: 'Workbench',
   developers: 'Developers',
 };
 

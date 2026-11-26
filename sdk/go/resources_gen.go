@@ -748,6 +748,15 @@ func (r *EventsResource) List(ctx context.Context, query *EventsListQuery, opts 
 	return newPager[WebhookEvent](r.c, call{method: "GET", path: "/api/v1/events", query: queryValues(query)}, "after", opts)
 }
 
+// ListDeliveries Where one event was sent: its deliveries across endpoints. `passes:read`, like the event `GET /api/v1/events/{id}/deliveries`
+func (r *EventsResource) ListDeliveries(ctx context.Context, id string, opts ...RequestOption) (*EventsListDeliveriesResult, error) {
+	var out EventsListDeliveriesResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/events/" + pathEscape(id) + "/deliveries"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Retrieve One event by id `GET /api/v1/events/{id}`
 func (r *EventsResource) Retrieve(ctx context.Context, id string, query *EventsRetrieveQuery, opts ...RequestOption) (EventsRetrieveResult, error) {
 	var out EventsRetrieveResult
@@ -1948,6 +1957,15 @@ func (r *PassesResource) SendEmail(ctx context.Context, id string, body *PassesS
 	return &out, nil
 }
 
+// Simulate Send a real Test event for a Test pass: install, scan, push failure and more `POST /api/v1/passes/{id}/simulate`
+func (r *PassesResource) Simulate(ctx context.Context, id string, body *PassesSimulateBody, opts ...RequestOption) (*PassesSimulateResult, error) {
+	var out PassesSimulateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/" + pathEscape(id) + "/simulate", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Unvoid Unvoid a pass `POST /api/v1/passes/{id}/unvoid`
 func (r *PassesResource) Unvoid(ctx context.Context, id string, opts ...RequestOption) (*PassesUnvoidResult, error) {
 	var out PassesUnvoidResult
@@ -2077,6 +2095,30 @@ func (r *PassViewsResource) List(ctx context.Context, opts ...RequestOption) (*P
 func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceBody, opts ...RequestOption) (*PassViewsReplaceResult, error) {
 	var out PassViewsReplaceResult
 	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/passes/views", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type RequestLogsResource struct {
+	c *core
+}
+
+func newRequestLogsResource(c *core) *RequestLogsResource {
+	return &RequestLogsResource{
+		c: c,
+	}
+}
+
+// List List an organization's Test calls, newest first `GET /api/v1/request-logs`
+func (r *RequestLogsResource) List(ctx context.Context, query *RequestLogsListQuery, opts ...RequestOption) *Pager[RequestLogsListItem] {
+	return newPager[RequestLogsListItem](r.c, call{method: "GET", path: "/api/v1/request-logs", query: queryValues(query)}, "cursor", opts)
+}
+
+// Retrieve One Test call, with its redacted bodies for 24 hours where the organization records them `GET /api/v1/request-logs/{id}`
+func (r *RequestLogsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*RequestLogsRetrieveResult, error) {
+	var out RequestLogsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/request-logs/" + pathEscape(id)}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -3122,6 +3164,7 @@ type Resources struct {
 	PrintJobs            *PrintJobsResource
 	BulkRuns             *BulkRunsResource
 	PassViews            *PassViewsResource
+	RequestLogs          *RequestLogsResource
 	RollCalls            *RollCallsResource
 	ScanEvents           *ScanEventsResource
 	ScanSetups           *ScanSetupsResource
@@ -3161,6 +3204,7 @@ func newResources(c *core) Resources {
 		PrintJobs:            newPrintJobsResource(c),
 		BulkRuns:             newBulkRunsResource(c),
 		PassViews:            newPassViewsResource(c),
+		RequestLogs:          newRequestLogsResource(c),
 		RollCalls:            newRollCallsResource(c),
 		ScanEvents:           newScanEventsResource(c),
 		ScanSetups:           newScanSetupsResource(c),

@@ -5,6 +5,7 @@ import { FacePair } from '../../../channel-previews/face-pair.tsx';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import { PassCardStage } from '../../../pass-card/index.tsx';
 import { Badge, LoadingRail, Skeleton } from '../../../ui/index.ts';
+import { useLoadedUrls } from './assets.ts';
 import { previewAssetMap } from './images.ts';
 import { allKeys, type DraftAsset } from './model.ts';
 
@@ -83,10 +84,13 @@ export function DesignerPreview({
   target?: PassTarget;
 }) {
   const host = usePartDrop(passJson);
+  const loaded = useLoadedUrls(
+    useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]),
+  );
   const view = useMemo(() => {
     if (!passJson) return null;
     try {
-      const files = { ...previewAssetMap(assets, assetBase), ...assetOverrides };
+      const files = { ...loaded, ...assetOverrides };
       if (stripUrl) {
         files['strip@2x.png'] = stripUrl;
         files['strip@3x.png'] = stripUrl;
@@ -96,7 +100,7 @@ export function DesignerPreview({
       // A pass the card cannot read shows the fallback line; the issues list says why.
       return null;
     }
-  }, [passJson, assets, assetBase, stripUrl, assetOverrides]);
+  }, [passJson, loaded, stripUrl, assetOverrides]);
   return (
     <div className="flex flex-col items-center gap-3" data-testid="designer-preview">
       <div ref={host} className="relative w-full">

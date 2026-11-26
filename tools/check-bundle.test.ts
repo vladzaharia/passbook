@@ -1,17 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BENCH_BUDGET_BYTES,
   checkBundle,
   DEV_BUDGET_BYTES,
   DEV_FORBIDDEN,
-  DEV_ISLAND_BUDGET_BYTES,
   FORBIDDEN,
   initialAssets,
   islandAssets,
-  PLAYGROUND_BUDGET_BYTES,
+  MARKETING_FORBIDDEN,
   SCAN_BUDGET_BYTES,
   SCAN_FORBIDDEN,
+  toolAssets,
+  WB_BENCH_BUDGET_BYTES,
+  WB_SHELL_BUDGET_BYTES,
+  WB_SHELL_MARKER,
+  WB_TOOL_BUDGET_BYTES,
+  WB_TOOLS_MEASURED,
 } from './check-bundle.ts';
+import { markedAssets } from './lib/marked-assets.ts';
 
 const html = `<script type="module" crossorigin src="/assets/index.js"></script>
 <link rel="modulepreload" crossorigin href="/assets/ui.js">
@@ -113,13 +118,7 @@ describe('check-bundle', () => {
     expect(islandAssets(() => 'nothing', initial, 'playground')).toEqual([]);
   });
 
-  it('the playground island has a budget of its own, above the portal’s and the console’s, below the SPA’s', () => {
-    expect(PLAYGROUND_BUDGET_BYTES).toBeGreaterThan(DEV_BUDGET_BYTES);
-    expect(PLAYGROUND_BUDGET_BYTES).toBeGreaterThan(DEV_ISLAND_BUDGET_BYTES);
-    expect(PLAYGROUND_BUDGET_BYTES).toBeLessThan(235_000);
-  });
-
-  it('finds the Try it island: its loader and the chunks Vite lists in it', () => {
+  it('finds an island by its loader name and the chunks Vite lists in it', () => {
     const files: Record<string, string> = {
       '/assets/developers-A.js': 'x(()=>import("./run-entry-B1.js"),__vite__mapDeps([0]))',
       '/assets/run-entry-B1.js':
@@ -133,13 +132,81 @@ describe('check-bundle', () => {
       '/assets/mount-C.css',
     ]);
     expect(islandAssets(read, ['/assets/developers-A.js'], 'missing')).toEqual([]);
-    expect(DEV_ISLAND_BUDGET_BYTES).toBe(98_000);
   });
 
-  it('a Workbench island holds React, the bench primitives and one tool, under the playground', () => {
-    // React alone is 67.5 kB and the primitives about 32 kB: a tool gets the rest.
-    expect(BENCH_BUDGET_BYTES).toBe(125_000);
-    expect(BENCH_BUDGET_BYTES).toBeGreaterThan(DEV_ISLAND_BUDGET_BYTES);
-    expect(BENCH_BUDGET_BYTES).toBeLessThan(PLAYGROUND_BUDGET_BYTES);
+  it('measures one tool route: its chunk by its class, and what its loader lists past the shell and bench', () => {
+    const files: Record<string, string> = {
+      '/assets/main-A.js':
+        'x(()=>import(`./logs-B.js`),__vite__mapDeps([0,1,2,3]));const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/logs-B.js","assets/list-C.js","assets/logs-B.css","assets/rail-D.js"])))=>i',
+      '/assets/logs-B.js': 'cn("wb-tool-logs")',
+      '/assets/list-C.js': 'bench',
+      '/assets/logs-B.css': '.x{}',
+      '/assets/rail-D.js': 'rail',
+      '/assets/other.js': 'cn("wb-tool-keys")',
+    };
+    const read = (url: string) => files[url] ?? '';
+    const all = Object.keys(files);
+    const tool = toolAssets(read, all, new Set(['/assets/list-C.js']), 'logs');
+    expect(tool.errors).toEqual([]);
+    expect(tool.files).toEqual(['/assets/logs-B.js', '/assets/logs-B.css', '/assets/rail-D.js']);
+    expect(toolAssets(read, all, new Set(), 'console').errors[0]).toMatch(/0 chunks carry it/);
+    expect(toolAssets(read, all, new Set(), 'keys').errors[0]).toMatch(/no loader lists/);
+  });
+
+  it('holds the bench once and each tool route under its own line', () => {
+    expect(WB_BENCH_BUDGET_BYTES).toBe(35_000);
+    expect(WB_TOOL_BUDGET_BYTES).toBe(75_000);
+    expect(WB_TOOLS_MEASURED.logs).toBe(WB_TOOL_BUDGET_BYTES);
+    expect(Object.keys(WB_TOOLS_MEASURED).sort()).toEqual([
+      'console',
+      'events',
+      'home',
+      'keys',
+      'logs',
+      'playground',
+      'quickstart',
+    ]);
+  });
+
+  it('keeps the Workbench shell out of every entry: the SPA, the scanner, the docs and the site', () => {
+    for (const list of [FORBIDDEN, SCAN_FORBIDDEN, DEV_FORBIDDEN, MARKETING_FORBIDDEN])
+      expect(list).toContain(WB_SHELL_MARKER);
+    const files: Record<string, string> = {
+      '/assets/index.js': 'x("wb-shell")',
+      '/assets/ui.js': '',
+    };
+    const { errors } = checkBundle((url) => files[url] ?? '', html, 0);
+    expect(errors).toEqual(['/assets/index.js contains wb-shell']);
+  });
+
+  it('measures the Workbench shell: its chunk, what it imports past the entry, and its stylesheet', () => {
+    const files: Record<string, string> = {
+      '/assets/index.js': 'entry',
+      '/assets/react.js': 'react',
+      '/assets/route-A.js': 'import{a}from"./react.js";import{b}from"./kit-B.js";cn("wb-shell")',
+      '/assets/kit-B.js': 'import{c}from"./kit-C.js";',
+      '/assets/kit-C.js': 'c',
+      '/assets/route-D.js': 'another route',
+      '/assets/route-A.css': '.wb-shell{--wb-dot:red}',
+      '/assets/index.css': '.app{}',
+    };
+    const read = (url: string) => files[url] ?? '';
+    const all = Object.keys(files);
+    const shell = markedAssets(
+      read,
+      all,
+      ['/assets/index.js', '/assets/react.js'],
+      WB_SHELL_MARKER,
+    );
+    expect(shell.errors).toEqual([]);
+    expect(shell.files.sort()).toEqual([
+      '/assets/kit-B.js',
+      '/assets/kit-C.js',
+      '/assets/route-A.css',
+      '/assets/route-A.js',
+    ]);
+    files['/assets/route-D.js'] = 'cn("wb-shell")';
+    expect(markedAssets(read, all, [], WB_SHELL_MARKER).errors[0]).toMatch(/2 chunks carry it/);
+    expect(WB_SHELL_BUDGET_BYTES).toBe(45_000);
   });
 });

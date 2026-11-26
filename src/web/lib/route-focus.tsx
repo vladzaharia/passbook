@@ -24,10 +24,11 @@ export function useDocumentTitle(title: string): void {
 const RESTORES = new Set(['BACK', 'FORWARD', 'GO']);
 
 /**
- * Announces the page after navigation and moves focus to its h1 (or main) without scrolling.
- * Back and Forward leave focus alone, so the router's scroll restoration holds.
+ * After a navigation, moves focus to the new page's h1 (or main) without scrolling and hands its
+ * title to `onArrive`. Back and Forward leave focus alone, so the router's scroll restoration holds.
+ * The SPA's RouteAnnouncer speaks it; the Workbench shell queues it with its other announcements.
  */
-export function RouteAnnouncer() {
+export function useRouteArrival(onArrive: (title: string) => void): void {
   const router = useRouter();
   // The resolved location only changes once the new route's chunk and loaders are done.
   const pathname = useRouterState({
@@ -35,7 +36,8 @@ export function RouteAnnouncer() {
   });
   const last = useRef<string | undefined>(undefined);
   const restoring = useRef(false);
-  const [message, setMessage] = useState('');
+  const arrive = useRef(onArrive);
+  arrive.current = onArrive;
 
   useEffect(
     () =>
@@ -58,11 +60,16 @@ export function RouteAnnouncer() {
       const main = document.getElementById(MAIN_ID);
       const heading = main?.querySelector<HTMLElement>('h1');
       if (!restore) (heading ?? main)?.focus({ preventScroll: true });
-      setMessage(heading?.textContent?.trim() || document.title);
+      arrive.current(heading?.textContent?.trim() || document.title);
     });
     return () => cancelAnimationFrame(frame);
   }, [pathname]);
+}
 
+/** Announces the page after navigation and moves focus to its h1 (`useRouteArrival`). */
+export function RouteAnnouncer() {
+  const [message, setMessage] = useState('');
+  useRouteArrival(setMessage);
   return (
     <div role="status" aria-live="polite" data-route-announcer className="sr-only">
       {message}

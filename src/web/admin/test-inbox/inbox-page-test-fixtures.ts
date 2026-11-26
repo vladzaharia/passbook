@@ -12,6 +12,7 @@ export const email = (over: Record<string, unknown> = {}) => ({
   to: 'holder@example.com',
   subject: 'Your Gym pass',
   attached: false,
+  failed: false,
   createdAt: Date.now() - 3_600_000,
   ...over,
 });

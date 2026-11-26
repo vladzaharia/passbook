@@ -76,7 +76,9 @@ export const RATE_LIMITS = [
   'RL_SESSION',
   'RL_ACCESS',
   'RL_ACCESS_ALL',
+  'RL_SIMULATE',
   'RL_WEBHOOK_LEDGER',
+  'RL_SANDBOX_DELIVERY',
 ] as const satisfies readonly RateLimitName[];
 
 /**

@@ -1061,6 +1061,7 @@ type CapturedEmail struct {
 	To        string  `json:"to"`
 	Subject   string  `json:"subject"`
 	Attached  bool    `json:"attached"`
+	Failed    bool    `json:"failed"`
 	CreatedAt int64   `json:"createdAt"`
 }
 
@@ -1073,6 +1074,7 @@ type CapturedEmailDetail struct {
 	To         string  `json:"to"`
 	Subject    string  `json:"subject"`
 	Attached   bool    `json:"attached"`
+	Failed     bool    `json:"failed"`
 	CreatedAt  int64   `json:"createdAt"`
 	HTML       string  `json:"html"`
 	Text       string  `json:"text"`
@@ -2871,10 +2873,34 @@ type EventPage struct {
 	HasMore    bool           `json:"hasMore"`
 }
 
+type EventsListDeliveriesResponse struct {
+	Items []EventsListDeliveriesResponseItemsItem `json:"items"`
+}
+
+type EventsListDeliveriesResponseItemsItem struct {
+	EventID       string  `json:"eventId"`
+	Type          string  `json:"type"`
+	PassID        string  `json:"passId"`
+	ExternalID    *string `json:"externalId"`
+	State         string  `json:"state"`
+	Attempts      int64   `json:"attempts"`
+	NextAt        int64   `json:"nextAt"`
+	LastStatus    *int64  `json:"lastStatus"`
+	LastError     *string `json:"lastError"`
+	LastAttemptAt *int64  `json:"lastAttemptAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+	Replays       int64   `json:"replays"`
+	EndpointID    string  `json:"endpointId"`
+	Target        string  `json:"target"`
+}
+
+type EventsListDeliveriesResult = EventsListDeliveriesResponse
+
 type EventsListQuery struct {
 	After      *string `json:"after,omitempty"`
 	Types      *string `json:"types,omitempty"`
 	PassID     *string `json:"passId,omitempty"`
+	RequestID  *string `json:"requestId,omitempty"`
 	Limit      *int64  `json:"limit,omitempty"`
 	APIVersion *string `json:"apiVersion,omitempty"`
 }
@@ -8421,6 +8447,8 @@ type PassesDevicesListResponseDevicesItem struct {
 	LastFetch      map[string]any `json:"lastFetch"`
 	LastPush       map[string]any `json:"lastPush"`
 	Removal        *string        `json:"removal"`
+	Simulated      *bool          `json:"simulated,omitempty"`
+	DeviceID       *string        `json:"deviceId,omitempty"`
 }
 
 type PassesDevicesListResult = PassesDevicesListResponse
@@ -8696,6 +8724,22 @@ type PassesSendEmailResponse struct {
 }
 
 type PassesSendEmailResult = PassesSendEmailResponse
+
+type PassesSimulateBody = PassesSimulateParams
+
+type PassesSimulateParams struct {
+	Event    string  `json:"event"`
+	Platform *string `json:"platform,omitempty"`
+	DeviceID *string `json:"deviceId,omitempty"`
+}
+
+type PassesSimulateResponse struct {
+	EventID   string  `json:"eventId"`
+	RequestID string  `json:"requestId"`
+	DeviceID  *string `json:"deviceId,omitempty"`
+}
+
+type PassesSimulateResult = PassesSimulateResponse
 
 type PassesStampsApplyBody = PassesStampsApplyParams
 
@@ -10958,6 +11002,117 @@ type ReleaseTemplateExpected struct {
 	Live *int64 `json:"live,omitempty"`
 	Test *int64 `json:"test,omitempty"`
 }
+
+type RequestLogsListItem struct {
+	ID         string                   `json:"id"`
+	RequestID  string                   `json:"requestId"`
+	At         int64                    `json:"at"`
+	Method     string                   `json:"method"`
+	Route      *string                  `json:"route"`
+	Path       string                   `json:"path"`
+	Query      *string                  `json:"query"`
+	Status     int64                    `json:"status"`
+	Code       *string                  `json:"code"`
+	DurationMs int64                    `json:"durationMs"`
+	KeyID      *string                  `json:"keyId"`
+	Mode       string                   `json:"mode"`
+	Via        string                   `json:"via"`
+	Client     *string                  `json:"client"`
+	HasBodies  bool                     `json:"hasBodies"`
+	ResourceID *string                  `json:"resourceId"`
+	APIVersion *string                  `json:"apiVersion"`
+	Flags      RequestLogsListItemFlags `json:"flags"`
+}
+
+type RequestLogsListItemFlags struct {
+	IdempotencyKey bool `json:"idempotencyKey"`
+	IfMatch        bool `json:"ifMatch"`
+	Version        bool `json:"version"`
+}
+
+type RequestLogsListQuery struct {
+	KeyID   *string `json:"keyId,omitempty"`
+	Status  *string `json:"status,omitempty"`
+	Code    *string `json:"code,omitempty"`
+	PassID  *string `json:"passId,omitempty"`
+	Version *string `json:"version,omitempty"`
+	Path    *string `json:"path,omitempty"`
+	Method  *string `json:"method,omitempty"`
+	Source  *string `json:"source,omitempty"`
+	Portal  *string `json:"portal,omitempty"`
+	After   *string `json:"after,omitempty"`
+	Cursor  *string `json:"cursor,omitempty"`
+	Limit   *int64  `json:"limit,omitempty"`
+	Key     *string `json:"key,omitempty"`
+}
+
+type RequestLogsListResponse struct {
+	Items          []RequestLogsListResponseItemsItem `json:"items"`
+	NextCursor     *string                            `json:"nextCursor"`
+	Capped         *string                            `json:"capped"`
+	BodiesRecorded bool                               `json:"bodiesRecorded"`
+}
+
+type RequestLogsListResponseItemsItem struct {
+	ID         string                                `json:"id"`
+	RequestID  string                                `json:"requestId"`
+	At         int64                                 `json:"at"`
+	Method     string                                `json:"method"`
+	Route      *string                               `json:"route"`
+	Path       string                                `json:"path"`
+	Query      *string                               `json:"query"`
+	Status     int64                                 `json:"status"`
+	Code       *string                               `json:"code"`
+	DurationMs int64                                 `json:"durationMs"`
+	KeyID      *string                               `json:"keyId"`
+	Mode       string                                `json:"mode"`
+	Via        string                                `json:"via"`
+	Client     *string                               `json:"client"`
+	HasBodies  bool                                  `json:"hasBodies"`
+	ResourceID *string                               `json:"resourceId"`
+	APIVersion *string                               `json:"apiVersion"`
+	Flags      RequestLogsListResponseItemsItemFlags `json:"flags"`
+}
+
+type RequestLogsListResponseItemsItemFlags struct {
+	IdempotencyKey bool `json:"idempotencyKey"`
+	IfMatch        bool `json:"ifMatch"`
+	Version        bool `json:"version"`
+}
+
+type RequestLogsRetrieveResponse struct {
+	ID              string                           `json:"id"`
+	RequestID       string                           `json:"requestId"`
+	At              int64                            `json:"at"`
+	Method          string                           `json:"method"`
+	Route           *string                          `json:"route"`
+	Path            string                           `json:"path"`
+	Query           *string                          `json:"query"`
+	Status          int64                            `json:"status"`
+	Code            *string                          `json:"code"`
+	DurationMs      int64                            `json:"durationMs"`
+	KeyID           *string                          `json:"keyId"`
+	Mode            string                           `json:"mode"`
+	Via             string                           `json:"via"`
+	Client          *string                          `json:"client"`
+	HasBodies       bool                             `json:"hasBodies"`
+	ResourceID      *string                          `json:"resourceId"`
+	APIVersion      *string                          `json:"apiVersion"`
+	Flags           RequestLogsRetrieveResponseFlags `json:"flags"`
+	RequestBody     *string                          `json:"requestBody"`
+	ResponseBody    *string                          `json:"responseBody"`
+	BodiesExpireAt  *int64                           `json:"bodiesExpireAt"`
+	BodiesRecorded  bool                             `json:"bodiesRecorded"`
+	BodiesTruncated bool                             `json:"bodiesTruncated"`
+}
+
+type RequestLogsRetrieveResponseFlags struct {
+	IdempotencyKey bool `json:"idempotencyKey"`
+	IfMatch        bool `json:"ifMatch"`
+	Version        bool `json:"version"`
+}
+
+type RequestLogsRetrieveResult = RequestLogsRetrieveResponse
 
 type RetentionReceiptsDownloadResponse struct {
 	Receipt RetentionReceiptsDownloadResponseReceipt `json:"receipt"`

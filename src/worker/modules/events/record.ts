@@ -22,6 +22,8 @@ export interface PassEventInput {
   data?: Record<string, Json>;
   /** Defaults to now. */
   at?: number;
+  /** Defaults to a new ordered id; set by callers that report the id back. */
+  id?: string;
 }
 
 const DATA_MAX_BYTES = 2048;
@@ -85,7 +87,7 @@ async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventR
   const device = input.device ? await hashDevice(input.device) : (input.deviceHash ?? null);
   // The API request that caused the event, so webhooks and the request log can be read together.
   const data = ctx.requestId ? { ...input.data, requestId: ctx.requestId } : input.data;
-  return eventRowOf({ ...input, data, at }, ctx.ids.ordered(at), device);
+  return eventRowOf({ ...input, data, at }, input.id ?? ctx.ids.ordered(at), device);
 }
 
 /**

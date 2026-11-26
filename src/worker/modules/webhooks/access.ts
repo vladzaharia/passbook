@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type AuthContext, assertOrgAccess, modeOf } from '../../platform/auth.ts';
+import { assertWorkbenchOrg, workbenchPinOf } from '../../platform/auth-workbench.ts';
 import {
   ForbiddenError,
   NotFoundError,
@@ -43,6 +44,11 @@ export async function authorizeWebhooks(
 
 /** Lists and creates name an org; only an org-bound key may omit it. */
 export function webhookOrg(auth: AuthContext | undefined, requested: string | undefined): string {
+  const pin = workbenchPinOf(auth);
+  if (pin) {
+    if (requested !== undefined) assertWorkbenchOrg(auth, requested);
+    return pin.orgId;
+  }
   if (auth?.kind === 'api_key' && auth.orgId !== null) {
     if (requested !== undefined) assertOrgAccess(auth, requested);
     return auth.orgId;

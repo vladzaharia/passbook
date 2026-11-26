@@ -9,6 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
 import { decodeCursor, encodeCursor } from './cursor.ts';
 import { buildEnvelope } from './payload.ts';
+import { listEventDeliveries } from './repo-event-deliveries.ts';
 import { feedHead, getFeedEvent, listFeed } from './repo-feed.ts';
 
 type Query = z.infer<typeof EventFeedQuerySchema>;
@@ -34,6 +35,7 @@ export async function page(ctx: ServiceContext, access: WebhookAccess, q: Query)
     after,
     types: q.types,
     passId: q.passId,
+    requestId: q.requestId,
     limit: q.limit,
   });
   const last = rows[rows.length - 1];
@@ -54,4 +56,15 @@ export async function one(
   const row = await getFeedEvent(ctx.env.DB, fenceOf(access), id);
   if (!row) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   return buildEnvelope(row, version ?? LATEST_WEBHOOK_API_VERSION);
+}
+
+/** The event's deliveries across endpoints; an event the caller cannot see is not found, never an empty list. */
+export async function deliveriesOf(ctx: ServiceContext, access: WebhookAccess, id: string) {
+  const fence = fenceOf(access);
+  if (!(await getFeedEvent(ctx.env.DB, fence, id)))
+    throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
+  const rows = await listEventDeliveries(ctx.env.DB, fence, id);
+  return {
+    items: rows.map(({ eventSeq: _seq, type, ...r }) => ({ ...r, type: type as never })),
+  };
 }

@@ -35,7 +35,9 @@ export interface StoredResponse {
 }
 
 export function principalOf(auth: AuthContext): string {
-  if (auth.kind === 'session') return `session:${auth.userId}`;
+  // A Workbench token's Test answers never replay as the person's own (Live and Test) ones, or back.
+  if (auth.kind === 'session')
+    return auth.workbench ? `wb:${auth.workbench.orgId}:${auth.userId}` : `session:${auth.userId}`;
   if (auth.kind === 'api_key') return `key:${auth.keyId}`;
   return `scanner:${auth.scannerId}`;
 }

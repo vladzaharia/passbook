@@ -351,6 +351,7 @@ export const SEEDS: Record<string, unknown> = {
     message: 'Your day pass was replaced by a monthly membership.',
     selection: { filter: { templateId: IDS.template, status: 'active' }, expectCount: 128 },
   },
+  'passes.postPassesByIdSimulate request': { event: 'installed' },
   'passes.postPassesByIdRemove request': {
     message: 'Your day pass was replaced by a monthly membership.',
   },

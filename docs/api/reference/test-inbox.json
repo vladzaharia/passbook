@@ -12,6 +12,7 @@
           "to": "ada@example.com",
           "subject": "Your Northwind Climbing pass",
           "attached": false,
+          "failed": false,
           "createdAt": 1795570500000
         }
       ],
@@ -29,6 +30,7 @@
       "to": "ada@example.com",
       "subject": "Your Northwind Climbing pass",
       "attached": false,
+      "failed": false,
       "createdAt": 1795570500000,
       "html": "<p>Your pass is ready.</p><p>Friday Night Bouldering for Ada Example.</p>",
       "text": "Your pass is ready. Friday Night Bouldering for Ada Example.",

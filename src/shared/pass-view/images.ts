@@ -13,9 +13,12 @@ export const IMAGE_SLOTS: readonly ImageSlot[] = [
   'footer',
 ];
 
-/** Only URLs a browser can load without running anything or leaking the page. */
+/**
+ * Only URLs a browser can load without running anything or leaking the page. A blob URL is the
+ * page's own bytes (the designer's files, loaded through its host).
+ */
 export function safeImageUrl(url: string): boolean {
-  return /^(https:\/\/|\/(?!\/)|data:image\/(png|jpeg|gif|webp);base64,)/i.test(url.trim());
+  return /^(https:\/\/|\/(?!\/)|blob:|data:image\/(png|jpeg|gif|webp);base64,)/i.test(url.trim());
 }
 
 const FILE = /^(?:([A-Za-z0-9_-]+)\.lproj\/)?([A-Za-z0-9]+?)(?:@([23])x)?\.png$/;

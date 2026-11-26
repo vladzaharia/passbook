@@ -8,7 +8,13 @@ export const ORG_CAPABILITIES: OrgCapability[] = [...OrgCapabilitySchema.options
 
 export const ROLE_GRANTS: Record<OrgRole, OrgCapability[]> = {
   org_admin: ORG_CAPABILITIES,
-  integration_admin: ['org:read', 'integrations:read', 'integrations:manage', 'templates:read'],
+  integration_admin: [
+    'org:read',
+    'integrations:read',
+    'integrations:manage',
+    'templates:read',
+    'logs:read',
+  ],
   template_author: ['org:read', 'templates:read', 'templates:author'],
   template_reviewer: ['org:read', 'templates:read', 'templates:review'],
   template_publisher: ['org:read', 'templates:read', 'templates:publish'],
@@ -30,6 +36,7 @@ export const ROLE_GRANTS: Record<OrgRole, OrgCapability[]> = {
     'messages:read',
     'scanning:read',
     'audit:read',
+    'logs:read',
   ],
 };
 

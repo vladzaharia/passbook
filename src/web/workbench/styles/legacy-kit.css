@@ -1,0 +1,5 @@
+/* The playground's compiled kit pieces (generated/playground-kit.css): the form controls and cards the
+   Playground and the Quickstart draw. In the `components` layer, so the SPA's own utilities (`hidden`,
+   `lg:hidden`) still win over its `.flex` and `.hidden`; unlayered they would not. DC3 and T8 move
+   these two onto the SPA kit and this file goes. */
+@import "../../../generated/playground-kit.css" layer(components);

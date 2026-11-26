@@ -1,4 +1,4 @@
-import { mountSheet } from '../console/run-entry.ts';
+import { mountSheet } from '../../workbench/console/run-entry.ts';
 
 let dialog: HTMLDialogElement | undefined;
 let body: HTMLElement | undefined;

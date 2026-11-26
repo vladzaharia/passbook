@@ -1,10 +1,10 @@
-import { Link } from '@tanstack/react-router';
 import { useEffect, useMemo } from 'react';
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { PREVIEW_COPY } from '@/shared/copy/previews.ts';
 import { PHONE, useMediaQuery } from '../../../../lib/media.ts';
 import { Button, Callout, Skeleton } from '../../../../ui/index.ts';
 import { useDesigner } from '../context.tsx';
+import { useDesignerHost } from '../host.tsx';
 import { type Dict, legacyStyleOf, previewTargetOf } from '../model.ts';
 import { DesignerPreview } from '../preview.tsx';
 import { readWallets } from './ops-wallets.ts';
@@ -46,6 +46,7 @@ export function WalletsMode({
   onPass: () => void;
 }) {
   const phone = useMediaQuery(PHONE);
+  const { Link } = useDesignerHost();
   const { doc, edit, select, state, readOnly, assetBase } = useDesigner();
   const previews = useWalletsCompile(passJson);
   const listed = channels.listed ?? [];
@@ -155,11 +156,9 @@ export function WalletsMode({
           </div>
         </div>
       </div>
-      {phone ? (
+      {phone && Link ? (
         <Button asChild variant="outline" className="justify-self-center">
-          <Link to="/admin/templates/$templateId" params={{ templateId }}>
-            Back to template
-          </Link>
+          <Link place={{ to: 'template', templateId }}>Back to template</Link>
         </Button>
       ) : null}
     </div>

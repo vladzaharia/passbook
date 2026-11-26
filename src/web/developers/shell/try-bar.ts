@@ -1,4 +1,4 @@
-import { PHONE } from '../console/phone.ts';
+import { PHONE } from '../../workbench/console/phone.ts';
 
 /**
  * The phone's sticky "Try it" bar points at the operation on screen and, on a phone, opens that

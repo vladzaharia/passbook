@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { ORG_WEBSITE_INVALID } from '@/shared/copy/org-website.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { localZone, zoneLabel } from '@/web/lib/timezones.ts';
+import { planFixture } from '../plan/plan-fixtures.ts';
 
 const org = {
   id: 'o1',
@@ -36,13 +37,25 @@ const item = (key: string, row: Row) => ({
   ...row,
 });
 
-function setup(rows: Record<string, Row>, onPut?: (body: unknown) => void, page = 'settings') {
+function setup(
+  rows: Record<string, Row>,
+  onPut?: (body: unknown) => void,
+  page = 'settings',
+  extra: { kind?: 'developer'; api?: 'read' | 'full' | null } = {},
+) {
   return renderApp(`/admin/o/o1/${page}`, {
     session: 'admin',
     memberships: [membershipFixture('o1')],
     handlers: {
-      '/api/v1/orgs/o1': () => json(org),
-      '/api/v1/orgs/o1/workspace': () => json(org),
+      '/api/v1/orgs/o1': () => json({ ...org, kind: extra.kind }),
+      '/api/v1/orgs/o1/workspace': () => json({ ...org, kind: extra.kind }),
+      '/api/v1/orgs/o1/plan': () =>
+        json(
+          planFixture({
+            orgId: 'o1',
+            features: [{ key: 'api', level: extra.api === undefined ? 'full' : extra.api }],
+          }),
+        ),
       '/api/v1/wallet-providers/accounts': () => json({ items: [] }),
       '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
       '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
@@ -200,5 +213,25 @@ describe('org website', () => {
     await waitFor(() =>
       expect(puts).toEqual([{ scope: 'org:o1', values: { 'org.website': 'https://gym.example' } }]),
     );
+  });
+});
+
+describe('request log bodies row', () => {
+  const label = 'Record request bodies in Test';
+  it('is under Privacy for an organization with API access', async () => {
+    await setup({ 'requestLog.bodies': { value: false } });
+    expect(await screen.findByText(label)).toBeInTheDocument();
+  });
+  it('is hidden in a sandbox, where bodies are always on', async () => {
+    await setup({ 'requestLog.bodies': { value: false } }, undefined, 'settings', {
+      kind: 'developer',
+    });
+    await screen.findByText('Privacy');
+    expect(screen.queryByText(label)).not.toBeInTheDocument();
+  });
+  it('is hidden where the plan has no API access', async () => {
+    await setup({ 'requestLog.bodies': { value: false } }, undefined, 'settings', { api: null });
+    await screen.findByText('Privacy');
+    await waitFor(() => expect(screen.queryByText(label)).not.toBeInTheDocument());
   });
 });

@@ -1,4 +1,4 @@
-import { BenchGate } from '../bench/state.tsx';
+import { BenchGate } from '../../workbench/bench/state.tsx';
 
 /**
  * Logs' prerendered body in the bench frame: the signed-out state. The island replaces it once the session

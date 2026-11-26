@@ -5,6 +5,7 @@ import {
   EventFeedQuerySchema,
   WebhookEventSchema,
 } from '../../../shared/contracts/webhooks.ts';
+import { EventDeliveriesSchema } from '../../../shared/contracts/workbench-read.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requireTenantSessionOrApiKey } from '../passes/http.ts';
@@ -51,5 +52,27 @@ register(
     const q = c.req.valid('query');
     const access = await authorizeFeed(ctx, c.var.auth, webhookOrg(c.var.auth, q.orgId));
     return c.json(await feed.one(ctx, access, c.req.valid('param').id, q.apiVersion));
+  },
+);
+register(
+  eventFeedRoutes,
+  'events',
+  {
+    method: 'get',
+    path: '/{id}/deliveries',
+    summary:
+      'Where one event was sent: its deliveries across endpoints. `passes:read`, like the event',
+    params: EventParamSchema,
+    query: EventQuerySchema.pick({ orgId: true }),
+    response: EventDeliveriesSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const access = await authorizeFeed(
+      ctx,
+      c.var.auth,
+      webhookOrg(c.var.auth, c.req.valid('query').orgId),
+    );
+    return c.json(await feed.deliveriesOf(ctx, access, c.req.valid('param').id));
   },
 );

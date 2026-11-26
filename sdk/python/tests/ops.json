@@ -2827,6 +2827,44 @@
   }
  },
  {
+  "id": "events.getEventsByIdDeliveries",
+  "call": "events.list_deliveries",
+  "http": "GET",
+  "path": "/api/v1/events/{id}/deliveries",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "eventId": "x",
+     "type": "pass.issued",
+     "passId": "x",
+     "externalId": "x",
+     "state": "pending",
+     "attempts": 0,
+     "nextAt": 0,
+     "lastStatus": 0,
+     "lastError": "x",
+     "lastAttemptAt": 0,
+     "finishedAt": 0,
+     "replays": 0,
+     "endpointId": "x",
+     "target": "url"
+    }
+   ]
+  }
+ },
+ {
   "id": "holders.getHolders",
   "call": "holders.list",
   "http": "GET",
@@ -7641,6 +7679,31 @@
   }
  },
  {
+  "id": "passes.postPassesByIdSimulate",
+  "call": "passes.simulate",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/simulate",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "event": "installed"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "eventId": "x",
+   "requestId": "x"
+  }
+ },
+ {
   "id": "passes.postPassesByIdStamps",
   "call": "passes.stamps.apply",
   "http": "POST",
@@ -7896,6 +7959,96 @@
    "ownerUserId": "x",
    "modifiedAt": 0,
    "createdAt": 0
+  }
+ },
+ {
+  "id": "workbench.listRequestLogs",
+  "call": "request_logs.list",
+  "http": "GET",
+  "path": "/api/v1/request-logs",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "requestId": "x",
+     "at": 0,
+     "method": "x",
+     "route": "x",
+     "path": "x",
+     "query": "x",
+     "status": 0,
+     "code": "x",
+     "durationMs": 0,
+     "keyId": "x",
+     "mode": "live",
+     "via": "try",
+     "client": "x",
+     "hasBodies": false,
+     "resourceId": "x",
+     "apiVersion": "x",
+     "flags": {
+      "idempotencyKey": false,
+      "ifMatch": false,
+      "version": false
+     }
+    }
+   ],
+   "nextCursor": null,
+   "capped": "hour",
+   "bodiesRecorded": false
+  }
+ },
+ {
+  "id": "workbench.getRequestLog",
+  "call": "request_logs.retrieve",
+  "http": "GET",
+  "path": "/api/v1/request-logs/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "requestId": "x",
+   "at": 0,
+   "method": "x",
+   "route": "x",
+   "path": "x",
+   "query": "x",
+   "status": 0,
+   "code": "x",
+   "durationMs": 0,
+   "keyId": "x",
+   "mode": "live",
+   "via": "try",
+   "client": "x",
+   "hasBodies": false,
+   "resourceId": "x",
+   "apiVersion": "x",
+   "flags": {
+    "idempotencyKey": false,
+    "ifMatch": false,
+    "version": false
+   },
+   "requestBody": "x",
+   "responseBody": "x",
+   "bodiesExpireAt": 0,
+   "bodiesRecorded": false,
+   "bodiesTruncated": false
   }
  },
  {
@@ -11915,6 +12068,7 @@
      "to": "x",
      "subject": "x",
      "attached": false,
+     "failed": false,
      "createdAt": 0
     }
    ],
@@ -11947,6 +12101,7 @@
    "to": "x",
    "subject": "x",
    "attached": false,
+   "failed": false,
    "createdAt": 0,
    "html": "x",
    "text": "x",

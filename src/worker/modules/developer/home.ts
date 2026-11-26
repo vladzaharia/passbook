@@ -14,6 +14,7 @@ import { parseJsonArray } from '../../platform/json-column.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseScopes } from '../api-keys/service-dto.ts';
 import { listMyOrgMemberships } from '../orgs/access.ts';
+import { quotasOf } from '../workbench/quotas.ts';
 import { testPreviewUrl } from './fence.ts';
 import { quickstartTemplateOf, sandboxKeyOf } from './repo.ts';
 import {
@@ -183,6 +184,7 @@ export async function developerHome(
       sandbox: null,
       progress: null,
       usage: null,
+      quotas: null,
       keys: [],
       calls: [],
       endpoints: [],
@@ -190,9 +192,10 @@ export async function developerHome(
       liveOrgs,
     };
   const orgId = row.org_id;
-  const [sandbox, usage, keys, sandboxKey, calls, endpoints, passes] = await Promise.all([
+  const [sandbox, usage, quotas, keys, sandboxKey, calls, endpoints, passes] = await Promise.all([
     sandboxOf(ctx, row, now),
     usageOf(ctx, orgId, now),
+    quotasOf(ctx, orgId),
     openKeysOf(db, orgId, now),
     sandboxKeyOf(db, orgId, session.userId, SANDBOX_KEY_NAME),
     listLogs(db, orgId, { portal: 'hide' }, CALLS, now),
@@ -206,6 +209,7 @@ export async function developerHome(
     sandbox,
     progress: progressOf(row),
     usage,
+    quotas,
     keys: keys.map((k) => ({
       id: k.id,
       name: k.name,
@@ -217,7 +221,7 @@ export async function developerHome(
       retireAt: k.retire_at,
       sandboxKey: k.id === sandboxKey?.id,
     })),
-    calls: calls.map(entryOf),
+    calls: calls.map((r) => entryOf(r)),
     endpoints: endpoints.map(endpointOf),
     passes: await Promise.all(
       passes.map(async (p) => ({
