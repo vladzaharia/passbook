@@ -342,6 +342,19 @@ describe('images (Q18)', () => {
     );
   });
 
+  it('says a strip below the hero size is the problem, not its address', async () => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.images.apple = {};
+      v.images.overrides = {};
+      v.images.apple.strip = [
+        file({ name: 'strip@2x.png', slot: 'strip', width: 640, height: 200, url: undefined }),
+      ];
+    });
+    expect(r.items.find((i) => i.capability === 'image.strip')?.message).toBe(
+      'The strip (hero) image is 640 x 200; Google needs 1032 px wide. Replace it.',
+    );
+  });
+
   it('uses the default of a localized image and says so', async () => {
     const r = await compile('starter-event-ticket', 'generic', (v) => {
       v.images.apple.thumbnail = [file({ locale: 'fr' }), file({})];
