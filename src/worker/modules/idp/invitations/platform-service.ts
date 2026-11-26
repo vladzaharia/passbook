@@ -50,6 +50,11 @@ function dto(row: PlatformRow, now: number): PlatformInvitation {
     expiresAt: row.expires_at,
     acceptedAt: row.accepted_at,
     revokedAt: row.revoked_at,
+    createdBy: {
+      kind: row.created_by_key ? 'key' : 'user',
+      id: row.created_by_key ?? row.created_by_user ?? '',
+      name: row.creator_name,
+    },
   };
 }
 
@@ -74,7 +79,7 @@ export async function listPlatformInvitations(
   ctx: ServiceContext,
 ): Promise<{ items: PlatformInvitation[]; nextCursor: null }> {
   const now = ctx.clock.now();
-  const rows = await listPlatform(ctx.env.DB, now - LISTED_FOR, LIST_LIMIT);
+  const rows = await listPlatform(ctx.env.DB, now - LISTED_FOR, LIST_LIMIT, now);
   return { items: rows.map((row) => dto(row, now)), nextCursor: null };
 }
 
@@ -134,7 +139,7 @@ async function issue(
     await revokePlatform(db, id, ctx.clock.now());
     throw new UnavailableError('Unable to deliver the invitation.');
   }
-  const row = await platformById(db, id);
+  const row = await platformById(db, id, ctx.clock.now());
   if (!row) throw new NotFoundError();
   return { ...dto(row, now), link };
 }
@@ -165,7 +170,7 @@ export async function resendPlatformInvitation(
   actor: Actor,
   id: string,
 ): Promise<PlatformInvitationCreated> {
-  const old = await platformById(ctx.env.DB, id);
+  const old = await platformById(ctx.env.DB, id, ctx.clock.now());
   if (!old) throw new NotFoundError();
   const invite = platformInviteOf(old, ctx.clock.now());
   if (!invite || invite.state === 'accepted' || invite.state === 'revoked')
@@ -187,7 +192,7 @@ export async function revokePlatformInvitation(
   actor: Actor,
   id: string,
 ): Promise<void> {
-  const row = await platformById(ctx.env.DB, id);
+  const row = await platformById(ctx.env.DB, id, ctx.clock.now());
   if (!row) throw new NotFoundError();
   if (!(await revokePlatform(ctx.env.DB, id, ctx.clock.now())))
     throw new ConflictError('This invitation has ended.', 'PLATFORM_INVITE_CONFLICT');

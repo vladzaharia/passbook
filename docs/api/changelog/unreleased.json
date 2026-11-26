@@ -2201,6 +2201,14 @@
     "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
+    "key": "GET /api/v1/platform/invitations 200.items[].createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "200.items[].createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
+  },
+  {
     "key": "GET /api/v1/platform/invitations new operation",
     "class": "additive",
     "operationId": "platform-invitations.getPlatformInvitations",
@@ -5513,12 +5521,28 @@
     "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
   },
   {
+    "key": "POST /api/v1/platform/invitations 201.createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "201.createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
+  },
+  {
     "key": "POST /api/v1/platform/invitations new operation",
     "class": "additive",
     "operationId": "platform-invitations.postPlatformInvitations",
     "op": "POST /api/v1/platform/invitations",
     "change": "new operation",
     "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend 201.createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "201.createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
   },
   {
     "key": "POST /api/v1/platform/invitations/{id}/resend new operation",

@@ -8712,7 +8712,12 @@
      "createdAt": 0,
      "expiresAt": 0,
      "acceptedAt": 0,
-     "revokedAt": 0
+     "revokedAt": 0,
+     "createdBy": {
+      "kind": "user",
+      "id": "x",
+      "name": "x"
+     }
     }
    ],
    "nextCursor": null
@@ -8743,7 +8748,12 @@
    "createdAt": 0,
    "expiresAt": 0,
    "acceptedAt": 0,
-   "revokedAt": 0
+   "revokedAt": 0,
+   "createdBy": {
+    "kind": "user",
+    "id": "x",
+    "name": "x"
+   }
   }
  },
  {
@@ -8795,7 +8805,12 @@
    "createdAt": 0,
    "expiresAt": 0,
    "acceptedAt": 0,
-   "revokedAt": 0
+   "revokedAt": 0,
+   "createdBy": {
+    "kind": "user",
+    "id": "x",
+    "name": "x"
+   }
   }
  },
  {

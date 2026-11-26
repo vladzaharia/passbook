@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { type Actor, platformActorOf } from '../../platform/actor.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { ConflictError, UnavailableError } from '../../platform/errors.ts';
+import { ConflictError, UnauthenticatedError, UnavailableError } from '../../platform/errors.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -29,8 +29,8 @@ export interface Caller {
 
 export function callerOf(c: Context<AppBindings>): Caller {
   const auth = c.var.auth;
+  if (!auth) throw new UnauthenticatedError();
   const actor = platformActorOf(c);
-  if (!auth) throw new Error('A principal is required.');
   return { actor, principal: principalOf(auth) };
 }
 

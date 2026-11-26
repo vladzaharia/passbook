@@ -29096,6 +29096,34 @@
             ],
             "minimum": 0
           },
+          "createdBy": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "key"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "name"
+            ]
+          },
           "link": {
             "type": "string"
           }
@@ -29109,7 +29137,8 @@
           "createdAt",
           "expiresAt",
           "acceptedAt",
-          "revokedAt"
+          "revokedAt",
+          "createdBy"
         ]
       },
       "PlatformInvitationsListResponse": {
@@ -29167,6 +29196,34 @@
                     "null"
                   ],
                   "minimum": 0
+                },
+                "createdBy": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "user",
+                        "key"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id",
+                    "name"
+                  ]
                 }
               },
               "required": [
@@ -29178,7 +29235,8 @@
                 "createdAt",
                 "expiresAt",
                 "acceptedAt",
-                "revokedAt"
+                "revokedAt",
+                "createdBy"
               ]
             }
           },
@@ -29259,6 +29317,34 @@
             ],
             "minimum": 0
           },
+          "createdBy": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "key"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "name"
+            ]
+          },
           "link": {
             "type": "string"
           }
@@ -29272,7 +29358,8 @@
           "createdAt",
           "expiresAt",
           "acceptedAt",
-          "revokedAt"
+          "revokedAt",
+          "createdBy"
         ]
       },
       "PlatformGroupsClaimsRetrieveResponse": {

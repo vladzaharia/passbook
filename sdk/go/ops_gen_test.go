@@ -1777,14 +1777,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"platform.invitations.list", "GET", "/api/v1/platform/invitations", false,
-		"", `{"items":[{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0}],"nextCursor":null}`,
+		"", `{"items":[{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Platform.Invitations.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"platform.invitations.create", "POST", "/api/v1/platform/invitations", false,
-		`{"email":"x"}`, `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0}`,
+		`{"email":"x"}`, `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PlatformInvitationsCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1802,7 +1802,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"platform.invitations.resend", "POST", "/api/v1/platform/invitations/id1/resend", false,
-		"", `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0}`,
+		"", `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Platform.Invitations.Resend(ctx, "id1")
 		},

@@ -9313,30 +9313,44 @@ type PlatformInvitationsCreateParams struct {
 }
 
 type PlatformInvitationsCreateResponse struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Groups     []string `json:"groups"`
-	Developer  bool     `json:"developer"`
-	State      string   `json:"state"`
-	CreatedAt  int64    `json:"createdAt"`
-	ExpiresAt  int64    `json:"expiresAt"`
-	AcceptedAt *int64   `json:"acceptedAt"`
-	RevokedAt  *int64   `json:"revokedAt"`
-	Link       *string  `json:"link,omitempty"`
+	ID         string                                     `json:"id"`
+	Email      string                                     `json:"email"`
+	Groups     []string                                   `json:"groups"`
+	Developer  bool                                       `json:"developer"`
+	State      string                                     `json:"state"`
+	CreatedAt  int64                                      `json:"createdAt"`
+	ExpiresAt  int64                                      `json:"expiresAt"`
+	AcceptedAt *int64                                     `json:"acceptedAt"`
+	RevokedAt  *int64                                     `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsCreateResponseCreatedBy `json:"createdBy"`
+	Link       *string                                    `json:"link,omitempty"`
+}
+
+type PlatformInvitationsCreateResponseCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
 }
 
 type PlatformInvitationsCreateResult = PlatformInvitationsCreateResponse
 
 type PlatformInvitationsListItem struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Groups     []string `json:"groups"`
-	Developer  bool     `json:"developer"`
-	State      string   `json:"state"`
-	CreatedAt  int64    `json:"createdAt"`
-	ExpiresAt  int64    `json:"expiresAt"`
-	AcceptedAt *int64   `json:"acceptedAt"`
-	RevokedAt  *int64   `json:"revokedAt"`
+	ID         string                               `json:"id"`
+	Email      string                               `json:"email"`
+	Groups     []string                             `json:"groups"`
+	Developer  bool                                 `json:"developer"`
+	State      string                               `json:"state"`
+	CreatedAt  int64                                `json:"createdAt"`
+	ExpiresAt  int64                                `json:"expiresAt"`
+	AcceptedAt *int64                               `json:"acceptedAt"`
+	RevokedAt  *int64                               `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsListItemCreatedBy `json:"createdBy"`
+}
+
+type PlatformInvitationsListItemCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
 }
 
 type PlatformInvitationsListQuery struct {
@@ -9349,28 +9363,42 @@ type PlatformInvitationsListResponse struct {
 }
 
 type PlatformInvitationsListResponseItemsItem struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Groups     []string `json:"groups"`
-	Developer  bool     `json:"developer"`
-	State      string   `json:"state"`
-	CreatedAt  int64    `json:"createdAt"`
-	ExpiresAt  int64    `json:"expiresAt"`
-	AcceptedAt *int64   `json:"acceptedAt"`
-	RevokedAt  *int64   `json:"revokedAt"`
+	ID         string                                            `json:"id"`
+	Email      string                                            `json:"email"`
+	Groups     []string                                          `json:"groups"`
+	Developer  bool                                              `json:"developer"`
+	State      string                                            `json:"state"`
+	CreatedAt  int64                                             `json:"createdAt"`
+	ExpiresAt  int64                                             `json:"expiresAt"`
+	AcceptedAt *int64                                            `json:"acceptedAt"`
+	RevokedAt  *int64                                            `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsListResponseItemsItemCreatedBy `json:"createdBy"`
+}
+
+type PlatformInvitationsListResponseItemsItemCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
 }
 
 type PlatformInvitationsResendResponse struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Groups     []string `json:"groups"`
-	Developer  bool     `json:"developer"`
-	State      string   `json:"state"`
-	CreatedAt  int64    `json:"createdAt"`
-	ExpiresAt  int64    `json:"expiresAt"`
-	AcceptedAt *int64   `json:"acceptedAt"`
-	RevokedAt  *int64   `json:"revokedAt"`
-	Link       *string  `json:"link,omitempty"`
+	ID         string                                     `json:"id"`
+	Email      string                                     `json:"email"`
+	Groups     []string                                   `json:"groups"`
+	Developer  bool                                       `json:"developer"`
+	State      string                                     `json:"state"`
+	CreatedAt  int64                                      `json:"createdAt"`
+	ExpiresAt  int64                                      `json:"expiresAt"`
+	AcceptedAt *int64                                     `json:"acceptedAt"`
+	RevokedAt  *int64                                     `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsResendResponseCreatedBy `json:"createdBy"`
+	Link       *string                                    `json:"link,omitempty"`
+}
+
+type PlatformInvitationsResendResponseCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
 }
 
 type PlatformInvitationsResendResult = PlatformInvitationsResendResponse

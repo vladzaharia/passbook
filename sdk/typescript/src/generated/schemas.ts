@@ -7939,6 +7939,11 @@ export type PlatformInvitationsCreateResponse = {
   expiresAt: number;
   acceptedAt: number | null;
   revokedAt: number | null;
+  createdBy: {
+    kind: "user" | "key";
+    id: string;
+    name: string | null;
+  };
   link?: string;
 };
 
@@ -7953,6 +7958,11 @@ export type PlatformInvitationsListResponse = {
     expiresAt: number;
     acceptedAt: number | null;
     revokedAt: number | null;
+    createdBy: {
+      kind: "user" | "key";
+      id: string;
+      name: string | null;
+    };
   }>;
   nextCursor: string | null;
 };
@@ -7967,6 +7977,11 @@ export type PlatformInvitationsResendResponse = {
   expiresAt: number;
   acceptedAt: number | null;
   revokedAt: number | null;
+  createdBy: {
+    kind: "user" | "key";
+    id: string;
+    name: string | null;
+  };
   link?: string;
 };
 

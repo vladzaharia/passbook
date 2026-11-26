@@ -11,6 +11,7 @@ import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { reportKeyAdminRefusal } from './actor.ts';
 import { accessView } from './dto.ts';
 import { idpIdempotent } from './idempotent.ts';
 import { callerOf } from './ops-start.ts';
@@ -40,6 +41,7 @@ const OFFBOARD = {
 
 /** Mount at /api/v1/users, before `usersRoutes`. */
 export const userAccessRoutes = createRouter();
+userAccessRoutes.use('*', reportKeyAdminRefusal);
 userAccessRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');

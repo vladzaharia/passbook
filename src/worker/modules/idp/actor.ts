@@ -1,5 +1,8 @@
+import type { MiddlewareHandler } from 'hono';
 import type { Actor } from '../../platform/actor.ts';
-import { ForbiddenError } from '../../platform/errors.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { reportDenied } from '../../platform/denied.ts';
+import { AppError, ForbiddenError } from '../../platform/errors.ts';
 import { activeCreatorOfKey } from './repo-key-creator.ts';
 import type { Actor as BindingActor } from './types.ts';
 
@@ -26,3 +29,20 @@ export const auditActorOf = (actor: Actor) => ({
   actorType: actor.actorType,
   actorId: actor.actorId,
 });
+
+const reported = new WeakSet<Request>();
+
+/** A key reaching for a platform admin is an escalation attempt: audited as the key, ids only, once per request. */
+export const reportKeyAdminRefusal: MiddlewareHandler<AppBindings> = async (c, next) => {
+  await next();
+  const auth = c.var.auth;
+  if (
+    !reported.has(c.req.raw) &&
+    auth?.kind === 'api_key' &&
+    c.error instanceof AppError &&
+    c.error.code === 'IDP_PLATFORM_ADMIN'
+  ) {
+    reported.add(c.req.raw);
+    reportDenied(c, 'IDP_PLATFORM_ADMIN', auth);
+  }
+};

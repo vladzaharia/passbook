@@ -4,8 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey } from '../../../../test/helpers/index.ts';
 import { MINTABLE_PLATFORM_SCOPES } from '../../../shared/contracts/api-keys.ts';
+import { createApp } from '../../app.ts';
+import { denyAllStores } from '../../platform/auth.ts';
 import { all, first } from '../../platform/db.ts';
+import { UnauthenticatedError } from '../../platform/errors.ts';
+import { createApiKeyStore } from '../api-keys/service.ts';
+import { createSessionStore } from '../auth/sessions.ts';
 import { person } from './access-test-fixtures.ts';
+import { byUserOf } from './actor.ts';
+import { callerOf } from './ops-start.ts';
 import { admin, f, installOpsRig, paused, rig, start } from './ops-test-fixtures.ts';
 
 installOpsRig();
@@ -228,5 +235,61 @@ describe('a service key and the person path', () => {
     expect(res.status).toBe(403);
     const a = await admin();
     expect((await start('/api/v1/platform/idp/groups', 'GET', a.headers)).status).toBe(200);
+  });
+});
+
+describe('R2b fixes', () => {
+  it('L1: a creator who lost the admin role writes no row, even past the gate', async () => {
+    const key = await platformKey(['platform:groups']);
+    const actor = {
+      userId: null,
+      keyId: key.id,
+      actorType: 'api_key',
+      actorId: key.id,
+    } as never;
+    await expect(byUserOf(rig.h.env.DB, actor)).resolves.toEqual(expect.any(String));
+    await rig.h.env.DB.prepare(
+      'UPDATE users SET last_roles = \'["user"]\' WHERE id = (SELECT created_by FROM api_keys WHERE id = ?)',
+    )
+      .bind(key.id)
+      .run();
+    await expect(byUserOf(rig.h.env.DB, actor)).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('L2: a key reaching for a platform admin is reported as the key, ids only', async () => {
+    const key = await platformKey(['platform:users']);
+    const boss = await person(f(), { link: true, lastRoles: ['admin', 'user'] });
+    const events: Record<string, unknown>[] = [];
+    const app = createApp({
+      stores: {
+        sessions: createSessionStore(rig.h.env, rig.h.clock),
+        apiKeys: createApiKeyStore(rig.h.env, rig.h.clock),
+        scanners: denyAllStores.scanners,
+        onDenied: (e) => {
+          events.push({ ...e });
+        },
+      },
+      clock: rig.h.clock,
+    });
+    const res = await app.request(
+      `https://wallet.test/api/v1/users/${boss.id}/roles`,
+      {
+        method: 'POST',
+        headers: { ...key.headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ role: 'support', grant: true }),
+      },
+      rig.h.env,
+      { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext,
+    );
+    expect(res.status).toBe(409);
+    expect(events).toMatchObject([
+      { code: 'IDP_PLATFORM_ADMIN', actorType: 'api_key', actorId: key.id, platformKey: true },
+    ]);
+    expect(JSON.stringify(events)).not.toContain(boss.email);
+  });
+
+  it('L4: no principal is the stable unauthenticated error', () => {
+    const c = { var: {} } as never;
+    expect(() => callerOf(c)).toThrow(UnauthenticatedError);
   });
 });

@@ -1273,12 +1273,16 @@ __all__ = [
     "PlatformInvitationsCreateBody",
     "PlatformInvitationsCreateParams",
     "PlatformInvitationsCreateResponse",
+    "PlatformInvitationsCreateResponseCreatedBy",
     "PlatformInvitationsCreateResult",
     "PlatformInvitationsListItem",
+    "PlatformInvitationsListItemCreatedBy",
     "PlatformInvitationsListResponse",
     "PlatformInvitationsListResponseItemsItem",
+    "PlatformInvitationsListResponseItemsItemCreatedBy",
     "PlatformInvitationsListResult",
     "PlatformInvitationsResendResponse",
+    "PlatformInvitationsResendResponseCreatedBy",
     "PlatformInvitationsResendResult",
     "PlatformInvitationsRevokeResponse",
     "PlatformInvitationsRevokeResult",
@@ -9836,7 +9840,13 @@ class PlatformInvitationsCreateResponse(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
+    createdBy: PlatformInvitationsCreateResponseCreatedBy
     link: str | None = None
+
+class PlatformInvitationsCreateResponseCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
 
 class PlatformInvitationsListItem(_Model):
     id: str
@@ -9848,6 +9858,12 @@ class PlatformInvitationsListItem(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
+    createdBy: PlatformInvitationsListItemCreatedBy
+
+class PlatformInvitationsListItemCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
 
 class PlatformInvitationsListResponse(_Model):
     items: _List[PlatformInvitationsListResponseItemsItem]
@@ -9863,6 +9879,12 @@ class PlatformInvitationsListResponseItemsItem(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
+    createdBy: PlatformInvitationsListResponseItemsItemCreatedBy
+
+class PlatformInvitationsListResponseItemsItemCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
 
 class PlatformInvitationsResendResponse(_Model):
     id: str
@@ -9874,7 +9896,13 @@ class PlatformInvitationsResendResponse(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
+    createdBy: PlatformInvitationsResendResponseCreatedBy
     link: str | None = None
+
+class PlatformInvitationsResendResponseCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
 
 class PlatformInvitationsRevokeResponse(_Model):
     ok: _Literal[True]

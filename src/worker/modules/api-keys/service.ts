@@ -17,6 +17,7 @@ import { ipAllowed } from '../../platform/ip-allow.ts';
 import { createLogger } from '../../platform/log.ts';
 import { enforceApiKeyRate, rememberApiTier } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { revokePlatformOfKey } from '../idp/invitations/repo-platform.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
 import { auditPlatformKeyRefusal } from './refusal-audit.ts';
@@ -146,6 +147,8 @@ export async function revokeApiKey(
     },
     successors,
   );
+  // A Platform key's pending invitations end with it: a deferred grant must not outlive the operator.
+  if (key.kind === 'platform') await revokePlatformOfKey(ctx.env.DB, id, ctx.clock.now());
 }
 
 /** Ends a key at an instant before it would otherwise end. Once only: a second call is a conflict. */

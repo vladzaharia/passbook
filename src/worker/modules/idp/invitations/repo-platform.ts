@@ -1,4 +1,5 @@
 import { all, batch, first, run, stmt } from '../../../platform/db.ts';
+import { keyLive } from '../../../platform/repo-api-key-sql.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { auditStmt, auditStmtWhere } from '../../audit/repo.ts';
 import type { AuditEntry } from '../../audit/types.ts';
@@ -22,26 +23,61 @@ export interface PlatformRow {
   revoked_at: number | null;
   accepted_at: number | null;
   accepted_subject: string | null;
+  /** 1 when the creating key is no longer live: the invitation ended with it. */
+  creator_dead: number;
+  /** The person's name, or the key's. */
+  creator_name: string | null;
 }
 
-const COLUMNS = `id, email, token_hash, groups, developer, created_by_user, created_by_key, created_at, expires_at,
-  claim_until, revoked_at, accepted_at, accepted_subject`;
+/** The columns, and whether the creating key still lives at `now` (a key's invitations die with it). */
+function columns(now: number) {
+  const live = keyLive('k', now);
+  return {
+    sql: `id, email, token_hash, groups, developer, created_by_user, created_by_key, created_at, expires_at,
+  claim_until, revoked_at, accepted_at, accepted_subject,
+  CASE WHEN created_by_key IS NOT NULL AND NOT EXISTS (SELECT 1 FROM api_keys k
+    WHERE k.id = platform_invitations.created_by_key AND ${live.sql}) THEN 1 ELSE 0 END AS creator_dead,
+  COALESCE((SELECT name FROM api_keys WHERE id = platform_invitations.created_by_key),
+    (SELECT name FROM users WHERE id = platform_invitations.created_by_user)) AS creator_name`,
+    params: live.params,
+  };
+}
 
-export const platformByHash = (db: D1Database, hash: string) =>
-  first<PlatformRow>(db, `SELECT ${COLUMNS} FROM platform_invitations WHERE token_hash = ?`, [
+export const platformByHash = (db: D1Database, hash: string, now: number) => {
+  const c = columns(now);
+  return first<PlatformRow>(db, `SELECT ${c.sql} FROM platform_invitations WHERE token_hash = ?`, [
+    ...c.params,
     hash,
   ]);
+};
 
-export const platformById = (db: D1Database, id: string) =>
-  first<PlatformRow>(db, `SELECT ${COLUMNS} FROM platform_invitations WHERE id = ?`, [id]);
+export const platformById = (db: D1Database, id: string, now: number) => {
+  const c = columns(now);
+  return first<PlatformRow>(db, `SELECT ${c.sql} FROM platform_invitations WHERE id = ?`, [
+    ...c.params,
+    id,
+  ]);
+};
 
 /** Newest first, from `since`: what the console lists. */
-export const listPlatform = (db: D1Database, since: number, limit: number) =>
-  all<PlatformRow>(
+export const listPlatform = (db: D1Database, since: number, limit: number, now: number) => {
+  const c = columns(now);
+  return all<PlatformRow>(
     db,
-    `SELECT ${COLUMNS} FROM platform_invitations WHERE created_at >= ? ORDER BY created_at DESC, id LIMIT ?`,
-    [since, limit],
+    `SELECT ${c.sql} FROM platform_invitations WHERE created_at >= ? ORDER BY created_at DESC, id LIMIT ?`,
+    [...c.params, since, limit],
   );
+};
+
+/** Ends the open invitations a key made, as the key is revoked. */
+export async function revokePlatformOfKey(db: D1Database, keyId: string, now: number) {
+  return run(
+    db,
+    `UPDATE platform_invitations SET revoked_at = ?
+     WHERE created_by_key = ? AND accepted_at IS NULL AND revoked_at IS NULL`,
+    [now, keyId],
+  );
+}
 
 /** An invitation to this address that can still be used: open and inside its claim window. */
 export const openPlatformFor = (db: D1Database, email: string, now: number) =>
@@ -180,12 +216,15 @@ export async function acceptPlatform(ctx: ServiceContext, a: PlatformAccept): Pr
   const db = ctx.env.DB;
   const gate = `EXISTS (SELECT 1 FROM platform_invitations WHERE id = ? AND accepted_subject = ? AND accepted_at = ?)`;
   const gateParams = [a.id, a.subject, a.now];
+  const live = keyLive('k', a.now);
   const statements = [
     stmt(
       db,
       `UPDATE platform_invitations SET accepted_at = ?, accepted_subject = ?
-       WHERE id = ? AND accepted_at IS NULL AND revoked_at IS NULL AND claim_until > ?`,
-      [a.now, a.subject, a.id, a.now],
+       WHERE id = ? AND accepted_at IS NULL AND revoked_at IS NULL AND claim_until > ?
+         AND (created_by_key IS NULL OR EXISTS (SELECT 1 FROM api_keys k
+           WHERE k.id = platform_invitations.created_by_key AND ${live.sql}))`,
+      [a.now, a.subject, a.id, a.now, ...live.params],
     ),
     ...a.groups.map((key, i) =>
       stmt(
@@ -225,7 +264,7 @@ export async function acceptPlatform(ctx: ServiceContext, a: PlatformAccept): Pr
     ),
   ];
   await batch(db, statements);
-  const row = await platformById(db, a.id);
+  const row = await platformById(db, a.id, a.now);
   return row?.accepted_subject === a.subject && row.accepted_at === a.now;
 }
 
