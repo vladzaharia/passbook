@@ -152,6 +152,23 @@ describe('fixOfCall', () => {
     expect(fix).toMatchObject({ title: 'ticketId is required.', path: 'input.ticketId' });
   });
 
+  it('reads the issue the log keeps when the request log blanks the whole input', () => {
+    const issue = JSON.stringify({
+      detail: 'The pass input is invalid.',
+      issues: [{ path: 'input.ticketId', message: 'ticketId is required.', code: 'INPUT' }],
+    });
+    const fix = fixOfCall(
+      { status: 422, code: 'PASS_INPUT_INVALID' },
+      { response: issue, request: JSON.stringify({ templateId: 'x', input: '[redacted]' }) },
+      sample,
+    );
+    expect(fix).toMatchObject({
+      title: 'ticketId is required.',
+      path: 'input.ticketId',
+      line: 'Add "ticketId": "QS-1042" to input and run again.',
+    });
+  });
+
   it('uses a path the problem names, and survives a missing or hostile body', () => {
     const named = JSON.stringify({ issues: [{ path: 'templateId' }] });
     expect(

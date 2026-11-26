@@ -149,9 +149,9 @@ function missingField(requestBody: string | null, sample: InputValues | null): s
 }
 
 /**
- * What a failed call heard in the request log says to do. The log keeps field names but blanks values and
- * messages, so the missing field is the one the quickstart's input has and the request's body lacks; the title is
- * the problem's own sentence.
+ * What a failed call heard in the request log says to do. The log keeps the problem's issue list (path and message
+ * per field) but blanks the request's input, so the field is the one the issue names, or else the one the quickstart's
+ * input has and the request's body lacks; the title is the problem's own sentence.
  */
 export function fixOfCall(
   entry: { status: number; code: string | null },
@@ -160,14 +160,18 @@ export function fixOfCall(
 ): Fix & { path: string | null } {
   let title: string = QS_COPY.fail.generic;
   let path: string | null = null;
+  let named = false;
   try {
     const p = JSON.parse(bodies.response ?? '') as {
       detail?: unknown;
-      issues?: { path?: unknown }[];
+      issues?: { path?: unknown; message?: unknown }[];
     };
     if (typeof p.detail === 'string' && p.detail !== '[redacted]') title = p.detail;
     const first = p.issues?.[0]?.path;
     if (typeof first === 'string' && first !== '' && first !== '[redacted]') path = first;
+    // The issue's own words (the platform's contract, readable in the log) say a missing field.
+    const said = p.issues?.[0]?.message;
+    named = typeof said === 'string' && / is required\.$/.test(said);
   } catch {
     // No readable body (older than a day, or not JSON): the status and code still say what happened.
   }
@@ -177,7 +181,7 @@ export function fixOfCall(
       ? missingField(bodies.request, sample)
       : null;
   // A path naming the field is not enough for "required": a wrong type names it too, so only the field the body lacks gets that title.
-  if (leaf && (!path || leaf === missingField(bodies.request, sample))) {
+  if (leaf && (!path || named || leaf === missingField(bodies.request, sample))) {
     path = `input.${leaf}`;
     title = QS_COPY.fail.required(leaf);
   }

@@ -141,6 +141,26 @@ const OPAQUE = new Set([
   'tags',
 ]);
 
+/**
+ * A problem answer's `issues` are the platform's field contract (`path`, `code`, `message` per issue, never the
+ * caller's values), so they stay readable. Anything else on an issue is blanked.
+ */
+const ISSUE_KEYS = new Set(['path', 'code', 'message']);
+function issues(value: unknown): unknown {
+  if (!Array.isArray(value)) return BLANK;
+  return value.slice(0, 50).map((item) => {
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) return BLANK;
+    return Object.fromEntries(
+      Object.entries(item as Record<string, unknown>)
+        .slice(0, 10)
+        .map(([k, v]) => [
+          k,
+          ISSUE_KEYS.has(k) && typeof v === 'string' ? scrubString(v).slice(0, 300) : BLANK,
+        ]),
+    );
+  });
+}
+
 function walk(value: unknown, safe: boolean, depth: number): unknown {
   if (value === null) return null;
   if (typeof value !== 'object')
@@ -154,9 +174,12 @@ function walk(value: unknown, safe: boolean, depth: number): unknown {
       .slice(0, 100)
       .map(([k, v]) => [
         scrubString(k).slice(0, 64),
-        OPAQUE.has(k) || (v !== null && typeof v === 'object' && !isSafe(k) && !CONTAINERS.has(k))
-          ? BLANK
-          : walk(v, isSafe(k) || (problem && PROBLEM_KEYS.has(k)), depth + 1),
+        problem && k === 'issues'
+          ? issues(v)
+          : OPAQUE.has(k) ||
+              (v !== null && typeof v === 'object' && !isSafe(k) && !CONTAINERS.has(k))
+            ? BLANK
+            : walk(v, isSafe(k) || (problem && PROBLEM_KEYS.has(k)), depth + 1),
       ]),
   );
 }

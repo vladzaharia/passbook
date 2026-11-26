@@ -95,6 +95,38 @@ describe('redactBody keeps only what is known to be safe', () => {
     expect(JSON.stringify(pair)).not.toContain(S);
   });
 
+  it('keeps a problem answer’s field issues readable (path, code, message) and blanks their other fields', () => {
+    const out = JSON.parse(
+      redacted({
+        type: 'https://passbook.mobile/developers/errors/PASS_INPUT_INVALID',
+        title: 'Invalid',
+        status: 422,
+        code: 'PASS_INPUT_INVALID',
+        detail: 'The pass input is invalid.',
+        issues: [
+          {
+            path: 'input.ticketId',
+            message: 'ticketId is required.',
+            code: 'required',
+            received: `${S}-value`,
+          },
+        ],
+      }),
+    );
+    expect(out.issues).toEqual([
+      {
+        path: 'input.ticketId',
+        message: 'ticketId is required.',
+        code: 'required',
+        received: '[redacted]',
+      },
+    ]);
+    // Only a problem answer's own list: the same key in any other body is caller-shaped and blanked.
+    expect(JSON.parse(redacted({ id: 'p1', issues: [{ path: `${S}-x` }] })).issues).toBe(
+      '[redacted]',
+    );
+  });
+
   it('scrubs capability shapes inside a safe string: links, JWTs, webhook secrets, signatures', () => {
     const out = redacted({
       detail: `see https://x.test/preview/abcdefghijklmnopqrstuv1234 or eyJabc.eyJdef.sigsig or whsec_abc123 or /d?exp=1&sig=${S} #pair=${S}`,
