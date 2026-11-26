@@ -36,7 +36,10 @@ export async function hardwareCode(page: Page, value: string) {
  */
 export async function refreshScannerSession(
   page: Page,
-  applied: (session: { scanner: { settings: Record<string, unknown> } }) => boolean = () => true,
+  applied: (session: {
+    scanner: { settings: Record<string, unknown> };
+    workspace?: { session: { status: string } } | null;
+  }) => boolean = () => true,
 ) {
   const fresh = page.waitForResponse(async (r) => {
     if (!r.url().includes('/api/v1/scan/session') || r.request().method() !== 'GET') return false;
@@ -44,8 +47,23 @@ export async function refreshScannerSession(
     return applied(await r.json());
   });
   await page.bringToFront();
-  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-  await fresh;
+  // A poll already in flight answers a visibility refetch with its own, older read, and a response
+  // that `applied` rejects leaves nothing queued: ask again until a read is accepted.
+  const kick = () => page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await kick();
+  let done = false;
+  const again = (async () => {
+    while (!done) {
+      await page.waitForTimeout(1_000);
+      if (!done) await kick();
+    }
+  })();
+  try {
+    await fresh;
+  } finally {
+    done = true;
+    await again;
+  }
   // Two frames: the response has been rendered, so the next key reaches the new configuration.
   await page.evaluate(
     () =>
