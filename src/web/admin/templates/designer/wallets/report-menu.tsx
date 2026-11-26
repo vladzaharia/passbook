@@ -1,6 +1,7 @@
 import { MoreHorizontal } from 'lucide-react';
 import type { FidelityReportDto } from '@/shared/contracts/wallet-fidelity.ts';
 import { capabilityLabel, WALLETS_COPY } from '@/shared/copy/wallets.ts';
+import { ACTION_ICON as I } from '../../../../lib/action-icons.ts';
 import { removeWithTransition } from '../../../../lib/motion.ts';
 import {
   DropdownMenu,
@@ -40,6 +41,7 @@ export function ReportRowMenu({ item, env, where }: { item: Item; env: WalletEnv
       <DropdownMenuContent align="end">
         {go ? (
           <DropdownMenuItem onSelect={() => focusTarget(go)}>
+            <I.goTo aria-hidden />
             {C.goTo.replace('{label}', where)}
           </DropdownMenuItem>
         ) : null}
@@ -55,11 +57,13 @@ export function ReportRowMenu({ item, env, where }: { item: Item; env: WalletEnv
             )
           }
         >
+          {left ? <I.showAgain aria-hidden /> : <I.leaveOut aria-hidden />}
           {left ? C.showAgain : C.leaveOut}
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => edit({ op: 'wallets-required', id: item.capability, on: true })}
         >
+          <I.require aria-hidden />
           {C.requireEvery}
           <span className="sr-only"> {capabilityLabel(item.capability)}</span>
         </DropdownMenuItem>

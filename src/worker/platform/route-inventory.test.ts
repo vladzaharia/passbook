@@ -60,6 +60,8 @@ const PUBLIC = [
   'GET /b/:token/:passId/pass.pkpass',
   'GET /b/:token/:passId/wallet/:provider',
   'GET /b/:token/passes.pkpasses',
+  // The bundle's one Google save link: the capability token is the credential, rate limited (RL_PUBLIC), private no-store 302.
+  'GET /b/:token/wallet/google',
   'GET /health',
   'GET /j/:token',
   'GET /j/:token/card/:name',

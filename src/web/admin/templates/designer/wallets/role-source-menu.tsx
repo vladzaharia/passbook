@@ -2,6 +2,7 @@ import { Check, ChevronDown } from 'lucide-react';
 import type { WalletRoleSource } from '@/passkit/template/wallets/schema.ts';
 import type { ViewField, WalletRole } from '@/passkit/wallets/types.ts';
 import { GROUP_NAME, ROLE_LABEL, WALLETS_COPY } from '@/shared/copy/wallets.ts';
+import { ACTION_ICON as I } from '../../../../lib/action-icons.ts';
 import { cn } from '../../../../lib/cn.ts';
 import {
   DropdownMenu,
@@ -104,7 +105,10 @@ export function RoleSourceMenu({
           <DropdownMenuSeparator />
           <DropdownMenuRadioItem value="empty">{C.leaveEmpty}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
-        <DropdownMenuItem onSelect={onValue}>{C.valueItem}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onValue}>
+          <I.edit aria-hidden />
+          {C.valueItem}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => onRequire(!row.required)}>
           <Check aria-hidden className={cn('size-4', !row.required && 'invisible')} />
