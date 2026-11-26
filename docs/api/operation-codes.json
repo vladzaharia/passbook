@@ -935,7 +935,6 @@
     "RATE_LIMITED",
     "UNAUTHENTICATED",
     "UNSAFE_URL",
-    "UPSTREAM",
     "VALIDATION"
   ],
   "connections post /test-config": [
@@ -1079,7 +1078,6 @@
     "RATE_LIMITED",
     "UNAUTHENTICATED",
     "UNSAFE_URL",
-    "UPSTREAM",
     "VALIDATION"
   ],
   "connections post /{id}/sync": [
