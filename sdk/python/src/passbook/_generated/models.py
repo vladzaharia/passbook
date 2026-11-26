@@ -1206,6 +1206,8 @@ __all__ = [
     "PlatformUsersEmailsMakePrimaryResponseSessionsItem",
     "PlatformUsersListResponse",
     "PlatformUsersListResponseItemsItem",
+    "PlatformUsersPassesListResponse",
+    "PlatformUsersPassesListResponseItemsItem",
     "PlatformUsersRetrieveResponse",
     "PlatformUsersRetrieveResponseEmailsItem",
     "PlatformUsersRetrieveResponseIdentitiesItem",
@@ -9186,7 +9188,7 @@ class PlatformUsersEmailsCreateResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsCreateResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9241,7 +9243,7 @@ class PlatformUsersEmailsDeleteResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsDeleteResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9296,7 +9298,7 @@ class PlatformUsersEmailsMakePrimaryResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsMakePrimaryResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9335,6 +9337,23 @@ class PlatformUsersListResponseItemsItem(_Model):
     passCount: int | None = None
     signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str] | None = None
 
+class PlatformUsersPassesListResponse(_Model):
+    items: _List[PlatformUsersPassesListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformUsersPassesListResponseItemsItem(_Model):
+    id: str
+    orgId: str
+    orgName: str
+    orgStatus: _Literal["active", "suspended"] | str
+    timeZone: str
+    templateName: str
+    status: _Literal["active", "voided"] | str
+    holding: _Literal["owned", "waiting"] | str
+    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
+    issuedAt: int
+    updatedAt: int
+
 class PlatformUsersRetrieveResponse(_Model):
     id: str
     name: str | None
@@ -9366,7 +9385,7 @@ class PlatformUsersRetrieveResponseIdentitiesItem(_Model):
 
 class PlatformUsersRetrieveResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str

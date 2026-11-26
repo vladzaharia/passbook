@@ -200,6 +200,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "DELETE /api/v1/users/{id}/emails/{email} 200.passes[].title: field removed",
+    "class": "breaking",
+    "operationId": "users.deleteUsersByIdEmailsByEmail",
+    "op": "DELETE /api/v1/users/{id}/emails/{email}",
+    "change": "200.passes[].title: field removed",
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
+  },
+  {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"console\" added",
     "class": "notable",
     "operationId": "users.deleteUsersByIdEmailsByEmail",
@@ -1616,6 +1624,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/users/{id} 200.passes[].title: field removed",
+    "class": "breaking",
+    "operationId": "users.getUsersById",
+    "op": "GET /api/v1/users/{id}",
+    "change": "200.passes[].title: field removed",
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
+  },
+  {
     "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"console\" added",
     "class": "notable",
     "operationId": "users.getUsersById",
@@ -1630,6 +1646,14 @@
     "op": "GET /api/v1/users/{id}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "GET /api/v1/users/{id}/passes new operation",
+    "class": "additive",
+    "operationId": "users.getUsersByIdPasses",
+    "op": "GET /api/v1/users/{id}/passes",
+    "change": "new operation",
+    "note": "A person's passes across orgs for platform admins: owned or waiting (verified address). Others' personal orgs excluded."
   },
   {
     "key": "GET /api/v1/visitors operation removed",
@@ -4317,6 +4341,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/users/{id}/emails 202.passes[].title: field removed",
+    "class": "breaking",
+    "operationId": "users.postUsersByIdEmails",
+    "op": "POST /api/v1/users/{id}/emails",
+    "change": "202.passes[].title: field removed",
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
+  },
+  {
     "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"console\" added",
     "class": "notable",
     "operationId": "users.postUsersByIdEmails",
@@ -4347,6 +4379,14 @@
     "op": "POST /api/v1/users/{id}/emails/{email}/primary",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.passes[].title: field removed",
+    "class": "breaking",
+    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
+    "change": "200.passes[].title: field removed",
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
   },
   {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"console\" added",
