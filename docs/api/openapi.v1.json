@@ -130938,6 +130938,7 @@
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_NOT_HELD",
+          "IDP_NOT_WANTED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OPERATION_RUNNING",

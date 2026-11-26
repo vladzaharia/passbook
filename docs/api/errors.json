@@ -1846,6 +1846,7 @@
       ],
       "modules": [
         "delivery",
+        "idp",
         "operations",
         "passes",
         "platform",
@@ -2145,7 +2146,7 @@
       ]
     },
     {
-      "code": "IDP_BREAKER_STILL_OPEN",
+      "code": "IDP_BREAKER_RETRIPPED",
       "statuses": [
         409
       ],
@@ -2155,6 +2156,15 @@
     },
     {
       "code": "IDP_BUDGET",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BUDGET_LOW",
       "statuses": [
         429
       ],
@@ -2252,6 +2262,15 @@
       "code": "IDP_NOT_READY",
       "statuses": [
         503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_WANTED",
+      "statuses": [
+        409
       ],
       "modules": [
         "idp"
