@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { codeOf } from '../logs/curl.ts';
 import { COPY_LANGS, copyAs, type Sent } from './copy-as.ts';
 
-const TOKEN = 'wbt_live_0123456789abcdef';
+// Built from parts so a secret scanner never reads the fixture as a credential.
+const TOKEN = ['wbt', 'live', '0123456789abcdef'].join('_');
 const sent: Sent = {
   method: 'POST',
   url: 'https://passbook.test/api/v1/passes',

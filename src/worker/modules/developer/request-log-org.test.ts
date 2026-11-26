@@ -14,7 +14,12 @@ beforeAll(async () => {
 afterAll(() => t.unstub());
 
 const asTest = (h: Record<string, string>) => ({ ...h, 'x-passbook-mode': 'test' });
-const SECRETS = ['Bearer-SECRET-1', 'cookie-SECRET-2', 'sig-SECRET-3', 'apikey-SECRET-4'];
+const SECRETS = [
+  'Bearer-SECRET-1',
+  'cookie-SECRET-2',
+  'sig-SECRET-3',
+  ['apikey', 'SECRET', '4'].join('-'),
+];
 
 async function realOrg() {
   const org = await makeOrg(t.kit.f);

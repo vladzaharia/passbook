@@ -19,6 +19,7 @@ test.describe('admin', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Developers',
       'Sign out',
     ]);
@@ -41,6 +42,7 @@ test.describe('admin', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Developers',
       'Sign out',
     ]);
@@ -146,6 +148,7 @@ test.describe('organization member', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Sign out',
     ]);
     await expect(menu.getByRole('menuitem', { name: 'My passes' })).toHaveAttribute(
@@ -159,6 +162,7 @@ test.describe('organization member', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Sign out',
     ]);
   });

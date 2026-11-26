@@ -45,7 +45,7 @@ BEGIN
     CASE WHEN NEW.kind IN ('device.registered', 'device.unregistered')
       THEN (SELECT count(*) FROM registrations r WHERE r.pass_id = p.id
         AND r.credential_generation = p.credential_generation)
-        -- Simulated devices count in Test only; Live counts real registrations.
+        -- Simulated devices count in Test only, Live counts real registrations.
         + CASE WHEN p.mode = 'test' THEN (SELECT count(*) FROM pass_simulated_devices s
           WHERE s.pass_id = p.id AND s.removed_at IS NULL) ELSE 0 END END,
     NEW.actor_type, NEW.data, NEW.at

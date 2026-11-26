@@ -43,7 +43,7 @@ const UTC_DAY = new Set([
 ]);
 
 /** `?? localZone()` reads "no zone known" as the browser's zone; only a page with no org may. */
-const BROWSER_FALLBACK = new Set(['web/developers/playground/live-paper.tsx']);
+const BROWSER_FALLBACK = new Set(['web/workbench/playground/live-paper.tsx']);
 const BROWSER = /(?:\?\?|\|\|)\s*localZone\(\)/;
 
 const NAME = /['"`](?:UTC|Etc\/UTC|GMT)['"`]/;

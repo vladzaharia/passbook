@@ -40,6 +40,9 @@ import { initMenu } from './shell/menu.ts';
 import { initSearch } from './shell/search.ts';
 import { initTryBar } from './shell/try-bar.ts';
 
+// The Workbench left the front page (design §4.2): an old `/developers#workbench` link follows it.
+if (location.pathname.replace(/\/+$/, '') === PATHS.home && location.hash === '#workbench')
+  location.replace('/workbench');
 if (location.pathname.replace(/\/+$/, '') === PATHS.quickstart) markViewed();
 initCopy();
 initChangelogFilter();

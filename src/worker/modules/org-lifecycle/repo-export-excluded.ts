@@ -77,6 +77,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   pass_views: 'saved list filters: settings of the console, not records',
   pass_issuance_deliveries: BOOKKEEPING,
   pass_personalizations: SEALED,
+  pass_simulated_devices: 'Test devices made by Simulate: no real device, no org content',
   pass_prints: 'print codes are hashed credentials',
   pass_token_seals: SEALED,
   pass_transfer_asset_candidates: BOOKKEEPING,

@@ -33,14 +33,13 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     if (r.url().endsWith('/api/v1/developer/sandbox')) created = r.postDataJSON();
   });
 
-  await page.goto('/developers/quickstart');
-  await expect(page.getByRole('heading', { level: 1, name: 'Your first pass' })).toBeVisible();
-  // The signed-out page is the whole page: five steps and the empty pass.
-  await expect(page.getByRole('listitem').filter({ hasText: 'Hear back' })).toBeVisible();
+  await page.goto('/workbench/quickstart');
+  // Signed out, the Workbench shows its one sign-in state until T8 puts step 1 back (design §1.11).
+  await expect(page.getByRole('heading', { level: 1, name: 'Quickstart' })).toBeVisible();
 
   // Step 1 goes straight to Polaris ID.
   await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
 
   // Step 2: the key decodes once into a .env box, and Copy .env masks it.
   await page.getByRole('button', { name: 'Create sandbox' }).click();
@@ -80,7 +79,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     manifest: { sample: Record<string, unknown> };
   };
   const input = { ...template.manifest.sample, attendee: 'Casey River', ticketId: 'QS-1042' };
-  // A bad first line: the page marks it with the problem and the field to change.
+  // A bad first line: the page marks it with the problem.
   const { ticketId: _gone, ...broken } = input;
   const bad = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-bad' },
@@ -88,8 +87,10 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   });
   expect(bad.status()).toBe(422);
   await expect(page.getByText('422 INVALID')).toBeVisible();
-  await expect(page.getByRole('alert').filter({ hasText: 'ticketId is required.' })).toBeVisible();
-  await expect(page.getByRole('alert').filter({ hasText: '"ticketId": "QS-1042"' })).toBeVisible();
+  // The request log keeps no input keys (R3), so the page names the problem and its code, not the field.
+  const problem = page.getByRole('alert').filter({ hasText: 'The pass input is invalid.' });
+  await expect(problem).toBeVisible();
+  await expect(problem.getByRole('link', { name: 'PASS_INPUT_INVALID' })).toBeVisible();
 
   const made = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-good' },
@@ -148,27 +149,25 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     expect(Object.keys(b).every((k) => k === 'step' || k === 'code')).toBe(true);
   expect(Object.keys(created ?? {}).sort()).toEqual(['turnstileToken', 'viewedAt']);
 
-  // "Open your workbench" lands on the Workbench itself, not the developer front page, at every width.
+  // "Open your workbench" lands on the Workbench Home of the sandbox, at every width.
   await page.getByRole('link', { name: 'Open your workbench' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers' && u.hash === '#workbench');
+  await page.waitForURL((u) => u.pathname.startsWith('/workbench/o/'));
   for (const [width, height] of [
     [1440, 900],
     [834, 1112],
     [390, 844],
   ] as const) {
     await page.setViewportSize({ width, height });
-    await page.goto('/developers#workbench');
-    await expect(page.locator('#workbench .wb')).toBeVisible();
-    await expect(page.locator('#workbench')).toBeInViewport();
-    await expect(page.locator('#workbench')).toBeFocused();
-    // Below the sticky bar, not under it.
-    const top = (await page.locator('#workbench').boundingBox())?.y ?? 0;
-    expect(top).toBeGreaterThanOrEqual(56);
+    await page.goto('/workbench');
+    await expect(page.locator('.wb').first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
   }
   await page.setViewportSize({ width: 1440, height: 900 });
 
   // The workbench: Reset deletes the test data, restarts the track and shows the new key once.
-  await page.goto('/developers');
+  await page.goto('/workbench');
   await page.getByRole('button', { name: 'Reset' }).click();
   await expect(
     page.getByText('Passes, events and logs in this sandbox are deleted.'),
