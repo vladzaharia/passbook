@@ -283,3 +283,40 @@ describe('mock Samsung Wallet', () => {
     expect(mock.requests[0]).toMatchObject({ provider: 'samsung', injected: true });
   });
 });
+
+describe("mock Google's callback keys", () => {
+  const keys = () => mock.handle(new Request('http://localhost:5175/gp/m/issuer/keys'));
+  const setKeys = (body: unknown) =>
+    mock.handle(
+      new Request('http://localhost:5175/__mock/google-keys', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    );
+
+  it('serves no key until a test sets them, then the keys it set', async () => {
+    expect(await (await keys()).json()).toEqual({ keys: [] });
+    const set = [{ protocolVersion: 'ECv2SigningOnly', keyValue: 'a', keyExpiration: '1' }];
+    expect((await setKeys({ keys: set })).status).toBe(200);
+    expect(await (await keys()).json()).toEqual({ keys: set });
+  });
+
+  it('refuses keys that are not a list, and forgets them on reset', async () => {
+    expect((await setKeys({ keys: 'a' })).status).toBe(400);
+    await setKeys({ keys: [{ keyValue: 'a' }] });
+    mock.reset();
+    expect(await (await keys()).json()).toEqual({ keys: [] });
+  });
+
+  it('logs the keys download as a Google request', async () => {
+    mock.reset();
+    await keys();
+    expect(mock.requests[0]).toMatchObject({
+      provider: 'google',
+      method: 'GET',
+      path: '/gp/m/issuer/keys',
+      status: 200,
+    });
+  });
+});
