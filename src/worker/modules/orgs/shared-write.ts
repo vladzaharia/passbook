@@ -4,7 +4,8 @@ import { isDeveloperOrg } from '../passes/repo-authority.ts';
 
 /**
  * Org state has no mode: the brand kit, settings, zones, tag types and saved mappings are read by Live passes,
- * emails, pages and scanners. A Test key never changes it, unless the org is a sandbox with no Live side to hurt.
+ * emails, pages and scanners. A Test credential never changes it, unless the org is a sandbox with no Live side
+ * to hurt. Test credentials: a Test key, and a Workbench token of either subject (`ctx.via`, pinned to Test).
  */
 export async function assertSharedWrite(
   ctx: ServiceContext,
@@ -12,7 +13,8 @@ export async function assertSharedWrite(
   orgId: string,
   what: string,
 ): Promise<void> {
-  if (principal.kind !== 'api_key' || principal.mode !== 'test') return;
+  const testCredential = principal.kind === 'api_key' || ctx.via === 'try';
+  if (!testCredential || principal.mode !== 'test') return;
   if (await isDeveloperOrg(ctx.env.DB, orgId)) return;
   throw new ForbiddenError(`Use a live key to change ${what}.`, 'MODE_LIVE_REQUIRED');
 }
