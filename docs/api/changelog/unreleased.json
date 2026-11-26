@@ -32,6 +32,22 @@
     "note": "Discard a pending revision and its stored file."
   },
   {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
     "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsUploadsByFileId",
@@ -392,6 +408,46 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "GET /api/v1/connections 200.items[].firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "GET /api/v1/connections 200.items[].health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "GET /api/v1/connections param query:health: enum value \"awaiting\" added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "param query:health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
     "class": "additive",
     "operationId": "connections.getConnectionsById",
@@ -454,6 +510,22 @@
     "op": "GET /api/v1/connections/{id}/setup",
     "change": "new operation",
     "note": "A webhook connection's setup guide with its URL and header names filled in. It never returns the secret, only hasSecret."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "new operation",
+    "note": "List what the webhook ingress saw for a connection: outcome and reason, never the body."
+  },
+  {
+    "key": "GET /api/v1/connections/summary 200.attention[].health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnectionsSummary",
+    "op": "GET /api/v1/connections/summary",
+    "change": "200.attention[].health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
     "key": "GET /api/v1/connections/uploads/{fileId} new operation",
@@ -2511,6 +2583,22 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "PATCH /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
     "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.patchConnectionsUploadsByFileId",
@@ -3357,6 +3445,22 @@
     "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
+    "key": "POST /api/v1/connections 201.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "POST /api/v1/connections 201.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
     "key": "POST /api/v1/connections body.fileId: optional input field added",
     "class": "additive",
     "operationId": "connections.postConnections",
@@ -3395,6 +3499,22 @@
     "op": "POST /api/v1/connections/{id}/probe",
     "change": "new operation",
     "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
     "key": "POST /api/v1/connections/probe new operation",

@@ -811,6 +811,14 @@
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
+  "connections get /{id}/webhook-arrivals": [
+    "CONNECTION_NOT_FOUND",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
   "connections get /{id}/webhook-failures": [
     "CONNECTION_NOT_FOUND",
     "FORBIDDEN",

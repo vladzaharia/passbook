@@ -469,6 +469,23 @@ class ConnectionsSetupResource:
         return self._core.request("GET", f"/api/v1/connections/{_p(id)}/setup", result=m.ConnectionsSetupRetrieveResult, **opts)
 
 
+class ConnectionsWebhookArrivalsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        since: int | None | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ConnectionsWebhookArrivalsListItem]:
+        """List webhook arrivals `GET /api/v1/connections/{id}/webhook-arrivals`"""
+        return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/webhook-arrivals", query={"cursor": cursor, "since": since, "limit": limit}, result=m.ConnectionsWebhookArrivalsListResult, cursor_param="cursor", **opts)
+
+
 class ConnectionsWebhookFailuresResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -509,6 +526,7 @@ class ConnectionsResource:
         self.files = ConnectionsFilesResource(core)
         self.runs = ConnectionsRunsResource(core)
         self.setup = ConnectionsSetupResource(core)
+        self.webhook_arrivals = ConnectionsWebhookArrivalsResource(core)
         self.webhook_failures = ConnectionsWebhookFailuresResource(core)
 
     def create(
@@ -530,7 +548,7 @@ class ConnectionsResource:
     def list(
         self,
         *,
-        health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | None = None,
+        health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | None = None,
         q: str | None = None,
         cursor: str | None = None,
         limit: int | None = None,

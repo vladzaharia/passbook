@@ -5,6 +5,8 @@ export const ConnectionModeSchema = z.enum(['poll', 'webhook', 'hybrid', 'manual
 export type ConnectionMode = z.infer<typeof ConnectionModeSchema>;
 export const ConnectionHealthSchema = z.enum([
   'unknown',
+  /** A webhook connection that has not yet received a verified delivery. */
+  'awaiting',
   'healthy',
   'degraded',
   'failing',
@@ -163,6 +165,8 @@ export const ConnectionSchema = z.object({
   requestsPerMinute: z.number().int().nullable(),
   enabled: z.boolean(),
   health: ConnectionHealthSchema,
+  /** When the first correctly signed delivery arrived; null until then, and always null without a webhook. */
+  firstVerifiedArrivalAt: TimestampSchema.nullable(),
   consecutiveFailures: z.number().int(),
   breakerOpenUntil: TimestampSchema.nullable(),
   nextRunAt: TimestampSchema.nullable(),

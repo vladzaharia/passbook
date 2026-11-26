@@ -399,18 +399,18 @@ describe('verifyRecipe', () => {
     expect(a.eventId).not.toBe(b.eventId);
   });
 
-  it('Shopify: a captured body replayed after its window is refused, even with a valid MAC', async () => {
+  it('Shopify: a captured body replayed after its window is acknowledged as stale, never applied', async () => {
     const body = JSON.stringify(order({ updated_at: iso(NOW - 49 * 3_600_000) }));
-    await expect(
-      verifyRecipe(shopify, ctx(SECRET), await deliver(shopify, body, SECRET), CFG),
-    ).rejects.toMatchObject({ code: 'AUTH' });
+    expect(
+      await verifyRecipe(shopify, ctx(SECRET), await deliver(shopify, body, SECRET), CFG),
+    ).toMatchObject({ ignored: 'stale', refs: [] });
   });
 
-  it('Shopify: a future-dated body is refused', async () => {
+  it('Shopify: a future-dated body is acknowledged as stale, never applied', async () => {
     const body = JSON.stringify(order({ updated_at: iso(NOW + 10 * 60_000) }));
-    await expect(
-      verifyRecipe(shopify, ctx(SECRET), await deliver(shopify, body, SECRET), CFG),
-    ).rejects.toMatchObject({ code: 'AUTH' });
+    expect(
+      await verifyRecipe(shopify, ctx(SECRET), await deliver(shopify, body, SECRET), CFG),
+    ).toMatchObject({ ignored: 'stale', refs: [] });
   });
 
   it('Shopify: a wrong secret is AUTH', async () => {
@@ -452,7 +452,13 @@ describe('verifyRecipe', () => {
     expect(out.versions).toEqual({ sub_1: NOW });
   });
 
-  it('Cal.com: a body older than an hour is refused; a fresh one verifies with a digest id', async () => {
+  it('Cal.com: a PING trigger is a ping, whatever else the body lacks', () => {
+    expect(adapt(RECIPES['calcom-bookings'], { triggerEvent: 'PING', payload: {} }).ignored).toBe(
+      'ping',
+    );
+  });
+
+  it('Cal.com: a body older than an hour is acknowledged as stale; a fresh one verifies with a digest id', async () => {
     const cal = RECIPES['calcom-bookings'];
     const mk = (at: number) =>
       JSON.stringify({
@@ -460,14 +466,14 @@ describe('verifyRecipe', () => {
         createdAt: iso(at),
         payload: { uid: 'bk_1' },
       });
-    await expect(
-      verifyRecipe(
+    expect(
+      await verifyRecipe(
         cal,
         ctx('cal_test_secret_01'),
         await deliver(cal, mk(NOW - 2 * 3_600_000), 'cal_test_secret_01'),
         CFG,
       ),
-    ).rejects.toMatchObject({ code: 'AUTH' });
+    ).toMatchObject({ ignored: 'stale', refs: [] });
     const ok = await verifyRecipe(
       cal,
       ctx('cal_test_secret_01'),

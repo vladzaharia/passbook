@@ -3,7 +3,6 @@ import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
-import { toDto } from './dto.ts';
 import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { schedules } from './health.ts';
 import { assertMayIssue, updateIssues } from './issuing.ts';
@@ -37,6 +36,7 @@ import {
   requireConnector,
 } from './validate.ts';
 import { validateVoidWhen } from './void-when.ts';
+import { dtoOf } from './webhook-arrivals.ts';
 
 /** Keys the connector fixes at creation (the webhook recipe) cannot change: bound passes hold its refs. */
 function assertFixedConfig(
@@ -326,5 +326,5 @@ export async function update(
       });
     }
   }
-  return { ...toDto(sctx.env, fresh), ...(generated ? { webhookSecret: generated } : {}) };
+  return { ...(await dtoOf(sctx, fresh)), ...(generated ? { webhookSecret: generated } : {}) };
 }
