@@ -131,6 +131,14 @@ export const slotsOf = (pass: Dict, assets: readonly DraftAsset[]): string[] =>
     assets.some((a) => a.slot === 'artwork'),
   );
 
+/** The Wallets tab's inspector; `key` is a role, a field path or an image slot. */
+export type WalletsSection =
+  | 'wallets-type'
+  | 'wallets-roles'
+  | 'wallets-fields'
+  | 'wallets-images'
+  | 'wallets-required';
+
 export type Section =
   | 'template'
   | 'style'
@@ -145,6 +153,7 @@ export type Section =
   | 'scan-actions'
   | 'none'
   | 'scan-display'
+  | WalletsSection
   | GroupId;
 
 export interface Selection {
@@ -167,6 +176,11 @@ export const SECTION_LABEL: Record<Exclude<Section, GroupId>, string> = {
   access: 'Access',
   'scan-actions': 'Scan actions',
   'scan-display': 'Scan screen',
+  'wallets-type': 'Type',
+  'wallets-roles': 'Roles',
+  'wallets-fields': 'Fields',
+  'wallets-images': 'Images',
+  'wallets-required': 'Required',
 };
 
 export const sectionLabel = (s: Section): string =>

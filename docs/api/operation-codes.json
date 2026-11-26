@@ -7658,6 +7658,19 @@
     "TEMPLATE_VERSION_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
+  "templates get /{id}/versions/{version}/wallet-reports": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_PERSONAL",
+    "ORG_REQUIRED",
+    "ORG_TEST_ONLY",
+    "TEMPLATE_NOT_FOUND",
+    "TEMPLATE_VERSION_CONTENT_CONFLICT",
+    "TEMPLATE_VERSION_NOT_FOUND",
+    "UNAUTHENTICATED",
+    "WALLET_ART_MISMATCH"
+  ],
   "templates patch /{id}": [
     "FORBIDDEN",
     "KEY_CREATOR_GONE",

@@ -485,6 +485,7 @@
   "templates.getTemplatesByIdStampsImpact",
   "templates.getTemplatesByIdVersionsByVersion",
   "templates.getTemplatesByIdVersionsByVersionAssetsByName",
+  "templates.getTemplatesByIdVersionsByVersionWalletReports",
   "templates.getTemplatesEligible",
   "templates.getTemplatesPreviews",
   "templates.getTemplatesUploads",

@@ -14101,6 +14101,87 @@ type TemplatesVersionsRetrieveResponseReportIssuesItemFix struct {
 
 type TemplatesVersionsRetrieveResult = TemplatesVersionsRetrieveResponse
 
+type TemplatesVersionsRetrieveWalletReportsResponse struct {
+	Google  TemplatesVersionsRetrieveWalletReportsResponseGoogle  `json:"google"`
+	Samsung TemplatesVersionsRetrieveWalletReportsResponseSamsung `json:"samsung"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogle struct {
+	Schema           int64                                                           `json:"schema"`
+	Target           string                                                          `json:"target"`
+	Type             string                                                          `json:"type"`
+	CompilerRevision int64                                                           `json:"compilerRevision"`
+	Status           any                                                             `json:"status"`
+	Items            []TemplatesVersionsRetrieveWalletReportsResponseGoogleItemsItem `json:"items"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleItemsItem struct {
+	Capability string `json:"capability"`
+	Path       string `json:"path"`
+	Support    string `json:"support"`
+	Severity   string `json:"severity"`
+	Group      string `json:"group"`
+	Chosen     bool   `json:"chosen"`
+	Message    string `json:"message"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus1 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus2 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus3 struct {
+	Kind  string `json:"kind"`
+	Count int64  `json:"count"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus4 struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsung struct {
+	Schema           int64                                                            `json:"schema"`
+	Target           string                                                           `json:"target"`
+	Type             string                                                           `json:"type"`
+	CompilerRevision int64                                                            `json:"compilerRevision"`
+	Status           any                                                              `json:"status"`
+	Items            []TemplatesVersionsRetrieveWalletReportsResponseSamsungItemsItem `json:"items"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungItemsItem struct {
+	Capability string `json:"capability"`
+	Path       string `json:"path"`
+	Support    string `json:"support"`
+	Severity   string `json:"severity"`
+	Group      string `json:"group"`
+	Chosen     bool   `json:"chosen"`
+	Message    string `json:"message"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus1 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus2 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus3 struct {
+	Kind  string `json:"kind"`
+	Count int64  `json:"count"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus4 struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResult = TemplatesVersionsRetrieveWalletReportsResponse
+
 type TerminalActBody = TerminalActParams
 
 type TerminalActParams struct {

@@ -57,14 +57,14 @@ export function GoogleCard({
             <Logo src={m.logo} name={m.issuer} />
             <span className="wp-g-issuer">{m.issuer}</span>
           </header>
-          <div className="wp-g-title">
+          <div className="wp-g-title" data-wk="title">
             {m.subheader ? <p className="wp-g-sub">{m.subheader}</p> : null}
             <p className="wp-g-heading">{m.heading}</p>
           </div>
           {m.facts.length > 0 ? (
             <dl className="wp-g-facts">
               {m.facts.map((f) => (
-                <div key={f.label}>
+                <div key={f.label} data-wk={`fact:${f.label}`}>
                   <dt>{f.label}</dt>
                   <dd>{f.value}</dd>
                 </div>
@@ -72,7 +72,7 @@ export function GoogleCard({
             </dl>
           ) : null}
           {m.barcode ? (
-            <div className="wp-g-code">
+            <div className="wp-g-code" data-wk="code">
               <div className="wp-tile">
                 <WalletCode
                   bcid={m.barcode.bcid}
@@ -83,19 +83,27 @@ export function GoogleCard({
               {m.barcode.alt ? <p className="wp-g-alt">{m.barcode.alt}</p> : null}
             </div>
           ) : null}
-          {m.hero ? <Hero src={m.hero} /> : null}
+          {m.hero ? (
+            <div data-wk="hero">
+              <Hero src={m.hero} />
+            </div>
+          ) : null}
         </article>
       )}
       {face === 'front' ? null : m.modules.length + m.links.length + m.messages.length > 0 ? (
         <section className="wp-g-details" aria-label="Details">
           {m.messages.map((x) => (
-            <div key={x.body} className="wp-g-msg">
+            <div key={x.body} className="wp-g-msg" data-wk={`msg:${x.body}`}>
               {x.header ? <strong>{x.header}</strong> : null}
               <span>{x.body}</span>
             </div>
           ))}
           {m.modules.map((x) => (
-            <div key={`${x.header ?? ''}:${x.body}`} className="wp-g-mod">
+            <div
+              key={`${x.header ?? ''}:${x.body}`}
+              className="wp-g-mod"
+              data-wk={`mod:${x.header ?? ''}:${x.body}`}
+            >
               {x.header ? <p className="wp-g-mod-head">{x.header}</p> : null}
               <p className="wp-g-mod-body">{x.body}</p>
             </div>
