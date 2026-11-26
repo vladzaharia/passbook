@@ -82,7 +82,7 @@ export function ComposePreview({
       )}
       {!detail ? (
         <p className="rounded-xl border border-dashed border-border-strong p-6 text-center text-sm text-fg-muted">
-          Choose a template to see the pass.
+          No pass to show yet.
         </p>
       ) : preview.data ? (
         <PassPreview

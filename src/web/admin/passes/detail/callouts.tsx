@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronDown, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
+import { issueWords } from '@/shared/copy/issues.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { cn } from '../../../lib/cn.ts';
 import { formatDateTime } from '../../../lib/format.ts';
@@ -104,7 +105,7 @@ function OtherWarnings({ pass }: { pass: PassDetailDto }) {
           />
         </button>
       }
-      {...(open || !list[0] ? {} : { children: list[0].message })}
+      {...(open || !list[0] ? {} : { children: issueWords(list[0]) })}
       items={
         open
           ? list.map((w) => (
@@ -114,7 +115,7 @@ function OtherWarnings({ pass }: { pass: PassDetailDto }) {
                 search={{ tab: IMAGE_CODES.test(w.code) ? 'images' : 'fields' }}
                 className="block py-1 underline-offset-2 hover:underline"
               >
-                {w.message}
+                {issueWords(w)}
               </Link>
             ))
           : []

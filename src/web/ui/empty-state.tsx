@@ -172,6 +172,8 @@ export function FilteredEmpty({
 
 export interface DetailNotFoundProps {
   entity: EntityKind;
+  /** The thing's own name when the entity's is the wrong noun: "Change run". */
+  noun?: string;
   /** The list the way back leads to. */
   to: string;
   /** The way back's words when the list is not the entity's plural: "My passes". */
@@ -184,14 +186,14 @@ export interface DetailNotFoundProps {
  * An item that is not there (deleted, mistyped link): the torn pass the buddy mends, "{Entity} not
  * found" and one way back to its list.
  */
-export function DetailNotFound({ entity, to, back, heading = false }: DetailNotFoundProps) {
+export function DetailNotFound({ entity, noun, to, back, heading = false }: DetailNotFoundProps) {
   const { label, plural } = ENTITY[entity];
   return (
     <EmptyState
       art="torn"
       mood="sad"
       heading={heading}
-      title={notFoundTitle(label)}
+      title={notFoundTitle(noun ?? label)}
       action={
         <Button asChild variant="outline">
           <Link to={to}>
