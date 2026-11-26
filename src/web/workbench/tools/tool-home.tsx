@@ -8,7 +8,7 @@ import '../home/workbench-cards.css';
 /** Home (T1 rebuilds it): the moved Workbench cards. */
 export function HomePage() {
   return (
-    <LegacyTool tool="home" className="wb-tool-home">
+    <LegacyTool tool="home" className="wb-tool-home" closed={<WorkbenchIsland />}>
       {() => <WorkbenchIsland />}
     </LegacyTool>
   );

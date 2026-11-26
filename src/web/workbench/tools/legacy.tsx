@@ -53,11 +53,14 @@ export interface ReadySession {
 export function LegacyTool({
   tool,
   className,
+  closed,
   children,
 }: {
   tool: WbTool;
   /** The route's own class (`wb-tool-<name>`): the bundle check finds the tool's chunk by it. */
   className: string;
+  /** What a closed sandbox shows instead of the generic state (Home offers Reopen). */
+  closed?: ReactNode;
   children: (session: ReadySession) => ReactNode;
 }) {
   const host = useOptionalToolHost();
@@ -69,7 +72,7 @@ export function LegacyTool({
   if (!session) body = <BenchSkeleton rows={6} />;
   else if (session.kind === 'out') body = <SignInState next={href} />;
   else if (session.kind === 'none') body = <NoSandboxState />;
-  else if (session.kind === 'closed') body = <BenchState scene="closed" />;
+  else if (session.kind === 'closed') body = closed ?? <BenchState scene="closed" />;
   else if (session.kind === 'failed')
     body = <ToolFailed error={new Error('sandbox')} onRetry={() => location.reload()} />;
   else body = children({ csrf: session.csrf, sandbox: session.sandbox });

@@ -14,6 +14,9 @@ export interface ToolRequest {
   ifMatch?: string;
 }
 
+/** Marks a background read as the portal's own: the request log keeps it out of the Calls a developer reads. */
+export const PORTAL_READ = { 'x-passbook-client': 'portal' } as const;
+
 type Method = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /**

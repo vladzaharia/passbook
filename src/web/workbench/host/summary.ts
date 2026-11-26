@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import type { WorkbenchApi } from './api.ts';
+import { PORTAL_READ, type WorkbenchApi } from './api.ts';
 
 /**
  * `GET /workbench/summary` (design §1.6, §3.6, S5): the nav's attention, counted after this
@@ -35,7 +35,11 @@ export function useWorkbenchSummary(
   return useQuery({
     queryKey: ['workbench', 'summary', api?.orgId, since] as const,
     queryFn: ({ signal }) =>
-      (api as WorkbenchApi).get(SUMMARY_PATH, SummarySchema, { query, signal }),
+      (api as WorkbenchApi).get(SUMMARY_PATH, SummarySchema, {
+        query,
+        signal,
+        headers: PORTAL_READ,
+      }),
     enabled: api !== null,
     // A seen mark changes the key: the other areas keep showing their counts meanwhile, in this org only.
     placeholderData: (previous, previousQuery) =>
