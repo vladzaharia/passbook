@@ -1,3 +1,4 @@
+import type { Server } from 'node:http';
 import type { Plugin } from 'vite';
 
 /**
@@ -7,12 +8,12 @@ import type { Plugin } from 'vite';
  * Holding idle sockets far longer than any spec idles removes the race without touching a request timeout.
  */
 export function e2eKeepAlive(): Plugin {
-  const hold = (server: {
-    httpServer: { keepAliveTimeout: number; headersTimeout: number } | null;
-  }) => {
-    if (!server.httpServer) return;
-    server.httpServer.keepAliveTimeout = 120_000;
-    server.httpServer.headersTimeout = 125_000;
+  // The dev and preview servers are plain HTTP here; the type also allows HTTP/2, which has neither field.
+  const hold = (server: { httpServer: unknown }) => {
+    const http = server.httpServer as Server | null;
+    if (!http) return;
+    http.keepAliveTimeout = 120_000;
+    http.headersTimeout = 125_000;
   };
   return { name: 'e2e-keep-alive', configureServer: hold, configurePreviewServer: hold };
 }
