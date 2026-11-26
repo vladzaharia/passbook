@@ -12,9 +12,6 @@ import {
 import type { WalletRuntimeScope } from './runtime.ts';
 import { withGoogleRest } from './runtime-google.ts';
 
-/** A class not yet approved is read at most this often, however many operations touch it. */
-export const REVIEW_RECHECK_MS = 60_000;
-
 /** Google's value, with its legacy `underReview` spelling; anything else is unknown. */
 export function parseReview(value: unknown): GoogleClassReview | null {
   const key = typeof value === 'string' ? value.toUpperCase().replace(/_/g, '') : '';
@@ -32,7 +29,8 @@ export async function refreshGoogleClassReview(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
   input: { releaseId: string; type: GoogleType; classKey?: string | undefined },
-): Promise<void> {
+): Promise<'read' | 'skipped' | 'failed'> {
+  let outcome: 'read' | 'skipped' = 'skipped';
   try {
     await withGoogleRest(
       ctx,
@@ -55,12 +53,9 @@ export async function refreshGoogleClassReview(
         const classIdHash = await sha256Hex(classId);
         const now = ctx.clock.now();
         const state = await getGoogleClassState(ctx.env.DB, classIdHash);
-        if (
-          !state ||
-          !(await claimGoogleClassReview(ctx.env.DB, classIdHash, now, now - REVIEW_RECHECK_MS))
-        )
-          return;
+        if (!state || !(await claimGoogleClassReview(ctx.env.DB, classIdHash, now))) return;
         const read = await verifyIdentity(rest, GOOGLE_RESOURCES[input.type].class, classId);
+        outcome = 'read';
         await setGoogleClassReview(
           ctx.env.DB,
           { classIdHash, ...state },
@@ -73,5 +68,7 @@ export async function refreshGoogleClassReview(
       code: 'WALLET_GOOGLE_CLASS_REVIEW',
       error,
     });
+    return 'failed';
   }
+  return outcome;
 }

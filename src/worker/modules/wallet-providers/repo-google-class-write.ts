@@ -28,6 +28,7 @@ export async function recordGoogleClass(
       written_at = excluded.written_at,
       review_status = CASE WHEN ${same} THEN wallet_google_classes.review_status END,
       review_checked_at = CASE WHEN ${same} THEN wallet_google_classes.review_checked_at END,
+      review_failures = CASE WHEN ${same} THEN wallet_google_classes.review_failures ELSE 0 END,
       verified_at = CASE WHEN excluded.verified_at IS NOT NULL THEN excluded.verified_at
         WHEN ${same} THEN wallet_google_classes.verified_at END
     WHERE excluded.release_generation >= wallet_google_classes.release_generation`,
@@ -109,25 +110,43 @@ export async function getGoogleClassState(
   );
 }
 
+/** Milliseconds to wait after `review_failures` failed reads in a row: 1, 5 and 30 minutes, then 6 hours. */
+export const REVIEW_BACKOFF_SQL = `CASE review_failures WHEN 0 THEN 60000 WHEN 1 THEN 60000
+  WHEN 2 THEN 300000 WHEN 3 THEN 1800000 ELSE 21600000 END`;
+
 /**
- * Compare-and-set before a review read: true for exactly one caller per `since` window, so a bulk run sends
+ * Compare-and-set before a review read: true for exactly one caller per backoff window, so a bulk run sends
  * one GET and an APPROVED class is never read again. Stamps the attempt, so a failing read waits too.
  */
 export async function claimGoogleClassReview(
   db: D1Database,
   classIdHash: string,
   now: number,
-  since: number,
 ): Promise<boolean> {
   return (
     (await first(
       db,
       `UPDATE wallet_google_classes SET review_checked_at = ?
       WHERE class_id_hash = ? AND (review_status IS NULL OR review_status != 'APPROVED')
-        AND pending_generation IS NULL AND (review_checked_at IS NULL OR review_checked_at < ?)
+        AND pending_generation IS NULL
+        AND (review_checked_at IS NULL OR review_checked_at + ${REVIEW_BACKOFF_SQL} <= ?)
       RETURNING 1 AS won`,
-      [now, classIdHash, since],
+      [now, classIdHash, now],
     )) !== null
+  );
+}
+
+/** A read that failed: counts it and stamps the attempt, so the next one waits its backoff. */
+export async function recordGoogleClassReviewFailure(
+  db: D1Database,
+  classIdHash: string,
+  now: number,
+): Promise<void> {
+  await run(
+    db,
+    `UPDATE wallet_google_classes SET review_failures = review_failures + 1, review_checked_at = ?
+    WHERE class_id_hash = ?`,
+    [now, classIdHash],
   );
 }
 
@@ -139,7 +158,7 @@ export async function setGoogleClassReview(
 ): Promise<void> {
   await run(
     db,
-    `UPDATE wallet_google_classes SET review_status = ?
+    `UPDATE wallet_google_classes SET review_status = ?, review_failures = 0
     WHERE class_id_hash = ? AND release_generation = ? AND body_digest IS ? AND pending_generation IS NULL`,
     [status, p.classIdHash, p.releaseGeneration, p.bodyDigest],
   );
