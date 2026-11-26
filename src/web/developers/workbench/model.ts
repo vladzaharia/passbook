@@ -41,21 +41,6 @@ export function duration(ms: number): string {
   return h > 0 ? `${h}:${two(m)}:${two(s % 60)}` : `${m}:${two(s % 60)}`;
 }
 
-/** `now`, `5 min`, `3 h`, `2 d`: how long ago, against the server's clock. */
-export function ago(ms: number, now: number): string {
-  const s = Math.max(0, Math.floor((now - ms) / 1000));
-  if (s < 60) return 'now';
-  if (s < 3600) return `${Math.floor(s / 60)} min`;
-  if (s < 86_400) return `${Math.floor(s / 3600)} h`;
-  return `${Math.floor(s / 86_400)} d`;
-}
-
-/** Time until `at`: `29 d`, `<1 min` at the end. */
-export function left(at: number, now: number): string {
-  const a = ago(now, at);
-  return a === 'now' ? '<1 min' : a;
-}
-
 export type Source = 'key' | 'try' | 'all';
 export const SOURCES: readonly { id: Source; label: string }[] = [
   { id: 'key', label: 'Yours' },

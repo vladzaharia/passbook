@@ -28,10 +28,10 @@ export class ActionError extends Error {
 /** The ids a finished operation names (`result.ids`): the sandbox it made, read without another call. */
 export function sandboxOfOperation(op: Operation): Sandbox | null {
   const ids = op.result?.ids;
-  if (!ids?.sandboxId || !ids.orgSlug) return null;
+  if (!ids?.sandboxId || !ids.orgId || !ids.orgSlug) return null;
   return {
     id: ids.sandboxId,
-    orgId: ids.orgId ?? '',
+    orgId: ids.orgId,
     orgSlug: ids.orgSlug,
     templateId: ids.templateId ?? null,
   };

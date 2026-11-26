@@ -1,6 +1,0 @@
-/* The webhook tester's column inside the bench frame (bench/frame.tsx sets the width and gutter); the island's own sheet loads with it. */
-.wh {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}

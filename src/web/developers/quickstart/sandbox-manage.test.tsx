@@ -171,7 +171,7 @@ describe('Start over and Delete sandbox', () => {
     };
     const fetchMock = api({
       'GET /operations/op-del': [json(200, failed), json(200, removing(1))],
-      'POST /operations/op-del/retry': json(202, { operation: { ...removing(0), attempt: 2 } }),
+      'POST /operations/op-del/retry': json(200, { ...removing(0), attempt: 2 }),
     });
     render(<Host initial="op-del" />);
     expect(await screen.findByText('Could not delete sandbox')).toBeTruthy();

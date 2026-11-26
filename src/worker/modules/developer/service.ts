@@ -1,4 +1,3 @@
-import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
 import type { CreatedDeveloperSandbox, DeveloperSandbox } from '../../../shared/contracts/index.ts';
 import { TimeZoneSchema } from '../../../shared/contracts/scan-base.ts';
 import {
@@ -7,7 +6,6 @@ import {
   SANDBOX_TEMPLATE_NAME,
 } from '../../../shared/copy/developer.ts';
 import { resolveOrgTimeZone } from '../../../shared/time-zone.ts';
-import { isPlatformScope } from '../../platform/api-scopes.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { actorOf } from '../../platform/context.ts';
 import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
@@ -23,6 +21,7 @@ import { useBlueprint as forkBlueprint } from '../templates/use-blueprint.ts';
 import { authorizeWebhooks } from '../webhooks/access.ts';
 import { ensureCapture } from '../webhooks/service-captures.ts';
 import { recordSandboxMade } from './funnel.ts';
+import { KEY_SCOPES } from './key-scopes.ts';
 import {
   approvalOf,
   candidateOf,
@@ -39,9 +38,6 @@ import { orgExists } from './repo-sandbox-op.ts';
 /** The quickstart's blueprint, and how long its test key lives. */
 const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';
 const KEY_TTL_MS = 30 * 86_400_000;
-
-/** A key a sandbox holds can reach everything a test org can, except minting keys, the terminal scope and the live-only scanning setup scope. */
-const KEY_SCOPES = SANDBOX_KEY_SCOPES.filter((s) => !isPlatformScope(s));
 
 /** A new Test personal key for the person (30 days): the secret is in the answer once and nowhere else. */
 export async function mintSandboxKey(

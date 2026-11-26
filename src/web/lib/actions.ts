@@ -45,14 +45,12 @@ import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
 import { USER_PASSES_ACTIONS } from './actions-user-passes.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
-
 export interface ActionEntry {
   label: string;
   icon: LucideIcon;
   /** success: created or working; info: changed; warning: paused or taken away; danger: lost. */
   tone: Tone;
 }
-
 const a = (label: string, icon: LucideIcon, tone: Tone): ActionEntry => ({ label, icon, tone });
 const I = ACTION_ICON;
 /** Audit and activity vocabulary: a label, a glyph and a tone per action code. */

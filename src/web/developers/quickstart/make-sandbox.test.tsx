@@ -50,7 +50,10 @@ function Host({ onMade }: { onMade: (...a: unknown[]) => void }) {
 
 const made = {
   ...fixtureOperation(SANDBOX_CREATE, { status: 'succeeded', id: 'op-c' }),
-  result: { href: null, ids: { sandboxId: 's1', orgId: 'o1', orgSlug: 'dev-1', templateId: 't1' } },
+  result: {
+    href: null,
+    ids: { sandboxId: 's1', orgId: 'org-1', orgSlug: 'dev-1', templateId: 't1' },
+  },
 };
 const adding = fixtureOperation(SANDBOX_CREATE, { status: 'running', at: 'template', id: 'op-c' });
 
@@ -81,7 +84,7 @@ describe('Create sandbox', () => {
     await waitFor(
       () =>
         expect(onMade).toHaveBeenCalledWith(
-          { id: 's1', orgId: 'o1', orgSlug: 'dev-1', templateId: 't1' },
+          { id: 's1', orgId: 'org-1', orgSlug: 'dev-1', templateId: 't1' },
           'pbp_test_once',
         ),
       { timeout: 4000 },
@@ -129,7 +132,7 @@ describe('Create sandbox', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create sandbox' }));
     await waitFor(() =>
       expect(onMade).toHaveBeenCalledWith(
-        { id: 's1', orgId: 'o1', orgSlug: 'dev-1', templateId: 't1' },
+        { id: 's1', orgId: 'org-1', orgSlug: 'dev-1', templateId: 't1' },
         null,
       ),
     );

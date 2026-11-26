@@ -99,8 +99,8 @@ describe('a new sandbox', () => {
     expect(half.endpoints).toEqual([]);
 
     const retry = await send('POST', `/operations/${failed.id}/retry`, headers);
-    expect(retry.status, await retry.clone().text()).toBe(202);
-    expect(((await retry.json()) as { operation: OperationDto }).operation.attempt).toBe(2);
+    expect(retry.status, await retry.clone().text()).toBe(200);
+    expect(((await retry.json()) as OperationDto).attempt).toBe(2);
     // The retry is a queued `operation.run`: the job's own entry runs it, as the queue would.
     await handleOperationRun(
       { kind: 'operation.run', operationId: failed.id, attempt: 2 },

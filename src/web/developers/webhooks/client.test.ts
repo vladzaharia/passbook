@@ -123,4 +123,25 @@ describe('connect', () => {
     await auth.api.endpoints();
     expect(calls.filter((c) => c.url.endsWith('try-token'))).toHaveLength(2);
   });
+
+  it('narrows captures and deliveries by request and pass, and leaves out what is not set', async () => {
+    const { fetchFn, calls } = stub({
+      'GET /api/v1/session': () => json(session),
+      'GET /api/v1/developer/sandbox': open,
+      'POST /api/v1/developer/try-token': (n) => token(n),
+      'GET /api/v1/webhook-endpoints/ep1/captures': () => json({ items: [] }),
+      'GET /api/v1/webhook-endpoints/ep1/deliveries': () => json({ items: [] }),
+    });
+    const auth = await connect(fetchFn, () => 0);
+    if (auth.kind !== 'ready') throw new Error('not ready');
+    await auth.api.captures('ep1', { type: 'pass.issued', requestId: 'r 1', passId: 'p1' });
+    await auth.api.captures('ep1');
+    await auth.api.deliveries('ep1', { requestId: 'r1', type: 'pass.issued' });
+    const urls = calls.filter((c) => c.url.includes('/ep1/')).map((c) => c.url);
+    expect(urls).toEqual([
+      '/api/v1/webhook-endpoints/ep1/captures?limit=50&type=pass.issued&requestId=r+1&passId=p1',
+      '/api/v1/webhook-endpoints/ep1/captures?limit=50',
+      '/api/v1/webhook-endpoints/ep1/deliveries?limit=30&requestId=r1',
+    ]);
+  });
 });

@@ -20,7 +20,7 @@ export const NAV_PATH: Record<NavKey, string> = {
   guides: PATHS.guides,
   reference: PATHS.reference,
   playground: PATHS.playground,
-  workbench: `${PATHS.home}#workbench`,
+  workbench: PATHS.workbench,
 };
 
 /**

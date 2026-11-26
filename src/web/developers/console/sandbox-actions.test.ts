@@ -78,12 +78,12 @@ describe('sandbox actions', () => {
     const op = {
       result: {
         href: null,
-        ids: { sandboxId: 's', orgId: 'o', orgSlug: 'dev-1', templateId: 't' },
+        ids: { sandboxId: 's', orgId: 'org-1', orgSlug: 'dev-1', templateId: 't' },
       },
     };
     expect(sandboxOfOperation(op as never)).toEqual({
       id: 's',
-      orgId: 'o',
+      orgId: 'org-1',
       orgSlug: 'dev-1',
       templateId: 't',
     });

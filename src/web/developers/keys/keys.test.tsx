@@ -8,6 +8,7 @@ import {
   presetsWithin,
   SANDBOX_CEILING,
 } from '../../../shared/developers-keys.ts';
+import { resetBenchZone, setBenchZone } from '../bench/zone.ts';
 import { HIDE_MS } from '../ui/reveal-sheet.tsx';
 import { homeDone, NOW } from '../workbench/home-fixtures.ts';
 import { type KeyApi, KeyError } from './api.ts';
@@ -31,6 +32,8 @@ beforeAll(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  resetBenchZone();
+  history.replaceState(null, '', '/');
 });
 
 const minted = (over: Record<string, unknown> = {}) => ({
@@ -57,13 +60,23 @@ function api(over: Partial<KeyApi> = {}): KeyApi {
   };
 }
 
-function page(a: KeyApi, hash = '') {
+/** The page at 1440 px (the inspector beside the list), at `hash` in the address. */
+function page(a: KeyApi, hash = '', calls: unknown[] = []) {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => Response.json(homeDone)),
+    vi.fn(async (url: string) =>
+      Response.json(String(url).includes('/developer/logs') ? { items: calls } : homeDone),
+    ),
   );
-  return render(<KeysPage initial={homeDone} csrf="c" api={a} now={() => NOW} hash={hash} />);
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    matches: !q.includes('reduce'),
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+  history.replaceState(null, '', `/developers/keys${hash}`);
+  return render(<KeysPage initial={homeDone} csrf="c" api={a} now={() => NOW} />);
 }
+const pane = () => screen.getByRole('complementary');
 
 /** Every string held in the React tree's props and hook state under `root`. */
 function heldStrings(root: Element): string[] {
@@ -108,21 +121,54 @@ describe('the shared preset map', () => {
 });
 
 describe('Keys page', () => {
-  it('lists the sandbox keys masked, with access, expiry and last use', () => {
+  it('lists the sandbox keys as one list, with the first key open beside it', () => {
     page(api());
     // The frame's title row has the h1; the page gives it the count (in place here: no frame).
     expect(screen.getByText(/^\d+ keys?$/)).toBeTruthy();
-    const row = screen.getByText('Sandbox key').closest('tr') as HTMLElement;
+    const list = screen.getByRole('listbox', { name: 'Keys' });
+    const row = within(list).getByText('Sandbox key').closest('[role="option"]') as HTMLElement;
     expect(within(row).getByText('pbp_test_Ab12Cd_…')).toBeTruthy();
-    expect(within(row).getByText('Issue passes')).toBeTruthy();
-    expect(within(row).getByRole('button', { name: 'Roll' })).toBeTruthy();
-    // A rolling key has no Roll of its own.
-    const ci = screen.getByText('CI').closest('tr') as HTMLElement;
-    expect(within(ci).queryByRole('button', { name: 'Roll' })).toBeNull();
+    expect(within(row).getByText('Active')).toBeTruthy();
+    expect(row.getAttribute('aria-selected')).toBe('true');
+    expect(within(pane()).getByRole('heading', { name: 'Sandbox key' })).toBeTruthy();
+    expect(within(pane()).getByText('Issue passes')).toBeTruthy();
+    expect(within(pane()).getByRole('button', { name: 'Roll' })).toBeTruthy();
+    // A rolling key has no Roll of its own, only Revoke.
+    const ci = within(list).getByText('CI').closest('[role="option"]') as HTMLElement;
     expect(within(ci).getByText('Rolling')).toBeTruthy();
     expect(screen.getByRole('link', { name: /Rain City Fit/ }).getAttribute('href')).toBe(
       '/admin/o/019a-live-2/api-keys',
     );
+  });
+
+  it('selects a key by its #id, and a rolling key offers Revoke only', async () => {
+    page(api(), '#019a-key-2');
+    expect(await screen.findByRole('heading', { name: 'CI' })).toBeTruthy();
+    expect(within(pane()).queryByRole('button', { name: 'Roll' })).toBeNull();
+    expect(within(pane()).getByRole('button', { name: 'Revoke' })).toBeTruthy();
+  });
+
+  it("shows expiry in the org zone, never UTC, and links to the key's calls", () => {
+    page(api());
+    act(() => setBenchZone('Asia/Tokyo'));
+    const expires = within(pane()).getByText('Expires').closest('div') as HTMLElement;
+    expect(expires.querySelector('time')?.textContent).toMatch(/10:30:00 PM GMT\+9$/);
+    expect(within(pane()).getByRole('link', { name: 'All calls' }).getAttribute('href')).toBe(
+      '/developers/logs?key=019a-key-1',
+    );
+  });
+
+  it("lists the key's last five calls, each opening Logs on its row", async () => {
+    const calls = Array.from({ length: 5 }, (_, i) => ({
+      id: `log-${i}`,
+      method: 'POST',
+      path: `/api/v1/passes/${i}`,
+      status: 201,
+      at: NOW - i * 60_000,
+    }));
+    page(api(), '', calls);
+    const link = await screen.findByRole('link', { name: /\/api\/v1\/passes\/2/ });
+    expect(link.getAttribute('href')).toBe('/developers/logs#log-2');
   });
 
   it('mints a personal Test key under the ceiling, shows it once, hides it after Copy and clears it on Done', async () => {
@@ -251,18 +297,12 @@ describe('Keys page', () => {
     const a = api();
     const user = userEvent.setup();
     page(a);
-    const row = screen.getByText('Sandbox key').closest('tr') as HTMLElement;
-    await user.click(within(row).getByRole('button', { name: 'Roll' }));
+    await user.click(within(pane()).getByRole('button', { name: 'Roll' }));
     expect(screen.getByText('The old key stops in 1 hour.')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Roll key' }));
     expect(a.roll).toHaveBeenCalledWith(homeDone.sandbox?.orgId, '019a-key-1', 1);
     expect(screen.getByTestId('ks-secret').textContent).toContain(SECRET);
-    expect(screen.getByText(/The old key stops \d\d:\d\d\./)).toBeTruthy();
-  });
-
-  it('#<key id> opens the Roll sheet for an active key only', () => {
-    page(api(), '#019a-key-1');
-    expect(screen.getByRole('heading', { name: 'Roll Sandbox key?' })).toBeTruthy();
+    expect(screen.getByText(/The old key stops [\d:]+\./)).toBeTruthy();
   });
 
   it('a replay that returns no secret says so instead of showing nothing', async () => {
@@ -279,9 +319,7 @@ describe('Keys page', () => {
     const a = api();
     const user = userEvent.setup();
     page(a);
-    const row = screen.getByText('Sandbox key').closest('tr') as HTMLElement;
-    await user.click(within(row).getByLabelText('More: Sandbox key'));
-    await user.click(within(row).getByRole('button', { name: 'Revoke' }));
+    await user.click(within(pane()).getByRole('button', { name: 'Revoke' }));
     expect(a.revoke).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Revoke key' }));
     expect(a.revoke).toHaveBeenCalledWith(homeDone.sandbox?.orgId, '019a-key-1');

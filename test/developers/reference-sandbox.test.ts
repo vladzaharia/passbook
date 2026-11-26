@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import openapi from '../../docs/api/openapi.v1.json';
-import { CreatedDeveloperSandboxSchema } from '../../src/shared/contracts/developer.ts';
 import { EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts';
 import { createApp } from '../../src/worker/app.ts';
 import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
 import { createSessionStore } from '../../src/worker/modules/auth/sessions.ts';
+import { makeSandbox } from '../../src/worker/modules/developer/sandbox-test-fixtures.ts';
 import {
   type BlueprintKit,
   blueprintKit,
@@ -116,22 +116,24 @@ beforeAll(async () => {
   // The reader's own sandbox, made the way the quickstart makes it.
   const user = await makeUser(kit.f);
   const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
-  const res = await app.request(
-    `${ORIGIN}/api/v1/developer/sandbox`,
-    {
-      method: 'POST',
-      headers: {
-        ...session.headers,
-        origin: ORIGIN,
-        'content-type': 'application/json',
-        'idempotency-key': kit.f.ids.token(),
-      },
-      body: JSON.stringify({ turnstileToken: 'ok' }),
-    },
-    kit.env,
+  const made = await makeSandbox(
+    (method, path, headers, body) =>
+      app.request(
+        `${ORIGIN}/api/v1${path}`,
+        {
+          method,
+          headers: {
+            ...headers,
+            origin: ORIGIN,
+            'content-type': 'application/json',
+            'idempotency-key': kit.f.ids.token(),
+          },
+          ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        },
+        kit.env,
+      ),
+    session.headers,
   );
-  expect(res.status, await res.clone().text()).toBe(201);
-  const made = CreatedDeveloperSandboxSchema.parse(await res.json());
   if (!made.key || !made.templateId) throw new Error('A new sandbox has a key and a template.');
   ({ orgId, templateId } = { orgId: made.orgId, templateId: made.templateId });
   key = made.key.secret;
