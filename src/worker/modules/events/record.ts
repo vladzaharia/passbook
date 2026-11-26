@@ -83,7 +83,9 @@ export function eventRowOf(
 async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventRow> {
   const at = input.at ?? ctx.clock.now();
   const device = input.device ? await hashDevice(input.device) : (input.deviceHash ?? null);
-  return eventRowOf({ ...input, at }, ctx.ids.ordered(at), device);
+  // The API request that caused the event, so webhooks and the request log can be read together.
+  const data = ctx.requestId ? { ...input.data, requestId: ctx.requestId } : input.data;
+  return eventRowOf({ ...input, data, at }, ctx.ids.ordered(at), device);
 }
 
 /**
