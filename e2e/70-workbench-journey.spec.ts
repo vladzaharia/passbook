@@ -75,6 +75,11 @@ test('the frame: h1, switcher and toolbar sit in the same boxes on all four tool
       seen.switcher.push(await box(page, 'nav[aria-label="Workbench"]'));
       seen.h1.push(await box(page, 'h1'));
       seen.toolbar.push(await box(page, '[data-bench-toolbar]'));
+      // The buddy's props (a cable, a lens) never scroll the page sideways.
+      const sideways = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      );
+      expect(sideways, `${tool} at ${width}`).toBeLessThanOrEqual(0);
     }
     for (const [part, boxes] of Object.entries(seen)) {
       // A name is as wide as its letters, and a tool's own filters may wrap at a tablet width: the place is shared.

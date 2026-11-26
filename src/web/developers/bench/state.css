@@ -16,6 +16,11 @@
   max-width: min(44rem, calc(100% - 28px));
   margin-inline: auto;
 }
+/* A card with a prop (the cable) keeps its room on both sides, so the prop never scrolls the page sideways. */
+.bench-main .bench-state[data-prop],
+.logs-solo .bench-state[data-prop] {
+  max-width: min(44rem, calc(100% - 56px));
+}
 /* Inside a pane or a list the card keeps less air above it. */
 .bench-insp .bench-state,
 .bench-main > .bench-state:first-child {
