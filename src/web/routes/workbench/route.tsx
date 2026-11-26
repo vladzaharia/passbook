@@ -1,11 +1,8 @@
 import { createFileRoute, Outlet, useRouterState } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { wbOrgOf, wbToolOf } from '@/shared/workbench.ts';
 import { useSession } from '../../lib/session.ts';
-import { AppShell } from '../../ui/layout/app-shell.tsx';
 import { StandaloneError } from '../../ui/layout/lazy-error-pages.tsx';
-import { PolarisIdRequired } from '../../ui/layout/polaris-id-required.tsx';
-import { PORTAL_BAR } from '../../ui/layout/portal-layout.tsx';
 import { SkeletonRows } from '../../ui/skeleton.tsx';
 import { useWorkbenchContexts } from '../../workbench/host/contexts.ts';
 import { resetSessionGone } from '../../workbench/host/session-gone.ts';
@@ -13,7 +10,14 @@ import { forgetTokens } from '../../workbench/host/token.ts';
 import { ToolHostProvider } from '../../workbench/host/tool-host.tsx';
 import { PUBLIC_AREAS } from '../../workbench/shell/nav-model.ts';
 import { WorkbenchShell } from '../../workbench/shell/workbench-shell.tsx';
-import { SignInState, ToolFailed } from '../../workbench/states/states.tsx';
+
+// The states only some visits reach load with them (WB_SHELL_BUDGET).
+const states = () => import('../../workbench/states/states.tsx');
+const SignInState = lazy(() => states().then((m) => ({ default: m.SignInState })));
+const ToolFailed = lazy(() => states().then((m) => ({ default: m.ToolFailed })));
+const PolarisIdRequired = lazy(() =>
+  import('../../ui/layout/polaris-id-required.tsx').then((m) => ({ default: m.PolarisIdRequired })),
+);
 
 /**
  * The Workbench's space (design §1.1): its own shell around every page. Signed out, Design and
@@ -31,13 +35,6 @@ function WorkbenchLayout() {
   }, []);
 
   const href = location.href;
-  if (authed && authed.amr !== 'oidc') {
-    return (
-      <AppShell bar={PORTAL_BAR} width="holder" holder>
-        <PolarisIdRequired space="The Workbench" next={href} />
-      </AppShell>
-    );
-  }
   const tool = wbToolOf(location.pathname);
   const orgId = wbOrgOf(location.pathname);
   const list = contexts.data ?? [];
@@ -50,6 +47,9 @@ function WorkbenchLayout() {
         : undefined) ?? null;
   let body = <Outlet />;
   if (isPending) body = <SkeletonRows label="Loading" />;
+  // An email link opens the holder's spaces only: the Workbench waits for Polaris ID.
+  else if (authed && authed.amr !== 'oidc')
+    body = <PolarisIdRequired space="The Workbench" next={href} />;
   else if (!authed) {
     if (!tool || !PUBLIC_AREAS.has(tool) || orgId) body = <SignInState next={href} />;
   } else if (contexts.isPending) body = <SkeletonRows label="Loading" />;
@@ -63,7 +63,7 @@ function WorkbenchLayout() {
       tool={tool}
       signedOutNext={authed || isPending ? null : href}
     >
-      {body}
+      <Suspense fallback={<SkeletonRows label="Loading" />}>{body}</Suspense>
     </WorkbenchShell>
   );
   return context ? <ToolHostProvider context={context}>{shell}</ToolHostProvider> : shell;

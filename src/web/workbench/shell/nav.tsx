@@ -99,7 +99,7 @@ export function WorkbenchNav({
           {group.items.map(({ tool, label, icon: Icon }) => {
             const active = tool === current;
             const meta = attention[tool];
-            const name = meta ? `${label}, ${meta.label}` : label;
+            // The meta reads as part of the name ("Logs, 3 new errors"); its glyph is hidden.
             const body = (
               <>
                 <Icon
@@ -109,7 +109,10 @@ export function WorkbenchNav({
                     active ? 'text-accent-fg' : 'text-fg-muted',
                   )}
                 />
-                <span className="truncate">{label}</span>
+                <span className="truncate">
+                  {label}
+                  {meta ? <span className="sr-only">, {meta.label}</span> : null}
+                </span>
                 <Meta attention={meta} known={known} />
               </>
             );
@@ -124,8 +127,10 @@ export function WorkbenchNav({
                 key={tool}
                 to={to}
                 onClick={onNavigate}
+                // The current area is the shell's call (wbToolOf): the router's prefix match
+                // would mark Home current on every page too.
+                activeOptions={{ exact: true }}
                 aria-current={active ? 'page' : undefined}
-                aria-label={name}
                 aria-keyshortcuts={singleKeys ? GO_CHORD[tool] : undefined}
                 className={style}
               >

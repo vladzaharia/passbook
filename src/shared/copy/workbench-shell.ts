@@ -60,9 +60,9 @@ export const WB_SHELL_COPY = {
   chordHint: 'Go to…',
 } as const;
 
-/** "Logs, change area", plus where attention waits: the area button's accessible name. */
-export const areaButtonLabel = (area: string, attentionIn?: string): string =>
-  attentionIn ? `${area}, change area. Attention in ${attentionIn}` : `${area}, change area`;
+/** After the area button's visible name and tag: what it does, and where attention waits. */
+export const areaButtonTail = (attentionIn?: string): string =>
+  attentionIn ? `, change area. Attention in ${attentionIn}` : ', change area';
 
 /** Spoken after a context switch. */
 export const nowIn = (name: string): string => `Now in ${name}, Test`;

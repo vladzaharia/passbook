@@ -28,7 +28,7 @@ export interface ToolPageProps {
  * the area has attention, then the one primary. Sections rise in, 45 ms apart.
  */
 export function ToolPage({ tool, count, primary, toolbar, children }: ToolPageProps) {
-  const { context, attention } = useWbShell();
+  const { context, attention, seenAt } = useWbShell();
   const { title } = WB_AREA[tool];
   useDocumentTitle(WB_TAB_TITLE[tool] ?? title);
   const area = isSeenArea(tool) && attention[tool] ? tool : null;
@@ -49,7 +49,7 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
               variant="ghost"
               size="sm"
               iconStart={<Eye aria-hidden />}
-              onClick={() => markSeen(context.orgId, area, Date.now())}
+              onClick={() => markSeen(context.orgId, area, seenAt())}
             >
               {WB_SHELL_COPY.markSeen}
             </Button>

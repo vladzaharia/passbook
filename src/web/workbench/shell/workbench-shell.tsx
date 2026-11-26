@@ -1,16 +1,20 @@
 import { useNavigate } from '@tanstack/react-router';
-import { BookOpen, Keyboard, Menu } from 'lucide-react';
-import { type MouseEvent, type ReactNode, useMemo, useState } from 'react';
+import { BookOpen, Menu } from 'lucide-react';
+import {
+  lazy,
+  type MouseEvent,
+  type ReactNode,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
-import { WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { PATHS } from '@/shared/developers.ts';
 import { WB_HOME, WB_TOOLS, type WbTool, wbPath } from '@/shared/workbench.ts';
 import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
 import { MAIN_ID, useRouteArrival } from '../../lib/route-focus.tsx';
 import { ScopeCrumbContext } from '../../lib/scope-context.ts';
-import { Button } from '../../ui/button.tsx';
-import { Callout } from '../../ui/callout.tsx';
-import { DropdownMenuItem } from '../../ui/dropdown-menu.tsx';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { ActivityTray } from '../../ui/layout/activity-tray.tsx';
 import { AppShell, type AppShellProps } from '../../ui/layout/app-shell.tsx';
@@ -18,7 +22,6 @@ import { MenubarSearch, shortcutHint } from '../../ui/layout/menubar.tsx';
 import { UserMenu } from '../../ui/layout/user-menu.tsx';
 import { useMineOperations } from '../../ui/operation/store.ts';
 import { isTerminal } from '../../ui/operation/types.ts';
-import { Sheet, SheetContent } from '../../ui/sheet.tsx';
 import type { WbContext } from '../host/contexts.ts';
 import { useSessionGone } from '../host/session-gone.ts';
 import { useWorkbenchSummary } from '../host/summary.ts';
@@ -30,13 +33,19 @@ import { WorkbenchMark } from './mark.tsx';
 import { contextFreePath, navGroups } from './nav-model.ts';
 import { useOrigin } from './origin.ts';
 import { OriginChip } from './origin-chip.tsx';
-import { WorkbenchPalette } from './palette.tsx';
 import { useSingleKeys } from './prefs.ts';
 import { WbShellContext } from './shell-context.ts';
-import { ShortcutsSheet } from './shortcuts-sheet.tsx';
 import { NavColumn } from './sidebar.tsx';
 import { ChordHint, useShellKeys } from './use-shell-keys.tsx';
 import './shell.css';
+
+// The sheets, the palette and the account menu's item open on demand (WB_SHELL_BUDGET).
+const overlays = () => import('./overlays.tsx');
+const Overlays = lazy(() => overlays().then((m) => ({ default: m.ShellOverlays })));
+const ShortcutsItem = lazy(() => overlays().then((m) => ({ default: m.ShortcutsItem })));
+const SessionGoneBanner = lazy(() =>
+  import('./moments.tsx').then((m) => ({ default: m.SessionGoneBanner })),
+);
 
 export interface WorkbenchShellProps {
   /** Every context this person may open; empty signed out. */
@@ -90,17 +99,31 @@ function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchSh
     if (!tools.includes(t)) return;
     void navigate({ to: context ? wbPath(context.orgId, t) : contextFreePath(t) });
   };
-  const hint = useShellKeys({ singleKeys, onGo: go, onHelp: () => setShortcutsOpen(true) });
+  const hint = useShellKeys({
+    singleKeys,
+    onGo: go,
+    onHelp: () => setShortcutsOpen(true),
+    onPalette: () => setPaletteOpen((open) => !open),
+  });
+  // Load the overlays on the first open, or once the page is idle.
+  const [overlaysWanted, setOverlaysWanted] = useState(false);
+  if (!overlaysWanted && (navOpen || paletteOpen || shortcutsOpen)) setOverlaysWanted(true);
+  useEffect(() => {
+    if (typeof requestIdleCallback !== 'function') return;
+    const id = requestIdleCallback(() => void overlays());
+    return () => cancelIdleCallback(id);
+  }, []);
   const shell = useMemo(
     () => ({
       context,
       contexts,
       tool,
       attention,
+      seenAt: () => summary.data?.now ?? Date.now(),
       openShortcuts: () => setShortcutsOpen(true),
       openPalette: () => setPaletteOpen(true),
     }),
-    [context, contexts, tool, attention],
+    [context, contexts, tool, attention, summary.data?.now],
   );
   const crumb = useMemo(
     () => (context ? { label: context.name, to: home } : undefined),
@@ -162,10 +185,9 @@ function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchSh
     account: (
       <UserMenu
         extra={
-          <DropdownMenuItem onSelect={() => setShortcutsOpen(true)}>
-            <Keyboard aria-hidden />
-            {WB_SHELL_COPY.shortcuts}
-          </DropdownMenuItem>
+          <Suspense fallback={null}>
+            <ShortcutsItem onSelect={() => setShortcutsOpen(true)} />
+          </Suspense>
         }
       />
     ),
@@ -200,31 +222,30 @@ function Shell({ contexts, context, tool, signedOutNext, children }: WorkbenchSh
           </a>
           <RouteArrivals />
           <AppShell bar={bar} sidebar={sidebar} width="console" holder={false}>
-            {sessionGone ? <SessionGoneBanner /> : null}
+            {sessionGone ? (
+              <Suspense fallback={null}>
+                <SessionGoneBanner />
+              </Suspense>
+            ) : null}
             {children}
           </AppShell>
-          <Sheet open={navOpen} onOpenChange={setNavOpen}>
-            <SheetContent
-              side="left"
-              title={WB_SHELL_COPY.nav}
-              header={<WorkbenchMark to={home} />}
-            >
-              {origin ? <div className="px-3 pt-3 sm:hidden">{search}</div> : null}
-              <NavColumn
+          {overlaysWanted ? (
+            <Suspense fallback={null}>
+              <Overlays
+                navOpen={navOpen}
+                onNavOpen={setNavOpen}
+                paletteOpen={paletteOpen}
+                onPaletteOpen={setPaletteOpen}
+                shortcutsOpen={shortcutsOpen}
+                onShortcutsOpen={setShortcutsOpen}
+                home={home}
                 nav={nav}
                 signedOutNext={signedOutNext}
                 quickstartDone={done}
-                inSheet
-                onNavigate={() => setNavOpen(false)}
+                sheetTop={origin ? <div className="px-3 pt-3 sm:hidden">{search}</div> : null}
               />
-            </SheetContent>
-          </Sheet>
-          <WorkbenchPalette
-            open={paletteOpen}
-            onOpenChange={setPaletteOpen}
-            singleKeys={singleKeys}
-          />
-          <ShortcutsSheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+            </Suspense>
+          ) : null}
           {hint ? <ChordHint tools={tools} /> : null}
         </div>
       </ScopeCrumbContext.Provider>
@@ -238,26 +259,6 @@ function skipToNav(e: MouseEvent, openSheet: () => void) {
   const nav = document.getElementById(NAV_ID);
   if (nav && nav.offsetParent !== null) nav.focus();
   else openSheet();
-}
-
-/** The session behind the token ended: one banner, the page kept, back to this URL after. */
-function SessionGoneBanner() {
-  const here = `${location.pathname}${location.search}${location.hash}`;
-  return (
-    <Callout
-      tone="warning"
-      title={WB_STATES.sessionExpired.title}
-      actionsAside
-      className="mb-4"
-      actions={
-        <Button asChild variant="outline" size="sm">
-          <a href={`/login?next=${encodeURIComponent(here)}&reason=expired`}>
-            {WB_STATES.sessionExpired.action}
-          </a>
-        </Button>
-      }
-    />
-  );
 }
 
 export function WorkbenchShell(props: WorkbenchShellProps) {

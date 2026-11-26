@@ -69,9 +69,9 @@ describe('WorkbenchShell', () => {
       'g l',
     );
     expect(screen.getAllByRole('link', { name: 'Workbench' }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /dev-4f8c673e, Switch context/ })).toHaveTextContent(
-      'Sandbox · Test',
-    );
+    expect(
+      screen.getByRole('button', { name: /^dev-4f8c673e Sandbox · Test, Switch context$/ }),
+    ).toHaveTextContent('Sandbox · Test');
     expect(container.querySelector('[data-menubar]')).not.toHaveAttribute('data-tone');
     // One live region for the space: the shell's queue, not the SPA's route announcer.
     expect(container.querySelectorAll('[aria-live]')).toHaveLength(1);
@@ -104,6 +104,8 @@ describe('WorkbenchShell', () => {
       'aria-current',
       'page',
     );
+    // The router's prefix match would mark Home current too; the shell decides.
+    expect(within(nav()).getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
 
   it('L13: tenant calls carry the bearer, omit the cookie and send no mode', async () => {
@@ -141,7 +143,7 @@ describe('WorkbenchShell', () => {
       within(nav()).getByRole('link', { name: 'Quickstart, 4 of 5 done' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Home, change area. Attention in Logs' }),
+      screen.getByRole('button', { name: 'Home Test, change area. Attention in Logs' }),
     ).toHaveAttribute('aria-haspopup', 'dialog');
   });
 
@@ -173,6 +175,15 @@ describe('WorkbenchShell', () => {
     fireEvent.keyDown(document.body, { key: 'l' });
     await act(async () => {});
     expect(router.state.location.pathname).toBe('/workbench/o/sbx/events');
+  });
+
+  it('⌘K opens the palette with the areas, found by their keywords', async () => {
+    await renderApp('/workbench/o/sbx', { session: 'developer', handlers: handlers() });
+    await screen.findByRole('heading', { name: 'Home', level: 1 });
+    fireEvent.keyDown(document.body, { key: 'k', ctrlKey: true });
+    const input = await screen.findByPlaceholderText('Search tools, ids, docs');
+    fireEvent.change(input, { target: { value: 'webhooks' } });
+    expect(await screen.findByRole('option', { name: /Events/ })).toBeInTheDocument();
   });
 
   it('? opens the shortcuts sheet with the single-key switch', async () => {

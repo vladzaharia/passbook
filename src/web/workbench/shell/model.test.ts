@@ -133,6 +133,7 @@ describe('shell keys', () => {
     expect(resolveShellKey(key('g'), off).action).toBeNull();
     expect(resolveShellKey(key('?'), off).action).toBeNull();
     expect(resolveShellKey(key('/', { metaKey: true }), off).action).toEqual({ kind: 'help' });
+    expect(resolveShellKey(key('k', { ctrlKey: true }), off).action).toEqual({ kind: 'palette' });
   });
 
   it('never fires in a field, a menu, a dialog, a wizard or the designer canvas', () => {

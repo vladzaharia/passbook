@@ -14,7 +14,7 @@ function layerOpen(): boolean {
 }
 
 /**
- * The shell's keys (design §5.4): `g` + a letter opens an area, `?` and ⌘/ the shortcuts sheet.
+ * The shell's keys (design §5.4): ⌘K the palette, `g` + a letter an area, `?` and ⌘/ the sheet.
  * A `g` waits 1.2 s for its second key, shows its hint and says it once. Off, single keys stop.
  * Returns whether the chord hint shows.
  */
@@ -22,15 +22,17 @@ export function useShellKeys({
   singleKeys,
   onGo,
   onHelp,
+  onPalette,
 }: {
   singleKeys: boolean;
   onGo: (tool: WbTool) => void;
   onHelp: () => void;
+  onPalette: () => void;
 }): boolean {
   const announce = useAnnounce();
   const [hint, setHint] = useState(false);
-  const latest = useRef({ singleKeys, onGo, onHelp, announce });
-  latest.current = { singleKeys, onGo, onHelp, announce };
+  const latest = useRef({ singleKeys, onGo, onHelp, onPalette, announce });
+  latest.current = { singleKeys, onGo, onHelp, onPalette, announce };
   useEffect(() => {
     let chord = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -40,7 +42,7 @@ export function useShellKeys({
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.repeat) return;
-      const { singleKeys: on, onGo: go, onHelp: help, announce: say } = latest.current;
+      const { singleKeys: on, onGo: go, onHelp: help, onPalette, announce: say } = latest.current;
       const next = resolveShellKey(e, { chord, singleKeys: on, layerOpen: layerOpen() });
       clearTimeout(timer);
       chord = next.chord;
@@ -51,6 +53,7 @@ export function useShellKeys({
       e.preventDefault();
       if (action.kind === 'chord') say(WB_SHELL_COPY.chordHint, { clearAfter: CHORD_MS });
       else if (action.kind === 'help') help();
+      else if (action.kind === 'palette') onPalette();
       else go(action.tool);
     };
     addEventListener('keydown', onKey);

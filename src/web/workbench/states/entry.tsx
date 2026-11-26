@@ -7,7 +7,7 @@ import { useDocumentTitle } from '../../lib/route-focus.tsx';
 import { useSession } from '../../lib/session.ts';
 import { CARD_SURFACE } from '../../ui/card-base.tsx';
 import { useWorkbenchContexts, type WbContext } from '../host/contexts.ts';
-import { Monogram, TestLine } from '../shell/context-switcher.tsx';
+import { Monogram, TestLine } from '../shell/switcher-face.tsx';
 import { NoSandboxState, NoWorkbenchAccess } from './states.tsx';
 
 /** Several contexts and none remembered: pick one. The sandbox, if any, is first. */

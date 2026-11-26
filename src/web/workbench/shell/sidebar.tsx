@@ -1,36 +1,21 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowUpRight, BookOpen, Check, KeyRound } from 'lucide-react';
-import { POLARIS_ID_COPY } from '@/shared/copy/sign-in.ts';
+import { ArrowUpRight, BookOpen, Check } from 'lucide-react';
+import { lazy, Suspense } from 'react';
 import { countsFor, WB_AREA, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
-import { WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { PATHS } from '@/shared/developers.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
-import { Buddy } from '../../ui/art/index.ts';
-import { Button } from '../../ui/button.tsx';
 import { shortcutHint } from '../../ui/layout/menubar.tsx';
 import { adminLink } from '../host/tool-host.tsx';
 import { ContextSwitcher } from './context-switcher.tsx';
 import { WorkbenchNav, type WorkbenchNavProps } from './nav.tsx';
 import { useWbShell } from './shell-context.ts';
 
+// Signed out only, so its buddy and button load with it (WB_SHELL_BUDGET).
+const SignInCard = lazy(() => import('./moments.tsx').then((m) => ({ default: m.SignInCard })));
+
 const FOOT_LINK =
   'flex min-h-8 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium text-fg-muted wl-colors hover:bg-state-hover-tint hover:text-fg-strong pointer-coarse:min-h-11';
-
-/** Signed out, at the sidebar's foot: the buddy waves over one line and Sign in. */
-function SignInCard({ next }: { next: string }) {
-  return (
-    <div className="relative mx-3 mt-16 mb-3 rounded-lg border border-dashed border-border-strong bg-surface-page px-3.5 pt-3 pb-3.5">
-      <div aria-hidden className="absolute -top-px right-4 h-0 w-16">
-        <Buddy size="sm" scene="wave" mood="happy" state="login" at="end" />
-      </div>
-      <p className="mb-2.5 text-sm font-medium text-fg-strong">{WB_STATES.signedOut.title}</p>
-      <Button asChild size="sm" iconStart={<KeyRound aria-hidden />} className="w-full">
-        <a href={`/auth/oidc/start?next=${encodeURIComponent(next)}`}>{POLARIS_ID_COPY.signIn}</a>
-      </Button>
-    </div>
-  );
-}
 
 /**
  * The navigation column: the context switcher, the grouped nav, then the foot (Go live or Open in
@@ -68,7 +53,11 @@ export function NavColumn({
       ) : null}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <WorkbenchNav {...nav} onNavigate={onNavigate} />
-        {signedOutNext ? <SignInCard next={signedOutNext} /> : null}
+        {signedOutNext ? (
+          <Suspense fallback={null}>
+            <SignInCard next={signedOutNext} />
+          </Suspense>
+        ) : null}
       </div>
       <div className="flex shrink-0 flex-col gap-0.5 border-t border-border px-3 py-2.5">
         {context?.kind === 'sandbox' ? (

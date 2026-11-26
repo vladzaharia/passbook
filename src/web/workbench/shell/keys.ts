@@ -34,7 +34,11 @@ export const GO_CHORD: Readonly<Record<WbTool, string>> = {
 /** A `g` waits this long for its second key. */
 export const CHORD_MS = 1200;
 
-export type ShellAction = { kind: 'go'; tool: WbTool } | { kind: 'help' } | { kind: 'chord' };
+export type ShellAction =
+  | { kind: 'go'; tool: WbTool }
+  | { kind: 'help' }
+  | { kind: 'palette' }
+  | { kind: 'chord' };
 
 export interface ShellKey {
   key: string;
@@ -67,7 +71,7 @@ export function ownsKeys(target: EventTarget | null): boolean {
 }
 
 /**
- * The shell's action for one key. ⌘/ (Ctrl+/) always opens the sheet. Single keys need the
+ * The shell's action for one key. ⌘K toggles the palette and ⌘/ opens the sheet, anywhere. Single keys need the
  * switch on, no modifier, no open layer and a target that does not own them. Pure: the hook
  * keeps the chord and the layer state.
  */
@@ -76,6 +80,7 @@ export function resolveShellKey(
   state: { chord: boolean; singleKeys: boolean; layerOpen: boolean },
 ): { action: ShellAction | null; chord: boolean } {
   const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key.toLowerCase() === 'k') return { action: { kind: 'palette' }, chord: false };
   if (mod && e.key === '/') return { action: { kind: 'help' }, chord: false };
   if (!state.singleKeys || mod || e.altKey || state.layerOpen || ownsKeys(e.target))
     return { action: null, chord: false };

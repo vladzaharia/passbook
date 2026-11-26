@@ -27,7 +27,7 @@ const DOCS: { label: string; href: string; keywords: string[] }[] = [
 ];
 
 /**
- * The Workbench's ⌘K (design §2.4): the one kit `CommandPalette`, with the Workbench's sources:
+ * The Workbench's ⌘K (design §2.4; the shell binds the key): the one kit `CommandPalette`, with the Workbench's sources:
  * areas in this context, the other contexts, the shell's actions and the docs (which open there).
  */
 export function WorkbenchPalette({
@@ -47,17 +47,6 @@ export function WorkbenchPalette({
   useEffect(() => {
     if (!open) setQuery('');
   }, [open]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        onOpenChange(!open);
-      }
-    };
-    addEventListener('keydown', onKey);
-    return () => removeEventListener('keydown', onKey);
-  }, [open, onOpenChange]);
 
   const q = query.trim();
   // Words an item answers to beyond its label ("webhooks" finds Events).

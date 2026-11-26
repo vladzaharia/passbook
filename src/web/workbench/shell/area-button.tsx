@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { areaButtonLabel, WB_AREA, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
+import { areaButtonTail, WB_AREA, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
 import type { WbTool } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
 import type { WbContext } from '../host/contexts.ts';
@@ -41,7 +41,7 @@ export function TestTag({ context }: { context: WbContext | null }) {
 /**
  * Below 1024 the bar names the area (design §1.3): glyph tile, name, Test tag and a chevron, 44 px,
  * opening the nav sheet. The tile carries one danger dot when another area asks for attention, and
- * the name says where ("Logs, change area. Attention in Events").
+ * the name says where.
  */
 export function AreaButton({
   tool,
@@ -59,7 +59,6 @@ export function AreaButton({
     <button
       type="button"
       aria-haspopup="dialog"
-      aria-label={areaButtonLabel(area, attentionIn ? WB_AREA[attentionIn].label : undefined)}
       onClick={onOpen}
       className="flex h-11 shrink-0 items-center gap-2 rounded-md pr-2 pl-1 text-[0.9375rem] font-semibold text-fg-strong wl-colors hover:bg-state-hover-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
@@ -68,9 +67,13 @@ export function AreaButton({
         {attentionIn ? <span className="wb-attn-dot" /> : null}
       </span>
       {/* Every area is one word, and the name never truncates below its first (design §7). */}
-      <span className="whitespace-nowrap">{area}</span>
-      <ChevronDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
+      <span className="whitespace-nowrap">{area}</span>{' '}
+      <ChevronDown aria-hidden className="size-4 shrink-0 text-fg-muted" />{' '}
       <TestTag context={context} />
+      {/* The name is the visible words plus these: "Logs Test, change area. Attention in Events". */}
+      <span className="sr-only">
+        {areaButtonTail(attentionIn ? WB_AREA[attentionIn].label : undefined)}
+      </span>
     </button>
   );
 }
