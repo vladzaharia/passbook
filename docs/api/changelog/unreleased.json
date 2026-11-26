@@ -53,7 +53,7 @@
     "operationId": "developer.deleteSandbox",
     "op": "DELETE /api/v1/developer/sandbox",
     "change": "response 200 removed",
-    "note": "Answers 202 with an operation (kind sandbox.delete) and the work runs after the answer; follow it at GET /api/v1/operations/{id}. A browser session calls it, no key: no version opt-in.",
+    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in.",
     "unversioned": true
   },
   {
@@ -2939,7 +2939,7 @@
     "operationId": "developer.postSandbox",
     "op": "POST /api/v1/developer/sandbox",
     "change": "response 201 removed",
-    "note": "Answers 202 with an operation (kind sandbox.create), not 201 with the key. The key is minted once afterwards by POST /api/v1/developer/sandbox/key. A browser session calls it, no key: no version opt-in.",
+    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in.",
     "unversioned": true
   },
   {
@@ -2972,7 +2972,7 @@
     "operationId": "developer.postSandboxRecreate",
     "op": "POST /api/v1/developer/sandbox/recreate",
     "change": "response 201 removed",
-    "note": "Answers 202 with an operation (kind sandbox.recreate), not 201 with the key; the key is minted once afterwards. A browser session calls it, no key: no version opt-in.",
+    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in.",
     "unversioned": true
   },
   {
@@ -2997,7 +2997,7 @@
     "operationId": "developer.postSandboxReset",
     "op": "POST /api/v1/developer/sandbox/reset",
     "change": "response 200 removed",
-    "note": "Answers 202 with an operation (kind sandbox.reset); the counts, resets left and key arrive as steps, result ids and POST /api/v1/developer/sandbox/key. The 25 second budget and `more` are gone: the work runs to the end. A browser session calls it, no key: no version opt-in.",
+    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in.",
     "unversioned": true
   },
   {
