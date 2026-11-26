@@ -1,7 +1,7 @@
 import type { OperationDto, OperationStep } from '../../../shared/contracts/operations.ts';
-import type { AuthContext } from '../../platform/auth.ts';
+import { type AuthContext, isOwnOnly } from '../../platform/auth.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { AppError } from '../../platform/errors.ts';
+import { AppError, ForbiddenError } from '../../platform/errors.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -42,6 +42,7 @@ export async function cancelOperation(
   auth: AuthContext,
   id: string,
 ): Promise<OperationDto> {
+  if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
   const dto = toDto(row);
   const policy = kindOf(row.kind)?.cancel ?? 'never';
@@ -114,6 +115,7 @@ export async function retryOperation(
   id: string,
   idempotencyKey?: string,
 ): Promise<OperationDto> {
+  if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
   // The key is kept as a hash on the row, per principal.
   const retryKey =

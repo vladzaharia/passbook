@@ -257,5 +257,10 @@
     "response": {
       "ok": true
     }
+  },
+  "me.postMePassesByIdLostPhoneConfirmation": {
+    "response": {
+      "ok": true
+    }
   }
 }

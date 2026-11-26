@@ -3713,6 +3713,14 @@
     "note": "Lost phone is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
   },
   {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone/confirmation new operation",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdLostPhoneConfirmation",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone/confirmation",
+    "change": "new operation",
+    "note": "Emails a sign-in link back to the pass. Lost phone then needs an email-link session under 10 minutes old (409 EMAIL_CONFIRMATION_REQUIRED)."
+  },
+  {
     "key": "POST /api/v1/me/passes/{id}/refresh 202.operationId: field added",
     "class": "additive",
     "operationId": "me.postMePassesByIdRefresh",

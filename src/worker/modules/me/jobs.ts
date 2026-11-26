@@ -26,8 +26,6 @@ export async function handleHolderMail(
   const progress = progressOf(ctx, job.operationId, 1);
   // A lost-phone transfer still finishing: fail so the queue retries after its backoff.
   if (await hasPendingIssuanceTransfer(ctx.env.DB, job.passId)) {
-    if (job.reason === 'lost_phone')
-      await progress.waiting('wallets', { reason: 'Waiting for your wallets' });
     throw new ConflictError('The pass is changing. Retrying.', 'HOLDER_TRANSFER_PENDING');
   }
   const pass = await getPass(ctx.env.DB, job.passId);

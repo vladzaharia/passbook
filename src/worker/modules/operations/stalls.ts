@@ -12,6 +12,8 @@ const DEFAULT_STALL_MS = 10 * 60_000;
 /** No kind stalls sooner: the first query only reads rows silent this long. */
 const MIN_STALL_MS = 60_000;
 const BATCH = 100;
+/** A timed wait is a lost wake-up this long after its end (the longest gap between looks is 15 min). */
+const LOST_LOOK_GRACE_MS = 20 * 60_000;
 const DEAD_WORKFLOW = new Set(['errored', 'terminated']);
 
 const stalled = () => new AppError('OPERATION_STALLED', 500, 'The operation stopped responding.');
@@ -82,6 +84,18 @@ function lostWakeUp(row: OperationRow, now: number): boolean {
       .map((s) => s.key),
   );
   const steps = parseSteps(row.steps);
+  // A timed wait whose end has long passed: the look that should have ended it was lost.
+  if (
+    steps.some(
+      (s) =>
+        s.state === 'waiting' &&
+        s.waitingReason === 'due' &&
+        !tails.has(s.key) &&
+        s.until !== null &&
+        s.until < now - LOST_LOOK_GRACE_MS,
+    )
+  )
+    return true;
   // A step blocked until a time (Apple, a rate window) is a wait the operation is meant to sit in.
   if (steps.some((s) => s.state === 'waiting' && s.waitingReason === 'blocked')) return false;
   return steps.some((s) => s.state === 'pending' && !tails.has(s.key));

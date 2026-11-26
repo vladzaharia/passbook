@@ -2,6 +2,7 @@ import { notifyManager, queryOptions, useQuery, useQueryClient } from '@tanstack
 import { OrgMembershipListSchema } from '@/shared/contracts/org-membership.ts';
 import { type SessionResponse, SessionResponseSchema } from '@/shared/contracts/session.ts';
 import { NEXT_COOKIE, NEXT_COOKIE_PATH, safeNextPath } from '@/shared/next.ts';
+import { resetOperationCache } from '../ui/operation/store.ts';
 import { api, resetSessionEnded } from './api.ts';
 import { ApiError, problemToError } from './errors.ts';
 import { clearLocalDrafts } from './local-drafts.ts';
@@ -9,6 +10,7 @@ import { setTestOnlyOrgs } from './mode.ts';
 import { clearPreviewBatches } from './preview-batch.ts';
 import { loginHref } from './redirect.ts';
 import { clearSavedPasses } from './saved-passes.ts';
+import { announceSessionEnd } from './session-signal.ts';
 
 export type AuthedSession = Extract<SessionResponse, { authenticated: true }>;
 
@@ -38,6 +40,8 @@ export const sessionQuery = queryOptions({
           // end the new session. Observers see the identity and cache eviction in one batch.
           client.setQueryData<SessionResponse>(['session'], session);
           clearPreviewBatches();
+          // The old account's operations leave this tab's cache, tray and toasts with its queries.
+          resetOperationCache();
           const cache = client.getQueryCache();
           for (const query of cache.getAll()) {
             if (query.queryKey.length === 1 && query.queryKey[0] === 'session') continue;
@@ -230,6 +234,8 @@ export async function endSession(
 /** Leaves for `target`, marking the tab so the sign-in page waves and keeps `next`. */
 export function leaveSignedOut(target: string, next?: string): void {
   clearPreviewBatches();
+  resetOperationCache();
+  announceSessionEnd();
   clearLocalDrafts();
   try {
     sessionStorage.setItem(BYE, String(Date.now()));

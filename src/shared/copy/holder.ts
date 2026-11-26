@@ -86,6 +86,7 @@ export const HOLDER_COPY = {
   sendAgainWait: 'Sent a few already. Try again in an hour.',
   /** My passes: new code and link; old copies stop at the door. */
   lostPhone: 'I lost my phone',
+  lostPhoneConfirm: 'We emailed you a link. Open it to finish.',
   lostPhoneDone:
     'The old copies stop working and your other devices are signed out. Check your email for the new pass.',
   /** A voided or expired pass: when, then who to ask. */

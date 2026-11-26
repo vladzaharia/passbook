@@ -2321,6 +2321,7 @@
     "ASSET_SLOT",
     "AUTHORITY_DENIED",
     "DELIVERY_STALE",
+    "EMAIL_CONFIRMATION_REQUIRED",
     "EMAIL_INVALID",
     "EMAIL_OUTCOME_UNKNOWN",
     "EMAIL_RATE_LIMITED",
@@ -2364,6 +2365,13 @@
     "UNAUTHENTICATED",
     "VALIDATION",
     "WALLET_PROJECTION_UNSUPPORTED"
+  ],
+  "me post /passes/{id}/lost-phone/confirmation": [
+    "EMAIL_RATE_LIMITED",
+    "NO_RECIPIENT",
+    "PASS_NOT_FOUND",
+    "PASS_VOIDED",
+    "UNAUTHENTICATED"
   ],
   "me post /passes/{id}/refresh": [
     "IDEMPOTENCY_KEY_REUSED",

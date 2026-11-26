@@ -4,7 +4,11 @@ import { holderCommon, holderErrors } from '../holder.ts';
 export const holderLostPhone = defineOperationKind({
   ...holderCommon,
   kind: 'holder.lost_phone',
-  errors: holderErrors,
+  errors: {
+    ...holderErrors,
+    HOLDER_TRANSFER_PENDING:
+      'The new pass was not sent: your wallets have not updated. Try again later.',
+  },
   title: 'Lost phone',
   doneTitle: 'New pass sent',
   failTitle: 'Could not replace the pass',

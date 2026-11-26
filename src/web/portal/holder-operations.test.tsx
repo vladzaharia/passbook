@@ -1,8 +1,8 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
-import { json, renderApp } from '../lib/test-utils.tsx';
+import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import {
   fixtureOperation,
   HOLDER_LOST_PHONE,
@@ -57,14 +57,15 @@ describe('Send it again as an operation', () => {
           return json({ ok: true, operationId: posts === 1 ? 'op-s1' : 'op-s2' }, 202);
         },
         '/api/v1/operations/op-s1': () =>
-          json(
-            fixtureOperation(HOLDER_RESEND, {
+          json({
+            ...fixtureOperation(HOLDER_RESEND, {
               status: 'failed',
               at: 'mail',
               id: 'op-s1',
               error: 'Too many emails to this address. Try again in an hour.',
             }),
-          ),
+            target: { type: 'pass', id: 'p1' },
+          }),
         '/api/v1/operations/op-s2': () =>
           json(fixtureOperation(HOLDER_RESEND, { status: 'running', at: 'mail', id: 'op-s2' })),
       },
@@ -136,5 +137,74 @@ describe('I lost my phone as an operation', () => {
     ])
       expect(within(sheet).getByText(label)).toBeVisible();
     expect(screen.queryByText(HOLDER_COPY.lostPhoneDone)).toBeNull();
+  });
+});
+
+describe('lost phone asks for a fresh email confirmation', () => {
+  it('sends the link when the session is not fresh, and says so', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () => json(passFixture()),
+        '/api/v1/me/passes/p1/lost-phone': () => {
+          calls.push('lost');
+          return problem(409, 'EMAIL_CONFIRMATION_REQUIRED', 'Confirm by email first.');
+        },
+        '/api/v1/me/passes/p1/lost-phone/confirmation': () => {
+          calls.push('confirmation');
+          return json({ ok: true }, 202);
+        },
+      },
+    });
+    await openMore(user, HOLDER_COPY.lostPhone);
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Replace pass' }),
+    );
+    expect(await screen.findByText(HOLDER_COPY.lostPhoneConfirm)).toBeVisible();
+    expect(calls).toEqual(['lost', 'confirmation']);
+  });
+
+  it('the link lands with the question open again, once', async () => {
+    window.history.replaceState(null, '', '/passes/p1?lostPhone=p1');
+    await renderApp('/passes/p1?lostPhone=p1', {
+      handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
+    });
+    expect(await screen.findByRole('alertdialog')).toBeVisible();
+    expect(window.location.search).not.toContain('lostPhone');
+  });
+});
+
+describe('a sheet restored from the URL still offers Retry', () => {
+  it('a lost phone that failed after the code was replaced sends the pass again, not a second replacement', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    window.history.replaceState(null, '', '/?op=op-l1');
+    await renderApp('/', {
+      handlers: {
+        '/api/v1/me/passes': () => json({ items: [passFixture()], nextCursor: null }),
+        '/api/v1/me/passes/p1/lost-phone': () => {
+          calls.push('lost');
+          return json({ transferId: 't', state: 'completed', operationId: 'op-x' }, 202);
+        },
+        '/api/v1/me/passes/p1/resend': () => {
+          calls.push('resend');
+          return json({ ok: true, operationId: 'op-x' }, 202);
+        },
+        '/api/v1/operations/op-x': () =>
+          json(fixtureOperation(HOLDER_RESEND, { status: 'running', at: 'mail', id: 'op-x' })),
+        '/api/v1/operations/op-l1': () =>
+          json({
+            ...fixtureOperation(HOLDER_LOST_PHONE, { status: 'failed', at: 'mail', id: 'op-l1' }),
+            target: { type: 'pass', id: 'p1' },
+          }),
+      },
+    });
+    const sheet = await screen.findByRole('dialog', { name: 'Lost phone' });
+    await user.click(await within(sheet).findByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(calls).toEqual(['resend']));
+    expect(await screen.findByRole('dialog', { name: 'Email my pass' })).toBeVisible();
+    // One sheet only: the tray does not reopen the one that was restored.
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
   });
 });

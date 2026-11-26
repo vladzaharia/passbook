@@ -82981,6 +82981,7 @@
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
           "BUNDLE_TOO_LARGE",
+          "EMAIL_CONFIRMATION_REQUIRED",
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_RATE_LIMITED",
@@ -83345,6 +83346,7 @@
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
           "DELIVERY_STALE",
+          "EMAIL_CONFIRMATION_REQUIRED",
           "EMAIL_INVALID",
           "EMAIL_OUTCOME_UNKNOWN",
           "EMAIL_RATE_LIMITED",
@@ -83390,6 +83392,78 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
+        ]
+      }
+    },
+    "/api/v1/me/passes/{id}/lost-phone/confirmation": {
+      "post": {
+        "summary": "Email me a sign-in link that lands back on this pass, to confirm a lost phone",
+        "tags": [
+          "me"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "me.postMePassesByIdLostPhoneConfirmation",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "EMAIL_RATE_LIMITED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "PASS_NOT_FOUND",
+          "PASS_VOIDED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
         ]
       }
     },

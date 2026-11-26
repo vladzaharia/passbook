@@ -21,6 +21,8 @@ export const myPassesQuery = infiniteQueryOptions({
   queryFn: ({ pageParam, signal }) =>
     api.get('/api/v1/me/passes', MyPassListSchema, { query: { cursor: pageParam }, signal }),
   getNextPageParam: (last) => last.nextCursor ?? undefined,
+  // An admin's refresh or reissue shows when the holder comes back to the tab.
+  refetchOnWindowFocus: 'always',
 });
 
 export function myPassQuery(id: string) {
@@ -31,6 +33,7 @@ export function myPassQuery(id: string) {
         signal,
         timeoutMs: PAGE_FETCH_TIMEOUT_MS,
       }),
+    refetchOnWindowFocus: 'always',
   });
 }
 
@@ -55,6 +58,9 @@ export const resendPass = (id: string) =>
 
 export const lostPhone = (id: string) =>
   api.post(`/api/v1/me/passes/${encodeURIComponent(id)}/lost-phone`, RemovePassStartedSchema);
+
+export const sendLostPhoneConfirmation = (id: string) =>
+  api.post(`/api/v1/me/passes/${encodeURIComponent(id)}/lost-phone/confirmation`, OkSchema);
 
 export const removePass = (id: string) =>
   api.deleteJson(`/api/v1/me/passes/${encodeURIComponent(id)}`, RemovePassStartedSchema);

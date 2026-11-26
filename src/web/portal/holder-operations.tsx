@@ -12,6 +12,8 @@ import {
   useState,
 } from 'react';
 import { sessionOperationsClient } from '../lib/operations-client.ts';
+import { sessionQuery } from '../lib/session.ts';
+import { onSessionEnd } from '../lib/session-signal.ts';
 import {
   isTerminal,
   OperationsProvider,
@@ -20,7 +22,7 @@ import {
   useOperation,
   useOperationParam,
 } from '../ui/operation/index.ts';
-import { useMineOperations } from '../ui/operation/store.ts';
+import { resetOperationCache, useMineOperations } from '../ui/operation/store.ts';
 import { myPassesKey } from './api.ts';
 
 export interface FollowOptions {
@@ -67,6 +69,9 @@ export function HolderOperationsProvider({ children }: { children: ReactNode }) 
   const [id, setId] = useOperationParam();
   // A reload restores the sheet from `?op`; the tray opens none for an id this sheet owns.
   useClaimOperation(id);
+  // The tray read the same `?op` when it mounted: it must not open that one when this sheet moves on to another.
+  const [restored] = useState(id);
+  useClaimOperation(restored);
   const [followed, setFollowed] = useState<readonly string[]>([]);
   const restarts = useRef(new Map<string, () => void>());
 
@@ -91,6 +96,17 @@ export function HolderOperationsProvider({ children }: { children: ReactNode }) 
     }
   }, [mine, queries]);
 
+  // Another tab signed out or switched account: this tab drops what it holds and asks who it is now.
+  useEffect(
+    () =>
+      onSessionEnd(() => {
+        resetOperationCache();
+        setFollowed([]);
+        void queries.invalidateQueries({ queryKey: sessionQuery.queryKey });
+      }),
+    [queries],
+  );
+
   const value = useMemo(() => ({ follow }), [follow]);
   return (
     <OperationsProvider client={client}>
@@ -101,7 +117,12 @@ export function HolderOperationsProvider({ children }: { children: ReactNode }) 
         ))}
         {id ? (
           <Suspense fallback={null}>
-            <HolderSheet id={id} restart={restarts.current.get(id)} onClose={() => setId(null)} />
+            <HolderSheet
+              id={id}
+              restart={restarts.current.get(id)}
+              follow={follow}
+              onClose={() => setId(null)}
+            />
           </Suspense>
         ) : null}
       </Context.Provider>

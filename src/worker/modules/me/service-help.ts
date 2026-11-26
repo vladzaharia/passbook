@@ -4,10 +4,12 @@ import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { issueMagicLink } from '../auth/magic-service.ts';
 import { revokeAllForUser } from '../auth/sessions.ts';
 import { recipientEmailBudget } from '../delivery/repo-email-budget.ts';
 import { rotateOwnPassCredentials } from '../holders/service-rotate.ts';
 import { CredentialTransferReissueRequired } from '../passes/credential-transfer.ts';
+import { FIRST_CHECK_S, sendWaitCheck, waitOnWallets } from './operations.ts';
 import { assertNoActiveHolderOperation, startHolderOperation } from './operations-start.ts';
 import * as repo from './repo.ts';
 import { sourceOf } from './service-actions.ts';
@@ -64,6 +66,45 @@ export async function resendMyPass(
   return { ok: true as const, operationId: op.id };
 }
 
+const FRESH_MS = 10 * 60_000;
+
+/**
+ * Lost phone replaces the code and signs every other device out, so the one that asks must have just proved the
+ * inbox: a session that came from an email link in the last 10 minutes. A finder holding a stolen session does not
+ * have it; the owner confirms by a link and the action runs from that new session, which is the one kept.
+ */
+async function assertFreshEmailSession(ctx: ServiceContext, sessionId: string) {
+  const born = await repo.sessionBirth(ctx.env.DB, sessionId);
+  if (born?.amr !== 'magic_link' || ctx.clock.now() - born.created_at > FRESH_MS)
+    throw new AppError(
+      'EMAIL_CONFIRMATION_REQUIRED',
+      409,
+      'Confirm by email first. Open the link we send, then try again.',
+    );
+}
+
+/** Mails the owner a sign-in link that lands back on this pass, to run lost phone from a fresh session. */
+export async function sendLostPhoneConfirmation(
+  ctx: ServiceContext,
+  userId: string,
+  passId: string,
+  bindingHash: string,
+) {
+  const { row, to } = await ownedActive(ctx, userId, passId);
+  if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost-confirm:${userId}`)))
+    throw new RateLimitedError();
+  await assertRecipientBudget(ctx, row.mode, to);
+  await issueMagicLink(ctx, {
+    email: to,
+    purpose: 'sign_in',
+    userId,
+    bindingHash,
+    next: `/passes/${passId}?lostPhone=${passId}`,
+    prefer: 'link',
+  });
+  return { ok: true as const };
+}
+
 /**
  * Lost phone: new code and link, old copies refused, the pass sent again. Only the signed-in owner,
  * only to the pass's own email: the body names nothing, so a pass cannot move to another person.
@@ -76,6 +117,7 @@ export async function lostMyPhone(
 ) {
   const { row } = await ownedActive(ctx, userId, passId);
   const who = { userId, sessionId };
+  await assertFreshEmailSession(ctx, sessionId);
   if (
     !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${userId}`)) ||
     !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${passId}`))
@@ -102,26 +144,29 @@ export async function lostMyPhone(
       );
     throw error;
   });
+  // The lost phone's other sessions end with the old code, before any bookkeeping can fail: a finder cannot open
+  // My passes. This session stays, and the operation is pinned to it, so the holder watches the rest.
+  await revokeAllForUser(ctx, userId, sessionId);
+  await recordAudit(ctx, {
+    actorType: 'user',
+    actorId: userId,
+    action: 'user.sessions_revoke',
+    targetType: 'user',
+    targetId: userId,
+    detail: { reason: 'lost_phone' },
+  });
   const op = await startHolderOperation(ctx, who, 'holder.lost_phone', passId);
   try {
     await op.progress.step('rotate').done();
-    // The lost phone's other sessions end with the old code: a finder cannot open My passes. This session stays,
-    // and the operation is pinned to it, so the holder watches the rest.
-    await revokeAllForUser(ctx, userId, sessionId);
-    await recordAudit(ctx, {
-      actorType: 'user',
-      actorId: userId,
-      action: 'user.sessions_revoke',
-      targetType: 'user',
-      targetId: userId,
-      detail: { reason: 'lost_phone' },
-    });
     await op.progress.step('signout').done();
-    if (result.state === 'pending')
-      await op.progress.waiting('wallets', { reason: 'Waiting for your wallets' });
-    else await op.progress.step('wallets').skip();
-    // A pending transfer finishes later; the job waits for it and then mails the new pass.
-    await queueMail(ctx, userId, passId, 'lost_phone', op.id);
+    if (result.state === 'pending') {
+      // The runner waits for the transfer and then queues the mail. The look is queued before the wait is written.
+      await sendWaitCheck(ctx, op.id, 1, FIRST_CHECK_S);
+      await waitOnWallets(op.progress, ctx.clock.now());
+    } else {
+      await op.progress.step('wallets').skip();
+      await queueMail(ctx, userId, passId, 'lost_phone', op.id);
+    }
   } catch (error) {
     await op.progress.fail(error);
     throw error;

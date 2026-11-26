@@ -1183,6 +1183,15 @@
       ]
     },
     {
+      "code": "EMAIL_CONFIRMATION_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
       "code": "EMAIL_CONFLICT",
       "statuses": [
         403,

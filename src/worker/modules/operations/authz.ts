@@ -88,7 +88,7 @@ export function starterFenceFor(
   if (auth.kind !== 'session') return null;
   const own = isOwnOnly(auth);
   return starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), {
-    strong: writer && !own,
+    strong: writer,
     pinned: own,
   });
 }

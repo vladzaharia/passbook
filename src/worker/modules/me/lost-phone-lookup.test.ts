@@ -27,7 +27,7 @@ async function lostPhone(barcode?: string) {
     { memberNo: 'M-1001' },
     { holderEmail: user.primaryEmail },
   );
-  const mine = await makeSession(kit.fx, { userId: user.id });
+  const mine = await makeSession(kit.fx, { userId: user.id, amr: 'magic_link' });
   const app = createApp({
     clock: kit.clock,
     stores: { ...denyAllStores, sessions: createSessionStore(kit.env, kit.clock) },

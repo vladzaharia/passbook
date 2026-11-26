@@ -15,20 +15,34 @@ export interface HolderSession {
 
 const actorOf = (who: HolderSession) => ({ type: 'user', id: who.userId }) as const;
 
-/** The id of this holder's active operation of `kind` on the pass, if one runs. */
+/**
+ * Whether this holder has an operation of `kind` running on the pass, and its id if this session can read it: a
+ * session reads only what it started, so another device's operation is not named.
+ */
 export async function activeHolderOperation(
   ctx: ServiceContext,
   who: HolderSession,
   kind: HolderKind,
   passId: string,
-): Promise<string | null> {
+): Promise<{ id: string | null; running: boolean }> {
+  const row = await activeRow(ctx, who, kind, passId);
+  return { id: row && row.actor_session === who.sessionId ? row.id : null, running: row !== null };
+}
+
+async function activeRow(
+  ctx: ServiceContext,
+  who: HolderSession,
+  kind: HolderKind,
+  passId: string,
+) {
   const key = dedupeKeyOf({ kind, actor: actorOf(who), subject: { passId } });
-  return key ? ((await activeByDedupe(ctx.env.DB, key))?.id ?? null) : null;
+  return key ? activeByDedupe(ctx.env.DB, key) : null;
 }
 
 /**
- * Refuses a second action of one kind on one pass while the first runs (409 OPERATION_RUNNING with its id). Run
- * before the action itself, so a refused start has changed nothing.
+ * Refuses a second action of one kind on one pass while the first runs, before the action itself, so a refused
+ * start has changed nothing. The session that started it is told which (409 with its id); another device only that
+ * it runs, with no id it could not read.
  */
 export async function assertNoActiveHolderOperation(
   ctx: ServiceContext,
@@ -36,9 +50,13 @@ export async function assertNoActiveHolderOperation(
   kind: HolderKind,
   passId: string,
 ): Promise<void> {
-  const id = await activeHolderOperation(ctx, who, kind, passId);
-  if (id)
-    throw new AppError('OPERATION_RUNNING', 409, 'This is already running.', { operationId: id });
+  const row = await activeRow(ctx, who, kind, passId);
+  if (!row) return;
+  if (row.actor_session === who.sessionId)
+    throw new AppError('OPERATION_RUNNING', 409, 'This is already running.', {
+      operationId: row.id,
+    });
+  throw new AppError('OPERATION_RUNNING', 409, 'Already running on another device.');
 }
 
 /** Starts the operation for an action that has just been accepted. The target is the pass, never the holder. */

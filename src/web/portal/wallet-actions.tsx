@@ -9,7 +9,7 @@ import {
   Smartphone,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { addLine, showsAddQr } from '@/shared/device.ts';
 import { copyText } from '../lib/clipboard.ts';
@@ -31,7 +31,13 @@ import {
   toast,
 } from '../ui/index.ts';
 import { Scan } from './add/scan.tsx';
-import { lostPhone, myPassesKey, removePass, resendPass } from './api.ts';
+import {
+  lostPhone,
+  myPassesKey,
+  removePass,
+  resendPass,
+  sendLostPhoneConfirmation,
+} from './api.ts';
 import { browserDevice } from './device.ts';
 import { useHolderOperations } from './holder-operations.tsx';
 import type { Refresh } from './refresh-button.tsx';
@@ -125,7 +131,7 @@ function useRemovePass(passId: string, onRemoved?: () => void) {
       if (currentUser() !== userId) return;
       if (result.state === 'pending') {
         // Its steps and the wait for the wallets are the operation's: the sheet shows them.
-        if (result.operationId) follow(result.operationId, { restart: () => mutation.mutate() });
+        if (result.operationId) follow(result.operationId);
         else toast.info(HOLDER_COPY.removalStarted);
       } else {
         toast.success('Removed from your passes');
@@ -145,16 +151,29 @@ function useHolderHelp(passId: string) {
   const resend = useMutation({
     mutationFn: () => resendPass(passId),
     onSuccess: (res) => {
-      if (res.operationId) follow(res.operationId, { restart: () => resend.mutate() });
+      if (res.operationId) follow(res.operationId);
       else toast.success(HOLDER_COPY.sendAgainSent);
     },
     onError: (error) => showRunning(error, 'Could not send'),
   });
   const lost = useMutation({
-    mutationFn: () => lostPhone(passId),
+    mutationFn: async () => {
+      try {
+        return await lostPhone(passId);
+      } catch (error) {
+        // Not a fresh email session: the owner confirms by a link, and the action runs from that session.
+        if (!(isApiError(error) && error.code === 'EMAIL_CONFIRMATION_REQUIRED')) throw error;
+        await sendLostPhoneConfirmation(passId);
+        return null;
+      }
+    },
     onSuccess: async (res) => {
+      if (!res) {
+        toast.info(HOLDER_COPY.lostPhoneConfirm);
+        return;
+      }
       await client.invalidateQueries({ queryKey: myPassesKey });
-      if (res.operationId) follow(res.operationId, { restart: () => lost.mutate() });
+      if (res.operationId) follow(res.operationId);
       else toast.success(HOLDER_COPY.lostPhoneDone);
     },
   });
@@ -197,6 +216,15 @@ export function PassMoreMenu({
   const [qrOpen, setQrOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
+  // The confirmation link lands here with the pass named: open the question again, now from a fresh session.
+  useEffect(() => {
+    if (!help) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('lostPhone') !== passId) return;
+    url.searchParams.delete('lostPhone');
+    window.history.replaceState(window.history.state, '', url);
+    setLostOpen(true);
+  }, [help, passId]);
   const mutation = useRemovePass(passId, onRemoved);
   const { resend, lost } = useHolderHelp(passId);
   const qr = showQr && !page && publicUrl && showsAddQr(browserDevice().device);
