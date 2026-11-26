@@ -94,8 +94,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
   assertSyncChain(p.chain);
   const seq = p.chain?.seq ?? 0;
   const budget = p.writeBudget ?? WRITE_BUDGET_PER_INSTANCE;
-  const report = syncReport(sctx, p);
-  const start = await step.do('start', () => startRun(sctx, p));
+  const [report, start] = [syncReport(sctx, p), await step.do('start', () => startRun(sctx, p))];
   assertSyncStart(start, p);
   if (start.ok && start.settle) step.arm?.();
   const startedAt = p.chain?.startedAt ?? start.startedAt;
@@ -157,7 +156,8 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
         staleCode = 'STALE_CONTEXT';
         return false;
       }
-      add(totals, r), report.seen(totals);
+      add(totals, r);
+      report.seen(totals);
       for (const sample of r.samples) if (samples.length < MAX_SAMPLES) samples.push(sample);
       failure ??= r.failure;
       releaseBlocked ??= r.releaseBlocked;
