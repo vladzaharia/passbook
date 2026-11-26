@@ -4,10 +4,12 @@ import type {
   ConnectionsSummarySchema,
   TestConnectionResponseSchema,
 } from '../../../shared/contracts/index.ts';
+import type { AuthContext } from '../../platform/auth.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { actorOfAuth } from '../operations/start-org.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import type { toDto } from './dto.ts';
@@ -123,6 +125,24 @@ export async function syncNow(
     targetId: id,
   });
   return started;
+}
+
+/** Sync now as the API reports it: `operationId` names the operation, null when the sync joined an open run. */
+export async function syncNowReported(
+  sctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  authority: ConnectionAuthority | undefined,
+  auth: AuthContext | undefined,
+) {
+  let operationId: string | null = null;
+  const started = await syncNow(sctx, actor, id, authority, undefined, {
+    actor: actorOfAuth(auth),
+    onStarted: (op) => {
+      operationId = op.id;
+    },
+  });
+  return { ...started, operationId };
 }
 
 /**

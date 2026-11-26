@@ -26,7 +26,6 @@ import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
-import { actorOfAuth } from '../operations/start-org.ts';
 import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeConnection, authorizeStoredConnection as authorizeStored } from './access.ts';
 import * as actions from './actions.ts';
@@ -250,14 +249,7 @@ register(
     const ctx = sctx(c);
     const id = c.req.valid('param').id;
     const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
-    let operationId: string | null = null;
-    const started = await actions.syncNow(ctx, actor(c), id, authority, undefined, {
-      actor: actorOfAuth(c.var.auth),
-      onStarted: (op) => {
-        operationId = op.id;
-      },
-    });
-    return c.json({ ...started, operationId }, 202);
+    return c.json(await actions.syncNowReported(ctx, actor(c), id, authority, c.var.auth), 202);
   },
 );
 register(
