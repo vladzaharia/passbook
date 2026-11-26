@@ -264,7 +264,7 @@ export const EPOCH_TABLES: EpochTable[] = [
       'hmac_iv',
       'hmac_wrapped_dek',
       'hmac_ciphertext',
-      // The candidate backfill's stamp (0229): bookkeeping of a sweep, no authority moves.
+      // The candidate backfill's stamp (0230): bookkeeping of a sweep, no authority moves.
       'projection_backfilled_at',
     ],
     fixed: ['id', 'org_id', 'mode', 'provider', 'created_at'],

@@ -41,6 +41,8 @@ export const ProblemSchema = z.object({
   used: z.number().int().optional(),
   /** IDP_SIGN_IN_REQUIRED: where to sign in with Polaris ID. */
   signInUrl: z.string().optional(),
+  /** OPERATION_RUNNING: the operation already doing this. */
+  operationId: z.string().optional(),
 });
 export type ProblemDto = z.infer<typeof ProblemSchema>;
 
@@ -103,6 +105,8 @@ export const ApiScopeSchema = z.enum([
   'platform:status',
   'platform:templates',
   'platform:audit',
+  /** Reads and edits custom claims on Polaris ID users and groups. */
+  'platform:claims',
   /** Reads and edits the org's brand kit: web logo, accent, mark level. */
   'brand:manage',
 ]);

@@ -277,6 +277,10 @@
     "resource": "connections",
     "method": "preview"
   },
+  "connections.postConnectionsByIdProbe": {
+    "resource": "connections",
+    "method": "probe"
+  },
   "connections.postConnectionsByIdSync": {
     "resource": "connections",
     "method": "sync"
@@ -296,6 +300,10 @@
   "connections.postConnectionsByIdWebhookSecret": {
     "resource": "connections",
     "method": "rotateWebhookSecret"
+  },
+  "connections.postConnectionsProbe": {
+    "resource": "connections",
+    "method": "probeConfig"
   },
   "connections.postConnectionsTestConfig": {
     "resource": "connections",
@@ -562,6 +570,30 @@
   "identity-runs.postOrgsByOrgIdIdentitiesApple": {
     "resource": "identityRuns",
     "method": "startManaged"
+  },
+  "invitations.postInvitationsAccept": {
+    "resource": "invitationPage",
+    "method": "accept",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
+  "invitations.postInvitationsClaimExisting": {
+    "resource": "invitationPage",
+    "method": "attachExisting",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
+  "invitations.postInvitationsPreview": {
+    "resource": "invitationPage",
+    "method": "preview",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+  },
+  "invitations.postInvitationsSetup": {
+    "resource": "invitationPage",
+    "method": "setup",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
   },
   "join-links.getJoinLinksByTemplateId": {
     "resource": "joinLinks",
@@ -874,6 +906,22 @@
   "offboard.postOffboard": {
     "resource": "holders",
     "method": "offboard"
+  },
+  "operations.getOperations": {
+    "resource": "operations",
+    "method": "list"
+  },
+  "operations.getOperationsById": {
+    "resource": "operations",
+    "method": "retrieve"
+  },
+  "operations.postOperationsByIdCancel": {
+    "resource": "operations",
+    "method": "cancel"
+  },
+  "operations.postOperationsByIdRetry": {
+    "resource": "operations",
+    "method": "retry"
   },
   "org-lifecycle.getOrgExportsByExportIdDownload": {
     "resource": "orgExports",
@@ -1288,6 +1336,22 @@
   "passes.putPassesViews": {
     "resource": "passViews",
     "method": "replace"
+  },
+  "polaris-claims.getPlatformIdpGroupsByKeyClaims": {
+    "resource": "platform.groups.claims",
+    "method": "retrieve"
+  },
+  "polaris-claims.getUsersByIdClaims": {
+    "resource": "platform.users.claims",
+    "method": "retrieve"
+  },
+  "polaris-claims.patchPlatformIdpGroupsByKeyClaims": {
+    "resource": "platform.groups.claims",
+    "method": "update"
+  },
+  "polaris-claims.patchUsersByIdClaims": {
+    "resource": "platform.users.claims",
+    "method": "update"
   },
   "public.getBByToken": {
     "resource": "public.bundles",

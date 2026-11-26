@@ -102,11 +102,25 @@ On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of th
 
 Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`.
 
-Runbooks (owner): [Polaris Binding Turn On](runbooks/polaris-binding-turn-on.md) (setup in dry run), [Polaris Binding Go Live](runbooks/polaris-binding-go-live.md) (after a week of dry run), [Polaris Binding Key Rotation](runbooks/polaris-binding-key-rotation.md) (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys), [Polaris Binding Thaw](runbooks/polaris-binding-thaw.md) and [Polaris Binding Compromise](runbooks/polaris-binding-compromise.md). The main Worker's SCIM and `IDP` binding steps follow in later changes.
+Runbooks (owner): [Polaris Binding Turn On](runbooks/polaris-binding-turn-on.md) (setup in dry run), [Polaris Binding Go Live](runbooks/polaris-binding-go-live.md) (after a week of dry run), [Polaris Binding Key Rotation](runbooks/polaris-binding-key-rotation.md) (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys), [Polaris Binding Thaw](runbooks/polaris-binding-thaw.md) and [Polaris Binding Compromise](runbooks/polaris-binding-compromise.md). The SCIM receiver is set up with [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). The main Worker's `IDP` service binding is not in `wrangler.jsonc` yet and follows in a later change.
 
 Next Polaris ID release: it moves admin routes to `/api/admin/...` and adds scoped keys. Recreate the key with `users:invite users:read users:write groups:read audit-logs:read config:read account:api-keys` and set `POCKET_ID_API` to `admin` in the same deploy. Both layouts are covered by `test/polaris-binding`.
 
 Never give CI a Cloudflare token that can deploy `polaris-binding`: anyone who can redeploy it can read the key. On Polaris ID v2.19.3 the key is a Polaris ID admin key, so a leak is identity provider compromise.
+
+### SCIM receiver
+
+Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (Users and Groups: list, create, replace, delete) with a bearer token. The receiver never adds a role, session, membership or user, and keeps ids and flags only (`idp_directory_users`, `idp_directory_groups`): no names, addresses or group names. What it does:
+
+- A user switched off, or taken out of every group the PassBook client allows (Polaris ID sends that as a DELETE): after a `lookup` confirms the account is off, gone or in none of PassBook's groups, that subject's Polaris ID sessions end (email-link sessions stay). If it cannot now (binding dry run, frozen or unreachable, breaker open, `lookup` failing or over its 60 an hour, or the subject already revoked this hour), the mirror row gets `revoke_pending` and the minute drain hook ends the sessions once the binding is live. Sessions started after the change stay. Switching the user back on clears it. Ending sessions is per PassBook user, so another Polaris ID account of the same person signs out too.
+- A member removed from a group, or in a deleted group: queued for the drain (at most 100 a push and 300 an hour; a subject already backing off keeps its backoff). The drain reads the account and decides.
+- A platform admin removed from a group: Polaris ID is asked about each of their accounts (`lookup`); with none in the admin group their admin sessions end within the push and `admin_changed` is filed. More than five at once, a failed lookup or dry run changes nothing here; the daily reconcile decides.
+
+Setup (owner): [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). Token rotation is in the same note.
+
+Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
+
+Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with [SCIM Breaker Clear](runbooks/scim-breaker-clear.md); the next minute's sweep ends what is owed. A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
 
 ## Managed identity runs
 
@@ -404,7 +418,7 @@ Only archived templates may be listed; the wait ignores them.
 
 ### Wallet migration gate
 
-Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. A legacy account issues with no enrolment, so a flip waits until none is left. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
+Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. Only an enrolment that is On issues (0229): a legacy account, an envelope with no source, does not, and no new one can be made (the configure route and the database refuse it). A flip still waits until none is left. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
 
 ```sql wallet-migration-gate
 SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a
@@ -417,7 +431,7 @@ ORDER BY a.id
 
 Google and Samsung are released per mode in two places that must agree: `RELEASE` in
 `src/worker/modules/wallet-providers/release.ts` (the Worker) and the `wallet_provider_releases` row (the
-database's issuance guards, 0226). `npm run check:rules` (check-migrations) and `release-mirror.test.ts` fail when
+database's issuance guards, 0229). `npm run check:rules` (check-migrations) and `release-mirror.test.ts` fail when
 they differ.
 
 | State | New copies, offers, Samsung references | Updates, messages | Voids, removals, transfers, retirement |
@@ -426,28 +440,41 @@ they differ.
 | `released` | per org: plan, then an enrolment that is On | sent | sent |
 | `draining` | refused | refused | sent |
 
+The database enforces each column too: while not released, its guards refuse new copies, activations (an un-void
+included), offers, references and every operation but a revoke. While draining, Samsung's callbacks on cards
+already added are answered without card data, a holder's DELETED is recorded and nothing is promoted.
+
 **Flip** (one PR per provider and mode, Test before Live): change the one cell of `RELEASE` and add a migration
 with only this statement (any other way of writing the table fails check-migrations):
 
-```sql
+```sql norun
 UPDATE wallet_provider_releases SET state = 'released', changed_at = <ms> WHERE provider = 'google' AND mode = 'test';
 ```
 
 Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin): a platform credential with a
 passing check, no `legacy` enrolment, the intended orgs `issuing` or `ready`, templates released. The deploy
 prints `Wallet release: google test -> released (<migration>)` and runs the wallet migration gate before it
-migrates. It migrates before it serves, and both sides must say `released`, so every step in between is dark.
+migrates, and again before it serves for as long as any wallet is released. It refuses when it cannot read the
+pending migrations. It migrates before it serves, and both sides must say `released`, so every step in between
+is dark.
 
-**After the flip**, turn on the orgs that set up before it:
-`POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that would turn
-On (plan, source, fresh check, Live round trip, no hold, channel not blocked). Send `{"apply": true}` to turn
-exactly those On, each with its own audit row. Apply is refused while the mode is not released.
+**After the flip**, turn on the orgs that set up before it (a recent sign-in is required):
+`POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that were never
+On and would turn On (plan, source, fresh check, Live round trip, no hold, channel not blocked). An enrolment the
+org switched Off (`org_off`) or a released hold cleared (`hold_released`) stays Off: only the org turns it back
+On. Review the list, then send `{"apply": true, "orgIds": [...]}` with the listed orgs: exactly those turn On,
+each with its own audit row. Apply is refused (409) when the list changed and while the mode is not released.
 
 **Rollback** is `draining`, never straight to `dark`: the same one-cell PR and one-statement migration with
 `state = 'draining'`. Copies already in wallets keep getting voids and removals; badges and offers go away; the
 next deploy applies it. Narrower: hold one org (`POST /api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold`)
-or revoke one credential. Go back to `dark` only once the readiness report shows `instances.open` at 0 for that
-provider and mode; until then the migration aborts (`drain it first`).
+or revoke one credential.
+
+**Back to dark** only once the readiness report shows `instances.open` at 0 for that provider and mode (copies
+that can still be in a wallet: active, revoking, revoked, or with an account and not retired). Merge the dark PR
+only then. Otherwise the deploy refuses before it migrates (`sets google test dark while N copies ...`), and every
+later deploy waits until those copies are voided or removed, since a merged migration cannot be edited; the
+migration itself also aborts as a backstop (`drain it first`).
 
 ### Entitlements gate
 
@@ -656,6 +683,10 @@ Owner setup: [Play Console Setup](runbooks/play-console-setup.md) and [TestFligh
   not a newer draft. This read does not itself run baked sync; newly installed baked choices
   appear after the normal sync has verified and recorded their system releases. A final issuance
   still rechecks authority, release head and asset integrity.
+
+## Recording wallet contract fixtures
+
+See `docs/runbooks/record-wallet-fixtures.md` (owner only).
 
 ## SDK release checks
 

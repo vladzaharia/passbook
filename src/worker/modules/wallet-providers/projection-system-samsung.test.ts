@@ -1,5 +1,5 @@
 // CAND-1: the platform authors, approves and releases a Samsung candidate, and the retirement and tombstone
-// proofs accept that release as they accept a human one (0229). The version author is a person here, so the
+// proofs accept that release as they accept a human one (0230). The version author is a person here, so the
 // exemption is exercised: without it the approval and the proofs would refuse the system candidate.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';

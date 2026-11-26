@@ -212,6 +212,14 @@ __all__ = [
     "ConnectionsListResponseItemsItemVoidWhenItem",
     "ConnectionsListResult",
     "ConnectionsPreviewResult",
+    "ConnectionsProbeBody",
+    "ConnectionsProbeConfigBody",
+    "ConnectionsProbeConfigParams",
+    "ConnectionsProbeConfigResponse",
+    "ConnectionsProbeConfigResult",
+    "ConnectionsProbeParams",
+    "ConnectionsProbeResponse",
+    "ConnectionsProbeResult",
     "ConnectionsRetrieveResponse",
     "ConnectionsRetrieveResponseMappingValue",
     "ConnectionsRetrieveResponseMappingValueTransform",
@@ -650,6 +658,26 @@ __all__ = [
     "NfcTagsRetrieveResult",
     "NfcTagsUpdateParams",
     "NfcTagsUpdateResponse",
+    "OperationsCancelResponse",
+    "OperationsCancelResponseStartedBy",
+    "OperationsCancelResponseStepsItem",
+    "OperationsCancelResult",
+    "OperationsListItem",
+    "OperationsListItemStartedBy",
+    "OperationsListItemStepsItem",
+    "OperationsListResponse",
+    "OperationsListResponseItemsItem",
+    "OperationsListResponseItemsItemStartedBy",
+    "OperationsListResponseItemsItemStepsItem",
+    "OperationsListResult",
+    "OperationsRetrieveResponse",
+    "OperationsRetrieveResponseStartedBy",
+    "OperationsRetrieveResponseStepsItem",
+    "OperationsRetrieveResult",
+    "OperationsRetryResponse",
+    "OperationsRetryResponseStartedBy",
+    "OperationsRetryResponseStepsItem",
+    "OperationsRetryResult",
     "Org",
     "OrgBranding",
     "OrgBrandingIcon",
@@ -1114,6 +1142,10 @@ __all__ = [
     "PlatformEntitlementPresetsUpdateParams",
     "PlatformEntitlementPresetsUpdateResponse",
     "PlatformEntitlementPresetsUpdateResponsePreset",
+    "PlatformGroupsClaimsRetrieveResponse",
+    "PlatformGroupsClaimsRetrieveResponseClaimsValue",
+    "PlatformGroupsClaimsUpdateParams",
+    "PlatformGroupsClaimsUpdateResponse",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -1185,6 +1217,10 @@ __all__ = [
     "PlatformStatusRetrieveResponseComponentsItem",
     "PlatformTemplatesAssignParams",
     "PlatformTemplatesShareParams",
+    "PlatformUsersClaimsRetrieveResponse",
+    "PlatformUsersClaimsRetrieveResponseClaimsValue",
+    "PlatformUsersClaimsUpdateParams",
+    "PlatformUsersClaimsUpdateResponse",
     "PlatformUsersEmailsCreateParams",
     "PlatformUsersEmailsCreateResponse",
     "PlatformUsersEmailsCreateResponseEmailsItem",
@@ -2006,7 +2042,7 @@ class ApiKeyCurrent(_Model):
     orgId: str | None
     name: str
     prefix: str
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdAt: int
     lastUsedAt: int | None
@@ -2021,7 +2057,7 @@ class ApiKeyDetail(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2049,7 +2085,7 @@ class ApiKeyMinted(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2081,7 +2117,7 @@ class ApiKeyRotationKey1(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2106,7 +2142,7 @@ class ApiKeyRotationKey2(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2130,7 +2166,7 @@ class ApiKeyRotationPrevious(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2167,7 +2203,7 @@ class ApiKeysListItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2196,7 +2232,7 @@ class ApiKeysListResponseItemsItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -3135,6 +3171,46 @@ class ConnectionsListResponseItemsItemVoidWhenItem(_Model):
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
+class ConnectionsProbeConfigParams(_Model):
+    orgId: str
+    connectorType: _Literal["http-json"] | str
+    config: _Dict[str, _Any]
+    secrets: _Dict[str, str] | None = None
+    target: _Literal["list", "record"] | str
+    ref: str | None = None
+    next: str | None = None
+
+class ConnectionsProbeConfigResponse(_Model):
+    ok: bool
+    errorCode: _Literal["AUTH", "FORBIDDEN", "NOT_FOUND", "RATE_LIMITED", "TIMEOUT", "UPSTREAM", "UNSAFE_URL", "REDIRECT_BLOCKED", "NOT_JSON", "TOO_LARGE", "NO_RECORDS", "OFF_ORIGIN", "CONFIG"] | str | None = None
+    retryAfterMs: int | None = None
+    durationMs: int
+    request: _Dict[str, _Any] | None
+    headers: _Dict[str, str]
+    body: _Any | None = None
+    pruned: _Dict[str, _Any] | None
+    detections: _Dict[str, _Any] | None
+    page: _Dict[str, _Any] | None
+
+class ConnectionsProbeParams(_Model):
+    config: _Dict[str, _Any] | None = None
+    secrets: _Dict[str, str] | None = None
+    target: _Literal["list", "record"] | str
+    ref: str | None = None
+    next: str | None = None
+
+class ConnectionsProbeResponse(_Model):
+    ok: bool
+    errorCode: _Literal["AUTH", "FORBIDDEN", "NOT_FOUND", "RATE_LIMITED", "TIMEOUT", "UPSTREAM", "UNSAFE_URL", "REDIRECT_BLOCKED", "NOT_JSON", "TOO_LARGE", "NO_RECORDS", "OFF_ORIGIN", "CONFIG"] | str | None = None
+    retryAfterMs: int | None = None
+    durationMs: int
+    request: _Dict[str, _Any] | None
+    headers: _Dict[str, str]
+    body: _Any | None = None
+    pruned: _Dict[str, _Any] | None
+    detections: _Dict[str, _Any] | None
+    page: _Dict[str, _Any] | None
+
 class ConnectionsRetrieveResponse(_Model):
     id: str
     orgId: str
@@ -3984,6 +4060,7 @@ class EmailFailedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: EmailFailedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class EmailFailedEventData(_Model):
@@ -6077,6 +6154,215 @@ class NfcTagsUpdateResponse(_Model):
     keysetId: str | None
     binding: _Dict[str, _Any] | None
 
+class OperationsCancelResponse(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsCancelResponseStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsCancelResponseStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsCancelResponseStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsCancelResponseStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsListItem(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsListItemStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsListItemStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsListItemStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsListItemStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsListResponse(_Model):
+    items: _List[OperationsListResponseItemsItem]
+    nextCursor: str | None
+
+class OperationsListResponseItemsItem(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsListResponseItemsItemStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsListResponseItemsItemStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsListResponseItemsItemStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsListResponseItemsItemStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsRetrieveResponse(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsRetrieveResponseStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsRetrieveResponseStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsRetrieveResponseStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsRetrieveResponseStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class OperationsRetryResponse(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[OperationsRetryResponseStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: OperationsRetryResponseStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class OperationsRetryResponseStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class OperationsRetryResponseStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
 class Org(_Model):
     id: str
     slug: str
@@ -6292,6 +6578,7 @@ class PassChannelsChangedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassChannelsChangedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassChannelsChangedEventData(_Model):
@@ -7211,6 +7498,7 @@ class PassInstalledEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassInstalledEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassInstalledEventData(_Model):
@@ -7228,6 +7516,7 @@ class PassIssuedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassIssuedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassIssuedEventData(_Model):
@@ -7248,6 +7537,7 @@ class PassPrintVoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintVoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassPrintVoidedEventData(_Model):
@@ -7263,6 +7553,7 @@ class PassPrintedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassPrintedEventData(_Model):
@@ -7279,6 +7570,7 @@ class PassRemovedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRemovedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassRemovedEventData(_Model):
@@ -7295,6 +7587,7 @@ class PassRestoredEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRestoredEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassRestoredEventData(_Model):
@@ -7309,6 +7602,7 @@ class PassScanRefusedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanRefusedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScanRefusedEventData(_Model):
@@ -7328,6 +7622,7 @@ class PassScanUndoneEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanUndoneEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScanUndoneEventData(_Model):
@@ -7344,6 +7639,7 @@ class PassScannedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScannedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassScannedEventData(_Model):
@@ -7838,6 +8134,7 @@ class PassUninstalledEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUninstalledEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUninstalledEventData(_Model):
@@ -7856,6 +8153,7 @@ class PassUnvoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUnvoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUnvoidedEventData(_Model):
@@ -7870,6 +8168,7 @@ class PassUpdatedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUpdatedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassUpdatedEventData(_Model):
@@ -7916,6 +8215,7 @@ class PassVoidedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassVoidedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PassVoidedEventData(_Model):
@@ -8690,6 +8990,22 @@ class PlatformEntitlementPresetsUpdateResponsePreset(_Model):
     pendingOrgs: int
     values: _Dict[str, float | str | _List[str] | None]
 
+class PlatformGroupsClaimsRetrieveResponse(_Model):
+    claims: _Dict[str, PlatformGroupsClaimsRetrieveResponseClaimsValue]
+    otherKeys: int
+
+class PlatformGroupsClaimsRetrieveResponseClaimsValue(_Model):
+    type: _Literal["text", "number", "boolean", "json"] | str
+    value: _Any | None = None
+
+class PlatformGroupsClaimsUpdateParams(_Model):
+    set: _Dict[str, _Dict[str, _Any] | None]
+
+class PlatformGroupsClaimsUpdateResponse(_Model):
+    set: _List[str]
+    removed: _List[str]
+    dryRun: bool
+
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str
     range: _Literal["24h", "7d", "30d"] | str
@@ -9153,6 +9469,22 @@ class PlatformTemplatesAssignParams(_Model):
 
 class PlatformTemplatesShareParams(_Model):
     shared: bool
+
+class PlatformUsersClaimsRetrieveResponse(_Model):
+    claims: _Dict[str, PlatformUsersClaimsRetrieveResponseClaimsValue]
+    otherKeys: int
+
+class PlatformUsersClaimsRetrieveResponseClaimsValue(_Model):
+    type: _Literal["text", "number", "boolean", "json"] | str
+    value: _Any | None = None
+
+class PlatformUsersClaimsUpdateParams(_Model):
+    set: _Dict[str, _Dict[str, _Any] | None]
+
+class PlatformUsersClaimsUpdateResponse(_Model):
+    set: _List[str]
+    removed: _List[str]
+    dryRun: bool
 
 class PlatformUsersEmailsCreateParams(_Model):
     email: str
@@ -9656,6 +9988,7 @@ class PlatformWalletEnrollmentsListResponseItemsItem(_Model):
 
 class PlatformWalletReleaseEnableReadyParams(_Model):
     apply: bool | None = None
+    orgIds: _List[str] | None = None
 
 class PlatformWalletReleaseEnableReadyResponse(_Model):
     applied: bool
@@ -9707,7 +10040,7 @@ class PlatformWalletReleaseRetrieveResponseReleasesItemEnrolmentsItem(_Model):
     orgId: str
     orgName: str
     status: _Literal["issuing", "ready", "blocked"] | str
-    blocks: _List[_Literal["plan", "source", "verified", "check", "round_trip", "hold", "revoked", "legacy", "channel_off", "org"] | str]
+    blocks: _List[_Literal["plan", "source", "verified", "check", "round_trip", "hold", "revoked", "legacy", "channel_off", "org", "org_off", "hold_released"] | str]
 
 class PlatformWalletReleaseRetrieveResponseReleasesItemInstances(_Model):
     open: int
@@ -9752,6 +10085,7 @@ class Problem(_Model):
     limit: int | None = None
     used: int | None = None
     signInUrl: str | None = None
+    operationId: str | None = None
 
 class ProblemIssuesItem(_Model):
     path: str
@@ -9767,6 +10101,7 @@ class PushFailedEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PushFailedEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class PushFailedEventData(_Model):
@@ -13980,6 +14315,7 @@ class WebhookTestEvent(_Model):
     mode: _Literal["live", "test"] | str
     pass_: None = _Field(alias="pass")
     data: WebhookTestEventData
+    requestId: str | None = None
     sample: _Literal[True] | None = None
 
 class WebhookTestEventData(_Model):
@@ -14124,6 +14460,14 @@ ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 ConnectionsListResult = ConnectionsListResponse
 
 ConnectionsPreviewResult = ConnectionPreview
+
+ConnectionsProbeBody = ConnectionsProbeParams
+
+ConnectionsProbeConfigBody = ConnectionsProbeConfigParams
+
+ConnectionsProbeConfigResult = ConnectionsProbeConfigResponse
+
+ConnectionsProbeResult = ConnectionsProbeResponse
 
 ConnectionsRetrieveResult = ConnectionsRetrieveResponse
 
@@ -14306,6 +14650,14 @@ NfcTagsReportLostResult = NfcTagsReportLostResponse
 NfcTagsRestoreResult = NfcTagsRestoreResponse
 
 NfcTagsRetrieveResult = NfcTagsRetrieveResponse
+
+OperationsCancelResult = OperationsCancelResponse
+
+OperationsListResult = OperationsListResponse
+
+OperationsRetrieveResult = OperationsRetrieveResponse
+
+OperationsRetryResult = OperationsRetryResponse
 
 OrgsEntitlementsRetrieveResult = OrgsEntitlementsRetrieveResponse
 

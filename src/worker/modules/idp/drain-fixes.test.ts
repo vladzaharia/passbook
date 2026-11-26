@@ -202,6 +202,7 @@ describe('L2: a grant never seen present goes in again, loudly', () => {
     const p = await person(r.f);
     r.fake.addAccount(p.subject);
     r.fake.accounts.get(p.subject)?.grants.add('console');
+    r.fake.accounts.get(p.subject)?.pending.add('console');
     await membership(r.f, org.id, p);
     await drainIdp(r.ctx);
     expect(roles(r, p.subject)).toEqual(['console']);

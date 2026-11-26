@@ -1136,6 +1136,15 @@
       ]
     },
     {
+      "code": "DEVELOPER_LIMIT_REACHED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "DEVICE_INVALID",
       "statuses": [
         400
@@ -1836,6 +1845,7 @@
       ],
       "modules": [
         "delivery",
+        "operations",
         "passes",
         "platform",
         "scan"
@@ -2125,6 +2135,15 @@
       ]
     },
     {
+      "code": "IDP_DRIFT",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -2152,7 +2171,25 @@
       ]
     },
     {
+      "code": "IDP_MULTIPLE_ACCOUNTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NO_ACCOUNT",
       "statuses": [
         409
       ],
@@ -2516,6 +2553,7 @@
       "modules": [
         "audit",
         "events",
+        "operations",
         "retention",
         "scan",
         "templates",
@@ -2542,12 +2580,49 @@
       ]
     },
     {
+      "code": "INVITATION_CLAIM_CAPPED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "INVITATION_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "INVITATION_EMAIL_MISMATCH",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "INVITATION_INVALID",
       "statuses": [
         400
       ],
       "modules": [
+        "idp",
         "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_NO_ACCOUNT",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -2557,6 +2632,15 @@
       ],
       "modules": [
         "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_SETUP_CAPPED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -3111,6 +3195,87 @@
       ],
       "modules": [
         "auth"
+      ]
+    },
+    {
+      "code": "OPERATION_KIND_UNKNOWN",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_NOT_CANCELABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_NOT_RETRYABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_ORG_REQUIRED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_OUTCOME_UNKNOWN",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_RUNNING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_SESSION_REQUIRED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_STALLED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
       ]
     },
     {
@@ -4996,6 +5161,24 @@
       ]
     },
     {
+      "code": "SCIM_AUTH_FAILED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "SCIM_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "SCREEN_ONLY",
       "statuses": [
         403
@@ -6166,7 +6349,8 @@
       ],
       "modules": [
         "auth",
-        "developer"
+        "developer",
+        "idp"
       ]
     },
     {
@@ -6548,6 +6732,15 @@
     },
     {
       "code": "WALLET_PROJECTION_UNSUPPORTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_RELEASE_READY_CHANGED",
       "statuses": [
         409
       ],

@@ -7,6 +7,7 @@ import { handleJoinResend } from '../modules/join/jobs.ts';
 import { handleHolderMail } from '../modules/me/jobs.ts';
 import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
 import { handleLentWindow } from '../modules/nfc/lent-window.ts';
+import { handleOperationRun } from '../modules/operations/jobs.ts';
 import { handleBoundaryRefresh } from '../modules/passes/event-boundaries.ts';
 import { handlePrintsBulk } from '../modules/prints/jobs.ts';
 import { handleRetentionNotice } from '../modules/retention/jobs.ts';
@@ -56,6 +57,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'channel.entitlement': handleEntitlementApply,
   'channel.replace_code': handleReplaceCode,
   'prints.bulk': handlePrintsBulk,
+  'operation.run': handleOperationRun,
 };
 
 /** Narrows per kind through a switch, so no cast is needed at the dispatch site. */
@@ -112,6 +114,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'channel.replace_code':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'prints.bulk':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'operation.run':
       return JOB_HANDLERS[job.kind](job, ctx);
   }
 }

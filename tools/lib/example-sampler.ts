@@ -845,6 +845,8 @@ const PATTERNS: [string, (seed: string) => string][] = [
   ['^([01]\\d|2[0-3]):[0-5]\\d$', () => '04:00'],
   ['^[0-9]{1,32}$', () => '3388000000022843210'],
   ['^[A-Za-z0-9_-]{43}$', (s) => `demo-token-northwind-${hex(s, 22)}`],
+  // An invitation secret: a kind prefix is optional (shared/invitation-link.ts).
+  ['^(?:[mdp]_)?[A-Za-z0-9_-]{43}$', (s) => `demo-token-northwind-${hex(s, 22)}`],
   ['^[0-9a-f]{32}$', (s) => hex32(s)],
   ['^\\d{6}$', (s) => String(100000 + (parseInt(hex(s, 5), 16) % 899999))],
 ];

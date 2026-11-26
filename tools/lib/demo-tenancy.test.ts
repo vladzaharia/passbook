@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildBootstrap } from './bootstrap-tenancy.ts';
+import { buildBootstrap, snapshotSql } from './bootstrap-tenancy.ts';
 import { DEMO_OWNER, tenancyCommand } from './demo-tenancy.ts';
 
 describe('demo tenancy', () => {
@@ -36,5 +36,9 @@ describe('demo tenancy', () => {
     expect(plan.filter((line) => line.includes('legacy release'))).toHaveLength(1);
     expect(sql).toContain('INSERT INTO org_memberships');
     expect(sql).toContain("'legacy', 'legacy'");
+  });
+
+  it('never adds an owner to a personal org, which holds one member by design', () => {
+    expect(snapshotSql(DEMO_OWNER)).toContain("slug NOT LIKE 'personal-%'");
   });
 });

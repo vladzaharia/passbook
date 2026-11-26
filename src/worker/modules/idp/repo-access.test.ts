@@ -206,7 +206,7 @@ describe('invite claims', () => {
     ).toBe(false);
   });
 
-  it('settles a claim whose invitation was revoked inside the window, never an accepted one', async () => {
+  it('settles a claim whose invitation was revoked inside the window, and one whose invitation was accepted', async () => {
     const org = await standardOrg(f);
     const admin = await person(f);
     const revoked = await developerInvitation(f, org.id, admin.id);
@@ -217,7 +217,9 @@ describe('invite claims', () => {
     await run(db(), 'UPDATE org_invitations SET accepted_at = ? WHERE id = ?', [now, accepted]);
     const open = await unsettledClaims(db(), now + 1, 1000);
     expect(open.some((c) => c.developer_invitation_id === revoked)).toBe(true);
-    expect(open.some((c) => c.org_invitation_id === accepted)).toBe(false);
+    // Accepted: the acceptor's reason is the membership now, and any other subject's claim is no reason; the sweep
+    // marks each dirty and the drain keeps the one and takes back the other.
+    expect(open.some((c) => c.org_invitation_id === accepted)).toBe(true);
   });
 
   it('claims of a platform invitation are found by that invitation', async () => {

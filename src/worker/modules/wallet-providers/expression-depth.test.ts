@@ -58,9 +58,9 @@ const bindingSql = projectionReleaseBindingPredicateSql({
   credentialKeysetCommitmentSql: 'op.credential_keyset_commitment',
 });
 
-const CHECK_DEPTH = 32;
-const CHECK_TERMS = 51;
-const CTE_DEPTH = 26;
+const CHECK_DEPTH = 33;
+const CHECK_TERMS = 53;
+const CTE_DEPTH = 27;
 
 describe('expression depth of the largest wallet-provider predicates', () => {
   // Measured when written (the depth is an upper bound): ceilings, so a growing predicate fails here first.
@@ -69,14 +69,16 @@ describe('expression depth of the largest wallet-provider predicates', () => {
   // terms 55 -> 56, binding terms 159 -> 162). All stay far below remote D1's limit of 100.
   // 0222 (sole approval for wallet classes) put `approval.kind = 'sole' OR` in front of each independence
   // predicate: revoke depth 26 -> 27 and terms 56 -> 58; the three triggers below grew the same way.
-  // 0229 (Samsung system release): the exemption's `provider IN (...)` is one group deeper: revoke depth 27 -> 28.
+  // 0230 (Samsung system release): the exemption's `provider IN (...)` is one group deeper: revoke depth 27 -> 28.
   // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32, CTE 25 -> 26.
+  // 0229: the revoke identity check also accepts a Samsung enrolment (repo-instance-current.ts), one more `OR`
+  // group on the epoch checks: 25 -> 26 and 32 -> 34 terms, 27 -> 28 and 50 -> 52, check 32 -> 33 and 51 -> 53, CTE 26 -> 27.
   it.each([
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
     ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 28, 58],
     ['release binding', bindingSql, 49, 162],
-    ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 25, 32],
-    ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 27, 50],
+    ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 26, 34],
+    ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 28, 52],
   ])(
     '%s prepares on D1 within its measured depth and terms',
     async (_name, predicate, depth, n) => {
@@ -121,9 +123,10 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       // 0199: the schema 2 branch (two evidence bypasses and the card-state row requirement) took the
       // release trigger from 46/113 to 50/131. Remote D1's limit is 100.
       template_provider_releases_insert: [51, 106],
-      // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
-      wallet_samsung_tombstones_approved_insert: [37, 33],
-      // 0229: one more OR/AND pair for the system exemption: terms 37 -> 39.
+      // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`. 0229: an enrolment account's tombstone is
+      // proved by its pinned credential version instead of a configure event (37 -> 45, 33 -> 41).
+      wallet_samsung_tombstones_approved_insert: [45, 41],
+      // 0230: one more OR/AND pair for the system exemption: terms 37 -> 39.
       wallet_samsung_tombstone_keyset_insert: [39, 39],
     };
     for (const t of triggers) {
@@ -141,7 +144,7 @@ describe('expression depth of the largest wallet-provider predicates', () => {
     );
     expect(views).toHaveLength(2);
     const ceiling: Record<string, [number, number]> = {
-      // 0199 made the evidence optional (33/75); 0222 added the sole approval clause (33/77); 0229 the system
+      // 0199 made the evidence optional (33/75); 0222 added the sole approval clause (33/77); 0230 the system
       // exemption (33/79).
       wallet_provider_retirement_complete_base: [33, 79],
       template_provider_apple_sources: [37, 41],

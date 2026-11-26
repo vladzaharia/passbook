@@ -155,6 +155,27 @@ describe('connection detail', () => {
     expect(within(table).getByText(/m-2: INVALID level not allowed/)).toBeVisible();
   });
 
+  it('shows a replaced run as neutral, not as a failure', async () => {
+    const detail = connectionDetail();
+    detail.runs[0] = {
+      ...detail.runs[0],
+      outcome: 'skipped',
+      errorCode: 'SUPERSEDED',
+      errorDetail: null,
+      httpStatus: null,
+    } as never;
+    await renderApp('/admin/connections/c1', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: handlers({ c: detail }),
+    });
+    const table = await screen.findByRole('table', { name: 'Connection runs' });
+    expect(within(table).getByText('Replaced by a newer run')).toBeVisible();
+    expect(within(table).queryByText('SUPERSEDED')).toBeNull();
+    expect(within(table).queryByText('Failed')).toBeNull();
+  });
+
   it('shows the test result in a reserved slot: pass, then a failure with its code', async () => {
     const user = userEvent.setup();
     let ok = true;
@@ -173,7 +194,7 @@ describe('connection detail', () => {
       ),
     });
     const tabs = await screen.findByRole('tablist');
-    const slot = container.querySelector('header [role="status"]');
+    const slot = container.querySelector('header [role="status"]:not([aria-label="Activity"])');
     expect(slot).not.toBeNull();
     await user.click(screen.getByRole('button', { name: 'Test' }));
     expect(await screen.findByText('Test passed')).toBeInTheDocument();

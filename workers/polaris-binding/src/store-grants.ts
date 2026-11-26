@@ -9,11 +9,21 @@ export async function subjectClass(db: D1Database, subject: string): Promise<Acc
 }
 
 export async function liveGrants(db: D1Database, subject: string): Promise<Target[]> {
+  return (await liveGrantRows(db, subject)).map((r) => r.role);
+}
+
+/** Live grants of a subject, each with the time its write was read back (null while pending). */
+export async function liveGrantRows(
+  db: D1Database,
+  subject: string,
+): Promise<{ role: Target; confirmedAt: number | null }[]> {
   const { results } = await db
-    .prepare('SELECT target AS role FROM idp_grants WHERE subject = ? AND removed_at IS NULL')
+    .prepare(
+      'SELECT target AS role, confirmed_at AS confirmedAt FROM idp_grants WHERE subject = ? AND removed_at IS NULL',
+    )
     .bind(subject)
-    .all<{ role: Target }>();
-  return results.map((r) => r.role);
+    .all<{ role: Target; confirmedAt: number | null }>();
+  return results;
 }
 
 /** Subjects with a confirmed grant made at or before `by`. Pending and newer grants are not for a snapshot to end. */

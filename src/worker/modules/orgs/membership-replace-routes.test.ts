@@ -56,8 +56,7 @@ async function member(orgId: string, roles: OrgRole[]) {
   expect(invite.status).toBe(201);
   const text = mail.at(-1) as unknown as { text: string };
   const token = new URL(
-    text.text.match(/https:\/\/wallet\.test\/api\/v1\/orgs\/invitations\/accept#[^\s<>"']+/)?.[0] ??
-      '',
+    text.text.match(/https:\/\/wallet\.test\/invite#[^\s<>"']+/)?.[0] ?? '',
   ).hash.slice(1);
   const accepted = await call('POST', '/invitations/accept', { token }, fake.user(person.id));
   expect(accepted.status).toBe(200);

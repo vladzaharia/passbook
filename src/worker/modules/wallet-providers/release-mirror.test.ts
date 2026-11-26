@@ -1,4 +1,4 @@
-// The release table every migration leaves (0226) equals RELEASE, its rows are fixed, and a release goes back to dark
+// The release table every migration leaves (0229) equals RELEASE, its rows are fixed, and a release goes back to dark
 // only once every copy of that provider and mode is retired.
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
@@ -45,7 +45,7 @@ describe('wallet_provider_releases', () => {
     await expect(setState('open')).rejects.toThrow();
   });
 
-  it('goes back to dark only once every copy is retired', async () => {
+  it('goes back to dark past placeholders that never reached a wallet', async () => {
     const f = fixtures(await makeEnv());
     const org = await makeOrg(f);
     const pass = await makePass(f, {
@@ -62,16 +62,7 @@ describe('wallet_provider_releases', () => {
         [pass.id, org.id],
       ),
     );
-    await expect(setState('dark')).rejects.toThrow('drain it first');
     await setState('draining');
-    // Another provider or mode has no copy, so it goes dark at once.
-    await setState('released', 'google', 'live');
-    await setState('dark', 'google', 'live');
-    await run(
-      db(),
-      `UPDATE wallet_provider_instances SET lifecycle = 'retired', retirement_reason = 'not_issued', retired_at = 1
-       WHERE id = 'dark-copy'`,
-    );
     await setState('dark');
     expect(
       await all(db(), "SELECT state FROM wallet_provider_releases WHERE provider = 'google'"),

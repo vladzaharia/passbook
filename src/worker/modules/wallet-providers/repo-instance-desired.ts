@@ -79,7 +79,8 @@ export async function grantDesiredOperation(
           AND pass.credential_generation = ? AND pass.release_id IS ?))
         AND (? = 'revoke' OR EXISTS (SELECT 1 FROM wallet_provider_accounts account
           JOIN template_releases rel ON rel.id = ?
-          WHERE account.id = i.account_id AND account.revision = ?
+          WHERE account.id = i.account_id
+            AND CASE WHEN account.credential_id IS NULL THEN account.enrolment_revision ELSE account.revision END = ?
             AND rel.adapter_revision = ? AND rel.audience_policy_revision = ?))
         AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations duplicate
           WHERE duplicate.instance_id = i.id AND duplicate.request_hash = ?)

@@ -78,7 +78,13 @@ export function PairView({
       {onAdmin ? (
         <div className="flex flex-col gap-3">
           <p className="scan-boot-divider">or</p>
-          <Button variant="outline" iconStart={<ShieldCheck aria-hidden />} onClick={onAdmin}>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="w-full"
+            iconStart={<ShieldCheck aria-hidden />}
+            onClick={onAdmin}
+          >
             Scan as Admin
           </Button>
           {adminWho ? (

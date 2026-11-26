@@ -1,0 +1,37 @@
+/* busy (a long action runs; neutral): the buddy riffles its passes left to right and the eyes follow,
+   900 ms a cycle, until the scene changes (the operation ended). The one looping scene: it marks
+   pending work. Under reduced motion it holds the rest pose; the working marker's spinner carries
+   the state. Moves only transform. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene="busy"][data-run] .wl-art :is([data-part="c1"], [data-part="c2"], [data-part="c3"]) {
+    animation: wl-s-busy-riffle 900ms var(--wl-ease-move) infinite;
+  }
+  [data-scene="busy"][data-run] .wl-art [data-part="c2"] {
+    animation-delay: 150ms;
+  }
+  [data-scene="busy"][data-run] .wl-art [data-part="c3"] {
+    animation-delay: 300ms;
+  }
+  [data-scene="busy"][data-run] .wl-art [data-look] {
+    animation: wl-s-busy-look 900ms var(--wl-ease-move) infinite;
+  }
+}
+@keyframes wl-s-busy-riffle {
+  0%,
+  55%,
+  100% {
+    transform: var(--t,) translateY(0);
+  }
+  25% {
+    transform: var(--t,) translateY(-6px);
+  }
+}
+@keyframes wl-s-busy-look {
+  0%,
+  100% {
+    transform: translateX(-1.2px);
+  }
+  45% {
+    transform: translateX(1.2px);
+  }
+}

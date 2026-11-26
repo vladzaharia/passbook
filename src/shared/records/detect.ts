@@ -63,12 +63,14 @@ const ID_EMAIL = /e-?mail/i;
 
 /** Unique, fully filled string or number fields, best id first. */
 export function idCandidates(fields: readonly FieldInfo[]): FieldInfo[] {
-  const rank = (f: FieldInfo) =>
-    ID_EXACT.test(f.name) ? 0 : ID_SUFFIX.test(f.name) ? 1 : ID_EMAIL.test(f.name) ? 2 : 3;
   return fields
     .filter((f) => f.unique && (f.type === 'string' || f.type === 'number'))
-    .sort((a, b) => rank(a) - rank(b));
+    .sort((a, b) => idRank(a.name) - idRank(b.name));
 }
+
+/** 0 for `id`-like names, 1 for `*_id`-like, 2 for an email, 3 otherwise. */
+export const idRank = (name: string): number =>
+  ID_EXACT.test(name) ? 0 : ID_SUFFIX.test(name) ? 1 : ID_EMAIL.test(name) ? 2 : 3;
 
 const CHANGED = /(updated|modified|changed|edited)/i;
 const CREATED = /(created|added|registered|issued|joined)/i;
@@ -89,9 +91,17 @@ function isEpoch(f: FieldInfo): boolean {
  * sync), then created-style, then any other time-like name or type.
  */
 export function timeCandidates(fields: readonly FieldInfo[]): FieldInfo[] {
-  const rank = (f: FieldInfo) =>
-    CHANGED.test(f.name) ? 0 : CREATED.test(f.name) ? 1 : TIME_NAME.test(f.name) ? 2 : 3;
   return fields
-    .filter((f) => f.type === 'date' || f.type === 'datetime' || (isEpoch(f) && rank(f) < 3))
-    .sort((a, b) => rank(a) - rank(b));
+    .filter(
+      (f) => f.type === 'date' || f.type === 'datetime' || (isEpoch(f) && timeRank(f.name) < 3),
+    )
+    .sort((a, b) => timeRank(a.name) - timeRank(b.name));
 }
+
+/** 0 for changed-style names, 1 for created-style, 2 for other time-like names, 3 otherwise. */
+export const timeRank = (name: string): number =>
+  CHANGED.test(name) ? 0 : CREATED.test(name) ? 1 : TIME_NAME.test(name) ? 2 : 3;
+
+/** Whether an epoch-number field counts seconds or milliseconds. */
+export const epochUnit = (f: FieldInfo): 'unix' | 'unix-ms' =>
+  f.numMin !== undefined && f.numMin >= EPOCH_S[0] * 1000 ? 'unix-ms' : 'unix';

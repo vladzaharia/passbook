@@ -541,6 +541,24 @@ func (r *ConnectionsResource) Preview(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
+// Probe Probe a saved REST connection `POST /api/v1/connections/{id}/probe`
+func (r *ConnectionsResource) Probe(ctx context.Context, id string, body *ConnectionsProbeBody, opts ...RequestOption) (*ConnectionsProbeResult, error) {
+	var out ConnectionsProbeResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/probe", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ProbeConfig Probe an unsaved REST configuration `POST /api/v1/connections/probe`
+func (r *ConnectionsResource) ProbeConfig(ctx context.Context, body *ConnectionsProbeConfigBody, opts ...RequestOption) (*ConnectionsProbeConfigResult, error) {
+	var out ConnectionsProbeConfigResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/probe", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Retrieve Connection with runs and metrics `GET /api/v1/connections/{id}`
 func (r *ConnectionsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsRetrieveResult, error) {
 	var out ConnectionsRetrieveResult
@@ -1067,6 +1085,48 @@ func newNfcResource(c *core) *NfcResource {
 		Tags:     newNfcTagsResource(c),
 		TagTypes: newNfcTagTypesResource(c),
 	}
+}
+
+type OperationsResource struct {
+	c *core
+}
+
+func newOperationsResource(c *core) *OperationsResource {
+	return &OperationsResource{
+		c: c,
+	}
+}
+
+// Cancel Stop an operation: a queued one at once, a running one at its next safe point `POST /api/v1/operations/{id}/cancel`
+func (r *OperationsResource) Cancel(ctx context.Context, id string, opts ...RequestOption) (*OperationsCancelResult, error) {
+	var out OperationsCancelResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/operations/" + pathEscape(id) + "/cancel"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List operations: started by you, in an organization you read, or platform-wide for admins `GET /api/v1/operations`
+func (r *OperationsResource) List(ctx context.Context, query *OperationsListQuery, opts ...RequestOption) *Pager[OperationsListItem] {
+	return newPager[OperationsListItem](r.c, call{method: "GET", path: "/api/v1/operations", query: queryValues(query)}, "cursor", opts)
+}
+
+// Retrieve Read an operation. An unchanged revision answers 304 when If-None-Match carries its ETag `GET /api/v1/operations/{id}`
+func (r *OperationsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*OperationsRetrieveResult, error) {
+	var out OperationsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/operations/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retry Retry a failed operation under the same id with the next attempt `POST /api/v1/operations/{id}/retry`
+func (r *OperationsResource) Retry(ctx context.Context, id string, opts ...RequestOption) (*OperationsRetryResult, error) {
+	var out OperationsRetryResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/operations/" + pathEscape(id) + "/retry", idempotent: true}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 type DeveloperInvitationsResource struct {
@@ -2964,6 +3024,7 @@ type Resources struct {
 	Holders              *HoldersResource
 	MessageRules         *MessageRulesResource
 	NFC                  *NfcResource
+	Operations           *OperationsResource
 	DeveloperInvitations *DeveloperInvitationsResource
 	Developers           *DevelopersResource
 	Orgs                 *OrgsResource
@@ -3002,6 +3063,7 @@ func newResources(c *core) Resources {
 		Holders:              newHoldersResource(c),
 		MessageRules:         newMessageRulesResource(c),
 		NFC:                  newNfcResource(c),
+		Operations:           newOperationsResource(c),
 		DeveloperInvitations: newDeveloperInvitationsResource(c),
 		Developers:           newDevelopersResource(c),
 		Orgs:                 newOrgsResource(c),

@@ -73,6 +73,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('nfc_tag_types'),
   inOrg('pass_import_mappings'),
   inOrg('pass_imports'),
+  inOrg('operations'),
   inOrg('pass_bulk_runs'),
   inOrg('pass_bulk_locks'),
   inOrg('pass_views'),
@@ -155,6 +156,7 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
 export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   apns_keys: 'platform push key',
   wallet_sa_keys: 'platform service-account key inventory',
+  wallet_provider_releases: 'platform release state of each provider and mode, no org',
   auth_identities: 'user sign-in',
   authority_grant_leaks: 'grant bookkeeping',
   counters: 'rate-limit windows',

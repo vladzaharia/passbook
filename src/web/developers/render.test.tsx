@@ -66,6 +66,31 @@ describe('the prerendered portal', () => {
     expect(body(`${PATHS.console}.html`)).toContain('Run any call against your sandbox.');
   });
 
+  it('frames the four tools as one bench: one h1, Skip to tool, the strip, no sandbox chip in the bar', () => {
+    for (const [path, label] of [
+      [PATHS.console, 'Console'],
+      [PATHS.webhooks, 'Webhooks'],
+      [PATHS.logs, 'Logs'],
+      [PATHS.keys, 'Keys'],
+    ] as const) {
+      const html = page(path);
+      expect(html.match(/<h1\b[^>]*>[^<]*<\/h1>/g), path).toEqual([`<h1 class="h1">${label}</h1>`]);
+      expect(html, path).toContain(`<title>${label} · Developers · PassBook</title>`);
+      expect(html, path).toContain(
+        '<a class="skip" href="#main">Skip to content</a><a class="skip" href="#tool">Skip to tool</a>',
+      );
+      expect(html, path).toContain('data-island="bench-strip"');
+      expect(html, path).not.toContain('data-island="org-chip"');
+      expect(html, path).toContain(
+        '<script async blocking="render" src="/developers/bench-vt.js">',
+      );
+    }
+    // Docs pages keep the chip in the bar and run no tool switch.
+    expect(page(PATHS.quickstart)).toContain('data-island="org-chip"');
+    expect(page(PATHS.quickstart)).not.toContain('bench-vt.js');
+    expect(body('/developers/bench-vt.js')).toContain("addEventListener('pagereveal'");
+  });
+
   it('puts one tree on every page, with the page lit and its group open', () => {
     const tree = (url: string) => {
       const html = page(url);

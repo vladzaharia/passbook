@@ -86,11 +86,11 @@ export const toastImpl = {
    * Errors stay until dismissed. `title` names what failed, "Could not {verb}" ("Could not save");
    * the line under it is the error's own sentence (errorMessage). A string is that sentence.
    */
-  error: (error: unknown, title: string) =>
+  error: (error: unknown, title: string, action?: { label: string; onClick: () => void }) =>
     // A step-up has its own dialog: one message, not two.
     isStepUp(error)
       ? undefined
-      : sonner.error(title, { description: errorMessage(error), duration: Infinity }),
+      : sonner.error(title, { description: errorMessage(error), duration: Infinity, action }),
   /** A success with one follow-up ("View run"). */
   action: (message: string, action: { label: string; onClick: () => void }) =>
     sonner.success(message, { duration: UNDO_MS, action }),

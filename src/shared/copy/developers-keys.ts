@@ -2,6 +2,7 @@
 export const KEYS_COPY = {
   title: 'Keys',
   testOnly: 'Test only',
+  count: (n: number) => `${n} ${n === 1 ? 'key' : 'keys'}`,
   signedOut: 'Sign in to see your keys.',
   noSandbox: 'No sandbox yet',
   create: 'Create sandbox',

@@ -1,4 +1,4 @@
-// The database side of the release (wallet_provider_releases, 0226) for a test that opens the code side with
+// The database side of the release (wallet_provider_releases, 0229) for a test that opens the code side with
 // setWalletProvidersEnabledForTest or setWalletReleaseForTest and keeps the guards in place.
 import { run } from '../../platform/db.ts';
 import type { WalletReleaseState } from './release.ts';

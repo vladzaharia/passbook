@@ -40,6 +40,14 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
+    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
@@ -224,12 +232,36 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"nfc:keys\" added",
     "note": "New scope for secure tag keysets: live keys of one organization, expiry within 90 days, minted by a signed-in org_admin only."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -544,6 +576,14 @@
     "note": "New scope for secure tag keysets: live keys of one organization, expiry within 90 days, minted by a signed-in org_admin only."
   },
   {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "GET /api/v1/developer/home new operation",
     "class": "additive",
     "operationId": "developer.getHome",
@@ -558,6 +598,14 @@
     "op": "GET /api/v1/developer/logs",
     "change": "optional parameter query:portal added",
     "note": "hide leaves out the portal's own background reads."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -576,6 +624,134 @@
     "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
   },
   {
+    "key": "GET /api/v1/developer/sandbox 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.getSandbox",
+    "op": "GET /api/v1/developer/sandbox",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|0.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|0.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|1.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|1.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|10.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|10.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|11.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|11.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|12.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|12.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|13.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|13.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|14.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|14.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|15.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|15.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|16.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|16.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|2.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|2.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|3.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|3.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|4.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|4.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|5.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|5.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|6.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|6.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|7.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|7.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|8.data.exit: field added",
     "class": "additive",
     "operationId": "events.getEvents",
@@ -592,6 +768,142 @@
     "note": "pass.scanned data carries zoneId when the scan was at a zone."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|8.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|8.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|9.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|9.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|0.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|0.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|1.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|1.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|10.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|10.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|11.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|11.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|12.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|12.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|13.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|13.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|14.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|14.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|15.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|15.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|16.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|16.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|2.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|2.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|3.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|3.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|4.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|4.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|5.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|5.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|6.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|6.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|7.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|7.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|8.data.exit: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
@@ -606,6 +918,22 @@
     "op": "GET /api/v1/events/{id}",
     "change": "200|8.data.zoneId: field added",
     "note": "pass.scanned data carries zoneId when the scan was at a zone."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|8.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|8.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|9.requestId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|9.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
     "key": "GET /api/v1/identities 200|0.items[].handle: field added",
@@ -854,6 +1182,22 @@
     "op": "GET /api/v1/nfc/tags/{id}/history",
     "change": "callable by nfc:read key",
     "note": "Callable with an org-bound key holding nfc:read; the audit log names the key."
+  },
+  {
+    "key": "GET /api/v1/operations new operation",
+    "class": "additive",
+    "operationId": "operations.getOperations",
+    "op": "GET /api/v1/operations",
+    "change": "new operation",
+    "note": "New. Lists operations you started or can read in an organization; filter by active, mine, kind, target."
+  },
+  {
+    "key": "GET /api/v1/operations/{id} new operation",
+    "class": "additive",
+    "operationId": "operations.getOperationsById",
+    "op": "GET /api/v1/operations/{id}",
+    "change": "new operation",
+    "note": "New. Reads one long-running action with its steps and counts. 304 when If-None-Match carries its ETag."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -1174,6 +1518,14 @@
     "op": "GET /api/v1/platform/entitlement-presets",
     "change": "new operation",
     "note": "Platform admins list every preset with its values, revision, organization count and pendingOrgs."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups/{key}/claims new operation",
+    "class": "additive",
+    "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
+    "op": "GET /api/v1/platform/idp/groups/{key}/claims",
+    "change": "new operation",
+    "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -1648,6 +2000,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/users/{id}/claims new operation",
+    "class": "additive",
+    "operationId": "polaris-claims.getUsersByIdClaims",
+    "op": "GET /api/v1/users/{id}/claims",
+    "change": "new operation",
+    "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
+  },
+  {
     "key": "GET /api/v1/users/{id}/passes new operation",
     "class": "additive",
     "operationId": "users.getUsersByIdPasses",
@@ -1680,6 +2040,158 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures optional parameter query:passId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "optional parameter query:passId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures optional parameter query:requestId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "optional parameter query:requestId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries optional parameter query:passId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "optional parameter query:passId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries optional parameter query:requestId added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "optional parameter query:requestId added",
+    "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|0.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|0.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|1.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|1.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|10.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|10.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|11.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|11.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|12.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|12.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|13.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|13.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|14.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|14.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|15.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|15.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|16.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|16.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|2.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|2.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|3.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|3.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|4.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|4.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|5.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|5.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|6.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|6.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|7.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|7.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.data.exit: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
@@ -1694,6 +2206,22 @@
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|8.data.zoneId: field added",
     "note": "pass.scanned data carries zoneId when the scan was at a zone."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|8.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|9.requestId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|9.requestId: field added",
+    "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
@@ -1967,6 +2495,14 @@
     "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
   },
   {
+    "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
+    "class": "additive",
+    "operationId": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
+    "op": "PATCH /api/v1/platform/idp/groups/{key}/claims",
+    "change": "new operation",
+    "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
+  },
+  {
     "key": "PATCH /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.patchScanSetupsById",
@@ -2135,6 +2671,22 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "PATCH /api/v1/users/{id}/claims new operation",
+    "class": "additive",
+    "operationId": "polaris-claims.patchUsersByIdClaims",
+    "op": "PATCH /api/v1/users/{id}/claims",
+    "change": "new operation",
+    "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
+  },
+  {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
     "class": "additive",
     "operationId": "api-keys.createApiKeys",
@@ -2221,6 +2773,54 @@
     "op": "POST /api/v1/api-keys",
     "change": "templateIds, passStyles: not allowed with templates:write, templates:review, templates:publish",
     "note": "A template or style restriction narrows templates:read but no longer pairs with the template write, review and publish scopes, whose routes do not honor it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
+    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -2669,6 +3269,22 @@
     "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
   },
   {
+    "key": "POST /api/v1/connections/{id}/probe new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdProbe",
+    "op": "POST /api/v1/connections/{id}/probe",
+    "change": "new operation",
+    "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
+  },
+  {
+    "key": "POST /api/v1/connections/probe new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsProbe",
+    "op": "POST /api/v1/connections/probe",
+    "change": "new operation",
+    "note": "Probe an unsaved REST config: one sample page or record, with detected records, ID, pagination and JSONPaths. 10 a minute per caller, 60 an hour per org."
+  },
+  {
     "key": "POST /api/v1/connections/test-config 200.columns: field added",
     "class": "additive",
     "operationId": "connections.postConnectionsTestConfig",
@@ -2773,12 +3389,36 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
+    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandbox",
+    "op": "POST /api/v1/developer/sandbox",
+    "change": "201.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxClose",
+    "op": "POST /api/v1/developer/sandbox/close",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/close new operation",
     "class": "additive",
     "operationId": "developer.postSandboxClose",
     "op": "POST /api/v1/developer/sandbox/close",
     "change": "new operation",
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "201.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
@@ -2789,12 +3429,28 @@
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxReopen",
+    "op": "POST /api/v1/developer/sandbox/reopen",
+    "change": "200.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
     "class": "additive",
     "operationId": "developer.postSandboxReopen",
     "op": "POST /api/v1/developer/sandbox/reopen",
     "change": "new operation",
     "note": "Reopen your closed developer sandbox inside its 30 days; returns a new key, shown once."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "POST /api/v1/developer/sandbox/reset new operation",
@@ -2931,6 +3587,38 @@
     "op": "POST /api/v1/identity-runs/{id}/retry",
     "change": "new operation",
     "note": "Retries a failed or cancelled provisioning run."
+  },
+  {
+    "key": "POST /api/v1/invitations/accept new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "new operation",
+    "note": "Accept a member or developer invitation with a strong Polaris ID session."
+  },
+  {
+    "key": "POST /api/v1/invitations/claim-existing new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsClaimExisting",
+    "op": "POST /api/v1/invitations/claim-existing",
+    "change": "new operation",
+    "note": "Give the Polaris ID account that has the invited address the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "new operation",
+    "note": "The invitation page names an invitation from its secret; member and developer invitations share it."
+  },
+  {
+    "key": "POST /api/v1/invitations/setup new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsSetup",
+    "op": "POST /api/v1/invitations/setup",
+    "change": "new operation",
+    "note": "Create a Polaris ID from an invitation: a one-hour signup link that already carries the invitation's groups."
   },
   {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
@@ -3075,6 +3763,22 @@
     "op": "POST /api/v1/offboard",
     "change": "200.more: field added",
     "note": "Up to 100 passes a call. more is true while passes remain: send the same request again."
+  },
+  {
+    "key": "POST /api/v1/operations/{id}/cancel new operation",
+    "class": "additive",
+    "operationId": "operations.postOperationsByIdCancel",
+    "op": "POST /api/v1/operations/{id}/cancel",
+    "change": "new operation",
+    "note": "New. Stops an operation: a queued one at once, a running one at its next safe point. 409 OPERATION_NOT_CANCELABLE when the kind cannot be stopped."
+  },
+  {
+    "key": "POST /api/v1/operations/{id}/retry new operation",
+    "class": "additive",
+    "operationId": "operations.postOperationsByIdRetry",
+    "op": "POST /api/v1/operations/{id}/retry",
+    "change": "new operation",
+    "note": "New. Retries a failed operation under the same id with the next attempt. Takes an Idempotency-Key. 409 OPERATION_NOT_RETRYABLE or OPERATION_RUNNING."
   },
   {
     "key": "POST /api/v1/orgs 201.kind: field added",
@@ -3458,7 +4162,7 @@
     "operationId": "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady",
     "op": "POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready",
     "change": "new operation",
-    "note": "Lists the Off enrollments that would turn On for a provider and mode; with apply true, turns exactly those On once the provider is released there."
+    "note": "Lists the Off enrollments that would turn On for a provider and mode; an apply names that list and turns exactly those On once released."
   },
   {
     "key": "POST /api/v1/scan-setups 200.staff.name, adminUser.name: now nullable",

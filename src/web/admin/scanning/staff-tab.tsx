@@ -1,5 +1,5 @@
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { Ban, CircleCheck, IdCard, LockOpen, Pencil, Plus, RotateCw } from 'lucide-react';
+import { Ban, CircleCheck, IdCard, LockOpen, Pencil, RotateCw } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 import { ScanStaffSchema } from '@/shared/contracts/scanners.ts';
@@ -21,6 +21,7 @@ import {
 } from '@/web/ui/index.ts';
 import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { RelTime, useNow } from '../../ui/rel-time.tsx';
+import { StaffBanner } from './staff-banner.tsx';
 import {
   type ScanStaff,
   StaffPinDialog,
@@ -208,27 +209,21 @@ function OrganizationStaff({
   const rows =
     staff.data?.pages.flatMap((page) => page.items).filter((person) => person.orgId === orgId) ??
     [];
+  // No staff yet: the empty state and its Add button stand alone, without a banner or a search.
+  const bare = !staff.isPending && !staff.isError && rows.length === 0 && !q;
   return (
     <div className="grid gap-4">
       {staff.data?.pages[0]?.pinOnlyOff ? (
         <StaffPinOnlyNotice orgId={orgId} canTurnOn={canTurnOnPinOnly} onTurnedOn={refresh} />
       ) : null}
-      <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-surface-raised p-4">
-        <p className="text-sm text-fg-muted">
-          Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans today, not
-          undone.
-        </p>
-        {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setDialog({ type: 'untagged' })}>
-              Reset untagged PINs
-            </Button>
-            <Button iconStart={<Plus aria-hidden />} onClick={() => setDialog({ type: 'create' })}>
-              Add staff
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      {bare ? null : (
+        <StaffBanner
+          mode={mode}
+          actions={canManage && !staff.isPending && !staff.isError}
+          onUntagged={() => setDialog({ type: 'untagged' })}
+          onCreate={() => setDialog({ type: 'create' })}
+        />
+      )}
       {staff.isError ? (
         <ErrorState
           inline
@@ -243,11 +238,13 @@ function OrganizationStaff({
         />
       ) : (
         <>
-          <FilterBar
-            search={{ value: text, onChange: setText, placeholder: 'Search staff' }}
-            filters={[]}
-            onClear={() => setText('')}
-          />
+          {bare ? null : (
+            <FilterBar
+              search={{ value: text, onChange: setText, placeholder: 'Search staff' }}
+              filters={[]}
+              onClear={() => setText('')}
+            />
+          )}
           <DataTable
             caption="Staff"
             data={rows}

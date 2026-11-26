@@ -33,6 +33,15 @@ export const DEV_ISLAND_BUDGET_BYTES = 98_000;
  * (src/web/developers/search/build.ts).
  */
 export const DEV_SEARCH_BUDGET_BYTES = 135_000;
+/**
+ * A Workbench island (developers/bench), on top of the portal's initial load, in gzip bytes: React
+ * (67.5 kB), the bench primitives (about 32 kB: 21.5 kB script, 10.6 kB styles) and one tool's own
+ * code. Measured (WB2): the strip island (`mount`: bench/mount.tsx, with the sandbox chip's OP-2 ring,
+ * the bench keys and the shortcuts sheet) 81.0 kB; the Logs island today 92.5 kB. WB3 adds Logs to
+ * this line when it moves onto React. Webhooks (140.2 kB) and Keys (127.8 kB) measure above it today:
+ * WB4 and WB5 bring them under it as they swap their own pieces for the primitives.
+ */
+export const BENCH_BUDGET_BYTES = 125_000;
 /** Literal strings: this check matches text, so an identifier would not survive minification. */
 export const FORBIDDEN = [
   'cmdk-',
@@ -214,6 +223,7 @@ if (import.meta.main) {
     },
     { label: 'quickstart island', name: 'quickstart', budget: QUICKSTART_BUDGET_BYTES },
     { label: 'developers run island', name: 'run-entry', budget: DEV_ISLAND_BUDGET_BYTES },
+    { label: 'bench strip island', name: 'mount', budget: BENCH_BUDGET_BYTES, statics: true },
   ];
   for (const { label, name, budget, forbidden = DEV_FORBIDDEN, statics } of islands) {
     const files = (statics ? staticIslandAssets : islandAssets)(read, initial, name);

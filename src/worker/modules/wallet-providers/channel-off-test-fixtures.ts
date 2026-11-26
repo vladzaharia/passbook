@@ -23,7 +23,7 @@ export async function setupSamsungChannelOff() {
   const f = await setupSamsungCallbacks();
   const db = f.kit.env.DB;
   const credentialKeysetCommitment = await ensureCredentialRefKeyset(db, f.kit.env);
-  // Successors (channel_epoch > 1) need the provider released in the database too (0226).
+  // Successors (channel_epoch > 1) need the provider released in the database too (0229).
   await releaseRows(db);
   const scope = {
     orgId: f.pass.orgId,

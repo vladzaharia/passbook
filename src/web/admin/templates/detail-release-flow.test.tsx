@@ -101,7 +101,7 @@ it('releases from the dialog: dry run first, then one call with a key', async ()
   await user.click(await screen.findByRole('button', { name: 'Release v2' }));
   const dialog = await screen.findByRole('dialog', { name: 'Release v2' });
   expect(await within(dialog).findByText('#4338CA')).toBeInTheDocument();
-  expect(within(dialog).getByRole('region', { name: 'Colours' })).toHaveTextContent('Background');
+  expect(within(dialog).getByRole('region', { name: 'Colors' })).toHaveTextContent('Background');
   expect(dialog).toHaveTextContent('12 passes update');
   expect(dialog).toHaveTextContent('9 on phones');
   expect(dialog).toHaveTextContent('No one else can review here. Approve it yourself?');

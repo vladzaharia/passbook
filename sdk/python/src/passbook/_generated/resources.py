@@ -533,6 +533,23 @@ class ConnectionsResource:
         """Preview a sync `POST /api/v1/connections/{id}/preview`"""
         return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", result=m.ConnectionsPreviewResult, **opts)
 
+    def probe(
+        self,
+        id: str,
+        body: m.ConnectionsProbeBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsProbeResult:
+        """Probe a saved REST connection `POST /api/v1/connections/{id}/probe`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/probe", body=body, result=m.ConnectionsProbeResult, **opts)
+
+    def probe_config(
+        self,
+        body: m.ConnectionsProbeConfigBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsProbeConfigResult:
+        """Probe an unsaved REST configuration `POST /api/v1/connections/probe`"""
+        return self._core.request("POST", "/api/v1/connections/probe", body=body, result=m.ConnectionsProbeConfigResult, **opts)
+
     def retrieve(
         self,
         id: str,
@@ -1038,6 +1055,49 @@ class NfcResource:
         self.keysets = NfcKeysetsResource(core)
         self.tags = NfcTagsResource(core)
         self.tag_types = NfcTagTypesResource(core)
+
+
+class OperationsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def cancel(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OperationsCancelResult:
+        """Stop an operation: a queued one at once, a running one at its next safe point `POST /api/v1/operations/{id}/cancel`"""
+        return self._core.request("POST", f"/api/v1/operations/{_p(id)}/cancel", result=m.OperationsCancelResult, **opts)
+
+    def list(
+        self,
+        *,
+        active: _Literal["true", "false"] | None = None,
+        mine: _Literal["true", "false"] | None = None,
+        kind: str | None = None,
+        target: str | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.OperationsListItem]:
+        """List operations: started by you, in an organization you read, or platform-wide for admins `GET /api/v1/operations`"""
+        return self._core.paginate("GET", "/api/v1/operations", query={"active": active, "mine": mine, "kind": kind, "target": target, "cursor": cursor, "limit": limit}, result=m.OperationsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OperationsRetrieveResult:
+        """Read an operation. An unchanged revision answers 304 when If-None-Match carries its ETag `GET /api/v1/operations/{id}`"""
+        return self._core.request("GET", f"/api/v1/operations/{_p(id)}", result=m.OperationsRetrieveResult, **opts)
+
+    def retry(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OperationsRetryResult:
+        """Retry a failed operation under the same id with the next attempt `POST /api/v1/operations/{id}/retry`"""
+        return self._core.request("POST", f"/api/v1/operations/{_p(id)}/retry", idempotent=True, result=m.OperationsRetryResult, **opts)
 
 
 class DeveloperInvitationsResource:
@@ -2664,10 +2724,12 @@ class WebhookEndpointsCapturesResource:
         cursor: str | None = None,
         limit: int | None = None,
         type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        request_id: str | None = None,
+        pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookCapture]:
         """Requests a capture endpoint stored, newest first `GET /api/v1/webhook-endpoints/{id}/captures`"""
-        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/captures", query={"cursor": cursor, "limit": limit, "type": type}, result=m.WebhookEndpointsCapturesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/captures", query={"cursor": cursor, "limit": limit, "type": type, "requestId": request_id, "passId": pass_id}, result=m.WebhookEndpointsCapturesListResult, cursor_param="cursor", **opts)
 
     def replay(
         self,
@@ -2717,10 +2779,12 @@ class WebhookEndpointsDeliveriesResource:
         limit: int | None = None,
         state: _Literal["pending", "delivered", "failed", "cancelled"] | None = None,
         type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        request_id: str | None = None,
+        pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEndpointsDeliveriesListItem]:
         """Deliveries of an endpoint, newest first `GET /api/v1/webhook-endpoints/{id}/deliveries`"""
-        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/deliveries", query={"cursor": cursor, "limit": limit, "state": state, "type": type}, result=m.WebhookEndpointsDeliveriesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/deliveries", query={"cursor": cursor, "limit": limit, "state": state, "type": type, "requestId": request_id, "passId": pass_id}, result=m.WebhookEndpointsDeliveriesListResult, cursor_param="cursor", **opts)
 
     def replay(
         self,
@@ -2848,6 +2912,7 @@ class Resources:
         self.holders = HoldersResource(core)
         self.message_rules = MessageRulesResource(core)
         self.nfc = NfcResource(core)
+        self.operations = OperationsResource(core)
         self.developer_invitations = DeveloperInvitationsResource(core)
         self.developers = DevelopersResource(core)
         self.orgs = OrgsResource(core)

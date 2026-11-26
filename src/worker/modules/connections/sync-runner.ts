@@ -2,9 +2,8 @@ import { connectors } from '../../connectors/registry.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { closeRun } from './health.ts';
-import { emptyTotals, type ReleaseBlockCode, type Totals } from './records.ts';
+import { emptyTotals, type ReleaseBlockCode } from './records.ts';
 import { getConnection } from './repo.ts';
-import { setWorkflowStatus } from './repo-sync.ts';
 import { type Failure, paceMs } from './runtime.ts';
 import {
   advanceCursor,
@@ -22,18 +21,16 @@ import {
   handOff,
   MAX_HANDOFFS,
   noteCapped,
+  noteListing,
   type SyncChain,
   spent,
 } from './sync-chain.ts';
 import type { StepResult } from './sync-context.ts';
-import { recordAbort } from './sync-runner-abort.ts';
+import { add, guardRun, RunSupersededError, type StepLike } from './sync-run-guard.ts';
+import { markGone, recordAbort } from './sync-runner-abort.ts';
 import { assertSyncAuthority, assertSyncStart } from './sync-runner-validation.ts';
 
-/** The subset of WorkflowStep the runner needs; tests pass an inline implementation. */
-export interface StepLike {
-  do<T>(name: string, fn: () => Promise<T>): Promise<T>;
-  sleep(name: string, ms: number): Promise<void>;
-}
+export type { StepLike } from './sync-run-guard.ts';
 
 export interface SyncRunParams {
   connectionId: string;
@@ -50,15 +47,6 @@ export interface SyncRunParams {
   writeBudget?: number;
 }
 
-function add(into: Totals, from: Totals): void {
-  into.seen += from.seen;
-  into.changed += from.changed;
-  into.created += from.created;
-  into.missing += from.missing;
-  into.errors += from.errors;
-  if (from.voided) into.voided = (into.voided ?? 0) + from.voided;
-}
-
 const MAX_SAMPLES = 5;
 
 /**
@@ -70,13 +58,21 @@ const MAX_SAMPLES = 5;
  */
 export async function executeSync(
   sctx: ServiceContext,
-  step: StepLike,
+  rawStep: StepLike,
   p: SyncRunParams,
 ): Promise<void> {
   await assertSyncAuthority(sctx, p);
+  const step = guardRun(rawStep, sctx, p);
   try {
     await runSync(sctx, step, p);
   } catch (error) {
+    if (error instanceof RunSupersededError) {
+      sctx.log.info('connection.sync_superseded', {
+        connectionId: p.connectionId,
+        code: 'SUPERSEDED',
+      });
+      return;
+    }
     if (
       error instanceof AppError &&
       (error.code === 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' || error.code === 'STALE_CONTEXT')
@@ -94,6 +90,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
   const budget = p.writeBudget ?? WRITE_BUDGET_PER_INSTANCE;
   const start = await step.do('start', () => startRun(sctx, p));
   assertSyncStart(start, p);
+  if (start.ok && start.settle) step.arm?.();
   const startedAt = p.chain?.startedAt ?? start.startedAt;
 
   const totals = p.chain ? { ...p.chain.totals } : emptyTotals();
@@ -106,19 +103,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
 
   if (!start.ok) {
     if (start.reason === 'GONE') {
-      await step.do('mark-gone', async () => {
-        await assertSyncAuthority(sctx, p);
-        await setWorkflowStatus(
-          sctx.env.DB,
-          p.instanceId,
-          'complete',
-          sctx.clock.now(),
-          null,
-          undefined,
-          p.credentialKeysetCommitment,
-          p,
-        );
-      });
+      await markGone(sctx, step, p);
       return;
     }
     if (start.reason === 'STALE_GENERATION') {
@@ -177,6 +162,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
     try {
       if (start.useList) {
         let cursor = start.cursor;
+        let settling = false;
         pages: for (let page = 0; page < MAX_PAGES_PER_RUN; page++) {
           const current = cursor;
           const fetched = await step.do(`page-${page}`, () =>
@@ -212,6 +198,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
               await step.sleep(`page-${page}-pace-${i}`, paceMs(requests, limits.rpm));
             }
           }
+          if (fetched.note) noteListing(samples, fetched.note);
           // Continue updating existing passes, but never advance past blocked issuance.
           if (!releaseBlocked) {
             const moved = await step.do(`page-${page}-cursor`, () =>
@@ -222,6 +209,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
                 mode: start.mode,
                 credentialKeysetCommitment: p.credentialKeysetCommitment,
                 cursor: fetched.cursor,
+                instanceId: p.instanceId,
               }),
             );
             if (moved?.stale !== false || moved.staleCode) {
@@ -231,7 +219,9 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
               break;
             }
           }
-          if (!fetched.hasMore) break;
+          if (!fetched.hasMore && (!start.settle || (settling && fetched.changes.length === 0)))
+            break;
+          settling = !fetched.hasMore;
           cursor = fetched.cursor;
           const overBudget = spent(totals) - spentBefore >= budget;
           // No hand-off while issuance is blocked (the cursor did not move) or past the chain cap.
@@ -293,7 +283,8 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
           }
         }
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof RunSupersededError) throw error;
       sctx.log.error('connection.sync_failed', { connectionId: p.connectionId, code: 'INTERNAL' });
       failure = { code: 'INTERNAL', httpStatus: null, retryAfterMs: null };
     }

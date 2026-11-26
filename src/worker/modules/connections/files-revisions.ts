@@ -34,6 +34,7 @@ import {
   userNames,
 } from './repo-files.ts';
 import { discardFile, insertPending, promotePending } from './repo-files-writes.ts';
+import { supersedeOpenRun } from './schedule.ts';
 import { auditActor, requireConnection } from './service-shared.ts';
 import { requireConnector } from './validate.ts';
 
@@ -119,7 +120,10 @@ export async function uploadRevision(
     row.diff = current ? diffRefs(before, refs) : null;
     discarded = await insertPending(ctx, { orgId, authority }, connectionId, row, now);
   } catch (error) {
-    await deleteFileObjects(ctx, orgId, row.id).catch(() => undefined);
+    // The daily sweep removes what this misses; the upload's own error still reaches the caller.
+    await deleteFileObjects(ctx, orgId, row.id).catch(() =>
+      ctx.log.error('connection.file_cleanup_failed', { orgId, code: 'FILE_CLEANUP_FAILED' }),
+    );
     if (classifyD1Error(error)?.kind === 'unique')
       throw new ConflictError('Another upload landed first. Try again.', 'FILE_STATE');
     throw error;
@@ -187,7 +191,9 @@ export async function applyRevision(
     targetId: connectionId,
     detail: { fileId, format: row.format, rows: row.rows, bytes: row.bytes },
   });
-  const started = await actions.syncNow(ctx, actor, connectionId, authority);
+  // A run still listing the old file must not be adopted: close it, so Apply's run starts after the promote.
+  await supersedeOpenRun(ctx, conn);
+  const started = await actions.syncNow(ctx, actor, connectionId, authority, fileId);
   const fresh = (await getFile(ctx.env.DB, conn.orgId, fileId)) ?? row;
   return { file: await dtoOf(ctx, fresh), ...started };
 }

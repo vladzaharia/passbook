@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { ORG_WEBSITE_INVALID } from '@/shared/copy/org-website.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
-import { localZone } from '@/web/lib/timezones.ts';
+import { localZone, zoneLabel } from '@/web/lib/timezones.ts';
 
 const org = {
   id: 'o1',
@@ -150,10 +150,10 @@ describe('org time zone', () => {
     );
     const user = userEvent.setup();
     const picker = await screen.findByRole('combobox', { name: /Time zone/ });
-    expect(picker).toHaveTextContent('Pacific Time (Seattle) · default');
+    expect(picker).toHaveTextContent(`${zoneLabel('America/Los_Angeles')} · default`);
     expect(puts).toEqual([]);
-    await user.click(screen.getByRole('button', { name: `Use ${localZone()}` }));
-    expect(screen.queryByRole('button', { name: `Use ${localZone()}` })).toBeNull();
+    await user.click(screen.getByRole('button', { name: `Use ${zoneLabel(localZone())}` }));
+    expect(screen.queryByRole('button', { name: `Use ${zoneLabel(localZone())}` })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>
       expect(puts).toEqual([{ scope: 'org:o1', values: { 'org.timeZone': localZone() } }]),
@@ -175,7 +175,7 @@ describe('org time zone', () => {
     );
     await user.click(screen.getByRole('combobox', { name: /Time zone/ }));
     await user.click(
-      await screen.findByRole('option', { name: 'Pacific Time (Seattle) · default' }),
+      await screen.findByRole('option', { name: `${zoneLabel('America/Los_Angeles')} · default` }),
     );
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>

@@ -31,6 +31,9 @@ export function estimateQueries(job: Job): number {
     case 'prints.bulk':
       // Per pass: the pass, its channels, org, template and print reads.
       return 10 + 10 * job.passIds.length;
+    // A kind's hook may do a whole run's work: it spends an invocation.
+    case 'operation.run':
+      return QUEUE_QUERY_BUDGET;
     case 'message_rule.check':
       return 14;
     // Measured 7 with an in-memory registry: the row, the outbox check and commit, the dispatch.

@@ -1496,6 +1496,58 @@ type ConnectionsListResponseItemsItemVoidWhenItem struct {
 
 type ConnectionsPreviewResult = ConnectionPreview
 
+type ConnectionsProbeBody = ConnectionsProbeParams
+
+type ConnectionsProbeConfigBody = ConnectionsProbeConfigParams
+
+type ConnectionsProbeConfigParams struct {
+	OrgID         string            `json:"orgId"`
+	ConnectorType string            `json:"connectorType"`
+	Config        map[string]any    `json:"config"`
+	Secrets       map[string]string `json:"secrets,omitempty"`
+	Target        string            `json:"target"`
+	Ref           *string           `json:"ref,omitempty"`
+	Next          *string           `json:"next,omitempty"`
+}
+
+type ConnectionsProbeConfigResponse struct {
+	Ok           bool              `json:"ok"`
+	ErrorCode    *string           `json:"errorCode,omitempty"`
+	RetryAfterMs *int64            `json:"retryAfterMs,omitempty"`
+	DurationMs   int64             `json:"durationMs"`
+	Request      map[string]any    `json:"request"`
+	Headers      map[string]string `json:"headers"`
+	Body         any               `json:"body,omitempty"`
+	Pruned       map[string]any    `json:"pruned"`
+	Detections   map[string]any    `json:"detections"`
+	Page         map[string]any    `json:"page"`
+}
+
+type ConnectionsProbeConfigResult = ConnectionsProbeConfigResponse
+
+type ConnectionsProbeParams struct {
+	Config  map[string]any    `json:"config,omitempty"`
+	Secrets map[string]string `json:"secrets,omitempty"`
+	Target  string            `json:"target"`
+	Ref     *string           `json:"ref,omitempty"`
+	Next    *string           `json:"next,omitempty"`
+}
+
+type ConnectionsProbeResponse struct {
+	Ok           bool              `json:"ok"`
+	ErrorCode    *string           `json:"errorCode,omitempty"`
+	RetryAfterMs *int64            `json:"retryAfterMs,omitempty"`
+	DurationMs   int64             `json:"durationMs"`
+	Request      map[string]any    `json:"request"`
+	Headers      map[string]string `json:"headers"`
+	Body         any               `json:"body,omitempty"`
+	Pruned       map[string]any    `json:"pruned"`
+	Detections   map[string]any    `json:"detections"`
+	Page         map[string]any    `json:"page"`
+}
+
+type ConnectionsProbeResult = ConnectionsProbeResponse
+
 type ConnectionsRetrieveResponse struct {
 	ID                  string                                             `json:"id"`
 	OrgID               string                                             `json:"orgId"`
@@ -2531,6 +2583,7 @@ type EmailFailedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       EmailFailedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -5027,6 +5080,246 @@ type NfcTagsUpdateResponse struct {
 	Binding    map[string]any `json:"binding"`
 }
 
+type OperationsCancelResponse struct {
+	ID              string                              `json:"id"`
+	Kind            string                              `json:"kind"`
+	Status          string                              `json:"status"`
+	Title           string                              `json:"title"`
+	Text            string                              `json:"text"`
+	OrgID           *string                             `json:"orgId"`
+	Mode            *string                             `json:"mode"`
+	Target          map[string]any                      `json:"target"`
+	Step            *string                             `json:"step"`
+	Steps           []OperationsCancelResponseStepsItem `json:"steps"`
+	Attempt         int64                               `json:"attempt"`
+	Cancelable      bool                                `json:"cancelable"`
+	CancelRequested bool                                `json:"cancelRequested"`
+	StartedBy       OperationsCancelResponseStartedBy   `json:"startedBy"`
+	CreatedAt       int64                               `json:"createdAt"`
+	StartedAt       *int64                              `json:"startedAt"`
+	UpdatedAt       int64                               `json:"updatedAt"`
+	FinishedAt      *int64                              `json:"finishedAt"`
+	Error           map[string]any                      `json:"error"`
+	Result          map[string]any                      `json:"result"`
+	Revision        int64                               `json:"revision"`
+	PollAfterMs     int64                               `json:"pollAfterMs"`
+}
+
+type OperationsCancelResponseStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type OperationsCancelResponseStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type OperationsCancelResult = OperationsCancelResponse
+
+type OperationsListItem struct {
+	ID              string                        `json:"id"`
+	Kind            string                        `json:"kind"`
+	Status          string                        `json:"status"`
+	Title           string                        `json:"title"`
+	Text            string                        `json:"text"`
+	OrgID           *string                       `json:"orgId"`
+	Mode            *string                       `json:"mode"`
+	Target          map[string]any                `json:"target"`
+	Step            *string                       `json:"step"`
+	Steps           []OperationsListItemStepsItem `json:"steps"`
+	Attempt         int64                         `json:"attempt"`
+	Cancelable      bool                          `json:"cancelable"`
+	CancelRequested bool                          `json:"cancelRequested"`
+	StartedBy       OperationsListItemStartedBy   `json:"startedBy"`
+	CreatedAt       int64                         `json:"createdAt"`
+	StartedAt       *int64                        `json:"startedAt"`
+	UpdatedAt       int64                         `json:"updatedAt"`
+	FinishedAt      *int64                        `json:"finishedAt"`
+	Error           map[string]any                `json:"error"`
+	Result          map[string]any                `json:"result"`
+	Revision        int64                         `json:"revision"`
+	PollAfterMs     int64                         `json:"pollAfterMs"`
+}
+
+type OperationsListItemStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type OperationsListItemStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type OperationsListQuery struct {
+	Active *string `json:"active,omitempty"`
+	Mine   *string `json:"mine,omitempty"`
+	Kind   *string `json:"kind,omitempty"`
+	Target *string `json:"target,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
+type OperationsListResponse struct {
+	Items      []OperationsListResponseItemsItem `json:"items"`
+	NextCursor *string                           `json:"nextCursor"`
+}
+
+type OperationsListResponseItemsItem struct {
+	ID              string                                     `json:"id"`
+	Kind            string                                     `json:"kind"`
+	Status          string                                     `json:"status"`
+	Title           string                                     `json:"title"`
+	Text            string                                     `json:"text"`
+	OrgID           *string                                    `json:"orgId"`
+	Mode            *string                                    `json:"mode"`
+	Target          map[string]any                             `json:"target"`
+	Step            *string                                    `json:"step"`
+	Steps           []OperationsListResponseItemsItemStepsItem `json:"steps"`
+	Attempt         int64                                      `json:"attempt"`
+	Cancelable      bool                                       `json:"cancelable"`
+	CancelRequested bool                                       `json:"cancelRequested"`
+	StartedBy       OperationsListResponseItemsItemStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                      `json:"createdAt"`
+	StartedAt       *int64                                     `json:"startedAt"`
+	UpdatedAt       int64                                      `json:"updatedAt"`
+	FinishedAt      *int64                                     `json:"finishedAt"`
+	Error           map[string]any                             `json:"error"`
+	Result          map[string]any                             `json:"result"`
+	Revision        int64                                      `json:"revision"`
+	PollAfterMs     int64                                      `json:"pollAfterMs"`
+}
+
+type OperationsListResponseItemsItemStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type OperationsListResponseItemsItemStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type OperationsRetrieveResponse struct {
+	ID              string                                `json:"id"`
+	Kind            string                                `json:"kind"`
+	Status          string                                `json:"status"`
+	Title           string                                `json:"title"`
+	Text            string                                `json:"text"`
+	OrgID           *string                               `json:"orgId"`
+	Mode            *string                               `json:"mode"`
+	Target          map[string]any                        `json:"target"`
+	Step            *string                               `json:"step"`
+	Steps           []OperationsRetrieveResponseStepsItem `json:"steps"`
+	Attempt         int64                                 `json:"attempt"`
+	Cancelable      bool                                  `json:"cancelable"`
+	CancelRequested bool                                  `json:"cancelRequested"`
+	StartedBy       OperationsRetrieveResponseStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                 `json:"createdAt"`
+	StartedAt       *int64                                `json:"startedAt"`
+	UpdatedAt       int64                                 `json:"updatedAt"`
+	FinishedAt      *int64                                `json:"finishedAt"`
+	Error           map[string]any                        `json:"error"`
+	Result          map[string]any                        `json:"result"`
+	Revision        int64                                 `json:"revision"`
+	PollAfterMs     int64                                 `json:"pollAfterMs"`
+}
+
+type OperationsRetrieveResponseStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type OperationsRetrieveResponseStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type OperationsRetrieveResult = OperationsRetrieveResponse
+
+type OperationsRetryResponse struct {
+	ID              string                             `json:"id"`
+	Kind            string                             `json:"kind"`
+	Status          string                             `json:"status"`
+	Title           string                             `json:"title"`
+	Text            string                             `json:"text"`
+	OrgID           *string                            `json:"orgId"`
+	Mode            *string                            `json:"mode"`
+	Target          map[string]any                     `json:"target"`
+	Step            *string                            `json:"step"`
+	Steps           []OperationsRetryResponseStepsItem `json:"steps"`
+	Attempt         int64                              `json:"attempt"`
+	Cancelable      bool                               `json:"cancelable"`
+	CancelRequested bool                               `json:"cancelRequested"`
+	StartedBy       OperationsRetryResponseStartedBy   `json:"startedBy"`
+	CreatedAt       int64                              `json:"createdAt"`
+	StartedAt       *int64                             `json:"startedAt"`
+	UpdatedAt       int64                              `json:"updatedAt"`
+	FinishedAt      *int64                             `json:"finishedAt"`
+	Error           map[string]any                     `json:"error"`
+	Result          map[string]any                     `json:"result"`
+	Revision        int64                              `json:"revision"`
+	PollAfterMs     int64                              `json:"pollAfterMs"`
+}
+
+type OperationsRetryResponseStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type OperationsRetryResponseStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type OperationsRetryResult = OperationsRetryResponse
+
 type Org struct {
 	ID                string      `json:"id"`
 	Slug              string      `json:"slug"`
@@ -5288,6 +5581,7 @@ type PassChannelsChangedEvent struct {
 	Mode       string                       `json:"mode"`
 	Pass       WebhookPassRef               `json:"pass"`
 	Data       PassChannelsChangedEventData `json:"data"`
+	RequestID  *string                      `json:"requestId,omitempty"`
 	Sample     *bool                        `json:"sample,omitempty"`
 }
 
@@ -6380,6 +6674,7 @@ type PassInstalledEvent struct {
 	Mode       string                 `json:"mode"`
 	Pass       WebhookPassRef         `json:"pass"`
 	Data       PassInstalledEventData `json:"data"`
+	RequestID  *string                `json:"requestId,omitempty"`
 	Sample     *bool                  `json:"sample,omitempty"`
 }
 
@@ -6399,6 +6694,7 @@ type PassIssuedEvent struct {
 	Mode       string              `json:"mode"`
 	Pass       WebhookPassRef      `json:"pass"`
 	Data       PassIssuedEventData `json:"data"`
+	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
 }
 
@@ -6422,6 +6718,7 @@ type PassPrintVoidedEvent struct {
 	Mode       string                   `json:"mode"`
 	Pass       WebhookPassRef           `json:"pass"`
 	Data       PassPrintVoidedEventData `json:"data"`
+	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
 }
 
@@ -6439,6 +6736,7 @@ type PassPrintedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassPrintedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -6457,6 +6755,7 @@ type PassRemovedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassRemovedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -6475,6 +6774,7 @@ type PassRestoredEvent struct {
 	Mode       string                `json:"mode"`
 	Pass       WebhookPassRef        `json:"pass"`
 	Data       PassRestoredEventData `json:"data"`
+	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
 }
 
@@ -6491,6 +6791,7 @@ type PassScanRefusedEvent struct {
 	Mode       string                   `json:"mode"`
 	Pass       WebhookPassRef           `json:"pass"`
 	Data       PassScanRefusedEventData `json:"data"`
+	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
 }
 
@@ -6512,6 +6813,7 @@ type PassScanUndoneEvent struct {
 	Mode       string                  `json:"mode"`
 	Pass       WebhookPassRef          `json:"pass"`
 	Data       PassScanUndoneEventData `json:"data"`
+	RequestID  *string                 `json:"requestId,omitempty"`
 	Sample     *bool                   `json:"sample,omitempty"`
 }
 
@@ -6530,6 +6832,7 @@ type PassScannedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassScannedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -7101,6 +7404,7 @@ type PassUninstalledEvent struct {
 	Mode       string                   `json:"mode"`
 	Pass       WebhookPassRef           `json:"pass"`
 	Data       PassUninstalledEventData `json:"data"`
+	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
 }
 
@@ -7121,6 +7425,7 @@ type PassUnvoidedEvent struct {
 	Mode       string                `json:"mode"`
 	Pass       WebhookPassRef        `json:"pass"`
 	Data       PassUnvoidedEventData `json:"data"`
+	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
 }
 
@@ -7137,6 +7442,7 @@ type PassUpdatedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassUpdatedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -7196,6 +7502,7 @@ type PassVoidedEvent struct {
 	Mode       string              `json:"mode"`
 	Pass       WebhookPassRef      `json:"pass"`
 	Data       PassVoidedEventData `json:"data"`
+	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
 }
 
@@ -8232,6 +8539,26 @@ type PlatformEntitlementPresetsUpdateResponsePreset struct {
 	Values      map[string]any `json:"values"`
 }
 
+type PlatformGroupsClaimsRetrieveResponse struct {
+	Claims    map[string]PlatformGroupsClaimsRetrieveResponseClaimsValue `json:"claims"`
+	OtherKeys int64                                                      `json:"otherKeys"`
+}
+
+type PlatformGroupsClaimsRetrieveResponseClaimsValue struct {
+	Type  string `json:"type"`
+	Value any    `json:"value,omitempty"`
+}
+
+type PlatformGroupsClaimsUpdateParams struct {
+	Set map[string]map[string]any `json:"set"`
+}
+
+type PlatformGroupsClaimsUpdateResponse struct {
+	Set     []string `json:"set"`
+	Removed []string `json:"removed"`
+	DryRun  bool     `json:"dryRun"`
+}
+
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
 	Range       string                                              `json:"range"`
@@ -8765,6 +9092,26 @@ type PlatformTemplatesAssignParams struct {
 
 type PlatformTemplatesShareParams struct {
 	Shared bool `json:"shared"`
+}
+
+type PlatformUsersClaimsRetrieveResponse struct {
+	Claims    map[string]PlatformUsersClaimsRetrieveResponseClaimsValue `json:"claims"`
+	OtherKeys int64                                                     `json:"otherKeys"`
+}
+
+type PlatformUsersClaimsRetrieveResponseClaimsValue struct {
+	Type  string `json:"type"`
+	Value any    `json:"value,omitempty"`
+}
+
+type PlatformUsersClaimsUpdateParams struct {
+	Set map[string]map[string]any `json:"set"`
+}
+
+type PlatformUsersClaimsUpdateResponse struct {
+	Set     []string `json:"set"`
+	Removed []string `json:"removed"`
+	DryRun  bool     `json:"dryRun"`
 }
 
 type PlatformUsersEmailsCreateParams struct {
@@ -9337,7 +9684,8 @@ type PlatformWalletEnrollmentsListResponseItemsItem struct {
 }
 
 type PlatformWalletReleaseEnableReadyParams struct {
-	Apply *bool `json:"apply,omitempty"`
+	Apply  *bool    `json:"apply,omitempty"`
+	OrgIds []string `json:"orgIds,omitempty"`
 }
 
 type PlatformWalletReleaseEnableReadyResponse struct {
@@ -9444,17 +9792,18 @@ type PrintJobsRetrieveResponse struct {
 type PrintJobsRetrieveResult = PrintJobsRetrieveResponse
 
 type Problem struct {
-	Type      string              `json:"type"`
-	Title     string              `json:"title"`
-	Status    int64               `json:"status"`
-	Code      string              `json:"code"`
-	Detail    string              `json:"detail"`
-	RequestID *string             `json:"requestId,omitempty"`
-	Issues    []ProblemIssuesItem `json:"issues,omitempty"`
-	Feature   *string             `json:"feature,omitempty"`
-	Limit     *int64              `json:"limit,omitempty"`
-	Used      *int64              `json:"used,omitempty"`
-	SignInURL *string             `json:"signInUrl,omitempty"`
+	Type        string              `json:"type"`
+	Title       string              `json:"title"`
+	Status      int64               `json:"status"`
+	Code        string              `json:"code"`
+	Detail      string              `json:"detail"`
+	RequestID   *string             `json:"requestId,omitempty"`
+	Issues      []ProblemIssuesItem `json:"issues,omitempty"`
+	Feature     *string             `json:"feature,omitempty"`
+	Limit       *int64              `json:"limit,omitempty"`
+	Used        *int64              `json:"used,omitempty"`
+	SignInURL   *string             `json:"signInUrl,omitempty"`
+	OperationID *string             `json:"operationId,omitempty"`
 }
 
 type ProblemIssuesItem struct {
@@ -9472,6 +9821,7 @@ type PushFailedEvent struct {
 	Mode       string              `json:"mode"`
 	Pass       WebhookPassRef      `json:"pass"`
 	Data       PushFailedEventData `json:"data"`
+	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
 }
 
@@ -14503,9 +14853,11 @@ type WebhookEndpointPage struct {
 }
 
 type WebhookEndpointsCapturesListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	Type   *string `json:"type,omitempty"`
+	Cursor    *string `json:"cursor,omitempty"`
+	Limit     *int64  `json:"limit,omitempty"`
+	Type      *string `json:"type,omitempty"`
+	RequestID *string `json:"requestId,omitempty"`
+	PassID    *string `json:"passId,omitempty"`
 }
 
 type WebhookEndpointsCapturesReplayResult = WebhookCapture
@@ -14568,10 +14920,12 @@ type WebhookEndpointsDeliveriesListItem struct {
 }
 
 type WebhookEndpointsDeliveriesListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	State  *string `json:"state,omitempty"`
-	Type   *string `json:"type,omitempty"`
+	Cursor    *string `json:"cursor,omitempty"`
+	Limit     *int64  `json:"limit,omitempty"`
+	State     *string `json:"state,omitempty"`
+	Type      *string `json:"type,omitempty"`
+	RequestID *string `json:"requestId,omitempty"`
+	PassID    *string `json:"passId,omitempty"`
 }
 
 type WebhookEndpointsDeliveriesReplayResponse struct {
@@ -14663,6 +15017,7 @@ type WebhookTestEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       any                  `json:"pass"`
 	Data       WebhookTestEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 

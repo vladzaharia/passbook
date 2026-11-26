@@ -42,6 +42,8 @@ export interface TurnstileProps {
   resetKey?: number;
   /** True while the widget asks the visitor to interact; the host shows its slot only then. */
   onInteractive?: (shown: boolean) => void;
+  /** The action the server expects back; the sign-in widget's by default. */
+  action?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export function Turnstile({
   onError,
   resetKey = 0,
   onInteractive,
+  action = TURNSTILE_ACTION,
 }: TurnstileProps) {
   const host = useRef<HTMLDivElement>(null);
   const { resolved } = useTheme();
@@ -72,7 +75,7 @@ export function Turnstile({
         api = t;
         widgetId = t.render(host.current, {
           sitekey: siteKey,
-          action: TURNSTILE_ACTION,
+          action,
           theme: resolved,
           appearance: 'interaction-only',
           'before-interactive-callback': () => callbacks.current.onInteractive?.(true),
@@ -91,7 +94,7 @@ export function Turnstile({
       callbacks.current.onInteractive?.(false);
       if (api && widgetId) api.remove(widgetId);
     };
-  }, [siteKey, resetKey, resolved]);
+  }, [siteKey, resetKey, resolved, action]);
 
   return <div ref={host} data-testid="turnstile" />;
 }

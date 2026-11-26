@@ -8,7 +8,7 @@ import type {
 import type { SessionAuth } from '../../platform/auth.ts';
 import { grant, grantedBatch } from '../../platform/authority.ts';
 import { entitled } from '../../platform/authority-entitled.ts';
-import { AppError, ForbiddenError } from '../../platform/errors.ts';
+import { AppError, ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { withLastChecks } from './credential-service.ts';
@@ -77,6 +77,14 @@ async function readEnrolment(
   if (row.org_status !== 'active') fixed.push('org');
   if (fixed.length > 0) return { ...base, status: 'blocked', blocks: fixed };
   if (row.enabled_at !== null) return { ...base, status: 'issuing', blocks: [] };
+  // Off after being On: the org switched it Off (or switched source), or a platform hold cleared it. Only the org
+  // turns it back On; enable-ready never overrides that.
+  if (row.was_on)
+    return {
+      ...base,
+      status: 'blocked',
+      blocks: [row.off_kind === 'hold' || row.off_kind === 'release' ? 'hold_released' : 'org_off'],
+    };
   if ((await getOrgSettings(ctx, row.org_id))['channels.blocked'].includes(provider))
     return { ...base, status: 'blocked', blocks: ['channel_off'] };
   const { plan, blocks } = await planOf(ctx, row, provider, mode);
@@ -129,24 +137,36 @@ export async function releaseReport(
   return { releases };
 }
 
+const CHUNK = 20;
+const changed = () =>
+  new ConflictError(
+    'The ready list changed since the dry run. Run it again and review the list.',
+    'WALLET_RELEASE_READY_CHANGED',
+  );
+
 /**
- * `POST /platform/wallet-release/{provider}/{mode}/enable-ready`: the Off enrolments whose org has not blocked the
- * channel and whose enable plan passes (plan, source, check, Live round trip, no hold). A dry run lists them; an
- * apply turns exactly those On in one batch, each under its own platform grant and audit row, and only while the
- * provider is released in the mode.
+ * `POST /platform/wallet-release/{provider}/{mode}/enable-ready`: the Off enrolments that were never On, whose org
+ * has not blocked the channel and whose enable plan passes (plan, source, check, Live round trip, no hold). A dry
+ * run lists them. An apply names the orgs the dry run listed and turns exactly those On, each under its own
+ * platform grant and audit row, only while the provider is released in the mode; any difference is a 409. Writes
+ * go in batches of CHUNK, each atomic.
  */
 export async function enableReady(
   ctx: ServiceContext,
   auth: SessionAuth,
   provider: WalletProvider,
   mode: Mode,
-  apply: boolean,
+  input: { apply: boolean; orgIds?: string[] | undefined },
 ): Promise<EnableReadyResult> {
   admin(auth);
   const read = await readMode(ctx, provider, mode);
   const ready = read.enrolments.filter((e) => e.status === 'ready');
   const enrolments = ready.map((e) => ({ orgId: e.orgId, orgName: e.orgName }));
-  if (!apply || ready.length === 0) return { applied: false, enrolments };
+  if (!input.apply) return { applied: false, enrolments };
+  const reviewed = [...new Set(input.orgIds ?? [])].sort();
+  const now = ready.map((e) => e.orgId).sort();
+  if (reviewed.length !== now.length || reviewed.some((id, i) => id !== now[i])) throw changed();
+  if (ready.length === 0) return { applied: false, enrolments };
   if (read.state !== 'released') throw new WalletProviderDisabledError(provider, 'not_released');
   const grants = ready.map((e) => {
     const plan = read.plans.get(e.orgId);
@@ -162,10 +182,12 @@ export async function enableReady(
     addEnrolmentStep(ctx, g, plan.build({ type: 'platform', id: principal.userId }));
     return g;
   });
-  try {
-    await grantedBatch(ctx.env.DB, grants);
-  } catch (error) {
-    throw mapWalletWriteError(error);
+  for (let i = 0; i < grants.length; i += CHUNK) {
+    try {
+      await grantedBatch(ctx.env.DB, grants.slice(i, i + CHUNK));
+    } catch (error) {
+      throw mapWalletWriteError(error);
+    }
   }
   ctx.log.info('wallet.release_enable_ready', { provider, mode, count: grants.length });
   return { applied: true, enrolments };

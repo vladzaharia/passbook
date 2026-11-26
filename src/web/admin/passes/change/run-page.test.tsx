@@ -48,6 +48,13 @@ function setup(
 }
 
 describe('Change run page', () => {
+  it('names a plain message as a missing change run, without a state chip', async () => {
+    setup(change({ kind: 'message', state: 'scheduled', at: Date.now() + 86_400_000 }));
+    expect(await screen.findByText('Change run not found')).toBeInTheDocument();
+    expect(screen.queryByText('Scheduled')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to passes' })).toBeInTheDocument();
+  });
+
   it('shows progress with Stop while it runs', async () => {
     setup(
       change({

@@ -905,6 +905,7 @@
     "NOT_FOUND",
     "ORG_ACCESS_CHANGED",
     "ORG_TEST_ONLY",
+    "RATE_LIMITED",
     "RETENTION_CHANGED",
     "SCANNER_REPAIR",
     "SCAN_CONFIG_CHANGED",
@@ -921,6 +922,21 @@
     "WEBHOOK_PAYLOAD",
     "WEBHOOK_SIGNATURE"
   ],
+  "connections post /probe": [
+    "CONNECTION_NOT_FOUND",
+    "CONNECTOR_UNKNOWN",
+    "FILE_CELL_TOO_LONG",
+    "FILE_DAMAGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_NOT_FOUND",
+    "ORG_TEST_ONLY",
+    "RATE_LIMITED",
+    "UNAUTHENTICATED",
+    "UNSAFE_URL",
+    "VALIDATION"
+  ],
   "connections post /test-config": [
     "CONNECTION_NOT_FOUND",
     "CONNECTOR_UNKNOWN",
@@ -931,6 +947,7 @@
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
+    "RATE_LIMITED",
     "TEMPLATE_CONTENT_CHANGED",
     "TEMPLATE_PROVIDER_UNSUPPORTED",
     "TEMPLATE_RELEASE_REQUIRED",
@@ -1038,6 +1055,7 @@
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
+    "RATE_LIMITED",
     "TEMPLATE_CONTENT_CHANGED",
     "TEMPLATE_PROVIDER_UNSUPPORTED",
     "TEMPLATE_RELEASE_REQUIRED",
@@ -1046,6 +1064,21 @@
     "UNSAFE_URL",
     "VALIDATION",
     "WALLET_PROJECTION_UNSUPPORTED"
+  ],
+  "connections post /{id}/probe": [
+    "CONNECTION_NOT_FOUND",
+    "CONNECTOR_UNKNOWN",
+    "FILE_CELL_TOO_LONG",
+    "FILE_DAMAGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_FORBIDDEN",
+    "ORG_NOT_FOUND",
+    "ORG_TEST_ONLY",
+    "RATE_LIMITED",
+    "UNAUTHENTICATED",
+    "UNSAFE_URL",
+    "VALIDATION"
   ],
   "connections post /{id}/sync": [
     "ACTOR_CHANGED",
@@ -1085,6 +1118,7 @@
     "ORG_ACCESS_CHANGED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
+    "RATE_LIMITED",
     "RETENTION_CHANGED",
     "SCANNER_REPAIR",
     "SCAN_CONFIG_CHANGED",
@@ -1245,6 +1279,11 @@
   "developer invitations delete /{id}/developer-invitations/{invitationId}": [
     "DEVELOPER_INVITE_CONFLICT",
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
@@ -2010,6 +2049,53 @@
     "STALE",
     "TEMPLATE_RELEASE_CHANGED",
     "UNAUTHENTICATED"
+  ],
+  "invitations post /accept": [
+    "DEVELOPER_LIMIT_REACHED",
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "IDP_SIGN_IN_REQUIRED",
+    "INVITATION_CLAIM_CAPPED",
+    "INVITATION_CONFLICT",
+    "INVITATION_EMAIL_MISMATCH",
+    "INVITATION_INVALID",
+    "UNAUTHENTICATED"
+  ],
+  "invitations post /claim-existing": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_CLAIM_CAPPED",
+    "INVITATION_INVALID",
+    "INVITATION_NO_ACCOUNT",
+    "TURNSTILE_FAILED"
+  ],
+  "invitations post /preview": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_INVALID"
+  ],
+  "invitations post /setup": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_INVALID",
+    "INVITATION_SETUP_CAPPED",
+    "TURNSTILE_FAILED"
   ],
   "join get /{token}": [
     "IDENTITY_EXPIRED",
@@ -2907,6 +2993,34 @@
     "VERSION_CONFLICT",
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
+  "operations get /": [
+    "FORBIDDEN",
+    "INVALID_CURSOR",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
+  "operations get /{id}": [
+    "FORBIDDEN",
+    "OPERATION_NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
+  "operations post /{id}/cancel": [
+    "FORBIDDEN",
+    "OPERATION_NOT_CANCELABLE",
+    "OPERATION_NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
+  "operations post /{id}/retry": [
+    "FORBIDDEN",
+    "IDEMPOTENCY_KEY_INVALID",
+    "OPERATION_NOT_FOUND",
+    "OPERATION_NOT_RETRYABLE",
+    "OPERATION_RUNNING",
+    "ORG_FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
   "org-lifecycle get /closed-orgs": [],
   "org-lifecycle get /{exportId}/download": [
     "EXPORT_NOT_FOUND"
@@ -2954,6 +3068,11 @@
   ],
   "organization memberships delete /{id}/invitations/{invitationId}": [
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "MEMBERSHIP_CONFLICT",
     "UNAUTHENTICATED"
   ],
@@ -2986,12 +3105,21 @@
     "UNAUTHENTICATED"
   ],
   "organization memberships post /invitations/accept": [
+    "DEVELOPER_LIMIT_REACHED",
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_CLAIM_CAPPED",
+    "INVITATION_CONFLICT",
+    "INVITATION_EMAIL_MISMATCH",
     "INVITATION_INVALID",
-    "MEMBERSHIP_CONFLICT",
     "UNAUTHENTICATED"
   ],
   "organization memberships post /invitations/preview": [
+    "FORBIDDEN",
     "INVITATION_INVALID"
   ],
   "organization memberships post /{id}/invitations": [
@@ -4668,6 +4796,44 @@
     "VALIDATION",
     "VERSION_CONFLICT",
     "WALLET_PROJECTION_UNSUPPORTED"
+  ],
+  "polaris claims get /idp/groups/{key}/claims": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED"
+  ],
+  "polaris claims get /{id}/claims": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_MULTIPLE_ACCOUNTS",
+    "IDP_NOT_MANAGED",
+    "IDP_NO_ACCOUNT",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
+  ],
+  "polaris claims patch /idp/groups/{key}/claims": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED"
+  ],
+  "polaris claims patch /{id}/claims": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_MULTIPLE_ACCOUNTS",
+    "IDP_NOT_MANAGED",
+    "IDP_NO_ACCOUNT",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
   ],
   "public get /wallet/samsung/{offer}": [
     "IDENTITY_EXPIRED",
@@ -8282,7 +8448,8 @@
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_ENROLMENT_HELD",
-    "WALLET_ENROLMENT_PREREQUISITE"
+    "WALLET_ENROLMENT_PREREQUISITE",
+    "WALLET_RELEASE_READY_CHANGED"
   ],
   "wallet platform put /wallet-credentials": [
     "CONFLICT",

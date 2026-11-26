@@ -37,7 +37,7 @@ export const isSystemAuthored = (candidate: { authorId: string }): boolean =>
 
 /**
  * Providers whose candidates the platform authors and approves itself. The release, approval, retirement and
- * tombstone proofs (0141, 0229) exempt the system author for exactly these.
+ * tombstone proofs (0141, 0230) exempt the system author for exactly these.
  */
 export const SYSTEM_AUTHORED_PROVIDERS: readonly string[] = ['google', 'samsung'];
 

@@ -299,6 +299,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"connections.probeConfig", "POST", "/api/v1/connections/probe", false,
+		`{"orgId":"x","connectorType":"http-json","config":{},"target":"list"}`, `{"ok":false,"durationMs":0,"request":{"method":"GET","url":"x","status":0,"bytes":0,"contentType":"x"},"headers":{},"pruned":{"arrays":[{"pointer":"x","total":0,"shown":0}],"strings":0,"depthCut":false,"nodesCut":false},"detections":{"records":[{"pointer":"x","jsonPath":"x","count":0,"score":0,"reason":"root"}],"pagination":[{"confidence":"high","config":{"style":"none"},"evidence":"x"}],"id":[{"pointer":"x","jsonPath":"x","unique":false,"score":0}],"updatedAt":[{"pointer":"x","jsonPath":"x","format":"iso","score":0}],"holderEmail":[{"pointer":"x","jsonPath":"x"}],"fields":[{"pointer":"x","jsonPath":"x","label":"x","type":"text","samples":["x"]}],"rateLimit":{}},"page":{"index":0,"from":0,"to":0,"overlap":0,"next":"x"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsProbeConfigBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.ProbeConfig(ctx, &b)
+		},
+	},
+	{
 		"connections.retrieveSummary", "GET", "/api/v1/connections/summary", false,
 		"", `{"total":0,"byHealth":{},"attention":[{"id":"x","orgId":"x","name":"x","health":"unknown","lastErrorCode":"x","lastErrorAt":0}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -414,6 +425,17 @@ var generatedOps = []opCase{
 		"", `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0,"waiting":0},"releaseBlocked":"x","window":{"days":0,"limit":0,"since":0,"excluded":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Preview(ctx, "id1")
+		},
+	},
+	{
+		"connections.probe", "POST", "/api/v1/connections/id1/probe", false,
+		`{"target":"list"}`, `{"ok":false,"durationMs":0,"request":{"method":"GET","url":"x","status":0,"bytes":0,"contentType":"x"},"headers":{},"pruned":{"arrays":[{"pointer":"x","total":0,"shown":0}],"strings":0,"depthCut":false,"nodesCut":false},"detections":{"records":[{"pointer":"x","jsonPath":"x","count":0,"score":0,"reason":"root"}],"pagination":[{"confidence":"high","config":{"style":"none"},"evidence":"x"}],"id":[{"pointer":"x","jsonPath":"x","unique":false,"score":0}],"updatedAt":[{"pointer":"x","jsonPath":"x","format":"iso","score":0}],"holderEmail":[{"pointer":"x","jsonPath":"x"}],"fields":[{"pointer":"x","jsonPath":"x","label":"x","type":"text","samples":["x"]}],"rateLimit":{}},"page":{"index":0,"from":0,"to":0,"overlap":0,"next":"x"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsProbeBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.Probe(ctx, "id1", &b)
 		},
 	},
 	{
@@ -836,6 +858,34 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Holders.Offboard(ctx, &b)
+		},
+	},
+	{
+		"operations.list", "GET", "/api/v1/operations", false,
+		"", `{"items":[{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"operations.retrieve", "GET", "/api/v1/operations/id1", false,
+		"", `{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"operations.cancel", "POST", "/api/v1/operations/id1/cancel", false,
+		"", `{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.Cancel(ctx, "id1")
+		},
+	},
+	{
+		"operations.retry", "POST", "/api/v1/operations/id1/retry", true,
+		"", `{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.Retry(ctx, "id1")
 		},
 	},
 	{

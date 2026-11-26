@@ -62,6 +62,9 @@ describe('wallet release mirror', () => {
       "DELETE FROM wallet_provider_releases WHERE provider = 'google';",
       "INSERT OR REPLACE INTO wallet_provider_releases VALUES ('google', 'test', 'released', 0);",
       `${flip('released')}\nupdate wallet_provider_releases set state = 'dark', changed_at = 0 where provider = 'google' and mode = 'test';`,
+      `UPDATE "wallet_provider_releases" SET state = 'released', changed_at = 1 WHERE provider = 'google' AND mode = 'test';`,
+      `UPDATE main.wallet_provider_releases SET state = 'released', changed_at = 1 WHERE provider = 'google' AND mode = 'test';`,
+      `DELETE FROM "main"."wallet_provider_releases";`,
     ])
       expect(releaseWrites('x.sql', sql).problem).toContain('outside the one form');
     // A trigger on the table and a comment are not writes.
@@ -76,7 +79,13 @@ describe('wallet release mirror', () => {
   it('lists what pending migrations change for the deploy log, and throws on an unreadable one', () => {
     const files: Record<string, string> = { '0300_flip.sql': flip('released'), '0301_x.sql': '' };
     expect(pendingReleaseWrites(['0300_flip.sql', '0301_x.sql'], (n) => files[n] ?? '')).toEqual([
-      { migration: '0300_flip.sql', provider: 'google', mode: 'test', state: 'released' },
+      {
+        migration: '0300_flip.sql',
+        kind: 'update',
+        provider: 'google',
+        mode: 'test',
+        state: 'released',
+      },
     ]);
     expect(pendingReleaseWrites(null, () => '')).toEqual([]);
     expect(() =>

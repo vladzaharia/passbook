@@ -23,14 +23,18 @@ type Mode = 'live' | 'test';
 const MODES: readonly Mode[] = ['live', 'test'];
 const PROVIDERS: readonly WalletProvider[] = ['google', 'samsung'];
 
-const released = (provider: WalletProvider, mode: Mode) => RELEASE[provider][mode] === 'released';
+type Release = Record<WalletProvider, Record<Mode, WalletReleaseState>>;
+/** The policy's view of RELEASE: the shipped constant, or a test or e2e override (setWalletReleaseForTest). */
+let current: Readonly<Record<WalletProvider, Readonly<Record<Mode, WalletReleaseState>>>> = RELEASE;
+
+const released = (provider: WalletProvider, mode: Mode) => current[provider][mode] === 'released';
 
 /** The release state of a provider in a mode (release.ts). */
 export function walletProviderReleaseState(
   provider: WalletProvider,
   mode: Mode,
 ): WalletReleaseState {
-  return RELEASE[provider][mode];
+  return current[provider][mode];
 }
 
 /**
@@ -55,20 +59,18 @@ export function walletProviderEnabled(provider: WalletProvider, mode?: Mode): bo
  * already in wallets still go void after a rollback. Without a mode, in some mode.
  */
 export function walletProviderRevokes(provider: WalletProvider, mode?: Mode): boolean {
-  return (mode ? [mode] : MODES).some((m) => RELEASE[provider][m] !== 'dark');
+  return (mode ? [mode] : MODES).some((m) => current[provider][m] !== 'dark');
 }
 
 /**
- * An enrolment may issue when it is not revoked or held, and is either a legacy envelope row with no
- * enrolment (unchanged) or has an enrolment (a source, migrated or new) that is On. Test counts like Live.
+ * An enrolment may issue when it is not revoked or held and is On. Test counts like Live.
  */
 export function walletEnrolmentIssues(row: EnrolmentGateRow | null): boolean {
   return (
     row !== null &&
     row.revoked_at === null &&
     (row.platform_hold_at ?? null) === null &&
-    ((row.credential_id !== null && (row.credential_source_id ?? null) === null) ||
-      (row.enabled_at ?? null) !== null)
+    (row.enabled_at ?? null) !== null
   );
 }
 
@@ -152,20 +154,22 @@ export function walletProviderEnabledSql(providerSql: string, modeSql?: string):
 }
 
 /**
- * Tests only: sets the code side of the release (RELEASE) for the current test file's module registry, for one
+ * Tests only: overrides the code side of the release (RELEASE) for the current test file's module registry, for one
  * provider and mode or all of them; returns a restorer. The database side is the `wallet_provider_releases` row.
  */
 export function setWalletReleaseForTest(
   state: WalletReleaseState,
   scope: { provider?: WalletProvider; mode?: Mode } = {},
 ): () => void {
-  const previous = structuredClone(RELEASE);
+  const previous = current;
+  const next: Release = structuredClone(current) as Release;
   for (const p of PROVIDERS)
     for (const m of MODES)
       if ((!scope.provider || p === scope.provider) && (!scope.mode || m === scope.mode))
-        RELEASE[p][m] = state;
+        next[p][m] = state;
+  current = next;
   return () => {
-    for (const p of PROVIDERS) Object.assign(RELEASE[p], previous[p]);
+    current = previous;
   };
 }
 

@@ -53,12 +53,14 @@ export async function insertHistoricalProviderInstance(
       SELECT ?, p.id, p.org_id, p.mode, a.provider, a.id, r.id, p.credential_generation,
         ?, 'active', 1, ?, ?, ?, ?
       FROM passes p JOIN wallet_provider_accounts a ON a.id = ? AND a.org_id = p.org_id
-        AND a.mode = p.mode AND a.provider = ? AND a.credential_id IS NOT NULL AND a.revoked_at IS NULL
+        AND a.mode = p.mode AND a.provider = ? AND COALESCE(a.credential_id, a.credential_source_id) IS NOT NULL
+        AND a.revoked_at IS NULL
       JOIN template_releases r ON r.id = ? AND r.org_id = p.org_id AND r.mode = p.mode
         AND r.provider = a.provider AND r.template_id = p.template_id AND r.version = p.template_version
         AND r.source = 'approved'
       JOIN template_candidates c ON c.id = r.candidate_id AND c.source_release_id = p.release_id
-        AND c.provider_account_id = a.id AND c.provider_account_revision = a.revision
+        AND c.provider_account_id = a.id
+        AND c.provider_account_revision = CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END
         AND c.candidate_hash = r.candidate_hash
       JOIN template_approvals approval ON approval.id = r.approval_id AND approval.candidate_id = c.id
         AND approval.candidate_hash = c.candidate_hash AND approval.reviewer_id != c.author_id
@@ -91,10 +93,13 @@ export async function insertHistoricalProviderInstance(
         `INSERT INTO wallet_provider_instance_operations
     (id, instance_id, version, kind, request_hash, pass_version, pass_revision, pass_credential_generation,
      lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-     policy_revision, credential_keyset_commitment, state, attempts, created_at, pass_row_version, account_epoch)
+     policy_revision, credential_keyset_commitment, state, attempts, created_at, pass_row_version, account_epoch,
+     credential_version_id)
     SELECT ?, i.id, 1, 'upsert', ?, p.version, p.revision, p.credential_generation, p.lifecycle_generation,
-      p.release_id, r.id, a.revision, r.adapter_revision, r.audience_policy_revision, ?, ?, ?, ?,
-      p.row_version, a.authority_epoch
+      p.release_id, r.id, CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END,
+      r.adapter_revision, r.audience_policy_revision, ?, ?, ?, ?,
+      p.row_version, a.authority_epoch,
+      (SELECT sc.current_version_id FROM wallet_credentials sc WHERE sc.id = a.credential_source_id)
     FROM wallet_provider_instances i JOIN passes p ON p.id = i.pass_id
       JOIN wallet_provider_accounts a ON a.id = i.account_id
       JOIN template_releases r ON r.id = i.identity_projection_release_id
@@ -147,8 +152,11 @@ export async function insertHistoricalSamsungRef(
       db,
       `INSERT INTO wallet_samsung_fetch_refs
     (id, ref_hash, instance_id, created_at, last_offered_at, initial_expires_at, promoted_at, retired_at,
-     credential_keyset_commitment, kek_version, iv, wrapped_dek, ciphertext)
-    SELECT ?, ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM wallet_provider_instances i
+     credential_keyset_commitment, kek_version, iv, wrapped_dek, ciphertext, credential_version_id)
+    SELECT ?, ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+      (SELECT sc.current_version_id FROM wallet_provider_accounts sa
+        JOIN wallet_credentials sc ON sc.id = sa.credential_source_id WHERE sa.id = i.account_id)
+    FROM wallet_provider_instances i
     WHERE i.id = ? AND i.provider = 'samsung' AND i.account_id IS NOT NULL`,
       [
         input.id,

@@ -21,6 +21,9 @@ import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { invitationRoutes } from './modules/idp/invitations/routes.ts';
+import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
+import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
 import { marketingRoutes } from './modules/marketing/routes.ts';
@@ -30,6 +33,7 @@ import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { tagPageRoutes } from './modules/nfc/tag-page.ts';
+import { operationsRoutes } from './modules/operations/routes.ts';
 import {
   orgClosedRoutes,
   orgExportDownloadRoutes,
@@ -104,7 +108,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|assets|health|marketing)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -172,6 +176,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);
+  app.route('/api/v1/invitations', invitationRoutes);
   app.route('/api/v1/orgs', passSetupRoutes);
   app.route('/api/v1/orgs', passSetupWriteRoutes);
   app.route('/api/v1/orgs', orgsRoutes);
@@ -188,6 +193,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);
   app.route('/api/v1/template-reviews', templateReviewsRoutes);
+  app.route('/api/v1/operations', operationsRoutes);
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/pass-imports', passImportRoutes);
   app.route('/api/v1/bundles', bundlesRoutes);
@@ -210,6 +216,9 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/wallet-providers/accounts', walletProviderAccountRoutes);
   app.route('/api/v1/wallet-providers/passes', walletProviderStatusRoutes);
   app.route('/api/v1/wallet-providers/reissue', walletReissueRoutes);
+  // Before usersRoutes: its admin-session guard would otherwise run first on `/{id}/claims`.
+  app.route('/api/v1/users', userClaimsRoutes);
+  app.route('/api/v1/platform', groupClaimsRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);
@@ -243,6 +252,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/b', bundlePublicRoutes);
   app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);
+  app.route('/scim/v2', scimRoutes);
   app.route('/developers', developerPortalRoutes);
   app.route('/access', marketingRoutes);
   app.route('/', marketingPageRoutes);

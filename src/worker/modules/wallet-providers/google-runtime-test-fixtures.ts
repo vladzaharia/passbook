@@ -15,6 +15,7 @@ import {
 } from './projection-service.ts';
 import { updateCompiler } from './projection-v2-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 
 export const testEnv = installKeysetTestEnv();
 export const mock = createMockWallets();
@@ -81,16 +82,25 @@ export async function publishRelease(
 }
 
 /** A pass with a published schema 2 Google release; `compile` stands in for a template of another type. */
-export async function fixture(compile?: Parameters<typeof updateCompiler>[0]) {
+export async function fixture(
+  compile?: Parameters<typeof updateCompiler>[0],
+  options: { enrolled?: boolean; guards?: boolean } = {},
+) {
   if (compile) restore.push(updateCompiler(compile, 0));
   routeFetchToMock();
   const f = await setupWalletOfferKit({
     google: 'configured',
     samsung: 'absent',
     db: (await testEnv()).DB,
+    ...(options.enrolled ? { enrolled: true } : {}),
   });
   const pins = await publishRelease(f, 0);
   restore.push(setWalletProvidersEnabledForTest(true));
+  if (options.guards) {
+    // Every database guard stays: Google Live is released in the table too, so each one runs as in production.
+    await releaseRows(f.kit.env.DB);
+    return { f, pins };
+  }
   // The database refuses a new provider instance and every offer (0043, 0114) until issuance is lifted
   // per account (Q2). This file's own database opens the four triggers that say so, and nothing else.
   for (const name of [

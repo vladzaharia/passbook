@@ -40,7 +40,7 @@ vi.mock('../console/session.ts', () => ({ updateSession: m.updateSession }));
 import { LiveError } from '../playground/live.ts';
 import { useQuickstart } from './use-quickstart.ts';
 
-const sandbox = { id: 's', orgSlug: 'o', templateId: 't1' };
+const sandbox = { id: 's', orgId: 'org-1', orgSlug: 'o', templateId: 't1' };
 const ready: Session = { kind: 'ready', csrf: 'c', sandbox, siteKey: 'k' };
 const body = (version: number) => ({
   id: 'p1',

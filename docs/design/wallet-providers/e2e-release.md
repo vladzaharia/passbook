@@ -3,7 +3,7 @@
 Google and Samsung are dark in two places:
 
 - `RELEASE` in `release.ts` (read by `provider-policy.ts`), a code constant per provider and mode;
-- the `wallet_provider_releases` rows (migration `0226`), which the database's issuance guards read: they refuse
+- the `wallet_provider_releases` rows (migration `0229`), which the database's issuance guards read: they refuse
   any provider instance, activation, offer or Samsung reference of a provider and mode that is not `released`.
 
 Worker tests open both in-process: `setWalletReleaseForTest` (or `setWalletProvidersEnabledForTest`), plus a row

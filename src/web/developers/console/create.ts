@@ -32,6 +32,7 @@ export async function createSandbox(csrf: string, turnstileToken: string): Promi
   return {
     sandbox: {
       id: String(body.id),
+      orgId: String(body.orgId),
       orgSlug: String(body.orgSlug),
       templateId: typeof body.templateId === 'string' ? body.templateId : null,
     },

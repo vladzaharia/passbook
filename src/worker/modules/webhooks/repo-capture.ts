@@ -40,13 +40,27 @@ export async function listCaptures(
   db: D1Database,
   fence: FeedFence,
   endpointId: string,
-  q: { limit: number; cursor?: string | undefined; type?: string | undefined },
+  q: {
+    limit: number;
+    cursor?: string | undefined;
+    type?: string | undefined;
+    requestId?: string | undefined;
+    passId?: string | undefined;
+  },
 ): Promise<{ items: WebhookCaptureDto[]; nextCursor: string | null }> {
   const params: SqlValue[] = [endpointId, fence.orgId, fence.mode];
   let where = '';
   if (q.type) {
     where += ' AND event_type = ?';
     params.push(q.type);
+  }
+  if (q.requestId || q.passId) {
+    where += ` AND event_id IN (SELECT event_id FROM event_feed WHERE org_id = ? AND mode = ?${
+      q.passId ? ' AND pass_id = ?' : ''
+    }${q.requestId ? " AND json_extract(data, '$.requestId') = ?" : ''})`;
+    params.push(fence.orgId, fence.mode);
+    if (q.passId) params.push(q.passId);
+    if (q.requestId) params.push(q.requestId);
   }
   const m = q.cursor ? /^(\d+)\.(.+)$/.exec(q.cursor) : null;
   if (m) {

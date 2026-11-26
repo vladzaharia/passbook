@@ -55,6 +55,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_bulk_runs',
   'pass_bulk_locks',
   'pass_views',
+  'operations',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
@@ -69,6 +70,8 @@ export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'wallet_provider_credentials',
   'wallet_provider_account_events',
   'wallet_provider_instances',
+  // The platform release per provider and mode (0229): written only by migrations, never by a grant.
+  'wallet_provider_releases',
   'wallet_samsung_callback_receipts',
   'wallet_google_callback_receipts',
   'wallet_org_cards',
@@ -86,6 +89,7 @@ export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_bulk_runs',
   'pass_bulk_locks',
   'pass_views',
+  'operations',
 ]);
 
 export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([

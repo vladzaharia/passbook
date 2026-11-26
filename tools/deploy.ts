@@ -1,7 +1,7 @@
 // Guarded production deploy. Dry run unless --apply.
 //   node tools/deploy.ts --check   check wrangler.jsonc only; add --secrets to also check required secret names
 //   npm run deploy:check -- <flags>  same; --require-wallet-migrated also queries the remote D1 (also checked before
-//                                    migrating and serving; on by itself when a pending migration releases a wallet)
+//                                    migrating and serving; on by itself for a flip and once any wallet is released)
 //   npm run deploy                   print the plan
 //   npm run deploy -- --apply        run every check, upload a Worker version, bookmark D1, migrate,
 //                                    promote the version
@@ -50,7 +50,7 @@ import { entitlementsRefusal, orgsWithoutEntitlements } from './lib/entitlements
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
 import { unmigratedWalletAccounts, walletMigrationRefusal } from './lib/wallet-migrate-gate.ts';
-import { pendingReleaseFlip } from './lib/wallet-release-sql.ts';
+import { anyWalletReleased, walletReleaseRefusal } from './lib/wallet-release-deploy.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const args = (() => {
@@ -82,6 +82,8 @@ const wrangler = (...a: string[]) =>
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
   });
+const remote = (sql: string) =>
+  wrangler('d1', 'execute', database, '--remote', '--json', '--command', sql);
 
 const required = config.secrets?.required ?? [];
 const checkSecrets = () => {
@@ -173,15 +175,14 @@ if (buildRefusal) {
 }
 checkSecrets();
 const pending = pendingMigrations(wrangler('d1', 'migrations', 'list', database, '--remote'));
-if (stage !== 'migrate') {
-  const refusal = pendingRefusal(stage, pending);
-  if (refusal) {
-    console.error(refusal);
-    process.exit(1);
-  }
+// Wallet release writes are printed; a flip needs every account on a source, a dark write no copies left.
+const refusal =
+  (stage === 'migrate' ? null : pendingRefusal(stage, pending)) ??
+  walletReleaseRefusal({ root, pending, log: console.log, remote, flags: args });
+if (refusal) {
+  console.error(refusal);
+  process.exit(1);
 }
-// A pending wallet flip is printed, and needs every wallet account on a source before it migrates.
-if (pendingReleaseFlip(root, pending, console.log)) args.add('--require-wallet-migrated');
 requireWalletMigrated();
 
 mkdirSync(resolve(root, '.wrangler'), { recursive: true });
@@ -242,11 +243,7 @@ function requireWalletMigrated(): void {
     'wallet-migration-gate',
   );
   if (!block) throw new Error('docs/operations.md has no wallet-migration-gate query.');
-  const refusal = walletMigrationRefusal(
-    unmigratedWalletAccounts(
-      wrangler('d1', 'execute', database, '--remote', '--json', '--command', singleSelect(block)),
-    ),
-  );
+  const refusal = walletMigrationRefusal(unmigratedWalletAccounts(remote(singleSelect(block))));
   if (refusal) {
     console.error(refusal);
     process.exit(1);
@@ -260,20 +257,22 @@ function requireEntitlements(): void {
     'entitlements-gate',
   );
   if (!block) throw new Error('docs/operations.md has no entitlements-gate query.');
-  const refusal = entitlementsRefusal(
-    orgsWithoutEntitlements(
-      wrangler('d1', 'execute', database, '--remote', '--json', '--command', singleSelect(block)),
-    ),
-  );
+  const refusal = entitlementsRefusal(orgsWithoutEntitlements(remote(singleSelect(block))));
   if (refusal) {
     console.error(refusal);
     process.exit(1);
   }
 }
 
-if (stage === 'promote') {
+/** Before serving: entitlements always; the wallet migration gate when asked or once any wallet is released. */
+function beforeServe(): void {
+  if (anyWalletReleased(remote)) args.add('--require-wallet-migrated');
   requireWalletMigrated();
   requireEntitlements();
+}
+
+if (stage === 'promote') {
+  beforeServe();
   const saved = first || !existsSync(versionFile) ? null : readFileSync(versionFile, 'utf8').trim();
   if (!first && !saved) throw new Error('No saved version id. Run --migrate-only first.');
   promote(saved);
@@ -321,8 +320,7 @@ const versionId = uploadAndMigrate({
 if (stage === 'migrate')
   console.log('Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.');
 else {
-  requireWalletMigrated();
-  requireEntitlements();
+  beforeServe();
   promote(versionId);
   await waitForBakedSync();
 }
