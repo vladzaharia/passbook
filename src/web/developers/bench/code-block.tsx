@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import type { Json } from '../console/types.ts';
 import type { Lang } from '../model/highlight.ts';
 import { CodeView } from '../ui/code-view.tsx';
 import { type CopyAsItem, CopyAsMenu } from '../ui/copy-as-menu.tsx';
 import { CopyBtn, WrapToggle } from '../ui/copy-button.tsx';
 import { JsonTree } from '../ui/json-tree.tsx';
-import { IdChip } from './id-chip.tsx';
 import './kit.css';
 
 const NO_CODES: ReadonlySet<string> = new Set();
@@ -22,6 +21,9 @@ export function parseBody(body: string | null | undefined): Json | undefined {
     return undefined;
   }
 }
+
+// The chip and its menu load when an id first shows in a body: a page that only reads code keeps them out of its island.
+const IdChip = lazy(() => import('./id-chip.tsx').then((m) => ({ default: m.IdChip })));
 
 /**
  * A body in the bench: UX4's one block header (its label, Wrap on phones, one Copy, Copy as) over
@@ -61,7 +63,16 @@ export function BenchCode({
       {json === undefined ? (
         <CodeView code={body} lang={lang} label={label} />
       ) : (
-        <JsonTree value={json} codes={codes} label={label} renderId={(id) => <IdChip id={id} />} />
+        <JsonTree
+          value={json}
+          codes={codes}
+          label={label}
+          renderId={(id) => (
+            <Suspense fallback={<span className="mono">{id}</span>}>
+              <IdChip id={id} />
+            </Suspense>
+          )}
+        />
       )}
     </div>
   );
