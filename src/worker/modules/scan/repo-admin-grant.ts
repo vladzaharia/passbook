@@ -136,15 +136,15 @@ export const PAIRING_TABLES = ['scanners', 'counters'] as const;
 
 /**
  * The tables the one-call setup grant may write, by caller: a console session all of them; a
- * `scanning:write` key neither staff nor, in test mode, zones (both are org-wide, not moded); a
+ * `scanning:write` key neither staff nor, in test mode outside a sandbox, zones (both are org-wide, not moded); a
  * live org-bound `scanning:admin` key all of them. The grant refuses the rest itself.
  */
-export function setupTables(authority: TenantPassWrite): readonly string[] {
+export function setupTables(authority: TenantPassWrite, sandbox = false): readonly string[] {
   if (authority.kind === 'session') return SCAN_ADMIN_TABLES;
   const live = authority.mode === 'live';
   const admin = authority.scope === 'scanning:admin' && live && authority.keyOrgId !== null;
   return SCAN_ADMIN_TABLES.filter(
-    (t) => (t !== 'scan_staff' || admin) && (t !== 'scan_zones' || live),
+    (t) => (t !== 'scan_staff' || admin) && (t !== 'scan_zones' || live || sandbox),
   );
 }
 
