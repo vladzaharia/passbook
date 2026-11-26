@@ -148,9 +148,11 @@ export interface KeyFilter {
   mine?: string | undefined;
   /** Only the children of this key. */
   parent?: string | undefined;
+  /** Only keys of this mode (a Workbench token lists Test keys). */
+  mode?: 'test' | undefined;
 }
 
-function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine' | 'parent'>) {
+function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine' | 'parent' | 'mode'>) {
   const where: string[] = [];
   const params: SqlValue[] = [f.orgId];
   where.push('k.org_id IS ?');
@@ -163,6 +165,10 @@ function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine' | 'parent'>) {
   if (f.parent !== undefined) {
     where.push('k.parent_key_id = ?');
     params.push(f.parent);
+  }
+  if (f.mode !== undefined) {
+    where.push('k.mode = ?');
+    params.push(f.mode);
   }
   return { where, params };
 }
@@ -192,8 +198,9 @@ export async function countRevoked(
   orgId: string | null,
   mine?: string,
   parent?: string,
+  mode?: 'test',
 ): Promise<number> {
-  const { where, params } = keyWhere({ orgId, state: 'revoked', mine, parent });
+  const { where, params } = keyWhere({ orgId, state: 'revoked', mine, parent, mode });
   const row = await first<{ n: number }>(
     db,
     `SELECT count(*) AS n FROM api_keys k WHERE ${where.join(' AND ')}`,

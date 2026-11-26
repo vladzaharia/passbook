@@ -38,6 +38,7 @@ const SCOPES = [
   'api-keys:write',
   'org:write',
   'audit:read',
+  'logs:read',
   'scans:read',
   'scans:write',
   'nfc:read',

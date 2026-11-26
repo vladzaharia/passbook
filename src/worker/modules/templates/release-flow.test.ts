@@ -561,7 +561,7 @@ describe('modes by key and sandbox', () => {
       send(`/${t.templateId}/release`, { orgId: org.id, version: t.version, ...body }, owner, {
         mode: 'test',
       });
-    await expectProblem(await inTest({ modes: ['live'] }), 409, 'ORG_TEST_ONLY');
+    await expectProblem(await inTest({ modes: ['live'] }), 409, 'SANDBOX_TEST_ONLY');
     const result = await ok(await inTest({}));
     expect(Object.keys(result.modes)).toEqual(['test']);
   });

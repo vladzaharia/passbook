@@ -1,0 +1,44 @@
+/* The page's two columns need about 1150 px: inside the Workbench the sidebar takes 240 of the window, so the
+   one-column layout (dev-quickstart.css, which stacks below a 1240 px window) holds up to 1439 px. */
+@media (min-width: 1240px) and (max-width: 1439px) {
+  .wb-tool-quickstart .qs:not(.qs-wide) {
+    display: flex;
+    flex-direction: column;
+    padding-inline: 40px;
+  }
+  .wb-tool-quickstart .qs:not(.qs-wide) .qs-main,
+  .wb-tool-quickstart .qs:not(.qs-wide) .qs-steps {
+    display: contents;
+  }
+  .wb-tool-quickstart .qs-step[data-step="1"],
+  .wb-tool-quickstart .qs-main > .eyebrow {
+    margin-top: 28px;
+  }
+  .wb-tool-quickstart .qs-step[data-step="1"],
+  .wb-tool-quickstart .qs-step[data-step="2"],
+  .wb-tool-quickstart .qs-step[data-step="3"] {
+    order: 1;
+  }
+  .wb-tool-quickstart .qs:not(.qs-wide) .qs-stage {
+    order: 2;
+    align-self: stretch;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    background: none;
+    border: 1px solid var(--pk-border-subtle);
+    border-radius: var(--pk-radius-xl);
+    margin: 0 0 30px;
+    padding: 18px 16px 20px;
+  }
+  .wb-tool-quickstart .qs-step[data-step="4"],
+  .wb-tool-quickstart .qs-step[data-step="5"] {
+    order: 3;
+  }
+  .wb-tool-quickstart .qs-step:last-child {
+    padding-bottom: 56px;
+  }
+  .wb-tool-quickstart .qs-stage-card {
+    min-height: 0;
+  }
+}

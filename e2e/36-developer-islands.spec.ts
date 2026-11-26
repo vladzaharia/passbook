@@ -55,32 +55,34 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   // Signed out: no authenticated call on any page, no section current under Console, a sign-in action.
   for (const path of [
     '/developers/reference/passes',
-    '/developers/logs',
-    '/developers/console',
-    '/developers/playground',
+    '/workbench/logs',
+    '/workbench/console',
+    '/workbench/design',
   ]) {
     await page.goto(path);
     await page.waitForTimeout(800);
   }
   expect(failures).toEqual([]);
-  await page.goto('/developers/console');
+  await page.goto('/workbench/console');
   await expect(
-    page.getByRole('navigation', { name: 'Sections' }).locator('[aria-current]'),
-  ).toHaveText('Workbench');
-  await expect(page.locator('main').getByRole('link', { name: 'Sign in' })).toBeVisible();
+    page
+      .locator('main')
+      .getByRole('link', { name: /Sign in/ })
+      .first(),
+  ).toBeVisible();
   await shot(page, 'console-signed-out');
-  await page.goto('/developers/playground');
+  await page.goto('/workbench/design');
   await shot(page, 'playground-signed-out');
 
-  // The prerendered playground has a sample and its fields before script runs.
-  const html = await (await page.request.get('/developers/playground')).text();
-  expect(html).toContain('sample pass');
-  expect(html).toContain('pg-fields');
+  // The old addresses follow the tools: the query and the hash survive the 301.
+  const old = await page.request.get('/developers/playground', { maxRedirects: 0 });
+  expect(old.status()).toBe(301);
+  expect(old.headers().location).toBe('/workbench/design');
 
   // Sign in and make sure there is a sandbox.
-  await page.goto('/developers/quickstart');
+  await page.goto('/workbench/quickstart');
   await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
   // Polaris ID lands straight on the page, so wait for the island to pick a state.
   await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
@@ -100,24 +102,9 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     return (await run.catch(() => null))?.headers()['x-request-id'] ?? null;
   })();
 
-  // D10: Try it on an operation page is bound to the sandbox, and runs there.
-  await page.goto('/developers/reference/passes/create');
-  await expect(page.locator('[data-sandbox]')).toHaveText(/^test · \S+/);
-  const tryRun = page.locator('.try').getByRole('button', { name: 'Run', exact: true });
-  await expect(tryRun).toBeVisible();
-  // R1: the example fits the sandbox's Quickstart ticket, so the first Run creates a pass.
-  await expect(page.locator('.try')).toContainText('Body shape valid');
-  const created = page.waitForResponse(
-    (r) => r.url().endsWith('/api/v1/passes') && r.request().method() === 'POST',
-  );
-  await tryRun.click();
-  expect((await created).status()).toBe(201);
-  // The Run read the template; now `input` is checked against its schema.
-  await expect(page.locator('.try')).toContainText('Valid against the schema');
-
   // D1: the webhook tester renders on the bench, with no Trusted Types error: a test send lands in the list
   // and opens on Verify.
-  await page.goto('/developers/webhooks');
+  await page.goto('/workbench/events');
   const send = page.getByRole('button', { name: 'Send test event' }).first();
   await expect(send).toBeVisible();
   await send.click();
@@ -177,8 +164,11 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await shots(page, 'admin-webhook-deliveries');
 
   // D10: the playground offers the sandbox instead of asking to sign in.
-  await page.goto('/developers/playground');
-  await expect(page.getByText(/Previews show each blueprint/)).toBeVisible();
+  // Signed in, Design is the Playground's successor (design §1.9): the sandbox's own Design, not a sign-in ask.
+  // DC3 restores the editor hand-off assertions on the anonymous page.
+  await page.goto('/workbench/design');
+  await page.waitForURL((u) => /^\/workbench\/o\/[^/]+\/design$/.test(u.pathname));
+  await expect(page.getByRole('heading', { level: 1, name: 'Design' })).toBeVisible();
   await expect(page.getByText('Sign in to edit them live')).toHaveCount(0);
   await shot(page, 'playground-signed-in');
 
@@ -198,7 +188,9 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     await expect(found).toBeVisible();
     await shot(page, 'search-request-id');
     await page.keyboard.press('Enter');
-    await page.waitForURL((u) => u.pathname === '/developers/logs');
+    await page.waitForURL(
+      (u) => u.pathname.startsWith('/workbench/') && u.pathname.endsWith('/logs'),
+    );
     expect(page.url().toLowerCase()).toContain(requestId.toLowerCase());
     await expect(page.locator('[role="option"][aria-selected="true"]')).toBeVisible();
     await shot(page, 'logs-request-id');

@@ -479,7 +479,14 @@ describe('outbound webhook query plans', () => {
     const text = lines.join('\n');
     expect(text).toContain('webhook_endpoints_org (org_id=? AND mode=? AND status=?)');
     expect(text).toContain('sqlite_autoindex_event_feed_1 (event_id=?)');
-    for (const table of ['webhook_endpoints', 'event_feed', 'passes', 'registrations', 'settings'])
+    for (const table of [
+      'webhook_endpoints',
+      'event_feed',
+      'passes',
+      'registrations',
+      'settings',
+      'pass_simulated_devices',
+    ])
       expect(fullScans(lines, table), table).toEqual([]);
   });
 

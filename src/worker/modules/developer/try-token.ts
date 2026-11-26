@@ -1,8 +1,8 @@
 import type { TryToken } from '../../../shared/contracts/index.ts';
 import { SANDBOX_KEY_MISSING_COPY } from '../../../shared/copy/developer.ts';
-import type { ApiKeyAuth, ApiKeyStore, KeyCaller, SessionAuth } from '../../platform/auth.ts';
+import type { ApiKeyAuth, KeyCaller, SessionAuth } from '../../platform/auth.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
-import { type Clock, systemClock } from '../../platform/clock.ts';
+import type { Clock } from '../../platform/clock.ts';
 import { derivedHmacKey, macPreviousVersion } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
@@ -101,20 +101,6 @@ export async function resolveTryToken(
     auth.sessionAmr = row.session_amr;
   }
   return auth;
-}
-
-/** The key store with try tokens: a `pbtry_` bearer resolves here, anything else in `inner`. */
-export function withTryTokens(
-  env: AppEnv,
-  inner: ApiKeyStore,
-  clock: Clock = systemClock,
-): ApiKeyStore {
-  return {
-    resolve: (raw, caller, options) =>
-      raw.startsWith(TRY_TOKEN_PREFIX)
-        ? resolveTryToken(env, clock, raw, caller, options)
-        : inner.resolve(raw, caller, options),
-  };
 }
 
 /** Mints a try token for the caller's sandbox key, bound to this session. */

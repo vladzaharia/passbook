@@ -69,6 +69,7 @@ export const MINTABLE_SCOPES = [
   'nfc:write',
   'api-keys:write',
   'audit:read',
+  'logs:read',
   'members:read',
   'members:write',
   ...MINTABLE_PLATFORM_SCOPES,
@@ -83,6 +84,7 @@ export const CREDENTIAL_SCOPES = [
 export const TEST_ONLY_SCOPES = [
   'templates:review',
   'templates:publish',
+  'logs:read',
 ] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
 /** Template scopes act as the key's creator: a key with no human creator (a platform key, a child) never holds them. */
 export const TEMPLATE_ACT_AS_SCOPES = [

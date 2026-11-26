@@ -17,6 +17,7 @@ import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import {
   assertStrictSignIn,
+  peekBody,
   requireStepUp,
   STEP_UP_SECONDS,
 } from '../../platform/sign-in-guard.ts';
@@ -26,6 +27,7 @@ import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
 import { idempotentSecret } from './idempotent-secret.ts';
 import { authorizeKey, registerKeyFamilyRoutes } from './routes-family.ts';
 import { createApiKey, listApiKeys, retireApiKey, revokeApiKey } from './service.ts';
+import { keyUnderToken } from './workbench-cap.ts';
 
 export const apiKeysRoutes = createRouter();
 // A signed-in member, or a key holding `api-keys:write` (it reaches its own children). `me` is the key route's.
@@ -124,7 +126,9 @@ register(
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const input = c.req.valid('json');
+    // Under a Workbench token: Test, Test data scopes, 30 days at most (`workbench-cap.ts`).
+    const modeSent = (await peekBody(c)).mode !== undefined;
+    const input = keyUnderToken(c.var.auth, c.req.valid('json'), modeSent, ctx.clock.now());
     // A member makes their own personal key with any role; every other key needs `integrations:manage`.
     const capability = input.kind === 'personal' ? 'org:read' : 'integrations:manage';
     const authority = await authorizeApiKeys(ctx, c.var.auth, input.orgId, capability);

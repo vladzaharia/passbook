@@ -2730,5 +2730,51 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
+  },
+  "passes.postPassesByIdSimulate": {
+    "resource": "passes",
+    "method": "simulate"
+  },
+  "workbench.deleteToken": {
+    "resource": "workbench.tokens",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "Workbench: a signed-in person in a browser, not an integration."
+  },
+  "workbench.postToken": {
+    "resource": "workbench.tokens",
+    "method": "create",
+    "sdk": false,
+    "reason": "Workbench: a signed-in person in a browser, not an integration."
+  },
+  "events.getEventsByIdDeliveries": {
+    "resource": "events",
+    "method": "listDeliveries"
+  },
+  "workbench.getContexts": {
+    "resource": "workbench",
+    "method": "listContexts",
+    "sdk": false,
+    "reason": "Workbench context switcher: a signed-in person in a browser, not an integration."
+  },
+  "workbench.getResolve": {
+    "resource": "workbench",
+    "method": "resolve",
+    "sdk": false,
+    "reason": "Workbench: a signed-in person in a browser, not an integration."
+  },
+  "workbench.getSummary": {
+    "resource": "workbench",
+    "method": "retrieveSummary",
+    "sdk": false,
+    "reason": "Workbench navigation counts: a signed-in person in a browser, not an integration."
+  },
+  "workbench.getRequestLog": {
+    "resource": "requestLogs",
+    "method": "retrieve"
+  },
+  "workbench.listRequestLogs": {
+    "resource": "requestLogs",
+    "method": "list"
   }
 }

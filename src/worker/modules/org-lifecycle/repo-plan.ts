@@ -194,6 +194,8 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   users: 'user accounts',
   wallet_logs: 'platform device log posts',
   wallet_samsung_auth_replays: 'replay guard of the platform callback',
+  workbench_token_epochs:
+    'Workbench token generation of a user session: no org, ends with the session',
 };
 
 /**

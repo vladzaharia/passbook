@@ -61,22 +61,25 @@ export function platformKeyFence(
  * Rows a person started, for the live session that asks. A key never reads these.
  * `writer`: stopping or retrying needs the person's own live, strong session (a step-up replaces the one that started it).
  * `ownSession`: an own-only session (an email link) sees only what its own session started.
+ * `pinnedOrg`: a Workbench token sees only the person's rows in that org's Test mode.
  */
 export function starterFence(
   session: { userId: string; sessionId: string },
   now: number,
-  options: { writer?: boolean; ownSession?: boolean } = {},
+  options: { writer?: boolean; ownSession?: boolean; pinnedOrg?: string } = {},
 ): Fence {
-  const { writer = false, ownSession = false } = options;
+  const { writer = false, ownSession = false, pinnedOrg } = options;
   return {
     ctes: '',
     ctesParams: [],
     where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${ownSession ? ' AND o.actor_session = ?' : ''}
+      ${pinnedOrg === undefined ? '' : "AND o.org_id = ? AND o.mode = 'test'"}
       AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ? AND s.user_id = ? AND s.revoked_at IS NULL
         AND s.expires_at > ? AND s.idle_expires_at > ?${writer ? ` AND s.amr IN ${STRONG_AMR_SQL}` : ''})`,
     whereParams: [
       session.userId,
       ...(ownSession ? [session.sessionId] : []),
+      ...(pinnedOrg === undefined ? [] : [pinnedOrg]),
       session.sessionId,
       session.userId,
       now,

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { PreviewSource } from '../../../channel-previews/types.ts';
 import { useSettings } from '../../settings/queries.ts';
 import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
+import { useLoadedUrls } from './assets.ts';
 import { previewAssetMap } from './images.ts';
 import type { DraftAsset } from './model.ts';
 import { ownParts } from './ops-brand.ts';
@@ -34,7 +35,7 @@ export function useStageSource({
     const out: Record<string, string> = {};
     for (const slot of ['logo', 'icon'] as const) {
       const image = org[slot];
-      if (!image || own.includes(slot)) continue;
+      if (!image?.url || own.includes(slot)) continue;
       for (const suffix of ['', '@2x', '@3x']) out[`${slot}${suffix}.png`] = image.url;
     }
     return out;
@@ -44,6 +45,10 @@ export function useStageSource({
     (i) => i.key === 'org.website',
   )?.value;
   const timeZone = useOrgTimeZone(orgId);
+  // Saved files load through the host; a file added in this draft is already a data URL.
+  const assetUrls = useLoadedUrls(
+    useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]),
+  );
   const source = useMemo<PreviewSource | null>(
     () =>
       passJson
@@ -51,8 +56,7 @@ export function useStageSource({
             passJson,
             assetBaseUrl: assetBase,
             assetNames: assets.map((a) => a.name),
-            // A file added in this draft has no address yet: it reaches a wallet card as a data URL.
-            assetUrls: previewAssetMap(assets, assetBase),
+            assetUrls,
             manifest,
             assets,
             input: (manifest.sample as PreviewSource['input'] | undefined) ?? NO_INPUT,
@@ -60,7 +64,7 @@ export function useStageSource({
             timeZone,
           }
         : null,
-    [passJson, assets, assetBase, manifest, website, timeZone],
+    [passJson, assets, assetBase, assetUrls, manifest, website, timeZone],
   );
   return { source, assetOverrides };
 }

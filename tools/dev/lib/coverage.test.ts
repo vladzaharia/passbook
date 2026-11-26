@@ -5,7 +5,7 @@ import { knownPlaceholders } from './resolve.ts';
 import { loadRoutes, placeholdersOf } from './routes.ts';
 
 const root = resolve(import.meta.dirname, '../../..');
-const lists = ['admin', 'portal', 'public', 'scanner', 'scanning'].flatMap((n) =>
+const lists = ['admin', 'portal', 'public', 'scanner', 'scanning', 'workbench'].flatMap((n) =>
   loadRoutes(resolve(root, `tools/dev/visual-routes/${n}.json`)),
 );
 const shape = (path: string) =>

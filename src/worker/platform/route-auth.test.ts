@@ -336,6 +336,7 @@ describe('mintable scopes', () => {
       'nfc:write',
       'api-keys:write',
       'audit:read',
+      'logs:read',
       'members:read',
       'members:write',
       // A Platform key's scopes join as routes accept them (platform-keys L2); route-inventory.test.ts pins the list.

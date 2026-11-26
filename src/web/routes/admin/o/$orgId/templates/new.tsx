@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { NewTemplatePage } from '../../../../../admin/templates/designer/new-page.tsx';
+import { NewTemplatePage } from '../../../../../admin/templates/designer/admin/new-page.tsx';
 import { newTemplateSearchSchema } from '../../../../../admin/templates/search.ts';
 
 function NewTemplateRoute() {

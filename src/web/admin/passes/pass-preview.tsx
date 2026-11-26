@@ -5,15 +5,15 @@ import { cn } from '../../lib/cn.ts';
 import { useChangeCount } from '../../lib/motion.ts';
 import { assetUrlMap } from '../../pass-card/assets.ts';
 import { PassCardStage } from '../../pass-card/index.tsx';
+import { Badge } from '../../ui/badge.tsx';
+import { Celebrate } from '../../ui/celebrate.tsx';
+import { LoadingRail } from '../../ui/loading-rail.tsx';
 import {
-  Badge,
-  Celebrate,
-  LoadingRail,
   type PassSide,
   PassSideToggle,
   type PassTarget,
   PassTargetToggle,
-} from '../../ui/index.ts';
+} from '../../ui/pass-toggles.tsx';
 
 /** Asset names to URLs under the base; all candidates when the API sends no list. */
 export function assetMap(assetBaseUrl: string, names?: readonly string[]): Record<string, string> {

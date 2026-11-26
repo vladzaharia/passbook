@@ -1,5 +1,6 @@
 import { type AuthContext, assertOrgAccess } from '../../platform/auth.ts';
-import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
+import { assertWorkbenchOrg } from '../../platform/auth-workbench.ts';
+import { ForbiddenError, NotFoundError, orgTestOnly } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
 import { tenantAuthorityOf } from './http.ts';
@@ -25,7 +26,10 @@ export async function requireTenantPassRead(
   orgId: string,
 ): Promise<void> {
   if (auth.kind === 'session') {
-    await requireOrgCapability(ctx, auth.userId, orgId, 'passes:read');
+    // A Workbench token reads its own org only; a sandbox has no Live to read.
+    assertWorkbenchOrg(auth, orgId);
+    const membership = await requireOrgCapability(ctx, auth.userId, orgId, 'passes:read');
+    if (auth.mode === 'live' && membership.testOnly) throw orgTestOnly();
   } else if (auth.kind === 'api_key') {
     assertOrgAccess(auth, orgId);
   } else {

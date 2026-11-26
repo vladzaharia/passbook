@@ -66,13 +66,15 @@ export async function listApiKeys(
       : undefined;
   // A key lists its own children, whatever else it asks for.
   const parent = authority.kind === 'api_key' ? authority.keyId : query.parentKeyId;
+  // A Workbench token lists Test keys only.
+  const mode = ctx.via === 'try' ? ('test' as const) : undefined;
   const [rows, revokedCount] = await Promise.all([
     repo.listKeys(
       ctx.env.DB,
-      { ...query, orgId, limit: query.limit + 1, mine, parent },
+      { ...query, orgId, limit: query.limit + 1, mine, parent, mode },
       seesAccountEmails(authority),
     ),
-    repo.countRevoked(ctx.env.DB, orgId, mine, parent),
+    repo.countRevoked(ctx.env.DB, orgId, mine, parent, mode),
   ]);
   const page = rows.slice(0, query.limit);
   const resources = await repo.keyResources(

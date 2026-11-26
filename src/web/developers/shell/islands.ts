@@ -1,4 +1,4 @@
-import { disableZodCompiling } from '../playground/jitless.ts';
+import { disableZodCompiling } from '../model/jitless.ts';
 
 export interface Island {
   mount(el: HTMLElement): void | Promise<void>;
@@ -10,37 +10,17 @@ export interface Island {
  * placeholder is its signed-out state.
  */
 export const ISLANDS: Record<string, () => Promise<Island>> = {
-  'webhook-tester': () => import('../webhooks/index.tsx'),
   snippets: () => import('./personal.ts'),
   moved: async () => (await import('./moved.ts')).movedIsland,
-  playground: () => import('../playground/index.tsx'),
-  quickstart: () => import('../quickstart/index.tsx'),
-  workbench: () => import('../workbench/index.tsx'),
-  'hero-start': () => import('../workbench/hero-start.ts'),
-  keys: () => import('../keys/index.tsx'),
-  run: () => import('../console/run-entry.ts'),
-  console: () => import('../console/console-entry.ts'),
   account: async () => {
     const { mountAccount } = await import('./account.ts');
     return { mount: async (el) => void (await mountAccount(el)) };
   },
   operations: async () => (await import('./operations.ts')).operationsIsland,
-  'org-chip': async () => (await import('../bench/mount.tsx')).barChipIsland,
-  'bench-strip': async () => (await import('../bench/mount.tsx')).stripIsland,
-  logs: async () => (await import('../logs/logs-island.tsx')).logsIsland,
 };
 
-/**
- * `account` and `workbench` hold from the first paint in CSS (dev-run.css) until `data-ready`: the prerender cannot
- * know the session, and a signed-in page must not show the signed-out markup first.
- */
-const HOLD_UNTIL_MOUNTED = (el: HTMLElement) =>
-  el.dataset.island === 'quickstart' ||
-  el.dataset.island === 'logs' ||
-  el.dataset.island === 'console';
-
 export function mountIslands(root: ParentNode = document): void {
-  // Any island may load zod: its parser probe would log a Trusted Types violation (keys, webhooks, logs, console).
+  // Any island may load zod: its parser probe would log a Trusted Types violation (the account menu, the operations list).
   disableZodCompiling();
   const pending = [...root.querySelectorAll<HTMLElement>('[data-island]')].filter(
     (el) => el.dataset.island && ISLANDS[el.dataset.island],
@@ -64,8 +44,6 @@ export function mountIslands(root: ParentNode = document): void {
             // Not silent, and not an unhandled rejection: the page's error handler gets it.
             reportError(error);
           } finally {
-            // Mounted or not, the static markup shows again if the island never replaced it.
-            delete el.dataset.hydrating;
             el.dataset.ready = '';
           }
         })();
@@ -73,9 +51,5 @@ export function mountIslands(root: ParentNode = document): void {
     },
     { rootMargin: '200px' },
   );
-  for (const el of pending) {
-    // The static markup reads signed out: hide it until the session is known, so a signed-in page never flashes it.
-    if (HOLD_UNTIL_MOUNTED(el)) el.dataset.hydrating = '';
-    observer.observe(el);
-  }
+  for (const el of pending) observer.observe(el);
 }

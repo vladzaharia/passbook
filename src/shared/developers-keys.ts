@@ -92,6 +92,7 @@ const ORG_ONLY: readonly string[] = [
   'org:write',
   'wallet:write',
   'audit:read',
+  'logs:read',
   'nfc:read',
   'nfc:write',
   ...TEMPLATE_ACT_AS_SCOPES,
@@ -127,6 +128,7 @@ export const MINTABLE_SCOPE_CAPABILITY: Record<
   'nfc:write': 'passes:operate',
   'api-keys:write': 'integrations:manage',
   'audit:read': 'audit:read',
+  'logs:read': 'logs:read',
   'members:read': 'members:read',
   'members:write': 'members:manage',
 };

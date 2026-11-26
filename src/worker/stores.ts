@@ -3,8 +3,8 @@ import { createApiKeyStore } from './modules/api-keys/service.ts';
 import { recordAudit } from './modules/audit/service.ts';
 import { bumpCounter } from './modules/auth/repo-magic.ts';
 import { createSessionStore } from './modules/auth/sessions.ts';
-import { withTryTokens } from './modules/developer/try-token.ts';
 import { createScannerStore } from './modules/scan/auth-store.ts';
+import { createWorkbenchStore, withWorkbenchTokens } from './modules/workbench/resolve.ts';
 import type { AuthStores } from './platform/auth.ts';
 import { type Clock, systemClock } from './platform/clock.ts';
 import type { AppEnv } from './platform/env.ts';
@@ -17,8 +17,10 @@ const DENIED_ROWS_PER_HOUR = 500;
 export function createAuthStores(env: AppEnv, clock?: Clock): AuthStores {
   return {
     sessions: createSessionStore(env, clock),
-    // A `pbtry_` developer try token resolves to its sandbox key while its session and sandbox hold.
-    apiKeys: withTryTokens(env, createApiKeyStore(env, clock), clock),
+    // A `pbtry_` Workbench or try token resolves to its sandbox key while its session and sandbox hold.
+    apiKeys: withWorkbenchTokens(env, createApiKeyStore(env, clock), clock),
+    // On `auth` routes: the sandbox key, or a member's Test session on the allowlisted operations.
+    workbench: createWorkbenchStore(env, clock),
     scanners: createScannerStore(env, clock),
     async onDenied(event) {
       // A Platform key's refusals have their own cap and row: `api_key.refused`, naming the key.

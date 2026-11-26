@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { TemplateDesignerPage } from '../../../../../admin/templates/designer/admin/designer-page.tsx';
 import { designSearchSchema } from '../../../../../admin/templates/designer/design-search.ts';
-import { TemplateDesignerPage } from '../../../../../admin/templates/designer/designer-page.tsx';
 
 function DesignRoute() {
   const { templateId } = Route.useParams();

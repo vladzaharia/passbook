@@ -20,6 +20,18 @@ Polls the sandbox's webhook captures and POSTs each new one to your server with 
 | `--from-start` | Also forward the captures already stored. |
 | `--once` | Poll once and exit. |
 
+## logs
+
+`logs --follow` prints your Test calls as they arrive, oldest first: time, method, status, path, duration, error code, request id. It reads `GET /api/v1/request-logs` with `after=`, so the key needs the `logs:read` scope. Calls are kept 7 days.
+
+| Flag | |
+| --- | --- |
+| `--follow` | Required. |
+| `--status <4xx>` | A status class or one status. |
+| `--code <CODE>` | An error code. |
+| `--interval <ms>` | Poll interval, at least 200. Default 2000. |
+| `--once` | Poll once and exit. |
+
 ## types
 
 Prints `export type <Template>Input = {...}`, the type of a template's `input`, from `GET /templates/{id}/input-schema`. `--name` sets the type name; `--out <file>` writes a file.
@@ -50,6 +62,13 @@ Issues or changes a pass. `ticket.json` holds the Quickstart ticket: `{"template
  --send-email              | create. Email the pass link.
  --template-version <v>    | update.
  --notify                  | update. Push the change to the holder's wallet.
+
+## trigger
+
+Sends a real Test event for a Test pass: `installed`, `uninstalled`, `scanned`, `scan_refused`, `push_failed`, `updated_on_device` or `email_failed`. Your webhook endpoints get it signed, with the `requestId` it prints. Without `--pass`, it uses the newest Test pass. `--device <id>` targets a device an earlier `installed` returned.
+
+    passbook trigger installed
+    passbook trigger uninstalled --pass <passId> --device <deviceId>
 
 ## Maintaining
 

@@ -1607,12 +1607,6 @@
     "fix": "Send the status change in its own request, then the other edits.",
     "retryable": false
   },
-  "ORG_TEST_ONLY": {
-    "title": "Organization is test-only",
-    "when": "A Live request named a developer sandbox organization, which never holds Live.",
-    "fix": "Send the request in Test mode, or use an organization with live access.",
-    "retryable": false
-  },
   "PAIRING_INVALID": {
     "title": "Pairing code invalid",
     "when": "The pairing code is wrong, used or expired.",
@@ -3921,6 +3915,60 @@
     "title": "Invitation already pending",
     "when": "This address already has an open platform invitation.",
     "fix": "Revoke it or use Resend, then invite again.",
+    "retryable": false
+  },
+  "REQUEST_LOG_NOT_FOUND": {
+    "title": "Request not found",
+    "when": "The log id or request id is not one of this organization's Test calls from the last 7 days.",
+    "fix": "List the calls with GET /request-logs and use an id from the list. Calls older than 7 days are gone.",
+    "retryable": false
+  },
+  "SANDBOX_ENDPOINT_LIMIT": {
+    "title": "Sandbox endpoint limit",
+    "when": "The sandbox already holds 3 webhook endpoints, the capture endpoint included.",
+    "fix": "Delete one with DELETE /api/v1/webhook-endpoints/{id}, then retry.",
+    "retryable": false
+  },
+  "SANDBOX_TEST_ONLY": {
+    "title": "Sandbox is Test only",
+    "when": "A request asked for Live in a developer sandbox, which never holds Live: a session or key that sent X-PassBook-Mode: live.",
+    "fix": "Send the request in Test mode, or use an organization with Live access.",
+    "retryable": false
+  },
+  "WORKBENCH_TEST_ONLY": {
+    "title": "Workbench is Test only",
+    "when": "A Workbench token asked for Live (a mode header, Live in modes, a Live key), or called an operation not marked x-workbench: test.",
+    "fix": "Stay in Test, or do it in admin or from your server with a key.",
+    "retryable": false
+  },
+  "SIMULATE_DEVICE_NOT_FOUND": {
+    "title": "Simulated device not found",
+    "when": "The deviceId is not a simulated device of this pass.",
+    "fix": "Use the deviceId returned by an installed event, or omit it for the newest device.",
+    "retryable": false
+  },
+  "SIMULATE_NO_DEVICE": {
+    "title": "No simulated device",
+    "when": "The event needs an installed simulated device and the pass has none, or the device is already removed.",
+    "fix": "Send an installed event first.",
+    "retryable": false
+  },
+  "SIMULATE_NO_EMAIL": {
+    "title": "No Test email",
+    "when": "The Test inbox holds no message for this pass.",
+    "fix": "Send the pass by email first, then simulate email_failed.",
+    "retryable": false
+  },
+  "SIMULATE_RATE_LIMITED": {
+    "title": "Too many simulated events",
+    "when": "The organization sent more than 60 simulated events in a minute.",
+    "fix": "Wait for the Retry-After seconds, then retry.",
+    "retryable": true
+  },
+  "SIMULATE_TEST_ONLY": {
+    "title": "Simulate is Test only",
+    "when": "The pass is a Live pass.",
+    "fix": "Simulate on a Test pass.",
     "retryable": false
   },
   "KEY_CANNOT_ADMINISTER": {

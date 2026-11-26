@@ -6,7 +6,7 @@ export const METHOD_VERBS: ReadonlySet<string> = new Set(
   consume count create decline delete detach diff disable download enable end ensure export hold import inspect join
   list mark match migrate offboard open override pair pause personalize preview probe promote reassign rebind receive
   reenroll refresh release remove renew reopen replace replay report request resend reset resolve restore retire
-  retrieve retry reveal revoke rollback rotate save search send set share stage start stop submit sync unassign undo unlock
+  retrieve retry reveal revoke rollback rotate save search send set share simulate stage start stop submit sync unassign undo unlock
   unpair unvoid update upload upsert verify void`.split(/\s+/),
 );
 

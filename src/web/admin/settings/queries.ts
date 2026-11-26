@@ -2,6 +2,7 @@ import { type UseQueryResult, useMutation, useQuery, useQueryClient } from '@tan
 import type { z } from 'zod';
 import { SettingsListSchema } from '@/shared/contracts/settings-list.ts';
 import { api } from '@/web/lib/api.ts';
+import { useToolApi, useToolKey } from '@/web/lib/tool-api.tsx';
 
 const OrgSettingsListSchema = SettingsListSchema.omit({ oidc: true });
 
@@ -16,11 +17,13 @@ export function useSettings(
   enabled?: boolean,
 ): UseQueryResult<z.infer<typeof OrgSettingsListSchema>>;
 export function useSettings(scope: string, enabled = true) {
+  const client = useToolApi();
+  const toolKey = useToolKey();
   return useQuery({
     enabled,
-    queryKey: settingsKey(scope),
+    queryKey: [...settingsKey(scope), ...toolKey],
     queryFn: ({ signal }) =>
-      api.get(
+      client.get(
         '/api/v1/settings',
         scope === 'platform' ? SettingsListSchema : OrgSettingsListSchema,
         {

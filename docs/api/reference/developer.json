@@ -17,11 +17,19 @@
           "mode": "test",
           "via": "try",
           "client": "@passbook/sdk 1.4.2",
-          "hasBodies": true
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
         }
       ],
       "nextCursor": null,
-      "capped": null
+      "capped": null,
+      "bodiesRecorded": true
     }
   },
   "developer.getLog": {
@@ -41,9 +49,18 @@
       "via": "try",
       "client": "@passbook/sdk 1.4.2",
       "hasBodies": true,
+      "resourceId": null,
+      "apiVersion": "2026-11-01",
+      "flags": {
+        "idempotencyKey": false,
+        "ifMatch": false,
+        "version": true
+      },
       "requestBody": null,
       "responseBody": "{\"items\":[],\"nextCursor\":null}",
-      "bodiesExpireAt": 1796175300000
+      "bodiesExpireAt": 1796175300000,
+      "bodiesRecorded": true,
+      "bodiesTruncated": false
     }
   },
   "developer.getRail": {
@@ -63,9 +80,10 @@
   },
   "developer.getResolve": {
     "response": {
-      "kind": "request",
-      "href": "https://passbook.mobile/developers/logs",
-      "label": "Server integration"
+      "kind": "live",
+      "id": "0193a1b2-7c00-7000-8000-e3816cf1ba1d",
+      "label": "Server integration",
+      "href": "https://passbook.mobile/developers/logs"
     }
   },
   "developer.getAccess": {
@@ -121,6 +139,24 @@
           "errors": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1]
         }
       },
+      "quotas": {
+        "passes": {
+          "used": 128,
+          "limit": 25
+        },
+        "templates": {
+          "used": 128,
+          "limit": 25
+        },
+        "endpoints": {
+          "used": 128,
+          "limit": 25
+        },
+        "keys": {
+          "used": 128,
+          "limit": 25
+        }
+      },
       "keys": [
         {
           "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
@@ -150,7 +186,14 @@
           "mode": "test",
           "via": "try",
           "client": "@passbook/sdk 1.4.2",
-          "hasBodies": true
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
         }
       ],
       "endpoints": [

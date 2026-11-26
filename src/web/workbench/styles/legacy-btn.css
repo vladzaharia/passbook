@@ -1,0 +1,112 @@
+/* The kit Button's rules, as `.btn` markup (copied from generated/ssr-controls.css, the Button part
+   only: that file also restyles every input and label, which the SPA must not take). The moved
+   tools draw `.btn`; T1 to T8 move them onto the kit Button and this file goes. */
+.btn {
+  border-radius: var(--pk-radius-md);
+  text-align: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  font-size: var(--pk-font-size-sm);
+  line-height: var(--tw-leading, var(--pk-line-height-sm));
+  --tw-font-weight: var(--pk-font-weight-medium);
+  font-weight: var(--pk-font-weight-medium);
+  white-space: nowrap;
+  transition-property: color, background-color, border-color, box-shadow, scale;
+  transition-duration: var(--wl-dur-hover);
+  transition-timing-function: var(--wl-ease-move);
+  -webkit-user-select: none;
+  user-select: none;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.375rem;
+  padding-inline: 1rem;
+  display: inline-flex;
+  position: relative;
+}
+.btn:focus-visible {
+  outline-style: var(--tw-outline-style);
+  outline-offset: 2px;
+  outline-width: 2px;
+  outline-color: var(--pk-focus);
+}
+.btn:disabled {
+  cursor: not-allowed;
+}
+.btn[aria-busy="true"] {
+  cursor: progress;
+}
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn:active:not(:disabled):not([aria-disabled="true"]) {
+    scale: var(--pk-motion-scale-press);
+  }
+}
+@media (pointer: coarse) {
+  .btn {
+    min-height: 2.75rem;
+  }
+}
+.btn svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+.btn:not(.outline) {
+  background-color: var(--pk-accent);
+  color: var(--pk-accent-on);
+  --tw-shadow: var(--pk-elevation-1);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+@media (hover: hover) {
+  .btn:not(.outline):hover:not(:disabled):not([aria-disabled="true"]) {
+    background-color: var(--pk-accent);
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .btn:not(.outline):hover:not(:disabled):not([aria-disabled="true"]) {
+      background-color: color-mix(in oklab, var(--pk-accent), var(--wl-hover-mix) 12%);
+    }
+  }
+  .btn:not(.outline):hover:not(:disabled):not([aria-disabled="true"]) {
+    --tw-shadow: var(--wl-glow-accent);
+    box-shadow:
+      var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+      var(--tw-ring-shadow), var(--tw-shadow);
+  }
+}
+.btn:not(.outline):focus-visible {
+  --tw-shadow: var(--wl-glow-accent);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+.btn:not(.outline):disabled:not([aria-busy="true"]),
+.btn:not(.outline)[aria-disabled="true"]:not([aria-busy="true"]) {
+  background-color: var(--pk-state-hover-tint);
+  color: var(--pk-text-default);
+  --tw-shadow: 0 0 #0000;
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+.btn.outline {
+  border-style: var(--tw-border-style);
+  border-width: 1px;
+  border-color: var(--pk-border-strong);
+  color: var(--pk-text-default);
+  background-color: #0000;
+}
+@media (hover: hover) {
+  .btn.outline:hover:not(:disabled):not([aria-disabled="true"]) {
+    background-color: var(--pk-state-hover-tint);
+    color: var(--pk-text-strong);
+  }
+}
+.btn.outline:disabled:not([aria-busy="true"]),
+.btn.outline[aria-disabled="true"]:not([aria-busy="true"]) {
+  opacity: 0.65;
+}

@@ -9,9 +9,12 @@ import { BENCH_COPY } from '../../shared/copy/developers-bench.ts';
 import { STATUS_COPY } from '../../shared/copy/developers-ops.ts';
 import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
 import { NOT_FOUND_FILE, PATHS, twin } from '../../shared/developers.ts';
-import { type BenchTool, toolLabel } from './bench/switcher.tsx';
-import { BENCH_VT_FILE, BENCH_VT_HEAD, benchVtScript } from './bench/transition.ts';
-import { runFile, runFileUrl, runIndex } from './console/run-spec.ts';
+import { type BenchTool, toolLabel } from '../workbench/bench/switcher.tsx';
+import { BENCH_VT_FILE, BENCH_VT_HEAD, benchVtScript } from '../workbench/bench/transition.ts';
+import { runFile, runFileUrl, runIndex } from '../workbench/console/run-spec.ts';
+import type { BlueprintPreviews } from '../workbench/playground/model.ts';
+import { PlaygroundPage } from '../workbench/playground/page.tsx';
+import { QuickstartView } from '../workbench/quickstart/page.tsx';
 import type { GuideInputs } from './guide/load.ts';
 import { guideMarkdown } from './guide/markdown.ts';
 import { resolveGuide } from './guide/model.ts';
@@ -56,9 +59,6 @@ import { OperationView } from './pages/operation.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
 import { TOOL_PATH } from './pages/toc.tsx';
-import type { BlueprintPreviews } from './playground/model.ts';
-import { PlaygroundPage } from './playground/page.tsx';
-import { QuickstartView } from './quickstart/page.tsx';
 import { type Doc, document, fileOf, opIndex } from './render-doc.ts';
 import {
   crumbs,

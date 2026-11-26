@@ -684,6 +684,7 @@ describe('tenant pass authorization', () => {
       'members:manage': ['org_admin'],
       'integrations:read': ['org_admin', 'integration_admin', 'read_only'],
       'integrations:manage': ['org_admin', 'integration_admin'],
+      'logs:read': ['org_admin', 'integration_admin', 'read_only'],
       'templates:read': [
         'org_admin',
         'integration_admin',

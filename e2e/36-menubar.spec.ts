@@ -19,6 +19,7 @@ test.describe('admin', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Developers',
       'Sign out',
     ]);
@@ -41,6 +42,7 @@ test.describe('admin', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Developers',
       'Sign out',
     ]);
@@ -75,7 +77,8 @@ test.describe('admin', () => {
       [390, false],
     ] as const) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto('/developers/quickstart');
+      // A docs page: Quickstart moved to the Workbench, where the Worker redirects it.
+      await page.goto('/developers/reference');
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );
@@ -146,6 +149,7 @@ test.describe('organization member', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Sign out',
     ]);
     await expect(menu.getByRole('menuitem', { name: 'My passes' })).toHaveAttribute(
@@ -159,6 +163,7 @@ test.describe('organization member', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Sign out',
     ]);
   });

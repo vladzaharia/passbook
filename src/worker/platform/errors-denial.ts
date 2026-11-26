@@ -7,6 +7,10 @@ import {
   PASSKEY_REQUIRED_MESSAGE,
   STEP_UP_REQUIRED_MESSAGE,
 } from '../../shared/copy/sign-in.ts';
+import {
+  SANDBOX_TEST_ONLY_COPY,
+  WORKBENCH_TEST_ONLY_COPY,
+} from '../../shared/copy/workbench-errors.ts';
 import { AppError, ConflictError, ForbiddenError, UnauthenticatedError } from './errors-core.ts';
 
 /** 403 `FEATURE_NOT_INCLUDED`: the organization's entitlements lack `feature` (the request guard's refusal). */
@@ -73,9 +77,13 @@ export interface DenialOptions {
   codes?: Partial<Record<DenyReason, string>>;
 }
 
-/** 409 `ORG_TEST_ONLY`: a Live request on a developer sandbox, which never holds Live. */
+/** 409 `SANDBOX_TEST_ONLY`: a Live request on a developer sandbox, which never holds Live, for any credential. */
 export const orgTestOnly = (): ConflictError =>
-  new ConflictError('This organization is test-only.', 'ORG_TEST_ONLY');
+  new ConflictError(SANDBOX_TEST_ONLY_COPY, 'SANDBOX_TEST_ONLY');
+
+/** 403 `WORKBENCH_TEST_ONLY`: a Workbench token asked for Live, or for an operation outside its allowlist. */
+export const workbenchTestOnly = (message = WORKBENCH_TEST_ONLY_COPY): ForbiddenError =>
+  new ForbiddenError(message, 'WORKBENCH_TEST_ONLY');
 
 /** Maps a classified grant refusal to the HTTP error. Unknown reasons are a plain 403. */
 export function authorityDenied(

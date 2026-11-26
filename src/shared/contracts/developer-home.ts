@@ -4,6 +4,7 @@ import { ApiScopeSchema, IdSchema, OrgIdSchema, TimestampSchema } from './common
 import { RequestLogEntrySchema } from './developer.ts';
 import { OrgRolesSchema } from './org-membership.ts';
 import { WebhookEndpointStatusSchema } from './webhooks.ts';
+import { QuotasSchema } from './workbench-read.ts';
 
 /**
  * The scopes a sandbox key may hold: every mintable scope except minting keys, the terminal scope, the
@@ -138,6 +139,7 @@ export const DeveloperHomeSchema = z.object({
   sandbox: DeveloperHomeSandboxSchema.nullable(),
   progress: DeveloperProgressSchema.nullable(),
   usage: DeveloperUsageSchema.nullable(),
+  quotas: QuotasSchema.nullable().describe('What the sandbox holds against its caps.'),
   keys: z.array(DeveloperHomeKeySchema).describe('Not revoked and not retired, newest first.'),
   calls: z
     .array(RequestLogEntrySchema)

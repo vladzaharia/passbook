@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { renderStrip, type StampArt } from '@/passkit/stamps/compose.ts';
 import { decodePng, encodePng, type Rgba } from '@/passkit/stamps/png.ts';
+import { type DesignerHost, useDesignerHost } from './host.tsx';
 import { previewAssetMap, toBase64 } from './images.ts';
 import type { DesignDoc, DraftAsset } from './model.ts';
 import { ART_SLOTS, readStamps, sampleCount } from './stamps.ts';
@@ -12,17 +13,19 @@ const fromBase64 = (text: string): Uint8Array => {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 };
 
-/** Decodes a file of the draft: new files from their upload, saved ones from the asset route. */
-function load(asset: DraftAsset, assetBase: string): Promise<Rgba> {
+type Loader = DesignerHost['loadAsset'];
+const noFiles: Loader = () => Promise.reject(new Error('No file loads here.'));
+
+/** Decodes a file of the draft: new files from their upload, saved ones through the host. */
+function load(asset: DraftAsset, assetBase: string, loadAsset: Loader): Promise<Rgba> {
   const id = `${asset.name}|${asset.sha1 ?? ''}|${asset.upload?.length ?? ''}|${asset.upload?.slice(-16) ?? ''}`;
   let hit = decoded.get(id);
   if (!hit) {
     hit = (async () => {
       if (asset.upload !== undefined) return decodePng(fromBase64(asset.upload));
       const url = previewAssetMap([asset], assetBase)[asset.name] ?? '';
-      const res = await fetch(url, { credentials: 'same-origin' });
-      if (!res.ok) throw new Error(`${asset.name} did not load.`);
-      return decodePng(new Uint8Array(await res.arrayBuffer()));
+      const blob = await loadAsset(url);
+      return decodePng(new Uint8Array(await blob.arrayBuffer()));
     })();
     decoded.set(id, hit);
     hit.catch(() => decoded.delete(id));
@@ -35,6 +38,7 @@ export async function drawStrip(
   doc: DesignDoc,
   assetBase: string,
   count: number,
+  loadAsset: Loader = noFiles,
 ): Promise<string | null> {
   const view = readStamps(doc);
   if (!view) return null;
@@ -45,7 +49,7 @@ export async function drawStrip(
   const [filled, empty, reward, rewardEarned] = await Promise.all(
     ART_SLOTS.map(async (slot) => {
       const asset = file(slot);
-      return asset ? load(asset, assetBase) : undefined;
+      return asset ? load(asset, assetBase, loadAsset) : undefined;
     }),
   );
   if (!filled || !empty) return null;
@@ -58,7 +62,7 @@ export async function drawStrip(
   const baseAsset = doc.assets.find((a) => a.name === 'strip@2x.png');
   let base: Rgba | undefined;
   try {
-    base = baseAsset ? await load(baseAsset, assetBase) : undefined;
+    base = baseAsset ? await load(baseAsset, assetBase, loadAsset) : undefined;
   } catch {
     base = undefined;
   }
@@ -89,15 +93,16 @@ export function useStampStrip(doc: DesignDoc, assetBase: string, count: number) 
       ])
     : null;
   const [url, setUrl] = useState<string | null>(null);
+  const { loadAsset } = useDesignerHost();
   // The effect runs when the key moves; it draws from whatever the latest render held.
-  const latest = useRef({ doc, assetBase, count });
-  latest.current = { doc, assetBase, count };
+  const latest = useRef({ doc, assetBase, count, loadAsset });
+  latest.current = { doc, assetBase, count, loadAsset };
   useEffect(() => {
     if (key === null) return setUrl(null);
     let live = true;
     const t = setTimeout(() => {
       const now = latest.current;
-      drawStrip(now.doc, now.assetBase, now.count).then(
+      drawStrip(now.doc, now.assetBase, now.count, now.loadAsset).then(
         (next) => live && setUrl(next),
         () => live && setUrl(null),
       );

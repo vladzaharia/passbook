@@ -34,12 +34,12 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   test.setTimeout(240_000);
   await stubTurnstile(page);
 
-  // 1. Signed out the page is the whole page, with the empty pass.
-  await page.goto('/developers/quickstart');
-  await expect(page.getByRole('heading', { level: 1, name: 'Your first pass' })).toBeVisible();
+  // 1. Signed out the Workbench shows its one sign-in state until T8 puts step 1 back (design §1.11).
+  await page.goto('/workbench/quickstart');
+  await expect(page.getByRole('heading', { level: 1, name: 'Quickstart' })).toBeVisible();
   await shots(page, '01-signed-out');
-  await startOidcAs(page, 'onboard', '/developers/quickstart');
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
+  await startOidcAs(page, 'onboard', '/workbench/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
 
   // 2. Sandbox: the key decodes once into the .env box.
   await page.getByRole('button', { name: 'Create sandbox' }).click();
@@ -109,7 +109,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
 
   // The workbench carries the same journey.
   await page.getByRole('link', { name: 'Open your workbench' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers');
+  await page.waitForURL((u) => u.pathname.startsWith('/workbench/o/'));
   await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
   await shots(page, '09-workbench');
   // The header never shows Sign in beside the session chip while the account menu loads.
@@ -134,7 +134,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await shots(page, '10-admin-pinned');
 
   // Reset confirms, deletes the test data and shows the new key once; the old key stops.
-  await page.goto('/developers');
+  await page.goto('/workbench');
   await page.getByRole('button', { name: 'Reset' }).click();
   await expect(
     page.getByText('Passes, events and logs in this sandbox are deleted.'),
@@ -162,7 +162,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
     return res.status;
   });
   expect(closed).toBe(200);
-  await page.goto('/developers');
+  await page.goto('/workbench');
   await expect(page.getByTestId('wb-closed')).toContainText('Reopen in 30 days');
   await shots(page, '13-closed');
   await page.getByRole('button', { name: 'Reopen' }).click();
@@ -176,11 +176,12 @@ test.describe('quickstart gates', () => {
   test.describe('signed in with Polaris ID but no developer group', () => {
     test.use({ storageState: 'e2e/.auth/user.json' });
     test('says so and offers the other account or the passes', async ({ page }) => {
-      await page.goto('/developers/quickstart');
-      const step = page.getByRole('listitem').filter({ hasText: 'No developer access' });
-      await expect(step.getByRole('link', { name: /Polaris ID/ })).toBeVisible();
-      await expect(step.getByRole('link', { name: 'My passes' })).toBeVisible();
-      await expect(page.getByText(/user@example\.test/)).toBeVisible();
+      // The Workbench gives it the one sign-in state; T8 puts the gate's own words back.
+      await page.goto('/workbench/quickstart');
+      await expect(page.locator('main').getByRole('link', { name: /Polaris ID/ })).toHaveAttribute(
+        'href',
+        /\/auth\/oidc\/start\?next=/,
+      );
       await expect(page.getByRole('button', { name: 'Create sandbox' })).toHaveCount(0);
       await shots(page, '15-no-group');
     });
@@ -197,9 +198,8 @@ test.describe('quickstart gates', () => {
         await admin.dispose();
       }
       await signInHolder(page, email);
-      await page.goto('/developers/quickstart');
-      const step = page.getByRole('listitem').filter({ hasText: 'Use Polaris ID' });
-      await expect(step.getByRole('link', { name: /Polaris ID/ })).toHaveAttribute(
+      await page.goto('/workbench/quickstart');
+      await expect(page.locator('main').getByRole('link', { name: /Polaris ID/ })).toHaveAttribute(
         'href',
         /\/auth\/oidc\/start\?next=/,
       );

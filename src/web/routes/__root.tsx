@@ -1,5 +1,6 @@
 import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/react-router';
 import { Fragment, lazy, type ReactNode } from 'react';
+import { isWorkbenchPath } from '@/shared/workbench.ts';
 import { isAdminPath, isKnownPortalPath, isPublicPath, requireSession } from '../lib/guards.ts';
 import { RouteAnnouncer, SkipLink } from '../lib/route-focus.tsx';
 import type { RouterContext } from '../lib/router-context.ts';
@@ -28,15 +29,23 @@ export function PrincipalBoundary({ children }: { children: ReactNode }) {
   return <Fragment key={key}>{children}</Fragment>;
 }
 
-/** Picks the shell by path. Admin routes bring their own layout (routes/admin/route.tsx). */
+/**
+ * Picks the shell by path. Admin and the Workbench bring their own layout (routes/admin/route.tsx,
+ * routes/workbench/route.tsx); the Workbench also its own skip links and announcement queue.
+ */
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const workbench = isWorkbenchPath(pathname);
   return (
     <PrincipalBoundary>
-      <SkipLink />
-      <RouteAnnouncer />
+      {workbench ? null : (
+        <>
+          <SkipLink />
+          <RouteAnnouncer />
+        </>
+      )}
       <StepUpGate />
-      {isAdminPath(pathname) ? (
+      {isAdminPath(pathname) || workbench ? (
         <Outlet />
       ) : (
         <ChunkBoundary fallback={<RootPending />}>

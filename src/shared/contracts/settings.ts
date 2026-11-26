@@ -167,6 +167,8 @@ export const OrgSettingsSchema = z.object({
       defaultType: IdSchema.nullable().optional(),
     })
     .default({ enabled: true }),
+  /** Test request log: keep redacted request and response bodies 24 hours. A sandbox records them regardless. */
+  'requestLog.bodies': z.boolean().default(false),
   /** Channels this org turns off for every template: copies keep working, nothing new is offered. */
   'channels.blocked': z.array(ChannelSchema).max(CHANNELS.length).default([]),
 });

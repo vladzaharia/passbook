@@ -14,6 +14,7 @@ import {
 import { platformHostsOf, urlRefusal } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
+import { purgeOrgBodies } from '../developer/repo-request-log.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { planRetentionChange } from '../retention/changes.ts';
 import { enqueueShortenNotices } from '../retention/notify.ts';
@@ -291,6 +292,9 @@ export async function updateSettings(
           : {}),
       },
     });
+  // Turning request bodies off blanks the ones already stored, so nothing outlives the switch.
+  if (orgId !== null && changes['requestLog.bodies'] && changes['requestLog.bodies'].to !== true)
+    await purgeOrgBodies(ctx.env.DB, orgId);
   await enqueueShortenNotices(ctx, retention.notices);
   return listSettings(ctx, scope);
 }

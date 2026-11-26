@@ -52,6 +52,7 @@ export interface FeedQuery {
   after: number;
   types?: readonly string[] | undefined;
   passId?: string | undefined;
+  requestId?: string | undefined;
   limit: number;
 }
 
@@ -68,8 +69,17 @@ export function feedStmt(db: D1Database, fence: FeedFence, q: FeedQuery): D1Prep
      WHERE f.org_id = ? AND f.mode = ? AND f.seq > ?
        ${types.length > 0 ? `AND f.type IN (${placeholders(types.length)})` : ''}
        ${q.passId ? 'AND f.pass_id = ?' : ''}
+       ${q.requestId ? "AND json_extract(f.data, '$.requestId') = ?" : ''}
      ORDER BY f.seq LIMIT ?`,
-    [fence.orgId, fence.mode, q.after, ...types, ...(q.passId ? [q.passId] : []), q.limit + 1],
+    [
+      fence.orgId,
+      fence.mode,
+      q.after,
+      ...types,
+      ...(q.passId ? [q.passId] : []),
+      ...(q.requestId ? [q.requestId] : []),
+      q.limit + 1,
+    ],
   );
 }
 

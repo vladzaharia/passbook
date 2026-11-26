@@ -21,9 +21,9 @@ async function signIn(page: Page) {
       headers: { ...response.headers(), location: location.toString() },
     });
   });
-  await page.goto('/developers/quickstart');
+  await page.goto('/workbench/quickstart');
   await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
   await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -36,12 +36,13 @@ test('the Console: opens on a read, runs with Cmd+Enter, and its request id open
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/developers/console');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Console');
+  await page.goto('/workbench/console');
+  // Signed out, a tool is the one sign-in state.
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sign in to use the Workbench');
   await shots(page, 'console-signed-out');
 
   await signIn(page);
-  await page.goto('/developers/console');
+  await page.goto('/workbench/console');
   const index = page.getByRole('listbox', { name: 'Operations' });
   await expect(index).toBeVisible();
   await expect(page.locator('[data-bench-count]')).toContainText(/\d+ operations/);
@@ -81,7 +82,7 @@ test('the Console: opens on a read, runs with Cmd+Enter, and its request id open
 
   // The request id opens that request in Logs.
   await page.getByRole('link', { name: 'View in Logs' }).click();
-  await page.waitForURL(/\/developers\/logs\?source=all#/);
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/logs\?source=all#/);
   expect(decodeURIComponent(new URL(page.url()).hash.slice(1))).toBe(rid);
 });
 
@@ -90,7 +91,7 @@ test('the Console: the JSON editor numbers each line once, and the index sheet o
 }) => {
   await signIn(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/developers/console#passes.postPasses');
+  await page.goto('/workbench/console#passes.postPasses');
   await page.waitForLoadState('networkidle');
   const trigger = page.getByRole('button', { name: /Operation/ });
   await expect(trigger).toBeVisible();
@@ -127,7 +128,7 @@ test('the Console: a search with no match says so, and Clear brings the index ba
 }) => {
   await signIn(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/developers/console');
+  await page.goto('/workbench/console');
   const index = page.getByRole('listbox', { name: 'Operations' });
   await expect(index).toBeVisible();
   await page.getByRole('searchbox', { name: 'Find an operation' }).fill('zzzzzz');

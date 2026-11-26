@@ -1,5 +1,5 @@
 import { canUseSpace, type SignInMethod, SPACE_HOME, SPACES } from '../../../shared/spaces.ts';
-import { loadSession } from '../console/session.ts';
+import { loadSession } from '../../workbench/console/session.ts';
 import type { MountedUser } from './account-island.tsx';
 import { fillMenuSheet, POLARIS_START } from './menu-sheet.ts';
 

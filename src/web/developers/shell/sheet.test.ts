@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const mountSheet = vi.fn();
-vi.mock('../console/run-entry.ts', () => ({ mountSheet: (...a: unknown[]) => mountSheet(...a) }));
+vi.mock('../../workbench/console/run-entry.ts', () => ({
+  mountSheet: (...a: unknown[]) => mountSheet(...a),
+}));
 
 afterEach(() => {
   document.body.innerHTML = '';

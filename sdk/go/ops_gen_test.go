@@ -555,6 +555,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"events.listDeliveries", "GET", "/api/v1/events/id1/deliveries", false,
+		"", `{"items":[{"eventId":"x","type":"pass.issued","passId":"x","externalId":"x","state":"pending","attempts":0,"nextAt":0,"lastStatus":0,"lastError":"x","lastAttemptAt":0,"finishedAt":0,"replays":0,"endpointId":"x","target":"url"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Events.ListDeliveries(ctx, "id1")
+		},
+	},
+	{
 		"holders.list", "GET", "/api/v1/holders", false,
 		"", `{"items":[{"passId":"x","state":"unassigned","email":"x","ownerUserId":"x","ownerName":"x","blockedUserIds":["x"],"transfer":{"transferId":"x","state":"pending"},"reissueRequired":false,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1579,6 +1586,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"passes.simulate", "POST", "/api/v1/passes/id1/simulate", false,
+		`{"event":"installed"}`, `{"eventId":"x","requestId":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassesSimulateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Passes.Simulate(ctx, "id1", &b)
+		},
+	},
+	{
 		"passes.stamps.apply", "POST", "/api/v1/passes/id1/stamps", false,
 		`{"action":"add"}`, `{"id":"x","orgId":"x","templateId":"x","templateVersion":"x","identityId":"x","serial":"x","title":"x","subtitle":"x","externalId":"x","status":"active","version":0,"connectionId":"x","syncErrorCode":"x","holderEmail":"x","holderState":"unassigned","ownerUserId":"x","modifiedAt":0,"createdAt":0,"reissueRequired":false,"ownerName":"x","ownerEmail":"x","personalization":{},"fieldSources":{},"passJson":{},"assetBaseUrl":"x","assetNames":["x"],"blockedUsers":[{"id":"x","name":"x"}],"downloadUrl":"x","publicUrl":"x","registrations":0,"lastRefreshedAt":0,"versions":[{"version":0,"templateVersion":"x","cause":"create","actorType":"x","actorId":"x","createdAt":0,"purged":false}],"deliveries":[{"id":"x","kind":"push","state":"pending","attempts":0,"errorCode":"x","createdAt":0,"finishedAt":0}],"warnings":[{"severity":"error","code":"x","message":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1644,6 +1662,20 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Platform.WalletRelease.EnableReady(ctx, "id1", "id2", &b)
+		},
+	},
+	{
+		"requestLogs.list", "GET", "/api/v1/request-logs", false,
+		"", `{"items":[{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false}}],"nextCursor":null,"capped":"hour","bodiesRecorded":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.RequestLogs.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"requestLogs.retrieve", "GET", "/api/v1/request-logs/id1", false,
+		"", `{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false},"requestBody":"x","responseBody":"x","bodiesExpireAt":0,"bodiesRecorded":false,"bodiesTruncated":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.RequestLogs.Retrieve(ctx, "id1")
 		},
 	},
 	{
@@ -2261,14 +2293,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"testEmails.list", "GET", "/api/v1/test-inbox", false,
-		"", `{"items":[{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"createdAt":0}],"nextCursor":null}`,
+		"", `{"items":[{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"failed":false,"createdAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.TestEmails.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"testEmails.retrieve", "GET", "/api/v1/test-inbox/id1", false,
-		"", `{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"createdAt":0,"html":"x","text":"x","forwarding":"none"}`,
+		"", `{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"failed":false,"createdAt":0,"html":"x","text":"x","forwarding":"none"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.TestEmails.Retrieve(ctx, "id1", nil)
 		},
