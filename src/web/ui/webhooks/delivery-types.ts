@@ -16,11 +16,15 @@ export type DeliveryRowData = Delivery & {
   /** The endpoint's host or "Capture endpoint". */
   endpointName?: string;
   endpointStatus?: WebhookEndpointStatus;
+  /** What a row opens, when it is not the event (a capture's id). */
+  rowId?: string;
+  /** A test send, kept as a capture: it wears the Test tag and names no pass. */
+  test?: true;
 };
 export type DeliveryListRow = DeliveryRowData | TestRow;
 export const isTestRow = (r: DeliveryListRow): r is TestRow => 'key' in r;
 export const rowKey = (r: DeliveryListRow): string =>
-  isTestRow(r) ? r.key : `${r.endpointId ?? ''}:${r.eventId}`;
+  isTestRow(r) ? r.key : (r.rowId ?? `${r.endpointId ?? ''}:${r.eventId}`);
 
 /**
  * What differs between the hosts. Admin links a pass to its admin page and may replay on a

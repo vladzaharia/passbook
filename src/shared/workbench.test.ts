@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { operatorSpaceOf } from './spaces.ts';
-import { isWorkbenchPath, safeReturn, WB_TOOLS, wbOrgOf, wbPath, wbToolOf } from './workbench.ts';
+import {
+  isWorkbenchPath,
+  safeReturn,
+  WB_TOOLS,
+  wbEventsPath,
+  wbOrgOf,
+  wbPath,
+  wbToolOf,
+} from './workbench.ts';
 
 describe('wbPath', () => {
   it('puts the org in the path, filters in the query and the selection in the hash', () => {
@@ -25,6 +33,33 @@ describe('wbPath', () => {
   it('lists the eleven areas in nav order', () => {
     expect(WB_TOOLS).toHaveLength(11);
     expect(WB_TOOLS[0]).toBe('home');
+  });
+});
+
+describe('wbEventsPath', () => {
+  it('selects an event, and names the delivery or capture to open inside it', () => {
+    expect(wbEventsPath('o1', { event: 'ev1' })).toBe('/workbench/o/o1/events#ev1');
+    expect(wbEventsPath('o1', { event: 'ev1', endpoint: 'we1' })).toBe(
+      '/workbench/o/o1/events?endpoint=we1#ev1',
+    );
+    expect(wbEventsPath('o1', { event: 'ev1', capture: 'cap1' })).toBe(
+      '/workbench/o/o1/events?capture=cap1#ev1',
+    );
+  });
+
+  it('puts an endpoint in the hash on the Endpoints tab, and opens the wizard with new=1', () => {
+    expect(wbEventsPath('o1', { tab: 'endpoints', endpoint: 'we1', event: 'ev1' })).toBe(
+      '/workbench/o/o1/events?tab=endpoints#we1',
+    );
+    expect(wbEventsPath('o1', { tab: 'endpoints', add: true })).toBe(
+      '/workbench/o/o1/events?tab=endpoints&new=1',
+    );
+  });
+
+  it('narrows the list by type, request and pass', () => {
+    expect(wbEventsPath('o1', { type: 'pass.issued', request: 'r-1', pass: 'p1' })).toBe(
+      '/workbench/o/o1/events?type=pass.issued&request=r-1&pass=p1',
+    );
   });
 });
 

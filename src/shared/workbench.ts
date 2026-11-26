@@ -68,6 +68,42 @@ export function wbPath(orgId: string, tool: WbTool, options: WbPathOptions = {})
   return `${base}${query ? `?${query}` : ''}${hash}`;
 }
 
+/**
+ * What Events opens (design §1.10). The address is `events?<params>#<id>`:
+ * - `#<eventId>` selects an event; `?endpoint=<id>` opens that endpoint's delivery of it and
+ *   `?capture=<id>` opens that captured request, both inside the selected event;
+ * - `?tab=endpoints#<endpointId>` selects an endpoint (the finish of Add endpoint lands here);
+ * - `?tab=endpoints&new=1` opens the Add endpoint wizard (it pushes history, so Back closes it);
+ * - `?type=`, `?request=` and `?pass=` narrow the list (the request is an `x-request-id`).
+ */
+export interface WbEventsLink {
+  event?: string;
+  endpoint?: string;
+  capture?: string;
+  tab?: 'endpoints';
+  add?: boolean;
+  type?: string;
+  request?: string;
+  pass?: string;
+}
+
+/** An Events URL: an endpoint is the selection on its own tab, and a filter on an event. */
+export function wbEventsPath(orgId: string, link: WbEventsLink = {}): string {
+  const endpoints = link.tab === 'endpoints';
+  return wbPath(orgId, 'events', {
+    query: {
+      tab: link.tab,
+      new: link.add ? 1 : undefined,
+      type: link.type,
+      request: link.request,
+      pass: link.pass,
+      endpoint: endpoints ? undefined : link.endpoint,
+      capture: endpoints ? undefined : link.capture,
+    },
+    hash: endpoints ? link.endpoint : link.event,
+  });
+}
+
 /** The area a Workbench path shows, or null outside the Workbench. */
 export function wbToolOf(pathname: string): WbTool | null {
   const parts = pathname.split(/[?#]/, 1)[0]?.split('/').filter(Boolean) ?? [];

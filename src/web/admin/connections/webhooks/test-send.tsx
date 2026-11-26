@@ -4,9 +4,12 @@ import type { z } from 'zod';
 import type { WebhookTestResultSchema } from '@/shared/contracts/webhooks.ts';
 import { cn } from '../../../lib/cn.ts';
 import { errorMessage } from '../../../lib/errors.ts';
-import { Buddy, Button, StatusPill, toast } from '../../../ui/index.ts';
-import { useEndpointActions } from './api.ts';
+import { Buddy } from '../../../ui/art/index.ts';
+import { Button } from '../../../ui/button.tsx';
+import { StatusPill } from '../../../ui/status-pill.tsx';
+import { toast } from '../../../ui/toaster.tsx';
 import { responseLabel } from '../../../ui/webhooks/labels.ts';
+import { useEndpointActions } from './api.ts';
 import './webhooks.css';
 
 type Result = z.infer<typeof WebhookTestResultSchema>;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { RotateWebhookSecretSchema } from '@/shared/contracts/webhook-secrets.ts';
 import { SUBSCRIBABLE_EVENT_TYPES, WebhookEndpointSchema } from '@/shared/contracts/webhooks.ts';
-import { EVENT_SETS, setOf } from './event-sets.ts';
 import { EVENT_GROUP, OVERLAP_OPTIONS } from '../../../ui/webhooks/labels.ts';
+import { EVENT_SETS, setOf } from './event-sets.ts';
 
 describe('secret overlap options', () => {
   it('offers Now, 1 hour, 24 hours, 3 days and 7 days', () => {

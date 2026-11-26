@@ -18,10 +18,10 @@ import {
   RowLink,
   useNow,
 } from '../../../ui/index.ts';
+import { EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
 import { useWebhookEndpoints } from './api.ts';
 import { EndpointStatus } from './endpoint-status.tsx';
 import { lastDelivery } from './health.ts';
-import { EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
 
 export function AddEndpointButton({ variant = 'primary' }: { variant?: 'primary' | 'outline' }) {
   return (

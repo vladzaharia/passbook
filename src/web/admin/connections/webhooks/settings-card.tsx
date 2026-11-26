@@ -13,8 +13,8 @@ import {
   useFormErrors,
   useUnsavedChangesGuard,
 } from '../../../ui/index.ts';
-import { useEndpointActions } from './api.ts';
 import { useAdminTemplateChoices } from './admin-templates.ts';
+import { useEndpointActions } from './api.ts';
 import { EndpointFields } from './endpoint-fields.tsx';
 import { checkForm, type FormState, formOf, isDirty, patchOf } from './form-state.ts';
 

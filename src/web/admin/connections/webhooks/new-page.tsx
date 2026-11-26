@@ -16,6 +16,7 @@ import {
   toast,
   useFormErrors,
 } from '../../../ui/index.ts';
+import { VerifyGuide } from '../../../ui/webhooks/verify-guide.tsx';
 import { useAdminTemplateChoices } from './admin-templates.ts';
 import { useSecretCalls, useValidateEndpoint } from './api.ts';
 import { EndpointFields } from './endpoint-fields.tsx';
@@ -23,7 +24,6 @@ import { FocusOnMount } from './focus-on-mount.tsx';
 import { checkForm, draftOf, emptyForm, type FormState } from './form-state.ts';
 import { endpointHost } from './health.ts';
 import { TestSend } from './test-send.tsx';
-import { VerifyGuide } from '../../../ui/webhooks/verify-guide.tsx';
 
 const crumbs = [
   { label: 'Connections', to: '/admin/connections', search: { tab: 'webhooks' } },

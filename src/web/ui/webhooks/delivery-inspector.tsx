@@ -1,18 +1,14 @@
 import { RotateCw } from 'lucide-react';
 import { WEBHOOK_USER_AGENT, type WebhookEndpointStatus } from '@/shared/contracts/webhooks.ts';
 import { formatDateTime } from '../../lib/format.ts';
-import {
-  Button,
-  Callout,
-  CodeBlock,
-  ErrorState,
-  JsonViewer,
-  KeyValue,
-  Skeleton,
-  StatusPill,
-  Timeline,
-  type TimelineItem,
-} from '../index.ts';
+import { Button } from '../button.tsx';
+import { Callout } from '../callout.tsx';
+import { CodeBlock, JsonViewer } from '../code-block.tsx';
+import { ErrorState } from '../error-state.tsx';
+import { KeyValue } from '../key-value.tsx';
+import { Skeleton } from '../skeleton.tsx';
+import { StatusPill } from '../status-pill.tsx';
+import { Timeline, type TimelineItem } from '../timeline.tsx';
 import type { DeliveryDetail, DeliveryHost, DeliveryRead } from './delivery-types.ts';
 import {
   DELIVERY_STATE_LABEL,

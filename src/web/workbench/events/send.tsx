@@ -10,10 +10,12 @@ export const TEST_TYPE = 'webhook.test';
  * event type once, so the title row keeps one line on a phone.
  */
 export function SendButton({
+  id,
   types,
   busy,
   onSend,
 }: {
+  id?: string;
   types: readonly string[];
   busy: boolean;
   onSend: (type: string) => void;
@@ -21,8 +23,9 @@ export function SendButton({
   return (
     <span className="wh-send">
       <button
+        id={id}
         type="button"
-        className="btn"
+        className="btn outline"
         disabled={busy}
         aria-keyshortcuts="Meta+Enter Control+Enter"
         onClick={() => onSend(TEST_TYPE)}

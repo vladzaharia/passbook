@@ -3,8 +3,13 @@ import type { ReactNode } from 'react';
 import type { WebhookEndpointStatus } from '@/shared/contracts/webhooks.ts';
 import { TEST_TAG } from '@/shared/webhook-test-rows.ts';
 import { formatDateTime } from '../../lib/format.ts';
+import { DataTable } from '../data-table.tsx';
 import type { DataColumnDef } from '../data-table-meta.ts';
-import { DataTable, EmptyState, ErrorState, IconButton, SegmentedControl, StatusPill } from '../index.ts';
+import { EmptyState } from '../empty-state.tsx';
+import { ErrorState } from '../error-state.tsx';
+import { IconButton } from '../icon-button.tsx';
+import { SegmentedControl } from '../segmented-control.tsx';
+import { StatusPill } from '../status-pill.tsx';
 import {
   type Delivery,
   type DeliveryHost,
@@ -109,15 +114,18 @@ export function DeliveryList({
             <StatusPill status="neutral">{TEST_TAG}</StatusPill>
           </span>
         ) : (
-          <button
-            type="button"
-            onClick={() => onOpen(d)}
-            aria-label={label(d)}
-            aria-current={selected === rowKey(d) ? 'true' : undefined}
-            className="block max-w-full truncate rounded-sm text-left font-medium text-fg-strong underline-offset-2 wl-colors hover:text-accent-fg hover:underline focus-visible:outline-2 focus-visible:outline-focus aria-[current=true]:text-accent-fg"
-          >
-            {EVENT_LABEL[d.type]}
-          </button>
+          <span className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onOpen(d)}
+              aria-label={label(d)}
+              aria-current={selected === rowKey(d) ? 'true' : undefined}
+              className="block max-w-full truncate rounded-sm text-left font-medium text-fg-strong underline-offset-2 wl-colors hover:text-accent-fg hover:underline focus-visible:outline-2 focus-visible:outline-focus aria-[current=true]:text-accent-fg"
+            >
+              {EVENT_LABEL[d.type]}
+            </button>
+            {d.test ? <StatusPill status="neutral">{TEST_TAG}</StatusPill> : null}
+          </span>
         ),
     },
     ...(showEndpoint
@@ -138,13 +146,10 @@ export function DeliveryList({
       header: 'Pass',
       meta: { hideBelow: 'md', nowrap: true },
       cell: ({ row: { original: d } }) =>
-        isTestRow(d) ? (
+        isTestRow(d) || !d.passId ? (
           <span className="text-fg-subtle">—</span>
         ) : (
-          host.passLink(
-            { passId: d.passId, externalId: d.externalId, label: passLabel(d) },
-            'list',
-          )
+          host.passLink({ passId: d.passId, externalId: d.externalId, label: passLabel(d) }, 'list')
         ),
     },
     {

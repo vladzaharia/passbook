@@ -3,10 +3,14 @@ import {
   WEBHOOK_MAX_TEMPLATES,
   type WebhookEndpointDto,
 } from '@/shared/contracts/webhooks.ts';
-import { Button, CheckboxField, FormField, Input, RadioGroup } from '../../../ui/index.ts';
+import { Button } from '../../../ui/button.tsx';
+import { CheckboxField } from '../../../ui/checkbox.tsx';
+import { FormField } from '../../../ui/field.tsx';
+import { Input } from '../../../ui/input.tsx';
+import { RadioGroup } from '../../../ui/radio-group.tsx';
+import { EVENT_GROUP, EVENT_GROUPS, EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
 import { EVENT_SETS, setOf } from './event-sets.ts';
 import type { FormErrors, FormState, SubscribableEventType } from './form-state.ts';
-import { EVENT_GROUP, EVENT_GROUPS, EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
 
 /** The templates an endpoint can be limited to: each host reads them through its own client. */
 export interface TemplateChoices {
@@ -30,6 +34,7 @@ export function EndpointFields({
   urlHelp,
   checking,
   templates,
+  hideDestination,
 }: {
   value: FormState;
   onChange: (patch: Partial<FormState>) => void;
@@ -41,6 +46,8 @@ export function EndpointFields({
   urlHelp?: string;
   checking?: boolean;
   templates: TemplateChoices;
+  /** The wizard asks for the URL on its own step: only events and templates show. */
+  hideDestination?: boolean;
 }) {
   const toggle = (type: SubscribableEventType, on: boolean) =>
     onChange({
@@ -50,42 +57,46 @@ export function EndpointFields({
     });
   return (
     <div className="flex flex-col gap-5">
-      <FormField
-        label="URL"
-        required={!disabled}
-        error={errors.url}
-        help={errors.url ? undefined : (urlHelp ?? 'https only.')}
-      >
-        {(f) => (
-          <Input
-            {...f}
-            data-draft
-            type="url"
-            inputMode="url"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="https://example.com/hooks/passbook"
-            disabled={disabled}
-            readOnly={disabled}
-            value={disabled ? (masked ?? '') : value.url}
-            aria-busy={checking || undefined}
-            onChange={(e) => onChange({ url: e.target.value })}
-            onBlur={onUrlBlur}
-          />
-        )}
-      </FormField>
-      <FormField label="Description">
-        {(f) => (
-          <Input
-            {...f}
-            data-draft
-            maxLength={120}
-            disabled={disabled}
-            value={value.description}
-            onChange={(e) => onChange({ description: e.target.value })}
-          />
-        )}
-      </FormField>
+      {hideDestination ? null : (
+        <FormField
+          label="URL"
+          required={!disabled}
+          error={errors.url}
+          help={errors.url ? undefined : (urlHelp ?? 'https only.')}
+        >
+          {(f) => (
+            <Input
+              {...f}
+              data-draft
+              type="url"
+              inputMode="url"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="https://example.com/hooks/passbook"
+              disabled={disabled}
+              readOnly={disabled}
+              value={disabled ? (masked ?? '') : value.url}
+              aria-busy={checking || undefined}
+              onChange={(e) => onChange({ url: e.target.value })}
+              onBlur={onUrlBlur}
+            />
+          )}
+        </FormField>
+      )}
+      {hideDestination ? null : (
+        <FormField label="Description">
+          {(f) => (
+            <Input
+              {...f}
+              data-draft
+              maxLength={120}
+              disabled={disabled}
+              value={value.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+            />
+          )}
+        </FormField>
+      )}
       <fieldset
         className="min-w-0"
         aria-invalid={errors.eventTypes ? true : undefined}

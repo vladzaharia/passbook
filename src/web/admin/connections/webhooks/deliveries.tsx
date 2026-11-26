@@ -1,48 +1,41 @@
 import { useMemo, useState } from 'react';
 import type { WebhookEndpointStatus } from '@/shared/contracts/webhooks.ts';
 import { testRowOf } from '@/shared/webhook-test-rows.ts';
-import { LoadMore, RowLink, toast } from '../../../ui/index.ts';
+import { LoadMore } from '../../../ui/pagination.tsx';
+import { toast } from '../../../ui/toaster.tsx';
 import {
   byNewestDelivery,
-  DeliveryList,
   type DeliveryFilter,
+  DeliveryList,
 } from '../../../ui/webhooks/delivery-list.tsx';
 import type { DeliveryHost, DeliveryListRow } from '../../../ui/webhooks/delivery-types.ts';
 import { queuedLine, replayError } from '../../../ui/webhooks/replay-errors.ts';
+import { adminDeliveryHost } from './admin-host.tsx';
 import { useDeliveries, useEndpointActions, useTestSends } from './api.ts';
-import { DeliverySheet } from './delivery-sheet.tsx';
-
-/** Admin's host for the shared delivery parts: a pass is an admin page, and a manager replays. */
-export const adminDeliveryHost = (canManage: boolean): DeliveryHost => ({
-  canManage,
-  passLink: ({ passId, externalId, label }, place) => (
-    <RowLink
-      to="/admin/passes/$passId"
-      params={{ passId }}
-      title={externalId ?? undefined}
-      className={place === 'list' ? 'text-xs font-normal' : 'font-normal'}
-    >
-      {label}
-    </RowLink>
-  ),
-});
+import { DeliveryInline, DeliverySheet } from './delivery-sheet.tsx';
 
 /** The endpoint's deliveries, newest first. A row opens its attempts and payload. */
 export function Deliveries({
   endpointId,
   canManage,
   endpointStatus,
+  host: given,
+  inline,
 }: {
   endpointId: string;
   canManage: boolean;
   endpointStatus: WebhookEndpointStatus;
+  /** Another host's links (the Workbench's); admin's by default. */
+  host?: DeliveryHost;
+  /** Open a delivery under the list, not in a sheet. */
+  inline?: boolean;
 }) {
   const [filter, setFilter] = useState<DeliveryFilter>('all');
   const [open, setOpen] = useState<string>();
   const list = useDeliveries(endpointId, filter);
   const { replayOne } = useEndpointActions(endpointId);
   const [replaying, setReplaying] = useState<string>();
-  const host = useMemo(() => adminDeliveryHost(canManage), [canManage]);
+  const host = useMemo(() => given ?? adminDeliveryHost(canManage), [given, canManage]);
   const replay = (eventId: string) => {
     setReplaying(eventId);
     replayOne
@@ -72,6 +65,7 @@ export function Deliveries({
         fetching={list.isFetching && !list.isFetchingNextPage}
         error={list.isError ? list.error : undefined}
         onRetry={() => void list.refetch()}
+        selected={inline && open ? `:${open}` : undefined}
         onOpen={(row) => 'eventId' in row && setOpen(row.eventId)}
         onReplay={(d) => replay(d.eventId)}
         replaying={replaying}
@@ -83,13 +77,25 @@ export function Deliveries({
           />
         }
       />
-      <DeliverySheet
-        endpointId={endpointId}
-        eventId={open}
-        canManage={canManage}
-        endpointStatus={endpointStatus}
-        onClose={() => setOpen(undefined)}
-      />
+      {inline ? (
+        <DeliveryInline
+          endpointId={endpointId}
+          eventId={open}
+          canManage={canManage}
+          host={host}
+          endpointStatus={endpointStatus}
+          onClose={() => setOpen(undefined)}
+        />
+      ) : (
+        <DeliverySheet
+          endpointId={endpointId}
+          eventId={open}
+          canManage={canManage}
+          host={host}
+          endpointStatus={endpointStatus}
+          onClose={() => setOpen(undefined)}
+        />
+      )}
     </>
   );
 }

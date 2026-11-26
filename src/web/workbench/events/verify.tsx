@@ -12,7 +12,7 @@ import {
 import { StepUp } from '../../developers/ui/step-up.tsx';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { UnpluggedArt } from '../../ui/art/unplugged.tsx';
-import { stepUpOf } from './client.ts';
+import { stepUpOf } from './api.ts';
 
 const VECTORS = vectorFile.vectors as WebhookVector[];
 const mask = (s: string) => `${'•'.repeat(20)}${s.slice(-4)}`;
@@ -44,9 +44,12 @@ function StepRow({ step, buddy }: { step: VerifyStep; buddy?: boolean }) {
 export function VerifyPanel({
   capture,
   loadSecret,
+  next,
 }: {
   capture: WebhookCaptureDto;
   loadSecret: () => Promise<string>;
+  /** Where a step-up sign-in returns to: this view. */
+  next: string;
 }) {
   const [secret, setSecret] = useState<string | null>(null);
   const [shown, setShown] = useState(false);
@@ -108,7 +111,7 @@ export function VerifyPanel({
           ) : null}
           <span className="xs muted push wh-hide-s">Checked here, in your browser</span>
         </div>
-        {stepUp !== null ? <StepUp signInUrl={stepUp} next="/developers/webhooks" /> : null}
+        {stepUp !== null ? <StepUp signInUrl={stepUp} next={next} /> : null}
         <details className="wh-try">
           <summary className="sm">Check what your receiver saw</summary>
           <div className="stack g2 mt2">
