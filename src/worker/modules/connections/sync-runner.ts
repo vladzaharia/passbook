@@ -4,7 +4,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { closeRun } from './health.ts';
 import { emptyTotals, type ReleaseBlockCode } from './records.ts';
 import { getConnection } from './repo.ts';
-import { setWorkflowStatus } from './repo-sync.ts';
 import { type Failure, paceMs } from './runtime.ts';
 import {
   advanceCursor,
@@ -28,7 +27,7 @@ import {
 } from './sync-chain.ts';
 import type { StepResult } from './sync-context.ts';
 import { add, guardRun, RunSupersededError, type StepLike } from './sync-run-guard.ts';
-import { recordAbort } from './sync-runner-abort.ts';
+import { markGone, recordAbort } from './sync-runner-abort.ts';
 import { assertSyncAuthority, assertSyncStart } from './sync-runner-validation.ts';
 
 export type { StepLike } from './sync-run-guard.ts';
@@ -104,19 +103,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
 
   if (!start.ok) {
     if (start.reason === 'GONE') {
-      await step.do('mark-gone', async () => {
-        await assertSyncAuthority(sctx, p);
-        await setWorkflowStatus(
-          sctx.env.DB,
-          p.instanceId,
-          'complete',
-          sctx.clock.now(),
-          null,
-          undefined,
-          p.credentialKeysetCommitment,
-          p,
-        );
-      });
+      await markGone(sctx, step, p);
       return;
     }
     if (start.reason === 'STALE_GENERATION') {

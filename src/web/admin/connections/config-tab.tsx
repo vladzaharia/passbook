@@ -34,6 +34,7 @@ import {
   keepOpaque,
   nestValues,
   opaqueSummary,
+  prefixed,
   secretKeysFor,
   withoutOpaque,
 } from './config-schema.ts';
@@ -51,13 +52,6 @@ function limitError(v: string, min: number, max: number): string | undefined {
   return Number.isInteger(n) && n >= min && n <= max
     ? undefined
     : `Whole number from ${min} to ${max}.`;
-}
-
-function prefixed(fields: Record<string, string>, prefix: string) {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(fields))
-    if (k.startsWith(prefix)) out[k.slice(prefix.length)] = v;
-  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 export function ConfigTab({
