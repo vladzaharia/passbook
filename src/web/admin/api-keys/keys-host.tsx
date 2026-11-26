@@ -23,6 +23,8 @@ export interface KeysHost {
   own?: (key: { kind: string }) => boolean;
   /** Beside a key's facts (recent calls). */
   aside?: (keyId: string) => ReactNode;
+  /** A key's page sits in the host's inspector, which has its own close: no back link. */
+  embedded?: boolean;
   /** The access the host already knows. */
   access: Extract<KeyAccess, { state: 'ready' }>;
 }
@@ -43,13 +45,15 @@ export function KeysHeader(props: PageHeaderProps) {
   if (!breadcrumbs?.length) return <>{host.primary(actions)}</>;
   return (
     <header className="mb-4 flex min-w-0 flex-col gap-2">
-      <Link
-        to={host.listPath}
-        className="inline-flex min-h-6 w-fit items-center gap-1 text-sm text-fg-muted hover:text-fg-strong"
-      >
-        <ArrowLeft aria-hidden className="size-4" />
-        Keys
-      </Link>
+      {host.embedded ? null : (
+        <Link
+          to={host.listPath}
+          className="inline-flex min-h-6 w-fit items-center gap-1 text-sm text-fg-muted hover:text-fg-strong"
+        >
+          <ArrowLeft aria-hidden className="size-4" />
+          Keys
+        </Link>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 tabIndex={-1} className="min-w-0 text-xl font-semibold text-fg-strong">
           {title}

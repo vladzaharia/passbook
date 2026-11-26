@@ -18,12 +18,7 @@ const DAY = 86_400_000;
  * The list and a key's page are admin's components on the kit's table and Radix menus: they load
  * after the tool's first paint, so the route's own weight stays its shell.
  */
-const ApiKeysView = lazy(() =>
-  import('../../admin/api-keys/api-keys-page.tsx').then((m) => ({ default: m.ApiKeysView })),
-);
-const KeyDetailView = lazy(() =>
-  import('../../admin/api-keys/key-detail-page.tsx').then((m) => ({ default: m.KeyDetailView })),
-);
+const KeysSplit = lazy(() => import('./keys-list.tsx').then((m) => ({ default: m.KeysSplit })));
 
 /**
  * Keys in the Workbench: admin's list, wizard and key page on the Workbench token. Test keys only,
@@ -45,7 +40,6 @@ function OrgKeys() {
   const { orgId, name, kind } = host.context;
   const principal = session.authed?.user.id ?? '';
   const listPath = wbPath(orgId, 'keys');
-  const keyId = hash ? decodeURIComponent(hash) : undefined;
 
   // A sandbox's person is the admin of their own sandbox: the token manages its keys as they do
   // (key-access.test.ts). An org's member holds what their roles grant.
@@ -107,19 +101,13 @@ function OrgKeys() {
     <ToolPage tool="keys">
       <KeysHostProvider value={bound}>
         <div className="wb-tool-keys min-w-0">
-          {keyId ? (
-            <Suspense fallback={<SkeletonRows label="Loading API key" />}>
-              <KeyDetailView access={bound.access} keyId={keyId} />
-            </Suspense>
-          ) : (
-            <Suspense fallback={<SkeletonRows label="Loading API keys" />}>
-              <ApiKeysView
-                access={bound.access}
-                createRequested={createRequested}
-                onCreateRequestHandled={handled}
-              />
-            </Suspense>
-          )}
+          <Suspense fallback={<SkeletonRows label="Loading API keys" />}>
+            <KeysSplit
+              access={bound.access}
+              createRequested={createRequested}
+              onCreateRequestHandled={handled}
+            />
+          </Suspense>
         </div>
       </KeysHostProvider>
     </ToolPage>

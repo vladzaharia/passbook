@@ -1,13 +1,27 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WORKBENCH_KEY_MAX_MS, WORKBENCH_KEY_SCOPES } from '@/shared/contracts/workbench.ts';
 import { createKey, toReview } from '../../admin/api-keys/wizard-test-utils.ts';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import { forgetTokens } from '../host/token.ts';
 import { handlers } from '../shell/test-fixtures.ts';
 
+/** A wide window: the pane sits beside the list, as at desktop width. */
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    matches: q.includes('1180') || q.includes('720') || q.includes('reduce'),
+    media: q,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+  }));
+});
+
 afterEach(() => {
+  history.replaceState(null, '', location.pathname);
+  vi.unstubAllGlobals();
   forgetTokens();
   localStorage.clear();
   sessionStorage.clear();
@@ -79,13 +93,13 @@ describe('Keys in the Workbench', () => {
       memberships: [membershipFixture('nw')],
       handlers: keysApi(),
     });
-    expect(await screen.findByText('CI key')).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /CI key/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Keys', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New API key' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Ada Lovelace' })).toBeNull();
-    expect(screen.getByRole('link', { name: 'CI key' })).toHaveAttribute(
-      'href',
-      '/workbench/o/nw/keys#k1',
+    expect(screen.getByRole('option', { name: /CI key/ })).toHaveAttribute(
+      'aria-selected',
+      'false',
     );
     const call = seen[0];
     expect(call?.headers.get('authorization')).toBe('Bearer pbtry_nw');
@@ -140,6 +154,8 @@ describe('Keys in the Workbench', () => {
   });
 
   it('opens a key at its hash with its recent calls', async () => {
+    // The bench reads the browser's address; the test router has its own.
+    history.replaceState(null, '', '#k1');
     await renderApp('/workbench/o/nw/keys#k1', {
       session: 'developer',
       memberships: [membershipFixture('nw')],
@@ -149,8 +165,11 @@ describe('Keys in the Workbench', () => {
           json({ ...key(), lastIpPrefix: null, childCount: 0, parent: null, replacedBy: null }),
       },
     });
+    // The list stays, with the key's row selected, and its page sits beside it.
+    expect(
+      await screen.findByRole('option', { name: /CI key/, selected: true }),
+    ).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'CI key', level: 2 })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Keys' }).length).toBeGreaterThan(1);
     const calls = await screen.findByRole('link', { name: /\/api\/v1\/passes/ });
     expect(calls).toHaveAttribute('href', '/workbench/o/nw/logs#l1');
   });
@@ -161,7 +180,7 @@ describe('Keys in the Workbench', () => {
       memberships: [membershipFixture('nw', { capabilities: ['integrations:read'] })],
       handlers: keysApi(),
     });
-    expect(await screen.findByText('CI key')).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /CI key/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
   });
 
@@ -174,12 +193,14 @@ describe('Keys in the Workbench', () => {
           json({ items: [key({ orgId: 'sbx' })], nextCursor: null, revokedCount: 0 }),
       },
     });
-    expect(await screen.findByText('CI key')).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /CI key/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New API key' })).toBeInTheDocument();
   });
 
-  it("marks the sandbox's own key and offers no Revoke on it", async () => {
+  it("marks the sandbox's own key and offers no Revoke on its page", async () => {
     const user = userEvent.setup();
+    const detail = (over: Record<string, unknown>) =>
+      json({ ...key(over), lastIpPrefix: null, childCount: 0, parent: null, replacedBy: null });
     await renderApp('/workbench/o/sbx/keys', {
       session: 'developer',
       handlers: {
@@ -193,13 +214,16 @@ describe('Keys in the Workbench', () => {
             nextCursor: null,
             revokedCount: 0,
           }),
+        '/api/v1/api-keys/own': () =>
+          detail({ id: 'own', name: 'Sandbox', orgId: 'sbx', kind: 'personal' }),
+        '/api/v1/api-keys/k2': () => detail({ id: 'k2', name: 'Other', orgId: 'sbx' }),
       },
     });
-    expect(await screen.findByText('Sandbox key')).toBeInTheDocument();
-    // Only Copy prefix remains on the sandbox key; the other key keeps its menu with Revoke.
-    expect(screen.getByRole('button', { name: 'Copy prefix' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Actions for Sandbox' })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Actions for Other' }));
-    expect(await screen.findByRole('menuitem', { name: 'Revoke' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /Sandbox key/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: /Sandbox key/ }));
+    expect(await screen.findByRole('heading', { name: 'Sandbox', level: 2 })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Revoke' })).toBeNull();
+    await user.click(screen.getByRole('option', { name: /Other/ }));
+    expect(await screen.findByRole('button', { name: 'Revoke' })).toBeInTheDocument();
   });
 });
