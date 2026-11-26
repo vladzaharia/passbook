@@ -1,0 +1,40 @@
+# Attach the repo root as a Ledge workspace and see only the runbooks and the
+# prose docs an operator reads. Hidden notes still exist on disk.
+
+# Dependencies, build output and local state
+node_modules
+.wrangler
+dist
+coverage
+playwright-report
+test-results
+next
+artifacts
+
+# Source, config and generated trees
+src
+test
+e2e
+tools
+migrations
+templates
+workers
+marketing
+public
+assets
+certificates
+sdk
+android
+ios
+
+# Archives, design history and generated docs
+docs/audits
+docs/design
+docs/research
+docs/developers
+docs/api
+
+# Repo-level notes that are not procedures
+AGENTS.md
+README.md
+HANDOFF.md
