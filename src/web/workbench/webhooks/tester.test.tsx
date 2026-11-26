@@ -264,7 +264,7 @@ describe('Tester', () => {
     render(<Tester connect={ready(api([capture({ body })]))} types={TYPES} />);
     const trace = await screen.findByRole('navigation', { name: 'Trace' });
     expect(within(trace).getByRole('button', { name: /request id req-77/ })).toBeInTheDocument();
-    expect(within(trace).getByRole('button', { name: /event id e1/ })).toBeInTheDocument();
+    expect(within(trace).getByRole('button', { name: /^Copy event id / })).toBeInTheDocument();
   });
 
   it('adds a URL endpoint with every subscribable event and shows the secret once', async () => {
