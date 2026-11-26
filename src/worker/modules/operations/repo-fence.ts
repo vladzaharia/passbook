@@ -48,13 +48,22 @@ export function starterFence(
   now: number,
   /** Stopping or retrying: the person's own live, strong session (a step-up replaces the one that started it). */
   writer = false,
+  /** An own-only session (a holder): only the rows its own session started. */
+  pinned = false,
 ): Fence {
   return {
     ctes: '',
     ctesParams: [],
-    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?
+    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${pinned ? ' AND o.actor_session = ?' : ''}
       AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ? AND s.user_id = ? AND s.revoked_at IS NULL
         AND s.expires_at > ? AND s.idle_expires_at > ?${writer ? ` AND s.amr IN ${STRONG_AMR_SQL}` : ''})`,
-    whereParams: [session.userId, session.sessionId, session.userId, now, now],
+    whereParams: [
+      session.userId,
+      ...(pinned ? [session.sessionId] : []),
+      session.sessionId,
+      session.userId,
+      now,
+      now,
+    ],
   };
 }

@@ -89,7 +89,8 @@ export function starterFenceFor(
     ? starterFence(
         { userId: auth.userId, sessionId: auth.sessionId },
         ctx.clock.now(),
-        writer || isOwnOnly(auth),
+        writer,
+        isOwnOnly(auth),
       )
     : null;
 }

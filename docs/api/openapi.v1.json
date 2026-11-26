@@ -94712,6 +94712,7 @@
           "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -94745,6 +94746,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_REISSUE_KEYSET",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -94854,6 +94856,7 @@
           "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -94887,6 +94890,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_REISSUE_KEYSET",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -94996,6 +95000,7 @@
           "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -95029,6 +95034,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_REISSUE_KEYSET",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -95843,7 +95849,8 @@
                   "expiresAt": null,
                   "bytes": null,
                   "entities": null,
-                  "errorCode": null
+                  "errorCode": null,
+                  "operationId": "0193a1b2-7c00-7000-8000-ff2b9c9c65f0"
                 }
               }
             }
@@ -95876,8 +95883,10 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_EXPORT_RUNNING",
           "ORG_NOT_FOUND",
           "ORG_PURGING",
@@ -111223,7 +111232,8 @@
                   "$ref": "#/components/schemas/PassesBulkReissueResponse"
                 },
                 "example": {
-                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-fc526349df42"
+                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-fc526349df42",
+                  "operationId": "0193a1b2-7c00-7000-8000-aaea668f397d"
                 }
               }
             }
@@ -111260,6 +111270,7 @@
           "API_KEY_MISSING",
           "BULK_RUN_ACTIVE",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -111267,6 +111278,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -111391,6 +111403,7 @@
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -111403,6 +111416,7 @@
           "MODE_MISMATCH",
           "NEW_CODE_UNSUPPORTED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -112093,7 +112107,8 @@
                       "code": "PRINTING_OFF",
                       "reason": "Paper is off for Quickstart ticket"
                     }
-                  ]
+                  ],
+                  "operationId": "0193a1b2-7c00-7000-8000-5b2fefdb1bd3"
                 }
               }
             }
@@ -112129,6 +112144,7 @@
         "x-codes": [
           "API_KEY_MISSING",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -112136,6 +112152,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "PASS_NOT_ACTIVE",
@@ -122793,6 +122810,7 @@
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
@@ -123062,11 +123080,13 @@
           "FILE_NOT_FOUND",
           "FILE_STATE",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
@@ -123938,12 +123958,14 @@
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -124359,7 +124381,8 @@
                 },
                 "example": {
                   "runId": "0193a1b2-7c00-7000-8000-000000000023",
-                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
+                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c",
+                  "operationId": "0193a1b2-7c00-7000-8000-77cfb49fba0e"
                 }
               }
             }
@@ -124402,11 +124425,13 @@
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
@@ -129670,7 +129695,8 @@
                 },
                 "example": {
                   "reissueId": "0193a1b2-7c00-7000-8000-5e1a0cc4f25e",
-                  "instances": 38
+                  "instances": 38,
+                  "operationId": "0193a1b2-7c00-7000-8000-135312555b22"
                 }
               }
             }
@@ -129706,9 +129732,11 @@
         "x-codes": [
           "API_KEY_MISSING",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
