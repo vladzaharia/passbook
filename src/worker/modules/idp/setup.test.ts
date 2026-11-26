@@ -51,19 +51,25 @@ describe('the item matrix', () => {
     ]);
   });
 
-  it('shows the alias group as an allowed row, never a placement', async () => {
+  it('reads client_groups as needed while an existing alias is not allowed', async () => {
     rig.idp.groupStore.set('support', {
       kind: 'role',
       name: 'passbook_support',
       friendlyName: 'passbook_support',
       otherClients: 0,
     });
-    const a = await admin();
-    const before = await itemOf(a.headers, 'client_groups');
-    expect(before).toMatchObject({ status: 'needed' });
-    expect(before?.rows).toContainEqual({ key: 'wallet_org_admins', state: 'needed' });
     for (const g of ['console', 'developer', 'support', 'platform_admin'])
       rig.idp.setup.client.allowed.add(g);
+    const a = await admin();
+    // No alias group in Polaris ID: nothing to show or allow.
+    const none = await itemOf(a.headers, 'client_groups');
+    expect(none).toMatchObject({ status: 'done' });
+    expect(none?.rows?.map((r) => r.key)).not.toContain('wallet_org_admins');
+    rig.idp.setup.alias.exists = true;
+    const before = await itemOf(a.headers, 'client_groups');
+    expect(before).toMatchObject({ status: 'needed', counts: { missing: 1 } });
+    expect(before?.rows).toContainEqual({ key: 'wallet_org_admins', state: 'needed' });
+    rig.idp.setup.client.allowed.add('alias:wallet_org_admins');
     const after = await itemOf(a.headers, 'client_groups');
     expect(after).toMatchObject({ status: 'done' });
     expect(after?.rows).toContainEqual({ key: 'wallet_org_admins', state: 'allowed' });

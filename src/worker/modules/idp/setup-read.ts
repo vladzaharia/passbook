@@ -12,13 +12,6 @@ export interface SetupView {
   items: SetupItem[];
 }
 
-/** Alias groups: the sign-in names that PassBook's own role groups do not carry. */
-const aliasesOf = (env: { OIDC_ADMIN_GROUP?: string }): string[] =>
-  (env.OIDC_ADMIN_GROUP ?? '')
-    .split(',')
-    .map((n) => n.trim())
-    .filter((n) => n !== '' && !n.startsWith('passbook_'));
-
 /**
  * One health read and one setup read, with the token table and the directory mirror: the item matrix. Nothing
  * is written, and the token hash only goes to the binding to be compared.
@@ -46,7 +39,6 @@ export async function readSetup(ctx: ServiceContext, rpc?: IdpRpc): Promise<Setu
     token: { active: active !== null, lastAuthAt: active?.last_auth_at ?? null },
     mirror: { users: await countUsers(db), groups: await countGroups(db) },
     now: ctx.clock.now(),
-    aliases: aliasesOf(ctx.env as { OIDC_ADMIN_GROUP?: string }),
   });
   return { mode: health.mode, items };
 }

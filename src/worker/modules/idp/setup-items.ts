@@ -16,8 +16,6 @@ export interface SetupFacts {
   token: { active: boolean; lastAuthAt: number | null };
   mirror: { users: number; groups: number };
   now: number;
-  /** Alias group names the main Worker's sign-in accepts: the binding allows them, never writes them. */
-  aliases: readonly string[];
 }
 
 /** The item a later one waits for. */
@@ -65,19 +63,23 @@ function groupsItem(status: SetupStatus): Own {
 
 function clientGroupsItem(f: SetupFacts): Own {
   const c = f.status.client;
-  const allowed = c.missingRoles.length === 0;
+  const aliases = c.aliases.filter((a) => a.exists);
+  const allowed = c.missingRoles.length === 0 && aliases.every((a) => a.allowed);
   const rows = [
     ...Object.keys(f.status.roles).map((key) => ({
       key,
       state: c.missingRoles.includes(key) ? ('needed' as const) : ('allowed' as const),
     })),
     // The binding allows an alias group that exists and never writes it: a row to see, not a placement.
-    ...f.aliases.map((key) => ({
-      key,
-      state: allowed ? ('allowed' as const) : ('needed' as const),
+    ...aliases.map((a) => ({
+      key: a.name,
+      state: a.allowed ? ('allowed' as const) : ('needed' as const),
     })),
   ];
-  const counts = { missing: c.missingRoles.length, other: c.otherGroups };
+  const counts = {
+    missing: c.missingRoles.length + aliases.filter((a) => !a.allowed).length,
+    other: c.otherGroups,
+  };
   return allowed ? done({ counts, rows }) : needed({ counts, rows });
 }
 
