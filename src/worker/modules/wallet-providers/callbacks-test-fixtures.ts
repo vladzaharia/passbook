@@ -7,6 +7,7 @@ import { readWalletPassSnapshot } from './instance.ts';
 import { type OfferFixtureSource, setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 import {
   findCallbackCredentialKeyset,
   findCallbackCredentialKeysetTrigger,
@@ -28,6 +29,10 @@ export async function setupSamsungCallbacks(
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
+    /** The account is a real enrolment, not a legacy envelope. */
+    enrolled?: boolean;
+    /** Every database guard stays: the release rows are opened and the instance and reference insert through them. */
+    guards?: boolean;
   } = {},
 ) {
   // Historical Samsung instances are only retired or refreshed while the provider is enabled.
@@ -38,10 +43,12 @@ export async function setupSamsungCallbacks(
     holderEmail: options.holderEmail,
     source: options.source,
     db: options.db,
+    ...(options.enrolled ? { enrolled: true } : {}),
   });
   const { kit, pass, samsung, samsungRelease } = fixture;
   if (!samsungRelease?.candidateId || !pass.releaseId) throw new Error('Missing release fixture');
   const credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+  if (options.guards) await releaseRows(kit.env.DB);
   const mode = 'live' as const;
   const source = await readWalletPassSnapshot(kit.env.DB, {
     orgId: kit.org.id,
@@ -69,6 +76,7 @@ export async function setupSamsungCallbacks(
     accountId: approved.release.accountId,
     releaseId: approved.release.id,
     now: kit.clock.now(),
+    ...(options.guards ? { keepGuard: true } : {}),
     upsert: { requestHash: await sha256Hex(kit.ctx.ids.token(32)), state: 'pending' },
   });
   if (!operation) throw new Error('Missing historical instance fixture');
@@ -90,6 +98,7 @@ export async function setupSamsungCallbacks(
       initialExpiresAt: now + 300_000,
       promotedAt: options.promoted === false ? null : now,
       envelope,
+      ...(options.guards ? { keepGuard: true } : {}),
     });
   }
   if (options.reference !== false && options.promoted === false) {

@@ -5,6 +5,7 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { Binds } from '../../platform/authority-principal.ts';
 import { all } from '../../platform/db.ts';
+import { retirementCtes } from './repo-callbacks-tombstone-retirement.ts';
 import { PART_CURRENT_OPERATION } from './repo-instance-claim-sql.ts';
 import {
   walletOpCurrentCheck,
@@ -58,9 +59,9 @@ const bindingSql = projectionReleaseBindingPredicateSql({
   credentialKeysetCommitmentSql: 'op.credential_keyset_commitment',
 });
 
-const CHECK_DEPTH = 32;
-const CHECK_TERMS = 51;
-const CTE_DEPTH = 26;
+const CHECK_DEPTH = 36;
+const CHECK_TERMS = 55;
+const CTE_DEPTH = 30;
 
 describe('expression depth of the largest wallet-provider predicates', () => {
   // Measured when written (the depth is an upper bound): ceilings, so a growing predicate fails here first.
@@ -70,12 +71,15 @@ describe('expression depth of the largest wallet-provider predicates', () => {
   // 0222 (sole approval for wallet classes) put `approval.kind = 'sole' OR` in front of each independence
   // predicate: revoke depth 26 -> 27 and terms 56 -> 58; the three triggers below grew the same way.
   // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32, CTE 25 -> 26.
+  // 0229: the revoke identity check also accepts a Samsung enrolment (repo-instance-current.ts), one more `OR`
+  // group on the epoch checks: 25 -> 26 and 32 -> 34 terms, 27 -> 28 and 50 -> 52, check 32 -> 33 and 51 -> 53, CTE 26 -> 27. The Samsung revoke identity then compares the partner of the pinned
+  // version (L-N2): epoch checks 29/36 and 31/54, check 36/55, CTE 30.
   it.each([
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
     ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 27, 58],
     ['release binding', bindingSql, 49, 162],
-    ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 25, 32],
-    ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 27, 50],
+    ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 29, 36],
+    ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 31, 54],
   ])(
     '%s prepares on D1 within its measured depth and terms',
     async (_name, predicate, depth, n) => {
@@ -105,10 +109,12 @@ describe('expression depth of the largest wallet-provider predicates', () => {
        AND name IN ('template_provider_approvals_insert', 'template_approvals_insert',
          'template_provider_releases_insert', 'template_releases_insert', 'wallet_provider_generation_ready_guard',
          'pass_credential_transfer_complete_guard', 'wallet_provider_instances_settle',
-         'wallet_samsung_tombstones_approved_insert', 'wallet_samsung_tombstone_keyset_insert')`,
+         'wallet_samsung_tombstones_approved_insert', 'wallet_samsung_tombstone_keyset_insert',
+         'wallet_provider_generation_insert_guard', 'wallet_provider_instances_successor',
+         'template_provider_candidates_insert', 'wallet_provider_generation_operation_guard')`,
       [],
     );
-    expect(triggers.length).toBe(9);
+    expect(triggers.length).toBe(13);
     const ceiling: Record<string, [number, number]> = {
       wallet_provider_instances_settle: [4, 2],
       wallet_provider_generation_ready_guard: [15, 16],
@@ -120,9 +126,16 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       // 0199: the schema 2 branch (two evidence bypasses and the card-state row requirement) took the
       // release trigger from 46/113 to 50/131. Remote D1's limit is 100.
       template_provider_releases_insert: [51, 106],
-      // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
-      wallet_samsung_tombstones_approved_insert: [37, 33],
+      // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`. 0229: an enrolment account's tombstone is
+      // proved by its pinned credential version instead of a configure event (37 -> 46, 33 -> 42, with the account's identity).
+      wallet_samsung_tombstones_approved_insert: [46, 42],
       wallet_samsung_tombstone_keyset_insert: [39, 37],
+      // 0229 recreated these: the release gate on the insert guard, the epoch pin and enrolment terms on the
+      // successor and the candidate, the enrolment On and not held terms on the operation guard.
+      wallet_provider_generation_insert_guard: [21, 38],
+      template_provider_candidates_insert: [34, 33],
+      wallet_provider_instances_successor: [26, 42],
+      wallet_provider_generation_operation_guard: [32, 50],
     };
     for (const t of triggers) {
       const [depth, n] = ceiling[t.name] ?? [0, 0];
@@ -130,6 +143,18 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       expect(terms(t.sql), t.name).toBeLessThanOrEqual(n);
     }
   });
+  it('prepares the Samsung retirement CTEs, with the enrolment pin proof, within their measured depth and terms', async () => {
+    await all(env.DB, `${retirementCtes} SELECT 1 AS ok FROM retirement_scope retirement`, [
+      'i',
+      'o',
+      'live',
+      1,
+      'h',
+    ]);
+    expect(exprDepth(retirementCtes)).toBeLessThanOrEqual(69);
+    expect(terms(retirementCtes)).toBeLessThanOrEqual(122);
+  });
+
   it('measures the views 0222 rebuilt: the retirement base and the Apple source', async () => {
     const views = await all<{ name: string; sql: string }>(
       env.DB,

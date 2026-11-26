@@ -15,7 +15,7 @@ import {
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { nextInstanceBoundary } from './lifecycle-boundary.ts';
-import { walletProviderEnabled, walletProviderReleaseReason } from './provider-policy.ts';
+import { walletProviderReleaseReason, walletProviderRevokes } from './provider-policy.ts';
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback-replay.ts';
 import { purgeGoogleMessages } from './repo-google-messages.ts';
 import { deferDirtyInstance } from './repo-instance.ts';
@@ -36,8 +36,9 @@ const BLOCKED_DELAY_MS = 60_000;
  * transport settlement before using settleWalletClaim. Provider outcomes contain no loggable body.
  */
 export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void> {
-  // Local bookkeeping (placeholders, retirement records) still runs; provider calls do not.
-  if (!walletProviderEnabled('google') && !walletProviderEnabled('samsung'))
+  // Local bookkeeping (placeholders, retirement records) still runs; provider calls do not. Draining has calls
+  // (revokes), so it is not skipped.
+  if (!walletProviderRevokes('google') && !walletProviderRevokes('samsung'))
     ctx.log.info('wallet.sync_provider_calls_skipped', {
       code: 'WALLET_PROVIDER_DISABLED',
       reason: walletProviderReleaseReason('google'),
