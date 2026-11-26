@@ -53,7 +53,7 @@ describe('startOperation', () => {
       code: 'OPERATION_RUNNING',
       operationId: first.id,
     });
-    await progressOf(kit.ctx, first.id).succeed();
+    await progressOf(kit.ctx, first.id, 1).succeed();
     await expect(start({ subject: { k: 'same' } })).resolves.toMatchObject({ status: 'queued' });
   });
 
@@ -127,7 +127,7 @@ describe('progress', () => {
   });
 
   it('does nothing without an operation id', async () => {
-    const p = progressOf(kit.ctx, undefined);
+    const p = progressOf(kit.ctx, undefined, 1);
     await p.step('a').done();
     await p.succeed();
     await expect(p.checkCancel()).resolves.toBeUndefined();

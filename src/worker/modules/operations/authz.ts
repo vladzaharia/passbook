@@ -80,9 +80,13 @@ export function platformFenceFor(ctx: ServiceContext, auth: AuthContext): Fence 
 }
 
 /** Starter rows: only the session of the person who started them. Never a key. */
-export function starterFenceFor(ctx: ServiceContext, auth: AuthContext): Fence | null {
+export function starterFenceFor(
+  ctx: ServiceContext,
+  auth: AuthContext,
+  writer = false,
+): Fence | null {
   return auth.kind === 'session'
-    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now())
+    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), writer)
     : null;
 }
 
@@ -93,7 +97,7 @@ export async function readFenceFor(
   row: Pick<OperationRow, 'audience' | 'org_id' | 'kind'>,
   capability: 'read' | 'write' = 'read',
 ): Promise<Fence | null> {
-  if (row.audience === 'starter') return starterFenceFor(ctx, auth);
+  if (row.audience === 'starter') return starterFenceFor(ctx, auth, capability === 'write');
   if (row.audience === 'platform') return platformFenceFor(ctx, auth);
   const needed = kindOf(row.kind)?.[capability] ?? null;
   if (!needed || !row.org_id) return null;

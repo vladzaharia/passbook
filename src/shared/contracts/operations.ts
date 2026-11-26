@@ -1,5 +1,9 @@
 import { z } from 'zod';
+import { safeNextPath } from '../next.ts';
 import { IdSchema, ModeSchema, TimestampSchema } from './common.ts';
+
+const ID_KEY = /^[A-Za-z][A-Za-z0-9_]*$/;
+const ID_VALUE = /^[A-Za-z0-9_.:-]+$/;
 
 // Long-running actions: `GET /operations/{id}`, `GET /operations`, `POST /operations/{id}/cancel|retry`.
 // An operation is the user-facing projection of progress. It never carries a secret or personal data.
@@ -65,9 +69,16 @@ export const OperationErrorSchema = z.object({
 });
 
 export const OperationResultSchema = z.object({
-  /** An app path. A download is a separate authorized call. */
-  href: z.string().max(300).nullable(),
-  ids: z.record(z.string().max(40), z.string().max(80)),
+  /** An app path (`safeNextPath`: no scheme, host, backslash or control character). A download is a separate authorized call. */
+  href: z
+    .string()
+    .max(300)
+    .nullable()
+    .refine((h) => h === null || safeNextPath(h) !== null, 'An app path only.'),
+  /** Ids of what the operation made: plain id characters only, so no free text or secret fits. */
+  ids: z
+    .record(z.string().regex(ID_KEY).max(40), z.string().regex(ID_VALUE).max(80))
+    .refine((r) => Object.keys(r).length <= 16, 'At most 16 ids.'),
 });
 export type OperationResult = z.infer<typeof OperationResultSchema>;
 

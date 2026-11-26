@@ -2,6 +2,7 @@ import {
   OPERATION_ACTIVE,
   type OperationDto,
   type OperationResult,
+  OperationResultSchema,
   type OperationStep,
   OperationStepSchema,
 } from '../../../shared/contracts/operations.ts';
@@ -26,7 +27,8 @@ export function parseSteps(json: string): OperationStep[] {
 function parseResult(json: string | null): OperationResult | null {
   if (!json) return null;
   try {
-    return JSON.parse(json) as OperationResult;
+    const parsed = OperationResultSchema.safeParse(JSON.parse(json));
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }

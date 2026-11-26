@@ -20,8 +20,8 @@ import { KEEP_MS, LEASE_MS } from './start.ts';
 
 const COUNT_EVERY_MS = 1000;
 const HEARTBEAT_EVERY_MS = 30_000;
-/** `result.href` is an app path, never another site. */
-const APP_PATH = /^\/(?!\/)/;
+/** A waiting reason is a short sentence: no digit, `@`, `/` or `:`, so no email, token or URL fits. */
+const REASON = /^[A-Za-z][A-Za-z ,.'-]{0,79}$/;
 const STABLE_CODE = /^[A-Z][A-Z0-9_]{1,79}$/;
 
 interface State {
@@ -42,19 +42,21 @@ class Reporter implements Progress {
 
   private readonly ctx: ServiceContext;
   private readonly id: string;
-  private readonly wanted: number | undefined;
+  private readonly wanted: number;
+  private readonly lease: string | null;
 
-  constructor(ctx: ServiceContext, id: string, wanted: number | undefined) {
+  constructor(ctx: ServiceContext, id: string, wanted: number, lease: string | null) {
     this.ctx = ctx;
     this.id = id;
     this.wanted = wanted;
+    this.lease = lease;
   }
 
   private load(): Promise<State | null> {
     this.state ??= this.guarded(async () => {
       const row = await rowById(this.ctx.env.DB, this.id);
       // Not found, ended, or a newer attempt: this runner no longer reports.
-      if (!row || (this.wanted !== undefined && row.attempt !== this.wanted)) return null;
+      if (!row || row.attempt !== this.wanted) return null;
       if (!['queued', 'running', 'waiting'].includes(row.status)) return null;
       return { row, steps: parseSteps(row.steps), cancelRequested: row.cancel_requested === 1 };
     }, null);
@@ -105,6 +107,7 @@ class Reporter implements Progress {
         stepKey: step.key,
         status,
         leaseUntil: now + LEASE_MS,
+        lease: this.lease,
       }),
     );
   }
@@ -171,6 +174,7 @@ class Reporter implements Progress {
           attempt: s.row.attempt,
           now,
           leaseUntil: now + LEASE_MS,
+          lease: this.lease,
         }),
       );
     }
@@ -193,7 +197,7 @@ class Reporter implements Progress {
       step.state = 'waiting';
       step.until = options.until ?? null;
       step.waitingReason = options.due ? 'due' : 'blocked';
-      step.detail = options.reason ?? null;
+      step.detail = options.reason && REASON.test(options.reason) ? options.reason : null;
       step.startedAt ??= this.ctx.clock.now();
       await this.writeOf(s, step, 'waiting');
     });
@@ -215,8 +219,7 @@ class Reporter implements Progress {
   succeed(result?: OperationResult): Promise<void> {
     return this.enqueue(async (s) => {
       const checked = result === undefined ? null : OperationResultSchema.safeParse(result);
-      const pathOnly = result?.href == null || APP_PATH.test(result.href);
-      if (checked && (!checked.success || !pathOnly))
+      if (checked && !checked.success)
         this.ctx.log.warn('operation.result_dropped', {
           code: 'OPERATION_RESULT_INVALID',
           operationId: this.id,
@@ -234,7 +237,7 @@ class Reporter implements Progress {
         else continue;
         if (step.state !== 'waiting') step.finishedAt = now;
       }
-      await this.close(s, 'succeeded', null, checked?.success && pathOnly ? checked.data : null);
+      await this.close(s, 'succeeded', null, checked?.success ? checked.data : null);
     });
   }
 
@@ -298,7 +301,7 @@ class Reporter implements Progress {
       steps: JSON.stringify(s.steps),
       stepKey: current,
       error,
-      result: result ? JSON.stringify(result) : null,
+      result,
       expiresAt: keep,
     });
     this.dead = true;
@@ -306,14 +309,16 @@ class Reporter implements Progress {
 }
 
 /**
- * How work reports. `attempt` is the attempt this runner serves: an old Workflow instance of a retried
- * operation passes its own, and its writes are refused. With no `opId` (a start that predates this, a
- * test) every call does nothing.
+ * How work reports. `attempt` is required: it is the attempt this runner serves, and an old Workflow instance
+ * of a retried operation passes its own, so its writes are refused (put it in the Workflow params beside
+ * `operationId`). `lease` is the token `operation.run` handed the hook; it keeps a twin runner from extending
+ * the lease. With no `opId` (a start that predates this, a test) every call does nothing.
  */
 export function progressOf(
   ctx: ServiceContext,
   opId: string | undefined,
-  attempt?: number,
+  attempt: number,
+  lease?: string,
 ): Progress {
-  return opId ? new Reporter(ctx, opId, attempt) : NOOP;
+  return opId ? new Reporter(ctx, opId, attempt, lease ?? null) : NOOP;
 }

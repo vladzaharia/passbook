@@ -15,23 +15,35 @@ const DEAD_WORKFLOW = new Set(['errored', 'terminated']);
 
 const stalled = () => new AppError('OPERATION_STALLED', 500, 'The operation stopped responding.');
 
-/** True when a Workflow-backed row's instance is gone or dead. A live one is not a stall. */
-async function workflowDead(ctx: ServiceContext, row: OperationRow): Promise<boolean> {
+type WorkflowState = 'dead' | 'complete' | 'alive' | 'unknown';
+
+/** Only a definite "not found" means the instance is gone; any other error leaves the row alone until the next sweep. */
+const isNotFound = (error: unknown) =>
+  error instanceof Error && /not[ _.]found/i.test(`${error.name} ${error.message}`);
+
+async function workflowState(ctx: ServiceContext, row: OperationRow): Promise<WorkflowState> {
   const find = runnerOf(row.kind)?.workflow;
-  if (!find || !row.workflow_instance_id) return false;
+  if (!find || !row.workflow_instance_id) return 'unknown';
   try {
-    const instance = await find(ctx, row.workflow_instance_id);
-    return DEAD_WORKFLOW.has((await instance.status()).status);
-  } catch {
-    // The instance cannot be found: it is gone.
-    return true;
+    const { status } = await (await find(ctx, row.workflow_instance_id)).status();
+    if (status === 'complete') return 'complete';
+    return DEAD_WORKFLOW.has(status) ? 'dead' : 'alive';
+  } catch (error) {
+    if (isNotFound(error)) return 'dead';
+    ctx.log.warn('operations.stall_check_failed', {
+      code: 'OPERATION_STALL_CHECK_FAILED',
+      operationId: row.id,
+      cause: error instanceof Error ? error.name : 'unknown',
+    });
+    return 'unknown';
   }
 }
 
 async function check(ctx: ServiceContext, row: OperationRow, now: number): Promise<void> {
   const db = ctx.env.DB;
+  const progress = progressOf(ctx, row.id, row.attempt);
   const fail = async () => {
-    await progressOf(ctx, row.id, row.attempt).fail(stalled());
+    await progress.fail(stalled());
     ctx.log.warn('operations.stalled', {
       code: 'OPERATION_STALLED',
       operationId: row.id,
@@ -39,26 +51,29 @@ async function check(ctx: ServiceContext, row: OperationRow, now: number): Promi
     });
   };
   if (row.workflow_instance_id && runnerOf(row.kind)?.workflow) {
-    if (await workflowDead(ctx, row)) await fail();
-    else await bumpHeartbeat(db, row.id, now);
+    const state = await workflowState(ctx, row);
+    if (state === 'dead') await fail();
+    // The instance finished but its final write was lost: settle the row.
+    else if (state === 'complete') await progress.succeed();
+    else if (state === 'alive') await bumpHeartbeat(db, row.id, now);
     return;
   }
-  // Lease-backed: a running row with an expired lease is resent once; stalled again, it fails.
-  if ((row.lease_until ?? 1) > now) return;
-  if (row.lease_until === 0 || !runnerOf(row.kind)?.run) {
+  // Lease-backed or never started: a free or expired lease is resent once; stalled again, it fails.
+  if (row.lease_until !== null && row.lease_until > now) return;
+  if (row.resends >= 1 || !runnerOf(row.kind)?.run) {
     await fail();
     return;
   }
-  if (await markResent(db, row.id, row.attempt, now))
+  if (await markResent(db, row.id, row.attempt, row.resends, now))
     await sendOperationRun(ctx, row.id, row.attempt);
 }
 
-/** The minute hook. Waiting rows are exempt: a long wait is the point of them. */
+/** The minute hook, over queued and running rows. Waiting rows are exempt: a long wait is the point of them. */
 export async function sweepStalledOperations(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
   for (const row of await runningSilentSince(ctx.env.DB, now - MIN_STALL_MS, BATCH)) {
     const limit = kindOf(row.kind)?.stallMs ?? DEFAULT_STALL_MS;
-    if ((row.heartbeat_at ?? 0) > now - limit) continue;
+    if ((row.heartbeat_at ?? row.created_at) > now - limit) continue;
     await check(ctx, row, now);
   }
 }

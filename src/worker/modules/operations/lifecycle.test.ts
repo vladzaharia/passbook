@@ -29,7 +29,8 @@ let app: ReturnType<typeof createApp>;
 let undo: () => void;
 const mocks = {
   run: vi.fn<NonNullable<OperationRunner['run']>>(async () => {}),
-  retry: vi.fn<NonNullable<OperationRunner['retry']>>(async () => {}),
+  authorizeRetry: vi.fn<NonNullable<OperationRunner['authorizeRetry']>>(async () => {}),
+  relaunch: vi.fn<NonNullable<OperationRunner['relaunch']>>(async () => {}),
   cancel: vi.fn<NonNullable<OperationRunner['cancel']>>(async () => {}),
 };
 const runner: OperationRunner = mocks;
@@ -138,12 +139,12 @@ describe('retry', () => {
     const next = (await res.json()) as OperationDto;
     expect(next).toMatchObject({ id: op.id, attempt: 2, status: 'queued', error: null });
     expect(next.steps.map((s) => s.state)).toEqual(['done', 'pending', 'pending']);
-    expect(mocks.retry).toHaveBeenCalledOnce();
+    expect(mocks.relaunch).toHaveBeenCalledOnce();
     // The same key again answers the retried operation and runs nothing.
     const replay = await post(`/${op.id}/retry`, { ...auth.admin(), 'idempotency-key': 'k1' });
     expect(replay.status).toBe(200);
     expect(((await replay.json()) as OperationDto).attempt).toBe(2);
-    expect(mocks.retry).toHaveBeenCalledOnce();
+    expect(mocks.relaunch).toHaveBeenCalledOnce();
     // Another key is another request: the operation has not failed again, so it is refused.
     const other = await post(`/${op.id}/retry`, { ...auth.admin(), 'idempotency-key': 'k2' });
     expect(other.status).toBe(409);
@@ -156,24 +157,36 @@ describe('retry', () => {
     expect(await res.json()).toMatchObject({ code: 'OPERATION_NOT_RETRYABLE' });
   });
 
-  it('ends as a failure again when the kind retry checks refuse', async () => {
+  it('rechecks before it touches the row: a refusal burns no attempt and leaves no audit row', async () => {
     const op = await failed();
-    mocks.retry.mockRejectedValueOnce(new AppError('FEATURE_NOT_INCLUDED', 403, 'no'));
+    mocks.authorizeRetry.mockRejectedValueOnce(new AppError('FEATURE_NOT_INCLUDED', 403, 'no'));
     const res = await post(`/${op.id}/retry`, auth.admin());
     expect(res.status).toBe(403);
-    expect(await read(op.id)).toMatchObject({
-      status: 'failed',
-      attempt: 2,
-      error: { code: 'FEATURE_NOT_INCLUDED' },
-    });
+    expect(await read(op.id)).toMatchObject({ status: 'failed', attempt: 1 });
+    expect(mocks.relaunch).not.toHaveBeenCalled();
+    const audit = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) AS n FROM audit_log WHERE action = 'operation.retried' AND target_id = ?",
+      [op.id],
+    );
+    expect(audit?.n).toBe(0);
+  });
+
+  it('refuses a kind that retries but has no authorizeRetry hook', async () => {
+    undo();
+    undo = registerTestKinds({ run: async () => {} });
+    const op = await failed();
+    expect((await post(`/${op.id}/retry`, auth.admin())).status).toBe(409);
   });
 
   it('answers OPERATION_RUNNING when another is active for the subject', async () => {
     const op = await failed();
     await start(ORG_KIND.kind, 'k-reuse');
-    await run(kit.env.DB, "UPDATE operations SET dedupe_key = 'test:k-reuse' WHERE id = ?", [
-      op.id,
-    ]);
+    await run(
+      kit.env.DB,
+      "UPDATE operations SET dedupe_key = (SELECT dedupe_key FROM operations WHERE dedupe_key LIKE '%:test:k-reuse') WHERE id = ?",
+      [op.id],
+    );
     const res = await post(`/${op.id}/retry`, auth.admin());
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ code: 'OPERATION_RUNNING' });

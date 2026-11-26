@@ -16,10 +16,13 @@ export interface OperationRow {
   cancel_requested: number;
   actor_type: 'user' | 'api_key' | 'system';
   actor_id: string | null;
+  actor_session: string | null;
   dedupe_key: string | null;
   retry_key: string | null;
   workflow_instance_id: string | null;
   lease_until: number | null;
+  lease_owner: string | null;
+  resends: number;
   heartbeat_at: number | null;
   error_code: string | null;
   error_step: string | null;
@@ -33,7 +36,7 @@ export interface OperationRow {
 }
 
 export const COLUMNS = `id, kind, audience, org_id, mode, target_type, target_id, status, steps, step_key,
-  revision, attempt, cancel_requested, actor_type, actor_id, dedupe_key, retry_key, workflow_instance_id, lease_until,
+  revision, attempt, cancel_requested, actor_type, actor_id, actor_session, dedupe_key, retry_key, workflow_instance_id, lease_until, lease_owner, resends,
   heartbeat_at, error_code, error_step, error_retryable, result, created_at, started_at, updated_at,
   finished_at, expires_at`;
 
@@ -47,6 +50,7 @@ export interface NewOperationRow {
   steps: string;
   actorType: OperationRow['actor_type'];
   actorId: string | null;
+  actorSession: string | null;
   dedupeKey: string | null;
   workflowInstanceId: string | null;
   leaseUntil: number | null;
@@ -59,8 +63,8 @@ export function insertOperationStmt(db: D1Database, r: NewOperationRow): D1Prepa
   return stmt(
     db,
     `INSERT INTO operations (id, kind, audience, org_id, mode, target_type, target_id, steps, actor_type,
-       actor_id, dedupe_key, workflow_instance_id, lease_until, created_at, updated_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       actor_id, actor_session, dedupe_key, workflow_instance_id, lease_until, created_at, updated_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       r.id,
       r.kind,
@@ -72,6 +76,7 @@ export function insertOperationStmt(db: D1Database, r: NewOperationRow): D1Prepa
       r.steps,
       r.actorType,
       r.actorId,
+      r.actorSession,
       r.dedupeKey,
       r.workflowInstanceId,
       r.leaseUntil,
@@ -96,20 +101,21 @@ export function activeByDedupe(db: D1Database, dedupeKey: string): Promise<Opera
   );
 }
 
-/** Claims the runner lease: free, expired, or the 0 a stall resend leaves. */
+/** Claims the runner lease for `owner`: free or expired. Only the owner's writes extend it afterwards. */
 export async function claimLease(
   db: D1Database,
   id: string,
   attempt: number,
   now: number,
   until: number,
+  owner: string,
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE operations SET lease_until = ?, updated_at = ?
+    `UPDATE operations SET lease_until = ?, lease_owner = ?, updated_at = ?
      WHERE id = ? AND attempt = ? AND status IN ('queued', 'running', 'waiting')
        AND (lease_until IS NULL OR lease_until <= ?)`,
-    [until, now, id, attempt, now],
+    [until, owner, now, id, attempt, now],
   );
   return changes === 1;
 }
