@@ -91,7 +91,7 @@ describe.each(['v2', 'admin'] as const)('route table (%s layout)', (layout) => {
       r.group('g1'),
       r.config,
       r.apiKeys,
-      r.client('c1'),
+      r.client(CLIENT_ID),
       r.me,
       r.users('a@b.test', 1),
       r.user('u1'),
