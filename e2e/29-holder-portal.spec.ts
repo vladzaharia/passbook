@@ -15,12 +15,19 @@ test('holder portal: list shows only my passes, detail opens, self-remove drops 
   const own = await createPass(admin, orgId, { holder: mine, email });
   await createPass(admin, orgId, { holder: second, email });
   await createPass(admin, orgId, { holder: foreign, email: `${uid('other')}@example.test` });
+  const trayStatuses: number[] = [];
+  page.on('response', (res) => {
+    if (new URL(res.url()).pathname === '/api/v1/operations') trayStatuses.push(res.status());
+  });
   try {
     await signInHolder(page, email);
     await expect(page.getByRole('link', { name: mine, exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: second, exact: true })).toBeVisible();
     // Positive control above; a pass issued to someone else never lists.
     await expect(page.getByRole('link', { name: foreign, exact: true })).toHaveCount(0);
+    // The activity tray lists a holder's own operations: never a 403 on an email-link session.
+    await expect.poll(() => trayStatuses.length).toBeGreaterThan(0);
+    expect(trayStatuses.filter((s) => s >= 400)).toEqual([]);
 
     // The tile's name link is the keyboard path (shown on focus); pointers use the card.
     await page.getByRole('link', { name: mine, exact: true }).press('Enter');
