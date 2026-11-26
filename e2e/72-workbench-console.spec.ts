@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { sandboxOrgId } from './helpers/sandbox.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
@@ -13,8 +14,7 @@ const VIEWS = [
 ] as const;
 /** Every width and theme of a state: the window at 1440 and 834 (the index and the stage scroll apart), the whole page at 390. */
 async function shots(page: Page, name: string, show?: string) {
-  if (!DIR || (only && !only.includes(name))) return;
-  mkdirSync(DIR, { recursive: true });
+  if (DIR) mkdirSync(DIR, { recursive: true });
   const before = page.viewportSize();
   for (const [width, height] of VIEWS) {
     for (const scheme of ['light', 'dark'] as const) {
@@ -25,6 +25,15 @@ async function shots(page: Page, name: string, show?: string) {
       );
       // The window shows the part the state is about: the response sits below the form.
       if (show) await page.locator(show).first().scrollIntoViewIfNeeded();
+      // Every state, every width, both themes: nothing serious or critical.
+      const found = (await new AxeBuilder({ page }).analyze()).violations.filter((v) =>
+        ['serious', 'critical'].includes(v.impact ?? ''),
+      );
+      expect(
+        found.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
+        `${name} ${width} ${scheme}`,
+      ).toEqual([]);
+      if (!DIR || (only && !only.includes(name))) continue;
       await page.screenshot({
         path: `${DIR}/${name}-${width}-${scheme}.png`,
         fullPage: width === 390,

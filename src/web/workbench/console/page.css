@@ -151,3 +151,11 @@
   font-size: 12px;
   color: var(--pk-text-muted);
 }
+/* Beside the stage the index scrolls inside its own pane, under the bar: the Workbench shell sets none of the
+   bench's sticky offsets, so the pane would otherwise be as tall as its 280 rows. */
+@media (min-width: 1180px) {
+  .bench-split[data-layout="index"] > .bench-pane {
+    top: 4.5rem;
+    max-height: calc(100dvh - 5.5rem);
+  }
+}

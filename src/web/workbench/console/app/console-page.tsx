@@ -118,7 +118,11 @@ export function ConsolePage() {
         return;
       }
       centered.current = true;
-      row?.scrollIntoView({ block: 'center' });
+      if (row && pane)
+        pane.scrollTop +=
+          row.getBoundingClientRect().top -
+          pane.getBoundingClientRect().top -
+          (pane.clientHeight - row.clientHeight) / 2;
       window.scrollTo({ top: pageTop.current });
     };
     frame = requestAnimationFrame(settle);
