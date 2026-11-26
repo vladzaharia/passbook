@@ -179,6 +179,24 @@ export async function findGoogleObjectMessage(
   return hit.messageType === 'TEXT_AND_NOTIFY' ? 'TEXT_AND_NOTIFY' : 'TEXT';
 }
 
+/**
+ * Whether Google reports users on the object, which only a holder's save gives it. An object Google does not
+ * have has none. A save callback can be lost; this is the provider's own answer.
+ */
+export async function googleObjectHasUsers(
+  ctx: GoogleWalletRestContext,
+  type: GoogleType,
+  scope: GoogleObjectScope,
+): Promise<boolean> {
+  const { objectId } = await googleObjectIds(ctx.account.issuerId, ctx.objectIdHmacKey, scope);
+  try {
+    return (await verifyIdentity(ctx, GOOGLE_RESOURCES[type].object, objectId)).hasUsers === true;
+  } catch (error) {
+    if (error instanceof GoogleWalletError && error.code === 'not_found') return false;
+    throw error;
+  }
+}
+
 const NOT_SENT = ['barcode', 'rotatingBarcode', 'classReference', 'smartTapRedemptionValue'];
 const OUTPUT_ONLY = ['hasUsers', 'kind', 'version'];
 const gone = (value: Record<string, unknown>) =>

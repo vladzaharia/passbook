@@ -2551,6 +2551,34 @@
     "resource": "walletEnrollments",
     "method": "update"
   },
+  "wallet-identities.getPlatformAppleIdentities": {
+    "resource": "platform.appleIdentities",
+    "method": "list"
+  },
+  "wallet-identities.postPlatformAppleIdentities": {
+    "resource": "platform.appleIdentities",
+    "method": "create"
+  },
+  "wallet-identities.postPlatformAppleIdentitiesByIdDefault": {
+    "resource": "platform.appleIdentities",
+    "method": "makeDefault"
+  },
+  "wallet-identities.getPlatformAppleIdentityMoves": {
+    "resource": "platform.appleIdentityMoves",
+    "method": "list"
+  },
+  "wallet-identities.getPlatformAppleIdentityMovesPreview": {
+    "resource": "platform.appleIdentityMoves",
+    "method": "preview"
+  },
+  "wallet-identities.postPlatformAppleIdentityMoves": {
+    "resource": "platform.appleIdentityMoves",
+    "method": "start"
+  },
+  "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm": {
+    "resource": "platform.appleIdentityMoves",
+    "method": "startTimer"
+  },
   "wallet-identities.getPlatformAppleCalls": {
     "resource": "platform.appleCalls",
     "method": "list"

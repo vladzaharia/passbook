@@ -18,6 +18,8 @@ export type EventName =
   | 'join.refused'
   | 'tag.sun_failed'
   | 'tag.sun_limited'
+  // An identity move whose replacement registered 7 days ago on a device that never armed the old pass's void.
+  | 'move.unarmed'
   // The developer quickstart (PX13): one event per step, orgId only. `dev.fail` carries the problem code as its outcome.
   | 'dev.view'
   | 'dev.sandbox'

@@ -33,6 +33,7 @@ const DATA: Record<WebhookEventType, Record<string, unknown>> = {
   'pass.channels_changed': { channel: 'google', from: 'off', to: 'on', source: 'org' },
   'pass.printed': { printId: 'sample-print', generation: 1 },
   'pass.print_voided': { printId: 'sample-print', cause: 'reprint' },
+  'pass.replaced': { replacedBy: 'sample-pass' },
   'push.failed': { version: 2, status: 410, reason: 'Unregistered', code: 'APNS_GONE' },
   'email.failed': { code: 'MAIL_BOUNCED' },
   'webhook.test': {},

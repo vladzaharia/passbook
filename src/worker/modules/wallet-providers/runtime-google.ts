@@ -145,12 +145,13 @@ export async function withGoogleRest<T>(
   inputScope: WalletRuntimeScope,
   assertCurrent: (() => Promise<void>) | undefined,
   stage: WalletRuntimeResponseStage,
-  onProviderResponse: WalletRuntimeResponseSink,
+  onProviderResponse: WalletRuntimeResponseSink | null,
   operation: (rest: GoogleWalletRestContext, scope: WalletRuntimeScope) => Promise<T>,
   retirement?: RuntimeRetirementPurpose,
 ): Promise<T> {
   ctx = snapshotWalletCredentialContext(ctx);
-  if (typeof onProviderResponse !== 'function') throw new WalletRuntimeError('provider_failure');
+  if (onProviderResponse !== null && typeof onProviderResponse !== 'function')
+    throw new WalletRuntimeError('provider_failure');
   const scope = copyRuntimeScope(inputScope);
   const purpose = retirement ?? ISSUANCE;
   const { account, hmacKey, credentialVersionId } = await runtimeGoogleAccount(ctx, scope, purpose);
@@ -159,7 +160,7 @@ export async function withGoogleRest<T>(
     scope,
     'google',
     assertCurrent,
-    { stage, sink: onProviderResponse },
+    onProviderResponse ? { stage, sink: onProviderResponse } : undefined,
     purpose,
   );
   return call.finish(async () => {

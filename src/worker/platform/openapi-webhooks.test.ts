@@ -19,6 +19,7 @@ const DATA: Partial<Record<string, object>> = {
   'pass.channels_changed': { channel: 'paper', from: 'off', to: 'on', source: 'pass' },
   'pass.printed': { printId: 'pr1', generation: 1 },
   'pass.print_voided': { printId: 'pr1' },
+  'pass.replaced': { replacedBy: 'p2' },
 };
 
 describe('openapi webhooks', () => {

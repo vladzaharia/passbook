@@ -7,6 +7,8 @@ import { enterStep, getRun, patchRunRef, type RunRow } from './repo-runs.ts';
 export interface RunRef {
   requestedHandle?: string;
   handle?: string;
+  /** Platform provision runs: which of the platform's own identities this run sets up. */
+  platformSlot?: 'root' | 'devtest';
   ascPassTypeId?: string;
   identityId?: string;
   certId?: string;

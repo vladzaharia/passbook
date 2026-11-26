@@ -2,6 +2,7 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireApprovedRelease, type TemplateRelease } from '../templates/releases.ts';
 import { requireCredentialRefKeyset } from './credential-keyset.ts';
+import { assertNotReplaced } from './pass-replaced.ts';
 import {
   type ConnectionPassContext,
   validConnectionPassContext,
@@ -63,6 +64,7 @@ export async function checkedPass(ctx: ServiceContext, context: ConnectionPassCo
     throw stalePass();
   const pass = await getPass(ctx.env.DB, context.passId);
   if (!pass) throw stalePass();
+  await assertNotReplaced(ctx.env.DB, pass.id);
   if (
     pass.orgId !== context.orgId ||
     pass.mode !== context.mode ||

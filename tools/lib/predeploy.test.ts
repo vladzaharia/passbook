@@ -3,6 +3,7 @@ import { parseBookmark, predeployProblems } from './predeploy.ts';
 
 const ready = {
   vars: {
+    PLATFORM_PASS_TYPE_ID: 'pass.im.plrs.wallet',
     PUBLIC_BASE_URL: 'https://passbook.example',
     REDIRECT_HOSTS: 'old.example',
     EMAIL_FROM: 'delivery@passbook.example',
@@ -31,6 +32,21 @@ describe('predeployProblems', () => {
     expect(withVars({ MAC_KEY_VERSION: '2', MAC_KEY_VERSION_PREVIOUS: '2' })).toEqual([
       'MAC_KEY_VERSION and MAC_KEY_VERSION_PREVIOUS must differ.',
     ]);
+  });
+
+  it('refuses a changed PLATFORM_PASS_TYPE_ID, or none (the legacy row keeps signing)', () => {
+    const withType = (value: string | undefined) => {
+      const { PLATFORM_PASS_TYPE_ID: _drop, ...rest } = ready.vars;
+      return predeployProblems({
+        ...ready,
+        vars: value === undefined ? rest : { ...rest, PLATFORM_PASS_TYPE_ID: value },
+      });
+    };
+    expect(withType('pass.mobile.passbook')).toEqual([
+      expect.stringMatching(/must stay pass\.im\.plrs\.wallet/),
+    ]);
+    expect(withType(undefined)).toHaveLength(1);
+    expect(withType('pass.im.plrs.wallet')).toEqual([]);
   });
 
   it('passes a finished config', () => {

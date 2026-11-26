@@ -37,6 +37,14 @@ export function intermediatePem(env: AppEnv): string {
   return envString(env, 'SIGNER_PLATFORM_INTERMEDIATE') ?? wwdrG4;
 }
 
+/** Whether the deployment still carries the legacy platform certificate and key. */
+export function envIdentityPresent(env: AppEnv, prefix = 'PLATFORM'): boolean {
+  return (
+    !!envString(env, `SIGNER_${prefix}_CERTIFICATE`) &&
+    !!envString(env, `SIGNER_${prefix}_PRIVATE_KEY`)
+  );
+}
+
 export function readEnvIdentity(env: AppEnv, prefix = 'PLATFORM'): ResolvedIdentity {
   const certificate = envString(env, `SIGNER_${prefix}_CERTIFICATE`);
   const privateKey = envString(env, `SIGNER_${prefix}_PRIVATE_KEY`);

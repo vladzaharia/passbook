@@ -48,6 +48,27 @@ describe('GET pass-setup', () => {
     );
   });
 
+  it('names the default platform pass type, not the env one, once the default moved', async () => {
+    await run(api.rig.db, 'UPDATE signing_identities SET is_default = 0 WHERE is_default = 1');
+    await run(
+      api.rig.db,
+      "INSERT INTO credentials (id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at) VALUES ('ps-cred', 'pass_signer', 1, x'00', x'00', x'00', 1)",
+    );
+    await run(
+      api.rig.db,
+      `INSERT INTO signing_identities (id, org_id, label, pass_type_identifier, team_identifier, source,
+         credential_id, provenance, purpose, is_default, issuing, created_at)
+       VALUES ('ps-root', NULL, 'Root', 'pass.mobile.passbook', 'TEAM123456', 'db', 'ps-cred', 'platform', 'passes', 1, 1, 1)`,
+    );
+    try {
+      expect((await read()).view.apple.sharedIdentifier).toBe('pass.mobile.passbook');
+    } finally {
+      await run(api.rig.db, "DELETE FROM signing_identities WHERE id = 'ps-root'");
+      await run(api.rig.db, "DELETE FROM credentials WHERE id = 'ps-cred'");
+      await run(api.rig.db, "UPDATE signing_identities SET is_default = 1 WHERE id = 'platform'");
+    }
+  });
+
   it('never carries storage detail of an image', async () => {
     await run(api.rig.db, 'UPDATE orgs SET branding = ? WHERE id = ?', [
       JSON.stringify({

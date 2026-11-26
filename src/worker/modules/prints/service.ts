@@ -31,8 +31,13 @@ export interface PrintCaller {
   limit: number;
 }
 
-const codeOf = (ctx: ServiceContext, pass: Pass, print: PassPrint): Promise<string> =>
-  printCodeOf(ctx.env, { id: print.id, passId: pass.id, orgId: pass.orgId, mode: pass.mode });
+const codeOf = async (ctx: ServiceContext, pass: Pass, print: PassPrint): Promise<string> =>
+  printCodeOf(ctx.env, {
+    id: print.id,
+    passId: await repo.codePassIdOf(ctx.env.DB, print.id, pass.id),
+    orgId: pass.orgId,
+    mode: pass.mode,
+  });
 
 /** Spends one change of the hour's allowance; the increment is the check, so concurrent calls cannot overshoot. */
 async function spend(ctx: ServiceContext, pass: Pass, limit: number): Promise<void> {

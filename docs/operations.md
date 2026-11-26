@@ -8,7 +8,7 @@ Procedures are Ledge runbooks in [`docs/runbooks/`](runbooks/): runnable notes, 
 | Go-live | [Go-Live Polaris ID Client](runbooks/go-live-polaris-id.md), [Go-Live Apple Signing and APNs](runbooks/go-live-apple-signing.md), [Go-Live Secrets](runbooks/go-live-secrets.md), [Go-Live Provision](runbooks/go-live-provision.md), [Deploy First](runbooks/deploy-first.md), [First Admin and Device Test](runbooks/first-admin-and-device-test.md) |
 | Deploy | [Deploy](runbooks/deploy.md), [Deploy Promote and Baked Sync](runbooks/deploy-promote.md), [Automatic Deploys Setup](runbooks/automatic-deploys-setup.md), [Rollback](runbooks/rollback.md), [Rollback Move Deploy Tag](runbooks/rollback-move-deploy-tag.md) |
 | Database | [D1 Manual Migrations](runbooks/d1-manual-migrations.md), [D1 Time Travel Restore](runbooks/d1-time-travel-restore.md), [Pre-Migration 0202 Check](runbooks/pre-migration-0202-check.md), [R2 Receipt Lock Remove](runbooks/r2-receipt-lock-remove.md) |
-| Keys | [KEK Rotation](runbooks/kek-rotation.md), [KEK Retire](runbooks/kek-retire.md), [MAC Key Rotation](runbooks/mac-key-rotation.md), [Platform Certificate Renewal](runbooks/platform-certificate-renewal.md), [Google Wallet Key Rotation](runbooks/google-key-rotation.md) |
+| Keys | [KEK Rotation](runbooks/kek-rotation.md), [KEK Retire](runbooks/kek-retire.md), [MAC Key Rotation](runbooks/mac-key-rotation.md), [Platform Certificate Renewal](runbooks/platform-certificate-renewal.md) (legacy identity), [Platform Identity Switch](runbooks/platform-identity-switch.md), [Switch Rollback](runbooks/platform-identity-switch-rollback.md), [Platform Identity Retire](runbooks/platform-identity-retire.md), [Google Wallet Key Rotation](runbooks/google-key-rotation.md) |
 | Sign-in | [Polaris ID Group Rename](runbooks/polaris-id-group-rename.md), [Polaris ID Pin Platform Admins](runbooks/polaris-id-pin-platform-admins.md), [Polaris ID Console Group Required](runbooks/polaris-id-console-group-required.md), [Break-Glass Token](runbooks/breakglass-token.md), [Break-Glass Off](runbooks/breakglass-off.md) |
 | Polaris binding | [Polaris Binding Turn On](runbooks/polaris-binding-turn-on.md), [Polaris Binding Go Live](runbooks/polaris-binding-go-live.md), [Polaris Binding Key Rotation](runbooks/polaris-binding-key-rotation.md), [Polaris Binding Thaw](runbooks/polaris-binding-thaw.md), [Polaris Binding Compromise](runbooks/polaris-binding-compromise.md) |
 | Apple provisioner | [Apple Provisioner Setup](runbooks/apple-provisioner-setup.md), [Apple Provisioner Key Rotation](runbooks/apple-provisioner-key-rotation.md) |
@@ -72,7 +72,7 @@ Owner only; agents never deploy. Do in order. `npm run deploy:check` lists what 
 
 Setup (owner, once): [Apple Provisioner Setup](runbooks/apple-provisioner-setup.md). Deploy the provisioner before the main Worker: Cloudflare fails a main Worker deploy if the `APPLE` service binding names a Worker that does not exist yet. Until then `ascClient` reports `ASC_UNAVAILABLE`.
 
-Platform certificates: the provisioner never orders or revokes for `pass.im.plrs.wallet`, `pass.mobile.passbook.wallet` or any identifier outside `pass.mobile.passbook.<handle>`. Order and renew those yourself in the developer portal (or Xcode) with your own Apple ID, then upload the result as `SIGNER_PLATFORM_*`. Nothing the main Worker can call does this.
+Platform certificates: the provisioner never orders or revokes for `pass.im.plrs.wallet`, `pass.mobile.passbook.wallet` or any identifier outside `pass.mobile.passbook.<handle>` and the two platform slots (`pass.mobile.passbook`, `pass.mobile.passbook.devtest`). Order and renew the legacy one yourself in the developer portal (or Xcode) with your own Apple ID, then upload the result as `SIGNER_PLATFORM_*`. Nothing the main Worker can call does this.
 
 Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any platform certificate (revoke those by hand in the developer portal). It revokes a certificate only when a newer one of the same pass type was ordered at least 24 hours earlier and the main Worker has since called `reportCertificateActive` for it, and at most once per pass type in 7 days. The main Worker calls `reportCertificateActive` after it activates a new certificate.
 
@@ -122,6 +122,17 @@ Setup (owner): [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). Token rot
 Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
 
 Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with the `idp.breaker_clear` operation (`POST /api/v1/platform/idp/scim-breaker/clear`, a platform admin signed in with Polaris ID), as in [SCIM Breaker Clear](runbooks/scim-breaker-clear.md); the next minute's sweep ends up to about 20 of what is owed, then it latches again. A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
+
+## Platform default identity
+
+New passes sign with the default platform identity: the `signing_identities` row with `is_default=1` and no org. It starts as the env-sourced row `platform` (`pass.im.plrs.wallet`). After a platform setup run, `pass.mobile.passbook` is a second row, issuing but not default.
+
+- **Switch** (`setPlatformDefault`, in `modules/identities/platform-default.ts`). It refuses with `IDENTITY_NOT_READY` unless the target has an active certificate, `issuing=1`, `apns_health='healthy'` and at least one device registered on a pass signed by it (the device test). Then, in one guarded batch: the old default is cleared, the target becomes default, row `platform` gets `issuing=0`, and `identity.platform_default_changed` is audited. A repeat changes nothing.
+- **Reverse:** the same call with `platform` as the target. It needs the legacy env material to still sign, and sets `issuing=1` again.
+- **Legacy row:** never deleted. It keeps signing and pushing for passes already issued on it, by mTLS (`APNS`). Once its env secrets are removed, `ensurePlatformIdentity` does nothing, the daily check treats it as retired, and a sign on it refuses `IDENTITY_RETIRED` (logged as `identity.platform_retired`).
+- **`PLATFORM_PASS_TYPE_ID` stays `pass.im.plrs.wallet`.** The row's pass type is immutable and a changed value stops all legacy signing (`IDENTITY_PLATFORM_ENV_MISMATCH`). `npm run deploy:check` fails if it differs. `PLATFORM_TEAM_ID` stays too.
+- **Readers:** setup's shared pass type and the template dry run and previews read the default platform row, not the env vars.
+- **Before removing `SIGNER_PLATFORM_*` or the `APNS` binding:** the legacy row is dormant or expired and no pass is registered on it. Both are owner steps.
 
 ## Managed identity runs
 
