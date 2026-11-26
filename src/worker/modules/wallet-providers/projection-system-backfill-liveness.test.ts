@@ -11,7 +11,7 @@ import {
   job,
   queued,
   withJobs,
-} from './projection-system-backfill-fixtures.ts';
+} from './projection-system-backfill-test-fixtures.ts';
 import { queueSystemProjections } from './projection-system-queue.ts';
 import { installV2Env, jobCtx, S, setup } from './projection-v2-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';

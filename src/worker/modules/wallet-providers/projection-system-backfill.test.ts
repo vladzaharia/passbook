@@ -5,7 +5,7 @@ import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first, run } from '../../platform/db.ts';
 import { disableEnrolment } from './enrolment-service.ts';
 import { createProjectionCandidate } from './projection-service.ts';
-import { bypass, drain, enrolled, job, queued } from './projection-system-backfill-fixtures.ts';
+import { bypass, drain, enrolled, job, queued } from './projection-system-backfill-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 
 describe('candidate backfill (CAND-1)', () => {
