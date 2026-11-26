@@ -1685,6 +1685,12 @@
     "fix": "Restore it with POST /api/v1/passes/{id}/restore, then send the request again.",
     "retryable": false
   },
+  "PASS_REPLACED": {
+    "title": "Pass was replaced",
+    "when": "The pass was replaced by a pass on another Apple identity, and this call would write to the old one, for example a connection bind or sync.",
+    "fix": "Use the replacement pass id from the message, then send the request again. API writes by the old id to a replaced pass are forwarded; connector syncs are refused.",
+    "retryable": false
+  },
   "PASS_SETUP_CHANGED": {
     "title": "Setup changed",
     "when": "Another request changed the organization's setup, or its wallet account, after your read.",

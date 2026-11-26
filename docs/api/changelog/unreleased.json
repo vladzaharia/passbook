@@ -1638,7 +1638,7 @@
     "operationId": "passes.getPassesById",
     "op": "GET /api/v1/passes/{id}",
     "change": "200.versions[].source: enum value \"move\" added",
-    "note": ""
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "GET /api/v1/passes/{id}/channels 200.levels: field added",
@@ -1654,7 +1654,7 @@
     "operationId": "passes.getPassesByIdEvents",
     "op": "GET /api/v1/passes/{id}/events",
     "change": "200.items[].kind: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
@@ -1686,7 +1686,7 @@
     "operationId": "passes.getPassesByIdVersionsByVersion",
     "op": "GET /api/v1/passes/{id}/versions/{version}",
     "change": "200.versions[].source: enum value \"move\" added",
-    "note": ""
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
@@ -1726,7 +1726,7 @@
     "operationId": "wallet-identities.getPlatformAppleIdentities",
     "op": "GET /api/v1/platform/apple/identities",
     "change": "new operation",
-    "note": ""
+    "note": "Platform admins read the platform Apple identities with registration counts and open setup runs. Session only."
   },
   {
     "key": "GET /api/v1/platform/apple/identity-moves new operation",
@@ -2350,7 +2350,7 @@
     "operationId": "webhooks.getWebhookEndpoints",
     "op": "GET /api/v1/webhook-endpoints",
     "change": "200.items[].eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id} 200.eventTypes[]: enum value \"pass.replaced\" added",
@@ -2358,7 +2358,7 @@
     "operationId": "webhooks.getWebhookEndpointsById",
     "op": "GET /api/v1/webhook-endpoints/{id}",
     "change": "200.eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/captures 200.items[].type: enum value \"pass.replaced\" added",
@@ -2366,7 +2366,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
     "op": "GET /api/v1/webhook-endpoints/{id}/captures",
     "change": "200.items[].type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/captures optional parameter query:passId added",
@@ -2390,7 +2390,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
     "op": "GET /api/v1/webhook-endpoints/{id}/captures",
     "change": "param query:type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/captures/{captureId} 200.type: enum value \"pass.replaced\" added",
@@ -2398,7 +2398,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
     "op": "GET /api/v1/webhook-endpoints/{id}/captures/{captureId}",
     "change": "200.type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries 200.items[].type: enum value \"pass.replaced\" added",
@@ -2406,7 +2406,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
     "change": "200.items[].type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries optional parameter query:passId added",
@@ -2430,7 +2430,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
     "change": "param query:type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|0.requestId: field added",
@@ -2590,7 +2590,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/tests 200.items[].type: enum value \"pass.replaced\" added",
@@ -2598,7 +2598,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdTests",
     "op": "GET /api/v1/webhook-endpoints/{id}/tests",
     "change": "200.items[].type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
@@ -2917,7 +2917,7 @@
     "operationId": "passes.patchPassesById",
     "op": "PATCH /api/v1/passes/{id}",
     "change": "200.versions[].source: enum value \"move\" added",
-    "note": ""
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -3125,7 +3125,7 @@
     "operationId": "webhooks.patchWebhookEndpointsById",
     "op": "PATCH /api/v1/webhook-endpoints/{id}",
     "change": "200.eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "PATCH /api/v1/webhook-endpoints/{id} body.eventTypes[]: enum value \"pass.replaced\" added",
@@ -3133,7 +3133,7 @@
     "operationId": "webhooks.patchWebhookEndpointsById",
     "op": "PATCH /api/v1/webhook-endpoints/{id}",
     "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:claims\" added",
@@ -4598,7 +4598,7 @@
     "operationId": "passes.postPasses",
     "op": "POST /api/v1/passes",
     "change": "201.versions[].source: enum value \"move\" added",
-    "note": ""
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "POST /api/v1/passes idempotency-key reserved prefixes",
@@ -4662,7 +4662,7 @@
     "operationId": "passes.postPassesByIdRenew",
     "op": "POST /api/v1/passes/{id}/renew",
     "change": "200.versions[].source: enum value \"move\" added",
-    "note": ""
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "POST /api/v1/passes/{id}/restore 200.matched: field added",
@@ -4678,7 +4678,7 @@
     "operationId": "passes.postPassesByIdStamps",
     "op": "POST /api/v1/passes/{id}/stamps",
     "change": "200.versions[].source: enum value \"move\" added",
-    "note": ""
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
@@ -4742,7 +4742,7 @@
     "operationId": "wallet-identities.postPlatformAppleIdentities",
     "op": "POST /api/v1/platform/apple/identities",
     "change": "new operation",
-    "note": ""
+    "note": "Starts the setup run for a platform identity slot (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key."
   },
   {
     "key": "POST /api/v1/platform/apple/identities/{id}/default new operation",
@@ -4750,7 +4750,7 @@
     "operationId": "wallet-identities.postPlatformAppleIdentitiesByIdDefault",
     "op": "POST /api/v1/platform/apple/identities/{id}/default",
     "change": "new operation",
-    "note": ""
+    "note": "Makes a ready platform identity the default. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
   },
   {
     "key": "POST /api/v1/platform/apple/identity-moves new operation",
@@ -5918,7 +5918,7 @@
     "operationId": "webhooks.postWebhookEndpoints",
     "op": "POST /api/v1/webhook-endpoints",
     "change": "201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "POST /api/v1/webhook-endpoints body.eventTypes[]: enum value \"pass.replaced\" added",
@@ -5926,7 +5926,7 @@
     "operationId": "webhooks.postWebhookEndpoints",
     "op": "POST /api/v1/webhook-endpoints",
     "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "POST /api/v1/webhook-endpoints/{id}/captures/{captureId}/replay 201.type: enum value \"pass.replaced\" added",
@@ -5934,7 +5934,7 @@
     "operationId": "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
     "op": "POST /api/v1/webhook-endpoints/{id}/captures/{captureId}/replay",
     "change": "201.type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "POST /api/v1/webhook-endpoints/{id}/secret body.overlapHours: values 1 and 168 added",
@@ -5950,7 +5950,7 @@
     "operationId": "webhooks.postWebhookEndpointsByIdTest",
     "op": "POST /api/v1/webhook-endpoints/{id}/test",
     "change": "body.type: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "POST /api/v1/webhook-endpoints/capture 201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
@@ -5958,7 +5958,7 @@
     "operationId": "webhooks.postWebhookEndpointsCapture",
     "op": "POST /api/v1/webhook-endpoints/capture",
     "change": "201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "POST /api/v1/webhook-endpoints/capture body.eventTypes[]: enum value \"pass.replaced\" added",
@@ -5966,7 +5966,7 @@
     "operationId": "webhooks.postWebhookEndpointsCapture",
     "op": "POST /api/v1/webhook-endpoints/capture",
     "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
-    "note": ""
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
@@ -6094,7 +6094,7 @@
     "operationId": "passes.putPassesByIdConnection",
     "op": "PUT /api/v1/passes/{id}/connection",
     "change": "200.versions[].source: enum value \"move\" added",
-    "note": ""
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "PUT /api/v1/passes/views new operation",
