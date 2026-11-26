@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { eligibleTemplateFixture, pairingFixture, scannerFixture } from '../test-fixtures.ts';
 import { managedSession } from './test-fixtures.ts';
+import { reach, reachStep } from './wizard-test-nav.ts';
 
 const northwind = membershipFixture('o1', { orgName: 'Northwind', orgSlug: 'northwind' });
 const harbor = membershipFixture('o2', { orgName: 'Harbor', orgSlug: 'harbor' });
@@ -119,7 +120,7 @@ describe('session configuration flows', () => {
     expect(await within(dialog).findByRole('textbox', { name: 'Session name' })).toHaveValue(
       'Membership desk copy',
     );
-    await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
+    await user.click(await reach(user, dialog, 'Create session'));
     await waitFor(() =>
       expect(s.saved()).toMatchObject({ orgId: 'o1', name: 'Membership desk copy' }),
     );
@@ -203,7 +204,7 @@ describe('session configuration flows', () => {
     await user.click(await screen.findByRole('button', { name: 'New session' }));
     const dialog = screen.getByRole('dialog', { name: 'New session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Evening entry');
-    await user.click(within(dialog).getByRole('tab', { name: 'Admission' }));
+    await reachStep(user, dialog, 'Set check-in rules');
     expect(within(dialog).getByText('Staff access')).toBeInTheDocument();
     const staffSignIn = within(dialog).getByRole('switch', { name: 'Require staff sign-in' });
     expect(staffSignIn).toHaveAccessibleDescription(
@@ -215,12 +216,12 @@ describe('session configuration flows', () => {
     await user.click(staffSignIn);
     await user.click(within(dialog).getByRole('combobox', { name: 'Check-in type' }));
     await user.click(screen.getByRole('option', { name: 'Track in / out' }));
-    await user.click(within(dialog).getByRole('tab', { name: 'Device defaults' }));
+    await reachStep(user, dialog, 'Set device defaults');
     await user.click(
       within(dialog).getByRole('combobox', { name: 'On scan, tap or entered code' }),
     );
     await user.click(screen.getByRole('option', { name: 'Review before check-in' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
+    await user.click(await reach(user, dialog, 'Create session'));
     await waitFor(() =>
       expect(s.saved()).toMatchObject({
         name: 'Evening entry',
@@ -252,7 +253,7 @@ describe('session configuration flows', () => {
     const name = within(dialog).getByRole('textbox', { name: 'Session name' });
     await user.clear(name);
     await user.type(name, 'Updated entry');
-    await user.click(within(dialog).getByRole('button', { name: 'Save session' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     expect(await within(dialog).findByText('Reload session settings.')).toBeInTheDocument();
     expect(name).toHaveValue('Updated entry');
     await user.click(within(dialog).getByRole('button', { name: 'Reload settings' }));

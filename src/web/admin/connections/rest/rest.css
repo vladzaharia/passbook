@@ -1,0 +1,166 @@
+/* The REST explorer: a response tree with picked roles, suggestion chips and the page-2 proof. */
+.rx-tree {
+  max-height: 24rem;
+  overflow: auto;
+  border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-md, 0.5rem);
+  background: var(--pk-surface-raised);
+  padding: 0.25rem;
+  font-family: var(--pk-font-mono, ui-monospace, monospace);
+  font-size: 0.8125rem;
+}
+.rx-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding-block: 0.125rem;
+  padding-inline-end: 0.5rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rx-tree-virtual .rx-row {
+  overflow: hidden;
+}
+@media (pointer: coarse) {
+  .rx-row {
+    min-height: 2.75rem;
+  }
+}
+.rx-row:hover {
+  background: var(--pk-state-hover-tint, color-mix(in oklab, var(--pk-fg) 6%, transparent));
+}
+.rx-row:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+.rx-row[data-picked] {
+  background: var(--pk-accent-subtle);
+}
+.rx-row[data-selected] {
+  box-shadow: inset 2px 0 0 var(--pk-accent);
+}
+.rx-chev {
+  display: inline-flex;
+  flex: none;
+  color: var(--pk-fg-muted);
+  transition: transform var(--wl-dur-hover) var(--wl-ease-out);
+}
+.rx-chev-open {
+  transform: rotate(90deg);
+}
+.rx-key {
+  flex: none;
+  color: var(--pk-fg-strong);
+}
+.rx-val {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rx-role {
+  flex: none;
+  font-family: var(--pk-font-sans, system-ui, sans-serif);
+}
+.rx-suggest {
+  flex: none;
+  color: var(--pk-accent-fg);
+  font-family: var(--pk-font-sans, system-ui, sans-serif);
+  font-size: 0.75rem;
+}
+
+.rx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  max-width: 100%;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--pk-border);
+  border-radius: 999px;
+  background: var(--pk-surface-raised);
+  color: var(--pk-fg);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    background-color var(--wl-dur-hover) var(--wl-ease-out),
+    border-color var(--wl-dur-hover) var(--wl-ease-out);
+}
+@media (pointer: coarse) {
+  .rx-chip {
+    min-height: 2.75rem;
+  }
+}
+.rx-chip:hover {
+  border-color: var(--pk-border-strong);
+}
+.rx-chip:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.rx-chip-on {
+  border-color: var(--pk-accent);
+  background: var(--pk-accent-subtle);
+  color: var(--pk-accent-fg);
+}
+.rx-chip-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--pk-font-mono, ui-monospace, monospace);
+  font-size: 0.75rem;
+}
+.rx-conf {
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  color: var(--pk-fg-muted);
+}
+.rx-conf[data-level="high"] {
+  color: var(--pk-success);
+}
+.rx-conf[data-level="low"] {
+  color: var(--pk-warning);
+}
+
+.rx-proof {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--pk-success);
+}
+.rx-proof-line {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -0.25rem;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--pk-success);
+  transform-origin: left;
+}
+
+@keyframes rx-found {
+  0% {
+    transform: scale(0.97);
+    opacity: 0.4;
+  }
+  60% {
+    transform: scale(1.015);
+    opacity: 1;
+  }
+}
+@keyframes rx-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rx-row[data-found] {
+    animation: rx-found 600ms var(--wl-ease-bounce);
+  }
+  .rx-proof-line {
+    animation: rx-draw 520ms var(--wl-ease-out);
+  }
+}

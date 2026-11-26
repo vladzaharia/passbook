@@ -18,6 +18,7 @@ export function WizardReview<Id extends string>({
   onEdit,
   preview,
   note,
+  level = 4,
 }: {
   sections: readonly WizardReviewSection<Id>[];
   onEdit: (id: Id) => void;
@@ -25,7 +26,10 @@ export function WizardReview<Id extends string>({
   preview?: ReactNode;
   /** Only for a consequence ("The key is shown once, after you create it."). */
   note?: string;
+  /** The section title's heading level: 4 under a dialog's step heading, 3 under a page's. */
+  level?: 3 | 4;
 }) {
+  const Title = level === 3 ? 'h3' : 'h4';
   return (
     <div className="flex flex-col gap-3">
       {preview}
@@ -33,7 +37,7 @@ export function WizardReview<Id extends string>({
         {sections.map((s) => (
           <section key={s.id} aria-label={s.title} className="p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h4 className="text-sm font-medium text-fg-strong">{s.title}</h4>
+              <Title className="text-sm font-medium text-fg-strong">{s.title}</Title>
               {s.edit === false ? null : (
                 <Button
                   size="sm"

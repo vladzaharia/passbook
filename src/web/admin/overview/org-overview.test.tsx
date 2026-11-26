@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
-import { resetModeForTests } from '@/web/lib/mode.ts';
+import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { endpoint } from '../connections/webhooks/test-fixtures.ts';
 import { resetShownCounts } from './count.ts';
 import { audit, memoryStorage, orgActivity, overview } from './overview-fixtures.ts';
 
@@ -130,6 +131,57 @@ describe('organization overview', () => {
       'href',
       '/admin/o/o1/api-keys',
     );
+  });
+
+  describe('the Connections count', () => {
+    const workspace = () =>
+      json({
+        id: 'o1',
+        slug: 'northwind',
+        name: 'Northwind',
+        status: 'active',
+        defaultIdentityId: null,
+        branding: {},
+        createdAt: 1,
+        updatedAt: 1,
+        counts: { passes: 5, templates: 2, connections: 1, apiKeys: 3 },
+        countsCapped: false,
+      });
+    const caps: OrgCapability[] = [...READER, 'templates:read', 'integrations:read'];
+
+    it('becomes a webhook endpoints count in a developer sandbox, opening that tab', async () => {
+      await renderApp('/admin', {
+        session: 'user',
+        memberships: [{ ...member(caps), testOnly: true }],
+        selectedOrg: 'o1',
+        handlers: {
+          ...handlers(orgActivity(), doneSetup),
+          '/api/v1/orgs/o1/workspace': workspace,
+          '/api/v1/webhook-endpoints': () =>
+            json({
+              items: [endpoint({ id: 'e1' }), endpoint({ id: 'e2' })],
+              nextCursor: null,
+            }),
+        },
+      });
+      const tile = await screen.findByRole('link', { name: /^2\s*webhook endpoints/i });
+      expect(tile).toHaveAttribute('href', expect.stringContaining('tab=webhooks'));
+      expect(screen.queryByRole('link', { name: /connection/i })).toBeNull();
+    });
+
+    it('stays a connections count in Test mode of a real organization', async () => {
+      setMode('test');
+      await renderApp('/admin', {
+        session: 'user',
+        memberships: [member(caps)],
+        selectedOrg: 'o1',
+        handlers: { ...handlers(orgActivity(), doneSetup), '/api/v1/orgs/o1/workspace': workspace },
+      });
+      expect(await screen.findByRole('link', { name: /^1\s*connection/i })).toHaveAttribute(
+        'href',
+        '/admin/o/o1/connections',
+      );
+    });
   });
 
   it('asks for the selected range', async () => {

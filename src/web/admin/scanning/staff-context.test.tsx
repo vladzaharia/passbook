@@ -58,6 +58,7 @@ describe('Scanning staff', () => {
     const reveal = await screen.findByRole('dialog', { name: "Sam K.'s PIN" });
     expect(within(reveal).getByRole('status', { name: 'PIN' })).toHaveTextContent('888111');
     expect(within(reveal).getByRole('button', { name: 'Copy PIN' })).toBeEnabled();
+    await user.click(within(reveal).getByRole('checkbox', { name: 'I saved the PIN' }));
     await user.click(within(reveal).getByRole('button', { name: 'Done' }));
     expect(writeModes).toEqual(['test']);
     await act(async () => setMode('live'));

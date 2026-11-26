@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 import '../../lib/test-utils.tsx';
 import { StepList, StepMarker } from '../step-marker.tsx';
 import { WizardStepper } from './wizard-stepper.tsx';
@@ -23,13 +24,46 @@ function model(states: WizardStepState[], over: Partial<WizardModel> = {}): Wiza
   } as unknown as WizardModel;
 }
 
+describe('WizardStepper compact edit header', () => {
+  it('lists every step with its state and jumps on select', async () => {
+    const user = userEvent.setup();
+    const wizard = model(['current', 'invalid', 'skipped', 'done'], { mode: 'edit' });
+    render(<WizardStepper wizard={wizard} />);
+    await user.click(screen.getByRole('button', { name: 'Go to step' }));
+    const menu = await screen.findByRole('menu');
+    const items = within(menu).getAllByRole('menuitem');
+    expect(items.map((i) => i.textContent)).toEqual([
+      expect.stringContaining('Step 1'),
+      expect.stringContaining('Needs attention'),
+      expect.stringContaining('Skipped'),
+      expect.stringContaining('Done'),
+    ]);
+    expect(items[2]).toHaveAttribute('aria-disabled', 'true');
+    await user.click(items[3] as HTMLElement);
+    expect(wizard.go).toHaveBeenCalledWith('s3');
+  });
+
+  it('stays plain text in create mode', () => {
+    render(<WizardStepper wizard={model(['current', 'todo'])} />);
+    expect(screen.queryByRole('button', { name: 'Go to step' })).toBeNull();
+  });
+});
+
+describe('WizardStepper accessible names', () => {
+  it('names a done step by its title and summary, so the name starts with the visible text', async () => {
+    const { container } = render(<WizardStepper wizard={model(['done', 'current'])} />);
+    expect(screen.getByRole('button', { name: 'Step 1 chose 1' })).toBeInTheDocument();
+    expect((await axe(container)).violations).toEqual([]);
+  });
+});
+
 describe('WizardStepper', () => {
   it('names done steps by title, describes them by what was chosen, and jumps on press', async () => {
     const user = userEvent.setup();
     const wizard = model(['done', 'current', 'todo']);
     render(<WizardStepper wizard={wizard} />);
-    const done = screen.getByRole('button', { name: 'Step 1' });
-    expect(done).toHaveAccessibleDescription('chose 1');
+    const done = screen.getByRole('button', { name: /^Step 1/ });
+    expect(done).toHaveAccessibleName('Step 1 chose 1');
     await user.click(done);
     expect(wizard.go).toHaveBeenCalledWith('s0');
     const current = screen
@@ -86,13 +120,20 @@ describe('WizardStepper pop', () => {
 
   it('shows hover on the title through the button group, not a descendant selector', () => {
     render(<WizardStepper wizard={model(['done', 'current'])} />);
-    const button = screen.getByRole('button', { name: 'Step 1' });
+    const button = screen.getByRole('button', { name: /^Step 1/ });
     expect(button.className).toContain('group');
     expect(button.innerHTML).toContain('group-hover:text-fg-strong');
   });
 });
 
 describe('StepMarker and StepList', () => {
+  it('keeps the tick on its own size and colour at every size', () => {
+    for (const size of ['sm', 'md', 'lg'] as const) {
+      const { container } = render(<StepMarker state="done" n={1} size={size} />);
+      expect(container.querySelector('svg')).toHaveClass('!text-current');
+    }
+  });
+
   it('says in words what a marker cannot', () => {
     render(
       <StepList
@@ -112,7 +153,7 @@ describe('StepMarker and StepList', () => {
 
   it('sizes the spinner with the marker', () => {
     const { container } = render(<StepMarker state="working" n={1} size="lg" />);
-    expect(container.querySelector('svg')).toHaveClass('size-4');
+    expect(container.querySelector('svg')).toHaveClass('!size-4');
   });
 
   it('pops and draws only when fresh', () => {
