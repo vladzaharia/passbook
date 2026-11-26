@@ -180,6 +180,8 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
     changes: { ref: string; record?: UpstreamRecord; deleted?: boolean }[];
     cursor: string;
     hasMore: boolean;
+    /** One line for the run's detail: the listing stopped short of the end and the next run continues. */
+    note?: string;
   }>;
   /** Throws ConnectorError('AUTH') when the signature is invalid. */
   verifyWebhook?(ctx: ConnectorContext<C, S>, req: Request): Promise<WebhookDelivery>;
@@ -193,7 +195,7 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
 }
 
 /** A finer cause inside a code, for the probe and logs. A closed list: upstream text never reaches it. */
-export type ConnectorErrorReason = 'OFF_ORIGIN';
+export type ConnectorErrorReason = 'OFF_ORIGIN' | 'CURSOR_TOO_LONG' | 'PAGE_TOO_LARGE';
 
 export type ConnectorErrorCode =
   | 'AUTH'

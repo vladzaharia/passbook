@@ -22,6 +22,13 @@ const dialog = (onOpenChange = vi.fn()) => (
 
 afterEach(() => vi.restoreAllMocks());
 
+/** Next stays blocked until the default scanner is picked. */
+async function next(user: ReturnType<typeof userEvent.setup>) {
+  const button = await screen.findByRole('button', { name: 'Next' });
+  await waitFor(() => expect(button).not.toHaveAttribute('aria-disabled'));
+  await user.click(button);
+}
+
 function handlers(poll: () => Response = () => json(enrollmentFixture())) {
   return {
     '/api/v1/nfc/scanners': () =>
@@ -95,7 +102,7 @@ describe('Assign tag dialog', () => {
         ),
       ),
     });
-    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await next(user);
     expect(await screen.findByText('Tap the tag on Front desk iPad')).toBeInTheDocument();
     expect(screen.getByText("Works with all of Maya Okafor's passes")).toBeInTheDocument();
     const body = JSON.parse(String(calls(fetchMock, 'POST', '/enrollments')[0]?.[1]?.body));
@@ -106,13 +113,16 @@ describe('Assign tag dialog', () => {
     expect(screen.getByText('ends 7 F 3 A')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(calls(fetchMock, 'DELETE', '/bindings/b1')).toHaveLength(1));
+    expect(
+      await screen.findByRole('heading', { name: 'Choose how to assign' }),
+    ).toBeInTheDocument();
   }, 10_000);
 
   it('cancels an open request when the dialog closes', async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const { fetchMock } = renderTags(dialog(onOpenChange), handlers());
-    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await next(user);
     await screen.findByText('Tap the tag on Front desk iPad');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled());
     await user.keyboard('{Escape}');
@@ -125,11 +135,23 @@ describe('Assign tag dialog', () => {
     const { fetchMock } = renderTags(dialog(), {
       ...handlers(() => json(enrollmentFixture({ state: 'expired' }))),
     });
-    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await next(user);
     expect(await screen.findByText("Front desk iPad didn't read a tag.")).toBeInTheDocument();
     expect(screen.getByText(TAG_COPY.dialog.timeout.sub)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: TAG_COPY.dialog.sendAgain }));
     await waitFor(() => expect(calls(fetchMock, 'POST', '/enrollments')).toHaveLength(2));
+  });
+
+  it('cancels the request when Back leaves the Tap step', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = renderTags(dialog(), handlers());
+    await next(user);
+    await screen.findByText('Tap the tag on Front desk iPad');
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await waitFor(() => expect(calls(fetchMock, 'DELETE', '/enrollments/e1')).toHaveLength(1));
+    expect(
+      await screen.findByRole('heading', { name: 'Choose how to assign' }),
+    ).toBeInTheDocument();
   });
 
   it('shows the tag error and keeps waiting', async () => {
@@ -137,7 +159,7 @@ describe('Assign tag dialog', () => {
     renderTags(dialog(), {
       ...handlers(() => json(enrollmentFixture({ errorCode: 'TAG_LOST' }))),
     });
-    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await next(user);
     expect(await screen.findByText(TAG_ERROR_COPY.TAG_LOST)).toBeInTheDocument();
     expect(screen.getByText('Tap the tag on Front desk iPad')).toBeInTheDocument();
   });
@@ -149,7 +171,7 @@ describe('Assign tag dialog', () => {
         json(enrollmentFixture({ state: 'failed', errorCode: 'TAG_HOLDER_CHANGED' })),
       ),
     });
-    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await next(user);
     expect(await screen.findByText(TAG_ERROR_COPY.TAG_HOLDER_CHANGED)).toBeInTheDocument();
   });
 
@@ -158,7 +180,7 @@ describe('Assign tag dialog', () => {
     renderTags(dialog(), {
       ...handlers(() => problem(404, 'PASS_NOT_FOUND', 'Pass not found.')),
     });
-    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await next(user);
     expect(await screen.findByText(TAG_COPY.dialog.voided)).toBeInTheDocument();
   });
 
@@ -171,7 +193,7 @@ describe('Assign tag dialog', () => {
         return json(enrollmentFixture());
       }),
     });
-    await user.click(await screen.findByRole('button', { name: TAG_COPY.dialog.send }));
+    await next(user);
     await waitFor(() => expect(reads).toBeGreaterThan(0));
     unmount();
     const seen = reads;
@@ -193,7 +215,7 @@ describe('Assign tag dialog', () => {
     });
     await user.click(await screen.findByRole('radio', { name: TAG_COPY.assignMenu.type }));
     const send = screen.getByRole('button', { name: TAG_COPY.dialog.assign });
-    expect(send).toBeDisabled();
+    expect(send).toHaveAttribute('aria-disabled', 'true');
     await user.type(screen.getByRole('textbox', { name: TAG_COPY.type.field }), '04:A1');
     await user.click(send);
     expect(await screen.findByText('A tag ID has 4, 7 or 10 bytes.')).toBeInTheDocument();
@@ -218,7 +240,7 @@ describe('Assign tag dialog', () => {
     });
     await user.click(await screen.findByRole('radio', { name: TAG_COPY.assignMenu.spare }));
     const send = screen.getByRole('button', { name: TAG_COPY.dialog.assign });
-    expect(send).toBeDisabled();
+    expect(send).toHaveAttribute('aria-disabled', 'true');
     await user.click(await screen.findByRole('radio', { name: /Green fob/ }));
     await user.click(send);
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));

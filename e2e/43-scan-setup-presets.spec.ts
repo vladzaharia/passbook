@@ -124,7 +124,9 @@ test('club keeps its own defaults: anyone as Door, no forced PIN', async ({ brow
     await page.getByRole('button', { name: 'Next', exact: true }).click();
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Checks' })).toBeVisible();
-    await expect(page.getByText('Anyone, as Door')).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Door summary' }).getByText('Anyone, as Door'),
+    ).toBeVisible();
     await expect(page.getByTestId('settings-line')).toHaveText('Check-in: in and out');
     const applied = page.waitForResponse(
       (r) =>

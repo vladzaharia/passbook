@@ -26,22 +26,8 @@ import { markCreated } from '../passes/created.tsx';
 import { useImportStatus, useTemplate, useUploadTemplate } from './api.ts';
 import { type PackageInfo, readPackage, UploadDrop } from './upload-drop.tsx';
 import { UploadReport } from './upload-report.tsx';
+import { UploadSteps, uploadStepIndex, uploadStepText } from './upload-steps.tsx';
 
-const STEPS: Record<string, number> = {
-  queued: 0,
-  extract: 1,
-  analyze: 2,
-  'dry-run': 3,
-  persist: 4,
-  done: 4,
-};
-const STEP_TEXT: Record<string, string> = {
-  queued: 'Waiting to start',
-  extract: 'Opening the package',
-  analyze: 'Checking files and images',
-  'dry-run': 'Building a sample pass',
-  persist: 'Saving the template',
-};
 /** Which piece slides out: archive problems the header, content the image, builds the barcode. */
 const failedPiece = (error: string | null) =>
   error && /ZIP|ARCHIVE|ENTRY|COMPRESSION|PATH|NOT_A_ZIP|TOO_MANY/.test(error)
@@ -135,7 +121,7 @@ export function UploadForm({
   }, [landedId]);
 
   const working = Boolean(uploadId) && !finished && !failed && !status.isError;
-  const landed = uploadId ? (finished ? 4 : (STEPS[s?.step ?? 'queued'] ?? 0)) : undefined;
+  const landed = uploadId ? (finished ? 4 : uploadStepIndex(s?.step)) : undefined;
   const title = version ? `New version of ${version.name}` : 'Upload template';
 
   if (verifyingResult) {
@@ -216,8 +202,9 @@ export function UploadForm({
             if (failed) void send(f);
           }}
         />
+        {uploadId && !finished ? <UploadSteps step={s?.step} failed={failed} /> : null}
         <p aria-live="polite" className="sr-only">
-          {working ? (STEP_TEXT[s?.step ?? 'queued'] ?? 'Processing') : ''}
+          {working ? uploadStepText(s?.step) : ''}
         </p>
         {version ? null : (
           <div className="grid gap-4 @container sm:grid-cols-2">

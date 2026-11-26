@@ -42,12 +42,23 @@ async function openImport(answer: (dryRun: boolean) => Response = (d) => json(d 
   return { user, dialog, upload, ...rendered };
 }
 
+/** Next turns on once the dry run is back; it opens the Check step. */
+async function toCheck(user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) {
+  const next = within(dialog).getByRole('button', { name: 'Next' });
+  await waitFor(() => expect(next).not.toHaveAttribute('aria-disabled'));
+  await user.click(next);
+  await within(dialog).findByRole('heading', { name: 'Check the rows' });
+}
+
 describe('Import tags', () => {
   it('checks the file first, lists skipped rows, then imports the ready ones', async () => {
     const { user, dialog, upload, fetchMock } = await openImport();
-    const go = within(dialog).getByRole('button', { name: 'Import 0 tags' });
-    expect(go).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await upload();
+    await toCheck(user, dialog);
     expect(await within(dialog).findByText('2 of 3 rows ready')).toBeInTheDocument();
     const table = within(dialog).getByRole('table', { name: 'Rows that will be skipped' });
     expect(within(table).getByText("Isn't a 7-byte tag ID")).toBeInTheDocument();
@@ -64,23 +75,24 @@ describe('Import tags', () => {
   it('replaces keys: dry run with replace, confirm with the count, then toast', async () => {
     const { user, dialog, upload, fetchMock } = await openImport();
     await upload();
-    await within(dialog).findByText('2 of 3 rows ready');
+    await waitFor(() => expect(posted(fetchMock, '/k2/import')).toHaveLength(1));
     await user.click(
       within(dialog).getByRole('checkbox', {
         name: 'Replace keys for tags already on this keyset',
       }),
     );
+    await waitFor(() => expect(posted(fetchMock, '/k2/import')).toHaveLength(2));
+    await toCheck(user, dialog);
     expect(await within(dialog).findByText('2 of 3 rows will re-key a tag')).toBeInTheDocument();
     expect(bodyOf(posted(fetchMock, '/k2/import')[1])).toEqual({
       csv: CSV,
       dryRun: true,
       replace: true,
     });
+    // The danger finish says what it costs; there is no second confirm.
+    expect(within(dialog).getByText(/Taps with the old keys stop working/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Re-key 2 tags' }));
-    const confirm = await screen.findByRole('alertdialog', { name: 'Re-key 2 tags?' });
-    expect(within(confirm).getByText(/Taps with the old keys stop working/)).toBeInTheDocument();
-    expect(posted(fetchMock, '/k2/import')).toHaveLength(2);
-    await user.click(within(confirm).getByRole('button', { name: 'Re-key' }));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     await waitFor(() => expect(posted(fetchMock, '/k2/import')).toHaveLength(3));
     expect(bodyOf(posted(fetchMock, '/k2/import')[2])).toEqual({
       csv: CSV,
@@ -107,7 +119,11 @@ describe('Import tags', () => {
     expect(
       await within(dialog).findByText('The first line needs uid and key columns.'),
     ).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Import 0 tags' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(within(dialog).queryByRole('heading', { name: 'Check the rows' })).toBeNull();
   });
 
   it('says 1 tag, not 1 tags', async () => {
@@ -115,6 +131,7 @@ describe('Import tags', () => {
       json(d ? { ...dry, rows: 1, ok: 1, problems: [] } : { ...real, added: 1 }),
     );
     await upload();
+    await toCheck(user, dialog);
     expect(await within(dialog).findByText('1 of 1 row ready')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Import 1 tag' }));
     expect(await screen.findByText('1 tag imported')).toBeInTheDocument();
@@ -137,6 +154,7 @@ describe('Import tags', () => {
           ),
     );
     await upload();
+    await toCheck(user, dialog);
     await within(dialog).findByText('2 of 3 rows ready');
     await user.click(within(dialog).getByRole('button', { name: 'Import 2 tags' }));
     expect(
@@ -146,18 +164,26 @@ describe('Import tags', () => {
   });
 
   it('cannot import when no row is ready', async () => {
-    const { dialog, upload } = await openImport(() => json({ ...dry, ok: 0, rows: 1 }));
+    const { user, dialog, upload, fetchMock } = await openImport(() =>
+      json({ ...dry, ok: 0, rows: 1 }),
+    );
     await upload();
+    await toCheck(user, dialog);
     expect(await within(dialog).findByText('0 of 1 row ready')).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Import 0 tags' })).toBeDisabled();
+    const go = within(dialog).getByRole('button', { name: 'Import 0 tags' });
+    expect(go).toHaveAttribute('aria-disabled', 'true');
+    await user.click(go);
+    expect(within(dialog).getAllByText('No rows are ready.').length).toBeGreaterThan(0);
+    expect(posted(fetchMock, '/k2/import')).toHaveLength(1);
   });
 
   it.each(AXE_MATRIX)(
     'has no axe violations at %i, %s',
     async (width, theme) => {
-      const { dialog, upload } = await openImport();
+      const { user, dialog, upload } = await openImport();
       expect(await axeAt(document.body, width, theme)).toEqual([]);
       await upload();
+      await toCheck(user, dialog);
       await within(dialog).findByText('2 of 3 rows ready');
       expect(await axeAt(document.body, width, theme)).toEqual([]);
     },

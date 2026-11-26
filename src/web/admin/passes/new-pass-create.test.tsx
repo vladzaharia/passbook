@@ -2,6 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
+import { STATE_COPY } from '@/shared/copy/states.ts';
 import { getMode, resetModeForTests, setMode } from '../../lib/mode.ts';
 import * as motion from '../../lib/motion.ts';
 import {
@@ -132,13 +133,15 @@ async function openReview(options: {
   if (options.atTemplates) return { user, ...app };
   await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
   await waitFor(() =>
-    expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+    expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+      'aria-disabled',
+    ),
   );
-  await user.click(screen.getByRole('button', { name: 'Next' }));
+  await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
   await user.type(await screen.findByLabelText(/Member name/), 'Ann');
-  await user.click(screen.getByRole('button', { name: 'Next' }));
+  await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
   await user.type(screen.getByLabelText('Holder email'), 'ann@example.com');
-  await user.click(screen.getByRole('button', { name: 'Next' }));
+  await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
   await screen.findByRole('button', { name: 'Create and send' });
   return { user, ...app };
 }
@@ -179,7 +182,7 @@ describe('reviewed pass issuance', () => {
     expect(screen.queryByText('Release generation')).toBeNull();
     expect(screen.getByText('Wallet provider').parentElement).toHaveTextContent('Apple Wallet');
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
-    await screen.findByText('Try again');
+    await screen.findByText(STATE_COPY.error);
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
     await waitFor(() => expect(requests).toHaveLength(2));
     expect(requests[0]?.body).toEqual({
@@ -202,9 +205,11 @@ describe('reviewed pass issuance', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
     await waitFor(() => expect(requests).toHaveLength(3));
     expect(requests[2]?.body.mode).toBe('test');
@@ -270,9 +275,11 @@ describe('reviewed pass issuance', () => {
       await user.click(screen.getByRole('button', { name: 'Back' }));
       expect(screen.getByDisplayValue('ann@example.com')).toBeInTheDocument();
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+        expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+          'aria-disabled',
+        ),
       );
-      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
       await user.click(screen.getByRole('button', { name: 'Create and send' }));
       await waitFor(() => expect(requests).toHaveLength(2));
       expect(requests[1]?.body.templateVersion).toBe('ffeeddccbbaa9988');
@@ -356,15 +363,17 @@ describe('reviewed pass issuance', () => {
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(await screen.findByLabelText(/New required field/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Ann');
     expect(posts).toHaveLength(1);
     await user.type(screen.getByLabelText(/New required field/), 'Ready');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    // The holder step is still done: the primary goes straight to Review.
+    await user.click(screen.getByRole('button', { name: 'Review' }));
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
     await waitFor(() => expect(posts).toHaveLength(2));
     expect(posts[1]?.input).toEqual({ name: 'Ann', extra: 'Ready' });
@@ -395,9 +404,11 @@ describe('reviewed pass issuance', () => {
     expect(posts).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ releaseId: 'release1', releaseGeneration: 2 });
@@ -637,7 +648,7 @@ describe('first pass for an organization', () => {
         return problem(500, 'failure', 'Unexpected request');
       },
     });
-    await user.click(screen.getByRole('button', { name: 'Edit member name' }));
+    await user.click(screen.getByRole('button', { name: 'Edit details' }));
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Ann');
     deferRefresh = true;
     act(() => {
@@ -645,22 +656,30 @@ describe('first pass for an organization', () => {
     });
     await waitFor(() => expect(sessionReloaded).toBe(true));
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Ann');
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await user.type(screen.getByLabelText(/Member name/), 'abelle');
     await act(async () => sessionReply.resolve(json(sessionFixture('admin'))));
     await waitFor(() => expect(membershipReloaded).toBe(true));
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Annabelle');
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     expect(posts).toBe(0);
     await act(async () => membershipReply.resolve(json({ items: [henry] })));
     await waitFor(() => {
       expect(screen.getByLabelText(/Member name/)).toHaveValue('Annabelle');
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled');
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      );
     });
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByLabelText('Holder email')).toHaveValue('ann@example.com');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    // Holder is still done, so the primary reads Review and goes straight there.
+    await user.click(screen.getByRole('button', { name: 'Review' }));
     expect(screen.getByText('Member name').parentElement).toHaveTextContent('Annabelle');
+    expect(screen.getByRole('region', { name: 'Holder' })).toHaveTextContent('ann@example.com');
     expect(screen.getByRole('button', { name: 'Create and send' })).not.toHaveAttribute(
       'aria-disabled',
     );
@@ -713,7 +732,7 @@ describe('first pass for an organization', () => {
       },
       post: () => problem(500, 'failure', 'Unexpected request'),
     });
-    await user.click(screen.getByRole('button', { name: 'Edit member name' }));
+    await user.click(screen.getByRole('button', { name: 'Edit details' }));
     deferEligible = true;
     act(() => {
       void queryClient.invalidateQueries({
@@ -727,21 +746,31 @@ describe('first pass for an organization', () => {
     });
     await waitFor(() => expect(membershipReloaded).toBe(true));
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Ann');
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     selectedRelease = eligibleTemplate({ releaseGeneration: 2, version: 'ffeeddccbbaa9988' });
     await act(async () =>
       eligibleReply.resolve(json({ items: [selectedRelease], nextCursor: null })),
     );
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Ann');
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     expect(screen.queryByLabelText(/New required field/)).toBeNull();
     expect(newVersionReads).toBe(0);
     deferEligible = false;
     await act(async () => membershipReply.resolve(json({ items: [henry] })));
     expect(await screen.findByLabelText(/New required field/)).toBeInTheDocument();
+    // The new field is required and empty: Next stays off until it is filled.
     await waitFor(() => {
       expect(screen.getByLabelText(/Member name/)).toHaveValue('Ann');
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled');
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
     });
   });
 
@@ -761,14 +790,17 @@ describe('first pass for an organization', () => {
         return problem(500, 'failure', 'Unexpected request');
       },
     });
-    await user.click(screen.getByRole('button', { name: 'Edit member name' }));
+    await user.click(screen.getByRole('button', { name: 'Edit details' }));
     refreshing = true;
     act(() => {
       void queryClient.invalidateQueries({ queryKey: ['org-memberships', 'me'] });
     });
     await waitFor(() => expect(membershipReloaded).toBe(true));
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Ann');
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await act(async () => membershipReply.resolve(json({ items: [] })));
     expect(
       await screen.findByRole('heading', { name: 'You do not have access' }),
@@ -782,9 +814,11 @@ describe('first pass for an organization', () => {
     });
     await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(await screen.findByLabelText(/Member name/)).toHaveValue('');
   });
 
@@ -802,7 +836,7 @@ describe('first pass for an organization', () => {
       membershipResponse: () => json({ items: [{ ...henry, userId: principal }] }),
       post: () => problem(500, 'failure', 'Unexpected request'),
     });
-    await user.click(screen.getByRole('button', { name: 'Edit member name' }));
+    await user.click(screen.getByRole('button', { name: 'Edit details' }));
     refreshing = true;
     act(() => {
       void queryClient.invalidateQueries({ queryKey: ['session'], exact: true });
@@ -818,16 +852,20 @@ describe('first pass for an organization', () => {
     await waitFor(() => expect(screen.queryByDisplayValue('Ann')).toBeNull());
     await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     const name = await screen.findByLabelText(/Member name/);
     expect(name).toHaveValue('');
     await user.type(name, 'Beth');
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(screen.getByLabelText('Holder email')).toHaveValue('');
   });
 
@@ -847,7 +885,7 @@ describe('first pass for an organization', () => {
         selection: (url) => eligibleTemplate({ templateOrgId: url.searchParams.get('orgId') }),
         post: () => problem(500, 'failure', 'Unexpected request'),
       });
-      await user.click(screen.getByRole('button', { name: 'Edit member name' }));
+      await user.click(screen.getByRole('button', { name: 'Edit details' }));
       refreshing = true;
       act(() => {
         void queryClient.invalidateQueries({ queryKey: ['org-memberships', 'me'] });
@@ -871,9 +909,11 @@ describe('first pass for an organization', () => {
       }
       await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+        expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+          'aria-disabled',
+        ),
       );
-      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
       expect(await screen.findByLabelText(/Member name/)).toHaveValue('');
     },
   );
@@ -900,9 +940,7 @@ describe('first pass for an organization', () => {
     });
     await waitFor(() => expect(membershipReloaded).toBe(true));
     expect(screen.getByText('Member name').parentElement).toHaveTextContent('Ann');
-    expect(screen.getByRole('button', { name: 'Edit holder' }).parentElement).toHaveTextContent(
-      'ann@example.com',
-    );
+    expect(screen.getByRole('region', { name: 'Holder' })).toHaveTextContent('ann@example.com');
     expect(screen.getByRole('button', { name: 'Create and send' })).toHaveAttribute(
       'aria-disabled',
       'true',
@@ -1013,9 +1051,11 @@ describe('first pass for an organization', () => {
     expect(reads).toBeGreaterThan(previousReads);
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(screen.getByRole('button', { name: 'Create and send' })).not.toHaveAttribute(
       'aria-disabled',
     );
@@ -1262,15 +1302,18 @@ describe('organization authority while issuing', () => {
     act(() => {
       queryClient.setQueryData(['org-memberships', 'me'], { items: [henry] });
     });
-    await user.click(await screen.findByRole('button', { name: 'Edit member name' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit details' }));
     const name = await screen.findByLabelText(/Member name/);
     expect(name).toHaveValue('');
     await user.type(name, 'Beth');
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByLabelText('Holder email')).toHaveValue('');
+    // The holder step was passed already, so the primary goes straight back to Review.
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    expect(screen.getByRole('region', { name: 'Holder' })).toHaveTextContent('No holder yet');
   });
 
   it('does not refetch a former org template when an old create conflicts', async () => {
@@ -1338,8 +1381,15 @@ describe('organization authority while issuing', () => {
         return problem(500, 'failure', 'Try again');
       },
     });
-    await user.click(screen.getByRole('button', { name: 'Edit organization' }));
-    await user.click(await screen.findByRole('radio', { name: /Other/ }));
+    // The scope names the organization, so it is switched from the shell, not from a step.
+    expect(screen.queryByRole('button', { name: 'Edit organization' })).toBeNull();
+    await act(async () => {
+      await router.navigate({
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
+        ignoreBlocker: true,
+      });
+    });
     await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     await waitFor(() =>
       expect(
@@ -1347,21 +1397,23 @@ describe('organization authority while issuing', () => {
           ?.status,
       ).toBe('success'),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     const choice = await screen.findByRole('radio', { name: /Copper card/ });
     expect(choice).not.toBeChecked();
     expect(posts).toHaveLength(0);
     await user.click(choice);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.type(await screen.findByLabelText(/Member name/), 'Beth');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(screen.getByLabelText('Holder email')).toHaveValue('');
     expect(screen.getByRole('checkbox', { name: 'Email the pass' })).not.toBeChecked();
     await user.type(screen.getByLabelText('Holder email'), 'beth@example.com');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.orgId).toBe('org2');
@@ -1400,13 +1452,15 @@ describe('organization authority while issuing', () => {
     expect(template).not.toBeChecked();
     await user.click(template);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     const name = await screen.findByLabelText(/Member name/);
     expect(name).toHaveValue('');
     await user.type(name, 'Beth');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(screen.getByLabelText('Holder email')).toHaveValue('');
     expect(screen.getByRole('checkbox', { name: 'Email the pass' })).not.toBeChecked();
   });

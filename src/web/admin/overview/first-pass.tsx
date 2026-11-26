@@ -3,7 +3,15 @@ import { ChevronRight, Link2, Plus, Upload, X } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import type { MetricsOverview } from '@/shared/contracts/metrics.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { Buddy, Button, Celebrate, IconButton, Skeleton, Tick } from '@/web/ui/index.ts';
+import {
+  Buddy,
+  Button,
+  Celebrate,
+  IconButton,
+  Skeleton,
+  StepMarker,
+  Tick,
+} from '@/web/ui/index.ts';
 import { useTemplate, useTemplates } from '../templates/api.ts';
 import { nextAction } from '../templates/releases/next-action.ts';
 import { BrandRow } from './first-pass-brand.tsx';
@@ -55,31 +63,6 @@ function useSeenProgress(orgId: string, now: number): number | null {
   return from;
 }
 
-function Mark({
-  index,
-  state,
-  fresh,
-}: {
-  index: number;
-  state: 'done' | 'now' | 'later';
-  fresh: boolean;
-}) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'fp-mark relative inline-flex size-9 items-center justify-center rounded-full border text-sm font-semibold tabular-nums',
-        state === 'done' && 'border-accent bg-accent text-accent-on',
-        state === 'done' && fresh && 'wl-step-done',
-        state === 'now' && 'border-accent bg-accent-subtle text-fg-strong',
-        state === 'later' && 'border-border-strong bg-surface-raised text-fg-muted',
-      )}
-    >
-      {state === 'done' ? <Tick draw={fresh} className="size-4" /> : index + 1}
-    </span>
-  );
-}
-
 /** Three steps on one line: done ones check, the current one is ringed, later ones wait. */
 function Track({ setup, from }: { setup: MetricsOverview['setup']; from: number | null }) {
   const at = currentStep(setup);
@@ -104,7 +87,12 @@ function Track({ setup, from }: { setup: MetricsOverview['setup']; from: number 
                 data-fresh={(from !== null && i - 1 >= from) || undefined}
               />
             ) : null}
-            <Mark index={i} state={state} fresh={fresh} />
+            <StepMarker
+              state={state === 'now' ? 'current' : state === 'done' ? 'done' : 'todo'}
+              n={i + 1}
+              size="lg"
+              fresh={fresh}
+            />
             <span
               className={cn(
                 'relative text-sm font-medium',

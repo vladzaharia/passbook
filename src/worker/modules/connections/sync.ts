@@ -37,6 +37,8 @@ export type StartResult =
   | {
       ok: true;
       useList: boolean;
+      /** The source can change under a run (a file applied mid-run): ask once more before finishing. */
+      settle: boolean;
       cursor: string | null;
       startedAt: number;
       release: ConnectionReleaseSnapshot;
@@ -169,6 +171,7 @@ export async function startRun(
     ok: true,
     useList:
       Boolean(prep.def.listChanges) && (prep.def.hasList?.(prep.cc.connection.config) ?? true),
+    settle: prep.def.capabilities.upload === true,
     cursor: conn.cursor,
     release,
     mode: conn.mode,
@@ -178,7 +181,7 @@ export async function startRun(
 }
 
 export type PageFetch =
-  | { ok: true; changes: Change[]; cursor: string | null; hasMore: boolean }
+  | { ok: true; changes: Change[]; cursor: string | null; hasMore: boolean; note?: string }
   | { ok: false; result: StepResult };
 
 /** The listChanges request for one page. Applying and the cursor move are separate steps. */
@@ -210,7 +213,13 @@ export async function fetchListPage(
   if (!current.conn) return { ok: false, result: stopped(null, true, p.cursor, current.staleCode) };
   try {
     const page = await prep.def.listChanges(prep.cc, p.cursor);
-    return { ok: true, changes: page.changes, cursor: page.cursor, hasMore: page.hasMore };
+    return {
+      ok: true,
+      changes: page.changes,
+      cursor: page.cursor,
+      hasMore: page.hasMore,
+      ...(page.note ? { note: page.note } : {}),
+    };
   } catch (error) {
     return { ok: false, result: stopped(classify(error), false, p.cursor) };
   }
@@ -267,6 +276,7 @@ export async function advanceCursor(
     mode: ConnectionRow['mode'];
     cursor: string | null;
     credentialKeysetCommitment: string;
+    instanceId?: string;
   },
 ): Promise<{ stale: boolean; staleCode?: StaleCode }> {
   if (!(await syncKeysetCurrent(sctx, p.credentialKeysetCommitment)))

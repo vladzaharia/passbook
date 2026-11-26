@@ -5,16 +5,17 @@ import { inputFields } from '@/shared/issuing/fields.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { useMediaQuery } from '../../../lib/media.ts';
 import { useSession } from '../../../lib/session.ts';
-import { Button, Callout, Card, CardHeader, KeyValue, toast, Wizard } from '../../../ui/index.ts';
+import { Button, Callout, Card, CardHeader, KeyValue, toast } from '../../../ui/index.ts';
 import { useTemplate } from '../../templates/api.ts';
 import { downloadImportFile, useCheckImport, useDiscardImport } from './api.ts';
 import { HOLD_CHOICES, isUndone, useCommitRun } from './api-run.ts';
 import { type EmailChoice, EmailSettings } from './check-aside.tsx';
 import { type CheckFilter, CheckTiles } from './check-tiles.tsx';
 import { FixTable } from './fix-table.tsx';
+import { ImportWizard, summaryOf } from './import-wizard.tsx';
 import { findLabel } from './match-sample.ts';
 import { NewFan } from './new-fan.tsx';
-import { IMPORT_STEPS, STEP } from './steps.ts';
+import { STEP } from './steps.ts';
 import { UpdatesList } from './updates-list.tsx';
 
 /** Counts, fixes, diffs and cards of a checked draft; Create starts the run. */
@@ -103,9 +104,9 @@ export function CheckStep({
   );
 
   return (
-    <Wizard
-      steps={IMPORT_STEPS}
+    <ImportWizard
       current={STEP.check}
+      summary={summaryOf(imp)}
       onStep={onStep}
       onCancel={onDiscarded}
       onBack={() => onStep(STEP.match)}
@@ -195,6 +196,6 @@ export function CheckStep({
           <div className="p-4">{settings}</div>
         </Card>
       )}
-    </Wizard>
+    </ImportWizard>
   );
 }

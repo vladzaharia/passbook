@@ -46,3 +46,10 @@ export function sourceLine(connector: string, mode: string): string {
     ? connector
     : `${connector} · ${label}`;
 }
+
+/** A run a newer one replaced is neutral, not a failure. */
+export const isReplaced = (run: { errorCode?: string | null }): boolean =>
+  run.errorCode === 'SUPERSEDED';
+
+export const outcomeLabel = (run: { errorCode?: string | null }, label: string): string =>
+  isReplaced(run) ? 'Replaced by a newer run' : label;

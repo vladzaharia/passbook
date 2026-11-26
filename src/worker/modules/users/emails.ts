@@ -39,7 +39,7 @@ export async function requestEmailProof(
     await processVerifyRequest(ctx, { userId: id, email });
     await audit(ctx, actorId, id, 'user.email_proof_requested');
   }
-  return getUserDetail(ctx, id, currentSessionId);
+  return getUserDetail(ctx, id, currentSessionId, actorId);
 }
 
 export async function removeEmail(
@@ -58,7 +58,7 @@ export async function removeEmail(
     throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
   }
   await audit(ctx, actorId, id, 'user.email_remove');
-  return getUserDetail(ctx, id, currentSessionId);
+  return getUserDetail(ctx, id, currentSessionId, actorId);
 }
 
 /** Sign-in emails go to the new primary; it must be one of the user's verified addresses. */
@@ -77,5 +77,5 @@ export async function makePrimaryEmail(
     }
     await audit(ctx, actorId, id, 'user.email_primary');
   }
-  return getUserDetail(ctx, id, currentSessionId);
+  return getUserDetail(ctx, id, currentSessionId, actorId);
 }

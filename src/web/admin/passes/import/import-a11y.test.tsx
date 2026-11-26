@@ -46,7 +46,7 @@ describe('import screens pass axe at 1440, 820 and 390, in both themes', () => {
 
   it('match columns', async () => {
     const { container } = await open('/admin/passes/import/imp1', importDto());
-    await screen.findByText('Match columns');
+    await screen.findByRole('heading', { name: 'Match the columns' });
     await axeEverywhere(container);
   });
 

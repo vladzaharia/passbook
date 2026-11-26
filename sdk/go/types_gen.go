@@ -1496,6 +1496,58 @@ type ConnectionsListResponseItemsItemVoidWhenItem struct {
 
 type ConnectionsPreviewResult = ConnectionPreview
 
+type ConnectionsProbeBody = ConnectionsProbeParams
+
+type ConnectionsProbeConfigBody = ConnectionsProbeConfigParams
+
+type ConnectionsProbeConfigParams struct {
+	OrgID         string            `json:"orgId"`
+	ConnectorType string            `json:"connectorType"`
+	Config        map[string]any    `json:"config"`
+	Secrets       map[string]string `json:"secrets,omitempty"`
+	Target        string            `json:"target"`
+	Ref           *string           `json:"ref,omitempty"`
+	Next          *string           `json:"next,omitempty"`
+}
+
+type ConnectionsProbeConfigResponse struct {
+	Ok           bool              `json:"ok"`
+	ErrorCode    *string           `json:"errorCode,omitempty"`
+	RetryAfterMs *int64            `json:"retryAfterMs,omitempty"`
+	DurationMs   int64             `json:"durationMs"`
+	Request      map[string]any    `json:"request"`
+	Headers      map[string]string `json:"headers"`
+	Body         any               `json:"body,omitempty"`
+	Pruned       map[string]any    `json:"pruned"`
+	Detections   map[string]any    `json:"detections"`
+	Page         map[string]any    `json:"page"`
+}
+
+type ConnectionsProbeConfigResult = ConnectionsProbeConfigResponse
+
+type ConnectionsProbeParams struct {
+	Config  map[string]any    `json:"config,omitempty"`
+	Secrets map[string]string `json:"secrets,omitempty"`
+	Target  string            `json:"target"`
+	Ref     *string           `json:"ref,omitempty"`
+	Next    *string           `json:"next,omitempty"`
+}
+
+type ConnectionsProbeResponse struct {
+	Ok           bool              `json:"ok"`
+	ErrorCode    *string           `json:"errorCode,omitempty"`
+	RetryAfterMs *int64            `json:"retryAfterMs,omitempty"`
+	DurationMs   int64             `json:"durationMs"`
+	Request      map[string]any    `json:"request"`
+	Headers      map[string]string `json:"headers"`
+	Body         any               `json:"body,omitempty"`
+	Pruned       map[string]any    `json:"pruned"`
+	Detections   map[string]any    `json:"detections"`
+	Page         map[string]any    `json:"page"`
+}
+
+type ConnectionsProbeResult = ConnectionsProbeResponse
+
 type ConnectionsRetrieveResponse struct {
 	ID                  string                                             `json:"id"`
 	OrgID               string                                             `json:"orgId"`
@@ -9044,11 +9096,11 @@ type PlatformUsersEmailsCreateResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsCreateResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsCreateResponseRecentAuditItem struct {
@@ -9105,11 +9157,11 @@ type PlatformUsersEmailsDeleteResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsDeleteResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsDeleteResponseRecentAuditItem struct {
@@ -9166,11 +9218,11 @@ type PlatformUsersEmailsMakePrimaryResponseIdentitiesItem struct {
 }
 
 type PlatformUsersEmailsMakePrimaryResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersEmailsMakePrimaryResponseRecentAuditItem struct {
@@ -9211,6 +9263,25 @@ type PlatformUsersListResponseItemsItem struct {
 	SignInMethods []string `json:"signInMethods,omitempty"`
 }
 
+type PlatformUsersPassesListResponse struct {
+	Items      []PlatformUsersPassesListResponseItemsItem `json:"items"`
+	NextCursor *string                                    `json:"nextCursor"`
+}
+
+type PlatformUsersPassesListResponseItemsItem struct {
+	ID           string   `json:"id"`
+	OrgID        string   `json:"orgId"`
+	OrgName      string   `json:"orgName"`
+	OrgStatus    string   `json:"orgStatus"`
+	TimeZone     string   `json:"timeZone"`
+	TemplateName string   `json:"templateName"`
+	Status       string   `json:"status"`
+	Holding      string   `json:"holding"`
+	Channels     []string `json:"channels"`
+	IssuedAt     int64    `json:"issuedAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+}
+
 type PlatformUsersRetrieveResponse struct {
 	ID            string                                         `json:"id"`
 	Name          *string                                        `json:"name"`
@@ -9244,11 +9315,11 @@ type PlatformUsersRetrieveResponseIdentitiesItem struct {
 }
 
 type PlatformUsersRetrieveResponsePassesItem struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	TemplateName string `json:"templateName"`
-	OrgName      string `json:"orgName"`
-	Status       string `json:"status"`
+	ID           string  `json:"id"`
+	Title        *string `json:"title,omitempty"`
+	TemplateName string  `json:"templateName"`
+	OrgName      string  `json:"orgName"`
+	Status       string  `json:"status"`
 }
 
 type PlatformUsersRetrieveResponseRecentAuditItem struct {

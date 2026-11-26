@@ -15,6 +15,7 @@ import { recordAudit } from '../audit/service.ts';
 import { BREAKGLASS_PROVIDER } from '../auth/breakglass-service.ts';
 import { emailsOf } from '../auth/repo.ts';
 import { OIDC_PROVIDER } from '../auth/service.ts';
+import { viewerOrgName } from '../orgs/personal-names.ts';
 import { suspendPersonalOrgOf } from '../orgs/personal-suspend.ts';
 import * as repo from './repo.ts';
 
@@ -53,12 +54,17 @@ function methodsOf(facts: repo.UserFacts | undefined): SignInMethod[] {
   return out;
 }
 
-export async function listUsers(ctx: ServiceContext, query: z.infer<typeof UserListQuerySchema>) {
+export async function listUsers(
+  ctx: ServiceContext,
+  query: z.infer<typeof UserListQuerySchema>,
+  viewerId = '',
+) {
   const rows = await repo.listUsers(ctx.env.DB, query);
   const page = rows.slice(0, query.limit);
   const facts = await repo.factsFor(
     ctx.env.DB,
     page.map((r) => r.id),
+    viewerId,
   );
   return {
     items: page.map(
@@ -83,6 +89,7 @@ export async function getUserDetail(
   ctx: ServiceContext,
   id: string,
   currentSessionId = '',
+  viewerId = '',
 ): Promise<UserDetailDto> {
   const db = ctx.env.DB;
   const user = await requireUser(ctx, id);
@@ -90,10 +97,10 @@ export async function getUserDetail(
     emailsOf(db, id),
     repo.identitiesOf(db, id),
     repo.listRecentSessions(db, id),
-    repo.ownedPasses(db, id),
-    repo.ownedPassCount(db, id),
+    repo.ownedPasses(db, id, viewerId),
+    repo.ownedPassCount(db, id, viewerId),
     repo.recentAudit(db, id),
-    repo.factsFor(db, [id]),
+    repo.factsFor(db, [id], viewerId),
   ]);
   return {
     ...toUser(user),
@@ -125,9 +132,8 @@ export async function getUserDetail(
     })),
     passes: passes.map((p) => ({
       id: p.id,
-      title: p.title,
       templateName: p.template_name,
-      orgName: p.org_name,
+      orgName: viewerOrgName(p, viewerId),
       status: p.status,
     })),
     passCount,

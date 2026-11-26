@@ -5,11 +5,17 @@ import { useBlockedSubmit } from './form.tsx';
 import { WizardButtons } from './wizard/wizard-actions.tsx';
 import { WizardStep } from './wizard/wizard-step.tsx';
 import { WizardStepper } from './wizard/wizard-stepper.tsx';
-import type { WizardRail } from './wizard/wizard-types.ts';
+import type { WizardRail, WizardStepDef, WizardStepState } from './wizard/wizard-types.ts';
 import { WizardStage } from './wizard-stage.tsx';
 
 export interface WizardProps {
-  steps: readonly { id: string; title: string }[];
+  steps: readonly WizardStepDef[];
+  /** From `useWizard().frame`: each step's state. Without it, steps behind are done. */
+  states?: readonly WizardStepState[];
+  /** One line at the foot of the step (from `useWizard().frame`). */
+  formError?: string | undefined;
+  /** A press on a blocked Next; without it the press announces the hint. */
+  onBlocked?: () => void;
   /** Index of the current step. */
   current: number;
   /** A done step was clicked: go back to it (its state is kept by the caller). */
@@ -107,10 +113,11 @@ export function WizardBar({
 /** The rail model of a page wizard, from its props: done steps behind, to do ahead. */
 function railOf({
   steps,
+  states,
   current,
   onStep,
   skipped = [],
-}: Pick<WizardProps, 'steps' | 'current' | 'onStep' | 'skipped'>): WizardRail {
+}: Pick<WizardProps, 'steps' | 'states' | 'current' | 'onStep' | 'skipped'>): WizardRail {
   return {
     mode: 'create',
     index: current,
@@ -118,13 +125,14 @@ function railOf({
       ...s,
       skip: skipped.includes(s.id),
       state:
-        i === current
+        states?.[i] ??
+        (i === current
           ? 'current'
           : skipped.includes(s.id)
             ? 'skipped'
             : i < current
               ? 'done'
-              : 'todo',
+              : 'todo'),
     })),
     go: (to) => {
       const at = typeof to === 'number' ? to : steps.findIndex((s) => s.id === to);
@@ -161,6 +169,9 @@ export function Wizard({
   asideQuiet,
   children,
   onNext,
+  states,
+  formError,
+  onBlocked,
   ...bar
 }: WizardProps) {
   const blocked = useBlockedSubmit<HTMLDivElement>();
@@ -172,14 +183,14 @@ export function Wizard({
   useEffect(() => {
     previous.current = current;
   }, [current]);
-  const rail = railOf({ steps, current, onStep, skipped });
+  const rail = railOf({ steps, states, current, onStep, skipped });
   const view = {
     ...rail,
     id: steps[current]?.id ?? '',
     last: !steps.slice(current + 1).some((s) => !skipped?.includes(s.id)),
     finishing: Boolean(bar.busy),
     motion: { key, direction } as const,
-    formError: undefined,
+    formError,
   };
   const next = onNext
     ? () => {
@@ -206,7 +217,11 @@ export function Wizard({
           {aside}
         </WizardStage>
       ) : null}
-      <WizardBar {...bar} onNext={next} onBlocked={() => blocked.block(bar.nextHint)} />
+      <WizardBar
+        {...bar}
+        onNext={next}
+        onBlocked={onBlocked ?? (() => blocked.block(bar.nextHint))}
+      />
     </div>
   );
 }

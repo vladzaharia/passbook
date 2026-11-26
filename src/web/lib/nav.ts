@@ -18,6 +18,8 @@ export interface NavSection {
 export interface NavItem extends NavSection {
   /** The full path in the current scope. */
   to: string;
+  /** Search params the entry opens with. */
+  search?: Record<string, string>;
 }
 
 const page = (
@@ -90,6 +92,14 @@ export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
   ],
 ];
 
+/** A developer sandbox has no Live, so no stored connections: the entry is its webhook endpoints. */
+const webhooksOnly = (item: NavItem): NavItem => ({
+  ...item,
+  label: 'Webhooks',
+  search: { tab: 'webhooks' },
+  keywords: ['endpoints', 'events', 'signing'],
+});
+
 /** The scope's sections the principal may open, with full paths. */
 export function adminNavGroups(
   scope: AdminScope | undefined,
@@ -101,8 +111,11 @@ export function adminNavGroups(
   return groups
     .map((group) =>
       group
-        .map((item) => ({ ...item, to: scopePath(scope, item.section) }))
-        .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership)),
+        .map((item): NavItem => ({ ...item, to: scopePath(scope, item.section) }))
+        .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership))
+        .map((item) =>
+          membership?.testOnly && item.section === '/connections' ? webhooksOnly(item) : item,
+        ),
     )
     .filter((group) => group.length > 0);
 }

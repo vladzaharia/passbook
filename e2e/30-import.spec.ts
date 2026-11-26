@@ -28,7 +28,7 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
     await upload(csv);
     await page.getByRole('button', { name: 'Next', exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/o\/[^/]+\/passes\/import\/[^/?]+/);
-    await expect(page.getByText('Match columns')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Match the columns' })).toBeVisible();
   };
   const check = () => page.getByRole('button', { name: /^Check/ }).click();
   const tile = (label: string, n: number) =>
@@ -111,7 +111,7 @@ async function importSample(page: Page) {
     buffer: Buffer.from(text),
   });
   await page.getByRole('button', { name: 'Next', exact: true }).click();
-  await expect(page.getByText('Match columns')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Match the columns' })).toBeVisible();
 }
 
 test('the template sample file maps in full', async ({ page }) => {
@@ -138,7 +138,7 @@ test('an unreadable choice shows the cell as written in Needs a fix', async ({ p
     buffer: Buffer.from([HEAD, row(ref, 'Kai', '3').replace(',Plus,', ',Gold,')].join('\n')),
   });
   await page.getByRole('button', { name: 'Next', exact: true }).click();
-  await expect(page.getByText('Match columns')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Match the columns' })).toBeVisible();
   await page.getByRole('button', { name: /^Check/ }).click();
   await expect(page.getByRole('table', { name: 'Problems' })).toContainText('Gold');
 });

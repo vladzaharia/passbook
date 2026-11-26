@@ -4,7 +4,7 @@ import { admitsOf, admitsWire, type ScanEventDto } from '@/shared/contracts/scan
 import { ScanningSessionDetailSchema } from '@/shared/contracts/scanning-sessions.ts';
 import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
-import { Button, Callout, CheckboxField, Dialog, DialogContent } from '@/web/ui/index.ts';
+import { Callout, CheckboxField, FormDialog } from '@/web/ui/index.ts';
 import { useScanningSessions } from '../sessions/api.ts';
 
 /** Sessions that admit this event: tick one to add it, untick to take it off. */
@@ -44,43 +44,29 @@ export function AddToSessionDialog({
     },
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        title="Add to a session"
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              loading={save.isPending}
-              disabled={changed.length === 0}
-              onClick={() => save.mutate()}
-            >
-              Save
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          {items.map((s) => (
-            <CheckboxField
-              key={s.id}
-              label={s.accepts === null ? `${s.name} (any pass type)` : s.name}
-              checked={on(s)}
-              disabled={s.accepts === null}
-              onCheckedChange={(checked) => setPicked((p) => ({ ...p, [s.id]: checked === true }))}
-            />
-          ))}
-          {!items.length && !sessions.isPending ? (
-            <p className="text-sm">No sessions yet.</p>
-          ) : null}
-          {save.isError || sessions.isError ? (
-            <Callout tone="danger">{errorMessage(save.error ?? sessions.error)}</Callout>
-          ) : null}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Add to a session"
+      size="sm"
+      dirty={changed.length > 0}
+      submitLabel="Save"
+      busy={save.isPending}
+      onSubmit={() => (changed.length ? save.mutateAsync() : onClose())}
+    >
+      {items.map((s) => (
+        <CheckboxField
+          key={s.id}
+          label={s.accepts === null ? `${s.name} (any pass type)` : s.name}
+          checked={on(s)}
+          disabled={s.accepts === null}
+          onCheckedChange={(checked) => setPicked((p) => ({ ...p, [s.id]: checked === true }))}
+        />
+      ))}
+      {!items.length && !sessions.isPending ? <p className="text-sm">No sessions yet.</p> : null}
+      {sessions.isError ? <Callout tone="danger">{errorMessage(sessions.error)}</Callout> : null}
+    </FormDialog>
   );
 }

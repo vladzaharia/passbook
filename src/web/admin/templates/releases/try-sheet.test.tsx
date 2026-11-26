@@ -32,7 +32,10 @@ const state = (over: Record<string, unknown> = {}) => ({
 });
 const done = { outcome: 'released', releaseId: 'r1', generation: 1, approvalKind: 'test' };
 
-async function open(devices: () => Response) {
+async function open(
+  devices: () => Response,
+  over: Record<string, (url: URL, init?: RequestInit) => Response> = {},
+) {
   const calls: { url: URL; init?: RequestInit | undefined }[] = [];
   const detail = templateDetail({ release: state() });
   detail.versions[1] = { ...detail.versions[1], report: { ok: true, issues: [] } } as never;
@@ -58,6 +61,7 @@ async function open(devices: () => Response) {
         );
       },
       '/api/v1/passes/p1/devices': devices,
+      ...over,
     },
   });
   return { ...rendered, calls };
@@ -117,4 +121,18 @@ it('cheers when the phone registers and offers Release', async () => {
     expect(within(sheet).getByRole('button', { name: 'Release v2' })).toBeEnabled(),
   );
   expect((await axe(container)).violations).toEqual([]);
+});
+
+it('names the step that failed and offers another try', async () => {
+  const user = userEvent.setup();
+  await open(() => json({ version: 1, devices: [], removal: null }), {
+    '/api/v1/passes': () =>
+      json({ type: 'about:blank', title: 'Down', status: 500, code: 'INTERNAL' }, 500),
+  });
+  await user.click(await screen.findByRole('button', { name: 'Try on my phone' }));
+  const sheet = await screen.findByRole('dialog', { name: 'Try on my phone' });
+  const steps = await within(sheet).findByRole('list', { name: 'Progress' });
+  await waitFor(() => expect(steps).toHaveTextContent('Make your pass (failed)'));
+  expect(steps).toHaveTextContent('Release v2 to Test (done)');
+  expect(within(sheet).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
 });
