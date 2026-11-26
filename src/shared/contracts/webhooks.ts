@@ -306,6 +306,12 @@ export const EventFeedQuerySchema = z.object({
     .pipe(z.array(SubscribableEventTypeSchema).min(1).max(32))
     .optional(),
   passId: IdSchema.optional(),
+  requestId: z
+    .string()
+    .min(1)
+    .max(64)
+    .optional()
+    .describe('Only events a call with this `x-request-id` caused.'),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   apiVersion: WebhookApiVersionSchema.optional(),
 });

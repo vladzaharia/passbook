@@ -57511,6 +57511,135 @@
           "queued"
         ]
       },
+      "EventsListDeliveriesResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "eventId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "pass.issued",
+                    "pass.updated",
+                    "pass.voided",
+                    "pass.unvoided",
+                    "pass.removed",
+                    "pass.restored",
+                    "pass.installed",
+                    "pass.uninstalled",
+                    "pass.scanned",
+                    "pass.scan_refused",
+                    "pass.scan_undone",
+                    "pass.channels_changed",
+                    "pass.printed",
+                    "pass.print_voided",
+                    "push.failed",
+                    "email.failed",
+                    "webhook.test"
+                  ]
+                },
+                "passId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "externalId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "delivered",
+                    "failed",
+                    "cancelled"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nextAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "lastStatus": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "lastError": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "lastAttemptAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "finishedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "replays": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "endpointId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "target": {
+                  "type": "string",
+                  "enum": [
+                    "url",
+                    "capture"
+                  ]
+                }
+              },
+              "required": [
+                "eventId",
+                "type",
+                "passId",
+                "externalId",
+                "state",
+                "attempts",
+                "nextAt",
+                "lastStatus",
+                "lastError",
+                "lastAttemptAt",
+                "finishedAt",
+                "replays",
+                "endpointId",
+                "target"
+              ]
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
       "IdentitiesListResponse": {
         "anyOf": [
           {
@@ -84971,7 +85100,7 @@
     },
     "/api/v1/developer/resolve": {
       "get": {
-        "summary": "What a pasted id is in your sandbox: a request, a pass, a template or the sandbox",
+        "summary": "What a pasted id is in your sandbox. An alias of GET /resolve",
         "operationId": "developer.getResolve",
         "tags": [
           "developer"
@@ -84980,11 +85109,24 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[0-9a-fA-F]{16}-[A-Za-z]{3})$"
+              "pattern": "^(?:dp_[A-Za-z0-9-]{8,60}|[A-Za-z0-9-]{8,64})$"
             },
             "required": true,
             "name": "id",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "The organization to look in. Omit it for your own sandbox. An organization you may use Test in is allowed."
+            },
+            "required": false,
+            "description": "The organization to look in. Omit it for your own sandbox. An organization you may use Test in is allowed.",
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -85001,26 +85143,43 @@
                         "request",
                         "pass",
                         "template",
+                        "sandbox",
+                        "key",
+                        "event",
+                        "delivery",
+                        "capture",
+                        "endpoint",
+                        "operation",
+                        "device_pass",
+                        "live",
                         "org"
-                      ]
+                      ],
+                      "description": "`live`: the id exists in Live. Open it in admin. `org`: the older name of `sandbox`, still sent by `/developer/resolve`."
                     },
-                    "href": {
-                      "type": "string"
+                    "id": {
+                      "type": "string",
+                      "description": "The id as stored, which can differ in case from the one sent."
                     },
                     "label": {
                       "type": "string"
+                    },
+                    "href": {
+                      "type": "string",
+                      "description": "Where it opens: a Workbench tool, the portal for the older kinds, or admin for `live`."
                     }
                   },
                   "required": [
                     "kind",
-                    "href",
-                    "label"
+                    "id",
+                    "label",
+                    "href"
                   ]
                 },
                 "example": {
-                  "kind": "request",
-                  "href": "https://passbook.mobile/developers/logs",
-                  "label": "Server integration"
+                  "kind": "live",
+                  "id": "0193a1b2-7c00-7000-8000-e3816cf1ba1d",
+                  "label": "Server integration",
+                  "href": "https://passbook.mobile/developers/logs"
                 }
               }
             }
@@ -85055,7 +85214,8 @@
           "RESOLVE_NOT_FOUND",
           "SANDBOX_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_CONTEXT_NOT_FOUND"
         ]
       }
     },
@@ -85458,6 +85618,101 @@
                         "series"
                       ]
                     },
+                    "quotas": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "passes": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        },
+                        "templates": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        },
+                        "endpoints": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        },
+                        "keys": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "passes",
+                        "templates",
+                        "endpoints",
+                        "keys"
+                      ],
+                      "description": "What the sandbox holds against its caps."
+                    },
                     "keys": {
                       "type": "array",
                       "items": {
@@ -85859,6 +86114,7 @@
                     "sandbox",
                     "progress",
                     "usage",
+                    "quotas",
                     "keys",
                     "calls",
                     "endpoints",
@@ -85959,6 +86215,24 @@
                         0,
                         1
                       ]
+                    }
+                  },
+                  "quotas": {
+                    "passes": {
+                      "used": 128,
+                      "limit": 25
+                    },
+                    "templates": {
+                      "used": 128,
+                      "limit": 25
+                    },
+                    "endpoints": {
+                      "used": 128,
+                      "limit": 25
+                    },
+                    "keys": {
+                      "used": 128,
+                      "limit": 25
                     }
                   },
                   "keys": [
@@ -87648,6 +87922,570 @@
           "RATE_LIMITED",
           "SANDBOX_CONFLICT",
           "SANDBOX_NOT_FOUND",
+          "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/resolve": {
+      "get": {
+        "summary": "What a pasted id is in your Test data: a request, a pass, an event, a key, or Live",
+        "operationId": "workbench.getResolve",
+        "tags": [
+          "workbench"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:dp_[A-Za-z0-9-]{8,60}|[A-Za-z0-9-]{8,64})$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "The organization to look in. Omit it for your own sandbox. An organization you may use Test in is allowed."
+            },
+            "required": false,
+            "description": "The organization to look in. Omit it for your own sandbox. An organization you may use Test in is allowed.",
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "request",
+                        "pass",
+                        "template",
+                        "sandbox",
+                        "key",
+                        "event",
+                        "delivery",
+                        "capture",
+                        "endpoint",
+                        "operation",
+                        "device_pass",
+                        "live",
+                        "org"
+                      ],
+                      "description": "`live`: the id exists in Live. Open it in admin. `org`: the older name of `sandbox`, still sent by `/developer/resolve`."
+                    },
+                    "id": {
+                      "type": "string",
+                      "description": "The id as stored, which can differ in case from the one sent."
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "href": {
+                      "type": "string",
+                      "description": "Where it opens: a Workbench tool, the portal for the older kinds, or admin for `live`."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id",
+                    "label",
+                    "href"
+                  ]
+                },
+                "example": {
+                  "kind": "live",
+                  "id": "0193a1b2-7c00-7000-8000-7b6a8ca3b670",
+                  "label": "Server integration",
+                  "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "workbench",
+          "method": "resolve",
+          "sdk": false,
+          "reason": "Workbench: a signed-in person in a browser, not an integration."
+        },
+        "description": "What an id is in your Test data. `live` means it exists in Live: open it in admin.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "RESOLVE_NOT_FOUND",
+          "SANDBOX_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_CONTEXT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/workbench/summary": {
+      "get": {
+        "summary": "Attention counts, the quickstart and a sandbox’s quotas for one Test context",
+        "operationId": "workbench.getSummary",
+        "tags": [
+          "workbench"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Omit for your own sandbox."
+            },
+            "required": false,
+            "description": "Omit for your own sandbox.",
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "Ms timestamp: errors newer than it count. Omitted counts all that is kept."
+            },
+            "required": false,
+            "description": "Ms timestamp: errors newer than it count. Omitted counts all that is kept.",
+            "name": "since[logs]",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "Ms timestamp: failed deliveries newer than it count. Omitted counts all that is kept."
+            },
+            "required": false,
+            "description": "Ms timestamp: failed deliveries newer than it count. Omitted counts all that is kept.",
+            "name": "since[events]",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "Ms timestamp: emails newer than it count. Omitted counts all that is kept."
+            },
+            "required": false,
+            "description": "Ms timestamp: emails newer than it count. Omitted counts all that is kept.",
+            "name": "since[inbox]",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "now": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "quickstart": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "done": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "done",
+                        "total"
+                      ],
+                      "description": "Sandbox only. Null in an organization."
+                    },
+                    "errors": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Test calls with status 400 or more, newer than `since[logs]`. Capped at 99."
+                    },
+                    "failedDeliveries": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Test deliveries that failed, newer than `since[events]`. Capped at 99."
+                    },
+                    "listening": {
+                      "type": "boolean",
+                      "description": "An active Test endpoint is attached."
+                    },
+                    "inboxNew": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Test emails newer than `since[inbox]`. Capped at 99."
+                    },
+                    "keysExpiring": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Test keys that expire within 7 days."
+                    },
+                    "quotas": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "passes": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        },
+                        "templates": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        },
+                        "endpoints": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        },
+                        "keys": {
+                          "type": "object",
+                          "properties": {
+                            "used": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "limit": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "used",
+                            "limit"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "passes",
+                        "templates",
+                        "endpoints",
+                        "keys"
+                      ],
+                      "description": "Sandbox only. Null in an organization."
+                    }
+                  },
+                  "required": [
+                    "now",
+                    "quickstart",
+                    "errors",
+                    "failedDeliveries",
+                    "listening",
+                    "inboxNew",
+                    "keysExpiring",
+                    "quotas"
+                  ]
+                },
+                "example": {
+                  "now": 1795570500000,
+                  "quickstart": {
+                    "done": 39,
+                    "total": 128
+                  },
+                  "errors": 0,
+                  "failedDeliveries": 17,
+                  "listening": false,
+                  "inboxNew": 8,
+                  "keysExpiring": 4,
+                  "quotas": {
+                    "passes": {
+                      "used": 128,
+                      "limit": 25
+                    },
+                    "templates": {
+                      "used": 128,
+                      "limit": 25
+                    },
+                    "endpoints": {
+                      "used": 128,
+                      "limit": 25
+                    },
+                    "keys": {
+                      "used": 128,
+                      "limit": 25
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "workbench",
+          "method": "retrieveSummary",
+          "sdk": false,
+          "reason": "Workbench navigation counts: a signed-in person in a browser, not an integration."
+        },
+        "description": "The navigation counts of one Test context. A count is rows newer than the `since[...]` mark you send; omit a mark and every kept row counts.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "SANDBOX_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_CONTEXT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/workbench/contexts": {
+      "get": {
+        "summary": "Your sandbox and the organizations where you may use Test, with the tools each shows",
+        "operationId": "workbench.getContexts",
+        "tags": [
+          "workbench"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sandbox": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "orgId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "closed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "orgId",
+                        "name",
+                        "slug",
+                        "closed"
+                      ],
+                      "description": "Your developer sandbox, or null before you make one."
+                    },
+                    "orgs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "orgId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "tools": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "home",
+                                "design",
+                                "passes",
+                                "console",
+                                "logs",
+                                "events",
+                                "inbox",
+                                "activity",
+                                "keys"
+                              ]
+                            },
+                            "description": "The tools your roles may read there."
+                          }
+                        },
+                        "required": [
+                          "orgId",
+                          "name",
+                          "slug",
+                          "tools"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "sandbox",
+                    "orgs"
+                  ]
+                },
+                "example": {
+                  "sandbox": {
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "name": "Northwind sandbox",
+                    "slug": "northwind-climbing",
+                    "closed": false
+                  },
+                  "orgs": [
+                    {
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "name": "Northwind Climbing",
+                      "slug": "northwind-climbing",
+                      "tools": [
+                        "home"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "workbench",
+          "method": "listContexts",
+          "sdk": false,
+          "reason": "Workbench context switcher: a signed-in person in a browser, not an integration."
+        },
+        "description": "Your sandbox and the organizations where you may use Test, with the tools your roles read in each.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
       }
@@ -126576,6 +127414,18 @@
           },
           {
             "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Only events a call with this `x-request-id` caused."
+            },
+            "required": false,
+            "description": "Only events a call with this `x-request-id` caused.",
+            "name": "requestId",
+            "in": "query"
+          },
+          {
+            "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 200,
@@ -126761,6 +127611,110 @@
           "method": "retrieve"
         },
         "description": "One event by id.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/events/{id}/deliveries": {
+      "get": {
+        "summary": "Where one event was sent: its deliveries across endpoints. `passes:read`, like the event",
+        "tags": [
+          "events"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsListDeliveriesResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "eventId": "0193a1b2-7c00-7000-8000-000000000033",
+                      "type": "pass.issued",
+                      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "externalId": "booking_8841",
+                      "state": "delivered",
+                      "attempts": 1,
+                      "nextAt": 1795570680000,
+                      "lastStatus": 200,
+                      "lastError": null,
+                      "lastAttemptAt": 1795570380000,
+                      "finishedAt": 1795570380240,
+                      "replays": 0,
+                      "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
+                      "target": "url"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "events.getEventsByIdDeliveries",
+        "x-sdk": {
+          "resource": "events",
+          "method": "listDeliveries"
+        },
+        "description": "Where one event was sent: one row per endpoint with its state and last attempt. Needs `passes:read`, like the event.",
         "security": [
           {
             "apiKey": [

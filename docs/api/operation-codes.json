@@ -1269,9 +1269,11 @@
     "UNAUTHENTICATED"
   ],
   "developer get /resolve": [
+    "FORBIDDEN",
     "RESOLVE_NOT_FOUND",
     "SANDBOX_NOT_FOUND",
-    "UNAUTHENTICATED"
+    "UNAUTHENTICATED",
+    "WORKBENCH_CONTEXT_NOT_FOUND"
   ],
   "developer get /sandbox": [
     "UNAUTHENTICATED"
@@ -1640,6 +1642,14 @@
     "VALIDATION"
   ],
   "events get /{id}": [
+    "EVENT_NOT_FOUND",
+    "FORBIDDEN",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "VALIDATION"
+  ],
+  "events get /{id}/deliveries": [
     "EVENT_NOT_FOUND",
     "FORBIDDEN",
     "ORG_FORBIDDEN",
@@ -8834,5 +8844,22 @@
     "UNSAFE_URL",
     "WEBHOOK_ENDPOINT_LIMIT",
     "WEBHOOK_ENDPOINT_NOT_FOUND"
+  ],
+  "workbench get /": [
+    "FORBIDDEN",
+    "RESOLVE_NOT_FOUND",
+    "SANDBOX_NOT_FOUND",
+    "UNAUTHENTICATED",
+    "WORKBENCH_CONTEXT_NOT_FOUND"
+  ],
+  "workbench get /contexts": [
+    "FORBIDDEN",
+    "UNAUTHENTICATED"
+  ],
+  "workbench get /summary": [
+    "FORBIDDEN",
+    "SANDBOX_NOT_FOUND",
+    "UNAUTHENTICATED",
+    "WORKBENCH_CONTEXT_NOT_FOUND"
   ]
 }

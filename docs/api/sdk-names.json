@@ -469,6 +469,10 @@
     "resource": "events",
     "method": "retrieve"
   },
+  "events.getEventsByIdDeliveries": {
+    "resource": "events",
+    "method": "listDeliveries"
+  },
   "google-wallet.postWalletV1GoogleByAccountId": {
     "resource": "googleWallet",
     "method": "receiveCallback",
@@ -2584,5 +2588,23 @@
   "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady": {
     "resource": "platform.walletRelease",
     "method": "enableReady"
+  },
+  "workbench.getContexts": {
+    "resource": "workbench",
+    "method": "listContexts",
+    "sdk": false,
+    "reason": "Workbench context switcher: a signed-in person in a browser, not an integration."
+  },
+  "workbench.getResolve": {
+    "resource": "workbench",
+    "method": "resolve",
+    "sdk": false,
+    "reason": "Workbench: a signed-in person in a browser, not an integration."
+  },
+  "workbench.getSummary": {
+    "resource": "workbench",
+    "method": "retrieveSummary",
+    "sdk": false,
+    "reason": "Workbench navigation counts: a signed-in person in a browser, not an integration."
   }
 }

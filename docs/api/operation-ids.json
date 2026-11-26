@@ -108,6 +108,7 @@
   "entitlements.putPlatformOrgsByIdEntitlements",
   "events.getEvents",
   "events.getEventsById",
+  "events.getEventsByIdDeliveries",
   "google-wallet.postWalletV1GoogleByAccountId",
   "holders.getHolders",
   "holders.getHoldersById",
@@ -576,5 +577,8 @@
   "webhooks.postWebhookEndpointsByIdReplay",
   "webhooks.postWebhookEndpointsByIdSecret",
   "webhooks.postWebhookEndpointsByIdTest",
-  "webhooks.postWebhookEndpointsCapture"
+  "webhooks.postWebhookEndpointsCapture",
+  "workbench.getContexts",
+  "workbench.getResolve",
+  "workbench.getSummary"
 ]

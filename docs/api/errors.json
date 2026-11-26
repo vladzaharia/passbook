@@ -6979,6 +6979,15 @@
       ]
     },
     {
+      "code": "WORKBENCH_CONTEXT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
       "code": "WORKFLOW_START",
       "statuses": [
         503,

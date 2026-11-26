@@ -530,6 +530,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"events.listDeliveries", "GET", "/api/v1/events/id1/deliveries", false,
+		"", `{"items":[{"eventId":"x","type":"pass.issued","passId":"x","externalId":"x","state":"pending","attempts":0,"nextAt":0,"lastStatus":0,"lastError":"x","lastAttemptAt":0,"finishedAt":0,"replays":0,"endpointId":"x","target":"url"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Events.ListDeliveries(ctx, "id1")
+		},
+	},
+	{
 		"holders.list", "GET", "/api/v1/holders", false,
 		"", `{"items":[{"passId":"x","state":"unassigned","email":"x","ownerUserId":"x","ownerName":"x","blockedUserIds":["x"],"transfer":{"transferId":"x","state":"pending"},"reissueRequired":false,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

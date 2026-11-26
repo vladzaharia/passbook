@@ -70,6 +70,12 @@ const base = (): Omit<DeveloperHome, 'state' | 'progress'> => ({
     passes: 0,
     series: { from: NOW - 23 * HOUR, calls: series(0), errors: series(0) },
   },
+  quotas: {
+    passes: { used: 0, limit: 500 },
+    templates: { used: 1, limit: 10 },
+    endpoints: { used: 1, limit: 3 },
+    keys: { used: 2, limit: 3 },
+  },
   keys: [
     {
       id: '019a-key-1',
@@ -117,6 +123,7 @@ export const homeNone: DeveloperHome = {
   ...base(),
   state: 'none',
   sandbox: null,
+  quotas: null,
   progress: null,
   usage: null,
   keys: [],

@@ -1,0 +1,63 @@
+{
+  "workbench.getResolve": {
+    "description": "What an id is in your Test data. `live` means it exists in Live: open it in admin.",
+    "response": {
+      "kind": "live",
+      "id": "0193a1b2-7c00-7000-8000-7b6a8ca3b670",
+      "label": "Server integration",
+      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+    }
+  },
+  "workbench.getSummary": {
+    "description": "The navigation counts of one Test context. A count is rows newer than the `since[...]` mark you send; omit a mark and every kept row counts.",
+    "response": {
+      "now": 1795570500000,
+      "quickstart": {
+        "done": 39,
+        "total": 128
+      },
+      "errors": 0,
+      "failedDeliveries": 17,
+      "listening": false,
+      "inboxNew": 8,
+      "keysExpiring": 4,
+      "quotas": {
+        "passes": {
+          "used": 128,
+          "limit": 25
+        },
+        "templates": {
+          "used": 128,
+          "limit": 25
+        },
+        "endpoints": {
+          "used": 128,
+          "limit": 25
+        },
+        "keys": {
+          "used": 128,
+          "limit": 25
+        }
+      }
+    }
+  },
+  "workbench.getContexts": {
+    "description": "Your sandbox and the organizations where you may use Test, with the tools your roles read in each.",
+    "response": {
+      "sandbox": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Northwind sandbox",
+        "slug": "northwind-climbing",
+        "closed": false
+      },
+      "orgs": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Northwind Climbing",
+          "slug": "northwind-climbing",
+          "tools": ["home"]
+        }
+      ]
+    }
+  }
+}

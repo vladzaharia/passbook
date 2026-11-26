@@ -2610,6 +2610,44 @@
   }
  },
  {
+  "id": "events.getEventsByIdDeliveries",
+  "call": "events.list_deliveries",
+  "http": "GET",
+  "path": "/api/v1/events/{id}/deliveries",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "eventId": "x",
+     "type": "pass.issued",
+     "passId": "x",
+     "externalId": "x",
+     "state": "pending",
+     "attempts": 0,
+     "nextAt": 0,
+     "lastStatus": 0,
+     "lastError": "x",
+     "lastAttemptAt": 0,
+     "finishedAt": 0,
+     "replays": 0,
+     "endpointId": "x",
+     "target": "url"
+    }
+   ]
+  }
+ },
+ {
   "id": "holders.getHolders",
   "call": "holders.list",
   "http": "GET",

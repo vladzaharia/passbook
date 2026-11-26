@@ -689,6 +689,15 @@ func (r *EventsResource) List(ctx context.Context, query *EventsListQuery, opts 
 	return newPager[WebhookEvent](r.c, call{method: "GET", path: "/api/v1/events", query: queryValues(query)}, "after", opts)
 }
 
+// ListDeliveries Where one event was sent: its deliveries across endpoints. `passes:read`, like the event `GET /api/v1/events/{id}/deliveries`
+func (r *EventsResource) ListDeliveries(ctx context.Context, id string, opts ...RequestOption) (*EventsListDeliveriesResult, error) {
+	var out EventsListDeliveriesResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/events/" + pathEscape(id) + "/deliveries"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Retrieve One event by id `GET /api/v1/events/{id}`
 func (r *EventsResource) Retrieve(ctx context.Context, id string, query *EventsRetrieveQuery, opts ...RequestOption) (EventsRetrieveResult, error) {
 	var out EventsRetrieveResult
