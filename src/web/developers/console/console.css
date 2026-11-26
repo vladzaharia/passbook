@@ -1,5 +1,4 @@
 /* The Try it console: tabs, header chips, form, editor and the Run bar. Loads with the island. */
-@import "./response.css";
 @import "./runbar.css";
 
 .run-root {

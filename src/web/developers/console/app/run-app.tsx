@@ -20,7 +20,7 @@ export function RunApp({ session, mode, slug, opId }: RunAppProps) {
       (error: unknown) => reportError(error),
     );
   }, []);
-  const state = sessionState(session, false);
+  const state = sessionState(session);
   if (state) return state;
   if (session.kind !== 'ready') return null;
   return (

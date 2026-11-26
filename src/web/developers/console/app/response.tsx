@@ -12,6 +12,7 @@ import { RUN_LIMIT, remaining as runsLeft } from '../budget.ts';
 import { COPY_LANGS, copyAs, type Sent } from '../copy-as.ts';
 import { EVENTS_AFTER_MS, showsSecret, tokenGet } from '../events.ts';
 import type { Outcome } from '../send.ts';
+import '../response.css';
 
 const C = CONSOLE_COPY;
 const header = (o: Outcome, name: string) => o.headers.find(([n]) => n === name)?.[1];
