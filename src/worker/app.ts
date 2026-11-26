@@ -21,6 +21,7 @@ import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { platformInvitationRoutes } from './modules/idp/invitations/platform-routes.ts';
 import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
@@ -219,6 +220,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // Before usersRoutes: its admin-session guard would otherwise run first on `/{id}/claims`.
   app.route('/api/v1/users', userClaimsRoutes);
   app.route('/api/v1/platform', groupClaimsRoutes);
+  app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);

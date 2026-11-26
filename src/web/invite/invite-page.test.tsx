@@ -12,6 +12,7 @@ const SECRET = `m_${'a'.repeat(43)}`;
 const preview = (over: Partial<InvitationPreview> = {}): InvitationPreview => ({
   kind: 'member',
   orgName: 'Agency',
+  groups: [],
   roles: ['pass_operator'],
   developer: false,
   email: 'a•••@agency.test',

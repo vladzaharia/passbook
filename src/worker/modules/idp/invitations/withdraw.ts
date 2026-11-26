@@ -11,7 +11,7 @@ import { pairedDeveloperOf, setupsOf } from './repo-resolve.ts';
  */
 export async function withdrawSetups(
   ctx: ServiceContext,
-  kind: InviteRow['kind'],
+  kind: InviteRow['kind'] | 'platform',
   invitationId: string,
   reason = 'invitation.revoked',
 ): Promise<void> {

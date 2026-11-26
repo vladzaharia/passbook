@@ -88036,11 +88036,21 @@
                       "type": "string",
                       "enum": [
                         "member",
-                        "developer"
+                        "developer",
+                        "platform"
                       ]
                     },
                     "orgName": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "roles": {
                       "type": "array",
@@ -88074,6 +88084,7 @@
                   "required": [
                     "kind",
                     "orgName",
+                    "groups",
                     "roles",
                     "developer",
                     "email",
@@ -88316,6 +88327,7 @@
           "IDP_NOT_MANAGED",
           "IDP_REFUSED",
           "INVITATION_CLAIM_CAPPED",
+          "INVITATION_CONFLICT",
           "INVITATION_INVALID",
           "INVITATION_NO_ACCOUNT",
           "RATE_LIMITED",
@@ -88378,11 +88390,15 @@
                       "type": "string",
                       "enum": [
                         "member",
-                        "developer"
+                        "developer",
+                        "platform"
                       ]
                     },
                     "orgName": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "membership": {
                       "type": [
@@ -88551,6 +88567,85 @@
           "INVITATION_INVALID",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/invitations/confirm": {
+      "post": {
+        "summary": "Finish a platform invitation after creating a Polaris ID, if its address matches the invitation",
+        "tags": [
+          "invitations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^(?:[mdp]_)?[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "joined"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "invitations.postInvitationsConfirm",
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVITATION_CONFLICT",
+          "INVITATION_EMAIL_MISMATCH",
+          "INVITATION_EMAIL_UNVERIFIED",
+          "INVITATION_INVALID",
+          "INVITATION_NOT_STARTED",
+          "RATE_LIMITED",
           "VALIDATION"
         ]
       }
@@ -128971,6 +129066,515 @@
           "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/invitations": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Invite a person to Polaris ID groups",
+        "tags": [
+          "platform-invitations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9_]{1,64}$"
+                    },
+                    "maxItems": 5,
+                    "default": []
+                  },
+                  "developer": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "developer": {
+                      "type": "boolean"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "accepted",
+                        "expired",
+                        "revoked"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "acceptedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "revokedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "link": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "groups",
+                    "developer",
+                    "state",
+                    "createdAt",
+                    "expiresAt",
+                    "acceptedAt",
+                    "revokedAt",
+                    "link"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "platform-invitations.postPlatformInvitations",
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_DRY_RUN",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "PLATFORM_INVITE_PENDING",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "List platform invitations",
+        "tags": [
+          "platform-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "groups": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "developer": {
+                            "type": "boolean"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "accepted",
+                              "expired",
+                              "revoked"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "expiresAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "acceptedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "revokedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "email",
+                          "groups",
+                          "developer",
+                          "state",
+                          "createdAt",
+                          "expiresAt",
+                          "acceptedAt",
+                          "revokedAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "platform-invitations.getPlatformInvitations",
+        "x-sign-in": "oidc",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/invitations/{id}": {
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Revoke a platform invitation",
+        "tags": [
+          "platform-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "platform-invitations.deletePlatformInvitationsById",
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "PLATFORM_INVITE_CONFLICT",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/invitations/{id}/resend": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Send a platform invitation again with a new link",
+        "tags": [
+          "platform-invitations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "developer": {
+                      "type": "boolean"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "accepted",
+                        "expired",
+                        "revoked"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "acceptedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "revokedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "link": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "groups",
+                    "developer",
+                    "state",
+                    "createdAt",
+                    "expiresAt",
+                    "acceptedAt",
+                    "revokedAt",
+                    "link"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_DRY_RUN",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "PLATFORM_INVITE_CONFLICT",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",

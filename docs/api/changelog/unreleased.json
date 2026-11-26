@@ -152,6 +152,14 @@
     "note": "Deletes a saved column mapping by name."
   },
   {
+    "key": "DELETE /api/v1/platform/invitations/{id} new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.deletePlatformInvitationsById",
+    "op": "DELETE /api/v1/platform/invitations/{id}",
+    "change": "new operation",
+    "note": "Revoke a platform invitation: its unused signup links are withdrawn."
+  },
+  {
     "key": "DELETE /api/v1/scan/draft new operation",
     "class": "additive",
     "operationId": "scan.deleteScanDraft",
@@ -1528,6 +1536,14 @@
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
   },
   {
+    "key": "GET /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "List platform invitations with their state."
+  },
+  {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
     "class": "notable",
     "operationId": "entitlements.getPlatformOrgsByIdEntitlements",
@@ -1574,6 +1590,14 @@
     "op": "GET /api/v1/platform/wallet-credentials",
     "change": "200.release: field added",
     "note": "Release state per provider and mode (issuance), so platform pages can say a wallet isn't released yet."
+  },
+  {
+    "key": "GET /api/v1/platform/wallet-release operation removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.getPlatformWalletRelease",
+    "op": "GET /api/v1/platform/wallet-release",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -3629,6 +3653,14 @@
     "note": "Retries a failed or cancelled provisioning run."
   },
   {
+    "key": "POST /api/v1/invitations/accept 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Accepting a platform invitation with developer access answers kind platform, orgName null."
+  },
+  {
     "key": "POST /api/v1/invitations/accept new operation",
     "class": "additive",
     "operationId": "invitations.postInvitationsAccept",
@@ -3643,6 +3675,30 @@
     "op": "POST /api/v1/invitations/claim-existing",
     "change": "new operation",
     "note": "Give the Polaris ID account that has the invited address the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/invitations/confirm new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsConfirm",
+    "op": "POST /api/v1/invitations/confirm",
+    "change": "new operation",
+    "note": "Finish a platform invitation after creating a Polaris ID; accepted when the account's verified address is the invited one."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.groups: field added",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.groups: field added",
+    "note": "Platform invitations list the groups they give, by display name; empty for other kinds."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Invitations come in a third kind, platform, with orgName null."
   },
   {
     "key": "POST /api/v1/invitations/preview new operation",
@@ -4149,6 +4205,22 @@
     "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
   },
   {
+    "key": "POST /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Invite a person to Polaris ID groups, with developer access if chosen. The invitation link is returned once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "new operation",
+    "note": "Send a platform invitation again on a new row with a new link; the old one is revoked."
+  },
+  {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
     "class": "additive",
     "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
@@ -4195,6 +4267,14 @@
     "op": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key",
     "change": "new operation",
     "note": "Starts a service account key rotation."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready operation removed",
+    "class": "breaking",
+    "operationId": "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady",
+    "op": "POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan-setups 200.staff.name, adminUser.name: now nullable",

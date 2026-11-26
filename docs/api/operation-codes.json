@@ -2073,9 +2073,23 @@
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
     "INVITATION_CLAIM_CAPPED",
+    "INVITATION_CONFLICT",
     "INVITATION_INVALID",
     "INVITATION_NO_ACCOUNT",
     "TURNSTILE_FAILED"
+  ],
+  "invitations post /confirm": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "IDP_SIGN_IN_REQUIRED",
+    "INVITATION_CONFLICT",
+    "INVITATION_EMAIL_MISMATCH",
+    "INVITATION_EMAIL_UNVERIFIED",
+    "INVITATION_INVALID",
+    "INVITATION_NOT_STARTED"
   ],
   "invitations post /preview": [
     "FORBIDDEN",
@@ -4796,6 +4810,46 @@
     "VALIDATION",
     "VERSION_CONFLICT",
     "WALLET_PROJECTION_UNSUPPORTED"
+  ],
+  "platform invitations delete /invitations/{id}": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "NOT_FOUND",
+    "PLATFORM_INVITE_CONFLICT",
+    "UNAUTHENTICATED"
+  ],
+  "platform invitations get /invitations": [],
+  "platform invitations post /invitations": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_DRY_RUN",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "NOT_FOUND",
+    "PLATFORM_INVITE_PENDING",
+    "UNAUTHENTICATED",
+    "VALIDATION"
+  ],
+  "platform invitations post /invitations/{id}/resend": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_DRY_RUN",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "NOT_FOUND",
+    "PLATFORM_INVITE_CONFLICT",
+    "UNAUTHENTICATED"
   ],
   "polaris claims get /idp/groups/{key}/claims": [
     "IDP_BUDGET",

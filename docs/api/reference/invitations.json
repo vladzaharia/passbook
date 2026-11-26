@@ -6,6 +6,7 @@
     "response": {
       "kind": "member",
       "orgName": "Northwind Climbing",
+      "groups": ["Access"],
       "roles": ["org_admin"],
       "developer": false,
       "email": "ada@example.com",
@@ -53,6 +54,14 @@
         "createdAt": 1794362400000,
         "revokedAt": null
       }
+    }
+  },
+  "invitations.postInvitationsConfirm": {
+    "request": {
+      "token": "demo-token-northwind-1aaf046224da35de6f98a4"
+    },
+    "response": {
+      "outcome": "joined"
     }
   }
 }
