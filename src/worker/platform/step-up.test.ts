@@ -264,6 +264,7 @@ describe('step-up route inventory', () => {
       [
         "DELETE /api/v1/developer/sandbox",
         "DELETE /api/v1/orgs/:id/developers/:userId",
+        "DELETE /api/v1/users/:id/holds/:role",
         "GET /api/v1/platform/idp/groups/:key/claims",
         "GET /api/v1/users/:id/claims",
         "PATCH /api/v1/connections/:id",
@@ -295,6 +296,8 @@ describe('step-up route inventory', () => {
         "POST /api/v1/orgs/:orgId/exports/:exportId/link",
         "POST /api/v1/orgs/:orgId/identities/apple",
         "POST /api/v1/orgs/:orgId/reopen",
+        "POST /api/v1/platform/idp/reconcile",
+        "POST /api/v1/platform/idp/scim-breaker/clear",
         "POST /api/v1/platform/wallet-credentials/:id/rotate-key",
         "POST /api/v1/users/:id/emails",
         "POST /api/v1/webhook-endpoints",

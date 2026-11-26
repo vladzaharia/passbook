@@ -23,6 +23,7 @@ import { identityProvisionRoutes, identityRunsRoutes } from './modules/identitie
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
 import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
+import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
@@ -218,7 +219,9 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/wallet-providers/reissue', walletReissueRoutes);
   // Before usersRoutes: its admin-session guard would otherwise run first on `/{id}/claims`.
   app.route('/api/v1/users', userClaimsRoutes);
+  app.route('/api/v1/users', userHoldRoutes);
   app.route('/api/v1/platform', groupClaimsRoutes);
+  app.route('/api/v1/platform', idpOperationRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);

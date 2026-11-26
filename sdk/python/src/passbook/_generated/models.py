@@ -1146,6 +1146,15 @@ __all__ = [
     "PlatformGroupsClaimsRetrieveResponseClaimsValue",
     "PlatformGroupsClaimsUpdateParams",
     "PlatformGroupsClaimsUpdateResponse",
+    "PlatformIdpReconcileParams",
+    "PlatformIdpReconcileResponse",
+    "PlatformIdpReconcileResponseOperation",
+    "PlatformIdpReconcileResponseOperationStartedBy",
+    "PlatformIdpReconcileResponseOperationStepsItem",
+    "PlatformIdpScimBreakerClearResponse",
+    "PlatformIdpScimBreakerClearResponseOperation",
+    "PlatformIdpScimBreakerClearResponseOperationStartedBy",
+    "PlatformIdpScimBreakerClearResponseOperationStepsItem",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -1240,6 +1249,10 @@ __all__ = [
     "PlatformUsersEmailsMakePrimaryResponsePassesItem",
     "PlatformUsersEmailsMakePrimaryResponseRecentAuditItem",
     "PlatformUsersEmailsMakePrimaryResponseSessionsItem",
+    "PlatformUsersHoldsDeleteResponse",
+    "PlatformUsersHoldsDeleteResponseOperation",
+    "PlatformUsersHoldsDeleteResponseOperationStartedBy",
+    "PlatformUsersHoldsDeleteResponseOperationStepsItem",
     "PlatformUsersListResponse",
     "PlatformUsersListResponseItemsItem",
     "PlatformUsersPassesListResponse",
@@ -8995,6 +9008,97 @@ class PlatformGroupsClaimsUpdateResponse(_Model):
     removed: _List[str]
     dryRun: bool
 
+class PlatformIdpReconcileParams(_Model):
+    dryRun: bool | None = None
+
+class PlatformIdpReconcileResponse(_Model):
+    operation: PlatformIdpReconcileResponseOperation
+
+class PlatformIdpReconcileResponseOperation(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[PlatformIdpReconcileResponseOperationStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: PlatformIdpReconcileResponseOperationStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class PlatformIdpReconcileResponseOperationStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class PlatformIdpReconcileResponseOperationStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class PlatformIdpScimBreakerClearResponse(_Model):
+    operation: PlatformIdpScimBreakerClearResponseOperation
+
+class PlatformIdpScimBreakerClearResponseOperation(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[PlatformIdpScimBreakerClearResponseOperationStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: PlatformIdpScimBreakerClearResponseOperationStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class PlatformIdpScimBreakerClearResponseOperationStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class PlatformIdpScimBreakerClearResponseOperationStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str
     range: _Literal["24h", "7d", "30d"] | str
@@ -9642,6 +9746,50 @@ class PlatformUsersEmailsMakePrimaryResponseSessionsItem(_Model):
     userAgent: str | None
     current: bool
     method: str
+
+class PlatformUsersHoldsDeleteResponse(_Model):
+    operation: PlatformUsersHoldsDeleteResponseOperation
+
+class PlatformUsersHoldsDeleteResponseOperation(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[PlatformUsersHoldsDeleteResponseOperationStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: PlatformUsersHoldsDeleteResponseOperationStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class PlatformUsersHoldsDeleteResponseOperationStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class PlatformUsersHoldsDeleteResponseOperationStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
 
 class PlatformUsersListResponse(_Model):
     items: _List[PlatformUsersListResponseItemsItem]

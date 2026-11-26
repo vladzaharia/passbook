@@ -2118,6 +2118,42 @@
       ]
     },
     {
+      "code": "IDP_ADMIN_ENDED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_APPLY_FAILED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_CLOSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_STILL_OPEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_BUDGET",
       "statuses": [
         429
@@ -2181,9 +2217,41 @@
       ]
     },
     {
+      "code": "IDP_NOT_APPLIED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_HELD",
+      "statuses": [
+        404,
+        409
+      ],
+      "primary": [
+        404,
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
       "statuses": [
         409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_READY",
+      "statuses": [
+        503
       ],
       "modules": [
         "idp"
@@ -2213,7 +2281,17 @@
         403
       ],
       "modules": [
+        "idp",
         "platform"
+      ]
+    },
+    {
+      "code": "IDP_SYNC_BUSY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -3213,7 +3291,8 @@
         409
       ],
       "modules": [
-        "developer"
+        "developer",
+        "idp"
       ]
     },
     {

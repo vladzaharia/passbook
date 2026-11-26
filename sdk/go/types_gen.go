@@ -8559,6 +8559,106 @@ type PlatformGroupsClaimsUpdateResponse struct {
 	DryRun  bool     `json:"dryRun"`
 }
 
+type PlatformIdpReconcileParams struct {
+	DryRun *bool `json:"dryRun,omitempty"`
+}
+
+type PlatformIdpReconcileResponse struct {
+	Operation PlatformIdpReconcileResponseOperation `json:"operation"`
+}
+
+type PlatformIdpReconcileResponseOperation struct {
+	ID              string                                           `json:"id"`
+	Kind            string                                           `json:"kind"`
+	Status          string                                           `json:"status"`
+	Title           string                                           `json:"title"`
+	Text            string                                           `json:"text"`
+	OrgID           *string                                          `json:"orgId"`
+	Mode            *string                                          `json:"mode"`
+	Target          map[string]any                                   `json:"target"`
+	Step            *string                                          `json:"step"`
+	Steps           []PlatformIdpReconcileResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                            `json:"attempt"`
+	Cancelable      bool                                             `json:"cancelable"`
+	CancelRequested bool                                             `json:"cancelRequested"`
+	StartedBy       PlatformIdpReconcileResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                            `json:"createdAt"`
+	StartedAt       *int64                                           `json:"startedAt"`
+	UpdatedAt       int64                                            `json:"updatedAt"`
+	FinishedAt      *int64                                           `json:"finishedAt"`
+	Error           map[string]any                                   `json:"error"`
+	Result          map[string]any                                   `json:"result"`
+	Revision        int64                                            `json:"revision"`
+	PollAfterMs     int64                                            `json:"pollAfterMs"`
+}
+
+type PlatformIdpReconcileResponseOperationStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformIdpReconcileResponseOperationStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformIdpScimBreakerClearResponse struct {
+	Operation PlatformIdpScimBreakerClearResponseOperation `json:"operation"`
+}
+
+type PlatformIdpScimBreakerClearResponseOperation struct {
+	ID              string                                                  `json:"id"`
+	Kind            string                                                  `json:"kind"`
+	Status          string                                                  `json:"status"`
+	Title           string                                                  `json:"title"`
+	Text            string                                                  `json:"text"`
+	OrgID           *string                                                 `json:"orgId"`
+	Mode            *string                                                 `json:"mode"`
+	Target          map[string]any                                          `json:"target"`
+	Step            *string                                                 `json:"step"`
+	Steps           []PlatformIdpScimBreakerClearResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                                   `json:"attempt"`
+	Cancelable      bool                                                    `json:"cancelable"`
+	CancelRequested bool                                                    `json:"cancelRequested"`
+	StartedBy       PlatformIdpScimBreakerClearResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                                   `json:"createdAt"`
+	StartedAt       *int64                                                  `json:"startedAt"`
+	UpdatedAt       int64                                                   `json:"updatedAt"`
+	FinishedAt      *int64                                                  `json:"finishedAt"`
+	Error           map[string]any                                          `json:"error"`
+	Result          map[string]any                                          `json:"result"`
+	Revision        int64                                                   `json:"revision"`
+	PollAfterMs     int64                                                   `json:"pollAfterMs"`
+}
+
+type PlatformIdpScimBreakerClearResponseOperationStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformIdpScimBreakerClearResponseOperationStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
 	Range       string                                              `json:"range"`
@@ -9299,6 +9399,54 @@ type PlatformUsersEmailsMakePrimaryResponseSessionsItem struct {
 	UserAgent  *string  `json:"userAgent"`
 	Current    bool     `json:"current"`
 	Method     string   `json:"method"`
+}
+
+type PlatformUsersHoldsDeleteResponse struct {
+	Operation PlatformUsersHoldsDeleteResponseOperation `json:"operation"`
+}
+
+type PlatformUsersHoldsDeleteResponseOperation struct {
+	ID              string                                               `json:"id"`
+	Kind            string                                               `json:"kind"`
+	Status          string                                               `json:"status"`
+	Title           string                                               `json:"title"`
+	Text            string                                               `json:"text"`
+	OrgID           *string                                              `json:"orgId"`
+	Mode            *string                                              `json:"mode"`
+	Target          map[string]any                                       `json:"target"`
+	Step            *string                                              `json:"step"`
+	Steps           []PlatformUsersHoldsDeleteResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                                `json:"attempt"`
+	Cancelable      bool                                                 `json:"cancelable"`
+	CancelRequested bool                                                 `json:"cancelRequested"`
+	StartedBy       PlatformUsersHoldsDeleteResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                                `json:"createdAt"`
+	StartedAt       *int64                                               `json:"startedAt"`
+	UpdatedAt       int64                                                `json:"updatedAt"`
+	FinishedAt      *int64                                               `json:"finishedAt"`
+	Error           map[string]any                                       `json:"error"`
+	Result          map[string]any                                       `json:"result"`
+	Revision        int64                                                `json:"revision"`
+	PollAfterMs     int64                                                `json:"pollAfterMs"`
+}
+
+type PlatformUsersHoldsDeleteResponseOperationStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformUsersHoldsDeleteResponseOperationStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
 }
 
 type PlatformUsersListResponse struct {

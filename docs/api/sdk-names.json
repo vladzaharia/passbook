@@ -1359,6 +1359,18 @@
     "resource": "platform.users.claims",
     "method": "update"
   },
+  "polaris-operations.deleteUsersByIdHoldsByRole": {
+    "resource": "platform.users.holds",
+    "method": "delete"
+  },
+  "polaris-operations.postPlatformIdpReconcile": {
+    "resource": "platform.idp",
+    "method": "reconcile"
+  },
+  "polaris-operations.postPlatformIdpScimBreakerClear": {
+    "resource": "platform.idp.scimBreaker",
+    "method": "clear"
+  },
   "public.getBByToken": {
     "resource": "public.bundles",
     "method": "retrievePage",

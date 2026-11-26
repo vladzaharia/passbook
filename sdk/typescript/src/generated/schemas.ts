@@ -7413,6 +7413,116 @@ export type PlatformGroupsClaimsUpdateResponse = {
   dryRun: boolean;
 };
 
+export type PlatformIdpReconcileParams = {
+  dryRun?: boolean;
+};
+
+export type PlatformIdpReconcileResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
+export type PlatformIdpScimBreakerClearResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
 export type PlatformMetricsRetrieveOverviewResponse = {
   source: "analytics_engine" | "d1";
   range: "24h" | "7d" | "30d";
@@ -8064,6 +8174,59 @@ export type PlatformUsersEmailsMakePrimaryResponse = {
     actorType: string;
     actorId: string | null;
   }>;
+};
+
+export type PlatformUsersHoldsDeleteResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
 };
 
 export type PlatformUsersListResponse = {

@@ -136,6 +136,11 @@ export async function breakerOpen(
   );
 }
 
+/** Deletes the breaker's counter row. True when there was one. */
+export async function clearBreaker(db: D1Database, key: string): Promise<boolean> {
+  return (await run(db, 'DELETE FROM counters WHERE key = ?', [key])).changes > 0;
+}
+
 /**
  * Marks subjects for the next drain without touching the backoff of ones that are failing: the version moves, so
  * the mark is not lost, and `attempts` and `next_at` stay.

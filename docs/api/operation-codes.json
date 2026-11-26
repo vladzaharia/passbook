@@ -4838,6 +4838,27 @@
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
+  "polaris operations delete /{id}/holds/{role}": [
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDP_NOT_HELD",
+    "OPERATION_RUNNING",
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
+  ],
+  "polaris operations post /idp/reconcile": [
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "OPERATION_RUNNING",
+    "UNAUTHENTICATED"
+  ],
+  "polaris operations post /idp/scim-breaker/clear": [
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDP_BREAKER_CLOSED",
+    "OPERATION_RUNNING",
+    "UNAUTHENTICATED"
+  ],
   "public get /wallet/samsung/{offer}": [
     "IDENTITY_EXPIRED",
     "IDENTITY_NOT_CONFIGURED",
