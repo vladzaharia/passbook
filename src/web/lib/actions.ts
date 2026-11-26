@@ -53,7 +53,6 @@ export interface ActionEntry {
   /** success: created or working; info: changed; warning: paused or taken away; danger: lost. */
   tone: Tone;
 }
-
 const a = (label: string, icon: LucideIcon, tone: Tone): ActionEntry => ({ label, icon, tone });
 const I = ACTION_ICON;
 /** Audit and activity vocabulary: a label, a glyph and a tone per action code. */
