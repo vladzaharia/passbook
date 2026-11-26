@@ -87,6 +87,9 @@ const KEYED: [RegExp, RegExp, string][] = [
 
 /** Segment word patterns, nearest ancestor first; the first that matches names the entity. */
 const RULES: [RegExp, string][] = [
+  // An operation a start answers (`.operation.title`, `.operation.steps[].label`), whatever the area.
+  [/^(steps)$/, 'operationStep'],
+  [/^(operation)$/, 'operation'],
   [/^(sandbox)$/, 'sandbox'],
   [/^(tagtype|types?)$/, 'tagType'],
   [/^(tags?)$/, 'tag'],

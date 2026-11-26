@@ -1,14 +1,8 @@
 import { Search } from 'lucide-react';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { BenchSlot } from './slots.tsx';
+import { typing } from './typing.ts';
 import './toolbar.css';
-
-/** True while the person is typing: a field, a select or an editable region has focus. */
-export const typing = (el: EventTarget | null): boolean =>
-  el instanceof HTMLElement &&
-  !!el.closest(
-    'input:not([type="checkbox"]):not([type="radio"]), textarea, select, [contenteditable="true"]',
-  );
 
 /**
  * The tool's search, first in the toolbar: 36 px (44 on touch), `/` focuses it from anywhere on the

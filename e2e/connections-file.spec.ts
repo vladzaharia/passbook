@@ -229,10 +229,17 @@ test('a developer sandbox has no Connections: hidden from the nav, a direct URL 
   const page = await ctx.newPage();
   const dev = await apiAs('developer');
   const made = await dev.get('/api/v1/developer/sandbox');
-  if (!made.sandbox)
-    await dev.send('POST', '/api/v1/developer/sandbox', {
+  if (!made.sandbox) {
+    // The create is an operation (202): wait for it to end before the sandbox is read.
+    const { operation } = await dev.send('POST', '/api/v1/developer/sandbox', {
       turnstileToken: 'XXXX.DUMMY.TOKEN.XXXX',
     });
+    await expect
+      .poll(async () => (await dev.get(`/api/v1/operations/${operation.id}`)).status, {
+        timeout: 60_000,
+      })
+      .toBe('succeeded');
+  }
   await page.goto('/');
   const orgId = await sandboxOrgId(page);
   await page.goto(`/admin/o/${encodeURIComponent(orgId)}`);

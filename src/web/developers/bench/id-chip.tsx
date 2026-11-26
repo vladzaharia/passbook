@@ -34,7 +34,7 @@ export function jumpTargets(kind: IdKind, id: string): BenchMenuItem[] {
   switch (kind) {
     case 'request':
       return [
-        to('logs', J.logs, `${PATHS.logs}#${q(id)}`),
+        to('logs', J.logs, `${PATHS.logs}?source=all#${q(id)}`),
         to('events', J.events, `${PATHS.webhooks}?request=${q(id)}`),
       ];
     case 'event':
@@ -46,7 +46,7 @@ export function jumpTargets(kind: IdKind, id: string): BenchMenuItem[] {
       ];
     case 'pass':
       return [
-        to('calls', J.passCalls, `${PATHS.logs}?path=${q(id)}`),
+        to('calls', J.passCalls, `${PATHS.logs}?path=${q(id)}&source=all`),
         to('events', J.passEvents, `${PATHS.webhooks}?pass=${q(id)}`),
       ];
     case 'op':

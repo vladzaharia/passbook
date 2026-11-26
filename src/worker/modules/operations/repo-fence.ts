@@ -2,6 +2,7 @@ import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { authorityPredicate } from '../../platform/authority-read.ts';
 import type { SqlValue } from '../../platform/db.ts';
+import { STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 
 /**
  * Who may read which rows, as SQL. `ctes` follow `WITH` (empty for a starter read); `where` is ANDed onto
@@ -41,22 +42,26 @@ export function platformFence(
   };
 }
 
-/** Rows a person started, for the live session that started them. A key never reads these. */
+/**
+ * Rows a person started, for the live session that asks. A key never reads these.
+ * `writer`: stopping or retrying needs the person's own live, strong session (a step-up replaces the one that started it).
+ * `ownSession`: an own-only session (an email link) sees only what its own session started.
+ */
 export function starterFence(
   session: { userId: string; sessionId: string },
   now: number,
-  /** Stopping or retrying: only the session that started it, not the person's other sessions. */
-  writer = false,
+  options: { writer?: boolean; ownSession?: boolean } = {},
 ): Fence {
+  const { writer = false, ownSession = false } = options;
   return {
     ctes: '',
     ctesParams: [],
-    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${writer ? ' AND o.actor_session = ?' : ''}
+    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${ownSession ? ' AND o.actor_session = ?' : ''}
       AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ? AND s.user_id = ? AND s.revoked_at IS NULL
-        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+        AND s.expires_at > ? AND s.idle_expires_at > ?${writer ? ` AND s.amr IN ${STRONG_AMR_SQL}` : ''})`,
     whereParams: [
       session.userId,
-      ...(writer ? [session.sessionId] : []),
+      ...(ownSession ? [session.sessionId] : []),
       session.sessionId,
       session.userId,
       now,

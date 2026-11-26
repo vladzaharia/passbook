@@ -36,7 +36,7 @@ describe('the signed-out markup of the quickstart and console', () => {
     }
     vi.stubGlobal('IntersectionObserver', Seen);
     document.body.innerHTML =
-      '<div data-island="quickstart" id="q"></div><div data-island="run" data-mode="console" id="r"></div><div data-island="run" id="o"></div><div data-island="logs" id="l"></div>';
+      '<div data-island="quickstart" id="q"></div><div data-island="console" id="r"></div><div data-island="run" id="o"></div><div data-island="logs" id="l"></div>';
     mountIslands();
     const q = document.getElementById('q') as HTMLElement;
     expect(q.hasAttribute('data-hydrating')).toBe(true);

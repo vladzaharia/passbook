@@ -40,8 +40,13 @@ export function Sheet({
     if (!d) return;
     opener.current = document.activeElement;
     if (!d.open) d.showModal();
+    // Focus may land on a field far down the body: the sheet opens on its top.
+    const top = () => d.querySelector('.sheet-b')?.scrollTo?.(0, 0);
+    top();
+    const frame = requestAnimationFrame(top);
     document.documentElement.dataset.sheet = 'open';
     return () => {
+      cancelAnimationFrame(frame);
       delete document.documentElement.dataset.sheet;
       if (opener.current instanceof HTMLElement) opener.current.focus();
     };

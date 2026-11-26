@@ -13,7 +13,7 @@ import { pagePath } from '../../src/web/developers/model/markdown.ts';
 import type { Example, Site } from '../../src/web/developers/model/types.ts';
 
 const PHONE_STEP = /\b(your phone|iphone|android|add to wallet|scan the qr)\b/i;
-const OUTSIDE = new Set<string>([PATHS.assets, PATHS.openapi, PATHS.previews]);
+const OUTSIDE = new Set<string>([PATHS.assets, PATHS.openapi, PATHS.previews, PATHS.workbench]);
 
 /** Every internal URL a guide may link to, with the anchors a link may name on it (null: none checked). */
 function targets(site: Site, docs: GuideDoc[]): Map<string, Set<string> | null> {

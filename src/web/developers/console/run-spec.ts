@@ -129,6 +129,7 @@ export function runIndex(site: Site): RunIndex {
           method: o.method,
           path: o.path,
           title: o.title,
+          destructive: o.run.destructive,
         })),
       ),
     })),

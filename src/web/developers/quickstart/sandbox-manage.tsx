@@ -6,14 +6,23 @@ import {
   sandboxWorking,
   startOverSandboxConfirm,
 } from '../../lib/confirms-developer.ts';
-import { ActionError, deleteSandbox, recreateSandbox } from '../console/sandbox-actions.ts';
+import { useOperation } from '../../ui/operation/index.ts';
+import {
+  ActionError,
+  mintKey,
+  sandboxOfOperation,
+  startDelete,
+  startRecreate,
+} from '../console/sandbox-actions.ts';
 import type { Sandbox } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
+import { SandboxOperation, startedOperation } from '../ui/sandbox-operation.tsx';
 import { WorkingNote } from '../ui/working-note.tsx';
 
 type Act = 'start-over' | 'delete';
 const COPY = { 'start-over': startOverSandboxConfirm, delete: deleteSandboxConfirm } as const;
 const HASH: Record<string, Act> = { '#start-over': 'start-over', '#delete-sandbox': 'delete' };
+const KIND: Record<string, Act> = { 'sandbox.delete': 'delete', 'sandbox.recreate': 'start-over' };
 /** The confirm that was open when Polaris ID took the person away for a fresh sign-in. */
 const RESUME = 'qs-manage-resume';
 
@@ -28,20 +37,34 @@ const resumed = (): Act | null => {
 };
 
 /**
- * Start over and Delete sandbox, each behind a consequence confirm. Start over makes a new sandbox and hands its key
- * to the page (shown once, in the key step); Delete returns to the quickstart's first step. The chip menu links here
- * with `#start-over` or `#delete-sandbox`, which opens the confirm.
+ * Start over and Delete sandbox, each behind a consequence confirm. Once confirmed, the confirm shows the operation
+ * live (every step with its count, Retry on the one that failed; `op` is the one `?op=` names, so a reload brings it
+ * back). Start over makes a new sandbox and hands its key to the page (minted once, shown in the key step); Delete ends
+ * on "Create sandbox", which returns to the quickstart's first step. The chip menu links here with `#start-over` or
+ * `#delete-sandbox`, which opens the confirm.
  */
 export function SandboxManage({
   csrf,
   siteKey,
   onMade,
+  op,
+  onOp,
+  buttons = true,
 }: {
   csrf: string;
   siteKey: string;
   onMade: (sandbox: Sandbox, secret: string | null) => void;
+  op: string | null;
+  onOp: (id: string | null) => void;
+  /** False once the sandbox is gone: only the operation that removed it is left to show. */
+  buttons?: boolean;
 }) {
-  const [act, setAct] = useState<Act | null>(null);
+  const [picked, setAct] = useState<Act | null>(null);
+  // Only a reload needs the kind to be asked for: a confirm that started it knows its own.
+  const { operation } = useOperation(picked ? null : op);
+  const act = picked ?? (operation ? (KIND[operation.kind] ?? null) : null);
+  const opRef = useRef(op);
+  opRef.current = op;
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<{ text: string; signInUrl: string | undefined } | null>(null);
   const [showCheck, setShowCheck] = useState(false);
@@ -51,7 +74,7 @@ export function SandboxManage({
   const host = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
   const open = useCallback((a: Act) => {
-    if (busy.current) return;
+    if (busy.current || opRef.current) return;
     setAct(a);
     setError(null);
     setOpened((n) => n + 1);
@@ -90,66 +113,108 @@ export function SandboxManage({
     setError(null);
     try {
       if (act === 'delete') {
-        await deleteSandbox(csrf);
-        // A fresh load reads the session again: the page is the signed-in, no-sandbox quickstart. The working
-        // state stays until it leaves, so the confirm never comes back over a sandbox that is gone.
-        window.location.assign(PATHS.quickstart);
-        return;
+        const started = await startDelete(csrf);
+        startedOperation(started);
+        onOp(started.id);
+      } else {
+        if (!siteKey || !host.current) throw new ActionError('Reload and try again.');
+        host.current.replaceChildren();
+        const token = await verify(host.current, siteKey, setShowCheck).catch(() => {
+          throw new ActionError('The check did not pass. Try again.');
+        });
+        const started = await startRecreate(csrf, token);
+        startedOperation(started);
+        onOp(started.id);
       }
-      if (!siteKey || !host.current) throw new ActionError('Reload and try again.');
-      host.current.replaceChildren();
-      const token = await verify(host.current, siteKey, setShowCheck).catch(() => {
-        throw new ActionError('The check did not pass. Try again.');
-      });
-      const made = await recreateSandbox(csrf, token);
-      setAct(null);
-      busy.current = false;
-      setWorking(false);
-      history.replaceState(null, '', PATHS.quickstart);
-      onMade(made.sandbox, made.secret);
     } catch (e) {
-      setError(
-        e instanceof ActionError
-          ? { text: e.message, signInUrl: e.signInUrl }
-          : { text: "Couldn't reach PassBook. Try again.", signInUrl: undefined },
-      );
+      // One is already running (another tab, a reload): follow it instead of showing an error.
+      if (e instanceof ActionError && e.operationId) onOp(e.operationId);
+      else
+        setError(
+          e instanceof ActionError
+            ? { text: e.message, signInUrl: e.signInUrl }
+            : { text: "Couldn't reach PassBook. Try again.", signInUrl: undefined },
+        );
+    } finally {
       busy.current = false;
       setWorking(false);
+    }
+  };
+
+  /** Start over ended well: the new sandbox's key is minted once, here, and handed to the key step. */
+  const finish = useCallback(
+    (done: Parameters<typeof sandboxOfOperation>[0]) => {
+      if (done.kind !== 'sandbox.recreate') return;
+      const made = sandboxOfOperation(done);
+      if (!made) return;
+      void mintKey(csrf)
+        .catch(() => null)
+        .then((secret) => {
+          history.replaceState(null, '', PATHS.quickstart);
+          setAct(null);
+          onOp(null);
+          onMade(made, secret);
+        });
+    },
+    [csrf, onMade, onOp],
+  );
+  const leave = () => {
+    if (act === 'delete') window.location.assign(PATHS.quickstart);
+    else {
+      setAct(null);
+      onOp(null);
     }
   };
 
   const copy = act ? COPY[act] : null;
   return (
     <div className="qs-manage">
-      <div className="row g2 wrap-row">
-        <button
-          type="button"
-          className="btn sm outline"
-          disabled={working}
-          onClick={() => open('start-over')}
-        >
-          <RotateCcw aria-hidden="true" />
-          Start over
-        </button>
-        <button
-          type="button"
-          className="btn sm outline"
-          disabled={working}
-          onClick={() => open('delete')}
-        >
-          <Trash2 aria-hidden="true" />
-          Delete sandbox
-        </button>
-      </div>
+      {buttons ? (
+        <div className="row g2 wrap-row">
+          <button
+            type="button"
+            className="btn sm outline"
+            disabled={working || op !== null}
+            onClick={() => open('start-over')}
+          >
+            <RotateCcw aria-hidden="true" />
+            Start over
+          </button>
+          <button
+            type="button"
+            className="btn sm outline"
+            disabled={working || op !== null}
+            onClick={() => open('delete')}
+          >
+            <Trash2 aria-hidden="true" />
+            Delete sandbox
+          </button>
+        </div>
+      ) : null}
       {copy && act ? (
         <section
           ref={panel}
           tabIndex={-1}
           className="qs-confirm"
           aria-label={copy.title}
-          aria-busy={working}
+          aria-busy={working || op !== null}
         >
-          {working ? (
+          {op ? (
+            <SandboxOperation
+              id={op}
+              next={
+                act === 'delete'
+                  ? {
+                      label: 'Create sandbox',
+                      onClick: () => window.location.assign(PATHS.quickstart),
+                    }
+                  : undefined
+              }
+              onSucceeded={finish}
+              onGone={() => onOp(null)}
+              onClose={leave}
+            />
+          ) : working ? (
             <WorkingNote {...sandboxWorking[act]} />
           ) : (
             <>

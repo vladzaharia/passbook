@@ -16,6 +16,21 @@ export function runningSilentSince(
   );
 }
 
+/** Waiting rows silent since `before`: the sweep keeps only those that still have steps to do (a lost wake-up). */
+export function waitingSilentSince(
+  db: D1Database,
+  before: number,
+  limit: number,
+): Promise<OperationRow[]> {
+  return all<OperationRow>(
+    db,
+    `SELECT ${COLUMNS} FROM operations
+     WHERE status = 'waiting' AND COALESCE(heartbeat_at, created_at) < ?
+     ORDER BY COALESCE(heartbeat_at, created_at) LIMIT ?`,
+    [before, limit],
+  );
+}
+
 /** A live runner or Workflow: push the heartbeat out. */
 export async function bumpHeartbeat(db: D1Database, id: string, now: number): Promise<void> {
   await run(
@@ -26,7 +41,7 @@ export async function bumpHeartbeat(db: D1Database, id: string, now: number): Pr
 }
 
 /**
- * The one resend: frees the lease and counts it. `seen` is the count the sweep read, so two overlapping sweeps
+ * The one resend: expires the lease (the owner stays, so a live old runner's writes stay refused until the resent job claims it) and counts it. `seen` is the count the sweep read, so two overlapping sweeps
  * cannot both resend, and a second stall (`resends` already 1) is failed by the caller instead.
  */
 export async function markResent(
@@ -38,8 +53,8 @@ export async function markResent(
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE operations SET resends = resends + 1, lease_until = NULL, lease_owner = NULL, heartbeat_at = ?
-     WHERE id = ? AND attempt = ? AND resends = ? AND status IN ('queued', 'running')`,
+    `UPDATE operations SET resends = resends + 1, lease_until = NULL, heartbeat_at = ?
+     WHERE id = ? AND attempt = ? AND resends = ? AND status IN ('queued', 'running', 'waiting')`,
     [now, id, attempt, seen],
   );
   return changes === 1;
