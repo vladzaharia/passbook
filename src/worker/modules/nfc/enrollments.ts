@@ -21,7 +21,12 @@ import {
 } from './repo-enrollments.ts';
 import { passFacts } from './repo-tag-bindings.ts';
 import { bindingView } from './repo-tag-history.ts';
-import { bindChecks, ENROLL_TABLES, type TagAuthority, tagGrant } from './repo-tags-write.ts';
+import {
+  bindChecks,
+  ENROLL_TABLES,
+  type SessionTagAuthority,
+  tagGrant,
+} from './repo-tags-write.ts';
 import { commitTag } from './tags.ts';
 
 /** A request lasts 90 seconds (master plan: study AN-4). */
@@ -83,7 +88,7 @@ async function ring(
  */
 export async function requestEnrollment(
   ctx: ServiceContext,
-  a: TagAuthority,
+  a: SessionTagAuthority,
   passId: string,
   req: { scannerId: string; binding: 'pass' | 'user' },
 ): Promise<TagEnrollment> {
@@ -257,7 +262,7 @@ export const getEnrollment = view;
 /** Stops a pending request; the device is told so it stops asking for a tag. An ended request is returned as it is. */
 export async function cancelEnrollment(
   ctx: ServiceContext,
-  a: TagAuthority,
+  a: SessionTagAuthority,
   passId: string,
   id: string,
 ): Promise<TagEnrollment> {

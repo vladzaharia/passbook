@@ -38,3 +38,7 @@ export const ScanApprovalSchema = z.object({
   staffId: IdSchema.optional(),
   pin: z.string().regex(/^\d{6}$/),
 });
+/** An action's approval: the requester may confirm `alone` with their own PIN when no other staff can approve here. */
+export const ScanActionApprovalSchema = ScanApprovalSchema.extend({
+  alone: z.boolean().optional(),
+});

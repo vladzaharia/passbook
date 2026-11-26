@@ -31,7 +31,7 @@ import { getVersion, listVersions } from './repo.ts';
 import { countDevicesNotOnVersion, countPassesNotOnVersion } from './repo-release-impact.ts';
 import { isActiveReviewer } from './repo-release-state.ts';
 import { getActiveRelease, type ReleaseRow } from './repo-releases.ts';
-import { countEligibleReviewers, lastReviewerRemoval } from './repo-sole-reviewer.ts';
+import { countEligibleReviewers } from './repo-sole-reviewer.ts';
 
 /** The scope each step's grant is checked under: a key acts with exactly the scope of that step. */
 export type StepScope = 'templates:write' | 'templates:review' | 'templates:publish';
@@ -123,14 +123,13 @@ export async function prepare(
     throw new NotFoundError('Template version not found.', 'TEMPLATE_VERSION_NOT_FOUND');
   if (!version.report.ok)
     throw new ConflictError('The template version is invalid.', 'VERSION_INVALID');
-  const [author, review, publish, count, lastRemovedAt] = await Promise.all([
+  const [author, review, publish, count] = await Promise.all([
     route.request && liveKey
       ? Promise.resolve(authority.userId)
       : holder(ctx, auth, orgId, 'templates:write', 'templates:author'),
     holder(ctx, auth, orgId, 'templates:review', 'templates:review'),
     holder(ctx, auth, orgId, 'templates:publish', 'templates:publish'),
     countEligibleReviewers(ctx.env.DB, orgId),
-    lastReviewerRemoval(ctx.env.DB, orgId),
   ]);
   const userId = author ?? authority.userId;
   const includesCaller = review !== null && (await isActiveReviewer(ctx.env.DB, orgId, review));
@@ -146,14 +145,13 @@ export async function prepare(
     userId,
     canReview: review !== null,
     alone: isAlone({
-      now: ctx.clock.now(),
       caller: {
         userId,
         author: author !== null,
         review: review !== null,
         publish: publish !== null,
       },
-      reviewers: { count, includesCaller, lastRemovedAt },
+      reviewers: { count, includesCaller },
     }),
   };
 }

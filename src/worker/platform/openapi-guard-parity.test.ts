@@ -112,6 +112,7 @@ describe('OpenAPI document and guards agree', () => {
     for (const path of [
       '/api/v1/scan/resolve',
       '/api/v1/scan/actions',
+      '/api/v1/scan/sign-out',
       '/api/v1/scan/scans/{scanId}/undo',
     ])
       expect(scopesOf('post', path)).toEqual(['scans:write']);

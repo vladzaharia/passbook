@@ -1,5 +1,6 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { coalesceTo, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { stmt } from '../../platform/db.ts';
 
@@ -107,6 +108,14 @@ export const approverStatement = (
         [staffId, orgId],
       )
     : managerRosterStatement(db, orgId, deskOk);
+
+/** The approvers a request reads: with `alone` the whole roster (never the named person), else as named. */
+export const approverForRequest = (
+  db: Db,
+  orgId: string,
+  approval: { staffId?: string | undefined; alone?: boolean | undefined },
+  deskOk: boolean,
+) => approverStatement(db, orgId, approval.alone ? undefined : approval.staffId, deskOk);
 
 /** Scoped to the org: another org's staff id is the same as an unknown one. */
 export async function getStaff(db: Db, orgId: string, id: string): Promise<ScanStaffRow | null> {
@@ -236,3 +245,11 @@ export async function getStaffBase(db: Db, orgId: string, id: string): Promise<S
       }
     : null;
 }
+
+/** No other active approver of the same roles exists at commit: a colleague added since the read voids it. */
+export const onlyApproverCheck = (orgId: string, approverId: string, deskOk: boolean): Check => ({
+  reason: 'staff',
+  ok: (b) => `NOT EXISTS (SELECT 1 FROM scan_staff o WHERE o.org_id = ${b.bind(orgId)}
+    AND o.id != ${b.bind(approverId)} AND o.role IN ('manager'${deskOk ? ",'desk'" : ''})
+    AND o.disabled_at IS NULL AND o.pin_reset_required = 0)`,
+});

@@ -1,17 +1,17 @@
 import type { z } from 'zod';
 import type { AuditEntrySchema, AuditQuerySchema } from '../../../shared/contracts/audit.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { proveCapability } from '../../platform/auth-capability.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { requireOrgCapability } from '../orgs/access.ts';
-import { orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
+import { orgIdOf, type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
+import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import { redactForRead, safeLabel } from './redact.ts';
 import { REKEYED_ACTION, rekeyedDetail } from './rekeyed-detail.ts';
 import {
   type AuditRow,
   auditStmt,
+  hiddenOrgLabels,
   labelKey,
   listAuditRows,
   loadLabels,
@@ -46,7 +46,7 @@ type AuditScope =
   | {
       kind: 'tenant';
       orgId: string;
-      reader: { userId: string; membershipId: string } | { keyId: string; now: number };
+      authority: TenantPassWrite;
     }
   | { kind: 'platform' };
 
@@ -118,21 +118,33 @@ export function assertKeyWindow(ctx: ServiceContext, query: Query, paged: boolea
     );
 }
 
-/** The org's log for a member with `audit:read`, or for a key holding it (its own org only). */
-export async function listTenantAudit(ctx: ServiceContext, auth: AuthContext, query: Query) {
+/** The authority to read an org's log: a member with `audit:read`, or a key holding it (its own org only). Prove it once per request. */
+export async function tenantAuditReader(
+  ctx: ServiceContext,
+  auth: AuthContext,
+  query: Pick<Query, 'orgId'>,
+) {
   const orgId = orgIdOf(auth, query.orgId);
   if (auth.kind === 'api_key' && auth.orgId === null) throw new ForbiddenError();
-  let reader: { userId: string; membershipId: string } | { keyId: string; now: number };
-  if (auth.kind === 'api_key') {
-    const authority = await tenantAuthorityOf(ctx, auth, orgId, 'audit:read');
-    if (authority.kind !== 'api_key') throw new ForbiddenError();
-    reader = { keyId: authority.keyId, now: ctx.clock.now() };
-  } else if (auth.kind === 'session') {
-    const membership = await requireOrgCapability(ctx, auth.userId, orgId, 'audit:read');
-    proveCapability(auth, 'audit:read');
-    reader = { userId: auth.userId, membershipId: membership.id };
-  } else throw new ForbiddenError();
-  return listAudit(ctx, query, { kind: 'tenant', orgId, reader });
+  return { orgId, authority: await tenantAuthorityOf(ctx, auth, orgId, 'audit:read') };
+}
+
+export type TenantAuditReader = Awaited<ReturnType<typeof tenantAuditReader>>;
+
+/** The org's log; `reader` is a proven authority when the caller pages through one request. */
+export async function listTenantAudit(
+  ctx: ServiceContext,
+  auth: AuthContext,
+  query: Query,
+  reader?: TenantAuditReader,
+) {
+  const { orgId, authority } = reader ?? (await tenantAuditReader(ctx, auth, query));
+  const page = await listAudit(ctx, query, { kind: 'tenant', orgId, authority });
+  // An empty page past the first may be authority lost mid-export: refuse rather than end the file short.
+  if (reader && query.cursor && page.items.length === 0)
+    if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
+      throw new ForbiddenError();
+  return page;
 }
 
 export async function listPlatformAudit(ctx: ServiceContext, query: Query) {
@@ -148,7 +160,9 @@ async function listAudit(
     ctx.env.DB,
     {
       orgId: scope.kind === 'tenant' ? scope.orgId : query.orgId,
-      ...(scope.kind === 'tenant' ? { tenant: scope.reader } : {}),
+      ...(scope.kind === 'tenant'
+        ? { tenant: { authority: scope.authority, now: ctx.clock.now() } }
+        : {}),
       actorId: query.actorId,
       action: query.action,
       excludeAction: query.excludeAction,
@@ -171,10 +185,12 @@ async function listAudit(
     refs,
     scope.kind === 'tenant' ? scope.orgId : undefined,
   );
+  const orgIds = [...new Set(page.flatMap((r) => (r.org_id ? [r.org_id] : [])))];
   const orgLabels =
     scope.kind === 'platform'
-      ? await personalOrgLabels(ctx.env.DB, [
-          ...new Set(page.flatMap((r) => (r.org_id ? [r.org_id] : []))),
+      ? new Map([
+          ...(await hiddenOrgLabels(ctx.env.DB, orgIds)),
+          ...(await personalOrgLabels(ctx.env.DB, orgIds)),
         ])
       : new Map<string, string>();
   return {

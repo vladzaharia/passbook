@@ -264,6 +264,15 @@
       ]
     },
     {
+      "code": "APPLE_PROVISIONER_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "APPLE_UNAUTHORIZED",
       "statuses": [
         401
@@ -3566,6 +3575,15 @@
       ]
     },
     {
+      "code": "PIN_ALONE_NOT_SELF",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "PIN_GENERATION_FAILED",
       "statuses": [
         503
@@ -5346,6 +5364,15 @@
       ]
     },
     {
+      "code": "TAG_KEY_LIMITED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
       "code": "TAG_KEY_UNREADABLE",
       "statuses": [
         500
@@ -5391,6 +5418,15 @@
       "modules": [
         "me",
         "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_NOT_LENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
         "scan"
       ]
     },
@@ -5940,8 +5976,7 @@
         403
       ],
       "modules": [
-        "templates",
-        "wallet-providers"
+        "templates"
       ]
     },
     {

@@ -1,4 +1,3 @@
-import { SOLE_COOLDOWN_MS } from '../../../shared/template-release-state.ts';
 import { all, first } from '../../platform/db.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import { APPLE_ADAPTER_REVISION, AUDIENCE_POLICY_REVISION } from './release-content.ts';
@@ -12,25 +11,20 @@ export const REVIEW_ROLES = `(${rolesGranting('templates:review')
   .join(', ')})`;
 /**
  * Disabled users still count: disabling sets no `revoked_at`, so filtering on status would let a
- * self-approval through while a reviewer is disabled, then re-enabled with no cooldown.
+ * self-approval through while a reviewer is disabled, then re-enabled.
  */
 export const reviews = (m: string) =>
   `EXISTS (SELECT 1 FROM json_each(${m}.roles) r WHERE r.value IN ${REVIEW_ROLES})`;
 
-export { SOLE_COOLDOWN_MS } from '../../../shared/template-release-state.ts';
-
 /**
  * The commit-time condition of a sole approval, evaluated inside the grant's batch: the reviewer is
- * the org's only active member with review rights, and none was removed in the cooldown. The
- * `template_approvals_insert` trigger repeats it.
+ * the org's only active member with review rights. The `template_approvals_insert` trigger repeats it.
  */
-export function soleReviewerSql(orgSql: string, reviewer: () => string, now: () => string): string {
+export function soleReviewerSql(orgSql: string, reviewer: () => string): string {
   return `((SELECT count(*) FROM org_memberships m
       WHERE m.org_id = ${orgSql} AND m.revoked_at IS NULL AND ${reviews('m')}) = 1
     AND EXISTS (SELECT 1 FROM org_memberships m WHERE m.org_id = ${orgSql} AND m.user_id = ${reviewer()}
-      AND m.revoked_at IS NULL AND ${reviews('m')})
-    AND NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.org_id = ${orgSql}
-      AND m.revoked_at > ${now()} - ${SOLE_COOLDOWN_MS} AND ${reviews('m')}))`;
+      AND m.revoked_at IS NULL AND ${reviews('m')}))`;
 }
 
 export async function countEligibleReviewers(db: D1Database, orgId: string): Promise<number> {
@@ -58,15 +52,22 @@ export async function reviewerAddedSince(
   return (row?.n ?? 0) > 0;
 }
 
-/** When the newest review-capable membership of the org was revoked, or null. */
-export async function lastReviewerRemoval(db: D1Database, orgId: string): Promise<number | null> {
-  const row = await first<{ at: number | null }>(
+/** The newest removal of a review-capable member: when, who left and who removed them (from the audit log). */
+export async function latestReviewerRemoval(
+  db: D1Database,
+  orgId: string,
+): Promise<{ at: number; userId: string; by: string | null } | null> {
+  const row = await first<{ at: number; userId: string; by: string | null }>(
     db,
-    `SELECT max(m.revoked_at) AS at FROM org_memberships m
-     WHERE m.org_id = ? AND m.revoked_at IS NOT NULL AND ${reviews('m')}`,
+    `SELECT m.revoked_at AS at, m.user_id AS userId,
+       (SELECT l.actor_id FROM audit_log l WHERE l.org_id = m.org_id AND l.target_id = m.id
+         ORDER BY l.id DESC LIMIT 1) AS by
+     FROM org_memberships m
+     WHERE m.org_id = ? AND m.revoked_at IS NOT NULL AND ${reviews('m')}
+     ORDER BY m.revoked_at DESC LIMIT 1`,
     [orgId],
   );
-  return row?.at ?? null;
+  return row ?? null;
 }
 
 /**

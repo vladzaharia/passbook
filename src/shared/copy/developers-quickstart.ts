@@ -106,7 +106,6 @@ export const QS_COPY = {
     again: 'Listen again',
     other: (method: string, path: string, status: number) =>
       `Heard ${method} ${path} · ${status}. Now POST /api/v1/passes.`,
-    soon: 'SDK not published yet. This runs as is.',
     cli: 'CLI',
     cliLine: '@passbook/cli is not on npm yet.',
   },

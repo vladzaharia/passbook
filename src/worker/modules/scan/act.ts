@@ -42,7 +42,7 @@ import { isOverrideOnceViolation } from './override-scope.ts';
 import { replayScanByKeyStmt, replayScanFromResult } from './repo-act-authority.ts';
 import { credentialTombstonesClearStmt } from './repo-credential-tombstones.ts';
 import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
-import { approverStatement } from './repo-staff.ts';
+import { approverForRequest } from './repo-staff.ts';
 import { findCandidates, planCandidateReads } from './resolve-candidates.ts';
 import { afterReads, capturingContext } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
@@ -63,6 +63,17 @@ export async function act(
   refuseKeyApproval(actor, request);
   if (request.approval && !request.approval.staffId && actor.settings.staffSignIn)
     throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
+  // `alone` is the signed-in requester's own approval: naming anyone else checks no one's PIN.
+  if (
+    request.approval?.alone &&
+    request.approval.staffId !== undefined &&
+    request.approval.staffId !== (actor.staff?.id ?? null)
+  )
+    throw new ValidationError(
+      'Approve your own request with your own staff id.',
+      [],
+      'PIN_ALONE_NOT_SELF',
+    );
   let credentials: CredentialTombstoneSnapshot | null = null;
   try {
     const [hash, derived] = await Promise.all([
@@ -153,10 +164,10 @@ export async function act(
           ...(overrideQuery ? [overrideQuery] : []),
           ...(req.approval
             ? [
-                approverStatement(
+                approverForRequest(
                   ctx.env.DB,
                   actor.orgId,
-                  req.approval.staffId,
+                  req.approval,
                   actor.settings.approvals === 'desk',
                 ),
               ]

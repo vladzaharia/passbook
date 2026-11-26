@@ -42,10 +42,13 @@ describe('copy buttons', () => {
     const button = await click('[data-copy]');
     expect(written).toEqual(['curl x']);
     expect(button.dataset.state).toBe('copied');
-    expect(button.getAttribute('aria-label')).toBe('Copied');
+    // The name stays put; the one live region says what happened.
+    expect(button.getAttribute('aria-label')).toBe('Copy');
+    vi.advanceTimersByTime(100);
+    expect(document.querySelectorAll('[role="status"]#dev-live')).toHaveLength(1);
+    expect(document.getElementById('dev-live')?.textContent).toBe('Copied');
     vi.advanceTimersByTime(1600);
     expect(button.dataset.state).toBeUndefined();
-    expect(button.getAttribute('aria-label')).toBe('Copy');
   });
 
   it('copies the endpoint, the command and the visible lines of a sample', async () => {
@@ -89,14 +92,42 @@ describe('copy buttons', () => {
     expect(written).toEqual(['const a = 1', '```py\na = 1\nb = 2\n```', '']);
   });
 
-  it('says so in the label when the clipboard refuses', async () => {
+  it('opens and closes the Copy as menu, wraps long lines', async () => {
+    clipboard(async () => {});
+    document.body.innerHTML = `
+      <div class="code" data-samples>
+        <div class="menu">
+          <button data-menu-toggle aria-expanded="false" id="t">Copy as</button>
+          <div class="menu-list" hidden><button data-copy-as="md" id="pick">Markdown</button></div>
+        </div>
+        <button class="copy" data-copy data-copy-text="x" id="c">c</button>
+        <button data-wrap-toggle aria-pressed="false" id="w">Wrap</button>
+      </div>`;
+    const list = document.querySelector('.menu-list') as HTMLElement;
+    document.getElementById('t')?.click();
+    expect(list.hidden).toBe(false);
+    expect(document.getElementById('t')?.getAttribute('aria-expanded')).toBe('true');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(list.hidden).toBe(true);
+    document.getElementById('t')?.click();
+    document.getElementById('pick')?.click();
+    await vi.waitFor(() => expect(document.getElementById('c')?.dataset.state).toBe('copied'));
+    expect(list.hidden).toBe(true);
+    document.getElementById('w')?.click();
+    expect(document.querySelector('.code')?.hasAttribute('data-wrap')).toBe(true);
+    expect(document.getElementById('w')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('says so when the clipboard refuses', async () => {
     clipboard(async () => {
       throw new Error('denied');
     });
     document.body.innerHTML = '<button data-copy data-copy-text="x" aria-label="Copy">c</button>';
     const button = await click('[data-copy]');
     expect(button.dataset.state).toBe('failed');
-    expect(button.getAttribute('aria-label')).toMatch(/Could not copy/);
+    await vi.waitFor(() =>
+      expect(document.getElementById('dev-live')?.textContent).toMatch(/Could not copy/),
+    );
   });
 });
 

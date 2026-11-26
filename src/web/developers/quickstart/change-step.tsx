@@ -51,6 +51,7 @@ export function ChangeStep({
               codes={codes}
               lang={lang}
               onLang={onLang}
+              name="Update pass"
               lit={['admission', 'If-Match']}
               base="update"
             />

@@ -21,5 +21,6 @@ export const SCAN_PIN_ACTIONS = {
   'scanner.pin_only_locked': a('Scanner PIN-only sign-in locked', Lock, 'warning'),
   'scanner.pin_only_paused': a('PIN-only sign-in paused for the hour', Lock, 'warning'),
   'scanner.pin_only_daily_limit': a('PIN-only sign-in paused for the day', Lock, 'warning'),
+  'scan.approved_alone': a('Scan approved by its own requester', Lock, 'warning'),
   'scan.pin_only_off': a('PIN-only sign-in turned off', Lock, 'danger'),
 };

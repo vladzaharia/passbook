@@ -211,6 +211,9 @@ export function noReleaseHead(templateId: string, provider = 'apple'): Check {
   };
 }
 
+/** The actor is not a key limited to templates or styles (a statement that no limit can express, such as a user-scope tag). */
+export const unlimitedActor: Check = { reason: 'actor', ok: () => 'a.limit_key IS NULL' };
+
 const RAW_FORBIDDEN =
   /\b(?:org_id|mode|scope)\b|;|--|\/\*|\b(?:insert|update|delete|replace|attach|pragma|drop|create|alter)\b/i;
 

@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   holderClassOf,
   PAPER_SIZES,
-  PAPER_SPECS,
   type PaperDesign,
   type PaperSize,
   resolvePaper,
@@ -39,11 +38,12 @@ import { previewAssetMap } from './images.ts';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
 import { PaperEditor } from './paper-editor.tsx';
+import { paperSizeLabel } from './paper-size-label.ts';
 
 /** A code of the print code's shape, so the preview draws a real QR; never a real ticket's. */
 const SAMPLE_CODE = 'PSAMPLEABCDEFGHIJKLMNOPQRST';
 
-const SIZE_OPTIONS = PAPER_SIZES.map((size) => ({ value: size, label: PAPER_SPECS[size].label }));
+const SIZE_OPTIONS = PAPER_SIZES.map((size) => ({ value: size, label: paperSizeLabel(size) }));
 
 /** The widest the sheet is drawn in the stage. */
 const WIDTH: Record<PaperSize, string> = {
@@ -192,6 +192,7 @@ export function PaperPreview({
               <Select
                 {...c}
                 options={SIZE_OPTIONS}
+                tall
                 value={picked}
                 onValueChange={(v) => {
                   const size = v as PaperSize;
@@ -204,7 +205,7 @@ export function PaperPreview({
                         : {}),
                     });
                 }}
-                className="w-full sm:w-56"
+                className="w-full sm:w-72"
               />
             )}
           </FormField>

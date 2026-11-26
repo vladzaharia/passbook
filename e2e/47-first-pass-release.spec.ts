@@ -82,7 +82,9 @@ test('a new org tries its blueprint on a phone, then releases it to holders', as
     const dialog = page.getByRole('dialog', { name: /^Release v/ });
     await expect(dialog.getByText('First release')).toBeVisible();
     await shoot(page, 'journey1-release-dialog');
-    await dialog.getByRole('button', { name: 'Release', exact: true }).click();
+    // The only reviewer approves their own release (SOLE-1).
+    await expect(dialog.getByText('Approve it yourself?')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Approve and release', exact: true }).click();
     await expect(page.getByText(/^Released v/).first()).toBeVisible();
 
     const released = await detailOf(api, org.id, templateId);
@@ -327,7 +329,9 @@ test('Test follows Live, and runs ahead when a version is tried', async ({ page 
     const dialog = page.getByRole('dialog', { name: /^Release v/ });
     await expect(dialog.getByRole('list', { name: 'Modes' })).toContainText('already');
     await shoot(page, 'journey3-release-test-already');
-    await dialog.getByRole('button', { name: 'Release', exact: true }).click();
+    // The only reviewer approves their own release (SOLE-1).
+    await expect(dialog.getByText('Approve it yourself?')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Approve and release', exact: true }).click();
     await expect(page.getByText(/^Released v/).first()).toBeVisible();
     const done = await detailOf(api, org.id, templateId);
     expect(done.release.live?.version).toBe(v4);

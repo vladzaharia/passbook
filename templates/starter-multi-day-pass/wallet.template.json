@@ -576,5 +576,11 @@
         "refused": "Send them to the box office."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "a4",
+    "barcode": "qr",
+    "kind": "admission"
   }
 }

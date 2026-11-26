@@ -59,13 +59,14 @@ export async function readOrgPlan(
       const cap = mode === 'test' ? TEST_ORG_CAP : platform['join.orgDailyCap'];
       return plan === null ? cap : Math.min(plan, cap);
     }
-    if (key === 'members' && personal) return 1;
     return plan;
   };
   const limits: OrgPlanDto['limits'] = [];
   for (const key of ENTITLEMENT_KEYS) {
     if (entitlementDef(key).kind !== 'limit' || NOT_ENFORCED.includes(key)) continue;
     if (parentOn[key] === false) continue;
+    // One person by design: a full member slot is not news, so no warning or row for it.
+    if (key === 'members' && personal) continue;
     if (key === 'join.perDay' && !platform['join.enabled']) continue;
     const planValue = parseEntitlementValue(key, values[key]);
     // A limit of 0 is a feature the plan does not have, and a missing value denies.

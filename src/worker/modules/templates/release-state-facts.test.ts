@@ -22,7 +22,6 @@ import { all, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { basicPackage, passJson, zipOf } from './package/fixtures.ts';
-import { SOLE_COOLDOWN_MS } from './repo-sole-reviewer.ts';
 import { fakeAssets, importZip } from './testing.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -219,8 +218,8 @@ describe('alone mirrors the sole approval rule', () => {
     ['solo admin', async () => {}],
     ['a second reviewer', (org) => member(org.id, ['template_reviewer'])],
     ['a second member who only authors', (org) => member(org.id, ['template_author'])],
-    ['a reviewer removed 6 days ago', (org) => removed(org, SOLE_COOLDOWN_MS - 86_400_000)],
-    ['a reviewer removed 8 days ago', (org) => removed(org, SOLE_COOLDOWN_MS + 86_400_000)],
+    ['a reviewer removed just now', (org) => removed(org, 0)],
+    ['a reviewer removed 8 days ago', (org) => removed(org, 8 * 86_400_000)],
   ];
   async function removed(org: OrgRow, ago: number) {
     const leaving = await member(org.id, ['template_reviewer']);

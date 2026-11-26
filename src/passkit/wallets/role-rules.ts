@@ -13,6 +13,8 @@ export interface RoleInput {
   semantics?: SemanticTags;
   barcodes: readonly ViewBarcode[];
   dates: readonly { start?: string; end?: string }[];
+  /** The start and end the template's own inputs name (paper's resolver). */
+  declared?: { start?: string; end?: string };
   locations: readonly PassLocation[];
   expirationDate?: string;
   /** The organization's logo, name and website, from settings. Never a `/p` capability URL. */
@@ -209,11 +211,17 @@ export const ROLE_RULES: Record<WalletRole, Rule> = {
   eventName: { semantic: textOf('eventName'), style: firstOf('primary', 'eventTicket') },
   eventStart: {
     semantic: dateOf('eventStartDate', 'eventStartDateInfo'),
-    style: (i) => (i.dates[0]?.start ? dateHit(i.dates[0].start) : undefined),
+    style: (i) => {
+      const start = i.declared?.start ?? i.dates[0]?.start;
+      return start ? dateHit(start) : undefined;
+    },
   },
   eventEnd: {
     semantic: dateOf('eventEndDate'),
-    style: (i) => (i.dates[0]?.end ? dateHit(i.dates[0].end) : undefined),
+    style: (i) => {
+      const end = i.declared?.end ?? i.dates[0]?.end;
+      return end ? dateHit(end) : undefined;
+    },
   },
   doorsOpen: { semantic: dateOf('venueDoorsOpenDate') },
   venueName: { semantic: textOf('venueName') },

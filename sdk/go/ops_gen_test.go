@@ -656,6 +656,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"nfc.bindings.delete", "DELETE", "/api/v1/nfc/bindings/id1", false,
+		"", `{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Bindings.Delete(ctx, "id1")
+		},
+	},
+	{
 		"nfc.keysets.list", "GET", "/api/v1/nfc/keysets", false,
 		"", `{"items":[{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -728,6 +735,24 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"nfc.tags.listForPass", "GET", "/api/v1/nfc/passes/id1/tags", false,
+		"", `{"items":[{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Tags.ListForPass(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"nfc.tags.assign", "POST", "/api/v1/nfc/passes/id1/tags/assign", false,
+		`{"id":"x","binding":"pass"}`, `{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcTagsAssignBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Tags.Assign(ctx, "id1", &b)
+		},
+	},
+	{
 		"nfc.tagTypes.list", "GET", "/api/v1/nfc/tag-types", false,
 		"", `{"items":[{"id":"x","system":"uid","name":"x","use":"member","version":0,"createdAt":0,"updatedAt":0,"archivedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -765,6 +790,41 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.NFC.TagTypes.Archive(ctx, "id1", &b)
+		},
+	},
+	{
+		"nfc.tags.list", "GET", "/api/v1/nfc/tags", false,
+		"", `{"items":[{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Tags.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"nfc.tags.retrieve", "GET", "/api/v1/nfc/tags/id1", false,
+		"", `{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Tags.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"nfc.tags.listHistory", "GET", "/api/v1/nfc/tags/id1/history", false,
+		"", `{"items":[{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}],"nextCursor":null,"events":[{"at":0,"action":"lost","actorName":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Tags.ListHistory(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"nfc.tags.reportLost", "POST", "/api/v1/nfc/tags/id1/lost", false,
+		"", `{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Tags.ReportLost(ctx, "id1")
+		},
+	},
+	{
+		"nfc.tags.restore", "POST", "/api/v1/nfc/tags/id1/restore", false,
+		"", `{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Tags.Restore(ctx, "id1")
 		},
 	},
 	{
@@ -1642,6 +1702,17 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Terminal.Scans.Undo(ctx, "id1", &b)
+		},
+	},
+	{
+		"terminal.signOutEverywhere", "POST", "/api/v1/scan/sign-out", false,
+		`{"idempotencyKey":"x"}`, `{"passId":"x","stayMs":0,"stillInside":0,"tag":"returned"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b TerminalSignOutEverywhereBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Terminal.SignOutEverywhere(ctx, &b)
 		},
 	},
 	{
