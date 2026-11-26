@@ -17,6 +17,7 @@ const COMMON: Record<string, number> = {
   IDENTITY_NOT_FOUND: 404,
   IDENTITY_RUN_INCOMPLETE: 502,
   NO_RECIPIENT: 422,
+  OPERATION_NOT_RETRYABLE: 404,
   ORG_INACTIVE: 403,
   ORG_NOT_FOUND: 404,
   ORG_REQUIRED: 422,
@@ -39,6 +40,7 @@ const TIES: Record<string, number[]> = {
   ASSET_SIZE: [413, 422],
   EMAIL_TAKEN: [403, 409],
   FILE_DAMAGED: [422, 500],
+  OPERATION_NOT_RETRYABLE: [404, 409],
   ORG_INACTIVE: [403, 409],
   SCANNER_REVOKED: [401, 409],
   SCANNING_SESSION_CLOSED: [403, 409],
@@ -52,7 +54,7 @@ describe('error catalog statuses', () => {
 
   it('shows a multi-status code with its most common raise site', () => {
     expect(Object.fromEntries(multi.map((c) => [c.code, c.statuses[0]]))).toEqual(COMMON);
-    expect(multi).toHaveLength(25);
+    expect(multi).toHaveLength(26);
   });
 
   it('carries the tied set where raise sites tie', () => {

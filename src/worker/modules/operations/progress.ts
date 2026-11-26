@@ -3,11 +3,17 @@ import {
   OperationResultSchema,
   type OperationStep,
 } from '../../../shared/contracts/operations.ts';
-import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseSteps } from './dto.ts';
 import { kindOf } from './kinds.ts';
-import { NOOP, OperationCancelled, type Progress, type StepHandle } from './progress-types.ts';
+import { codeOf, settleSteps, tickStep } from './progress-code.ts';
+import {
+  NOOP,
+  OperationCancelled,
+  type Progress,
+  type StepHandle,
+  type Writer,
+} from './progress-types.ts';
 import { type OperationRow, rowById } from './repo.ts';
 import {
   finish,
@@ -22,7 +28,6 @@ const COUNT_EVERY_MS = 1000;
 const HEARTBEAT_EVERY_MS = 30_000;
 /** A waiting reason is a short sentence: no digit, `@`, `/` or `:`, so no email, token or URL fits. */
 const REASON = /^[A-Za-z][A-Za-z ,.'-]{0,79}$/;
-const STABLE_CODE = /^[A-Z][A-Z0-9_]{1,79}$/;
 
 interface State {
   row: OperationRow;
@@ -43,9 +48,9 @@ class Reporter implements Progress {
   private readonly ctx: ServiceContext;
   private readonly id: string;
   private readonly wanted: number;
-  private readonly lease: string | null;
+  private readonly lease: Writer | null;
 
-  constructor(ctx: ServiceContext, id: string, wanted: number, lease: string | null) {
+  constructor(ctx: ServiceContext, id: string, wanted: number, lease: Writer | null) {
     this.ctx = ctx;
     this.id = id;
     this.wanted = wanted;
@@ -145,7 +150,20 @@ class Reporter implements Progress {
       count: (done) => this.enqueue((s) => this.count(s, key, done)),
       done: () => this.enqueue((s) => this.end(s, key, 'done')),
       skip: () => this.enqueue((s) => this.end(s, key, 'skipped')),
+      tick: () => this.tick(key),
     };
+  }
+
+  private async tick(key: string): Promise<{ done: number; total: number | null } | null> {
+    let out: { done: number; total: number | null } | null = null;
+    await this.enqueue(async (s) => {
+      const step = this.stepOf(s, key);
+      if (!step || this.ignored.has(key)) return;
+      out = await tickStep(this.ctx, s.row.id, s.row.attempt, s.steps.indexOf(step), this.lease);
+      if (!out) this.dead = true;
+      else Object.assign(step, out);
+    });
+    return out;
   }
 
   private async count(s: State, key: string, done: number) {
@@ -225,18 +243,7 @@ class Reporter implements Progress {
           operationId: this.id,
         });
       const now = this.ctx.clock.now();
-      for (const step of s.steps) {
-        const tail = kindOf(s.row.kind)?.steps.find((d) => d.key === step.key)?.tail === true;
-        if (tail && step.state !== 'done') {
-          step.state = 'waiting';
-          step.waitingReason = 'due';
-        } else if (step.state === 'running' || step.state === 'waiting') {
-          step.state = 'done';
-          step.waitingReason = null;
-        } else if (step.state === 'pending') step.state = 'skipped';
-        else continue;
-        if (step.state !== 'waiting') step.finishedAt = now;
-      }
+      settleSteps(s.steps, s.row.kind, now);
       await this.close(s, 'succeeded', null, checked?.success ? checked.data : null);
     });
   }
@@ -253,7 +260,7 @@ class Reporter implements Progress {
         await this.close(s, 'cancelled', null, null);
         return;
       }
-      const code = this.codeOf(error);
+      const code = codeOf(this.ctx, this.id, error);
       // The step that was running; a tail that waits after Done (the erase) is not what failed.
       const tail = (key: string) =>
         kindOf(s.row.kind)?.steps.find((d) => d.key === key)?.tail === true;
@@ -272,17 +279,6 @@ class Reporter implements Progress {
         null,
       );
     });
-  }
-
-  /** An AppError keeps its code; anything else is OPERATION_FAILED and logged as an error. */
-  private codeOf(error: unknown): string {
-    if (error instanceof AppError && STABLE_CODE.test(error.code)) return error.code;
-    this.ctx.log.error('operation.failed', {
-      code: 'OPERATION_FAILED',
-      operationId: this.id,
-      cause: error instanceof Error ? error.name : 'unknown',
-    });
-    return 'OPERATION_FAILED';
   }
 
   private async close(
@@ -323,7 +319,7 @@ export function progressOf(
   ctx: ServiceContext,
   opId: string | undefined,
   attempt: number,
-  lease?: string,
+  lease?: Writer,
 ): Progress {
   return opId ? new Reporter(ctx, opId, attempt, lease ?? null) : NOOP;
 }

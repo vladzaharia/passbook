@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { Sheet, SheetContent } from '../sheet.tsx';
 import { OperationProgress } from './operation-progress.tsx';
+import type { Operation } from './types.ts';
 import { useOperation } from './use-operation.ts';
 import { useOperationActions } from './use-tray.ts';
 
@@ -13,11 +14,14 @@ export function OperationSheet({
   onClose,
   zone,
   next,
+  doneNote,
 }: {
   id: string | null;
   onClose: () => void;
   zone?: string;
   next?: { label: string; onClick: () => void };
+  /** One line under a finished operation. */
+  doneNote?: (op: Operation) => ReactNode;
 }) {
   const { operation, missing } = useOperation(id);
   // A `?op` that is unknown, or not the person's: the sheet has nothing to show, so it goes.
@@ -38,6 +42,7 @@ export function OperationSheet({
               onRetry={() => retry(operation)}
               onClose={onClose}
               next={next}
+              doneNote={doneNote?.(operation)}
             />
           </div>
         ) : null}

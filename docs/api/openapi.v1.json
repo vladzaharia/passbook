@@ -10401,11 +10401,18 @@
           "instances": {
             "type": "integer",
             "minimum": 0
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "reissueId",
-          "instances"
+          "instances",
+          "operationId"
         ]
       },
       "ApiKeyCurrent": {
@@ -26891,6 +26898,14 @@
               "string",
               "null"
             ]
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
@@ -26901,7 +26916,8 @@
           "expiresAt",
           "bytes",
           "entities",
-          "errorCode"
+          "errorCode",
+          "operationId"
         ]
       },
       "OrgExportsCreateLinkResponse": {
@@ -38919,10 +38935,17 @@
         "properties": {
           "workflowInstanceId": {
             "type": "string"
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
-          "workflowInstanceId"
+          "workflowInstanceId",
+          "operationId"
         ]
       },
       "PassesBulkUpdateChannelsParams": {
@@ -39136,6 +39159,12 @@
               "allOff",
               "blocked",
               "windows"
+            ]
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
             ]
           }
         },
@@ -40839,12 +40868,19 @@
                 "code"
               ]
             }
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "jobId",
           "count",
-          "skipped"
+          "skipped",
+          "operationId"
         ]
       },
       "PrintJobsRetrieveResponse": {
@@ -56916,11 +56952,20 @@
           },
           "workflowInstanceId": {
             "type": "string"
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
           "runId",
-          "workflowInstanceId"
+          "workflowInstanceId",
+          "operationId"
         ]
       },
       "ConnectionsRunsListResponse": {
@@ -84876,6 +84921,11 @@
                         "pending",
                         "completed"
                       ]
+                    },
+                    "operationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
                     }
                   },
                   "required": [
@@ -84885,7 +84935,8 @@
                 },
                 "example": {
                   "transferId": "0193a1b2-7c00-7000-8000-0cc606e8ee52",
-                  "state": "completed"
+                  "state": "completed",
+                  "operationId": "0193a1b2-7c00-7000-8000-63650d8198ea"
                 }
               }
             }
@@ -84911,6 +84962,11 @@
                         "pending",
                         "completed"
                       ]
+                    },
+                    "operationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
                     }
                   },
                   "required": [
@@ -84949,6 +85005,7 @@
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
           "BUNDLE_TOO_LARGE",
+          "EMAIL_CONFIRMATION_REQUIRED",
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_RATE_LIMITED",
@@ -84958,6 +85015,7 @@
           "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
+          "OPERATION_RUNNING",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
           "PASS_FILE_MISSING",
@@ -85071,6 +85129,11 @@
                     },
                     "cooldownSeconds": {
                       "type": "integer"
+                    },
+                    "operationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
                     }
                   },
                   "required": [
@@ -85082,7 +85145,8 @@
                 "example": {
                   "accepted": true,
                   "requestedAt": 1795570500000,
-                  "cooldownSeconds": 16
+                  "cooldownSeconds": 16,
+                  "operationId": "0193a1b2-7c00-7000-8000-89e7b376f249"
                 }
               }
             }
@@ -85113,8 +85177,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_NOT_FOUND",
@@ -85128,6 +85194,234 @@
     "/api/v1/me/passes/{id}/resend": {
       "post": {
         "summary": "Email my pass to me again",
+        "tags": [
+          "me"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "operationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                },
+                "example": {
+                  "ok": true,
+                  "operationId": "0193a1b2-7c00-7000-8000-0ad5c2baa7ca"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "me.postMePassesByIdResend",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "sendEmail",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "EMAIL_RATE_LIMITED",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "OPERATION_RUNNING",
+          "PASS_NOT_FOUND",
+          "PASS_VOIDED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/me/passes/{id}/lost-phone": {
+      "post": {
+        "summary": "Replace my pass code and link, and email it to me",
+        "tags": [
+          "me"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "transferId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "completed"
+                      ]
+                    },
+                    "operationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "transferId",
+                    "state"
+                  ]
+                },
+                "example": {
+                  "transferId": "0193a1b2-7c00-7000-8000-252b8f18d5c4",
+                  "state": "completed",
+                  "operationId": "0193a1b2-7c00-7000-8000-4cacc5e67167"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "me.postMePassesByIdLostPhone",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "replaceLostPhone",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "ASSET_NOT_FOUND",
+          "ASSET_SLOT",
+          "AUTHORITY_DENIED",
+          "DELIVERY_STALE",
+          "EMAIL_CONFIRMATION_REQUIRED",
+          "EMAIL_INVALID",
+          "EMAIL_OUTCOME_UNKNOWN",
+          "EMAIL_RATE_LIMITED",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FORBIDDEN",
+          "HOLDER_TRANSFER_PENDING",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_INPUT",
+          "LINEAGE_CHANGED",
+          "MODE_MISMATCH",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "OPERATION_RUNNING",
+          "ORG_ACCESS_CHANGED",
+          "ORG_TEST_ONLY",
+          "PASS_CONFLICT",
+          "PASS_CREDENTIAL_FIXED",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_FOUND",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_VOIDED",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "STAMPS_ABOVE_MAX",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CHANGED",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TOKEN_SEAL_MISMATCH",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_PROJECTION_UNSUPPORTED"
+        ]
+      }
+    },
+    "/api/v1/me/passes/{id}/lost-phone/confirmation": {
+      "post": {
+        "summary": "Email me a sign-in link that lands back on this pass, to confirm a lost phone",
         "tags": [
           "me"
         ],
@@ -85179,10 +85473,10 @@
             }
           }
         },
-        "operationId": "me.postMePassesByIdResend",
+        "operationId": "me.postMePassesByIdLostPhoneConfirmation",
         "x-sdk": {
           "resource": "me.passes",
-          "method": "sendEmail",
+          "method": "confirmLostPhone",
           "sdk": false,
           "reason": "Acts on the signed-in person's own account; needs a person's session."
         },
@@ -85193,7 +85487,6 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
-          "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
@@ -85203,136 +85496,6 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/me/passes/{id}/lost-phone": {
-      "post": {
-        "summary": "Replace my pass code and link, and email it to me",
-        "tags": [
-          "me"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "transferId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "pending",
-                        "completed"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "transferId",
-                    "state"
-                  ]
-                },
-                "example": {
-                  "transferId": "0193a1b2-7c00-7000-8000-252b8f18d5c4",
-                  "state": "completed"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "me.postMePassesByIdLostPhone",
-        "x-sdk": {
-          "resource": "me.passes",
-          "method": "replaceLostPhone",
-          "sdk": false,
-          "reason": "Acts on the signed-in person's own account; needs a person's session."
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ACTOR_CHANGED",
-          "ASSET_NOT_FOUND",
-          "ASSET_SLOT",
-          "AUTHORITY_DENIED",
-          "DELIVERY_STALE",
-          "EMAIL_INVALID",
-          "EMAIL_OUTCOME_UNKNOWN",
-          "EMAIL_RATE_LIMITED",
-          "FEATURE_LIMIT_REACHED",
-          "FEATURE_NOT_INCLUDED",
-          "FORBIDDEN",
-          "HOLDER_TRANSFER_PENDING",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_INPUT",
-          "LINEAGE_CHANGED",
-          "MODE_MISMATCH",
-          "NOT_FOUND",
-          "NO_RECIPIENT",
-          "ORG_ACCESS_CHANGED",
-          "ORG_TEST_ONLY",
-          "PASS_CONFLICT",
-          "PASS_CREDENTIAL_FIXED",
-          "PASS_INPUT_INVALID",
-          "PASS_INVALID",
-          "PASS_NOT_FOUND",
-          "PASS_TRANSFER_NOT_FOUND",
-          "PASS_VOIDED",
-          "RATE_LIMITED",
-          "RETENTION_CHANGED",
-          "SCANNER_REPAIR",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_STAFF_CHANGED",
-          "STALE",
-          "STAMPS_ABOVE_MAX",
-          "TEMPLATE_CONTENT_CHANGED",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_PROVIDER_UNSUPPORTED",
-          "TEMPLATE_RELEASE_CHANGED",
-          "TEMPLATE_RELEASE_REQUIRED",
-          "TEMPLATE_VERSION_CONTENT_CONFLICT",
-          "TOKEN_SEAL_MISMATCH",
-          "UNAUTHENTICATED",
-          "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
     },
@@ -97087,6 +97250,7 @@
           "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -97121,6 +97285,7 @@
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WALLET_PROVIDER_DISABLED",
+          "WALLET_REISSUE_KEYSET",
           "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
@@ -97231,6 +97396,7 @@
           "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -97265,6 +97431,7 @@
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WALLET_PROVIDER_DISABLED",
+          "WALLET_REISSUE_KEYSET",
           "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
@@ -97375,6 +97542,7 @@
           "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -97409,6 +97577,7 @@
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WALLET_PROVIDER_DISABLED",
+          "WALLET_REISSUE_KEYSET",
           "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
@@ -98225,7 +98394,8 @@
                   "expiresAt": null,
                   "bytes": null,
                   "entities": null,
-                  "errorCode": null
+                  "errorCode": null,
+                  "operationId": "0193a1b2-7c00-7000-8000-ff2b9c9c65f0"
                 }
               }
             }
@@ -98258,8 +98428,10 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_EXPORT_RUNNING",
           "ORG_NOT_FOUND",
           "ORG_PURGING",
@@ -114071,7 +114243,8 @@
                   "$ref": "#/components/schemas/PassesBulkReissueResponse"
                 },
                 "example": {
-                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-fc526349df42"
+                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-fc526349df42",
+                  "operationId": "0193a1b2-7c00-7000-8000-aaea668f397d"
                 }
               }
             }
@@ -114108,6 +114281,7 @@
           "API_KEY_MISSING",
           "BULK_RUN_ACTIVE",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -114115,6 +114289,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -114239,6 +114414,7 @@
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -114251,6 +114427,7 @@
           "MODE_MISMATCH",
           "NEW_CODE_UNSUPPORTED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -114941,7 +115118,8 @@
                       "code": "PRINTING_OFF",
                       "reason": "Paper is off for Quickstart ticket"
                     }
-                  ]
+                  ],
+                  "operationId": "0193a1b2-7c00-7000-8000-5b2fefdb1bd3"
                 }
               }
             }
@@ -114977,6 +115155,7 @@
         "x-codes": [
           "API_KEY_MISSING",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -114984,6 +115163,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "PASS_NOT_ACTIVE",
@@ -125965,6 +126145,7 @@
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
@@ -126234,11 +126415,13 @@
           "FILE_NOT_FOUND",
           "FILE_STATE",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
@@ -127120,12 +127303,14 @@
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -127541,7 +127726,8 @@
                 },
                 "example": {
                   "runId": "0193a1b2-7c00-7000-8000-000000000023",
-                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
+                  "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c",
+                  "operationId": "0193a1b2-7c00-7000-8000-77cfb49fba0e"
                 }
               }
             }
@@ -127584,11 +127770,13 @@
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "NOT_FOUND",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
@@ -133176,7 +133364,8 @@
                 },
                 "example": {
                   "reissueId": "0193a1b2-7c00-7000-8000-5e1a0cc4f25e",
-                  "instances": 38
+                  "instances": 38,
+                  "operationId": "0193a1b2-7c00-7000-8000-135312555b22"
                 }
               }
             }
@@ -133212,9 +133401,11 @@
         "x-codes": [
           "API_KEY_MISSING",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",

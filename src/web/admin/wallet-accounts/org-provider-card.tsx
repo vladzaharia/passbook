@@ -14,6 +14,8 @@ import {
   StatusPill,
   toast,
 } from '@/web/ui/index.ts';
+import { walletNote } from '../operations/notes.ts';
+import { OperationSlot } from '../operations/operation-slot.tsx';
 import { COPY, PROVIDER_NAME, releaseLine, safeError } from './copy.ts';
 import { CredentialRow } from './credential-row.tsx';
 import { blockerOf, gatesOf } from './gates.ts';
@@ -62,6 +64,7 @@ export function OrgProviderCard({
   const actions = useWalletActions();
   const [busy, setBusy] = useState(false);
   const [reissuing, setReissuing] = useState(false);
+  const [updating, setUpdating] = useState<string | null>(null);
   const name = PROVIDER_NAME[e.provider];
   const on = e.state === 'on';
   const blocker = blockerOf(e);
@@ -164,6 +167,13 @@ export function OrgProviderCard({
             ))}
           </ul>
         </div>
+        <OperationSlot
+          kind="wallet.reissue"
+          orgId={orgId}
+          startedId={updating}
+          onClear={() => setUpdating(null)}
+          doneNote={walletNote}
+        />
         {canReissue && on ? (
           <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
             <Button size="sm" variant="outline" onClick={() => setReissuing(true)}>
@@ -176,17 +186,14 @@ export function OrgProviderCard({
           onOpenChange={setReissuing}
           {...reissueWalletPassesConfirm(name)}
           onConfirm={async () => {
-            let result: { instances: number };
+            let result: { instances: number; operationId: string | null };
             try {
               result = await actions.reissue(orgId, e.provider);
             } catch (cause) {
               throw safeError(cause);
             }
-            toast.success(
-              result.instances === 0
-                ? 'Nothing to update yet'
-                : `Updating ${result.instances} ${result.instances === 1 ? 'pass' : 'passes'}`,
-            );
+            if (result.operationId) setUpdating(result.operationId);
+            else toast.success('Nothing to update yet');
           }}
         />
         {canManage ? null : <p className="text-sm text-fg-muted">{COPY.readOnly}</p>}

@@ -36,6 +36,8 @@ export const OrgExportSchema = z.object({
   entities: z.record(z.string(), z.number().int()).nullable(),
   errorCode: z.string().nullable(),
 });
+/** The start's answer: the export and the operation that shows its progress. */
+export const OrgExportStartedSchema = OrgExportSchema.extend({ operationId: IdSchema.nullable() });
 export const OrgExportListSchema = pageOf(OrgExportSchema);
 export const OrgExportLinkSchema = z.object({ url: z.string(), expiresAt: TimestampSchema });
 

@@ -3,6 +3,7 @@ import { CHANNELS, type Channel } from '@/shared/contracts/channels.ts';
 import { CHANNEL_COPY, CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { bulkChannelsOffConfirm } from '../../lib/confirms.ts';
 import { toast, useWizard, WizardDialog, WizardReview } from '../../ui/index.ts';
+import { trackStarted } from '../operations/admin-operation.tsx';
 import { BulkPreview } from './bulk-channels-preview.tsx';
 import {
   ACTION_WORD,
@@ -82,6 +83,8 @@ export function BulkChannelsDialog({
         ...(replacing ? { replaceCodes: true } : {}),
         orgId,
       });
+      // The code replacements run on in the background: the tray shows them and says when they end.
+      if (result.operationId) void trackStarted(result.operationId).catch(() => undefined);
       const skipped = result.skipped.length ? `, ${result.skipped.length} skipped` : '';
       toast.success(
         `${plural(result.done)} updated${skipped}${replacing ? `. ${CHANNEL_COPY.bulkReplaced}` : ''}`,
