@@ -421,7 +421,7 @@
   },
   "developer.postSandboxKey": {
     "resource": "developer.sandbox",
-    "method": "mintKey",
+    "method": "reveal",
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
