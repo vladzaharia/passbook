@@ -3,14 +3,13 @@ import {
   InviteOrgMemberSchema,
   type OrgInvitation,
   type OrgMember,
-  type OrgMembership,
   type OrgRole,
 } from '../../../shared/contracts/org-membership.ts';
 import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
+import { INVITE_PATH, INVITE_PREFIX } from '../../../shared/invitation-link.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { batch } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import {
   AppError,
@@ -24,12 +23,14 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
+import { resolveInvite } from '../idp/invitations/resolve.ts';
+import { withdrawForMember } from '../idp/invitations/withdraw.ts';
 import {
   membershipCapability,
   platformAdminSessionParams,
   platformAdminSessionSql,
 } from '../passes/repo-authority.ts';
-import { getOrgAccess, memberDto, parseRoles, requireOrgCapability } from './access.ts';
+import { memberDto, parseRoles, requireOrgCapability } from './access.ts';
 import { invitationEmail } from './invitation-email.ts';
 import { checkInviteAllowed } from './invitation-limits.ts';
 import {
@@ -146,8 +147,7 @@ export async function deliverInvitation(
   roles: OrgRole[],
   token: string,
 ): Promise<void> {
-  const accept = `/api/v1/orgs/invitations/accept#${token}`;
-  const acceptLink = `${baseUrl(ctx.env)}${accept}`;
+  const acceptLink = `${baseUrl(ctx.env)}${INVITE_PATH}#${token}`;
   const org = await repo.orgName(ctx.env.DB, orgId);
   await assertNotPreviewOnly(ctx.env.DB, orgId);
   try {
@@ -197,7 +197,7 @@ export async function inviteOrgMember(
   if (!parsed.success) throw new ValidationError();
   await checkInviteAllowed(ctx, { actorId: auth.userId, orgId, email: parsed.data.email });
   const now = ctx.clock.now();
-  const token = ctx.ids.token(32);
+  const token = `${INVITE_PREFIX.member}${ctx.ids.token(32)}`;
   const row = {
     id: ctx.ids.id(),
     orgId,
@@ -227,12 +227,11 @@ export async function inviteOrgMember(
     acceptedAt: null,
   };
 }
-/** The page shows which organization a link joins before anyone signs in; the token is the proof. */
+/** The pre-prefix preview: which organization a member link joins. The invitation page's preview says more. */
 export async function previewOrgInvitation(ctx: ServiceContext, token: string) {
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw invalidLink();
-  const row = await repo.invitationOrgName(ctx.env.DB, await sha256Hex(token));
-  if (!row) throw invalidLink();
-  return { orgName: row.name };
+  const invite = await resolveInvite(ctx, token);
+  if (invite?.kind !== 'member' || invite.state !== 'pending') throw invalidLink();
+  return { orgName: invite.row.org_name };
 }
 export async function revokeOrgInvitation(
   ctx: ServiceContext,
@@ -251,6 +250,7 @@ export async function revokeOrgInvitation(
   };
   if (!(await revokePendingInvitation(ctx, manager.principal, manager.checks, invitationId, entry)))
     throw changed();
+  await withdrawForMember(ctx, invitationId);
 }
 export async function revokeOrgMembership(
   ctx: ServiceContext,
@@ -279,46 +279,4 @@ export async function revokeOrgMembership(
     throw error;
   }
   if (!revoked) throw changed();
-}
-export async function acceptOrgInvitation(
-  ctx: ServiceContext,
-  auth: SessionAuth,
-  token: string,
-): Promise<OrgMembership> {
-  if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token)) throw invalidLink();
-  const hash = await sha256Hex(token);
-  const invitation = await repo.invitationByHash(ctx.env.DB, hash);
-  if (!invitation) throw invalidLink();
-  try {
-    parseRoles(invitation.roles);
-  } catch {
-    throw invalidLink();
-  }
-  const now = ctx.clock.now();
-  const id = ctx.ids.id();
-  const result = await batch(ctx.env.DB, [
-    repo.acceptMembership(ctx.env.DB, id, hash, auth.userId, now),
-    repo.consumeInvitation(ctx.env.DB, hash, now),
-    repo.mutationAudit(
-      ctx,
-      invitation.org_id,
-      auth.userId,
-      'org_invitation.accept',
-      'org_invitation',
-      invitation.id,
-    ),
-    repo.mutationAudit(
-      ctx,
-      invitation.org_id,
-      auth.userId,
-      'org_membership.create',
-      'org_membership',
-      id,
-    ),
-  ]);
-  // D1 counts rows a trigger writes (the Polaris ID dirty marks), so a write is `>= 1`, never `=== 1`.
-  if ((result[0]?.meta.changes ?? 0) < 1 || (result[1]?.meta.changes ?? 0) < 1) throw invalidLink();
-  const membership = await getOrgAccess(ctx, auth.userId, invitation.org_id);
-  if (!membership || membership.id !== id) throw changed();
-  return membership;
 }

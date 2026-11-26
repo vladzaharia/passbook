@@ -1,7 +1,8 @@
+import { QrCode } from 'lucide-react';
 import { useState } from 'react';
 import type { ScanningDevice, ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { Button, Callout, Dialog, DialogContent, FormField, Input } from '@/web/ui/index.ts';
+import { isApiError } from '@/web/lib/errors.ts';
+import { FormField, Input, useWizard, WizardDialog } from '@/web/ui/index.ts';
 import { type Pairing, PairingFace } from '../pairing-face.tsx';
 import { useAddSessionDevice } from './api.ts';
 import { SurfacePicker } from './surface-picker.tsx';
@@ -15,6 +16,8 @@ export function freeName(base: string, taken: readonly string[]): string {
     if (!used.has(name.toLowerCase())) return name;
   }
 }
+
+const STEPS = [{ id: 'device', title: 'Device', heading: 'Name the device' }] as const;
 
 export function AddDeviceDialog({
   session,
@@ -35,11 +38,9 @@ export function AddDeviceDialog({
   // A name the dialog picked, not typed: another session's scanner may hold it, so try the next.
   const [auto, setAuto] = useState(setup);
   const [surface, setSurface] = useState<ScanningDevice['surface']>('auto');
-  const [error, setError] = useState('');
   const [made, setMade] = useState<{ id: string; name: string; pairing: Pairing | null }>();
   const add = useAddSessionDevice(session.id);
   async function submit() {
-    setError('');
     const tried = [...deviceNames];
     let next = name.trim();
     for (let attempt = 0; ; attempt++) {
@@ -53,57 +54,62 @@ export function AddDeviceDialog({
           setName(next);
           continue;
         }
-        setError(errorMessage(cause));
-        return;
+        throw cause;
       }
     }
   }
+  const w = useWizard({
+    open: true,
+    steps: STEPS,
+    errors: { device: name.trim() ? undefined : { name: 'Name the device.' } },
+    hints: { device: 'Name the device.' },
+    fieldStep: { name: 'device', surface: 'device' },
+    onFinish: submit,
+  });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} dirty={!made && !!name && !setup}>
-      <DialogContent
-        title={made ? `Pair ${made.name}` : setup ? 'Pair a scanner' : 'Add device'}
-        size="lg"
-        footer={
-          made ? undefined : (
-            <>
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button disabled={!name.trim()} loading={add.isPending} onClick={() => void submit()}>
-                Create pairing code
-              </Button>
-            </>
-          )
-        }
-      >
-        {made?.pairing ? (
-          <PairingFace
-            scanner={{ ...made, mode: session.mode }}
-            pairing={made.pairing}
-            onClose={onClose}
-          />
-        ) : (
-          <div className="grid gap-6">
-            {error ? <Callout tone="danger">{error}</Callout> : null}
-            <FormField label="Device name" required>
-              {(p) => (
-                <Input
-                  {...p}
-                  value={name}
-                  onChange={(e) => {
-                    setAuto(false);
-                    setName(e.target.value);
-                  }}
-                  placeholder="Front desk iPad"
-                  maxLength={40}
-                  autoComplete="off"
+    <WizardDialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={setup ? 'Pair a scanner' : 'Add device'}
+      wizard={w}
+      dirty={!made && !!name && !setup}
+      finishLabel="Create pairing code"
+      busy={add.isPending}
+      result={
+        made?.pairing
+          ? {
+              title: `Pair ${made.name}`,
+              icon: <QrCode aria-hidden />,
+              body: (
+                <PairingFace
+                  scanner={{ ...made, mode: session.mode }}
+                  pairing={made.pairing}
+                  onClose={onClose}
                 />
-              )}
-            </FormField>
-            <SurfacePicker value={surface} onChange={setSurface} />
-          </div>
+              ),
+            }
+          : undefined
+      }
+    >
+      <FormField label="Device name" required error={w.errors.name}>
+        {(p) => (
+          <Input
+            {...p}
+            data-autofocus
+            value={name}
+            onChange={(e) => {
+              setAuto(false);
+              setName(e.target.value);
+            }}
+            placeholder="Front desk iPad"
+            maxLength={40}
+            autoComplete="off"
+          />
         )}
-      </DialogContent>
-    </Dialog>
+      </FormField>
+      <SurfacePicker value={surface} onChange={setSurface} />
+    </WizardDialog>
   );
 }

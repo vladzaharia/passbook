@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectRejectsCode } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession, revokeMembership } from '../../../../test/helpers/index.ts';
+import { expectSet } from '../../../../test/helpers/landed.ts';
 import { hashSessionCookie } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { grantKitMembership } from './apple-release-test-fixtures.ts';
@@ -101,14 +102,8 @@ describe('member photo tenant authority', () => {
             return async (statements: D1PreparedStatement[]) => {
               if (!revoked) {
                 revoked = true;
-                const result = await revokeMembership(
-                  kit.env.DB,
-                  pass.orgId,
-                  membershipId,
-                  kit.clock.now(),
-                ).run();
-                // D1 counts the Polaris ID dirty mark a membership revoke writes.
-                expect(result.meta.changes).toBeGreaterThanOrEqual(1);
+                await revokeMembership(kit.env.DB, pass.orgId, membershipId, kit.clock.now()).run();
+                await expectSet(kit.env.DB, 'org_memberships', 'id', membershipId);
                 await grantKitMembership(kit, pass.orgId, userId);
               }
               return target.batch(statements);
@@ -205,14 +200,8 @@ describe('member photo tenant authority', () => {
         if (!revoked && current.linkGeneration === prior.linkGeneration + 1) {
           revoked = true;
           during = await memberPhoto(kit.env.DB, pass.orgId, pass.id);
-          const result = await revokeMembership(
-            kit.env.DB,
-            pass.orgId,
-            membershipId,
-            kit.clock.now(),
-          ).run();
-          // D1 counts the Polaris ID dirty mark a membership revoke writes.
-          expect(result.meta.changes).toBeGreaterThanOrEqual(1);
+          await revokeMembership(kit.env.DB, pass.orgId, membershipId, kit.clock.now()).run();
+          await expectSet(kit.env.DB, 'org_memberships', 'id', membershipId);
         }
         return resolve(...args);
       });

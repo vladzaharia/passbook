@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { z } from 'zod';
-import type { ConnectorInfoSchema, RecipeId } from '@/shared/contracts/connections.ts';
+import type { ConnectorInfoSchema, RecipeId, RecipeInfo } from '@/shared/contracts/connections.ts';
 import type { MappingRow } from '../mapping/mapping.ts';
 import type { Lifecycle } from './lifecycle-fields.tsx';
 import { recipeSeed, signingSecretError } from './recipe-copy.ts';
@@ -10,13 +10,11 @@ import type { ConfigDraft } from './wizard-steps.tsx';
 export function useWizardRecipe({
   info,
   draft,
-  setDraft,
   setRows,
   setLife,
 }: {
   info: z.infer<typeof ConnectorInfoSchema> | undefined;
   draft: ConfigDraft;
-  setDraft: Dispatch<SetStateAction<ConfigDraft>>;
   setRows: (rows: MappingRow[]) => void;
   setLife: Dispatch<SetStateAction<Lifecycle>>;
 }) {
@@ -29,9 +27,9 @@ export function useWizardRecipe({
     secretError: recipe?.pasteSecret
       ? signingSecretError(id, draft.signingSecret ?? '')
       : undefined,
-    pick(next: RecipeId) {
-      const seed = recipeSeed(info?.recipes.find((r) => r.id === next));
-      setDraft((d) => ({ ...d, config: { ...d.config, recipe: next }, signingSecret: '' }));
+    /** A tile was picked: its sender seeds the mapping, holder email and void rules; none clears them. */
+    seed(next: RecipeInfo | undefined) {
+      const seed = recipeSeed(next);
       setRows(seed.rows);
       setLife((l) => ({ ...l, holderEmailField: seed.holderEmailField, voidWhen: seed.voidWhen }));
     },

@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -170,6 +170,23 @@ describe('API key page', () => {
     const reveal = await screen.findByRole('dialog', { name: /Copy the new key/ });
     expect(within(reveal).getByText(/The old key stops/)).toBeInTheDocument();
     expect(within(reveal).getByLabelText('API key')).not.toHaveTextContent('SECRETVALUE');
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(within(reveal).queryByRole('button', { name: 'Close' })).toBeNull();
+  });
+
+  it('keeps the rotate form open and says why when the rotation fails', async () => {
+    await renderApp('/admin/o/o1/api-keys/k1', {
+      session: 'user',
+      memberships: [manager],
+      handlers: handlers({
+        '/api/v1/api-keys/k1/rotate': () => problem(409, 'CONFLICT', 'Key already rotated.'),
+      }),
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Rotate' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Rotate key' });
+    await user.click(within(dialog).getByRole('button', { name: 'Rotate' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Key already rotated.');
   });
 
   it('revokes after a confirm, and says the children go too', async () => {

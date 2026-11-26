@@ -181,10 +181,10 @@ An active organization administrator, or a platform administrator acting explici
 - `DELETE /orgs/{id}/invitations/{invitationId}` or
   `DELETE /orgs/{id}/memberships/{membershipId}`
 
-The invitee opens the delivered link and signs in with a verified account address exactly matching
+The invitee opens the delivered link, `/invite#<secret>`, and signs in with a verified account address exactly matching
 the normalized invited address. Invitations expire after seven days, can be revoked, and are
-single-use. The link's token is sent only in the email and stored only as a hash; it is not returned
-by invitation APIs. The acceptance page names the organization with `POST /orgs/invitations/preview` and submits the token as `POST /orgs/invitations/accept`. Accepting needs a Polaris ID sign-in, with no email-link grace: the page sends anyone else to `/auth/oidc/start`, and the POST answers 403 `IDP_SIGN_IN_REQUIRED` (`signInUrl` points back to the page). An invitee with no Polaris ID account asks the inviter for access first. Org member lists include each member's name and email. Revocation
+single-use. The secret (`m_` for a member invitation, `d_` for a developer one; older member links have no prefix) is sent only in the email, rides in the URL fragment, and is stored only as a hash; invitation APIs never return it.
+The page names the invitation with `POST /invitations/preview`. Accepting is `POST /invitations/accept`: it needs a Polaris ID sign-in, with no email-link grace, and the POST answers 403 `IDP_SIGN_IN_REQUIRED` (`signInUrl` points back to the page) to anyone else. While Polaris ID is live the page also offers **Create a Polaris ID** (`POST /invitations/setup`: a one-hour, one-use signup link that already carries the invitation's groups) and **I have a Polaris ID** (`POST /invitations/claim-existing`: the account that has the invited address verified gets the groups at once). Both answer a Turnstile check first, and are hidden while Polaris ID is in dry run. `POST /orgs/invitations/preview` and `POST /orgs/invitations/accept` still serve member links. Org member lists include each member's name and email. Revocation
 is effective on the next membership/capability lookup.
 If the mail provider reports a delivery failure, the invitation remains recorded and can be
 revoked or replaced; provider acceptance does not prove inbox delivery.

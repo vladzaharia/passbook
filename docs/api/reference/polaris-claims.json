@@ -1,0 +1,56 @@
+{
+  "polaris-claims.getUsersByIdClaims": {
+    "response": {
+      "claims": {
+        "passbook_tier": {
+          "type": "text",
+          "value": "gold"
+        }
+      },
+      "otherKeys": 2
+    }
+  },
+  "polaris-claims.patchUsersByIdClaims": {
+    "request": {
+      "set": {
+        "passbook_tier": {
+          "type": "text",
+          "value": "gold"
+        },
+        "passbook_old": null
+      }
+    },
+    "response": {
+      "set": ["passbook_tier"],
+      "removed": ["passbook_old"],
+      "dryRun": false
+    }
+  },
+  "polaris-claims.getPlatformIdpGroupsByKeyClaims": {
+    "response": {
+      "claims": {
+        "passbook_tier": {
+          "type": "text",
+          "value": "gold"
+        }
+      },
+      "otherKeys": 2
+    }
+  },
+  "polaris-claims.patchPlatformIdpGroupsByKeyClaims": {
+    "request": {
+      "set": {
+        "passbook_tier": {
+          "type": "text",
+          "value": "gold"
+        },
+        "passbook_old": null
+      }
+    },
+    "response": {
+      "set": ["passbook_tier"],
+      "removed": ["passbook_old"],
+      "dryRun": false
+    }
+  }
+}

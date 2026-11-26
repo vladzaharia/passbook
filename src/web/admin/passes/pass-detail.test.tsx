@@ -861,6 +861,31 @@ describe('pass detail: tabs', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows a server email error under the Email field, not on the foot line', async () => {
+    const user = userEvent.setup();
+    const server = newServer();
+    await renderApp('/admin/passes/p1?tab=holder', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers(server, {
+        '/api/v1/holders/assign': () =>
+          problem(422, 'VALIDATION', 'Invalid request.', [
+            { path: 'email', message: 'That domain cannot receive passes.' },
+          ]),
+      }),
+    });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Change' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: 'Change' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Change holder' });
+    const email = within(dialog).getByLabelText('Email');
+    await user.clear(email);
+    await user.type(email, 'new@example.com');
+    await user.click(within(dialog).getByRole('button', { name: 'Change and send' }));
+    const message = await within(dialog).findByText('That domain cannot receive passes.');
+    expect(message.closest('[role="alert"]')).toBeNull();
+    expect(email).toHaveAttribute('aria-invalid', 'true');
+  });
+
   it('reports an uncertain email separately after changing the holder', async () => {
     const user = userEvent.setup();
     const server = newServer();

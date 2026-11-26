@@ -19,7 +19,7 @@ export type TryPhase =
   | { step: 'releasing' }
   | { step: 'making'; result: ReleaseResult }
   | { step: 'waiting'; result: ReleaseResult; pass: PassDetailDto }
-  | { step: 'failed'; message: string };
+  | { step: 'failed'; message: string; at: 'releasing' | 'making' };
 
 /**
  * Try on my phone, in order: release `version` to Test, make a Test pass from the template's
@@ -54,10 +54,12 @@ export function useTryFlow(input: {
     if (started.current === attempt) return;
     started.current = attempt;
     void (async () => {
+      let at: 'releasing' | 'making' = 'releasing';
       try {
         setPhase({ step: 'releasing' });
         const result = await mutateAsync({ version, modes: ['test'] });
         if (!mounted.current) return;
+        at = 'making';
         setPhase({ step: 'making', result });
         const list = await api.get(
           `/api/v1/templates/${encodeURIComponent(templateId)}/releases`,
@@ -85,7 +87,7 @@ export function useTryFlow(input: {
         await client.invalidateQueries({ queryKey: passKeys.all });
         if (mounted.current) setPhase({ step: 'waiting', result, pass });
       } catch (cause) {
-        if (mounted.current) setPhase({ step: 'failed', message: errorMessage(cause) });
+        if (mounted.current) setPhase({ step: 'failed', message: errorMessage(cause), at });
       }
     })();
   }, [attempt, client, email, mutateAsync, orgId, sample, templateId, version]);

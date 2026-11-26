@@ -22,6 +22,40 @@ describe('invite dialog', () => {
     expect((await axe(dialog)).violations).toEqual([]);
   });
 
+  it('offers Developer access only when the API says developers are available, and invites through it', async () => {
+    const posts: { path: string; body: unknown }[] = [];
+    const sentOk = (path: string, body: unknown) => {
+      posts.push({ path, body });
+      return json(invitation({ email: (body as { email: string }).email }), 201);
+    };
+    const available = (value: boolean) => ({
+      '/api/v1/orgs/o1/developers': () =>
+        json({ items: [], nextCursor: null, limit: 5, available: value }),
+      '/api/v1/orgs/o1/developer-invitations': (_url: URL, init?: RequestInit) =>
+        sentOk('developer', JSON.parse(String(init?.body))),
+      '/api/v1/orgs/o1/invitations': (_url: URL, init?: RequestInit) =>
+        init?.method === 'POST'
+          ? sentOk('member', JSON.parse(String(init.body)))
+          : json({ items: [], nextCursor: null }),
+    });
+    const off = await renderMembers({ handlers: handlers(available(false)) });
+    const user = userEvent.setup();
+    expect(
+      within(await openDialog(user)).queryByRole('checkbox', { name: 'Developer access' }),
+    ).toBeNull();
+    off.unmount();
+
+    await renderMembers({ handlers: handlers(available(true)) });
+    const dialog = await openDialog(user);
+    await user.type(within(dialog).getByLabelText('Emails'), 'dev@example.test{Enter}');
+    await user.click(await within(dialog).findByRole('checkbox', { name: 'Developer access' }));
+    // Developer access alone is an invitation: no role is needed.
+    await user.click(within(dialog).getByRole('button', { name: 'Invite' }));
+    await waitFor(() =>
+      expect(posts).toEqual([{ path: 'developer', body: { email: 'dev@example.test' } }]),
+    );
+  });
+
   it('turns comma and newline separated addresses into chips and invites each', async () => {
     const sent = vi.spyOn(toast, 'sent');
     const posts: { email: string; roles: string[] }[] = [];

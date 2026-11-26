@@ -7,10 +7,15 @@ import {
   type UpdateMessageRuleBody,
 } from '@/shared/contracts/message-rules.ts';
 import { api } from '../../lib/api.ts';
+import { isApiError } from '../../lib/errors.ts';
 
 const BASE = '/api/v1/message-rules';
 const path = (id: string) => `${BASE}/${encodeURIComponent(id)}`;
 export const ruleKeys = { all: (orgId: string) => ['admin', 'message-rules', orgId] as const };
+
+/** A save over a rule someone else saved first (409 `RULE_VERSION`). */
+export const isRuleStale = (cause: unknown): boolean =>
+  isApiError(cause) && cause.status === 409 && cause.code === 'RULE_VERSION';
 
 export function useRules(orgId: string) {
   return useQuery({

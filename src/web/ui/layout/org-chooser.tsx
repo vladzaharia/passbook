@@ -67,7 +67,10 @@ export function OrgChooser({ next, title = C.choose, inline = false }: OrgChoose
   const others = offered.filter((m) => m.orgId !== scope.requestedOrgId);
   const memberships = others.length > 0 ? others : offered;
   const last = readTabScope() ?? remembered;
-  const choices = orderChoices(memberships, { next: section, platform: isAdmin, last });
+  // Every chooser picks an organization for an org-scoped page, so Platform is no choice here. A
+  // platform admin with no organization to pick keeps it as the way out.
+  const wayOut = isAdmin && memberships.length === 0;
+  const choices = orderChoices(memberships, { next: section, platform: wayOut, last });
   const shown = choices.filter((c) => matchesChoice(c, query));
   const Title = inline ? 'h2' : 'h1';
 

@@ -52,7 +52,7 @@ test('the sample CSV imports with 0 errors', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Every column finds its field, and nothing is left to answer.
-  await expect(page.getByText('Match columns')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Match the columns' })).toBeVisible();
   await expect(page.getByText('All fields ready')).toBeVisible();
   await expect(page.getByText(/(\d+) of \1 columns used/)).toBeVisible();
   await sweep(page, 'sample-2-match');
@@ -99,7 +99,7 @@ test('the export: fix 3 rows, issue, undo', async ({ page }) => {
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // The matcher reads the export: a name join, Member # for the ID, the dates, the plan by value.
-  await expect(page.getByText('Match columns')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Match the columns' })).toBeVisible();
   await expect(page.getByText(/6 of 7 columns used/)).toBeVisible();
   await expect(page.getByText('Locker')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Option for Gold' })).toHaveText('Choose');

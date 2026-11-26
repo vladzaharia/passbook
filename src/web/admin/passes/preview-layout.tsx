@@ -38,37 +38,25 @@ export function PreviewLayout({
   const narrow = useMediaQuery(BELOW_LG);
   const phone = useMediaQuery(PHONE);
   const [open, setOpen] = useState(false);
+  // One tree at every width: lead and children keep their place, so crossing a breakpoint never
+  // remounts them (an open sheet and its draft survive a tablet rotation). Only the stage moves.
+  let beside: ReactNode = null;
+  let above: ReactNode = null;
   if (!narrow) {
-    return (
-      <div className="grid min-w-0 grid-cols-[16rem_minmax(0,1fr)] items-start gap-6 xl:grid-cols-[20rem_minmax(0,1fr)] xl:gap-8">
-        <aside
-          aria-label="Pass preview"
-          className="sticky top-[calc(5rem+env(safe-area-inset-top))]"
-        >
-          {stage('column')}
-        </aside>
-        <div className="min-w-0">
-          {lead ? <div className="mb-6 flex flex-col gap-6">{lead}</div> : null}
-          {children}
-        </div>
-      </div>
+    beside = (
+      <aside aria-label="Pass preview" className="sticky top-[calc(5rem+env(safe-area-inset-top))]">
+        {stage('column')}
+      </aside>
     );
-  }
-  if (phone && inline) {
-    return (
-      <div className="flex min-w-0 flex-col gap-6">
-        <Card className="p-5">
-          <div className="mx-auto w-full max-w-xs">{stage('card')}</div>
-        </Card>
-        {lead}
-        {children}
-      </div>
+  } else if (phone && inline) {
+    above = (
+      <Card className="p-5">
+        <div className="mx-auto w-full max-w-xs">{stage('card')}</div>
+      </Card>
     );
-  }
-  if (phone) {
-    return (
-      <div className="flex min-w-0 flex-col gap-6">
-        {lead}
+  } else if (phone) {
+    above = (
+      <>
         <Card className="flex items-center gap-4 p-3">
           <div aria-hidden className="w-16 shrink-0" inert>
             {still}
@@ -88,20 +76,33 @@ export function PreviewLayout({
             <div className="py-2">{stage('sheet')}</div>
           </DialogContent>
         </Dialog>
-        {children}
-      </div>
+      </>
     );
-  }
-  return (
-    <div className="flex min-w-0 flex-col gap-6">
-      {lead}
+  } else {
+    above = (
       <Card
         className={summary ? 'grid grid-cols-[180px_minmax(0,1fr)] items-start gap-6 p-5' : 'p-5'}
       >
         <div className="mx-auto w-[180px]">{stage('card')}</div>
         {summary ? <div className="flex min-w-0 flex-col gap-4">{summary}</div> : null}
       </Card>
-      {children}
+    );
+  }
+  return (
+    <div
+      className={
+        narrow
+          ? 'flex min-w-0 flex-col gap-6'
+          : 'grid min-w-0 grid-cols-[16rem_minmax(0,1fr)] items-start gap-6 xl:grid-cols-[20rem_minmax(0,1fr)] xl:gap-8'
+      }
+    >
+      {beside}
+      <div className="flex min-w-0 flex-col gap-6">
+        {/* The stage card sits above the lead on a phone's inline mint, below it otherwise. */}
+        {above ? <div className={phone && inline ? 'order-first' : 'order-1'}>{above}</div> : null}
+        {lead ? <div className="flex flex-col gap-6">{lead}</div> : null}
+        <div className="min-w-0 order-2">{children}</div>
+      </div>
     </div>
   );
 }

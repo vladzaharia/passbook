@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { resetModeForTests } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { reachStep } from '../sessions/wizard-test-nav.ts';
 import { ACTIVE_ZONES, annex } from './test-fixtures.ts';
 
 const northwind = membershipFixture('o1', { orgName: 'Northwind', orgSlug: 'northwind' });
@@ -52,7 +53,13 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
     expect((await axe(document.body)).violations).toEqual([]);
     await user.click(screen.getByRole('button', { name: 'New zone' }));
     const dialog = await screen.findByRole('dialog', { name: 'New zone' });
-    await user.click(within(dialog).getByRole('switch', { name: 'Track who’s inside' }));
+    expect((await axe(document.body)).violations).toEqual([]);
+    await user.type(within(dialog).getByRole('textbox', { name: /^Name/ }), 'Pool');
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await user.click(await within(dialog).findByRole('switch', { name: 'Track who’s inside' }));
+    expect((await axe(document.body)).violations).toEqual([]);
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await within(dialog).findByRole('heading', { name: 'Check and create' });
     expect((await axe(document.body)).violations).toEqual([]);
   });
 
@@ -66,12 +73,13 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
     });
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: 'New session' });
-    await user.click(await within(dialog).findByRole('tab', { name: 'Access' }));
+    await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Gate');
+    await reachStep(user, dialog, 'Set where it scans');
     await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
     await user.click(await screen.findByRole('checkbox', { name: 'Pool' }));
     expect((await axe(document.body)).violations).toEqual([]);
     await user.keyboard('{Escape}');
-    await user.click(within(dialog).getByRole('tab', { name: 'Customer screen' }));
+    await reachStep(user, dialog, 'Set the customer screen');
     expect((await axe(document.body)).violations).toEqual([]);
     expect(within(dialog).getByRole('textbox', { name: 'Welcome' })).toBeInTheDocument();
   });

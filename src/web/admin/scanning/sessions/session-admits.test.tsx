@@ -23,6 +23,7 @@ import {
 import { eligibleTemplateFixture } from '../test-fixtures.ts';
 import { NewSessionDialog } from './session-dialog.tsx';
 import { managedSession } from './test-fixtures.ts';
+import { reach } from './wizard-test-nav.ts';
 
 afterEach(() => {
   resetModeForTests();
@@ -138,7 +139,7 @@ describe('the Admits picker', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: /Gala 2/ }));
     expect(within(dialog).getByRole('button', { name: 'Remove Type 1' })).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Remove Gala 2' })).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
+    await user.click(await reach(user, dialog, 'Create session'));
     await waitFor(() => expect(writes).toHaveLength(1));
     expect(writes[0]).toMatchObject({ accepts: { templateIds: ['t1'], eventIds: ['e2'] } });
   });
@@ -174,9 +175,10 @@ describe('the Admits picker', () => {
     });
     const { user, dialog } = await open();
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Type 1' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
+    await user.click(await reach(user, dialog, 'Create session'));
     expect(await within(dialog).findByText(/more than 100 pass types/)).toBeInTheDocument();
     expect(writes).toHaveLength(1);
+    await user.click(within(dialog).getByRole('button', { name: /^Passes/ }));
     expect(within(dialog).getByRole('checkbox', { name: 'Type 1' })).toBeChecked();
   });
 

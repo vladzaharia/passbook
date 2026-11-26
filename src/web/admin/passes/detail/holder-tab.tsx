@@ -1,160 +1,22 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Pencil } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
-import type { SessionResponse } from '@/shared/contracts/session.ts';
-import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
-import { errorMessage } from '../../../lib/errors.ts';
-import { sessionQuery } from '../../../lib/session.ts';
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
-  CheckboxField,
-  Dialog,
-  DialogContent,
   EntityAvatar,
-  Form,
-  FormField,
-  Input,
   KeyValue,
   ListRow,
   ListRows,
   StatusPill,
   toast,
-  useFormErrors,
 } from '../../../ui/index.ts';
 import { passKeys, usePassActions, usePassHolder } from '../api.ts';
-import { reportEmailError } from '../email-outcome.ts';
-import { newKey } from '../format.ts';
-
-/** Change the holder: assign or reassign, and email the pass to the new address (on by default). */
-function ChangeHolderDialog({
-  pass,
-  open,
-  onOpenChange,
-}: {
-  pass: PassDetailDto;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const actions = usePassActions(pass.id);
-  const client = useQueryClient();
-  const formId = useId();
-  const [email, setEmail] = useState(pass.holderEmail ?? '');
-  const [send, setSend] = useState(true);
-  const [failed, setFailed] = useState<string>();
-  const [busy, setBusy] = useState(false);
-  const owned = pass.holderState === 'owned';
-  const trimmed = email.trim();
-  const valid = strictEmail(trimmed) !== null;
-  const same = trimmed.toLowerCase() === (pass.holderEmail ?? '').toLowerCase();
-  const check = useFormErrors({ email: valid ? undefined : EMAIL_INVALID_MESSAGE });
-
-  async function save() {
-    const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-    if (!before?.authenticated) return;
-    const userId = before.user.id;
-    const stillCurrent = () => {
-      const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-      return current?.authenticated === true && current.user.id === userId;
-    };
-    setBusy(true);
-    setFailed(undefined);
-    try {
-      const holder = owned
-        ? await actions.reassign.mutateAsync(trimmed)
-        : await actions.assign.mutateAsync(trimmed);
-      if (!stillCurrent()) return;
-      if (holder.transfer?.state === 'pending') {
-        toast.info(
-          'Holder transfer pending. Existing wallet credentials must be retired before the pass is available; no email was sent.',
-        );
-        onOpenChange(false);
-        return;
-      }
-      if (send) {
-        try {
-          await actions.resendEmail.mutateAsync({ to: trimmed, key: newKey() });
-          if (!stillCurrent()) return;
-          toast.info(`Holder changed; email queued to ${trimmed}`);
-        } catch (error) {
-          if (!stillCurrent()) return;
-          reportEmailError(error, 'Holder changed. ');
-        }
-      } else toast.success('Holder changed');
-      if (!stillCurrent()) return;
-      onOpenChange(false);
-    } catch (cause) {
-      if (stillCurrent()) setFailed(errorMessage(cause));
-    } finally {
-      if (stillCurrent()) setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog
-      open={open}
-      dirty={trimmed !== (pass.holderEmail ?? '')}
-      onOpenChange={(o) => !busy && onOpenChange(o)}
-    >
-      <DialogContent
-        title="Change holder"
-        description={
-          owned
-            ? 'The current owner loses access while the existing credentials are retired.'
-            : undefined
-        }
-        footer={
-          <>
-            <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" form={formId} loading={busy} disabled={!trimmed || same}>
-              {send ? 'Change and send' : 'Change holder'}
-            </Button>
-          </>
-        }
-      >
-        <Form
-          id={formId}
-          {...check.form}
-          onValid={() => void save()}
-          className="flex flex-col gap-4"
-        >
-          <FormField label="Email" error={check.errors.email ?? failed}>
-            {(c) => (
-              <Input
-                {...c}
-                data-autofocus
-                type="email"
-                autoComplete="off"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setFailed(undefined);
-                }}
-              />
-            )}
-          </FormField>
-          <CheckboxField
-            label={valid ? `Email the pass to ${trimmed}` : 'Email the pass'}
-            checked={send}
-            onCheckedChange={(c) => setSend(c === true)}
-          />
-          {send ? (
-            <p className="text-sm text-fg-muted">
-              Email is sent only if the transfer completes immediately. Otherwise, send it after the
-              transfer finishes.
-            </p>
-          ) : null}
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+import { ChangeHolderDialog } from './change-holder-dialog.tsx';
 
 /** One card: the holder's state and who it is, with Change. Clear lives in the header's More. */
 export function HolderTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {

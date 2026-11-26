@@ -94,17 +94,23 @@ describe('Automatic messages', () => {
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByRole('textbox', { name: /Name/ }), 'Renewal');
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Copper card' }));
-    await user.click(within(dialog).getByRole('combobox', { name: 'Counting from' }));
-    await user.click(await screen.findByRole('option', { name: 'Expires on' }));
     await user.click(within(dialog).getByRole('button', { name: /Add condition/ }));
     await user.click(within(dialog).getByRole('combobox', { name: 'Input' }));
     await user.click(await screen.findByRole('option', { name: 'Tier' }));
     await user.click(within(dialog).getByRole('checkbox', { name: 'gold' }));
-    await user.type(within(dialog).getByRole('textbox', { name: /Text/ }), 'Your card ends soon.');
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await user.click(await within(dialog).findByRole('combobox', { name: 'Counting from' }));
+    await user.click(await screen.findByRole('option', { name: 'Expires on' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await user.type(
+      await within(dialog).findByRole('textbox', { name: /Text/ }),
+      'Your card ends soon.',
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
     await waitFor(() => expect(previews.length).toBeGreaterThan(0));
     expect(previews.at(-1)).toMatchObject({ match: [{ input: 'tier', values: ['gold'] }] });
     expect(await within(dialog).findByText('Next 14 days: 4 passes')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create message' }));
     await waitFor(() => expect(saved).toHaveLength(1));
     expect(saved[0]?.body).toMatchObject({
       name: 'Renewal',
@@ -119,7 +125,7 @@ describe('Automatic messages', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: /New/ }));
     const dialog = await screen.findByRole('dialog');
-    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
     expect(await within(dialog).findByText('Name it.')).toBeInTheDocument();
     expect(within(dialog).getByText('Choose at least one template.')).toBeInTheDocument();
     expect(saved).toHaveLength(0);

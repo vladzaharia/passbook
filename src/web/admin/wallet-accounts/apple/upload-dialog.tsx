@@ -1,20 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import {
-  Button,
-  CheckboxField,
-  Dialog,
-  DialogContent,
-  Form,
-  FormField,
-  Input,
-  Select,
-  useFormErrors,
-} from '@/web/ui/index.ts';
+import { useWizard, WizardDialog } from '@/web/ui/index.ts';
 import { useOrgList } from '../../orgs/queries.ts';
 import { markCreated } from '../../passes/created.tsx';
-import { CertificateFields } from './certificate-fields.tsx';
 import { useUploadIdentity } from './queries.ts';
 import {
   buildUploadBody,
@@ -23,9 +11,15 @@ import {
   type UploadDraft,
   validateUpload,
 } from './upload-input.ts';
-
-const PLATFORM = 'platform';
-const FORM_ID = 'upload-identity';
+import {
+  CertificateStep,
+  FIELD_STEP,
+  HINTS,
+  IdentityStep,
+  PLATFORM,
+  STEPS,
+  UploadReview,
+} from './upload-steps.tsx';
 
 /** Uploads and opens the new identity, whose page says what to do next. */
 export function UploadIdentityDialog({
@@ -41,103 +35,86 @@ export function UploadIdentityDialog({
   const [draft, setDraft] = useState<UploadDraft>(EMPTY);
   const [org, setOrg] = useState(PLATFORM);
   const [nfc, setNfc] = useState(false);
-  const [server, setServer] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string>();
-  const check = useFormErrors(validateUpload(draft));
-  const errors = { ...server, ...check.errors } as Record<string, string>;
-  const patch = (p: Partial<UploadDraft>) => {
-    setDraft((d) => ({ ...d, ...p }));
-    setServer({});
-  };
+  const found = validateUpload(draft);
+  const { label, ...certificate } = found;
+  const owners = [
+    { value: PLATFORM, label: 'Platform' },
+    ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
+  ];
+  const ownerLabel = owners.find((o) => o.value === org)?.label ?? org;
 
-  function close() {
-    onOpenChange(false);
-    setDraft(EMPTY);
-    setOrg(PLATFORM);
-    setNfc(false);
-    setServer({});
-    check.reset();
-    setFormError(undefined);
-  }
-
-  async function submit() {
-    setFormError(undefined);
-    try {
-      const body = await buildUploadBody(draft, org === PLATFORM ? null : org, nfc);
-      const created = await upload.mutateAsync(body);
-      close();
+  const w = useWizard({
+    open,
+    steps: STEPS.map((s) => ({
+      ...s,
+      summary:
+        s.id === 'identity' && draft.label.trim()
+          ? draft.label.trim()
+          : s.id === 'certificate' && !Object.keys(certificate).length
+            ? draft.mode === 'p12'
+              ? (draft.p12?.name ?? '')
+              : 'PEM'
+            : undefined,
+    })),
+    errors: {
+      identity: label ? { label } : undefined,
+      certificate: Object.keys(certificate).length ? certificate : undefined,
+    },
+    hints: HINTS,
+    fieldStep: FIELD_STEP,
+    onFinish: async () => {
+      const created = await upload.mutateAsync(
+        await buildUploadBody(draft, org === PLATFORM ? null : org, nfc),
+      );
+      onOpenChange(false);
       markCreated(`identity:${created.id}`);
       void navigate({
         to: '/admin/platform/wallet-accounts/$identityId',
         params: { identityId: created.id },
       });
-    } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
-      setFormError(errorMessage(cause));
-    }
-  }
+    },
+  });
+  const patch = (p: Partial<UploadDraft>) => {
+    setDraft((d) => ({ ...d, ...p }));
+    w.clearServer();
+  };
 
   return (
-    <Dialog
+    <WizardDialog
       open={open}
+      onOpenChange={onOpenChange}
+      title="Upload Apple identity"
+      wizard={w}
       dirty={draftDirty(draft) || org !== PLATFORM || nfc}
-      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+      finishLabel="Upload identity"
+      busy={upload.isPending}
+      onClose={() => {
+        setDraft(EMPTY);
+        setOrg(PLATFORM);
+        setNfc(false);
+      }}
     >
-      <DialogContent
-        title="Upload Apple identity"
-        size="lg"
-        footer={
-          <>
-            <Button variant="outline" onClick={close}>
-              Cancel
-            </Button>
-            <Button type="submit" form={FORM_ID} loading={upload.isPending}>
-              Upload
-            </Button>
-          </>
-        }
-      >
-        <Form
-          id={FORM_ID}
-          className="flex flex-col gap-4 overflow-y-auto"
-          {...check.form}
-          onValid={() => void submit()}
-        >
-          <FormField label="Label" required error={errors.label}>
-            {(p) => (
-              <Input
-                {...p}
-                value={draft.label}
-                onChange={(e) => patch({ label: e.target.value })}
-              />
-            )}
-          </FormField>
-          <FormField label="Owner">
-            {(p) => (
-              <Select
-                {...p}
-                value={org}
-                onValueChange={setOrg}
-                options={[
-                  { value: PLATFORM, label: 'Platform' },
-                  ...(orgs.data?.items ?? []).map((o) => ({ value: o.id, label: o.name })),
-                ]}
-              />
-            )}
-          </FormField>
-          <CertificateFields draft={draft} errors={errors} patch={patch} />
-          <CheckboxField
-            label="NFC enabled"
-            checked={nfc}
-            onCheckedChange={(c) => setNfc(c === true)}
-          />
-          {formError ? (
-            <p role="alert" className="text-sm text-danger">
-              {formError}
-            </p>
-          ) : null}
-        </Form>
-      </DialogContent>
-    </Dialog>
+      {w.id === 'identity' ? (
+        <IdentityStep
+          draft={draft}
+          owners={owners}
+          org={org}
+          nfc={nfc}
+          errors={w.errors}
+          onLabel={(v) => patch({ label: v })}
+          onOrg={(v) => {
+            setOrg(v);
+            w.clearServer('orgId');
+          }}
+          onNfc={setNfc}
+        />
+      ) : null}
+      {w.id === 'certificate' ? (
+        <CertificateStep draft={draft} errors={w.errors} patch={patch} />
+      ) : null}
+      {w.id === 'review' ? (
+        <UploadReview draft={draft} ownerLabel={ownerLabel} nfc={nfc} onEdit={w.go} />
+      ) : null}
+    </WizardDialog>
   );
 }

@@ -32,12 +32,13 @@ import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { useConnectionActions, useConnector, useConnectorNames } from './api.ts';
 import { ConfigTab } from './config-tab.tsx';
 import { SettingsTab } from './detail-tabs.tsx';
+import { FileTab } from './files/file-tab.tsx';
+import { markApplyStarted } from './files/use-apply-watch.ts';
 import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
 import { sourceLine } from './labels.ts';
 import { MappingTab } from './mapping-tab.tsx';
 import type { ConnectionDetailSearch } from './search.ts';
-import { showLive, TestModeNote } from './test-mode-note.tsx';
 import { type TestOutcome, TestResult } from './test-result.tsx';
 import { WebhookPanel } from './webhook.tsx';
 import { WebhookFailures } from './webhook-failures.tsx';
@@ -67,8 +68,13 @@ export function ConnectionDetail({
   const caps = connector.data?.capabilities;
   // Until the connector loads, fall back to the mode.
   const showWebhook = caps ? caps.webhook : c.mode === 'webhook' || c.mode === 'hybrid';
-  const canSync = caps ? caps.poll || caps.snapshot : c.mode !== 'webhook';
-  const tab = search.tab === 'webhook' && !showWebhook ? 'health' : (search.tab ?? 'health');
+  const showFile = caps?.upload === true;
+  const canSync = caps ? caps.poll || caps.snapshot || caps.upload : c.mode !== 'webhook';
+  const home = showFile ? 'file' : 'health';
+  const tab =
+    (search.tab === 'webhook' && !showWebhook) || (search.tab === 'file' && !showFile)
+      ? home
+      : (search.tab ?? home);
   const setTab = (next: string) =>
     void navigate({
       to: '.',
@@ -90,7 +96,10 @@ export function ConnectionDetail({
     if (!canManage) return;
     void actions.sync
       .mutateAsync()
-      .then(() => toast.success('Sync started'))
+      .then(() => {
+        markApplyStarted(connectionId);
+        toast.success('Sync started');
+      })
       .catch((error: unknown) => toast.error(error, 'Could not sync'));
   };
   const sample = test?.kind === 'result' ? test.result.sample : undefined;
@@ -197,7 +206,6 @@ export function ConnectionDetail({
           />
         </div>
       ) : null}
-      <TestModeNote className="mb-4" />
       <TwoPane
         aside={
           <Card>
@@ -214,7 +222,6 @@ export function ConnectionDetail({
                         icon={ENTITY.pass.icon}
                         to="/admin/passes"
                         search={{ connectionId: c.id }}
-                        onClick={showLive}
                       />
                     ),
                   },
@@ -229,12 +236,24 @@ export function ConnectionDetail({
       >
         <Tabs value={tab} onValueChange={setTab} className="min-w-0">
           <TabsList aria-label="Connection sections">
+            {showFile ? <TabsTrigger value="file">File</TabsTrigger> : null}
             <TabsTrigger value="health">Health</TabsTrigger>
             <TabsTrigger value="mapping">Mapping</TabsTrigger>
             <TabsTrigger value="config">Configuration</TabsTrigger>
             <TabsTrigger value="settings">Lifecycle</TabsTrigger>
             {showWebhook ? <TabsTrigger value="webhook">Webhook</TabsTrigger> : null}
           </TabsList>
+          {showFile ? (
+            <TabsContent value="file">
+              <FileTab
+                connectionId={connectionId}
+                onMissing={c.onMissing}
+                canManage={canManage}
+                enabled={c.enabled}
+                runs={c.runs}
+              />
+            </TabsContent>
+          ) : null}
           <TabsContent value="health">
             <HealthPanel
               connection={c}

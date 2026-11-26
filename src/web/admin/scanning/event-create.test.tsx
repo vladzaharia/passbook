@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('New event', () => {
-  it('names what is missing on Create instead of a silent disabled button', async () => {
+  it('names what is missing on Next instead of a silent disabled button', async () => {
     let creates = 0;
     await renderApp('/admin/scanning?tab=events&orgId=o1', {
       session: 'admin',
@@ -31,14 +31,17 @@ describe('New event', () => {
       (await screen.findAllByRole('button', { name: 'New event' }))[0] as HTMLElement,
     );
     const form = screen.getByRole('dialog', { name: 'New event' });
-    expect(within(form).queryByLabelText('No opening time')).toBeNull();
-    expect(within(form).queryByLabelText('No closing time')).toBeNull();
-    const create = within(form).getByRole('button', { name: 'Create event' });
-    expect(create).toBeEnabled();
-    await user.click(create);
+    expect(within(form).getByRole('heading', { name: 'Name the event' })).toBeInTheDocument();
+    expect(within(form).queryByRole('button', { name: 'Create event' })).toBeNull();
+    const next = within(form).getByRole('button', { name: 'Next' });
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    await user.click(next);
     expect(within(form).getByText('Enter a name.')).toBeInTheDocument();
-    expect(within(form).getByText('Set when scanning opens.')).toBeInTheDocument();
-    expect(within(form).getByText('Set when scanning closes.')).toBeInTheDocument();
+    await user.type(within(form).getByRole('textbox', { name: /^Name/ }), 'Summer');
+    await user.click(within(form).getByRole('button', { name: 'Next' }));
+    expect(within(form).getByRole('heading', { name: 'Pick the passes' })).toBeInTheDocument();
+    await user.click(within(form).getByRole('button', { name: 'Next' }));
+    expect(within(form).getByText('Pick at least one template.')).toBeInTheDocument();
     expect(creates).toBe(0);
   });
 });

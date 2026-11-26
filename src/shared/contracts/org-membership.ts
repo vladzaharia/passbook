@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { normalizeEmail, strictEmail } from '../email.ts';
+import { INVITE_SECRET } from '../invitation-link.ts';
 import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 
 /** Organization roles are separate from the platform session roles. */
@@ -107,7 +108,7 @@ export const ChangeOrgMemberRolesSchema = z.strictObject({
 export type ChangeOrgMemberRoles = z.infer<typeof ChangeOrgMemberRolesSchema>;
 
 export const AcceptOrgInvitationSchema = z.strictObject({
-  token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+  token: z.string().regex(INVITE_SECRET),
 });
 export const OrgInvitationPreviewSchema = z.object({ orgName: z.string() });
 

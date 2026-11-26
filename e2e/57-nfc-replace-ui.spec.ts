@@ -99,6 +99,9 @@ test('the console replaces tag keys: dry run, confirm, step-up, re-key, then the
     await dialog
       .getByRole('checkbox', { name: 'Replace keys for tags already on this keyset' })
       .click();
+    const next = dialog.getByRole('button', { name: 'Next', exact: true });
+    await expect(next).not.toHaveAttribute('aria-disabled', 'true');
+    await next.click();
     await expect(dialog.getByText('2 of 2 rows will re-key a tag')).toBeVisible();
     return dialog;
   }
@@ -107,13 +110,11 @@ test('the console replaces tag keys: dry run, confirm, step-up, re-key, then the
   let dialog = await openReplace();
   await shots(page, 'nfc-replace-dialog');
   await axeBothThemes(page);
-  await dialog.getByRole('button', { name: 'Re-key 2 tags' }).click();
-  const confirm = page.getByRole('alertdialog', { name: 'Re-key 2 tags?' });
-  await expect(confirm.getByText(/Taps with the old keys stop working/)).toBeVisible();
+  await expect(dialog.getByText(/Taps with the old keys stop working/)).toBeVisible();
   await page.waitForTimeout(400);
   await shots(page, 'nfc-replace-confirm');
   await axeBothThemes(page);
-  await confirm.getByRole('button', { name: 'Re-key', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Re-key 2 tags' }).click();
   const stepUp = page.getByRole('alertdialog', { name: "Confirm it's you" });
   await expect(stepUp).toBeVisible();
   await page.waitForTimeout(400);
@@ -125,10 +126,6 @@ test('the console replaces tag keys: dry run, confirm, step-up, re-key, then the
   await page.waitForURL(/\/admin/);
   dialog = await openReplace();
   await dialog.getByRole('button', { name: 'Re-key 2 tags' }).click();
-  await page
-    .getByRole('alertdialog', { name: 'Re-key 2 tags?' })
-    .getByRole('button', { name: 'Re-key', exact: true })
-    .click();
   await expect(page.getByText('2 tags re-keyed')).toBeVisible();
 
   // The audit entry lists the re-keyed tags, never a key.

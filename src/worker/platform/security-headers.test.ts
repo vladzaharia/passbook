@@ -163,6 +163,15 @@ describe('the scanner document and its decoder worker', () => {
     expect(PERMISSIONS_POLICY).toContain('camera=()');
   });
 
+  it('the invitation page sends no Referer and keeps the one SPA policy', () => {
+    const invite = headersFor('/invite');
+    expect(invite.get('referrer-policy')).toEqual(['no-referrer']);
+    expect(invite.get('content-security-policy')).toHaveLength(1);
+    expect(headersFor('/login').get('referrer-policy')).toEqual([
+      'strict-origin-when-cross-origin',
+    ]);
+  });
+
   it('serves the manifest as application/manifest+json', () => {
     expect(headersFor('/scan.webmanifest').get('content-type')).toEqual([
       'application/manifest+json',

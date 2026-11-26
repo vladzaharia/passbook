@@ -34,7 +34,12 @@ const wizard = (isFetching: boolean) =>
 describe('the review step while it re-checks', () => {
   it('keeps the last counts on screen and shows a loading rail', async () => {
     const { container } = render(
-      <ReviewStep w={wizard(true)} which="1,240 passes" picked={undefined} />,
+      <ReviewStep
+        w={wizard(true)}
+        which="1,240 passes"
+        picked={undefined}
+        onEdit={() => undefined}
+      />,
     );
     expect(screen.getByText('Will change')).toBeInTheDocument();
     expect(screen.getAllByText('Seed 1')).not.toHaveLength(0);
@@ -43,7 +48,12 @@ describe('the review step while it re-checks', () => {
 
   it('shows no rail when nothing is being fetched', () => {
     const { container } = render(
-      <ReviewStep w={wizard(false)} which="1,240 passes" picked={undefined} />,
+      <ReviewStep
+        w={wizard(false)}
+        which="1,240 passes"
+        picked={undefined}
+        onEdit={() => undefined}
+      />,
     );
     expect(container.querySelector('.wl-rail')).toBeNull();
   });

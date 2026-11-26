@@ -30,6 +30,22 @@ export const FENCED = [
   'enabled',
 ] as const;
 
+/** The value with object keys sorted, so two parses of one config compare by content, not key order. */
+const canonical = (v: unknown): unknown =>
+  Array.isArray(v)
+    ? v.map(canonical)
+    : v && typeof v === 'object'
+      ? Object.fromEntries(
+          Object.entries(v)
+            .sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0))
+            .map(([k, x]) => [k, canonical(x)]),
+        )
+      : v;
+
+/** Same JSON value, whatever the key order; an absent value equals null. */
+export const sameJson = (a: unknown, b: unknown): boolean =>
+  JSON.stringify(canonical(a ?? null)) === JSON.stringify(canonical(b ?? null));
+
 export function auditActor(actor: Actor): { actorType: Actor['type']; actorId: string | null } {
   return { actorType: actor.type, actorId: actor.id };
 }
