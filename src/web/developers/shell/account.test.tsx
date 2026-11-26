@@ -62,7 +62,14 @@ describe('the developer site account island', () => {
     await mount(sessionFixture('admin'));
     await user.click(await screen.findByRole('button', { name: 'Account menu' }));
     const menu = await screen.findByRole('menu');
-    expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Developers', 'Sign out']);
+    expect(items(menu)).toEqual([
+      'My passes',
+      'Account',
+      'Admin',
+      'Workbench',
+      'Developers',
+      'Sign out',
+    ]);
     expect(within(menu).getByRole('menuitem', { name: 'Developers' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -79,6 +86,7 @@ describe('the developer site account island', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Sign out',
     ]);
   });
@@ -88,7 +96,7 @@ describe('the developer site account island', () => {
     await mount(sessionFixture('developer'));
     await user.click(await screen.findByRole('button', { name: 'Account menu' }));
     const menu = await screen.findByRole('menu');
-    expect(items(menu)).toEqual(['My passes', 'Account', 'Developers', 'Sign out']);
+    expect(items(menu)).toEqual(['My passes', 'Account', 'Workbench', 'Developers', 'Sign out']);
     expect(within(menu).getByRole('menuitem', { name: 'Developers' })).toHaveAttribute(
       'aria-current',
       'page',

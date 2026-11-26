@@ -36,8 +36,14 @@ export interface EmptyStateProps {
   inline?: boolean;
   /** Not-found and forbidden pages: the title is the page h1. */
   heading?: boolean;
+  /** `stage`: the Workbench's dot-grid canvas in place of the dashed box (design D3). */
+  surface?: 'stage';
   className?: string;
 }
+
+/** The dot grid a pass stands on: the Workbench's empty canvas. */
+export const STAGE_SURFACE =
+  'rounded-lg border border-border bg-surface-sunken bg-[radial-gradient(color-mix(in_oklab,var(--pk-border-strong)_38%,transparent)_1px,transparent_1.2px)] bg-size-[16px_16px]';
 
 /** Not found and forbidden: the SSR pages' compositions (art/state-acts.ts), always sad. */
 function stateOf(art: ArtName, artState: WalletState | undefined): ActedState | undefined {
@@ -70,6 +76,7 @@ export function EmptyState({
   inline = false,
   heading = false,
   still = false,
+  surface,
   className,
 }: EmptyStateProps) {
   const filtered = variant === 'filtered';
@@ -102,7 +109,12 @@ export function EmptyState({
         'relative flex flex-col items-center text-center',
         inline
           ? 'gap-1.5 px-4 py-6'
-          : 'gap-2 rounded-lg border border-dashed border-border-strong px-6 py-10',
+          : cn(
+              'gap-2 px-6 py-10',
+              surface === 'stage'
+                ? STAGE_SURFACE
+                : 'rounded-lg border border-dashed border-border-strong',
+            ),
         // The search walk spans a share of the box's width.
         !inline && scene === 'search' && '[container-type:inline-size]',
         className,
