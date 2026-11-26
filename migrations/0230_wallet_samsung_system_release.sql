@@ -247,3 +247,9 @@ SELECT id FROM wallet_google_retirement_complete;
 -- Pending while unstamped or stamped before the enrolment was last turned On.
 ALTER TABLE wallet_provider_accounts ADD COLUMN projection_backfilled_at INTEGER
   CHECK (projection_backfilled_at IS NULL OR (typeof(projection_backfilled_at) = 'integer' AND projection_backfilled_at >= 0));
+
+-- One platform-authored candidate per source release, provider and mode: the Apple-release job and the backfill
+-- may run for the same source, and the second adopts the first's row.
+CREATE UNIQUE INDEX template_candidates_system_source
+  ON template_candidates (org_id, mode, provider, source_release_id)
+  WHERE author_id = 'system:wallet-projection';

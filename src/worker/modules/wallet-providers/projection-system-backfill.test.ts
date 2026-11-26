@@ -171,4 +171,22 @@ describe('candidate backfill (CAND-1)', () => {
       restore();
     }
   });
+
+  it('does not stamp a suspended org, so reactivating it backfills', async () => {
+    const x = await enrolled();
+    const restore = setWalletProvidersEnabledForTest(true);
+    try {
+      const sent: unknown[] = [];
+      await run(x.f.kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [
+        x.f.kit.org.id,
+      ]);
+      await drain(x, sent);
+      expect(queued(x, sent)).toEqual([]);
+      await run(x.f.kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [x.f.kit.org.id]);
+      await drain(x, sent);
+      expect(queued(x, sent)).toEqual([job(x)]);
+    } finally {
+      restore();
+    }
+  });
 });

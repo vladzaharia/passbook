@@ -34,6 +34,7 @@ import {
   setup,
   updateCompiler,
 } from './projection-v2-test-fixtures.ts';
+import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { walletInstanceProofSql } from './repo-instance-proof.ts';
 import {
   getProjectionRetirementMetadata,
@@ -364,6 +365,7 @@ describe('the Apple release hook', () => {
 
   it('queues one job for Google only, and only for an org with an account', async () => {
     const kit = await setup();
+    restore.push(setWalletProvidersEnabledForTest(true));
     const sent: unknown[] = [];
     const ctx = ctxWith(async (messages) => void sent.push(...messages.map((m) => m.body)));
     await queueSystemProjections(ctx, release('apple', 'org-without-account'));

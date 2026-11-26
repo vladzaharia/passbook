@@ -10,8 +10,10 @@ import {
 } from './repo-projection-backfill.ts';
 
 const ENROLMENTS_PER_DRAIN = 5;
-const SOURCES_PER_ENROLMENT = 500;
-const SEND_BATCH = 100;
+const PAGE = 100;
+const MAX_PAGES = 20;
+/** A platform candidate that is written but not released (a Samsung card not launched) is driven again this often. */
+const REDRIVE_MS = 15 * 60_000;
 
 const MODES = ['live', 'test'] as const;
 const PROVIDERS = ['google', 'samsung'] as const;
@@ -33,15 +35,22 @@ export async function backfillSystemProjections(ctx: ServiceContext): Promise<vo
   if (pairs.length === 0) return;
   const startedAt = ctx.clock.now();
   const db = ctx.env.DB;
-  for (const enrolment of await listBackfillEnrolments(db, pairs, ENROLMENTS_PER_DRAIN)) {
+  for (const enrolment of await listBackfillEnrolments(
+    db,
+    pairs,
+    startedAt - REDRIVE_MS,
+    ENROLMENTS_PER_DRAIN,
+  )) {
     try {
-      const count = await queueBackfill(ctx, enrolment);
-      await stampBackfilled(db, enrolment.id, startedAt);
+      const { count, done } = await queueBackfill(ctx, enrolment);
+      // Past the page cap the rest stays pending for the next drain.
+      if (done) await stampBackfilled(db, enrolment.id, startedAt);
       ctx.log.info('wallet.projection_backfill_queued', {
         orgId: enrolment.orgId,
         provider: enrolment.provider,
         mode: enrolment.mode,
         count,
+        done,
       });
     } catch (error) {
       ctx.log.error('wallet.projection_backfill_failed', {
@@ -53,21 +62,32 @@ export async function backfillSystemProjections(ctx: ServiceContext): Promise<vo
   }
 }
 
-async function queueBackfill(ctx: ServiceContext, e: BackfillEnrolment): Promise<number> {
-  const sources = await listUncoveredAppleSources(ctx.env.DB, e, SOURCES_PER_ENROLMENT);
-  for (let i = 0; i < sources.length; i += SEND_BATCH)
-    await ctx.env.JOBS.sendBatch(
-      sources.slice(i, i + SEND_BATCH).map((s) => ({
-        body: {
-          kind: 'wallet.projection_system' as const,
-          orgId: e.orgId,
-          mode: e.mode,
-          templateId: s.templateId,
-          sourceReleaseId: s.releaseId,
-          version: s.version,
-          provider: e.provider,
-        },
-      })),
-    );
-  return sources.length;
+async function queueBackfill(
+  ctx: ServiceContext,
+  e: BackfillEnrolment,
+): Promise<{ count: number; done: boolean }> {
+  let after = '';
+  let count = 0;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const sources = await listUncoveredAppleSources(ctx.env.DB, e, after, PAGE);
+    if (sources.length > 0)
+      await ctx.env.JOBS.sendBatch(
+        sources.map((s) => ({
+          body: {
+            kind: 'wallet.projection_system' as const,
+            orgId: e.orgId,
+            mode: e.mode,
+            templateId: s.templateId,
+            sourceReleaseId: s.releaseId,
+            version: s.version,
+            provider: e.provider,
+          },
+        })),
+      );
+    count += sources.length;
+    const last = sources.at(-1);
+    if (!last || sources.length < PAGE) return { count, done: true };
+    after = last.releaseId;
+  }
+  return { count, done: false };
 }

@@ -1,15 +1,12 @@
-// CAND-1: the platform authors, approves and releases a Samsung candidate, and the retirement and tombstone
-// proofs accept that release as they accept a human one (0230). The version author is a person here, so the
-// exemption is exercised: without it the approval and the proofs would refuse the system candidate.
+// CAND-1: the platform authors, approves and releases a Samsung candidate with no person, and the retirement proof
+// accepts that release. The version author is a person here. The exemption of 0230 is what lets that person approve
+// a system candidate with omissions (see projection-system-samsung-authority.test.ts).
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
-import type { SamsungWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
 import { all, first } from '../../platform/db.ts';
-import type { Kit as PassKit } from '../passes/pass-test-fixtures.ts';
 import { getLatestRelease } from '../templates/repo-releases.ts';
-import { enrolOn } from './enrolled-test-fixtures.ts';
 import { runSystemProjection } from './projection-system.ts';
 import { SYSTEM_AUTHOR, SYSTEM_REVIEWER } from './projection-system-authority.ts';
+import { enrolSamsung, samsungCard } from './projection-system-samsung-fixtures.ts';
 import { installV2Env, jobCtx, LOGO, S, setup } from './projection-v2-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { samsungRetirementProjectionSql } from './repo-instance-retirement-sql.ts';
@@ -29,41 +26,9 @@ const wallets = { schema: 1, google: { images: { logo: LOGO } }, samsung: {} };
 
 async function systemRelease() {
   const kit = await setup({}, wallets);
-  const identity = await createFixtureIdentity(undefined, { now: new Date(S.clock.now()) });
-  // A real enrolment (an org credential, its source, On), not the legacy envelope; the identity is unique per mode.
-  const unique = `${Date.now()}${Math.floor(Math.random() * 1e3)}`;
-  const samsung: SamsungWalletCredentials = {
-    partnerId: `partner${unique}`,
-    certificateId: 'ABCD',
-    cardId: `card${unique}`,
-    partnerPrivateKeyPem: identity.privateKey,
-    partnerCertificatePem: identity.certificate,
-    samsungCertificatePem: identity.certificate,
-  };
-  await enrolOn(
-    { env: S.env, org: { id: kit.orgId }, ctx: kit.ctx } as unknown as PassKit,
-    kit.author,
-    {
-      provider: 'samsung',
-      expectedRevision: 0,
-      credentials: samsung,
-    },
-  );
+  const samsung = await enrolSamsung(kit);
   const restore = setWalletProvidersEnabledForTest(true);
-  // The card read that a Samsung release needs: a launched loyalty card.
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
-    Response.json({
-      resultCode: '0',
-      template: {
-        cardId: samsung.cardId,
-        state: 'ACTIVE',
-        testingModeOff: 'Y',
-        cardType: 'loyalty',
-        subType: 'others',
-        countryCode: 'GB',
-      },
-    }),
-  );
+  samsungCard(samsung);
   try {
     await runSystemProjection(jobCtx(kit.ctx), {
       kind: 'wallet.projection_system',

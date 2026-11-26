@@ -7,7 +7,7 @@ import { type ApprovalRow, getLatestRelease } from '../templates/repo-releases.t
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import { publishableSchema } from './projection-contract.ts';
 import { computeProjectionPins, unreleasable } from './projection-pins.ts';
-import { publish } from './projection-release-service.ts';
+import { CARD_STATE_MARGIN_MS, publish } from './projection-release-service.ts';
 import {
   failedWrite,
   pinProjectionContext,
@@ -27,6 +27,7 @@ import {
   selectProjectionCandidates,
 } from './repo-projection-store.ts';
 import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
+import { ensureSamsungCard } from './samsung-verification.ts';
 
 type SystemProjectionJob = JobOf<'wallet.projection_system'>;
 
@@ -67,9 +68,7 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
   const scope: ProjectionScope = { orgId, mode, provider, templateId };
   const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const db = ctx.env.DB;
-  const earlier = (await selectProjectionCandidates(db, scope)).find(
-    (c) => isSystemAuthored(c) && c.sourceReleaseId === job.sourceReleaseId,
-  );
+  const earlier = await findSystemCandidate(ctx, scope, job);
   const reviewer = systemAuthority('reviewer', orgId, mode);
   // A retry resumes where the last run stopped: candidate, then approval, then release.
   let candidate = earlier ?? null;
@@ -96,11 +95,22 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
     });
     if (!candidate) return;
     const created = candidate;
-    const made = await writeProjectionCandidate(ctx, created, author, {
-      action: 'template.system_candidate',
-      detail: auditDetail(created),
-    });
-    if (!made) return failedWrite(ctx, author);
+    let made: boolean;
+    try {
+      made = await writeProjectionCandidate(ctx, created, author, {
+        action: 'template.system_candidate',
+        detail: auditDetail(created),
+      });
+    } catch (error) {
+      // A concurrent job's twin (the unique index of 0230) is adopted below, not duplicated.
+      if (!(await findSystemCandidate(ctx, scope, job))) throw error;
+      made = false;
+    }
+    if (!made) {
+      const twin = await findSystemCandidate(ctx, scope, job);
+      if (!twin) return failedWrite(ctx, author);
+      candidate = twin;
+    }
   }
   if (candidate.projection.schema !== 2 || candidate.projection.approvedOmissions.length > 0)
     return;
@@ -132,8 +142,24 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
     });
     if (!approved) return failedWrite(ctx, reviewer);
   }
+  // Samsung publishes only on a card Samsung reports launched (Test also takes one in testing): a mode that is not
+  // released, or a Live card that is not launched yet, is a skip. The backfill drives it again later.
+  if (
+    provider === 'samsung' &&
+    !(await ensureSamsungCard(ctx, checked.id, checked.candidateHash, CARD_STATE_MARGIN_MS))
+  )
+    return skipped(ctx, job, 'card not ready');
   await publish(ctx, reviewer, scope, checked, approval, head?.generation ?? 0, 'release', null);
 }
+
+const findSystemCandidate = async (
+  ctx: ServiceContext,
+  scope: ProjectionScope,
+  job: SystemProjectionJob,
+) =>
+  (await selectProjectionCandidates(ctx.env.DB, scope)).find(
+    (c) => isSystemAuthored(c) && c.sourceReleaseId === job.sourceReleaseId,
+  );
 
 const auditDetail = (candidate: ProjectionCandidate) => ({
   candidateId: candidate.id,
