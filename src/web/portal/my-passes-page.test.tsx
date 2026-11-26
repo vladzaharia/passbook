@@ -5,6 +5,7 @@ import { axe } from 'vitest-axe';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import { loadBarcodeEngine } from '../pass-card/barcode-engine.ts';
+import { fixtureOperation, HOLDER_REFRESH } from '../ui/operation/fixtures.test-support.ts';
 import { passFixture } from './fixtures.ts';
 
 // The QR encoder is a lazy chunk: load it once so the dialog's QR does not wait on a fetch.
@@ -208,12 +209,13 @@ describe('my passes', () => {
 });
 
 describe('refresh', () => {
-  it('goes pending, polls until refreshed, then cools down', async () => {
+  it('goes pending while its operation runs, then cools down', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
     const requestedAt = Date.now();
     let state: 'before' | 'pending' | 'done' = 'before';
     let posts = 0;
+    let operationReads = 0;
     await renderApp('/', {
       handlers: {
         '/api/v1/me/passes': () =>
@@ -230,7 +232,20 @@ describe('refresh', () => {
         '/api/v1/me/passes/p1/refresh': () => {
           posts++;
           state = 'pending';
-          return json({ accepted: true, requestedAt, cooldownSeconds: 30 }, 202);
+          return json(
+            { accepted: true, requestedAt, cooldownSeconds: 30, operationId: 'op-r1' },
+            202,
+          );
+        },
+        '/api/v1/operations/op-r1': () => {
+          operationReads++;
+          return json(
+            fixtureOperation(HOLDER_REFRESH, {
+              status: state === 'done' ? 'succeeded' : 'running',
+              at: 'build',
+              id: 'op-r1',
+            }),
+          );
         },
       },
     });
@@ -239,10 +254,12 @@ describe('refresh', () => {
     expect(busy).toBeDisabled();
     expect(posts).toBe(1);
 
+    // The operation says when it ends: nothing polls the list for it.
     state = 'done';
     await act(async () => {
       await vi.advanceTimersByTimeAsync(3500);
     });
+    expect(operationReads).toBeGreaterThan(1);
     const cooling = await screen.findByRole('button', { name: /^Refresh in \d+s$/ });
     expect(cooling).toBeDisabled();
 

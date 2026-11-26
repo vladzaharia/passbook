@@ -32,6 +32,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
     /** The signed-in owner; null when the holder used the pass link. */
     userId: z.string().nullable(),
     reason: z.enum(['resend', 'lost_phone', 'codes_replaced', 'channel_off']),
+    /** The holder's operation that reports this mail (resend, lost phone). */
+    operationId: z.string().min(1).max(64).optional(),
     /** channel_off: the digital channels whose copies stopped working, for the mail's line. */
     channels: z.array(z.enum(['mobile', 'apple', 'google', 'samsung'])).optional(),
   }),
@@ -45,6 +47,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
   }),
   z.object({
     kind: z.literal('pass.refresh'),
+    /** The holder's operation that reports this refresh; absent for an admin's. */
+    operationId: z.string().min(1).max(64).optional(),
     passId: z.string(),
     orgId: z.string(),
     identityId: z.string().min(1),

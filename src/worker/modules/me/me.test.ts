@@ -15,7 +15,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { fakeLimiter, harness, type TestHarness } from '../auth/test-support.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
-import { type MeDeps, refreshMyPass, removeMyPass } from './service.ts';
+import { type MeDeps, refreshMyPass, removeMyPass } from './service-actions.ts';
 
 let h: TestHarness;
 const f = () => fixtures(h.env, h.clock);
@@ -303,7 +303,7 @@ describe('passes', () => {
       const { user, org, own, template } = await setup();
       const mine = await own();
       const ctx = createServiceContext(h.env, { clock: h.clock });
-      expect(await refreshMyPass(ctx, user.id, mine.id, deps)).toEqual({
+      expect(await refreshMyPass(ctx, user.id, 'session', mine.id, deps)).toEqual({
         accepted: true,
         requestedAt: 42,
         cooldownSeconds: 30,
@@ -338,7 +338,7 @@ describe('passes', () => {
       const mine = await own();
       const ctx = createServiceContext(h.env, { clock: h.clock });
       await run(h.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [mine.id]);
-      await expect(refreshMyPass(ctx, user.id, mine.id, deps)).rejects.toMatchObject({
+      await expect(refreshMyPass(ctx, user.id, 'session', mine.id, deps)).rejects.toMatchObject({
         status: 409,
       });
       await run(h.env.DB, "UPDATE passes SET status = 'active' WHERE id = ?", [mine.id]);
@@ -346,10 +346,10 @@ describe('passes', () => {
         { ...h.env, RL_REFRESH: fakeLimiter(3) as unknown as RateLimit },
         { clock: h.clock },
       );
-      for (let i = 0; i < 3; i++) await refreshMyPass(limited, user.id, mine.id, deps);
-      await expect(refreshMyPass(limited, user.id, mine.id, deps)).rejects.toBeInstanceOf(
-        RateLimitedError,
-      );
+      for (let i = 0; i < 3; i++) await refreshMyPass(limited, user.id, 'session', mine.id, deps);
+      await expect(
+        refreshMyPass(limited, user.id, 'session', mine.id, deps),
+      ).rejects.toBeInstanceOf(RateLimitedError);
       expect(calls).toHaveLength(3);
     });
 
@@ -361,9 +361,9 @@ describe('passes', () => {
         { ...h.env, RL_REFRESH: fakeLimiter(1) as unknown as RateLimit },
         { clock: h.clock },
       );
-      await refreshMyPass(limited, user.id, a.id, deps);
-      await refreshMyPass(limited, user.id, b.id, deps);
-      await expect(refreshMyPass(limited, user.id, a.id, deps)).rejects.toBeInstanceOf(
+      await refreshMyPass(limited, user.id, 'session', a.id, deps);
+      await refreshMyPass(limited, user.id, 'session', b.id, deps);
+      await expect(refreshMyPass(limited, user.id, 'session', a.id, deps)).rejects.toBeInstanceOf(
         RateLimitedError,
       );
     });
@@ -381,6 +381,7 @@ describe('passes', () => {
       expect(await removeMyPass(ctx, user.id, 'session', mine.id, deps)).toEqual({
         transferId: 'transfer-1',
         state: 'completed',
+        operationId: expect.any(String),
       });
       expect(calls).toEqual([
         [
@@ -409,9 +410,9 @@ describe('passes', () => {
       const { user, org, template, f1 } = await setup();
       const stranger = await makePass(f1, { orgId: org.id, template: template.resolved });
       const ctx = createServiceContext(h.env, { clock: h.clock });
-      await expect(refreshMyPass(ctx, user.id, stranger.id, deps)).rejects.toBeInstanceOf(
-        NotFoundError,
-      );
+      await expect(
+        refreshMyPass(ctx, user.id, 'session', stranger.id, deps),
+      ).rejects.toBeInstanceOf(NotFoundError);
       await expect(removeMyPass(ctx, user.id, 'session', stranger.id, deps)).rejects.toBeInstanceOf(
         NotFoundError,
       );

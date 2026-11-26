@@ -121,10 +121,14 @@ export function useTray({
       if (op.status === 'succeeded')
         toast.action(op.text, { label: 'View', onClick: () => onOpen?.(op) });
       else if (op.status === 'failed')
-        toast.error(op.error?.message ?? 'Something went wrong.', op.text, {
-          label: 'Retry',
-          onClick: () => void retry(op),
-        });
+        toast.error(
+          op.error?.message ?? 'Something went wrong.',
+          op.text,
+          // A failure the server cannot retry (a holder's) offers View: Retry would only be refused.
+          op.error?.retryable === false
+            ? { label: 'View', onClick: () => onOpen?.(op) }
+            : { label: 'Retry', onClick: () => void retry(op) },
+        );
     }
   }, [all, notify, onOpen, retry]);
 

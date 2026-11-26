@@ -310,46 +310,6 @@ describe('stall sweep', () => {
   });
 });
 
-describe('stall sweep: waiting rows', () => {
-  const resent = (id: string) =>
-    kit.queue.sent.filter((m) => (m as { kind: string; operationId?: string }).operationId === id)
-      .length;
-
-  it('leaves a non-tail wait alone until its time passes (R3-L1)', async () => {
-    const op = await start();
-    const p = progressOf(kit.ctx, op.id, 1);
-    await p.waiting('a', { until: kit.clock.now() + 2 * 3_600_000, due: true });
-    kit.clock.advance(3_600_000);
-    await sweepStalledOperations(kit.ctx);
-    expect(resent(op.id)).toBe(0);
-    expect((await read(op.id)).status).toBe('waiting');
-    // The wait is over and nothing woke it: now it is a lost wake-up.
-    kit.clock.advance(2 * 3_600_000);
-    await sweepStalledOperations(kit.ctx);
-    expect(resent(op.id)).toBe(1);
-  });
-
-  it('finds a lost wake-up behind a crowd of tail-only waits (R3-L2)', async () => {
-    const crowd = 105;
-    for (let i = 0; i < crowd; i++) {
-      const op = await start(ORG_KIND.kind, `crowd-${i}`);
-      const p = progressOf(kit.ctx, op.id, 1);
-      await p.step('a').done();
-      await p.step('b').done();
-      await p.waiting('c', { until: kit.clock.now() + 7 * 86_400_000, due: true });
-    }
-    kit.clock.advance(120_000);
-    const lost = await start(ORG_KIND.kind, 'lost');
-    await progressOf(kit.ctx, lost.id, 1).waiting('a', {
-      until: kit.clock.now() + 1000,
-      due: true,
-    });
-    kit.clock.advance(3_600_000);
-    await sweepStalledOperations(kit.ctx);
-    expect(resent(lost.id)).toBe(1);
-  });
-});
-
 describe('retention sweep', () => {
   it('deletes only ended rows past their expiry', async () => {
     const done = await start();

@@ -13,6 +13,10 @@ const DEFAULT_STALL_MS = 10 * 60_000;
 /** No kind stalls sooner: the first query only reads rows silent this long. */
 const MIN_STALL_MS = 60_000;
 const BATCH = 100;
+/** A timed wait is a lost wake-up this long after its end (the longest gap between looks is 15 min). */
+const LOST_LOOK_GRACE_MS = 20 * 60_000;
+/** A timed wait is a lost wake-up this long after its end (the longest gap between looks is 15 min). */
+const LOST_LOOK_GRACE_MS = 20 * 60_000;
 const DEAD_WORKFLOW = new Set(['errored', 'terminated']);
 
 const stalled = () => new AppError('OPERATION_STALLED', 500, 'The operation stopped responding.');
@@ -85,6 +89,29 @@ function tailKeys(): Map<string, string[]> {
 }
 
 /**
+ * The one rule for a row that may have lost its wake-up. A timed wait that has not ended is planned, whatever is
+ * pending behind it (a lost phone's mail). One that ended is silent from its end, and a lost wake-up once the look
+ * that should have ended it is `LOST_LOOK_GRACE_MS` late. Without a timed wait, the row is lost once its heartbeat is
+ * `limit` old. Tail steps wait by design and never count.
+ */
+export function lostWakeUp(
+  row: OperationRow,
+  steps: readonly { key: string; tail?: boolean }[] | undefined,
+  now: number,
+  limit: number,
+): boolean {
+  const tails = new Set(steps?.filter((x) => x.tail).map((x) => x.key));
+  const timed = parseSteps(row.steps).filter(
+    (x) => x.state === 'waiting' && !tails.has(x.key) && x.until !== null,
+  );
+  const heartbeatLimit = (row.heartbeat_at ?? row.created_at) + limit;
+  if (row.status !== 'waiting' || !timed.length) return heartbeatLimit <= now;
+  const ends = timed.map((x) => x.until ?? 0);
+  if (ends.some((end) => end > now)) return false;
+  return Math.max(...ends) + LOST_LOOK_GRACE_MS <= now && heartbeatLimit <= now;
+}
+
+/**
  * The minute hook, over queued and running rows, and waiting rows that still have non-tail steps to do and no live
  * lease (a lost wake-up). A waiting row with only its tail left is exempt: a long wait is the point of it.
  */
@@ -103,16 +130,7 @@ export async function sweepStalledOperations(ctx: ServiceContext): Promise<void>
   for (const row of silent) {
     const def = kindOf(row.kind);
     const limit = def?.stallMs ?? DEFAULT_STALL_MS;
-    // A wait that has ended since the last heartbeat is silent only from its end: a wake-up a little late is not a stall.
-    const tails = new Set(def?.steps.filter((x) => x.tail).map((x) => x.key));
-    const waitEnds = parseSteps(row.steps).reduce(
-      (m, x) =>
-        x.state === 'waiting' && !tails.has(x.key) && x.until !== null && x.until <= now
-          ? Math.max(m, x.until)
-          : m,
-      0,
-    );
-    if (Math.max(row.heartbeat_at ?? row.created_at, waitEnds) > now - limit) continue;
+    if (!lostWakeUp(row, def?.steps, now, limit)) continue;
     await check(ctx, row, now);
   }
 }

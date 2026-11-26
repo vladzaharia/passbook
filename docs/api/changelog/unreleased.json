@@ -129,6 +129,22 @@
     "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
   },
   {
+    "key": "DELETE /api/v1/me/passes/{id} 200.operationId: field added",
+    "class": "additive",
+    "operationId": "me.deleteMePassesById",
+    "op": "DELETE /api/v1/me/passes/{id}",
+    "change": "200.operationId: field added",
+    "note": "The removal is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
+  },
+  {
+    "key": "DELETE /api/v1/me/passes/{id} 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.deleteMePassesById",
+    "op": "DELETE /api/v1/me/passes/{id}",
+    "change": "202.operationId: field added",
+    "note": "The removal is an operation: follow it at GET /operations/{id}. It waits until the wallets let go. Only the holder's own session reads it."
+  },
+  {
     "key": "DELETE /api/v1/nfc/bindings/{bindingId} callable by nfc:write key",
     "class": "additive",
     "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
@@ -3590,6 +3606,14 @@
     "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
   },
   {
+    "key": "POST /api/v1/connections/{id}/sync 202.operationId: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdSync",
+    "op": "POST /api/v1/connections/{id}/sync",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the sync; null when the sync joined a run that was already open. Read it with GET /api/v1/operations/{id}."
+  },
+  {
     "key": "POST /api/v1/connections/{id}/webhook-secret 200.firstVerifiedArrivalAt: field added",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdWebhookSecret",
@@ -3612,14 +3636,6 @@
     "op": "POST /api/v1/connections/{id}/webhook-secret",
     "change": "200.warning: field added",
     "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
-  },
-  {
-    "key": "POST /api/v1/connections/{id}/sync 202.operationId: field added",
-    "class": "additive",
-    "operationId": "connections.postConnectionsByIdSync",
-    "op": "POST /api/v1/connections/{id}/sync",
-    "change": "202.operationId: field added",
-    "note": "operationId names the operation that shows the sync; null when the sync joined a run that was already open. Read it with GET /api/v1/operations/{id}."
   },
   {
     "key": "POST /api/v1/connections/probe new operation",
@@ -3983,6 +3999,38 @@
     "op": "POST /api/v1/invitations/setup",
     "change": "new operation",
     "note": "Create a Polaris ID from an invitation: a one-hour signup link that already carries the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdLostPhone",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone",
+    "change": "202.operationId: field added",
+    "note": "Lost phone is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone/confirmation new operation",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdLostPhoneConfirmation",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone/confirmation",
+    "change": "new operation",
+    "note": "Emails a sign-in link back to the pass. Lost phone then needs an email-link session under 10 minutes old (409 EMAIL_CONFIRMATION_REQUIRED)."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/refresh 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdRefresh",
+    "op": "POST /api/v1/me/passes/{id}/refresh",
+    "change": "202.operationId: field added",
+    "note": "The refresh is an operation: follow it at GET /operations/{id}. Absent when an earlier refresh covers the click. Only the holder's own session reads it."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/resend 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdResend",
+    "op": "POST /api/v1/me/passes/{id}/resend",
+    "change": "202.operationId: field added",
+    "note": "The email is an operation: follow it at GET /operations/{id}. A second request while one runs answers 409 OPERATION_RUNNING with its id."
   },
   {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
