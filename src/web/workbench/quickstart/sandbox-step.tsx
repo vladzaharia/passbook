@@ -2,7 +2,6 @@ import { ArrowRight, Check, Copy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { SandboxOperations } from '../../developers/ui/sandbox-operation.tsx';
 import { useClaimOperation, useOperation, useOperationParam } from '../../ui/operation/index.ts';
 import { mintKey } from '../console/sandbox-actions.ts';
 import { copyToClipboard } from '../playground/copy.ts';
@@ -252,9 +251,5 @@ export function SandboxStep({
   state: StepState;
   onNext: () => void;
 }) {
-  return (
-    <SandboxOperations csrf={q.csrf}>
-      <Body q={q} state={state} onNext={onNext} />
-    </SandboxOperations>
-  );
+  return <Body q={q} state={state} onNext={onNext} />;
 }

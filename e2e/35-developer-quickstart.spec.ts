@@ -1,6 +1,7 @@
 import { expect, request as playwrightRequest, test } from '@playwright/test';
 import { apiAs } from './helpers/api.ts';
 import { sandboxOrgId } from './helpers/sandbox.ts';
+import { shots } from './helpers/shots.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 /** The builder gets the one sandbox a person can have, so this spec needs a fresh server (the default). */
@@ -33,11 +34,11 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     if (r.url().endsWith('/api/v1/developer/sandbox')) created = r.postDataJSON();
   });
 
-  // The Workbench shell collapses its nav and the stage below 1440 px: the whole page is the desktop one.
-  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/workbench/quickstart');
-  // Signed out the Workbench shows its sign-in state (T8 rebuilds the public first step).
   await expect(page.getByRole('heading', { level: 1, name: 'Quickstart' })).toBeVisible();
+  // The signed-out page is the whole page: five steps and the empty pass.
+  await expect(page.getByRole('listitem').filter({ hasText: 'Hear back' })).toBeVisible();
+  await shots(page, 'qs-1-signed-out');
 
   // Step 1 goes straight to Polaris ID.
   await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
@@ -48,6 +49,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   const env = page.locator('.qs-env-v');
   await expect(env).toContainText(/PASSBOOK_KEY=pbp_test_\S{20,}/);
   await expect(page.getByText('Shown once')).toBeVisible();
+  await shots(page, 'qs-2-key');
   await page.getByRole('button', { name: 'Copy .env' }).click();
   const clip = await page.evaluate(() => navigator.clipboard.readText());
   const [, secret = '', templateId = ''] =
@@ -81,7 +83,8 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     manifest: { sample: Record<string, unknown> };
   };
   const input = { ...template.manifest.sample, attendee: 'Casey River', ticketId: 'QS-1042' };
-  // A bad first line: the page marks it with the problem.
+  // A bad first line: the page marks it with the problem. The request log redacts a body's input and
+  // issues, so the page names the server's own words and the error page, not the missing field.
   const { ticketId: _gone, ...broken } = input;
   const bad = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-bad' },
@@ -89,10 +92,9 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   });
   expect(bad.status()).toBe(422);
   await expect(page.getByText('422 INVALID')).toBeVisible();
-  // The field detail ("ticketId is required.") is not on the page today; T8's rebuild restores it.
-  await expect(
-    page.getByRole('alert').filter({ hasText: 'The pass input is invalid.' }),
-  ).toBeVisible();
+  const fix = page.getByRole('alert').filter({ hasText: 'The pass input is invalid.' });
+  await expect(fix).toBeVisible();
+  await expect(fix.getByRole('link', { name: 'PASS_INPUT_INVALID' })).toBeVisible();
 
   const made = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-good' },
@@ -103,10 +105,9 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   await expect(page.getByText('From your terminal').first()).toBeVisible();
   await expect(page.getByText(/curl\/8\.7\.1/).first()).toBeVisible();
   const preview = page.getByRole('complementary', { name: 'Your pass, live' });
-  await expect(preview.getByText(/Rendered in/)).toBeAttached();
-  // A sandbox pass is a preview on every channel, and says so. The band is in the page but not painted
-  // in the Workbench's Quickstart today (T8's rebuild restores it): check it is present.
-  // The same holds for the whole preview pane below: attached, not painted (T8 restores it).
+  await expect(preview.getByText(/Rendered in/)).toBeVisible();
+  await shots(page, 'qs-3-pass', true);
+  // A sandbox pass is a preview on every channel, and says so.
   await expect(
     preview.getByRole('note').filter({ hasText: 'TEST PREVIEW · NOT INSTALLABLE' }).first(),
   ).toBeAttached();
@@ -137,6 +138,7 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     page.getByRole('status').filter({ hasText: /First pass in \d+:\d\d/ }),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Go to Home' })).toBeVisible();
+  await shots(page, 'qs-4-done');
 
   // The key lives in memory for the .env step: not in storage, not in the address.
   const kept = await page.evaluate(() =>
@@ -152,23 +154,34 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
     expect(Object.keys(b).every((k) => k === 'step' || k === 'code')).toBe(true);
   expect(Object.keys(created ?? {}).sort()).toEqual(['turnstileToken', 'viewedAt']);
 
-  // "Go to Home" lands on the sandbox's own Home in the Workbench, at every width.
+  // "Go to Home" lands on the sandbox's Home in the Workbench, at every width.
   await page.getByRole('link', { name: 'Go to Home' }).click();
-  await page.waitForURL(/\/workbench\/o\/[^/]+$/);
+  await page.waitForURL((u) => /^\/workbench\/o\/[^/]+$/.test(u.pathname));
+  const home = new URL(page.url()).pathname;
+  const orgId = home.split('/').at(-1) ?? '';
   for (const [width, height] of [
     [1440, 900],
     [834, 1112],
     [390, 844],
   ] as const) {
     await page.setViewportSize({ width, height });
-    await page.goto('/workbench');
-    await page.waitForURL(/\/workbench\/o\/[^/]+$/);
-    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await page.goto(home);
+    await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
   }
   await page.setViewportSize({ width: 1440, height: 900 });
 
-  // Reset moves into the Workbench's Sandbox area (T8, a placeholder today); its restore of the
-  // track and the new key is checked there.
+  // The Sandbox page: Reset deletes the test data through its operation and shows the new key once.
+  await page.goto(`/workbench/o/${orgId}/sandbox`);
+  await expect(page.getByText(/of \d+/).first()).toBeVisible();
+  await shots(page, 'qs-5-sandbox');
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await expect(
+    page.getByRole('alertdialog').getByText('Passes, events and logs in this sandbox are deleted.'),
+  ).toBeVisible();
+  await shots(page, 'qs-6-reset-confirm');
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Reset sandbox' }).click();
+  await expect(page.getByText(/^pbp_test_\S{20,}$/)).toBeVisible({ timeout: 60_000 });
+  expect((await api.get('/api/v1/passes', { headers: auth })).status()).toBe(401);
 
   // Admin does not list the sandbox; its own URL still opens it, Test only: no Test switch, and
   // the Overview points back here.

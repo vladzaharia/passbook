@@ -2,7 +2,7 @@ import { ArrowRight, Check, Copy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { wbHref, wbPath } from '../../../shared/workbench.ts';
+import { wbPath } from '../../../shared/workbench.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { duration } from '../home/model.ts';
 import { copyToClipboard } from '../playground/copy.ts';
@@ -45,7 +45,7 @@ export function Done({ q }: { q: Quickstart }) {
           </button>
           <a
             className="btn outline"
-            href={sandbox ? wbPath(sandbox.orgId, 'home') : wbHref('home')}
+            href={q.sandbox ? wbPath(q.sandbox.orgId, 'home') : wbPath('', 'quickstart')}
           >
             {D.workbench}
             <ArrowRight aria-hidden="true" />

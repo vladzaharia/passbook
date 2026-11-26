@@ -71,8 +71,8 @@ const WB_CHUNK = new RegExp(`/(${[WB_BENCH_CHUNK, WB_HOST_CHUNK, WB_KIT_CHUNK].j
 export const WB_TOOL_BUDGET_BYTES = 75_000;
 /**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
- * quickstart (79.7 kB measured; its pass cards and the compilers' loader) until T8, and the anonymous
- * Design route (84.8 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
+ * anonymous Design route (88.0 kB; the playground's cards), which DC2 and DC3 bring under the design
+ * budget. The quickstart is under 75 kB (60.5 kB measured) since its stage and finished page load lazily.
  */
 export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   logs: WB_TOOL_BUDGET_BYTES,
@@ -80,7 +80,8 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   events: WB_TOOL_BUDGET_BYTES,
   home: WB_TOOL_BUDGET_BYTES,
   keys: WB_TOOL_BUDGET_BYTES,
-  quickstart: 92_000,
+  sandbox: WB_TOOL_BUDGET_BYTES,
+  quickstart: WB_TOOL_BUDGET_BYTES,
   playground: 92_000,
 };
 /** The class every tool route's body carries (`wb-tool-logs`): it marks the route's chunk. */
