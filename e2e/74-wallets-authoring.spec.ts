@@ -427,8 +427,9 @@ test('a one-person organization approves its own omission with the alone rule', 
       projection: {
         schema: 2,
         provider: 'google',
-        approvedOmissions: (platform?.projection as { approvedOmissions: string[] })
-          .approvedOmissions,
+        approvedOmissions:
+          (platform?.projection as { approvedOmissions?: string[] } | undefined)
+            ?.approvedOmissions ?? [],
       },
     },
     TEST,
@@ -548,8 +549,9 @@ test('in a two-person organization the author cannot approve their own candidate
       projection: {
         schema: 2,
         provider: 'google',
-        approvedOmissions: (platform?.projection as { approvedOmissions: string[] })
-          .approvedOmissions,
+        approvedOmissions:
+          (platform?.projection as { approvedOmissions?: string[] } | undefined)
+            ?.approvedOmissions ?? [],
       },
     },
     TEST,
