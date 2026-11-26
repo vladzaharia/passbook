@@ -197,6 +197,34 @@ describe('6.1 Google: expiry and upcoming events', () => {
     expect(sent(mark)).toContain('PATCH genericObject');
     expect(await first(f.kit.env.DB, 'SELECT 1 FROM wallet_provider_instance_dirty')).toBeNull();
   });
+  it('an unedited pass is parked by its first tap and recompiled at its boundary, with no edit at all', async () => {
+    const { f } = await fixture();
+    const soon = f.kit.clock.now() + 3_600_000;
+    await run(
+      f.kit.env.DB,
+      `UPDATE pass_versions SET pass_json = json_set(pass_json, '$.expirationDate', ?) WHERE pass_id = ?`,
+      [new Date(soon).toISOString(), f.pass.id],
+    );
+    await issueWalletOffer(f.kit.ctx, await tokenOf(f), 'google');
+    const jobCtx = jobCtxOf(f.kit);
+    await drainWalletProviderSync(jobCtx);
+    const parked = await first<{ next_attempt_at: number }>(
+      f.kit.env.DB,
+      'SELECT next_attempt_at FROM wallet_provider_instance_dirty',
+    );
+    expect(parked?.next_attempt_at).toBe(soon);
+    const mark = mock.requests.length;
+    f.kit.clock.advance(3_600_001);
+    await drainWalletProviderSync(jobCtx);
+    await drainWalletProviderSync(jobCtx);
+    expect(sent(mark)).toContain('PATCH genericObject');
+  });
+
+  it('a pass with no boundary leaves no row behind after its first tap', async () => {
+    const { f } = await issued();
+    await drainWalletProviderSync(jobCtxOf(f.kit));
+    expect(await first(f.kit.env.DB, 'SELECT 1 FROM wallet_provider_instance_dirty')).toBeNull();
+  });
 });
 
 describe('Q4: provider objects are created at the first tap, not at issue', () => {

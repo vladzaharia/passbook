@@ -34171,6 +34171,9 @@
                   "type": "string"
                 },
                 "projection": {},
+                "selfAuthored": {
+                  "type": "boolean"
+                },
                 "approvals": {
                   "type": "array",
                   "items": {
@@ -34503,6 +34506,14 @@
               "sourceReleaseId",
               "report"
             ]
+          },
+          "wallet": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "not_released"
+            ]
           }
         },
         "required": [
@@ -34659,6 +34670,9 @@
             "type": "string"
           },
           "projection": {},
+          "selfAuthored": {
+            "type": "boolean"
+          },
           "approvals": {
             "type": "array",
             "items": {
@@ -34869,6 +34883,9 @@
             "type": "string"
           },
           "projection": {},
+          "selfAuthored": {
+            "type": "boolean"
+          },
           "approvals": {
             "type": "array",
             "items": {

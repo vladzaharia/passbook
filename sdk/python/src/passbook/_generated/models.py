@@ -13720,6 +13720,7 @@ class TemplatesCandidatesCreateResponse(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
     projection: _Any | None = None
+    selfAuthored: bool | None = None
     approvals: _List[TemplatesCandidatesCreateResponseApprovalsItem]
 
 class TemplatesCandidatesCreateResponseApprovalsItem(_Model):
@@ -13755,6 +13756,7 @@ class TemplatesCandidatesListItem(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
     projection: _Any | None = None
+    selfAuthored: bool | None = None
     approvals: _List[TemplatesCandidatesListItemApprovalsItem]
 
 class TemplatesCandidatesListItemApprovalsItem(_Model):
@@ -13770,6 +13772,7 @@ class TemplatesCandidatesListResponse(_Model):
     items: _List[TemplatesCandidatesListResponseItemsItem]
     nextCursor: str | None
     current: TemplatesCandidatesListResponseCurrent | None = None
+    wallet: _Literal["on", "off", "not_released"] | str | None = None
 
 class TemplatesCandidatesListResponseCurrent(_Model):
     version: str
@@ -13831,6 +13834,7 @@ class TemplatesCandidatesListResponseItemsItem(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
     projection: _Any | None = None
+    selfAuthored: bool | None = None
     approvals: _List[TemplatesCandidatesListResponseItemsItemApprovalsItem]
 
 class TemplatesCandidatesListResponseItemsItemApprovalsItem(_Model):
@@ -13872,6 +13876,7 @@ class TemplatesCandidatesPromoteResponse(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
     projection: _Any | None = None
+    selfAuthored: bool | None = None
     approvals: _List[TemplatesCandidatesPromoteResponseApprovalsItem]
 
 class TemplatesCandidatesPromoteResponseApprovalsItem(_Model):

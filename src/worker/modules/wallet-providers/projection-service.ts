@@ -24,10 +24,12 @@ import {
   scopedCandidate,
   scopedTemplate,
 } from './projection-service-support.ts';
-import { isSystemAuthored } from './projection-system-authority.ts';
+import { isSelfAuthored } from './projection-system-authority.ts';
 import { walletEntitled } from './repo-enrolment-gate.ts';
 import { selectProjectionApprovals, selectProjectionCandidates } from './repo-projection-store.ts';
 import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
+import { holdsTemplateCapability } from './review-capability.ts';
+import { walletAvailability } from './wallet-availability.ts';
 
 export {
   activeProjectionRelease,
@@ -61,10 +63,19 @@ export async function listProjectionCandidates(
     if (group) group.push(approval);
     else approvalsByCandidate.set(approval.candidateId, [approval]);
   }
+  const viewer = auth?.kind === 'session' ? auth.userId : undefined;
   const items = candidates.map((candidate) =>
-    candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? []),
+    candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? [], viewer),
   );
-  return { items, nextCursor: null, ...(current ? { current } : {}) };
+  const wallet = (await holdsTemplateCapability(ctx, auth, scope.orgId, 'templates:review'))
+    ? await walletAvailability(ctx, scope.orgId, scope.mode, native.provider)
+    : undefined;
+  return {
+    items,
+    nextCursor: null,
+    ...(current ? { current } : {}),
+    ...(wallet ? { wallet } : {}),
+  };
 }
 
 export async function createProjectionCandidate(
@@ -127,9 +138,7 @@ export async function approveProjectionCandidate(
     orgId: scope.orgId,
     mode: scope.mode,
     provider: scope.provider,
-    selfAuthored:
-      authority.userId === candidate.authorId ||
-      (authority.userId === candidate.versionAuthorId && !isSystemAuthored(candidate)),
+    selfAuthored: isSelfAuthored(authority.userId, candidate),
     alone: body.alone,
   });
   const approval: ApprovalRow = {
