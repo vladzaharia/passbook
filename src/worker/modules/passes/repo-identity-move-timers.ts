@@ -20,6 +20,45 @@ export function firstRegistration(
   );
 }
 
+/** The oldest current registration of the replacement on any device: an admin may arm on it. */
+export function anyRegistration(
+  db: D1Database,
+  newPassId: string,
+): Promise<{ at: number; device: string } | null> {
+  return first<{ at: number; device: string }>(
+    db,
+    `SELECT r.created_at AS at, r.device_id AS device FROM registrations r JOIN passes n ON n.id = r.pass_id
+     WHERE r.pass_id = ? AND r.credential_generation = n.credential_generation ORDER BY r.created_at LIMIT 1`,
+    [newPassId],
+  );
+}
+
+/** A registration this old on a device that never armed the void is a state worth a look. */
+export const UNARMED_AFTER_MS = 7 * DAY_MS;
+
+/**
+ * Marks open rows whose replacement has been registered for 7 days without the void arming (the device id of
+ * the two pass types may differ), and returns the rows newly marked. The mark clears when the void arms.
+ */
+export function flagUnarmed(
+  db: D1Database,
+  now: number,
+  limit: number,
+): Promise<{ id: string; org_id: string }[]> {
+  return all<{ id: string; org_id: string }>(
+    db,
+    `UPDATE pass_moves SET reason = 'unarmed', updated_at = ?1
+     WHERE id IN (SELECT m.id FROM pass_moves m
+       WHERE m.state IN ('issued', 'notified') AND m.reason IS NULL
+         AND EXISTS (SELECT 1 FROM registrations r JOIN passes n ON n.id = r.pass_id
+           WHERE r.pass_id = m.new_pass_id AND r.credential_generation = n.credential_generation
+             AND r.created_at <= ?2)
+       LIMIT ?3)
+     RETURNING id, org_id`,
+    [now, now - UNARMED_AFTER_MS, limit],
+  );
+}
+
 /** The replacement registered: from here the old pass voids 24 hours after the first registration. */
 export async function arm(
   db: D1Database,
@@ -118,14 +157,16 @@ export async function reschedule(
   return 'waiting';
 }
 
-/** The old pass is replaced: from here writes by its id go to `replaced_by`. True when this call closed the row. */
+/**
+ * Closes the row of a voided old pass. `replaced_by` was set in the void's own batch, so writes by the old id
+ * already go to the replacement. True when this call closed the row.
+ */
 export async function finishVoid(db: D1Database, id: string, now: number): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE pass_moves SET state = 'voided', voided_at = ?, replaced_by = new_pass_id, replaced_at = ?,
-       claim_until = NULL, updated_at = ?
+    `UPDATE pass_moves SET state = 'voided', voided_at = ?, claim_until = NULL, updated_at = ?
      WHERE id = ? AND state = 'registered'`,
-    [now, now, now, id],
+    [now, now, id],
   );
   return changes === 1;
 }

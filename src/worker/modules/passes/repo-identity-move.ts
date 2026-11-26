@@ -9,6 +9,7 @@ export type MoveState =
   | 'registered'
   | 'voided'
   | 'kept'
+  | 'kept_both'
   | 'failed';
 
 export interface MoveRow {
@@ -25,6 +26,8 @@ export interface MoveRow {
   copied_hash: string | null;
   copied_input: string | null;
   made_input: string | null;
+  copied_state: string | null;
+  made_state: string | null;
   conflicts: string | null;
   told_at: number | null;
   emailed_at: number | null;
@@ -49,7 +52,7 @@ export interface MoveParams {
 }
 
 export const COLUMNS = `id, op_id, org_id, mode, from_identity_id, to_identity_id, old_pass_id, new_pass_id, state,
-  reason, copied_hash, copied_input, made_input, conflicts, told_at, emailed_at, remind_at, reminded_at, registered_at, armed_device, void_at, claim_until,
+  reason, copied_hash, copied_input, made_input, copied_state, made_state, conflicts, told_at, emailed_at, remind_at, reminded_at, registered_at, armed_device, void_at, claim_until,
   voided_at, replaced_by, replaced_at, created_at, updated_at`;
 
 /**
@@ -201,6 +204,8 @@ export async function markIssued(
     copiedHash: string;
     copiedInput: string;
     madeInput: string;
+    copiedState: string;
+    madeState: string;
     emailedAt: number | null;
     remindAt: number;
     now: number;
@@ -208,10 +213,20 @@ export async function markIssued(
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE pass_moves SET state = 'issued', copied_hash = ?, copied_input = ?, made_input = ?, emailed_at = ?,
-       remind_at = ?, updated_at = ?
+    `UPDATE pass_moves SET state = 'issued', copied_hash = ?, copied_input = ?, made_input = ?, copied_state = ?,
+       made_state = ?, emailed_at = ?, remind_at = ?, updated_at = ?
      WHERE id = ? AND state = 'planned'`,
-    [v.copiedHash, v.copiedInput, v.madeInput, v.emailedAt, v.remindAt, v.now, id],
+    [
+      v.copiedHash,
+      v.copiedInput,
+      v.madeInput,
+      v.copiedState,
+      v.madeState,
+      v.emailedAt,
+      v.remindAt,
+      v.now,
+      id,
+    ],
   );
   return changes === 1;
 }
@@ -241,6 +256,20 @@ export async function setCarried(
     db,
     `UPDATE pass_moves SET copied_hash = ?, copied_input = ?, conflicts = ?, updated_at = ? WHERE id = ?`,
     [v.hash, v.input, v.conflicts, now, id],
+  );
+}
+
+/** What the void's state carry did: both fingerprints as they now stand (the next base), and the conflicts so far. */
+export async function setCarriedState(
+  db: D1Database,
+  id: string,
+  v: { copied: string; made: string; conflicts: string | null },
+  now: number,
+): Promise<void> {
+  await run(
+    db,
+    `UPDATE pass_moves SET copied_state = ?, made_state = ?, conflicts = ?, updated_at = ? WHERE id = ?`,
+    [v.copied, v.made, v.conflicts, now, id],
   );
 }
 

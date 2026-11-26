@@ -12,6 +12,7 @@ import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
 import { depsOf } from './deps.ts';
 import { linksOf } from './detail.ts';
 import { carryEdits, messageKey, without } from './identity-move-carry.ts';
+import { fingerprintOf, recarryState } from './identity-move-recarry.ts';
 import { moveVoidCommit } from './identity-move-repoint.ts';
 import { gone, revokeReplacement, SYSTEM } from './identity-move-revoke.ts';
 import { carryState, stageFiles } from './identity-move-state.ts';
@@ -31,13 +32,9 @@ import {
   arm,
   claimReminder,
   claimVoid,
-  dueReminders,
-  dueVoids,
   finishVoid,
   firstRegistration,
   reschedule,
-  revokedOld,
-  unarmed,
   unclaimReminder,
   voidedByMove,
   voidRef,
@@ -54,7 +51,6 @@ export const REMIND_AFTER_MS = 30 * DAY_MS;
  * one, and a crashed sweep's claim still lapses within minutes.
  */
 export const CLAIM_MS = 5 * 60_000;
-const BATCH = 50;
 
 /**
  * Makes the replacement. Its id was fixed when the row was planned, so a rerun finds the pass instead of making
@@ -128,6 +124,8 @@ export async function issueReplacement(
     copiedHash: await sha256Hex(copiedInput),
     copiedInput,
     madeInput: stableStringify(without(made.personalization, key)),
+    copiedState: JSON.stringify(await fingerprintOf(db, row.old_pass_id)),
+    madeState: JSON.stringify(await fingerprintOf(db, made.id)),
     emailedAt: made.holderEmail ? at : null,
     remindAt: at + REMIND_AFTER_MS,
     now: at,
@@ -200,10 +198,12 @@ export async function voidDue(
       await setState(db, row.id, ['registered'], { state: 'kept', reason: 'new_gone' }, now);
       return 'kept';
     }
-    // The old pass took on something the move cannot carry since it was planned: it stays, alone.
+    // The old pass took on something the move cannot carry since it was planned. A device holds the replacement,
+    // so neither pass is voided: both stay live, and the row says why.
     const why = await keptReason(db, row.old_pass_id);
     if (why !== null) {
-      await revokeReplacement(ctx, row, why);
+      await setState(db, row.id, ['registered'], { state: 'kept_both', reason: why }, now);
+      ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: why });
       return 'kept';
     }
     return reschedule(db, fresh, now);
@@ -212,6 +212,7 @@ export async function voidDue(
     const old = await getPass(db, row.old_pass_id, row.org_id);
     if (old?.status === 'active' && old.removedAt === null && old.deletedAt === null) {
       await carryEdits(ctx, row, old);
+      await recarryState(ctx, row, old);
       const made = await getPass(db, row.new_pass_id, row.org_id);
       if (!made) throw new AppError('IDENTITY_MOVE_CONFLICT', 409, 'The replacement is gone.');
       await setPassStatus(ctx, SYSTEM, old.id, 'voided', row.org_id, undefined, {
@@ -279,41 +280,4 @@ export async function remindDue(ctx: ServiceContext, row: MoveRow): Promise<'sen
     await unclaimReminder(db, row.id, back, now + DAY_MS, ctx.clock.now());
     return 'skipped';
   }
-}
-
-/** The minute hook: arms what the register hook missed, voids what is due, sends the reminders that are. */
-export async function sweepIdentityMoves(ctx: ServiceContext): Promise<void> {
-  const db = ctx.env.DB;
-  const now = ctx.clock.now();
-  for (const row of await revokedOld(db, now, BATCH))
-    try {
-      if (await isOrgActive(ctx, row.org_id)) await revokeReplacement(ctx, row);
-    } catch (error) {
-      ctx.log.error('identity_move.revoke_failed', {
-        code: 'IDENTITY_MOVE_REVOKE',
-        moveId: row.id,
-        error,
-      });
-    }
-  for (const { id, at, device } of await unarmed(db, BATCH)) await arm(db, id, { at, device }, now);
-  for (const row of await dueVoids(db, now, BATCH))
-    try {
-      await voidDue(ctx, row);
-    } catch (error) {
-      ctx.log.error('identity_move.void_failed', {
-        code: 'IDENTITY_MOVE_VOID',
-        moveId: row.id,
-        error,
-      });
-    }
-  for (const row of await dueReminders(db, now, BATCH))
-    try {
-      await remindDue(ctx, row);
-    } catch (error) {
-      ctx.log.error('identity_move.remind_failed', {
-        code: 'IDENTITY_MOVE_REMIND',
-        moveId: row.id,
-        error,
-      });
-    }
 }

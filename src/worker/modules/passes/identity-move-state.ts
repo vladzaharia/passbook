@@ -17,7 +17,7 @@ import {
 import type { Pass } from './repo-map.ts';
 
 /** The tables the carry writes through its grant; the rest are plain rows of this module's own. */
-const TABLES = ['pass_assets', 'member_photos', 'pass_notes'] as const;
+export const TABLES = ['pass_assets', 'member_photos', 'pass_notes'] as const;
 
 /** The key of a copied object: the same name under the replacement's id, so a rerun writes the same object. */
 const rekey = (key: string, from: string, to: string): string =>
@@ -60,7 +60,7 @@ export async function stageFiles(
 }
 
 /** Writes the copied rows for the replacement; every row is skipped when it already exists, so a rerun adds nothing. */
-async function writeRows(
+export async function writeRows(
   ctx: ServiceContext,
   made: Pass,
   files: { assets: AssetRow[]; photo: PhotoRow | null },
@@ -132,7 +132,11 @@ async function writeRows(
  * Apple personalization is sealed under the pass id, so it is opened with the old id and sealed again under the
  * replacement's: the holder is not asked for it a second time.
  */
-async function copyPersonalization(ctx: ServiceContext, old: Pass, made: Pass): Promise<void> {
+export async function copyPersonalization(
+  ctx: ServiceContext,
+  old: Pass,
+  made: Pass,
+): Promise<void> {
   const row = await sealedOf(ctx.env.DB, old.id);
   if (!row) return;
   const ring = await loadKekRing(ctx.env);

@@ -10,7 +10,8 @@ import type { BroadcastKit } from '../broadcasts/test-kit.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { printCodeOf, printCodeRef } from '../prints/codes.ts';
 import { codePassIdOf } from '../prints/repo.ts';
-import { armOnRegister, sweepIdentityMoves } from './identity-move.ts';
+import { armOnRegister } from './identity-move.ts';
+import { sweepIdentityMoves } from './identity-move-sweep.ts';
 import {
   DAY,
   moveKit,
@@ -410,7 +411,7 @@ describe('H1: what cannot be carried keeps the pass, by name', () => {
     ]);
   });
 
-  it('re-checks at the void: a pass that gained something uncarriable stays, and its replacement is voided', async () => {
+  it('re-checks at the void: a pass that gained something uncarriable stays, and so does the replacement a device holds', async () => {
     const { org, old, next } = await movedWith();
     await run(
       db(),
@@ -422,8 +423,8 @@ describe('H1: what cannot be carried keeps the pass, by name', () => {
     ]);
     await completeMove(next);
     expect((await passOf(kit, old.id)).status).toBe('active');
-    expect((await passOf(kit, next.id)).status).toBe('voided');
-    expect(await moveOf(kit, old.id)).toMatchObject({ state: 'kept', reason: 'connection' });
+    expect((await passOf(kit, next.id)).status).toBe('active');
+    expect(await moveOf(kit, old.id)).toMatchObject({ state: 'kept_both', reason: 'connection' });
   });
 });
 

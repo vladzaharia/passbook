@@ -21,8 +21,11 @@ CREATE TABLE pass_moves (
   old_pass_id TEXT NOT NULL UNIQUE,
   new_pass_id TEXT NOT NULL UNIQUE,
   state TEXT NOT NULL DEFAULT 'planned'
-    CHECK (state IN ('planned', 'issued', 'notified', 'registered', 'voided', 'kept', 'failed')),
-  -- A stable code: why the row is `kept` (connection, wallet_copy, user_tag, old_gone, old_revoked, new_gone, reminded) or `failed`.
+    CHECK (state IN ('planned', 'issued', 'notified', 'registered', 'voided', 'kept', 'kept_both', 'failed')),
+  -- A stable code: why the row is `kept` (connection, wallet_copy, user_tag, old_gone, old_revoked, new_gone, reminded),
+  -- `kept_both` (a connection, wallet copy or user tag appeared on the old pass after the replacement registered: both
+  -- stay live) or `failed`. An open row with `unarmed` has a registration on a device that does not hold the old pass for
+  -- 7 days and no void timer.
   reason TEXT,
   -- What the replacement was built from, to tell later edits of the old pass from the move's own tell.
   copied_hash TEXT,
@@ -30,6 +33,10 @@ CREATE TABLE pass_moves (
   -- three-way diff that carries later edits.
   copied_input TEXT CHECK (copied_input IS NULL OR json_valid(copied_input)),
   made_input TEXT CHECK (made_input IS NULL OR json_valid(made_input)),
+  -- The same two sides for the state a pass holds (photo, assets, notes, check-in rules, personalization), as
+  -- fingerprints: what the void's carry compares.
+  copied_state TEXT CHECK (copied_state IS NULL OR json_valid(copied_state)),
+  made_state TEXT CHECK (made_state IS NULL OR json_valid(made_state)),
   -- Fields edited on both passes since the copy, with the side that won (JSON array).
   conflicts TEXT CHECK (conflicts IS NULL OR json_valid(conflicts)),
   told_at INTEGER,
@@ -54,8 +61,18 @@ CREATE INDEX pass_moves_org ON pass_moves (org_id);
 CREATE INDEX pass_moves_op ON pass_moves (op_id, state);
 CREATE INDEX pass_moves_void_due ON pass_moves (void_at) WHERE state = 'registered';
 CREATE INDEX pass_moves_remind_due ON pass_moves (remind_at) WHERE state IN ('issued', 'notified') AND reminded_at IS NULL;
-CREATE INDEX pass_moves_open ON pass_moves (state) WHERE state IN ('issued', 'notified', 'kept');
+CREATE INDEX pass_moves_open ON pass_moves (state) WHERE state IN ('issued', 'notified', 'kept', 'kept_both');
 CREATE INDEX pass_moves_replaced ON pass_moves (old_pass_id) WHERE replaced_by IS NOT NULL;
+
+-- The move's own void writes a version with source `move:void:<move id>` in the batch that voids the old pass and
+-- re-points what it owns. This trigger records the replacement in that same batch, so no moment and no crash
+-- leaves a voided pass that writes by its id still reach.
+CREATE TRIGGER pass_moves_replaced AFTER INSERT ON pass_versions
+WHEN NEW.source LIKE 'move:void:%'
+BEGIN
+  UPDATE pass_moves SET replaced_by = new_pass_id, replaced_at = NEW.created_at, updated_at = NEW.created_at
+  WHERE id = substr(NEW.source, 11) AND old_pass_id = NEW.pass_id AND replaced_by IS NULL;
+END;
 
 -- A printed card keeps working after a move: its print row follows the pass (the one change pass_prints_key allows,
 -- only to the replacement of a move, in the tenant, while active). The printed code is derived from the pass id

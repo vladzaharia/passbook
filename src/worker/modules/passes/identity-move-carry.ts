@@ -23,7 +23,7 @@ export function without(p: Personalization, key: string | null): Personalization
   return rest;
 }
 
-const same = (a: unknown, b: unknown) => stableStringify(a) === stableStringify(b);
+export const same = (a: unknown, b: unknown) => stableStringify(a) === stableStringify(b);
 
 export interface Conflict {
   field: string;

@@ -27,6 +27,7 @@ export const IDENTITY_RUN_ACTIONS = {
   'identity.run_retry': a('Run retried', rotate, 'info'),
   'identity.run_cancel': a('Run cancelled', rotate, 'warning'),
   'identity.move_started': a('Passes moving', rotate, 'info'),
+  'identity.move_armed': a('Old pass timer started', rotate, 'info'),
   'wallet.google_issuer_requested': a('Google issuer requested', key, 'info'),
   'wallet.google_issuer_entered': a('Google issuer entered', key, 'success'),
   'wallet.google_issuer_created': a('Google issuer created', key, 'success'),

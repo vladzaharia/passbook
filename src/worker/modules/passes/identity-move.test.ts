@@ -2,8 +2,9 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { BroadcastKit } from '../broadcasts/test-kit.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
-import { armOnRegister, remindDue, sweepIdentityMoves, voidDue } from './identity-move.ts';
+import { armOnRegister, remindDue, voidDue } from './identity-move.ts';
 import { SECOND_ID } from './identity-move-resolver-test-fixtures.ts';
+import { sweepIdentityMoves } from './identity-move-sweep.ts';
 import {
   count,
   DAY,

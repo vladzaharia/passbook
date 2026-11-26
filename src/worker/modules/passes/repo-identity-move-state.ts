@@ -84,6 +84,22 @@ export async function copyCheckIn(
   );
 }
 
+export function checkInOf(
+  db: D1Database,
+  passId: string,
+): Promise<{ rules: string; updated_at: number } | null> {
+  return first(db, 'SELECT rules, updated_at FROM pass_check_in WHERE pass_id = ?', [passId]);
+}
+
+/** Clears the replacement's own copy of one table, so the carry of a changed item writes the old pass's. */
+export async function dropCopy(
+  db: D1Database,
+  table: 'pass_check_in' | 'pass_personalizations',
+  passId: string,
+): Promise<void> {
+  await run(db, `DELETE FROM ${table} WHERE pass_id = ?`, [passId]);
+}
+
 export function sealedOf(db: D1Database, passId: string): Promise<SealedRow | null> {
   return first<SealedRow>(
     db,

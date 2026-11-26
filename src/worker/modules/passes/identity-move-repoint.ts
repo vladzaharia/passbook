@@ -78,8 +78,9 @@ function addRepoint(
 }
 
 /**
- * The commit hook of the old pass's void: its grant carries the re-pointing before the status write, so the
- * void and the move of everything the pass owns are one batch.
+ * The commit hook of the old pass's void: its grant carries the re-pointing before the status write, so the void
+ * and the move of everything the pass owns are one batch (`pass_moves_replaced` records `replaced_by` with the
+ * void's version row, in the same batch).
  */
 export function moveVoidCommit(
   ctx: ServiceContext,

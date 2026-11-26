@@ -4,11 +4,12 @@ import { all, first, run } from '../../platform/db.ts';
 import { hasVersionFrom } from '../broadcasts/repo-items.ts';
 import type { BroadcastKit } from '../broadcasts/test-kit.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { armOnRegister, CLAIM_MS, sweepIdentityMoves, voidDue } from './identity-move.ts';
+import { armOnRegister, CLAIM_MS, voidDue } from './identity-move.ts';
 import { threeWay } from './identity-move-carry.ts';
 import { SECOND_ID } from './identity-move-resolver-test-fixtures.ts';
 import { runIdentityMove } from './identity-move-run.ts';
 import { startIdentityMove } from './identity-move-start.ts';
+import { sweepIdentityMoves } from './identity-move-sweep.ts';
 import {
   ADMIN,
   DAY,

@@ -26,7 +26,7 @@ import { expireEntitlementOverrides } from '../modules/orgs/entitlement-expiry.t
 import { sweepBulkRuns } from '../modules/passes/bulk-run.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { claimBoundaries } from '../modules/passes/event-boundaries.ts';
-import { sweepIdentityMoves } from '../modules/passes/identity-move.ts';
+import { sweepIdentityMoves } from '../modules/passes/identity-move-sweep.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
 import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
