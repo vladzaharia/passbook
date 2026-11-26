@@ -67,7 +67,7 @@ describe('what each class prints', () => {
       fromCity: 'San Francisco',
       to: 'JFK',
       toCity: 'New York',
-      vehicle: 'WA100',
+      vehicle: 'ZA1100',
       gate: 'B12',
       arrivesZone: 'America/New_York',
     });

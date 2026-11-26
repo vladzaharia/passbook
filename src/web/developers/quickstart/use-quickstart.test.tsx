@@ -181,6 +181,33 @@ describe('useQuickstart', () => {
     expect(m.send.mock.calls[0]?.slice(0, 2)).toEqual(['GET', '/passes/p1']);
   });
 
+  it('after a reload, the first call shows as sent when the server says the pass was made', async () => {
+    m.home.current = {
+      progress: { passAt: 5000 },
+      passes: [],
+      calls: [
+        {
+          method: 'POST',
+          path: '/api/v1/passes',
+          status: 201,
+          durationMs: 40,
+          requestId: 'r1',
+          at: 4900,
+          via: 'try',
+          client: null,
+        },
+      ],
+    };
+    const { result } = renderHook(() => useQuickstart(ready));
+    expect(result.current.run).toMatchObject({
+      state: 'ok',
+      status: 201,
+      ms: 40,
+      via: 'here',
+      at: 4900,
+    });
+  });
+
   it('signed out: no client, no beacon, and create does nothing', async () => {
     const { result } = renderHook(() => useQuickstart({ kind: 'out' }));
     await act(() => result.current.create());

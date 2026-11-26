@@ -20,7 +20,7 @@
     }
   ],
   "semantics": {
-    "airlineCode": "WA",
+    "airlineCode": "ZA1",
     "flightNumber": 100,
     "departureAirportCode": "SFO",
     "departureCityName": "San Francisco",
@@ -47,7 +47,7 @@
       {
         "key": "flight",
         "label": "Flight",
-        "value": "WA100"
+        "value": "ZA1100"
       },
       {
         "key": "gate",

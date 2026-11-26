@@ -246,6 +246,25 @@ export function useQuickstart(initial: Session) {
     [csrf],
   );
 
+  /** After a reload the page made no call, but the server knows the pass was made: show that call as it was. */
+  const passAt = progress?.passAt ?? null;
+  const shownRun = useMemo<Call>(() => {
+    if (run.state !== 'idle' || passAt === null) return run;
+    const e = home?.calls.find(
+      (c) => c.method === 'POST' && c.path.endsWith('/passes') && c.status < 400,
+    );
+    return {
+      state: 'ok',
+      status: e?.status ?? 201,
+      ms: e?.durationMs ?? 0,
+      requestId: e?.requestId ?? null,
+      replayed: false,
+      at: e?.at ?? passAt,
+      via: e && e.via === null ? 'terminal' : 'here',
+      client: e?.client ?? null,
+    };
+  }, [run, passAt, home]);
+
   return {
     viewedAt,
     session,
@@ -256,7 +275,7 @@ export function useQuickstart(initial: Session) {
     template,
     templateId,
     input,
-    run,
+    run: shownRun,
     change,
     pass,
     home,

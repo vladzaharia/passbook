@@ -34,7 +34,7 @@ export interface RecipeOutcome {
   ignored?: WebhookIgnoreKind;
 }
 
-export interface Recipe extends Omit<RecipeInfo, 'id'> {
+export interface Recipe extends Omit<RecipeInfo, 'id' | 'entitled'> {
   id: Exclude<RecipeId, 'custom'>;
   verifier: 'shopify' | 'stripe' | 'calcom' | 'woocommerce' | 'tickettailor';
   /** The signed body may be something other than JSON (WooCommerce pings with a form body): adapt gets undefined. */

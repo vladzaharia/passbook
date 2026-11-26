@@ -357,6 +357,92 @@ func (r *BundlesResource) SendEmail(ctx context.Context, id string, body *Bundle
 	return &out, nil
 }
 
+type ConnectionsUploadsResource struct {
+	c *core
+}
+
+func newConnectionsUploadsResource(c *core) *ConnectionsUploadsResource {
+	return &ConnectionsUploadsResource{
+		c: c,
+	}
+}
+
+// Create Upload a file as a draft `POST /api/v1/connections/uploads`
+func (r *ConnectionsUploadsResource) Create(ctx context.Context, body *ConnectionsUploadsCreateBody, opts ...RequestOption) (*ConnectionsUploadsCreateResult, error) {
+	var out ConnectionsUploadsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/uploads", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Delete Discard a draft upload `DELETE /api/v1/connections/uploads/{fileId}`
+func (r *ConnectionsUploadsResource) Delete(ctx context.Context, fileId string, opts ...RequestOption) (*ConnectionsUploadsDeleteResult, error) {
+	var out ConnectionsUploadsDeleteResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/connections/uploads/" + pathEscape(fileId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Read a draft upload `GET /api/v1/connections/uploads/{fileId}`
+func (r *ConnectionsUploadsResource) Retrieve(ctx context.Context, fileId string, opts ...RequestOption) (*ConnectionsUploadsRetrieveResult, error) {
+	var out ConnectionsUploadsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/connections/uploads/" + pathEscape(fileId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Read a draft again with another sheet or records path `PATCH /api/v1/connections/uploads/{fileId}`
+func (r *ConnectionsUploadsResource) Update(ctx context.Context, fileId string, body *ConnectionsUploadsUpdateBody, opts ...RequestOption) (*ConnectionsUploadsUpdateResult, error) {
+	var out ConnectionsUploadsUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/connections/uploads/" + pathEscape(fileId), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ConnectionsFilesResource struct {
+	c *core
+}
+
+func newConnectionsFilesResource(c *core) *ConnectionsFilesResource {
+	return &ConnectionsFilesResource{
+		c: c,
+	}
+}
+
+// Apply Apply a pending revision and sync `POST /api/v1/connections/{id}/files/{fileId}/apply`
+func (r *ConnectionsFilesResource) Apply(ctx context.Context, id string, fileId string, opts ...RequestOption) (*ConnectionsFilesApplyResult, error) {
+	var out ConnectionsFilesApplyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/files/" + pathEscape(fileId) + "/apply"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Delete Discard a pending revision `DELETE /api/v1/connections/{id}/files/{fileId}`
+func (r *ConnectionsFilesResource) Delete(ctx context.Context, id string, fileId string, opts ...RequestOption) (*ConnectionsFilesDeleteResult, error) {
+	var out ConnectionsFilesDeleteResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/connections/" + pathEscape(id) + "/files/" + pathEscape(fileId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List Revisions of a connection file, newest first `GET /api/v1/connections/{id}/files`
+func (r *ConnectionsFilesResource) List(ctx context.Context, id string, query *ConnectionsFilesListQuery, opts ...RequestOption) *Pager[ConnectionsFilesListItem] {
+	return newPager[ConnectionsFilesListItem](r.c, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/files", query: queryValues(query)}, "cursor", opts)
+}
+
+// Upload Upload a new revision of a connection file `POST /api/v1/connections/{id}/files`
+func (r *ConnectionsFilesResource) Upload(ctx context.Context, id string, body *ConnectionsFilesUploadBody, query *ConnectionsFilesUploadQuery, opts ...RequestOption) (ConnectionsFilesUploadResult, error) {
+	var out ConnectionsFilesUploadResult
+	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/files", query: queryValues(query), body: body}, &out, opts)
+	return out, err
+}
+
 type ConnectionsRunsResource struct {
 	c *core
 }
@@ -407,6 +493,8 @@ func (r *ConnectionsWebhookFailuresResource) Resolve(ctx context.Context, id str
 
 type ConnectionsResource struct {
 	c               *core
+	Uploads         *ConnectionsUploadsResource
+	Files           *ConnectionsFilesResource
 	Runs            *ConnectionsRunsResource
 	WebhookFailures *ConnectionsWebhookFailuresResource
 }
@@ -414,6 +502,8 @@ type ConnectionsResource struct {
 func newConnectionsResource(c *core) *ConnectionsResource {
 	return &ConnectionsResource{
 		c:               c,
+		Uploads:         newConnectionsUploadsResource(c),
+		Files:           newConnectionsFilesResource(c),
 		Runs:            newConnectionsRunsResource(c),
 		WebhookFailures: newConnectionsWebhookFailuresResource(c),
 	}
@@ -893,6 +983,63 @@ func newNfcResource(c *core) *NfcResource {
 		Keysets:  newNfcKeysetsResource(c),
 		TagTypes: newNfcTagTypesResource(c),
 	}
+}
+
+type DeveloperInvitationsResource struct {
+	c *core
+}
+
+func newDeveloperInvitationsResource(c *core) *DeveloperInvitationsResource {
+	return &DeveloperInvitationsResource{
+		c: c,
+	}
+}
+
+// Create Invite a developer `POST /api/v1/orgs/{id}/developer-invitations`
+func (r *DeveloperInvitationsResource) Create(ctx context.Context, id string, body *DeveloperInvitationsCreateBody, opts ...RequestOption) (*DeveloperInvitationsCreateResult, error) {
+	var out DeveloperInvitationsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(id) + "/developer-invitations", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List developer invitations `GET /api/v1/orgs/{id}/developer-invitations`
+func (r *DeveloperInvitationsResource) List(ctx context.Context, id string, query *DeveloperInvitationsListQuery, opts ...RequestOption) *Pager[DeveloperInvitationsListItem] {
+	return newPager[DeveloperInvitationsListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/developer-invitations", query: queryValues(query)}, "cursor", opts)
+}
+
+// Revoke Revoke a developer invitation `DELETE /api/v1/orgs/{id}/developer-invitations/{invitationId}`
+func (r *DeveloperInvitationsResource) Revoke(ctx context.Context, id string, invitationId string, opts ...RequestOption) (*DeveloperInvitationsRevokeResult, error) {
+	var out DeveloperInvitationsRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/developer-invitations/" + pathEscape(invitationId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type DevelopersResource struct {
+	c *core
+}
+
+func newDevelopersResource(c *core) *DevelopersResource {
+	return &DevelopersResource{
+		c: c,
+	}
+}
+
+// List List the developers an organization vouches for `GET /api/v1/orgs/{id}/developers`
+func (r *DevelopersResource) List(ctx context.Context, id string, query *DevelopersListQuery, opts ...RequestOption) *Pager[DevelopersListItem] {
+	return newPager[DevelopersListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/developers", query: queryValues(query)}, "cursor", opts)
+}
+
+// Remove Remove a developer `DELETE /api/v1/orgs/{id}/developers/{userId}`
+func (r *DevelopersResource) Remove(ctx context.Context, id string, userId string, opts ...RequestOption) (*DevelopersRemoveResult, error) {
+	var out DevelopersRemoveResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/developers/" + pathEscape(userId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 type OrgsEntitlementsResource struct {
@@ -2712,73 +2859,77 @@ func (r *WebhookEndpointsResource) Update(ctx context.Context, id string, body *
 
 // Resources are every resource, named as in docs/api/sdk-names.json.
 type Resources struct {
-	APIKeys          *ApiKeysResource
-	AuditEntries     *AuditEntriesResource
-	Brand            *BrandResource
-	Broadcasts       *BroadcastsResource
-	Bundles          *BundlesResource
-	Connections      *ConnectionsResource
-	Connectors       *ConnectorsResource
-	Deliveries       *DeliveriesResource
-	Events           *EventsResource
-	Holders          *HoldersResource
-	MessageRules     *MessageRulesResource
-	NFC              *NfcResource
-	Orgs             *OrgsResource
-	PassImports      *PassImportsResource
-	Passes           *PassesResource
-	PrintJobs        *PrintJobsResource
-	BulkRuns         *BulkRunsResource
-	PassViews        *PassViewsResource
-	RollCalls        *RollCallsResource
-	ScanEvents       *ScanEventsResource
-	ScanSetups       *ScanSetupsResource
-	ScanStaff        *ScanStaffResource
-	ScanZones        *ScanZonesResource
-	Terminal         *TerminalResource
-	Scanners         *ScannersResource
-	ScanningSessions *ScanningSessionsResource
-	Scans            *ScansResource
-	Templates        *TemplatesResource
-	TemplateImports  *TemplateImportsResource
-	Blueprints       *BlueprintsResource
-	TestEmails       *TestEmailsResource
-	WebhookEndpoints *WebhookEndpointsResource
+	APIKeys              *ApiKeysResource
+	AuditEntries         *AuditEntriesResource
+	Brand                *BrandResource
+	Broadcasts           *BroadcastsResource
+	Bundles              *BundlesResource
+	Connections          *ConnectionsResource
+	Connectors           *ConnectorsResource
+	Deliveries           *DeliveriesResource
+	Events               *EventsResource
+	Holders              *HoldersResource
+	MessageRules         *MessageRulesResource
+	NFC                  *NfcResource
+	DeveloperInvitations *DeveloperInvitationsResource
+	Developers           *DevelopersResource
+	Orgs                 *OrgsResource
+	PassImports          *PassImportsResource
+	Passes               *PassesResource
+	PrintJobs            *PrintJobsResource
+	BulkRuns             *BulkRunsResource
+	PassViews            *PassViewsResource
+	RollCalls            *RollCallsResource
+	ScanEvents           *ScanEventsResource
+	ScanSetups           *ScanSetupsResource
+	ScanStaff            *ScanStaffResource
+	ScanZones            *ScanZonesResource
+	Terminal             *TerminalResource
+	Scanners             *ScannersResource
+	ScanningSessions     *ScanningSessionsResource
+	Scans                *ScansResource
+	Templates            *TemplatesResource
+	TemplateImports      *TemplateImportsResource
+	Blueprints           *BlueprintsResource
+	TestEmails           *TestEmailsResource
+	WebhookEndpoints     *WebhookEndpointsResource
 }
 
 func newResources(c *core) Resources {
 	return Resources{
-		APIKeys:          newApiKeysResource(c),
-		AuditEntries:     newAuditEntriesResource(c),
-		Brand:            newBrandResource(c),
-		Broadcasts:       newBroadcastsResource(c),
-		Bundles:          newBundlesResource(c),
-		Connections:      newConnectionsResource(c),
-		Connectors:       newConnectorsResource(c),
-		Deliveries:       newDeliveriesResource(c),
-		Events:           newEventsResource(c),
-		Holders:          newHoldersResource(c),
-		MessageRules:     newMessageRulesResource(c),
-		NFC:              newNfcResource(c),
-		Orgs:             newOrgsResource(c),
-		PassImports:      newPassImportsResource(c),
-		Passes:           newPassesResource(c),
-		PrintJobs:        newPrintJobsResource(c),
-		BulkRuns:         newBulkRunsResource(c),
-		PassViews:        newPassViewsResource(c),
-		RollCalls:        newRollCallsResource(c),
-		ScanEvents:       newScanEventsResource(c),
-		ScanSetups:       newScanSetupsResource(c),
-		ScanStaff:        newScanStaffResource(c),
-		ScanZones:        newScanZonesResource(c),
-		Terminal:         newTerminalResource(c),
-		Scanners:         newScannersResource(c),
-		ScanningSessions: newScanningSessionsResource(c),
-		Scans:            newScansResource(c),
-		Templates:        newTemplatesResource(c),
-		TemplateImports:  newTemplateImportsResource(c),
-		Blueprints:       newBlueprintsResource(c),
-		TestEmails:       newTestEmailsResource(c),
-		WebhookEndpoints: newWebhookEndpointsResource(c),
+		APIKeys:              newApiKeysResource(c),
+		AuditEntries:         newAuditEntriesResource(c),
+		Brand:                newBrandResource(c),
+		Broadcasts:           newBroadcastsResource(c),
+		Bundles:              newBundlesResource(c),
+		Connections:          newConnectionsResource(c),
+		Connectors:           newConnectorsResource(c),
+		Deliveries:           newDeliveriesResource(c),
+		Events:               newEventsResource(c),
+		Holders:              newHoldersResource(c),
+		MessageRules:         newMessageRulesResource(c),
+		NFC:                  newNfcResource(c),
+		DeveloperInvitations: newDeveloperInvitationsResource(c),
+		Developers:           newDevelopersResource(c),
+		Orgs:                 newOrgsResource(c),
+		PassImports:          newPassImportsResource(c),
+		Passes:               newPassesResource(c),
+		PrintJobs:            newPrintJobsResource(c),
+		BulkRuns:             newBulkRunsResource(c),
+		PassViews:            newPassViewsResource(c),
+		RollCalls:            newRollCallsResource(c),
+		ScanEvents:           newScanEventsResource(c),
+		ScanSetups:           newScanSetupsResource(c),
+		ScanStaff:            newScanStaffResource(c),
+		ScanZones:            newScanZonesResource(c),
+		Terminal:             newTerminalResource(c),
+		Scanners:             newScannersResource(c),
+		ScanningSessions:     newScanningSessionsResource(c),
+		Scans:                newScansResource(c),
+		Templates:            newTemplatesResource(c),
+		TemplateImports:      newTemplateImportsResource(c),
+		Blueprints:           newBlueprintsResource(c),
+		TestEmails:           newTestEmailsResource(c),
+		WebhookEndpoints:     newWebhookEndpointsResource(c),
 	}
 }

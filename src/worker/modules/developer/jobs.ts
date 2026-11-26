@@ -1,5 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { idleSandboxOrgs } from './repo.ts';
+import { idleSandboxOrgs, sandboxOfUser } from './repo.ts';
 import { closeSandbox } from './repo-grants.ts';
 
 /** A sandbox with no activity for this long closes. */
@@ -21,4 +21,14 @@ export async function dailyDeveloperSandbox(ctx: ServiceContext): Promise<void> 
     }
   }
   if (closed > 0) ctx.log.info('developer.sandboxes_closed', { count: closed });
+}
+
+/**
+ * The Polaris ID sync took a person's developer access back: their open sandbox closes (read-only, keys revoked,
+ * the usual export window). False when they had none open. Throws when the close fails, so the caller retries.
+ */
+export async function closeDeveloperSandbox(ctx: ServiceContext, userId: string): Promise<boolean> {
+  const row = await sandboxOfUser(ctx.env.DB, userId);
+  if (!row || row.closed_at !== null) return false;
+  return closeSandbox(ctx, row.org_id, undefined, 'admin');
 }

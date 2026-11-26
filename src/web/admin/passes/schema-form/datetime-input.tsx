@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
-import { CALENDAR_ZONE } from '../../../../shared/time-zone.ts';
 import { cn } from '../../../lib/cn.ts';
 import { formatWallTime } from '../../../lib/format.ts';
-import { localZone, zoneLabel, zoneOptions } from '../../../lib/timezones.ts';
+import { zoneLabel, zoneOptions } from '../../../lib/timezones.ts';
 import { CheckboxField, CONTROL, CONTROL_HEIGHT, Combobox } from '../../../ui/index.ts';
 import { isoToLocal, localToOffsetIso, writtenOffset, zoneOffset } from './datetime.ts';
 
@@ -16,18 +15,22 @@ interface Props {
   clearLabel?: string | undefined;
   /** The venue zone from the template's time zone input: values show in it. */
   zone?: string | undefined;
+  /** The org's zone: the editor's zone when there is no venue zone and no written offset. */
+  orgZone?: string | undefined;
   [key: string]: unknown;
 }
 
-/** The zone a stored value was written in: the browser's when its offset matches, else the first. */
-function zoneFor(iso: string): string {
-  const here = localZone();
+/**
+ * The zone a stored value is read in: its written offset when it has one the org zone does not
+ * match, else the org's. A `Z` is how it was stored, not a zone choice.
+ */
+function zoneFor(iso: string, orgZone: string): string {
   const ms = Date.parse(iso);
-  // A UTC value reads as UTC: ignoresTimeZone shows the written wall clock, not the browser's.
-  const written = /Z$/i.test(iso) ? 0 : writtenOffset(iso);
-  if (Number.isNaN(ms) || written === undefined || zoneOffset(ms, here) === written) return here;
-  if (written === 0) return CALENDAR_ZONE;
-  return zoneOptions().find((z) => zoneOffset(ms, z.value) === written)?.value ?? here;
+  const written = /Z$/i.test(iso) ? undefined : writtenOffset(iso);
+  if (Number.isNaN(ms) || written === undefined || zoneOffset(ms, orgZone) === written) {
+    return orgZone;
+  }
+  return zoneOptions().find((z) => zoneOffset(ms, z.value) === written)?.value ?? orgZone;
 }
 
 /**
@@ -41,9 +44,10 @@ export function DateTimeInput({
   onBlur,
   clearLabel,
   zone: venueZone,
+  orgZone = DEFAULT_TIME_ZONE,
   ...control
 }: Props) {
-  const [zone, setZone] = useState(() => venueZone ?? (value ? zoneFor(value) : DEFAULT_TIME_ZONE));
+  const [zone, setZone] = useState(() => venueZone ?? (value ? zoneFor(value, orgZone) : orgZone));
   // The signed pass shows times in the venue zone, so the editor follows it.
   useEffect(() => {
     if (venueZone) setZone(venueZone);

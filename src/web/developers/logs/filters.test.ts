@@ -116,11 +116,13 @@ describe('an empty log', () => {
     });
     const show = await vi.waitFor(() => {
       const b = [...el.querySelectorAll('button')].find(
-        (x) => x.textContent === LOGS_COPY.empty.portal,
+        (x) => x.textContent === LOGS_COPY.empty.showHidden,
       );
       if (!b) throw new Error('not yet');
       return b;
     });
+    expect(el.textContent).toContain('1 call from the portal is hidden.');
+    expect(el.textContent).not.toContain(LOGS_COPY.empty.title);
     show.click();
     await vi.advanceTimersByTimeAsync(300);
     expect(calls.at(-1)).toContain('source=try');

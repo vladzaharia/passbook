@@ -35,6 +35,7 @@ export const ENTITLEMENT_LABEL: Record<EntitlementKey, string> = {
   'templates.stylesBlocked': 'Blocked pass styles',
   'email.perDay': 'Emails per day',
   members: 'Members',
+  'members.developers': 'Developers',
   'brand.mark': 'PassBook footer',
   domains: 'Custom domains',
   'identity.own': 'Own Pass Type ID',

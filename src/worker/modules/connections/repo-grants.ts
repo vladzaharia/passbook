@@ -50,6 +50,7 @@ export interface ConnectionActor {
 /** Every table a connection grant writes: the typed ones and the parts. Anything else is refused. */
 const CONNECTION_TABLES = [
   'connections',
+  'connection_files',
   'connection_runs',
   'connection_ref_versions',
   'connection_webhook_items',

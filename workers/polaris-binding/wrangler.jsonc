@@ -1,0 +1,43 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "polaris-binding",
+  "main": "src/index.ts",
+  "account_id": "07a2eb0d4916b220da1f9c1387b5f6d8",
+  "compatibility_date": "2026-08-14",
+  "compatibility_flags": ["nodejs_compat"],
+  // Reached only through the main Worker's IDP service binding: no public route.
+  "workers_dev": false,
+  "preview_urls": false,
+  "upload_source_maps": true,
+  "vars": {
+    "POCKET_ID_ORIGIN": "https://id.example.invalid",
+    // v2 is Polaris ID on Pocket ID v2.19.x (/api/...); admin is the next release (/api/admin/...).
+    "POCKET_ID_API": "v2",
+    // The PassBook OIDC client's id in Polaris ID, for the group-restriction check.
+    "PASSBOOK_CLIENT_ID": "",
+    // dry_run computes and ledgers every write and sends none. The owner sets live after a dry-run week.
+    "WRITE_MODE": "dry_run",
+    "GROUP_PREFIX": "passbook_",
+    // Custom groups the binding creates are named CUSTOM_GROUP_PREFIX + key. Prefix and limit are owner settings.
+    "CUSTOM_GROUP_PREFIX": "passbook_g_",
+    "CUSTOM_GROUP_LIMIT": "50",
+    // {"key": "<group id>"}: owner opt-in for groups outside the namespace.
+    "ADOPT_GROUPS": "{}",
+    // Exact claim keys outside passbook_* the binding may write. Keep empty unless an app needs a bare key.
+    "CLAIM_KEYS": "[]",
+    // Role registry. Ids are placeholders until the owner fills them in (docs/operations.md, Polaris ID binding).
+    "GROUPS": "{\"console\":{\"id\":\"\",\"name\":\"passbook_console\"},\"developer\":{\"id\":\"\",\"name\":\"passbook_developers\"},\"platform_admin\":{\"id\":\"\",\"name\":\"passbook_platform_admins\",\"protected\":true},\"users\":{\"id\":\"\",\"name\":\"passbook_users\",\"protected\":true}}"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "polaris-binding",
+      // Placeholder until `wrangler d1 create polaris-binding` (docs/operations.md, Polaris ID binding).
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "secrets": { "required": ["POCKET_ID_API_KEY"] },
+  // Traces would record request attributes of calls that carry the key; logs are enough.
+  "observability": { "enabled": true, "traces": { "enabled": false } }
+}

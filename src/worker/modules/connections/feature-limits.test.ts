@@ -8,7 +8,7 @@ import {
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
-import { first } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { addMembership, type Kit, makeKit } from './test-kit.ts';
@@ -76,5 +76,16 @@ describe('connection limits', () => {
     const secrets = await credentials();
     expect((await refusedBy(await create()))?.code).toBe('FEATURE_LIMIT_REACHED');
     expect(await credentials()).toBe(secrets);
+  });
+
+  it('refuses a connector the plan does not list', async () => {
+    await run(kit.env.DB, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [
+      'trial',
+      kit.org.id,
+    ]);
+    await run(kit.env.DB, 'DELETE FROM connections WHERE org_id = ?', [kit.org.id]);
+    const refused = await refusedBy(await create());
+    expect(refused?.code).toBe('FEATURE_NOT_INCLUDED');
+    expect(await held()).toBe(0);
   });
 });

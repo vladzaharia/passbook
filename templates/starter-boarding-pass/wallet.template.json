@@ -236,7 +236,7 @@
   "sample": {
     "passengerGiven": "Alex",
     "passengerFamily": "Morgan",
-    "airlineCode": "WA",
+    "airlineCode": "ZA1",
     "flightNumber": 100,
     "origin": "SFO",
     "originCity": "San Francisco",

@@ -36,7 +36,15 @@ const UTC_DAY = new Set([
   'worker/modules/org-lifecycle/jobs.ts',
   'worker/platform/browser-signals.ts',
   'worker/modules/wallet-providers/projection-class-rule.ts',
+  // The demo world is a synthetic wall clock (`ms` read with UTC fields): its days are calendar arithmetic.
+  'worker/connectors/demo/people.ts',
+  'worker/connectors/demo/world.ts',
+  'worker/connectors/demo/datasets/transit-tickets.ts',
 ]);
+
+/** `?? localZone()` reads "no zone known" as the browser's zone; only a page with no org may. */
+const BROWSER_FALLBACK = new Set(['web/developers/playground/live-paper.tsx']);
+const BROWSER = /(?:\?\?|\|\|)\s*localZone\(\)/;
 
 const NAME = /['"`](?:UTC|Etc\/UTC|GMT)['"`]/;
 const DAY = /toISOString\(\)\s*\.slice\(0,\s*10\)/;
@@ -68,6 +76,22 @@ describe('time zone literals', () => {
     const found = source()
       .filter((f) => !UTC_DAY.has(f.path) && DAY.test(f.text))
       .map((f) => f.path);
+    expect(found).toEqual([]);
+  });
+
+  it('keep the browser zone from standing in for a missing org zone', () => {
+    const found = source()
+      .filter((f) => !BROWSER_FALLBACK.has(f.path) && BROWSER.test(f.text))
+      .map((f) => f.path);
+    expect(found).toEqual([]);
+  });
+
+  it('keep UTC out of the seed scripts: a zone-less org must show the default zone', () => {
+    const tools = resolve(SRC, '..', 'tools');
+    const seeds = [...files(join(tools, 'lib'))]
+      .filter((p) => /demo-[\w-]+\.ts$/.test(p))
+      .concat(join(tools, 'nfc-tags-fixtures.ts'));
+    const found = seeds.filter((p) => NAME.test(readFileSync(p, 'utf8'))).map((p) => basename(p));
     expect(found).toEqual([]);
   });
 

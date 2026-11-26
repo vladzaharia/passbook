@@ -530,11 +530,11 @@ describe('starter-boarding-pass', () => {
     expect(semantics).toMatchObject({
       departureStationName: 'San Francisco',
       destinationStationName: 'New York',
-      vehicleNumber: 'WA100',
+      vehicleNumber: 'ZA1100',
     });
     expect(train.boardingPass?.headerFields?.[0]?.label).toBe('Train');
     const air = (await build('starter-boarding-pass', material, sample)).passJson;
-    expect((air.semantics as Record<string, unknown>).airlineCode).toBe('WA');
+    expect((air.semantics as Record<string, unknown>).airlineCode).toBe('ZA1');
     expect(air.logoText).toBe('Organization');
   });
 

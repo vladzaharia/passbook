@@ -1109,6 +1109,33 @@
       ]
     },
     {
+      "code": "DEVELOPER_INVITE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
+      "code": "DEVELOPER_INVITE_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
+      "code": "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
       "code": "DEVICE_INVALID",
       "statuses": [
         400
@@ -1375,6 +1402,245 @@
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "FILE_ARCHIVE_LIMIT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_BAD_POINTER",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_CELL_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_DAMAGED",
+      "statuses": [
+        500,
+        422
+      ],
+      "primary": [
+        422,
+        500
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_ENCODING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_EXPIRED",
+      "statuses": [
+        410
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_FORMAT_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_HEADER_DUPLICATE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_HEADER_MISSING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_HEADER_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_ID_COLUMN_MISSING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_JSON_TOO_DEEP",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_LINE_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_MACRO",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_NOT_RECORDS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_RECORDS_NOT_FOUND",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_ROW_SHAPE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_SHEET_NOT_FOUND",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_STATE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_LARGE",
+      "statuses": [
+        413
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_MANY_CELLS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_MANY_COLUMNS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_TOO_MANY_ROWS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "FILE_XML_UNSAFE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
       ]
     },
     {
@@ -1841,6 +2107,24 @@
       ]
     },
     {
+      "code": "IDP_BUDGET",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -1850,12 +2134,58 @@
       ]
     },
     {
+      "code": "IDP_FROZEN",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_REFUSED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_SIGN_IN_REQUIRED",
       "statuses": [
         403
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "IDP_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "dev-access",
+        "idp"
       ]
     },
     {
@@ -2380,6 +2710,7 @@
         409
       ],
       "modules": [
+        "dev-access",
         "orgs"
       ]
     },
@@ -2895,6 +3226,7 @@
         409
       ],
       "modules": [
+        "dev-access",
         "orgs"
       ]
     },
@@ -5046,6 +5378,7 @@
         409
       ],
       "modules": [
+        "nfc",
         "scan"
       ]
     },
@@ -5106,6 +5439,15 @@
       "modules": [
         "nfc",
         "scan"
+      ]
+    },
+    {
+      "code": "TAG_PROGRAM_FAILED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {

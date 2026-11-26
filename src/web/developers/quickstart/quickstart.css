@@ -145,6 +145,12 @@
 .qs-code .src {
   overflow-x: auto;
 }
+/* A request line scrolls sideways: wrapping would split the quoted URL. */
+.qs-code pre.src .ln {
+  white-space: pre;
+  overflow-wrap: normal;
+  text-indent: 0;
+}
 .qs-code-ghost {
   min-height: 9rem;
 }

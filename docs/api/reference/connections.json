@@ -492,6 +492,296 @@
       "nextCursor": "c1.4812"
     }
   },
+  "connections.postConnectionsUploads": {
+    "description": "Uploads a CSV, Excel or JSON file as a draft: columns, a preview and ID column candidates. Create the connection with its fileId within 23 hours.",
+    "request": {
+      "name": "members.csv",
+      "content": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n",
+      "encoding": "utf8"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000014",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "draft",
+      "name": "members.csv",
+      "format": "csv",
+      "sheets": [],
+      "sheet": null,
+      "recordsPointer": null,
+      "bytes": 330,
+      "rows": 5,
+      "columns": [
+        {
+          "pointer": "/Holder email",
+          "label": "Holder email",
+          "type": "email",
+          "samples": ["ada@example.com", "grace@example.com"],
+          "blanks": 0,
+          "duplicates": 0
+        },
+        {
+          "pointer": "/Name",
+          "label": "Name",
+          "type": "text",
+          "samples": ["Ada Example", "Grace Okafor"],
+          "blanks": 0,
+          "duplicates": 0
+        },
+        {
+          "pointer": "/Member ID",
+          "label": "Member ID",
+          "type": "text",
+          "samples": ["NW-1001", "NW-1002"],
+          "blanks": 0,
+          "duplicates": 0
+        }
+      ],
+      "preview": {
+        "header": ["Holder email", "Name", "Member ID"],
+        "rows": [
+          ["ada@example.com", "Ada Example", "NW-1001"],
+          ["grace@example.com", "Grace Okafor", "NW-1002"]
+        ]
+      },
+      "idCandidates": ["/Member ID", "/Holder email", "/Name"],
+      "createdAt": 1795572000000,
+      "expiresAt": 1795654800000
+    }
+  },
+  "connections.getConnectionsUploadsByFileId": {
+    "description": "Reads a draft upload.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000014",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "draft",
+      "name": "members.csv",
+      "format": "csv",
+      "sheets": [],
+      "sheet": null,
+      "recordsPointer": null,
+      "bytes": 330,
+      "rows": 5,
+      "columns": [
+        {
+          "pointer": "/Holder email",
+          "label": "Holder email",
+          "type": "email",
+          "samples": ["ada@example.com", "grace@example.com"],
+          "blanks": 0,
+          "duplicates": 0
+        },
+        {
+          "pointer": "/Name",
+          "label": "Name",
+          "type": "text",
+          "samples": ["Ada Example", "Grace Okafor"],
+          "blanks": 0,
+          "duplicates": 0
+        },
+        {
+          "pointer": "/Member ID",
+          "label": "Member ID",
+          "type": "text",
+          "samples": ["NW-1001", "NW-1002"],
+          "blanks": 0,
+          "duplicates": 0
+        }
+      ],
+      "preview": {
+        "header": ["Holder email", "Name", "Member ID"],
+        "rows": [
+          ["ada@example.com", "Ada Example", "NW-1001"],
+          ["grace@example.com", "Grace Okafor", "NW-1002"]
+        ]
+      },
+      "idCandidates": ["/Member ID", "/Holder email", "/Name"],
+      "createdAt": 1795572000000,
+      "expiresAt": 1795654800000
+    }
+  },
+  "connections.patchConnectionsUploadsByFileId": {
+    "description": "Reads a draft again from its stored file with another sheet or records path.",
+    "request": {
+      "sheet": "Members"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000014",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "draft",
+      "name": "members.csv",
+      "format": "csv",
+      "sheets": [],
+      "sheet": null,
+      "recordsPointer": null,
+      "bytes": 330,
+      "rows": 5,
+      "columns": [
+        {
+          "pointer": "/Holder email",
+          "label": "Holder email",
+          "type": "email",
+          "samples": ["ada@example.com", "grace@example.com"],
+          "blanks": 0,
+          "duplicates": 0
+        },
+        {
+          "pointer": "/Name",
+          "label": "Name",
+          "type": "text",
+          "samples": ["Ada Example", "Grace Okafor"],
+          "blanks": 0,
+          "duplicates": 0
+        },
+        {
+          "pointer": "/Member ID",
+          "label": "Member ID",
+          "type": "text",
+          "samples": ["NW-1001", "NW-1002"],
+          "blanks": 0,
+          "duplicates": 0
+        }
+      ],
+      "preview": {
+        "header": ["Holder email", "Name", "Member ID"],
+        "rows": [
+          ["ada@example.com", "Ada Example", "NW-1001"],
+          ["grace@example.com", "Grace Okafor", "NW-1002"]
+        ]
+      },
+      "idCandidates": ["/Member ID", "/Holder email", "/Name"],
+      "createdAt": 1795572000000,
+      "expiresAt": 1795654800000
+    }
+  },
+  "connections.deleteConnectionsUploadsByFileId": {
+    "description": "Discards a draft upload and its stored file.",
+    "response": {
+      "ok": true
+    }
+  },
+  "connections.postConnectionsByIdFiles": {
+    "description": "Uploads a new revision of the connection's file. It stays pending until applied; apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true and store nothing.",
+    "request": {
+      "name": "members.csv",
+      "content": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n",
+      "encoding": "utf8"
+    },
+    "response": {
+      "unchanged": false,
+      "id": "0193a1b2-7c00-7000-8000-000000000034",
+      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+      "revision": 2,
+      "state": "pending",
+      "name": "members.csv",
+      "format": "csv",
+      "sheet": null,
+      "bytes": 370,
+      "rows": 6,
+      "skipped": {
+        "noId": 0,
+        "duplicate": 0
+      },
+      "diff": {
+        "added": 1,
+        "changed": 1,
+        "removed": 0,
+        "examples": {
+          "added": ["NW-1006"],
+          "changed": ["NW-1001"],
+          "removed": []
+        }
+      },
+      "applied": false,
+      "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "createdByName": "Mei Tanaka",
+      "createdAt": 1795572000000,
+      "expiresAt": 1795654800000,
+      "supersededAt": null
+    }
+  },
+  "connections.getConnectionsByIdFiles": {
+    "description": "Lists the connection's file revisions, newest first.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000034",
+          "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+          "revision": 2,
+          "state": "pending",
+          "name": "members.csv",
+          "format": "csv",
+          "sheet": null,
+          "bytes": 370,
+          "rows": 6,
+          "skipped": {
+            "noId": 0,
+            "duplicate": 0
+          },
+          "diff": {
+            "added": 1,
+            "changed": 1,
+            "removed": 0,
+            "examples": {
+              "added": ["NW-1006"],
+              "changed": ["NW-1001"],
+              "removed": []
+            }
+          },
+          "applied": false,
+          "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+          "createdByName": "Mei Tanaka",
+          "createdAt": 1795572000000,
+          "expiresAt": 1795654800000,
+          "supersededAt": null
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "connections.postConnectionsByIdFilesByFileIdApply": {
+    "description": "Makes a pending revision current and syncs now.",
+    "response": {
+      "file": {
+        "id": "0193a1b2-7c00-7000-8000-000000000034",
+        "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+        "revision": 2,
+        "state": "current",
+        "name": "members.csv",
+        "format": "csv",
+        "sheet": null,
+        "bytes": 370,
+        "rows": 6,
+        "skipped": {
+          "noId": 0,
+          "duplicate": 0
+        },
+        "diff": {
+          "added": 1,
+          "changed": 1,
+          "removed": 0,
+          "examples": {
+            "added": ["NW-1006"],
+            "changed": ["NW-1001"],
+            "removed": []
+          }
+        },
+        "applied": false,
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "createdByName": "Mei Tanaka",
+        "createdAt": 1795572000000,
+        "expiresAt": null,
+        "supersededAt": null
+      },
+      "runId": "0193a1b2-7c00-7000-8000-000000000023",
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
+    }
+  },
+  "connections.deleteConnectionsByIdFilesByFileId": {
+    "description": "Discards a pending revision and its stored file.",
+    "response": {
+      "ok": true
+    }
+  },
   "connections.postConnectionsByIdWebhookSecret": {
     "description": "Generates a new webhook secret. It is shown once.",
     "response": {

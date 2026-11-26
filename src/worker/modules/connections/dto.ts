@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ConnectionDto, ConnectorInfoSchema, Json } from '../../../shared/contracts/index.ts';
+import { connectors } from '../../connectors/registry.ts';
 import type { AnyConnector } from '../../connectors/types.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -11,15 +12,48 @@ export function webhookUrl(env: AppEnv, conn: Pick<ConnectionRow, 'id' | 'mode'>
     : null;
 }
 
+type Shown = Pick<ConnectionDto, 'connectorVersion' | 'config'> & {
+  /** Set when the stored config is shown as stored because it did not migrate. */
+  issue?: 'MIGRATE_FAILED' | 'MIGRATED_INVALID';
+};
+
+/**
+ * The config as runs see it: one stored by an older connector version is shown migrated, under the
+ * current version, so an edit starts from the shape the update path takes. A row that does not migrate
+ * is shown as stored, under its stored version.
+ */
+function shownConfig(c: ConnectionRow): Shown {
+  const stored = { connectorVersion: c.connectorVersion, config: c.config };
+  const def = connectors.get(c.connectorType);
+  if (!def?.migrate || c.connectorVersion === def.version) return stored;
+  let migrated: unknown;
+  try {
+    migrated = def.migrate(c.connectorVersion, c.config);
+  } catch {
+    // A broken stored config must not fail a listing; `stored` keeps its old version, so clients can tell.
+    return { ...stored, issue: 'MIGRATE_FAILED' };
+  }
+  const parsed = def.configSchema.safeParse(migrated);
+  return parsed.success
+    ? { connectorVersion: def.version, config: parsed.data as Record<string, Json> }
+    : { ...stored, issue: 'MIGRATED_INVALID' };
+}
+
 /** Secrets never appear: only whether each credential exists. */
-export function toDto(env: AppEnv, c: ConnectionRow): ConnectionDto {
+export function toDto(
+  env: AppEnv,
+  c: ConnectionRow,
+  onIssue?: (code: NonNullable<Shown['issue']>) => void,
+): ConnectionDto {
+  const shown = shownConfig(c);
+  if (shown.issue) onIssue?.(shown.issue);
   return {
     id: c.id,
     orgId: c.orgId,
     connectorType: c.connectorType,
-    connectorVersion: c.connectorVersion,
+    connectorVersion: shown.connectorVersion,
     name: c.name,
-    config: c.config,
+    config: shown.config,
     hasCredential: c.credentialId !== null,
     hasWebhookSecret: c.webhookCredentialId !== null,
     mapping: c.mapping
@@ -77,18 +111,22 @@ export function connectorInfo(def: AnyConnector): z.infer<typeof ConnectorInfoSc
     version: def.version,
     displayName: def.displayName,
     description: def.description ?? '',
+    category: def.category,
+    order: def.order,
     capabilities: {
       poll: caps.poll === true,
       delta: caps.delta === true,
       webhook: caps.webhook === true,
       import: caps.import === true,
       snapshot: caps.snapshot === true,
+      upload: caps.upload === true,
     },
     configSchema: jsonSchemaOf(def.configSchema),
     secretSchema: def.secretSchema ? jsonSchemaOf(def.secretSchema) : null,
     outputFields: def.outputFields,
     defaults: def.defaults,
-    recipes: [...(def.recipes ?? [])],
+    recipes: (def.recipes ?? []).map((r) => ({ ...r, entitled: true })),
+    entitled: true,
   };
 }
 
