@@ -5,11 +5,11 @@ import { build, type Rolldown } from 'vite';
 import { describe, expect, it } from 'vitest';
 import {
   E2E_RELEASE_MARKERS,
+  E2E_RELEASE_SQL,
   e2eReleaseDefine,
   e2eReleaseMismatch,
   e2eReleaseOn,
   e2eReleaseProblems,
-  ISSUANCE_GUARDS,
 } from './e2e-release.ts';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -30,13 +30,15 @@ describe('e2e release build switch', () => {
     expect(e2eReleaseDefine({})).toEqual({ __WALLET_E2E_RELEASE__: 'false' });
   });
 
-  it('names issuance guards the migrations really create', () => {
+  it('releases through the table the migrations create, every row at once', () => {
     const migrations = readdirSync(join(root, 'migrations'))
       .filter((name) => name.endsWith('.sql'))
       .map((name) => readFileSync(join(root, 'migrations', name), 'utf8'))
       .join('\n');
-    for (const guard of ISSUANCE_GUARDS)
-      expect(migrations).toMatch(new RegExp(`CREATE TRIGGER ${guard}\\b`));
+    expect(migrations).toMatch(/CREATE TABLE wallet_provider_releases \(/);
+    expect(E2E_RELEASE_SQL).toBe(
+      "UPDATE wallet_provider_releases SET state = 'released', changed_at = 0;",
+    );
   });
 
   it('marks strings the Worker module really carries', () => {

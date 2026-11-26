@@ -2,6 +2,11 @@ import { hasCredentialSql } from './account-presence.ts';
 import { approvalStandsSql } from './projection-system-authority.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
+/** The revision the Worker pins (`REVISION_EXPR`): an enrolment-only row keeps it in `enrolment_revision`. */
+function accountRevisionSql(row: string): string {
+  return `CASE WHEN ${row}.credential_id IS NULL THEN ${row}.enrolment_revision ELSE ${row}.revision END`;
+}
+
 /**
  * D2: on the send path (`byEpoch`) an operation that recorded an account epoch follows the epoch, so a same-identity
  * rotation (which moves the revision only) does not stale it; inbound callbacks and offers keep the revision (PE5c).
@@ -14,8 +19,8 @@ function accountPin(
   opRevision: string,
   epoch: string,
 ): string {
-  if (!byEpoch) return `${row}.${revision} = ${op}.${opRevision}`;
-  return `((${op}.account_epoch IS NULL AND ${row}.${revision} = ${op}.${opRevision})
+  if (!byEpoch) return `${revision} = ${op}.${opRevision}`;
+  return `((${op}.account_epoch IS NULL AND ${revision} = ${op}.${opRevision})
     OR (${op}.account_epoch IS NOT NULL AND ${row}.${epoch} IS ${op}.account_epoch))`;
 }
 
@@ -68,7 +73,7 @@ export function walletInstanceProofSql(
       JOIN orgs owner ON owner.id = p.org_id
       JOIN wallet_provider_accounts account ON account.id = ${i}.account_id
         AND account.org_id = ${i}.org_id AND account.mode = ${i}.mode AND account.provider = ${i}.provider
-        AND ${accountPin(byEpoch, op, 'account', 'revision', 'account_revision', 'authority_epoch')}
+        AND ${accountPin(byEpoch, op, 'account', accountRevisionSql('account'), 'account_revision', 'authority_epoch')}
         AND ${hasCredentialSql('account')}
         AND account.revoked_at IS NULL
       WHERE ((p.id = ${i}.pass_id AND p.org_id = ${i}.org_id AND p.mode = ${i}.mode)
@@ -111,7 +116,7 @@ export function walletInstanceProofSql(
                 AND exact_projection.adapter_revision = ${op}.adapter_revision
                 AND exact_projection.audience_policy_revision = ${op}.policy_revision)
                 AND ((exact_candidate.provider_account_id = ${i}.account_id
-                  AND ${accountPin(byEpoch, op, 'exact_candidate', 'provider_account_revision', 'account_revision', 'provider_account_epoch')})
+                  AND ${accountPin(byEpoch, op, 'exact_candidate', 'exact_candidate.provider_account_revision', 'account_revision', 'provider_account_epoch')})
                   AND EXISTS (SELECT 1 FROM template_releases original_identity
                     JOIN template_candidates initial_candidate ON initial_candidate.id = original_identity.candidate_id
                     JOIN template_approvals initial_approval ON initial_approval.id = original_identity.approval_id

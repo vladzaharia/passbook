@@ -53,8 +53,14 @@ const opSql = `INSERT INTO wallet_provider_instance_operations
     (SELECT p.row_version FROM passes p JOIN wallet_provider_instances i ON i.pass_id = p.id WHERE i.id = o.instance_id),
     (SELECT a.authority_epoch FROM wallet_provider_accounts a JOIN wallet_provider_instances i ON i.account_id = a.id WHERE i.id = o.instance_id)
   FROM wallet_provider_instance_operations o WHERE o.instance_id = ? AND o.version = 1`;
+// The operation guard and the release rule (0229) refuse an upsert on an account that is Off or not released; the
+// pin guards are under test here.
 const insertOp = (instanceId: string, pin: string | null) =>
-  run(db(), opSql, [uid(), ident(), pin, instanceId]);
+  withoutTrigger(db(), 'wallet_provider_generation_operation_guard', () =>
+    withoutTrigger(db(), 'wallet_provider_generation_operation_draining', () =>
+      run(db(), opSql, [uid(), ident(), pin, instanceId]),
+    ),
+  );
 
 /** A retired copy of the instance's reference under the 0043 guard, which allows no new reference. */
 const refSql = `INSERT INTO wallet_samsung_fetch_refs

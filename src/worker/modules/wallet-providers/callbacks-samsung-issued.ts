@@ -2,6 +2,7 @@ import { credentialAad, type Envelope, encryptSecret, loadKekRing } from '../../
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { SamsungCallbackInput, SamsungCallbackResult } from './callbacks-samsung-types.ts';
+import { walletProviderEnabled } from './provider-policy.ts';
 import {
   claimSamsungIssuedDelivery,
   findSamsungIssuedRefs,
@@ -41,8 +42,10 @@ export async function answerSamsungIssuedRef(
           }
           const claim = { tokenHash, expiresAt, claimId: ctx.ids.id(), now: ctx.clock.now() };
           // An older or revoked credential may authenticate the callback, so it is answered and
-          // its token spent, but it records nothing and changes nothing.
-          if (method === 'GET' || !writable || !receiptId || !body)
+          // its token spent, but it records nothing and changes nothing. While draining an ADDED
+          // promotes nothing either; any other state (a holder's DELETED) is recorded.
+          const promoting = event === 'ADDED' && !walletProviderEnabled('samsung', ref.mode);
+          if (method === 'GET' || !writable || promoting || !receiptId || !body)
             return claimSamsungIssuedDelivery(ctx.env.DB, ref, claim, null);
           sealed ??= await encryptSecret(
             await loadKekRing(ctx.env),

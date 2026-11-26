@@ -9,11 +9,9 @@ import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import {
-  configureWalletProviderAccount,
-  readConfiguredWalletProviderCredentials,
-} from './account-service.ts';
+import { readConfiguredWalletProviderCredentials } from './account-service.ts';
 import { getWalletInstanceById, readWalletPassSnapshot } from './instance.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
@@ -74,7 +72,7 @@ describe('a Google rotation, reconcile and queued send', () => {
 
     const before = await accountOf(db, account.id);
     const second = await createFixtureIdentity(undefined, { now: new Date(kit.clock.now()) });
-    const rotated = await configureWalletProviderAccount(kit.ctx, f.auth, {
+    const rotated = await configureOn(kit.ctx, f.auth, {
       ...scope,
       expectedRevision: before?.revision ?? 0,
       credentials: { ...f.google, privateKeyPem: second.privateKey },

@@ -5,6 +5,7 @@ import { PROVIDER_NAME, releaseLine, releaseSummary } from './copy.ts';
 import { CredentialRow } from './credential-row.tsx';
 import { EnrolmentTable } from './enrolment-table.tsx';
 import { usePlatformCredentials } from './queries.ts';
+import { ReleaseCard } from './release-card.tsx';
 import { SamsungCards } from './samsung-cards.tsx';
 
 const MODES: { mode: Mode; label: string }[] = [
@@ -21,6 +22,7 @@ export function ProviderTab({ provider }: { provider: WalletProvider }) {
   const credentials = usePlatformCredentials();
   return (
     <div className="flex flex-col gap-6">
+      <ReleaseCard provider={provider} />
       <Card>
         <CardHeader title={`${PROVIDER_NAME[provider]} credentials`} />
         <CardBody className="flex flex-col gap-3">
