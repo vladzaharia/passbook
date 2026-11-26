@@ -16,6 +16,8 @@ export interface WalletProviderStatusRow {
   /** The provider's own save and removal reports (callbacks), never proof of installation. */
   savedAt: number | null;
   removedAt: number | null;
+  /** The instance's Google class review as stored: UNREAD before the first read, null with no class. */
+  classReview: string | null;
 }
 
 /** An empty array means the pass or authority snapshot no longer matches. */
@@ -46,6 +48,9 @@ export async function readWalletProviderStatus(
       i.lifecycle, op.version AS operationVersion, op.kind AS operationKind,
       op.state AS operationState, op.reason_code AS operationReason,
       i.saved_at AS savedAt, i.holder_removed_at AS removedAt,
+      (SELECT COALESCE(c.review_status, 'UNREAD') FROM wallet_google_callback_bindings gb
+        JOIN wallet_google_classes c ON c.class_id_hash = gb.class_id_hash
+        WHERE gb.instance_id = i.id) AS classReview,
       EXISTS (SELECT 1 FROM wallet_provider_instances previous
         WHERE previous.pass_id = p.id AND previous.org_id = p.org_id AND previous.mode = p.mode
           AND previous.provider = provider.provider AND previous.credential_generation < p.credential_generation

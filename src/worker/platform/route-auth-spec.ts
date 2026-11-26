@@ -43,6 +43,22 @@ export type RouteAuth =
        */
       templateScoped?: true;
       stepUp?: StepUp;
+      signIn?: never;
+    }
+  /**
+   * A key with the scope, or any session: one with no console access (an email link, or Polaris ID without the
+   * console group) is an "own only" caller (`isOwnOnly`), and the handler must show it only what it started.
+   * Never with a capability, an admin session, a step-up or a till key: those need the console's strength.
+   */
+  | {
+      scope: ScopeRule;
+      signIn: 'any';
+      feature?: FeatureRule;
+      capability?: never;
+      session?: never;
+      stepUp?: never;
+      tillKey?: never;
+      templateScoped?: never;
     }
   /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
   | {

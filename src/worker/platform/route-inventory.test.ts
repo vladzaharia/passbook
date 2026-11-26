@@ -60,6 +60,8 @@ const PUBLIC = [
   'GET /b/:token/:passId/pass.pkpass',
   'GET /b/:token/:passId/wallet/:provider',
   'GET /b/:token/passes.pkpasses',
+  // The bundle's one Google save link: the capability token is the credential, rate limited (RL_PUBLIC), private no-store 302.
+  'GET /b/:token/wallet/google',
   'GET /health',
   'GET /j/:token',
   'GET /j/:token/card/:name',
@@ -247,7 +249,7 @@ function signInLevels(): Record<string, SignInLevel> {
 }
 
 /** Routes an email-link session may call (holder features). Every other session route needs a strong sign-in. */
-const SIGN_IN_ANY = [
+const HOLDER_ROUTES = [
   'DELETE /api/v1/me/emails/:email',
   'DELETE /api/v1/me/passes/:id',
   'DELETE /api/v1/me/sessions/:id',
@@ -268,6 +270,13 @@ const SIGN_IN_ANY = [
   'POST /api/v1/me/sessions/revoke-all',
   'POST /api/v1/me/tags/:id/lost',
 ];
+
+/**
+ * Scope routes (`signIn: 'any'`) that also take a key: a session without console access reaches them as
+ * own-only, so every handler here must show it only what that person started (`isOwnOnly`).
+ */
+const OWN_ONLY_ROUTES = ['GET /api/v1/operations', 'GET /api/v1/operations/:id'];
+const SIGN_IN_ANY = [...HOLDER_ROUTES, ...OWN_ONLY_ROUTES].sort();
 
 it("has a decision for every route, and only today's undecided ones are listed", () => {
   const listed = new Set([...PUBLIC, ...SCANNER, ...OWN_GUARD]);

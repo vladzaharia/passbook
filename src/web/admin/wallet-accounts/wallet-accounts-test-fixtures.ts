@@ -5,6 +5,7 @@ import type {
   WalletCredential,
   WalletEnrolment,
 } from '@/shared/contracts/wallet-providers.ts';
+import type { WalletRelease } from '@/shared/contracts/wallet-release.ts';
 import { channelOf, enrolmentOf, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { json, type RenderAppOptions, renderApp } from '@/web/lib/test-utils.tsx';
 
@@ -80,3 +81,12 @@ export async function renderOrgAccounts(options: RenderAppOptions) {
   }
   return rendered;
 }
+
+const DARK = { state: 'disabled', reason: 'not_released' } as const;
+const OPEN = { state: 'enabled' } as const;
+
+/** Release state as the platform credential list reports it; both modes dark unless named. */
+export const walletRelease = (test: boolean = false, live: boolean = false): WalletRelease => {
+  const by = { live: live ? OPEN : DARK, test: test ? OPEN : DARK };
+  return { google: by, samsung: by };
+};

@@ -8,7 +8,6 @@ import { PREVIEW_PAGE_COPY } from '../../shared/copy/developer.ts';
 import { PREVIEW_COPY, walletName } from '../../shared/copy/previews.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
-import { FidelityNotes } from '../../web/channel-previews/fidelity-notes.tsx';
 import type { WalletTargetOut } from '../../web/channel-previews/wallet-kit.ts';
 import { PAPER_CSS } from '../../web/paper/css.ts';
 import type { PaperDrawing } from '../../web/paper/drawing.ts';
@@ -26,6 +25,7 @@ import { GoogleCard } from '../../web/wallet-previews/google/google-card.tsx';
 import samsungCss from '../../web/wallet-previews/samsung/samsung.css?raw';
 import { SamsungCard } from '../../web/wallet-previews/samsung/samsung-card.tsx';
 import walletsCss from '../../web/wallet-previews/wallet-previews.css?raw';
+import { WalletReport } from '../../web/wallet-report/wallet-report.tsx';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage } from './hosted.ts';
 import pageCss from './preview-page.css?raw';
@@ -132,7 +132,7 @@ function WalletPane({
             card
           )}
         </div>
-        <FidelityNotes report={report} />
+        <WalletReport report={report} host="pane" compact={false} />
       </div>
     </div>
   );

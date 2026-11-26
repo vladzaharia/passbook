@@ -38,6 +38,8 @@ export interface ChannelPreviewsProps {
   /** The Front / Back choice of the wallet cards, when the page keeps it (a shared hash, say). */
   face?: PreviewFace | undefined;
   onFace?: ((face: PreviewFace) => void) | undefined;
+  /** A link under a wallet's report: the designer's Edit in Wallets. */
+  walletAction?: ((target: 'google' | 'samsung') => ReactNode) | undefined;
   className?: string;
 }
 
@@ -84,6 +86,7 @@ export function ChannelPreviews({
   walletNotes,
   face,
   onFace,
+  walletAction,
   className,
 }: ChannelPreviewsProps) {
   const tabs = PREVIEW_CHANNELS.filter(
@@ -165,6 +168,7 @@ export function ChannelPreviews({
               notes={walletNotes}
               face={face}
               onFace={onFace}
+              action={walletAction?.(current)}
             />
           </Suspense>
         ) : null}

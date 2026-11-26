@@ -20,6 +20,7 @@ import {
   WalletMigrationResolvedSchema,
   type WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
+import { PlatformWalletCredentialListSchema } from '@/shared/contracts/wallet-release.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 
@@ -50,7 +51,9 @@ export function usePlatformCredentials() {
   return useQuery({
     queryKey: [...KEY, 'platform-credentials'],
     queryFn: ({ signal }) =>
-      api.get('/api/v1/platform/wallet-credentials', WalletCredentialListSchema, { signal }),
+      api.get('/api/v1/platform/wallet-credentials', PlatformWalletCredentialListSchema, {
+        signal,
+      }),
   });
 }
 

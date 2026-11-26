@@ -1,7 +1,10 @@
 import { WalletCards } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
+import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import type {
   TemplateCandidate,
+  TemplateCandidateCurrent,
   TemplateRelease,
   TemplateReleaseProvider,
 } from '@/shared/contracts/template-releases.ts';
@@ -17,6 +20,9 @@ import {
 import { useReleaseLists, useWalletEnrolments } from './api.ts';
 import { PROVIDER } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
+import { fidelityWords, walletReview } from './wallet-review.ts';
+
+const WalletReviewDialog = lazy(() => import('./wallet-review-dialog.tsx'));
 
 const WALLETS: readonly TemplateReleaseProvider[] = ['apple', 'google', 'samsung'];
 
@@ -28,8 +34,8 @@ function fidelityOf(candidate: TemplateCandidate | undefined): string {
 }
 
 interface RowState {
-  status: 'active' | 'on' | 'off' | 'not_configured';
-  pill: 'success' | 'neutral' | 'warning';
+  status: 'active' | 'on' | 'off' | 'not_configured' | 'blocked';
+  pill: 'success' | 'neutral' | 'warning' | 'danger';
   label: string;
   meta: string;
 }
@@ -47,6 +53,20 @@ function releasedState(
       meta: '',
     };
   const source = candidates.find((c) => c.id === active.candidateId);
+  if (active.googleReview === 'rejected')
+    return {
+      status: 'off',
+      pill: 'warning',
+      label: 'Rejected by Google',
+      meta: versionLabel(versions, active.version),
+    };
+  if (active.googleReview === 'waiting')
+    return {
+      status: 'on',
+      pill: 'neutral',
+      label: 'Waiting for Google review',
+      meta: versionLabel(versions, active.version),
+    };
   return {
     status: 'active',
     pill: 'success',
@@ -55,13 +75,56 @@ function releasedState(
   };
 }
 
+/**
+ * Google or Samsung from the report the server compiles now and the release it serves: Blocked
+ * and Review needed (Q21) outrank a plain release; a class under Google's review comes next.
+ */
+function nativeState(
+  current: TemplateCandidateCurrent | undefined,
+  active: TemplateRelease | null,
+  candidates: readonly TemplateCandidate[],
+  versions: readonly ReleaseVersion[],
+): RowState {
+  if (!current) return releasedState(active, candidates, versions);
+  const review = walletReview(current, active, candidates);
+  const meta = versionLabel(versions, current.version);
+  if (review.kind === 'off') return { status: 'off', pill: 'neutral', label: 'Off', meta: '' };
+  if (review.kind === 'blocked')
+    return { status: 'blocked', pill: 'danger', label: 'Blocked', meta: review.reason };
+  if (active?.googleReview === 'rejected') return releasedState(active, candidates, versions);
+  if (review.kind === 'review')
+    return {
+      status: 'blocked',
+      pill: 'warning',
+      label: 'Review needed: new omission',
+      meta: review.pending.map((item) => item.message).join(' · '),
+    };
+  if (review.kind === 'released' && active?.googleReview === 'waiting')
+    return releasedState(active, candidates, versions);
+  if (review.kind === 'released')
+    return {
+      status: 'active',
+      pill: 'success',
+      label: 'Released',
+      meta: `${meta} · ${fidelityWords(review.items.length)}`,
+    };
+  return review.kind === 'omissions'
+    ? {
+        status: 'on',
+        pill: 'warning',
+        label: fidelityWords(review.items.length),
+        meta,
+      }
+    : { status: 'on', pill: 'success', label: 'Ready', meta };
+}
+
 /** Google or Samsung when the platform and the organization have turned it on. */
 function OnRow(props: RowProps & { orgId: string }) {
   const { templateId, orgId, mode, provider, versions } = props;
   const { releases, candidates } = useReleaseLists(templateId, { orgId, mode, provider });
   const state: RowState =
     releases.data && candidates.data
-      ? releasedState(releases.data.active, candidates.data.items, versions)
+      ? nativeState(candidates.data.current, releases.data.active, candidates.data.items, versions)
       : { status: 'on', pill: 'neutral', label: 'On', meta: 'Loading release.' };
   return <WalletRow {...props} state={state} />;
 }
@@ -106,12 +169,25 @@ function WalletRow({ provider, selected, onSelect, state }: RowProps & { state: 
 export function WalletRows({
   orgId,
   apple,
-  ...props
+  capabilities,
+  alone,
+  ...base
 }: Omit<RowProps, 'provider'> & {
   orgId: string;
+  capabilities: readonly OrgCapability[];
+  /** The release state's `alone`: the shared rule for approving your own work. */
+  alone: boolean;
   /** The Apple release and candidates the panel already loaded. */
   apple: { active: TemplateRelease | null; candidates: readonly TemplateCandidate[] };
 }) {
+  const [reviewing, setReviewing] = useState<'google' | 'samsung' | null>(null);
+  const props = {
+    ...base,
+    onSelect: (provider: TemplateReleaseProvider) => {
+      base.onSelect(provider);
+      if (provider !== 'apple') setReviewing(provider);
+    },
+  };
   const enrolments = useWalletEnrolments(orgId, props.mode);
   // Google and Samsung ship dark: a row exists only once the wallet is on for this organization.
   const on = WALLETS.filter(
@@ -137,6 +213,20 @@ export function WalletRows({
           ))}
         </ListRows>
       </CardBody>
+      {reviewing ? (
+        <Suspense fallback={null}>
+          <WalletReviewDialog
+            templateId={props.templateId}
+            orgId={orgId}
+            mode={props.mode}
+            provider={reviewing}
+            versions={props.versions}
+            capabilities={capabilities}
+            alone={alone}
+            onClose={() => setReviewing(null)}
+          />
+        </Suspense>
+      ) : null}
     </Card>
   );
 }

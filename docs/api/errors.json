@@ -6818,15 +6818,6 @@
       ]
     },
     {
-      "code": "WALLET_PREPARING",
-      "statuses": [
-        503
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
       "code": "WALLET_PROJECTION_BLOCKED",
       "statuses": [
         409

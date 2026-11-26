@@ -13,7 +13,6 @@ describe('wallet accounts copy', () => {
           "noIntegrationAccess": "Google and Samsung accounts need integrations access.",
           "noOwn": "Add your own credentials first.",
           "noPlatform": "PassBook has no account for this mode.",
-          "notReleased": "Not open to holders yet.",
           "ownSource": "Own account",
           "platformSource": "PassBook",
           "readOnly": "Read-only. Managing wallet accounts needs integrations:manage.",

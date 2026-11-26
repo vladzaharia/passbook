@@ -1,0 +1,224 @@
+/* The Wallets tab: the rail, the three-column workspace and its entrance (motion.css tokens). */
+.wallets-mode {
+  display: grid;
+  gap: 1.25rem;
+  animation: wl-fade-in 120ms var(--wl-ease-out);
+}
+@keyframes wl-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.wt-rail {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+.wt-tiles {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.wt-tiles > .wt {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  cursor: pointer;
+  background-color: transparent;
+  animation: wt-rise 320ms var(--wl-ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+.wt-tiles > .wl-hatch {
+  border-style: dashed;
+}
+.wt-tiles > [aria-checked="true"] {
+  border-color: var(--pk-accent);
+}
+.wt-tiles > [aria-checked="true"] .wt-card {
+  transform: translateY(-2px);
+}
+.wt-tiles > .wt:focus-visible,
+.wt-apple:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.wt-apple {
+  cursor: pointer;
+  border-style: dashed;
+  background-color: transparent;
+}
+.wt-tiles .wl-indicator,
+.wt-tiles > span[aria-hidden] {
+  border-radius: var(--pk-radius-lg, 0.75rem);
+}
+@keyframes wt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.wt-arrow {
+  position: relative;
+  display: inline-flex;
+  width: 2rem;
+  justify-content: center;
+  color: var(--pk-text-muted);
+}
+.wt-dot-run {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.3rem;
+  height: 0.3rem;
+  margin-top: -0.15rem;
+  border-radius: 50%;
+  background: var(--pk-accent);
+  opacity: 0;
+}
+.wt-arrow[data-play] .wt-dot-run {
+  animation: wt-dot 400ms var(--wl-ease-out);
+}
+@keyframes wt-dot {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+
+.wm-grid {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  grid-template-areas: "inspector side";
+}
+.wm-inspector {
+  grid-area: inspector;
+  min-width: 0;
+}
+.wm-side {
+  grid-area: side;
+  min-width: 0;
+  display: grid;
+  gap: 1.25rem;
+  position: sticky;
+  top: calc(5rem + env(safe-area-inset-top, 0px));
+}
+@media (min-width: 1280px) {
+  .wm-grid {
+    grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr) 18rem;
+    grid-template-areas: "inspector preview report";
+  }
+  .wm-side {
+    display: contents;
+  }
+  .wm-preview,
+  .wm-report {
+    position: sticky;
+    top: calc(5rem + env(safe-area-inset-top, 0px));
+    min-width: 0;
+  }
+  .wm-preview {
+    grid-area: preview;
+  }
+  .wm-report {
+    grid-area: report;
+  }
+}
+.wm-card-frame {
+  position: relative;
+  min-width: 0;
+}
+.wm-fade > * {
+  animation: wl-fade-in 160ms var(--wl-ease-out);
+}
+.wm-deal {
+  animation: wm-deal var(--wl-dur-card) var(--wl-ease-card);
+}
+@keyframes wm-deal {
+  from {
+    opacity: 0;
+    transform: translateY(24px) rotate(-2deg) scale(0.96);
+  }
+}
+@media (max-width: 1023px) {
+  .wt-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wt-arrow,
+  .wt-apple {
+    display: none;
+  }
+}
+@media (max-width: 1023px) {
+  /* The status pill drops under the type line, so a name is never cut by it. */
+  .wt-tiles > .wt {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0.375rem;
+  }
+  .wt-tiles > .wt > .wt-card {
+    grid-row: 1 / 3;
+  }
+  .wt-tiles > .wt > :nth-child(3) {
+    grid-column: 2;
+    justify-self: start;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .wt-tiles .wt-pill {
+    white-space: normal;
+    text-align: left;
+    height: auto;
+    padding-block: 0.125rem;
+  }
+}
+@media (max-width: 767px) {
+  .wm-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "side";
+  }
+  .wm-side {
+    position: static;
+  }
+  .wt-tiles > .wt {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wt-tiles > .wt > .wt-card {
+    grid-row: auto;
+  }
+  .wt-tiles > .wt > :nth-child(3) {
+    grid-column: 1;
+  }
+}
+/* The lock of a required role swaps in with a bounce (300 ms). */
+.wm-lock {
+  animation: wm-lock 300ms var(--wl-ease-bounce);
+}
+@keyframes wm-lock {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wm-lock,
+  .wm-fade > *,
+  .wallets-mode,
+  .wt-tiles > .wt,
+  .wm-deal,
+  .wt-arrow[data-play] .wt-dot-run {
+    animation: none;
+  }
+  .wt-tiles > [aria-checked="true"] .wt-card {
+    transform: none;
+  }
+}

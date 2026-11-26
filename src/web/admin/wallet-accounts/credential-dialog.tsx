@@ -1,6 +1,6 @@
 import type { SaveWalletCredential, WalletProvider } from '@/shared/contracts/wallet-providers.ts';
 import { UserMessageError } from '@/web/lib/errors.ts';
-import { FormDialog, toast } from '@/web/ui/index.ts';
+import { Callout, FormDialog, toast } from '@/web/ui/index.ts';
 import { PROVIDER_NAME, safeError } from './copy.ts';
 import { useCredentialForm, WalletCredentialFields } from './credential-fields.tsx';
 
@@ -16,6 +16,7 @@ export function CredentialDialog({
   open,
   onOpenChange,
   save,
+  notice,
 }: {
   provider: WalletProvider;
   modeLabel: string;
@@ -24,6 +25,8 @@ export function CredentialDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   save: (body: SaveWalletCredential) => Promise<unknown>;
+  /** Why the wallet is dark ("Google isn't released yet."): credentials can still be saved. */
+  notice?: string | null | undefined;
 }) {
   const form = useCredentialForm(provider, revision);
   return (
@@ -37,6 +40,7 @@ export function CredentialDialog({
           : undefined
       }
       size="lg"
+      notice={notice ? <Callout tone="info">{notice}</Callout> : undefined}
       submitLabel={rotating ? 'Rotate' : 'Save'}
       onSubmit={async () => {
         const request = form.read();

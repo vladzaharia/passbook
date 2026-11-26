@@ -199,7 +199,7 @@ describe('ChannelPreviews', () => {
     await user.click(screen.getByRole('radio', { name: 'Google' }));
     const google = await screen.findByTestId('google-preview', undefined, { timeout: 10_000 });
     expect(google).toHaveTextContent('Spring Concert');
-    expect(screen.getByTestId('fidelity-notes')).toBeInTheDocument();
+    expect(screen.getByTestId('google-report')).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: 'Samsung' }));
     // The fixture has no logo, and Samsung needs one for its app link: no card, the reason instead.
     await waitFor(() =>

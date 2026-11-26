@@ -18,12 +18,12 @@ export { SAMSUNG_LIMITS } from './limits.ts';
 export { samsungPortalUrl } from './portal.ts';
 
 /** Joins the release candidate digest. Bump it with any change to compiled output. */
-export const SAMSUNG_COMPILER_REVISION = 2;
+export const SAMSUNG_COMPILER_REVISION = 3;
 
 type Wanted = SamsungType | 'generic' | 'giftcard';
 
 /** The style's type (architecture 3.1), or the author's. */
-function wantedType(view: WalletPassView, configured: Wanted | 'off' | undefined): Wanted {
+export function wantedType(view: WalletPassView, configured: Wanted | 'off' | undefined): Wanted {
   if (configured && configured !== 'off') return configured;
   if (view.style === 'eventTicket') return 'ticket';
   if (view.style === 'coupon') return 'coupon';

@@ -44,6 +44,8 @@ export const WalletProviderInstanceStatusSchema = z.strictObject({
   reported: z
     .strictObject({ event: z.enum(['saved', 'removed']), at: z.number().int() })
     .optional(),
+  /** Google's review of the pass's class: waiting, rejected or approved. Absent before a class exists. */
+  classReview: z.enum(['waiting', 'rejected', 'approved']).optional(),
   issuance: WalletProviderIssuanceSchema,
 });
 export type WalletProviderInstanceStatus = z.infer<typeof WalletProviderInstanceStatusSchema>;

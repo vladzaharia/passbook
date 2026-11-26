@@ -14,6 +14,8 @@ import {
   Celebrate,
   Skeleton,
 } from '../../ui/index.ts';
+import { ImportWallets } from '../../wallet-report/import-wallets.tsx';
+import { useVersionWalletReports } from './api.ts';
 import { TemplateStill } from './gallery.tsx';
 import { PackageChecklist, ValidationReport } from './validation-report.tsx';
 
@@ -38,6 +40,11 @@ export function UploadReport({
   working: boolean;
 }) {
   const error = s?.error ?? null;
+  const wallets = useVersionWalletReports(
+    finished && template ? s?.templateId : null,
+    s?.version,
+    template?.orgId ?? undefined,
+  ).data;
   const report = failed ? (
     <>
       <Callout tone="danger" title="Import failed">
@@ -58,6 +65,15 @@ export function UploadReport({
           <Celebrate when={s.report?.issues.length === 0} />
           <TemplateStill template={template} deal className="mx-auto w-full max-w-56" />
         </div>
+      ) : null}
+      {wallets ? (
+        <section aria-label="Wallet reports">
+          <ImportWallets
+            reports={wallets}
+            templateId={s?.templateId ?? ''}
+            orgId={template?.orgId ?? undefined}
+          />
+        </section>
       ) : null}
       {report ? (
         <section aria-label="Report" className="flex flex-col gap-3">

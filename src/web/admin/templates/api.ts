@@ -13,6 +13,7 @@ import {
   UploadListSchema,
   UploadTemplateResponseSchema,
 } from '@/shared/contracts/templates.ts';
+import { WalletReportsSchema } from '@/shared/contracts/wallet-fidelity.ts';
 import { api } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -126,6 +127,23 @@ export const templateDetailQuery = (id: string, orgId?: string) =>
 
 export function useTemplate(id: string | undefined, orgId?: string) {
   return useQuery({ ...templateDetailQuery(id ?? '', orgId), enabled: Boolean(id) });
+}
+
+/** The per-wallet fidelity reports of a stored version (import report, Wallets tab). */
+export function useVersionWalletReports(
+  id: string | null | undefined,
+  version: string | null | undefined,
+  orgId: string | undefined,
+) {
+  return useQuery({
+    queryKey: [...templateKeys.detail(id ?? '', orgId), 'wallet-reports', version ?? null],
+    queryFn: ({ signal }) =>
+      api.get(`/api/v1/templates/${id}/versions/${version}/wallet-reports`, WalletReportsSchema, {
+        query: { orgId },
+        signal,
+      }),
+    enabled: Boolean(id && version),
+  });
 }
 
 /** An undefined org is for an explicitly global preview, not an unselected tenant. */

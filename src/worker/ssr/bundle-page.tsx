@@ -22,6 +22,7 @@ import { PassStack } from '../../web/portal/pass-stack.tsx';
 import { AppleWalletBadge } from '../../web/ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../../web/ui/art/buddy-art.tsx';
 import { Badge } from '../../web/ui/badge.tsx';
+import { GoogleAllLinks } from './bundle-google-all.tsx';
 import bundleCss from './bundle-page.css?raw';
 import { documentStart, type PageTheme } from './head.ts';
 import { REPLAY_SCRIPT } from './hosted.ts';
@@ -79,6 +80,8 @@ export interface BundlePageProps {
   /** A test bundle carries a ribbon. */
   mode?: Mode;
   addAllHref: string;
+  /** One Google save link per part when two or more members offer Google Wallet. */
+  googleAllHrefs?: readonly string[];
   /** The absolute URL of this page: the add QR encodes it. */
   publicUrl: string;
   device: DeviceInfo;
@@ -238,6 +241,7 @@ function BundleBody(props: BundlePageProps) {
               mixed={voided > 0 && removed > 0}
             />
           ) : null}
+          <GoogleAllLinks hrefs={props.googleAllHrefs ?? []} />
         </div>
         {front ? (
           <div className="bd-stack">

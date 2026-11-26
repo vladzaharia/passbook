@@ -19,7 +19,7 @@ import {
 
 // CW12 (architecture.md section 7, product.md section 5): a Test pass with Samsung open against the mock
 // wallets: the holder adds it, Samsung fetches the card and reports ADDED, and an edit reaches Samsung.
-// Void and unvoid wait for CW11's Samsung lifecycle parity (cw12-plan.md). Needs playwright.wallets.config.ts.
+// Void and unvoid run in lifecycle-parity-samsung.test.ts, not here. Needs playwright.wallets.config.ts.
 test.describe.configure({ mode: 'serial' });
 
 const GALAXY_UA =

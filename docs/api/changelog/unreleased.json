@@ -1569,6 +1569,14 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
+    "key": "GET /api/v1/platform/wallet-credentials 200.release: field added",
+    "class": "additive",
+    "operationId": "",
+    "op": "GET /api/v1/platform/wallet-credentials",
+    "change": "200.release: field added",
+    "note": "Release state per provider and mode (issuance), so platform pages can say a wallet isn't released yet."
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",
@@ -1865,6 +1873,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "GET /api/v1/templates/{id}/candidates 200.current: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdCandidates",
+    "op": "GET /api/v1/templates/{id}/candidates",
+    "change": "200.current: field added",
+    "note": "Google and Samsung candidate lists carry current: the Apple release's version and id, and the wallet's report compiled now."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdChannels",
@@ -1887,6 +1903,22 @@
     "op": "GET /api/v1/templates/{id}/channels",
     "change": "200.overrides: field added",
     "note": "overrides counts the template's passes with their own choice, per channel."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/releases 200.active.googleReview: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdReleases",
+    "op": "GET /api/v1/templates/{id}/releases",
+    "change": "200.active.googleReview: field added",
+    "note": "A Google release carries googleReview: waiting, rejected or approved, the review of the classes it wrote."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/releases 200.items[].googleReview: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdReleases",
+    "op": "GET /api/v1/templates/{id}/releases",
+    "change": "200.items[].googleReview: field added",
+    "note": "A Google release carries googleReview: waiting, rejected or approved, the review of the classes it wrote."
   },
   {
     "key": "GET /api/v1/templates/{id}/releases/impact 200.passes: count meaning changed",
@@ -1919,6 +1951,14 @@
     "op": "GET /api/v1/templates/{id}/versions/{version}",
     "change": "200.report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports new operation",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdVersionsByVersionWalletReports",
+    "op": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports",
+    "change": "new operation",
+    "note": "Per-wallet (Google, Samsung) fidelity reports for a stored template version."
   },
   {
     "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
@@ -2231,6 +2271,14 @@
     "op": "GET /b/{token}/{passId}",
     "change": "new operation",
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
+  },
+  {
+    "key": "GET /b/{token}/wallet/google new operation",
+    "class": "additive",
+    "operationId": "public.getBByTokenWalletGoogle",
+    "op": "GET /b/{token}/wallet/google",
+    "change": "new operation",
+    "note": "Opens one Google save link for every eligible pass of a bundle."
   },
   {
     "key": "Pass input: required issue path",
@@ -4903,6 +4951,22 @@
     "op": "POST /api/v1/templates/{id}/release",
     "change": "new operation",
     "note": "Releases a saved version to Test and Live in one call, with dryRun to preview. Test follows Live; Idempotency-Key is required."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/releases 201.googleReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdReleases",
+    "op": "POST /api/v1/templates/{id}/releases",
+    "change": "201.googleReview: field added",
+    "note": "A Google release carries googleReview: waiting, rejected or approved, the review of the classes it wrote."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/releases/rollback 201.googleReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdReleasesRollback",
+    "op": "POST /api/v1/templates/{id}/releases/rollback",
+    "change": "201.googleReview: field added",
+    "note": "A Google release carries googleReview: waiting, rejected or approved, the review of the classes it wrote."
   },
   {
     "key": "POST /api/v1/templates/{id}/restore 200.openReview: field added",
