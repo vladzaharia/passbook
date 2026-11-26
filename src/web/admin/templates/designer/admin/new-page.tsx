@@ -1,21 +1,21 @@
 import { Navigate, useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
-import { PHONE, useMediaQuery } from '../../../lib/media.ts';
-import { markMinted } from '../../../lib/motion.ts';
-import { useOrgScope } from '../../../lib/org-filter.tsx';
-import { useSession } from '../../../lib/session.ts';
-import { Button, Callout, detailError, PageHeader } from '../../../ui/index.ts';
-import { useUseBlueprint } from '../../blueprints/api.ts';
-import { markCreated } from '../../passes/created.tsx';
-import { useTemplate } from '../api.ts';
-import { useBaseVersion } from './api.ts';
-import type { CreateDesign } from './create-flow.ts';
-import { Designer } from './designer.tsx';
-import { docOf } from './designer-page.tsx';
-import { DesignerSkeleton } from './designer-skeleton.tsx';
-import { draftKey } from './drafts.ts';
-import { assetsPayload } from './images.ts';
-import type { DesignDoc } from './model.ts';
+import { PHONE, useMediaQuery } from '../../../../lib/media.ts';
+import { markMinted } from '../../../../lib/motion.ts';
+import { useOrgScope } from '../../../../lib/org-filter.tsx';
+import { useSession } from '../../../../lib/session.ts';
+import { Button, Callout, detailError, PageHeader } from '../../../../ui/index.ts';
+import { useUseBlueprint } from '../../../blueprints/api.ts';
+import { markCreated } from '../../../passes/created.tsx';
+import { useTemplate } from '../../api.ts';
+import { docOf, useBaseVersion } from '../api.ts';
+import type { CreateDesign } from '../create-flow.ts';
+import { Designer } from '../designer.tsx';
+import { DesignerSkeleton } from '../designer-skeleton.tsx';
+import { draftKey } from '../drafts.ts';
+import { assetsPayload } from '../images.ts';
+import type { DesignDoc } from '../model.ts';
+import { AdminDesignerHost } from './host.tsx';
 
 /** The blueprint's own design, named for the new template and without the blueprint flag. */
 function draftOf(base: DesignDoc, name: string): DesignDoc {
@@ -36,7 +36,11 @@ export function NewTemplatePage({
 }) {
   if (!blueprintId || !name?.trim())
     return <Navigate from="/admin/o/$orgId" to="/admin/o/$orgId/blueprints" replace />;
-  return <NewFromBlueprint blueprintId={blueprintId} name={name.trim()} />;
+  return (
+    <AdminDesignerHost>
+      <NewFromBlueprint blueprintId={blueprintId} name={name.trim()} />
+    </AdminDesignerHost>
+  );
 }
 
 function NewFromBlueprint({ blueprintId, name }: { blueprintId: string; name: string }) {
@@ -132,7 +136,6 @@ function NewFromBlueprint({ blueprintId, name }: { blueprintId: string; name: st
     <Designer
       key={`${blueprintId}:${orgId}`}
       template={{ ...blueprint.data, name, orgId, orgName: membership.orgName, blueprint: false }}
-      selectedOrg={orgId}
       draftKey={draftKey(authed?.user.id ?? 'anonymous', orgId, `new:${blueprintId}`)}
       base={{ version: version.data.version, doc: base }}
       draft={null}

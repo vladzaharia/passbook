@@ -5,7 +5,7 @@ import type { ScanDisplayScope } from '@/passkit/template/scan-display/text.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
 import { MODE_HEADER, type Mode } from '@/shared/contracts/common.ts';
 import { ScanDisplayPreviewSchema } from '@/shared/contracts/scan-display-preview.ts';
-import { api } from '@/web/lib/api.ts';
+import { useToolApi } from '@/web/lib/tool-api.tsx';
 import type { DesignDoc } from '../model.ts';
 import { previewManifest, previewSecrets, safePreviewText } from './scan-preview-policy.ts';
 
@@ -19,6 +19,7 @@ export function useRealPreview(
   passId: string | null,
   request: number,
 ) {
+  const api = useToolApi();
   const key = JSON.stringify([orgId, templateId, mode, role, passId, request]);
   const [result, setResult] = useState<RealScope | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -53,7 +54,7 @@ export function useRealPreview(
         }
       });
     return () => controller.abort();
-  }, [orgId, templateId, mode, role, passId, key]);
+  }, [api, orgId, templateId, mode, role, passId, key]);
   // The key check is synchronous: a render for another role/pass/org/mode can never paint an old response.
   return {
     scope: result?.key === key && passId && orgId ? result.scope : null,

@@ -1,20 +1,16 @@
-import { Link } from '@tanstack/react-router';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import type { AccessGrant, AccessPlan, ValidationIssue } from '@/passkit/types.ts';
 import { ZoneKeySchema } from '@/shared/contracts/scan-access.ts';
 import { Button, Combobox, IconButton, Input, SwitchRow, WeekGrid } from '../../../../ui/index.ts';
-import type { ScanningSearch } from '../../../scanning/search.ts';
 import { useZones } from '../../../scanning/zones-query.ts';
 import { useDesigner } from '../context.tsx';
+import { useDesignerHost } from '../host.tsx';
 import { dayErrors } from './issues.ts';
 
 const ALL = '*';
 const isAll = (g: AccessGrant) => g.zone === ALL;
 const keyOf = (g: AccessGrant): string | null => (typeof g.zone === 'string' ? g.zone : null);
-
-/** Where an unknown zone gets made; the Zones tab lands with the zones console. */
-const ZONES_TAB: ScanningSearch = { tab: 'zones' as ScanningSearch['tab'] };
 
 /**
  * Who a plan lets in where: every zone, or the zones picked, each optionally with hours of its
@@ -28,6 +24,7 @@ export function ZoneGrants({
   issues: readonly ValidationIssue[];
 }) {
   const { edit } = useDesigner();
+  const { Link } = useDesignerHost();
   const zones = useZones();
   const [typed, setTyped] = useState('');
   const list = zones.data?.items ?? [];
@@ -88,7 +85,7 @@ export function ZoneGrants({
                   {key && zones.isSuccess && !known.has(key) ? (
                     <p className="text-xs text-warning">
                       {key} isn&apos;t a zone yet.{' '}
-                      <Link to="/admin/scanning" search={ZONES_TAB} className="underline">
+                      <Link place={{ to: 'zones' }} className="underline">
                         Create zone
                       </Link>
                     </p>

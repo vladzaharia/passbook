@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
@@ -10,6 +9,7 @@ import { Button, Callout } from '../../../../ui/index.ts';
 import { describeItem } from '../../../../wallet-report/describe.ts';
 import { rowId, WalletReport } from '../../../../wallet-report/wallet-report.tsx';
 import { useDesigner } from '../context.tsx';
+import { useDesignerHost } from '../host.tsx';
 import { type Selection, sectionLabel } from '../model.ts';
 import { issueTarget } from '../targets.ts';
 import { blockedFixes, type Fix } from './blocked-fixes.ts';
@@ -77,6 +77,7 @@ export function WalletReportColumn({
   onPass: () => void;
 }) {
   const { focusTarget } = useDesigner();
+  const { Link } = useDesignerHost();
   const { target, out, block, edit, readOnly } = env;
   const fresh = useInsertHighlight(out.report.items.map(rowId));
   const { report, view } = out;
@@ -113,9 +114,7 @@ export function WalletReportColumn({
                 channel: CHANNEL_LABEL[target],
               }).replace(' Change it in Channels and brand.', '')}{' '}
               <Link
-                to="/admin/templates/$templateId"
-                params={{ templateId }}
-                search={{ tab: 'channels' }}
+                place={{ to: 'channels', templateId }}
                 className="font-medium text-accent-fg underline"
               >
                 Channels and brand

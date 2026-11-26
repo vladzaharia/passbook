@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useOrgScope } from '../../../lib/org-filter.tsx';
+import { useDesignerHost } from './host.tsx';
 
 /** An issued pass shows the org's name beside the logo; the draft card does too. */
 function withOrgLogoText(
@@ -17,6 +17,6 @@ function withOrgLogoText(
 export function useOrgBrandedPass(
   passJson: Record<string, unknown> | undefined,
 ): Record<string, unknown> | null {
-  const orgName = useOrgScope().membership?.orgName;
+  const { orgName } = useDesignerHost();
   return useMemo(() => withOrgLogoText(passJson, orgName), [passJson, orgName]);
 }

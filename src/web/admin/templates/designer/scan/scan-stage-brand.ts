@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
 import type { ScanBranding } from '@/shared/contracts/scan-session.ts';
-import { api } from '@/web/lib/api.ts';
+import { useToolApi } from '@/web/lib/tool-api.tsx';
 import { brandingUrl } from '../../../orgs/queries.ts';
 
 export interface OrgLook {
@@ -22,6 +22,7 @@ export const NEUTRAL_LOOK: OrgLook = {
  * loads, or if it cannot be read (`failed`), the preview shows neutral branding.
  */
 export function useOrgLook(orgId: string | null): { look: OrgLook; failed: boolean } {
+  const api = useToolApi();
   const [look, setLook] = useState<OrgLook>(NEUTRAL_LOOK);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -47,6 +48,6 @@ export function useOrgLook(orgId: string | null): { look: OrgLook; failed: boole
         },
       );
     return () => controller.abort();
-  }, [orgId]);
+  }, [api, orgId]);
   return { look, failed };
 }

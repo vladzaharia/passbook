@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { api, buildUrl } from '../../../lib/api.ts';
+import type { ToolApi } from '../../../lib/tool-api.tsx';
 import { toBase64 } from './images.ts';
 import type { DraftAsset } from './model.ts';
 import { ART_SLOTS, type ArtSlot } from './stamps.ts';
@@ -9,6 +9,7 @@ const Active = z.object({ activeVersion: z.string().nullable() });
 
 /** The Stamp card's four art files, as new files for the draft. */
 export async function fetchBlueprintArt(
+  api: ToolApi,
   orgId: string | undefined,
 ): Promise<Partial<Record<ArtSlot, DraftAsset>>> {
   const query = { orgId };
@@ -18,7 +19,8 @@ export async function fetchBlueprintArt(
   await Promise.all(
     ART_SLOTS.map(async ({ slot, file }) => {
       const path = `/api/v1/templates/${STAMP_CARD}/versions/${activeVersion}/assets/${encodeURIComponent(file)}`;
-      const res = await fetch(buildUrl(path, query), { credentials: 'same-origin' });
+      const url = orgId ? `${path}?orgId=${encodeURIComponent(orgId)}` : path;
+      const res = await fetch(url, { credentials: 'same-origin' });
       if (!res.ok) throw new Error('The Stamp card art did not load. Try again.');
       const bytes = new Uint8Array(await res.arrayBuffer());
       out[slot] = {

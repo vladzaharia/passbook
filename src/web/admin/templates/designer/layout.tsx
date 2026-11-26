@@ -1,7 +1,7 @@
-import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import { Button, Callout } from '../../../ui/index.ts';
+import { useDesignerHost } from './host.tsx';
 
 /**
  * Desktop (1280 and up): structure and inspector, the card, the issues. Tablet: the inspector
@@ -9,7 +9,6 @@ import { Button, Callout } from '../../../ui/index.ts';
  */
 export function DesignerLayout({
   templateId,
-  orgId,
   structure,
   preview,
   issues,
@@ -17,7 +16,6 @@ export function DesignerLayout({
   previewOnPhone = true,
 }: {
   templateId: string;
-  orgId?: string | undefined;
   structure: ReactNode;
   preview: ReactNode;
   issues: ReactNode;
@@ -26,6 +24,7 @@ export function DesignerLayout({
   previewOnPhone?: boolean;
 }) {
   const phone = useMediaQuery(PHONE);
+  const { Link } = useDesignerHost();
   if (phone) {
     return (
       <div className="grid gap-4">
@@ -33,9 +32,7 @@ export function DesignerLayout({
           The designer needs a tablet or desktop screen.
         </Callout>
         <Button asChild variant="outline" className="justify-self-center">
-          <Link to="/admin/templates/$templateId" params={{ templateId }} search={{ orgId }}>
-            Back to template
-          </Link>
+          <Link place={{ to: 'template', templateId }}>Back to template</Link>
         </Button>
         {previewOnPhone ? preview : null}
       </div>

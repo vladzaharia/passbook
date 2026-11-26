@@ -1,11 +1,11 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
-import { ACTION_ICON } from '../../../lib/action-icons.ts';
-import { useOrgScope } from '../../../lib/org-filter.tsx';
-import { Button, Callout } from '../../../ui/index.ts';
-import { UseBlueprintDialog } from '../../blueprints/use-dialog.tsx';
-import { DuplicateDialog } from '../template-dialogs.tsx';
-import type { Template } from '../versions.ts';
+import { ACTION_ICON } from '../../../../lib/action-icons.ts';
+import { useOrgScope } from '../../../../lib/org-filter.tsx';
+import { Button, Callout } from '../../../../ui/index.ts';
+import { UseBlueprintDialog } from '../../../blueprints/use-dialog.tsx';
+import { DuplicateDialog } from '../../template-dialogs.tsx';
+import type { Template } from '../../versions.ts';
 
 /** Why a template cannot be designed, and the way out. */
 export function ReadOnlyNotice({

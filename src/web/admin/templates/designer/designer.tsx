@@ -28,6 +28,7 @@ import { DesignerHeader } from './designer-header.tsx';
 import { type DesignerMode, ModeSwitch, useDesignerModes } from './designer-modes.tsx';
 import { clearDraft } from './drafts.ts';
 import { useGoalFlow } from './goal-flow.tsx';
+import { useDesignerHost } from './host.tsx';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
 import { type DesignDoc, findField, previewTargetOf, type Selection } from './model.ts';
@@ -63,7 +64,6 @@ export interface ReadOnlyDesign {
 
 export interface DesignerProps {
   template: Template;
-  selectedOrg: string | undefined;
   /** Where drafts of this template are kept (person, organisation, template). */
   draftKey: string;
   /** The version the draft starts from. */
@@ -84,7 +84,6 @@ export interface DesignerProps {
 
 export function Designer({
   template,
-  selectedOrg,
   draftKey,
   base,
   draft,
@@ -98,6 +97,7 @@ export function Designer({
   const templateId = template.id;
   const name = template.name;
   const phone = useMediaQuery(PHONE);
+  const { orgId: selectedOrg, allows } = useDesignerHost();
   const [version, setVersion] = useState(base.version);
   const [state, dispatch] = useReducer(designerReducer, undefined, () =>
     initialState(draft ?? base.doc, base.doc),
@@ -228,7 +228,6 @@ export function Designer({
         <DesignerHeader
           templateId={templateId}
           name={name}
-          orgId={selectedOrg}
           create={create}
           template={template}
           undoRedo={
@@ -282,7 +281,6 @@ export function Designer({
         ) : (
           <DesignerLayout
             templateId={templateId}
-            orgId={selectedOrg}
             readOnly={Boolean(readOnly)}
             structure={<Outline />}
             preview={
@@ -304,7 +302,7 @@ export function Designer({
             issues={issuesList}
           />
         )}
-        {phone || readOnly ? null : (
+        {phone || readOnly || !allows.save ? null : (
           <SaveBar
             dirty={create ? created.made === null : dirty}
             saving={create ? created.saving : flow.saving}

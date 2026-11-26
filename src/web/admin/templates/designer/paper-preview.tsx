@@ -17,7 +17,7 @@ import { TemplateChannelsResponseSchema } from '@/shared/contracts/channels.ts';
 import { channelReason } from '@/shared/copy/channels.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
 import { FitBox } from '../../../channel-previews/fit-box.tsx';
-import { api } from '../../../lib/api.ts';
+import { useToolApi } from '../../../lib/tool-api.tsx';
 import { PAPER_CSS } from '../../../paper/css.ts';
 import { drawPaperCode, type PaperDrawing } from '../../../paper/drawing.ts';
 import { PaperTicket } from '../../../paper/ticket.tsx';
@@ -61,6 +61,7 @@ const WIDTH: Record<PaperSize, string> = {
 
 /** The template's own paper state in this mode: platform, organization and template levels. */
 function useTemplatePaper(templateId: string | undefined, orgId: string | undefined) {
+  const api = useToolApi();
   return useQuery({
     queryKey: ['admin', 'templates', 'paper', templateId, orgId],
     enabled: Boolean(templateId),

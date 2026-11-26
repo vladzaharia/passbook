@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import type { z } from 'zod';
 import {
   type SaveVersionRequest,
   type SaveVersionResponse,
@@ -7,10 +8,9 @@ import {
   TemplateVersionDetailSchema,
 } from '@/shared/contracts/index.ts';
 import { StampsImpactSchema } from '@/shared/contracts/stamps.ts';
-import { api } from '../../../lib/api.ts';
 import { useDebounced } from '../../../lib/debounce.ts';
-import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { templateKeys } from '../api.ts';
+import { useDesignerHost } from './host.tsx';
 import { assetsPayload } from './images.ts';
 import { type DesignDoc, type DraftAsset, isRecord } from './model.ts';
 import { signature } from './reducer.ts';
@@ -35,7 +35,7 @@ const body = (doc: DesignDoc, extra: VersionOptions, previewCount?: number) => (
 
 /** The version the designer starts from: both documents and the file list. */
 export function useBaseVersion(templateId: string, version: string | null) {
-  const { orgId } = useOrgScope();
+  const { orgId, api } = useDesignerHost();
   return useQuery({
     queryKey: [...templateKeys.detail(templateId, orgId), 'design', version],
     queryFn: ({ signal }) =>
@@ -60,7 +60,7 @@ export function useDesignCheck(
   previewCount?: number,
   asNew?: { orgId: string; name: string },
 ) {
-  const { orgId } = useOrgScope();
+  const { orgId, api } = useDesignerHost();
   const settled = useDebounced(doc, 450);
   const sig = useMemo(() => `${signature(settled)}|${previewCount ?? ''}`, [settled, previewCount]);
   const query = useQuery({
@@ -93,7 +93,7 @@ export function useDesignCheck(
 
 /** What a goal change does to the template's live cards. */
 export function useStampsImpact(templateId: string, goal: number, enabled: boolean) {
-  const { orgId } = useOrgScope();
+  const { orgId, api } = useDesignerHost();
   return useQuery({
     queryKey: ['admin', 'templates', 'stamps-impact', templateId, orgId, goal],
     queryFn: ({ signal }) =>
@@ -109,7 +109,7 @@ export function useStampsImpact(templateId: string, goal: number, enabled: boole
 }
 
 export function useSaveVersion(templateId: string) {
-  const { orgId } = useOrgScope();
+  const { orgId, api } = useDesignerHost();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (doc: DesignDoc) =>
@@ -128,6 +128,15 @@ export function useSaveVersion(templateId: string) {
 }
 
 export type { SaveVersionResponse };
+
+/** A saved version as the designer's documents. */
+export function docOf(v: z.infer<typeof TemplateVersionDetailSchema>): DesignDoc {
+  return {
+    passJson: structuredClone(v.passJson),
+    manifest: structuredClone(v.manifest) as Record<string, unknown>,
+    assets: mergeAssets(v.assets),
+  };
+}
 
 /** The server's file list (with hashes) as the designer's assets; none of them carries bytes. */
 export function mergeAssets(server: SaveVersionResponse['assets']): DraftAsset[] {

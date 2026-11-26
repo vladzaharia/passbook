@@ -5,10 +5,10 @@ import type {
   TemplateVersionDetailSchema,
 } from '@/shared/contracts/templates.ts';
 import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
-import { isApiError } from '../../../lib/errors.ts';
-import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
-import { orgPath } from '../../../lib/scope.ts';
-import { useSession } from '../../../lib/session.ts';
+import { isApiError } from '../../../../lib/errors.ts';
+import { useOrgScope, useResourceOrg } from '../../../../lib/org-filter.tsx';
+import { orgPath } from '../../../../lib/scope.ts';
+import { useSession } from '../../../../lib/session.ts';
 import {
   Button,
   Callout,
@@ -17,35 +17,20 @@ import {
   detailError,
   EmptyState,
   PageHeader,
-} from '../../../ui/index.ts';
-import { useTemplate, useTemplatePreview } from '../api.ts';
-import { useBaseVersion } from './api.ts';
-import type { DesignSearch } from './design-search.ts';
-import { Designer, type ReadOnlyDesign } from './designer.tsx';
-import { DesignerSkeleton } from './designer-skeleton.tsx';
-import { clearDraft, draftKey, loadDraft } from './drafts.ts';
-import type { DesignDoc } from './model.ts';
+} from '../../../../ui/index.ts';
+import { useTemplate, useTemplatePreview } from '../../api.ts';
+import { docOf, useBaseVersion } from '../api.ts';
+import type { DesignSearch } from '../design-search.ts';
+import { Designer, type ReadOnlyDesign } from '../designer.tsx';
+import { DesignerSkeleton } from '../designer-skeleton.tsx';
+import { clearDraft, draftKey, loadDraft } from '../drafts.ts';
+import type { DesignDoc } from '../model.ts';
+import { AdminDesignerHost } from './host.tsx';
 import { ReadOnlyNotice } from './read-only-notice.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
 type Version = z.infer<typeof TemplateVersionDetailSchema>;
 type Crumbs = Crumb[];
-
-export function docOf(v: Version): DesignDoc {
-  return {
-    passJson: structuredClone(v.passJson),
-    manifest: structuredClone(v.manifest) as Record<string, unknown>,
-    assets: v.assets.map((a) => ({
-      name: a.name,
-      slot: a.slot,
-      scale: a.scale,
-      size: a.size,
-      width: a.width,
-      height: a.height,
-      sha1: a.sha1,
-    })),
-  };
-}
 
 export interface DesignerView {
   view?: DesignSearch | undefined;
@@ -59,12 +44,14 @@ export function TemplateDesignerPage({
 }: { templateId: string } & DesignerView) {
   const { hasExplicitOrg } = useOrgScope();
   return (
-    <TemplateDesignerResource
-      key={JSON.stringify([templateId, hasExplicitOrg])}
-      templateId={templateId}
-      view={view}
-      onView={onView}
-    />
+    <AdminDesignerHost>
+      <TemplateDesignerResource
+        key={JSON.stringify([templateId, hasExplicitOrg])}
+        templateId={templateId}
+        view={view}
+        onView={onView}
+      />
+    </AdminDesignerHost>
   );
 }
 
@@ -294,7 +281,6 @@ function Ready({
     <Designer
       key={`${t.id}:${answer === 'restore' ? 'restore' : 'open'}`}
       template={t}
-      selectedOrg={scope.orgId}
       draftKey={key}
       base={{ version: version.version, doc: base }}
       draft={fresh ?? (older && answer === 'restore' ? older.doc : null)}

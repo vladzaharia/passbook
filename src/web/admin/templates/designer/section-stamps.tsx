@@ -1,5 +1,6 @@
 import { Minus, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useToolApi } from '../../../lib/tool-api.tsx';
 import { Badge, Button, Callout, IconButton, SwitchRow, toast } from '../../../ui/index.ts';
 import { ImageSlotRow } from '../../passes/detail/image-slot-row.tsx';
 import '../../passes/passes.css';
@@ -103,13 +104,14 @@ function GoalStepper({ goal }: { goal: number }) {
 
 export function StampsSection() {
   const { doc, edit, stamps, readOnly, orgId } = useDesigner();
+  const api = useToolApi();
   const view = readStamps(doc);
   const [busy, setBusy] = useState(false);
 
   async function loadArt(add: boolean) {
     setBusy(true);
     try {
-      const art = await fetchBlueprintArt(orgId);
+      const art = await fetchBlueprintArt(api, orgId);
       if (add) edit({ op: 'stamps-add', art });
       else
         for (const { slot } of ART_SLOTS)
