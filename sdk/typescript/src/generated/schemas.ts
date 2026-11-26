@@ -12053,6 +12053,7 @@ export type TemplatesCandidatesListResponse = {
       }>;
     };
   };
+  wallet?: "on" | "off" | "not_released";
 };
 
 export type TemplatesCandidatesPromoteParams = {

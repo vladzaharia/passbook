@@ -101,6 +101,8 @@ export type TemplateCandidateCurrent = z.infer<typeof TemplateCandidateCurrentSc
 export const TemplateCandidateListSchema = pageOf(TemplateCandidateSchema).extend({
   /** Google and Samsung lists only; absent when there is no Apple release or the report did not compile. */
   current: TemplateCandidateCurrentSchema.optional(),
+  /** Google and Samsung lists, for a caller who can review the template: the wallet's state for this organization and mode. */
+  wallet: z.enum(['on', 'off', 'not_released']).optional(),
 });
 export type TemplateCandidateList = z.infer<typeof TemplateCandidateListSchema>;
 export const TemplateReleaseListSchema = z.object({

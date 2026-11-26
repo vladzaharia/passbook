@@ -17,7 +17,7 @@ import {
   ListRows,
   StatusPill,
 } from '../../../ui/index.ts';
-import { useReleaseLists, useWalletEnrolments } from './api.ts';
+import { useReleaseLists } from './api.ts';
 import { PROVIDER } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
 import { fidelityWords, newestRelease, walletReview } from './wallet-review.ts';
@@ -198,14 +198,15 @@ export function WalletRows({
       if (provider !== 'apple') setReviewing(provider);
     },
   };
-  const enrolments = useWalletEnrolments(orgId, props.mode);
+  // The template's own lists say whether a wallet is open for this organization, to anyone who can review.
+  const scopes = { orgId, mode: props.mode };
+  const google = useReleaseLists(props.templateId, { ...scopes, provider: 'google' });
+  const samsung = useReleaseLists(props.templateId, { ...scopes, provider: 'samsung' });
   // Google and Samsung ship dark: a row exists only once the wallet is on for this organization.
   const on = WALLETS.filter(
     (provider) =>
-      provider !== 'apple' &&
-      enrolments.data?.items.some(
-        (e) => e.provider === provider && e.state === 'on' && e.issuance.state === 'enabled',
-      ),
+      (provider === 'google' ? google : provider === 'samsung' ? samsung : null)?.candidates.data
+        ?.wallet === 'on',
   );
   if (on.length === 0) return null;
   return (

@@ -7502,6 +7502,9 @@
   ],
   "templates get /{id}/candidates": [
     "FORBIDDEN",
+    "KEY_CREATOR_GONE",
+    "KEY_CREATOR_NOT_MEMBER",
+    "KEY_TEST_ONLY",
     "MISSING_SCOPE",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL",

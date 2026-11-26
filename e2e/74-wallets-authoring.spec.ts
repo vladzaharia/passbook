@@ -255,6 +255,7 @@ test('the two Samsung omissions are approved item by item and Samsung is release
   await expect(release).toBeDisabled();
   await dialog.getByRole('checkbox', { name: /Samsung sharing is not restricted/ }).check();
   await expect(release).toBeDisabled();
+  // Production has it too: Samsung's background needs 888 x 555 and the strip is 1125 x 432, so Samsung cannot use it.
   await dialog.getByRole('checkbox', { name: /The image has no public address/ }).check();
   await expect(release).toBeEnabled();
   await shots(page, 'authoring-review-dialog');
@@ -508,11 +509,9 @@ test('in a two-person organization the author cannot approve their own candidate
   browser,
 }) => {
   const team = await enrolledOrg(admin, 'pair', [googleCredential()]);
-  // The wallet rows read the org's enrolments (integrations:read), which the reviewer roles do not carry.
   const reviewer = await templateReviewer(admin, team.id, [
     'template_reviewer',
     'template_publisher',
-    'read_only',
   ]);
   await reviewer.dispose();
   const made = await admin.send<{ id: string; versions: { version: string }[] }>(

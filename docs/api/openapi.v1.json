@@ -34463,6 +34463,14 @@
               "sourceReleaseId",
               "report"
             ]
+          },
+          "wallet": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "not_released"
+            ]
           }
         },
         "required": [

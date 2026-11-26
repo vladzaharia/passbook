@@ -5,10 +5,12 @@ import {
   approveOf,
   candidateOf,
   installV2Env,
+  member,
   pinsOf,
   request,
   setup,
 } from './projection-v2-test-fixtures.ts';
+import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 
 installV2Env();
 
@@ -47,5 +49,24 @@ describe('the candidate list says how an approval was recorded', () => {
     await approveOf(kit, candidate);
     const list = await listProjectionCandidates(kit.ctx, kit.author, kit.templateId, kit.scope);
     expect(list.items[0]?.approvals.map((a) => a.kind)).toEqual(['peer']);
+  });
+});
+
+describe('the candidate list says whether the wallet is open, to anyone who can review', () => {
+  it('tells a reviewer with only the reviewer and publisher roles, and no one who cannot review (an unenrolled legacy account reads off)', async () => {
+    const kit = await setup();
+    const reviewer = await member(kit.orgId, ['template_reviewer', 'template_publisher']);
+    const reader = await member(kit.orgId, ['read_only']);
+    const asReviewer = await listProjectionCandidates(kit.ctx, reviewer, kit.templateId, kit.scope);
+    const asReader = await listProjectionCandidates(kit.ctx, reader, kit.templateId, kit.scope);
+    expect(asReviewer.wallet).toBe('not_released');
+    const restore = setWalletProvidersEnabledForTest(true);
+    try {
+      const open = await listProjectionCandidates(kit.ctx, reviewer, kit.templateId, kit.scope);
+      expect(open.wallet).toBe('off');
+    } finally {
+      restore();
+    }
+    expect(asReader.wallet).toBeUndefined();
   });
 });

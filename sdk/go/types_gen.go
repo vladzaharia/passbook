@@ -13175,6 +13175,7 @@ type TemplatesCandidatesListResponse struct {
 	Items      []TemplatesCandidatesListResponseItemsItem `json:"items"`
 	NextCursor *string                                    `json:"nextCursor"`
 	Current    *TemplatesCandidatesListResponseCurrent    `json:"current,omitempty"`
+	Wallet     *string                                    `json:"wallet,omitempty"`
 }
 
 type TemplatesCandidatesListResponseCurrent struct {

@@ -47,19 +47,6 @@ const READY = report({ kind: 'ready' });
 const TWO = report({ kind: 'omissions', count: 2 }, ITEMS);
 const ONE_OLD = report({ kind: 'omissions', count: 1 }, ITEMS.slice(0, 1));
 
-const enrolment = {
-  mode: 'live',
-  provider: 'google',
-  accountId: null,
-  source: null,
-  platformAvailable: true,
-  state: 'on',
-  enrolmentRevision: 0,
-  prerequisites: { check: false, roundTrip: null },
-  hold: null,
-  issuance: { state: 'enabled' },
-};
-
 /** The release server, with Google's candidate list carrying the report the server compiled. */
 function serve(options: {
   current: FidelityReportDto | null;
@@ -73,8 +60,6 @@ function serve(options: {
   const inner = globalThis.fetch;
   vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input), 'http://localhost');
-    if (url.pathname === '/api/v1/orgs/org-1/wallet-enrolments')
-      return Promise.resolve(json({ items: [enrolment], nextCursor: null }));
     if (
       url.pathname === `/api/v1/templates/${TEMPLATE}/candidates` &&
       url.searchParams.get('provider') === 'google' &&
@@ -84,6 +69,7 @@ function serve(options: {
         json({
           items: server.candidates,
           nextCursor: null,
+          wallet: 'on',
           ...(options.current
             ? {
                 current: {

@@ -11,9 +11,10 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { FeatureNotIncludedError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { authorizeTemplateWrite } from '../templates/access.ts';
+import { authorizeTemplateWrite, holdsTemplateCapability } from '../templates/access.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
 import { approvalKind, soleAuditDetail } from '../templates/sole-reviewer.ts';
+import { walletAvailability } from './enrolment-read.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import { currentReview } from './projection-review-current.ts';
 import {
@@ -65,7 +66,15 @@ export async function listProjectionCandidates(
   const items = candidates.map((candidate) =>
     candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? [], viewer),
   );
-  return { items, nextCursor: null, ...(current ? { current } : {}) };
+  const wallet = (await holdsTemplateCapability(ctx, auth, scope.orgId, 'templates:review'))
+    ? await walletAvailability(ctx, scope.orgId, scope.mode, native.provider)
+    : undefined;
+  return {
+    items,
+    nextCursor: null,
+    ...(current ? { current } : {}),
+    ...(wallet ? { wallet } : {}),
+  };
 }
 
 export async function createProjectionCandidate(

@@ -12907,6 +12907,7 @@ class TemplatesCandidatesListResponse(_Model):
     items: _List[TemplatesCandidatesListResponseItemsItem]
     nextCursor: str | None
     current: TemplatesCandidatesListResponseCurrent | None = None
+    wallet: _Literal["on", "off", "not_released"] | str | None = None
 
 class TemplatesCandidatesListResponseCurrent(_Model):
     version: str
