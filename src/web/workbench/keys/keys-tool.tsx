@@ -1,10 +1,11 @@
 import { useLocation, useRouter } from '@tanstack/react-router';
 import { lazy, type ReactNode, Suspense, useCallback, useMemo, useState } from 'react';
 import { WORKBENCH_KEY_MAX_MS, WORKBENCH_KEY_SCOPES } from '@/shared/contracts/workbench.ts';
+import { WB_KEYS_COPY } from '@/shared/copy/workbench-keys.ts';
 import { wbPath } from '@/shared/workbench.ts';
-import { ApiKeysView } from '../../admin/api-keys/api-keys-page.tsx';
 import { type KeysHost, KeysHostProvider } from '../../admin/api-keys/keys-host.tsx';
-import { useSession } from '../../lib/session.ts';
+import { useMemberships, useSession } from '../../lib/session.ts';
+import { NoAccessState } from '../../ui/no-access-state.tsx';
 import { RowLink } from '../../ui/row-link.tsx';
 import { SkeletonRows } from '../../ui/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
@@ -14,7 +15,13 @@ import { RecentCalls } from './recent-calls.tsx';
 
 const DAY = 86_400_000;
 
-/** A key's page loads when one is opened. */
+/**
+ * The list and a key's page are admin's components on the kit's table and Radix menus: they load
+ * after the tool's first paint, so the route's own weight stays its shell.
+ */
+const ApiKeysView = lazy(() =>
+  import('../../admin/api-keys/api-keys-page.tsx').then((m) => ({ default: m.ApiKeysView })),
+);
 const KeyDetailView = lazy(() =>
   import('../../admin/api-keys/key-detail-page.tsx').then((m) => ({ default: m.KeyDetailView })),
 );
@@ -26,16 +33,35 @@ const KeyDetailView = lazy(() =>
  */
 export function KeysTool() {
   const host = useToolHost();
+  // A sandbox token holds no key scopes: the server refuses its list, create and rotate (key-access.test.ts).
+  if (host.context.kind === 'sandbox')
+    return (
+      <ToolPage tool="keys">
+        <NoAccessState title={WB_KEYS_COPY.sandbox} />
+      </ToolPage>
+    );
+  return <OrgKeys />;
+}
+
+function OrgKeys() {
+  const host = useToolHost();
+  const grants = useMemberships();
   const session = useSession();
   const router = useRouter();
   const hash = useLocation({ select: (l) => l.hash });
   const search = useLocation({ select: (l) => l.searchStr });
   const [asked, setAsked] = useState(false);
-  const { orgId, name, kind } = host.context;
+  const { orgId, name } = host.context;
   const principal = session.authed?.user.id ?? '';
   const listPath = wbPath(orgId, 'keys');
   const keyId = hash ? decodeURIComponent(hash) : undefined;
 
+  const caps = useMemo(
+    () =>
+      grants.data?.items.find((m) => m.userId === principal && m.orgId === orgId)?.capabilities ??
+      [],
+    [grants.data, principal, orgId],
+  );
   const bound = useMemo<KeysHost>(
     () => ({
       listPath,
@@ -52,14 +78,14 @@ export function KeysTool() {
         principal,
         orgId,
         orgName: name,
-        // A sandbox's key holds no key-minting scope, so its keys are read here.
-        canManage: kind === 'org',
-        capabilities: null,
+        // The member's own capabilities: the server answers a token the same way (key-access.test.ts).
+        canManage: caps.includes('integrations:manage'),
+        capabilities: caps,
         developerOrg: true,
-        canAudit: false,
+        canAudit: caps.includes('audit:read'),
       },
     }),
-    [listPath, orgId, name, kind, principal],
+    [listPath, orgId, name, caps, principal],
   );
 
   const createRequested = asked || new URLSearchParams(search).has('new');
@@ -72,6 +98,12 @@ export function KeysTool() {
     router.history.replace(`${listPath}${rest ? `?${rest}` : ''}${hash ? `#${hash}` : ''}`);
   }, [search, router, listPath, hash]);
 
+  if (grants.isPending)
+    return (
+      <ToolPage tool="keys">
+        <SkeletonRows label="Loading access" />
+      </ToolPage>
+    );
   return (
     <ToolPage tool="keys">
       <KeysHostProvider value={bound}>
@@ -81,11 +113,13 @@ export function KeysTool() {
               <KeyDetailView access={bound.access} keyId={keyId} />
             </Suspense>
           ) : (
-            <ApiKeysView
-              access={bound.access}
-              createRequested={createRequested}
-              onCreateRequestHandled={handled}
-            />
+            <Suspense fallback={<SkeletonRows label="Loading API keys" />}>
+              <ApiKeysView
+                access={bound.access}
+                createRequested={createRequested}
+                onCreateRequestHandled={handled}
+              />
+            </Suspense>
           )}
         </div>
       </KeysHostProvider>

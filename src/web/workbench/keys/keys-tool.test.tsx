@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WORKBENCH_KEY_MAX_MS, WORKBENCH_KEY_SCOPES } from '@/shared/contracts/workbench.ts';
 import { createKey, toReview } from '../../admin/api-keys/wizard-test-utils.ts';
-import { json, renderApp } from '../../lib/test-utils.tsx';
+import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import { forgetTokens } from '../host/token.ts';
 import { handlers } from '../shell/test-fixtures.ts';
 
@@ -74,7 +74,11 @@ const keysApi = () => ({
 describe('Keys in the Workbench', () => {
   it('lists the org Test keys on the token, with no admin link and no mode header', async () => {
     seen.length = 0;
-    await renderApp('/workbench/o/nw/keys', { session: 'developer', handlers: keysApi() });
+    await renderApp('/workbench/o/nw/keys', {
+      session: 'developer',
+      memberships: [membershipFixture('nw')],
+      handlers: keysApi(),
+    });
     expect(await screen.findByText('CI key')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Keys', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New API key' })).toBeInTheDocument();
@@ -93,6 +97,7 @@ describe('Keys in the Workbench', () => {
     let headers = new Headers();
     await renderApp('/workbench/o/nw/keys', {
       session: 'developer',
+      memberships: [membershipFixture('nw')],
       handlers: {
         ...keysApi(),
         '/api/v1/api-keys': (_url: URL, init?: RequestInit) => {
@@ -137,6 +142,7 @@ describe('Keys in the Workbench', () => {
   it('opens a key at its hash with its recent calls', async () => {
     await renderApp('/workbench/o/nw/keys#k1', {
       session: 'developer',
+      memberships: [membershipFixture('nw')],
       handlers: {
         ...keysApi(),
         '/api/v1/api-keys/k1': () =>
@@ -147,5 +153,21 @@ describe('Keys in the Workbench', () => {
     expect(screen.getAllByRole('link', { name: 'Keys' }).length).toBeGreaterThan(1);
     const calls = await screen.findByRole('link', { name: /\/api\/v1\/passes/ });
     expect(calls).toHaveAttribute('href', '/workbench/o/nw/logs#l1');
+  });
+
+  it('offers no New key to a member without integrations:manage', async () => {
+    await renderApp('/workbench/o/nw/keys', {
+      session: 'developer',
+      memberships: [membershipFixture('nw', { capabilities: ['integrations:read'] })],
+      handlers: keysApi(),
+    });
+    expect(await screen.findByText('CI key')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
+  });
+
+  it('a sandbox has no keys here: the server refuses its token', async () => {
+    await renderApp('/workbench/o/sbx/keys', { session: 'developer', handlers: keysApi() });
+    expect(await screen.findByText('Keys are not available in a sandbox')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
   });
 });
