@@ -39,7 +39,9 @@ describe('the committed TypeScript SDK', () => {
       .filter((o) => o.idempotent)
       .map((o) => `${o.resource.join('.')}.${o.method}`);
     expect(ids).toContain('passes.create');
-    expect(ids.length).toBeLessThan(12);
+    expect(ids).toContain('operations.retry');
+    // A bound, not a count: only operations that declare the header get one (operations retry joined the 11).
+    expect(ids.length).toBeLessThan(16);
   });
 
   it('returns the Response of a download, and nothing for a call with no body', () => {
