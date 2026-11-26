@@ -25,9 +25,13 @@ export interface OperationRunner {
   /**
    * Relaunches after the row went back to `queued` with the next attempt: a new Workflow instance
    * `<opId>-r<attempt>` (refuse while the old instance is not errored, terminated or complete) or an
-   * `operation.run` job, which is the default.
+   * `operation.run` job, which is the default. A Workflow kind MUST return the new `workflowInstanceId`: the stall
+   * sweep checks that instance, not the failed one.
    */
-  relaunch?: (ctx: ServiceContext, op: OperationDto) => Promise<void>;
+  relaunch?: (
+    ctx: ServiceContext,
+    op: OperationDto,
+  ) => Promise<{ workflowInstanceId?: string } | undefined>;
   /** Tells the work to stop (a stop flag on its own run row). The operation row is already marked. */
   cancel?: (ctx: ServiceContext, op: OperationDto) => Promise<void>;
   /** The kind runs as a Workflow: how to find its instance. */

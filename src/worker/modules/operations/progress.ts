@@ -303,6 +303,7 @@ class Reporter implements Progress {
       error,
       result,
       expiresAt: keep,
+      lease: this.lease ?? '',
     });
     this.dead = true;
   }

@@ -12,7 +12,7 @@ import { sendOperationRun } from './jobs.ts';
 import { progressOf } from './progress.ts';
 import { kindOf, runnerOf } from './registry.ts';
 import { activeByDedupe, type OperationRow, rowById } from './repo.ts';
-import { finish, markCancel, resetForRetry } from './repo-write.ts';
+import { finish, markCancel, resetForRetry, setWorkflowInstance } from './repo-write.ts';
 import { readable } from './service.ts';
 import { KEEP_MS } from './start.ts';
 
@@ -21,6 +21,12 @@ function auditActor(auth: AuthContext) {
   if (auth.kind === 'api_key') return { actorType: 'api_key', actorId: auth.keyId } as const;
   return { actorType: 'system', actorId: null } as const;
 }
+
+/** The active row was started by this caller. */
+const same = (row: OperationRow, auth: AuthContext) => {
+  const a = auditActor(auth);
+  return row.actor_type === a.actorType && row.actor_id === a.actorId;
+};
 
 const notCancelable = () =>
   new AppError('OPERATION_NOT_CANCELABLE', 409, 'This cannot be stopped. Wait for it to finish.');
@@ -142,7 +148,7 @@ export async function retryOperation(
       'OPERATION_RUNNING',
       409,
       'This is already running.',
-      active && active.actor_id === row.actor_id ? { operationId: active.id } : {},
+      active && same(active, auth) ? { operationId: active.id } : {},
     );
   }
   if (!reset) {
@@ -154,8 +160,10 @@ export async function retryOperation(
   const next = row.attempt + 1;
   const fresh = toDto((await rowById(ctx.env.DB, id)) as OperationRow);
   try {
-    if (runner.relaunch) await runner.relaunch(ctx, fresh);
-    else await sendOperationRun(ctx, id, next);
+    const launched = runner.relaunch ? await runner.relaunch(ctx, fresh) : undefined;
+    if (!runner.relaunch) await sendOperationRun(ctx, id, next);
+    if (launched?.workflowInstanceId)
+      await setWorkflowInstance(ctx.env.DB, id, next, launched.workflowInstanceId);
   } catch (error) {
     await progressOf(ctx, id, next).fail(error);
     throw error;

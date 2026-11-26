@@ -88,8 +88,10 @@ export interface Finish {
   error: { code: string; step: string | null; retryable: boolean } | null;
   result: OperationResult | null;
   expiresAt: number | null;
-  /** The stop of an operation that has not started: refuses a row the runner already claimed. */
+  /** The stop of an operation that has not started: refuses a row a runner already claimed (status or live lease). */
   onlyQueued?: true;
+  /** A runner's lease token: a claimed lease refuses any other end write. Omit for the sweep and a stop. */
+  lease?: string;
 }
 
 /** The terminal write. A statement, so a domain batch can commit its own end state with it. */
@@ -99,7 +101,9 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
     `UPDATE operations SET status = ?, steps = ?, step_key = ?, error_code = ?, error_step = ?,
        error_retryable = ?, result = ?, revision = revision + 1, started_at = COALESCE(started_at, ?),
        updated_at = ?, finished_at = ?, expires_at = ${f.expiresAt === null ? 'expires_at' : '?'}, lease_until = NULL
-     WHERE id = ? AND attempt = ? AND ${f.onlyQueued ? "status = 'queued'" : ACTIVE}`,
+     WHERE id = ? AND attempt = ? AND ${
+       f.onlyQueued ? "status = 'queued' AND (lease_until IS NULL OR lease_until <= ?)" : ACTIVE
+     }${f.lease === undefined ? '' : ' AND (lease_owner IS NULL OR lease_owner = ?)'}`,
     [
       f.status,
       f.steps,
@@ -114,6 +118,8 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
       ...(f.expiresAt === null ? [] : [f.expiresAt]),
       f.id,
       f.attempt,
+      ...(f.onlyQueued ? [f.now] : []),
+      ...(f.lease === undefined ? [] : [f.lease]),
     ],
   );
 }
@@ -155,6 +161,7 @@ export async function resetForRetry(
     db,
     `UPDATE operations SET status = 'queued', attempt = attempt + 1, steps = ?, step_key = ?,
        error_code = NULL, error_step = NULL, error_retryable = NULL, result = NULL, finished_at = NULL,
+       workflow_instance_id = NULL,
        expires_at = ?, cancel_requested = 0, lease_until = NULL, lease_owner = NULL, resends = 0,
        heartbeat_at = ?, retry_key = ?,
        revision = revision + 1, updated_at = ?
@@ -162,4 +169,18 @@ export async function resetForRetry(
     [r.steps, r.stepKey, r.expiresAt, r.now, r.retryKey, r.now, r.id, r.attempt],
   );
   return changes === 1;
+}
+
+/** Records the Workflow instance a retry started, for the stall sweep. Guarded by the attempt it belongs to. */
+export async function setWorkflowInstance(
+  db: D1Database,
+  id: string,
+  attempt: number,
+  instanceId: string,
+): Promise<void> {
+  await run(db, 'UPDATE operations SET workflow_instance_id = ? WHERE id = ? AND attempt = ?', [
+    instanceId,
+    id,
+    attempt,
+  ]);
 }

@@ -60,6 +60,7 @@ describe('startOperation', () => {
   it('keeps a starter operation 7 days from the start', async () => {
     const op = await startOperation(kit.ctx, {
       kind: STARTER_KIND.kind,
+      session: 'sess',
       actor: { type: 'user', id: 'u1' },
     });
     const row = await rowById(kit.env.DB, op.id);

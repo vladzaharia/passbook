@@ -203,7 +203,7 @@ describe('operation.run', () => {
     expect(mocks.run).toHaveBeenCalledOnce();
     await handleOperationRun({ ...job, attempt: 2 }, kit.ctx);
     kit.clock.advance(120_000);
-    await progressOf(kit.ctx, op.id, 1).succeed();
+    await run(kit.env.DB, "UPDATE operations SET status = 'succeeded' WHERE id = ?", [op.id]);
     await handleOperationRun(job, kit.ctx);
     expect(mocks.run).toHaveBeenCalledOnce();
   });

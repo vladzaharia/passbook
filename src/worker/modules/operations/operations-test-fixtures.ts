@@ -64,6 +64,7 @@ export const PLATFORM_KIND = defineOperationKind({
   read: null,
   write: null,
   cancel: 'between-steps',
+  dedupe: (s) => `plat:${s.s}`,
 });
 export const STEP_UP_KIND = defineOperationKind({
   ...common,
