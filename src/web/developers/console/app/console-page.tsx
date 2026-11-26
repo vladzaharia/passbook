@@ -84,6 +84,17 @@ export function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string 
     if (start) select(start.id, { open: false });
   }, [index, current, select]);
 
+  // The sheet opens on the operation in use, not at the top of 269.
+  useEffect(() => {
+    if (!indexOpen) return;
+    const frame = requestAnimationFrame(() =>
+      document
+        .querySelector('dialog.bench-sheet [aria-selected="true"]')
+        ?.scrollIntoView({ block: 'center' }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [indexOpen]);
+
   const pick = useMemo(
     () => ({
       ...selection,
@@ -105,7 +116,7 @@ export function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string 
   const stage = (
     <div className="console-stage">
       <div className="console-op">
-        <h2 className="h2 console-op-t">
+        <h2 className="h2 console-op-t" title={wide ? current?.title : undefined}>
           {wide ? (
             current?.title
           ) : (

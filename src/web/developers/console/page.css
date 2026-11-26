@@ -15,6 +15,9 @@
 .console-op-t {
   margin: 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .console-path {
   display: inline-flex;
@@ -86,6 +89,13 @@
 .console-idx .bench-row-title {
   font-family: var(--pk-font-sans);
   font-size: 13.5px;
+}
+/* An index has no status: only the selected row carries a tick, in the accent. */
+.console-idx .bench-row:not([aria-selected="true"])::before {
+  display: none;
+}
+.console-idx .bench-row[aria-selected="true"] {
+  --tick: var(--pk-accent);
 }
 .console-idx .bench-row-lead {
   min-inline-size: 3.4rem;

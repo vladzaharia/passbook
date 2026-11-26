@@ -134,7 +134,9 @@ export function ResponseView({
         />
       </div>
       {o.truncated ? <p className="xs muted cr-note">{C.truncated}</p> : null}
-      <Trace nodes={nodes} />
+      <div className="cr-trace">
+        <Trace nodes={nodes} />
+      </div>
     </div>
   );
 }
