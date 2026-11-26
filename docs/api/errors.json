@@ -2225,6 +2225,15 @@
       ]
     },
     {
+      "code": "IDP_SCIM_MISSING",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_SIGN_IN_REQUIRED",
       "statuses": [
         403

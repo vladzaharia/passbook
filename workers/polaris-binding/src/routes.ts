@@ -1,8 +1,14 @@
-import { assertClientId, assertId, assertSubject } from './policy.ts';
+import { assertClientId, assertId, assertSubject, refuse } from './policy.ts';
 import { clientIdOk, encodeClientId } from './registry.ts';
 import type { Layout } from './types.ts';
 
 const escapeRegExp = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** A SCIM provider as `readProvider` returns it: its id and the path it was read from. */
+export interface ScimRef {
+  id: string;
+  from: string;
+}
 
 /** Polaris ID routes per layout. Ids are validated here, so no caller text becomes path syntax. */
 export function routes(layout: Layout) {
@@ -10,6 +16,12 @@ export function routes(layout: Layout) {
   const base = admin ? '/api/admin' : '/api';
   const id = (kind: string, v: string) => encodeURIComponent(assertId(kind, v));
   const sub = (v: string) => encodeURIComponent(assertSubject(v));
+  const scimOf = (cid: string) =>
+    `${base}/oidc/clients/${assertClientId(cid)}/scim-service-provider`;
+  const scimId = (p: ScimRef, cid: string) => {
+    if (p?.from !== scimOf(cid)) refuse("The SCIM provider is not the client's own.");
+    return id('provider id', p.id);
+  };
   return {
     groupSearch: (name: string, page = 1) =>
       `${base}/user-groups?search=${encodeURIComponent(name)}&pagination[limit]=100${page > 1 ? `&pagination[page]=${page}` : ''}`,
@@ -27,10 +39,11 @@ export function routes(layout: Layout) {
     /** PUT to the client path writes its settings; the allowed groups and the SCIM connection hang off it. */
     clientGroups: (cid: string) =>
       `${base}/oidc/clients/${assertClientId(cid)}/allowed-user-groups`,
-    scimOf: (cid: string) => `${base}/oidc/clients/${assertClientId(cid)}/scim-service-provider`,
+    scimOf,
     scimCreate: `${base}/scim/service-provider`,
-    scim: (pid: string) => `${base}/scim/service-provider/${id('provider id', pid)}`,
-    scimSync: (pid: string) => `${base}/scim/service-provider/${id('provider id', pid)}/sync`,
+    /** Only the provider read from the client's own SCIM route: an id from anywhere else is refused. */
+    scim: (p: ScimRef, cid: string) => `${base}/scim/service-provider/${scimId(p, cid)}`,
+    scimSync: (p: ScimRef, cid: string) => `${base}/scim/service-provider/${scimId(p, cid)}/sync`,
     signupTokens: `${base}/signup-tokens`,
     signupToken: (tid: string) => `${base}/signup-tokens/${id('token id', tid)}`,
     auditLogs: (page: number) =>

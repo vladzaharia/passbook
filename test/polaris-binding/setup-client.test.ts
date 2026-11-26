@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ledger, resetLedger, rows, userCtx } from './harness.ts';
-import { setupCimd, writes } from './setup-harness.ts';
+import { ledger, resetLedger, rows } from './harness.ts';
+import { setupCimd, setupCtx, writes } from './setup-harness.ts';
 
 beforeEach(resetLedger);
-const run = (r = 'c1', over = {}) => userCtx({ ref: r, reason: 'setup', ...over });
+const run = (r = 'c1', over = {}) => setupCtx({ ref: r, ...over });
 const base = (layout: string) => (layout === 'admin' ? '/api/admin' : '/api');
 const bodies = (h: ReturnType<typeof setupCimd>, method: string) =>
   h.pocket.s.seen.filter((r) => r.method === method).map((r) => r.body as Record<string, unknown>);
@@ -167,6 +167,7 @@ describe.each(['v2', 'admin'] as const)('client writes (%s layout)', (layout) =>
           hasDarkLogo: false,
           name: 'PassBook',
           allowedUserGroups: [{ id: 'g-admins' }],
+          callbackURLs: ['https://passbook.mobile/auth/oidc/callback'],
           requiresReauthentication: false,
         };
         return rest;

@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { pocketRequest } from '../../workers/polaris-binding/src/pocket-http.ts';
 import { allowedRoutes, routes } from '../../workers/polaris-binding/src/routes.ts';
 import { CIMD, ENC, TOKEN } from './fake-setup.ts';
-import { baseEnv, NOW, resetLedger, rows, userCtx } from './harness.ts';
-import { setupCimd, writes } from './setup-harness.ts';
+import { baseEnv, NOW, resetLedger, rows } from './harness.ts';
+import { setupCimd, setupCtx, writes } from './setup-harness.ts';
 
 beforeEach(resetLedger);
-const run = (r = 't1', over = {}) => userCtx({ ref: r, reason: 'setup', ...over });
+const run = (r = 't1', over = {}) => setupCtx({ ref: r, ...over });
 const SOURCES = import.meta.glob('../../workers/polaris-binding/src/*.ts', {
   query: '?raw',
   import: 'default',
@@ -167,8 +167,8 @@ describe('threat model 25 to 33 (design: automatic Polaris ID setup, section 6)'
         ] as const)
           expect(hit(m, p), `${m} ${p}`).toBe(false);
         const r = routes(layout);
-        expect(() => r.scim('~bWU')).toThrow();
-        expect(() => r.scimSync('~bWU')).toThrow();
+        expect(() => r.scim({ id: '~bWU', from: r.scimOf(CIMD) }, CIMD)).toThrow();
+        expect(() => r.scimSync({ id: '~bWU', from: r.scimOf(CIMD) }, CIMD)).toThrow();
       }
     });
 

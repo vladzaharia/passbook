@@ -1,5 +1,5 @@
 import { failure, ok, type Req } from './pocket-http.ts';
-import { ID } from './registry.ts';
+import { ID, passbookOrigin } from './registry.ts';
 import type { Shared } from './shared.ts';
 import { IdpError } from './types.ts';
 
@@ -32,6 +32,20 @@ function allowedIds(c: Record<string, unknown>): string[] {
     const id = (g as { id?: unknown } | null)?.id;
     if (typeof id !== 'string' || !ID.test(id)) throw unexpected();
     return id;
+  });
+}
+
+/** Every callback URL is on PassBook's own origin, and there is at least one. A client of another app is not ours to change. */
+export function callbacksOurs(c: ClientView, clientId: string): boolean {
+  const origin = passbookOrigin(clientId);
+  const urls = c.raw.callbackURLs;
+  if (origin === null || !Array.isArray(urls) || !urls.length) return false;
+  return urls.every((u) => {
+    try {
+      return typeof u === 'string' && new URL(u).origin === origin;
+    } catch {
+      return false;
+    }
   });
 }
 
@@ -129,11 +143,15 @@ export async function readClient(s: Shared, req: Req): Promise<ClientView> {
   if (!ok(res)) throw failure(res);
   const c = parseClient(res.body);
   if (c.id !== s.env.PASSBOOK_CLIENT_ID) throw new IdpError('IDP_CLIENT', 'client_not_ours');
+  if (!callbacksOurs(c, s.env.PASSBOOK_CLIENT_ID))
+    throw new IdpError('IDP_CLIENT', 'client_foreign_callbacks');
   return c;
 }
 
 export interface Provider {
   id: string;
+  /** The path it was read from: `routes` refuses an id that did not come from the client's own SCIM read. */
+  from: string;
   endpoint: string;
   /** Polaris ID answers its SCIM token in clear on every read. It is hashed and dropped by the caller. */
   token: string;
@@ -142,7 +160,8 @@ export interface Provider {
 
 /** The client's SCIM connection, or null when it has none. */
 export async function readProvider(s: Shared, req: Req): Promise<Provider | null> {
-  const res = await req('GET', s.r.scimOf(s.env.PASSBOOK_CLIENT_ID));
+  const from = s.r.scimOf(s.env.PASSBOOK_CLIENT_ID);
+  const res = await req('GET', from);
   if (res.status === 404) return null;
   if (!ok(res)) throw failure(res);
   const p = res.body as Record<string, unknown> | null;
@@ -157,6 +176,7 @@ export async function readProvider(s: Shared, req: Req): Promise<Provider | null
   const at = typeof p.lastSyncedAt === 'string' ? Date.parse(p.lastSyncedAt) : Number.NaN;
   return {
     id: p.id,
+    from,
     endpoint: p.endpoint,
     token: p.token,
     lastSyncedAt: Number.isNaN(at) ? null : at,

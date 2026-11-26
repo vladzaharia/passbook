@@ -86,8 +86,8 @@ describe.each(['v2', 'admin'] as const)('client path (%s layout)', (layout) => {
       () => r.client('~bWU'),
       () => r.clientGroups('~bWU'),
       () => r.scimOf('~bWU'),
-      () => r.scim('~bWU'),
-      () => r.scimSync('~bWU'),
+      () => r.scim({ id: '~bWU', from: r.scimOf(CIMD) }, CIMD),
+      () => r.scimSync({ id: '~bWU', from: r.scimOf(CIMD) }, CIMD),
     ];
     for (const b of builders) expect(b).toThrow(/^IDP_REFUSED|Invalid/);
     const paths: [string, string][] = [

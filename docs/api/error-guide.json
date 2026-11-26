@@ -3859,7 +3859,7 @@
   },
   "IDP_CLIENT": {
     "title": "Polaris ID app needs a change",
-    "when": "PassBook's app in Polaris ID is missing, is not PassBook's, is still open to everyone, or would lock admins out of PassBook if restricted.",
+    "when": "PassBook's app in Polaris ID is missing, is not PassBook's, has callbacks that are not PassBook's, is still open to everyone, or would lock admins out of PassBook if restricted.",
     "fix": "Open setup and follow the reason it shows, or ask the PassBook owner.",
     "retryable": false
   },
@@ -3867,6 +3867,12 @@
     "title": "User sync points elsewhere",
     "when": "The owner pointed Polaris ID's user sync at a different address, so PassBook will not change or push to it.",
     "fix": "Ask the PassBook owner to point it back at PassBook.",
+    "retryable": false
+  },
+  "IDP_SCIM_MISSING": {
+    "title": "User sync not set up",
+    "when": "Polaris ID has no user sync connection for PassBook yet, so there is nothing to push or sync.",
+    "fix": "Run setup to create the connection, then try again.",
     "retryable": false
   },
   "IDP_IN_USE": {

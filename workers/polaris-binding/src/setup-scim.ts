@@ -30,7 +30,7 @@ export function setupScimApi(s: Shared): ScimApi {
     async ensureScim(token, ctx) {
       const tok = await call.guard(meta('ensureScim'), () => assertScimToken(token));
       return run(
-        { method: 'ensureScim', delta: 'scim', lease: 'scim', bucket: 'scim_write' },
+        { method: 'ensureScim', delta: 'scim', lease: 'setup:scim', bucket: 'scim_write' },
         ctx,
         async ({ req, dry, note }) => {
           const endpoint = endpointOf();
@@ -50,7 +50,7 @@ export function setupScimApi(s: Shared): ScimApi {
           }
           const body = { endpoint, token: tok, oidcClientId: env.PASSBOOK_CLIENT_ID };
           const res = live
-            ? await req('PUT', r.scim(live.id), body)
+            ? await req('PUT', r.scim(live, env.PASSBOOK_CLIENT_ID), body)
             : await req('POST', r.scimCreate, body);
           if (!ok(res)) throw failure(res);
           const after = await readProvider(s, req);
@@ -63,9 +63,12 @@ export function setupScimApi(s: Shared): ScimApi {
 
     syncScim: (ctx) =>
       run(
-        { method: 'syncScim', delta: 'scim_sync', lease: 'scim', bucket: 'scim_sync' },
+        { method: 'syncScim', delta: 'scim_sync', lease: 'setup:scim', bucket: 'scim_sync' },
         ctx,
         async ({ req, dry, note }) => {
+          // An open client would push every account, whenever the owner opened it.
+          if (!(await readClient(s, req)).restricted)
+            throw new IdpError('IDP_CLIENT', 'client_open');
           const live = await readProvider(s, req);
           if (!live) throw new IdpError('IDP_NOT_FOUND', 'no_scim_provider');
           if (live.endpoint !== endpointOf())
@@ -74,7 +77,12 @@ export function setupScimApi(s: Shared): ScimApi {
             await note();
             return { result: 'synced' as const, dryRun: true };
           }
-          const res = await req('POST', r.scimSync(live.id), undefined, SYNC_TIMEOUT_MS);
+          const res = await req(
+            'POST',
+            r.scimSync(live, env.PASSBOOK_CLIENT_ID),
+            undefined,
+            SYNC_TIMEOUT_MS,
+          );
           // Polaris ID's own text is never forwarded.
           if (!ok(res)) throw new IdpError('IDP_UPSTREAM', `Polaris ID answered ${res.status}.`);
           return { result: 'synced' as const, dryRun: false };

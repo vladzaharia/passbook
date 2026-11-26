@@ -26,7 +26,7 @@
     // Exact claim keys outside passbook_* the binding may write. Keep empty unless an app needs a bare key.
     "CLAIM_KEYS": "[]",
     // Role registry by exact group name. placeRoleGroups finds or makes each group and records its id in D1; a protected role may list several names.
-    "GROUPS": "{\"console\":{\"name\":\"passbook_console\"},\"developer\":{\"name\":\"passbook_developers\"},\"platform_admin\":[{\"name\":\"wallet_admins\",\"protected\":true},{\"name\":\"passbook_platform_admins\",\"protected\":true}],\"users\":[{\"name\":\"wallet_users\",\"protected\":true},{\"name\":\"passbook_users\",\"protected\":true}]}"
+    "GROUPS": "{\"aliases\":[\"wallet_org_admins\"],\"console\":{\"name\":\"passbook_console\"},\"developer\":{\"name\":\"passbook_developers\"},\"platform_admin\":[{\"name\":\"wallet_admins\",\"protected\":true},{\"name\":\"passbook_platform_admins\",\"protected\":true}],\"users\":[{\"name\":\"wallet_users\",\"protected\":true},{\"name\":\"passbook_users\",\"protected\":true}]}"
   },
   "d1_databases": [
     {

@@ -53,6 +53,15 @@ export function mapIdpError(error: unknown, log?: Logger): AppError {
         cause,
       );
     case 'IDP_NOT_FOUND':
+      // Only the missing SCIM connection has a sentence of its own: it is a setup step, not a race.
+      if (idpReasonOf(error) === 'no_scim_provider')
+        return new AppError(
+          'IDP_SCIM_MISSING',
+          404,
+          'Polaris ID has no user sync for PassBook yet. Set it up first.',
+          cause,
+        );
+      return new AppError('IDP_CONFLICT', 409, 'Polaris ID changed. Try again.', cause);
     case 'IDP_CONFLICT':
       return new AppError('IDP_CONFLICT', 409, 'Polaris ID changed. Try again.', cause);
     case 'IDP_CLIENT':

@@ -4,9 +4,10 @@ import { AppError } from '../../platform/errors.ts';
 import type { Logger } from '../../platform/log.ts';
 import { idpClient, idpConfigured } from './client.ts';
 import { idpCodeOf, idpReasonOf, IDP_UNAVAILABLE_MESSAGE as UNAVAILABLE } from './errors.ts';
-import { IDP_CODES, type WriteCtx } from './types.ts';
+import { IDP_CODES, type SetupCtx, type WriteCtx } from './types.ts';
 
 const ctx: WriteCtx = { ref: 'r', reason: 'test', actor: { kind: 'system', job: 'test' } };
+const setup: SetupCtx = { ...ctx, dryRun: false };
 
 // Every code the binding sends (design 5.10) and what a caller sees.
 const MAP: [string, string, number, string][] = [
@@ -121,12 +122,12 @@ describe('idpClient', () => {
       client.freeze('why', ctx),
       client.calls(0),
       client.setupStatus(),
-      client.placeRoleGroups(ctx),
-      client.allowClientGroups(ctx),
-      client.restrictClient(ctx),
-      client.setClientLogo(ctx),
-      client.ensureScim('t', ctx),
-      client.syncScim(ctx),
+      client.placeRoleGroups(setup),
+      client.allowClientGroups(setup),
+      client.restrictClient(setup),
+      client.setClientLogo(setup),
+      client.ensureScim('t', setup),
+      client.syncScim(setup),
     ];
     for (const call of calls)
       await expect(call).rejects.toMatchObject({ code: 'IDP_UNAVAILABLE', status: 503 });
@@ -148,13 +149,28 @@ describe('idpClient', () => {
   it('passes setup reasons through unchanged', async () => {
     const idp = createFakeIdp();
     const client = idpClient({ IDP: idp.binding });
-    const err = await client.restrictClient(ctx).catch((e: unknown) => e);
+    const err = await client.restrictClient(setup).catch((e: unknown) => e);
     expect(err).toMatchObject({ code: 'IDP_CLIENT', status: 409 });
     expect(idpReasonOf(err)).toBe('client_lockout');
     expect(idpReasonOf(new Error('IDP_CLIENT: Polaris ID said no.'))).toBeNull();
+    await client.placeRoleGroups(setup);
     idp.setup.client.ours = false;
-    expect(idpReasonOf(await client.allowClientGroups(ctx).catch((e: unknown) => e))).toBe(
+    expect(idpReasonOf(await client.allowClientGroups(setup).catch((e: unknown) => e))).toBe(
       'client_not_ours',
     );
+  });
+
+  it('maps a missing SCIM connection to its own not-found error, not a retry', async () => {
+    const idp = createFakeIdp();
+    idp.setup.client.restricted = true;
+    const client = idpClient({ IDP: idp.binding });
+    const err = await client.syncScim(setup).catch((e: unknown) => e);
+    expect(err).toMatchObject({
+      code: 'IDP_SCIM_MISSING',
+      status: 404,
+      message: 'Polaris ID has no user sync for PassBook yet. Set it up first.',
+    });
+    expect(idpReasonOf(err)).toBe('no_scim_provider');
+    expect(idpCodeOf(err)).toBe('IDP_NOT_FOUND');
   });
 });

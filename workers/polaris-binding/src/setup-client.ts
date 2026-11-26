@@ -1,4 +1,5 @@
 import { echoBody, readClient, sameFields } from './client-dto.ts';
+import { aliasIds } from './group-find.ts';
 import { failure, ok } from './pocket-http.ts';
 import { refuse, sameSet } from './policy.ts';
 import { passbookOrigin, type Registry } from './registry.ts';
@@ -34,7 +35,7 @@ export function setupClientApi(s: Shared): ClientApi {
         {
           method: 'allowClientGroups',
           delta: 'client_groups',
-          lease: 'client',
+          lease: 'setup:client',
           bucket: 'client_write',
           check: (registry) => {
             if (unplacedRoles(registry).length) refuse('A role group is not placed.');
@@ -43,8 +44,9 @@ export function setupClientApi(s: Shared): ClientApi {
         ctx,
         async ({ req, dry, registry, note }) => {
           const client = await readClient(s, req);
-          // Union only: what the owner allowed stays, and only PassBook's registry groups are added.
-          const want = [...new Set([...client.allowed, ...registry.ids])];
+          // Union only: what the owner allowed stays; PassBook's registry groups and the alias groups that exist are added.
+          const aliases = await aliasIds(s.r, req, registry.aliases);
+          const want = [...new Set([...client.allowed, ...registry.ids, ...aliases])];
           const added = want.length - client.allowed.length;
           if (!added) return { result: 'already' as const, added: 0, dryRun: dry };
           if (dry) {
@@ -68,7 +70,7 @@ export function setupClientApi(s: Shared): ClientApi {
         {
           method: 'restrictClient',
           delta: 'client_restrict',
-          lease: 'client',
+          lease: 'setup:client',
           bucket: 'client_write',
         },
         ctx,
@@ -76,9 +78,11 @@ export function setupClientApi(s: Shared): ClientApi {
           const client = await readClient(s, req);
           if (client.restricted) return { result: 'already' as const, dryRun: dry };
           // Restricted with the admin group missing from the allowed set would lock every platform admin out.
+          // The same goes for an alias group (`wallet_org_admins`) the main Worker's sign-in still accepts.
+          const aliases = await aliasIds(s.r, req, registry.aliases);
           if (
             !registry.adminIds.length ||
-            !registry.adminIds.every((id) => client.allowed.includes(id))
+            ![...registry.adminIds, ...aliases].every((id) => client.allowed.includes(id))
           )
             throw new IdpError('IDP_CLIENT', 'client_lockout');
           const body = echoBody(client);
@@ -102,7 +106,12 @@ export function setupClientApi(s: Shared): ClientApi {
 
     setClientLogo: (ctx) =>
       run(
-        { method: 'setClientLogo', delta: 'client_logo', lease: 'client', bucket: 'client_write' },
+        {
+          method: 'setClientLogo',
+          delta: 'client_logo',
+          lease: 'setup:client',
+          bucket: 'client_write',
+        },
         ctx,
         async ({ req, dry, note }) => {
           const origin = passbookOrigin(env.PASSBOOK_CLIENT_ID);

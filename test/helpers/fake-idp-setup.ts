@@ -1,4 +1,9 @@
-import { type IdpRpc, type RoleState, WRITABLE_ROLES } from '../../src/worker/modules/idp/types.ts';
+import {
+  type IdpRpc,
+  type RolePlacement,
+  type RoleState,
+  WRITABLE_ROLES,
+} from '../../src/worker/modules/idp/types.ts';
 import type { FakeGroup } from './fake-idp-groups.ts';
 
 /** PassBook's client and SCIM connection in the fake Polaris ID. Tests seed and read it as `idp.setup`. */
@@ -7,12 +12,22 @@ export interface FakeSetup {
     found: boolean;
     ours: boolean;
     cimd: boolean;
+    /** The client's callbacks are not PassBook's: every setup write refuses it. */
+    callbacksOurs: boolean;
     restricted: boolean;
     /** Groups the client allows: role names, `platform_admin`, and `other:*` entries PassBook never removes. */
     allowed: Set<string>;
     logo: boolean;
     darkLogo: boolean;
   };
+  /** Protected roles: `found` exists in Polaris ID but is not recorded yet, `missing` does not exist. */
+  protectedGroups: Record<'platform_admin' | 'users', 'recorded' | 'found' | 'missing'>;
+  /** A writable role with no placed group: `adoptable` exists and only PassBook uses it, `in_use` is shared with another app. Absent means it would be created. */
+  existing: Partial<Record<(typeof WRITABLE_ROLES)[number], 'adoptable' | 'in_use'>>;
+  /** The console alias group (`wallet_org_admins`): when it exists and the client does not allow it, restricting refuses. */
+  alias: { exists: boolean };
+  /** A recorded group was renamed or deleted in Polaris ID: every setup write refuses. */
+  groupDrift: boolean;
   scim: {
     exists: boolean;
     /** The owner pointed the provider at another endpoint. */
@@ -28,11 +43,16 @@ export const newFakeSetup = (): FakeSetup => ({
     found: true,
     ours: true,
     cimd: true,
+    callbacksOurs: true,
     restricted: false,
     allowed: new Set(),
     logo: false,
     darkLogo: false,
   },
+  protectedGroups: { platform_admin: 'recorded', users: 'recorded' },
+  existing: {},
+  alias: { exists: false },
+  groupDrift: false,
   scim: { exists: false, foreign: false, token: null, lastSyncedAt: null },
 });
 
@@ -74,12 +94,49 @@ export function setupMethods(env: SetupEnv): Methods {
       const g = groups.get(r);
       return g !== undefined && g.state !== 'gone';
     });
-  const required = (): string[] => [...placed(), 'platform_admin'];
+  const ALIAS = 'alias:wallet_org_admins';
+  const required = (): string[] => [
+    ...placed(),
+    'platform_admin',
+    ...(setup.alias.exists ? [ALIAS] : []),
+  ];
   const client = (): FakeSetup['client'] => {
     if (!setup.client.found) return refuse('IDP_CLIENT', 'client_not_found');
     if (!setup.client.ours) return refuse('IDP_CLIENT', 'client_not_ours');
+    if (!setup.client.callbacksOurs) return refuse('IDP_CLIENT', 'client_foreign_callbacks');
     return setup.client;
   };
+  /** What every setup write checks first: an explicit `dryRun`, then no stale group record. */
+  const gate = (ctx: { dryRun?: unknown }): void => {
+    if (typeof ctx?.dryRun !== 'boolean')
+      refuse('IDP_REFUSED', 'Setup needs dryRun true or false.');
+    if (setup.groupDrift)
+      refuse(
+        'IDP_UNSAFE_CONFIG',
+        'Unsafe Polaris ID configuration: group_name_mismatch:platform_admin.',
+      );
+  };
+  const roleStates = (): Record<string, RoleState> => {
+    const roles: Record<string, RoleState> = {};
+    for (const r of WRITABLE_ROLES) {
+      const g = groups.get(r);
+      const had = g !== undefined && g.state !== 'gone';
+      const ex = setup.existing[r];
+      roles[r] = had
+        ? 'placed'
+        : ex === 'adoptable'
+          ? 'adopt'
+          : ex === 'in_use'
+            ? 'in_use'
+            : 'create';
+    }
+    for (const r of ['platform_admin', 'users'] as const) {
+      const p = setup.protectedGroups[r];
+      roles[r] = p === 'recorded' ? 'placed' : p === 'found' ? 'adopt' : 'missing';
+    }
+    return roles;
+  };
+  const unplaced = (): boolean => Object.values(roleStates()).some((s) => s !== 'placed');
 
   return {
     async setupStatus(opts = {}) {
@@ -88,16 +145,13 @@ export function setupMethods(env: SetupEnv): Methods {
       const hashes = opts.tokenHashes ?? [];
       const live = setup.scim.token === null ? null : await sha256Hex(setup.scim.token);
       const at = live === null ? -1 : hashes.indexOf(live);
-      const roles: Record<string, RoleState> = {};
-      for (const r of WRITABLE_ROLES) {
-        const g = groups.get(r);
-        roles[r] = g === undefined || g.state === 'gone' ? 'create' : 'placed';
-      }
+      const roles = roleStates();
       return {
         client: {
           found: c.found,
           cimd: c.cimd,
           ours: c.ours,
+          callbacksOurs: c.callbacksOurs,
           restricted: c.restricted,
           missingRoles: placed().filter((r) => !c.allowed.has(r)),
           otherGroups: [...c.allowed].filter((g) => g.startsWith('other:')).length,
@@ -115,28 +169,34 @@ export function setupMethods(env: SetupEnv): Methods {
     },
     async placeRoleGroups(ctx) {
       env.enter('placeRoleGroups', true);
+      gate(ctx);
       const isDry = env.dry(ctx.dryRun, 'group_write');
-      const result: Record<string, 'already' | 'created'> = {};
-      for (const role of WRITABLE_ROLES) {
-        const g = groups.get(role);
-        if (g && g.state !== 'gone') {
-          result[role] = 'already';
-          continue;
-        }
-        result[role] = 'created';
-        if (isDry) continue;
+      const result: Record<string, RolePlacement> = {};
+      for (const [role, state] of Object.entries(roleStates())) {
+        const writable = (WRITABLE_ROLES as readonly string[]).includes(role);
+        if (state === 'in_use' || state === 'missing') result[role] = state;
+        else if (state === 'placed') result[role] = 'already';
+        else if (state === 'create') result[role] = 'created';
+        else result[role] = writable ? 'adopted' : 'recorded';
+        if (isDry || state === 'placed' || state === 'in_use' || state === 'missing') continue;
         env.write();
-        groups.set(role, {
-          kind: 'role',
-          name: `passbook_${role}`,
-          friendlyName: `passbook_${role}`,
-          otherClients: 0,
-        });
+        if (!writable) setup.protectedGroups[role as 'platform_admin' | 'users'] = 'recorded';
+        else {
+          delete setup.existing[role as (typeof WRITABLE_ROLES)[number]];
+          groups.set(role, {
+            kind: 'role',
+            name: `passbook_${role}`,
+            friendlyName: `passbook_${role}`,
+            otherClients: 0,
+          });
+        }
       }
       return { roles: result, dryRun: isDry };
     },
     async allowClientGroups(ctx) {
       env.enter('allowClientGroups', true);
+      gate(ctx);
+      if (unplaced()) return refuse('IDP_REFUSED', 'A role group is not placed.');
       const c = client();
       const isDry = env.dry(ctx.dryRun, 'client_write');
       const add = required().filter((g) => !c.allowed.has(g));
@@ -148,11 +208,12 @@ export function setupMethods(env: SetupEnv): Methods {
     },
     async restrictClient(ctx) {
       env.enter('restrictClient', true);
+      gate(ctx);
       const c = client();
-      if (!c.restricted && !c.allowed.has('platform_admin'))
+      if (c.restricted) return { result: 'already', dryRun: env.dry(ctx.dryRun, 'client_write') };
+      if (!c.allowed.has('platform_admin') || (setup.alias.exists && !c.allowed.has(ALIAS)))
         return refuse('IDP_CLIENT', 'client_lockout');
       const isDry = env.dry(ctx.dryRun, 'client_write');
-      if (c.restricted) return { result: 'already', dryRun: isDry };
       if (!isDry) {
         env.write();
         c.restricted = true;
@@ -161,9 +222,11 @@ export function setupMethods(env: SetupEnv): Methods {
     },
     async setClientLogo(ctx) {
       env.enter('setClientLogo', true);
+      gate(ctx);
       const c = client();
       const isDry = env.dry(ctx.dryRun, 'client_write');
       if (c.logo && c.darkLogo) return { result: 'already', dryRun: isDry };
+      if (!c.restricted) return refuse('IDP_CLIENT', 'client_open');
       if (!isDry) {
         env.write();
         c.logo = true;
@@ -173,6 +236,7 @@ export function setupMethods(env: SetupEnv): Methods {
     },
     async ensureScim(token, ctx) {
       env.enter('ensureScim', true);
+      gate(ctx);
       if (!/^[A-Za-z0-9_-]{43,128}$/.test(token)) return refuse('IDP_REFUSED', 'Invalid token.');
       if (!client().restricted) return refuse('IDP_CLIENT', 'client_open');
       if (setup.scim.exists && setup.scim.foreign)
@@ -190,6 +254,8 @@ export function setupMethods(env: SetupEnv): Methods {
     },
     async syncScim(ctx) {
       env.enter('syncScim', true);
+      gate(ctx);
+      if (!client().restricted) return refuse('IDP_CLIENT', 'client_open');
       if (!setup.scim.exists) return refuse('IDP_NOT_FOUND', 'no_scim_provider');
       if (setup.scim.foreign) return refuse('IDP_SCIM_FOREIGN', 'scim_endpoint_foreign');
       const isDry = env.dry(ctx.dryRun, 'scim_sync');

@@ -1,3 +1,4 @@
+import { ALIASES_KEY, parseAliases } from './aliases.ts';
 import { listedKeyOk } from './claims.ts';
 import {
   type BindingEnv,
@@ -97,6 +98,8 @@ export interface Registry {
   adminIds: string[];
   /** Role and protected group ids (the PassBook client allows exactly these). */
   ids: string[];
+  /** Names of groups the main Worker's sign-in also accepts: found by exact name and allowed on the client, never created, renamed or written. */
+  aliases: string[];
   custom: Custom[];
   /** Every id the binding may write: role groups and custom or adopted groups. */
   managedIds: string[];
@@ -124,6 +127,7 @@ function build(
   unplaced: Unplaced[],
   custom: Custom[],
   unplacedProtected: UnplacedProtected[] = [],
+  aliases: string[] = [],
 ): Registry {
   const writable = entries.filter((e) => !e.protected);
   const ids = entries.map((e) => e.id);
@@ -133,6 +137,7 @@ function build(
     unplaced,
     unplacedProtected,
     ids,
+    aliases,
     custom,
     protectedIds: entries.filter((e) => e.protected).map((e) => e.id),
     adminIds: entries.filter((e) => e.role === 'platform_admin').map((e) => e.id),
@@ -173,6 +178,7 @@ export function withRecorded(
     base.unplaced.filter((u) => !placed.has(u.role)),
     custom,
     base.unplacedProtected.filter((u) => !placedNames.has(u.name)),
+    base.aliases,
   );
 }
 
@@ -249,8 +255,11 @@ export function parseRegistry(env: BindingEnv): {
   const entries: Entry[] = [];
   const unplaced: Unplaced[] = [];
   const unplacedProtected: UnplacedProtected[] = [];
-  const names: string[] = [];
+  const aliases = parseAliases((raw as Record<string, unknown>)[ALIASES_KEY] ?? []);
+  if (!aliases) return bad('env_groups');
+  const names: string[] = [...aliases];
   for (const [role, value] of Object.entries(raw)) {
+    if (role === ALIASES_KEY) continue;
     if (!ROLES.includes(role as Role)) return bad('env_groups');
     const isProtected = PROTECTED_ROLES.includes(role as Role);
     // The protected roles may list several groups, for the window where a group is renamed.
@@ -308,7 +317,7 @@ export function parseRegistry(env: BindingEnv): {
     return bad('env_groups');
   const settings = parseSettings(env, reasons, ids, names);
   return {
-    registry: build(entries, unplaced, [], unplacedProtected),
+    registry: build(entries, unplaced, [], unplacedProtected, aliases),
     settings,
     reasons: [...reasons],
   };

@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SCIM_ENDPOINT, TOKEN, TOKEN2 } from './fake-setup.ts';
-import { captureLogs, dumpAll, ledger, resetLedger, userCtx } from './harness.ts';
-import { setupCimd, writes } from './setup-harness.ts';
+import { captureLogs, dumpAll, ledger, resetLedger } from './harness.ts';
+import { setupCimd, setupCtx, writes } from './setup-harness.ts';
 
 beforeEach(resetLedger);
 afterEach(() => vi.restoreAllMocks());
-const run = (r = 's1', over = {}) => userCtx({ ref: r, reason: 'setup', ...over });
+const run = (r = 's1', over = {}) => setupCtx({ ref: r, ...over });
 const base = (layout: string) => (layout === 'admin' ? '/api/admin' : '/api');
 
 describe.each(['v2', 'admin'] as const)('SCIM (%s layout)', (layout) => {

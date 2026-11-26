@@ -1,5 +1,8 @@
 import type { WriteCtx } from './types.ts';
 
+/** A setup write says whether it is a dry run: it is never inferred from a missing flag. */
+export type SetupCtx = WriteCtx & { dryRun: boolean };
+
 /** What `placeRoleGroups` did, or would do, per configured role. */
 export type RolePlacement = 'already' | 'recorded' | 'created' | 'adopted' | 'missing' | 'in_use';
 export interface PlaceResult {
@@ -13,6 +16,8 @@ export interface SetupStatus {
     found: boolean;
     cimd: boolean;
     ours: boolean;
+    /** Every callback URL is on PassBook's own origin. Setup writes refuse a client where this is false. */
+    callbacksOurs: boolean;
     restricted: boolean;
     /** Placed roles whose group the client does not allow. */
     missingRoles: string[];
@@ -38,16 +43,16 @@ export interface SetupStatus {
 export interface SetupRpc {
   /** Reads the PassBook client, its SCIM connection and the unplaced role groups. Hashes are SHA-256 hex of candidate SCIM tokens. */
   setupStatus(opts?: { tokenHashes?: string[] }): Promise<SetupStatus>;
-  placeRoleGroups(ctx: WriteCtx): Promise<PlaceResult>;
+  placeRoleGroups(ctx: SetupCtx): Promise<PlaceResult>;
   allowClientGroups(
-    ctx: WriteCtx,
+    ctx: SetupCtx,
   ): Promise<{ result: 'already' | 'allowed'; added: number; dryRun: boolean }>;
-  restrictClient(ctx: WriteCtx): Promise<{ result: 'already' | 'restricted'; dryRun: boolean }>;
-  setClientLogo(ctx: WriteCtx): Promise<{ result: 'already' | 'set'; dryRun: boolean }>;
+  restrictClient(ctx: SetupCtx): Promise<{ result: 'already' | 'restricted'; dryRun: boolean }>;
+  setClientLogo(ctx: SetupCtx): Promise<{ result: 'already' | 'set'; dryRun: boolean }>;
   /** `token` is the only caller value: a secret that addresses nothing. The endpoint is PassBook's own, from config. */
   ensureScim(
     token: string,
-    ctx: WriteCtx,
+    ctx: SetupCtx,
   ): Promise<{ result: 'already' | 'created' | 'rotated'; dryRun: boolean }>;
-  syncScim(ctx: WriteCtx): Promise<{ result: 'synced'; dryRun: boolean }>;
+  syncScim(ctx: SetupCtx): Promise<{ result: 'synced'; dryRun: boolean }>;
 }

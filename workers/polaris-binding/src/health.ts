@@ -1,6 +1,7 @@
 import type { Call } from './call.ts';
 import { keyKind } from './claims.ts';
 import { assertNotFrozen, isFrozen } from './freeze.ts';
+import { aliasIds } from './group-find.ts';
 import { composeRegistry, withoutBlocked } from './group-state.ts';
 import { readTargets, recordAdoptedNames, settlePending } from './health-groups.ts';
 import { alert, budgetUse, logRefusal, type Meta, meta } from './ledger.ts';
@@ -37,6 +38,7 @@ type Probe = Omit<HealthCore, 'checkedAt'>;
 
 /** Does the PassBook client allow exactly the registry groups? Anything else is `client_open`, a warning. */
 async function clientWarnings(env: BindingEnv, r: Routes, registry: Registry, req: Req) {
+  const aliases = await aliasIds(r, req, registry.aliases);
   const res = await req('GET', r.client(env.PASSBOOK_CLIENT_ID));
   if (res.status === 404) return ['client_not_found'];
   if (!ok(res)) throw failure(res);
@@ -53,7 +55,12 @@ async function clientWarnings(env: BindingEnv, r: Routes, registry: Registry, re
     allowed.every(
       (id) =>
         typeof id === 'string' &&
-        registry.ids.concat(registry.custom.map((c) => c.id)).includes(id),
+        registry.ids
+          .concat(
+            registry.custom.map((c) => c.id),
+            aliases,
+          )
+          .includes(id),
     );
   const out = exact ? [] : ['client_open'];
   // A custom group on the PassBook client would let its members sign in.
@@ -221,9 +228,10 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
   }
 
   /**
-   * The gate of the seven setup writes: not frozen and the deployment's own settings parse. Polaris ID's
-   * configuration is not read: these writes only tighten PassBook's own client, and they must run before the
-   * platform admin group is placed, which is the one thing that keeps every other write refused.
+   * The gate of the seven setup writes: not frozen, the deployment's own settings parse, and no recorded group
+   * has been renamed or deleted. Other Polaris ID configuration reasons do not block: these writes only tighten
+   * PassBook's own client, and they must run before the platform admin group is placed, which is the one thing
+   * that keeps every other write refused.
    */
   async function requireSetup(m: Meta): Promise<{ registry: Registry; settings: Settings }> {
     await assertNotFrozen(db, m, deps.now());
@@ -234,7 +242,22 @@ export function createGate(env: BindingEnv, deps: Deps, call: Call, r: Routes) {
         `Unsafe binding settings: ${own.reasons.join(', ')}.`,
       );
     }
-    return { registry: await compose(), settings };
+    const registry = await compose();
+    // A recorded group whose live name changed (or that is gone) is no longer the group the record meant: the
+    // client would be allowed, or locked to, a stranger's group. Other reasons do not block setup. With no
+    // group recorded yet there is nothing to compare, so the probe is not spent.
+    const stale = registry.entries.length
+      ? (await currentHealth()).unsafe.filter((x) => /^group_(name_mismatch|not_found):/.test(x))
+      : [];
+    if (stale.length) {
+      await logRefusal(db, m, deps.now(), 'IDP_UNSAFE_CONFIG');
+      alert('error', 'binding.unsafe_config', { method: m.method, reasons: stale });
+      throw new IdpError(
+        'IDP_UNSAFE_CONFIG',
+        `Unsafe Polaris ID configuration: ${stale.join(', ')}.`,
+      );
+    }
+    return { registry, settings };
   }
 
   /** The static registry when the settings parse, so a request can be refused before any Polaris ID read. */

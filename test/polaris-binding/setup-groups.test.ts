@@ -1,10 +1,10 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ledger, resetLedger, rows, userCtx } from './harness.ts';
-import { setupCimd, writes } from './setup-harness.ts';
+import { ledger, resetLedger, rows } from './harness.ts';
+import { setupCimd, setupCtx, writes } from './setup-harness.ts';
 
 beforeEach(resetLedger);
-const run = (r = 'p1') => userCtx({ ref: r, reason: 'setup' });
+const run = (r = 'p1') => setupCtx({ ref: r });
 
 describe.each(['v2', 'admin'] as const)('placeRoleGroups (%s layout)', (layout) => {
   it('records the protected groups it finds by exact name, never creating them', async () => {
@@ -192,8 +192,8 @@ describe.each(['v2', 'admin'] as const)('placeRoleGroups (%s layout)', (layout) 
   it('budgets creates in group_write', async () => {
     const h = setupCimd(layout, { names: true });
     h.pocket.s.missing.add('g-console');
-    await h.api.placeRoleGroups(run('b1'));
     h.pocket.s.missing.add('g-dev');
+    await h.api.placeRoleGroups(run('b1'));
     await h.api.placeRoleGroups(run('b2'));
     await expect(h.api.placeRoleGroups(run('b3'))).rejects.toMatchObject({ code: 'IDP_BUDGET' });
   });

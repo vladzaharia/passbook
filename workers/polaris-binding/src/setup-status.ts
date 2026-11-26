@@ -1,4 +1,5 @@
-import { parseClient, readProvider } from './client-dto.ts';
+import { callbacksOurs, parseClient, readProvider } from './client-dto.ts';
+import { aliasIds } from './group-find.ts';
 import { meta } from './ledger.ts';
 import { failure, ok } from './pocket-http.ts';
 import { assertTokenHashes, sha256Hex } from './policy.ts';
@@ -28,6 +29,7 @@ export function setupStatusApi(s: Shared): Pick<SetupRpc, 'setupStatus'> {
             found: false,
             cimd: false,
             ours: false,
+            callbacksOurs: false,
             restricted: false,
             missingRoles: [],
             otherGroups: 0,
@@ -41,17 +43,21 @@ export function setupStatusApi(s: Shared): Pick<SetupRpc, 'setupStatus'> {
         if (res.status === 404) return status;
         if (!ok(res)) throw failure(res);
         const c = parseClient(res.body);
+        const aliases = await aliasIds(r, req, registry.aliases);
         status.client = {
           found: true,
           cimd: c.clientType === 'cimd',
           ours: c.id === env.PASSBOOK_CLIENT_ID,
+          callbacksOurs: callbacksOurs(c, env.PASSBOOK_CLIENT_ID),
           restricted: c.restricted,
           missingRoles: [
             ...new Set(
               registry.entries.filter((e) => !c.allowed.includes(e.id)).map((e) => e.role),
             ),
           ],
-          otherGroups: c.allowed.filter((id) => !registry.allIds.includes(id)).length,
+          otherGroups: c.allowed.filter(
+            (id) => !registry.allIds.includes(id) && !aliases.includes(id),
+          ).length,
           logo: c.hasLogo,
           darkLogo: c.hasDarkLogo,
         };

@@ -1,33 +1,16 @@
 import { keyKind } from './claims.ts';
+import { assertNotFrozen } from './freeze.ts';
 import { createRoleGroup } from './group-create.ts';
-import { type GroupDto, parseGroup, unexpected } from './group-dto.ts';
+import { type GroupDto, parseGroup } from './group-dto.ts';
+import { exactHit } from './group-find.ts';
 import { failure, ok, type Req } from './pocket-http.ts';
-import { ID, type Registry } from './registry.ts';
+import type { Registry } from './registry.ts';
 import { setupRunner } from './setup-shell.ts';
 import type { PlaceResult, RolePlacement, RoleState, SetupRpc } from './setup-types.ts';
 import type { Shared } from './shared.ts';
 import { invalidateHealth } from './store.ts';
 import { recordRoleGroup } from './store-groups.ts';
-import { IdpError, type Role, WRITABLE_ROLES, type WritableRole } from './types.ts';
-
-/** Groups that exist in Polaris ID under an exact name. Names are unique there, so at most one. */
-async function exactHit(s: Shared, req: Req, name: string): Promise<string | null> {
-  const ids: string[] = [];
-  for (let page = 1; page <= 3; page++) {
-    const res = await req('GET', s.r.groupSearch(name, page));
-    if (!ok(res)) throw failure(res);
-    const data = (res.body as { data?: unknown } | null)?.data;
-    if (!Array.isArray(data)) throw unexpected();
-    for (const g of data as { id?: unknown; name?: unknown }[]) {
-      if (typeof g?.id !== 'string' || !ID.test(g.id) || typeof g.name !== 'string')
-        throw unexpected();
-      if (g.name === name) ids.push(g.id);
-    }
-    if (data.length < 100) break;
-  }
-  if (ids.length > 1) throw new IdpError('IDP_CONFLICT', 'The group name is not unique.');
-  return ids[0] ?? null;
-}
+import { type Role, WRITABLE_ROLES, type WritableRole } from './types.ts';
 
 /** A writable role's existing group may be adopted only when no other app trusts it. */
 export function adoptable(g: GroupDto, clientId: string): boolean {
@@ -58,7 +41,7 @@ export async function planRoles(s: Shared, req: Req, registry: Registry): Promis
   for (const e of registry.entries)
     set(e.role, base?.entries.some((b) => b.role === e.role) ? 'configured' : 'placed');
   for (const u of registry.unplaced) {
-    const id = await exactHit(s, req, u.name);
+    const id = await exactHit(s.r, req, u.name);
     if (id === null) {
       set(u.role, 'create');
       plan.create.push({ role: u.role, name: u.name, friendlyName: u.friendlyName });
@@ -72,7 +55,7 @@ export async function planRoles(s: Shared, req: Req, registry: Registry): Promis
     } else set(u.role, 'in_use');
   }
   for (const u of registry.unplacedProtected) {
-    const id = await exactHit(s, req, u.name);
+    const id = await exactHit(s.r, req, u.name);
     // A group the registry already has under another role is never recorded twice.
     if (id === null || registry.allIds.includes(id)) {
       set(u.role, id === null ? 'missing' : 'placed');
@@ -106,7 +89,7 @@ export function setupGroupsApi(s: Shared): Pick<SetupRpc, 'placeRoleGroups'> {
       run(
         { method: 'placeRoleGroups', delta: 'place', lease: 'setup:groups', bucket: 'group_write' },
         ctx,
-        async ({ req, dry, registry, note, ref }): Promise<PlaceResult> => {
+        async ({ req, dry, registry, note, ref, m }): Promise<PlaceResult> => {
           const plan = await planRoles(s, req, registry);
           const roles: Record<string, RolePlacement> = {};
           for (const [role, state] of Object.entries(plan.roles)) {
@@ -120,6 +103,8 @@ export function setupGroupsApi(s: Shared): Pick<SetupRpc, 'placeRoleGroups'> {
             await note();
             return { roles, dryRun: true };
           }
+          // The records below are D1 writes the request-level freeze check does not see.
+          await assertNotFrozen(db, m, deps.now());
           for (const g of plan.record)
             await recordRoleGroup(db, {
               key: g.protected ? `${g.role}:${g.name}` : g.role,

@@ -1,7 +1,7 @@
 import { ctxMeta, type Meta, meta, noteCall } from './ledger.ts';
 import { withLock } from './lock.ts';
 import type { Req } from './pocket-http.ts';
-import { assertCtx } from './policy.ts';
+import { assertCtx, refuse } from './policy.ts';
 import type { Registry, Settings } from './registry.ts';
 import type { Shared } from './shared.ts';
 import type { Bucket } from './types.ts';
@@ -34,7 +34,12 @@ export function setupRunner(s: Shared) {
     ctx: unknown,
     fn: (x: Run) => Promise<T>,
   ): Promise<T> {
-    const c = await s.call.guard(meta(o.method), () => assertCtx(ctx));
+    const c = await s.call.guard(meta(o.method), () => {
+      // `WRITE_MODE` does not guard these, so a caller that forgot the flag must not get a live write.
+      if (typeof (ctx as { dryRun?: unknown } | null)?.dryRun !== 'boolean')
+        refuse('Setup needs dryRun true or false.');
+      return assertCtx(ctx);
+    });
     const m = ctxMeta(o.method, c, { delta: o.delta });
     const { registry, settings } = await s.gate.requireSetup(m);
     await s.call.guard(m, () => o.check?.(registry));
