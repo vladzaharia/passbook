@@ -154,6 +154,13 @@ export function setupMethods(env: SetupEnv): Methods {
           callbacksOurs: c.callbacksOurs,
           restricted: c.restricted,
           missingRoles: placed().filter((r) => !c.allowed.has(r)),
+          aliases: [
+            {
+              name: 'wallet_org_admins',
+              exists: setup.alias.exists,
+              allowed: setup.alias.exists && c.allowed.has(ALIAS),
+            },
+          ],
           otherGroups: [...c.allowed].filter((g) => g.startsWith('other:')).length,
           logo: c.logo,
           darkLogo: c.darkLogo,

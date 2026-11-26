@@ -21,6 +21,8 @@ export interface SetupStatus {
     restricted: boolean;
     /** Placed roles whose group the client does not allow. */
     missingRoles: string[];
+    /** Each alias group the main Worker's sign-in accepts: whether it exists and the client allows it. Never written. */
+    aliases: { name: string; exists: boolean; allowed: boolean }[];
     /** Allowed groups that are not PassBook's. PassBook never removes them. */
     otherGroups: number;
     logo: boolean;

@@ -1,5 +1,5 @@
 import { callbacksOurs, parseClient, readProvider } from './client-dto.ts';
-import { aliasIds } from './group-find.ts';
+import { aliasIds, aliasStates } from './group-find.ts';
 import { meta } from './ledger.ts';
 import { failure, ok } from './pocket-http.ts';
 import { assertTokenHashes, sha256Hex } from './policy.ts';
@@ -32,6 +32,7 @@ export function setupStatusApi(s: Shared): Pick<SetupRpc, 'setupStatus'> {
             callbacksOurs: false,
             restricted: false,
             missingRoles: [],
+            aliases: [],
             otherGroups: 0,
             logo: false,
             darkLogo: false,
@@ -55,6 +56,7 @@ export function setupStatusApi(s: Shared): Pick<SetupRpc, 'setupStatus'> {
               registry.entries.filter((e) => !c.allowed.includes(e.id)).map((e) => e.role),
             ),
           ],
+          aliases: await aliasStates(r, req, registry.aliases, c.allowed),
           otherGroups: c.allowed.filter(
             (id) => !registry.allIds.includes(id) && !aliases.includes(id),
           ).length,

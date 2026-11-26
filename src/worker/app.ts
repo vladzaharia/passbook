@@ -29,6 +29,7 @@ import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims
 import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
 import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
 import { idpPlatformRoutes } from './modules/idp/routes-platform.ts';
+import { idpSetupRoutes } from './modules/idp/routes-setup.ts';
 import { userAccessRoutes } from './modules/idp/routes-users.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
@@ -209,6 +210,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
   // Polaris ID routes are person-only (`{ platform }` with no `key`): a key is refused with PERSON_REQUIRED. PK-2a converts them.
   app.route('/api/v1/platform', idpOperationRoutes);
+  app.route('/api/v1/platform', idpSetupRoutes);
   app.route('/api/v1/platform', idpPlatformRoutes);
   app.route('/api/v1/platform', idpGroupsRoutes);
   app.route('/api/v1/platform', platformInvitationRoutes);

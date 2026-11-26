@@ -10,20 +10,16 @@ Use to turn on `OIDC_CONSOLE_GROUP_REQUIRED` (default `"false"`). Afterwards, co
 
 ## Prerequisites
 
-- Polaris ID admin access.
+- Polaris ID admin access and a finished Set up.
 - The console group name used by `OIDC_ADMIN_GROUP` (`wallet_org_admins`, display name `wallet-org-admins`, or `passbook_console` after [[Polaris ID Group Rename]]).
 
-## 1. Create the group and add everyone
+## 1. Set up and drain
 
-In Polaris ID create the console group and add everyone who uses an org console, including every current org member.
+Settings, Polaris ID, Set up creates the console group and allows it on the client ([[Polaris Binding Turn On]]). Then add everyone who uses an org console to it, including every current org member, by inviting or granting through PassBook; wait until the card shows no members owed.
 
-## 2. Allow it on the client
+## 2. Switch it on
 
-Add the group to the PassBook client's allowed groups in Polaris ID.
-
-## 3. Switch it on
-
-Set `OIDC_CONSOLE_GROUP_REQUIRED` to `"true"` in `wrangler.jsonc`, commit, then [[Deploy]].
+When the card reads ready, an agent PR sets `OIDC_CONSOLE_GROUP_REQUIRED` to `"true"` in `wrangler.jsonc`; merge it and CI deploys.
 
 Sessions made before the change lack the role until the next sign-in: members sign out and in.
 

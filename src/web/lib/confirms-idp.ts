@@ -121,3 +121,24 @@ export function offboardConfirm(name: string): ConfirmCopy & { word: string } {
     word: name.length <= 24 ? name : 'offboard',
   };
 }
+
+/** The live set-up: every step is safe to repeat and only tightens PassBook's own app. */
+export function applySetupConfirm(): ConfirmCopy {
+  return {
+    title: 'Set up Polaris ID?',
+    confirmLabel: 'Apply',
+    description:
+      'Places groups, restricts the PassBook app and connects SCIM. Preview shows each step.',
+    typed: false,
+  };
+}
+
+/** Polaris ID gets the new token before PassBook switches, so the feed never stops. */
+export function rotateScimConfirm(): ConfirmCopy {
+  return {
+    title: 'Rotate the SCIM token?',
+    confirmLabel: 'Rotate',
+    description: 'Polaris ID gets a new token and the old one stops working.',
+    typed: false,
+  };
+}
