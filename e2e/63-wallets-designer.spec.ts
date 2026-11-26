@@ -185,8 +185,11 @@ test('Pass mode panes use the shared report and open the tab', async ({ page }) 
         await page.setViewportSize({ width, height });
         await page.emulateMedia({ colorScheme: scheme });
         await page.goto(design());
+        await page.waitForLoadState('networkidle');
         await page.getByRole('radio', { name: 'Samsung', exact: true }).click();
         await expect(page.getByTestId('samsung-report')).toBeVisible();
+        await page.waitForTimeout(800);
+        await expect(page.getByRole('radio', { name: 'Samsung', exact: true })).toBeChecked();
         await page.screenshot({
           path: `${dir}/wallets-pass-pane-${width}-${scheme}.png`,
           fullPage: true,
