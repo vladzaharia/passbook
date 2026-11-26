@@ -100,11 +100,12 @@ export function groupColumns({
               <Button
                 size="sm"
                 variant="outline"
+                aria-label="Create in Polaris ID"
                 loading={creating === g.key}
                 iconStart={<Cloud aria-hidden />}
                 onClick={() => onCreate(g)}
               >
-                Create in Polaris ID
+                Create<span className="max-sm:hidden"> in Polaris ID</span>
               </Button>
             </div>
           );
