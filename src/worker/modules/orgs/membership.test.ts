@@ -621,7 +621,13 @@ describe('organization memberships', () => {
     const ctx = createServiceContext(env, { clock });
     const grants: Record<OrgRole, OrgCapability[]> = {
       org_admin: [...OrgCapabilitySchema.options],
-      integration_admin: ['org:read', 'integrations:read', 'integrations:manage', 'templates:read'],
+      integration_admin: [
+        'org:read',
+        'integrations:read',
+        'integrations:manage',
+        'templates:read',
+        'logs:read',
+      ],
       template_author: ['org:read', 'templates:read', 'templates:author'],
       template_reviewer: ['org:read', 'templates:read', 'templates:review'],
       template_publisher: ['org:read', 'templates:read', 'templates:publish'],
@@ -643,6 +649,7 @@ describe('organization memberships', () => {
         'messages:read',
         'scanning:read',
         'audit:read',
+        'logs:read',
       ],
     };
     await join(org.id, await makeUser(f), ['org_admin']);
