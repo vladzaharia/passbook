@@ -458,7 +458,7 @@ migrates, and again before it serves for as long as any wallet is released. It r
 pending migrations. It migrates before it serves, and both sides must say `released`, so every step in between
 is dark.
 
-**After the flip**, turn on the orgs that set up before it (a recent sign-in is required):
+**After the flip**, turn on the orgs that set up before it (a recent sign-in is required). The Release card on Platform > Wallet accounts runs the dry run and the apply with exactly this list; the route is:
 `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that were never
 On and would turn On (plan, source, fresh check, Live round trip, no hold, channel not blocked). An enrolment the
 org switched Off (`org_off`) or a released hold cleared (`hold_released`) stays Off: only the org turns it back

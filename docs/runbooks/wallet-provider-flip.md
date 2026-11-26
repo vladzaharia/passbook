@@ -1,87 +1,68 @@
 ---
 tags: runbook, wallet, google, samsung, release, production
 confirm: true
-profile: passbook-owner
-env:
-  PASSBOOK_ORIGIN: https://passbook.mobile
 ---
 # Wallet Provider Flip
 
 Owner only. Agents never run `--remote` or deploy. Releases Google or Samsung in one mode (Test before Live), turns on the orgs that set up before the flip, and rolls back through `draining`. Background: "Wallet release" in [operations](../operations.md).
 
+The platform state is read and applied in the browser, on the Release card of Platform > Wallet accounts (the Google and Samsung tabs). The enable-ready routes need a recent Polaris ID sign-in, which the card asks for itself, so no session cookie or token goes into a profile or a command. The blocks below are the deploy gate and CI.
+
 ## Prerequisites
 
-Profile `passbook-owner` defines `PASSBOOK_SESSION_COOKIE`: the `Cookie` header value of a platform admin session that signed in within the last 10 minutes (enable-ready needs that step-up), and `PASSBOOK_CSRF`: the session's `x-csrf-token`. Both stay out of the command line: they go to curl on stdin.
+- You are signed in to PassBook as a platform admin.
+- `gh` is signed in to the repository (for step 3).
+- The repository root is a Ledge workspace.
 
-## Parameters
+## 1. Read the Release card
 
-```sh name=set-params confirm=no
-export PROVIDER="${PROVIDER:-google}" && export MODE="${MODE:-test}" && export ORG_IDS="${ORG_IDS:-}"
-```
+Open <https://passbook.mobile/admin/platform/wallet-accounts>, pick the Google or Samsung tab and read the card for the mode you will flip. Before the flip PR merges:
 
-`ORG_IDS` is the JSON array of org ids the dry run lists, for example `["019e..."]`. Set it after step 2.
+- The mode reads Dark, and its credential shows a passing check.
+- No organization is blocked as `Legacy account with no source`: a deploy refuses while one exists.
+- The organizations you expect are Issuing or Ready, and each Blocked one has a reason you accept.
+- Templates show nothing Awaiting review that you meant to ship.
+- Wallet copies Open is 0 for any mode that goes dark.
 
-## 1. Read the readiness report
+## 2. The flip PR and the deploy gate
 
-Lists each provider and mode with its release state, the credentials, and every enrolment graded. Before the flip PR merges you want a platform credential with a passing check, no `legacy` enrolment, the intended orgs `issuing` or `ready`, and `instances.open` at 0 for any mode that goes dark.
+The flip is one cell of `RELEASE` and one migration with the single canonical UPDATE (see operations). It merges like any PR and CI deploys it. The card never flips it. Check the placeholders first, then read the plan.
 
-```sh name=read-readiness confirm=no
-: "${PASSBOOK_SESSION_COOKIE:?profile passbook-owner must define it}" &&
-curl -fsS -K - "$PASSBOOK_ORIGIN/api/v1/platform/wallet-release" <<EOT
-header = "Cookie: $PASSBOOK_SESSION_COOKIE"
-EOT
-```
+`deploy:check --secrets` reads Cloudflare (`wrangler secret list`, read-only) without asking, so it carries its own confirm.
 
-## 2. The flip PR and the deploy
-
-The flip is one cell of `RELEASE` and one migration with the single canonical `UPDATE` (see operations). It merges like any PR and CI deploys it. Check the placeholders first, then read the plan; the deploy prints `Wallet release: <provider> <mode> -> released` and runs the wallet migration gate before it migrates.
-
-```sh name=deploy-check confirm=no
+```sh name=deploy-check confirm="Read the Worker secret list from Cloudflare (read-only)?"
 npm run deploy:check -- --secrets
 ```
 
+The plan is the dry run of a full deploy: upload, bookmark, migrate, promote. It changes nothing.
+
 ```sh name=deploy-plan confirm=no
-npm run deploy -- --promote
+npm run deploy
 ```
 
-Apply the deploy only through [[Deploy]] or the automatic deploy; this note never applies it.
+The `Wallet release: <provider> <mode> -> released` line, and the wallet migration gate that runs before the migration, appear in the CI deploy log of the flip commit, not in this plan. Apply the deploy only through [[Deploy]] or the automatic deploy; this note never applies it.
 
-## 3. Enable ready: dry run
+## 3. Wait for the deploy
 
-After the flip, lists the Off enrolments that were never On and would turn On. An enrolment the org switched Off (`org_off`) or a released hold cleared (`hold_released`) is not listed. Review it, then copy the org ids into `ORG_IDS`.
+Finds the deploy run of the flip commit. It must end successful before step 4.
 
-```sh name=enable-ready-dry-run confirm=no
-: "${PASSBOOK_SESSION_COOKIE:?profile passbook-owner must define it}" &&
-curl -fsS -X POST -K - -H 'content-type: application/json' --data '{"apply": false}' "$PASSBOOK_ORIGIN/api/v1/platform/wallet-release/$PROVIDER/$MODE/enable-ready" <<EOT
-header = "Cookie: $PASSBOOK_SESSION_COOKIE"
-header = "x-csrf-token: $PASSBOOK_CSRF"
-EOT
+```sh name=deploy-runs confirm=no
+gh run list --workflow deploy.yml --branch main --limit 3
 ```
 
-## 4. Enable ready: apply
+## 4. Enable ready, in the card
 
-Turns on exactly the listed orgs, each with its own audit row. It is refused with 409 `WALLET_RELEASE_READY_CHANGED` when the list changed since the dry run, and while the mode is not released.
+After the flip, the mode reads Released. On the same card:
 
-Writes go in batches of 20. If a batch fails, the earlier batches stay committed. The same request then gets 409, because the ready set shrank: that is expected. Run step 3 again, which lists only what is still Off, put the new list in `ORG_IDS` and apply again. Repeat until the dry run is empty.
-
-```sh name=enable-ready-apply confirm="Turn on every org in ORG_IDS for $PROVIDER in $MODE, platform-wide?"
-: "${ORG_IDS:?run enable-ready-dry-run and set ORG_IDS}" &&
-curl -fsS -X POST -K - -H 'content-type: application/json' --data "{\"apply\": true, \"orgIds\": $ORG_IDS}" "$PASSBOOK_ORIGIN/api/v1/platform/wallet-release/$PROVIDER/$MODE/enable-ready" <<EOT
-header = "Cookie: $PASSBOOK_SESSION_COOKIE"
-header = "x-csrf-token: $PASSBOOK_CSRF"
-EOT
-```
+1. Run dry run. It lists the Off enrolments that were never On and would turn On. An organization that switched itself Off (`Organization turned it Off`) or whose hold was released is not listed; only that organization turns it back On. Confirm the list is the one you expect.
+2. Apply, then Turn on. The card sends exactly the listed organizations and each gets its own audit row. If it asks you to confirm it is you, sign in again and click again.
+3. If the card says the ready list changed, it names who was added or dropped. Read that, then Run the dry run again and apply the new list.
+4. Writes go in batches of 20. If an apply fails part way, the earlier batches stay On. Run the dry run again: it lists only what is still Off. Repeat until it says nothing is ready.
 
 ## 5. Verify
 
-The report must show the mode `released`, the intended orgs `issuing` and nothing left `ready`.
-
-```sh name=verify-readiness confirm=no
-curl -fsS -K - "$PASSBOOK_ORIGIN/api/v1/platform/wallet-release" <<EOT
-header = "Cookie: $PASSBOOK_SESSION_COOKIE"
-EOT
-```
+On the card the mode reads Released, the intended organizations are Issuing, and Ready is 0. Check Wallet copies and the check pill once more.
 
 ## Rollback
 
-Rollback is `draining`, never straight to `dark`: the same one-cell PR and one-statement migration with `state = 'draining'`. Back to dark only once `instances.open` is 0. See [[Wallet Provider Flip Rollback]].
+Rollback is draining, never straight to dark: the same one-cell PR and one-statement migration with `state = 'draining'`. Back to dark only once Wallet copies Open is 0. See [[Wallet Provider Flip Rollback]].

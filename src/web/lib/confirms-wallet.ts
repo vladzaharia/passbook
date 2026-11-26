@@ -78,3 +78,13 @@ export function holdConfirm(name: string): ConfirmCopy {
     typed: false,
   };
 }
+
+/** Enable-ready: every listed organization's Off account turns On, each under its own audit row. */
+export function enableReadyConfirm(wallet: string, mode: string, count: number): ConfirmCopy {
+  return {
+    title: `Turn on ${count} ${count === 1 ? 'account' : 'accounts'}?`,
+    confirmLabel: 'Turn on',
+    description: `${wallet} ${mode} starts issuing for exactly the listed organizations.`,
+    typed: false,
+  };
+}
