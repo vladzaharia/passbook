@@ -2,7 +2,7 @@ import { ArrowRight, Check, Copy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { useOperation, useOperationParam } from '../../ui/operation/index.ts';
+import { useClaimOperation, useOperation, useOperationParam } from '../../ui/operation/index.ts';
 import { mintKey } from '../console/sandbox-actions.ts';
 import { copyToClipboard } from '../playground/copy.ts';
 import { SandboxOperations } from '../ui/sandbox-operation.tsx';
@@ -143,10 +143,11 @@ function ShowKey({ q }: { q: Quickstart }) {
 
 function Body({ q, state, onNext }: { q: Quickstart; state: StepState; onNext: () => void }) {
   const { session, sandbox, secret, templateId, home } = q;
-  // Its own param, not the tray's `op`: a reload would open the same operation in the tray's sheet over this panel.
-  const [opId, setOpId] = useOperationParam('sandbox-op');
+  const [opId, setOpId] = useOperationParam();
+  // The panel owns `?op` while it shows: the tray opens no sheet for an id this page claimed.
+  useClaimOperation(opId);
   const { operation } = useOperation(opId);
-  // The operation `?sandbox-op=` names: a create shows here, a delete or start over in the confirm below.
+  // The operation `?op=` names: a create shows here, a delete or start over in the confirm below.
   const making = opId && (!operation || operation.kind === 'sandbox.create') ? opId : null;
   const managing =
     opId && operation && operation.kind !== 'sandbox.create' && operation.kind !== 'sandbox.reset'

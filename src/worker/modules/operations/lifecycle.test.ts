@@ -76,7 +76,7 @@ describe('cancel', () => {
     const op = await start();
     const res = await post(`/${op.id}/cancel`, auth.admin());
     expect(res.status).toBe(200);
-    const stopped = (await res.json()) as OperationDto;
+    const stopped = ((await res.json()) as { operation: OperationDto }).operation;
     expect(stopped).toMatchObject({ status: 'cancelled', text: 'Stopped' });
     expect(stopped.steps.every((s) => s.state === 'skipped')).toBe(true);
     expect(mocks.cancel).toHaveBeenCalledOnce();
@@ -135,15 +135,16 @@ describe('retry', () => {
   it('reruns a failed operation under the same id with the next attempt', async () => {
     const op = await failed();
     const res = await post(`/${op.id}/retry`, { ...auth.admin(), 'idempotency-key': 'k1' });
-    expect(res.status).toBe(200);
-    const next = (await res.json()) as OperationDto;
+    expect(res.status).toBe(202);
+    expect(res.headers.get('location')).toBe(`/api/v1/operations/${op.id}`);
+    const next = ((await res.json()) as { operation: OperationDto }).operation;
     expect(next).toMatchObject({ id: op.id, attempt: 2, status: 'queued', error: null });
     expect(next.steps.map((s) => s.state)).toEqual(['done', 'pending', 'pending']);
     expect(mocks.relaunch).toHaveBeenCalledOnce();
     // The same key again answers the retried operation and runs nothing.
     const replay = await post(`/${op.id}/retry`, { ...auth.admin(), 'idempotency-key': 'k1' });
-    expect(replay.status).toBe(200);
-    expect(((await replay.json()) as OperationDto).attempt).toBe(2);
+    expect(replay.status).toBe(202);
+    expect(((await replay.json()) as { operation: OperationDto }).operation.attempt).toBe(2);
     expect(mocks.relaunch).toHaveBeenCalledOnce();
     // Another key is another request: the operation has not failed again, so it is refused.
     const other = await post(`/${op.id}/retry`, { ...auth.admin(), 'idempotency-key': 'k2' });

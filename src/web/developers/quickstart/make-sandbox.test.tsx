@@ -99,10 +99,8 @@ describe('Create sandbox', () => {
     const fetchMock = api({
       'POST /developer/sandbox': json(202, { operation: adding }),
       'GET /operations/op-c': json(200, failed),
-      'POST /operations/op-c/retry': json(200, {
-        ...adding,
-        attempt: 2,
-        text: 'Adding the capture endpoint',
+      'POST /operations/op-c/retry': json(202, {
+        operation: { ...adding, attempt: 2, text: 'Adding the capture endpoint' },
       }),
     });
     render(<Host onMade={vi.fn()} />);

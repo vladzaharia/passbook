@@ -1120,7 +1120,7 @@ func (r *OperationsResource) Retrieve(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
-// Retry Retry a failed operation under the same id with the next attempt `POST /api/v1/operations/{id}/retry`
+// Retry Retry a failed operation under the same id with the next attempt. Answers 202 with the operation. `POST /api/v1/operations/{id}/retry`
 func (r *OperationsResource) Retry(ctx context.Context, id string, opts ...RequestOption) (*OperationsRetryResult, error) {
 	var out OperationsRetryResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/operations/" + pathEscape(id) + "/retry", idempotent: true}, &out, opts); err != nil {

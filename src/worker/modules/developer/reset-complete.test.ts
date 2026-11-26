@@ -159,7 +159,7 @@ const readOp = async (id: string) =>
 /** A failed reset's retry as the page asks for it: the route, then the job it queued. */
 async function retry(headers: Record<string, string>, op: OperationDto) {
   const res = await t.call(`/operations/${op.id}/retry`, { method: 'POST', headers });
-  expect(res.status, await res.clone().text()).toBe(200);
+  expect(res.status, await res.clone().text()).toBe(202);
   await handleOperationRun(
     { kind: 'operation.run', operationId: op.id, attempt: op.attempt + 1 },
     createJobContext(t.kit.env, 'test', { clock: t.kit.clock }),

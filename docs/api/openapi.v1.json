@@ -35215,233 +35215,70 @@
       "OperationsCancelResponse": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "kind": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "queued",
-              "running",
-              "waiting",
-              "succeeded",
-              "failed",
-              "cancelled"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "orgId": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "mode": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "live",
-              "test",
-              null
-            ]
-          },
-          "target": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "type": {
-                "type": "string"
-              },
-              "id": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "type",
-              "id"
-            ]
-          },
-          "step": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "steps": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "key": {
-                  "type": "string"
-                },
-                "label": {
-                  "type": "string"
-                },
-                "state": {
-                  "type": "string",
-                  "enum": [
-                    "pending",
-                    "running",
-                    "waiting",
-                    "done",
-                    "failed",
-                    "skipped"
-                  ]
-                },
-                "done": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
-                "total": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
-                "detail": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "until": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0
-                },
-                "waitingReason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "blocked",
-                    "due",
-                    null
-                  ]
-                },
-                "group": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "startedAt": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0
-                },
-                "finishedAt": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "key",
-                "label",
-                "state",
-                "done",
-                "total",
-                "detail",
-                "until",
-                "waitingReason",
-                "group",
-                "startedAt",
-                "finishedAt"
-              ]
-            }
-          },
-          "attempt": {
-            "type": "integer"
-          },
-          "cancelable": {
-            "type": "boolean"
-          },
-          "cancelRequested": {
-            "type": "boolean"
-          },
-          "startedBy": {
+          "operation": {
             "type": "object",
             "properties": {
-              "type": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "kind": {
+                "type": "string"
+              },
+              "status": {
                 "type": "string",
                 "enum": [
-                  "user",
-                  "api_key",
-                  "system"
+                  "queued",
+                  "running",
+                  "waiting",
+                  "succeeded",
+                  "failed",
+                  "cancelled"
                 ]
               },
-              "id": {
+              "title": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "orgId": {
                 "type": [
                   "string",
                   "null"
-                ]
-              }
-            },
-            "required": [
-              "type",
-              "id"
-            ]
-          },
-          "createdAt": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "startedAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "updatedAt": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "finishedAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "error": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "code": {
-                "type": "string"
+                ],
+                "minLength": 1,
+                "maxLength": 64
               },
-              "message": {
-                "type": "string"
+              "mode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "live",
+                  "test",
+                  null
+                ]
+              },
+              "target": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
               },
               "step": {
                 "type": [
@@ -35449,306 +35286,314 @@
                   "null"
                 ]
               },
-              "retryable": {
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "waiting",
+                        "done",
+                        "failed",
+                        "skipped"
+                      ]
+                    },
+                    "done": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "total": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "detail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "until": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "waitingReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "blocked",
+                        "due",
+                        null
+                      ]
+                    },
+                    "group": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "state",
+                    "done",
+                    "total",
+                    "detail",
+                    "until",
+                    "waitingReason",
+                    "group",
+                    "startedAt",
+                    "finishedAt"
+                  ]
+                }
+              },
+              "attempt": {
+                "type": "integer"
+              },
+              "cancelable": {
                 "type": "boolean"
-              }
-            },
-            "required": [
-              "code",
-              "message",
-              "step",
-              "retryable"
-            ]
-          },
-          "result": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "href": {
+              },
+              "cancelRequested": {
+                "type": "boolean"
+              },
+              "startedBy": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "api_key",
+                      "system"
+                    ]
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "createdAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "startedAt": {
                 "type": [
-                  "string",
+                  "integer",
                   "null"
                 ],
-                "maxLength": 300
+                "minimum": 0
               },
-              "ids": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string",
-                  "maxLength": 80,
-                  "pattern": "^[A-Za-z0-9_.:-]+$"
-                }
+              "updatedAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finishedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "step": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "step",
+                  "retryable"
+                ]
+              },
+              "result": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 300
+                  },
+                  "ids": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 80,
+                      "pattern": "^[A-Za-z0-9_.:-]+$"
+                    }
+                  }
+                },
+                "required": [
+                  "href",
+                  "ids"
+                ]
+              },
+              "revision": {
+                "type": "integer"
+              },
+              "pollAfterMs": {
+                "type": "integer"
               }
             },
             "required": [
-              "href",
-              "ids"
+              "id",
+              "kind",
+              "status",
+              "title",
+              "text",
+              "orgId",
+              "mode",
+              "target",
+              "step",
+              "steps",
+              "attempt",
+              "cancelable",
+              "cancelRequested",
+              "startedBy",
+              "createdAt",
+              "startedAt",
+              "updatedAt",
+              "finishedAt",
+              "error",
+              "result",
+              "revision",
+              "pollAfterMs"
             ]
-          },
-          "revision": {
-            "type": "integer"
-          },
-          "pollAfterMs": {
-            "type": "integer"
           }
         },
         "required": [
-          "id",
-          "kind",
-          "status",
-          "title",
-          "text",
-          "orgId",
-          "mode",
-          "target",
-          "step",
-          "steps",
-          "attempt",
-          "cancelable",
-          "cancelRequested",
-          "startedBy",
-          "createdAt",
-          "startedAt",
-          "updatedAt",
-          "finishedAt",
-          "error",
-          "result",
-          "revision",
-          "pollAfterMs"
+          "operation"
         ]
       },
       "OperationsRetryResponse": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "kind": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "queued",
-              "running",
-              "waiting",
-              "succeeded",
-              "failed",
-              "cancelled"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "orgId": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "mode": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "live",
-              "test",
-              null
-            ]
-          },
-          "target": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "type": {
-                "type": "string"
-              },
-              "id": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "type",
-              "id"
-            ]
-          },
-          "step": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "steps": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "key": {
-                  "type": "string"
-                },
-                "label": {
-                  "type": "string"
-                },
-                "state": {
-                  "type": "string",
-                  "enum": [
-                    "pending",
-                    "running",
-                    "waiting",
-                    "done",
-                    "failed",
-                    "skipped"
-                  ]
-                },
-                "done": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
-                "total": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
-                "detail": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "until": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0
-                },
-                "waitingReason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "blocked",
-                    "due",
-                    null
-                  ]
-                },
-                "group": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "startedAt": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0
-                },
-                "finishedAt": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "key",
-                "label",
-                "state",
-                "done",
-                "total",
-                "detail",
-                "until",
-                "waitingReason",
-                "group",
-                "startedAt",
-                "finishedAt"
-              ]
-            }
-          },
-          "attempt": {
-            "type": "integer"
-          },
-          "cancelable": {
-            "type": "boolean"
-          },
-          "cancelRequested": {
-            "type": "boolean"
-          },
-          "startedBy": {
+          "operation": {
             "type": "object",
             "properties": {
-              "type": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "kind": {
+                "type": "string"
+              },
+              "status": {
                 "type": "string",
                 "enum": [
-                  "user",
-                  "api_key",
-                  "system"
+                  "queued",
+                  "running",
+                  "waiting",
+                  "succeeded",
+                  "failed",
+                  "cancelled"
                 ]
               },
-              "id": {
+              "title": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "orgId": {
                 "type": [
                   "string",
                   "null"
-                ]
-              }
-            },
-            "required": [
-              "type",
-              "id"
-            ]
-          },
-          "createdAt": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "startedAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "updatedAt": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "finishedAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "error": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "code": {
-                "type": "string"
+                ],
+                "minLength": 1,
+                "maxLength": 64
               },
-              "message": {
-                "type": "string"
+              "mode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "live",
+                  "test",
+                  null
+                ]
+              },
+              "target": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
               },
               "step": {
                 "type": [
@@ -35756,74 +35601,245 @@
                   "null"
                 ]
               },
-              "retryable": {
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "waiting",
+                        "done",
+                        "failed",
+                        "skipped"
+                      ]
+                    },
+                    "done": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "total": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "detail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "until": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "waitingReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "blocked",
+                        "due",
+                        null
+                      ]
+                    },
+                    "group": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "state",
+                    "done",
+                    "total",
+                    "detail",
+                    "until",
+                    "waitingReason",
+                    "group",
+                    "startedAt",
+                    "finishedAt"
+                  ]
+                }
+              },
+              "attempt": {
+                "type": "integer"
+              },
+              "cancelable": {
                 "type": "boolean"
-              }
-            },
-            "required": [
-              "code",
-              "message",
-              "step",
-              "retryable"
-            ]
-          },
-          "result": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "href": {
+              },
+              "cancelRequested": {
+                "type": "boolean"
+              },
+              "startedBy": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "api_key",
+                      "system"
+                    ]
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "createdAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "startedAt": {
                 "type": [
-                  "string",
+                  "integer",
                   "null"
                 ],
-                "maxLength": 300
+                "minimum": 0
               },
-              "ids": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string",
-                  "maxLength": 80,
-                  "pattern": "^[A-Za-z0-9_.:-]+$"
-                }
+              "updatedAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finishedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "step": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "step",
+                  "retryable"
+                ]
+              },
+              "result": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 300
+                  },
+                  "ids": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 80,
+                      "pattern": "^[A-Za-z0-9_.:-]+$"
+                    }
+                  }
+                },
+                "required": [
+                  "href",
+                  "ids"
+                ]
+              },
+              "revision": {
+                "type": "integer"
+              },
+              "pollAfterMs": {
+                "type": "integer"
               }
             },
             "required": [
-              "href",
-              "ids"
+              "id",
+              "kind",
+              "status",
+              "title",
+              "text",
+              "orgId",
+              "mode",
+              "target",
+              "step",
+              "steps",
+              "attempt",
+              "cancelable",
+              "cancelRequested",
+              "startedBy",
+              "createdAt",
+              "startedAt",
+              "updatedAt",
+              "finishedAt",
+              "error",
+              "result",
+              "revision",
+              "pollAfterMs"
             ]
-          },
-          "revision": {
-            "type": "integer"
-          },
-          "pollAfterMs": {
-            "type": "integer"
           }
         },
         "required": [
-          "id",
-          "kind",
-          "status",
-          "title",
-          "text",
-          "orgId",
-          "mode",
-          "target",
-          "step",
-          "steps",
-          "attempt",
-          "cancelable",
-          "cancelRequested",
-          "startedBy",
-          "createdAt",
-          "startedAt",
-          "updatedAt",
-          "finishedAt",
-          "error",
-          "result",
-          "revision",
-          "pollAfterMs"
+          "operation"
         ]
       },
       "PassesCreateParams": {
@@ -84803,7 +84819,7 @@
         },
         "x-sdk": {
           "resource": "developer.sandbox",
-          "method": "mintKey",
+          "method": "reveal",
           "sdk": false,
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
@@ -105066,53 +105082,55 @@
                   "$ref": "#/components/schemas/OperationsCancelResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-cb8398d01ce2",
-                  "kind": "bulk.run",
-                  "status": "succeeded",
-                  "title": "Delete sandbox",
-                  "text": "Removing Test passes · 4 of 12",
-                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "mode": "live",
-                  "target": {
-                    "type": "generic",
-                    "id": "0193a1b2-7c00-7000-8000-696c742e8471"
-                  },
-                  "step": "mapping",
-                  "steps": [
-                    {
-                      "key": "tier",
-                      "label": "Remove Test passes",
-                      "state": "done",
-                      "done": 39,
-                      "total": 128,
-                      "detail": "Waiting for Apple",
-                      "until": 1795572600000,
-                      "waitingReason": "due",
-                      "group": "Access",
-                      "startedAt": 1794362400000,
-                      "finishedAt": 1795570500000
-                    }
-                  ],
-                  "attempt": 1,
-                  "cancelable": true,
-                  "cancelRequested": true,
-                  "startedBy": {
-                    "type": "user",
-                    "id": "0193a1b2-7c00-7000-8000-000000000011"
-                  },
-                  "createdAt": 1794362400000,
-                  "startedAt": 1794362400000,
-                  "updatedAt": 1795399200000,
-                  "finishedAt": 1795570500000,
-                  "error": null,
-                  "result": {
-                    "href": "/admin/passes",
-                    "ids": {
-                      "tier": "northwind"
-                    }
-                  },
-                  "revision": 3,
-                  "pollAfterMs": 1471
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-5fb420e31bab",
+                    "kind": "bulk.run",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-33cc03362941"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "/admin/passes",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -105253,7 +105271,7 @@
             "session": []
           }
         ],
-        "summary": "Retry a failed operation under the same id with the next attempt",
+        "summary": "Retry a failed operation under the same id with the next attempt. Answers 202 with the operation.",
         "tags": [
           "operations"
         ],
@@ -105273,7 +105291,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "202": {
             "description": "Success",
             "content": {
               "application/json": {
@@ -105281,53 +105299,55 @@
                   "$ref": "#/components/schemas/OperationsRetryResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-b0ad56dbc5b4",
-                  "kind": "bulk.run",
-                  "status": "succeeded",
-                  "title": "Delete sandbox",
-                  "text": "Removing Test passes · 4 of 12",
-                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "mode": "live",
-                  "target": {
-                    "type": "generic",
-                    "id": "0193a1b2-7c00-7000-8000-4ec68f100a84"
-                  },
-                  "step": "mapping",
-                  "steps": [
-                    {
-                      "key": "tier",
-                      "label": "Remove Test passes",
-                      "state": "done",
-                      "done": 39,
-                      "total": 128,
-                      "detail": "Waiting for Apple",
-                      "until": 1795572600000,
-                      "waitingReason": "due",
-                      "group": "Access",
-                      "startedAt": 1794362400000,
-                      "finishedAt": 1795570500000
-                    }
-                  ],
-                  "attempt": 1,
-                  "cancelable": true,
-                  "cancelRequested": true,
-                  "startedBy": {
-                    "type": "user",
-                    "id": "0193a1b2-7c00-7000-8000-000000000011"
-                  },
-                  "createdAt": 1794362400000,
-                  "startedAt": 1794362400000,
-                  "updatedAt": 1795399200000,
-                  "finishedAt": 1795570500000,
-                  "error": null,
-                  "result": {
-                    "href": "/admin/passes",
-                    "ids": {
-                      "tier": "northwind"
-                    }
-                  },
-                  "revision": 3,
-                  "pollAfterMs": 1471
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-f650d22e8d9d",
+                    "kind": "bulk.run",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-c89e76b47558"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "/admin/passes",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }

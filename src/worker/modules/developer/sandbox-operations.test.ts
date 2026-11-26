@@ -398,7 +398,7 @@ describe('sandbox.delete', () => {
       ['erase', 'pending'],
     ]);
     const retried = await send('POST', `/operations/${failed.id}/retry`, s.headers);
-    expect(retried.status, await retried.clone().text()).toBe(200);
+    expect(retried.status, await retried.clone().text()).toBe(202);
     const done = await settle(send, s.headers, failed.id);
     expect(done).toMatchObject({ status: 'succeeded', attempt: 2 });
     // The retry is its own Workflow instance, named for the attempt, and the row tracks it.
@@ -544,7 +544,7 @@ describe('sandbox.recreate', () => {
     expect(failed).toMatchObject({ status: 'failed', step: 'passes' });
     expect(step(failed, 'org')?.state).toBe('pending');
     const res = await send('POST', `/operations/${failed.id}/retry`, s.headers);
-    expect(res.status, await res.clone().text()).toBe(200);
+    expect(res.status, await res.clone().text()).toBe(202);
     // The retry is a queued `operation.run`; the job's own entry runs it, as the queue would.
     const { handleOperationRun } = await import('../operations/jobs.ts');
     const { createJobContext } = await import('../../platform/service-context.ts');

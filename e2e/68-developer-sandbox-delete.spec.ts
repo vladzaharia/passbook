@@ -59,7 +59,7 @@ test('Delete sandbox from the chip menu while on the quickstart opens the confir
   await expect(steps.nth(1)).toContainText('Revoke keys');
   await expect(steps.nth(2)).toContainText('Remove Test passes');
   await expect(steps.nth(3)).toContainText('Erase sandbox data');
-  await expect(page).toHaveURL(new RegExp(`[?&]sandbox-op=${operation.id}`));
+  await expect(page).toHaveURL(new RegExp(`[?&]op=${operation.id}`));
   await shots(page, 'sandbox-delete-3-steps');
 
   // A reload brings the same panel back, whatever stage the delete has reached.
