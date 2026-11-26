@@ -42,6 +42,7 @@ import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
+import { syncGoogleClassReviews } from '../modules/wallet-providers/google-review-sync.ts';
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
@@ -81,6 +82,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'tokens.remac', run: remacCapabilityTokens },
     { name: 'keys.rewrap', run: rewrapEnvelopes },
     { name: 'wallet.sync', run: drainWalletProviderSync },
+    { name: 'wallet.google_review', run: syncGoogleClassReviews },
     {
       name: 'passes.credential_transfers',
       run: async (ctx) => {

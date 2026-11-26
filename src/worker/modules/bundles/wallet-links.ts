@@ -1,14 +1,17 @@
 import type { WalletProvider } from '../../../shared/contracts/wallet-providers.ts';
 import { revealToken } from '../../platform/capability-token.ts';
-import { AppError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
+import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo.ts';
+import { GoogleWalletError } from '../wallet-providers/google-errors.ts';
 import {
   issueWalletOffer,
   issueWalletOfferScoped,
   listWalletOffers,
+  type ScopedWalletOffer,
 } from '../wallet-providers/offers.ts';
-import type { WalletRuntimeScope } from '../wallet-providers/runtime.ts';
+import { GoogleMemberFailedError } from '../wallet-providers/offers-google.ts';
+import { WalletRuntimeError } from '../wallet-providers/runtime.ts';
 import { combineGoogleRuntimeOffers } from '../wallet-providers/runtime-google-bundle.ts';
 import {
   addablePass,
@@ -51,17 +54,21 @@ export async function bundleWalletLocation(
   return location;
 }
 
-/** Objects per Google save link: the most that fit its 1,800-character limit with room to spare. */
-export const GOOGLE_BUNDLE_LINK_SIZE = 8;
+/**
+ * Objects per Google save link. Sized so the longest link the validators accept (a 32-digit issuer, a
+ * 119-character service-account email, five object types) stays under Google's 1,800-character limit.
+ */
+export const GOOGLE_BUNDLE_LINK_SIZE = 6;
 
-/** How many save links the bundle's Google-offered members need. */
+/** How many save links the bundle's Google-offered members need: the page and the route both ask this. */
 export const googleBundleParts = (offered: number) =>
   offered < 2 ? 0 : Math.ceil(offered / GOOGLE_BUNDLE_LINK_SIZE);
 
 /**
  * One Google save link for part `part` of the bundle: each member's own offer is issued under its own
- * fences, then the objects are signed into a single link. A member Google is not ready for makes the
- * whole link 503 (the first tap is still preparing it); a member without an offer is left out.
+ * fences, then the objects are signed into a single link. A member Google is still preparing makes the
+ * link 503 (retry); one whose operation failed for good, or with no offer, is left out. Copies are recorded
+ * only for members the delivered link carries.
  */
 export async function bundleGoogleLocation(
   ctx: ServiceContext,
@@ -72,42 +79,80 @@ export async function bundleGoogleLocation(
   const offered: Pass[] = [];
   for (const { pass } of members)
     if ((await bundleWalletProviders(ctx, pass)).includes('google')) offered.push(pass);
+  if (part >= googleBundleParts(offered.length)) throw notFound();
   const chunk = offered.slice(part * GOOGLE_BUNDLE_LINK_SIZE, (part + 1) * GOOGLE_BUNDLE_LINK_SIZE);
-  if (chunk.length === 0) throw notFound();
   const issued = await Promise.allSettled(
     chunk.map(async (pass) => {
       const token = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
-      return issueWalletOfferScoped(ctx, token, 'google');
+      return {
+        pass,
+        offer: await issueWalletOfferScoped(ctx, token, 'google', { deferCopy: true }),
+      };
     }),
   );
-  const links: { location: string; scope: WalletRuntimeScope }[] = [];
+  const links: { pass: Pass; offer: ScopedWalletOffer }[] = [];
   for (const result of issued) {
-    if (result.status === 'fulfilled') links.push(result.value);
-    else if (result.reason instanceof UnavailableError) throw result.reason;
-    else if (!(result.reason instanceof AppError && result.reason.status === 404))
-      throw result.reason;
+    if (result.status === 'fulfilled') {
+      links.push(result.value);
+      continue;
+    }
+    const error = result.reason;
+    if (error instanceof GoogleMemberFailedError)
+      ctx.log.warn('wallet.google_bundle_member_failed', {
+        code: 'WALLET_GOOGLE_BUNDLE_MEMBER_FAILED',
+        orgId: bundle.org_id,
+      });
+    else if (!(error instanceof AppError && error.status === 404)) throw error;
   }
   const [first] = links;
   if (!first) throw notFound();
-  let location = first.location;
+  let location = first.offer.location;
   if (links.length > 1) {
-    const scope = first.scope;
-    if (
-      links.some(
-        (l) =>
-          l.scope.accountId !== scope.accountId ||
-          l.scope.accountRevision !== scope.accountRevision,
-      )
-    )
+    const scope = first.offer.scope;
+    const objects = links.map((l) => l.offer.google);
+    const same = links.every(
+      (l) =>
+        l.offer.scope.accountId === scope.accountId &&
+        l.offer.scope.accountRevision === scope.accountRevision,
+    );
+    if (!same || objects.some((o) => !o)) {
+      ctx.log.warn('wallet.google_bundle_scope_mismatch', {
+        code: 'WALLET_GOOGLE_BUNDLE_SCOPE',
+        orgId: bundle.org_id,
+      });
       throw notFound();
-    location = (
-      await combineGoogleRuntimeOffers(
+    }
+    try {
+      location = await combineGoogleRuntimeOffers(
         ctx,
         scope,
-        links.map((l) => l.location),
-      )
-    ).url;
+        objects.filter((o) => o !== undefined),
+        // Each member's own currency, again at sign time: first taps ran in parallel and may be old.
+        async () => {
+          for (const l of links) await l.offer.recheck();
+        },
+      );
+    } catch (error) {
+      if (
+        error instanceof AppError ||
+        (error instanceof WalletRuntimeError && error.code === 'account_unavailable') ||
+        error instanceof GoogleWalletError
+      ) {
+        ctx.log.warn('wallet.google_bundle_link_failed', {
+          code: 'WALLET_GOOGLE_BUNDLE_LINK',
+          orgId: bundle.org_id,
+        });
+        if (error instanceof AppError) throw error;
+        throw notFound();
+      }
+      throw error;
+    }
   }
-  await assertBundleMembers(ctx, bundle, chunk);
+  await assertBundleMembers(
+    ctx,
+    bundle,
+    links.map((l) => l.pass),
+  );
+  for (const l of links) await l.offer.recordCopy();
   return location;
 }
