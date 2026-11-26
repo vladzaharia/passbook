@@ -12,6 +12,7 @@ import {
   RotateLinkResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { methodScope, modeOf } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
@@ -42,6 +43,7 @@ import { registerBulkRunRoutes } from './routes-bulk-runs.ts';
 import { registerCheckInRoutes } from './routes-check-in.ts';
 import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
 import { registerPhotoImportRoutes } from './routes-photo-import.ts';
+import { registerSimulateRoutes } from './routes-simulate.ts';
 import { registerStampsRoutes } from './routes-stamps.ts';
 import { registerTermRoutes } from './routes-term.ts';
 import { registerViewRoutes } from './routes-views.ts';
@@ -84,7 +86,7 @@ register(
         ? q.orgId
         : auth.kind === 'api_key' && auth.orgId !== null
           ? auth.orgId
-          : undefined;
+          : workbenchPinOf(auth)?.orgId;
     if (orgId === undefined)
       throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
     if (orgId === null) {
@@ -317,3 +319,4 @@ registerPassChannelRoutes(passesRoutes);
 registerPassPrintRoutes(passesRoutes);
 registerEventRoutes(passesRoutes);
 registerRemoveRoutes(passesRoutes);
+registerSimulateRoutes(passesRoutes);

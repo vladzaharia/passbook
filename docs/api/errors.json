@@ -3748,7 +3748,8 @@
         "scan",
         "settings",
         "templates",
-        "wallet-providers"
+        "wallet-providers",
+        "workbench"
       ]
     },
     {
@@ -3837,15 +3838,6 @@
       ],
       "modules": [
         "orgs"
-      ]
-    },
-    {
-      "code": "ORG_TEST_ONLY",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "platform"
       ]
     },
     {
@@ -4678,6 +4670,15 @@
       ]
     },
     {
+      "code": "SANDBOX_ENDPOINT_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
       "code": "SANDBOX_EXISTS",
       "statuses": [
         409
@@ -4692,7 +4693,8 @@
         409
       ],
       "modules": [
-        "developer"
+        "developer",
+        "workbench"
       ]
     },
     {
@@ -4792,6 +4794,15 @@
       ],
       "modules": [
         "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_TEST_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {
@@ -5627,15 +5638,6 @@
       ]
     },
     {
-      "code": "SCAN_ZONE_LIVE_ONLY",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "scan"
-      ]
-    },
-    {
       "code": "SCIM_AUTH_FAILED",
       "statuses": [
         401
@@ -5755,6 +5757,61 @@
       "modules": [
         "orgs",
         "settings"
+      ]
+    },
+    {
+      "code": "SIMULATE_DEVICE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_NO_DEVICE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_NO_EMAIL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_RATE_LIMITED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_TEST_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery",
+        "passes"
       ]
     },
     {
@@ -7460,6 +7517,24 @@
       ],
       "modules": [
         "connections"
+      ]
+    },
+    {
+      "code": "WORKBENCH_CONTEXT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "WORKBENCH_TEST_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {

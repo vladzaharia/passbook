@@ -24,6 +24,8 @@ export interface CapturedRow {
   attached: number;
   intent: string | null;
   created_at: number;
+  /** 1 when Simulate failed the message's outbox row. */
+  failed?: number;
 }
 
 export type CapturedRef = CaptureReference & { id: string };
@@ -178,8 +180,9 @@ export interface CapturedFilter {
 }
 
 const REFERENCE = 'c.id, c.org_id, c.pass_id, c.bundle_id, c.recipient, c.attached, c.intent';
+const FAILED = `EXISTS (SELECT 1 FROM outbox fo WHERE fo.id = c.outbox_id AND fo.state = 'failed') AS failed`;
 const SUMMARY = `c.id, c.org_id, c.pass_id, c.bundle_id, c.outbox_id, c.recipient, c.subject,
-  '' AS html, '' AS text, c.attached, c.intent, c.created_at`;
+  '' AS html, '' AS text, c.attached, c.intent, c.created_at, ${FAILED}`;
 
 /** Mode is the mode of what the message is about: a capture of a Live pass or bundle is never shown. */
 const TEST_MODE_ONLY = `(c.pass_id IS NULL OR EXISTS (SELECT 1 FROM passes tp WHERE tp.id = c.pass_id AND tp.mode = 'test'))
@@ -217,7 +220,7 @@ export function getCaptured(
   const fence = inboxAuthorityFence(authority, 'passes:read', now);
   return first<CapturedRow>(
     db,
-    `SELECT c.* FROM captured_emails c WHERE c.id = ? AND ${fence.sql} AND ${TEST_MODE_ONLY}`,
+    `SELECT c.*, ${FAILED} FROM captured_emails c WHERE c.id = ? AND ${fence.sql} AND ${TEST_MODE_ONLY}`,
     [id, ...fence.params],
   );
 }

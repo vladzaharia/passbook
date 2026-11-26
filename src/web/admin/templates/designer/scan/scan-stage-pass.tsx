@@ -1,5 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useDebounced } from '@/web/lib/debounce.ts';
+import { ENTITY } from '@/web/lib/entities.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
-import { Button, EntityPicker } from '@/web/ui/index.ts';
+import { Button, Combobox, type ComboboxOption } from '@/web/ui/index.ts';
+import { useDesignerHost, useHostKey } from '../host.tsx';
+
+const MIN_QUERY = 2;
+const PassIcon = ENTITY.pass.icon;
+const icon = <PassIcon aria-hidden className="size-4 shrink-0 text-fg-muted" />;
 
 /** One sentence for why a real pass cannot be previewed. */
 export function previewErrorMessage(error: unknown): string {
@@ -8,6 +17,22 @@ export function previewErrorMessage(error: unknown): string {
     if (error.status === 403) return 'You cannot preview passes in this organization.';
   }
   return errorMessage(error);
+}
+
+/** Passes of the host's organization, in its mode, through its client. */
+function usePassOptions(term: string): { options: ComboboxOption[]; loading: boolean } {
+  const { searchPasses, orgId, mode } = useDesignerHost();
+  const hostKey = useHostKey();
+  const query = useQuery({
+    queryKey: ['designer', 'pass-search', orgId ?? null, mode, term, ...hostKey],
+    queryFn: ({ signal }) => searchPasses(term, signal),
+    enabled: Boolean(orgId) && term.length >= MIN_QUERY,
+    staleTime: 15_000,
+  });
+  return {
+    options: (query.data ?? []).map((p) => ({ value: p.id, label: p.title ?? p.serial, icon })),
+    loading: query.isFetching,
+  };
 }
 
 export function RealPassPicker({
@@ -21,16 +46,24 @@ export function RealPassPicker({
   onPick: (id: string) => void;
   onRetry: () => void;
 }) {
+  const [typed, setTyped] = useState('');
+  const found = usePassOptions(useDebounced(typed.trim(), 200));
+  const options =
+    passId && !found.options.some((o) => o.value === passId)
+      ? [{ value: passId, label: 'Selected pass', icon }, ...found.options]
+      : found.options;
   return (
     <>
       <div className="sp-pass-id">
-        <EntityPicker
-          kind="pass"
+        <Combobox
           aria-label="Pass"
+          options={options}
           value={passId ?? undefined}
-          valueLabel="Selected pass"
-          placeholder="Find a pass"
           onValueChange={onPick}
+          onSearch={setTyped}
+          loading={found.loading}
+          placeholder="Find a pass"
+          searchPlaceholder="Search passes"
         />
       </div>
       {error ? (

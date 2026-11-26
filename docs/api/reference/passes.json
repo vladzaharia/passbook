@@ -1933,5 +1933,16 @@
       "voidedAt": null,
       "voidCause": null
     }
+  },
+  "passes.postPassesByIdSimulate": {
+    "description": "Sends a real Test event for a Test pass: installed, uninstalled, scanned, scan_refused, push_failed, updated_on_device or email_failed. It goes down the normal path, so signed Test webhooks carry the returned requestId. Live passes answer 409 SIMULATE_TEST_ONLY; 60 a minute per organization.",
+    "request": {
+      "event": "installed"
+    },
+    "response": {
+      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "requestId": "0193a1b2-7c00-7000-8000-d0545441efe1",
+      "deviceId": "0193a1b2-7c00-7000-8000-000000000012"
+    }
   }
 }

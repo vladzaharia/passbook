@@ -587,7 +587,7 @@ gap; turning it back on does not backfill.
 
 ### Request log and status notes
 
-`request_log` holds one row per Test call of a developer org (sandboxes only; Live and real orgs write nothing): metadata for 7 days, request and response bodies for 24 hours (a trigger refuses a body or a query value anywhere else). A sandbox keeps at most 2,000 rows an hour and 20,000 in all (`request_log_budget`). The minute cron hook `developer.request_log_purge` purges on a 20-second budget every minute, so a backlog is caught up; reads already hide bodies older than 24 hours and rows older than 7 days.
+`request_log` holds one row per Test call of any org (a Live call is never written; a trigger refuses it): metadata for 7 days (route, status, code, resource id, version date, header presence flags, never a header value). Redacted request and response bodies, at most 8 KB each, are kept 24 hours only in a sandbox or in an org whose admin turned on `requestLog.bodies`; turning it off blanks the bodies already stored. An org keeps at most 2,000 rows an hour and 20,000 in all (`request_log_budget`). The minute cron hook `developer.request_log_purge` purges on a 20-second budget every minute, so a backlog is caught up; reads already hide bodies older than 24 hours and rows older than 7 days.
 
 Public status incident notes are rows of `status_incidents`. Platform admins open and resolve them on Admin > Status ("Public incident notes") or with `POST /api/v1/status/incidents` and `POST /api/v1/status/incidents/{id}/resolve`; each is audited.
 

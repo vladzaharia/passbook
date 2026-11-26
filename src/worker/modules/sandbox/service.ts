@@ -54,6 +54,7 @@ const summaryOf = (r: CapturedRow): Summary => ({
   to: r.recipient,
   subject: r.subject,
   attached: r.attached === 1,
+  failed: r.failed === 1,
   createdAt: r.created_at,
 });
 

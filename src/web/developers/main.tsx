@@ -23,15 +23,15 @@ import './styles/dev-guide.css';
 import './styles/dev-quickstart-card.css';
 import './styles/dev-quickstart.css';
 import './styles/dev-responsive.css';
-import './bench/bench.css';
-import './bench/pane.css';
-import './bench/view-transition.css';
+import '../workbench/bench/bench.css';
+import '../workbench/bench/pane.css';
+import '../workbench/bench/view-transition.css';
 import '../ui/art/scenes/common.css';
 import '../ui/art/scenes/plug.css';
 import './ui/gate.css';
 import './ui/state-card.css';
 import { PATHS } from '../../shared/developers.ts';
-import { markViewed } from './quickstart/viewed.ts';
+import { markViewed } from '../workbench/quickstart/viewed.ts';
 import { initCopy } from './shell/copy.ts';
 import { initChangelogFilter } from './shell/filter.ts';
 import { mountIslands } from './shell/islands.ts';
@@ -40,6 +40,9 @@ import { initMenu } from './shell/menu.ts';
 import { initSearch } from './shell/search.ts';
 import { initTryBar } from './shell/try-bar.ts';
 
+// The Workbench left the front page (design §4.2): an old `/developers#workbench` link follows it.
+if (location.pathname.replace(/\/+$/, '') === PATHS.home && location.hash === '#workbench')
+  location.replace('/workbench');
 if (location.pathname.replace(/\/+$/, '') === PATHS.quickstart) markViewed();
 initCopy();
 initChangelogFilter();

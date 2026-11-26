@@ -159,12 +159,27 @@ export async function peekBody(c: Context<AppBindings>): Promise<Record<string, 
 }
 
 /**
+ * The one exemption from the console group (Workbench v2, Phase 3): a developer acting on their own open
+ * sandbox. `ownSandbox` is the id of the session user's open sandbox org, looked up by the caller (null: none).
+ */
+export const ownSandboxExempt = (
+  session: SessionAuth,
+  orgId: string,
+  ownSandbox: string | null,
+): boolean => ownSandbox !== null && ownSandbox === orgId && hasDeveloperAccess(session.roles);
+
+/**
  * With `OIDC_CONSOLE_GROUP_REQUIRED` on, an org console needs the admin group (`console`) or platform
  * admin. Polaris ID sessions only: an email-link session keeps the console grace rules, and break-glass
- * carries the admin role.
+ * carries the admin role. `sandbox` names the org and the caller's own sandbox when the exemption applies.
  */
-export function assertConsoleGroup(c: Context<AppBindings>, session: SessionAuth): void {
+export function assertConsoleGroup(
+  c: Context<AppBindings>,
+  session: SessionAuth,
+  sandbox?: { orgId: string; ownSandbox: string | null },
+): void {
   if (consoleGroupOk(c, session)) return;
+  if (sandbox && ownSandboxExempt(session, sandbox.orgId, sandbox.ownSandbox)) return;
   reportDenied(c, 'FORBIDDEN', session);
   throw new ForbiddenError(
     "You don't have console access. Ask an administrator.",

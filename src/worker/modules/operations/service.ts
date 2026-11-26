@@ -4,6 +4,7 @@ import type {
   OperationListQuerySchema,
 } from '../../../shared/contracts/operations.ts';
 import { type AuthContext, isOwnOnly } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgFenceFor, platformFenceFor, readFenceFor, starterFenceFor } from './authz.ts';
@@ -92,7 +93,8 @@ export async function listOperations(
   const own = isOwnOnly(auth);
   if (own && (query.mine !== true || query.orgId || query.kind || query.target))
     throw new ForbiddenError();
-  const orgId = query.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+  const orgId =
+    query.orgId ?? (auth.kind === 'api_key' ? auth.orgId : (workbenchPinOf(auth)?.orgId ?? null));
   const actor =
     query.mine === true && auth.kind !== 'scanner'
       ? auth.kind === 'session'

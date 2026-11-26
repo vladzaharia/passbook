@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext, useState } from 'react';
 import { PATHS } from '../../../shared/developers.ts';
-import type { Json } from '../console/types.ts';
+import type { Json } from '../../workbench/console/types.ts';
 import { copyToClipboard as copyText } from '../shell/copy.ts';
 import './json-tree.css';
 

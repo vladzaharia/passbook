@@ -120,6 +120,8 @@ const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
     const rows = await list(await c.platform(), '/api/v1/identities?limit=20');
     return id(rows.find((r) => r.id !== 'platform') ?? rows[0]);
   },
+  /** A Workbench tool name: the tool entry redirect picks the remembered context. */
+  wbTool: async () => 'logs',
   myPassId: async (c) => id((await list(await c.holder(), '/api/v1/me/passes?limit=1'))[0]),
 };
 

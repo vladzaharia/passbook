@@ -96,6 +96,8 @@ export const ApiScopeSchema = z.enum([
   'members:read',
   'members:write',
   'audit:read',
+  /** The org's Test request log. Test keys only. */
+  'logs:read',
   /** Platform scopes: only a platform admin acts on them, never an org member or an org key. */
   'platform:orgs',
   'platform:users',

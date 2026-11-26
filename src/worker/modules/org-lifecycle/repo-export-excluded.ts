@@ -62,7 +62,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   outbox: BOOKKEEPING,
   pass_assets: DERIVED,
   request_log:
-    'API call metadata kept 7 days, with Test bodies of a developer org for 24 hours: no org content',
+    'Test call metadata kept 7 days, with redacted bodies for 24 hours where the org records them: no org content',
   request_log_budget: BOOKKEEPING,
   pass_attach_blocks: 'holder mail preference',
   pass_auth_seals: SEALED,
@@ -79,6 +79,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   pass_views: 'saved list filters: settings of the console, not records',
   pass_issuance_deliveries: BOOKKEEPING,
   pass_personalizations: SEALED,
+  pass_simulated_devices: 'Test devices made by Simulate: no real device, no org content',
   pass_prints: 'print codes are hashed credentials',
   pass_token_seals: SEALED,
   pass_transfer_asset_candidates: BOOKKEEPING,

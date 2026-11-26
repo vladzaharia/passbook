@@ -18,6 +18,8 @@ export const CapturedEmailSchema = z.object({
   to: z.string(),
   subject: z.string(),
   attached: z.boolean(),
+  /** Simulate marked this message failed. */
+  failed: z.boolean(),
   createdAt: TimestampSchema,
 });
 

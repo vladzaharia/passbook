@@ -4,6 +4,7 @@
  * is not upscaled: the slot is left empty and reported.
  */
 
+import { sizeReason } from '../art-size.ts';
 import type { CapabilityId, Support, ViewImageFile } from '../types.ts';
 import type { Ctx } from './ctx.ts';
 import { TEXT } from './limits.ts';
@@ -43,8 +44,8 @@ interface Candidate {
   files: readonly ViewImageFile[];
 }
 
-function problem(file: ViewImageFile, min: PickSpec['min']): string | undefined {
-  if (!file.url) return `${file.name} has no public URL.`;
+function problem(file: ViewImageFile, slot: string, min: PickSpec['min']): string | undefined {
+  if (!file.url) return sizeReason('google', slot, file) ?? `${file.name} has no public URL.`;
   if (min.width !== undefined && file.width !== undefined && file.width < min.width)
     return `${file.name} is ${file.width} px wide; Google needs ${min.width}.`;
   if (min.height !== undefined && file.height !== undefined && file.height < min.height)
@@ -79,7 +80,7 @@ export function pickImage(ctx: Ctx, spec: PickSpec): GoogleImage | undefined {
       );
     const best = files.find((f) => !f.personal && f.locale === undefined);
     if (!best) continue;
-    const message = problem(best, spec.min);
+    const message = problem(best, slot, spec.min);
     if (message) {
       failures.push({ capability, path, message });
       continue;

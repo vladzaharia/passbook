@@ -1,5 +1,6 @@
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
+import { createFixtureIdentity } from './src/passkit/testing/fixture-identity.ts';
 
 const alias = {
   '@': new URL('./src', import.meta.url).pathname,
@@ -30,6 +31,12 @@ export default defineConfig({
         plugins: [
           cloudflareTest(async () => {
             const migrations = await readD1Migrations('./migrations');
+            // Workflows started through a real binding run in workerd with these bindings, not makeEnv's.
+            const signer = await createFixtureIdentity(undefined, {
+              now: new Date('2026-01-01T00:00:00.000Z'),
+              days: 3650,
+              caDays: 3650,
+            });
             return {
               wrangler: { configPath: './test/wrangler.vitest.jsonc' },
               // This file lives under test/ so Wrangler cannot load the repository-root .dev.vars.
@@ -54,8 +61,9 @@ export default defineConfig({
                   OIDC_CLIENT_ID: 'wallet-placeholder-client-id',
                   OIDC_CLIENT_SECRET: 'test-oidc-secret',
                   TURNSTILE_SECRET: '1x0000000000000000000000000000000AA',
-                  SIGNER_PLATFORM_CERTIFICATE: 'replaced-in-tests',
-                  SIGNER_PLATFORM_PRIVATE_KEY: 'replaced-in-tests',
+                  SIGNER_PLATFORM_CERTIFICATE: signer.certificate,
+                  SIGNER_PLATFORM_PRIVATE_KEY: signer.privateKey,
+                  SIGNER_PLATFORM_INTERMEDIATE: signer.intermediate,
                   BREAKGLASS_TOKEN_SHA256: '',
                   // Production keeps the scanner off until M1; tests cover it on (and off, by override).
                   SCAN_ENABLED: '1',
@@ -79,6 +87,7 @@ export default defineConfig({
             './test/setup/check-responses.ts',
             './test/setup/apply-migrations.ts',
             './test/setup/settle-wait-until.ts',
+            './test/setup/settle-workflows.ts',
           ],
         },
       },

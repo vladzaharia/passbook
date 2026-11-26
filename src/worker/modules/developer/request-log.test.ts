@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApiKey, makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 import {
   HOUR_ROWS_CAP,
   insertLog,
@@ -85,24 +86,17 @@ describe('the request log writes', () => {
       expect(stored, leak).not.toContain(leak);
   });
 
-  it('writes nothing for a Live call or a real org: no row, and no statement at all', async () => {
+  it('writes nothing for a Live call, in any org: no row, and no statement at all', async () => {
     const std = await makeOrg(t.kit.f);
     const live = await makeApiKey(t.kit.f, {
       orgId: std.id,
       mode: 'live',
       scopes: ['passes:read', 'passes:write'],
     });
-    const test = await makeApiKey(t.kit.f, {
-      orgId: std.id,
-      mode: 'test',
-      scopes: ['passes:read'],
-    });
     const seen: string[] = [];
     const env = { ...t.kit.env, DB: gatedDb(t.kit.env.DB, Promise.resolve(), seen) };
-    for (const key of [live, test]) {
-      const res = await t.call('/passes?limit=5', { headers: key.headers }, env);
-      expect(res.status).toBe(200);
-    }
+    const res = await t.call('/passes?limit=5', { headers: live.headers }, env);
+    expect(res.status).toBe(200);
     await t.call(
       '/passes',
       {
@@ -114,13 +108,53 @@ describe('the request log writes', () => {
     await t.settle();
     expect(await t.rows(std.id)).toHaveLength(0);
     expect(seen.filter((s) => s.includes('request_log'))).toEqual([]);
-    // The insert is itself a developer-org write: a row for a real org is refused by the SELECT.
-    expect(await insertLog(t.kit.env.DB, newLog(std.id, { requestBody: '{}' }))).toBe(false);
     expect(await insertLog(t.kit.env.DB, newLog(std.id, { mode: 'live' }))).toBe(false);
     expect(await t.rows(std.id)).toHaveLength(0);
   });
 
-  it('refuses a body or a query value anywhere but a developer Test row, by trigger', async () => {
+  it('keeps the metadata of a real org Test call and no body unless the org records them', async () => {
+    const std = await makeOrg(t.kit.f);
+    const key = await makeApiKey(t.kit.f, {
+      orgId: std.id,
+      mode: 'test',
+      scopes: ['passes:read', 'passes:write'],
+    });
+    const send = () =>
+      t.call('/passes', {
+        ...post({ templateId: 'no-such-template', input: { note: 'hello' } }),
+        headers: { ...JSON_HEADERS, ...key.headers },
+      });
+    expect((await send()).status).toBeGreaterThanOrEqual(400);
+    await t.settle();
+    const [off] = await t.rows(std.id);
+    expect(off?.has_bodies).toBe(0);
+    expect(off).toMatchObject({
+      method: 'POST',
+      route: '/api/v1/passes',
+      mode: 'test',
+      has_bodies: 0,
+    });
+    expect(off?.request_body).toBeNull();
+    expect(off?.response_body).toBeNull();
+    expect(off?.code).toMatch(/^[A-Z_]+$/);
+
+    await run(
+      t.kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'requestLog.bodies', 'true', 1)",
+      [`org:${std.id}`],
+    );
+    clearSettingsCache(t.kit.env.DB);
+    await send();
+    await t.settle();
+    const rows = await t.rows(std.id);
+    expect(rows).toHaveLength(2);
+    const on = rows.find((r) => r.id !== off?.id);
+    expect(on?.has_bodies).toBe(1);
+    expect(on?.response_body).not.toBeNull();
+    expect(`${on?.request_body}${on?.response_body}`).not.toContain('hello');
+  });
+
+  it('refuses a Live row, and a body or query value outside Test, by trigger', async () => {
     const std = await makeOrg(t.kit.f);
     const dev = await t.developer();
     const raw = (orgId: string, mode: string, id: string, col: string) =>
@@ -137,24 +171,19 @@ describe('the request log writes', () => {
           col === 'query' ? 'a=1' : null,
         ],
       );
-    await expect(raw(std.id, 'test', 'raw-1', 'body')).rejects.toThrow(
-      /developer Test traffic only/,
+    await expect(raw(std.id, 'live', 'raw-1', 'body')).rejects.toThrow(
+      /never logged|Test traffic only|query values/,
     );
-    await expect(raw(std.id, 'test', 'raw-2', 'query')).rejects.toThrow(/query values/);
-    await expect(raw(dev.made.orgId, 'live', 'raw-3', 'body')).rejects.toThrow(
-      /Live data|Test traffic only/,
+    await expect(raw(std.id, 'live', 'raw-2', 'query')).rejects.toThrow(
+      /never logged|Test traffic only|query values/,
     );
-    await run(
-      t.kit.env.DB,
-      `INSERT INTO request_log (id, org_id, mode, request_id, method, path, status, duration_ms, at) VALUES ('raw-4', ?, 'live', 'r', 'GET', '/x', 200, 1, 1)`,
-      [std.id],
+    await expect(raw(dev.made.orgId, 'live', 'raw-3', 'none')).rejects.toThrow(
+      /never logged|Test traffic only|query values/,
     );
-    await expect(
-      run(
-        t.kit.env.DB,
-        "UPDATE request_log SET has_bodies = 1, request_body = '{}' WHERE id = 'raw-4'",
-      ),
-    ).rejects.toThrow();
+    await expect(raw(std.id, 'live', 'raw-4', 'none')).rejects.toThrow(
+      /never logged|Test traffic only|query values/,
+    );
+    await raw(std.id, 'test', 'raw-5', 'body');
   });
 
   it('keeps the redacted query of a sandbox call, so a bad filter can be read back', async () => {

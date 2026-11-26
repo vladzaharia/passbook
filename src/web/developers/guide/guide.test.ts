@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseHash } from '../console/prefill.ts';
+import { parseHash } from '../../workbench/console/prefill.ts';
 import { EDGES, lifecycleMermaid, lifecycleSvg } from './lifecycle.ts';
 import { consoleHref, prefillFromCurl } from './model.ts';
 import { GuideError, linksIn, parseGuide } from './parse.ts';

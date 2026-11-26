@@ -712,12 +712,21 @@ class EventsResource:
         after: str | None = None,
         types: str | None = None,
         pass_id: str | None = None,
+        request_id: str | None = None,
         limit: int | None = None,
         api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEvent]:
         """Event feed (cursor paging, ascending) `GET /api/v1/events`"""
-        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "limit": limit, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
+        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "requestId": request_id, "limit": limit, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
+
+    def list_deliveries(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.EventsListDeliveriesResult:
+        """Where one event was sent: its deliveries across endpoints. `passes:read`, like the event `GET /api/v1/events/{id}/deliveries`"""
+        return self._core.request("GET", f"/api/v1/events/{_p(id)}/deliveries", result=m.EventsListDeliveriesResult, **opts)
 
     def retrieve(
         self,
@@ -1845,6 +1854,15 @@ class PassesResource:
         """Email the pass to the holder (Idempotency-Key supported) `POST /api/v1/passes/{id}/resend-email`"""
         return self._core.request("POST", f"/api/v1/passes/{_p(id)}/resend-email", body=body, idempotent=True, result=m.PassesSendEmailResult, **opts)
 
+    def simulate(
+        self,
+        id: str,
+        body: m.PassesSimulateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesSimulateResult:
+        """Send a real Test event for a Test pass: install, scan, push failure and more `POST /api/v1/passes/{id}/simulate`"""
+        return self._core.request("POST", f"/api/v1/passes/{_p(id)}/simulate", body=body, result=m.PassesSimulateResult, **opts)
+
     def unvoid(
         self,
         id: str,
@@ -1954,6 +1972,40 @@ class PassViewsResource:
     ) -> m.PassViewsReplaceResult:
         """Replace the saved views of the passes list `PUT /api/v1/passes/views`"""
         return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
+
+
+class RequestLogsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        key_id: str | None = None,
+        status: str | None = None,
+        code: str | None = None,
+        pass_id: str | None = None,
+        version: str | None = None,
+        path: str | None = None,
+        method: _Literal["GET", "POST", "PUT", "PATCH", "DELETE"] | None = None,
+        source: _Literal["key", "try", "all"] | None = None,
+        portal: _Literal["show", "hide"] | None = None,
+        after: str | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        key: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.RequestLogsListItem]:
+        """List an organization's Test calls, newest first `GET /api/v1/request-logs`"""
+        return self._core.paginate("GET", "/api/v1/request-logs", query={"keyId": key_id, "status": status, "code": code, "passId": pass_id, "version": version, "path": path, "method": method, "source": source, "portal": portal, "after": after, "cursor": cursor, "limit": limit, "key": key}, result=m.RequestLogsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.RequestLogsRetrieveResult:
+        """One Test call, with its redacted bodies for 24 hours where the organization records them `GET /api/v1/request-logs/{id}`"""
+        return self._core.request("GET", f"/api/v1/request-logs/{_p(id)}", result=m.RequestLogsRetrieveResult, **opts)
 
 
 class RollCallsResource:
@@ -2990,6 +3042,7 @@ class Resources:
         self.print_jobs = PrintJobsResource(core)
         self.bulk_runs = BulkRunsResource(core)
         self.pass_views = PassViewsResource(core)
+        self.request_logs = RequestLogsResource(core)
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)

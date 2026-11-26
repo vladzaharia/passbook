@@ -222,7 +222,7 @@ describe('who may call', () => {
         intent('Test zone', { places: [{ ref: 'z', name: 'Test zone place' }] }),
       ),
       403,
-      'SCAN_SETUP_LIVE_ONLY',
+      'MODE_LIVE_REQUIRED',
     );
   });
 

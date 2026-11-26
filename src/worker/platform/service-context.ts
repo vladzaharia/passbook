@@ -23,7 +23,7 @@ export interface ServiceContext {
   jobName?: string;
   /** Daily cron only: D1 queries the shared daily budget has spent so far, across every hook. */
   spent?: () => number;
-  /** The request's key came as a developer try token: its audit rows carry `via: 'try'`. */
+  /** The request came with a `pbtry_` token (a key's or a member's): its audit rows carry `via: 'try'`. */
   via?: 'try';
   /** A cron invocation's D1 queries so far (D1 allows 1,000); only the daily cron sets it. */
   queries?: () => number;
@@ -42,7 +42,9 @@ export function serviceContext(c: Context<AppBindings>): ServiceContext {
     ids: c.var.ids,
     log: c.var.log,
     requestId: c.var.requestId,
-    ...(c.var.auth?.kind === 'api_key' && c.var.auth.via ? { via: c.var.auth.via } : {}),
+    ...((c.var.auth?.kind === 'api_key' || c.var.auth?.kind === 'session') && c.var.auth.via
+      ? { via: c.var.auth.via }
+      : {}),
     waitUntil: (promise) => {
       const reported = reportFailure(promise, c.var.log);
       try {

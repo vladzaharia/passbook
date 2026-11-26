@@ -1,8 +1,11 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { purgeOrphanEpochs } from '../workbench/repo.ts';
 import { purgeExpired } from './repo.ts';
 
 /** Daily retention for magic links, OIDC flows, expired sessions and counters. */
 export async function dailyAuth(ctx: ServiceContext): Promise<void> {
   const removed = await purgeExpired(ctx.env.DB, ctx.clock.now());
-  ctx.log.info('auth.retention', removed);
+  // After the sessions: a Workbench token epoch goes with its session.
+  const workbenchEpochs = await purgeOrphanEpochs(ctx.env.DB);
+  ctx.log.info('auth.retention', { ...removed, workbenchEpochs });
 }

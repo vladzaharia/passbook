@@ -112,6 +112,7 @@
   "entitlements.putPlatformOrgsByIdEntitlements",
   "events.getEvents",
   "events.getEventsById",
+  "events.getEventsByIdDeliveries",
   "google-wallet.postWalletV1GoogleByAccountId",
   "holders.getHolders",
   "holders.getHoldersById",
@@ -305,6 +306,7 @@
   "passes.postPassesByIdResendEmail",
   "passes.postPassesByIdRestore",
   "passes.postPassesByIdRotateLink",
+  "passes.postPassesByIdSimulate",
   "passes.postPassesByIdStamps",
   "passes.postPassesByIdUnvoid",
   "passes.postPassesByIdVoid",
@@ -616,5 +618,12 @@
   "webhooks.postWebhookEndpointsByIdReplay",
   "webhooks.postWebhookEndpointsByIdSecret",
   "webhooks.postWebhookEndpointsByIdTest",
-  "webhooks.postWebhookEndpointsCapture"
+  "webhooks.postWebhookEndpointsCapture",
+  "workbench.deleteToken",
+  "workbench.getContexts",
+  "workbench.getRequestLog",
+  "workbench.getResolve",
+  "workbench.getSummary",
+  "workbench.listRequestLogs",
+  "workbench.postToken"
 ]

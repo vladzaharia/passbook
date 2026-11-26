@@ -22,6 +22,7 @@ test.describe('developer group', () => {
     await expect(await menuItems(page)).toHaveText([
       'My passes',
       'Account',
+      'Workbench',
       'Developers',
       'Sign out',
     ]);

@@ -63,17 +63,17 @@ export function grantAuthorityOf(
   purpose?: string,
 ): AdminAuthority | KeyAdminAuthority {
   const admin = modeFreeAuthorityOf(authority, actorId, orgId, purpose);
-  // Zones and a scanner's mode move belong to the org, not a mode: only a live key writes them.
+  // A scanner's mode move belongs to the org, not a mode: only a live key makes it. Zones are guarded by
+  // `assertSharedWrite` in the route, which lets a sandbox key through.
   if (
     admin.kind === 'api_key' &&
     purpose?.startsWith('org.scan.') === true &&
+    !purpose.startsWith('org.scan.zone.') &&
     admin.mode !== 'live'
   )
     throw new ForbiddenError(
-      purpose.startsWith('org.scan.zone.')
-        ? 'Zones need a live key.'
-        : 'Moving a scanner between live and test needs a live key.',
-      purpose.startsWith('org.scan.zone.') ? 'SCAN_ZONE_LIVE_ONLY' : 'SCAN_MODE_LIVE_ONLY',
+      'Moving a scanner between live and test needs a live key.',
+      'SCAN_MODE_LIVE_ONLY',
     );
   return admin;
 }
@@ -136,15 +136,15 @@ export const PAIRING_TABLES = ['scanners', 'counters'] as const;
 
 /**
  * The tables the one-call setup grant may write, by caller: a console session all of them; a
- * `scanning:write` key neither staff nor, in test mode, zones (both are org-wide, not moded); a
+ * `scanning:write` key neither staff nor, in test mode outside a sandbox, zones (both are org-wide, not moded); a
  * live org-bound `scanning:admin` key all of them. The grant refuses the rest itself.
  */
-export function setupTables(authority: TenantPassWrite): readonly string[] {
+export function setupTables(authority: TenantPassWrite, sandbox = false): readonly string[] {
   if (authority.kind === 'session') return SCAN_ADMIN_TABLES;
   const live = authority.mode === 'live';
   const admin = authority.scope === 'scanning:admin' && live && authority.keyOrgId !== null;
   return SCAN_ADMIN_TABLES.filter(
-    (t) => (t !== 'scan_staff' || admin) && (t !== 'scan_zones' || live),
+    (t) => (t !== 'scan_staff' || admin) && (t !== 'scan_zones' || live || sandbox),
   );
 }
 
@@ -180,7 +180,8 @@ export function adminGrant(
   // The live-only rule is also part of the write: the actor row's mode is the key's own, read at commit (org-wide rows, and every admin key).
   const live =
     admin.kind === 'api_key' &&
-    (purpose.startsWith('org.scan.') || admin.scope === 'scanning:admin')
+    ((purpose.startsWith('org.scan.') && !purpose.startsWith('org.scan.zone.')) ||
+      admin.scope === 'scanning:admin')
       ? [rawCheck('actor', "a.mode = 'live'")]
       : [];
   return grant(ctx, {

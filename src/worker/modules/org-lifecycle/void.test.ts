@@ -18,6 +18,12 @@ let kit: RetentionKit['kit'];
 beforeAll(async () => {
   rk = await retentionKit();
   kit = rk.kit;
+  // requestExport starts a workflow that would outlive the test; the purge is driven directly.
+  (kit.env as { ORG_EXPORT: unknown }).ORG_EXPORT = {
+    async create(o: { id: string }) {
+      return { id: o.id };
+    },
+  };
 }, 30_000);
 
 const close = async (orgId: string) =>

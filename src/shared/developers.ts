@@ -30,6 +30,16 @@ export const PATHS = {
   openapi: '/api/v1/openapi.json',
 } as const;
 
+/** Pages the Workbench took over (design §4.2): the Worker answers 301 to the new path and keeps the query. */
+export const MOVED: Readonly<Record<string, string>> = {
+  [PATHS.console]: '/workbench/console',
+  [PATHS.webhooks]: '/workbench/events',
+  [PATHS.logs]: '/workbench/logs',
+  [PATHS.keys]: '/workbench/keys',
+  [PATHS.playground]: '/workbench/design',
+  [PATHS.quickstart]: '/workbench/quickstart',
+};
+
 /**
  * The portal stays out of search until it is linked (W5). One switch: the pages' robots meta,
  * the Worker's X-Robots-Tag, robots.txt's Allow and the sitemap line all follow it.

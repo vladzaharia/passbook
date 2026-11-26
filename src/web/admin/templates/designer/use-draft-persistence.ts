@@ -3,9 +3,12 @@ import { toast } from '../../../ui/index.ts';
 import { clearDraft, saveDraft } from './drafts.ts';
 import type { DesignDoc } from './model.ts';
 
-/** Keep a dirty draft across reloads, clearing it once local edits are discarded or saved. */
+/**
+ * Keep a dirty draft across reloads, clearing it once local edits are discarded or saved. A null
+ * key keeps nothing (a read-only designer).
+ */
 export function useDraftPersistence(
-  draftKey: string,
+  draftKey: string | null,
   version: string,
   doc: DesignDoc,
   dirty: boolean,
@@ -14,6 +17,7 @@ export function useDraftPersistence(
   const wasDirty = useRef(false);
   const warned = useRef(false);
   useEffect(() => {
+    if (draftKey === null) return;
     if (!dirty) {
       if (wasDirty.current) clearDraft(draftKey);
       wasDirty.current = false;

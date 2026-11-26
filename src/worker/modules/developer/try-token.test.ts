@@ -220,8 +220,13 @@ describe('try token reach', () => {
     expect(own.status, await own.clone().text()).toBe(200);
     const theirs = await send('GET', `/templates/${other.made.templateId}`, page(d, token));
     expect([403, 404]).toContain(theirs.status);
-    // The mode header does not move a key: the key's row decides, and it is Test.
-    const me = await send('GET', '/api-keys/me', { ...page(d, token), 'x-passbook-mode': 'live' });
+    // A token never serves Live: asked for it, it refuses (WORKBENCH_TEST_ONLY), and otherwise it is Test.
+    const live = await send('GET', '/api-keys/me', {
+      ...page(d, token),
+      'x-passbook-mode': 'live',
+    });
+    await expectProblem(live, 403, 'WORKBENCH_TEST_ONLY');
+    const me = await send('GET', '/api-keys/me', page(d, token));
     expect(await me.json()).toMatchObject({ mode: 'test', orgId: d.made.orgId });
   });
 

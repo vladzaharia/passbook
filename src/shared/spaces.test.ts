@@ -24,13 +24,35 @@ describe('canUseSpace', () => {
     expect(usable(access('oidc'))).toEqual(['passes', 'account']);
   });
 
-  it('adds Admin for an organization member, and Developers for the developer role', () => {
-    expect(usable(access('oidc', ['user'], true))).toEqual(['passes', 'account', 'admin']);
+  it('adds Admin and the Workbench for an organization member, the Workbench and Developers for a developer', () => {
+    expect(usable(access('oidc', ['user'], true))).toEqual([
+      'passes',
+      'account',
+      'admin',
+      'workbench',
+    ]);
     expect(usable(access('oidc', ['user', 'developer']))).toEqual([
       'passes',
       'account',
+      'workbench',
       'developers',
     ]);
+  });
+
+  it('opens the Workbench to Polaris ID only, and an org-only member needs the console group', () => {
+    const required = { consoleGroupRequired: true };
+    expect(canUseSpace('workbench', { ...access('oidc', ['user'], true), ...required })).toBe(
+      false,
+    );
+    expect(
+      canUseSpace('workbench', { ...access('oidc', ['user', 'console'], true), ...required }),
+    ).toBe(true);
+    // Their own sandbox needs no console group (design §2.3, check 10).
+    expect(
+      canUseSpace('workbench', { ...access('oidc', ['user', 'developer']), ...required }),
+    ).toBe(true);
+    expect(canUseSpace('workbench', access('breakglass', ['admin', 'user'], true))).toBe(false);
+    expect(canUseSpace('workbench', access('magic_link', ['developer', 'user'], true))).toBe(false);
   });
 
   it('gives a platform admin every space, Developers implied', () => {
@@ -38,6 +60,7 @@ describe('canUseSpace', () => {
       'passes',
       'account',
       'admin',
+      'workbench',
       'developers',
     ]);
   });
