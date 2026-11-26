@@ -22,7 +22,7 @@ export async function previewArrival(
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
   const startedAt = sctx.clock.now();
-  const arrival = await retentionIdOfArrival(sctx.env.DB, conn.id, arrivalId);
+  const arrival = await retentionIdOfArrival(sctx.env.DB, conn.orgId, conn.id, arrivalId);
   if (!arrival.found) throw new NotFoundError('Arrival not found.', 'WEBHOOK_NOT_FOUND');
   const row = arrival.retentionId
     ? await retainedById(sctx.env.DB, conn.id, arrival.retentionId)

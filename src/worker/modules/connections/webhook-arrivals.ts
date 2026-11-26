@@ -2,18 +2,25 @@ import type { ArrivalDto } from '../../../shared/contracts/index.ts';
 import { ConnectorError } from '../../connectors/types.ts';
 import { RECIPES } from '../../connectors/webhook-push/recipes/index.ts';
 import { classifyD1Error } from '../../platform/db.ts';
+import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { toDto } from './dto.ts';
 import type { ConnectionRow } from './repo.ts';
+import type { ArrivalSummary } from './repo-webhook-arrivals.ts';
 import {
   type ArrivalOutcome,
+  arrivalSummaries,
   type ContentClass,
-  firstVerifiedArrivalAt,
   listArrivals,
   writeArrival,
 } from './repo-webhook-arrivals.ts';
 
 const MINUTE_MS = 60_000;
+/** A refusal burst in this isolate writes at most one row per connection and reason in this time. */
+const DEBOUNCE_MS = 5_000;
+const lastRefusalWrite = new Map<string, number>();
+
+export const NO_ARRIVALS: ArrivalSummary = { firstVerifiedAt: null, staleRun: false };
 
 export type ArrivalReason = NonNullable<ArrivalDto['reason']>;
 
@@ -56,6 +63,27 @@ export function topicOf(conn: Pick<ConnectionRow, 'config'>, req: Request): stri
   return recipe.topics.includes(value) ? value : 'other';
 }
 
+/**
+ * Refusals come from anyone who knows the URL: the ledger gets its own budget per connection, apart from
+ * the per-IP limit. Over budget the row is dropped and the answer is unchanged; `count` is "at least".
+ */
+async function refusalBudget(
+  sctx: ServiceContext,
+  connectionId: string,
+  reason: string | null,
+  now: number,
+): Promise<boolean> {
+  const key = `${connectionId}:${reason ?? ''}`;
+  if (now - (lastRefusalWrite.get(key) ?? -DEBOUNCE_MS) < DEBOUNCE_MS) return false;
+  if (!(await checkRateLimit(sctx.env, 'RL_WEBHOOK_LEDGER', connectionId))) return false;
+  lastRefusalWrite.set(key, now);
+  if (lastRefusalWrite.size > 1_000) {
+    const oldest = lastRefusalWrite.keys().next().value;
+    if (oldest !== undefined) lastRefusalWrite.delete(oldest);
+  }
+  return true;
+}
+
 export interface ArrivalInput {
   outcome: ArrivalOutcome;
   reason?: ArrivalReason;
@@ -77,7 +105,10 @@ export async function recordArrival(
   try {
     const now = sctx.clock.now();
     const reason = input.reason ?? null;
-    const topic = input.outcome === 'rejected' ? null : topicOf(conn, req);
+    if (input.outcome === 'rejected' && !(await refusalBudget(sctx, conn.id, reason, now))) return;
+    // A refusal or a duplicate rests on an unsigned header: no topic.
+    const topic =
+      input.outcome === 'rejected' || input.outcome === 'duplicate' ? null : topicOf(conn, req);
     await writeArrival(sctx.env.DB, {
       id: sctx.ids.id(),
       orgId: conn.orgId,
@@ -92,7 +123,7 @@ export async function recordArrival(
       coalesceKey:
         input.outcome === 'accepted'
           ? null
-          : `${input.outcome}:${reason ?? ''}:${topic ?? ''}:${Math.floor(now / MINUTE_MS)}`,
+          : `${input.outcome}:${reason ?? ''}:${Math.floor(now / MINUTE_MS)}`,
     });
   } catch (error) {
     sctx.log.error('connection.webhook_arrival_failed', {
@@ -104,13 +135,18 @@ export async function recordArrival(
 
 export async function connectionArrivals(
   sctx: ServiceContext,
+  orgId: string,
   connectionId: string,
   query: { since: number; limit: number },
 ): Promise<ArrivalDto[]> {
-  return listArrivals(sctx.env.DB, connectionId, query.since, query.limit);
+  return listArrivals(sctx.env.DB, orgId, connectionId, query.since, query.limit);
+}
+
+export async function summaryOf(sctx: ServiceContext, id: string): Promise<ArrivalSummary> {
+  return (await arrivalSummaries(sctx.env.DB, [id], sctx.clock.now())).get(id) ?? NO_ARRIVALS;
 }
 
 /** The connection as the API shows it, with whether a verified delivery has arrived. */
 export async function dtoOf(sctx: ServiceContext, row: ConnectionRow) {
-  return toDto(sctx.env, row, await firstVerifiedArrivalAt(sctx.env.DB, row.id));
+  return toDto(sctx.env, row, await summaryOf(sctx, row.id));
 }

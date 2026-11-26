@@ -34,7 +34,7 @@ export function registerWebhookArrivalRoutes(router: OpenAPIHono<AppBindings>): 
       const { id } = c.req.valid('param');
       const connection = await service.requireConnection(ctx, id);
       await authorizeStoredConnection(ctx, c.var.auth, connection.orgId, 'integrations:read');
-      const items = await connectionArrivals(ctx, id, c.req.valid('query'));
+      const items = await connectionArrivals(ctx, connection.orgId, id, c.req.valid('query'));
       const etag = `W/"${items.length}:${items[0]?.lastAt ?? 0}:${items.reduce((n, r) => n + r.count, 0)}"`;
       if (c.req.header('if-none-match') === etag) {
         return new Response(null, { status: 304, headers: { etag } });

@@ -34,7 +34,10 @@ CREATE INDEX connection_webhook_arrivals_expiry
 -- A connection that already received verified events is not "waiting for its first event".
 INSERT INTO connection_webhook_arrivals
   (id, org_id, connection_id, received_at, last_at, outcome, content_class, count)
-SELECT lower(hex(randomblob(16))), r.org_id, r.connection_id, MIN(r.received_at), MIN(r.received_at),
+-- The id is a UUIDv7-shaped value derived from the time and the connection id: deterministic, one row each.
+SELECT printf('%08x-%04x-7', MIN(r.received_at) >> 16, MIN(r.received_at) & 65535)
+  || substr(replace(r.connection_id, '-', ''), 2, 3) || '-8' || substr(replace(r.connection_id, '-', ''), 5, 3)
+  || '-' || substr(replace(r.connection_id, '-', ''), 8, 12), r.org_id, r.connection_id, MIN(r.received_at), MIN(r.received_at),
   'accepted', 'other', 1
 FROM connection_webhook_retention r
 WHERE r.source = 'ingress' AND r.connection_id IN (SELECT id FROM connections)

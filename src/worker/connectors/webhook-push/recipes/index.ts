@@ -96,12 +96,14 @@ export async function verifyRecipe(
   if (out.ignored) return { eventId, refs: [], ignored: out.ignored, ...previous };
   const signedAt = verifier.replay === 'body-window' ? out.signedAt : signed.signedAt;
   if (signedAt === undefined) throw new ConnectorError('AUTH');
-  // Signed correctly but outside the window: acknowledged and not applied, so a replay changes nothing.
-  if (
-    verifier.replay === 'body-window' &&
-    !withinWindow(now, signedAt, recipe.windowMs, BODY_FUTURE_SKEW_MS)
-  ) {
-    return { eventId, refs: [], ignored: 'stale', ...previous };
+  if (verifier.replay === 'body-window') {
+    // Ahead of the clock: refused, so the sender retries once its time is inside the window.
+    if (signedAt - now > BODY_FUTURE_SKEW_MS)
+      throw new ConnectorError('AUTH', { detail: 'expired' });
+    // Signed correctly but too old: acknowledged and not applied, so a replay changes nothing.
+    if (!withinWindow(now, signedAt, recipe.windowMs, BODY_FUTURE_SKEW_MS)) {
+      return { eventId, refs: [], ignored: 'stale', ...previous };
+    }
   }
   return {
     eventId,

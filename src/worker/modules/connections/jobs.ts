@@ -13,7 +13,7 @@ import { type RefreshSnapshot, refreshSnapshotCurrent } from './repo-pass-refres
 import { getPassById } from './repo-passes.ts';
 import { deleteIdleRefVersions } from './repo-ref-versions.ts';
 import { deleteOldRuns, deleteOldWebhookEvents, deleteOldWorkflowRuns } from './repo-sync.ts';
-import { deleteOldArrivals } from './repo-webhook-arrivals.ts';
+import { clearOldArrivalRefs, deleteOldArrivals } from './repo-webhook-arrivals.ts';
 import { reconcileConnections as schedule } from './schedule.ts';
 import { dropExpiredPreviousSecrets } from './secret-sweep.ts';
 import { processWebhook } from './webhook-process.ts';
@@ -148,9 +148,11 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
     deleteIdleRefVersions(ctx, now - REF_VERSION_IDLE_MS),
   );
   await step(ctx, 'files', () => dailyConnectionFiles(ctx));
-  const arrivals = await step(ctx, 'arrivals', () =>
-    deleteOldArrivals(ctx.env.DB, now - ARRIVAL_RETENTION_MS),
-  );
+  const arrivals = await step(ctx, 'arrivals', async () => {
+    const before = now - ARRIVAL_RETENTION_MS;
+    await clearOldArrivalRefs(ctx.env.DB, before);
+    return deleteOldArrivals(ctx.env.DB, before);
+  });
   const secrets = await step(ctx, 'previous_secrets', () => dropExpiredPreviousSecrets(ctx, now));
   await step(ctx, 'prev_secret_counters', () =>
     prune(ctx.env.DB, 'webhook-prev-secret:%', now - DAY_MS),

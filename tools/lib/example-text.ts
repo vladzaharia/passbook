@@ -125,6 +125,8 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
       'Shopify signs every webhook made in admin with one secret for the store.',
       'Row menu, **Send test**. The sample may not be a real record, so no pass is issued.',
     ],
+    // shared/copy/connection-warnings.ts
+    'warning.text': ['Your provider is sending old events. Check its clock and retries.'],
   },
   webhooks: {
     // webhooks/setup-guide.ts: the receiving server's steps and test line.

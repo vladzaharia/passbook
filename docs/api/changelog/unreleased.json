@@ -48,6 +48,14 @@
     "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
     "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsUploadsByFileId",
@@ -424,6 +432,14 @@
     "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
+    "key": "GET /api/v1/connections 200.items[].warning: field added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
     "key": "GET /api/v1/connections param query:health: enum value \"awaiting\" added",
     "class": "additive",
     "operationId": "connections.getConnections",
@@ -470,6 +486,14 @@
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
     "key": "GET /api/v1/connections/{id}/files new operation",
@@ -2599,6 +2623,14 @@
     "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
+    "key": "PATCH /api/v1/connections/{id} 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
     "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.patchConnectionsUploadsByFileId",
@@ -3461,6 +3493,14 @@
     "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
+    "key": "POST /api/v1/connections 201.warning: field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
     "key": "POST /api/v1/connections behavior changed",
     "class": "notable",
     "operationId": "connections.postConnections",
@@ -3523,6 +3563,14 @@
     "op": "POST /api/v1/connections/{id}/webhook-secret",
     "change": "200.health: enum value \"awaiting\" added",
     "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
     "key": "POST /api/v1/connections/probe new operation",
