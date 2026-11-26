@@ -624,6 +624,14 @@
     "note": "Each recipe lists whether the plan allows it for new connections. Always true without an org."
   },
   {
+    "key": "GET /api/v1/developer/access 200.invitedBy: field added",
+    "class": "additive",
+    "operationId": "developer.getAccess",
+    "op": "GET /api/v1/developer/access",
+    "change": "200.invitedBy: field added",
+    "note": "With access none: the orgs that invited a verified address of this account as a developer."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
@@ -1390,6 +1398,14 @@
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.usage: field added",
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/memberships 200.items[].accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.getOrgsByIdMemberships",
+    "op": "GET /api/v1/orgs/{id}/memberships",
+    "change": "200.items[].accessPaused: field added",
+    "note": "True while the Polaris ID owner has paused the member's console access. Absent otherwise."
   },
   {
     "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
@@ -2677,6 +2693,14 @@
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "200.accessPaused: field added",
+    "note": "True while the Polaris ID owner has paused the member's console access. Absent otherwise."
   },
   {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",

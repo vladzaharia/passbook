@@ -29,6 +29,8 @@ export interface Gate {
   reason: 'none' | 'email' | 'noaccess';
   /** Who is signed in, for the no-access line. */
   email: string | null;
+  /** Orgs with an open developer invitation for this account's address. */
+  invitedBy?: string[];
 }
 
 const API = '/api/v1';
@@ -56,7 +58,13 @@ async function read(): Promise<Session> {
   }
   const roles = Array.isArray(me.roles) ? (me.roles as string[]) : [];
   if (!hasDeveloperAccess(roles)) {
-    gate = { reason: 'noaccess', email };
+    const access = await json(
+      await fetch(`${API}/developer/access`, { headers: head, cache: 'no-store' }),
+    );
+    const orgs = Array.isArray(access.invitedBy)
+      ? (access.invitedBy as unknown[]).filter((o): o is string => typeof o === 'string')
+      : [];
+    gate = { reason: 'noaccess', email, ...(orgs.length ? { invitedBy: orgs } : {}) };
     return { kind: 'out' };
   }
   const csrf = me.csrfToken;

@@ -15,8 +15,15 @@ import {
   TwoPane,
   toast,
 } from '@/web/ui/index.ts';
+import { useOperationParam } from '@/web/ui/operation/index.ts';
 import { personLabel } from '../../lib/format.ts';
 import { UserTagsCard } from '../tags/user-tags-card.tsx';
+import { AccessCard } from './access/access-card.tsx';
+import { GroupsCard } from './access/groups-card.tsx';
+import { OffboardCard } from './access/offboard.tsx';
+import { useAccess } from './access/queries.ts';
+import { UserOperation } from './access/user-operation.tsx';
+import { ClaimsCard } from './claims/claims-card.tsx';
 import { useUser, useUserMutations } from './queries.ts';
 import { UserPassesCard } from './user-passes-card.tsx';
 import { AccountCard, EmailsCard, IdentitiesCard, SessionsCard } from './user-sections.tsx';
@@ -25,6 +32,8 @@ export function UserDetailPage({ userId }: { userId: string }) {
   const query = useUser(userId);
   const { authed } = useSession();
   const { setStatus } = useUserMutations(userId);
+  const access = useAccess(userId);
+  const [opId, setOpId] = useOperationParam();
   const crumbs = [
     { label: 'Users', to: '/admin/users' },
     { label: query.data?.name ?? query.data?.primaryEmail ?? 'User' },
@@ -118,6 +127,10 @@ export function UserDetailPage({ userId }: { userId: string }) {
             This is you. Manage your own sign-in and sessions in Account.
           </Callout>
         ) : null}
+        <UserOperation id={opId} onClose={() => setOpId(null)} />
+        {access.available && access.data ? (
+          <AccessCard access={access.data} person={name} userId={user.id} onStarted={setOpId} />
+        ) : null}
         <UserTagsCard
           userId={user.id}
           name={name}
@@ -128,6 +141,15 @@ export function UserDetailPage({ userId }: { userId: string }) {
         <EmailsCard user={user} self={self} />
         <SessionsCard user={user} self={self} now={Date.now()} />
         <IdentitiesCard user={user} />
+        {access.available ? (
+          <>
+            <GroupsCard userId={user.id} person={name} />
+            <ClaimsCard userId={user.id} />
+            {self || access.data?.platformAdmin ? null : (
+              <OffboardCard userId={user.id} name={name} onStarted={setOpId} />
+            )}
+          </>
+        ) : null}
       </TwoPane>
     </>
   );
