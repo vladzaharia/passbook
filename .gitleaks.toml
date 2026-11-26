@@ -45,7 +45,8 @@ keywords = ["pbtry_"]
 description = "Demo shapes, identifiers and public keys, each anchored"
 regexes = [
   '''^whsec_demo_northwind_[0-9a-f]{6}$''',
-  '''^pb_test_[A-Za-z0-9]{8}_northwind-demo-key-do-not-use-[0-9a-f]{12}$''',
+  # The same value cut short where a scanner fragment ends inside it: any leading part of the exact shape.
+  '''^pb_test_[A-Za-z0-9]{8}_(?:northwind-demo-key-do-not-use-[0-9a-f]{0,12}|(?:n(?:o(?:r(?:t(?:h(?:w(?:i(?:n(?:d(?:-(?:d(?:e(?:m(?:o(?:-(?:k(?:e(?:y(?:-(?:d(?:o(?:-(?:n(?:o(?:t(?:-(?:u(?:s(?:e(?:-)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)$''',
   '''^pb_test_(?:k3Qx9Zt2|p7Wm4Hn8)$''',
   '''^demo-token-northwind-[0-9a-f]{22}$''',
   '''^c0ffee00c0ffee00c0ffee00c0ffee01$''',
