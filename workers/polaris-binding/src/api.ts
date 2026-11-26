@@ -12,8 +12,9 @@ import { setupClientApi } from './setup-client.ts';
 import { setupGroupsApi } from './setup-groups.ts';
 import { setupScimApi } from './setup-scim.ts';
 import { setupStatusApi } from './setup-status.ts';
+import type { SetupRpc } from './setup-types.ts';
 import type { Shared } from './shared.ts';
-import type { BindingEnv, IdpRpc, SetupRpc } from './types.ts';
+import type { BindingEnv, IdpRpc } from './types.ts';
 
 /** The binding's RPC methods over injectable I/O. The entrypoint class only delegates here. */
 export function createApi(env: BindingEnv, deps: Deps): IdpRpc & SetupRpc {

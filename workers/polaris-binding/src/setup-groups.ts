@@ -4,19 +4,11 @@ import { type GroupDto, parseGroup, unexpected } from './group-dto.ts';
 import { failure, ok, type Req } from './pocket-http.ts';
 import { ID, type Registry } from './registry.ts';
 import { setupRunner } from './setup-shell.ts';
+import type { PlaceResult, RolePlacement, RoleState, SetupRpc } from './setup-types.ts';
 import type { Shared } from './shared.ts';
 import { invalidateHealth } from './store.ts';
 import { recordRoleGroup } from './store-groups.ts';
-import {
-  IdpError,
-  type PlaceResult,
-  type Role,
-  type RolePlacement,
-  type RoleState,
-  type SetupRpc,
-  WRITABLE_ROLES,
-  type WritableRole,
-} from './types.ts';
+import { IdpError, type Role, WRITABLE_ROLES, type WritableRole } from './types.ts';
 
 /** Groups that exist in Polaris ID under an exact name. Names are unique there, so at most one. */
 async function exactHit(s: Shared, req: Req, name: string): Promise<string | null> {

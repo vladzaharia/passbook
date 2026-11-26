@@ -4,8 +4,9 @@ import { failure, ok } from './pocket-http.ts';
 import { assertScimToken, refuse, sha256Hex } from './policy.ts';
 import { passbookOrigin } from './registry.ts';
 import { setupRunner } from './setup-shell.ts';
+import type { SetupRpc } from './setup-types.ts';
 import type { Shared } from './shared.ts';
-import { IdpError, type SetupRpc } from './types.ts';
+import { IdpError } from './types.ts';
 
 type ScimApi = Pick<SetupRpc, 'ensureScim' | 'syncScim'>;
 

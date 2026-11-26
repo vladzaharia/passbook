@@ -3,9 +3,10 @@ import { failure, ok } from './pocket-http.ts';
 import { refuse, sameSet } from './policy.ts';
 import { passbookOrigin, type Registry } from './registry.ts';
 import { setupRunner } from './setup-shell.ts';
+import type { SetupRpc } from './setup-types.ts';
 import type { Shared } from './shared.ts';
 import { invalidateHealth } from './store.ts';
-import { IdpError, type SetupRpc } from './types.ts';
+import { IdpError } from './types.ts';
 
 type ClientApi = Pick<SetupRpc, 'allowClientGroups' | 'restrictClient' | 'setClientLogo'>;
 

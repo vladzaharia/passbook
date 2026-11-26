@@ -4,8 +4,8 @@ import { failure, ok } from './pocket-http.ts';
 import { assertTokenHashes, sha256Hex } from './policy.ts';
 import { passbookOrigin } from './registry.ts';
 import { planRoles } from './setup-groups.ts';
+import type { SetupRpc, SetupStatus } from './setup-types.ts';
 import type { Shared } from './shared.ts';
-import type { SetupRpc, SetupStatus } from './types.ts';
 
 /**
  * One read of everything setup needs to decide: the PassBook client, its SCIM connection and the unplaced role
