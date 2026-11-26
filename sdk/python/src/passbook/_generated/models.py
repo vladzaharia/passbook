@@ -8494,7 +8494,7 @@ class PassVersion(_Model):
     version: int
     templateVersion: str
     cause: _Literal["create", "admin", "api", "connection", "user_refresh", "template_upgrade", "resign"] | str
-    source: _Literal["scan", "broadcast", "schedule", "remove", "restore", "designer", None] | str = None
+    source: _Literal["scan", "broadcast", "schedule", "remove", "restore", "designer", "move", None] | str = None
     actorType: str | None
     actorId: str | None
     createdAt: int

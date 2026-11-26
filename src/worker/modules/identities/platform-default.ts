@@ -4,8 +4,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { platformEnvMismatch } from './db-resolver.ts';
 import { PLATFORM_IDENTITY_ID, readEnvIdentity } from './env-identity.ts';
-import { getDefaultRow, getIdentityRow, type IdentityRow } from './repo.ts';
-import { registeredDeviceCount, switchDefault } from './repo-platform-default.ts';
+import { getDefaultRow, getIdentityRow, type IdentityRow, identityFacts } from './repo.ts';
+import { deviceTestPassed, PROBE_FRESH_MS, switchDefault } from './repo-platform-default.ts';
 
 const notReady = (message: string) => new ConflictError(message, 'IDENTITY_NOT_READY');
 
@@ -32,13 +32,19 @@ async function assertReady(ctx: ServiceContext, row: IdentityRow): Promise<void>
     throw notReady('The identity has no active certificate.');
   if (row.id === PLATFORM_IDENTITY_ID) return;
   if (row.apns_health !== 'healthy') throw notReady('Push is not healthy. Run the push check.');
-  if ((await registeredDeviceCount(ctx.env.DB, row.id)) === 0)
-    throw notReady('No device has registered a pass on this identity. Run the device test first.');
+  const probedAt = (await identityFacts(ctx.env.DB, row.id)).checked_at;
+  if (probedAt === null || probedAt < now - PROBE_FRESH_MS)
+    throw notReady('Push was not checked in the last 24 hours. Run the push check.');
+  if (!(await deviceTestPassed(ctx.env.DB, row.id)))
+    throw notReady(
+      'No device has registered a pass of this identity from a personal org. Run the device test first.',
+    );
 }
 
 /**
  * Makes `identityId` the platform default (design 3.3). The new identity needs an active certificate,
- * issuing on, a healthy push and a device that registered one of its passes. The legacy `platform`
+ * issuing on, a healthy push checked within a day and a platform admin's device that registered one of its
+ * passes from their personal org. The legacy `platform`
  * row then stops issuing but keeps signing and pushing for passes already issued. Targeting
  * `platform` reverses the flip. A repeat call changes nothing.
  */

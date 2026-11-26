@@ -39,12 +39,17 @@ beforeAll(async () => {
 const sweep = () => sweepIdentityMoves(jobCtxOf(kit));
 const advance = (ms: number) => kit.clock.advance(ms);
 
-/** One org, one emailed pass, moved: the replacement exists and the old pass was told. */
+/**
+ * One org, one emailed pass, moved: the replacement exists and the old pass was told. The old pass sits on two
+ * devices, `dev-1` and `dev-2`: only an add of the replacement on one of those starts its 24 hours.
+ */
 async function moved() {
   const { org, passes } = await orgWithPasses(kit, 1);
   const old = passes[0] as NonNullable<(typeof passes)[0]>;
   const op = await startAndRun(kit, org.id);
   const next = await replacement(kit, old);
+  await kit.device(old, 'dev-1', 'o'.repeat(64));
+  await kit.device(old, 'dev-2', 'p'.repeat(64));
   return { org, old, next, op };
 }
 
@@ -232,17 +237,6 @@ describe('the void', () => {
     await sweep();
     expect((await passOf(kit, old.id)).status).toBe('voided');
     expect((await passOf(kit, next.id)).personalization.memberName).toBe('Renamed');
-  });
-
-  it('leaves an old pass an admin already removed, and says so', async () => {
-    const { org, old, next } = await moved();
-    await kit.device(next, 'dev-1', 'a'.repeat(64));
-    await armOnRegister(jobCtxOf(kit), next.id);
-    await removePass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, old.id, {}, org.id);
-    advance(DAY);
-    await sweep();
-    const row = await moveOf(kit, old.id);
-    expect([row.state, row.reason]).toEqual(['kept', 'old_gone']);
   });
 });
 

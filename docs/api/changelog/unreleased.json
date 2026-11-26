@@ -1617,6 +1617,14 @@
     "note": "count=true adds the number of passes the filters match."
   },
   {
+    "key": "GET /api/v1/passes/{id} 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A pass version written by an identity move reports source: move."
+  },
+  {
     "key": "GET /api/v1/passes/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "passes.getPassesByIdChannels",
@@ -1647,6 +1655,14 @@
     "op": "GET /api/v1/passes/{id}/prints",
     "change": "200.prints[].stale: field added",
     "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A pass version written by an identity move reports source: move."
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
@@ -2758,6 +2774,14 @@
     "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
     "change": "new operation",
     "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A pass version written by an identity move reports source: move."
   },
   {
     "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -4369,6 +4393,14 @@
     "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
   },
   {
+    "key": "POST /api/v1/passes 201.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.versions[].source: enum value \"move\" added",
+    "note": "A pass version written by an identity move reports source: move."
+  },
+  {
     "key": "POST /api/v1/passes idempotency-key reserved prefixes",
     "class": "notable",
     "operationId": "passes.postPasses",
@@ -4425,12 +4457,28 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "POST /api/v1/passes/{id}/renew 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A pass version written by an identity move reports source: move."
+  },
+  {
     "key": "POST /api/v1/passes/{id}/restore 200.matched: field added",
     "class": "additive",
     "operationId": "passes.postPassesByIdRestore",
     "op": "POST /api/v1/passes/{id}/restore",
     "change": "200.matched: field added",
     "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A pass version written by an identity move reports source: move."
   },
   {
     "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
@@ -5711,6 +5759,14 @@
     "op": "PUT /api/v1/passes/{id}/channels",
     "change": "200.levels: field added",
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/connection 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A pass version written by an identity move reports source: move."
   },
   {
     "key": "PUT /api/v1/passes/views new operation",

@@ -341,6 +341,8 @@ describe('the Wallet register hook', () => {
     await startAndRun(kit, org.id);
     const next = await replacement(kit, await passOf(kit, old.id));
     expect((await moveOf(kit, old.id)).state).toBe('notified');
+    // The same device holds the old pass: its add of the replacement is the one that arms the timer.
+    await kit.device(await passOf(kit, old.id), 'a'.repeat(32), 'c'.repeat(64));
     await registerDevice(job(), {
       deviceId: 'a'.repeat(32),
       passTypeId: 'pass.test.second',

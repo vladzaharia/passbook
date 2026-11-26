@@ -8566,6 +8566,7 @@
               "remove",
               "restore",
               "designer",
+              "move",
               null
             ]
           },
@@ -130363,6 +130364,8 @@
           "IDENTITY_EXISTS",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",

@@ -6789,7 +6789,7 @@ export type PassVersion = {
   version: number;
   templateVersion: string;
   cause: "create" | "admin" | "api" | "connection" | "user_refresh" | "template_upgrade" | "resign";
-  source?: "scan" | "broadcast" | "schedule" | "remove" | "restore" | "designer" | null;
+  source?: "scan" | "broadcast" | "schedule" | "remove" | "restore" | "designer" | "move" | null;
   actorType: string | null;
   actorId: string | null;
   createdAt: number;

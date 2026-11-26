@@ -10,6 +10,7 @@ import {
   type IdentityRow,
   listIdentityRows,
 } from './repo.ts';
+import { hasRegistrations } from './repo-platform-default.ts';
 
 export const EXPIRY_WARNING_DAYS = 30;
 
@@ -45,8 +46,9 @@ export async function checkIdentityRow(
     await resolveRow(ctx.env, row);
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
-    // A legacy row whose env material was removed after the default moved is retired, not broken.
-    if (error.code !== 'IDENTITY_RETIRED') {
+    // A legacy row whose env material was removed after the default moved is retired, not broken, until a
+    // device that still holds one of its passes registers: those passes can no longer be signed or pushed.
+    if (error.code !== 'IDENTITY_RETIRED' || (await hasRegistrations(ctx.env.DB, row.id))) {
       result.ok = false;
       result.code = error.code;
     }

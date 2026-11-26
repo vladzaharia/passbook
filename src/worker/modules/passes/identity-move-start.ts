@@ -5,12 +5,8 @@ import { recordAudit } from '../audit/service.ts';
 import { sendOperationRun } from '../operations/jobs.ts';
 import { startOperation } from '../operations/start.ts';
 import { depsOf } from './deps.ts';
-import {
-  countCandidates,
-  dropOrphanParams,
-  insertParams,
-  type MoveCounts,
-} from './repo-identity-move.ts';
+import { dropOrphanParams, insertParams } from './repo-identity-move.ts';
+import { countCandidates, type MoveCounts } from './repo-identity-move-candidates.ts';
 import { getOrg } from './repo-read-issuance.ts';
 
 export interface MoveInput {

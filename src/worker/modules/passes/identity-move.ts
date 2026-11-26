@@ -1,4 +1,3 @@
-import type { Personalization } from '../../../passkit/types.ts';
 import { IDENTITY_MOVE_COPY as COPY } from '../../../shared/copy/identity-move.ts';
 import { notice } from '../../email/org-closed.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -13,6 +12,8 @@ import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
 import { depsOf } from './deps.ts';
 import { linksOf } from './detail.ts';
 import { uniqueExternalIds } from './external-id.ts';
+import { carryEdits, messageKey, without } from './identity-move-carry.ts';
+import { gone, revokeReplacement, SYSTEM } from './identity-move-revoke.ts';
 import { publishPass } from './publish.ts';
 import {
   DAY_MS,
@@ -21,7 +22,6 @@ import {
   markNotified,
   moveById,
   moveByNewPass,
-  setCopiedHash,
   setState,
 } from './repo-identity-move.ts';
 import {
@@ -31,41 +31,27 @@ import {
   dueReminders,
   dueVoids,
   finishVoid,
-  firstRegistrationAt,
+  firstRegistration,
   reschedule,
+  revokedOld,
   unarmed,
   unclaimReminder,
+  voidedByMove,
+  voidRef,
 } from './repo-identity-move-timers.ts';
-import type { Pass } from './repo-map.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
 import { setPassStatus } from './service-status.ts';
 import { stampMovePlan } from './stamps-keep.ts';
 
-const SYSTEM = { type: 'system', id: null } as const;
 /** A holder who never adds the replacement gets one reminder this long after it was issued. */
 export const REMIND_AFTER_MS = 30 * DAY_MS;
-/** One sweep's hold on a void: long enough to publish, short enough that a crashed sweep's claim lapses. */
-const CLAIM_MS = 60_000;
+/**
+ * One sweep's hold on a void: it covers the edit carry and the void's publish, so it is long enough for a slow
+ * one, and a crashed sweep's claim still lapses within minutes.
+ */
+export const CLAIM_MS = 5 * 60_000;
 const BATCH = 50;
-
-const gone = (p: Pass | null): boolean =>
-  p?.status !== 'active' || p.removedAt !== null || p.deletedAt !== null;
-
-/** The key of the template's message field: the move's own tell lives there, so edits are compared without it. */
-async function messageKey(ctx: ServiceContext, pass: Pass): Promise<string | null> {
-  const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-  return template.manifest.messaging?.input ?? null;
-}
-
-function without(p: Personalization, key: string | null): Personalization {
-  if (key === null) return p;
-  const { [key]: _tell, ...rest } = p;
-  return rest;
-}
-
-const hashOf = (p: Personalization, key: string | null) =>
-  sha256Hex(stableStringify(without(p, key)));
 
 /**
  * Makes the replacement. Its id was fixed when the row was planned, so a rerun finds the pass instead of making
@@ -115,9 +101,13 @@ export async function issueReplacement(
   // A rerun after the pass was made: the mail intent is durable, so asking again only queues what is missing.
   if (made.holderEmail) await scheduleRequiredIssuanceDelivery(ctx, made.id);
   const at = now();
-  const copied = old ? await hashOf(old.personalization, await messageKey(ctx, old)) : '';
+  // The two sides of the later edit carry: the old pass and the replacement as they stand at the copy.
+  const key = old ? await messageKey(ctx, old) : null;
+  const copiedInput = stableStringify(old ? without(old.personalization, key) : {});
   await markIssued(db, row.id, {
-    copiedHash: copied,
+    copiedHash: await sha256Hex(copiedInput),
+    copiedInput,
+    madeInput: stableStringify(without(made.personalization, key)),
     emailedAt: made.holderEmail ? at : null,
     remindAt: at + REMIND_AFTER_MS,
     now: at,
@@ -133,8 +123,9 @@ export async function tellOldPass(ctx: ServiceContext, row: MoveRow): Promise<vo
   const db = ctx.env.DB;
   const old = await getPass(db, row.old_pass_id, row.org_id);
   const made = await getPass(db, row.new_pass_id, row.org_id);
-  if (gone(old) || !old || gone(made) || !made) {
-    await setState(db, row.id, ['issued'], { state: 'kept', reason: 'old_gone' }, ctx.clock.now());
+  if (!old || gone(old)) return revokeReplacement(ctx, row);
+  if (!made || gone(made)) {
+    await setState(db, row.id, ['issued'], { state: 'kept', reason: 'new_gone' }, ctx.clock.now());
     return;
   }
   const key = await messageKey(ctx, old);
@@ -146,9 +137,8 @@ export async function tellOldPass(ctx: ServiceContext, row: MoveRow): Promise<vo
         passId: old.id,
         orgScope: row.org_id,
         cause: 'admin',
-        // The history shows a message: there is no source for a move, and a new one is a contract change.
-        source: 'broadcast',
-        sourceRef: `move:${row.id}`,
+        source: 'move',
+        sourceRef: `tell:${row.id}`,
         actor: SYSTEM,
         notify: true,
         changeText: COPY.changeMessage,
@@ -164,30 +154,9 @@ export async function armOnRegister(ctx: ServiceContext, newPassId: string): Pro
   const db = ctx.env.DB;
   const row = await moveByNewPass(db, newPassId);
   if (!row || !['issued', 'notified', 'kept'].includes(row.state)) return;
-  const now = ctx.clock.now();
-  await arm(db, row.id, (await firstRegistrationAt(db, newPassId)) ?? now, now);
-}
-
-/** Before the old pass voids, edits made to it since the copy go to the replacement, so the void loses nothing. */
-async function carryEdits(ctx: ServiceContext, row: MoveRow, old: Pass): Promise<void> {
-  const key = await messageKey(ctx, old);
-  const current = await hashOf(old.personalization, key);
-  if (current === row.copied_hash) return;
-  const edits = without(old.personalization, key);
-  await publishPass(ctx, {
-    passId: row.new_pass_id,
-    orgScope: row.org_id,
-    cause: 'admin',
-    source: 'broadcast',
-    sourceRef: `move:${row.id}`,
-    actor: SYSTEM,
-    notify: false,
-    mutate: (made) => {
-      if (gone(made)) throw new AppError('IDENTITY_MOVE_CONFLICT', 409, 'The replacement is gone.');
-      return { personalization: { ...made.personalization, ...edits } };
-    },
-  });
-  await setCopiedHash(ctx.env.DB, row.id, current, ctx.clock.now());
+  // Only a device that also holds the old pass arms it; another device's add leaves the reminder flow as it is.
+  const reg = await firstRegistration(db, newPassId);
+  if (reg) await arm(db, row.id, reg, ctx.clock.now());
 }
 
 /**
@@ -215,13 +184,16 @@ export async function voidDue(
   }
   try {
     const old = await getPass(db, row.old_pass_id, row.org_id);
-    if (!old || old.removedAt !== null || old.deletedAt !== null) {
-      await setState(db, row.id, ['registered'], { state: 'kept', reason: 'old_gone' }, now);
-      return 'kept';
-    }
-    if (old.status === 'active') {
+    if (old?.status === 'active' && old.removedAt === null && old.deletedAt === null) {
       await carryEdits(ctx, row, old);
-      await setPassStatus(ctx, SYSTEM, old.id, 'voided', row.org_id);
+      await setPassStatus(ctx, SYSTEM, old.id, 'voided', row.org_id, undefined, {
+        source: 'move',
+        sourceRef: voidRef(row.id),
+      });
+    } else if (!(old && (await voidedByMove(db, row)))) {
+      // Someone else revoked the old pass: the replacement is revoked with it.
+      await revokeReplacement(ctx, row);
+      return 'kept';
     }
     await finishVoid(db, row.id, ctx.clock.now());
     return 'voided';
@@ -236,6 +208,11 @@ export async function remindDue(ctx: ServiceContext, row: MoveRow): Promise<'sen
   const db = ctx.env.DB;
   const now = ctx.clock.now();
   const back = row.state === 'issued' ? 'issued' : 'notified';
+  const old = await getPass(db, row.old_pass_id, row.org_id);
+  if (!old || gone(old)) {
+    await revokeReplacement(ctx, row);
+    return 'skipped';
+  }
   const made = await getPass(db, row.new_pass_id, row.org_id);
   if (gone(made) || !made) {
     await setState(db, row.id, ['issued', 'notified'], { state: 'kept', reason: 'new_gone' }, now);
@@ -247,8 +224,11 @@ export async function remindDue(ctx: ServiceContext, row: MoveRow): Promise<'sen
   try {
     const org = await getOrg(db, row.org_id);
     const url = (await linksOf(ctx, made)).publicUrl;
-    const name = org?.name ?? 'your';
-    const mail = notice(baseUrl(ctx.env), COPY.reminderSubject(name), COPY.reminderBody(name, url));
+    const mail = notice(
+      baseUrl(ctx.env),
+      COPY.reminderSubject,
+      COPY.reminderBody(org?.name ?? null, url),
+    );
     await depsOf(ctx.env).mailer.send({ to: made.holderEmail, ...mail });
     return 'sent';
   } catch {
@@ -266,7 +246,17 @@ export async function remindDue(ctx: ServiceContext, row: MoveRow): Promise<'sen
 export async function sweepIdentityMoves(ctx: ServiceContext): Promise<void> {
   const db = ctx.env.DB;
   const now = ctx.clock.now();
-  for (const { id, at } of await unarmed(db, BATCH)) await arm(db, id, at, now);
+  for (const row of await revokedOld(db, now, BATCH))
+    try {
+      if (await isOrgActive(ctx, row.org_id)) await revokeReplacement(ctx, row);
+    } catch (error) {
+      ctx.log.error('identity_move.revoke_failed', {
+        code: 'IDENTITY_MOVE_REVOKE',
+        moveId: row.id,
+        error,
+      });
+    }
+  for (const { id, at, device } of await unarmed(db, BATCH)) await arm(db, id, { at, device }, now);
   for (const row of await dueVoids(db, now, BATCH))
     try {
       await voidDue(ctx, row);

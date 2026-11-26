@@ -2,18 +2,20 @@ import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { progressOf } from '../operations/progress.ts';
+import { OperationCancelled } from '../operations/progress-types.ts';
 import { LEASE_MS } from '../operations/start.ts';
 import { issueReplacement, tellOldPass } from './identity-move.ts';
 import {
   adoptOpen,
-  candidates,
   countMoves,
+  deleteUnissued,
   getParams,
   insertMoves,
   type MoveParams,
   movesOf,
   setState,
 } from './repo-identity-move.ts';
+import { candidates } from './repo-identity-move-candidates.ts';
 
 const PAGE = 100;
 const ROWS = 20;
@@ -39,13 +41,12 @@ async function plan(ctx: ServiceContext, params: MoveParams, check: () => Promis
       db,
       params,
       page.map((c) => {
-        const reason = c.connection_id !== null ? 'connection' : c.assets ? 'assets' : null;
         return {
           id: ctx.ids.id(),
           oldPassId: c.id,
           newPassId: ctx.ids.id(),
-          state: reason ? ('kept' as const) : ('planned' as const),
-          reason,
+          state: c.reason ? ('kept' as const) : ('planned' as const),
+          reason: c.reason,
         };
       }),
       ctx.clock.now(),
@@ -64,6 +65,21 @@ export async function runIdentityMove(
   op: OperationDto,
   lease: string,
   options: { budgetMs?: number } = {},
+): Promise<void> {
+  try {
+    await runSteps(ctx, op, lease, options);
+  } catch (error) {
+    // A stopped run frees the passes it planned but never copied, so a later move to another identity sees them.
+    if (error instanceof OperationCancelled) await deleteUnissued(ctx.env.DB, op.id);
+    throw error;
+  }
+}
+
+async function runSteps(
+  ctx: ServiceContext,
+  op: OperationDto,
+  lease: string,
+  options: { budgetMs?: number },
 ): Promise<void> {
   const db = ctx.env.DB;
   const params = await getParams(db, op.id);

@@ -2,7 +2,8 @@
 export const IDENTITY_MOVE_COPY = {
   /** The change message on the old pass; Wallet fills `%@` with the field's value, the add link. */
   changeMessage: 'New pass ready: %@',
-  reminderSubject: (org: string) => `Add your new ${org} pass`,
-  reminderBody: (org: string, url: string) =>
-    `Your new ${org} pass is ready, and your current pass will stop updating. Add the new pass: ${url}`,
+  reminderSubject: 'Add your new pass',
+  /** `org` is null when the organization cannot be read: the sentence then names none. */
+  reminderBody: (org: string | null, url: string) =>
+    `Your new ${org ? `${org} ` : ''}pass is ready. Add it: ${url}`,
 } as const;

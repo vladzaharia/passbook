@@ -23,11 +23,15 @@ export interface MoveRow {
   state: MoveState;
   reason: string | null;
   copied_hash: string | null;
+  copied_input: string | null;
+  made_input: string | null;
+  conflicts: string | null;
   told_at: number | null;
   emailed_at: number | null;
   remind_at: number | null;
   reminded_at: number | null;
   registered_at: number | null;
+  armed_device: string | null;
   void_at: number | null;
   claim_until: number | null;
   voided_at: number | null;
@@ -43,12 +47,22 @@ export interface MoveParams {
 }
 
 export const COLUMNS = `id, op_id, org_id, mode, from_identity_id, to_identity_id, old_pass_id, new_pass_id, state,
-  reason, copied_hash, told_at, emailed_at, remind_at, reminded_at, registered_at, void_at, claim_until,
+  reason, copied_hash, copied_input, made_input, conflicts, told_at, emailed_at, remind_at, reminded_at, registered_at, armed_device, void_at, claim_until,
   voided_at, created_at, updated_at`;
 
-/** The registrations that count: this pass's current credential, as the Wallet web service sees it. */
+/**
+ * A registration of the replacement (`r`) that counts: its current credential, on a device that also holds the
+ * old pass, or on the one whose add armed the timer (the holder may delete the old pass from it after). Another
+ * device's add (a shared or forwarded pass) never starts the old pass's 24 hours.
+ */
+export const ON_OLD_DEVICE = `r.credential_generation = n.credential_generation
+  AND (EXISTS (SELECT 1 FROM pass_moves pm JOIN registrations o ON o.pass_id = pm.old_pass_id
+      WHERE pm.new_pass_id = r.pass_id AND o.device_id = r.device_id)
+    OR EXISTS (SELECT 1 FROM pass_moves pm WHERE pm.new_pass_id = r.pass_id AND pm.armed_device = r.device_id))`;
+
+/** The registrations that count for the void timer of the replacement `?`. */
 export const LIVE_REGISTRATION = `FROM registrations r JOIN passes n ON n.id = r.pass_id
-  WHERE r.pass_id = ? AND r.credential_generation = n.credential_generation`;
+  WHERE r.pass_id = ? AND ${ON_OLD_DEVICE}`;
 
 /** True when this start made the row; false for a repeat of the same start. */
 export async function insertParams(db: D1Database, p: MoveParams, now: number): Promise<boolean> {
@@ -76,57 +90,6 @@ export function getParams(db: D1Database, opId: string): Promise<MoveParams | nu
     `SELECT op_id, org_id, from_identity_id, to_identity_id FROM identity_moves WHERE op_id = ?`,
     [opId],
   );
-}
-
-export interface Candidate {
-  id: string;
-  connection_id: string | null;
-  assets: number;
-}
-
-/** Active Live passes on `identityId` with no move yet, after `after`, in id order. */
-export function candidates(
-  db: D1Database,
-  q: { orgId: string; identityId: string; after: string; limit: number },
-): Promise<Candidate[]> {
-  return all<Candidate>(
-    db,
-    `SELECT p.id, p.connection_id,
-       EXISTS (SELECT 1 FROM pass_assets a WHERE a.pass_id = p.id) AS assets
-     FROM passes p
-     WHERE p.org_id = ? AND p.identity_id = ? AND p.id > ? AND p.mode = 'live' AND p.status = 'active'
-       AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0
-       AND NOT EXISTS (SELECT 1 FROM pass_moves m WHERE m.old_pass_id = p.id)
-       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = p.id AND t.state = 'pending')
-     ORDER BY p.id LIMIT ?`,
-    [q.orgId, q.identityId, q.after, q.limit],
-  );
-}
-
-export interface MoveCounts {
-  passes: number;
-  registered: number;
-  holders: number;
-}
-
-/** The dry run: what a move would touch. */
-export async function countCandidates(
-  db: D1Database,
-  orgId: string,
-  identityId: string,
-): Promise<MoveCounts> {
-  const row = await first<MoveCounts>(
-    db,
-    `SELECT count(*) AS passes,
-       coalesce(sum(EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id)), 0) AS registered,
-       count(DISTINCT p.holder_email) AS holders
-     FROM passes p
-     WHERE p.org_id = ? AND p.identity_id = ? AND p.mode = 'live' AND p.status = 'active'
-       AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0
-       AND NOT EXISTS (SELECT 1 FROM pass_moves m WHERE m.old_pass_id = p.id)`,
-    [orgId, identityId],
-  );
-  return row ?? { passes: 0, registered: 0, holders: 0 };
 }
 
 export interface NewMove {
@@ -232,13 +195,21 @@ export async function setState(
 export async function markIssued(
   db: D1Database,
   id: string,
-  v: { copiedHash: string; emailedAt: number | null; remindAt: number; now: number },
+  v: {
+    copiedHash: string;
+    copiedInput: string;
+    madeInput: string;
+    emailedAt: number | null;
+    remindAt: number;
+    now: number;
+  },
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE pass_moves SET state = 'issued', copied_hash = ?, emailed_at = ?, remind_at = ?, updated_at = ?
+    `UPDATE pass_moves SET state = 'issued', copied_hash = ?, copied_input = ?, made_input = ?, emailed_at = ?,
+       remind_at = ?, updated_at = ?
      WHERE id = ? AND state = 'planned'`,
-    [v.copiedHash, v.emailedAt, v.remindAt, v.now, id],
+    [v.copiedHash, v.copiedInput, v.madeInput, v.emailedAt, v.remindAt, v.now, id],
   );
   return changes === 1;
 }
@@ -257,15 +228,37 @@ export async function markNotified(
   return changes === 1;
 }
 
-export async function setCopiedHash(
+/** What a carry did: the old input as it now stands (the next base), and the fields both passes edited. */
+export async function setCarried(
   db: D1Database,
   id: string,
-  hash: string,
+  v: { hash: string; input: string; conflicts: string | null },
   now: number,
 ): Promise<void> {
-  await run(db, 'UPDATE pass_moves SET copied_hash = ?, updated_at = ? WHERE id = ?', [
-    hash,
-    now,
-    id,
-  ]);
+  await run(
+    db,
+    `UPDATE pass_moves SET copied_hash = ?, copied_input = ?, conflicts = ?, updated_at = ? WHERE id = ?`,
+    [v.hash, v.input, v.conflicts, now, id],
+  );
+}
+
+/** A cancelled run's rows that made no replacement: the passes are free for a later move. */
+export async function deleteUnissued(db: D1Database, opId: string): Promise<void> {
+  await run(
+    db,
+    `DELETE FROM pass_moves WHERE op_id = ? AND state = 'planned'
+       AND NOT EXISTS (SELECT 1 FROM passes n WHERE n.id = pass_moves.new_pass_id)`,
+    [opId],
+  );
+}
+
+/** When a pass was last written by someone other than a move: its newest version not made by one. */
+export async function lastEditAt(db: D1Database, passId: string): Promise<number> {
+  const row = await first<{ at: number | null }>(
+    db,
+    `SELECT max(created_at) AS at FROM pass_versions
+     WHERE pass_id = ? AND (source IS NULL OR source NOT LIKE 'move:%')`,
+    [passId],
+  );
+  return row?.at ?? 0;
 }
