@@ -2,13 +2,14 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
+import { announceSessionEnd } from '../lib/session-signal.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import {
   fixtureOperation,
   HOLDER_LOST_PHONE,
   HOLDER_RESEND,
 } from '../ui/operation/fixtures.test-support.ts';
-import { resetOperationCache } from '../ui/operation/store.ts';
+import { cachedOperation, resetOperationCache, trackOperation } from '../ui/operation/store.ts';
 import { passFixture } from './fixtures.ts';
 
 afterEach(() => {
@@ -206,5 +207,17 @@ describe('a sheet restored from the URL still offers Retry', () => {
     expect(await screen.findByRole('dialog', { name: 'Email my pass' })).toBeVisible();
     // One sheet only: the tray does not reopen the one that was restored.
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  });
+});
+
+describe('another tab', () => {
+  it('a sign-out or account switch there empties this tab of the operations it held', async () => {
+    await renderApp('/', {
+      handlers: { '/api/v1/me/passes': () => json({ items: [passFixture()], nextCursor: null }) },
+    });
+    trackOperation(fixtureOperation(HOLDER_RESEND, { status: 'running', at: 'mail', id: 'op-a' }));
+    expect(cachedOperation('op-a')).toBeDefined();
+    announceSessionEnd();
+    await waitFor(() => expect(cachedOperation('op-a')).toBeUndefined());
   });
 });
