@@ -3088,20 +3088,20 @@
     "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
   },
   {
-    "key": "PATCH /api/v1/platform/idp/groups/{key} new operation",
-    "class": "additive",
-    "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
-    "op": "PATCH /api/v1/platform/idp/groups/{key}",
-    "change": "new operation",
-    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
-  },
-  {
     "key": "PATCH /api/v1/passes/{id} 200.versions[].source: enum value \"move\" added",
     "class": "notable",
     "operationId": "passes.patchPassesById",
     "op": "PATCH /api/v1/passes/{id}",
     "change": "200.versions[].source: enum value \"move\" added",
     "note": "A version written by an identity move has source move."
+  },
+  {
+    "key": "PATCH /api/v1/platform/idp/groups/{key} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
+    "op": "PATCH /api/v1/platform/idp/groups/{key}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -5009,6 +5009,38 @@
     "note": "operationId names the operation that shows the code replacements; null when none is to be replaced."
   },
   {
+    "key": "POST /api/v1/platform/apple/identities new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentities",
+    "op": "POST /api/v1/platform/apple/identities",
+    "change": "new operation",
+    "note": "Starts the setup run for a platform identity slot (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identities/{id}/default new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentitiesByIdDefault",
+    "op": "POST /api/v1/platform/apple/identities/{id}/default",
+    "change": "new operation",
+    "note": "Makes a ready platform identity the default. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identity-moves new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
+    "op": "POST /api/v1/platform/apple/identity-moves",
+    "change": "new operation",
+    "note": "Starts the identity.move operation (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key; no token retries or cancels it."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm",
+    "op": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm",
+    "change": "new operation",
+    "note": "Starts one move row's 24 hours now. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
     "key": "POST /api/v1/platform/idp/freeze new operation",
     "class": "additive",
     "operationId": "polaris-platform.postPlatformIdpFreeze",
@@ -5079,38 +5111,6 @@
     "op": "POST /api/v1/platform/invitations/{id}/resend",
     "change": "new operation",
     "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
-  },
-  {
-    "key": "POST /api/v1/platform/apple/identities new operation",
-    "class": "additive",
-    "operationId": "wallet-identities.postPlatformAppleIdentities",
-    "op": "POST /api/v1/platform/apple/identities",
-    "change": "new operation",
-    "note": "Starts the setup run for a platform identity slot (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key."
-  },
-  {
-    "key": "POST /api/v1/platform/apple/identities/{id}/default new operation",
-    "class": "additive",
-    "operationId": "wallet-identities.postPlatformAppleIdentitiesByIdDefault",
-    "op": "POST /api/v1/platform/apple/identities/{id}/default",
-    "change": "new operation",
-    "note": "Makes a ready platform identity the default. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
-  },
-  {
-    "key": "POST /api/v1/platform/apple/identity-moves new operation",
-    "class": "additive",
-    "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
-    "op": "POST /api/v1/platform/apple/identity-moves",
-    "change": "new operation",
-    "note": "Starts the identity.move operation (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key; no token retries or cancels it."
-  },
-  {
-    "key": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm new operation",
-    "class": "additive",
-    "operationId": "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm",
-    "op": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm",
-    "change": "new operation",
-    "note": "Starts one move row's 24 hours now. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
