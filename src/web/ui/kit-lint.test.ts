@@ -152,4 +152,14 @@ describe('kit lint', () => {
       expect(text, path).not.toMatch(/Platform-wide/);
     }
   });
+
+  // L12 (Workbench v2 §2.3): Workbench pages reach tenant data only through the token client
+  // (`useToolApi()`), never the admin session client or its Live/Test mode.
+  it('keeps the admin client and mode out of the Workbench', () => {
+    const workbench = /^(workbench|routes\/workbench)\//;
+    const banned = /from\s+['"][^'"]*\/lib\/(api|mode)(\.ts)?['"]/;
+    const checked = files.filter(({ path }) => workbench.test(path));
+    expect(checked.length).toBeGreaterThan(0);
+    for (const { path, text } of checked) expect(text, path).not.toMatch(banned);
+  });
 });
