@@ -64,7 +64,7 @@ export function RouteAnnouncer() {
   }, [pathname]);
 
   return (
-    <div role="status" aria-live="polite" className="sr-only">
+    <div role="status" aria-live="polite" data-route-announcer className="sr-only">
       {message}
     </div>
   );
