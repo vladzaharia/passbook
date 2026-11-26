@@ -89,10 +89,12 @@ export function WizardStepper({
           ));
           return run.group ? (
             <li key={run.items[0]} className="relative">
-              <div
-                role="group"
+              <fieldset
                 aria-labelledby={`${base}-g${run.items[0]}`}
-                className={cn(run.items[0] !== 0 && 'mt-1 border-t border-border pt-3')}
+                className={cn(
+                  'm-0 min-w-0 border-0 p-0',
+                  run.items[0] !== 0 && 'mt-1 border-t border-border pt-3',
+                )}
               >
                 <p
                   id={`${base}-g${run.items[0]}`}
@@ -101,7 +103,7 @@ export function WizardStepper({
                   {run.group}
                 </p>
                 <ol className="flex flex-col">{items}</ol>
-              </div>
+              </fieldset>
             </li>
           ) : (
             items
