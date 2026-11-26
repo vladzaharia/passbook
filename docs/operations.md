@@ -102,7 +102,7 @@ On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of th
 
 Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`.
 
-Runbooks (owner): [Polaris Binding Turn On](runbooks/polaris-binding-turn-on.md) (setup in dry run), [Polaris Binding Go Live](runbooks/polaris-binding-go-live.md) (after a week of dry run), [Polaris Binding Key Rotation](runbooks/polaris-binding-key-rotation.md) (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys), [Polaris Binding Thaw](runbooks/polaris-binding-thaw.md) and [Polaris Binding Compromise](runbooks/polaris-binding-compromise.md). The main Worker's SCIM and `IDP` binding steps follow in later changes.
+Runbooks (owner): [Polaris Binding Turn On](runbooks/polaris-binding-turn-on.md) (setup in dry run), [Polaris Binding Go Live](runbooks/polaris-binding-go-live.md) (after a week of dry run), [Polaris Binding Key Rotation](runbooks/polaris-binding-key-rotation.md) (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys), [Polaris Binding Thaw](runbooks/polaris-binding-thaw.md) and [Polaris Binding Compromise](runbooks/polaris-binding-compromise.md). The SCIM receiver is set up with [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). The main Worker's `IDP` service binding is not in `wrangler.jsonc` yet and follows in a later change.
 
 Next Polaris ID release: it moves admin routes to `/api/admin/...` and adds scoped keys. Recreate the key with `users:invite users:read users:write groups:read audit-logs:read config:read account:api-keys` and set `POCKET_ID_API` to `admin` in the same deploy. Both layouts are covered by `test/polaris-binding`.
 
@@ -116,15 +116,11 @@ Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (
 - A member removed from a group, or in a deleted group: queued for the drain (at most 100 a push and 300 an hour; a subject already backing off keeps its backoff). The drain reads the account and decides.
 - A platform admin removed from a group: Polaris ID is asked about each of their accounts (`lookup`); with none in the admin group their admin sessions end within the push and `admin_changed` is filed. More than five at once, a failed lookup or dry run changes nothing here; the daily reconcile decides.
 
-1. `openssl rand -base64 32`, then `npx wrangler secret put SCIM_BEARER_TOKEN` (main Worker; at least 32 characters, or the route answers 404).
-2. Set the PassBook client's allowed groups first (step 3 above), or Polaris ID pushes every user, and the mirror keeps the ids of every group it pushes (`client_open` in `health()` warns). Fix that before SCIM.
-3. In Polaris ID add a SCIM service provider on the PassBook client (a Client ID Metadata Document client is a client row like any other, but it exists in Polaris ID only after its first sign-in; read from v2.19.3 source, not yet tried live; if Polaris ID refuses it, use a plain registered client for SCIM): endpoint `https://<host>/scim/v2`, that token. Run Sync now and check `idp_directory_users` fills.
+Setup (owner): [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). Token rotation is in the same note.
 
 Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
 
-Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with `DELETE FROM counters WHERE key = 'idp:scim:breaker'` on the main D1; the next minute's sweep ends what is owed (tripping it resets the ten-minute count, so clearing it in the same window does not latch it again). A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
-
-Rotate the token by putting a new secret and updating the service provider; between the two Polaris ID's pushes fail with 401 and retry on the next sync.
+Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with [SCIM Breaker Clear](runbooks/scim-breaker-clear.md); the next minute's sweep ends what is owed. A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
 
 ## Managed identity runs
 
