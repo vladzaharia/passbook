@@ -68,7 +68,7 @@ export function Stats({ orgId, summary }: { orgId: string; summary: Summary | un
               to={wbPath(orgId, s.tool, s.query ? { query: s.query } : {})}
               className={cn(
                 CARD_SURFACE,
-                'group flex h-full min-h-20 flex-col justify-between gap-2 p-3 outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+                'group flex h-full min-h-20 flex-col justify-between gap-2 p-3 outline-none transition-[border-color] duration-(--wl-dur-hover) ease-(--wl-ease-move) hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
               )}
             >
               <span className="text-xs font-medium text-fg-muted">{s.label}</span>

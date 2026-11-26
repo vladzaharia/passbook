@@ -56,7 +56,7 @@ export function NextStep({
               key={i}
               aria-hidden
               className={cn(
-                'grid h-1.5 w-8 place-items-center rounded-full transition-colors',
+                'grid h-1.5 w-8 place-items-center rounded-full transition-[background-color] duration-(--wl-dur-hover) ease-(--wl-ease-move)',
                 i < done ? 'bg-accent' : 'bg-state-hover-tint',
               )}
             />

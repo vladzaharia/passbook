@@ -12,7 +12,7 @@ import type { CallRow, EventRow } from './data.ts';
 import { At, Panel } from './panel.tsx';
 
 const ROW =
-  'wb-home-row flex min-h-11 items-center gap-3 px-4 py-2 text-sm outline-none transition-colors hover:bg-state-hover-tint focus-visible:bg-state-hover-tint focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus';
+  'wb-home-row flex min-h-11 items-center gap-3 px-4 py-2 text-sm outline-none transition-[background-color] duration-(--wl-dur-hover) ease-(--wl-ease-move) hover:bg-state-hover-tint focus-visible:bg-state-hover-tint focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus';
 
 function Rows({ children }: { children: ReactNode }) {
   return <ul className="m-0 flex list-none flex-col divide-y divide-border p-0">{children}</ul>;
