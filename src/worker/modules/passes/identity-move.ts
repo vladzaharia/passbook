@@ -12,6 +12,7 @@ import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
 import { depsOf } from './deps.ts';
 import { linksOf } from './detail.ts';
 import { carryEdits, messageKey, without } from './identity-move-carry.ts';
+import { ASK_AGAIN_MS, askGoogle } from './identity-move-copies.ts';
 import { fingerprintOf, recarryState } from './identity-move-recarry.ts';
 import { moveVoidCommit } from './identity-move-repoint.ts';
 import { gone, revokeReplacement, SYSTEM } from './identity-move-revoke.ts';
@@ -192,7 +193,14 @@ export async function voidDue(
   const now = ctx.clock.now();
   // A suspended org's passes cannot be written: the row waits, and the next sweep tries again.
   if (!(await isOrgActive(ctx, row.org_id))) return 'skipped';
-  if (!(await claimVoid(db, row.id, now, now + CLAIM_MS))) {
+  let asked: Awaited<ReturnType<typeof askGoogle>> = null;
+  let claimed = await claimVoid(db, row.id, now, now + CLAIM_MS);
+  if (!claimed) {
+    // A Google copy with no report may still be saved: Google says whether anyone has it before it is voided.
+    asked = await askGoogle(ctx, row);
+    if (asked === 'empty') claimed = await claimVoid(db, row.id, now, now + CLAIM_MS, ['google']);
+  }
+  if (!claimed) {
     const fresh = await moveById(db, row.id);
     if (fresh?.state !== 'registered') return 'skipped';
     if (fresh.claim_until !== null && fresh.claim_until > now) return 'skipped';
@@ -210,14 +218,14 @@ export async function voidDue(
     }
     // A device holds a wallet copy of the old pass that the replacement lacks: the row waits, with its reason, for
     // the holder to save the new one. At the reminder's deadline it stays as it is, both passes live.
-    const held = await heldReason(db, row);
+    const held = await heldReason(db, row, asked === 'empty' ? ['google'] : []);
     if (held !== null) {
       if (fresh.remind_at !== null && now >= fresh.remind_at) {
         await setState(db, row.id, ['registered'], { state: 'kept_both', reason: held }, now);
         ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: held });
         return 'kept';
       }
-      await setWaitReason(db, row.id, held, now);
+      await setWaitReason(db, row.id, held, now, asked === null ? null : now + ASK_AGAIN_MS);
       return 'waiting';
     }
     return reschedule(db, fresh, now);

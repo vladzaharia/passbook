@@ -108,16 +108,19 @@ export function dueVoids(db: D1Database, now: number, limit: number): Promise<Mo
 }
 
 /**
- * Takes the right to void, only while it still holds: a current registration at least 24 hours old, a
- * replacement that is still an active pass, and an old pass that can still move (the plan's kept reasons are
- * read again here), holds no saved wallet copy the replacement lacks, and whose replacement's saves (of the
- * providers the old pass had saved) are a day old. A holder with no Apple registration is armed by those saves. One statement, so a register or an unregister racing the timer lands on one side of it.
+ * Takes the right to void, only while it still holds, however the row was armed: a current registration at least
+ * 24 hours old (or wallet saves that armed it), a replacement that is still an active pass, an old pass that can
+ * still move (the plan's kept reasons are read again here), no device registered to the old pass without the
+ * replacement, no wallet copy that may be saved while the replacement's is not, and the replacement's saves a
+ * day old. One statement, so a register or an unregister racing the timer lands on one side of it.
  */
 export async function claimVoid(
   db: D1Database,
   id: string,
   now: number,
   until: number,
+  /** Providers Google was asked about and said nobody has the copy. */
+  cleared: readonly string[] = [],
 ): Promise<boolean> {
   const { changes } = await run(
     db,
@@ -129,8 +132,12 @@ export async function claimVoid(
          WHERE r.pass_id = pass_moves.new_pass_id AND ${ON_OLD_DEVICE} AND r.created_at <= ?)
          OR ${WALLET_ARMED})
        AND (SELECT ${KEPT} FROM passes p WHERE p.id = pass_moves.old_pass_id) IS NULL
+       AND NOT EXISTS (SELECT 1 FROM registrations o JOIN passes op ON op.id = o.pass_id
+         AND o.credential_generation = op.credential_generation
+         WHERE o.pass_id = pass_moves.old_pass_id AND NOT EXISTS (SELECT 1 FROM registrations r
+           WHERE r.pass_id = pass_moves.new_pass_id AND r.device_id = o.device_id))
        AND NOT ${HELD_COPY} AND NOT ${RECENT_SAVE}`,
-    [until, now, id, now, now, now - DAY_MS, now - DAY_MS],
+    [until, now, id, now, now, now - DAY_MS, JSON.stringify(cleared), now - DAY_MS],
   );
   return changes === 1;
 }
@@ -255,10 +262,13 @@ export async function setWaitReason(
   id: string,
   reason: string | null,
   now: number,
+  /** The next look at the row, when the wait cost a provider read. */
+  retryAt: number | null = null,
 ): Promise<void> {
   await run(
     db,
-    `UPDATE pass_moves SET reason = ?, updated_at = ? WHERE id = ? AND state = 'registered'`,
-    [reason, now, id],
+    `UPDATE pass_moves SET reason = ?, updated_at = ?, void_at = MAX(void_at, COALESCE(?, 0))
+     WHERE id = ? AND state = 'registered'`,
+    [reason, now, retryAt, id],
   );
 }

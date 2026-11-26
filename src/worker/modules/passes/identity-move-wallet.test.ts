@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import type { BroadcastKit } from '../broadcasts/test-kit.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -26,6 +26,15 @@ vi.mock('../identities/resolver.ts', async (importOriginal) => {
       wrapResolver(original.createIdentityResolver(...a)),
   };
 });
+
+// Google's answer to "does the object have users": the real read has its own tests (google-copy-users.test.ts).
+const google = vi.hoisted(() => ({ answer: false as boolean | null, asked: 0 }));
+vi.mock('../wallet-providers/google-copy-users.ts', () => ({
+  googleCopyHasUsers: async () => {
+    google.asked++;
+    return google.answer;
+  },
+}));
 
 let kit: BroadcastKit;
 beforeAll(async () => {
@@ -98,6 +107,10 @@ async function completeMove(next: Old) {
   kit.clock.advance(DAY);
   await sweep();
 }
+beforeEach(() => {
+  google.answer = false;
+  google.asked = 0;
+});
 const stateOf = async (oldId: string) => {
   const row = await moveOf(kit, oldId);
   return [row.state, row.reason];
@@ -110,6 +123,11 @@ describe('a pass with a Google or Samsung copy moves', () => {
       const { old, next, copies } = await moved(providers);
       expect(await stateOf(old.id)).toEqual(['notified', null]);
       expect((await passOf(kit, next.id)).status).toBe('active');
+      // Google says nobody has its copy; the holder removed the Samsung one (its report says so).
+      if (providers.includes('samsung')) {
+        await save(old, 'samsung');
+        await report(old, 'samsung', 'wallet.removed');
+      }
       const before = new Map<string, number>();
       for (const id of copies.values()) before.set(id, await dirtyOf(id));
       await completeMove(next);
@@ -119,15 +137,19 @@ describe('a pass with a Google or Samsung copy moves', () => {
       // The provider's own void path: each copy's pass write told the drain, in the void's batch.
       for (const id of copies.values())
         expect(await dirtyOf(id)).toBeGreaterThan(before.get(id) ?? 0);
+      expect(google.asked).toBe(providers.includes('google') ? 1 : 0);
     },
   );
 
-  it('voids the old pass with a copy nobody saved, and with one removed after it was saved', async () => {
+  it('voids the old pass with a copy removed after it was saved, asking nobody', async () => {
     const { old, next } = await moved(['google', 'samsung']);
-    await save(old, 'google');
-    await report(old, 'google', 'wallet.removed');
+    for (const p of ['google', 'samsung'] as const) {
+      await save(old, p);
+      await report(old, p, 'wallet.removed');
+    }
     await completeMove(next);
     expect(await stateOf(old.id)).toEqual(['voided', null]);
+    expect(google.asked).toBe(0);
   });
 
   it('ignores a saved copy that is no longer live', async () => {
@@ -321,6 +343,123 @@ describe('a holder with no Apple registration is armed by wallet saves', () => {
     await save(next, 'google');
     await sweep();
     expect(await stateOf(old.id)).toEqual(['registered', null]);
+  });
+});
+
+describe('W2: a device that holds the old pass without the replacement keeps it', () => {
+  it('a row armed by wallet saves does not void an Apple pass registered later on another iPhone', async () => {
+    const { old, next } = await moved(['google'], false);
+    await save(old, 'google');
+    await save(next, 'google');
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['registered', null]);
+    expect((await moveOf(kit, old.id)).armed_device).toBe('wallet');
+    await kit.device(old, 'dev-9', 'p'.repeat(64));
+    kit.clock.advance(2 * DAY);
+    await sweep();
+    expect((await passOf(kit, old.id)).status).toBe('active');
+    expect((await passOf(kit, next.id)).status).toBe('active');
+    // The wallet arming is gone; the Apple path arms when the replacement reaches that iPhone.
+    expect(await stateOf(old.id)).toEqual(['notified', null]);
+    await kit.device(next, 'dev-9', 'q'.repeat(64));
+    await armOnRegister(ctx(), next.id);
+    kit.clock.advance(DAY);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['voided', null]);
+  });
+
+  it('an Apple-armed row waits while a second device holds the old pass alone', async () => {
+    const { old, next } = await moved([]);
+    await kit.device(old, 'dev-2', 'p'.repeat(64));
+    await completeMove(next);
+    expect((await passOf(kit, old.id)).status).toBe('active');
+    expect((await moveOf(kit, old.id)).state).toBe('registered');
+    await kit.device(next, 'dev-2', 'q'.repeat(64));
+    kit.clock.advance(HOUR);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['voided', null]);
+  });
+});
+
+describe('W1: a lost save callback is not proof the copy is unsaved', () => {
+  it('Google says the object has users: the old pass waits as wallet_copy:google, and ends kept_both at the deadline', async () => {
+    google.answer = true;
+    const { old, next, copies } = await moved(['google']);
+    const before = await dirtyOf(copies.get('google') ?? '');
+    await completeMove(next);
+    expect(google.asked).toBe(1);
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:google']);
+    expect((await passOf(kit, old.id)).status).toBe('active');
+    // It asks again after an hour, not on every sweep.
+    await sweep();
+    expect(google.asked).toBe(1);
+    kit.clock.advance(HOUR + 1_000);
+    await sweep();
+    expect(google.asked).toBe(2);
+    kit.clock.advance(40 * DAY);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['kept_both', 'wallet_copy:google']);
+    expect((await passOf(kit, old.id)).status).toBe('active');
+    expect(await dirtyOf(copies.get('google') ?? '')).toBe(before);
+  });
+
+  it('Google says the object has no users: the old pass is voided, with its copy', async () => {
+    google.answer = false;
+    const { old, next, copies } = await moved(['google']);
+    const before = await dirtyOf(copies.get('google') ?? '');
+    await completeMove(next);
+    expect(google.asked).toBe(1);
+    expect(await stateOf(old.id)).toEqual(['voided', null]);
+    expect(await dirtyOf(copies.get('google') ?? '')).toBeGreaterThan(before);
+  });
+
+  it('Google cannot be asked: the copy is held', async () => {
+    google.answer = null;
+    const { old, next } = await moved(['google']);
+    await completeMove(next);
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:google']);
+    expect((await passOf(kit, old.id)).status).toBe('active');
+  });
+
+  it('Google users appear after the first answer: the next look holds, and a later empty answer voids', async () => {
+    google.answer = true;
+    const { old, next } = await moved(['google']);
+    await completeMove(next);
+    google.answer = false;
+    kit.clock.advance(HOUR + 1_000);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['voided', null]);
+  });
+
+  it('Samsung with no events is held until the replacement is saved, or the 30-day deadline', async () => {
+    const { old, next, copies } = await moved(['samsung']);
+    const before = await dirtyOf(copies.get('samsung') ?? '');
+    await completeMove(next);
+    expect(google.asked).toBe(0);
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:samsung']);
+    kit.clock.advance(40 * DAY);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['kept_both', 'wallet_copy:samsung']);
+    expect((await passOf(kit, old.id)).status).toBe('active');
+    expect(await dirtyOf(copies.get('samsung') ?? '')).toBe(before);
+  });
+
+  it('Samsung with no events is released once the replacement is saved, and voided 24 hours later', async () => {
+    const { old, next } = await moved(['samsung']);
+    await completeMove(next);
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:samsung']);
+    await save(next, 'samsung');
+    kit.clock.advance(DAY + HOUR);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['voided', null]);
+  });
+
+  it('does not ask Google when a report already speaks for the copy', async () => {
+    const { old, next } = await moved(['google']);
+    await save(old, 'google');
+    await completeMove(next);
+    expect(google.asked).toBe(0);
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:google']);
   });
 });
 
