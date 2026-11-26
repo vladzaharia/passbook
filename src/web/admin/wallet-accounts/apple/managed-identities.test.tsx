@@ -336,6 +336,20 @@ describe('Apple API tab', () => {
     expect(await screen.findByText('createPassType')).toBeInTheDocument();
   });
 
+  it('shows the error state with Retry when the call fails', async () => {
+    await renderApp('/admin/platform/wallet-accounts', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/wallet-identities': page([]),
+        '/api/v1/platform/apple-calls': () =>
+          problem(503, 'APPLE_PROVISIONER_UNAVAILABLE', 'The Apple provisioner is not reachable.'),
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('tab', { name: 'Apple API' }));
+    expect(await screen.findByRole('button', { name: /retry/i })).toBeInTheDocument();
+  });
+
   it('reads as not connected without the binding', async () => {
     await renderApp('/admin/platform/wallet-accounts', {
       session: 'admin',
