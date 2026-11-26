@@ -1,18 +1,45 @@
 import { createRoot } from 'react-dom/client';
+import { useActiveOperation } from '../../ui/operation/use-operation.ts';
 import { loadSession, onSession, type Session } from '../console/session.ts';
 import type { Island } from '../shell/islands.ts';
 import { type ChipState, SandboxChip } from './sandbox-chip.tsx';
-import { ContextStrip, stripModel } from './strip.tsx';
+import { BenchKeys } from './shortcuts.tsx';
+import { ContextStrip, type StripModel, stripModel } from './strip.tsx';
 import type { BenchTool } from './switcher.tsx';
 import './bench-chip.css';
+
+type Ready = Extract<StripModel, { kind: 'ready' }>;
+
+/** The strip of a sandbox in use: an operation running on it (OP-2) rings the chip and leads its menu. */
+function ReadyStrip({ tool, model }: { tool: BenchTool; model: Ready }) {
+  const op = useActiveOperation({ type: 'sandbox', id: model.orgId });
+  return (
+    <ContextStrip
+      tool={tool}
+      model={model}
+      activity={op ? { title: op.title, text: op.text } : undefined}
+    />
+  );
+}
 
 /** The `bench-strip` island: the strip for the tool its placeholder names, redrawn when the session changes. */
 export const stripIsland: Island = {
   mount: async (el) => {
     const tool = (el.dataset.tool ?? 'console') as BenchTool;
     const root = createRoot(el);
-    const paint = async () =>
-      root.render(<ContextStrip tool={tool} model={await stripModel(tool)} />);
+    const paint = async () => {
+      const model = await stripModel(tool);
+      root.render(
+        <>
+          {model.kind === 'ready' ? (
+            <ReadyStrip tool={tool} model={model} />
+          ) : (
+            <ContextStrip tool={tool} model={model} />
+          )}
+          <BenchKeys tool={tool} />
+        </>,
+      );
+    };
     await paint();
     onSession(() => void paint());
   },
