@@ -120,7 +120,7 @@ export async function selectProjectionApprovals(
   return all<ApprovalRow>(
     db,
     `SELECT a.id, a.candidate_id AS candidateId, a.candidate_hash AS candidateHash,
-    a.reviewer_id AS reviewerId, a.created_at AS createdAt
+    a.reviewer_id AS reviewerId, a.kind, a.created_at AS createdAt
     FROM template_approvals a JOIN template_candidates c ON c.id = a.candidate_id
     WHERE c.template_id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ?
       AND c.credential_keyset_commitment = ${pinnedKeysetSql} AND a.credential_keyset_commitment = c.credential_keyset_commitment

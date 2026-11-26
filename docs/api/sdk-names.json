@@ -721,6 +721,12 @@
     "sdk": false,
     "reason": "Acts on the signed-in person's own account; needs a person's session."
   },
+  "me.postMePassesByIdLostPhoneConfirmation": {
+    "resource": "me.passes",
+    "method": "confirmLostPhone",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
   "me.postMePassesByIdRefresh": {
     "resource": "me.passes",
     "method": "refresh",

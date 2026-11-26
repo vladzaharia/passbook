@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "101c4a7ea2ac05ee1a5ab202e1b10fd158bc31f8";
+export const BAKED_BUILD_HASH = "b25dd9d5f49d38d263bd5595575ab724e3b4f260";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -3981,7 +3981,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-coupon",
     "slug": "starter-coupon",
-    "version": "cede1d997047227c",
+    "version": "b020d015d18ece12",
     "name": "Coupon",
     "description": "A single-use offer with an expiry.",
     "org": null,
@@ -4006,7 +4006,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "logo": "wallets/google/logo.png"
           }
         },
-        "samsung": {}
+        "samsung": {
+          "images": {
+            "main": "wallets/samsung/main.png"
+          }
+        }
       },
       "channels": {
         "paper": "on",
@@ -4421,7 +4425,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3965588232,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/en.lproj/pass.strings"
+          "path": "/templates/starter-coupon/b020d015d18ece12/en.lproj/pass.strings"
         }
       },
       {
@@ -4435,7 +4439,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/icon@2x.png"
+          "path": "/templates/starter-coupon/b020d015d18ece12/icon@2x.png"
         }
       },
       {
@@ -4449,7 +4453,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/icon@3x.png"
+          "path": "/templates/starter-coupon/b020d015d18ece12/icon@3x.png"
         }
       },
       {
@@ -4463,7 +4467,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/logo@2x.png"
+          "path": "/templates/starter-coupon/b020d015d18ece12/logo@2x.png"
         }
       },
       {
@@ -4477,7 +4481,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/logo@3x.png"
+          "path": "/templates/starter-coupon/b020d015d18ece12/logo@3x.png"
         }
       },
       {
@@ -4491,7 +4495,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/strip@2x.png"
+          "path": "/templates/starter-coupon/b020d015d18ece12/strip@2x.png"
         }
       },
       {
@@ -4505,7 +4509,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/strip@3x.png"
+          "path": "/templates/starter-coupon/b020d015d18ece12/strip@3x.png"
         }
       },
       {
@@ -4519,7 +4523,21 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 660,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/cede1d997047227c/wallets/google/logo.png"
+          "path": "/templates/starter-coupon/b020d015d18ece12/wallets/google/logo.png"
+        }
+      },
+      {
+        "name": "wallets/samsung/main.png",
+        "slot": "source",
+        "scale": 1,
+        "size": 30935,
+        "sha1": "a5541cbe5011aa1ce6bcd0ca57b0f12413946339",
+        "crc32": 3373962251,
+        "width": 1125,
+        "height": 432,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-coupon/b020d015d18ece12/wallets/samsung/main.png"
         }
       }
     ],

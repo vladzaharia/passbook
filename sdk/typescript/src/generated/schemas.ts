@@ -1574,6 +1574,7 @@ export type ConnectionsSetupRetrieveResponse = {
 export type ConnectionsSyncResponse = {
   runId: string;
   workflowInstanceId: string;
+  operationId: string | null;
 };
 
 export type ConnectionsTestConfigParams = {
@@ -4864,6 +4865,7 @@ export type OrgExportsCreateResponse = {
   bytes: number | null;
   entities: Record<string, number> | null;
   errorCode: string | null;
+  operationId: string | null;
 };
 
 export type OrgExportsListResponse = {
@@ -6923,6 +6925,7 @@ export type PassesBulkReissueParams = {
 
 export type PassesBulkReissueResponse = {
   workflowInstanceId: string;
+  operationId: string | null;
 };
 
 export type PassesBulkUpdateChannelsParams = {
@@ -6963,6 +6966,7 @@ export type PassesBulkUpdateChannelsResponse = {
       scheduled: boolean;
     }>;
   };
+  operationId?: string | null;
 };
 
 export type PassesChannelsRetrieveResponse = {
@@ -8747,6 +8751,7 @@ export type PrintJobsCreateResponse = {
     code: string;
     reason?: string;
   }>;
+  operationId: string | null;
 };
 
 export type PrintJobsRetrieveResponse = {
@@ -12272,6 +12277,7 @@ export type TemplatesCandidatesCreateResponse = {
   accountRevision?: number;
   providerIdentityHash?: string;
   projection?: unknown;
+  selfAuthored?: boolean;
   approvals: Array<{
     id: string;
     candidateId: string;
@@ -12308,6 +12314,7 @@ export type TemplatesCandidatesListResponse = {
     accountRevision?: number;
     providerIdentityHash?: string;
     projection?: unknown;
+    selfAuthored?: boolean;
     approvals: Array<{
       id: string;
       candidateId: string;
@@ -12349,6 +12356,7 @@ export type TemplatesCandidatesListResponse = {
       }>;
     };
   };
+  wallet?: "on" | "off" | "not_released";
 };
 
 export type TemplatesCandidatesPromoteParams = {
@@ -12382,6 +12390,7 @@ export type TemplatesCandidatesPromoteResponse = {
   accountRevision?: number;
   providerIdentityHash?: string;
   projection?: unknown;
+  selfAuthored?: boolean;
   approvals: Array<{
     id: string;
     candidateId: string;
@@ -13660,6 +13669,7 @@ export type WalletProviderAccountsVerifyResponse = {
 export type WalletReissue = {
   reissueId: string;
   instances: number;
+  operationId: string | null;
 };
 
 export type WebhookCapture = {

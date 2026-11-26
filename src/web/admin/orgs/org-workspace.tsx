@@ -9,6 +9,7 @@ import {
   SaveBarGroup,
   SkeletonDetail,
 } from '@/web/ui/index.ts';
+import { DataCard } from '../settings/data-card.tsx';
 import { OrgSettingsSections } from '../settings/org-settings-page.tsx';
 import { OrgFacts } from './org-facts.tsx';
 import { OrgForm } from './org-form.tsx';
@@ -95,6 +96,7 @@ export function OrgWorkspacePage({
           canManage={canManage}
           sandbox={org.kind === 'developer'}
         />
+        {canManage ? <DataCard orgId={org.id} /> : null}
       </div>
     </SaveBarGroup>
   );

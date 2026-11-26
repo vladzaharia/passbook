@@ -15,7 +15,11 @@
         "logo": "wallets/google/logo.png"
       }
     },
-    "samsung": {}
+    "samsung": {
+      "images": {
+        "main": "wallets/samsung/main.png"
+      }
+    }
   },
   "channels": {
     "paper": "on",

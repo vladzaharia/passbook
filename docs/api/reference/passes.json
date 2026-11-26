@@ -1304,7 +1304,8 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
     },
     "response": {
-      "workflowInstanceId": "0193a1b2-7c00-7000-8000-fc526349df42"
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-fc526349df42",
+      "operationId": "0193a1b2-7c00-7000-8000-aaea668f397d"
     }
   },
   "passes.postPassesBulkChannels": {
@@ -1790,7 +1791,8 @@
           "code": "PRINTING_OFF",
           "reason": "Paper is off for Quickstart ticket"
         }
-      ]
+      ],
+      "operationId": "0193a1b2-7c00-7000-8000-5b2fefdb1bd3"
     }
   },
   "passes.getPassesBulkPrintByJobId": {

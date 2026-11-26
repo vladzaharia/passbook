@@ -30,7 +30,7 @@ export function stepText(
   return count ? `${active ?? step.label} · ${count}` : (active ?? step.label);
 }
 
-/** The muted meta on a step row: its count, or when a waiting step resumes (a tail: its date). */
+/** The muted meta on a step row: its count, or when a waiting step resumes (a tail or a timed wait: the date it ends by). */
 export function stepMeta(
   step: OperationStep,
   now: number,
@@ -38,7 +38,7 @@ export function stepMeta(
   tail = false,
 ): string | undefined {
   if (step.state === 'waiting' && step.until !== null)
-    return tail
+    return tail || step.waitingReason === 'due'
       ? `By ${formatShortDateIn(step.until, zone)}`
       : `Tries again in ${formatSpan(step.until - now)}`;
   if (step.state === 'pending' || (step.state === 'skipped' && !step.done)) return undefined;

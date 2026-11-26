@@ -2,13 +2,14 @@ import type { z } from 'zod';
 import type {
   ConnectionRunsQuerySchema,
   ConnectionsSummarySchema,
-  SyncNowResponseSchema,
   TestConnectionResponseSchema,
 } from '../../../shared/contracts/index.ts';
+import type { AuthContext } from '../../platform/auth.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { actorOfAuth } from '../operations/start-org.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import type { toDto } from './dto.ts';
@@ -21,6 +22,7 @@ import { classify, prepare } from './runtime.ts';
 import { adminBucketMs, adminInstanceId, startSync } from './schedule.ts';
 import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
 import { auditActor, requireConnection } from './service.ts';
+import type { SyncOperation } from './sync-operation.ts';
 import { firstRecord, sampleFields } from './test-config.ts';
 import { assertModeSupported, requireConnector } from './validate.ts';
 import { dtoOf } from './webhook-arrivals.ts';
@@ -99,7 +101,9 @@ export async function syncNow(
   authority?: ConnectionAuthority,
   /** What the run is for, such as an applied file: it gets an instance of its own. */
   purpose?: string,
-): Promise<z.infer<typeof SyncNowResponseSchema>> {
+  /** Reports the run as an operation; a retry passes the one it restarts. */
+  operation?: SyncOperation,
+): Promise<{ runId: string; workflowInstanceId: string }> {
   const conn = await requireConnection(sctx, id);
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
   if (!conn.enabled) throw new ConflictError('The connection is disabled.', 'CONNECTION_DISABLED');
@@ -112,7 +116,7 @@ export async function syncNow(
     adminBucketMs(sctx.env),
     purpose,
   );
-  const started = await startSync(sctx, conn, 'admin', instanceId, actor.id, authority);
+  const started = await startSync(sctx, conn, 'admin', instanceId, actor.id, authority, operation);
   await recordAudit(sctx, {
     orgId: conn.orgId,
     ...auditActor(actor),
@@ -121,6 +125,24 @@ export async function syncNow(
     targetId: id,
   });
   return started;
+}
+
+/** Sync now as the API reports it: `operationId` names the operation, null when the sync joined an open run. */
+export async function syncNowReported(
+  sctx: ServiceContext,
+  actor: Actor,
+  id: string,
+  authority: ConnectionAuthority | undefined,
+  auth: AuthContext | undefined,
+) {
+  let operationId: string | null = null;
+  const started = await syncNow(sctx, actor, id, authority, undefined, {
+    actor: actorOfAuth(auth),
+    onStarted: (op) => {
+      operationId = op.id;
+    },
+  });
+  return { ...started, operationId };
 }
 
 /**

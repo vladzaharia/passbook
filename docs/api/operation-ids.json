@@ -161,6 +161,7 @@
   "me.postMeEmails",
   "me.postMeEmailsByEmailPrimary",
   "me.postMePassesByIdLostPhone",
+  "me.postMePassesByIdLostPhoneConfirmation",
   "me.postMePassesByIdRefresh",
   "me.postMePassesByIdResend",
   "me.postMeSessionsRevokeAll",

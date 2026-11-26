@@ -3,12 +3,12 @@ import {
   OperationResultSchema,
 } from '../../../shared/contracts/operations.ts';
 import { first, run, stmt } from '../../platform/db.ts';
-import { WORKFLOW_WRITER } from './progress-types.ts';
+import { WORKFLOW_WRITER, type Writer } from './progress-types.ts';
 
 const ACTIVE = `status IN ('queued', 'running', 'waiting')`;
 
 /** The lease condition of a write: a claimed lease refuses any other writer; a Workflow writer is fenced by attempt only. */
-function fence(lease: string | null | undefined): { sql: string; params: string[] } {
+function fence(lease: Writer | null | undefined): { sql: string; params: string[] } {
   if (lease === WORKFLOW_WRITER) return { sql: '', params: [] };
   return { sql: ' AND (lease_owner IS NULL OR lease_owner = ?)', params: [lease ?? ''] };
 }
@@ -34,20 +34,35 @@ export function writeStep(
     status: 'running' | 'waiting';
     leaseUntil: number;
     /** The lease token of the runner; a claimed lease refuses any other writer. */
-    lease: string | null;
+    lease: Writer | null;
   },
 ): Promise<Written | null> {
   // The index is an integer from the code's own step list, never a request value.
   const at = `$[${Math.trunc(w.index)}]`;
+  const old = (field: string) => `json_extract(steps, '${at}.${field}')`;
+  // A runner holds the step as it loaded it, possibly seconds ago: `done` never goes down, and a wait never
+  // ends sooner than one another job already set.
+  const done = `CASE WHEN ${old('done')} IS NULL AND json_extract(?, '$.done') IS NULL THEN NULL
+    ELSE MAX(COALESCE(${old('done')}, 0), COALESCE(json_extract(?, '$.done'), 0)) END`;
+  const until = `CASE WHEN json_extract(?, '$.state') = 'waiting' AND ${old('until')} IS NOT NULL
+    AND json_extract(?, '$.until') IS NOT NULL
+    THEN MAX(${old('until')}, json_extract(?, '$.until')) ELSE json_extract(?, '$.until') END`;
   return first<Written>(
     db,
-    `UPDATE operations SET steps = json_set(steps, ?, json(?)), step_key = ?, status = ?,
+    `UPDATE operations SET steps = json_set(json_set(json_set(steps, ?, json(?)), '${at}.done', ${done}), '${at}.until', ${until}),
+       step_key = ?, status = ?,
        revision = revision + 1, started_at = COALESCE(started_at, ?), updated_at = ?, heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
      WHERE id = ? AND attempt = ? AND ${ACTIVE}${fence(w.lease).sql}
      RETURNING status, cancel_requested`,
     [
       at,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
+      w.stepJson,
       w.stepJson,
       w.stepKey,
       w.status,
@@ -62,10 +77,31 @@ export function writeStep(
   );
 }
 
+/**
+ * One more done on a step, added by the database (capped at the step's total), with no change to its state or the
+ * row's status: jobs that run side by side cannot know each other's count. Null: nothing written.
+ */
+export function incrementStep(
+  db: D1Database,
+  w: { id: string; attempt: number; now: number; index: number; lease: Writer | null },
+): Promise<{ done: number; total: number | null } | null> {
+  const at = `$[${Math.trunc(w.index)}]`;
+  return first<{ done: number; total: number | null }>(
+    db,
+    `UPDATE operations SET steps = json_set(steps, '${at}.done',
+         MIN(COALESCE(json_extract(steps, '${at}.total'), 9007199254740991),
+             COALESCE(json_extract(steps, '${at}.done'), 0) + 1)),
+       revision = revision + 1, updated_at = ?, heartbeat_at = ?
+     WHERE id = ? AND attempt = ? AND ${ACTIVE}${fence(w.lease).sql}
+     RETURNING json_extract(steps, '${at}.done') AS done, json_extract(steps, '${at}.total') AS total`,
+    [w.now, w.now, w.id, w.attempt, ...fence(w.lease).params],
+  );
+}
+
 /** Only the heartbeat and the lease: no revision bump, so an unchanged poll still gets its 304. */
 export async function writeHeartbeat(
   db: D1Database,
-  w: { id: string; attempt: number; now: number; leaseUntil: number; lease: string | null },
+  w: { id: string; attempt: number; now: number; leaseUntil: number; lease: Writer | null },
 ): Promise<Written | null> {
   return first<Written>(
     db,
@@ -98,7 +134,7 @@ export interface Finish {
   /** The stop of an operation that has not started: refuses a row a runner already claimed (status or live lease). */
   onlyQueued?: true;
   /** A runner's lease token: a claimed lease refuses any other end write. Omit for the sweep and a stop. */
-  lease?: string;
+  lease?: Writer;
 }
 
 /** The terminal write. A statement, so a domain batch can commit its own end state with it. */

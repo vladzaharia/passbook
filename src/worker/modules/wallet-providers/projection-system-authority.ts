@@ -36,6 +36,18 @@ export const isSystemAuthored = (candidate: { authorId: string }): boolean =>
   candidate.authorId === SYSTEM_AUTHOR;
 
 /**
+ * `selfAuthored` for `approvalKind`, and what a candidate list tells the viewer. The version author is a
+ * genuine second party to a system candidate (its author is the platform), so only a person's own
+ * candidate or version counts.
+ */
+export const isSelfAuthored = (
+  userId: string,
+  candidate: { authorId: string; versionAuthorId: string | null },
+): boolean =>
+  userId === candidate.authorId ||
+  (userId === candidate.versionAuthorId && !isSystemAuthored(candidate));
+
+/**
  * Providers whose candidates the platform authors and approves itself. The release, approval, retirement and
  * tombstone proofs (0141, 0230) exempt the system author for exactly these.
  */

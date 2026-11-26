@@ -17,10 +17,10 @@ import {
   ListRows,
   StatusPill,
 } from '../../../ui/index.ts';
-import { useReleaseLists, useWalletEnrolments } from './api.ts';
+import { useReleaseLists } from './api.ts';
 import { PROVIDER } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
-import { fidelityWords, walletReview } from './wallet-review.ts';
+import { fidelityWords, newestRelease, walletReview } from './wallet-review.ts';
 
 const WalletReviewDialog = lazy(() => import('./wallet-review-dialog.tsx'));
 
@@ -84,9 +84,10 @@ function nativeState(
   active: TemplateRelease | null,
   candidates: readonly TemplateCandidate[],
   versions: readonly ReleaseVersion[],
+  previous: TemplateRelease | null,
 ): RowState {
   if (!current) return releasedState(active, candidates, versions);
-  const review = walletReview(current, active, candidates);
+  const review = walletReview(current, active, candidates, previous);
   const meta = versionLabel(versions, current.version);
   if (review.kind === 'off') return { status: 'off', pill: 'neutral', label: 'Off', meta: '' };
   if (review.kind === 'blocked')
@@ -96,8 +97,11 @@ function nativeState(
     return {
       status: 'blocked',
       pill: 'warning',
-      label: 'Review needed: new omission',
-      meta: review.pending.map((item) => item.message).join(' · '),
+      label: review.pending.length > 0 ? 'Review needed: new omission' : 'Review needed: new type',
+      meta:
+        review.pending.length > 0
+          ? review.pending.map((item) => item.message).join(' · ')
+          : `Now ${review.typeChanged?.to ?? ''}, approved as ${review.typeChanged?.from ?? ''}.`,
     };
   if (review.kind === 'released' && active?.googleReview === 'waiting')
     return releasedState(active, candidates, versions);
@@ -124,7 +128,13 @@ function OnRow(props: RowProps & { orgId: string }) {
   const { releases, candidates } = useReleaseLists(templateId, { orgId, mode, provider });
   const state: RowState =
     releases.data && candidates.data
-      ? nativeState(candidates.data.current, releases.data.active, candidates.data.items, versions)
+      ? nativeState(
+          candidates.data.current,
+          releases.data.active,
+          candidates.data.items,
+          versions,
+          newestRelease(releases.data.items),
+        )
       : { status: 'on', pill: 'neutral', label: 'On', meta: 'Loading release.' };
   return <WalletRow {...props} state={state} />;
 }
@@ -188,14 +198,15 @@ export function WalletRows({
       if (provider !== 'apple') setReviewing(provider);
     },
   };
-  const enrolments = useWalletEnrolments(orgId, props.mode);
+  // The template's own lists say whether a wallet is open for this organization, to anyone who can review.
+  const scopes = { orgId, mode: props.mode };
+  const google = useReleaseLists(props.templateId, { ...scopes, provider: 'google' });
+  const samsung = useReleaseLists(props.templateId, { ...scopes, provider: 'samsung' });
   // Google and Samsung ship dark: a row exists only once the wallet is on for this organization.
   const on = WALLETS.filter(
     (provider) =>
-      provider !== 'apple' &&
-      enrolments.data?.items.some(
-        (e) => e.provider === provider && e.state === 'on' && e.issuance.state === 'enabled',
-      ),
+      (provider === 'google' ? google : provider === 'samsung' ? samsung : null)?.candidates.data
+        ?.wallet === 'on',
   );
   if (on.length === 0) return null;
   return (

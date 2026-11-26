@@ -1,7 +1,9 @@
+import { env } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
 import { createPublicKey, type KeyObject, verify as verifySignature } from 'node:crypto';
 import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { isGoogleIssuerId } from './google-credentials.ts';
+import { providerFetch } from './mock-endpoint.ts';
 
 // Google Wallet's documented ECv2SigningOnly endpoint, not the Google Pay payment-token key URL.
 export const GOOGLE_CALLBACK_KEYS_URL = 'https://pay.google.com/gp/m/issuer/keys';
@@ -172,7 +174,8 @@ async function fetchRootKeys(now: () => number): Promise<RootKeyCache> {
   try {
     // Always the pinned URL. Redirects are not followed (a 3xx fails the read), and neither the request nor its headers
     // can supply a verification key or URL.
-    const response = await fetch(GOOGLE_CALLBACK_KEYS_URL, {
+    // The e2e server's mock stands in for Google's keys (providerFetch is `fetch` unchanged anywhere else).
+    const response = await providerFetch(env)(GOOGLE_CALLBACK_KEYS_URL, {
       method: 'GET',
       redirect: 'manual',
       signal: AbortSignal.timeout(10_000),

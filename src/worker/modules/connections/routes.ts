@@ -249,7 +249,7 @@ register(
     const ctx = sctx(c);
     const id = c.req.valid('param').id;
     const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
-    return c.json(await actions.syncNow(ctx, actor(c), id, authority), 202);
+    return c.json(await actions.syncNowReported(ctx, actor(c), id, authority, c.var.auth), 202);
   },
 );
 register(
