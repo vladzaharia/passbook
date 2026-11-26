@@ -441,6 +441,8 @@ it('pins which platform routes take a key and which are person-only', () => {
 
 it('makes a platform scope mintable exactly when a route accepts it by key', () => {
   const { scopes } = platformKeyRoutes();
+  // `platform:status` is declared by GET /idp/setup for sessions but is not a key scope until PK-2a.
+  scopes.delete('platform:status');
   if (scopes.size > 0) scopes.add('platform:read');
   expect([...MINTABLE_PLATFORM_SCOPES].sort()).toEqual([...scopes].sort());
 });

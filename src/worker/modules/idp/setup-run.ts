@@ -15,7 +15,7 @@ import { idpClient } from './client.ts';
 import { adminStill, held } from './ops-runs.ts';
 import { blockError } from './setup-items.ts';
 import { readSetup, type SetupView } from './setup-read.ts';
-import { installToken } from './setup-token.ts';
+import { installToken, starterOf } from './setup-token.ts';
 import type { IdpRpc, SetupCtx } from './types.ts';
 
 /** The steps after the read, in the matrix's order. */
@@ -97,12 +97,13 @@ export async function setupRun(
   const progress = progressOf(ctx, op.id, op.attempt, lease);
   await adminStill(ctx, op);
   const { dry, only } = parseTarget(op);
-  const actorId = op.startedBy.id ?? '';
+  const starter = starterOf(op);
+  const actorId = starter.id;
   const rpc: IdpRpc = idpClient(ctx.env, ctx.log);
   const setup = (): SetupCtx => ({
     ref: `setup-${op.id}`,
     reason: 'setup',
-    actor: { kind: 'user', id: actorId },
+    actor: starter.rpc,
     dryRun: dry,
   });
   const ids: Record<string, string> = { dryRun: dry ? 'yes' : 'no' };
@@ -115,12 +116,12 @@ export async function setupRun(
   await progress.step('check').done();
   const audit = (key: string, result: string) =>
     recordAudit(ctx, {
-      actorType: 'user',
+      actorType: starter.audit,
       actorId,
       action: `idp.setup.${key}`,
       targetType: 'idp',
       targetId: 'setup',
-      detail: { item: key, result },
+      detail: { item: key, result, operationId: op.id },
     });
   const act = async (key: Step): Promise<void> => {
     if (key === 'groups') await rpc.placeRoleGroups(setup());
@@ -134,6 +135,7 @@ export async function setupRun(
   };
   for (const key of STEPS) {
     await progress.checkCancel();
+    await adminStill(ctx, op);
     await held(ctx, op, lease);
     const step = progress.step(key);
     const item = itemOf(view, key);

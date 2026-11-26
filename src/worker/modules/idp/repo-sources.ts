@@ -195,11 +195,12 @@ export async function hasLiveAdminSession(
   );
 }
 
-/** A Platform key that is not revoked, expired or retired. */
+/** A Platform key that is not revoked, expired or retired, and still holds `scope`. */
 export async function hasLivePlatformKey(
   db: D1Database,
   keyId: string,
   now: number,
+  scope: string,
 ): Promise<boolean> {
   return (
     (await first(
@@ -207,8 +208,9 @@ export async function hasLivePlatformKey(
       `SELECT 1 AS ok FROM api_keys
        WHERE id = ? AND kind = 'platform' AND org_id IS NULL AND revoked_at IS NULL
          AND (expires_at IS NULL OR expires_at > ?) AND (retire_at IS NULL OR retire_at > ?)
+         AND json_valid(scopes) AND EXISTS (SELECT 1 FROM json_each(scopes) s WHERE s.value = ?)
        LIMIT 1`,
-      [keyId, now, now],
+      [keyId, now, now, scope],
     )) !== null
   );
 }

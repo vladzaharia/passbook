@@ -10,6 +10,8 @@ import type { IdpRpc } from './types.ts';
 export interface SetupView {
   mode: 'dry_run' | 'live' | null;
   items: SetupItem[];
+  /** A SCIM connection exists in Polaris ID (false when it could not be read). */
+  scimExists: boolean;
 }
 
 /**
@@ -17,7 +19,8 @@ export interface SetupView {
  * is written, and the token hash only goes to the binding to be compared.
  */
 export async function readSetup(ctx: ServiceContext, rpc?: IdpRpc): Promise<SetupView> {
-  if (!idpConfigured(ctx.env)) return { mode: null, items: bindingDown('binding_absent', true) };
+  if (!idpConfigured(ctx.env))
+    return { mode: null, items: bindingDown('binding_absent', true), scimExists: false };
   const client = rpc ?? idpClient(ctx.env, ctx.log);
   const db = ctx.env.DB;
   const active = await activeToken(db);
@@ -28,11 +31,12 @@ export async function readSetup(ctx: ServiceContext, rpc?: IdpRpc): Promise<Setu
     const code = idpCodeOf(error);
     ctx.log.warn('idp.setup.read_failed', { code: code ?? 'IDP_UNAVAILABLE' });
     return code === 'IDP_AUTH'
-      ? { mode: null, items: bindingDown('idp_auth', true) }
-      : { mode: null, items: bindingDown('binding_unreachable', false) };
+      ? { mode: null, items: bindingDown('idp_auth', true), scimExists: false }
+      : { mode: null, items: bindingDown('binding_unreachable', false), scimExists: false };
   }
   const { health, status } = reads;
-  if (health.frozen || !status) return { mode: health.mode, items: bindingDown('frozen', true) };
+  if (health.frozen || !status)
+    return { mode: health.mode, items: bindingDown('frozen', true), scimExists: false };
   const items = itemsOf({
     health,
     status,
@@ -40,7 +44,7 @@ export async function readSetup(ctx: ServiceContext, rpc?: IdpRpc): Promise<Setu
     mirror: { users: await countUsers(db), groups: await countGroups(db) },
     now: ctx.clock.now(),
   });
-  return { mode: health.mode, items };
+  return { mode: health.mode, items, scimExists: status.scim.exists };
 }
 
 /** Health first: a frozen binding is not asked for the setup read. */

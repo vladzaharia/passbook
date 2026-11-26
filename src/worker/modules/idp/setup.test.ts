@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeApiKey, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { fakeAuth, makeApiKey, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { SetupStatusSchema } from '../../../shared/contracts/idp-setup.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
+import { createApp } from '../../app.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { all, run } from '../../platform/db.ts';
+import { buildOpenApiDocument } from '../../platform/openapi-document.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { operationRunners } from './operations.ts';
 import { f } from './ops-test-fixtures.ts';
@@ -231,6 +234,55 @@ describe('a Platform key', () => {
     expect(rig.idp.writes).toBe(0);
   });
 
+  it('records every item row as the key, with the operation id', async () => {
+    const writer = await platformKey(['platform:settings']);
+    const actors: unknown[] = [];
+    const real = rig.idp.placeRoleGroups.bind(rig.idp);
+    rig.idp.placeRoleGroups = async (ctx) => {
+      actors.push(ctx.actor);
+      return real(ctx);
+    };
+    const op = await opOf(await start(SETUP, 'POST', writer.headers, { dryRun: false }));
+    await runNext(op);
+    expect(actors).toEqual([{ kind: 'key', id: writer.id }]);
+    const rows = await all<{
+      action: string;
+      actor_type: string;
+      actor_id: string;
+      detail: string;
+    }>(
+      rig.h.env.DB,
+      "SELECT action, actor_type, actor_id, detail FROM audit_log WHERE action LIKE 'idp.setup.%' AND actor_type = 'api_key' AND actor_id = ?",
+      [writer.id],
+    );
+    const all2 = await all<{ n: number }>(
+      rig.h.env.DB,
+      "SELECT COUNT(*) AS n FROM audit_log WHERE action LIKE 'idp.setup.%'",
+    );
+    expect(rows.length).toBeGreaterThan(3);
+    expect(all2[0]?.n).toBe(rows.length);
+    for (const r of rows) expect(JSON.parse(r.detail).operationId).toBe(op.id);
+  });
+
+  it('stops a run whose key loses platform:settings between steps', async () => {
+    const writer = await platformKey(['platform:settings']);
+    const real = rig.idp.placeRoleGroups.bind(rig.idp);
+    rig.idp.placeRoleGroups = async (ctx) => {
+      const out = await real(ctx);
+      // The scopes are immutable in practice: lift the trigger to model a future change.
+      await withoutTrigger(rig.h.env.DB, 'api_keys_identity_immutable', () =>
+        run(rig.h.env.DB, `UPDATE api_keys SET scopes = '["platform:read"]' WHERE id = ?`, [
+          writer.id,
+        ]),
+      );
+      return out;
+    };
+    const op = await opOf(await start(SETUP, 'POST', writer.headers, { dryRun: false }));
+    await runNext(op);
+    expect((await read(op.id, writer.headers)).error?.code).toBe('IDP_ADMIN_ENDED');
+    expect(rig.idp.setup.client.restricted).toBe(false);
+  });
+
   it('cannot retry', async () => {
     const writer = await platformKey(['platform:settings']);
     rig.idp.setup.client.found = false;
@@ -239,6 +291,17 @@ describe('a Platform key', () => {
     expect(
       (await start(`/api/v1/operations/${op.id}/retry`, 'POST', writer.headers)).status,
     ).toBeGreaterThanOrEqual(400);
+  });
+});
+
+describe('route scopes', () => {
+  it('GET /idp/setup declares platform:status', async () => {
+    const doc = buildOpenApiDocument(createApp({ stores: fakeAuth().stores })) as {
+      paths: Record<string, { get?: Record<string, unknown> }>;
+    };
+    expect(doc.paths['/api/v1/platform/idp/setup']?.get?.['x-platform-scope']).toBe(
+      'platform:status',
+    );
   });
 });
 

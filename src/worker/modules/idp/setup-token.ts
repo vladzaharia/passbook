@@ -9,6 +9,14 @@ import { blockError } from './setup-items.ts';
 import { readSetup } from './setup-read.ts';
 import type { IdpRpc, SetupCtx } from './types.ts';
 
+/** Who started the run: the audit actor and the binding's, one for a person and one for a Platform key. */
+export function starterOf(op: OperationDto) {
+  const id = op.startedBy.id ?? '';
+  return op.startedBy.type === 'api_key'
+    ? ({ id, audit: 'api_key', rpc: { kind: 'key', id } } as const)
+    : ({ id, audit: 'user', rpc: { kind: 'user', id } } as const);
+}
+
 /** The rotation's target: `dry` or `live`. */
 export const rotateTarget = (dryRun: boolean) => ({
   type: 'idp_scim_token',
@@ -52,7 +60,7 @@ export async function rotateRun(
   await adminStill(ctx, op);
   const dry = op.target?.id !== 'live';
   const rpc = idpClient(ctx.env, ctx.log);
-  const { items } = await readSetup(ctx, rpc);
+  const { items, scimExists } = await readSetup(ctx, rpc);
   progress.step('token');
   for (const key of [
     'binding',
@@ -66,6 +74,8 @@ export async function rotateRun(
     if (key === 'client_restricted' && item?.status !== 'done')
       throw new AppError('IDP_CLIENT', 409, 'The app is not restricted yet.');
   }
+  // Creating the connection is setup's job; a rotation only replaces the token of one that is there.
+  if (!scimExists) throw new AppError('IDP_SCIM_MISSING', 404, 'No SCIM connection yet.');
   if (dry) {
     await progress.step('token').skip();
     await progress.step('switch').skip();
@@ -76,7 +86,7 @@ export async function rotateRun(
   const setup: SetupCtx = {
     ref: `rotate-${op.id}`,
     reason: 'scim_rotate',
-    actor: { kind: 'user', id: op.startedBy.id ?? '' },
+    actor: starterOf(op).rpc,
     dryRun: false,
   };
   await installToken(ctx, rpc, op.startedBy.id ?? '', setup, async () => {

@@ -105176,7 +105176,7 @@
         "security": [
           {
             "apiKey": [
-              "platform:settings"
+              "platform:status"
             ]
           },
           {
@@ -105188,7 +105188,7 @@
             "session": []
           }
         ],
-        "x-platform-scope": "platform:settings",
+        "x-platform-scope": "platform:status",
         "summary": "What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read.",
         "operationId": "polaris-setup.getPlatformIdpSetup",
         "tags": [

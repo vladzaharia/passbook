@@ -51,8 +51,8 @@ register(
       'What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read.',
     operationId: 'polaris-setup.getPlatformIdpSetup',
     response: SetupStatusSchema,
-    // A key reads with `platform:read` (or `platform:settings`): `platform:status` is not a key scope.
-    auth: { platform: 'platform:settings', key: true },
+    // §3.5 names `platform:status` for sessions. `platform:status` is not a key scope yet, so a key reads with `platform:read` until PK-2a makes it mintable; the join reconciles it.
+    auth: { platform: 'platform:status', key: true },
   },
   async (c) => c.json(await readSetup(serviceContext(c))),
 );

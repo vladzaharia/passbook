@@ -47,11 +47,11 @@ function holdOf(op: OperationDto): { userId: string; role: WritableRole } {
  * no session of its own; a demotion in Polaris ID ends those sessions through SCIM before `last_roles` moves.
  */
 export async function adminStill(ctx: ServiceContext, op: OperationDto): Promise<void> {
-  // A Platform key started it (setup only): the key must still be live. It never asks a person's session.
+  // A Platform key started it (setup only): the key must still be live and hold the write scope. It never asks a person's session.
   if (op.startedBy.type === 'api_key') {
     if (
       !op.startedBy.id ||
-      !(await hasLivePlatformKey(ctx.env.DB, op.startedBy.id, ctx.clock.now()))
+      !(await hasLivePlatformKey(ctx.env.DB, op.startedBy.id, ctx.clock.now(), 'platform:settings'))
     )
       throw new ForbiddenError('The Platform key ended.', 'IDP_ADMIN_ENDED');
     return;

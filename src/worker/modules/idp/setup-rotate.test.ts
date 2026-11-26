@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { hashScimToken } from './scim-tokens.ts';
 import {
   admin,
@@ -86,6 +86,19 @@ describe('rotate', () => {
     });
     expect(dump).not.toContain(fresh);
     expect(dump).not.toContain(old);
+  });
+
+  it('refuses with IDP_SCIM_MISSING when there is no connection to rotate', async () => {
+    const a = await admin();
+    restricted();
+    for (const dryRun of [true, false]) {
+      const op = await opOf(await start(ROTATE, 'POST', a.headers, { dryRun }));
+      await runNext(op);
+      expect((await read(op.id, a.headers)).error?.code).toBe('IDP_SCIM_MISSING');
+      await run(rig.h.env.DB, 'DELETE FROM operations');
+    }
+    expect(rig.idp.setup.scim.exists).toBe(false);
+    expect(await states()).toEqual([]);
   });
 
   it('refuses an app that is not restricted and a connection pointed elsewhere', async () => {
