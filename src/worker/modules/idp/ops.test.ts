@@ -81,7 +81,7 @@ describe('check now and dry run', () => {
     expect(res.status).toBe(202);
     const op = await opOf(res);
     expect(res.headers.get('location')).toBe(`/api/v1/operations/${op.id}`);
-    expect(op).toMatchObject({ kind: 'idp.check', status: 'queued', cancelable: true });
+    expect(op).toMatchObject({ kind: 'idp.check', status: 'queued', cancelable: false });
     expect(rig.queue.jobs).toMatchObject([{ kind: 'operation.run', operationId: op.id }]);
     await runNext(op);
     const done = await read(op.id, a.headers);
@@ -152,11 +152,59 @@ describe('check now and dry run', () => {
   it('fails when the admin who started it lost the role before it ran', async () => {
     const a = await admin();
     const op = await opOf(await start('/api/v1/platform/idp/reconcile', 'POST', a.headers));
-    await run(rig.h.env.DB, 'UPDATE users SET last_roles = ? WHERE id = ?', [
-      '["user"]',
+    // The real path: SCIM ends the demoted admin's sessions; `last_roles` still names admin.
+    await run(rig.h.env.DB, 'UPDATE sessions SET revoked_at = ? WHERE user_id = ?', [
+      rig.h.clock.now(),
       a.user.id,
     ]);
     await runNext(op);
-    expect((await read(op.id, a.headers)).error?.code).toBe('IDP_ADMIN_ENDED');
+    expect((await read(op.id, (await admin()).headers)).error?.code).toBe('IDP_ADMIN_ENDED');
+  });
+});
+
+describe('snapshot budget', () => {
+  const low = (left: number) => {
+    const health = rig.idp.health.bind(rig.idp);
+    rig.idp.health = async () => ({
+      ...(await health()),
+      budget: { snapshot: { day: 30 - left, limit: 30 } },
+    });
+  };
+
+  it('keeps the daily reconcile its share', async () => {
+    low(4);
+    const a = await admin();
+    const op = await opOf(await start('/api/v1/platform/idp/reconcile', 'POST', a.headers));
+    await runNext(op);
+    expect((await read(op.id, a.headers)).error?.code).toBe('IDP_BUDGET_LOW');
+  });
+
+  it('reports what is left', async () => {
+    low(20);
+    const a = await admin();
+    const op = await opOf(await start('/api/v1/platform/idp/reconcile', 'POST', a.headers));
+    await runNext(op);
+    expect((await read(op.id, a.headers)).result?.ids.snapshotsLeft).toBe('19');
+  });
+
+  it('a retry gets a fresh ten minutes of waiting', async () => {
+    const a = await admin();
+    const op = await opOf(await start('/api/v1/platform/idp/reconcile', 'POST', a.headers));
+    await takeLease(rig.h.env.DB, SYNC_LEASE, 'other-run', rig.h.clock.now());
+    await runNext(op);
+    rig.h.clock.advance(11 * 60_000);
+    await run(rig.h.env.DB, 'UPDATE idp_run_lease SET expires_at = ?', [
+      rig.h.clock.now() + 600_000,
+    ]);
+    await runNext(op);
+    // The clock moved on: another admin, with a recent sign-in, reads and retries.
+    const b = await admin();
+    expect((await read(op.id, b.headers)).error?.code).toBe('IDP_SYNC_BUSY');
+    expect((await start(`/api/v1/operations/${op.id}/retry`, 'POST', b.headers)).status).toBe(200);
+    await run(rig.h.env.DB, 'UPDATE idp_run_lease SET expires_at = ?', [
+      rig.h.clock.now() + 600_000,
+    ]);
+    await runNext({ ...op, attempt: 2 });
+    expect((await read(op.id, b.headers)).status).toBe('waiting');
   });
 });

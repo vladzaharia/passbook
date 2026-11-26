@@ -160,3 +160,22 @@ export async function liveGroupKeys(db: D1Database, keys: readonly string[]): Pr
   );
   return new Set(rows.map((r) => r.key));
 }
+
+/** The user is active and has a live, unrevoked session with the admin role (a demotion in Polaris ID ends it). */
+export async function hasLiveAdminSession(
+  db: D1Database,
+  userId: string,
+  now: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS ok FROM sessions s JOIN users u ON u.id = s.user_id
+       WHERE s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL AND s.amr = 'oidc'
+         AND s.expires_at > ? AND s.idle_expires_at > ? AND json_valid(s.roles)
+         AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin')
+       LIMIT 1`,
+      [userId, now, now],
+    )) !== null
+  );
+}

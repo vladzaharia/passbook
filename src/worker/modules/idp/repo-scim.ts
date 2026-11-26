@@ -136,9 +136,48 @@ export async function breakerOpen(
   );
 }
 
-/** Deletes the breaker's counter row. True when there was one. */
-export async function clearBreaker(db: D1Database, key: string): Promise<boolean> {
-  return (await run(db, 'DELETE FROM counters WHERE key = ?', [key])).changes > 0;
+/** When the open breaker latched (its row's `window_start`), or null while it is closed. */
+export async function latchedAt(
+  db: D1Database,
+  key: string,
+  now: number,
+  ttl: number,
+): Promise<number | null> {
+  return (
+    (
+      await first<{ window_start: number }>(
+        db,
+        'SELECT window_start FROM counters WHERE key = ? AND window_start > ? ORDER BY window_start DESC LIMIT 1',
+        [key, now - ttl],
+      )
+    )?.window_start ?? null
+  );
+}
+
+/** Deletes the breaker's rows that latched at or before `trippedAt`: a trip that came later stays. */
+export async function clearBreakerAt(
+  db: D1Database,
+  key: string,
+  trippedAt: number,
+): Promise<boolean> {
+  return (
+    (await run(db, 'DELETE FROM counters WHERE key = ? AND window_start <= ?', [key, trippedAt]))
+      .changes > 0
+  );
+}
+
+/** Users off in Polaris ID whose revocation is owed and due: how many (exact). */
+export async function countOwed(db: D1Database, now: number): Promise<number> {
+  return (
+    (
+      await first<{ n: number }>(
+        db,
+        `SELECT count(*) AS n FROM idp_directory_users
+         WHERE revoke_pending = 1 AND (active = 0 OR deleted_at IS NOT NULL) AND revoke_next_at <= ?`,
+        [now],
+      )
+    )?.n ?? 0
+  );
 }
 
 /**

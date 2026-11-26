@@ -8,7 +8,10 @@ const errors = {
   IDP_NOT_HELD: 'This role is not paused any more.',
   IDP_NOT_APPLIED: 'Polaris ID did not add the role. Retry.',
   IDP_APPLY_FAILED: 'Polaris ID did not accept the change. Retry.',
-  IDP_BREAKER_STILL_OPEN: 'The breaker is still latched. Retry.',
+  IDP_BREAKER_RETRIPPED: 'The breaker tripped again. Check the feed, then clear it again.',
+  IDP_NOT_WANTED: 'No reason wants this role now, or the user is off. Nothing was restored.',
+  IDP_BUDGET_LOW: 'Too few Polaris ID reads left today. The daily check keeps them. Try tomorrow.',
+  IDP_ADMIN_ENDED: 'The admin who started this is no longer a signed-in platform admin.',
   OPERATION_LEASE_LOST: 'Another runner took this over. Retry.',
 } as const;
 
@@ -34,7 +37,7 @@ const syncSubject = () => 'idp:sync';
 export const idpCheck = defineOperationKind({
   ...common,
   kind: 'idp.check',
-  cancel: 'queued',
+  cancel: 'never',
   dedupe: syncSubject,
   title: 'Check Polaris ID',
   doneTitle: 'Polaris ID checked',
@@ -45,7 +48,7 @@ export const idpCheck = defineOperationKind({
 export const idpDryRun = defineOperationKind({
   ...common,
   kind: 'idp.dry_run',
-  cancel: 'queued',
+  cancel: 'never',
   dedupe: syncSubject,
   title: 'Dry run',
   doneTitle: 'Dry run done',

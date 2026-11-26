@@ -120,7 +120,7 @@ Setup (owner): [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). Token rot
 
 Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
 
-Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with the `idp.breaker_clear` operation (`POST /api/v1/platform/idp/scim-breaker/clear`, a platform admin signed in with Polaris ID), as in [SCIM Breaker Clear](runbooks/scim-breaker-clear.md); the next minute's sweep ends what is owed. A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
+Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with the `idp.breaker_clear` operation (`POST /api/v1/platform/idp/scim-breaker/clear`, a platform admin signed in with Polaris ID), as in [SCIM Breaker Clear](runbooks/scim-breaker-clear.md); the next minute's sweep ends up to about 20 of what is owed, then it latches again. A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
 
 ## Managed identity runs
 

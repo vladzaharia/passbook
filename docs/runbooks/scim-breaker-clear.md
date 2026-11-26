@@ -9,7 +9,7 @@ env:
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
-Use after `IDP_SCIM_BREAKER` is logged. More than 20 session endings in ten minutes latch the breaker for 24 hours: nothing more ends, rows go `revoke_pending`. Clearing it lets the next minute's sweep end what is owed. Check the feed first: a burst you did not expect may be a bad push, not a real change.
+Use after `IDP_SCIM_BREAKER` is logged. More than 20 session endings in ten minutes latch the breaker for 24 hours: nothing more ends, rows go `revoke_pending`. Clearing it lets the next minute's sweep end up to about 20 of what is owed before it latches again. Check the feed first: a burst you did not expect may be a bad push, not a real change.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Use the operation: a platform admin signed in with Polaris ID, with a recent sig
 POST /api/v1/platform/idp/scim-breaker/clear
 ```
 
-The operation deletes the latch, reads that it is gone and reports how many session endings are owed. The next minute's sweep ends them.
+The operation deletes the latch you saw, reads that it is gone and reports `owed`, the exact count of session endings due. The next minute's sweep ends up to about 20 of them, then the breaker latches again. Check the feed again, then clear it again for the rest. If the breaker tripped anew while the operation ran, it stops with `IDP_BREAKER_RETRIPPED` and leaves the new latch in place: check the feed before starting another clear.
 
 ### Fallback: raw D1
 
