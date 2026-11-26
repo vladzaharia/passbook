@@ -33,7 +33,7 @@ async function orgBy(c: C, orgId: string, capability: 'audit:read' | 'org:manage
   return authority;
 }
 
-const platformBy = (c: C): HoldBy => {
+export const platformBy = (c: C): HoldBy => {
   const auth = sessionOf(c);
   return { kind: 'platform', admin: { userId: auth.userId, sessionId: auth.sessionId } };
 };
@@ -102,6 +102,8 @@ register(
     summary: 'Release a legal hold the organization placed',
     params: HoldIdParamsSchema,
     response: OkSchema,
+    // A person's call, never a key's: releasing a hold lets a purge run.
+    auth: { human: true, requestMode: true },
   },
   async (c) => {
     const { orgId, holdId } = c.req.valid('param');
@@ -194,23 +196,6 @@ register(
       platformBy(c),
     );
     return c.json({ ok: true as const }, 201);
-  },
-);
-
-register(
-  retentionPlatformRoutes,
-  'retention',
-  {
-    method: 'post',
-    path: '/orgs/{orgId}/retention/holds/{holdId}/release',
-    summary: 'Release any legal hold',
-    params: HoldIdParamsSchema,
-    response: OkSchema,
-  },
-  async (c) => {
-    const { orgId, holdId } = c.req.valid('param');
-    await releaseHold(serviceContext(c), orgId, holdId, platformBy(c));
-    return c.json({ ok: true as const });
   },
 );
 

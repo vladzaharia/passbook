@@ -1,13 +1,18 @@
 import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { adminPresets, holdableScopes, selectedPreset } from '@/shared/developers-keys.ts';
-import { OptionTile } from '@/web/ui/index.ts';
+import { OptionTile, SegmentedControl } from '@/web/ui/index.ts';
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
+import { offeredPlatformScopes } from './key-kind-fields.ts';
 import { PRESET_FACT } from './key-presets.ts';
 import { ScopePicker } from './scope-picker.tsx';
 import { TerminalRows } from './scope-rows.tsx';
 import type { KeyForm } from './use-key-form.ts';
 
+const FLAVOURS = [
+  { value: 'platform', label: 'Platform' },
+  { value: 'all', label: 'All organizations' },
+] as const;
 const TILE = 'min-h-0 p-3';
 const GRID = 'grid grid-cols-2 gap-3 @xl:grid-cols-3';
 
@@ -41,8 +46,43 @@ export function StepAccess({
     form.setCustom(false);
     form.set([...scopes]);
   };
+  const platformScopes = offeredPlatformScopes();
+  const switcher =
+    platform && platformScopes.length > 0 ? (
+      <div className="flex flex-col">
+        <p className="mb-2 text-sm font-medium text-fg">Reaches</p>
+        <SegmentedControl
+          label="Reaches"
+          options={FLAVOURS}
+          value={form.flavour}
+          onValueChange={form.changeFlavour}
+        />
+      </div>
+    ) : null;
+  if (form.onPlatform)
+    return (
+      <>
+        {switcher}
+        {form.idpSession ? (
+          <ScopePicker
+            offered={platformScopes}
+            value={form.scopes}
+            onChange={form.set}
+            note={form.note}
+            error={errors.scopes}
+          />
+        ) : (
+          <p role="alert" className="text-sm text-danger">
+            {form.errors.access && 'scopes' in form.errors.access
+              ? form.errors.access.scopes
+              : null}
+          </p>
+        )}
+      </>
+    );
   return (
     <>
+      {switcher}
       <fieldset className="flex min-w-0 flex-col">
         <legend className="mb-2 text-sm font-medium text-fg">Presets</legend>
         <div className={GRID}>

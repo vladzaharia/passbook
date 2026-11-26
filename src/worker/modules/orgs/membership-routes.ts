@@ -17,20 +17,21 @@ import {
   OrgMembershipSchema,
 } from '../../../shared/contracts/index.ts';
 import {
-  requireConsoleSession,
   requireHolderSession,
   requireStrictSession,
   type SessionAuth,
 } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
+import { reportDenied } from '../../platform/denied.ts';
+import { AppError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { peekBody, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { acceptInvitation } from '../idp/invitations/accept.ts';
+import { authOf } from '../passes/http.ts';
 import { listMyOrgMemberships, parseRoles } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
 import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
@@ -60,55 +61,60 @@ membershipRoutes.use('/invitations/accept', (c, next) =>
 );
 // The caller's own list is read by the account menu and the setup banner; an email link may read it.
 membershipRoutes.use('/memberships/me', requireHolderSession);
-membershipRoutes.use('/:id/memberships', requireConsoleSession);
-membershipRoutes.use('/:id/memberships/:membershipId', requireConsoleSession);
-membershipRoutes.use('/:id/invitations', requireConsoleSession);
-// Inviting someone into a role that administers the org (or mints keys) hands over its credentials.
-membershipRoutes.post(
-  '/:id/invitations',
-  requireStepUp(STEP_UP_SECONDS, async (c) => {
-    const { roles } = await peekBody(c);
-    return (
-      Array.isArray(roles) &&
-      roles.some((role) => (ADMINISTERING_ROLES as readonly unknown[]).includes(role))
-    );
-  }),
-);
-// Giving a member a role that administers the org hands over its credentials, as inviting does.
-membershipRoutes.patch(
-  '/:id/memberships/:membershipId',
-  requireStepUp(STEP_UP_SECONDS, async (c) => {
-    const { roles } = await peekBody(c);
-    return (
-      Array.isArray(roles) &&
-      roles.some((role) => (ADMINISTERING_ROLES as readonly unknown[]).includes(role))
-    );
-  }),
-);
-membershipRoutes.use('/:id/invitations/:invitationId', requireConsoleSession);
-membershipRoutes.use('/:id/invitations/:invitationId/resend', requireConsoleSession);
-// A resend mails a fresh credential link: for an invitation into an administering role it asks as inviting did.
-membershipRoutes.post(
-  '/:id/invitations/:invitationId/resend',
-  requireStepUp(STEP_UP_SECONDS, async (c) => {
-    const orgId = c.req.param('id') ?? '';
-    // Only a manager of the org learns anything from whether this asks.
-    if (!(await isOrgManager(serviceContext(c), session(c), orgId))) return false;
-    const found = await invitationById(c.env.DB, orgId, c.req.param('invitationId') ?? '');
-    if (!found) return false;
-    try {
-      return parseRoles(found.roles).some((role) =>
-        (ADMINISTERING_ROLES as readonly unknown[]).includes(role),
-      );
-    } catch {
-      return true;
-    }
-  }),
-);
+
+// A key reaching for an administering role is an escalation attempt: audited as the key, in its org's log.
+membershipRoutes.use('/:id/*', async (c, next) => {
+  await next();
+  const auth = c.var.auth;
+  if (
+    auth?.kind === 'api_key' &&
+    c.error instanceof AppError &&
+    c.error.code === 'KEY_CANNOT_ADMINISTER'
+  )
+    reportDenied(c, 'KEY_CANNOT_ADMINISTER', auth);
+});
+
+const TAG = 'organization memberships';
+/** An administering role hands over the org's credentials: a session steps up, a key is refused in the service. */
+const administers = async (c: Context<AppBindings>) => {
+  const { roles } = await peekBody(c);
+  return (
+    Array.isArray(roles) &&
+    roles.some((role) => (ADMINISTERING_ROLES as readonly unknown[]).includes(role))
+  );
+};
+const READ = { scope: 'members:read', capability: 'members:read' } as const;
+const WRITE = { scope: 'members:write', capability: 'members:manage' } as const;
+/** Inviting, or giving a role, that administers the org (or mints keys) hands over its credentials. */
+const WRITE_ROLES = {
+  ...WRITE,
+  stepUp: { maxAgeSec: STEP_UP_SECONDS, when: administers },
+} as const;
+/** A resend mails a fresh credential link: for an invitation into an administering role it asks as inviting did. */
+const WRITE_RESEND = {
+  ...WRITE,
+  stepUp: {
+    maxAgeSec: STEP_UP_SECONDS,
+    when: async (c: Context<AppBindings>) => {
+      const orgId = c.req.param('id') ?? '';
+      // Only a manager of the org learns anything from whether this asks.
+      if (!(await isOrgManager(serviceContext(c), session(c), orgId))) return false;
+      const found = await invitationById(c.env.DB, orgId, c.req.param('invitationId') ?? '');
+      if (!found) return false;
+      try {
+        return parseRoles(found.roles).some((role) =>
+          (ADMINISTERING_ROLES as readonly unknown[]).includes(role),
+        );
+      } catch {
+        return true;
+      }
+    },
+  },
+} as const;
 
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'get',
     path: '/invitations/accept',
@@ -118,7 +124,7 @@ register(
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'post',
     path: '/invitations/accept',
@@ -139,7 +145,7 @@ register(
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'post',
     path: '/invitations/preview',
@@ -151,7 +157,7 @@ register(
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'get',
     path: '/memberships/me',
@@ -167,10 +173,11 @@ register(
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'get',
     path: '/{id}/memberships',
+    auth: READ,
     summary: 'List organization memberships',
     params: IdParamSchema,
     query: CursorQuerySchema,
@@ -178,16 +185,17 @@ register(
   },
   async (c) =>
     c.json({
-      items: await listOrgMembers(serviceContext(c), session(c), c.req.valid('param').id),
+      items: await listOrgMembers(serviceContext(c), authOf(c), c.req.valid('param').id),
       nextCursor: null,
     }),
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'get',
     path: '/{id}/invitations',
+    auth: READ,
     summary: 'List organization invitations',
     params: IdParamSchema,
     query: CursorQuerySchema,
@@ -195,16 +203,17 @@ register(
   },
   async (c) =>
     c.json({
-      items: await listOrgInvitations(serviceContext(c), session(c), c.req.valid('param').id),
+      items: await listOrgInvitations(serviceContext(c), authOf(c), c.req.valid('param').id),
       nextCursor: null,
     }),
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'post',
     path: '/{id}/invitations',
+    auth: WRITE_ROLES,
     summary: 'Invite an organization member',
     params: IdParamSchema,
     body: InviteOrgMemberSchema,
@@ -215,7 +224,7 @@ register(
     c.json(
       await inviteOrgMember(
         serviceContext(c),
-        session(c),
+        authOf(c),
         c.req.valid('param').id,
         c.req.valid('json'),
       ),
@@ -224,42 +233,45 @@ register(
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'delete',
     path: '/{id}/invitations/{invitationId}',
+    auth: WRITE,
     summary: 'Revoke an organization invitation',
     params: OrgInvitationParamSchema,
     response: OkSchema,
   },
   async (c) => {
     const { id, invitationId } = c.req.valid('param');
-    await revokeOrgInvitation(serviceContext(c), session(c), id, invitationId);
+    await revokeOrgInvitation(serviceContext(c), authOf(c), id, invitationId);
     return c.json({ ok: true });
   },
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'delete',
     path: '/{id}/memberships/{membershipId}',
+    auth: WRITE,
     summary: 'Revoke an organization membership',
     params: OrgMembershipParamSchema,
     response: OkSchema,
   },
   async (c) => {
     const { id, membershipId } = c.req.valid('param');
-    await revokeOrgMembership(serviceContext(c), session(c), id, membershipId);
+    await revokeOrgMembership(serviceContext(c), authOf(c), id, membershipId);
     return c.json({ ok: true });
   },
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'patch',
     path: '/{id}/memberships/{membershipId}',
+    auth: WRITE_ROLES,
     summary: "Change an organization member's roles",
     description:
       'Replaces the roles. The member keeps one active membership, but its id changes: personal API keys tied to the old membership stop working (keys of kind service, which no membership owns, keep working). Scheduled broadcasts of the member stay scheduled. Organization admin and Read only stand alone. The last org admin cannot lose the role (`LAST_ORG_ADMIN`).',
@@ -272,7 +284,7 @@ register(
     return c.json(
       await changeOrgMemberRoles(
         serviceContext(c),
-        session(c),
+        authOf(c),
         id,
         membershipId,
         c.req.valid('json').roles,
@@ -282,10 +294,11 @@ register(
 );
 register(
   membershipRoutes,
-  'organization memberships',
+  TAG,
   {
     method: 'post',
     path: '/{id}/invitations/{invitationId}/resend',
+    auth: WRITE_RESEND,
     summary: 'Resend an organization invitation',
     description:
       'Revokes the pending invitation and issues a new one for the same address and roles, with a fresh link and seven days, and mails it. The answer is the new invitation, with a new id. Counts against the hourly and daily invite limits.',
@@ -295,6 +308,6 @@ register(
   },
   async (c) => {
     const { id, invitationId } = c.req.valid('param');
-    return c.json(await resendOrgInvitation(serviceContext(c), session(c), id, invitationId), 201);
+    return c.json(await resendOrgInvitation(serviceContext(c), authOf(c), id, invitationId), 201);
   },
 );

@@ -1333,6 +1333,81 @@ func (r *OrgsResource) UpdatePassSetup(ctx context.Context, orgId string, body *
 	return &out, nil
 }
 
+type InvitationsResource struct {
+	c *core
+}
+
+func newInvitationsResource(c *core) *InvitationsResource {
+	return &InvitationsResource{
+		c: c,
+	}
+}
+
+// Create Invite an organization member `POST /api/v1/orgs/{id}/invitations`
+func (r *InvitationsResource) Create(ctx context.Context, id string, body *InvitationsCreateBody, opts ...RequestOption) (*InvitationsCreateResult, error) {
+	var out InvitationsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List organization invitations `GET /api/v1/orgs/{id}/invitations`
+func (r *InvitationsResource) List(ctx context.Context, id string, query *InvitationsListQuery, opts ...RequestOption) *Pager[InvitationsListItem] {
+	return newPager[InvitationsListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations", query: queryValues(query)}, "cursor", opts)
+}
+
+// Resend Resend an organization invitation `POST /api/v1/orgs/{id}/invitations/{invitationId}/resend`
+func (r *InvitationsResource) Resend(ctx context.Context, id string, invitationId string, opts ...RequestOption) (*InvitationsResendResult, error) {
+	var out InvitationsResendResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations/" + pathEscape(invitationId) + "/resend"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Revoke Revoke an organization invitation `DELETE /api/v1/orgs/{id}/invitations/{invitationId}`
+func (r *InvitationsResource) Revoke(ctx context.Context, id string, invitationId string, opts ...RequestOption) (*InvitationsRevokeResult, error) {
+	var out InvitationsRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations/" + pathEscape(invitationId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type MembershipsResource struct {
+	c *core
+}
+
+func newMembershipsResource(c *core) *MembershipsResource {
+	return &MembershipsResource{
+		c: c,
+	}
+}
+
+// List List organization memberships `GET /api/v1/orgs/{id}/memberships`
+func (r *MembershipsResource) List(ctx context.Context, id string, query *MembershipsListQuery, opts ...RequestOption) *Pager[MembershipsListItem] {
+	return newPager[MembershipsListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/memberships", query: queryValues(query)}, "cursor", opts)
+}
+
+// Revoke Revoke an organization membership `DELETE /api/v1/orgs/{id}/memberships/{membershipId}`
+func (r *MembershipsResource) Revoke(ctx context.Context, id string, membershipId string, opts ...RequestOption) (*MembershipsRevokeResult, error) {
+	var out MembershipsRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/memberships/" + pathEscape(membershipId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdateRoles Change an organization member's roles `PATCH /api/v1/orgs/{id}/memberships/{membershipId}`
+func (r *MembershipsResource) UpdateRoles(ctx context.Context, id string, membershipId string, body *MembershipsUpdateRolesBody, opts ...RequestOption) (*MembershipsUpdateRolesResult, error) {
+	var out MembershipsUpdateRolesResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/orgs/" + pathEscape(id) + "/memberships/" + pathEscape(membershipId), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassImportsMappingsResource struct {
 	c *core
 }
@@ -2098,6 +2173,76 @@ func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceB
 		return nil, err
 	}
 	return &out, nil
+}
+
+type PlatformSettingsResource struct {
+	c *core
+}
+
+func newPlatformSettingsResource(c *core) *PlatformSettingsResource {
+	return &PlatformSettingsResource{
+		c: c,
+	}
+}
+
+// Retrieve Read the platform settings `GET /api/v1/platform/settings`
+func (r *PlatformSettingsResource) Retrieve(ctx context.Context, opts ...RequestOption) (*PlatformSettingsRetrieveResult, error) {
+	var out PlatformSettingsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/settings"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.* `PUT /api/v1/platform/settings`
+func (r *PlatformSettingsResource) Update(ctx context.Context, body *PlatformSettingsUpdateBody, opts ...RequestOption) (*PlatformSettingsUpdateResult, error) {
+	var out PlatformSettingsUpdateResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/platform/settings", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformWalletReleaseResource struct {
+	c *core
+}
+
+func newPlatformWalletReleaseResource(c *core) *PlatformWalletReleaseResource {
+	return &PlatformWalletReleaseResource{
+		c: c,
+	}
+}
+
+// EnableReady Turn on the reviewed ready enrollments of a released provider (dry run unless apply; a key may only dry run) `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready`
+func (r *PlatformWalletReleaseResource) EnableReady(ctx context.Context, provider string, mode string, body *PlatformWalletReleaseEnableReadyBody, opts ...RequestOption) (*PlatformWalletReleaseEnableReadyResult, error) {
+	var out PlatformWalletReleaseEnableReadyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/wallet-release/" + pathEscape(provider) + "/" + pathEscape(mode) + "/enable-ready", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Read what Google and Samsung would issue once released, per mode `GET /api/v1/platform/wallet-release`
+func (r *PlatformWalletReleaseResource) Retrieve(ctx context.Context, opts ...RequestOption) (*PlatformWalletReleaseRetrieveResult, error) {
+	var out PlatformWalletReleaseRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/wallet-release"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformResource struct {
+	c             *core
+	Settings      *PlatformSettingsResource
+	WalletRelease *PlatformWalletReleaseResource
+}
+
+func newPlatformResource(c *core) *PlatformResource {
+	return &PlatformResource{
+		c:             c,
+		Settings:      newPlatformSettingsResource(c),
+		WalletRelease: newPlatformWalletReleaseResource(c),
+	}
 }
 
 type RequestLogsResource struct {
@@ -3159,11 +3304,14 @@ type Resources struct {
 	DeveloperInvitations *DeveloperInvitationsResource
 	Developers           *DevelopersResource
 	Orgs                 *OrgsResource
+	Invitations          *InvitationsResource
+	Memberships          *MembershipsResource
 	PassImports          *PassImportsResource
 	Passes               *PassesResource
 	PrintJobs            *PrintJobsResource
 	BulkRuns             *BulkRunsResource
 	PassViews            *PassViewsResource
+	Platform             *PlatformResource
 	RequestLogs          *RequestLogsResource
 	RollCalls            *RollCallsResource
 	ScanEvents           *ScanEventsResource
@@ -3199,11 +3347,14 @@ func newResources(c *core) Resources {
 		DeveloperInvitations: newDeveloperInvitationsResource(c),
 		Developers:           newDevelopersResource(c),
 		Orgs:                 newOrgsResource(c),
+		Invitations:          newInvitationsResource(c),
+		Memberships:          newMembershipsResource(c),
 		PassImports:          newPassImportsResource(c),
 		Passes:               newPassesResource(c),
 		PrintJobs:            newPrintJobsResource(c),
 		BulkRuns:             newBulkRunsResource(c),
 		PassViews:            newPassViewsResource(c),
+		Platform:             newPlatformResource(c),
 		RequestLogs:          newRequestLogsResource(c),
 		RollCalls:            newRollCallsResource(c),
 		ScanEvents:           newScanEventsResource(c),

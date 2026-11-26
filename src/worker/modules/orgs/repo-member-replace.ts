@@ -5,6 +5,7 @@ import type { Principal } from '../../platform/authority-principal.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
+import { KEY_GUARD_CODES, keyNotAdministering } from './repo-member-keyguard.ts';
 import type { NewInvitation } from './repo-member-writes.ts';
 
 /**
@@ -20,7 +21,13 @@ export async function replaceInvitation(
   row: NewInvitation,
   audit: AuditEntry,
 ): Promise<void> {
-  const g = grant(ctx, { purpose: 'org.member.resend', principal, checks, target: oldId });
+  const g = grant(ctx, {
+    purpose: 'org.member.resend',
+    principal,
+    checks: [...checks, ...keyNotAdministering(principal, { table: 'org_invitations', id: oldId })],
+    target: oldId,
+    codes: KEY_GUARD_CODES,
+  });
   g.add(
     grantedAudit(g, ctx, audit, [
       exists('org_invitations', { id: oldId, revoked_at: null, accepted_at: null }),
@@ -68,9 +75,13 @@ export async function replaceMembership(
   const g = grant(ctx, {
     purpose: 'org.member.roles',
     principal,
-    checks,
+    checks: [
+      ...checks,
+      ...keyNotAdministering(principal, { table: 'org_memberships', id: change.oldId }),
+      ...keyNotAdministering(principal, { roles: change.roles }),
+    ],
     target: change.oldId,
-    codes,
+    codes: { ...codes, ...KEY_GUARD_CODES },
   });
   g.add(
     grantedAudit(g, ctx, audit, [

@@ -11,6 +11,7 @@ import { resolve } from 'node:path';
 import { assertLocal, discPng, Session } from './lib/demo-client.ts';
 import { demoPlans, emailOf, PORTAL } from './lib/demo-data.ts';
 import { seedExtras } from './lib/demo-extras.ts';
+import { seedPlatformKey } from './lib/demo-platform-key.ts';
 import { releaseTemplates } from './lib/demo-releases.ts';
 import {
   DEMO_OWNER,
@@ -292,6 +293,8 @@ for (const { revoke, ...key } of KEYS) {
   const made = await who.send('POST', '/api/v1/api-keys', key);
   if (revoke) await who.send('DELETE', `/api/v1/api-keys/${made.id}?orgId=${key.orgId}`);
 }
+
+await seedPlatformKey(base, keys, root);
 
 // One pass email for the delivery log (and a rendered email under the local mail directory).
 const waiting = (await owner.all(`/api/v1/passes?orgId=${henrys}&holderState=waiting`))[0];

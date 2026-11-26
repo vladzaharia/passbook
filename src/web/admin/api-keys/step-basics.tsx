@@ -1,6 +1,6 @@
 import { Server, User } from 'lucide-react';
 import { FormField, Input, OptionTile, Select } from '@/web/ui/index.ts';
-import { EXPIRY, SHORT_EXPIRY } from './key-kind-fields.ts';
+import { EXPIRY } from './key-kind-fields.ts';
 import type { KeyForm } from './use-key-form.ts';
 
 const KINDS = [
@@ -66,13 +66,15 @@ export function StepBasics({
               {...p}
               value={form.expiry}
               onValueChange={form.setExpiry}
-              options={form.short ? SHORT_EXPIRY : EXPIRY}
+              options={form.expiryOptions ?? EXPIRY}
             />
           )}
         </FormField>
         <div>
           <p className="text-sm font-medium text-fg">Organization</p>
-          <p className="mt-2 text-sm text-fg-strong">{orgName}</p>
+          <p className="mt-2 text-sm text-fg-strong">
+            {orgId !== null ? orgName : form.onPlatform ? 'Platform' : 'All organizations'}
+          </p>
           {errors.orgId ? <p className="mt-1 text-xs text-danger">{errors.orgId}</p> : null}
         </div>
       </div>

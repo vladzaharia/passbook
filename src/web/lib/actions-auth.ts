@@ -9,6 +9,7 @@ export const AUTH_ACTIONS = {
   'auth.breakglass_failed': a('Break-glass sign-in failed', ShieldAlert, 'danger'),
   'auth.breakglass_used': a('Break-glass sign-in', ShieldAlert, 'warning'),
   'auth.denied': a('Access denied', ShieldX, 'warning'),
+  'api_key.refused': a('Platform key refused', ShieldX, 'warning'),
   'auth.identity_linked': a('Sign-in method linked', Link2, 'info'),
   'auth.identity_linked_moved_primary': a(
     'Polaris ID linked after email change',

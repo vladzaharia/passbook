@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added: `pb.platform.*` for Platform keys (`pbo_` keys with `platform:*` scopes): `platform.settings` (`retrieve`, `update`) and `platform.walletRelease` (`retrieve`, `enableReady`) in TypeScript, `platform.wallet_release.enable_ready` in Python and `Platform.WalletRelease.EnableReady` in Go. `enableReady` sends a dry run; an apply is a person's and answers 403 `PERSON_REQUIRED`. The public developer portal does not list them.
 - Removed: the `visitors` resource (TypeScript, Python and Go): `list`, `create`, `listHosts`, `checkOut`, `cancel` and `sendHostEmail`, with their types. The operations are gone from the API. Create a pass on a guest plan with `passes.create`, and sign someone out with the scan sign-out call.
 - `mode` reads `pbp_` and `pbo_` keys as well as `pb_`. The docs use `pbp_test_`.
 - Every call sends `User-Agent: passbook-sdk-<lang>/<version>` (`passbook-cli/<version>` from the CLI) and `PassBook-Version`. The default version is the newest date in `docs/api/versions.json` when the SDK was generated; set `apiVersion` (`api_version` in Python, `WithAPIVersion` in Go) to pin another. `userAgent` overrides the User-Agent in the TypeScript SDK. A call that sets either header itself wins.

@@ -50,6 +50,11 @@ export interface ApiKeyAuth {
   /** null = platform-wide key. */
   orgId: string | null;
   scopes: ApiScope[];
+  /**
+   * From api_keys.kind (`keyAuthOf`). Absent is never a platform key: the route gate treats it as one only when it
+   * reads `platform` here and `orgId` is null.
+   */
+  keyKind?: 'service' | 'personal' | 'platform';
   /** From api_keys.mode. */
   mode: Mode;
   /** The key is limited to templates or styles (`api_key_resources`); only a `templateScoped` route admits it. */
