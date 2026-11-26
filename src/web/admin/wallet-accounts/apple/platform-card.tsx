@@ -5,7 +5,7 @@ import { formatDayIn } from '@/shared/format-date.ts';
 import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { formatCount } from '@/web/lib/format.ts';
-import { Badge, Button, Card, CardBody, CardHeader, KeyValue, StatusPill } from '@/web/ui/index.ts';
+import { Badge, Button, Card, CardBody, CardHeader, StatusPill } from '@/web/ui/index.ts';
 import { PUSH_METHOD_LABEL } from './apns-check.tsx';
 import { ExpiryPill } from './expiry.tsx';
 import { IdentityStatusPill } from './identity-status.tsx';
@@ -34,16 +34,77 @@ export function PlatformCard({
   onMove: (row: PlatformIdentity) => void;
 }) {
   const legacy = row.slot === null;
+  const canMove = row.passCount > 0 && !row.isDefault;
+  const facts = [
+    {
+      label: legacy ? 'Retires' : 'Expires',
+      wide: true,
+      value: <ExpiryPill identity={row} now={now} zone={DEFAULT_TIME_ZONE} />,
+    },
+    ...(row.nextRotationAt === null
+      ? []
+      : [{ label: 'Next rotation', wide: false, value: day(row.nextRotationAt) }]),
+    ...(row.pushMethod === 'none'
+      ? []
+      : [
+          {
+            label: 'Push',
+            wide: false,
+            value: (
+              <span className="flex flex-wrap items-center gap-2">
+                {PUSH_METHOD_LABEL[row.pushMethod]}
+                <StatusPill status={PUSH_HEALTH[row.apnsHealth]} />
+              </span>
+            ),
+          },
+        ]),
+    { label: 'Passes', wide: false, value: formatCount(row.passCount) },
+    { label: 'Registrations', wide: false, value: formatCount(row.registrationCount) },
+  ];
   return (
     <Card
       data-platform-card={row.slot ?? 'legacy'}
       style={{ '--i': index } as CSSProperties}
-      className={cn(row.dormant && 'opacity-80')}
+      className={cn('flex flex-col', row.dormant && 'opacity-80')}
     >
       <CardHeader
         title={platformName(row)}
         actions={
-          <>
+          <Button asChild size="sm" variant="ghost">
+            <Link
+              to="/admin/platform/wallet-accounts/$identityId"
+              params={{ identityId: row.id }}
+              aria-label={`Open ${platformName(row)}`}
+            >
+              <ExternalLink aria-hidden />
+            </Link>
+          </Button>
+        }
+      />
+      <CardBody className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone={row.managed === 'connector' ? 'accent' : 'neutral'}>
+            {row.managed === 'connector' ? 'Managed' : 'Deployment'}
+          </Badge>
+          {row.isDefault ? <StatusPill status="default" /> : null}
+          {row.issuing ? null : <Badge>Not issuing</Badge>}
+          {row.dormant ? <Badge>Dormant</Badge> : null}
+          <IdentityStatusPill status={row.status} />
+        </div>
+        <p className="break-all font-mono text-xs text-fg-muted">{row.passTypeIdentifier}</p>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+          {facts.map((f) => (
+            <div
+              key={f.label}
+              className={cn('flex min-w-0 flex-col gap-0.5', f.wide && 'col-span-2')}
+            >
+              <dt className="text-fg-muted">{f.label}</dt>
+              <dd className="min-w-0 break-words text-fg">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+        {canMakeDefault(row) || canMove ? (
+          <div className="mt-auto flex flex-wrap gap-2">
             {canMakeDefault(row) ? (
               <Button
                 size="sm"
@@ -54,7 +115,7 @@ export function PlatformCard({
                 Make default
               </Button>
             ) : null}
-            {row.passCount > 0 && !row.isDefault ? (
+            {canMove ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -64,55 +125,8 @@ export function PlatformCard({
                 Move passes
               </Button>
             ) : null}
-            <Button asChild size="sm" variant="ghost">
-              <Link
-                to="/admin/platform/wallet-accounts/$identityId"
-                params={{ identityId: row.id }}
-                aria-label={`Open ${platformName(row)}`}
-              >
-                <ExternalLink aria-hidden />
-              </Link>
-            </Button>
-          </>
-        }
-      />
-      <CardBody className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={row.managed === 'connector' ? 'accent' : 'neutral'}>
-            {row.managed === 'connector' ? 'Managed' : 'Deployment'}
-          </Badge>
-          {row.isDefault ? <StatusPill status="default" /> : null}
-          {row.issuing ? <Badge tone="success">Issuing</Badge> : <Badge>Not issuing</Badge>}
-          {row.dormant ? <Badge>Dormant</Badge> : null}
-          <IdentityStatusPill status={row.status} />
-        </div>
-        <p className="break-all font-mono text-xs text-fg-muted">{row.passTypeIdentifier}</p>
-        <KeyValue
-          items={[
-            {
-              label: legacy ? 'Retires' : 'Expires',
-              value: <ExpiryPill identity={row} now={now} zone={DEFAULT_TIME_ZONE} />,
-            },
-            ...(row.nextRotationAt === null
-              ? []
-              : [{ label: 'Next rotation', value: day(row.nextRotationAt) }]),
-            ...(row.pushMethod === 'none'
-              ? []
-              : [
-                  {
-                    label: 'Push',
-                    value: (
-                      <span className="flex flex-wrap items-center gap-2">
-                        {PUSH_METHOD_LABEL[row.pushMethod]}
-                        <StatusPill status={PUSH_HEALTH[row.apnsHealth]} />
-                      </span>
-                    ),
-                  },
-                ]),
-            { label: 'Passes', value: formatCount(row.passCount) },
-            { label: 'Registrations', value: formatCount(row.registrationCount) },
-          ]}
-        />
+          </div>
+        ) : null}
       </CardBody>
     </Card>
   );
