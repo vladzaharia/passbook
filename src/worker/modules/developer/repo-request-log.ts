@@ -70,8 +70,8 @@ export const TOTAL_ROWS_CAP = 20_000;
 
 /**
  * The one write of a request, for a Test call: the SELECT reads the org's row budget, so an org over its hourly or
- * total cap writes nothing, and a body is bound only when the call was Test (the caller binds none when the org
- * does not record bodies). The table's triggers refuse a Live row, a body and a query value outside Test.
+ * total cap writes nothing, and a body is bound only when the call was Test (the statement itself checks that the org
+ * records bodies: a sandbox, or `requestLog.bodies` stored true, so a call that lands after the switch is off keeps none). The table's triggers refuse a Live row, a body and a query value outside Test.
  * Returns whether a row was written.
  */
 export const insertLog = async (db: D1Database, l: NewLog) =>
@@ -82,11 +82,13 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
       `INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code,
          duration_ms, at, has_bodies, request_body, response_body, client, resource_id, api_version, flags, bodies_truncated)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
-         CASE WHEN ?5 = 'test' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
-         CASE WHEN ?5 = 'test' THEN ?15 END,
-         CASE WHEN ?5 = 'test' THEN ?16 END, ?17
+         CASE WHEN ?5 = 'test' AND o.rec = 1 AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
+         CASE WHEN ?5 = 'test' AND o.rec = 1 THEN ?15 END,
+         CASE WHEN ?5 = 'test' AND o.rec = 1 THEN ?16 END, ?17
          , ?18, ?19, ?20, ?21
-       FROM orgs o WHERE o.id = ?2
+       FROM (SELECT id, CASE WHEN kind = 'developer' OR EXISTS (SELECT 1 FROM settings s
+                WHERE s.scope = 'org:' || orgs.id AND s.key = 'requestLog.bodies' AND s.value = 'true')
+              THEN 1 ELSE 0 END AS rec FROM orgs) o WHERE o.id = ?2
          AND COALESCE((SELECT CASE WHEN b.hour = CAST(?14 AS INTEGER) / 3600000 THEN b.hour_rows ELSE 0 END
                        FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${HOUR_ROWS_CAP}
          AND COALESCE((SELECT b.total_rows FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${TOTAL_ROWS_CAP}`,
