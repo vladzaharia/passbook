@@ -10,8 +10,8 @@ import {
   Tag,
   UserMinus,
   UserPlus,
-  UserX,
   Users,
+  UserX,
 } from 'lucide-react';
 import type { Tone } from './status.ts';
 
