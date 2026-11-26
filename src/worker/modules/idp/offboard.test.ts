@@ -61,7 +61,7 @@ describe('offboard', () => {
     expect(body.plan).toMatchObject({
       userId: t.p.id,
       memberships: [{ membershipId: t.membershipId, org: { id: t.org.id } }],
-      sponsorships: [{ orgId: t.org.id }],
+      sponsorships: [{ org: { id: t.org.id } }],
       grants: ['support'],
       platformKeys: [t.key.id],
       sessions: 1,
