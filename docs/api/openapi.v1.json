@@ -29275,6 +29275,120 @@
           "revokedAt"
         ]
       },
+      "PlatformGroupsClaimsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {}
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "otherKeys": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "claims",
+          "otherKeys"
+        ]
+      },
+      "PlatformGroupsClaimsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "set"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsClaimsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "set",
+          "removed",
+          "dryRun"
+        ]
+      },
       "PlatformWalletReleaseRetrieveResponse": {
         "type": "object",
         "properties": {
@@ -67718,120 +67832,6 @@
           "operation"
         ]
       },
-      "PlatformGroupsClaimsRetrieveResponse": {
-        "type": "object",
-        "properties": {
-          "claims": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "text",
-                    "number",
-                    "boolean",
-                    "json"
-                  ]
-                },
-                "value": {}
-              },
-              "required": [
-                "type"
-              ]
-            }
-          },
-          "otherKeys": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "claims",
-          "otherKeys"
-        ]
-      },
-      "PlatformGroupsClaimsUpdateParams": {
-        "type": "object",
-        "properties": {
-          "set": {
-            "type": "object",
-            "additionalProperties": {
-              "type": [
-                "object",
-                "null"
-              ],
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "text",
-                    "number",
-                    "boolean",
-                    "json"
-                  ]
-                },
-                "value": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "array",
-                      "items": {}
-                    },
-                    {
-                      "type": "object",
-                      "additionalProperties": {}
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "type",
-                "value"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "set"
-        ],
-        "additionalProperties": false
-      },
-      "PlatformGroupsClaimsUpdateResponse": {
-        "type": "object",
-        "properties": {
-          "set": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "removed": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "dryRun": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "set",
-          "removed",
-          "dryRun"
-        ]
-      },
       "PlatformUsersListResponse": {
         "type": "object",
         "properties": {
@@ -104416,6 +104416,7 @@
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_BREAKER_CLOSED",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "OPERATION_RUNNING",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -104660,6 +104661,7 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -106225,6 +106227,210 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "PLATFORM_INVITE_CONFLICT",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/claims": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "platform:claims"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Read a Polaris ID group's claims (the ones PassBook manages)",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsRetrieveResponse"
+                },
+                "example": {
+                  "claims": {
+                    "passbook_tier": {
+                      "type": "text",
+                      "value": "gold"
+                    }
+                  },
+                  "otherKeys": 2
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "retrieve"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "patch": {
+        "security": [
+          {
+            "apiKey": [
+              "platform:claims"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Set or remove a Polaris ID group's claims",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateParams"
+              },
+              "example": {
+                "set": {
+                  "passbook_tier": {
+                    "type": "text",
+                    "value": "gold"
+                  },
+                  "passbook_old": null
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateResponse"
+                },
+                "example": {
+                  "set": [
+                    "passbook_tier"
+                  ],
+                  "removed": [
+                    "passbook_old"
+                  ],
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "update"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -141379,6 +141585,7 @@
           "IDP_MULTIPLE_ACCOUNTS",
           "IDP_NOT_MANAGED",
           "IDP_NO_ACCOUNT",
+          "IDP_PLATFORM_ADMIN",
           "IDP_REFUSED",
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
@@ -141491,6 +141698,7 @@
           "IDP_MULTIPLE_ACCOUNTS",
           "IDP_NOT_MANAGED",
           "IDP_NO_ACCOUNT",
+          "IDP_PLATFORM_ADMIN",
           "IDP_REFUSED",
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
@@ -141634,6 +141842,7 @@
           "IDP_NOT_HELD",
           "IDP_NOT_WANTED",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "OPERATION_RUNNING",
           "RATE_LIMITED",
@@ -142030,6 +142239,7 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -142246,210 +142456,6 @@
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/platform/idp/groups/{key}/claims": {
-      "get": {
-        "security": [
-          {
-            "apiKey": [
-              "platform:claims"
-            ]
-          },
-          {
-            "apiKey": [
-              "platform:read"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-platform-scope": "platform:claims",
-        "summary": "Read a Polaris ID group's claims (the ones PassBook manages)",
-        "tags": [
-          "polaris-claims"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-z0-9_]{1,64}$"
-            },
-            "required": true,
-            "name": "key",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlatformGroupsClaimsRetrieveResponse"
-                },
-                "example": {
-                  "claims": {
-                    "passbook_tier": {
-                      "type": "text",
-                      "value": "gold"
-                    }
-                  },
-                  "otherKeys": 2
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
-        "x-sdk": {
-          "resource": "platform.groups.claims",
-          "method": "retrieve"
-        },
-        "x-sign-in": "oidc",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": false
-        },
-        "x-codes": [
-          "API_KEY_MISSING",
-          "FORBIDDEN",
-          "IDP_BUDGET",
-          "IDP_CLIENT",
-          "IDP_CONFLICT",
-          "IDP_IN_USE",
-          "IDP_NOT_MANAGED",
-          "IDP_REFUSED",
-          "IDP_SCIM_FOREIGN",
-          "IDP_SCIM_MISSING",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "RATE_LIMITED",
-          "STEP_UP_REQUIRED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      },
-      "patch": {
-        "security": [
-          {
-            "apiKey": [
-              "platform:claims"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-platform-scope": "platform:claims",
-        "summary": "Set or remove a Polaris ID group's claims",
-        "tags": [
-          "polaris-claims"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-z0-9_]{1,64}$"
-            },
-            "required": true,
-            "name": "key",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateParams"
-              },
-              "example": {
-                "set": {
-                  "passbook_tier": {
-                    "type": "text",
-                    "value": "gold"
-                  },
-                  "passbook_old": null
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateResponse"
-                },
-                "example": {
-                  "set": [
-                    "passbook_tier"
-                  ],
-                  "removed": [
-                    "passbook_old"
-                  ],
-                  "dryRun": false
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
-        "x-sdk": {
-          "resource": "platform.groups.claims",
-          "method": "update"
-        },
-        "x-sign-in": "oidc",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": false
-        },
-        "x-codes": [
-          "API_KEY_MISSING",
-          "FORBIDDEN",
-          "IDP_BUDGET",
-          "IDP_CLIENT",
-          "IDP_CONFLICT",
-          "IDP_IN_USE",
-          "IDP_NOT_MANAGED",
-          "IDP_REFUSED",
-          "IDP_SCIM_FOREIGN",
-          "IDP_SCIM_MISSING",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "RATE_LIMITED",
-          "STEP_UP_REQUIRED",
-          "UNAUTHENTICATED",
           "VALIDATION"
         ]
       }

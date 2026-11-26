@@ -12,7 +12,7 @@ import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { groupClaims, updateGroupClaims, updateUserClaims, userClaims } from './service-claims.ts';
 
 const TAG = 'polaris claims';
-/** Claims reach every app that signs in with Polaris ID: a platform admin signed in with Polaris ID recently (no break-glass), or a Platform key. A key never reaches a platform admin's claims, and reads them only with platform:claims. */
+/** Claims reach every app that signs in with Polaris ID: a platform admin signed in with Polaris ID recently (no break-glass), or a Platform key. A key never reaches a platform admin's claims. */
 const AUTH = {
   platform: 'platform:claims',
   key: true,
@@ -42,13 +42,7 @@ register(
     auth: AUTH,
   },
   async (c) =>
-    c.json(
-      await userClaims(
-        serviceContext(c),
-        platformActorOf(c, { scope: 'platform:claims' }),
-        c.req.valid('param').id,
-      ),
-    ),
+    c.json(await userClaims(serviceContext(c), platformActorOf(c), c.req.valid('param').id)),
 );
 
 register(
@@ -90,13 +84,7 @@ register(
     auth: AUTH,
   },
   async (c) =>
-    c.json(
-      await groupClaims(
-        serviceContext(c),
-        platformActorOf(c, { scope: 'platform:claims' }),
-        c.req.valid('param').key,
-      ),
-    ),
+    c.json(await groupClaims(serviceContext(c), platformActorOf(c), c.req.valid('param').key)),
 );
 
 register(

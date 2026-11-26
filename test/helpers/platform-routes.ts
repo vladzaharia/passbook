@@ -7,10 +7,8 @@ export const REQUIRE_ADMIN_ROUTER_ROUTES: readonly string[] = [
   'GET /api/v1/metrics/platform/developer',
   'GET /api/v1/platform/apple-calls',
   'GET /api/v1/platform/entitlement-presets',
-  'GET /api/v1/platform/idp/groups/:key/claims',
   'GET /api/v1/platform/orgs/:id/entitlements',
   'GET /api/v1/platform/personal-org-labels',
-  'PATCH /api/v1/platform/idp/groups/:key/claims',
   'PUT /api/v1/platform/entitlement-presets',
   'PUT /api/v1/platform/orgs/:id/entitlements',
 ];

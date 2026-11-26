@@ -38,6 +38,11 @@ const HANDLER_LEVEL_SESSION_ONLY = new Set([
   'post /api/v1/test-inbox/{id}/send-to-me',
 ]);
 
+/** A request a key may make on a conditional route: its refusal rule needs the safe shape, not an empty body. */
+const PROBE_BODY: Record<string, string> = {
+  'post /api/v1/users/{id}/offboard': '{"dryRun":true}',
+};
+
 async function setup() {
   const fake = fakeAuth();
   const app = createApp({ stores: fake.stores });
@@ -55,7 +60,7 @@ async function setup() {
     const init: RequestInit = { method: method.toUpperCase(), headers: send };
     if (!['get', 'head', 'delete'].includes(method)) {
       send['content-type'] = 'application/json';
-      init.body = '{}';
+      init.body = PROBE_BODY[`${method} ${path}`] ?? '{}';
     }
     const res = await app.fetch(new Request(url, init), env, ctx);
     const body = (await res.json().catch(() => ({}))) as { code?: string };

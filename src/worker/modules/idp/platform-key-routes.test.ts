@@ -77,12 +77,6 @@ describe('a Platform key on the routes that take one', () => {
       403,
       'MISSING_SCOPE',
     );
-    const t = await person(f(), { link: true });
-    await expectProblem(
-      await start(`/api/v1/users/${t.id}/claims`, 'GET', key.headers),
-      403,
-      'MISSING_SCOPE',
-    );
   });
 
   it('writes a group audited as the key, and a retry with the same Idempotency-Key does it once', async () => {
