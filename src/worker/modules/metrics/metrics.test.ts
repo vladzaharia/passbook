@@ -236,7 +236,7 @@ describe('metrics from Analytics Engine', () => {
     expect(o.series.emailUnknown).toHaveLength(o.series.issued.length);
     expect(calls[0]?.query).toContain('blob2 = $orgId');
     expect(calls[0]?.params).toMatchObject({ orgId: org.id });
-    expect(calls[0]?.query).toContain('FROM events.analyticsEngine.wallet_events');
+    expect(calls[0]?.query).toContain('FROM events.analyticsEngine.passbook_events');
     expect(calls[0]?.query).not.toContain('accountTag');
   });
 

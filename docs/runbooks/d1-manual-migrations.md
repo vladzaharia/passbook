@@ -18,19 +18,19 @@ Profile `passbook-owner` defines `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_
 The Time Travel bookmark taken before the migrations. Write it down; it is the only restore point ([[D1 Time Travel Restore]] is a last resort).
 
 ```sh name=time-travel-info confirm=no
-npx wrangler d1 time-travel info wallet-platform
+npx wrangler d1 time-travel info passbook-platform
 ```
 
 ## 2. List pending migrations
 
 ```sh name=migrations-list confirm=no
-npx wrangler d1 migrations list wallet-platform --remote
+npx wrangler d1 migrations list passbook-platform --remote
 ```
 
 ## 3. Apply
 
-```sh name=migrations-apply confirm="Apply all pending migrations to the production wallet-platform D1 database?"
-npx wrangler d1 migrations apply wallet-platform --remote
+```sh name=migrations-apply confirm="Apply all pending migrations to the production passbook-platform D1 database?"
+npx wrangler d1 migrations apply passbook-platform --remote
 ```
 
 ## 4. Check the entitlements gate

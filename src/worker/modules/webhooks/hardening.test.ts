@@ -87,11 +87,11 @@ describe('M1: a dead endpoint cannot hold the queue', () => {
     const hooks = Promise.all(lanes.map((l) => runLane(rig.ctx, l, 600))).then(() => {
       hooksDone = true;
     });
-    // A push job on wallet-jobs is consumed while every webhook handler is still stuck.
+    // A push job on passbook-jobs is consumed while every webhook handler is still stuck.
     let acked = false;
     await handleQueue(
       {
-        queue: 'wallet-jobs',
+        queue: 'passbook-jobs',
         messages: [
           {
             id: 'm1',

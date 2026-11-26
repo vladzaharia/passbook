@@ -7,7 +7,7 @@ profile: passbook-owner
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md). Steps 6 to 8 of the go-live order, after [[Go-Live Secrets]].
 
-Creates the Cloudflare resources: the D1 database `wallet-platform` (id written to `wrangler.jsonc`), the queues and the R2 bucket. Adds the R2 lifecycle rule (`uploads/` expires after one day) and the receipt lock. Deletes the legacy secrets `ADMIN_TOKEN`, `SIGNER_HENRYS_CERTIFICATE` and `SIGNER_HENRYS_PRIVATE_KEY` from the `wallet` Worker. Each step probes first, so a rerun skips what exists; rerun it after any release that adds a queue. Migrations are applied by the deploy ([[Deploy First]]), not here.
+Creates the Cloudflare resources: the D1 database `passbook-platform` (id written to `wrangler.jsonc`), the queues and the R2 bucket. Adds the R2 lifecycle rule (`uploads/` expires after one day) and the receipt lock. Deletes the legacy secrets `ADMIN_TOKEN`, `SIGNER_HENRYS_CERTIFICATE` and `SIGNER_HENRYS_PRIVATE_KEY` from the `wallet` Worker. Each step probes first, so a rerun skips what exists; rerun it after any release that adds a queue. Migrations are applied by the deploy ([[Deploy First]]), not here.
 
 ## Prerequisites
 
@@ -41,6 +41,6 @@ Done by step 2. The lock rule `retention-receipts` keeps every object under `ret
 
 ## Analytics Engine
 
-Needs the Workers Analytics Engine entitlement on the account. The `EVENTS` dataset `wallet_events` is created by the first write. Charts query it through the `ANALYTICS_SQL` binding (no API token). If the query fails they fall back to D1 and the overview says which source it used.
+Needs the Workers Analytics Engine entitlement on the account. The `EVENTS` dataset `passbook_events` is created by the first write. Charts query it through the `ANALYTICS_SQL` binding (no API token). If the query fails they fall back to D1 and the overview says which source it used.
 
 Next: [[Deploy First]].

@@ -26,7 +26,7 @@ const value = (name: string) => {
   const at = argv.indexOf(name);
   return at >= 0 ? argv[at + 1] : undefined;
 };
-const database = 'wallet-platform';
+const database = 'passbook-platform';
 const sqlFile = resolve(root, BOOTSTRAP_SQL);
 
 if (flag('--remote')) {

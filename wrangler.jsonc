@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "wallet",
+  "name": "passbook",
   "main": "src/worker/index.ts",
   "account_id": "07a2eb0d4916b220da1f9c1387b5f6d8",
   "compatibility_date": "2026-08-14",
@@ -97,68 +97,69 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "wallet-platform",
-      // Placeholder until go-live (`wrangler d1 create wallet-platform`). Local dev and tests ignore it.
-      "database_id": "f572193f-bb7e-4e05-96b5-b202c1e69bab",
+      "database_name": "passbook-platform",
+      // Placeholder until the owner creates the database (docs/runbooks/worker-rename.md); deploy:check refuses it.
+      // Retired id of the old wallet-platform database, do not reuse: f572193f-bb7e-4e05-96b5-b202c1e69bab
+      "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "wallet-passes" }],
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "passbook-passes" }],
 
   "queues": {
     "producers": [
-      { "binding": "JOBS", "queue": "wallet-jobs" },
-      { "binding": "WEBHOOK_JOBS", "queue": "wallet-webhooks" },
-      { "binding": "JOBS_DLQ", "queue": "wallet-jobs-dlq" }
+      { "binding": "JOBS", "queue": "passbook-jobs" },
+      { "binding": "WEBHOOK_JOBS", "queue": "passbook-webhooks" },
+      { "binding": "JOBS_DLQ", "queue": "passbook-jobs-dlq" }
     ],
     "consumers": [
       {
-        "queue": "wallet-jobs",
+        "queue": "passbook-jobs",
         "max_batch_size": 10,
         "max_batch_timeout": 2,
         "max_retries": 8,
         "retry_delay": 30,
-        "dead_letter_queue": "wallet-jobs-dlq"
+        "dead_letter_queue": "passbook-jobs-dlq"
       },
       // Tenant receivers can be slow: their own queue and small batches keep push and email from waiting behind them.
       {
-        "queue": "wallet-webhooks",
+        "queue": "passbook-webhooks",
         "max_batch_size": 2,
         "max_batch_timeout": 2,
         "max_retries": 4,
         "retry_delay": 30,
-        "dead_letter_queue": "wallet-jobs-dlq"
+        "dead_letter_queue": "passbook-jobs-dlq"
       },
-      { "queue": "wallet-jobs-dlq", "max_batch_size": 10, "max_retries": 2 }
+      { "queue": "passbook-jobs-dlq", "max_batch_size": 10, "max_retries": 2 }
     ]
   },
 
   "workflows": [
     {
-      "name": "wallet-template-import",
+      "name": "passbook-template-import",
       "binding": "TEMPLATE_IMPORT",
       "class_name": "TemplateImport"
     },
-    { "name": "wallet-bulk-reissue", "binding": "BULK_REISSUE", "class_name": "BulkReissue" },
-    { "name": "wallet-broadcast", "binding": "BROADCAST", "class_name": "Broadcast" },
-    { "name": "wallet-pass-import", "binding": "PASS_IMPORT", "class_name": "PassImport" },
+    { "name": "passbook-bulk-reissue", "binding": "BULK_REISSUE", "class_name": "BulkReissue" },
+    { "name": "passbook-broadcast", "binding": "BROADCAST", "class_name": "Broadcast" },
+    { "name": "passbook-pass-import", "binding": "PASS_IMPORT", "class_name": "PassImport" },
     {
-      "name": "wallet-identity-provision",
+      "name": "passbook-identity-provision",
       "binding": "IDENTITY_PROVISION",
       "class_name": "IdentityProvision"
     },
-    { "name": "wallet-channel-apply", "binding": "CHANNEL_APPLY", "class_name": "ChannelApply" },
+    { "name": "passbook-channel-apply", "binding": "CHANNEL_APPLY", "class_name": "ChannelApply" },
     {
-      "name": "wallet-connection-sync",
+      "name": "passbook-connection-sync",
       "binding": "CONNECTION_SYNC",
       "class_name": "ConnectionSync"
     },
-    { "name": "wallet-org-export", "binding": "ORG_EXPORT", "class_name": "OrgExport" },
-    { "name": "wallet-org-purge", "binding": "ORG_PURGE", "class_name": "OrgPurge" }
+    { "name": "passbook-org-export", "binding": "ORG_EXPORT", "class_name": "OrgExport" },
+    { "name": "passbook-org-purge", "binding": "ORG_PURGE", "class_name": "OrgPurge" }
   ],
 
   "services": [
-    { "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }
+    { "binding": "APPLE", "service": "passbook-apple-connector", "entrypoint": "AppleProvisioner" }
   ],
 
   "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["delivery@passbook.mobile"] }],
@@ -233,8 +234,8 @@
     { "name": "RL_ACCESS_ALL", "namespace_id": "1028", "simple": { "limit": 30, "period": 60 } }
   ],
 
-  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],
-  // Admin charts read wallet_events through this. Remote only; absent locally, charts fall back to D1.
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "passbook_events" }],
+  // Admin charts read passbook_events through this. Remote only; absent locally, charts fall back to D1.
   "analytics": { "binding": "ANALYTICS_SQL", "remote": true },
   "version_metadata": { "binding": "CF_VERSION" },
 

@@ -4,7 +4,7 @@ import type {
   CertificateInfo,
   CreatedPassType,
   PassTypeRef,
-} from '../../../workers/apple-provisioner/src/types.ts';
+} from '../../../workers/passbook-apple-connector/src/types.ts';
 import {
   createFakeWwdr,
   type FakeWwdr,
@@ -20,7 +20,7 @@ import { runIdentityProvision } from './identity-provision.ts';
 export const TEAM = '48H7CLBV8Y';
 const KEK_V1 = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
 
-/** A stand-in for the apple-provisioner Worker: Apple's pass types and certificates, in memory. */
+/** A stand-in for the passbook-apple-connector Worker: Apple's pass types and certificates, in memory. */
 export class FakeApple {
   passTypes = new Map<string, PassTypeRef>();
   certs: (CertificateInfo & { passTypeAscId: string })[] = [];

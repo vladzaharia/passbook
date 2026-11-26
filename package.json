@@ -32,7 +32,7 @@
     "test:e2e": "playwright test",
     "test:e2e:camera": "playwright test --config playwright.camera.config.ts",
     "test:e2e:wallets": "playwright test --config playwright.wallets.config.ts",
-    "db:local": "wrangler d1 migrations apply wallet-platform --local",
+    "db:local": "wrangler d1 migrations apply passbook-platform --local",
     "breakglass": "node tools/breakglass.ts",
     "keys:retire": "node tools/keys.ts retire",
     "credentials": "node tools/credentials.ts",

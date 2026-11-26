@@ -3,7 +3,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import type { Scope, Window } from './repo.ts';
 
 /** Dataset name as bound by `analytics_engine_datasets` in wrangler.jsonc. */
-const DATASET = 'events.analyticsEngine.wallet_events';
+const DATASET = 'events.analyticsEngine.passbook_events';
 
 export interface EventRow {
   event: EventName;

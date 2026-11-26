@@ -1,6 +1,6 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
 import { NonRetryableError } from 'cloudflare:workflows';
-import type { AppleRpc } from '../../../workers/apple-provisioner/src/types.ts';
+import type { AppleRpc } from '../../../workers/passbook-apple-connector/src/types.ts';
 import { ascClient } from '../modules/identities/asc-client.ts';
 import { adoptByPubkey } from '../modules/identities/cert-history.ts';
 import { passTypeOf } from '../modules/identities/handles.ts';

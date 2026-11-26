@@ -50,7 +50,7 @@ describe('wrangler.jsonc', () => {
     expect(wrangler.analytics?.binding).toBe('ANALYTICS_SQL');
     expect(wrangler.analytics_engine_datasets).toContainEqual({
       binding: 'EVENTS',
-      dataset: 'wallet_events',
+      dataset: 'passbook_events',
     });
   });
 

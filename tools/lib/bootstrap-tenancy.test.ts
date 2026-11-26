@@ -10,10 +10,10 @@ describe('bootstrap remote commands', () => {
   it('reads the snapshot with --command (a remote --file returns counts, not rows), owner-only', () => {
     const [read, , apply] = remoteCommands('owner@example.com');
     expect(read).toBe(
-      '(umask 077; npx wrangler d1 execute wallet-platform --remote --json --command "$(cat .wrangler/bootstrap-snapshot.sql)" > .wrangler/bootstrap-snapshot.json)',
+      '(umask 077; npx wrangler d1 execute passbook-platform --remote --json --command "$(cat .wrangler/bootstrap-snapshot.sql)" > .wrangler/bootstrap-snapshot.json)',
     );
     expect(apply).toBe(
-      'npx wrangler d1 execute wallet-platform --remote --file .wrangler/bootstrap-tenancy.sql; rm -f .wrangler/bootstrap-tenancy.sql',
+      'npx wrangler d1 execute passbook-platform --remote --file .wrangler/bootstrap-tenancy.sql; rm -f .wrangler/bootstrap-tenancy.sql',
     );
   });
 });

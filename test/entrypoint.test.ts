@@ -86,7 +86,7 @@ describe('worker entrypoint', () => {
   });
 
   it('exports a queue consumer that acks invalid messages', async () => {
-    const batch = createMessageBatch('wallet-jobs', [
+    const batch = createMessageBatch('passbook-jobs', [
       { id: 'm1', timestamp: new Date(), attempts: 1, body: { kind: 'nope' } },
     ]);
     const ctx = createExecutionContext();

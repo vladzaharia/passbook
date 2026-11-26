@@ -33,7 +33,7 @@ export RESTORE_TIMESTAMP="${RESTORE_TIMESTAMP:-}"
 Wrangler's restore prints the previous bookmark, which lets you undo the restore.
 
 ```sh name=time-travel-now confirm=no
-npx wrangler d1 time-travel info wallet-platform
+npx wrangler d1 time-travel info passbook-platform
 ```
 
 ## 2. Look up the bookmark for a timestamp
@@ -41,13 +41,13 @@ npx wrangler d1 time-travel info wallet-platform
 Skip when you already have `BOOKMARK`.
 
 ```sh name=time-travel-at confirm=no
-: "${RESTORE_TIMESTAMP:?set RESTORE_TIMESTAMP or BOOKMARK}" && npx wrangler d1 time-travel info wallet-platform --timestamp "$RESTORE_TIMESTAMP"
+: "${RESTORE_TIMESTAMP:?set RESTORE_TIMESTAMP or BOOKMARK}" && npx wrangler d1 time-travel info passbook-platform --timestamp "$RESTORE_TIMESTAMP"
 ```
 
 ## 3. Restore
 
-```sh name=time-travel-restore confirm="Restore the production wallet-platform database to BOOKMARK? Every write since is lost."
-: "${BOOKMARK:?set BOOKMARK first}" && npx wrangler d1 time-travel restore wallet-platform --bookmark "$BOOKMARK"
+```sh name=time-travel-restore confirm="Restore the production passbook-platform database to BOOKMARK? Every write since is lost."
+: "${BOOKMARK:?set BOOKMARK first}" && npx wrangler d1 time-travel restore passbook-platform --bookmark "$BOOKMARK"
 ```
 
 ## 4. After the restore

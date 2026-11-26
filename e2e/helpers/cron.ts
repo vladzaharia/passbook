@@ -32,7 +32,7 @@ export function recordRolloutFailure(input: {
       'wrangler',
       'd1',
       'execute',
-      'wallet-platform',
+      'passbook-platform',
       '--local',
       '--persist-to',
       '.wrangler/e2e-state',

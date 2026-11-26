@@ -1,4 +1,4 @@
-import type { AppleRpc } from '../../../../workers/apple-provisioner/src/types.ts';
+import type { AppleRpc } from '../../../../workers/passbook-apple-connector/src/types.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditOnce, beginStep } from './provision-run.ts';

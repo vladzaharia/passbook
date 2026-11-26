@@ -83,7 +83,7 @@ export async function postCheck(ctx: ServiceContext, runId: string): Promise<voi
   );
 }
 
-/** The provisioner's own cap per pass type (workers/apple-provisioner/src/ledger.ts); this one stops the run before an order is refused. */
+/** The provisioner's own cap per pass type (workers/passbook-apple-connector/src/ledger.ts); this one stops the run before an order is refused. */
 const CAP = 2;
 const CAP_WINDOW_MS = 30 * 86_400_000;
 

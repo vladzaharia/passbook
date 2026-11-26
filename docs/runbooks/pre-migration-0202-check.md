@@ -16,7 +16,7 @@ Profile `passbook-owner` defines `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_
 ## 1. Check for schema 1 Samsung releases
 
 ```sh name=check-samsung-schema1 confirm=no
-npx wrangler d1 execute wallet-platform --remote --command "SELECT r.id FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.provider = 'samsung' AND json_extract(c.projection_json, '\$.schema') = 1"
+npx wrangler d1 execute passbook-platform --remote --command "SELECT r.id FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.provider = 'samsung' AND json_extract(c.projection_json, '\$.schema') = 1"
 ```
 
 No rows: apply, with [[Deploy]]. If a row exists, stop and ask the owner: the code can no longer retire it.

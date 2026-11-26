@@ -31,7 +31,7 @@ async function goStale(page: Page): Promise<void> {
       'wrangler',
       'd1',
       'execute',
-      'wallet-platform',
+      'passbook-platform',
       '--local',
       '--persist-to',
       '.wrangler/e2e-state',

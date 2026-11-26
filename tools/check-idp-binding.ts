@@ -1,4 +1,4 @@
-// The IDP service binding reaches the Polaris ID (Pocket ID) admin key through the polaris-binding Worker.
+// The IDP service binding reaches the Polaris ID (Pocket ID) admin key through the passbook-id-connector Worker.
 // Only its typed client may name it; the same checks as check-apple-binding.ts. Run in `npm run check:rules`.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';

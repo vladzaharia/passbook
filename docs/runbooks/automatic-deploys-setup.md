@@ -24,7 +24,7 @@ In the Cloudflare dashboard (My Profile, API Tokens, Create custom token) with:
 - Zone: Workers Routes Edit, DNS Edit, Zone Read on `passbook.mobile` and `plrs.im`
 - User: User Details Read
 
-Scope accounts and zones to this account. The token can redeploy any Worker in the account, including `apple-provisioner`; see its trust boundary in [docs/operations.md](../operations.md#apple-provisioner). Add the value to the profile.
+Scope accounts and zones to this account. The token can redeploy any Worker in the account, including `passbook-apple-connector`; see its trust boundary in [docs/operations.md](../operations.md#passbook-apple-connector). Add the value to the profile.
 
 ## 2. Create the `production` environment
 

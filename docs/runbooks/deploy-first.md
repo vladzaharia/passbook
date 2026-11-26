@@ -39,10 +39,10 @@ npm run deploy -- --first --apply
 
 ## 4. Verify the queue consumer
 
-The Worker must appear as consumer of `wallet-jobs`.
+The Worker must appear as consumer of `passbook-jobs`.
 
 ```sh name=verify-consumer confirm=no
-npx wrangler queues info wallet-jobs
+npx wrangler queues info passbook-jobs
 ```
 
 Later releases use the default flow: [[Deploy]]. First admin and the device test: [[First Admin and Device Test]].

@@ -67,7 +67,7 @@ export function stubNet(): Net {
 
 export interface Rig {
   kit: ScanKit;
-  /** The `wallet-webhooks` queue: lane messages land here, never on `kit.queue` (wallet-jobs). */
+  /** The `passbook-webhooks` queue: lane messages land here, never on `kit.queue` (passbook-jobs). */
   hooks: FakeQueue;
   ctx: ServiceContext;
   db: D1Database;

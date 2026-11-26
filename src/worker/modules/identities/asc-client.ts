@@ -1,4 +1,4 @@
-import type { AppleRpc } from '../../../../workers/apple-provisioner/src/types.ts';
+import type { AppleRpc } from '../../../../workers/passbook-apple-connector/src/types.ts';
 import {
   AppError,
   ConflictError,

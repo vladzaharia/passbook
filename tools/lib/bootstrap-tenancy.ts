@@ -136,7 +136,7 @@ export const BOOTSTRAP_SQL = '.wrangler/bootstrap-tenancy.sql';
  * it is created owner-only and the tool deletes it; the SQL holds holder emails and is deleted once
  * applied.
  */
-export const remoteCommands = (owner: string, database = 'wallet-platform') => [
+export const remoteCommands = (owner: string, database = 'passbook-platform') => [
   `(umask 077; npx wrangler d1 execute ${database} --remote --json --command "$(cat ${SNAPSHOT_SQL})" > ${SNAPSHOT_JSON})`,
   `node tools/bootstrap-tenancy.ts --owner ${owner} --snapshot ${SNAPSHOT_JSON}`,
   `npx wrangler d1 execute ${database} --remote --file ${BOOTSTRAP_SQL}; rm -f ${BOOTSTRAP_SQL}`,

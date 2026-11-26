@@ -90,7 +90,7 @@ describe('uploadAndMigrate', () => {
   });
 });
 
-/** `wrangler d1 migrations list wallet-platform --remote`, as wrangler 4 prints it. */
+/** `wrangler d1 migrations list passbook-platform --remote`, as wrangler 4 prints it. */
 const listed = (...names: string[]) =>
   names.length === 0
     ? '\n ⛅️ wrangler 4.151.1\n───────────────────\n✅ No migrations to apply!\n'

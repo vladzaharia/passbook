@@ -63,7 +63,7 @@ const state = resolve(root, '.wrangler/e2e-state');
 rmSync(state, { recursive: true, force: true });
 execFileSync(
   'npx',
-  ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local', '--persist-to', state],
+  ['wrangler', 'd1', 'migrations', 'apply', 'passbook-platform', '--local', '--persist-to', state],
   { cwd: root, stdio: 'inherit' },
 );
 // Mock Pocket ID verifies its emails, and with trust off a first sign-in needs a mail round trip.
@@ -73,7 +73,7 @@ execFileSync(
     'wrangler',
     'd1',
     'execute',
-    'wallet-platform',
+    'passbook-platform',
     '--local',
     '--persist-to',
     state,
@@ -91,7 +91,7 @@ if (release)
       'wrangler',
       'd1',
       'execute',
-      'wallet-platform',
+      'passbook-platform',
       '--local',
       '--persist-to',
       state,

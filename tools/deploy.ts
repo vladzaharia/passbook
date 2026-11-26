@@ -11,9 +11,8 @@
 //   npm run deploy -- --promote --apply         serve the version uploaded by --migrate-only, then wait for the
 //                                    baked sync (WALLET_API_KEY starts it at once; else the minute cron)
 //                                    (with --first: `wrangler deploy` after --migrate-only --first)
-// Refuses unless the working tree is clean and dist/ was built from HEAD (tools/stamp-build.ts writes the
-// stamp; --promote checks the commit --migrate-only uploaded). Refuses while wrangler.jsonc still has placeholder ids or keys, or a required secret is unset; a
-// flag before `--`; a full deploy while 0029_org_memberships is pending (the cutover); a promote while
+// Refuses unless the working tree is clean and dist/ was built from HEAD (tools/stamp-build.ts writes the stamp; --promote checks the commit --migrate-only uploaded). Refuses while wrangler.jsonc still has placeholder ids or keys,
+// or a required secret is unset on the Worker or on a bound connector Worker (workers/*); a flag before `--`; a full deploy while 0029_org_memberships is pending (the cutover); a promote while
 // any migration is pending. Migrations are forward-only. Once they run, roll forward; the previous Worker version is an
 // emergency degraded mode only (docs/operations.md, Rollback). Never restore D1 to undo a deploy.
 import { execFileSync } from 'node:child_process';
@@ -49,6 +48,7 @@ import { e2eReleaseProblems } from './lib/e2e-release.ts';
 import { entitlementsRefusal, orgsWithoutEntitlements } from './lib/entitlements-gate.ts';
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
+import { requireServiceSecrets } from './lib/service-secrets.ts';
 import { unmigratedWalletAccounts, walletMigrationRefusal } from './lib/wallet-migrate-gate.ts';
 import { anyWalletReleased, walletReleaseRefusal } from './lib/wallet-release-deploy.ts';
 
@@ -61,12 +61,13 @@ const args = (() => {
     process.exit(1);
   }
 })();
-const database = 'wallet-platform';
+const database = 'passbook-platform';
 
 const config = readJsonc(resolve(root, 'wrangler.jsonc')) as Parameters<
   typeof predeployProblems
 >[0] & {
   secrets?: { required?: string[] };
+  services?: { service: string }[];
 };
 const problems = predeployProblems(config, {
   allowNoPush: args.has('--allow-no-push'),
@@ -93,6 +94,9 @@ const checkSecrets = () => {
     console.error(`Not migrating. Set with wrangler secret put: ${missing.join(', ')}`);
     process.exit(1);
   }
+  requireServiceSecrets(config.services, resolve(root, 'workers'), (service) =>
+    wrangler('secret', 'list', '--name', service, '--format', 'json'),
+  );
   const versions = (prefix: string) =>
     secretNames(listed).flatMap((name) => {
       const match = new RegExp(`^${prefix}_V([1-9]\\d*)$`).exec(name);

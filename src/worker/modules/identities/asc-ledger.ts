@@ -1,4 +1,4 @@
-import type { CallRow } from '../../../../workers/apple-provisioner/src/types.ts';
+import type { CallRow } from '../../../../workers/passbook-apple-connector/src/types.ts';
 
 /** Read-only: this file may call the provisioner's `calls` and nothing else (tools/check-apple-binding.ts). */
 interface LedgerBinding {

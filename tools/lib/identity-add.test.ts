@@ -18,7 +18,7 @@ describe('identity-add', () => {
       cert: '.secrets/platform-certificate.pem',
       apply: false,
     });
-    expect(uploadArgs(o)).toContain('wallet-platform');
+    expect(uploadArgs(o)).toContain('passbook-platform');
   });
 
   it('derives APNS_<NAME> for other identities and validates input', () => {
@@ -33,7 +33,7 @@ describe('identity-add', () => {
 
   it('reads the certificate id from wrangler output', () => {
     expect(
-      parseCertificateId(`Success! Uploaded mTLS Certificate wallet-platform\nID: ${ID}`),
+      parseCertificateId(`Success! Uploaded mTLS Certificate passbook-platform\nID: ${ID}`),
     ).toBe(ID);
     expect(() => parseCertificateId('nope')).toThrow();
   });

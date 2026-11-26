@@ -130,7 +130,7 @@ describe('queue consumer contract', () => {
     };
     return {
       calls,
-      batch: { queue: 'wallet-jobs', messages: [message] } as unknown as MessageBatch<unknown>,
+      batch: { queue: 'passbook-jobs', messages: [message] } as unknown as MessageBatch<unknown>,
     };
   }
   const exec = {
@@ -178,7 +178,7 @@ describe('queue consumer contract', () => {
       [pass.id],
     );
     const dlq = batch({ kind: 'push.deliver', outboxId: row?.id });
-    (dlq.batch as { queue: string }).queue = 'wallet-jobs-dlq';
+    (dlq.batch as { queue: string }).queue = 'passbook-jobs-dlq';
     await handleQueue(dlq.batch, kit.env, exec);
     expect(dlq.calls.ack).toBe(1);
     expect((await getOutbox(kit.env.DB, row?.id ?? ''))?.state).toBe('failed');

@@ -11,8 +11,8 @@
     "src/shared",
     "src/generated",
     "src/web/pass-card",
-    "workers/apple-provisioner/src",
-    "workers/polaris-binding/src",
+    "workers/passbook-apple-connector/src",
+    "workers/passbook-id-connector/src",
     "test",
     "worker-configuration.d.ts"
   ],

@@ -1,5 +1,5 @@
-export const JOBS_QUEUE = 'wallet-jobs';
-export const DLQ_QUEUE = 'wallet-jobs-dlq';
+export const JOBS_QUEUE = 'passbook-jobs';
+export const DLQ_QUEUE = 'passbook-jobs-dlq';
 
 /** Exponential backoff in seconds for the nth attempt (30 s, 1 min, 2 min, ... capped at 1 h). */
 export function retryDelaySeconds(attempts: number): number {

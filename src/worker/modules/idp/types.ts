@@ -1,4 +1,4 @@
-// The `IDP` service binding's RPC surface. Mirrors workers/polaris-binding/src/types.ts; types.test.ts fails on drift.
+// The `IDP` service binding's RPC surface. Mirrors workers/passbook-id-connector/src/types.ts; types.test.ts fails on drift.
 export const IDP_CODES = [
   'IDP_REFUSED',
   'IDP_BUDGET',

@@ -49,7 +49,7 @@ export function uploadArgs(o: IdentityAddOptions): string[] {
     '--key',
     o.key,
     '--name',
-    `wallet-${o.name}`,
+    `passbook-${o.name}`,
   ];
 }
 

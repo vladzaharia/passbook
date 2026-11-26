@@ -3,7 +3,7 @@ tags: runbook, polaris-id, scim, production
 confirm: true
 profile: passbook-owner
 env:
-  DB_NAME: wallet-platform
+  DB_NAME: passbook-platform
 ---
 # SCIM Receiver Setup
 

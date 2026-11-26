@@ -9,7 +9,7 @@ export interface AppEnv
   /** The generated type is Queue<unknown>; producers are checked against `Job`. */
   JOBS: Queue<Job>;
   JOBS_DLQ: Queue<Job>;
-  /** Outbound webhook lanes only (`wallet-webhooks`), served by the same consumer. */
+  /** Outbound webhook lanes only (`passbook-webhooks`), served by the same consumer. */
   WEBHOOK_JOBS: Queue<Job>;
   /**
    * Absent until the platform certificate is uploaded; treated as "push unavailable".
