@@ -270,7 +270,7 @@
     "operationId": "api-keys.getApiKeys",
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:groups\" added",
@@ -278,7 +278,7 @@
     "operationId": "api-keys.getApiKeys",
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:read\" added",
@@ -286,7 +286,7 @@
     "operationId": "api-keys.getApiKeys",
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
@@ -294,7 +294,7 @@
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:groups\" added",
@@ -302,7 +302,7 @@
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:read\" added",
@@ -310,7 +310,7 @@
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
@@ -326,7 +326,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:groups\" added",
@@ -334,7 +334,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:read\" added",
@@ -342,7 +342,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -798,7 +798,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.keys[].scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:groups\" added",
@@ -806,7 +806,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.keys[].scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:read\" added",
@@ -814,7 +814,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.keys[].scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "GET /api/v1/developer/home new operation",
@@ -838,7 +838,7 @@
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:groups\" added",
@@ -846,7 +846,7 @@
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:read\" added",
@@ -854,7 +854,7 @@
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -3053,7 +3053,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:groups\" added",
@@ -3061,7 +3061,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:read\" added",
@@ -3069,7 +3069,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
@@ -3101,7 +3101,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"members:read\" added",
-    "note": "members:read and members:write can be named on a key. members:write is a credential scope: Live, one organization, at most 90 days, never through a role."
+    "note": "members:read and members:write can be named on a key and open the organization member routes (list, invite, resend, revoke, change role). members:write is a credential scope: Live, one organization, at most 90 days, never through a role. A key never makes, promotes, demotes or removes an administrator (403 KEY_CANNOT_ADMINISTER)."
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"members:write\" added",
@@ -3133,7 +3133,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys may hold platform:read: it reads every key-callable platform route. Never mixed with an organization scope."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:settings\" added",
@@ -3141,7 +3141,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"platform:settings\" added",
-    "note": "Platform keys may hold platform:settings: the platform settings, except sign-in (auth.*, oidc.*), which is a person's."
+    "note": "Platform keys may hold platform:settings: read and write the platform settings, except sign-in (auth.*, oidc.*), which is a person's (403 PERSON_REQUIRED)."
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:wallet\" added",
@@ -3149,7 +3149,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"platform:wallet\" added",
-    "note": "Platform keys may hold platform:wallet: the wallet release report and the enable-ready dry run; an apply is a person's."
+    "note": "Platform keys may hold platform:wallet: the wallet release report and the enable-ready dry run. An apply is a person's (403 PERSON_REQUIRED)."
   },
   {
     "key": "POST /api/v1/api-keys error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
@@ -3189,7 +3189,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
@@ -3197,7 +3197,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
@@ -3205,7 +3205,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3213,7 +3213,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
@@ -3221,7 +3221,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
@@ -3229,7 +3229,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3237,7 +3237,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
@@ -3245,7 +3245,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
@@ -3253,7 +3253,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
@@ -3261,7 +3261,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
@@ -3269,7 +3269,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
@@ -3277,7 +3277,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3285,7 +3285,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
@@ -3293,7 +3293,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
@@ -3301,7 +3301,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3309,7 +3309,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
-    "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
@@ -3317,7 +3317,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "Reserved platform scope. No route takes it by key yet, so a key cannot hold it."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
@@ -3325,7 +3325,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:read\" added",
-    "note": "Platform keys carry platform:* scopes (platform:read, platform:groups and more)."
+    "note": "New scope platform:read, for Platform keys only (pbo_, no organization). It reads every platform route a key may call. A Platform key holds platform scopes alone, never an organization scope (422 API_KEY_PLATFORM_SCOPES_ALONE), is Live only, lives at most 30 days (90 with platform:read alone) and needs an IP range. Minting one needs a Polaris ID session with a recent sign-in."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
