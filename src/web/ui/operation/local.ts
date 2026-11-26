@@ -130,7 +130,18 @@ export class LocalOperation {
 
   /** The step is done; the operation stays running until `finish`. */
   complete(key: string): void {
-    this.set({}, { key, patch: { state: 'done', finishedAt: this.now() } });
+    const total = this.op.steps.find((s) => s.key === key)?.total ?? null;
+    this.set(
+      {},
+      {
+        key,
+        patch: {
+          state: 'done',
+          finishedAt: this.now(),
+          ...(total === null ? {} : { done: total }),
+        },
+      },
+    );
   }
 
   /** The step waits (for a person, a device) until `until`, or with no date. */
@@ -162,12 +173,13 @@ export class LocalOperation {
     );
   }
 
-  finish(result: Operation['result'] = null): void {
+  /** `text` replaces the done title for one run ('Offline list from 2:14 PM'). */
+  finish(result: Operation['result'] = null, text?: string): void {
     this.set({
       status: 'succeeded',
       step: null,
       finishedAt: this.now(),
-      text: this.doneTitle,
+      text: text ?? this.doneTitle,
       result,
     });
   }
