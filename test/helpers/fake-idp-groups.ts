@@ -14,6 +14,10 @@ export interface FakeAccount {
   roles: Set<string>;
   /** Targets PassBook added (a live grant); removing any other needs `override`. */
   grants: Set<string>;
+  /** Grants recorded but not yet read back: in `grants`, never in `confirmedGrants`. */
+  pending: Set<string>;
+  /** When a grant was read back; a grant not listed was confirmed at 0. */
+  confirmedAt: Map<string, number>;
   disabled: boolean;
   isAdmin: boolean;
   email?: string;

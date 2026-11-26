@@ -132,6 +132,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     class: 'created',
     roles: new Set(),
     grants: new Set(),
+    pending: new Set(),
+    confirmedAt: new Map(),
     disabled: false,
     isAdmin: false,
     emailVerified: false,
@@ -202,6 +204,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
         ...rest,
         roles: new Set(roles),
         grants: new Set(),
+        pending: new Set(),
+        confirmedAt: new Map(),
       });
     },
     async health(): Promise<IdpHealth> {

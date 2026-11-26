@@ -43,6 +43,9 @@ export function accountMethods(
         isAdmin: a.isAdmin,
         class: a.class,
         grants: [...a.grants] as Target[],
+        confirmedGrants: [...a.grants]
+          .filter((t) => !a.pending.has(t))
+          .map((t) => ({ target: t as Target, confirmedAt: a.confirmedAt.get(t) ?? 0 })),
       };
     },
     async apply(subject, delta, ctx) {
