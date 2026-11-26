@@ -218,23 +218,23 @@
 .scan-in-trailing {
   flex: none;
 }
-.scan-in-mark-short {
-  display: none;
-}
 .scan-in-more {
   align-self: center;
 }
+.scan-in-mark {
+  min-height: 44px;
+  white-space: nowrap;
+}
 @media (max-width: 420px) {
-  /* A narrow phone: the action keeps a short word beside its icon. */
-  .scan-in-mark-label {
-    display: none;
+  /* A narrow phone: the action drops under the details, in line with the name, at full size. */
+  .scan-in-row {
+    flex-wrap: wrap;
   }
-  .scan-in-mark-short {
-    display: inline;
+  .scan-in-open {
+    flex-basis: 100%;
   }
-  .scan-in-mark {
-    min-width: 44px;
-    min-height: 44px;
+  .scan-in-trailing {
+    margin-inline-start: 52px;
   }
 }
 @media (prefers-reduced-motion: no-preference) {

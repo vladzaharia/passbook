@@ -109,10 +109,7 @@ export function MarkOutButton({
       iconStart={<LogOut aria-hidden />}
       onClick={() => onMark(row)}
     >
-      <span className="scan-in-mark-label">{SCAN_COPY.actions.markAsOut}</span>
-      <span className="scan-in-mark-short" aria-hidden>
-        {SCAN_COPY.actions.markOutShort}
-      </span>
+      {SCAN_COPY.actions.markAsOut}
     </Button>
   );
 }

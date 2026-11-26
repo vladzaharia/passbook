@@ -35,7 +35,6 @@ export function StyleSection() {
           label: STYLE_LABEL[s],
         }))}
         onPick={(v) => edit({ op: 'style', style: v as PassStyle })}
-        help="Switching keeps your fields. Fields the style cannot show move to the back."
       />
       {poster ? (
         <SwitchRow
@@ -90,7 +89,6 @@ export function StyleSection() {
           value={text('description')}
           merge="description"
           op={(v) => ({ op: 'pass-prop', key: 'description', value: v })}
-          help="Read aloud by VoiceOver."
         />
       </Group>
     </div>

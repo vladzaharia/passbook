@@ -188,6 +188,9 @@ function EventDetail({
                     <SessionStatePill session={s} />
                   </div>
                 ))}
+                {admitting.length === 0 ? (
+                  <p className="text-sm text-fg-muted">No sessions yet.</p>
+                ) : null}
                 {editable && !over ? (
                   <Button variant="secondary" onClick={() => setDialog('assign')}>
                     Add to a session
@@ -229,7 +232,7 @@ function EventDetail({
                       label: 'Passes',
                       value: event.match
                         ? `${event.match.input} is ${event.match.values.join(' or ')}`
-                        : 'All from these templates',
+                        : 'All',
                     },
                   ]}
                 />
@@ -246,13 +249,13 @@ function EventDetail({
                       event.templateIds.includes(t.id),
                   )
                   .map((t) => (
-                    <p key={t.id} className="text-sm">
+                    <p key={t.id} className="flex flex-wrap items-center text-sm">
                       Result screen: {t.name}
                       {canAuthor && (t.orgId !== null || t.origin === 'baked' || isAdmin) ? (
                         <>
                           {' · '}
                           <a
-                            className="text-accent-fg"
+                            className="inline-flex items-center text-accent-fg pointer-coarse:min-h-11"
                             href={`/admin/templates/${encodeURIComponent(t.id)}/design?mode=scan`}
                           >
                             Edit
