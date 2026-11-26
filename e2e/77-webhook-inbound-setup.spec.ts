@@ -150,7 +150,7 @@ test('Custom: the payload shape and its example, then the secret and the send sn
   await page.getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('button', { name: 'Leave', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Finish setup' })).toBeVisible();
-  await expect(page.getByText('Listening for your system')).toBeVisible();
+  await expect(page.getByText('Listening for your system').first()).toBeVisible();
   await check(page, 'webhook-awaiting');
 
   const api = await apiAs('admin');
