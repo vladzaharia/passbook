@@ -173,6 +173,39 @@ describe('GET /api/v1/users/{id}/passes', () => {
     const tpl = makeTemplate().resolved;
     const theirs = await makeOrg(f(), { name: 'B Personal Org', personalUserId: person.id });
     const mine = await makeOrg(f(), { name: 'A Personal Org', personalUserId: a.user.id });
+    await makePass(f(), { orgId: theirs.id, template: tpl, ownerUserId: person.id });
+    const own = await makePass(f(), { orgId: mine.id, template: tpl, ownerUserId: person.id });
+    const body = await read(person.id, a.headers);
+    expect(body.items.map((p) => [p.id, p.orgName])).toEqual([[own.id, 'Personal']]);
+    const detail = (await (
+      await h.call(`/api/v1/users/${person.id}`, { headers: a.headers })
+    ).json()) as { passes: { id: string }[] };
+    expect(detail.passes.map((p) => p.id)).toEqual([own.id]);
+  });
+
+  it('does not match an unproven primary email', async () => {
+    const a = await admin();
+    const claimant = await makeUser(f());
+    const org = await makeOrg(f());
+    await run(h.env.DB, 'DELETE FROM user_emails WHERE user_id = ?', [claimant.id]);
+    await makePass(f(), {
+      orgId: org.id,
+      template: makeTemplate().resolved,
+      holderEmail: claimant.primaryEmail,
+    });
+    expect((await read(claimant.id, a.headers)).items).toEqual([]);
+  });
+
+  it('marks waiting against owned, leaves out join-link and quarantined passes', async () => {
+    const a = await admin();
+    const person = await makeUser(f());
+    const org = await makeOrg(f());
+    const tpl = makeTemplate().resolved;
+    await run(
+      h.env.DB,
+      "INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES ('w@example.com', ?, 'admin', 0)",
+      [person.id],
+    );
     const owned = await makePass(f(), { orgId: org.id, template: tpl, ownerUserId: person.id });
     const waiting = await makePass(f(), {
       orgId: org.id,
