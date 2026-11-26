@@ -3,6 +3,13 @@ import type { MockOidc } from './index.ts';
 import { scimPush } from './scim-push.ts';
 import { signUp } from './signup.ts';
 
+const ROLE_GROUPS = [
+  'passbook_console',
+  'passbook_developers',
+  'passbook_support',
+  'passbook_platform_admins',
+];
+
 export interface MockPolarisOptions {
   oidc: MockOidc;
   /** The key the binding sends in `X-API-KEY`; any other is answered 401, as Polaris ID does. */
@@ -47,6 +54,8 @@ export function createMockPolaris(options: MockPolarisOptions) {
         const u = pocket.s.users.get(sub);
         return u && !u.disabled ? ['wallet_users', ...groupNames(u.groups)] : [];
       },
+      // The PassBook client lets in only accounts in a PassBook role group, as Polaris ID is set up.
+      requiresGroups: ROLE_GROUPS,
     });
 
   async function control(path: string, body: Record<string, unknown>): Promise<Response> {

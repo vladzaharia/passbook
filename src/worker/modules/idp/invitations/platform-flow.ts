@@ -185,7 +185,8 @@ export async function claimExistingPlatform(
 /**
  * After "Done" on the page: for each signup token the invitation made, `proveSignup` finds the account and compares
  * its verified address with the invited one, without returning it. A match gets the groups and accepts; an account
- * made from a forwarded link with another address never had any. Repeating it after the accept is a no-op.
+ * made from a forwarded link with another address never had any. A developer invitation gets `developer` only and asks
+ * for a PassBook sign-in, where the accept adds the rest. Repeating it after the accept is a no-op.
  */
 export async function confirmPlatform(
   ctx: ServiceContext,
@@ -195,7 +196,6 @@ export async function confirmPlatform(
   if (!invite) throw invalidInvitation();
   if (invite.state === 'accepted') return { outcome: 'joined' };
   if (invite.state !== 'pending') throw invalidInvitation();
-  if (invite.developer) throw new IdpSignInRequiredError('/auth/oidc/start?next=/invite');
   const db = ctx.env.DB;
   const rpc = idpClient(ctx.env, ctx.log);
   const setups = await setupsOf(db, 'platform', invite.row.id);
@@ -227,6 +227,13 @@ export async function confirmPlatform(
         'INVITATION_EMAIL_UNVERIFIED',
       );
     throw new ConflictError('Finish creating your Polaris ID first.', 'INVITATION_NOT_STARTED');
+  }
+  if (invite.developer) {
+    // The PassBook client lets in only accounts in a PassBook group: `developer` first, so the person can sign in and
+    // accept, which adds the rest.
+    await claimPlatformAccount(ctx, invite, matched, ['developer']);
+    for (const subject of [...others, ...wrong]) await markDirty(db, subject);
+    throw new IdpSignInRequiredError('/auth/oidc/start?next=/invite');
   }
   await grantPlatformGroups(ctx, invite, matched);
   await acceptPlatformSubject(ctx, invite, matched, null, [...others, ...wrong]);

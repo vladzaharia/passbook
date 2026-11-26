@@ -316,6 +316,42 @@ test.describe('platform invitations', () => {
   });
 });
 
+test.describe('developer platform invitation', () => {
+  test('a person with no Polaris ID signs up, is let in, accepts and holds the group', async ({
+    browser,
+  }) => {
+    await freshAdmin(browser);
+    const group = `devs_${run}`.slice(0, 30);
+    await admin.send('POST', '/api/v1/platform/idp/groups', { key: group, friendlyName: 'Devs' });
+    const invited = email('newdev');
+    const before = snapshotMail();
+    await admin.send('POST', '/api/v1/platform/invitations', {
+      email: invited,
+      groups: [group],
+      developer: true,
+    });
+    const secret = await nextInvite(before, 'p_');
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const sub = await createAndAccept(page, context, secret, invited);
+    // The new account holds no group yet, so the PassBook client would refuse it.
+    expect(await polarisGroups(sub)).not.toContain('passbook_developers');
+    const done = await context.request.post('/api/v1/invitations/confirm', {
+      data: { token: secret },
+    });
+    expect(done.status()).toBe(403);
+    expect(await done.json()).toMatchObject({ code: 'IDP_SIGN_IN_REQUIRED' });
+    // Done gave developer only: the sign-in works, and the accept adds the group.
+    const groups = await polarisGroups(sub);
+    expect(groups).toContain('passbook_developers');
+    expect(groups).not.toContain(`passbook_g_${group}`);
+    const me = await apiSignedInAs(sub);
+    await me.send('POST', '/api/v1/invitations/accept', { token: secret });
+    expect(await polarisGroups(sub)).toContain(`passbook_g_${group}`);
+    await context.close();
+  });
+});
+
 test.describe('operations', () => {
   test('Check now and Dry run finish; a failed read shows Retry and succeeds again', async ({
     browser,

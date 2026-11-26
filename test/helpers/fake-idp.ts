@@ -169,6 +169,10 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     signups,
     accounts,
     groupStore: groups,
+    canSignIn: (subject) =>
+      ['console', 'developer', 'support', 'platform_admin'].some((r) =>
+        accounts.get(subject)?.roles.has(r as never),
+      ),
     log,
     writes: 0,
     frozen: false,

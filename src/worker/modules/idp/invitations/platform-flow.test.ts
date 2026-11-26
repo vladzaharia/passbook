@@ -300,6 +300,30 @@ describe('POST /invitations/accept, platform developer', () => {
     expect((await accept(invite.secret, p.session.headers)).status).toBe(200);
   });
 
+  it('a person with no Polaris ID: Done gives developer only so they can sign in, and the accept adds the rest', async () => {
+    const key = await customGroup(r);
+    const invite = await platformInvite(r, 'guest@agency.test', { groups: [key], developer: true });
+    const p = await person(r, 'guest@agency.test', ['user', 'developer']);
+    await signUp(invite.secret, p.subject, invite.email);
+    // The PassBook client is group-restricted: a new account with no PassBook group could not sign in.
+    expect(r.idp.canSignIn(p.subject)).toBe(false);
+    await expectProblem(await confirm(invite.secret), 403, 'IDP_SIGN_IN_REQUIRED');
+    expect(r.idp.canSignIn(p.subject)).toBe(true);
+    expect(r.idp.accounts.get(p.subject)?.roles.has(`g:${key}`)).toBe(false);
+    expect((await accepted(invite.id))?.accepted_at).toBeNull();
+    expect((await accept(invite.secret, p.session.headers)).status).toBe(200);
+    expect(r.idp.accounts.get(p.subject)?.roles.has(`g:${key}`)).toBe(true);
+    expect(await accepted(invite.id)).toMatchObject({ accepted_subject: p.subject });
+  });
+
+  it('a stranger with another address gets neither developer nor a group from Done', async () => {
+    const key = await customGroup(r);
+    const invite = await platformInvite(r, 'guest@agency.test', { groups: [key], developer: true });
+    await signUp(invite.secret, 'sub-stranger', r.addr('stranger@elsewhere.test'));
+    await expectProblem(await confirm(invite.secret), 403, 'INVITATION_EMAIL_MISMATCH');
+    expect(r.idp.canSignIn('sub-stranger')).toBe(false);
+  });
+
   it('refuses a session without the invited address, and another person after the accept', async () => {
     const invite = await platformInvite(r, 'guest@agency.test', { developer: true });
     const wrong = await person(r, 'someone@else.test', ['user']);

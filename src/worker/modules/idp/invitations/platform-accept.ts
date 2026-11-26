@@ -3,6 +3,7 @@ import type { ServiceContext } from '../../../platform/service-context.ts';
 import { idpClient } from '../client.ts';
 import { markDirty } from '../repo-dirty.ts';
 import { claimsOfInvitation, insertClaim } from '../repo-invite-claims.ts';
+import type { Target } from '../types.ts';
 import { ledgerOfPlatform, platformTargets } from './platform-groups.ts';
 import type { PlatformInvite } from './platform-resolve.ts';
 import { INVITE_REASON } from './reasons.ts';
@@ -67,10 +68,11 @@ export async function grantPlatformGroups(
   ctx: ServiceContext,
   invite: PlatformInvite,
   subject: string,
+  targets: Target[] = platformTargets(invite),
 ): Promise<void> {
   await idpClient(ctx.env, ctx.log).apply(
     subject,
-    { add: platformTargets(invite) },
+    { add: targets },
     ledgerOfPlatform(invite, INVITE_REASON.claim),
   );
 }
@@ -83,6 +85,7 @@ export async function claimPlatformAccount(
   ctx: ServiceContext,
   invite: PlatformInvite,
   subject: string,
+  targets: Target[] = platformTargets(invite),
 ): Promise<void> {
   const db = ctx.env.DB;
   const { row } = invite;
@@ -105,5 +108,5 @@ export async function claimPlatformAccount(
       claimUntil: until,
     });
   }
-  await grantPlatformGroups(ctx, invite, subject);
+  await grantPlatformGroups(ctx, invite, subject, targets);
 }

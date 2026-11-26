@@ -18,6 +18,11 @@ export interface FakeIdp extends IdpRpc {
   /** Role groups (seeded: console, developer), custom and adopted groups, by role or key. */
   groupStore: Map<string, FakeGroup>;
   accounts: Map<string, FakeAccount>;
+  /**
+   * Whether the PassBook client lets the account sign in: it is group-restricted, so the account must hold a PassBook
+   * role group (design-1 section 2.3). A custom group does not count.
+   */
+  canSignIn(subject: string): boolean;
   /** Method names called, in order. */
   log: string[];
   /** Writes the binding would have sent to Polaris ID. Dry runs and refusals add none. */
