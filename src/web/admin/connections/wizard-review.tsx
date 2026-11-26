@@ -44,6 +44,7 @@ export function ReviewStep({
   templateName,
   mappings,
   defaultMinutes,
+  upload,
   onEdit,
 }: {
   orgName: string;
@@ -53,6 +54,8 @@ export function ReviewStep({
   templateName: string | undefined;
   mappings: number;
   defaultMinutes: number | undefined;
+  /** A file upload syncs when a file is applied. */
+  upload?: boolean;
   onEdit: (step: number) => void;
 }) {
   const Icon = connectorIcon(connector?.type ?? '');
@@ -114,7 +117,7 @@ export function ReviewStep({
         <CardBody>
           <KeyValue
             items={[
-              { label: 'Mode', value: MODE_LABEL[life.mode] },
+              { label: 'Mode', value: upload ? 'On apply' : MODE_LABEL[life.mode] },
               ...(scheduled(life.mode)
                 ? [
                     {
@@ -187,11 +190,13 @@ export function WizardAside({
           <p className="text-xs text-fg-muted">
             {!connector
               ? 'Pick a connector'
-              : step === 1
-                ? 'Test shows a sample record here.'
-                : step === 2
-                  ? 'Test to load a sample.'
-                  : null}
+              : connector.capabilities.upload
+                ? 'The first row shows here.'
+                : step === 1
+                  ? 'Test shows a sample record here.'
+                  : step === 2
+                    ? 'Test to load a sample.'
+                    : null}
           </p>
         </div>
       )}
