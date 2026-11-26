@@ -4,6 +4,8 @@ import { actorOfAuth } from '../operations/start-org.ts';
 import { startBulkReissue } from './bulk.ts';
 import { tenantAuthorityOf } from './http.ts';
 import { limitKeyReissues } from './key-reissue-limit.ts';
+import { decodeReissue } from './reissue-target.ts';
+import { releaseRunGuardOf } from './repo-ops.ts';
 
 /** The retry's own checks are the start's: passes:operate in the org, in the mode it ran in, and a key's hourly limit. */
 const authorizeRetry: NonNullable<OperationRunner['authorizeRetry']> = async (ctx, op, caller) => {
@@ -15,10 +17,11 @@ const authorizeRetry: NonNullable<OperationRunner['authorizeRetry']> = async (ct
 };
 
 /** A new run over the same target, reporting into the same operation. The target says what it was for. */
-const relaunch: NonNullable<OperationRunner['relaunch']> = async (ctx, op, _previous, caller) => {
+const relaunch: NonNullable<OperationRunner['relaunch']> = async (ctx, op, previous, caller) => {
   const target = op.target;
   if (!op.orgId || !op.mode || !target || caller.kind === 'scanner') throw new ForbiddenError();
   const authority = await tenantAuthorityOf(ctx, caller, op.orgId, 'passes:operate');
+  if (previous.instanceId) await releaseRunGuardOf(ctx.env.DB, previous.instanceId);
   const instanceId = await startBulkReissue(
     ctx,
     caller.kind === 'session'
@@ -26,11 +29,7 @@ const relaunch: NonNullable<OperationRunner['relaunch']> = async (ctx, op, _prev
       : { type: 'api_key', id: caller.keyId },
     {
       orgId: op.orgId,
-      ...(target.type === 'identity'
-        ? { identityId: target.id, cause: 'resign' as const }
-        : target.type === 'template'
-          ? { templateId: target.id }
-          : {}),
+      ...decodeReissue(target.id),
     },
     { authority, mode: op.mode, operation: { actor: actorOfAuth(caller), existing: op } },
   );
@@ -60,13 +59,7 @@ const relaunchPlatform: NonNullable<OperationRunner['relaunch']> = async (
   const instanceId = await startBulkReissue(
     ctx,
     { type: 'user', id: caller.userId },
-    {
-      ...(target?.type === 'identity'
-        ? { identityId: target.id, cause: 'resign' as const }
-        : target?.type === 'template'
-          ? { templateId: target.id }
-          : {}),
-    },
+    decodeReissue(target?.id),
     {
       platformSession: { userId: caller.userId, sessionId: caller.sessionId },
       mode: caller.mode,

@@ -44,6 +44,7 @@ const run: NonNullable<OperationRunner['run']> = async (ctx, op, lease) => {
   await startWalletReissue(ctx, scopeOf(op), {
     actor: { type: op.startedBy.type, id: op.startedBy.id },
     existing: op,
+    fresh: true,
   });
 };
 

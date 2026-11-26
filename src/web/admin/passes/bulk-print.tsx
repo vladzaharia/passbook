@@ -53,8 +53,13 @@ export function useBulkPrint({
         ids,
         orgId,
       });
-      if (started.count === 0 || !started.operationId) {
+      if (started.count === 0) {
         toast.warning(PRINT_COPY.bulkNone);
+        return;
+      }
+      // The job is queued, but nothing can show it: say so instead of leaving the person guessing.
+      if (!started.operationId) {
+        toast.info(PRINT_COPY.bulkSlow);
         return;
       }
       jobRef.current = started.jobId;

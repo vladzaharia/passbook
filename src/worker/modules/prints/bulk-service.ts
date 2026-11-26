@@ -5,7 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { progressOf } from '../operations/progress.ts';
-import { failStarted, startOrgOperation } from '../operations/start-org.ts';
+import { failStarted, tryStartOrgOperation } from '../operations/start-org.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
@@ -76,7 +76,7 @@ export async function startBulkPrint(
     mode: caller.mode,
     passIds: printed,
   });
-  const op = await startOrgOperation(
+  const op = await tryStartOrgOperation(
     ctx,
     {
       type:
@@ -87,20 +87,21 @@ export async function startBulkPrint(
     },
     { kind: 'prints.bulk', orgId, mode: caller.mode, target: { type: 'print-job', id: jobId } },
   );
-  const pages = progressOf(ctx, op.id, op.attempt).step('pages');
-  pages.total(printed.length);
-  await pages.count(0);
+  if (op) {
+    const pages = progressOf(ctx, op.id, op.attempt).step('pages');
+    pages.total(printed.length);
+    await pages.count(0);
+  }
   try {
     await ctx.env.JOBS.send({
       kind: 'prints.bulk',
       orgId,
       jobId,
       passIds: printed,
-      operationId: op.id,
-      attempt: op.attempt,
+      ...(op ? { operationId: op.id, attempt: op.attempt } : {}),
     });
   } catch (error) {
-    await failStarted(ctx, op, error);
+    if (op) await failStarted(ctx, op, error);
     throw error;
   }
   await recordAudit(ctx, {
@@ -112,7 +113,7 @@ export async function startBulkPrint(
     targetId: orgId,
     detail: { count: printed.length, skipped: skipped.length },
   });
-  return { jobId, count: printed.length, skipped, operationId: op.id };
+  return { jobId, count: printed.length, skipped, operationId: op?.id ?? null };
 }
 
 type Who = { orgId: string; userId: string; mode: Mode };

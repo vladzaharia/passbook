@@ -4,6 +4,7 @@ import { runJob } from '../../jobs/registry.ts';
 import { all } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { toDto } from '../operations/dto.ts';
+import { kindOf, kinds } from '../operations/kinds.ts';
 import { rowById } from '../operations/repo.ts';
 import { sweepStalledOperations } from '../operations/stalls.ts';
 import { type ApplyKit, applyKit } from './apply-test-fixtures.ts';
@@ -327,5 +328,31 @@ describe('replace codes: operation', () => {
       status: 'failed',
       error: { code: 'OPERATION_STALLED' },
     });
+  });
+
+  it('still queues the rotations when the operation row cannot be made (M4)', async () => {
+    const t = await passKit();
+    const def = kindOf('channels.replace_codes');
+    kinds.delete('channels.replace_codes');
+    try {
+      const body = (await (await bulk(t)).json()) as { operationId: string | null };
+      expect(body.operationId).toBeNull();
+      const job = jobs(t, 'channel.replace_code')[0] as { operationId?: string } | undefined;
+      expect(job).toBeDefined();
+      expect(job?.operationId).toBeUndefined();
+    } finally {
+      if (def) kinds.set('channels.replace_codes', def);
+    }
+  });
+
+  it('counts a redelivered job once (L1)', async () => {
+    const t = await passKit();
+    const body = (await (await bulk(t, { ids: [t.ids[0]] })).json()) as { operationId: string };
+    const queued = jobs(t, 'channel.replace_code')[0];
+    const before = (await opOf(t, body.operationId)).steps[1];
+    expect(before?.total).toBe(1);
+    await runJob(queued as never, jobCtxOf(t.kit));
+    await runJob(queued as never, jobCtxOf(t.kit));
+    expect((await opOf(t, body.operationId)).steps[1]).toMatchObject({ done: 1, total: 1 });
   });
 });

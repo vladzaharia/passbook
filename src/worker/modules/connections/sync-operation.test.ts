@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeSession } from '../../../../test/helpers/index.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
+import { all } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { toDto } from '../operations/dto.ts';
 import { rowById } from '../operations/repo.ts';
@@ -69,6 +70,24 @@ describe('Sync now shows as an operation', () => {
     expect(op.steps.map((s) => s.state)).toEqual(['done', 'done', 'done']);
     expect(op.steps[1]?.done).toBeGreaterThan(0);
     expect(JSON.stringify(op)).not.toMatch(/@/);
+  });
+
+  it('a second Sync now in the same window answers the first operation and makes no orphan (M3)', async () => {
+    const { dto, wf, operationId } = await startSync();
+    let second = '';
+    await actions.syncNow(wf.sctx, kit.actor, dto.id, authority, undefined, {
+      actor: { type: 'user', id: kit.actor.id },
+      onStarted: (op) => {
+        second = op.id;
+      },
+    });
+    expect(second).toBe(operationId);
+    const rows = await all(
+      kit.env.DB,
+      'SELECT id FROM operations WHERE kind = ? AND target_id = ?',
+      ['connection.sync', dto.id],
+    );
+    expect(rows).toHaveLength(1);
   });
 
   it('fails the operation when the run aborts, and Retry runs under an instance of its own', async () => {

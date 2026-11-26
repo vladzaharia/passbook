@@ -202,6 +202,7 @@ export async function bulkPassChannels(
   const out: BulkResponse = { done: 0, skipped: [], operationId: null };
   const bulkKey = ctx.requestId ?? ctx.ids.id();
   const replaced: string[] = [];
+  let failure: unknown = null;
   try {
     for (const pass of passes) {
       try {
@@ -218,12 +219,16 @@ export async function bulkPassChannels(
         out.skipped.push({ id: pass.id, code: 'RATE_LIMITED' });
       }
     }
-  } finally {
-    out.operationId = await queueCodeReplacements(ctx, authority, starter, {
-      passIds: replaced,
-      key: `channel_bulk:${bulkKey}`,
-      updated: out.done,
-    });
+  } catch (error) {
+    failure = error;
   }
+  // The overrides that were written get their replacement jobs even when a later pass failed, and the loop's own
+  // error is the one that comes back.
+  out.operationId = await queueCodeReplacements(ctx, authority, starter, {
+    passIds: replaced,
+    key: `channel_bulk:${bulkKey}`,
+    updated: out.done,
+  });
+  if (failure) throw failure;
   return out;
 }

@@ -17,6 +17,7 @@ import { isNotFound, resolveTemplate } from './builder.ts';
 import type { ReissueParams } from './bulk-reissue-page.ts';
 import { depsOf } from './deps.ts';
 import type { TenantPassWrite } from './http.ts';
+import { encodeReissue } from './reissue-target.ts';
 import {
   activeBulkRun,
   insertPlatformAdminBulkWorkflowRun,
@@ -226,11 +227,7 @@ export async function startBulkReissue(
   // The row comes before the Workflow, so its first write finds it.
   const reported = options?.operation && options.mode ? options.operation : null;
   const kind = options?.platformSession ? 'passes.reissue_platform' : 'passes.reissue';
-  const target = body.identityId
-    ? { type: 'identity', id: body.identityId }
-    : templateId
-      ? { type: 'template', id: templateId }
-      : { type: 'org', id: orgId ?? 'platform' };
+  const target = { type: 'reissue', id: encodeReissue({ ...body, cause }) };
   const op = reported
     ? (reported.existing ??
       (orgId !== null && options?.mode

@@ -3,6 +3,7 @@ import { envString } from '../../platform/env.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { activeByInstance } from '../operations/repo.ts';
 import { failStarted } from '../operations/start-org.ts';
 import {
   ensureCredentialRefKeyset,
@@ -177,10 +178,16 @@ export async function startSync(
     throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
   }
   // The operation comes before the Workflow, so its first write finds the row.
-  const op =
-    operation && authority
-      ? await syncOperation(sctx, conn, authority.mode, instanceId, operation)
-      : null;
+  // Only the call that made this enqueue makes the operation. A repeat inside the same bucket joins the run,
+  // and answers the operation that already shows it (none, if it has none): no orphan waits for a Workflow that
+  // reports to someone else.
+  let op: { id: string; attempt: number } | null = null;
+  if (operation && authority) {
+    if (retry) {
+      const shown = await activeByInstance(sctx.env.DB, instanceId);
+      if (shown) operation.onStarted?.({ id: shown.id, attempt: shown.attempt });
+    } else op = await syncOperation(sctx, conn, authority.mode, instanceId, operation);
+  }
   // No user principal enters the workflow; after launch it runs as the connection.
   try {
     await sctx.env.CONNECTION_SYNC.create({

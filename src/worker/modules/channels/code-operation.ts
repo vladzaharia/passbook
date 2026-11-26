@@ -1,6 +1,6 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { progressOf } from '../operations/progress.ts';
-import { failStarted, startOrgOperation } from '../operations/start-org.ts';
+import { failStarted, tryStartOrgOperation } from '../operations/start-org.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 
 /**
@@ -14,32 +14,33 @@ export async function queueCodeReplacements(
   x: { passIds: string[]; key: string; updated: number },
 ): Promise<string | null> {
   if (x.passIds.length === 0) return null;
-  const op = await startOrgOperation(ctx, starter ?? { type: 'system', id: null }, {
+  const op = await tryStartOrgOperation(ctx, starter ?? { type: 'system', id: null }, {
     kind: 'channels.replace_codes',
     orgId: authority.orgId,
     mode: authority.mode,
     target: { type: 'org', id: authority.orgId },
   });
-  const progress = progressOf(ctx, op.id, op.attempt);
-  const channels = progress.step('channels');
-  channels.total(x.updated);
-  await channels.count(x.updated);
-  await channels.done();
-  const codes = progress.step('codes');
-  codes.total(x.passIds.length);
-  await codes.count(0);
+  if (op) {
+    const progress = progressOf(ctx, op.id, op.attempt);
+    const channels = progress.step('channels');
+    channels.total(x.updated);
+    await channels.count(x.updated);
+    await channels.done();
+    const codes = progress.step('codes');
+    codes.total(x.passIds.length);
+    await codes.count(0);
+  }
   try {
     for (const passId of x.passIds)
       await ctx.env.JOBS.send({
         kind: 'channel.replace_code',
         passId,
         key: x.key,
-        operationId: op.id,
-        attempt: op.attempt,
+        ...(op ? { operationId: op.id, attempt: op.attempt } : {}),
       });
   } catch (error) {
-    await failStarted(ctx, op, error);
+    if (op) await failStarted(ctx, op, error);
     throw error;
   }
-  return op.id;
+  return op?.id ?? null;
 }

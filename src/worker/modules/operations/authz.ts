@@ -86,12 +86,10 @@ export function starterFenceFor(
   writer = false,
 ): Fence | null {
   return auth.kind === 'session'
-    ? starterFence(
-        { userId: auth.userId, sessionId: auth.sessionId },
-        ctx.clock.now(),
-        writer,
-        isOwnOnly(auth),
-      )
+    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), {
+        strong: writer,
+        pinned: isOwnOnly(auth),
+      })
     : null;
 }
 

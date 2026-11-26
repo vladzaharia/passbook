@@ -1,5 +1,7 @@
 import { anyDigitalOn, DIGITAL_CHANNELS, effectiveChannels } from '../../../shared/channels.ts';
 import type { JobOf } from '../../jobs/types.ts';
+import { bump } from '../../platform/counters.ts';
+import { RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { progressOf } from '../operations/progress.ts';
 import { assertNewCodeAllowed, countNewCode } from '../passes/new-code.ts';
@@ -47,7 +49,18 @@ export async function handleReplaceCode(
 ): Promise<void> {
   const progress = progressOf(ctx, job.operationId, job.attempt ?? 1);
   const codes = progress.step('codes');
-  const outcome = await replaceOne(job, ctx);
+  let outcome: Awaited<ReturnType<typeof replaceOne>>;
+  try {
+    outcome = await replaceOne(job, ctx);
+  } catch (error) {
+    // The New code limit (or any limit) will let it through later: the queue retries, and the row waits, not stalls.
+    if (error instanceof RateLimitedError)
+      await progress.waiting('codes', {
+        until: ctx.clock.now() + HOUR_S * 1000,
+        reason: 'Waiting for the limit',
+      });
+    throw error;
+  }
   if (outcome !== 'done') {
     // It sent itself again for when its window closes: the operation waits on that, and is not stalled.
     await progress.waiting('codes', {
@@ -56,7 +69,12 @@ export async function handleReplaceCode(
     });
     return;
   }
-  // This pass is finished, whatever it came to: the last one ends the operation.
+  // This pass is finished, whatever it came to: the last one ends the operation. A redelivered job counts once.
+  if (
+    job.operationId &&
+    (await bump(ctx.env.DB, `op-tick:${job.operationId}:${job.passId}`, 0)) > 1
+  )
+    return;
   const counted = await codes.tick();
   if (counted && counted.total !== null && counted.done >= counted.total) {
     await codes.done();

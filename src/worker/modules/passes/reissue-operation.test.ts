@@ -3,6 +3,7 @@ import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { runBulkReissue } from '../../workflows/bulk-reissue.ts';
 import { toDto } from '../operations/dto.ts';
+import { progressOf } from '../operations/progress.ts';
 import { rowById } from '../operations/repo.ts';
 import type { ReissueParams } from './bulk-reissue-page.ts';
 import { operationRunners } from './operations.ts';
@@ -57,7 +58,7 @@ describe('a rebuild shows as an operation', () => {
       status: 'queued',
       orgId: kit.org.id,
       mode: 'live',
-      target: { type: 'template', id: kit.template.id },
+      target: { type: 'reissue', id: `${kit.template.id}~~template_upgrade~` },
       startedBy: { type: 'api_key' },
     });
     const created = kit.workflow.created.find((w) => w.id === body.workflowInstanceId);
@@ -94,6 +95,47 @@ describe('a rebuild shows as an operation', () => {
   });
 });
 
+describe('a retry runs the action that was started (M2)', () => {
+  it('a re-sign by template stays a re-sign, and an explicit version stays pinned', async () => {
+    kit.workflow.created.length = 0;
+    await settle();
+    const key = await makeTenantTestApiKey(kit.fx, {
+      orgId: kit.org.id,
+      scopes: ['passes:write', 'passes:read'],
+    });
+    const post = (path: string, body: object) =>
+      app.request(
+        `https://wallet.test/api/v1${path}`,
+        {
+          method: 'POST',
+          headers: { ...key.headers, 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+        kit.env,
+      );
+    const res = await post('/passes/bulk-reissue', {
+      orgId: kit.org.id,
+      templateId: kit.template.id,
+      cause: 'resign',
+      version: kit.template.version,
+    });
+    expect(res.status).toBe(202);
+    const { operationId } = (await res.json()) as { operationId: string };
+    await settle();
+    await progressOf(kit.ctx, operationId, 1).fail(new Error('boom'));
+    kit.workflow.created.length = 0;
+    const retried = await post(`/operations/${operationId}/retry`, {});
+    expect(retried.status, await retried.clone().text()).toBe(200);
+    expect(kit.workflow.created[0]?.params).toMatchObject({
+      cause: 'resign',
+      templateId: kit.template.id,
+      version: kit.template.version,
+      operationId,
+      operationAttempt: 2,
+    });
+  });
+});
+
 describe('a platform admin rebuild shows as a platform operation', () => {
   it('has no org, is read by an admin, and a retry needs an admin', async () => {
     kit.workflow.created.length = 0;
@@ -113,7 +155,7 @@ describe('a platform admin rebuild shows as a platform operation', () => {
       kind: 'passes.reissue_platform',
       orgId: null,
       mode: null,
-      target: { type: 'template', id: kit.template.id },
+      target: { type: 'reissue', id: `${kit.template.id}~~template_upgrade~` },
     });
     const read = await app.request(
       `https://wallet.test/api/v1/operations/${operationId}`,

@@ -3,7 +3,7 @@ import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { progressOf } from '../operations/progress.ts';
-import { startOrgOperation } from '../operations/start-org.ts';
+import { tryStartOrgOperation } from '../operations/start-org.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getWalletInstanceById } from './instance.ts';
 import type { WalletMode, WalletProvider } from './instance-types.ts';
@@ -45,13 +45,15 @@ export async function startWalletReissue(
   operation?: {
     actor: { type: 'user' | 'api_key' | 'system'; id: string | null };
     existing?: { id: string; attempt: number };
+    /** A resend or retry names a chain of its own: the first chain's claimed steps would cut it short. */
+    fresh?: true;
   },
 ): Promise<{ reissueId: string; instances: number; operationId: string | null }> {
   const instances = await countReissueInstances(ctx.env.DB, scope);
   const op =
     operation && instances > 0
       ? (operation.existing ??
-        (await startOrgOperation(ctx, operation.actor, {
+        (await tryStartOrgOperation(ctx, operation.actor, {
           kind: 'wallet.reissue',
           orgId: scope.orgId,
           mode: scope.mode as WalletMode,
@@ -62,7 +64,13 @@ export async function startWalletReissue(
         })))
       : null;
   // The first attempt's chain is named for the operation; a retry gets a chain (and update keys) of its own.
-  const reissueId = op ? (op.attempt > 1 ? `${op.id}-r${op.attempt}` : op.id) : ctx.ids.id();
+  const reissueId = !op
+    ? ctx.ids.id()
+    : operation?.fresh
+      ? `${op.id}-${ctx.ids.token(6)}`
+      : op.attempt > 1
+        ? `${op.id}-r${op.attempt}`
+        : op.id;
   if (op) {
     const copies = progressOf(ctx, op.id, op.attempt).step('copies');
     copies.total(instances);

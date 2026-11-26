@@ -4,6 +4,7 @@ import { PRINT_BULK_MAX } from '../../../shared/contracts/prints.ts';
 import { all, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { toDto } from '../operations/dto.ts';
+import { kindOf, kinds } from '../operations/kinds.ts';
 import { rowById } from '../operations/repo.ts';
 import { voidPass } from '../passes/service.ts';
 import { handlePrintsBulk } from './jobs.ts';
@@ -307,5 +308,19 @@ describe('bulk print as an operation', () => {
     await operationRunners['prints.bulk']?.run?.(jobCtxOf(kit), { ...op, attempt: 2 }, 'lease');
     expect(jobs()).toHaveLength(before + 1);
     expect(jobs().at(-1)).toMatchObject({ operationId: started.operationId, attempt: 2 });
+  });
+
+  it('still queues the render when the operation row cannot be made (M4)', async () => {
+    const { printPass, start, jobs } = await setup();
+    const a = await printPass();
+    const def = kindOf('prints.bulk');
+    kinds.delete('prints.bulk');
+    try {
+      const started = (await (await start([a.id])).json()) as Started;
+      expect(started.operationId).toBeNull();
+      expect(jobs()).toHaveLength(1);
+    } finally {
+      if (def) kinds.set('prints.bulk', def);
+    }
   });
 });

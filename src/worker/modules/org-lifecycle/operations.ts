@@ -1,7 +1,9 @@
 import { AppError, ConflictError, ForbiddenError } from '../../platform/errors.ts';
+import { progressOf } from '../operations/progress.ts';
 import type { OperationRunner, OperationRunners } from '../operations/registry.ts';
 import {
   actorHolds,
+  exportRow,
   isOrgAdmin,
   type LifecycleActor,
   lifecycleRow,
@@ -33,6 +35,11 @@ const relaunch: NonNullable<OperationRunner['relaunch']> = async (ctx, op) => {
   const exportId = op.target?.id;
   if (!op.orgId || !exportId)
     throw new AppError('ORG_EXPORT_START', 500, 'The export did not start.');
+  // The archive is already done (the operation only lost its end): settle it as it is.
+  if ((await exportRow(ctx.env.DB, op.orgId, exportId))?.state === 'ready') {
+    await progressOf(ctx, op.id, op.attempt).succeed({ href: null, ids: { exportId } });
+    return undefined;
+  }
   if (!(await requeueExport(ctx.env.DB, op.orgId, exportId)))
     throw new ConflictError('Another export is running.', 'ORG_EXPORT_RUNNING');
   const instanceId = `${exportId}-r${op.attempt}`;

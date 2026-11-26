@@ -66,3 +66,25 @@ export async function startPlatformOperation(
   });
   return operation;
 }
+
+/**
+ * `startOrgOperation` for an action whose real work must go on whatever the bookkeeping does: a failed insert is
+ * logged and answers null, and the caller runs on with no operation (every progress call is then a no-op).
+ */
+export async function tryStartOrgOperation(
+  ctx: ServiceContext,
+  actor: StartInput['actor'],
+  spec: OrgStart,
+): Promise<OperationDto | null> {
+  try {
+    return await startOrgOperation(ctx, actor, spec);
+  } catch (error) {
+    ctx.log.error('operations.start_failed', {
+      code: 'OPERATION_START_FAILED',
+      kind: spec.kind,
+      orgId: spec.orgId,
+      error,
+    });
+    return null;
+  }
+}
