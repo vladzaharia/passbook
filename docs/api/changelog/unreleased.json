@@ -1888,6 +1888,14 @@
     "note": "Google and Samsung candidate lists carry current: the Apple release's version and id, and the wallet's report compiled now."
   },
   {
+    "key": "GET /api/v1/templates/{id}/candidates 200.items[].selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdCandidates",
+    "op": "GET /api/v1/templates/{id}/candidates",
+    "change": "200.items[].selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdChannels",
@@ -4859,6 +4867,22 @@
     "op": "POST /api/v1/templates/{id}/archive",
     "change": "200.versions[].report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/candidates 201.selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdCandidates",
+    "op": "POST /api/v1/templates/{id}/candidates",
+    "change": "201.selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/candidates/promote 201.selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdCandidatesPromote",
+    "op": "POST /api/v1/templates/{id}/candidates/promote",
+    "change": "201.selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
   },
   {
     "key": "POST /api/v1/templates/{id}/channels/reset-passes new operation",

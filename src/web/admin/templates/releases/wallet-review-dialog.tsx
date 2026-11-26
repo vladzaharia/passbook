@@ -141,7 +141,11 @@ export default function WalletReviewDialog({
     (max, r) => Math.max(max, r.generation),
     0,
   );
-  const canApprove = reviewer && (author || existing !== undefined);
+  // Approving your own work is refused unless you are alone (`approvalKind`): the list says whose
+  // work it is, `alone` is the release state's. A new candidate would be yours.
+  const ownWork = existing ? existing.selfAuthored === true : true;
+  const mustRequest = ownWork && !alone;
+  const canApprove = reviewer && (author || existing !== undefined) && !mustRequest;
 
   async function submit(mode: 'approve' | 'release' | 'request') {
     if (!current) return;
@@ -290,7 +294,13 @@ export default function WalletReviewDialog({
                   You are the only reviewer. This approves your own work.
                 </Callout>
               ) : null}
-              {open && !canApprove && !existing ? (
+              {open && mustRequest && reviewer ? (
+                <Callout tone="info">
+                  {existing
+                    ? 'Another reviewer must approve this. Review is requested.'
+                    : 'Another reviewer must approve this. Request a review.'}
+                </Callout>
+              ) : open && !canApprove && !existing ? (
                 <Callout tone="info">No review is requested yet.</Callout>
               ) : null}
             </>

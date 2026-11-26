@@ -28,7 +28,7 @@ const ART = {
   buffer: readFileSync('templates/starter-store-card/wallets/google/logo.png'),
 };
 
-const png = (width: number, height: number) => ({
+const _png = (width: number, height: number) => ({
   name: 'art.png',
   mimeType: 'image/png',
   buffer: logoPng(width, height, [20, 90, 200]),
@@ -156,30 +156,19 @@ test('roles are set, and the Google Loyalty and Samsung previews and reports sho
 });
 
 test('Samsung and Google art is added and the version saved with the roles', async ({ page }) => {
-  // The local e2e server cannot cut images (its Images binding is not there), and the coin strip
-  // would be cut to Google's hero: the author drops it and gives each wallet art at its own size.
-  await page.goto(design());
-  await page.getByRole('button', { name: /^Images/ }).click();
-  await page.getByRole('button', { name: 'Remove strip' }).click();
-  await page.getByRole('radio', { name: 'Wallets' }).click();
+  await page.goto(design('?mode=wallets&wallet=google'));
   await page.getByRole('button', { name: /^Accept 3/ }).click();
   await open(page, /^Google images/);
   const google = page.locator('[data-target="wallets-images:google:logo"]');
   await google.locator('input[type=file]').setInputFiles(ART);
   await expect(google).toContainText('wallets/google/logo.png');
-  const hero = page.locator('[data-target="wallets-images:google:hero"]');
-  await hero.locator('input[type=file]').setInputFiles(png(1032, 336));
-  await expect(hero).toContainText('wallets/google/hero.png');
   await rail(page)
     .getByRole('radio', { name: /^Samsung Wallet/ })
     .click();
   await open(page, /^Samsung images/);
   const samsung = page.locator('[data-target="wallets-images:samsung:logo"]');
-  await samsung.locator('input[type=file]').setInputFiles(png(256, 256));
+  await samsung.locator('input[type=file]').setInputFiles(ART);
   await expect(samsung).toContainText('wallets/samsung/logo.png');
-  const main = page.locator('[data-target="wallets-images:samsung:main"]');
-  await main.locator('input[type=file]').setInputFiles(png(888, 288));
-  await expect(main).toContainText('wallets/samsung/main.png');
   await shots(page, 'authoring-art');
   await page.getByRole('button', { name: 'Save version' }).click();
   await expect(page.getByText(/^Saved v/)).toBeVisible();
@@ -225,7 +214,7 @@ test('a package with wallets art imports with both wallet reports', async ({ pag
   await expect(wallets.getByTestId('google-report')).toBeVisible();
   await expect(wallets.getByTestId('samsung-report')).toBeVisible();
   await expect(wallets.getByTestId('google-report')).toContainText('Ready');
-  await expect(wallets.getByTestId('samsung-report')).toContainText('Ready with omissions (1)');
+  await expect(wallets.getByTestId('samsung-report')).toContainText('Ready with omissions (2)');
   await shots(page, 'authoring-import-report');
 });
 
@@ -247,11 +236,17 @@ const releasesTab = async (page: Page) => {
   await page.getByRole('tab', { name: 'Releases' }).click();
 };
 
-test('the one omission is approved item by item and Samsung is released', async ({ page }) => {
+test('the two Samsung omissions are approved item by item and Samsung is released', async ({
+  page,
+}) => {
+  await syncUntil(
+    async () => (await systemCandidates('samsung')).length > 0,
+    'the platform Samsung candidate',
+  );
   await releasesTab(page);
   await expect(walletRow(page, 'Google')).toContainText('Released');
   const row = walletRow(page, 'Samsung');
-  await expect(row).toContainText('Ready with omissions (1)');
+  await expect(row).toContainText('Ready with omissions (2)');
   await row.getByRole('button', { name: 'Review Samsung Wallet' }).click();
   const dialog = page.getByRole('dialog', { name: 'Review Samsung Wallet' });
   await expect(dialog).toBeVisible();
@@ -259,11 +254,14 @@ test('the one omission is approved item by item and Samsung is released', async 
   const release = dialog.getByRole('button', { name: 'Approve and release' });
   await expect(release).toBeDisabled();
   await dialog.getByRole('checkbox', { name: /Samsung sharing is not restricted/ }).check();
+  await expect(release).toBeDisabled();
+  await dialog.getByRole('checkbox', { name: /The image has no public address/ }).check();
+  await expect(release).toBeEnabled();
   await shots(page, 'authoring-review-dialog');
   await release.click();
   await expect(page.getByText('Released to Samsung Wallet')).toBeVisible();
   await expect(walletRow(page, 'Samsung')).toContainText('Released');
-  await expect(walletRow(page, 'Samsung')).toContainText('Ready with omissions (1)');
+  await expect(walletRow(page, 'Samsung')).toContainText('Ready with omissions (2)');
   expect(await active('samsung')).not.toBeNull();
 });
 
@@ -402,7 +400,9 @@ test('a one-person organization approves its own omission with the alone rule', 
   );
   const apple = await requireActiveTemplateRelease(admin, sole.id, made.id, 'test');
   const system = () =>
-    admin.send<{ items: { authorId: string }[] }>(
+    admin.send<{
+      items: { authorId: string; projection: unknown; approvals: { kind: string }[] }[];
+    }>(
       'GET',
       `${base}/candidates?${new URLSearchParams({ orgId: sole.id, mode: 'test', provider: 'google' })}`,
       undefined,
@@ -411,6 +411,27 @@ test('a one-person organization approves its own omission with the alone rule', 
   await syncUntil(
     async () => (await system()).items.some((c) => c.authorId.startsWith('system:')),
     'the platform Google candidate',
+  );
+
+  // The platform's candidate is approved as a peer by design, so the alone rule needs a candidate the
+  // person authored for the same omissions: it is the newest, and the dialog takes it.
+  const platform = (await system()).items.find((c) => c.authorId.startsWith('system:'));
+  await admin.send(
+    'POST',
+    `${base}/candidates`,
+    {
+      ...scope,
+      provider: 'google',
+      version: apple.version,
+      sourceReleaseId: apple.id,
+      projection: {
+        schema: 2,
+        provider: 'google',
+        approvedOmissions: (platform?.projection as { approvedOmissions: string[] })
+          .approvedOmissions,
+      },
+    },
+    TEST,
   );
 
   await page.goto(
@@ -428,6 +449,10 @@ test('a one-person organization approves its own omission with the alone rule', 
   await dialog.getByRole('button', { name: 'Approve and release' }).click();
   await expect(page.getByText('Released to Google Wallet')).toBeVisible();
   await expect(walletRow(page, 'Google')).toContainText('Released');
+
+  // Recorded as the alone approval, not a peer's.
+  const own = (await system()).items.find((c) => !c.authorId.startsWith('system:'));
+  expect(own?.approvals.map((a) => a.kind)).toEqual(['sole']);
 
   const pass = await testPass(admin, { org: sole, apple });
   expect((await badges(browser, pass.path)).google).toBe(1);
@@ -475,4 +500,84 @@ test('axe finds nothing serious on the tab, the release rows, the review and the
   await page.goto(importUrl);
   await expect(page.getByTestId('google-report')).toBeVisible();
   await expectNoSerious(page, 'the import report');
+});
+
+test('in a two-person organization the author cannot approve their own candidate and the other reviewer does', async ({
+  page,
+  browser,
+}) => {
+  const team = await enrolledOrg(admin, 'pair', [googleCredential()]);
+  const reviewer = await templateReviewer(admin, team.id, [
+    'template_reviewer',
+    'template_publisher',
+  ]);
+  await reviewer.dispose();
+  const made = await admin.send<{ id: string; versions: { version: string }[] }>(
+    'POST',
+    `/api/v1/templates/${encodeURIComponent('baked:starter-day-pass')}/use`,
+    { orgId: team.id, name: `Pair ${uid('p')}` },
+  );
+  await publishTemplateVersion(admin, team.id, made.id, made.versions[0]?.version ?? '', 'test');
+  const apple = await requireActiveTemplateRelease(admin, team.id, made.id, 'test');
+  const base = `/api/v1/templates/${encodeURIComponent(made.id)}`;
+  const q = new URLSearchParams({ orgId: team.id, mode: 'test', provider: 'google' });
+  const list = () =>
+    admin.send<{ items: { authorId: string; projection: unknown }[] }>(
+      'GET',
+      `${base}/candidates?${q}`,
+      undefined,
+      TEST,
+    );
+  await syncUntil(
+    async () => (await list()).items.some((c) => c.authorId.startsWith('system:')),
+    'the platform Google candidate',
+  );
+  // The author's own candidate for the omissions: approving it would be their own work.
+  const platform = (await list()).items.find((c) => c.authorId.startsWith('system:'));
+  await admin.send(
+    'POST',
+    `${base}/candidates`,
+    {
+      orgId: team.id,
+      mode: 'test',
+      provider: 'google',
+      version: apple.version,
+      sourceReleaseId: apple.id,
+      projection: {
+        schema: 2,
+        provider: 'google',
+        approvedOmissions: (platform?.projection as { approvedOmissions: string[] })
+          .approvedOmissions,
+      },
+    },
+    TEST,
+  );
+
+  const url = `/admin/o/${encodeURIComponent(team.id)}/templates/${encodeURIComponent(made.id)}`;
+  await page.goto(url);
+  await page.getByRole('tab', { name: 'Releases' }).click();
+  await walletRow(page, 'Google').getByRole('button', { name: 'Review Google Wallet' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Review Google Wallet' });
+  await expect(dialog.getByText(/Another reviewer must approve this/)).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Review requested' })).toBeDisabled();
+  await expect(dialog.getByRole('button', { name: /^Approve/ })).toHaveCount(0);
+  await shots(page, 'authoring-request-review');
+
+  const other = await browser.newContext({ storageState: 'e2e/.auth/reviewer.json' });
+  await other.addInitScript(() => localStorage.setItem('passbook-mode', 'test'));
+  try {
+    const second = await other.newPage();
+    await second.goto(url);
+    await second.getByRole('tab', { name: 'Releases' }).click();
+    await walletRow(second, 'Google').getByRole('button', { name: 'Review Google Wallet' }).click();
+    const theirs = second.getByRole('dialog', { name: 'Review Google Wallet' });
+    await theirs.getByRole('checkbox').check();
+    await theirs.getByRole('button', { name: 'Approve and release' }).click();
+    await expect(second.getByText('Released to Google Wallet')).toBeVisible();
+    await expect(walletRow(second, 'Google')).toContainText('Released');
+  } finally {
+    await other.close();
+  }
+  const pass = await testPass(admin, { org: team, apple });
+  expect((await badges(browser, pass.path)).google).toBe(1);
 });

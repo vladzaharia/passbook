@@ -34128,6 +34128,9 @@
                   "type": "string"
                 },
                 "projection": {},
+                "selfAuthored": {
+                  "type": "boolean"
+                },
                 "approvals": {
                   "type": "array",
                   "items": {
@@ -34616,6 +34619,9 @@
             "type": "string"
           },
           "projection": {},
+          "selfAuthored": {
+            "type": "boolean"
+          },
           "approvals": {
             "type": "array",
             "items": {
@@ -34826,6 +34832,9 @@
             "type": "string"
           },
           "projection": {},
+          "selfAuthored": {
+            "type": "boolean"
+          },
           "approvals": {
             "type": "array",
             "items": {

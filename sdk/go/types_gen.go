@@ -13111,6 +13111,7 @@ type TemplatesCandidatesCreateResponse struct {
 	AccountRevision         *int64                                           `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                          `json:"providerIdentityHash,omitempty"`
 	Projection              any                                              `json:"projection,omitempty"`
+	SelfAuthored            *bool                                            `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesCreateResponseApprovalsItem `json:"approvals"`
 }
 
@@ -13150,6 +13151,7 @@ type TemplatesCandidatesListItem struct {
 	AccountRevision         *int64                                     `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                    `json:"providerIdentityHash,omitempty"`
 	Projection              any                                        `json:"projection,omitempty"`
+	SelfAuthored            *bool                                      `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesListItemApprovalsItem `json:"approvals"`
 }
 
@@ -13242,6 +13244,7 @@ type TemplatesCandidatesListResponseItemsItem struct {
 	AccountRevision         *int64                                                  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                                 `json:"providerIdentityHash,omitempty"`
 	Projection              any                                                     `json:"projection,omitempty"`
+	SelfAuthored            *bool                                                   `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesListResponseItemsItemApprovalsItem `json:"approvals"`
 }
 
@@ -13286,6 +13289,7 @@ type TemplatesCandidatesPromoteResponse struct {
 	AccountRevision         *int64                                            `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                           `json:"providerIdentityHash,omitempty"`
 	Projection              any                                               `json:"projection,omitempty"`
+	SelfAuthored            *bool                                             `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesPromoteResponseApprovalsItem `json:"approvals"`
 }
 

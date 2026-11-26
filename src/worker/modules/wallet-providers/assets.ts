@@ -21,7 +21,15 @@ export type ArtTransform = (
   size: { width: number; height: number; fit: 'cover' | 'scale-down' },
 ) => Promise<Uint8Array | null>;
 
+let installed: ArtTransform | null = null;
+
+/** The local e2e server only (e2e-release.ts): its Images binding cannot cut, so a stub stands in. */
+export function setArtTransformForTest(transform: ArtTransform | null): void {
+  installed = transform;
+}
+
 export function artTransformFromBinding(images: ImagesBinding | undefined): ArtTransform {
+  if (installed) return installed;
   return async (bytes, { width, height, fit }) => {
     if (!images) return null;
     const result = await images

@@ -236,9 +236,17 @@ describe('wallet release review', () => {
     expect(row).toHaveTextContent('Ready with omissions (1)');
   });
 
-  it('approves item by item, then requests, approves and releases', async () => {
+  it('approves the platform candidate item by item and releases it', async () => {
+    // The platform's own candidate is no one's own work: the version author approves it as a peer.
     const user = userEvent.setup();
-    const server = serve({ current: TWO });
+    const platform = candidate({
+      id: 'candidate-1',
+      provider: 'google',
+      authorId: 'system:wallet-projection',
+      selfAuthored: false,
+      projection: { schema: 2, provider: 'google', approvedOmissions: [PLACES, STRIP].sort() },
+    });
+    const server = serve({ current: TWO, candidates: [platform] });
     mountPanel();
     const row = await googleRow();
     await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
@@ -255,20 +263,48 @@ describe('wallet release review', () => {
     await waitFor(() =>
       expect(server.requests.filter((r) => r.method === 'POST').map((r) => r.url.pathname)).toEqual(
         [
-          `/api/v1/templates/${TEMPLATE}/candidates`,
           `/api/v1/templates/${TEMPLATE}/candidates/candidate-1/approve`,
           `/api/v1/templates/${TEMPLATE}/releases`,
         ],
       ),
     );
     const posts = server.requests.filter((r) => r.method === 'POST');
-    expect(posts[0]?.body).toMatchObject({
+    expect(posts[0]?.body).not.toHaveProperty('alone');
+  });
+
+  it('offers Request review, not Approve, for your own work when you are not alone', async () => {
+    const user = userEvent.setup();
+    const own = candidate({
+      id: 'candidate-own',
       provider: 'google',
-      version: 'version-2',
-      sourceReleaseId: 'release-apple',
+      selfAuthored: true,
       projection: { schema: 2, provider: 'google', approvedOmissions: [PLACES, STRIP].sort() },
     });
-    expect(posts[1]?.body).not.toHaveProperty('alone');
+    const server = serve({ current: TWO, candidates: [own] });
+    mountPanel();
+    const row = await googleRow();
+    await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Review Google Wallet' });
+    expect(within(dialog).queryByRole('button', { name: /^Approve/ })).toBeNull();
+    expect(within(dialog).getByText(/Another reviewer must approve this/)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Review requested' })).toBeDisabled();
+    expect(server.requests.filter((r) => r.method === 'POST')).toEqual([]);
+  });
+
+  it('requests a review for a new candidate when you are not alone', async () => {
+    const user = userEvent.setup();
+    const server = serve({ current: TWO });
+    mountPanel();
+    const row = await googleRow();
+    await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Review Google Wallet' });
+    expect(within(dialog).queryByRole('button', { name: /^Approve/ })).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Request review' }));
+    await waitFor(() =>
+      expect(server.requests.filter((r) => r.method === 'POST').map((r) => r.url.pathname)).toEqual(
+        [`/api/v1/templates/${TEMPLATE}/candidates`],
+      ),
+    );
   });
 
   it('sends alone only when the release state says the caller is alone', async () => {
@@ -300,7 +336,16 @@ describe('wallet release review', () => {
   it('shows the buddy and nothing to approve when nothing is left out', async () => {
     const user = userEvent.setup();
     serve({ current: READY });
-    mountPanel();
+    mountPanel({
+      release: {
+        live: null,
+        test: null,
+        draft: null,
+        review: { state: 'none' },
+        alone: true,
+        next: null,
+      },
+    });
     const row = await googleRow();
     await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
     const dialog = await screen.findByRole('dialog', { name: 'Review Google Wallet' });

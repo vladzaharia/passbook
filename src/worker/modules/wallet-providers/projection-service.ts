@@ -24,7 +24,7 @@ import {
   scopedCandidate,
   scopedTemplate,
 } from './projection-service-support.ts';
-import { isSystemAuthored } from './projection-system-authority.ts';
+import { isSelfAuthored } from './projection-system-authority.ts';
 import { walletEntitled } from './repo-enrolment-gate.ts';
 import { selectProjectionApprovals, selectProjectionCandidates } from './repo-projection-store.ts';
 import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
@@ -61,8 +61,9 @@ export async function listProjectionCandidates(
     if (group) group.push(approval);
     else approvalsByCandidate.set(approval.candidateId, [approval]);
   }
+  const viewer = auth?.kind === 'session' ? auth.userId : undefined;
   const items = candidates.map((candidate) =>
-    candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? []),
+    candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? [], viewer),
   );
   return { items, nextCursor: null, ...(current ? { current } : {}) };
 }
@@ -127,9 +128,7 @@ export async function approveProjectionCandidate(
     orgId: scope.orgId,
     mode: scope.mode,
     provider: scope.provider,
-    selfAuthored:
-      authority.userId === candidate.authorId ||
-      (authority.userId === candidate.versionAuthorId && !isSystemAuthored(candidate)),
+    selfAuthored: isSelfAuthored(authority.userId, candidate),
     alone: body.alone,
   });
   const approval: ApprovalRow = {

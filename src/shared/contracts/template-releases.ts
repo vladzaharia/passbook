@@ -55,6 +55,8 @@ export const TemplateCandidateSchema = z.object({
   accountRevision: z.number().int().positive().optional(),
   providerIdentityHash: z.string().optional(),
   projection: z.unknown().optional(),
+  /** Wallet lists, for a signed-in person: approving this would be their own work (`approvalKind`'s rule). */
+  selfAuthored: z.boolean().optional(),
   approvals: z.array(TemplateApprovalSchema),
 });
 export type TemplateCandidate = z.infer<typeof TemplateCandidateSchema>;
