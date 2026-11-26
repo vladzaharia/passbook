@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { useMediaQuery } from '../../../lib/media.ts';
 import { useBenchKeys } from '../../bench/keys.ts';
@@ -23,8 +23,11 @@ import { tokenHeld } from '../token.ts';
 import type { Json, RunOp } from '../types.ts';
 import { Builder, type Tab } from './builder.tsx';
 import { LazyState } from './lazy-state.tsx';
-import { ResponseView } from './response.tsx';
 import { RunBar } from './run-bar.tsx';
+
+// The response (its code block, id chips and Trace) is read when there is one to draw, and warmed once the console is idle.
+const loadResponse = () => import('./response.tsx');
+const ResponseView = lazy(() => loadResponse().then((m) => ({ default: m.ResponseView })));
 
 export interface ConsoleProps {
   op: RunOp;
@@ -62,6 +65,14 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
   const [spent, setSpent] = useState(() => remaining() === 0);
   const live = useRef(true);
   const pressRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const warm = setTimeout(
+      () => void loadResponse().catch((error: unknown) => reportError(error)),
+      1500,
+    );
+    return () => clearTimeout(warm);
+  }, []);
 
   useEffect(() => {
     live.current = true;
@@ -187,14 +198,16 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
             ) : null}
             {pending && !outcome ? <BenchSkeleton rows={3} /> : null}
             {outcome ? (
-              <ResponseView
-                outcome={outcome.result}
-                at={outcome.at}
-                sent={buildSent(op, outcome.draft, origin)}
-                codes={codes}
-                csrf={csrf}
-                onReplay={replay}
-              />
+              <Suspense fallback={<BenchSkeleton rows={3} />}>
+                <ResponseView
+                  outcome={outcome.result}
+                  at={outcome.at}
+                  sent={buildSent(op, outcome.draft, origin)}
+                  codes={codes}
+                  csrf={csrf}
+                  onReplay={replay}
+                />
+              </Suspense>
             ) : pending || error ? null : (
               <LazyState scene="console-idle" heading="p" />
             )}
