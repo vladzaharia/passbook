@@ -9278,13 +9278,21 @@ type PlatformUsersAccessRetrieveResponseRolesItem struct {
 }
 
 type PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersAccessRetrieveResponseRolesItemMembershipsItemOrg `json:"org"`
+}
+
+type PlatformUsersAccessRetrieveResponseRolesItemMembershipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg `json:"org"`
+}
+
+type PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersClaimsRetrieveResponse struct {
@@ -9584,25 +9592,41 @@ type PlatformUsersOffboardResponsePlan struct {
 }
 
 type PlatformUsersOffboardResponsePlanBlockersItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
-	Code  string `json:"code"`
+	Org  PlatformUsersOffboardResponsePlanBlockersItemOrg `json:"org"`
+	Code string                                           `json:"code"`
+}
+
+type PlatformUsersOffboardResponsePlanBlockersItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersOffboardResponsePlanKeptItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersOffboardResponsePlanKeptItemOrg `json:"org"`
+}
+
+type PlatformUsersOffboardResponsePlanKeptItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersOffboardResponsePlanMembershipsItem struct {
-	OrgID        string `json:"orgId"`
-	Name         string `json:"name"`
-	MembershipID string `json:"membershipId"`
+	Org          PlatformUsersOffboardResponsePlanMembershipsItemOrg `json:"org"`
+	MembershipID string                                              `json:"membershipId"`
+}
+
+type PlatformUsersOffboardResponsePlanMembershipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersOffboardResponsePlanSponsorshipsItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersOffboardResponsePlanSponsorshipsItemOrg `json:"org"`
+}
+
+type PlatformUsersOffboardResponsePlanSponsorshipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersPassesListResponse struct {
@@ -9713,13 +9737,21 @@ type PlatformUsersRolesRemoveExternalResponseRolesItem struct {
 }
 
 type PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItemOrg `json:"org"`
+}
+
+type PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg `json:"org"`
+}
+
+type PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersRolesSetParams struct {
@@ -9755,13 +9787,21 @@ type PlatformUsersRolesSetResponseRolesItem struct {
 }
 
 type PlatformUsersRolesSetResponseRolesItemMembershipsItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersRolesSetResponseRolesItemMembershipsItemOrg `json:"org"`
+}
+
+type PlatformUsersRolesSetResponseRolesItemMembershipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersRolesSetResponseRolesItemSponsorshipsItem struct {
-	OrgID string `json:"orgId"`
-	Name  string `json:"name"`
+	Org PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg `json:"org"`
+}
+
+type PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type PlatformUsersSessionsRevokeAllResponse struct {

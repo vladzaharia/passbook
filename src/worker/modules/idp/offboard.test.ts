@@ -60,7 +60,7 @@ describe('offboard', () => {
     expect(body.operation).toBeNull();
     expect(body.plan).toMatchObject({
       userId: t.p.id,
-      memberships: [{ membershipId: t.membershipId, orgId: t.org.id }],
+      memberships: [{ membershipId: t.membershipId, org: { id: t.org.id } }],
       sponsorships: [{ orgId: t.org.id }],
       grants: ['support'],
       platformKeys: [t.key.id],
@@ -198,7 +198,9 @@ describe('offboard', () => {
     const dry = OffboardStartedSchema.parse(
       await (await start(offboard(lone.id), 'POST', a.headers, { dryRun: true })).json(),
     );
-    expect(dry.plan.blockers).toEqual([{ orgId: org.id, name: org.name, code: 'LAST_ORG_ADMIN' }]);
+    expect(dry.plan.blockers).toEqual([
+      { org: { id: org.id, name: org.name }, code: 'LAST_ORG_ADMIN' },
+    ]);
     await expectProblem(
       await start(offboard(lone.id), 'POST', a.headers, {}),
       409,
@@ -222,8 +224,8 @@ describe('offboard', () => {
     const dry = OffboardStartedSchema.parse(
       await (await start(offboard(t.p.id), 'POST', a.headers, { dryRun: true })).json(),
     );
-    expect(dry.plan.kept).toEqual([{ orgId: idle.id, name: idle.name }]);
-    expect(dry.plan.memberships.map((m) => m.orgId)).toEqual([t.org.id]);
+    expect(dry.plan.kept).toEqual([{ org: { id: idle.id, name: idle.name } }]);
+    expect(dry.plan.memberships.map((m) => m.org.id)).toEqual([t.org.id]);
   });
 
   it('answers a repeat with the same key by the first operation', async () => {

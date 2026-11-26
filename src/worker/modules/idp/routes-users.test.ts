@@ -72,12 +72,12 @@ describe('access view', () => {
       account: { class: 'linked', disabledInIdp: false },
     });
     const by = Object.fromEntries(view.roles.map((r) => [r.role, r]));
-    expect(by.console).toMatchObject({ wanted: true, memberships: [{ orgId: org.id }] });
+    expect(by.console).toMatchObject({ wanted: true, memberships: [{ org: { id: org.id } }] });
     expect(by.developer).toMatchObject({
       wanted: true,
       present: true,
       presence: 'external',
-      sponsorships: [{ orgId: org.id }],
+      sponsorships: [{ org: { id: org.id } }],
     });
     expect(by.support).toMatchObject({ wanted: false, present: null });
   });

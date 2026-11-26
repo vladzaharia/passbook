@@ -1,0 +1,61 @@
+{
+  "polaris-platform.getPlatformIdp": {
+    "response": {
+      "connected": false,
+      "mode": "live",
+      "frozen": false,
+      "keyExpiresAt": 1795570500000,
+      "problems": ["problem"],
+      "budget": {
+        "tier": {
+          "day": 22,
+          "limit": 25
+        }
+      },
+      "lastScimAt": 1795570500000,
+      "drift": {
+        "tier": 8
+      },
+      "breakerOpen": false
+    }
+  },
+  "polaris-platform.getPlatformIdpDrift": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-8de0614067e2",
+          "userId": "0193a1b2-7c00-7000-8000-000000000011",
+          "target": "tier",
+          "kind": "unknown_member",
+          "foundAt": 1795570500000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "polaris-platform.postPlatformIdpFreeze": {
+    "request": {
+      "reason": "Unexpected role changes in Polaris ID."
+    },
+    "response": {
+      "result": "frozen"
+    }
+  },
+  "polaris-platform.getPlatformIdpCalls": {
+    "response": {
+      "items": [
+        {
+          "id": 14,
+          "phase": "active",
+          "method": "GET",
+          "target": "tier",
+          "actor": "idp_sync",
+          "reason": null,
+          "status": "ok",
+          "at": 1795570500000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  }
+}

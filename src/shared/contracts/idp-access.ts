@@ -85,7 +85,8 @@ export type ClaimsResult = z.infer<typeof ClaimsResultSchema>;
 /** A role (`console`, `developer`, `support`) or a custom or adopted group key. */
 export const GroupKeyParamSchema = z.object({ key: z.string().regex(/^[a-z0-9_]{1,64}$/) });
 
-const AccessOrgSchema = z.object({ orgId: IdSchema, name: z.string() });
+const OrgRefSchema = z.object({ id: IdSchema, name: z.string() });
+const AccessOrgSchema = z.object({ org: OrgRefSchema });
 
 /** One role as the Access card shows it. `present` is what the last read of Polaris ID showed, null before any. */
 export const RoleAccessSchema = z.object({
@@ -132,7 +133,7 @@ export const ExternalRoleParamSchema = z.object({ id: IdSchema, role: IdpRoleSch
 
 export const OffboardSchema = z.strictObject({ dryRun: z.boolean().default(false) });
 
-const PlanOrgSchema = z.object({ orgId: IdSchema, name: z.string() });
+const PlanOrgSchema = z.object({ org: OrgRefSchema });
 
 /** What offboarding ends. A dry run returns it and changes nothing; the real run ends exactly these. */
 export const OffboardPlanSchema = z.object({

@@ -48,15 +48,13 @@ export async function offboardPlan(ctx: ServiceContext, userId: string): Promise
     userId,
     memberships: revoked.map((m) => ({
       membershipId: m.membership_id,
-      orgId: m.org_id,
-      name: m.org_name,
+      org: { id: m.org_id, name: m.org_name },
     })),
     kept: memberships
       .filter((m) => m.org_status !== REVOCABLE)
-      .map((m) => ({ orgId: m.org_id, name: m.org_name })),
+      .map((m) => ({ org: { id: m.org_id, name: m.org_name } })),
     sponsorships: sponsorOrgs.map((s) => ({
-      orgId: s.org_id,
-      name: orgs.get(s.org_id)?.name ?? '',
+      org: { id: s.org_id, name: orgs.get(s.org_id)?.name ?? '' },
     })),
     grants: grants.map((g) => g.role),
     personalKeys: await livePersonalKeyCount(
@@ -70,7 +68,10 @@ export async function offboardPlan(ctx: ServiceContext, userId: string): Promise
     external,
     blockers: revoked
       .filter((m) => m.last_admin === 1)
-      .map((m) => ({ orgId: m.org_id, name: m.org_name, code: 'LAST_ORG_ADMIN' as const })),
+      .map((m) => ({
+        org: { id: m.org_id, name: m.org_name },
+        code: 'LAST_ORG_ADMIN' as const,
+      })),
   };
 }
 

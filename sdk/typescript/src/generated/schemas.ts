@@ -8065,12 +8065,16 @@ export type PlatformUsersAccessRetrieveResponse = {
     presence: "none" | "passbook" | "external";
     held: boolean;
     memberships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     sponsorships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     grantedAt: number | null;
     error: string | null;
@@ -8331,17 +8335,23 @@ export type PlatformUsersOffboardResponse = {
   plan: {
     userId: string;
     memberships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
       membershipId: string;
     }>;
     kept: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     sponsorships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     grants: Array<"developer" | "support">;
     personalKeys: number;
@@ -8351,8 +8361,10 @@ export type PlatformUsersOffboardResponse = {
     removes: Array<"console" | "developer" | "support">;
     external: Array<"console" | "developer" | "support">;
     blockers: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
       code: "LAST_ORG_ADMIN";
     }>;
   };
@@ -8493,12 +8505,16 @@ export type PlatformUsersRolesRemoveExternalResponse = {
     presence: "none" | "passbook" | "external";
     held: boolean;
     memberships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     sponsorships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     grantedAt: number | null;
     error: string | null;
@@ -8527,12 +8543,16 @@ export type PlatformUsersRolesSetResponse = {
     presence: "none" | "passbook" | "external";
     held: boolean;
     memberships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     sponsorships: Array<{
-      orgId: string;
-      name: string;
+      org: {
+        id: string;
+        name: string;
+      };
     }>;
     grantedAt: number | null;
     error: string | null;

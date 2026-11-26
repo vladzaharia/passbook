@@ -54,7 +54,7 @@ export async function accessView(ctx: ServiceContext, userId: string): Promise<A
     ...memberships.map((m) => m.org_id),
     ...sponsorships.map((s) => s.org_id),
   ]);
-  const org = (orgId: string) => ({ orgId, name: names.get(orgId)?.name ?? '' });
+  const org = (id: string) => ({ org: { id, name: names.get(id)?.name ?? '' } });
   const roles = WRITABLE_ROLES.map((role) => {
     const mine = states.filter((s) => s.target === role);
     const grant = grants.find((g) => g.role === role);

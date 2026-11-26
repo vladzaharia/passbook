@@ -1238,7 +1238,9 @@ __all__ = [
     "PlatformUsersAccessRetrieveResponseAccount",
     "PlatformUsersAccessRetrieveResponseRolesItem",
     "PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem",
+    "PlatformUsersAccessRetrieveResponseRolesItemMembershipsItemOrg",
     "PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem",
+    "PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg",
     "PlatformUsersClaimsRetrieveResponse",
     "PlatformUsersClaimsRetrieveResponseClaimsValue",
     "PlatformUsersClaimsUpdateParams",
@@ -1272,9 +1274,13 @@ __all__ = [
     "PlatformUsersOffboardResponse",
     "PlatformUsersOffboardResponsePlan",
     "PlatformUsersOffboardResponsePlanBlockersItem",
+    "PlatformUsersOffboardResponsePlanBlockersItemOrg",
     "PlatformUsersOffboardResponsePlanKeptItem",
+    "PlatformUsersOffboardResponsePlanKeptItemOrg",
     "PlatformUsersOffboardResponsePlanMembershipsItem",
+    "PlatformUsersOffboardResponsePlanMembershipsItemOrg",
     "PlatformUsersOffboardResponsePlanSponsorshipsItem",
+    "PlatformUsersOffboardResponsePlanSponsorshipsItemOrg",
     "PlatformUsersPassesListResponse",
     "PlatformUsersPassesListResponseItemsItem",
     "PlatformUsersRetrieveResponse",
@@ -1287,13 +1293,17 @@ __all__ = [
     "PlatformUsersRolesRemoveExternalResponseAccount",
     "PlatformUsersRolesRemoveExternalResponseRolesItem",
     "PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem",
+    "PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItemOrg",
     "PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem",
+    "PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg",
     "PlatformUsersRolesSetParams",
     "PlatformUsersRolesSetResponse",
     "PlatformUsersRolesSetResponseAccount",
     "PlatformUsersRolesSetResponseRolesItem",
     "PlatformUsersRolesSetResponseRolesItemMembershipsItem",
+    "PlatformUsersRolesSetResponseRolesItemMembershipsItemOrg",
     "PlatformUsersRolesSetResponseRolesItemSponsorshipsItem",
+    "PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg",
     "PlatformUsersSessionsRevokeAllResponse",
     "PlatformUsersSessionsRevokeResponse",
     "PlatformUsersUpdateParams",
@@ -9710,11 +9720,17 @@ class PlatformUsersAccessRetrieveResponseRolesItem(_Model):
     error: str | None
 
 class PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem(_Model):
-    orgId: str
+    org: PlatformUsersAccessRetrieveResponseRolesItemMembershipsItemOrg
+
+class PlatformUsersAccessRetrieveResponseRolesItemMembershipsItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem(_Model):
-    orgId: str
+    org: PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg
+
+class PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersClaimsRetrieveResponse(_Model):
@@ -9982,21 +9998,33 @@ class PlatformUsersOffboardResponsePlan(_Model):
     blockers: _List[PlatformUsersOffboardResponsePlanBlockersItem]
 
 class PlatformUsersOffboardResponsePlanBlockersItem(_Model):
-    orgId: str
-    name: str
+    org: PlatformUsersOffboardResponsePlanBlockersItemOrg
     code: _Literal["LAST_ORG_ADMIN"] | str
 
+class PlatformUsersOffboardResponsePlanBlockersItemOrg(_Model):
+    id: str
+    name: str
+
 class PlatformUsersOffboardResponsePlanKeptItem(_Model):
-    orgId: str
+    org: PlatformUsersOffboardResponsePlanKeptItemOrg
+
+class PlatformUsersOffboardResponsePlanKeptItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersOffboardResponsePlanMembershipsItem(_Model):
-    orgId: str
-    name: str
+    org: PlatformUsersOffboardResponsePlanMembershipsItemOrg
     membershipId: str
 
+class PlatformUsersOffboardResponsePlanMembershipsItemOrg(_Model):
+    id: str
+    name: str
+
 class PlatformUsersOffboardResponsePlanSponsorshipsItem(_Model):
-    orgId: str
+    org: PlatformUsersOffboardResponsePlanSponsorshipsItemOrg
+
+class PlatformUsersOffboardResponsePlanSponsorshipsItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersPassesListResponse(_Model):
@@ -10096,11 +10124,17 @@ class PlatformUsersRolesRemoveExternalResponseRolesItem(_Model):
     error: str | None
 
 class PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem(_Model):
-    orgId: str
+    org: PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItemOrg
+
+class PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem(_Model):
-    orgId: str
+    org: PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg
+
+class PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersRolesSetParams(_Model):
@@ -10132,11 +10166,17 @@ class PlatformUsersRolesSetResponseRolesItem(_Model):
     error: str | None
 
 class PlatformUsersRolesSetResponseRolesItemMembershipsItem(_Model):
-    orgId: str
+    org: PlatformUsersRolesSetResponseRolesItemMembershipsItemOrg
+
+class PlatformUsersRolesSetResponseRolesItemMembershipsItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersRolesSetResponseRolesItemSponsorshipsItem(_Model):
-    orgId: str
+    org: PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg
+
+class PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg(_Model):
+    id: str
     name: str
 
 class PlatformUsersSessionsRevokeAllResponse(_Model):

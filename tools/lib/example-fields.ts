@@ -29,6 +29,10 @@ const RULES: Rule[] = [
   [/^developer\./, /(^|\.)operation\.kind$/, 'sandbox.delete'],
   // A Polaris ID start answers the same operation (platform area).
   [/^polaris-operations\./, /(^|\.)operation\.kind$/, 'idp.check'],
+  [/^polaris-access\./, /(^|\.)operation\.kind$/, 'idp.offboard'],
+  // The binding's ledger: who made a call, and the open difference it found.
+  [/^polaris-platform\./, /\.items\[\d+\]\.actor$/, 'idp_sync'],
+  [/^polaris-platform\./, /\.items\[\d+\]\.kind$/, 'unknown_member'],
   [/^developer\./, /(^|\.)operation\.result\.href$/, '/developers/quickstart'],
   [/^developer\./, /(^|\.)operation\.result\.ids\.\w+$/, 'northwind'],
   // Scan answers. A tag's passes and a group's members carry a scan reason only when refused (scan/tag-choose.ts,

@@ -39,10 +39,10 @@ async function endAccess(
   const db = ctx.env.DB;
   const now = ctx.clock.now();
   for (const m of plan.memberships) {
-    const manager = await managerOf(ctx, auth, m.orgId);
+    const manager = await managerOf(ctx, auth, m.org.id);
     try {
       await revokeActiveMembership(ctx, manager.principal, manager.checks, m.membershipId, {
-        orgId: m.orgId,
+        orgId: m.org.id,
         actorType: 'user',
         actorId: auth.userId,
         action: 'org_membership.revoke',
@@ -52,16 +52,16 @@ async function endAccess(
       });
     } catch (error) {
       if (error instanceof AppError && error.code === 'LAST_ORG_ADMIN')
-        throw new ConflictError(`${m.name} needs another org admin first.`, 'LAST_ORG_ADMIN');
+        throw new ConflictError(`${m.org.name} needs another org admin first.`, 'LAST_ORG_ADMIN');
       throw error;
     }
   }
   for (const s of plan.sponsorships) {
-    const sponsor = await liveSponsorOf(db, s.orgId, plan.userId);
+    const sponsor = await liveSponsorOf(db, s.org.id, plan.userId);
     if (!sponsor) continue;
-    const manager = await managerOf(ctx, auth, s.orgId);
+    const manager = await managerOf(ctx, auth, s.org.id);
     await endSponsor(ctx, manager.principal, manager.checks, sponsor.id, 'removed', {
-      orgId: s.orgId,
+      orgId: s.org.id,
       actorType: 'user',
       actorId: auth.userId,
       action: 'developer.remove',
@@ -103,7 +103,7 @@ export async function startOffboard(
   if (dryRun) return { plan, operation: null };
   const [blocker] = plan.blockers;
   if (blocker)
-    throw new ConflictError(`${blocker.name} needs another org admin first.`, 'LAST_ORG_ADMIN');
+    throw new ConflictError(`${blocker.org.name} needs another org admin first.`, 'LAST_ORG_ADMIN');
   await limited(ctx, auth);
   await endAccess(ctx, auth, plan);
   const operation = await startIdpOp(ctx, auth, {

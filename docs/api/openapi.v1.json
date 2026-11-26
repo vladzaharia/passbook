@@ -62489,18 +62489,26 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "orgId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
-                      },
-                      "name": {
-                        "type": "string"
+                      "org": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
                       }
                     },
                     "required": [
-                      "orgId",
-                      "name"
+                      "org"
                     ]
                   }
                 },
@@ -62509,18 +62517,26 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "orgId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
-                      },
-                      "name": {
-                        "type": "string"
+                      "org": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
                       }
                     },
                     "required": [
-                      "orgId",
-                      "name"
+                      "org"
                     ]
                   }
                 },
@@ -62667,18 +62683,26 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "orgId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
-                      },
-                      "name": {
-                        "type": "string"
+                      "org": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
                       }
                     },
                     "required": [
-                      "orgId",
-                      "name"
+                      "org"
                     ]
                   }
                 },
@@ -62687,18 +62711,26 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "orgId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
-                      },
-                      "name": {
-                        "type": "string"
+                      "org": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
                       }
                     },
                     "required": [
-                      "orgId",
-                      "name"
+                      "org"
                     ]
                   }
                 },
@@ -62825,18 +62857,26 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "orgId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
-                      },
-                      "name": {
-                        "type": "string"
+                      "org": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
                       }
                     },
                     "required": [
-                      "orgId",
-                      "name"
+                      "org"
                     ]
                   }
                 },
@@ -62845,18 +62885,26 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "orgId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
-                      },
-                      "name": {
-                        "type": "string"
+                      "org": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
                       }
                     },
                     "required": [
-                      "orgId",
-                      "name"
+                      "org"
                     ]
                   }
                 },
@@ -62924,13 +62972,22 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "name": {
-                      "type": "string"
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
                     },
                     "membershipId": {
                       "type": "string",
@@ -62939,8 +62996,7 @@
                     }
                   },
                   "required": [
-                    "orgId",
-                    "name",
+                    "org",
                     "membershipId"
                   ]
                 }
@@ -62950,18 +63006,26 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "name": {
-                      "type": "string"
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
                     }
                   },
                   "required": [
-                    "orgId",
-                    "name"
+                    "org"
                   ]
                 }
               },
@@ -62970,18 +63034,26 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "name": {
-                      "type": "string"
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
                     }
                   },
                   "required": [
-                    "orgId",
-                    "name"
+                    "org"
                   ]
                 }
               },
@@ -63046,13 +63118,22 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "name": {
-                      "type": "string"
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
                     },
                     "code": {
                       "type": "string",
@@ -63062,8 +63143,7 @@
                     }
                   },
                   "required": [
-                    "orgId",
-                    "name",
+                    "org",
                     "code"
                   ]
                 }
@@ -132783,6 +132863,40 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformUsersAccessRetrieveResponse"
+                },
+                "example": {
+                  "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                  "connected": false,
+                  "platformAdmin": false,
+                  "disabled": false,
+                  "linked": false,
+                  "account": {
+                    "class": "created",
+                    "disabledInIdp": false
+                  },
+                  "roles": [
+                    {
+                      "role": "console",
+                      "wanted": false,
+                      "present": false,
+                      "presence": "passbook",
+                      "held": false,
+                      "memberships": [
+                        {
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "Sam Rivera"
+                        }
+                      ],
+                      "sponsorships": [
+                        {
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "MISSING"
+                        }
+                      ],
+                      "grantedAt": 1795570500000,
+                      "error": null
+                    }
+                  ]
                 }
               }
             }
@@ -132850,6 +132964,10 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformUsersRolesSetParams"
+              },
+              "example": {
+                "role": "developer",
+                "grant": false
               }
             }
           }
@@ -132861,6 +132979,40 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformUsersRolesSetResponse"
+                },
+                "example": {
+                  "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                  "connected": false,
+                  "platformAdmin": false,
+                  "disabled": false,
+                  "linked": false,
+                  "account": {
+                    "class": "created",
+                    "disabledInIdp": false
+                  },
+                  "roles": [
+                    {
+                      "role": "console",
+                      "wanted": false,
+                      "present": false,
+                      "presence": "passbook",
+                      "held": false,
+                      "memberships": [
+                        {
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "Sam Rivera"
+                        }
+                      ],
+                      "sponsorships": [
+                        {
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "MISSING"
+                        }
+                      ],
+                      "grantedAt": 1795570500000,
+                      "error": null
+                    }
+                  ]
                 }
               }
             }
@@ -132948,6 +133100,40 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformUsersRolesRemoveExternalResponse"
+                },
+                "example": {
+                  "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                  "connected": false,
+                  "platformAdmin": false,
+                  "disabled": false,
+                  "linked": false,
+                  "account": {
+                    "class": "created",
+                    "disabledInIdp": false
+                  },
+                  "roles": [
+                    {
+                      "role": "console",
+                      "wanted": false,
+                      "present": false,
+                      "presence": "passbook",
+                      "held": false,
+                      "memberships": [
+                        {
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "Sam Rivera"
+                        }
+                      ],
+                      "sponsorships": [
+                        {
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "MISSING"
+                        }
+                      ],
+                      "grantedAt": 1795570500000,
+                      "error": null
+                    }
+                  ]
                 }
               }
             }
@@ -133022,6 +133208,9 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformUsersOffboardParams"
+              },
+              "example": {
+                "dryRun": false
               }
             }
           }
@@ -133033,6 +133222,101 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformUsersOffboardResponse"
+                },
+                "example": {
+                  "plan": {
+                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "memberships": [
+                      {
+                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                        "name": "Sam Rivera",
+                        "membershipId": "0193a1b2-7c00-7000-8000-1b5822e0a640"
+                      }
+                    ],
+                    "kept": [
+                      {
+                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                        "name": "Always open"
+                      }
+                    ],
+                    "sponsorships": [
+                      {
+                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                        "name": "Always open"
+                      }
+                    ],
+                    "grants": [
+                      "developer"
+                    ],
+                    "personalKeys": 9,
+                    "platformKeys": [
+                      "platformKey"
+                    ],
+                    "sessions": 34,
+                    "sandboxOrgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "removes": [
+                      "console"
+                    ],
+                    "external": [
+                      "console"
+                    ],
+                    "blockers": [
+                      {
+                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                        "name": "Always open",
+                        "code": "LAST_ORG_ADMIN"
+                      }
+                    ]
+                  },
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-76ce790ad83b",
+                    "kind": "kind",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-dd59eda23abe"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -133505,6 +133789,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformIdpRetrieveResponse"
+                },
+                "example": {
+                  "connected": false,
+                  "mode": "live",
+                  "frozen": false,
+                  "keyExpiresAt": 1795570500000,
+                  "problems": [
+                    "problem"
+                  ],
+                  "budget": {
+                    "tier": {
+                      "day": 22,
+                      "limit": 25
+                    }
+                  },
+                  "lastScimAt": 1795570500000,
+                  "drift": {
+                    "tier": 8
+                  },
+                  "breakerOpen": false
                 }
               }
             }
@@ -133558,6 +133862,18 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformIdpDriftListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-8de0614067e2",
+                      "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                      "target": "tier",
+                      "kind": "kind",
+                      "foundAt": 1795570500000
+                    }
+                  ],
+                  "nextCursor": null
                 }
               }
             }
@@ -133605,6 +133921,9 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PlatformIdpPauseParams"
+              },
+              "example": {
+                "reason": "Unexpected role changes in Polaris ID."
               }
             }
           }
@@ -133616,6 +133935,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformIdpPauseResponse"
+                },
+                "example": {
+                  "result": "frozen"
                 }
               }
             }
@@ -133698,6 +134020,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlatformIdpCallsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": 14,
+                      "phase": "active",
+                      "method": "GET",
+                      "target": "tier",
+                      "actor": "actor",
+                      "reason": null,
+                      "status": "ok",
+                      "at": 1795570500000
+                    }
+                  ],
+                  "nextCursor": "c1.4812"
                 }
               }
             }
