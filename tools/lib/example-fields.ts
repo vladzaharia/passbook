@@ -27,6 +27,8 @@ const RULES: Rule[] = [
   [/^operations\./, /(^|\.)result\.ids\.\w+$/, 'northwind'],
   // A start that answers 202 carries the same operation (a sandbox action, in the developer area).
   [/^developer\./, /(^|\.)operation\.kind$/, 'sandbox.delete'],
+  // A Polaris ID start answers the same operation (platform area).
+  [/^polaris-operations\./, /(^|\.)operation\.kind$/, 'idp.check'],
   [/^developer\./, /(^|\.)operation\.result\.href$/, '/developers/quickstart'],
   [/^developer\./, /(^|\.)operation\.result\.ids\.\w+$/, 'northwind'],
   // Scan answers. A tag's passes and a group's members carry a scan reason only when refused (scan/tag-choose.ts,
