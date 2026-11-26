@@ -175,7 +175,8 @@ export function staticIslandAssets(
 
 /**
  * A tool route's own weight: the chunk carrying its `wb-tool-<stem>` class, and everything the
- * route's loader lists for it (`__vite__mapDeps`: the chunk, its static imports, its stylesheets),
+ * route's loader lists for it (`__vite__mapDeps`: the chunk, its static imports, its stylesheets; the
+ * loader may pick a renamed export with `.then(e=>e.t)` when other chunks import the same one),
  * minus what `skip` (the entry, the shell and the bench) already loads.
  */
 export function toolAssets(
@@ -190,7 +191,7 @@ export function toolAssets(
     return { files: [], errors: [`${marker}: ${scripts.length} chunks carry it, want 1`] };
   const base = (scripts[0] as string).replace(/^\/assets\//, '');
   const loader = new RegExp(
-    `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\),__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
+    `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\)(?:\\.then\\([^)]*\\))?,__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
   );
   for (const f of files) {
     if (!f.endsWith('.js')) continue;

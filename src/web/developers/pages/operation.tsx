@@ -1,14 +1,13 @@
 import { ArrowUpRight } from 'lucide-react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { cliSample } from '../model/cli.ts';
 import { opPath } from '../model/markdown.ts';
 import { exampleSamples, samplesFor } from '../model/samples.ts';
 import type { ErrorRow, Field, OpView, ResourcePage, Site } from '../model/types.ts';
 import { CopyButton, JsonBlock, SampleTabs } from '../ui/code.tsx';
 import { EnvChip } from '../ui/env-chip.tsx';
-import { Gate } from '../ui/gate.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
 import { Prose } from '../ui/prose.tsx';
 import { Ticket } from '../ui/ticket.tsx';
@@ -117,35 +116,30 @@ function OpErrors({ op, site }: { op: OpView; site: Site }) {
   );
 }
 
+/** Opens the Console on the operation's own sample; the body is never in the URL. */
+const runHref = (op: OpView) => wbHref('console', { query: { op: op.operationId } });
+
 /** The right pane: the request (curl first) as a ticket stub, a signed-out run slot, then the response. */
-function Rail({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
+function Rail({ op, site }: { op: OpView; site: Site }) {
   const samples = [...samplesFor(op, site.baseUrl), ...cliSample(op)];
   const ok = op.returns;
   return (
     <aside className="rail-pane" aria-label={`${op.title}: request and response`}>
       <div className="row g3 rail-h">
-        <h2 className="h2">{DEV_COPY.reference.tryIt}</h2>
-        <span className="pill info mono" data-sandbox>
-          test
-        </span>
-        <span className="push" data-budget />
+        <h2 className="h2">{DEV_COPY.reference.request}</h2>
+        <span className="pill info mono">test</span>
       </div>
-      <div
-        id={`try-${op.anchor}`}
-        data-island="run"
-        data-op={op.operationId}
-        data-slug={slug}
-        className="try"
-      >
-        <Ticket
-          stub={<SampleTabs id={`s-${op.anchor}`} samples={samples} name={op.title} />}
-          body={
-            <div className="try-foot">
-              <Gate inline title={GATE_COPY.lines.tryIt} next={`${PATHS.reference}/${slug}`} />
-            </div>
-          }
-        />
-      </div>
+      <Ticket
+        stub={<SampleTabs id={`s-${op.anchor}`} samples={samples} name={op.title} />}
+        body={
+          <div className="try-foot">
+            <a className="btn" href={runHref(op)}>
+              {DEV_COPY.reference.tryIt}
+              <ArrowUpRight aria-hidden="true" />
+            </a>
+          </div>
+        }
+      />
       {op.examples.length > 0 ? (
         <div className="examples">
           <h3 className="h3">{DEV_COPY.reference.examples}</h3>
@@ -276,14 +270,14 @@ export function OperationView({ page, op, site }: { page: ResourcePage; op: OpVi
           <OpErrors op={op} site={site} />
           <Neighbours page={page} op={op} />
         </div>
-        <Rail op={op} site={site} slug={page.slug} />
+        <Rail op={op} site={site} />
       </section>
-      <div className="trybar" data-island="try-bar">
+      <div className="trybar">
         <span className="trybar-op mono">
           <MethodPill method={op.method} />
           <span className="trybar-path">{op.path.replace(/^\/api\/v1/, '')}</span>
         </span>
-        <a className="btn" href={`#try-${op.anchor}`} data-try-bar>
+        <a className="btn" href={runHref(op)}>
           {DEV_COPY.reference.tryIt}
           <ArrowUpRight aria-hidden="true" />
         </a>

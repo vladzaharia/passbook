@@ -1,29 +1,5 @@
-/* The Try it slot, its skeleton, the org chip with the Run budget and the phone sheet. The
-   console's own controls live in console/console.css and load with the island. */
+/* The org chip with the Run budget. The console's own controls live in console/console.css. */
 
-/* One size from signed-out to ready, so the island arriving moves nothing. */
-@media (min-width: 721px) {
-  .try .stub {
-    block-size: 21rem;
-    display: flex;
-    flex-direction: column;
-    min-block-size: 0;
-  }
-  .try .body {
-    min-block-size: 12.25rem;
-  }
-  .try .stub > .code {
-    flex: 1;
-    min-block-size: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .try .stub .panel {
-    flex: 1;
-    min-block-size: 0;
-    overflow: auto;
-  }
-}
 /* The Console tool while its session is read: the held slot keeps room, so the page below does not jump. */
 [data-island="console"][data-hydrating] {
   min-block-size: clamp(20rem, calc(100dvh - 24rem), 40rem);
@@ -37,39 +13,6 @@
   align-items: flex-start;
   gap: 12px;
   padding: 24px 20px;
-}
-
-/* Skeleton: the slot keeps its boxes (visibility, not display) and shows bars where content goes. */
-.try[data-state="loading"] :is(.stub, .body) > * {
-  visibility: hidden;
-}
-.try[data-state="loading"] :is(.stub, .body)::before {
-  content: "";
-  position: absolute;
-  inset: 20px;
-  --sk: color-mix(in oklab, var(--pk-text-muted) 16%, transparent);
-  background:
-    linear-gradient(var(--sk), var(--sk)) 0 0 / 38% 14px no-repeat,
-    linear-gradient(var(--sk), var(--sk)) 0 32px / 100% 14px no-repeat,
-    linear-gradient(var(--sk), var(--sk)) 0 60px / 86% 14px no-repeat,
-    linear-gradient(var(--sk), var(--sk)) 0 88px / 64% 14px no-repeat;
-  border-radius: 4px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .try[data-state="loading"] :is(.stub, .body)::before {
-    animation: dp-sk 1.3s ease-in-out infinite;
-  }
-}
-@keyframes dp-sk {
-  50% {
-    opacity: 0.45;
-  }
-}
-/* On a phone the page's slot keeps its samples; the sheet is the console. */
-@media (max-width: 720px) {
-  .try[data-state="ready"] .try-foot {
-    display: none;
-  }
 }
 
 /* ---------- The sandbox chip's slot and the Run budget ---------- */
@@ -115,82 +58,11 @@
   }
 }
 
-/* ---------- The phone sheet ---------- */
-dialog.sheet {
-  position: fixed;
-  inset: auto 0 0;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  max-width: none;
-  height: min(92dvh, 45.5rem);
-  max-height: none;
-  border: 0;
-  border-top: 1px solid var(--pk-border-strong);
-  border-radius: var(--pk-radius-xl) var(--pk-radius-xl) 0 0;
-  background: var(--pk-surface-page);
-  color: var(--pk-text-default);
-  overflow: hidden;
-}
-dialog.sheet[open] {
-  display: flex;
-  flex-direction: column;
-}
-dialog.sheet::backdrop {
-  background: rgb(0 0 0 / 0.55);
-}
-@media (prefers-reduced-motion: no-preference) {
-  dialog.sheet[open] {
-    animation: dp-sheet var(--wl-dur-card) var(--wl-ease-out);
-  }
-}
-@keyframes dp-sheet {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: none;
-  }
-}
-.sheet-h {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 12px 6px 16px;
-  flex: none;
-}
-.sheet-grab {
-  position: absolute;
-  top: 7px;
-  left: 50%;
-  width: 36px;
-  height: 4px;
-  margin-left: -18px;
-  border-radius: 2px;
-  background: var(--pk-border-strong);
-}
-.sheet-b {
-  flex: 1;
-  min-block-size: 0;
-  overflow: auto;
-  padding: 8px 16px calc(24px + env(safe-area-inset-bottom, 0px));
-}
-:root[data-sheet="open"] body {
-  overflow: hidden;
-}
-
 /* Until the session is known (the island sets data-ready) the header's account slot and the sandbox slot keep their
    boxes and are not shown, from the first paint: a signed-in page never flashes the signed-out markup, and the page
    never shows Sign in, the avatar, Sign in again. Without script nothing would ever set it, so they show. */
 @media (scripting: enabled) {
-  :is(
-    [data-island="account"],
-    [data-island="workbench"],
-    [data-island="hero-start"],
-    .hero [data-hero-try],
-    .hero [data-buddy]
-  ):not([data-ready]) {
+  :is([data-island="account"], .hero [data-buddy]):not([data-ready]) {
     visibility: hidden;
   }
 }

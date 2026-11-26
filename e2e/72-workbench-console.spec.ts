@@ -37,8 +37,9 @@ test('the Console: opens on a read, runs with Cmd+Enter, and its request id open
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/workbench/console');
-  // Signed out, a tool is the one sign-in state.
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sign in to use the Workbench');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Sign in to use the Workbench' }),
+  ).toBeVisible();
   await shots(page, 'console-signed-out');
 
   await signIn(page);
@@ -91,6 +92,7 @@ test('the Console: the JSON editor numbers each line once, and the index sheet o
 }) => {
   await signIn(page);
   await page.setViewportSize({ width: 390, height: 844 });
+  // Today's Console selects by hash (T5 moves it to ?op=).
   await page.goto('/workbench/console#passes.postPasses');
   await page.waitForLoadState('networkidle');
   const trigger = page.getByRole('button', { name: /Operation/ });
