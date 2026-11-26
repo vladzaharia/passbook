@@ -368,14 +368,14 @@ describe('W2: a device that holds the old pass without the replacement keeps it'
     expect(await stateOf(old.id)).toEqual(['voided', null]);
   });
 
-  it('an Apple-armed row waits while a second device holds the old pass alone', async () => {
-    const { old, next } = await moved([]);
-    await kit.device(old, 'dev-2', 'p'.repeat(64));
-    await completeMove(next);
-    expect((await passOf(kit, old.id)).status).toBe('active');
-    expect((await moveOf(kit, old.id)).state).toBe('registered');
-    await kit.device(next, 'dev-2', 'q'.repeat(64));
-    kit.clock.advance(HOUR);
+  it('a wallet-armed row voids once the replacement is on that iPhone too', async () => {
+    const { old, next } = await moved(['google'], false);
+    await save(old, 'google');
+    await save(next, 'google');
+    await sweep();
+    await kit.device(old, 'dev-9', 'p'.repeat(64));
+    await kit.device(next, 'dev-9', 'q'.repeat(64));
+    kit.clock.advance(2 * DAY);
     await sweep();
     expect(await stateOf(old.id)).toEqual(['voided', null]);
   });
