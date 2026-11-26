@@ -72,6 +72,7 @@ export const TOTAL_ROWS_CAP = 20_000;
  * Returns whether a row was written.
  */
 export const insertLog = async (db: D1Database, l: NewLog) =>
+  l.mode === 'test' &&
   (
     await run(
       db,
@@ -80,8 +81,9 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
          CASE WHEN ?5 = 'test' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
          CASE WHEN ?5 = 'test' THEN ?15 END,
-         CASE WHEN ?5 = 'test' THEN ?16 END, ?17, ?18, ?19, ?20
-       FROM orgs o WHERE o.id = ?2 AND ?5 = 'test'
+         CASE WHEN ?5 = 'test' THEN ?16 END, ?17
+         , ?18, ?19, ?20
+       FROM orgs o WHERE o.id = ?2
          AND COALESCE((SELECT CASE WHEN b.hour = CAST(?14 AS INTEGER) / 3600000 THEN b.hour_rows ELSE 0 END
                        FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${HOUR_ROWS_CAP}
          AND COALESCE((SELECT b.total_rows FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${TOTAL_ROWS_CAP}`,
@@ -109,6 +111,10 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
       ],
     )
   ).changes > 0;
+
+/** The org's kind (`developer` for a sandbox), null when there is no such org. */
+export const orgKindOf = async (db: D1Database, orgId: string) =>
+  (await first<{ kind: string }>(db, 'SELECT kind FROM orgs WHERE id = ?', [orgId]))?.kind ?? null;
 
 /** `hour`: this hour's cap is spent; `total`: the org holds its most rows. Null: room left. */
 export async function logCap(
