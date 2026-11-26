@@ -2,6 +2,7 @@ import { IDENTITY_MOVE_COPY as COPY } from '../../../shared/copy/identity-move.t
 import { notice } from '../../email/org-closed.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { identityRetired as rowRetired } from '../identities/db-resolver.ts';
 import { getIdentityRow } from '../identities/repo.ts';
 import { googleCopyHasUsers } from '../wallet-providers/google-copy-users.ts';
@@ -54,6 +55,7 @@ export async function remindWalletCopy(
   reason: string,
 ): Promise<'sent' | 'skipped' | 'retry'> {
   const db = ctx.env.DB;
+  if (await isPreviewOnlyOrg(db, row.org_id)) return 'skipped';
   if (!(await claimWalletReminder(db, row.id, ctx.clock.now()))) return 'skipped';
   const made = await getPass(db, row.new_pass_id, row.org_id);
   if (!made?.holderEmail) return 'skipped';

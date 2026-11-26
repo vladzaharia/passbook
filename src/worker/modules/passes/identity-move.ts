@@ -4,6 +4,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
@@ -294,6 +295,7 @@ export async function remindDue(ctx: ServiceContext, row: MoveRow): Promise<'sen
     return 'skipped';
   }
   if (!(await isOrgActive(ctx, row.org_id))) return 'skipped';
+  if (await isPreviewOnlyOrg(db, row.org_id)) return 'skipped';
   if (!(await claimReminder(db, row.id, back, now))) return 'skipped';
   if (!made.holderEmail) return 'skipped';
   try {
