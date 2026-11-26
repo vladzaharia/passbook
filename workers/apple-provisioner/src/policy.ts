@@ -3,6 +3,14 @@ import { AscError } from './types.ts';
 export const MANAGED_PREFIX = 'pass.mobile.passbook.';
 /** Their certificates back every installed platform pass; the owner revokes them by hand. */
 export const PLATFORM_IDENTIFIERS = new Set(['pass.im.plrs.wallet', `${MANAGED_PREFIX}wallet`]);
+export const PLATFORM_ROOT = 'pass.mobile.passbook';
+export const DEVTEST = `${MANAGED_PREFIX}devtest`;
+/** The only platform pass types `createPlatformPassType` orders: slot to exact identifier and name. */
+export const PLATFORM_SLOTS = {
+  root: { identifier: PLATFORM_ROOT, name: 'PassBook' },
+  devtest: { identifier: DEVTEST, name: 'PassBook Test' },
+} as const;
+export type PlatformSlot = keyof typeof PLATFORM_SLOTS;
 const HANDLE = /^[a-z][a-z0-9]{1,29}$/;
 const RESERVED = new Set([
   'wallet',
@@ -11,6 +19,7 @@ const RESERVED = new Set([
   'platform',
   'passbook',
   'apple',
+  'devtest',
   'google',
   'samsung',
   'admin',
@@ -28,7 +37,13 @@ export function managedIdentifier(handle: string): string {
   return `${MANAGED_PREFIX}${handle}`;
 }
 
+export function platformPassType(slot: string): { identifier: string; name: string } {
+  if (!Object.hasOwn(PLATFORM_SLOTS, slot)) refuse('Unknown platform slot.');
+  return PLATFORM_SLOTS[slot as PlatformSlot];
+}
+
 export function assertManagedIdentifier(identifier: string): void {
+  if (identifier === PLATFORM_ROOT) return;
   if (
     !identifier.startsWith(MANAGED_PREFIX) ||
     !HANDLE.test(identifier.slice(MANAGED_PREFIX.length))
