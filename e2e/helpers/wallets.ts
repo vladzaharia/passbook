@@ -1,8 +1,9 @@
+import { execFileSync } from 'node:child_process';
 import { generateKeyPairSync } from 'node:crypto';
 import { expect } from '@playwright/test';
 import { e2ePorts } from '../../tools/lib/e2e-ports.ts';
 import { e2eReleaseMismatch } from '../../tools/lib/e2e-release.ts';
-import { type Api, createPass, requireActiveTemplateRelease, uid } from './api.ts';
+import { type Api, BASE, createPass, requireActiveTemplateRelease, uid } from './api.ts';
 import { runMinuteCron } from './cron.ts';
 import { publishTemplateVersion, templateReviewer } from './releases.ts';
 import { createOrgWithRoles, readSeed } from './seed.ts';
@@ -54,11 +55,11 @@ export async function requireE2eRelease(admin: Api): Promise<void> {
  * passing check against the mock (which verifies it), the credential as the source, then enable. Only an
  * enrolment that is On issues (migration 0229); the legacy account route has no part in it.
  */
-async function enrolTestAccount(
+export async function enrolTestAccount(
   admin: Api,
   orgId: string,
   credential: Record<string, unknown> & { provider: Provider },
-): Promise<void> {
+): Promise<string> {
   const { provider, ...credentials } = credential;
   const base = `/api/v1/orgs/${encodeURIComponent(orgId)}`;
   const saved = await admin.send<{ id: string }>(
@@ -101,32 +102,104 @@ async function enrolTestAccount(
     TEST,
   );
   expect(on.state).toBe('on');
+  return saved.id;
+}
+
+/** Runs the credential's check against the mock and returns how it ended (`ok`, or a failure). */
+export async function runCredentialCheck(
+  admin: Api,
+  orgId: string,
+  credentialId: string,
+): Promise<string> {
+  const checks = `/api/v1/orgs/${encodeURIComponent(orgId)}/wallet-credentials/${encodeURIComponent(credentialId)}`;
+  const { checkId } = await admin.send<{ checkId: string }>(
+    'POST',
+    `${checks}/check`,
+    undefined,
+    TEST,
+  );
+  let status = 'pending';
+  await expect
+    .poll(
+      async () => {
+        status = (
+          await admin.send<{ status: string }>(
+            'GET',
+            `${checks}/checks/${encodeURIComponent(checkId)}`,
+            undefined,
+            TEST,
+          )
+        ).status;
+        return status !== 'pending';
+      },
+      { message: 'the credential check', timeout: 30_000 },
+    )
+    .toBe(true);
+  return status;
+}
+
+type Credential = Record<string, unknown> & { provider: Provider };
+type Manifest = Record<string, unknown> & { wallets: Record<string, unknown> };
+
+/**
+ * A template whose scan code is the only credential, so a transfer can rotate it: a lookup on an input (member ID,
+ * card number) stays the same for the new holder, and the transfer asks for a reissue instead.
+ */
+export const withoutLookup = (manifest: Manifest): Manifest => {
+  const { lookup: _lookup, ...scan } = (manifest.scan ?? {}) as Record<string, unknown>;
+  return { ...manifest, scan };
+};
+
+export interface WalletOrgOptions {
+  blueprint?: string;
+  /** Edits the blueprint's manifest; the edited version is the one released (a Google gift card, say). */
+  manifest?: (manifest: Manifest) => Manifest;
+  /** Leave the Test account unset: the template is released first (CAND-1) or the org has no account. */
+  enrol?: boolean;
+  /** Runs once the accounts are On and before the template is released. */
+  afterEnrol?: () => Promise<unknown>;
 }
 
 /**
- * A fresh org (preset legacy: every wallet included) with the provider's Test account, then a Day pass
- * template released to Test. The release queues the platform's own Google projection, as in production.
+ * A fresh org (preset legacy: every wallet included) with each provider's Test account, then a template made
+ * from a blueprint and released to Test. The release queues the platform's own projections, as in production.
  */
 export async function walletOrg(
   admin: Api,
   name: string,
-  credential: Record<string, unknown> & { provider: Provider },
+  credentials: Credential | Credential[],
+  options: WalletOrgOptions = {},
 ) {
   const slug = uid(name).toLowerCase();
   // A fresh e2e database has no credential-ref keyset until its first pass (production always has one), and
   // provider projections need it: one pass from the seed org makes it.
   await createPass(admin, readSeed().org.id);
   const org = await createOrgWithRoles(admin, { slug, name: `Wallets ${slug}` });
-  await enrolTestAccount(admin, org.id, credential);
-  const made = await admin.send<{ id: string; versions: { version: string }[] }>(
+  const accounts: Partial<Record<Provider, string>> = {};
+  if (options.enrol !== false)
+    for (const credential of [credentials].flat())
+      accounts[credential.provider] = await enrolTestAccount(admin, org.id, credential);
+  await options.afterEnrol?.();
+  const blueprint = options.blueprint ?? BLUEPRINT;
+  let made = await admin.send<{ id: string; versions: { version: string }[] }>(
     'POST',
-    `/api/v1/templates/${encodeURIComponent(BLUEPRINT)}/use`,
+    `/api/v1/templates/${encodeURIComponent(blueprint)}/use`,
     { orgId: org.id, name: `Wallets ${slug}` },
   );
-  const version = made.versions[0]?.version ?? '';
+  const first = made.versions[0]?.version ?? '';
+  let version = first;
+  if (options.manifest) {
+    const detail = await admin.get<{ manifest: Manifest }>(
+      `/api/v1/templates/${encodeURIComponent(made.id)}?orgId=${encodeURIComponent(org.id)}`,
+    );
+    made = await admin.send('PUT', `/api/v1/templates/${encodeURIComponent(made.id)}/manifest`, {
+      manifest: options.manifest(detail.manifest),
+    });
+    version = made.versions.find((v) => v.version !== first)?.version ?? '';
+  }
   await publishTemplateVersion(admin, org.id, made.id, version, 'test');
   const apple = await requireActiveTemplateRelease(admin, org.id, made.id, 'test');
-  return { org, template: { id: made.id }, apple };
+  return { org, template: { id: made.id }, apple, accounts };
 }
 
 export type WalletOrg = Awaited<ReturnType<typeof walletOrg>>;
@@ -184,26 +257,75 @@ async function approveAndPublish(admin: Api, w: WalletOrg, provider: Provider, c
  * holder sees, so it waits for one human approval instead of releasing itself.
  */
 export async function releaseSystemGoogle(admin: Api, w: WalletOrg): Promise<string[]> {
-  const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider: 'google' });
+  return releaseSystem(admin, w, 'google');
+}
+
+/**
+ * The provider's platform candidate: a human approves and publishes it when it omits something a holder sees;
+ * one that omits nothing releases itself. Returns what was approved as omitted.
+ */
+export async function releaseSystem(
+  admin: Api,
+  w: WalletOrg,
+  provider: Provider,
+  options: { cron?: boolean } = {},
+): Promise<string[]> {
+  const tick = async () => {
+    // A template released before its account was On is found by the minute cron's drain (CAND-1).
+    if (options.cron) await runMinuteCron();
+  };
   let candidate: Candidate | undefined;
   await expect
     .poll(
       async () => {
-        const list = await admin.send<{ items: (Candidate & { authorId: string })[] }>(
-          'GET',
-          `${templatePath(w)}/candidates?${query}`,
-          undefined,
-          TEST,
-        );
-        candidate = list.items.find((c) => c.authorId.startsWith('system:'));
+        await tick();
+        candidate = await systemCandidate(admin, w, provider);
         return Boolean(candidate);
       },
-      { message: 'the system Google candidate', timeout: 30_000 },
+      { message: `the system ${provider} candidate`, timeout: 45_000 },
     )
     .toBe(true);
-  if (!candidate) throw new Error('No system Google candidate');
-  await approveAndPublish(admin, w, 'google', candidate);
-  return candidate.projection.approvedOmissions ?? [];
+  if (!candidate) throw new Error(`No system ${provider} candidate`);
+  const omissions = candidate.projection.approvedOmissions ?? [];
+  if (omissions.length > 0) await approveAndPublish(admin, w, provider, candidate);
+  await expect
+    .poll(
+      async () => {
+        await tick();
+        return (await providerRelease(admin, w, provider)) !== null;
+      },
+      { message: `the ${provider} release`, timeout: 45_000 },
+    )
+    .toBe(true);
+  return omissions;
+}
+
+/** The platform's own candidate for the provider, once it has written one. */
+export async function systemCandidate(admin: Api, w: WalletOrg, provider: Provider) {
+  const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
+  const list = await admin.send<{ items: (Candidate & { authorId: string })[] }>(
+    'GET',
+    `${templatePath(w)}/candidates?${query}`,
+    undefined,
+    TEST,
+  );
+  return list.items.find((c) => c.authorId.startsWith('system:'));
+}
+
+/** The provider's active Test release of the template, if any. */
+export async function providerRelease(
+  admin: Api,
+  w: WalletOrg,
+  provider: Provider,
+): Promise<{ id: string } | null> {
+  const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
+  const list = await admin.send<{ active: { id: string } | null }>(
+    'GET',
+    `${templatePath(w)}/releases?${query}`,
+    undefined,
+    TEST,
+  );
+  return list.active;
 }
 
 /** A candidate the test authors for a provider, approved by a second member and published to Test. */
@@ -230,7 +352,12 @@ export async function releaseProjection(
 }
 
 /** A Test pass from the org's Day pass release, with the holder's email. */
-export async function testPass(admin: Api, w: WalletOrg) {
+export async function testPass(
+  admin: Api,
+  w: WalletOrg,
+  input?: Record<string, unknown>,
+  extra: Record<string, unknown> = {},
+) {
   const memberId = uid('DAY').toUpperCase();
   const pass = await admin.send<{ id: string; publicUrl: string }>(
     'POST',
@@ -243,8 +370,9 @@ export async function testPass(admin: Api, w: WalletOrg) {
       releaseGeneration: w.apple.generation,
       mode: 'test',
       // A change message needs a value to change from (passkit/wallets/google/messages.ts).
-      input: { memberName: `Holder ${memberId}`, memberId, message: 'Welcome.' },
+      input: input ?? { memberName: `Holder ${memberId}`, memberId, message: 'Welcome.' },
       holderEmail: `${uid('holder')}@example.test`,
+      ...extra,
     },
     { ...TEST, 'Idempotency-Key': uid('idem') },
   );
@@ -264,4 +392,49 @@ export async function syncUntil(done: () => Promise<boolean>, what: string): Pro
       { message: what, intervals: [500, 1_000, 2_000], timeout: 45_000 },
     )
     .toBe(true);
+}
+
+/**
+ * Runs SQL in the e2e server's throwaway local database, for the one thing no API reaches: a clock. Local only;
+ * wrangler's `--local` never reaches a deployed database.
+ */
+export function localSql(command: string): void {
+  execFileSync(
+    'npx',
+    [
+      'wrangler',
+      'd1',
+      'execute',
+      'wallet-platform',
+      '--local',
+      '--persist-to',
+      '.wrangler/e2e-state',
+      '--command',
+      command,
+    ],
+    { stdio: 'pipe' },
+  );
+}
+
+/** Sets the platform's release of both providers in both modes on the running e2e server (a rollback rehearsal). */
+export async function setRelease(state: 'draining' | 'released'): Promise<void> {
+  const res = await fetch(`${BASE}/__e2e/wallet-release`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ state }),
+  });
+  if (!res.ok) throw new Error(`The release did not move to ${state}: ${res.status}`);
+}
+
+/** A Test pass filled from the template's own sample (every blueprint ships one), with the holder's email. */
+export async function samplePass(
+  admin: Api,
+  w: WalletOrg,
+  over: Record<string, unknown> = {},
+  extra: Record<string, unknown> = {},
+) {
+  const detail = await admin.get<{ sample: Record<string, unknown> }>(
+    `${templatePath(w)}?orgId=${encodeURIComponent(w.org.id)}`,
+  );
+  return testPass(admin, w, { ...detail.sample, ...over }, extra);
 }
