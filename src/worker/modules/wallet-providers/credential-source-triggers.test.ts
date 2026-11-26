@@ -2,6 +2,7 @@
 // insert guards, so the projection triggers are pinned by their text below and the binding trigger by behaviour.
 import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
@@ -39,7 +40,7 @@ async function dropTriggers(db: D1Database, table: string) {
 type Kind = 'legacy' | 'new-model' | 'neither';
 
 /** A release seeded on the account (the candidate, approval and release triggers run), then a ready placeholder activated. */
-async function activate(kind: Kind) {
+async function prepare(kind: Kind) {
   const f = await setupWalletOfferKit({
     google: 'absent',
     samsung: kind === 'legacy' ? 'configured' : 'absent',
@@ -122,14 +123,18 @@ async function activate(kind: Kind) {
       (SELECT authority_epoch FROM wallet_provider_accounts WHERE id = ?) WHERE provider_account_id = ?`,
     [account.accountId, account.accountId],
   );
-  // The issuance gate (dark providers) is not under test; binding_immutable is.
-  await run(env.DB, 'DROP TRIGGER IF EXISTS wallet_provider_generation_binding_guard');
-  return run(
-    env.DB,
-    `UPDATE wallet_provider_instances SET lifecycle = 'active', account_id = ?, identity_projection_release_id = ?,
-      desired_version = 1, desired_operation_id = ?, updated_at = ? WHERE id = ?`,
-    [account.accountId, seeded.releaseId, operationId, now, instanceId],
-  );
+  return () =>
+    run(
+      env.DB,
+      `UPDATE wallet_provider_instances SET lifecycle = 'active', account_id = ?, identity_projection_release_id = ?,
+        desired_version = 1, desired_operation_id = ?, updated_at = ? WHERE id = ?`,
+      [account.accountId, seeded.releaseId, operationId, now, instanceId],
+    );
+}
+
+/** The issuance gate (the release) is not under test here; binding_immutable is. */
+async function activate(kind: Kind) {
+  return withoutTrigger(env.DB, 'wallet_provider_generation_binding_guard', await prepare(kind));
 }
 
 describe('credential presence in the projection and binding triggers', () => {
@@ -137,8 +142,16 @@ describe('credential presence in the projection and binding triggers', () => {
     expect((await activate('legacy')).changes).toBeGreaterThan(0);
   });
 
-  it('a new-model-only account does too', async () => {
-    expect((await activate('new-model')).changes).toBeGreaterThan(0);
+  // With the binding guard in place (0226): a ready placeholder waits while its provider and mode are not
+  // released, and activates once they are.
+  it('a new-model-only account does too, once released', async () => {
+    const update = await prepare('new-model');
+    await expect(update()).rejects.toThrow('provider issuance is unavailable');
+    await run(env.DB, "UPDATE wallet_provider_releases SET state = 'released', changed_at = 0");
+    expect((await update()).changes).toBeGreaterThan(0);
+    await withoutTrigger(env.DB, 'wallet_provider_releases_dark_retired', () =>
+      run(env.DB, "UPDATE wallet_provider_releases SET state = 'dark', changed_at = 0"),
+    );
   });
 
   it('an account with neither credential is refused by the trigger', async () => {

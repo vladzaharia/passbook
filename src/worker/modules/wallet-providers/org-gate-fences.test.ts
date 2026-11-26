@@ -7,6 +7,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { holdEnrolment } from './enrolment-hold.ts';
 import { enableEnrolment } from './enrolment-service.ts';
+import { legacyOff } from './legacy-on-test-fixtures.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { addCheck } from './repo-wallet-credentials-test-fixtures.ts';
@@ -99,7 +100,9 @@ describe('enrolment gate in the database and the claim proof', () => {
     ).rejects.toThrow(/enrolment is not on/);
   });
 
-  it('leaves a legacy envelope row alone: its instance and offer ref are not gated', async () => {
+  // 0226 removed the legacy exemption this test used to pin (a legacy envelope with no enrolment issued, its
+  // instance and offer ref ungated). Such a row is now Off like any enrolment, so the gate refuses its instance.
+  it('gates a legacy envelope row like any enrolment: Off, its instance is refused', async () => {
     const f = await setupWalletOfferKit({
       google: 'configured',
       samsung: 'absent',
@@ -107,40 +110,29 @@ describe('enrolment gate in the database and the claim proof', () => {
     });
     const { kit, pass } = f;
     const keyset = await requireCredentialRefKeyset(env.DB, kit.env);
-    const account = await first<{ id: string; enabled_at: number | null }>(
+    const account = await first<{ id: string }>(
       env.DB,
-      "SELECT id, enabled_at FROM wallet_provider_accounts WHERE org_id = ? AND mode = 'live' AND provider = 'google'",
+      "SELECT id FROM wallet_provider_accounts WHERE org_id = ? AND mode = 'live' AND provider = 'google'",
       [pass.orgId],
     );
-    expect(account?.enabled_at).toBeNull();
-    const instanceId = kit.ctx.ids.id();
-    await seedHistoricalProviderInstance(env.DB, {
-      id: instanceId,
-      passId: pass.id,
-      orgId: pass.orgId,
-      mode: 'live',
-      provider: 'google',
-      credentialGeneration: 1,
-      credentialKeysetCommitment: keyset,
-      accountId: account?.id ?? '',
-      releaseId: await historicalGoogleRelease(f),
-      operationId: kit.ctx.ids.id(),
-      now: kit.clock.now(),
-      upsert: { requestHash: await sha256Hex('legacy-op'), state: 'succeeded' },
-    });
-    await seedHistoricalOfferRef(env.DB, {
-      refHash: 'b'.repeat(64),
-      instanceId,
-      operationVersion: 1,
-      createdAt: kit.clock.now(),
-      expiresAt: kit.clock.now() + 60_000,
-      consumedAt: null,
-      deliveredAt: null,
-    });
-    expect(
-      await first(env.DB, 'SELECT 1 FROM wallet_provider_offer_refs WHERE instance_id = ?', [
-        instanceId,
-      ]),
-    ).not.toBeNull();
+    const releaseId = await historicalGoogleRelease(f);
+    // The configure route leaves it Off; the offer kit turned it On to issue.
+    await legacyOff(env.DB, account?.id ?? '');
+    await expect(
+      seedHistoricalProviderInstance(env.DB, {
+        id: kit.ctx.ids.id(),
+        passId: pass.id,
+        orgId: pass.orgId,
+        mode: 'live',
+        provider: 'google',
+        credentialGeneration: 1,
+        credentialKeysetCommitment: keyset,
+        accountId: account?.id ?? '',
+        releaseId,
+        operationId: kit.ctx.ids.id(),
+        now: kit.clock.now(),
+        upsert: { requestHash: await sha256Hex('legacy-op'), state: 'succeeded' },
+      }),
+    ).rejects.toThrow(/enrolment is not on/);
   });
 });

@@ -14,6 +14,7 @@ import {
   retireWalletInstance,
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 import { insertInstance } from './repo-instance.ts';
 import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
@@ -22,6 +23,8 @@ export async function setupSamsungChannelOff() {
   const f = await setupSamsungCallbacks();
   const db = f.kit.env.DB;
   const credentialKeysetCommitment = await ensureCredentialRefKeyset(db, f.kit.env);
+  // Successors (channel_epoch > 1) need the provider released in the database too (0226).
+  await releaseRows(db);
   const scope = {
     orgId: f.pass.orgId,
     mode: f.pass.mode,

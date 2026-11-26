@@ -27,6 +27,7 @@ import {
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 import { findGoogleCallbackBinding } from './repo-google-callback.ts';
 import { googleCallbackRoutes } from './routes-google-callbacks.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
@@ -54,6 +55,8 @@ async function setup() {
   });
   const db = f.kit.env.DB;
   const credentialKeysetCommitment = await requireCredentialRefKeyset(db, f.kit.env);
+  // Successors (channel_epoch > 1) need the provider released in the database too (0226).
+  await releaseRows(db);
   const account = await first<{ id: string; revision: number }>(
     db,
     "SELECT id, revision FROM wallet_provider_accounts WHERE org_id = ? AND mode = 'live' AND provider = 'google'",

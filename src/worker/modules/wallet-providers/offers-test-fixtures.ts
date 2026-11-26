@@ -15,11 +15,11 @@ import { ICON_PNG, type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getVersion } from '../templates/repo.ts';
 import {
-  configureWalletProviderAccount,
   getWalletProviderReadiness,
   readConfiguredWalletProviderCredentials,
 } from './account-service.ts';
 import { GOOGLE_WALLET_SCOPE } from './google-credentials.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import type { NativeProvider } from './projection-contract.ts';
 import { computeProjectionPins } from './projection-pins.ts';
 import {
@@ -151,13 +151,13 @@ export async function setupWalletOfferKit(
   });
   async function configure(provider: NativeProvider) {
     return provider === 'google'
-      ? configureWalletProviderAccount(kit.ctx, auth, {
+      ? configureOn(kit.ctx, auth, {
           ...scope(provider),
           provider,
           expectedRevision: 0,
           credentials: google,
         })
-      : configureWalletProviderAccount(kit.ctx, auth, {
+      : configureOn(kit.ctx, auth, {
           ...scope(provider),
           provider,
           expectedRevision: 0,

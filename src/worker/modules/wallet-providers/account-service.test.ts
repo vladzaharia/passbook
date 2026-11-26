@@ -35,14 +35,13 @@ import { makeRsaPem } from '../identities/push-key-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import {
-  configureWalletProviderAccount,
   getWalletProviderReadiness,
   readConfiguredWalletProviderCredentials,
   readGoogleCallbackVerification,
   readWalletProviderRetirementCredentials,
-  revokeWalletProviderAccount,
 } from './account-service.ts';
 import { GOOGLE_WALLET_SCOPE } from './google-credentials.ts';
+import { configureOn, legacyOff, legacyOn, revokeOff } from './legacy-on-test-fixtures.ts';
 import { saveAccountConfiguration, transitionAccount } from './repo-accounts.ts';
 
 const origin = 'https://wallet.test';
@@ -288,6 +287,7 @@ describe('wallet provider accounts', () => {
       ),
     ).rejects.toThrow(/Decryption failed/);
     await ensureCredentialRefKeyset(env.DB, env);
+    await legacyOn(env.DB, configured.accountId);
     const expected = { accountId: configured.accountId, accountRevision: 1 };
     const firstSnapshot = await readConfiguredWalletProviderCredentials(ctx, scope, expected);
     if (firstSnapshot?.provider !== 'google') throw new Error('Missing Google snapshot');
@@ -344,6 +344,7 @@ describe('wallet provider accounts', () => {
         })
       ).status,
     ).toBe(409);
+    await legacyOff(env.DB, configured.accountId ?? '');
     expect(
       (await dto(await call('POST', '/revoke', session.headers, { ...scope, expectedRevision: 2 })))
         .state,
@@ -363,6 +364,7 @@ describe('wallet provider accounts', () => {
         credentials: google(),
       }),
     );
+    await legacyOn(env.DB, configured.accountId);
     const restored = await readConfiguredWalletProviderCredentials(ctx, scope, {
       ...expected,
       accountRevision: 4,
@@ -473,6 +475,8 @@ describe('wallet provider accounts', () => {
     );
     if (!live.accountId || !test.accountId) throw new Error('Missing account IDs');
     await ensureCredentialRefKeyset(env.DB, env);
+    await legacyOn(env.DB, live.accountId);
+    await legacyOn(env.DB, test.accountId);
     const liveSecret = await readConfiguredWalletProviderCredentials(ctx, scope, {
       accountId: live.accountId,
       accountRevision: 1,
@@ -491,6 +495,7 @@ describe('wallet provider accounts', () => {
         { accountId: live.accountId, accountRevision: 1 },
       ),
     ).toBeNull();
+    await legacyOff(env.DB, live.accountId);
     expect(
       (
         await dto(
@@ -603,7 +608,7 @@ describe('wallet provider accounts', () => {
       },
     });
     const ctx = createServiceContext({ ...env, DB: db }, { clock });
-    const configured = await configureWalletProviderAccount(ctx, auth, {
+    const configured = await configureOn(ctx, auth, {
       ...scope,
       expectedRevision: 0,
       credentials: google(),
@@ -658,15 +663,16 @@ describe('wallet provider accounts', () => {
 
     reportedChanges = 2;
     expect(
-      await configureWalletProviderAccount(ctx, auth, {
+      await configureOn(ctx, auth, {
         ...scope,
         expectedRevision: 1,
         credentials: google(rotatedPem),
       }),
     ).toMatchObject({ state: 'configured', revision: 2 });
-    expect(
-      await revokeWalletProviderAccount(ctx, auth, { ...scope, expectedRevision: 2 }),
-    ).toMatchObject({ state: 'revoked', revision: 3 });
+    expect(await revokeOff(ctx, auth, { ...scope, expectedRevision: 2 })).toMatchObject({
+      state: 'revoked',
+      revision: 3,
+    });
     const events = await all<{ kind: string }>(
       env.DB,
       'SELECT kind FROM wallet_provider_account_events WHERE account_id = ? ORDER BY revision',
@@ -716,7 +722,7 @@ describe('wallet provider accounts', () => {
     const ctx = createServiceContext({ ...env, DB: db }, { clock });
     const scope = { orgId: org.id, mode: 'live' as const, provider: 'google' as const };
     await expect(
-      configureWalletProviderAccount(ctx, actor.auth, {
+      configureOn(ctx, actor.auth, {
         ...scope,
         expectedRevision: 0,
         credentials: google(),
