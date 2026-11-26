@@ -361,6 +361,18 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
       );
     },
     writes: () => s.seen.filter((x) => x.method !== 'GET'),
+    /** The name Polaris ID reports for a group id. */
+    nameOf,
+    /** The id of the group called `name`, or undefined. */
+    idOfName: (name: string) => [...groups.keys()].find((id) => nameOf(id) === name),
+    /** Every group by name, with the accounts in it (the e2e mock's state read). */
+    roster: () =>
+      Object.fromEntries(
+        [...groups.keys()].map((id) => [
+          nameOf(id),
+          [...s.users.entries()].filter(([, u]) => u.groups.includes(id)).map(([sub]) => sub),
+        ]),
+      ),
   };
 }
 export type FakePocket = ReturnType<typeof fakePocket>;

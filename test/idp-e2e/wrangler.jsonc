@@ -1,0 +1,33 @@
+{
+  // The polaris-binding Worker as the e2e stack runs it (tools/e2e-server.ts, vite.config.ts): the real binding code over the
+  // mock Polaris ID admin API (test/mock-oidc/admin-api.ts). Never deployed; vars and the key are throwaway.
+  "name": "polaris-binding",
+  "main": "worker.ts",
+  "compatibility_date": "2026-08-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": {
+    "POCKET_ID_ORIGIN": "https://polaris.e2e.test",
+    "POCKET_ID_API": "v2",
+    "PASSBOOK_CLIENT_ID": "client-1",
+    "WRITE_MODE": "live",
+    "GROUP_PREFIX": "passbook_",
+    "CUSTOM_GROUP_PREFIX": "passbook_g_",
+    "CUSTOM_GROUP_LIMIT": "50",
+    "ADOPT_GROUPS": "{}",
+    "CLAIM_KEYS": "[]",
+    "GROUPS": "{\"console\":{\"id\":\"g-console\",\"name\":\"passbook_console\"},\"developer\":{\"id\":\"g-dev\",\"name\":\"passbook_developers\"},\"platform_admin\":{\"id\":\"g-admins\",\"name\":\"passbook_platform_admins\",\"protected\":true},\"users\":{\"id\":\"g-users\",\"name\":\"passbook_users\",\"protected\":true}}",
+    "POCKET_ID_API_KEY": "e2e-polaris-key",
+    // Where the mock listens; tools/e2e-server.ts sets it for the run.
+    "MOCK_POLARIS_URL": "http://localhost:5174"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "polaris-binding",
+      "database_id": "00000000-0000-0000-0000-0000000e2e01",
+      "migrations_dir": "../../workers/polaris-binding/migrations"
+    }
+  ]
+}
