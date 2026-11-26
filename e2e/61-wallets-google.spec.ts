@@ -139,6 +139,29 @@ test('a field edit updates the object and sends its change message', async () =>
   ]);
 });
 
+test('the fourth notifying change in a day reaches Google as text, with no notifying message', async () => {
+  const notified = async () =>
+    (await mockRequests())
+      .filter((r) => r.path.endsWith('/addMessage') && r.path.includes(issuerId))
+      .map((r) => (r.body?.message as { messageType?: string })?.messageType);
+  const change = (text: string) =>
+    admin.send('PATCH', passPath(pass.id), { input: { message: text }, notify: true }, TEST);
+  // The first change above notified; two more fill Google's budget of three.
+  for (const [i, text] of ['Doors open at ten.', 'Doors open at eleven.'].entries()) {
+    await change(text);
+    await syncUntil(async () => (await notified()).length === i + 2, `notifying message ${i + 2}`);
+  }
+  await change('Doors open at noon.');
+  await syncUntil(
+    async () => JSON.stringify(await object()).includes('Doors open at noon.'),
+    'the fourth change is on the object',
+  );
+  // Over budget it rides the object as text: no fourth notifying call.
+  expect(await notified()).toEqual(['TEXT_AND_NOTIFY', 'TEXT_AND_NOTIFY', 'TEXT_AND_NOTIFY']);
+  const messages = ((await object())?.messages ?? []).map((m) => m.messageType);
+  expect(messages.at(-1)).toBe('TEXT');
+});
+
 test('a void makes the object inactive without a barcode, and an unvoid restores it', async ({
   browser,
 }) => {
@@ -358,4 +381,41 @@ test('an offer expiry edit reaches Google as the end of its validity interval', 
     async () => JSON.stringify((await offer())?.validTimeInterval).includes('2031-02-03T00:00:00Z'),
     'the offer ends on the new date',
   );
+});
+
+test('an upcoming event that has ended rolls off the Google object with no edit', async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  const credential = googleCredential();
+  const events = await walletOrg(admin, 'g-roll', credential, {
+    blueprint: 'baked:starter-event-ticket',
+  });
+  await releaseSystemGoogle(admin, events);
+  // With a local offset: a bare Z time is refused ("no local offset").
+  const at = (ms: number) => new Date(Date.now() + ms).toISOString().replace('Z', '+00:00');
+  const venue = { venueName: 'Sample Hall', venueRegion: 'Cupertino, CA' };
+  const holder = await samplePass(admin, events, {
+    startsAt: at(7_200_000),
+    endsAt: at(10_800_000),
+    doorsAt: at(7_000_000),
+    upcomingEvents: [
+      { name: 'Opening night', startsAt: at(4_000), endsAt: at(14_000), ...venue },
+      { name: 'Closing night', startsAt: at(7_200_000), endsAt: at(10_800_000), ...venue },
+    ],
+  });
+  await saveToGoogle(browser, holder.path);
+  const upcoming = async () => {
+    const [ticket] = (
+      Object.values((await mockState()).google.eventTicketObject ?? {}) as GoogleObject[]
+    ).filter((o) => o.id.startsWith(`${credential.issuerId}.`));
+    return JSON.stringify(ticket?.textModulesData ?? []);
+  };
+  expect(await upcoming()).toContain('Opening night');
+  // Nobody edits the pass: the next event boundary schedules the recompile (lifecycle-instance-schedule.ts).
+  await syncUntil(
+    async () => !(await upcoming()).includes('Opening night'),
+    'the first event rolls off',
+  );
+  expect(await upcoming()).toContain('Closing night');
 });

@@ -224,7 +224,7 @@ describe('wallet provider instances', () => {
     expect(requests).toBe(0);
   });
 
-  it('does not fetch while another tab is active', async () => {
+  it('reads once for the Wallets card while another tab is active, and shows nothing for unreleased providers', async () => {
     let requests = 0;
     await renderApp('/admin/passes/p1?tab=fields', {
       session: 'admin',
@@ -240,7 +240,30 @@ describe('wallet provider instances', () => {
       }),
     });
     expect(await screen.findByRole('tab', { name: 'Fields' })).toBeInTheDocument();
-    expect(requests).toBe(0);
+    await waitFor(() => expect(requests).toBe(1));
+    expect(screen.queryByRole('list', { name: 'Wallets' })).not.toBeInTheDocument();
+  });
+
+  it('shows Not saved, Offered and Recommended on the pass page for released providers', async () => {
+    const enabled = { state: 'enabled' as const };
+    await renderApp('/admin/passes/p1?tab=fields', {
+      session: 'admin',
+      ...scope,
+      handlers: handlers({
+        [path]: () =>
+          json({
+            credentialGeneration: 1,
+            providers: [
+              instance('google', { lifecycle: 'active', issuance: enabled }),
+              instance('samsung', { issuance: enabled }),
+            ],
+          }),
+      }),
+    });
+    const list = await screen.findByRole('list', { name: 'Wallets' });
+    expect(within(list).getByText('Offered')).toBeInTheDocument();
+    expect(within(list).getByText('Not saved')).toBeInTheDocument();
+    expect(within(list).getAllByText('Recommended')).toHaveLength(1);
   });
 
   it('hides status when the current membership loses passes:read', async () => {

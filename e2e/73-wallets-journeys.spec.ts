@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import {
   callbackKeyset,
@@ -6,6 +7,7 @@ import {
 } from '../src/worker/modules/wallet-providers/google-callback-test-kit.ts';
 import { type Api, apiAs, BASE } from './helpers/api.ts';
 import { runMinuteCron } from './helpers/cron.ts';
+import { pairScanner } from './helpers/pair.ts';
 import {
   enrolTestAccount,
   googleCredential,
@@ -95,6 +97,87 @@ const googleObjects = async () =>
     String(o.id).startsWith(`${google.issuerId}.`),
   ) as { id: string; state: string; barcode?: unknown }[];
 
+/** A paired Android door scanner on the Test org: reads codes through the native bridge, as 16-scan-door does. */
+async function pairedDoor(browser: import('@playwright/test').Browser) {
+  const created = await admin.send<{ pairing: { code: string } }>(
+    'POST',
+    '/api/v1/scanners',
+    {
+      orgId: harbor.org.id,
+      name: `Door ${harbor.org.slug}`,
+      kind: 'device',
+      accepts: { templateIds: [harbor.template.id] },
+      timeZone: 'UTC',
+      settings: { reader: 'barcode', lookup: false },
+    },
+    TEST,
+  );
+  const context = await browser.newContext({
+    reducedMotion: 'reduce',
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    Object.assign(window, {
+      PassBookNative: { sent: [], onmessage: null, postMessage() {} },
+    });
+  });
+  await pairScanner(page, created.pairing.code);
+  await page.getByTestId('scan-start').click();
+  const read = (id: string, value: string) =>
+    page.evaluate(
+      ({ id, value }) =>
+        (
+          window as unknown as { PassBookNative: { onmessage: (e: { data: string }) => void } }
+        ).PassBookNative.onmessage({
+          data: JSON.stringify({ version: 1, event: 'scan', source: 'barcode', id, value }),
+        }),
+      { id, value },
+    );
+  return { read, result: page.getByTestId('scan-result'), page, close: () => context.close() };
+}
+
+/**
+ * The admin pass page's Wallets card, in Test mode: each wallet's row text. With `shots`, the page is also shot at
+ * 390, 834 and 1440, light and dark, under .wrangler/agent-logs (never committed).
+ */
+async function walletRows(
+  browser: import('@playwright/test').Browser,
+  passId: string,
+  shots?: string,
+) {
+  const context = await browser.newContext({
+    storageState: 'e2e/.auth/admin.json',
+    viewport: { width: 1440, height: 900 },
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto(`/admin/passes/${passId}?orgId=${encodeURIComponent(harbor.org.id)}`);
+    await page.getByRole('radio', { name: 'Test' }).click();
+    const list = page.getByRole('list', { name: 'Wallets' });
+    await expect(list).toBeVisible();
+    const row = async (name: string) =>
+      (await list.getByRole('listitem').filter({ hasText: name }).first().textContent()) ?? '';
+    const rows = { google: await row('Google Wallet'), samsung: await row('Samsung Wallet') };
+    if (shots) {
+      mkdirSync('.wrangler/agent-logs/e2er-shots', { recursive: true });
+      for (const scheme of ['light', 'dark'] as const) {
+        await page.emulateMedia({ colorScheme: scheme });
+        for (const width of [390, 834, 1440]) {
+          await page.setViewportSize({ width, height: width === 1440 ? 900 : 1000 });
+          await page.waitForTimeout(150);
+          await page.screenshot({
+            path: `.wrangler/agent-logs/e2er-shots/${shots}-${width}-${scheme}.png`,
+          });
+        }
+      }
+    }
+    return rows;
+  } finally {
+    await context.close();
+  }
+}
+
 test.beforeAll(async () => {
   test.setTimeout(180_000);
   admin = await apiAs('admin');
@@ -134,11 +217,17 @@ test('journey 1: harbor has both accounts On and north has none', async () => {
   expect(on(await enrolments(north))).toEqual([]);
 });
 
-test('journey 3: a new pass is not saved to Google or Samsung yet', async () => {
+test('journey 3: a new pass is not saved to Google or Samsung yet', async ({ browser }) => {
   expect(await status(pass.id)).toMatchObject([
     { provider: 'google', lifecycle: 'absent' },
     { provider: 'samsung', lifecycle: 'absent' },
   ]);
+  // The admin pass page says so: Not saved in both, and Google, listed first, is the likely wallet.
+  const rows = await walletRows(browser, pass.id, 'pass-wallets');
+  expect(rows.google).toMatch(/Not saved/);
+  expect(rows.google).toMatch(/Recommended/);
+  expect(rows.samsung).toMatch(/Not saved/);
+  expect(rows.samsung).not.toMatch(/Recommended/);
 });
 
 test('journey 4: the emailed pass lists Apple, Google and Samsung with PassBook links and no token of theirs', async ({
@@ -221,9 +310,13 @@ test('journey 7: Google sends the save link, scoped to the Test issuer, and the 
   expect(await lifecycleOf('google')).toBe('active');
   const statuses = await status(pass.id);
   expect(statuses.find((p) => p.provider === 'google')?.reported).toBeUndefined();
+  // Offered, never Saved: only Google's callback says that.
+  expect((await walletRows(browser, pass.id)).google).toMatch(/Offered/);
 });
 
-test('journey 8: a signed Google save callback marks the pass Saved once, and a callback signed for another issuer changes nothing', async () => {
+test('journey 8: a signed Google save callback marks the pass Saved once, and a callback signed for another issuer changes nothing', async ({
+  browser,
+}) => {
   // Google's root keys are the mock's to serve: the test holds their private halves.
   const keys = await makeCallbackSigningKeys();
   await fetch(`${MOCK}/__mock/google-keys`, {
@@ -265,9 +358,22 @@ test('journey 8: a signed Google save callback marks the pass Saved once, and a 
   expect(await post(delivery)).toBe(204);
   const saved = await reported();
   expect(saved).toMatchObject({ event: 'saved' });
+  const rows = await walletRows(browser, pass.id);
+  expect(rows.google).toMatch(/Saved/);
+  expect(rows.google).toMatch(/Recommended/);
   // Google redelivers the same message on a timeout: the same answer, no second change.
   expect(await post(delivery)).toBe(204);
   expect(await reported()).toEqual(saved);
+  const savedEvents = async () =>
+    (
+      await admin.send<{ items: { kind: string }[] }>(
+        'GET',
+        `${passPath(pass.id)}/events`,
+        undefined,
+        TEST,
+      )
+    ).items.filter((e) => e.kind === 'wallet.saved').length;
+  expect(await savedEvents()).toBe(1);
 
   // A callback signed for another issuer (north's, say) is refused and moves nothing.
   const other = `3388${String(Date.now()).slice(-9)}9999`;
@@ -278,13 +384,19 @@ test('journey 8: a signed Google save callback marks the pass Saved once, and a 
     nonce: 'foreign',
     expTimeMillis: String(Date.now() + 3_600_000),
   };
-  expect(await post(await sign(other, foreign))).toBeGreaterThanOrEqual(400);
+  // The handler throws UnauthenticatedError (google-callback-handler.ts `rejected`): 401, never an acknowledgement.
+  expect(await post(await sign(other, foreign))).toBe(401);
   expect(await reported()).toEqual(saved);
+  expect(await savedEvents()).toBe(1);
 });
 
-test('journey 7: the Samsung add reaches Samsung and the pass is active there', async () => {
+test('journey 7: the Samsung add reaches Samsung and the pass is active there', async ({
+  browser,
+}) => {
   ref = await samsung.add(pass.path);
   expect(await lifecycleOf('samsung')).toBe('active');
+  // Samsung's ADDED callback is its report of a save.
+  expect((await walletRows(browser, pass.id)).samsung).toMatch(/Saved/);
 });
 
 test('journey 9: an edit reaches Google as a PATCH and Samsung as an update', async () => {
@@ -303,7 +415,23 @@ test('journey 9: an edit reaches Google as a PATCH and Samsung as an update', as
 test('journey 10: a void inactivates both cards and takes the badges off the pass page', async ({
   browser,
 }) => {
-  await admin.send('POST', `${passPath(pass.id)}/void`, undefined, TEST);
+  const detail = await admin.send<{
+    passJson: { barcodes?: { message: string }[]; barcode?: { message: string } };
+  }>('GET', passPath(pass.id), undefined, TEST);
+  const code = detail.passJson.barcodes?.[0]?.message ?? detail.passJson.barcode?.message ?? '';
+  const door = await pairedDoor(browser);
+  try {
+    await admin.send('POST', `${passPath(pass.id)}/void`, undefined, TEST);
+    // The door denies at once, before any wallet has heard of the void.
+    await door.read('after-void', code);
+    await expect(door.result).toContainText(/void/i);
+    await expect(door.result).not.toContainText('Access granted');
+    await expect(door.result)
+      .toHaveAttribute('data-outcome', /./)
+      .catch(() => undefined);
+  } finally {
+    await door.close();
+  }
   await syncUntil(
     async () => (await googleObjects())[0]?.state === 'INACTIVE',
     'the Google object is inactive',

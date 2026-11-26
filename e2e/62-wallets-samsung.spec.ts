@@ -85,6 +85,24 @@ const sent = async (ref: string) => (await mockState()).samsung.refs[ref];
 const sentState = async (ref: string) => (await sent(ref))?.state;
 const sentRefs = async () => Object.keys((await mockState()).samsung.refs);
 
+test('a change message reaches Samsung as an update only, in the card notice', async () => {
+  const calls = async () =>
+    (await mockRequests())
+      .filter((r) => r.provider === 'samsung' && r.method === 'POST' && r.path.includes(kit.cardId))
+      .map((r) => r.path.split('/').pop());
+  const before = (await calls()).length;
+  await admin.send(
+    'PATCH',
+    passPath(pass.id),
+    { input: { message: 'Closed for the day.' }, notify: true },
+    TEST,
+  );
+  await syncUntil(async () => (await calls()).length > before, 'Samsung got the update');
+  // Samsung has no notifying call: nothing but Update Notification goes out, and the card carries the text.
+  expect((await calls()).slice(before).every((call) => call === 'updates')).toBe(true);
+  expect(JSON.stringify(await kit.card(refId))).toContain('Closed for the day.');
+});
+
 test('a void sends Samsung CANCELED, and an unvoid sends it ACTIVE again', async () => {
   await admin.send('POST', `${passPath(pass.id)}/void`, undefined, TEST);
   await syncUntil(async () => (await sentState(refId)) === 'CANCELED', 'Samsung got CANCELED');
