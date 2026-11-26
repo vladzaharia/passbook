@@ -52,8 +52,12 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
           {title}
         </h1>
         {count ? <span className="font-mono text-[0.8125rem] text-fg-muted">{count}</span> : null}
-        <span ref={setCount} className="font-mono text-[0.8125rem] text-fg-muted empty:hidden" />
-        <div ref={setStatus} className="empty:hidden" />
+        <span
+          ref={setCount}
+          data-bench-count=""
+          className="font-mono text-[0.8125rem] text-fg-muted empty:hidden"
+        />
+        <div ref={setStatus} data-bench-status="" className="empty:hidden" />
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {area && context && seenAt !== undefined ? (
             <Button
@@ -69,7 +73,11 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
           <div ref={setAction} className="contents" />
         </div>
       </header>
-      <div ref={setBar} className="flex flex-wrap items-center gap-2 empty:hidden">
+      <div
+        ref={setBar}
+        data-bench-toolbar=""
+        className="flex flex-wrap items-center gap-2 empty:hidden"
+      >
         {toolbar}
       </div>
       <div className="min-w-0">

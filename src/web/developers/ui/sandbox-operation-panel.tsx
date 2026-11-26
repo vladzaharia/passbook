@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import '../../../generated/operations-kit.css';
+import './operations-kit-layer.css';
 import '../styles/dev-operations.css';
 import '../../styles/kit-controls.css';
 import '../../styles/kit-motion.css';

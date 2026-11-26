@@ -98,3 +98,7 @@
   max-width: 100%;
   overflow-x: clip;
 }
+/* The Quickstart's sticky pass column sits under the shell's 56 px bar. */
+.wb-tool-quickstart {
+  --dev-bar: calc(3.5rem + env(safe-area-inset-top, 0px));
+}

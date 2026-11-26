@@ -18,6 +18,7 @@ import '../quickstart/quickstart.css';
 import '../quickstart/quickstart-stage.css';
 import '../quickstart/quickstart-v2.css';
 import '../quickstart/quickstart-first-run.css';
+import '../quickstart/quickstart-fit.css';
 
 /** Quickstart (T8 rebuilds it): the moved five steps, signed in. Signed out, the one sign-in state. */
 export function QuickstartPage() {
