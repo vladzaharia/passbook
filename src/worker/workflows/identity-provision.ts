@@ -32,7 +32,13 @@ import { stepRevoke } from '../modules/identities/revoke-run.ts';
 import type { IdentityProvisionParams } from '../modules/identities/run-start.ts';
 import type { Clock } from '../platform/clock.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { AppError, ConflictError, NotFoundError, UnavailableError } from '../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnavailableError,
+} from '../platform/errors.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 
 export type { IdentityProvisionParams };
@@ -181,8 +187,18 @@ async function issue(ctx: ServiceContext, rpc: AppleRpc, runId: string): Promise
   const adopted = await adoptByPubkey(listed, input.pubkeySha256, ctx.log);
   if (!adopted) await assertIssueBudget(ctx, runId);
   const cert =
-    adopted ?? (await rpc.createCertificate(input.ascPassTypeId, input.csrDer, input.nfc, runId));
+    adopted ??
+    (await rpc.createCertificate(input.ascPassTypeId, input.csrDer, input.nfc, runId).catch((e) => {
+      throw csrRefusal(e) ?? e;
+    }));
   await recordIssued(ctx, runId, cert);
+}
+
+/** Apple answered 400 or 422 to the order: the CSR is bad for good, so the run stops and `failRun` discards its key. */
+function csrRefusal(error: unknown): AppError | null {
+  if (!(error instanceof AppError) || error.code !== 'ASC_UPSTREAM') return null;
+  if (!/Apple answered (400|422)\b/.test(error.message)) return null;
+  return new ForbiddenError('Apple refused the certificate request.', 'ASC_REFUSED');
 }
 
 /** Tells the provisioner the new certificate is live: until then it refuses to revoke (it fails closed). Safe to repeat. */

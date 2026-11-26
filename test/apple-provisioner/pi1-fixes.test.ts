@@ -84,6 +84,22 @@ describe('PI-1 fix: L2 adopt lookup pages through every result', () => {
     expect(seen).toHaveLength(3);
   });
 
+  it('charges the budget once per page read', async () => {
+    const next = (n: number) => ({ links: { next: `${asc}/v1/passTypeIds?limit=200&page=${n}` } });
+    const { api, seen } = stubApple(({ method, path }) => {
+      if (method === 'POST') return { status: 409, body: { errors: [] } };
+      if (path.includes('page=3')) return { body: { data: [ptBody('PTR', ROOT)] } };
+      if (path.includes('page=2')) return { body: { data: [], ...next(3) } };
+      return { body: { data: [], ...next(2) } };
+    });
+    await api.createPlatformPassType('root');
+    expect(seen).toHaveLength(4);
+    // One reservation for the call, plus one for each of the two later page reads.
+    expect(
+      (await ledger()).filter((r) => r.method === 'createPassType' && r.phase === 'start'),
+    ).toHaveLength(3);
+  });
+
   it('ignores a next link that leaves the Apple host', async () => {
     const { api, seen } = stubApple(({ method }) =>
       method === 'POST'
