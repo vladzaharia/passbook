@@ -134,4 +134,18 @@ describe('the toolbar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
+
+  it('names the select apart from its visible label when asked', () => {
+    render(
+      <FilterSelect
+        label="Send as"
+        name="Event type to send"
+        value={undefined}
+        options={[{ value: 'pass.issued', label: 'pass.issued' }]}
+        onChange={() => undefined}
+      />,
+    );
+    expect(screen.getByRole('combobox', { name: 'Event type to send' })).toBeTruthy();
+    expect(screen.getByText('Send as')).toBeTruthy();
+  });
 });

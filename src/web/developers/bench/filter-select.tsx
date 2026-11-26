@@ -23,6 +23,7 @@ export function FilterSelect({
   options,
   onChange,
   any = C.any,
+  name,
 }: {
   label: string;
   /** '' or undefined: off. */
@@ -31,6 +32,8 @@ export function FilterSelect({
   onChange: (value: string | null) => void;
   /** The off choice's words. */
   any?: string;
+  /** The control's accessible name when the visible label is shorter ("Send as" for "Event type to send"). */
+  name?: string;
 }) {
   const shown = options.find((o) => o.value === value)?.label ?? any;
   return (
@@ -41,7 +44,7 @@ export function FilterSelect({
       <select
         className="bench-fs-s"
         value={value ?? ''}
-        aria-label={label}
+        aria-label={name ?? label}
         onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
       >
         <option value="">{any}</option>
