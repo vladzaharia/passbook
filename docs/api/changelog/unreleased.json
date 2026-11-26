@@ -2008,14 +2008,6 @@
     "note": "A person's passes across orgs for platform admins: owned or waiting (verified address). Others' personal orgs excluded."
   },
   {
-    "key": "GET /api/v1/users/{id}/passes operation removed",
-    "class": "breaking",
-    "operationId": "users.getUsersByIdPasses",
-    "op": "GET /api/v1/users/{id}/passes",
-    "change": "operation removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/visitors operation removed",
     "class": "breaking",
     "operationId": "visitors.getVisitors",
