@@ -1,4 +1,4 @@
-import { TriangleAlert } from 'lucide-react';
+import { Lock, TriangleAlert } from 'lucide-react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { MethodPill } from '../../../developers/ui/method-pill.tsx';
 import { BenchList } from '../../bench/list.tsx';
@@ -23,12 +23,15 @@ export function OpIndex({
   selection,
   query,
   onClear,
+  locked,
 }: {
   items: readonly IndexOp[];
   /** What the search holds: the empty state names it. */
   query: string;
   selection: BenchSelection<IndexOp>;
   onClear: () => void;
+  /** Operations this context cannot run: a lock in place of the caution, with the reason. */
+  locked?: ((op: IndexOp) => boolean) | undefined;
 }) {
   return (
     <div className="console-idx">
@@ -41,7 +44,13 @@ export function OpIndex({
         row={(op) => ({
           lead: <MethodPill method={op.method} />,
           title: op.title,
-          trail: op.destructive ? (
+          trail: locked?.(op) ? (
+            <Lock
+              className="console-caution"
+              role="img"
+              aria-label={CONSOLE_COPY.reason.testOnly}
+            />
+          ) : op.destructive ? (
             <TriangleAlert
               className="console-caution"
               role="img"

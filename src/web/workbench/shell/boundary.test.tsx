@@ -133,6 +133,8 @@ describe('the runtime boundary (R4 M7, L14)', () => {
         session: 'developer',
         handlers: {
           ...handlers({ errors: 2 }),
+          // The Console reads the docs' operation index (a static file, not an API call).
+          '/developers/run/index.json': () => json({ codes: [], groups: [] }),
           '/api/v1/operations': () =>
             json({ items: [running('op_1', 'NW test job', 'nw', 'test')] }),
         },

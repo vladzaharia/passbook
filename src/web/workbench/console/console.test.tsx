@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OpConsole } from './app/console.tsx';
 import { resetBudget } from './budget.ts';
+import { tryClient } from './client.ts';
 import { resetTemplateInput } from './template-sample.ts';
 import { fakeNetwork, json, passesCreate, passesVoid, TOKEN } from './test-support.ts';
 import { resetToken } from './token.ts';
 
 const props = {
   origin: 'https://passbook.mobile',
-  csrf: 'csrf-1',
+  client: tryClient('c'),
   templateId: null,
   codes: new Set(['PASS_CONFLICT']),
 } as const;

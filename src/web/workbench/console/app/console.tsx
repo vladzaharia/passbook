@@ -2,12 +2,15 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { copyWithFeedback } from '../../../developers/shell/copy.ts';
 import { Ticket } from '../../../developers/ui/ticket.tsx';
+import { consoleRunConfirm } from '../../../lib/confirms.ts';
 import { useMediaQuery } from '../../../lib/media.ts';
+import { ConfirmDialog } from '../../../ui/alert-dialog.tsx';
 import { useBenchKeys } from '../../bench/keys.ts';
 import { BenchSkeleton } from '../../bench/skeleton.tsx';
 import { remaining, subscribe } from '../budget.ts';
-import { cheersFor } from '../cheer.ts';
-import { copyAs } from '../copy-as.ts';
+import { type Moment, momentOf } from '../cheer.ts';
+import type { ConsoleClient } from '../client.ts';
+import { linesFor } from '../lines.ts';
 import { applyPrefill, type Prefill } from '../prefill.ts';
 import {
   buildSent,
@@ -16,10 +19,10 @@ import {
   initialDraft,
   problems,
   takesTemplate,
+  target,
 } from '../request.ts';
 import { type Outcome, RunError, send } from '../send.ts';
 import { loadTemplateInput } from '../template-sample.ts';
-import { tokenHeld } from '../token.ts';
 import type { Json, RunOp } from '../types.ts';
 import { Builder, type Tab } from './builder.tsx';
 import { LazyState } from './lazy-state.tsx';
@@ -36,20 +39,34 @@ const ResponseView = lazy(() => loadResponse().then((m) => ({ default: m.Respons
 export interface ConsoleProps {
   op: RunOp;
   origin: string;
-  csrf: string;
+  client: ConsoleClient;
   templateId: string | null;
   codes: ReadonlySet<string>;
   /** On the console page the stub grows with its content; on an operation page it is a fixed size. */
   mode: 'op' | 'console' | 'sheet';
   /** A guide's link: the request to start from. */
   prefill?: Prefill | undefined;
+  /** Where the request came from, over the form. */
+  note?: string | null | undefined;
+  /** Why this operation cannot run here: Run is disabled with this line, and Copy as still works. */
+  reason?: string | null | undefined;
 }
 
 const firstTab = (op: RunOp): Tab =>
   op.params.some((p) => p.where !== 'header') || !op.body ? 'form' : 'json';
 
 /** One operation: the request as the ticket stub, the response as its body. Remounted per operation. */
-export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }: ConsoleProps) {
+export function OpConsole({
+  op,
+  origin,
+  client,
+  templateId,
+  codes,
+  mode,
+  prefill,
+  note,
+  reason,
+}: ConsoleProps) {
   const [draft, setDraft] = useState<Draft>(() => {
     const start = initialDraft(op, templateId);
     return prefill ? applyPrefill(start, op, prefill, templateId) : start;
@@ -58,14 +75,15 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
   const untouched = useRef(draft.body);
   const guided = prefill?.body !== undefined;
   // The template is read on first need (a Run or an edit), unless a token is already held: opening a page mints none.
-  const [asked, setAsked] = useState(tokenHeld);
+  const [asked, setAsked] = useState(client.eager);
   const [tab, setTab] = useState<Tab>(() => firstTab(op));
   const [pending, setPending] = useState(false);
   const [outcome, setOutcome] = useState<{ result: Outcome; draft: Draft; at: number } | null>(
     null,
   );
   const count = useRef(0);
-  const [cheer, setCheer] = useState<number | null>(null);
+  const [moment, setMoment] = useState<{ at: number; moment: Moment } | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [spent, setSpent] = useState(() => remaining() === 0);
   const live = useRef(true);
@@ -92,7 +110,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
   useEffect(() => {
     if (!asked || !templateId || !takesTemplate(op)) return;
     let on = true;
-    void loadTemplateInput(templateId, csrf).then((tpl) => {
+    void loadTemplateInput(templateId, client.send).then((tpl) => {
       if (!on) return;
       if (tpl.schema) setCheck({ templateId, schema: tpl.schema });
       const sample: Json | undefined = tpl.sample;
@@ -105,18 +123,19 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
     return () => {
       on = false;
     };
-  }, [op, templateId, csrf, guided, asked]);
+  }, [op, templateId, client, guided, asked]);
 
   const execute = useCallback(
     async (d: Draft, again: boolean) => {
       setPending(true);
       setError(null);
       try {
-        const result = await send(op, d, csrf);
+        const result = await send(op, d, client.send);
         if (!live.current) return;
         count.current += 1;
         setOutcome({ result, draft: d, at: count.current });
-        if (mode === 'console' && cheersFor(result.status)) setCheer(count.current);
+        const moment = mode === 'console' ? momentOf(op, result) : null;
+        setMoment(moment ? { at: count.current, moment } : null);
         // A call that went through spends its key: the next Run is a new call. "Same key" keeps it.
         if (!again && d.idemOn && result.status < 500)
           setDraft((cur) => ({ ...cur, idemKey: crypto.randomUUID() }));
@@ -126,7 +145,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
         if (live.current) setPending(false);
       }
     },
-    [op, csrf, mode],
+    [op, client, mode],
   );
 
   const edit = (next: Draft) => {
@@ -153,6 +172,8 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
       spent={spent}
       run={run}
       pressRef={pressRef}
+      reason={reason}
+      ask={mode === 'console' ? () => setConfirming(true) : undefined}
     />
   );
   // The bench's keys reach the console from the list too (a focused field has its own Cmd+Enter below).
@@ -160,7 +181,11 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
     mode === 'console'
       ? {
           primary: () => pressRef.current?.(),
-          copyCurl: () => void copyWithFeedback(copyAs('curl', buildSent(op, draft, origin)), null),
+          copyCurl: () =>
+            void copyWithFeedback(
+              linesFor(op, draft, origin).find((l) => l.lang === 'curl')?.code ?? '',
+              null,
+            ),
           ...(outcome?.result.requestId
             ? { copyId: () => void copyWithFeedback(outcome.result.requestId ?? '', null) }
             : {}),
@@ -183,6 +208,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
       <Ticket
         stub={
           <>
+            {note ? <p className="console-note">{note}</p> : null}
             <Builder
               op={op}
               origin={origin}
@@ -203,9 +229,9 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
               </p>
             ) : null}
             {pending && !outcome ? <BenchSkeleton rows={3} /> : null}
-            {outcome && cheer === outcome.at ? (
+            {outcome && moment?.at === outcome.at ? (
               <Suspense fallback={null}>
-                <Cheer />
+                <Cheer kind={moment.moment.kind} />
               </Suspense>
             ) : null}
             {outcome ? (
@@ -215,7 +241,9 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
                   at={outcome.at}
                   sent={buildSent(op, outcome.draft, origin)}
                   codes={codes}
-                  csrf={csrf}
+                  client={client}
+                  lines={linesFor(op, outcome.draft, origin)}
+                  caption={moment?.at === outcome.at ? moment.moment.caption : null}
                   onReplay={replay}
                 />
               </Suspense>
@@ -226,6 +254,15 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
         }
       />
       {docked ? <div className="runbar-dock">{bar}</div> : null}
+      {mode === 'console' ? (
+        <ConfirmDialog
+          open={confirming}
+          onOpenChange={setConfirming}
+          destructive
+          {...consoleRunConfirm(op.method.toUpperCase(), target(op, draft))}
+          onConfirm={run}
+        />
+      ) : null}
     </div>
   );
 }

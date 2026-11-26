@@ -144,3 +144,10 @@
 .check[data-shown="false"] {
   display: none;
 }
+/* Where the request came from: one line over the form. */
+.console-note {
+  margin: 0;
+  padding: 8px 16px 0;
+  font-size: 12px;
+  color: var(--pk-text-muted);
+}
