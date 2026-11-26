@@ -159,7 +159,7 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-67a34975ea5c",
-      "kind": "kind",
+      "kind": "identity.move",
       "status": "succeeded",
       "title": "Delete sandbox",
       "text": "Issuing replacements · 40 of 120",

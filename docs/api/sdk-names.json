@@ -2435,7 +2435,7 @@
   },
   "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm": {
     "resource": "platform.appleIdentityMoves",
-    "method": "arm"
+    "method": "startTimer"
   },
   "wallet-identities.getPlatformAppleCalls": {
     "resource": "platform.appleCalls",

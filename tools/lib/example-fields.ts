@@ -26,6 +26,7 @@ const RULES: Rule[] = [
   [/^operations\./, /(^|\.)result\.href$/, '/admin/passes'],
   [/^operations\./, /(^|\.)result\.ids\.\w+$/, 'northwind'],
   // A start that answers 202 carries the same operation (a sandbox action, in the developer area).
+  [/^wallet-identities\.postPlatformAppleIdentityMoves$/, /(^|\.)kind$/, 'identity.move'],
   [/^developer\./, /(^|\.)operation\.kind$/, 'sandbox.delete'],
   [/^developer\./, /(^|\.)operation\.result\.href$/, '/developers/quickstart'],
   [/^developer\./, /(^|\.)operation\.result\.ids\.\w+$/, 'northwind'],
