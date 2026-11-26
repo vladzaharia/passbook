@@ -14,12 +14,18 @@ export {
   type LocalStepDef,
   useLocalOperation,
 } from './local.ts';
+export { useOperationParam } from './op-param.ts';
 export { OperationProgress, type OperationProgressProps } from './operation-progress.tsx';
 export { OperationRow } from './operation-row.tsx';
 export { OperationSheet } from './operation-sheet.tsx';
 export { OperationTray } from './operation-tray.tsx';
 export { RunBar } from './run-bar.tsx';
-export { seedOperation, trackOperation, useOperationOnScreen } from './store.ts';
+export {
+  seedOperation,
+  trackOperation,
+  useClaimOperation,
+  useOperationOnScreen,
+} from './store.ts';
 export { stepText } from './text.ts';
 export {
   isTerminal,

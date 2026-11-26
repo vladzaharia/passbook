@@ -8,7 +8,7 @@ import {
 } from '../../../shared/contracts/operations.ts';
 import { OPERATION_COPY } from '../../../shared/copy/operations.ts';
 import { stepText } from '../../../shared/operations/text.ts';
-import { kindOf } from './registry.ts';
+import { kindOf } from './kinds.ts';
 import type { OperationRow } from './repo.ts';
 
 export function parseSteps(json: string): OperationStep[] {

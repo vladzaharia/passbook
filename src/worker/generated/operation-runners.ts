@@ -4,6 +4,8 @@
 // biome-ignore-all assist/source/organizeImports: generated
 // biome-ignore-all lint: generated
 import type { OperationRunners } from '../modules/operations/registry.ts';
+import { operationRunners as r0 } from '../modules/developer/operations.ts';
+import { operationRunners as r1 } from '../modules/idp/operations.ts';
 
 /** Run, retry and cancel hooks by kind. */
-export const OPERATION_RUNNERS: OperationRunners = {  };
+export const OPERATION_RUNNERS: OperationRunners = { ...r0, ...r1 };

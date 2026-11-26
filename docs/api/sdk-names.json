@@ -419,6 +419,12 @@
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
+  "developer.postSandboxKey": {
+    "resource": "developer.sandbox",
+    "method": "reveal",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
   "developer.postSandboxReopen": {
     "resource": "developer.sandbox",
     "method": "reopen",
@@ -1337,6 +1343,22 @@
     "resource": "passViews",
     "method": "replace"
   },
+  "polaris-access.getUsersByIdAccess": {
+    "resource": "platform.users.access",
+    "method": "retrieve"
+  },
+  "polaris-access.postUsersByIdOffboard": {
+    "resource": "platform.users",
+    "method": "offboard"
+  },
+  "polaris-access.postUsersByIdRoles": {
+    "resource": "platform.users.roles",
+    "method": "set"
+  },
+  "polaris-access.postUsersByIdRolesByRoleRemoveExternal": {
+    "resource": "platform.users.roles",
+    "method": "removeExternal"
+  },
   "polaris-claims.getPlatformIdpGroupsByKeyClaims": {
     "resource": "platform.groups.claims",
     "method": "retrieve"
@@ -1352,6 +1374,34 @@
   "polaris-claims.patchUsersByIdClaims": {
     "resource": "platform.users.claims",
     "method": "update"
+  },
+  "polaris-operations.deleteUsersByIdHoldsByRole": {
+    "resource": "platform.users.holds",
+    "method": "delete"
+  },
+  "polaris-operations.postPlatformIdpReconcile": {
+    "resource": "platform.idp",
+    "method": "check"
+  },
+  "polaris-operations.postPlatformIdpScimBreakerClear": {
+    "resource": "platform.idp.scimBreaker",
+    "method": "clear"
+  },
+  "polaris-platform.getPlatformIdp": {
+    "resource": "platform.idp",
+    "method": "retrieve"
+  },
+  "polaris-platform.getPlatformIdpCalls": {
+    "resource": "platform.idp.calls",
+    "method": "list"
+  },
+  "polaris-platform.getPlatformIdpDrift": {
+    "resource": "platform.idp.drift",
+    "method": "list"
+  },
+  "polaris-platform.postPlatformIdpFreeze": {
+    "resource": "platform.idp",
+    "method": "pause"
   },
   "public.getBByToken": {
     "resource": "public.bundles",

@@ -3,8 +3,15 @@ import {
   OperationResultSchema,
 } from '../../../shared/contracts/operations.ts';
 import { first, run, stmt } from '../../platform/db.ts';
+import { WORKFLOW_WRITER } from './progress-types.ts';
 
 const ACTIVE = `status IN ('queued', 'running', 'waiting')`;
+
+/** The lease condition of a write: a claimed lease refuses any other writer; a Workflow writer is fenced by attempt only. */
+function fence(lease: string | null | undefined): { sql: string; params: string[] } {
+  if (lease === WORKFLOW_WRITER) return { sql: '', params: [] };
+  return { sql: ' AND (lease_owner IS NULL OR lease_owner = ?)', params: [lease ?? ''] };
+}
 
 export interface Written {
   status: string;
@@ -37,7 +44,7 @@ export function writeStep(
     `UPDATE operations SET steps = json_set(steps, ?, json(?)), step_key = ?, status = ?,
        revision = revision + 1, started_at = COALESCE(started_at, ?), updated_at = ?, heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
-     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ?)
+     WHERE id = ? AND attempt = ? AND ${ACTIVE}${fence(w.lease).sql}
      RETURNING status, cancel_requested`,
     [
       at,
@@ -50,7 +57,7 @@ export function writeStep(
       w.leaseUntil,
       w.id,
       w.attempt,
-      w.lease ?? '',
+      ...fence(w.lease).params,
     ],
   );
 }
@@ -64,9 +71,9 @@ export async function writeHeartbeat(
     db,
     `UPDATE operations SET heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
-     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ?)
+     WHERE id = ? AND attempt = ? AND ${ACTIVE}${fence(w.lease).sql}
      RETURNING status, cancel_requested`,
-    [w.now, w.leaseUntil, w.id, w.attempt, w.lease ?? ''],
+    [w.now, w.leaseUntil, w.id, w.attempt, ...fence(w.lease).params],
   );
 }
 
@@ -103,7 +110,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
        updated_at = ?, finished_at = ?, expires_at = ${f.expiresAt === null ? 'expires_at' : '?'}, lease_until = NULL
      WHERE id = ? AND attempt = ? AND ${
        f.onlyQueued ? "status = 'queued' AND (lease_until IS NULL OR lease_until <= ?)" : ACTIVE
-     }${f.lease === undefined ? '' : ' AND (lease_owner IS NULL OR lease_owner = ?)'}`,
+     }${f.lease === undefined ? '' : fence(f.lease).sql}`,
     [
       f.status,
       f.steps,
@@ -119,7 +126,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
       f.id,
       f.attempt,
       ...(f.onlyQueued ? [f.now] : []),
-      ...(f.lease === undefined ? [] : [f.lease]),
+      ...(f.lease === undefined ? [] : fence(f.lease).params),
     ],
   );
 }
@@ -153,6 +160,8 @@ export async function resetForRetry(
     steps: string;
     stepKey: string | null;
     retryKey: string | null;
+    /** The row's owning session: the retrying one for a starter row (a step-up replaced the first), else unchanged. */
+    actorSession: string | null;
     /** A starter operation keeps its 7 days from the retry; others get an expiry when they end. */
     expiresAt: number | null;
   },
@@ -163,10 +172,10 @@ export async function resetForRetry(
        error_code = NULL, error_step = NULL, error_retryable = NULL, result = NULL, finished_at = NULL,
        workflow_instance_id = NULL,
        expires_at = ?, cancel_requested = 0, lease_until = NULL, lease_owner = NULL, resends = 0,
-       heartbeat_at = ?, retry_key = ?,
+       heartbeat_at = ?, retry_key = ?, actor_session = ?,
        revision = revision + 1, updated_at = ?
      WHERE id = ? AND attempt = ? AND status = 'failed' AND error_retryable = 1`,
-    [r.steps, r.stepKey, r.expiresAt, r.now, r.retryKey, r.now, r.id, r.attempt],
+    [r.steps, r.stepKey, r.expiresAt, r.now, r.retryKey, r.actorSession, r.now, r.id, r.attempt],
   );
   return changes === 1;
 }

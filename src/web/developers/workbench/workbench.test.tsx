@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fixtureOperation, SANDBOX_RESET } from '../../ui/operation/fixtures.test-support.ts';
 import { updateSession } from '../console/session.ts';
 import { homeClosed, homeDone, homeFresh, homeNone, homeProgressed } from './home-fixtures.ts';
 import { mount } from './index.tsx';
@@ -9,6 +10,14 @@ import { ago, duration, keyState, left, masked, meter, sparkPoints, ticksOf } fr
 import { Workbench } from './workbench.tsx';
 
 const noCalls = async () => [];
+/** A reset that has ended well, as the server answers it: what it deleted is in the result ids. */
+const resetOp = {
+  ...fixtureOperation(SANDBOX_RESET, { status: 'succeeded', id: 'op-reset' }),
+  result: {
+    href: null,
+    ids: { passes: '1', captures: '1', calls: '38', other: '0', kept: '0', resetsLeft: '2' },
+  },
+};
 afterEach(() => vi.unstubAllGlobals());
 
 describe('workbench model', () => {
@@ -107,12 +116,11 @@ describe('after Reset', () => {
     vi.doMock('../console/turnstile.ts', () => ({ verify: async () => 'token' }));
     vi.doMock('../console/sandbox-actions.ts', async (orig) => ({
       ...(await orig<typeof import('../console/sandbox-actions.ts')>()),
-      resetSandbox: async () => ({
-        secret: 'pbp_test_NEW',
-        deleted: { passes: 1, captures: 1, calls: 38 },
-        resetsLeft: 2,
-      }),
+      startReset: async () => resetOp,
+      mintKey: async () => 'pbp_test_NEW',
     }));
+    // The panel follows the operation by id: the server says it is done, with what it deleted.
+    vi.stubGlobal('fetch', async () => Response.json(resetOp));
     vi.resetModules();
     const { Workbench: Fresh } = await import('./workbench.tsx');
     const { updateSession: set } = await import('../console/session.ts');
@@ -130,7 +138,7 @@ describe('after Reset', () => {
     expect(within(calls).getAllByRole('link').length).toBeGreaterThan(5);
     await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
     await userEvent.click(screen.getByRole('button', { name: 'Reset sandbox' }));
-    await screen.findByText(/Reset\. Deleted 1 pass/);
+    await screen.findByText(/Reset\. Deleted 1 pass/, {}, { timeout: 4000 });
     expect(onChanged).toHaveBeenCalledTimes(1);
     // The refreshed home has no calls: the card follows it at once.
     rerender(
@@ -147,7 +155,8 @@ describe('Reset and Reopen panels', () => {
     vi.doMock('../console/turnstile.ts', () => ({ verify: async () => 'token' }));
     vi.doMock('../console/sandbox-actions.ts', async (orig) => ({
       ...(await orig<typeof import('../console/sandbox-actions.ts')>()),
-      resetSandbox: async () => ({ secret: 'pbp_test_NEW', deleted: { passes: 0 }, resetsLeft: 2 }),
+      startReset: async () => resetOp,
+      mintKey: async () => 'pbp_test_NEW',
       reopenSandbox: async () => ({ secret: 'pbp_test_REOPENED' }),
     }));
     vi.resetModules();

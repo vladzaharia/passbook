@@ -1105,6 +1105,7 @@
         403
       ],
       "modules": [
+        "developer",
         "platform"
       ]
     },
@@ -1845,6 +1846,7 @@
       ],
       "modules": [
         "delivery",
+        "idp",
         "operations",
         "passes",
         "platform",
@@ -2117,7 +2119,52 @@
       ]
     },
     {
+      "code": "IDP_ADMIN_ENDED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_APPLY_FAILED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_CLOSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_RETRIPPED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_BUDGET",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BUDGET_LOW",
       "statuses": [
         429
       ],
@@ -2162,6 +2209,15 @@
       ]
     },
     {
+      "code": "IDP_HOLD_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_IN_USE",
       "statuses": [
         409
@@ -2180,6 +2236,33 @@
       ]
     },
     {
+      "code": "IDP_NOT_APPLIED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_EXTERNAL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_HELD",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
       "statuses": [
         409
@@ -2189,7 +2272,43 @@
       ]
     },
     {
+      "code": "IDP_NOT_READY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_WANTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NO_ACCOUNT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_OFFBOARD_INCOMPLETE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_PLATFORM_ADMIN",
       "statuses": [
         409
       ],
@@ -2212,7 +2331,17 @@
         403
       ],
       "modules": [
+        "idp",
         "platform"
+      ]
+    },
+    {
+      "code": "IDP_SYNC_BUSY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -2795,6 +2924,7 @@
       ],
       "modules": [
         "dev-access",
+        "idp",
         "orgs"
       ]
     },
@@ -3207,6 +3337,16 @@
       ]
     },
     {
+      "code": "OPERATION_LEASE_LOST",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer",
+        "idp"
+      ]
+    },
+    {
       "code": "OPERATION_NOT_CANCELABLE",
       "statuses": [
         409
@@ -3257,6 +3397,7 @@
         409
       ],
       "modules": [
+        "developer",
         "operations"
       ]
     },
@@ -3325,7 +3466,8 @@
       ],
       "modules": [
         "developer",
-        "org-lifecycle"
+        "org-lifecycle",
+        "workflows"
       ]
     },
     {
@@ -3393,6 +3535,15 @@
       "modules": [
         "dev-access",
         "orgs"
+      ]
+    },
+    {
+      "code": "ORG_PURGE_BLOCKED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workflows"
       ]
     },
     {
@@ -4257,6 +4408,15 @@
       ]
     },
     {
+      "code": "SANDBOX_KEY_SHOWN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
       "code": "SANDBOX_NOT_CLOSED",
       "statuses": [
         409
@@ -4281,6 +4441,15 @@
       ],
       "modules": [
         "sandbox"
+      ]
+    },
+    {
+      "code": "SANDBOX_PURGE_START",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "developer"
       ]
     },
     {
@@ -4314,6 +4483,24 @@
       "code": "SANDBOX_RESET_LIMIT",
       "statuses": [
         429
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_SESSION_ENDED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_TEMPLATE_FAILED",
+      "statuses": [
+        500
       ],
       "modules": [
         "developer"

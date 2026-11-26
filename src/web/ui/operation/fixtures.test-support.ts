@@ -1,68 +1,32 @@
+import type { OperationKindDef } from '../../../shared/operations/define.ts';
+import {
+  sandboxCreate,
+  sandboxDelete,
+  sandboxRecreate,
+  sandboxReset,
+} from '../../../shared/operations/kinds/sandbox.ts';
 import type { LocalOperationDef } from './local.ts';
 import { stepText } from './text.ts';
 import type { Operation, OperationStatus, OperationStep } from './types.ts';
 
-// The sandbox copy as docs (progress-feedback design §3.6) gives it. OP-4 moves these words into
-// src/shared/operations/kinds/sandbox.ts; the kit's fixtures and story keep them as plain data.
-const create = [
-  { key: 'org', label: 'Create sandbox', active: 'Creating your sandbox' },
-  { key: 'template', label: 'Add ticket template', active: 'Adding the ticket template' },
-  { key: 'release', label: 'Release it in Test', active: 'Releasing the ticket in Test' },
-  { key: 'capture', label: 'Add capture endpoint', active: 'Adding the capture endpoint' },
-  { key: 'scanner', label: 'Add test scanner', active: 'Adding a test scanner' },
-] as const;
+// The sandbox kinds' words live in src/shared/operations/kinds/sandbox.ts: the fixtures draw from them.
+const fromKind = (kind: OperationKindDef): LocalOperationDef => ({
+  kind: kind.kind,
+  title: kind.title,
+  doneTitle: kind.doneTitle,
+  failTitle: kind.failTitle,
+  steps: kind.steps.map((s) => ({
+    key: s.key,
+    label: s.label,
+    ...(s.active ? { active: s.active } : {}),
+    ...(s.group ? { group: s.group } : {}),
+  })),
+});
 
-const del = [
-  { key: 'close', label: 'Close sandbox', active: 'Closing your sandbox' },
-  { key: 'keys', label: 'Revoke keys', active: 'Revoking keys' },
-  { key: 'passes', label: 'Remove Test passes', active: 'Removing Test passes' },
-  { key: 'erase', label: 'Erase sandbox data' },
-] as const;
-
-export const SANDBOX_CREATE: LocalOperationDef = {
-  kind: 'sandbox.create',
-  title: 'Create sandbox',
-  doneTitle: 'Sandbox ready',
-  failTitle: 'Could not finish your sandbox',
-  steps: create,
-};
-
-export const SANDBOX_DELETE: LocalOperationDef = {
-  kind: 'sandbox.delete',
-  title: 'Delete sandbox',
-  doneTitle: 'Sandbox deleted',
-  failTitle: 'Could not delete sandbox',
-  steps: del,
-};
-
-export const SANDBOX_RESET: LocalOperationDef = {
-  kind: 'sandbox.reset',
-  title: 'Reset sandbox',
-  doneTitle: 'Sandbox reset',
-  failTitle: 'Could not reset sandbox',
-  steps: [
-    { key: 'claim', label: 'Revoke old key', active: 'Revoking the old key' },
-    { key: 'passes', label: 'Delete Test passes', active: 'Deleting Test passes' },
-    { key: 'captures', label: 'Delete captured events', active: 'Deleting captured events' },
-    {
-      key: 'rows',
-      label: 'Clear calls and drafts',
-      active: 'Clearing calls, messages and imports',
-    },
-    { key: 'template', label: 'Release the ticket again', active: 'Releasing the ticket in Test' },
-  ],
-};
-
-export const SANDBOX_RECREATE: LocalOperationDef = {
-  kind: 'sandbox.recreate',
-  title: 'Start over',
-  doneTitle: 'New sandbox ready',
-  failTitle: 'Could not start over',
-  steps: [
-    ...del.map((s) => ({ ...s, group: 'Old sandbox' })),
-    ...create.map((s) => ({ ...s, group: 'New sandbox' })),
-  ],
-};
+export const SANDBOX_CREATE = fromKind(sandboxCreate);
+export const SANDBOX_DELETE = fromKind(sandboxDelete);
+export const SANDBOX_RESET = fromKind(sandboxReset);
+export const SANDBOX_RECREATE = fromKind(sandboxRecreate);
 
 /** A step that waits on someone else: the waiting state. */
 export const APPLE_SETUP: LocalOperationDef = {

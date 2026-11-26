@@ -6,7 +6,6 @@ import {
   makeUser,
   withoutTrigger,
 } from '../../../../test/helpers/index.ts';
-import { CreatedDeveloperSandboxSchema } from '../../../shared/contracts/developer.ts';
 import { SANDBOX_TERMINAL_NAME } from '../../../shared/copy/developer.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -16,6 +15,7 @@ import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { createScannerStore } from '../scan/auth-store.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
+import { makeSandbox, startAndSettle } from './sandbox-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 let kit: BlueprintKit;
@@ -66,11 +66,10 @@ async function sandbox() {
   const user = await makeUser(kit.f);
   const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
   const headers = { ...session.headers, origin: ORIGIN };
-  const create = () => send('POST', '/developer/sandbox', headers, { turnstileToken: 'ok' });
-  const res = await create();
-  expect(res.status, await res.clone().text()).toBe(201);
-  const made = CreatedDeveloperSandboxSchema.parse(await res.json());
-  if (!made.key) throw new Error('A new sandbox returns its key.');
+  const create = () =>
+    startAndSettle(send, headers, 'POST', '/developer/sandbox', { turnstileToken: 'ok' });
+  const made = await makeSandbox(send, headers);
+  if (!made.key) throw new Error('A new sandbox mints its key.');
   const terminals = () =>
     all<{ id: string; kind: string; mode: string; token_hash: string | null }>(
       kit.env.DB,
@@ -113,7 +112,7 @@ describe('the sandbox test terminal', () => {
   it('is made once, in Test, never paired; a retry adds no second', async () => {
     const s = await sandbox();
     expect(s.terminal).toMatchObject({ kind: 'terminal', mode: 'test', token_hash: null });
-    expect((await s.create()).status).toBe(201);
+    expect((await s.create()).status).toBe('succeeded');
     expect(await s.terminals()).toHaveLength(1);
   });
 

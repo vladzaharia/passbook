@@ -3,7 +3,7 @@
 // src/worker/platform/openapi-snapshot.test.ts still pins the snapshot to the live document.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { hasNewVersion, type Versions, versionedBreaks } from './lib/changelog.ts';
+import { hasNewVersion, sessionOnly, type Versions, versionedBreaks } from './lib/changelog.ts';
 import { readPending } from './lib/changelog-files.ts';
 import { exampleFailures } from './lib/example-lint.ts';
 import { showAt } from './lib/git-show.ts';
@@ -46,6 +46,8 @@ if (prev) {
   const broken = versionedBreaks(
     withoutApprovedRemovals(breakingChanges(prev, next), approved),
     readPending(root),
+    // A status that only a browser session ever received, before and after, may change unversioned.
+    (op) => sessionOnly(prev, op) && sessionOnly(next, op),
   );
   const versions = read<Versions>('docs/api/versions.json');
   if (

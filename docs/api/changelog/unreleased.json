@@ -40,20 +40,20 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
-    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.deleteSandbox",
-    "op": "DELETE /api/v1/developer/sandbox",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
     "op": "DELETE /api/v1/developer/sandbox",
     "change": "behavior changed",
     "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
+  },
+  {
+    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in."
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
@@ -230,6 +230,14 @@
     "op": "DELETE /api/v1/users/{id}/emails/{email}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "DELETE /api/v1/users/{id}/holds/{role} new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.deleteUsersByIdHoldsByRole",
+    "op": "DELETE /api/v1/users/{id}/holds/{role}",
+    "change": "new operation",
+    "note": "Restore a role the Polaris ID owner paused. Answers 202 with an operation (idp.restore). Platform admin session only."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
@@ -622,14 +630,6 @@
     "op": "GET /api/v1/developer/resolve",
     "change": "new operation",
     "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
-  },
-  {
-    "key": "GET /api/v1/developer/sandbox 200.sandbox.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.getSandbox",
-    "op": "GET /api/v1/developer/sandbox",
-    "change": "200.sandbox.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "GET /api/v1/events 200.items[]|0.requestId: field added",
@@ -1520,6 +1520,30 @@
     "note": "Platform admins list every preset with its values, revision, organization count and pendingOrgs."
   },
   {
+    "key": "GET /api/v1/platform/idp new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdp",
+    "op": "GET /api/v1/platform/idp",
+    "change": "new operation",
+    "note": "Polaris ID status: connected, mode, paused, key expiry, budgets, last SCIM change, open differences. Platform admin session."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/calls new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpCalls",
+    "op": "GET /api/v1/platform/idp/calls",
+    "change": "new operation",
+    "note": "The binding's ledger of Polaris ID calls from a time, paged by cursor. Platform admin session."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/drift new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpDrift",
+    "op": "GET /api/v1/platform/idp/drift",
+    "change": "new operation",
+    "note": "Open differences between Polaris ID and PassBook. Platform admin session."
+  },
+  {
     "key": "GET /api/v1/platform/idp/groups/{key}/claims new operation",
     "class": "additive",
     "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
@@ -2038,6 +2062,14 @@
     "op": "GET /api/v1/users/{id}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "GET /api/v1/users/{id}/access new operation",
+    "class": "additive",
+    "operationId": "polaris-access.getUsersByIdAccess",
+    "op": "GET /api/v1/users/{id}/access",
+    "change": "new operation",
+    "note": "A user's Polaris ID access per role: wanted and why, what Polaris ID showed, any pause. Platform admin session."
   },
   {
     "key": "GET /api/v1/users/{id}/claims new operation",
@@ -3437,20 +3469,12 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
-    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
-    "class": "additive",
+    "key": "POST /api/v1/developer/sandbox response 201 removed",
+    "class": "breaking",
     "operationId": "developer.postSandbox",
     "op": "POST /api/v1/developer/sandbox",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandboxClose",
-    "op": "POST /api/v1/developer/sandbox/close",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in."
   },
   {
     "key": "POST /api/v1/developer/sandbox/close new operation",
@@ -3461,12 +3485,12 @@
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
+    "key": "POST /api/v1/developer/sandbox/key new operation",
     "class": "additive",
-    "operationId": "developer.postSandboxRecreate",
-    "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "operationId": "developer.postSandboxKey",
+    "op": "POST /api/v1/developer/sandbox/key",
+    "change": "new operation",
+    "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
@@ -3477,12 +3501,12 @@
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandboxReopen",
-    "op": "POST /api/v1/developer/sandbox/reopen",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "key": "POST /api/v1/developer/sandbox/recreate response 201 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in."
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
@@ -3493,20 +3517,20 @@
     "note": "Reopen your closed developer sandbox inside its 30 days; returns a new key, shown once."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/reset 200.sandbox.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandboxReset",
-    "op": "POST /api/v1/developer/sandbox/reset",
-    "change": "200.sandbox.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "POST /api/v1/developer/sandbox/reset new operation",
     "class": "additive",
     "operationId": "developer.postSandboxReset",
     "op": "POST /api/v1/developer/sandbox/reset",
     "change": "new operation",
     "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in."
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
@@ -4155,6 +4179,30 @@
     "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
     "change": "new operation",
     "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/freeze new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.postPlatformIdpFreeze",
+    "op": "POST /api/v1/platform/idp/freeze",
+    "change": "new operation",
+    "note": "Pause every Polaris ID change. Platform admin session, Polaris ID sign-in and step-up; never a key."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/reconcile new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpReconcile",
+    "op": "POST /api/v1/platform/idp/reconcile",
+    "change": "new operation",
+    "note": "Check now, or a dry run with dryRun. Answers 202 with an operation (idp.check, idp.dry_run). Platform admin session only."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/scim-breaker/clear new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpScimBreakerClear",
+    "op": "POST /api/v1/platform/idp/scim-breaker/clear",
+    "change": "new operation",
+    "note": "Clear the latched SCIM breaker. Answers 202 with an operation (idp.breaker_clear). Platform admin session only."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -5171,6 +5219,30 @@
     "op": "POST /api/v1/users/{id}/emails/{email}/primary",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/offboard new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdOffboard",
+    "op": "POST /api/v1/users/{id}/offboard",
+    "change": "new operation",
+    "note": "Offboard a user. dryRun answers 200 with the plan; else 202 with an operation (idp.offboard). Admin session, Polaris ID sign-in, step-up."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRoles",
+    "op": "POST /api/v1/users/{id}/roles",
+    "change": "new operation",
+    "note": "Grant or revoke the developer or support role. Platform admin session, Polaris ID sign-in and step-up."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles/{role}/remove-external new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRolesByRoleRemoveExternal",
+    "op": "POST /api/v1/users/{id}/roles/{role}/remove-external",
+    "change": "new operation",
+    "note": "Remove a role added in Polaris ID. 409 IDP_NOT_EXTERNAL when PassBook did not find it there. Platform admin session, Polaris ID sign-in and step-up."
   },
   {
     "key": "POST /api/v1/visitors operation removed",
