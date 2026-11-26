@@ -99,8 +99,21 @@ export function DesignerModeView({
   return (
     <DesignerLayout
       templateId={templateId}
-      readOnly={Boolean(readOnly)}
-      structure={extras ? <extras.Panel structure={<Outline />} /> : <Outline />}
+      readOnly={Boolean(readOnly) && !extras}
+      structure={
+        extras ? (
+          // The host's tabs stay live; only the section editor behind them goes inert.
+          <extras.Panel
+            structure={
+              <div inert={Boolean(readOnly)} data-readonly={Boolean(readOnly) || undefined}>
+                <Outline />
+              </div>
+            }
+          />
+        ) : (
+          <Outline />
+        )
+      }
       below={extras ? <extras.Code /> : undefined}
       preview={
         <DesignerStage

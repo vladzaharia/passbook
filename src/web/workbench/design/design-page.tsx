@@ -25,6 +25,14 @@ import { DesignLoaded } from './design-loaded.tsx';
 import { DESIGN_EXTRAS } from './extras.tsx';
 import './design.css';
 
+/**
+ * Whether the server takes a version save (and its dry run) on the Workbench token. It does not yet:
+ * the templates router answers `POST /templates/:id/versions` for a cookie session only, so the core
+ * opens read only here (the saved version's built pass, Data, Code, Issue, Release) and the edit
+ * path stays built and tested behind this one switch.
+ */
+export const WB_DESIGN_SAVES = false;
+
 function TemplateResource({
   templateId,
   view,
@@ -94,6 +102,7 @@ export function DesignPage({
     orgName: host.context.name,
     client,
     extras: DESIGN_EXTRAS,
+    canSave: WB_DESIGN_SAVES,
   });
   return (
     <ToolPage tool="design">

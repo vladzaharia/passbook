@@ -12,7 +12,7 @@ import type { DesignSearch } from '../../admin/templates/designer/design-search.
 import { Designer, type ReadOnlyDesign } from '../../admin/templates/designer/designer.tsx';
 import { DesignerSkeleton } from '../../admin/templates/designer/designer-skeleton.tsx';
 import { clearDraft, draftKey, loadDraft } from '../../admin/templates/designer/drafts.ts';
-import { useDesignerHost, useHostKey } from '../../admin/templates/designer/host.tsx';
+import { PlaceLink, useDesignerHost, useHostKey } from '../../admin/templates/designer/host.tsx';
 import { useSession } from '../../lib/session.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
@@ -67,10 +67,10 @@ function openedVersion(t: Template): string | null {
 /** A template of the org, in the designer: editable when it is the org's own and active. */
 export function DesignLoaded({ template: t, view, onView }: { template: Template } & DesignView) {
   const [opened] = useState(() => openedVersion(t));
-  const { orgId } = useDesignerHost();
+  const { orgId, allows } = useDesignerHost();
   const version = useBaseVersion(t.id, opened);
   const shared = t.orgId === null;
-  const locked = t.origin === 'baked' || t.status !== 'active' || shared;
+  const locked = t.origin === 'baked' || t.status !== 'active' || shared || !allows.edit;
   const lockedPass = useLockedPass(t, opened ?? '', locked && Boolean(opened));
   const base = useMemo(() => (version.data ? docOf(version.data) : null), [version.data]);
   if (!opened) return <EmptyState art="template" title={WB_DESIGN.states.noVersions} />;
@@ -80,7 +80,10 @@ export function DesignLoaded({ template: t, view, onView }: { template: Template
     ? {
         notice: (
           <Callout className="mb-4" tone="info">
-            {shared ? WB_DESIGN.states.shared : WB_DESIGN.states.locked}
+            {shared ? WB_DESIGN.states.shared : WB_DESIGN.states.locked}{' '}
+            <PlaceLink place={{ to: 'template', templateId: t.id }} className="underline">
+              {WB_DESIGN.states.openAdmin}
+            </PlaceLink>
           </Callout>
         ),
         passJson: lockedPass.data?.passJson ?? null,

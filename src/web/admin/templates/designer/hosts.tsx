@@ -87,6 +87,8 @@ export interface WorkbenchHostOptions {
   orgId: string;
   orgName?: string | undefined;
   client: WorkbenchClient;
+  /** Whether this client can save a version (the core's edits, drafts and dry run): default yes. */
+  canSave?: boolean | undefined;
   /** The Workbench's panels around the core (workbench/design). */
   extras?: DesignerExtras | undefined;
 }
@@ -97,6 +99,7 @@ export function workbenchDesignerHost({
   orgName,
   client,
   extras,
+  canSave = true,
 }: WorkbenchHostOptions): DesignerHost {
   const { api } = client;
   return {
@@ -120,7 +123,7 @@ export function workbenchDesignerHost({
           ...(signal ? { signal } : {}),
         })
       ).items,
-    allows: { edit: true, save: true, publishLive: false },
+    allows: { edit: canSave, save: canSave, publishLive: false },
     Link: TestAdminLink,
     crumbs: ({ name }) => [{ label: 'Design' }, { label: name }],
     useReleaseStep: useWorkbenchReleaseStep,
@@ -131,10 +134,16 @@ export function workbenchDesignerHost({
 }
 
 /** The Workbench host, built once per org and client. */
-export function useWorkbenchDesignerHost({ orgId, orgName, client, extras }: WorkbenchHostOptions) {
+export function useWorkbenchDesignerHost({
+  orgId,
+  orgName,
+  client,
+  extras,
+  canSave,
+}: WorkbenchHostOptions) {
   return useMemo(
-    () => workbenchDesignerHost({ orgId, orgName, client, extras }),
-    [orgId, orgName, client, extras],
+    () => workbenchDesignerHost({ orgId, orgName, client, extras, canSave }),
+    [orgId, orgName, client, extras, canSave],
   );
 }
 

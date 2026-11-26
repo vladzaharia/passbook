@@ -238,7 +238,7 @@ export function Designer({
           assetBase={base_}
           stripUrl={stamps.stripUrl}
         />
-        {extras && phone && !readOnly && allows.save ? (
+        {extras && phone ? (
           <extras.PhoneBar
             dirty={create ? created.made === null : dirty}
             saving={create ? created.saving : flow.saving}

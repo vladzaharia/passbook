@@ -28,7 +28,8 @@ export const WB_DESIGN = {
   states: {
     notFound: 'Template not found',
     shared: 'A shared template. Open it in admin to change it.',
-    locked: 'This template is read only here.',
+    locked: 'Saving a version is not available in the Workbench yet.',
+    openAdmin: 'Open in admin',
     noVersions: 'No versions yet',
     draftOlder: 'You have an unsaved draft from an older version of this template.',
     restore: 'Restore',
