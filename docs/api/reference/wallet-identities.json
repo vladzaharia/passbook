@@ -116,5 +116,101 @@
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "changed": false
     }
+  },
+  "wallet-identities.getPlatformAppleIdentityMovesPreview": {
+    "response": {
+      "toIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "passes": 37,
+      "registered": 15,
+      "holders": 3,
+      "kept": {
+        "tier": 8
+      }
+    }
+  },
+  "wallet-identities.getPlatformAppleIdentityMoves": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-fcaca9137406",
+          "operationId": "0193a1b2-7c00-7000-8000-8d47a660d49a",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "fromIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "toIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "oldPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "newPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "state": "planned",
+          "reason": "MISSING",
+          "conflictCount": 25,
+          "registeredAt": 1795570500000,
+          "voidAt": 1795570500000,
+          "voidedAt": null,
+          "updatedAt": 1795399200000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "wallet-identities.postPlatformAppleIdentityMoves": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "fromIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "toIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-67a34975ea5c",
+      "kind": "kind",
+      "status": "succeeded",
+      "title": "MISSING",
+      "text": "MISSING",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "target": {
+        "type": "generic",
+        "id": "0193a1b2-7c00-7000-8000-e4650b9b5420"
+      },
+      "step": "mapping",
+      "steps": [
+        {
+          "key": "tier",
+          "label": "Remove Test passes",
+          "state": "done",
+          "done": 39,
+          "total": 128,
+          "detail": "MISSING",
+          "until": 1795572600000,
+          "waitingReason": "due",
+          "group": "Access",
+          "startedAt": 1794362400000,
+          "finishedAt": 1795570500000
+        }
+      ],
+      "attempt": 1,
+      "cancelable": true,
+      "cancelRequested": true,
+      "startedBy": {
+        "type": "user",
+        "id": "0193a1b2-7c00-7000-8000-000000000011"
+      },
+      "createdAt": 1794362400000,
+      "startedAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000,
+      "error": null,
+      "result": {
+        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+        "ids": {
+          "tier": "northwind"
+        }
+      },
+      "revision": 3,
+      "pollAfterMs": 1471
+    }
+  },
+  "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm": {
+    "response": {
+      "moveId": "0193a1b2-7c00-7000-8000-36ed6f6441cf",
+      "armed": true
+    }
   }
 }
