@@ -93,7 +93,12 @@ export function ToolHostProvider({
   useRenewal(orgId, csrf);
   return (
     <HostContext.Provider value={value}>
-      <ToolScopeProvider api={value?.api ?? refusingApi} mode="test" orgId={orgId}>
+      <ToolScopeProvider
+        api={value?.api ?? refusingApi}
+        client={`workbench:${orgId ?? 'none'}`}
+        mode="test"
+        orgId={orgId}
+      >
         {children}
       </ToolScopeProvider>
     </HostContext.Provider>

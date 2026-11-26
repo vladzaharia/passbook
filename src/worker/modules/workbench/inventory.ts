@@ -19,6 +19,9 @@ export const WORKBENCH_NEVER: readonly (readonly [RegExp, string])[] = [
     'template delete, archive, assign and share',
   ],
   [SHARED_WRITES, 'org, brand, member, identity, plan, settings and inbound connection writes'],
-  [/^\w+ \/api\/v1\/(workbench|developer|cli)(\/|$)/, 'a token never mints a token or a CLI token'],
+  [
+    /^\w+ \/api\/v1\/(workbench\/token|developer|cli)(\/|$)/,
+    'a token never mints a token or a CLI token',
+  ],
   [/^\w+ \/api\/v1\/platform(\/|$)/, 'platform administration'],
 ];

@@ -7093,6 +7093,15 @@
       ]
     },
     {
+      "code": "WORKBENCH_CONTEXT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
       "code": "WORKBENCH_TEST_ONLY",
       "statuses": [
         403

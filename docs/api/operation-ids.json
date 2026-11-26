@@ -112,6 +112,7 @@
   "entitlements.putPlatformOrgsByIdEntitlements",
   "events.getEvents",
   "events.getEventsById",
+  "events.getEventsByIdDeliveries",
   "google-wallet.postWalletV1GoogleByAccountId",
   "holders.getHolders",
   "holders.getHoldersById",
@@ -584,5 +585,10 @@
   "webhooks.postWebhookEndpointsByIdTest",
   "webhooks.postWebhookEndpointsCapture",
   "workbench.deleteToken",
+  "workbench.getContexts",
+  "workbench.getRequestLog",
+  "workbench.getResolve",
+  "workbench.getSummary",
+  "workbench.listRequestLogs",
   "workbench.postToken"
 ]

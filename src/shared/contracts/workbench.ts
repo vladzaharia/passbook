@@ -54,6 +54,8 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   'GET /api/v1/passes/:id/diff',
   'GET /api/v1/passes/:id/events',
   'GET /api/v1/passes/:id/devices',
+  // Simulate sends real Test events; a Live pass is refused (`SIMULATE_TEST_ONLY`).
+  'POST /api/v1/passes/:id/simulate',
   // Events, and the Connections wizard's outbound endpoints (Test-mode rows; DM2).
   'GET /api/v1/events',
   'GET /api/v1/events/:id',
@@ -92,6 +94,12 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   'GET /api/v1/operations/:id',
   'POST /api/v1/operations/:id/cancel',
   'POST /api/v1/operations/:id/retry',
+  // The Test request log, what an id is in Test data, and the shell's contexts and counts.
+  'GET /api/v1/request-logs',
+  'GET /api/v1/request-logs/:id',
+  'GET /api/v1/resolve',
+  'GET /api/v1/workbench/summary',
+  'GET /api/v1/workbench/contexts',
   // Release a template version to Test only (`modes: ['test']`).
   'POST /api/v1/templates/:id/release',
 ];

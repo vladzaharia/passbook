@@ -2,6 +2,5 @@ import { PassBook } from '@passbook/sdk';
 
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
-for await (const item of pb.requestLogs.list({
-  limit: 25,
-})) console.log(item);
+const result = await pb.requestLogs.list();
+console.log(result);

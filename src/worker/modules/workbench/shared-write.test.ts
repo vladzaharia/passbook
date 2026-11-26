@@ -28,7 +28,7 @@ describe('shared writes: the Workbench token goes through the one Test-credentia
     const sandbox = (await makeOrg(t.kit.f, { kind: 'developer' })).id;
     const ctx = createServiceContext(t.kit.env, { clock: t.kit.clock });
     const token = { ...ctx, via: 'try' as const };
-    const member = { kind: 'session', mode: 'test' };
+    const member = { kind: 'session', mode: 'test' as const };
     expect(await codeOf(assertSharedWrite(token, member, real, 'the brand kit'))).toBe(
       'MODE_LIVE_REQUIRED',
     );

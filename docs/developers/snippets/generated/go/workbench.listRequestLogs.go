@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -16,14 +15,7 @@ func main() {
 		panic(err)
 	}
 
-	var query passbook.RequestLogsListQuery
-	if err := json.Unmarshal([]byte(`{
-  "limit": 25
-}`), &query); err != nil {
-		panic(err)
-	}
-
-	pager := pb.RequestLogs.List(ctx, &query)
+	pager := pb.RequestLogs.List(ctx, nil)
 	for pager.Next(ctx) {
 		fmt.Printf("%+v\n", pager.Item())
 	}
