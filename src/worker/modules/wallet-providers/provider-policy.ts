@@ -1,4 +1,7 @@
-import type { WalletProviderIssuance } from '../../../shared/contracts/wallet-providers.ts';
+import type {
+  WalletProviderIssuance,
+  WalletRelease,
+} from '../../../shared/contracts/wallet-providers.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { WalletProvider } from './instance-types.ts';
 import {
@@ -96,11 +99,30 @@ export function walletIssuanceByProvider(
   };
 }
 
+/** The release state of every provider in both modes, for the platform pages. */
+export function walletReleaseByMode(): WalletRelease {
+  return {
+    google: {
+      live: walletProviderIssuance('google', 'live'),
+      test: walletProviderIssuance('google', 'test'),
+    },
+    samsung: {
+      live: walletProviderIssuance('samsung', 'live'),
+      test: walletProviderIssuance('samsung', 'test'),
+    },
+  };
+}
+
+const WALLET_NAME: Record<WalletProvider, string> = {
+  google: 'Google Wallet',
+  samsung: 'Samsung Wallet',
+};
+
 export class WalletProviderDisabledError extends AppError {
   readonly reason: WalletProviderDisabledReason;
 
   constructor(provider: WalletProvider, reason: WalletProviderDisabledReason) {
-    super('WALLET_PROVIDER_DISABLED', 403, `${provider} wallet is not available yet.`);
+    super('WALLET_PROVIDER_DISABLED', 403, `${WALLET_NAME[provider]} isn't released yet.`);
     this.reason = reason;
   }
 }

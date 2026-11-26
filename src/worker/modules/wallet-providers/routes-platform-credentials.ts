@@ -4,6 +4,7 @@ import { SetSamsungCardSchema } from '../../../shared/contracts/wallet-provider-
 import {
   HoldWalletEnrolmentSchema,
   PlatformWalletCredentialCheckParamsSchema,
+  PlatformWalletCredentialListSchema,
   PlatformWalletEnrolmentListSchema,
   PlatformWalletEnrolmentParamsSchema,
   PlatformWalletEnrolmentQuerySchema,
@@ -12,7 +13,6 @@ import {
   SavePlatformWalletCredentialSchema,
   WalletCredentialCheckQueuedSchema,
   WalletCredentialCheckResultSchema,
-  WalletCredentialListSchema,
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
   WalletMigrationQueuedSchema,
@@ -62,7 +62,7 @@ register(
     path: '/wallet-credentials',
     summary: 'List the platform wallet credentials',
     query: CursorQuerySchema,
-    response: WalletCredentialListSchema,
+    response: PlatformWalletCredentialListSchema,
   },
   async (c) => c.json(await listPlatformCredentials(serviceContext(c), sessionOf(c))),
 );

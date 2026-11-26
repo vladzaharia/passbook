@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import { WalletReissueResponseSchema } from '@/shared/contracts/wallet-provider-actions.ts';
 import {
+  PlatformWalletCredentialListSchema,
   PlatformWalletEnrolmentListSchema,
   type ResolveWalletMigration,
   type SaveWalletCredential,
@@ -50,7 +51,9 @@ export function usePlatformCredentials() {
   return useQuery({
     queryKey: [...KEY, 'platform-credentials'],
     queryFn: ({ signal }) =>
-      api.get('/api/v1/platform/wallet-credentials', WalletCredentialListSchema, { signal }),
+      api.get('/api/v1/platform/wallet-credentials', PlatformWalletCredentialListSchema, {
+        signal,
+      }),
   });
 }
 

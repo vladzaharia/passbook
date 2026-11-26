@@ -70,12 +70,19 @@ function CardRow({ credential, type }: { credential: WalletCredential; type: str
 }
 
 /** One card per pass type on the platform partner. A card, once named, does not change. */
-export function SamsungCards({ credential }: { credential: WalletCredential }) {
+export function SamsungCards({
+  credential,
+  notice,
+}: {
+  credential: WalletCredential;
+  notice?: string | null;
+}) {
   return (
     <ul
       aria-label="Samsung cards"
       className="flex flex-col gap-3 rounded-lg border border-border p-3"
     >
+      {notice ? <li className="text-sm text-fg-muted">{notice}</li> : null}
       {SAMSUNG_CARD_TYPES.map((type) => (
         <CardRow key={type} credential={credential} type={type} />
       ))}

@@ -14,7 +14,7 @@ import {
   StatusPill,
   toast,
 } from '@/web/ui/index.ts';
-import { COPY, PROVIDER_NAME, safeError } from './copy.ts';
+import { COPY, PROVIDER_NAME, releaseLine, safeError } from './copy.ts';
 import { CredentialRow } from './credential-row.tsx';
 import { blockerOf, gatesOf } from './gates.ts';
 import { useWalletActions } from './queries.ts';
@@ -65,7 +65,7 @@ export function OrgProviderCard({
   const name = PROVIDER_NAME[e.provider];
   const on = e.state === 'on';
   const blocker = blockerOf(e);
-  const notReleased = e.issuance.state === 'disabled' ? COPY.notReleased : undefined;
+  const notReleased = releaseLine(e.provider, e.issuance) ?? undefined;
   const help = e.state === 'held' ? undefined : on ? notReleased : (blocker ?? notReleased);
   const revoked = e.state === 'revoked';
 
