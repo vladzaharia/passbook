@@ -73,7 +73,8 @@ export const connectionsWebhooks: Journey = {
         if (!endpoint) {
           const made = await owner.post(`/api/v1/webhook-endpoints?${q}`, {
             orgId: env.orgId,
-            url: `https://example.com/journey-hook-${env.stamp}`,
+            // hooks.example.com is the host the e2e server resolves without DNS (WEBHOOK_TEST_DNS).
+            url: `https://hooks.example.com/journey-hook-${env.stamp}`,
             description: DESCRIPTION,
             eventTypes: ['pass.issued', 'pass.updated', 'pass.voided'],
           });
