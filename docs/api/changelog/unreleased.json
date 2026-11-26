@@ -2591,6 +2591,8 @@
     "op": "GET /api/v1/webhook-endpoints/setup",
     "change": "new operation",
     "note": "The setup guide for the server that receives webhooks: store the secret, verify the signature, answer 2xx."
+  },
+  {
     "key": "GET /api/v1/workbench/contexts new operation",
     "class": "additive",
     "operationId": "workbench.getContexts",

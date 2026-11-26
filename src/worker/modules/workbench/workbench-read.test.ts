@@ -7,7 +7,7 @@ import {
   WorkbenchSummarySchema,
 } from '../../../shared/contracts/workbench-read.ts';
 import { run } from '../../platform/db.ts';
-import { workbenchKit } from './workbench-test-fixtures.ts';
+import { workbenchKit } from './workbench-read-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof workbenchKit>>;
 beforeAll(async () => {

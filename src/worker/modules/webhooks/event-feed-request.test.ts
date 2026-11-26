@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { EventDeliveriesSchema } from '../../../shared/contracts/workbench-read.ts';
-import { workbenchKit } from '../workbench/workbench-test-fixtures.ts';
+import { workbenchKit } from '../workbench/workbench-read-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof workbenchKit>>;
 beforeAll(async () => {
