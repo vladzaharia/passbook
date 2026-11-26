@@ -273,19 +273,28 @@ test.describe('platform invitations', () => {
     await freshAdmin(browser);
     await admin.send('POST', '/api/v1/platform/idp/groups', { key: group, friendlyName: 'Guests' });
     const polarisGroup = `passbook_g_${group}`;
-    for (const [who, signupAddress, outcome] of [
-      ['match', null, 'joined'],
-      ['mismatch', email('other'), 'refused'],
+    for (const [who, signupAddress, outcome, developer] of [
+      ['match', null, 'joined', false],
+      ['mismatch', email('other'), 'refused', false],
+      ['devmismatch', email('devother'), 'refused', true],
     ] as const) {
       const invited = email(who);
       const before = snapshotMail();
-      await admin.send('POST', '/api/v1/platform/invitations', { email: invited, groups: [group] });
+      await admin.send('POST', '/api/v1/platform/invitations', {
+        email: invited,
+        groups: [group],
+        developer,
+      });
       const secret = await nextInvite(before, 'p_');
       const context = await browser.newContext();
       const page = await context.newPage();
       const sub = await createAndAccept(page, context, secret, signupAddress ?? invited);
       // A stranger with their own address holds no group the moment the account exists: the token carries none.
-      if (outcome === 'refused') expect(await polarisGroups(sub)).not.toContain(polarisGroup);
+      if (outcome === 'refused') {
+        expect(await polarisGroups(sub)).not.toContain(polarisGroup);
+        // Nor the developer role: a developer invitation's token carries none either.
+        expect(await polarisGroups(sub)).not.toContain('passbook_developers');
+      }
       const res = await context.request.post('/api/v1/invitations/confirm', {
         data: { token: secret },
       });

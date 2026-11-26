@@ -19,7 +19,8 @@ export async function isLiveAdmin(
   const rpc = idpClient(ctx.env, ctx.log);
   for (const subject of await subjectsOfUser(ctx.env.DB, userId)) {
     try {
-      if ((await rpc.lookup(subject)).isAdmin) return true;
+      const found = await rpc.lookup(subject);
+      if (found.isAdmin || found.roles.includes('platform_admin')) return true;
     } catch (error) {
       if (idpCodeOf(error) !== 'IDP_NOT_FOUND') return true;
     }

@@ -9,12 +9,10 @@ export const ledgerOfPlatform = (invite: PlatformInvite, reason: string): WriteC
 });
 
 /**
- * A forwarded link enrols nobody: the token carries no groups, only the kind. The groups are added once the signed-up
- * address has matched the invited one (`grantPlatformGroups`).
+ * A forwarded link enrols nobody: the token carries no groups and no developer role, only the kind. The groups are added once the signed-up
+ * address has matched the invited one (`grantPlatformGroups`), developer included.
  */
-export const platformSignupSpec = (invite: PlatformInvite): SignupSpec => ({
-  kind: invite.developer ? 'developer' : 'platform',
-});
+export const platformSignupSpec = (): SignupSpec => ({ kind: 'platform' });
 
 /** What an existing account is given at once when it claims the invitation. */
 export const platformTargets = (invite: PlatformInvite): Target[] => [

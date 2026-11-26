@@ -4,6 +4,7 @@ import { grant } from './authority.ts';
 import { codeOf, count, db, refusal } from './authority-ext-fixtures.ts';
 import { scopeOf } from './authority-granted.ts';
 import type { Principal } from './authority-principal.ts';
+import { authorityPredicate } from './authority-read.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { first, run } from './db.ts';
 import { createJobContext } from './service-context.ts';
@@ -193,6 +194,17 @@ describe('users.access_revision and deferred membership principals', () => {
 });
 
 describe('platform principal with inactiveOk', () => {
+  it('is refused by the read fences', () => {
+    const p = {
+      kind: 'platform',
+      userId: 'u',
+      sessionIdHash: 's',
+      orgId: 'o',
+      inactiveOk: true,
+    } as never;
+    expect(() => authorityPredicate(p, { scope: 'org', now: 1 })).toThrow(/grants, not reads/);
+  });
+
   const admin = {
     kind: 'platform',
     userId: 'u',
@@ -203,6 +215,7 @@ describe('platform principal with inactiveOk', () => {
 
   it('is for the membership revoke of an offboarding and no other purpose', () => {
     expect(scopeOf({ purpose: 'org.member.revoke', principal: admin } as never)).toBe('org');
+    expect(scopeOf({ purpose: 'org.developer.remove', principal: admin } as never)).toBe('org');
     expect(() => scopeOf({ purpose: 'org.member.add', principal: admin } as never)).toThrow(
       /allowlisted/,
     );

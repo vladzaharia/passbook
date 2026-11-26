@@ -152,6 +152,39 @@ describe('groups', () => {
     );
   });
 
+  it('does not adopt an owner-adopted group, and a refusal leaves no intent', async () => {
+    const { headers } = await person();
+    await run(
+      h.env.DB,
+      'INSERT INTO idp_group_intents (key, friendly_name, created_at) VALUES (?, ?, ?)',
+      [crew, 'Crew', h.clock.now()],
+    );
+    idp.groupStore.set(crew, {
+      kind: 'adopted',
+      name: `owner_${crew}`,
+      friendlyName: 'Crew',
+      otherClients: 0,
+    });
+    await idp.createGroup(`${crew}x`, 'Other', {
+      ref: 'x',
+      reason: 'group_create',
+      actor: { kind: 'user', id: 'x' },
+    });
+    // Make the binding refuse the create for this key (the name is taken).
+    idp.groupStore.set(`z${crew}`, {
+      kind: 'custom',
+      name: `passbook_g_${crew}`,
+      friendlyName: 'T',
+      otherClients: 0,
+    });
+    const res = await send('POST', BASE, headers, { key: crew, friendlyName: 'Crew' });
+    expect(res.status).toBe(409);
+    expect(await all(h.env.DB, 'SELECT 1 FROM idp_groups WHERE key = ?', [crew])).toEqual([]);
+    expect(await all(h.env.DB, 'SELECT 1 FROM idp_group_intents WHERE key = ?', [crew])).toEqual(
+      [],
+    );
+  });
+
   it('does not adopt a group with the name but no intent of ours', async () => {
     const { headers } = await person();
     await idp.createGroup(crew, 'Theirs', {

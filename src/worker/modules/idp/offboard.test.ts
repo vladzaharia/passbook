@@ -250,6 +250,41 @@ describe('offboard', () => {
     expect(row?.revoked_at).not.toBeNull();
   });
 
+  it('ends a sponsorship in a suspended org and finishes the offboard', async () => {
+    const t = await target();
+    const idle = await makeOrg(f());
+    const keeper = await person(f(), { link: false });
+    await membership(f(), idle.id, keeper, ['org_admin']);
+    await sponsor(f(), idle.id, t.p);
+    await run(rig.h.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [idle.id]);
+    const a = await admin();
+    const res = await start(offboard(t.p.id), 'POST', a.headers, {});
+    expect(res.status, await res.clone().text()).toBe(202);
+    const left = await first<{ n: number }>(
+      rig.h.env.DB,
+      'SELECT count(*) AS n FROM developer_sponsors WHERE user_id = ? AND ended_at IS NULL',
+      [t.p.id],
+    );
+    expect(left?.n).toBe(0);
+    const user = await first<{ status: string }>(
+      rig.h.env.DB,
+      'SELECT status FROM users WHERE id = ?',
+      [t.p.id],
+    );
+    expect(user?.status).toBe('disabled');
+  });
+
+  it('refuses a member of the platform admins group who has not signed in since', async () => {
+    const t = await target();
+    const a = await admin();
+    rig.idp.accounts.get(t.p.subject)?.roles.add('platform_admin');
+    await expectProblem(
+      await start(offboard(t.p.id), 'POST', a.headers, { dryRun: true }),
+      409,
+      'IDP_PLATFORM_ADMIN',
+    );
+  });
+
   it('refuses an account that is an admin in Polaris ID though the user has not signed in since', async () => {
     const t = await target();
     const a = await admin();

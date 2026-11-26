@@ -161,13 +161,16 @@ const PLATFORM_ADMIN_PURPOSES: readonly string[] = [
   'org_mode.wallet.migration_resolve',
 ];
 
+/** The purposes a platform admin may run on a suspended org: offboarding ends what the user holds there. */
+const INACTIVE_OK_PLATFORM: readonly string[] = ['org.member.revoke', 'org.developer.remove'];
+
 /** The scope a purpose names, checked against the principal that may hold it. */
 export function scopeOf(input: GrantInput): GrantScope {
   const match = PURPOSE.exec(input.purpose);
   if (!match) throw new AuthorityError('GRANT_BAD_PURPOSE', `Bad grant purpose: ${input.purpose}`);
   const scope = match[1] as GrantScope;
   const p = input.principal;
-  if (p.kind === 'platform' && p.inactiveOk && input.purpose !== 'org.member.revoke')
+  if (p.kind === 'platform' && p.inactiveOk && !INACTIVE_OK_PLATFORM.includes(input.purpose))
     throw new AuthorityError('GRANT_BAD_PURPOSE', 'inactiveOk is for allowlisted purposes.');
   if (PLATFORM_ADMIN_PURPOSES.includes(input.purpose) && p.kind !== 'platform')
     throw new AuthorityError(

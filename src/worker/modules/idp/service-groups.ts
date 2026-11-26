@@ -94,7 +94,11 @@ export async function createGroup(
     .createGroup(input.key, input.friendlyName, writeCtx(ctx, userActor(actorId), 'group_create'))
     .catch(async (error: unknown) => {
       // An earlier attempt may have made the group before it failed: it is ours when its key is there.
-      if (retry && (await rpc.groups()).some((g) => g.key === input.key)) return { key: input.key };
+      if (retry && (await rpc.groups()).some((g) => g.key === input.key && g.kind === 'custom'))
+        return { key: input.key };
+      // A definite refusal ends the attempt: nothing was made, so no intent stays behind.
+      if (error instanceof AppError && ['IDP_REFUSED', 'IDP_CONFLICT'].includes(error.code))
+        await clearGroupIntentStmt(db, input.key).run();
       return nameTaken(error);
     });
   if ('dryRun' in sent) {

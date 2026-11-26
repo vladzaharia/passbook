@@ -175,6 +175,12 @@ function holderProof(proof: HolderProof, now: number, b: Binds): string {
  * the principal or its org target is missing. The org and mode always come from a row the check
  * joins (membership, key, scanner, or the org target of a platform or system actor).
  */
+/** `inactiveOk` is for grants only: a read fence never widens to a suspended org. */
+export function assertNoInactiveOk(p: Principal): void {
+  if (p.kind === 'platform' && p.inactiveOk)
+    throw new Error('inactiveOk is for grants, not reads.');
+}
+
 export function actorSql(p: Principal, now: number, b: Binds): string {
   switch (p.kind) {
     case 'membership': {

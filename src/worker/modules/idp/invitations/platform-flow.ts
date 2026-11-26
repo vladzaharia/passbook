@@ -98,7 +98,7 @@ export async function setupPlatform(
     );
   const rpc = idpClient(ctx.env, ctx.log);
   const write = ledgerOfPlatform(invite, INVITE_REASON.setup);
-  const signup = await rpc.createSignup(platformSignupSpec(invite), write);
+  const signup = await rpc.createSignup(platformSignupSpec(), write);
   if ('dryRun' in signup)
     throw new AppError(
       'IDP_UNAVAILABLE',

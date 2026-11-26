@@ -80,13 +80,14 @@ describe('POST /invitations/preview, platform', () => {
 });
 
 describe('setup', () => {
-  it('mints a one-hour token that carries no group, and developer when chosen', async () => {
+  it('mints a one-hour token that carries no group and no role, developer invitations too', async () => {
     const key = await customGroup(r);
     const invite = await platformInvite(r, 'guest@agency.test', { groups: [key], developer: true });
     const res = await post(r, '/setup', challenge(invite.secret));
     expect(res.status).toBe(200);
     const token = [...r.idp.signups.values()].at(-1);
-    expect([...(token?.targets ?? [])]).toEqual(['developer']);
+    // Not even the developer role: it is given once the address matches.
+    expect([...(token?.targets ?? [])]).toEqual([]);
     expect(
       await rowsOf(r, 'SELECT * FROM platform_invitation_setups WHERE invitation_id = ?', [
         invite.id,

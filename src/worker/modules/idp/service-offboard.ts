@@ -39,25 +39,28 @@ async function endAccess(
 ): Promise<void> {
   const db = ctx.env.DB;
   const now = ctx.clock.now();
-  const orgs = await orgInfo(
-    db,
-    plan.memberships.map((m) => m.org.id),
-  );
+  const ids = [...plan.memberships.map((m) => m.org.id), ...plan.sponsorships.map((x) => x.org.id)];
+  const orgs = await orgInfo(db, ids);
+  // A suspended org takes no membership principal: the admin session acts, as it did to make the plan.
+  const managerFor = async (orgId: string) =>
+    orgs.get(orgId)?.status === 'suspended'
+      ? {
+          principal: {
+            kind: 'platform' as const,
+            userId: auth.userId,
+            sessionIdHash: auth.sessionId,
+            orgId,
+            inactiveOk: true as const,
+          },
+          checks: [],
+        }
+      : await managerOf(ctx, auth, orgId);
+  // Every org check comes before the first write, so a refusal leaves nothing half done.
+  const managers = new Map<string, Awaited<ReturnType<typeof managerFor>>>();
+  for (const id of ids) if (!managers.has(id)) managers.set(id, await managerFor(id));
+  const managerOfOrg = (id: string) => managers.get(id) as Awaited<ReturnType<typeof managerFor>>;
   for (const m of plan.memberships) {
-    // A suspended org takes no membership principal: the admin session acts, as it did to make the plan.
-    const manager =
-      orgs.get(m.org.id)?.status === 'suspended'
-        ? {
-            principal: {
-              kind: 'platform' as const,
-              userId: auth.userId,
-              sessionIdHash: auth.sessionId,
-              orgId: m.org.id,
-              inactiveOk: true as const,
-            },
-            checks: [],
-          }
-        : await managerOf(ctx, auth, m.org.id);
+    const manager = managerOfOrg(m.org.id);
     try {
       await revokeActiveMembership(ctx, manager.principal, manager.checks, m.membershipId, {
         orgId: m.org.id,
@@ -77,7 +80,7 @@ async function endAccess(
   for (const s of plan.sponsorships) {
     const sponsor = await liveSponsorOf(db, s.org.id, plan.userId);
     if (!sponsor) continue;
-    const manager = await managerOf(ctx, auth, s.org.id);
+    const manager = managerOfOrg(s.org.id);
     await endSponsor(ctx, manager.principal, manager.checks, sponsor.id, 'removed', {
       orgId: s.org.id,
       actorType: 'user',
