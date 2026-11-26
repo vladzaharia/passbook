@@ -12182,6 +12182,7 @@ export type TemplatesCandidatesCreateResponse = {
   accountRevision?: number;
   providerIdentityHash?: string;
   projection?: unknown;
+  selfAuthored?: boolean;
   approvals: Array<{
     id: string;
     candidateId: string;
@@ -12218,6 +12219,7 @@ export type TemplatesCandidatesListResponse = {
     accountRevision?: number;
     providerIdentityHash?: string;
     projection?: unknown;
+    selfAuthored?: boolean;
     approvals: Array<{
       id: string;
       candidateId: string;
@@ -12259,6 +12261,7 @@ export type TemplatesCandidatesListResponse = {
       }>;
     };
   };
+  wallet?: "on" | "off" | "not_released";
 };
 
 export type TemplatesCandidatesPromoteParams = {
@@ -12292,6 +12295,7 @@ export type TemplatesCandidatesPromoteResponse = {
   accountRevision?: number;
   providerIdentityHash?: string;
   projection?: unknown;
+  selfAuthored?: boolean;
   approvals: Array<{
     id: string;
     candidateId: string;

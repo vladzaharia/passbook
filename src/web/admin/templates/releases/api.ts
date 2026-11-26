@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MODE_HEADER, type Mode } from '@/shared/contracts/common.ts';
+import { MODE_HEADER } from '@/shared/contracts/common.ts';
 import {
   type RollbackTemplateRelease,
   RollbackTemplateReleaseSchema,
@@ -8,7 +8,6 @@ import {
   TemplateReleaseSchema,
   type TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
-import { WalletEnrolmentListSchema } from '@/shared/contracts/wallet-providers.ts';
 import { api } from '../../../lib/api.ts';
 import { isApiError } from '../../../lib/errors.ts';
 
@@ -68,17 +67,3 @@ export function useReleaseActions(templateId: string, scope: TemplateReleaseScop
 }
 
 /** Google and Samsung enrolments of one organization in an explicit mode. */
-export function useWalletEnrolments(orgId: string, mode: Mode) {
-  return useQuery({
-    queryKey: ['admin', 'template-releases', 'enrolments', orgId, mode],
-    queryFn: ({ signal }) =>
-      api.get(
-        `/api/v1/orgs/${encodeURIComponent(orgId)}/wallet-enrolments`,
-        WalletEnrolmentListSchema,
-        {
-          headers: { [MODE_HEADER]: mode },
-          signal,
-        },
-      ),
-  });
-}

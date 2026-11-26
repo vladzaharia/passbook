@@ -1,8 +1,13 @@
 import { env } from 'cloudflare:workers';
+import { zlibSync } from 'fflate';
 import { envString } from '../../platform/env.ts';
 import { createLogger } from '../../platform/log.ts';
+import { crc32 } from '../templates/package/hash.ts';
+import { parsePng } from '../templates/package/png.ts';
+import { setArtTransformForTest } from './assets.ts';
 import { mockProvidersUrl } from './mock-endpoint.ts';
-import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { setWalletProvidersEnabledForTest, setWalletReleaseForTest } from './provider-policy.ts';
+import { setReleaseRows } from './repo-e2e-release.ts';
 
 /**
  * vite.config.ts defines it (tools/lib/e2e-release.ts) only for a tools/e2e-server.ts build started with
@@ -39,6 +44,52 @@ export function e2eReleaseRefusal(source: object): E2eReleaseRefusal | null {
   return null;
 }
 
+function pngChunk(type: string, data: Uint8Array): Uint8Array {
+  const out = new Uint8Array(12 + data.length);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, data.length);
+  for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  out.set(data, 8);
+  view.setUint32(8 + data.length, crc32(out, 4, 8 + data.length));
+  return out;
+}
+
+/** A plain RGBA PNG of exactly the size asked for: the local Images binding cannot cut, this stands in. */
+async function stubCut(
+  bytes: Uint8Array,
+  size: { width: number; height?: number },
+): Promise<Uint8Array> {
+  const { width } = size;
+  // A downscale names only its width: the height follows the source's aspect.
+  const source = parsePng(bytes);
+  const height =
+    size.height ?? ('error' in source ? width : Math.round((source.height * width) / source.width));
+  const header = new Uint8Array(13);
+  const view = new DataView(header.buffer);
+  view.setUint32(0, width);
+  view.setUint32(4, height);
+  header[8] = 8;
+  header[9] = 6;
+  const stride = 1 + width * 4;
+  const rows = new Uint8Array(height * stride);
+  for (let y = 0; y < height; y++) {
+    rows.fill(255, y * stride + 1, (y + 1) * stride);
+  }
+  const parts = [
+    new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk('IHDR', header),
+    pngChunk('IDAT', zlibSync(rows)),
+    pngChunk('IEND', new Uint8Array()),
+  ];
+  const png = new Uint8Array(parts.reduce((n, part) => n + part.length, 0));
+  let at = 0;
+  for (const part of parts) {
+    png.set(part, at);
+    at += part.length;
+  }
+  return png;
+}
+
 /**
  * e2e only (docs/design/wallet-providers/e2e-release.md): opens Google and Samsung in both modes for this
  * isolate. Without the build define this returns at once and the bundler drops the rest of the module;
@@ -54,6 +105,37 @@ export function openE2eRelease(source: object = env): boolean {
     return false;
   }
   setWalletProvidersEnabledForTest(true);
+  setArtTransformForTest(stubCut);
   log.warn('wallet.e2e_release_open', { code: 'WALLET_E2E_RELEASE' });
   return true;
+}
+
+/** The path a rehearsal of the rollback posts to (e2e/73-wallets-journeys.spec.ts). */
+const E2E_RELEASE_CONTROL = '/__e2e/wallet-release';
+
+/**
+ * The rollback rehearsal on an opened e2e server: both providers in both modes go to `draining` or back to
+ * `released`, in the isolate (RELEASE is frozen) and in the table the database's guards read, as a flip migration
+ * would change both. Anything else answers 400; a server the release refused answers 403.
+ */
+export async function controlE2eRelease(request: Request, source: object): Promise<Response> {
+  const json = (status: number, body: unknown) => Response.json(body, { status });
+  if (e2eReleaseRefusal(source)) return json(403, { error: 'not an e2e release server' });
+  if (request.method !== 'POST') return json(405, { error: 'POST only' });
+  const { state } = (await request.json().catch(() => ({}))) as { state?: unknown };
+  if (state !== 'draining' && state !== 'released')
+    return json(400, { error: 'state is draining or released' });
+  setWalletReleaseForTest(state);
+  await setReleaseRows((source as { DB: D1Database }).DB, state, Date.now());
+  return json(200, { state });
+}
+
+/** The Worker's first look at a request: null for every build but the e2e release, which folds this away. */
+export async function e2eReleaseControl(
+  request: Request,
+  source: object = env,
+): Promise<Response | null> {
+  if (typeof __WALLET_E2E_RELEASE__ === 'undefined' || __WALLET_E2E_RELEASE__ !== true) return null;
+  if (new URL(request.url).pathname !== E2E_RELEASE_CONTROL) return null;
+  return controlE2eRelease(request, source);
 }

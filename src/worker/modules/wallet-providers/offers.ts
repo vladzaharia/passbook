@@ -15,6 +15,7 @@ import {
   getWalletInstance,
   type WalletInstanceProof,
 } from './instance.ts';
+import { nextInstanceBoundary } from './lifecycle-boundary.ts';
 import {
   captureOfferContext,
   type EligibleWalletProvider,
@@ -31,6 +32,7 @@ import {
 } from './offers-instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
+import { markInstanceDirty } from './repo-google-reconcile.ts';
 import {
   createSamsungRuntimeOffer,
   WalletRuntimeError,
@@ -221,6 +223,10 @@ export async function issueWalletOfferScoped(
     )
       throw notFound();
     delivered = true;
+    // A card that changes by itself (an event ends, the pass expires) needs the drain to know, with no edit to
+    // tell it: listing the instance parks it until that boundary. No boundary, no row.
+    if ((await nextInstanceBoundary(ctx, pass.id)) !== null)
+      await markInstanceDirty(ctx.env.DB, instance.id);
     const copy = () => recordCopy(ctx, pass, provider);
     if (!options.deferCopy) await copy();
     return {
