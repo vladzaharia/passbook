@@ -90,7 +90,7 @@ export function AuditTable({
               meta: { nowrap: true, hideBelow: 'lg' as const },
               cell: ({ row }: { row: { original: AuditEntry } }) =>
                 row.original.orgId
-                  ? (orgName(row.original.orgId) ?? row.original.orgId)
+                  ? (orgName(row.original.orgId) ?? 'Unknown organization')
                   : 'Not recorded',
             },
           ]

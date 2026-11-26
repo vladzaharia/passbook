@@ -60,7 +60,7 @@ export function DesignerStage({
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
-  // has no tab.
+  // has no tab. The paper pane says so itself.
   const effective = useMemo(() => {
     const all = channels.data?.effective;
     if (!all) return undefined;
@@ -73,7 +73,7 @@ export function DesignerStage({
     if (!all) return undefined;
     return Object.fromEntries(
       (Object.keys(all) as (keyof typeof all)[])
-        .filter((c) => c !== 'nfc' && !all[c].on && all[c].source === 'template')
+        .filter((c) => c !== 'nfc' && c !== 'paper' && !all[c].on && all[c].source === 'template')
         .map((c) => [
           c,
           scanLine(TEMPLATE_BRAND_COPY.designer.channelOff, { channel: CHANNEL_LABEL[c] }),
