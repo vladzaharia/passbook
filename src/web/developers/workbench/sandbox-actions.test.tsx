@@ -7,7 +7,6 @@ const m = vi.hoisted(() => ({
   reopen: vi.fn(),
   session: vi.fn(),
   verify: vi.fn(),
-  copy: vi.fn(),
 }));
 
 vi.mock('../console/sandbox-actions.ts', () => ({
@@ -23,10 +22,9 @@ vi.mock('../console/sandbox-actions.ts', () => ({
 }));
 vi.mock('../console/session.ts', () => ({ loadSession: m.session }));
 vi.mock('../console/turnstile.ts', () => ({ verify: m.verify }));
-vi.mock('../playground/copy.ts', () => ({ copyToClipboard: m.copy }));
 
 import { ActionError } from '../console/sandbox-actions.ts';
-import { NewKey, ReopenAction, ResetAction } from './sandbox-actions.tsx';
+import { ReopenAction, ResetAction } from './sandbox-actions.tsx';
 
 const ready = { kind: 'ready', csrf: 'c', siteKey: 'k', sandbox: {} };
 const closed = (reason: string, until: number | null) =>
@@ -36,27 +34,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   m.session.mockResolvedValue(ready);
   m.verify.mockResolvedValue('tok');
-});
-
-describe('NewKey', () => {
-  it('shows the key once and copies it as an env line', async () => {
-    m.copy.mockResolvedValue(true);
-    const onClose = vi.fn();
-    render(<NewKey done secret="pk_1" line="Reset." onClose={onClose} />);
-    expect(screen.getByText('PASSBOOK_KEY=pk_1')).toBeInTheDocument();
-    expect(screen.getByText('Shown once.')).toBeInTheDocument();
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Copy' }));
-    expect(m.copy).toHaveBeenCalledWith('PASSBOOK_KEY=pk_1\n');
-    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Done' }));
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it('has no key box without a secret', () => {
-    render(<NewKey done={false} secret={null} line="Reopened." onClose={() => undefined} />);
-    expect(screen.queryByText(/PASSBOOK_KEY/)).toBeNull();
-  });
 });
 
 describe('ResetAction', () => {

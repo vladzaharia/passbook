@@ -196,7 +196,7 @@ a.wb-stat:hover {
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
-.wb-spark[data-tone="danger"] polyline {
+.wb-spark[data-line="danger"] polyline {
   stroke: var(--pk-danger);
 }
 .wb-meter {
@@ -246,7 +246,7 @@ a.wb-stat:hover {
   min-height: 1px;
 }
 
-/* Reset and Reopen: a consequence confirm and the new key, inline in the head. */
+/* Reset and Reopen: a consequence confirm, inline in the head. */
 .wb-act {
   display: grid;
   gap: 8px;
@@ -258,16 +258,6 @@ a.wb-stat:hover {
 }
 .wb-confirm {
   border-color: var(--pk-warning-border);
-}
-.wb-key-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.wb-key-box code {
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 .wb .check:not([data-shown="true"]) {
   height: 0;

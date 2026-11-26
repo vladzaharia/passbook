@@ -1,16 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { clock, count, flavour } from './format.ts';
+import { count, flavour } from './format.ts';
 import { duration, pathParts } from './row-format.ts';
 
 const text = (runs: { text: string }[]) => runs.map((r) => r.text).join('');
 
 describe('log formatting', () => {
-  it('shows the time with seconds today and the date before', () => {
-    const now = new Date(2026, 10, 20, 15, 0, 0).getTime();
-    expect(clock(new Date(2026, 10, 20, 9, 5, 7).getTime(), now)).toBe('09:05:07');
-    expect(clock(new Date(2026, 10, 19, 14, 2, 11).getTime(), now)).toBe('Nov 19 14:02');
-  });
-
   it('groups thousands and tones a status', () => {
     expect(count(0)).toBe('0');
     expect(count(1234567)).toBe('1,234,567');

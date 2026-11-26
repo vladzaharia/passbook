@@ -2,7 +2,7 @@ import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { clock } from '../logs/format.ts';
+import { BenchTime } from '../bench/time.tsx';
 import { statusText } from '../ui/status-text.ts';
 import { type Activity, codeActivity } from './net.ts';
 import type { SearchIndex } from './types.ts';
@@ -69,7 +69,12 @@ function ErrorPane({ code, index }: { code: string; index: SearchIndex }) {
                   {activity.count}
                   {activity.more ? '+' : ''}
                 </span>{' '}
-                in the last 24 h{activity.lastAt ? `, last at ${clock(activity.lastAt)}` : ''}
+                in the last 24 h
+                {activity.lastAt ? (
+                  <>
+                    , last at <BenchTime at={activity.lastAt} />
+                  </>
+                ) : null}
               </>
             )}
           </p>

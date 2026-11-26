@@ -1,4 +1,4 @@
-import { Check, Copy, RotateCcw, Unlock } from 'lucide-react';
+import { RotateCcw, Unlock } from 'lucide-react';
 import { type ReactNode, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { DeveloperHomeSandbox } from '../../../shared/contracts/developer-home.ts';
@@ -6,7 +6,6 @@ import { resetSandboxConfirm } from '../../lib/confirms-developer.ts';
 import { ActionError, reopenSandbox, resetSandbox } from '../console/sandbox-actions.ts';
 import { loadSession } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
-import { copyToClipboard } from '../playground/copy.ts';
 
 /** The step-up answer: the sentence and the link to Polaris ID, as the Keys page shows it. */
 function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefined }) {
@@ -18,42 +17,6 @@ function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefi
 }
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-
-/** The new key after a reset or reopen: text only, shown once, and gone when the panel is closed. */
-export function NewKey({
-  done,
-  secret,
-  line,
-  onClose,
-}: {
-  done: boolean;
-  secret: string | null;
-  line: string;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    if (secret && (await copyToClipboard(`PASSBOOK_KEY=${secret}\n`))) setCopied(true);
-  };
-  return (
-    <div className="wb-act wb-newkey" role="status">
-      <p className="sm">{line}</p>
-      {secret ? (
-        <div className="wb-key-box">
-          <code className="mono xs">PASSBOOK_KEY={secret}</code>
-          <button type="button" className="btn sm outline" onClick={() => void copy()}>
-            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-        </div>
-      ) : null}
-      <p className="xs muted">{done ? 'Shown once.' : ''}</p>
-      <button type="button" className="btn sm" onClick={onClose}>
-        Done
-      </button>
-    </div>
-  );
-}
 
 /** What a reset or reopen hands back: its sentence and the new key, shown once in the head. */
 export interface Reveal {
