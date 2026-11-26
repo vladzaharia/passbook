@@ -7,6 +7,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { localSecrets } from './tools/lib/dev-secrets.ts';
+import { e2eKeepAlive } from './tools/lib/e2e-keep-alive.ts';
 import { e2eReleaseDefine, e2eReleaseOn } from './tools/lib/e2e-release.ts';
 import { DEV_MOCK_WALLETS_URL, mockWallets } from './tools/lib/mock-wallets-dev.ts';
 import { publicBaseUrl, withOrigin } from './tools/lib/site-origin.ts';
@@ -258,6 +259,7 @@ export default defineConfig(({ command }) => ({
     devPublicAtSign(),
     mockWallets(),
     sonnerNoInlineCss(),
+    ...(e2e ? [e2eKeepAlive()] : []),
     radixNoInlineStyles(),
     // File-based routes under src/web/routes; generates src/web/routeTree.gen.ts.
     tanstackRouter({
