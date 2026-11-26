@@ -303,6 +303,7 @@ describe('step-up route inventory', () => {
         "POST /api/v1/webhook-endpoints/:id/secret",
         "PUT /api/v1/identities/:id/push-key",
         "PUT /api/v1/platform/entitlement-presets",
+        "PUT /api/v1/platform/settings",
         "PUT /api/v1/settings",
       ]
     `);
