@@ -1205,6 +1205,42 @@
     "fix": "Ask an organization admin to send a new invitation with POST /api/v1/orgs/{id}/invitations.",
     "retryable": false
   },
+  "INVITATION_EMAIL_MISMATCH": {
+    "title": "Invitation is for another address",
+    "when": "The signed-in account does not hold the invited address, verified.",
+    "fix": "Sign in with the invited address, or ask for an invitation to the address you use.",
+    "retryable": false
+  },
+  "INVITATION_CONFLICT": {
+    "title": "Invitation could not be accepted",
+    "when": "Part of the acceptance could not land, for example the person is already a member. Nothing was changed.",
+    "fix": "Check the person's memberships and developer access, then ask for a new invitation if needed.",
+    "retryable": false
+  },
+  "INVITATION_SETUP_CAPPED": {
+    "title": "Too many Polaris ID links",
+    "when": "The invitation already made three Polaris ID signup links.",
+    "fix": "Ask an organization admin to send a new invitation.",
+    "retryable": false
+  },
+  "INVITATION_NO_ACCOUNT": {
+    "title": "No Polaris ID for this address",
+    "when": "No Polaris ID account has the invited address verified.",
+    "fix": "Create a Polaris ID from the invitation page.",
+    "retryable": false
+  },
+  "INVITATION_CLAIM_CAPPED": {
+    "title": "Too many accounts tried this invitation",
+    "when": "Three accounts already claimed this invitation.",
+    "fix": "Ask an organization admin to send a new invitation.",
+    "retryable": false
+  },
+  "DEVELOPER_LIMIT_REACHED": {
+    "title": "No developer seats left",
+    "when": "Accepting would put the organization over its developer limit.",
+    "fix": "Ask the organization to remove a developer or raise the limit, then accept again.",
+    "retryable": false
+  },
   "INVITATION_PENDING": {
     "title": "Invitation pending",
     "when": "This address already has a pending invitation.",

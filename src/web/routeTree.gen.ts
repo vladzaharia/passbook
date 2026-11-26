@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as InviteRouteImport } from './routes/invite'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAccountRouteImport } from './routes/admin/account'
@@ -125,6 +126,11 @@ const AccountRoute = AccountRouteImport.update({
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteRoute = InviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -677,6 +683,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/account': typeof AccountRoute
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
   '/admin/platform': typeof AdminPlatformRouteRouteWithChildren
   '/admin/account': typeof AdminAccountRoute
@@ -780,6 +787,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
@@ -883,6 +891,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/account': typeof AccountRoute
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
   '/admin/platform': typeof AdminPlatformRouteRouteWithChildren
   '/admin/account': typeof AdminAccountRoute
@@ -989,6 +998,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/account'
+    | '/invite'
     | '/login'
     | '/admin/platform'
     | '/admin/account'
@@ -1092,6 +1102,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/invite'
     | '/login'
     | '/admin/account'
     | '/passes/$passId'
@@ -1194,6 +1205,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/account'
+    | '/invite'
     | '/login'
     | '/admin/platform'
     | '/admin/account'
@@ -1299,6 +1311,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AccountRoute: typeof AccountRoute
+  InviteRoute: typeof InviteRoute
   LoginRoute: typeof LoginRoute
   PassesPassIdRoute: typeof PassesPassIdRoute
 }
@@ -1324,6 +1337,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite': {
+      id: '/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof InviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -2258,6 +2278,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AccountRoute: AccountRoute,
+  InviteRoute: InviteRoute,
   LoginRoute: LoginRoute,
   PassesPassIdRoute: PassesPassIdRoute,
 }

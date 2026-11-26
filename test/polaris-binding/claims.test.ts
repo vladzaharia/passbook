@@ -279,3 +279,34 @@ describe('group claims', () => {
     void seedGrant;
   });
 });
+
+describe('no-ops and previews', () => {
+  const same = { passbook_tier: { type: 'text', value: 'gold' } } as const;
+
+  it('reports nothing changed for a same value or an absent key, and sends no PUT', async () => {
+    const { api, pocket } = await owner();
+    pocket.s.users.get('u1')!.claims = [claim('passbook_tier', 'gold')];
+    await expect(
+      api.setClaims({ subject: 'u1' }, { ...same, passbook_none: null }, ctx()),
+    ).resolves.toEqual({ set: [], removed: [], dryRun: false });
+    expect(pocket.writes()).toHaveLength(0);
+  });
+
+  it('answers a no-op in dry run as a dry run', async () => {
+    const { api, pocket } = await owner({ WRITE_MODE: 'dry_run' });
+    pocket.s.users.get('u1')!.claims = [claim('passbook_tier', 'gold')];
+    await expect(api.setClaims({ subject: 'u1' }, same, ctx())).resolves.toEqual({
+      set: [],
+      removed: [],
+      dryRun: true,
+    });
+  });
+
+  it('spends the preview budget in dry run, not claims_write', async () => {
+    const { api } = await owner({ WRITE_MODE: 'dry_run' });
+    await api.setClaims({ subject: 'u1' }, same, ctx());
+    const buckets = (await ledger()).map((r) => r.bucket);
+    expect(buckets).toContain('preview');
+    expect(buckets).not.toContain('claims_write');
+  });
+});
