@@ -15,6 +15,7 @@ import { authorizeTemplateWrite } from '../templates/access.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
 import { approvalKind, soleAuditDetail } from '../templates/sole-reviewer.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
+import { currentReview } from './projection-review-current.ts';
 import {
   candidateDto,
   failedWrite,
@@ -49,9 +50,10 @@ export async function listProjectionCandidates(
   await scopedTemplate(ctx, auth, templateId, scope);
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const native = nativeScope(templateId, scope);
-  const [candidates, approvals] = await Promise.all([
+  const [candidates, approvals, current] = await Promise.all([
     selectProjectionCandidates(ctx.env.DB, native),
     selectProjectionApprovals(ctx.env.DB, native),
+    currentReview(ctx, native),
   ]);
   const approvalsByCandidate = new Map<string, ApprovalRow[]>();
   for (const approval of approvals) {
@@ -62,7 +64,7 @@ export async function listProjectionCandidates(
   const items = candidates.map((candidate) =>
     candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? []),
   );
-  return { items, nextCursor: null };
+  return { items, nextCursor: null, ...(current ? { current } : {}) };
 }
 
 export async function createProjectionCandidate(

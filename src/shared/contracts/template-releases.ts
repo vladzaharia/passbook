@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
+import { FidelityReportSchema } from './wallet-fidelity.ts';
 
 export const TemplateReleaseProviderSchema = z.enum(['apple', 'google', 'samsung']);
 export type TemplateReleaseProvider = z.infer<typeof TemplateReleaseProviderSchema>;
@@ -86,7 +87,19 @@ export const TemplateReleaseSchema = z.object({
 });
 export type TemplateRelease = z.infer<typeof TemplateReleaseSchema>;
 
-export const TemplateCandidateListSchema = pageOf(TemplateCandidateSchema);
+/** What a review would approve now: the wallet's report for the version the Apple release serves. */
+export const TemplateCandidateCurrentSchema = z.object({
+  version: z.string(),
+  /** The Apple release a new candidate for this version names as its source. */
+  sourceReleaseId: IdSchema,
+  report: FidelityReportSchema,
+});
+export type TemplateCandidateCurrent = z.infer<typeof TemplateCandidateCurrentSchema>;
+
+export const TemplateCandidateListSchema = pageOf(TemplateCandidateSchema).extend({
+  /** Google and Samsung lists only; absent when there is no Apple release or the report did not compile. */
+  current: TemplateCandidateCurrentSchema.optional(),
+});
 export type TemplateCandidateList = z.infer<typeof TemplateCandidateListSchema>;
 export const TemplateReleaseListSchema = z.object({
   active: TemplateReleaseSchema.nullable(),
