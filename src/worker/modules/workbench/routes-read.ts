@@ -17,9 +17,10 @@ import { workbenchSummary } from './summary.ts';
 /**
  * `GET /api/v1/resolve`: what an id is in a Test context. A person's browser, or a try token; never a key.
  * Mounted at `/api/v1` with its own path: the request log's `/` shares the `workbench` tag, and the route
- * code table is keyed by tag, method and router-local path.
+ * code table is keyed by tag, method and router-local path. It reads no body, and a default body cap on a
+ * router mounted here would cap every `/api/v1` upload.
  */
-export const resolveRoutes = createRouter();
+export const resolveRoutes = createRouter({ bodyLimit: false });
 resolveRoutes.use('/resolve', logCaller);
 register(
   resolveRoutes,

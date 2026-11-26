@@ -151,8 +151,10 @@ describe('kit lint', () => {
     const byPath = new Map(files.map((f) => [f.path, f.text]));
     const banned = new Set(['lib/api.ts', 'lib/mode.ts', 'lib/operations-client.ts']);
     // Modules that may touch the session on purpose: its own read (`useSession`), the account menu,
-    // and the tray body, whose session client is the admin default the Workbench replaces.
+    // the tray body, whose session client is the admin default the Workbench replaces, and the lazy
+    // error pages every route shares (their portal layout holds the holder's own client).
     const stop = new Set([
+      'ui/layout/lazy-error-pages.tsx',
       'lib/tool-api.tsx',
       'lib/session.ts',
       'ui/layout/user-menu.tsx',
