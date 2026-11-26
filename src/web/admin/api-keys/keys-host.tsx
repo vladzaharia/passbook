@@ -19,6 +19,8 @@ export interface KeysHost {
   cap: { scopes: readonly string[]; maxDays: number };
   /** Draws the list's primary action in the host's tool head. */
   primary: (action: ReactNode) => ReactNode;
+  /** The key the host runs on (a sandbox's own): marked, and never revoked or rotated here. */
+  own?: (key: { kind: string }) => boolean;
   /** Beside a key's facts (recent calls). */
   aside?: (keyId: string) => ReactNode;
   /** The access the host already knows. */

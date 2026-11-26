@@ -29,6 +29,8 @@ export interface KeyColumnsOptions {
   onRevoke: (key: ApiKey) => void;
   /** The creator's name links to their admin page; a host without one shows the name. */
   creatorLink?: boolean;
+  /** The key the host runs on: labelled, with no Revoke. */
+  isOwn?: (key: ApiKey) => boolean;
 }
 
 /** What the list shows of a key: the start of its secret (`pb_live_`, `pbp_`, `pbo_`, or `wlt_` for an older key) and its prefix. */
@@ -44,6 +46,7 @@ export function keyColumns({
   canRevoke,
   onRevoke,
   creatorLink = true,
+  isOwn,
 }: KeyColumnsOptions): DataColumnDef<ApiKey, never>[] {
   return [
     {
@@ -68,7 +71,13 @@ export function keyColumns({
                 </KeyNameLink>
                 {k.kind === 'service' && !k.parentKeyId ? null : (
                   <span className="shrink-0 text-xs font-normal text-fg-muted">
-                    {k.parentKeyId ? 'Child' : k.kind === 'personal' ? 'Personal' : 'Platform'}
+                    {isOwn?.(k)
+                      ? 'Sandbox key'
+                      : k.parentKeyId
+                        ? 'Child'
+                        : k.kind === 'personal'
+                          ? 'Personal'
+                          : 'Platform'}
                   </span>
                 )}
               </span>
@@ -170,7 +179,7 @@ export function keyColumns({
                 icon: Copy,
                 onSelect: () => void copyText(keyPrefix(row.original), 'prefix'),
               },
-              ...(canRevoke && row.original.revokedAt === null
+              ...(canRevoke && row.original.revokedAt === null && !isOwn?.(row.original)
                 ? [
                     {
                       label: 'Revoke',

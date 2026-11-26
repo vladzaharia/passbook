@@ -177,4 +177,29 @@ describe('Keys in the Workbench', () => {
     expect(await screen.findByText('CI key')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New API key' })).toBeInTheDocument();
   });
+
+  it("marks the sandbox's own key and offers no Revoke on it", async () => {
+    const user = userEvent.setup();
+    await renderApp('/workbench/o/sbx/keys', {
+      session: 'developer',
+      handlers: {
+        ...keysApi(),
+        '/api/v1/api-keys': () =>
+          json({
+            items: [
+              key({ id: 'own', name: 'Sandbox', orgId: 'sbx', kind: 'personal' }),
+              key({ id: 'k2', name: 'Other', orgId: 'sbx' }),
+            ],
+            nextCursor: null,
+            revokedCount: 0,
+          }),
+      },
+    });
+    expect(await screen.findByText('Sandbox key')).toBeInTheDocument();
+    // Only Copy prefix remains on the sandbox key; the other key keeps its menu with Revoke.
+    expect(screen.getByRole('button', { name: 'Copy prefix' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Actions for Sandbox' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Actions for Other' }));
+    expect(await screen.findByRole('menuitem', { name: 'Revoke' })).toBeInTheDocument();
+  });
 });

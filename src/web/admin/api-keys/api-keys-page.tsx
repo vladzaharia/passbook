@@ -127,6 +127,7 @@ function ScopedApiKeys({
         canRevoke: canManage,
         onRevoke: setRevoking,
         creatorLink: !host,
+        isOwn: host?.own,
       }),
     [orgId, justRevoked, now, canManage, host],
   );

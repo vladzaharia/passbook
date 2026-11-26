@@ -60,6 +60,8 @@ function OrgKeys() {
   const bound = useMemo<KeysHost>(
     () => ({
       listPath,
+      // A sandbox runs on its personal key.
+      ...(kind === 'sandbox' ? { own: (k: { kind: string }) => k.kind === 'personal' } : {}),
       keyLink: (_org: string | null, id: string, children: ReactNode) => (
         <RowLink to="/workbench/o/$orgId/keys" params={{ orgId }} hash={id}>
           {children}
@@ -80,7 +82,7 @@ function OrgKeys() {
         canAudit: caps.includes('audit:read'),
       },
     }),
-    [listPath, orgId, name, caps, principal],
+    [listPath, orgId, name, kind, caps, principal],
   );
 
   const createRequested = asked || new URLSearchParams(search).has('new');

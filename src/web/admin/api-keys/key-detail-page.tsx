@@ -95,7 +95,9 @@ function KeyDetail({
   const live = state === 'active';
   // A personal key is its member's to rotate; a platform key made before expiry and addresses were required is replaced, not rotated.
   const legacy = key.kind === 'platform' && (key.expiresAt === null || key.ipAllow.length === 0);
-  const canRotate = live && !legacy && (own || (canManage && key.kind !== 'personal'));
+  // The key the host runs on is never revoked or rotated from its own page.
+  const runsHost = host?.own?.(key) === true;
+  const canRotate = !runsHost && live && !legacy && (own || (canManage && key.kind !== 'personal'));
   // Platform keys have no children; a personal or child key mints none.
   const mints = key.kind === 'service' && key.parentKeyId === null && key.orgId !== null;
   return (
@@ -119,7 +121,7 @@ function KeyDetail({
           </>
         }
         actions={
-          (canManage || own) && (live || state === 'retiring') ? (
+          !runsHost && (canManage || own) && (live || state === 'retiring') ? (
             <>
               {canRotate ? (
                 <Button

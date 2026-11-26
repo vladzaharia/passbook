@@ -110,4 +110,29 @@ describe('Keys access by Workbench token', () => {
     // It still reads the list (`integrations:read`).
     expect(m.list).toBe(200);
   });
+
+  it('a sandbox at its 3-key quota makes another once one is revoked', async () => {
+    const d = await t.developer();
+    const { token } = await t.wbMint(d.browser, d.made.orgId);
+    const client = t.asClient(token);
+    const orgId = d.made.orgId;
+    const now = t.kit.clock.now();
+    const make = () =>
+      t.call('POST', '/api-keys', client, {
+        orgId,
+        name: 'Q',
+        kind: 'service',
+        scopes: ['passes:read'],
+        expiresAt: now + day,
+      });
+    const first = await make();
+    expect(first.status).toBe(201);
+    expect((await make()).status).toBe(201);
+    const full = await make();
+    expect(full.status).toBe(403);
+    expect(((await full.json()) as { code: string }).code).toBe('SANDBOX_QUOTA');
+    const { id } = (await first.json()) as { id: string };
+    expect((await t.call('DELETE', `/api-keys/${id}?orgId=${orgId}`, client)).status).toBe(200);
+    expect((await make()).status).toBe(201);
+  });
 });

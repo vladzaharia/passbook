@@ -188,15 +188,16 @@ export async function createKey(
     target: key.id,
     checks: [
       ...capabilityChecks(authority),
-      // Revoked and expired keys free their slot; a rotation replaces a key, so it does not take one.
+      // Revoked, expired and retired keys free their slot; a rotation replaces a key, so it does not take one.
       ...(rotating
         ? []
         : [
             withinLimit(
               'api.keys',
               `SELECT COUNT(*) FROM api_keys k WHERE k.org_id = {org} AND k.revoked_at IS NULL
-                AND (k.expires_at IS NULL OR k.expires_at > ?)`,
-              [key.created_at],
+                AND (k.expires_at IS NULL OR k.expires_at > ?)
+                AND (k.retire_at IS NULL OR k.retire_at > ?)`,
+              [key.created_at, key.created_at],
             ),
           ]),
       ...(authority.kind === 'session'
