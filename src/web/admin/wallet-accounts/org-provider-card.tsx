@@ -173,7 +173,6 @@ export function OrgProviderCard({
           startedId={updating}
           onClear={() => setUpdating(null)}
           doneNote={walletNote}
-          framing="plain"
         />
         {canReissue && on ? (
           <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">

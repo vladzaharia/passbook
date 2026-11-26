@@ -14,7 +14,6 @@ export function OperationSlot({
   onClear,
   doneNote,
   next,
-  framing = 'card',
   onSucceeded,
 }: {
   kind: string;
@@ -23,7 +22,6 @@ export function OperationSlot({
   onClear?: () => void;
   doneNote?: (op: Operation) => ReactNode;
   next?: (op: Operation) => { label: string; onClick: () => void } | undefined;
-  framing?: 'plain' | 'card';
   onSucceeded?: (op: Operation) => void;
 }) {
   return (
@@ -31,7 +29,6 @@ export function OperationSlot({
       <Slot
         kind={kind}
         startedId={startedId}
-        framing={framing}
         {...(orgId ? { orgId } : {})}
         {...(onClear ? { onClear } : {})}
         {...(doneNote ? { doneNote } : {})}
@@ -49,7 +46,6 @@ function Slot({
   onClear,
   doneNote,
   next,
-  framing,
   onSucceeded,
 }: {
   kind: string;
@@ -58,7 +54,6 @@ function Slot({
   onClear?: () => void;
   doneNote?: (op: Operation) => ReactNode;
   next?: (op: Operation) => { label: string; onClick: () => void } | undefined;
-  framing: 'plain' | 'card';
   onSucceeded?: (op: Operation) => void;
 }) {
   const { id, show, clear } = useOrgOperation(kind, orgId);
