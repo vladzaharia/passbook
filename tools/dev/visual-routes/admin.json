@@ -312,7 +312,8 @@
   {
     "role": "org",
     "path": "/admin/connections/webhooks/{endpointId}",
-    "name": "legacy-webhook-detail"
+    "name": "legacy-webhook-detail",
+    "filterOrg": "northwindId"
   },
   {
     "role": "org",
@@ -488,7 +489,7 @@
     "role": "platform",
     "path": "/admin/platform/wallet-accounts",
     "name": "admin-wallet-accounts-migration",
-    "click": "[role=tab]:text-is(\"Migration\")"
+    "click": "tab:Migration"
   },
   {
     "role": "org",
