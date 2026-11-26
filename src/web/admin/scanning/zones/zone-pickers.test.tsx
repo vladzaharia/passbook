@@ -92,7 +92,7 @@ describe('session pickers', () => {
     await user.click(screen.getByRole('button', { name: 'New zone' }));
     expect(await screen.findByRole('dialog', { name: 'New zone' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Passes' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Passes/ }));
     expect(within(dialog).getByRole('textbox', { name: 'Session name' })).toHaveValue('Pool door');
   });
 
@@ -123,7 +123,7 @@ describe('session pickers', () => {
     await user.keyboard('{Escape}');
     await user.click(within(dialog).getByRole('button', { name: 'Remove Gym' }));
     expect(within(dialog).getByText('Any zone')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Passes' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Passes/ }));
     await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(await within(dialog).findByRole('checkbox', { name: /Gala/ }));
     await reachStep(user, dialog, 'Set where it scans');

@@ -185,11 +185,11 @@ describe('Zones tab', () => {
     expect(save).toHaveAttribute('aria-disabled', 'true');
     expect(within(dialog).getByText('No changes.')).toBeInTheDocument();
     expect(within(dialog).queryByRole('heading', { name: 'Check and create' })).toBeNull();
-    await user.click(within(dialog).getByRole('button', { name: 'Occupancy' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Occupancy/ }));
     const capacity = await within(dialog).findByRole('spinbutton', { name: 'Capacity' });
     await user.clear(capacity);
     await user.type(capacity, '80');
-    await user.click(within(dialog).getByRole('button', { name: 'Zone' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Zone/ }));
     expect(within(dialog).getByRole('textbox', { name: /^Key/ })).toHaveAttribute('readonly');
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(s.calls).toHaveLength(1));
