@@ -10,17 +10,13 @@ import { join, relative } from 'node:path';
 export const E2E_RELEASE_MARKERS = ['WALLET_E2E_RELEASE', 'Wallet Test WWDR'] as const;
 
 /**
- * The database's own issuance guards (migrations 0043 and 0114): they refuse every provider instance activation,
- * offer and Samsung reference whatever the Worker's flags say. Only tools/e2e-server.ts drops them, in its
- * throwaway local database, for a release run. Every deployed database keeps them.
+ * The database side of the release (migration 0226): its issuance guards refuse every provider instance, activation,
+ * offer and Samsung reference of a provider and mode whose `wallet_provider_releases` row is not `released`.
+ * Only tools/e2e-server.ts writes these rows outside a migration, in its throwaway local database, for a release
+ * run; the guards then run with their real bodies. Every deployed database changes them only by a flip migration.
  */
-export const ISSUANCE_GUARDS = [
-  'wallet_provider_generation_insert_guard',
-  'wallet_provider_generation_binding_guard',
-  'wallet_provider_generation_offer_insert',
-  'wallet_provider_generation_offer_consume',
-  'wallet_provider_generation_samsung_ref',
-] as const;
+export const E2E_RELEASE_SQL =
+  "UPDATE wallet_provider_releases SET state = 'released', changed_at = 0;";
 
 /** On only for a tools/e2e-server.ts run (WALLET_E2E) that asked for the release; vite.config.ts uses it. */
 export function e2eReleaseOn(env: Record<string, string | undefined>): boolean {
