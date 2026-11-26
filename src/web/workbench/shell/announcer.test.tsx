@@ -2,7 +2,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnnouncerProvider, createAnnouncer, HOLD_MS, useAnnounce } from './announcer.tsx';
-import { markSeen, SEEN_DWELL_MS, useArrive, useSeenMarks } from './attention.ts';
+import { markSeen, SEEN_DWELL_MS, useArrive, useSeenMarks, useSeenOnView } from './attention.ts';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
@@ -87,5 +87,32 @@ describe('attention', () => {
     act(() => markSeen('org_2', 'events', 50));
     expect(result.current).toEqual({ logs: 200 });
     expect(SEEN_DWELL_MS).toBe(1000);
+  });
+
+  it('marks an area seen once its newest row has been in view for a second', () => {
+    let fire: (entries: { isIntersecting: boolean }[]) => void = () => undefined;
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(cb: typeof fire) {
+          fire = cb;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const row = document.createElement('div');
+    renderHook(() => useSeenOnView('org_3', 'inbox', row, 900));
+    const marks = renderHook(() => useSeenMarks('org_3'));
+    act(() => fire([{ isIntersecting: true }]));
+    act(() => vi.advanceTimersByTime(SEEN_DWELL_MS - 1));
+    expect(marks.result.current).toEqual({});
+    act(() => fire([{ isIntersecting: false }]));
+    act(() => vi.advanceTimersByTime(SEEN_DWELL_MS));
+    expect(marks.result.current).toEqual({});
+    act(() => fire([{ isIntersecting: true }]));
+    act(() => vi.advanceTimersByTime(SEEN_DWELL_MS));
+    expect(marks.result.current).toEqual({ inbox: 900 });
+    vi.unstubAllGlobals();
   });
 });
