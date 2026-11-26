@@ -2,10 +2,10 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { json, renderApp } from '../../lib/test-utils.tsx';
+import { writePrefill } from '../host/prefill.ts';
 import { forgetTokens } from '../host/token.ts';
 import { handlers as shellHandlers } from '../shell/test-fixtures.ts';
 import { resetBudget } from './budget.ts';
-import { forgetHandoffs, stashHandoff } from './handoff.ts';
 import { resetTemplateInput } from './template-sample.ts';
 import type { RunFile, RunIndex, RunOp } from './types.ts';
 
@@ -105,7 +105,6 @@ const headers = (init: RequestInit) => Object.fromEntries(new Headers(init.heade
 beforeEach(() => {
   resetBudget();
   resetTemplateInput();
-  forgetHandoffs();
   sessionStorage.clear();
 });
 afterEach(() => {
@@ -180,7 +179,7 @@ describe('the Console on the Workbench token', () => {
   });
 
   it('fills from a handoff nonce once, and keeps it out of the address', async () => {
-    const nonce = stashHandoff({ body: { templateId: 'tpl_hand' }, note: 'From a pass' });
+    const nonce = writePrefill({ op: 'passes.create', body: { templateId: 'tpl_hand' } });
     const { handlers } = setup();
     const { router } = await renderApp(
       `/workbench/o/nw/console?op=passes.create&prefill=${nonce}`,
@@ -189,7 +188,6 @@ describe('the Console on the Workbench token', () => {
         handlers,
       },
     );
-    await screen.findByText('From a pass');
     await userEvent.click(await screen.findByRole('tab', { name: 'JSON' }));
     expect(await screen.findByDisplayValue(/tpl_hand/)).toBeInTheDocument();
     expect(sessionStorage.getItem(`wb-prefill:${nonce}`)).toBeNull();

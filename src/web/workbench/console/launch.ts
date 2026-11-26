@@ -1,4 +1,4 @@
-import { stashHandoff, takeHandoff } from './handoff.ts';
+import { readPrefill, writePrefill } from '../host/prefill.ts';
 import { type Prefill, parseHash } from './prefill.ts';
 import type { RunOp } from './types.ts';
 
@@ -43,16 +43,17 @@ export function bodyOfLog(text: string | null | undefined): Prefill['body'] {
  */
 export function fillFor(op: RunOp, launch: Launch): Filled {
   if (launch.prefill) {
-    const h = takeHandoff(launch.prefill);
-    if (h)
+    const h = readPrefill(launch.prefill);
+    if (h && h.op === op.id)
       return {
         source: 'handoff',
         prefill: {
           query: h.query ?? {},
+          ...(h.path ? { path: h.path } : {}),
           literal: true,
           ...(h.body !== undefined ? { body: h.body } : {}),
         },
-        note: h.note ?? null,
+        note: null,
       };
   }
   const snippet = launch.sample ? op.samples?.[launch.sample] : undefined;
@@ -80,7 +81,8 @@ export function shimHash(hash: string, search: string): string | null {
   q.set('op', id);
   q.set(
     'prefill',
-    stashHandoff({
+    writePrefill({
+      op: id,
       query: prefill.query,
       ...(prefill.body !== undefined ? { body: prefill.body } : {}),
     }),

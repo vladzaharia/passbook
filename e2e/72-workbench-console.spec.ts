@@ -174,14 +174,15 @@ test('the Console: a destructive call asks first, and a handoff fills the form w
   expect(sent).toEqual([]);
 
   const create = await op(page, 'post', '/api/v1/passes');
-  await page.evaluate(() =>
-    sessionStorage.setItem(
-      'wb-prefill:e2e1',
-      JSON.stringify({ body: { templateId: 'from-a-pass' }, note: 'From a pass' }),
-    ),
+  await page.evaluate(
+    (id) =>
+      sessionStorage.setItem(
+        'wb-prefill:e2e1',
+        JSON.stringify({ op: id, body: { templateId: 'from-a-pass' } }),
+      ),
+    create.id,
   );
   await open(page, `?op=${encodeURIComponent(create.id)}&prefill=e2e1`);
-  await expect(page.getByText('From a pass')).toBeVisible();
   await expect(page.getByLabel('Request body (JSON)')).toHaveValue(/from-a-pass/);
   expect(page.url()).not.toContain('from-a-pass');
   expect(await page.evaluate(() => sessionStorage.getItem('wb-prefill:e2e1'))).toBeNull();

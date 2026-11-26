@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { forgetHandoffs, stashHandoff, takeHandoff } from './handoff.ts';
+import { readPrefill, writePrefill } from '../host/prefill.ts';
 import { bodyOfLog, fillFor, launchOf, matchOp, shimHash } from './launch.ts';
 import { passesCreate } from './test-support.ts';
 
 afterEach(() => {
-  forgetHandoffs();
   sessionStorage.clear();
 });
 
@@ -34,23 +33,28 @@ describe('the Console address', () => {
 
 describe('the handoff', () => {
   it('is read once from storage and gone from it', () => {
-    const nonce = stashHandoff({ body: { a: 1 }, note: 'n' });
+    const nonce = writePrefill({ op: 'x', body: { a: 1 } });
     expect(sessionStorage.getItem(`wb-prefill:${nonce}`)).not.toBeNull();
-    expect(takeHandoff(nonce)).toEqual({ body: { a: 1 }, note: 'n' });
+    expect(readPrefill(nonce)).toEqual({ op: 'x', body: { a: 1 } });
     expect(sessionStorage.getItem(`wb-prefill:${nonce}`)).toBeNull();
     // A remount in the same tab still has it.
-    expect(takeHandoff(nonce)).toEqual({ body: { a: 1 }, note: 'n' });
+    expect(readPrefill(nonce)).toEqual({ op: 'x', body: { a: 1 } });
   });
 
   it('is null for an unknown or damaged nonce', () => {
-    expect(takeHandoff('nope')).toBeNull();
+    expect(readPrefill('nope')).toBeNull();
     sessionStorage.setItem('wb-prefill:bad', '{not json');
-    expect(takeHandoff('bad')).toBeNull();
+    expect(readPrefill('bad')).toBeNull();
   });
 
   it('is filled in as the reader’s own: no template swap', () => {
-    const nonce = stashHandoff({ body: { templateId: 'mine' } });
-    const got = fillFor(passesCreate, { op: 'x', sample: null, from: null, prefill: nonce });
+    const nonce = writePrefill({ op: 'passes.postPasses', body: { templateId: 'mine' } });
+    const got = fillFor(passesCreate, {
+      op: 'passes.postPasses',
+      sample: null,
+      from: null,
+      prefill: nonce,
+    });
     expect(got).toMatchObject({ source: 'handoff', prefill: { literal: true } });
   });
 });
@@ -61,7 +65,11 @@ describe('an old hash link', () => {
     const q = new URLSearchParams(next ?? '');
     expect(q.get('op')).toBe('passes.create');
     expect(next).not.toContain('%22a%22');
-    expect(takeHandoff(q.get('prefill') ?? '')).toEqual({ query: { limit: '5' }, body: { a: 1 } });
+    expect(readPrefill(q.get('prefill') ?? '')).toEqual({
+      op: 'passes.create',
+      query: { limit: '5' },
+      body: { a: 1 },
+    });
   });
 
   it('leaves a plain address alone', () => {
