@@ -71,6 +71,7 @@
 }
 .logs-solo {
   max-width: 52rem;
+  margin-inline: auto;
 }
 /* The card is a grid: its action row would take the code's full line length without these. */
 .logs-solo .pstate-a {

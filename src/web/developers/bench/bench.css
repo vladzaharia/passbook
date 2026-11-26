@@ -303,6 +303,10 @@ body:has(.bench) > .foot {
   .bench-split[data-layout="split"] {
     grid-template-columns: minmax(0, 1fr) var(--wb-inspector);
   }
+  /* Nothing to inspect (an empty list): its column takes the width, so a state card centres on the page. */
+  .bench-split[data-layout="split"]:has(.bench-pane:empty) {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .bench-split[data-layout="index"] {
     grid-template-columns: var(--wb-index) minmax(0, 1fr);
   }
