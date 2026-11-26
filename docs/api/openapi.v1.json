@@ -158161,6 +158161,12 @@
           }
         },
         "operationId": "public.getBByTokenWalletGoogle",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "addToGoogleWallet",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        },
         "security": [],
         "x-public": true,
         "x-codes": [
