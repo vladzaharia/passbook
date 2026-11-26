@@ -203,6 +203,7 @@ describe('the Workbench designer across the phone breakpoint', () => {
       'true',
     );
     await user.click(screen.getByRole('tab', { name: WB_DESIGN.tabs.data }));
+    await user.click(screen.getByRole('radio', { name: 'Back' }));
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
 
     // Phone width swaps the structure and the card for another tree; a wide window brings the first back.
@@ -212,6 +213,7 @@ describe('the Workbench designer across the phone breakpoint', () => {
     await screen.findByTestId('designer-layout');
 
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Back' })).toBeChecked();
     expect(screen.getByRole('tab', { name: WB_DESIGN.tabs.data })).toHaveAttribute(
       'aria-selected',
       'true',

@@ -6519,5 +6519,13 @@
     "op": "webhook sandbox delivery",
     "change": "Test endpoints deliver to their URL",
     "note": "A sandbox's URL endpoints deliver signed Test events, 60 a minute, with Live's address checks. A fourth endpoint is 409 SANDBOX_ENDPOINT_LIMIT."
+  },
+  {
+    "key": "Workbench token: file reads rate limit",
+    "class": "notable",
+    "operationId": "",
+    "op": "Workbench token",
+    "change": "template file reads: own rate limit",
+    "note": "A Workbench token's template file reads (GET .../assets/{name}) now have their own limit, 600 a minute per session."
   }
 ]
