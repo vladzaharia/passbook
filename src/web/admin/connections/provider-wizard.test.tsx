@@ -301,7 +301,7 @@ describe('setup page: the pieces', () => {
   });
 
   it('an accepted delivery whose work failed reads Accepted, not issued, with Open failures', async () => {
-    const row = ledgerRow({ topic: 'orders/create', eventRef: 'evt-9' });
+    const row = ledgerRow({ topic: 'orders/create', eventRef: 'shopify:evt-9' });
     const handlers = setupHandlers('shopify-orders', { rows: [row] });
     await renderApp('/admin/connections/c9/setup', {
       session: 'admin',

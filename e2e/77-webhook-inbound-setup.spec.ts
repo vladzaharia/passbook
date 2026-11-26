@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { apiAs, BASE, uid } from './helpers/api.ts';
+import { apiAs, BASE, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
 
@@ -158,4 +158,57 @@ test('Custom: the payload shape and its example, then the secret and the send sn
   const api = await apiAs('admin');
   await api.send('DELETE', `/api/v1/connections/${id}`);
   await api.dispose();
+});
+
+test('Shopify: an accepted delivery whose work failed reads Accepted, not issued, with Open failures', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const org = readSeed().org.id;
+  const api = await apiAs('admin');
+  const secret = `shpss_${uid('n')}${'0'.repeat(12)}`;
+  // A template with no approved release: the order is read, and its pass waits for a release (blocked).
+  const template = await api.send(
+    'POST',
+    `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
+    { orgId: org, name: `E2E Unreleased ${uid('t')}` },
+  );
+  const required: string[] = template.inputSchema?.required ?? [];
+  const made = await api.send('POST', '/api/v1/connections', {
+    orgId: org,
+    connectorType: 'webhook-push',
+    name: `E2E Shopify ${uid('x')}`,
+    config: { recipe: 'shopify-orders' },
+    mode: 'webhook',
+    webhookSecret: secret,
+    defaultTemplateId: template.id,
+    autoCreate: true,
+    holderEmailField: '/email',
+    mapping: Object.fromEntries(required.map((k) => [k, { from: '/orderName' }])),
+  });
+  const id = made.id as string;
+  try {
+    await page.goto(`/admin/o/${encodeURIComponent(org)}/connections/${id}/setup`);
+    await expect(page.getByRole('heading', { name: 'Send a test', level: 2 })).toBeVisible();
+    const body = ORDER(new Date().toISOString());
+    const res = await page.request.post(`${BASE}/hooks/connections/${id}`, {
+      headers: {
+        'content-type': 'application/json',
+        'x-shopify-topic': 'orders/create',
+        'x-shopify-hmac-sha256': createHmac('sha256', secret).update(body).digest('base64'),
+      },
+      data: body,
+    });
+    expect(res.ok()).toBe(true);
+    await expect(page.getByRole('button', { name: 'Open failures' })).toBeVisible({
+      timeout: 60_000,
+    });
+    await expect(page.getByText('Accepted, not issued').first()).toBeVisible();
+    await page.waitForTimeout(700);
+    await check(page, 'webhook-not-issued');
+  } finally {
+    await api.send('DELETE', `/api/v1/connections/${id}`);
+    await api.dispose();
+  }
 });

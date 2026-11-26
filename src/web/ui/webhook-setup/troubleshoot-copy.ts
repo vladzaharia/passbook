@@ -23,6 +23,12 @@ export interface InboundContext {
 
 export const NOTHING = 'none';
 
+/** The ledger names an event `shopify:<id>` where retained work names it `<id>`: either matches. */
+function isNotIssued(ref: string | null | undefined, failed: ReadonlySet<string> | undefined) {
+  if (!ref || !failed) return false;
+  return failed.has(ref) || failed.has(ref.slice(ref.indexOf(':') + 1));
+}
+
 /** A name that opens a line is capitalised there only: "your system sent no signature" reads "Your system…". */
 const atLineStart = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
@@ -55,7 +61,7 @@ function rawInboundTrouble(
             'Signed with the previous secret. Switch the sender to the new one.',
           ),
         }
-      : arrival.eventRef && ctx.notIssued?.has(arrival.eventRef)
+      : isNotIssued(arrival.eventRef, ctx.notIssued)
         ? {
             tone: 'warning',
             title: 'Accepted, not issued',

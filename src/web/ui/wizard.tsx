@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 import { useChangeCount } from '../lib/change-count.ts';
 import { useMediaQuery } from '../lib/media.ts';
 import { useBlockedSubmit } from './form.tsx';
@@ -89,8 +89,24 @@ export function WizardBar({
   | 'barExtra'
   | 'busy'
 > & { onBlocked?: () => void }) {
+  // The bar's height as a variable, so the page keeps its last line clear of it (a phone's bar is three rows).
+  const bar = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const set = () => root.style.setProperty('--wl-wizard-bar', `${el.offsetHeight}px`);
+    set();
+    const watch = new ResizeObserver(set);
+    watch.observe(el);
+    return () => {
+      watch.disconnect();
+      root.style.removeProperty('--wl-wizard-bar');
+    };
+  }, []);
   return (
     <section
+      ref={bar}
       aria-label="Wizard actions"
       // Part of the page, not a transient bar: it arrives with the route, no slide.
       data-static=""
@@ -215,7 +231,7 @@ export function Wizard({
   return (
     <div
       data-staged={staged || undefined}
-      className="wl-wizard flex min-w-0 flex-col gap-6 pb-24 max-sm:pb-40"
+      className="wl-wizard flex min-w-0 flex-col gap-6 pb-[calc(var(--wl-wizard-bar,6rem)+1.5rem)]"
     >
       <div className="@container">
         <div className="flex flex-col gap-5 @[43.5rem]:flex-row @[43.5rem]:gap-8">
