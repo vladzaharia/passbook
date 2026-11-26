@@ -24,10 +24,10 @@ import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identitie
 import { platformInvitationRoutes } from './modules/idp/invitations/platform-routes.ts';
 import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
+import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
 import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
 import { idpPlatformRoutes } from './modules/idp/routes-platform.ts';
 import { userAccessRoutes } from './modules/idp/routes-users.ts';
-import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
