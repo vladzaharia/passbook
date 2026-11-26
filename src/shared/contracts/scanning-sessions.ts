@@ -76,7 +76,6 @@ export const NativeScannerCapabilitiesSchema = z.strictObject({
   hardware: z.array(NativeHardwareEntrySchema).max(16).optional(),
 });
 export type NativeScannerCapabilities = z.infer<typeof NativeScannerCapabilitiesSchema>;
-
 export const ScanDeviceCapabilitiesSchema = z.strictObject({
   width: z.number().int().min(1).max(32768),
   height: z.number().int().min(1).max(32768),
@@ -258,8 +257,7 @@ export const ScanningDeviceSchema = z.object({
   revoked: z.boolean(),
   lastSeenAt: TimestampSchema.nullable(),
   updatedAt: TimestampSchema,
-  /** Digest of the editable settings; send it back as `revision` on an update. */
-  configRevision: z.number().int().nonnegative(),
+  configRevision: TimestampSchema,
   signIn: z.enum(['paired', 'admin']),
   adminName: z.string().nullable(),
 });
@@ -305,8 +303,7 @@ export const UpdateScanningDeviceSchema = z.strictObject({
   name: PlainLineSchema(40).optional(),
   surface: ScanSurfaceChoiceSchema.optional(),
   overrides: ScanDeviceOverridesSchema.optional(),
-  /** The device's `configRevision`: a stale one is a 409. */
-  revision: z.number().int().nonnegative().optional(),
+  revision: TimestampSchema.optional(),
 });
 export const DevicePairingSchema = z.object({
   code: z.string(),
