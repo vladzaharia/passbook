@@ -85,7 +85,7 @@ export function InsidePanel({
           {fill(ACCESS_COPY.inside.asOf, { time: sessionTime(state.asOf) })}
         </p>
       ) : null}
-      <div className="scan-in-body" aria-busy={state.loading}>
+      <div className="scan-in-body" aria-busy={online && state.loading}>
         {!online && state.rows.length === 0 ? (
           <EmptyState
             inline

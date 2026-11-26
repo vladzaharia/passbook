@@ -98,7 +98,7 @@ const passJson = (a: string) => `json_object('id', ${a}.id, 'org_id', ${a}.org_i
 export const snapshotSql = (ownerEmail: string) => `SELECT json_object(
   'owner', (SELECT json_object('id', id, 'primary_email', primary_email) FROM users WHERE primary_email = ${q(ownerEmail)}),
   'orgs', (SELECT json_group_array(json_object('id', id, 'slug', slug)) FROM orgs
-    WHERE status != 'deleted' AND NOT EXISTS (SELECT 1 FROM org_memberships m JOIN users u ON u.id = m.user_id
+    WHERE status != 'deleted' AND slug NOT LIKE 'personal-%' AND NOT EXISTS (SELECT 1 FROM org_memberships m JOIN users u ON u.id = m.user_id
       WHERE m.org_id = orgs.id AND m.revoked_at IS NULL AND u.primary_email = ${q(ownerEmail)})),
   'templates', (SELECT json_group_array(json_object('id', t.id, 'org_id', s.org_id, 'active_version', t.active_version,
       'manifest', v.manifest, 'pass_json', v.pass_json, 'assets', v.assets))

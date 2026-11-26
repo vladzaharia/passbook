@@ -73,6 +73,8 @@ export function FilterBar({ search, filters, onClear, className, maxInline }: Fi
     <search
       className={cn(
         'mb-3 flex flex-wrap items-center gap-2 max-sm:grid max-sm:grid-cols-2',
+        // A lone filter under the search takes the full row, so "Sandboxes: Hidden" is not cut.
+        search && 'max-sm:[&>:last-child:nth-child(even)]:col-span-2',
         className,
       )}
     >

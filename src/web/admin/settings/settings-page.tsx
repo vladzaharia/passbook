@@ -6,6 +6,7 @@ import {
   CardLink,
   KeyValue,
   PageHeader,
+  TechnicalDetails,
 } from '@/web/ui/index.ts';
 import { PlatformChannelsCards } from '../channels/settings-channels.tsx';
 import { PLATFORM_FIELDS } from './fields-platform.ts';
@@ -42,20 +43,25 @@ function OidcSection() {
       <CardBody>
         <KeyValue
           items={[
-            { label: 'Issuer', value: oidc.issuer, mono: true },
-            {
-              label: 'Platform admin group',
-              value: oidc.platformAdminGroup.join(', ') || null,
-              mono: true,
-            },
-            { label: 'Admin group', value: oidc.adminGroup.join(', ') || null, mono: true },
-            { label: 'Developer group', value: oidc.developerGroup.join(', ') || null, mono: true },
-            { label: 'User group', value: oidc.userGroup.join(', ') || null, mono: true },
             {
               label: 'Pinned platform admins',
               value: oidc.platformAdminPinned > 0 ? String(oidc.platformAdminPinned) : 'Off',
             },
             { label: 'Admin group required', value: oidc.consoleGroupRequired ? 'On' : 'Off' },
+          ]}
+        />
+        <TechnicalDetails
+          className="mt-3"
+          items={[
+            { label: 'Issuer', value: oidc.issuer, copy: true },
+            {
+              label: 'Platform admin group',
+              value: oidc.platformAdminGroup.join(', ') || null,
+              copy: true,
+            },
+            { label: 'Admin group', value: oidc.adminGroup.join(', ') || null, copy: true },
+            { label: 'Developer group', value: oidc.developerGroup.join(', ') || null, copy: true },
+            { label: 'User group', value: oidc.userGroup.join(', ') || null, copy: true },
           ]}
         />
       </CardBody>
