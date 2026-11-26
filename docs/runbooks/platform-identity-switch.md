@@ -198,7 +198,7 @@ export FROM_ID="${FROM_ID:-platform}"
 export TO_ID="${TO_ID:-}"
 ```
 
-Dry run. Nothing is written. `kept` counts the passes that stay on the old identity, by reason: `connection`, `user_tag`, `transfer`. A Google or Samsung copy does not keep a pass: the replacement is offered a new one, and the old pass is voided with its copies unless a device holds a saved copy the replacement lacks; that row ends `kept_both` with reason `wallet_copy:google`, `wallet_copy:samsung` or `wallet_copy:google+samsung`, and both passes stay live.
+Dry run. Nothing is written. `kept` counts the passes that stay on the old identity, by reason: `connection`, `user_tag`, `transfer`. A Google or Samsung copy does not keep a pass: the replacement is offered a new one, and the old pass is voided with its copies. A saved copy the replacement lacks makes the move wait (`registered`, reason `wallet_copy:google`, `wallet_copy:samsung` or `wallet_copy:google+samsung`); the void runs 24 hours after the new copy is saved, and a holder with no Apple registration is armed by the new copy's save. At the 30-day deadline a move still waiting ends `kept_both`, both passes live.
 
 ```sh name=move-preview confirm=no
 api -G "$BASE_URL/api/v1/platform/apple/identity-moves/preview" --data-urlencode "orgId=${ORG_ID:?run move-params first}" --data-urlencode "fromIdentityId=$FROM_ID" ${TO_ID:+--data-urlencode "toIdentityId=$TO_ID"} | jq .
@@ -225,7 +225,7 @@ The operation issues and emails the replacements, then ends. The old passes void
 api "$BASE_URL/api/v1/operations/${MOVE_OP:?run move-start first}" | jq '{status, step, text}'
 ```
 
-Rows that need a look: `kept_both` (both passes stay live because a connection or user tag appeared, or a device holds a Google or Samsung copy the replacement lacks) and `unarmed` (registered for 7 days without arming).
+Rows that need a look: `kept_both` (both passes stay live because a connection or user tag appeared, or a device still holds a Google or Samsung copy the replacement lacks after 30 days) and `unarmed` (registered for 7 days without arming).
 
 ```sh name=move-rows-kept-both confirm=no
 api "$BASE_URL/api/v1/platform/apple/identity-moves?operationId=${MOVE_OP:?run move-start first}&state=kept_both" | jq '.items[] | {id, oldPassId, reason}'

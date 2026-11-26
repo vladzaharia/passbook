@@ -53,7 +53,7 @@ export const IdentityMoveSchema = z.object({
   oldPassId: IdSchema,
   newPassId: IdSchema,
   state: IdentityMoveStateSchema,
-  /** Why the row is kept, kept_both (`wallet_copy:<providers>` when a device holds a Google or Samsung copy the replacement lacks), failed or unarmed. */
+  /** Why the row is kept, kept_both, or registered while waiting (`wallet_copy:<providers>`: a device holds a Google or Samsung copy the replacement lacks), failed or unarmed. */
   reason: z.string().nullable(),
   /** Fields edited on both passes since the copy. */
   conflictCount: z.number().int().nonnegative(),

@@ -7,7 +7,7 @@ import {
   ON_OLD_DEVICE,
 } from './repo-identity-move.ts';
 import { KEPT } from './repo-identity-move-candidates.ts';
-import { HELD_COPY } from './repo-identity-move-wallet.ts';
+import { HELD_COPY, RECENT_SAVE, WALLET_ARMED } from './repo-identity-move-wallet.ts';
 
 /** The oldest registration of the replacement that counts, or null when none does. */
 export function firstRegistration(
@@ -110,7 +110,8 @@ export function dueVoids(db: D1Database, now: number, limit: number): Promise<Mo
 /**
  * Takes the right to void, only while it still holds: a current registration at least 24 hours old, a
  * replacement that is still an active pass, and an old pass that can still move (the plan's kept reasons are
- * read again here) and holds no saved wallet copy the replacement lacks. One statement, so a register or an unregister racing the timer lands on one side of it.
+ * read again here), holds no saved wallet copy the replacement lacks, and whose replacement's saves (of the
+ * providers the old pass had saved) are a day old. A holder with no Apple registration is armed by those saves. One statement, so a register or an unregister racing the timer lands on one side of it.
  */
 export async function claimVoid(
   db: D1Database,
@@ -120,15 +121,16 @@ export async function claimVoid(
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE pass_moves SET claim_until = ?, updated_at = ?
+    `UPDATE pass_moves SET claim_until = ?, updated_at = ?, reason = NULL
      WHERE id = ? AND state = 'registered' AND void_at <= ? AND (claim_until IS NULL OR claim_until <= ?)
        AND EXISTS (SELECT 1 FROM passes n WHERE n.id = pass_moves.new_pass_id AND n.status = 'active'
          AND n.deleted_at IS NULL AND n.removed_at IS NULL)
-       AND EXISTS (SELECT 1 FROM registrations r JOIN passes n ON n.id = r.pass_id
+       AND (EXISTS (SELECT 1 FROM registrations r JOIN passes n ON n.id = r.pass_id
          WHERE r.pass_id = pass_moves.new_pass_id AND ${ON_OLD_DEVICE} AND r.created_at <= ?)
+         OR ${WALLET_ARMED})
        AND (SELECT ${KEPT} FROM passes p WHERE p.id = pass_moves.old_pass_id) IS NULL
-       AND NOT ${HELD_COPY}`,
-    [until, now, id, now, now, now - DAY_MS],
+       AND NOT ${HELD_COPY} AND NOT ${RECENT_SAVE}`,
+    [until, now, id, now, now, now - DAY_MS, now - DAY_MS],
   );
   return changes === 1;
 }

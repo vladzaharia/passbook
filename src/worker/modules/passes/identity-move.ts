@@ -39,7 +39,7 @@ import {
   voidedByMove,
   voidRef,
 } from './repo-identity-move-timers.ts';
-import { heldReason } from './repo-identity-move-wallet.ts';
+import { heldReason, setWaitReason } from './repo-identity-move-wallet.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
 import { setPassStatus } from './service-status.ts';
@@ -199,14 +199,25 @@ export async function voidDue(
       await setState(db, row.id, ['registered'], { state: 'kept', reason: 'new_gone' }, now);
       return 'kept';
     }
-    // The old pass took on something the move cannot carry since it was planned, or a device holds a wallet copy
-    // of it that the replacement lacks. A device holds the replacement, so neither pass is voided: both stay live,
-    // and the row says why.
-    const why = (await keptReason(db, row.old_pass_id)) ?? (await heldReason(db, row));
+    // The old pass took on something the move cannot carry since it was planned. A device holds the replacement,
+    // so neither pass is voided: both stay live, and the row says why.
+    const why = await keptReason(db, row.old_pass_id);
     if (why !== null) {
       await setState(db, row.id, ['registered'], { state: 'kept_both', reason: why }, now);
       ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: why });
       return 'kept';
+    }
+    // A device holds a wallet copy of the old pass that the replacement lacks: the row waits, with its reason, for
+    // the holder to save the new one. At the reminder's deadline it stays as it is, both passes live.
+    const held = await heldReason(db, row);
+    if (held !== null) {
+      if (fresh.remind_at !== null && now >= fresh.remind_at) {
+        await setState(db, row.id, ['registered'], { state: 'kept_both', reason: held }, now);
+        ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: held });
+        return 'kept';
+      }
+      await setWaitReason(db, row.id, held, now);
+      return 'waiting';
     }
     return reschedule(db, fresh, now);
   }

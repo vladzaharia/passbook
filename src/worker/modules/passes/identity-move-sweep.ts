@@ -11,6 +11,7 @@ import {
   revokedOld,
   unarmed,
 } from './repo-identity-move-timers.ts';
+import { walletArmable } from './repo-identity-move-wallet.ts';
 
 const BATCH = 50;
 
@@ -36,6 +37,8 @@ export async function sweepIdentityMoves(ctx: ServiceContext): Promise<void> {
     ctx.log.warn('identity_move.unarmed', { code: 'IDENTITY_MOVE_UNARMED', moveId: id });
     writeEvent(ctx.env, { event: 'move.unarmed', orgId: org_id, outcome: 'unarmed' }, ctx.log);
   }
+  for (const { id, at } of await walletArmable(db, BATCH))
+    await arm(db, id, { at, device: 'wallet' }, now);
   for (const row of await dueVoids(db, now, BATCH))
     try {
       await voidDue(ctx, row);
