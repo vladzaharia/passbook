@@ -7,7 +7,7 @@ export interface OccupancyErrors {
   clearAt?: string;
 }
 
-/** The zone dialog's Occupancy section: tracking, tap out, and the limits that need it. */
+/** The zone wizard's Occupancy step: tracking, tap out, and the limits that need it. */
 export function OccupancyFields({
   draft,
   set,
@@ -20,20 +20,12 @@ export function OccupancyFields({
   inNow: number | null;
 }) {
   return (
-    <section
-      aria-labelledby="zone-occupancy"
-      className="@container mt-2 grid gap-4 border-t border-border pt-6"
-    >
-      <div>
-        <h3 id="zone-occupancy" className="text-sm font-semibold text-fg-strong">
-          Occupancy
-        </h3>
-        {inNow !== null ? (
-          <p role="status" className="mt-1 text-xs text-fg-muted">
-            {inNow} inside now.
-          </p>
-        ) : null}
-      </div>
+    <div className="@container flex flex-col gap-4">
+      {inNow !== null ? (
+        <p role="status" className="text-xs text-fg-muted">
+          {inNow} inside now.
+        </p>
+      ) : null}
       <SwitchRow
         label="Track who’s inside"
         checked={draft.track}
@@ -110,6 +102,6 @@ export function OccupancyFields({
           </FormField>
         </div>
       </DependentSettings>
-    </section>
+    </div>
   );
 }

@@ -21,7 +21,7 @@ import {
 import { SyncRunOpenError } from './repo-sync-enqueue.ts';
 import { openRunOf } from './repo-sync-open.ts';
 import { closeLostRun, instanceLost, STUCK_MS } from './run-lost.ts';
-import { alreadyExists } from './sync-chain.ts';
+import { alreadyExists, continuationId } from './sync-chain.ts';
 
 const DUE_BATCH = 100;
 const ADMIN_BUCKET_MS = 30_000;
@@ -41,9 +41,40 @@ export async function adminInstanceId(
   conn: Pick<ConnectionRow, 'id' | 'orgId' | 'generation'>,
   now: number,
   bucketMs: number,
+  /** Names what the run is for (an applied file): its own requests never share an instance with others. */
+  purpose?: string,
 ): Promise<string> {
-  const scope = await sha256Hex(JSON.stringify([conn.orgId, conn.id, conn.generation]));
+  const scope = await sha256Hex(
+    JSON.stringify([conn.orgId, conn.id, conn.generation, ...(purpose ? [purpose] : [])]),
+  );
   return `sync-${scope.slice(0, 32)}-admin-${Math.floor(now / bucketMs)}`;
+}
+
+/**
+ * Replaces the connection's open sync, so the next request starts a run of its own instead of joining it.
+ * The old run is closed as SUPERSEDED, which every step of it checks before it writes, and its workflow
+ * instance is terminated on a best-effort basis. Used when the source changed under it.
+ */
+export async function supersedeOpenRun(
+  sctx: ServiceContext,
+  conn: Pick<ConnectionRow, 'id' | 'orgId'>,
+): Promise<void> {
+  const open = await openRunOf(sctx.env.DB, { connectionId: conn.id, instanceId: '' });
+  if (!open) return;
+  await closeLostRun(sctx, {
+    orgId: conn.orgId,
+    connectionId: conn.id,
+    runId: open.id,
+    superseded: true,
+  });
+  for (const id of open.tipSeq > 0 ? [open.id, continuationId(open.id, open.tipSeq)] : [open.id]) {
+    try {
+      await (await sctx.env.CONNECTION_SYNC.get(id)).terminate();
+    } catch {
+      // Gone or finished already; the closed tracking row stops anything still running.
+      sctx.log.info('connection.supersede_terminate_skipped', { code: 'SUPERSEDED' });
+    }
+  }
 }
 
 /** A queued run whose launch failed has no instance yet: start it, so adopting it is not a dead end. */
@@ -90,10 +121,13 @@ export async function startSync(
   await assertConnectionAuthority(sctx, authority);
   const retry = await syncEnqueueExists(sctx.env.DB, instanceId);
   if (!retry) {
-    // Two runs would page the same cursor: adopt the open one while its instance is alive.
+    // Two runs would page the same cursor: adopt the open one while its instance is alive and current.
     const open = await openRunOf(sctx.env.DB, { connectionId: conn.id, instanceId });
     if (open) {
+      // A run enqueued under an older generation is fenced out: it cannot do this request's work.
+      const current = open.generation === null || open.generation >= conn.generation;
       const alive =
+        current &&
         (open.status === 'queued' || open.status === 'running') &&
         (sctx.clock.now() - open.startedAt < STUCK_MS ||
           !(await instanceLost(sctx, open.id, open.tipSeq)));
@@ -101,7 +135,12 @@ export async function startSync(
         await ensureInstance(sctx, conn, open);
         return { runId: open.id, workflowInstanceId: open.id };
       }
-      await closeLostRun(sctx, { orgId: conn.orgId, connectionId: conn.id, runId: open.id });
+      await closeLostRun(sctx, {
+        orgId: conn.orgId,
+        connectionId: conn.id,
+        runId: open.id,
+        superseded: !current,
+      });
     }
   }
   const credentialKeysetCommitment = retry

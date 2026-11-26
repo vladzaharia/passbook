@@ -15,8 +15,18 @@ import type { WizardRail } from './wizard-types.ts';
  * done steps as buttons back to them with what was chosen under them. Narrower, one line, "Step 2
  * of 4 · Access", over a thin progress bar. Put it in a `@container` that holds the step too.
  */
-export function WizardStepper({ wizard }: { wizard: WizardRail }) {
-  const { steps, index } = wizard;
+export function WizardStepper({
+  wizard,
+  finished,
+}: {
+  wizard: WizardRail;
+  /** The finish went through: the current step ticks and the bar completes while the result is held back. */
+  finished?: boolean;
+}) {
+  const { index } = wizard;
+  const steps = finished
+    ? wizard.steps.map((s, i) => (i === index ? { ...s, state: 'done' as const } : s))
+    : wizard.steps;
   const base = useId();
   // A marker pops only for a step that became done after this rail mounted, and keeps the class
   // until it leaves done (dropping it mid-animation would cut the pop short).
@@ -165,7 +175,9 @@ function StepPicker({ wizard, line }: { wizard: WizardRail; line: ReactNode }) {
               aria-current={s.state === 'current' ? 'step' : undefined}
               onSelect={() => wizard.go(s.id)}
             >
-              <StepMarker state={s.state} n={n} size="sm" />
+              <span aria-hidden className="inline-flex">
+                <StepMarker state={s.state} n={n} size="sm" />
+              </span>
               <span className="min-w-0 flex-1 truncate">{s.title}</span>
               {word ? <span className="text-xs text-fg-muted">{word}</span> : null}
             </DropdownMenuItem>

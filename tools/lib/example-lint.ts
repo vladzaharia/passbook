@@ -253,7 +253,13 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
           patterned.set(v, set);
         }
       }
-      if (typeof v === 'number' && TIME_KEY.test(leaf.key) && v < 1_000_000_000_000)
+      // The probe's page.from and page.to number records, not instants.
+      if (
+        typeof v === 'number' &&
+        TIME_KEY.test(leaf.key) &&
+        v < 1_000_000_000_000 &&
+        !/\.page\.(?:from|to)$/.test(at)
+      )
         bad(`time ${v} is not a plausible millisecond time`, at);
     }
   }

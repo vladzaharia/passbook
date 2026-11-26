@@ -1,10 +1,9 @@
-import { Check } from 'lucide-react';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
-import { cn } from '@/web/lib/cn.ts';
+import { StepList, type StepListItem } from '@/web/ui/index.ts';
 
 /**
- * A run as steps: done ones tick, the current one is ringed, the rest wait. Apple's managed ID
- * and Google's managed issuer draw the same list.
+ * A run as steps: done ones tick, the current one spins (or shows the failure), the rest wait.
+ * Apple's managed ID and Google's managed issuer draw the same list.
  */
 export function RunSteps({
   labels,
@@ -16,42 +15,11 @@ export function RunSteps({
   at: number;
   failed: boolean;
 }) {
-  return (
-    <ol aria-label="Setup steps" className="wl-stagger m-0 flex list-none flex-col gap-2 p-0">
-      {labels.map((label, i) => {
-        const done = i < at;
-        const now = i === at;
-        return (
-          <li
-            key={label}
-            style={{ '--i': i } as never}
-            className={cn(
-              'flex items-center gap-2 text-sm',
-              done || now ? 'text-fg' : 'text-fg-muted',
-            )}
-          >
-            <span
-              aria-hidden
-              className={cn(
-                'inline-flex size-5 items-center justify-center rounded-full border text-xs',
-                done
-                  ? 'wl-step-done border-success-border bg-success-subtle text-success'
-                  : now && !failed
-                    ? 'border-accent text-accent-fg'
-                    : 'border-border-strong',
-              )}
-            >
-              {done ? <Check className="size-3" /> : i + 1}
-            </span>
-            {label}
-            {now ? (
-              <span className="sr-only">
-                {failed ? PASS_SETUP_COPY.channelsCard.runFailed : 'In progress'}
-              </span>
-            ) : null}
-          </li>
-        );
-      })}
-    </ol>
-  );
+  const items: StepListItem[] = labels.map((label, i) => ({
+    id: label,
+    label,
+    state: i < at ? 'done' : i === at ? (failed ? 'failed' : 'working') : 'todo',
+    ...(i === at && failed ? { detail: PASS_SETUP_COPY.channelsCard.runFailed } : {}),
+  }));
+  return <StepList items={items} label="Setup steps" />;
 }

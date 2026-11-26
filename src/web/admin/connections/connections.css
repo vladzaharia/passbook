@@ -26,3 +26,10 @@
     animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
   }
 }
+
+/* Picker tiles settle in once, staggered by their place in the flat order. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-tile-in {
+    animation: wl-fade-in 200ms var(--wl-ease-out) calc(var(--wl-i, 0) * 30ms) backwards;
+  }
+}

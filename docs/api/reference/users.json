@@ -61,7 +61,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-42d7551c0b15",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -140,7 +139,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-9f970a1ed4fc",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -202,7 +200,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-f8ee46f35f20",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -264,7 +261,6 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-c427695ea03d",
-          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -290,6 +286,26 @@
   "users.deleteUsersByIdSessionsBySessionId": {
     "response": {
       "ok": true
+    }
+  },
+  "users.getUsersByIdPasses": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-a97e2c9eb615",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "orgStatus": "active",
+          "timeZone": "America/Los_Angeles",
+          "templateName": "Monthly membership",
+          "status": "active",
+          "holding": "owned",
+          "channels": ["mobile"],
+          "issuedAt": 1795570500000,
+          "updatedAt": 1795399200000
+        }
+      ],
+      "nextCursor": "c1.4812"
     }
   }
 }

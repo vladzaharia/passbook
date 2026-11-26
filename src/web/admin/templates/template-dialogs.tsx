@@ -2,12 +2,22 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
-import { errorMessage } from '../../lib/errors.ts';
+import { errorMessage, UserMessageError } from '../../lib/errors.ts';
 import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import { useSession } from '../../lib/session.ts';
-import { Button, Dialog, DialogContent, FormField, Input, Select, toast } from '../../ui/index.ts';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  FormDialog,
+  FormField,
+  Input,
+  Select,
+  toast,
+  useFormErrors,
+} from '../../ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
 import { useTemplateActions } from './api.ts';
 
@@ -31,12 +41,14 @@ export function DuplicateDialog({
   const scope = useOrgScope();
   const actions = useTemplateActions(template.id);
   const navigate = useNavigate();
-  const [orgId, setOrgId] = useState<string | undefined>(template.orgId ?? undefined);
-  const [name, setName] = useState(`${template.name} copy`);
-  const [error, setError] = useState<string>();
+  const own = template.orgId ?? undefined;
+  const fresh = `${template.name} copy`;
+  const [orgId, setOrgId] = useState<string | undefined>(own);
+  const [name, setName] = useState(fresh);
+  const check = useFormErrors(orgId ? {} : { orgId: 'Choose an organization.' });
 
   async function duplicate() {
-    if (!orgId) return setError('Choose an organization.');
+    if (!orgId) return;
     if (
       scope.isLoading ||
       scope.isError ||
@@ -47,62 +59,55 @@ export function DuplicateDialog({
         (m) => m.orgId === orgId && m.capabilities.includes('templates:author'),
       )
     ) {
-      return setError('Choose an organization where you can author templates.');
+      throw new UserMessageError('Choose an organization where you can author templates.');
     }
-    try {
-      const copy = await actions.clone.mutateAsync({ orgId, name: name.trim() || undefined });
-      markMinted(`template:${copy.id}`);
-      markCreated(`template:${copy.id}`, 'duplicated');
-      onOpenChange(false);
-      void navigate(
-        to === 'design'
-          ? {
-              to: '/admin/o/$orgId/templates/$templateId/design',
-              params: { orgId: copy.orgId ?? orgId, templateId: copy.id },
-            }
-          : {
-              to: '/admin/o/$orgId/templates/$templateId',
-              params: { orgId: copy.orgId ?? orgId, templateId: copy.id },
-            },
-      );
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
+    const copy = await actions.clone.mutateAsync({ orgId, name: name.trim() || undefined });
+    markMinted(`template:${copy.id}`);
+    markCreated(`template:${copy.id}`, 'duplicated');
+    onOpenChange(false);
+    void navigate(
+      to === 'design'
+        ? {
+            to: '/admin/o/$orgId/templates/$templateId/design',
+            params: { orgId: copy.orgId ?? orgId, templateId: copy.id },
+          }
+        : {
+            to: '/admin/o/$orgId/templates/$templateId',
+            params: { orgId: copy.orgId ?? orgId, templateId: copy.id },
+          },
+    );
   }
 
   return (
-    <Dialog
+    <FormDialog
       open={open}
-      dirty={name !== `${template.name} copy` || orgId !== (template.orgId ?? undefined)}
       onOpenChange={onOpenChange}
+      title="Duplicate template"
+      dirty={name !== fresh || orgId !== own}
+      check={check}
+      onSubmit={duplicate}
+      submitLabel="Duplicate"
+      busy={actions.clone.isPending}
+      onClose={() => {
+        setName(fresh);
+        setOrgId(own);
+      }}
     >
-      <DialogContent
-        title="Duplicate template"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button loading={actions.clone.isPending} onClick={() => void duplicate()}>
-              Duplicate
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-4">
-          <FormField label="Name">
+      {({ errors, clear }) => (
+        <>
+          <FormField label="Name" error={errors.name}>
             {(c) => (
               <Input {...c} data-autofocus value={name} onChange={(e) => setName(e.target.value)} />
             )}
           </FormField>
-          <FormField label="Organization" required error={error}>
+          <FormField label="Organization" required error={check.errors.orgId ?? errors.orgId}>
             {(c) => (
               <Select
                 {...c}
                 value={orgId}
                 onValueChange={(v) => {
                   setOrgId(v);
-                  setError(undefined);
+                  clear('orgId');
                 }}
                 options={(orgs.data?.items ?? [])
                   .filter((o) =>
@@ -114,9 +119,9 @@ export function DuplicateDialog({
               />
             )}
           </FormField>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </>
+      )}
+    </FormDialog>
   );
 }
 

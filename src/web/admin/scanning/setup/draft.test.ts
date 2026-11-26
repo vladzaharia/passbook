@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { planScanSetup } from '@/shared/scan-setup-plan.ts';
 import type { SetupPlanContext } from '@/shared/scan-setup-plan-types.ts';
-import {
-  type Draft,
-  initialDraft,
-  newEvent,
-  PRESETS,
-  skipsWhen,
-  stepAfter,
-  stepProblem,
-} from './draft.ts';
+import { type Draft, initialDraft, newEvent, PRESETS, skipsWhen, stepProblem } from './draft.ts';
 import { applyFix, toIntent } from './intent.ts';
 
 const ctx: SetupPlanContext = {
@@ -107,7 +99,7 @@ describe('steps', () => {
       undefined,
     );
   });
-  it('an event door skips When, both ways', () => {
+  it('an event door skips When', () => {
     const d = {
       ...initialDraft('event_night', 'UTC'),
       events: [
@@ -115,9 +107,7 @@ describe('steps', () => {
       ],
     };
     expect(skipsWhen(d)).toBe(true);
-    expect(stepAfter(d, 1, 1)).toBe(3);
-    expect(stepAfter(d, 3, -1)).toBe(1);
-    expect(stepAfter(initialDraft('front_desk', 'UTC'), 1, 1)).toBe(2);
+    expect(skipsWhen(initialDraft('front_desk', 'UTC'))).toBe(false);
   });
 });
 

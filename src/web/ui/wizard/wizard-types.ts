@@ -18,7 +18,10 @@ export type WizardStepState = 'done' | 'current' | 'todo' | 'skipped' | 'invalid
 export interface WizardOptions<Id extends string> {
   /** Computed each render: summaries change with the draft. */
   steps: readonly WizardStepDef<Id>[];
-  /** Blocking problems per step, a pure function of the draft: field to message. */
+  /**
+   * Blocking problems per step, a pure function of the draft: field to message. A `wait` key is a
+   * load in flight: it holds Next on its own step and never turns another step invalid.
+   */
   errors: Partial<Record<Id, Partial<Record<string, string>> | undefined>>;
   /** Why Next is off, four words or fewer with a period ("Name the key."). Falls back to the count. */
   hints?: Partial<Record<Id, string>>;
@@ -39,7 +42,9 @@ export interface WizardOptions<Id extends string> {
  * `primary`) and the stage. The Next button submits the form `formId` names.
  */
 export interface WizardFrameProps {
-  steps: readonly { id: string; title: string }[];
+  steps: readonly WizardStepDef[];
+  /** One state per step: the rail shows done, invalid and skipped as the model derives them. */
+  states: readonly WizardStepState[];
   current: number;
   onStep: (index: number) => void;
   skipped: readonly string[];
@@ -48,6 +53,10 @@ export interface WizardFrameProps {
   nextDisabled: boolean;
   nextHint: string | undefined;
   busy: boolean;
+  /** One line at the foot of the step (a refused finish). */
+  formError: string | undefined;
+  /** A press on a blocked Next: submits the form, which shows the step's errors. */
+  onBlocked: () => void;
 }
 
 export interface WizardModel<Id extends string = string> {
@@ -60,6 +69,8 @@ export interface WizardModel<Id extends string = string> {
   last: boolean;
   /** Create: a step that was passed, or any step behind. Edit: any step. */
   go(to: number | Id): void;
+  /** Move there whatever the state of the steps between, marking those behind it done. For a choice that skips ahead (a deep link, a committed tile). */
+  jump(to: number | Id): void;
   /** Same as pressing Next: a blocked step shows its errors instead. */
   next(): void;
   back(): void;

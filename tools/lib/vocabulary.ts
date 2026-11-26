@@ -4,7 +4,7 @@ import type { SdkNames } from './openapi-ratchet.ts';
 export const METHOD_VERBS: ReadonlySet<string> = new Set(
   `accept add apply approve archive assign attach bind cancel check clear clone close commit complete confirm connect
   consume count create decline delete detach diff disable download enable end ensure export hold import inspect join
-  list mark match migrate offboard open override pair pause personalize preview promote reassign rebind receive
+  list mark match migrate offboard open override pair pause personalize preview probe promote reassign rebind receive
   reenroll refresh release remove renew reopen replace replay report request resend reset resolve restore retire
   retrieve retry reveal revoke rollback rotate save search send set share stage start stop submit sync unassign undo unlock
   unpair unvoid update upload upsert verify void`.split(/\s+/),

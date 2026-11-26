@@ -32,28 +32,32 @@ export async function instanceLost(
   }
 }
 
-/** Marks the tracking row lost and closes the run row as RUN_LOST, like any other finished run. */
+/**
+ * Marks the tracking row lost and closes the run row as RUN_LOST, like any other finished run. A run a newer
+ * one replaced (`superseded`) closes as skipped with code SUPERSEDED, and its remaining steps stop.
+ */
 export async function closeLostRun(
   sctx: ServiceContext,
-  p: { orgId: string; connectionId: string; runId: string },
+  p: { orgId: string; connectionId: string; runId: string; superseded?: boolean },
 ): Promise<void> {
+  const code = p.superseded ? 'SUPERSEDED' : 'RUN_LOST';
   const now = sctx.clock.now();
   const db = sctx.env.DB;
   const scope = { orgId: p.orgId, connectionId: p.connectionId };
   const tracking = await workflowSyncTracking(db, { instanceId: p.runId, ...scope });
   const keyset = tracking?.credentialKeysetCommitment ?? null;
   if (keyset === null) await markLegacyWorkflowLost(db, { instanceId: p.runId, ...scope, now });
-  else await setWorkflowStatus(db, p.runId, 'errored', now, 'RUN_LOST', undefined, keyset, scope);
+  else await setWorkflowStatus(db, p.runId, 'errored', now, code, undefined, keyset, scope);
   await finishRun(
     sctx,
     {
       id: p.runId,
       connectionId: p.connectionId,
       finishedAt: now,
-      outcome: 'error',
+      outcome: p.superseded ? 'skipped' : 'error',
       recordsSeen: 0,
       passesChanged: 0,
-      errorCode: 'RUN_LOST',
+      errorCode: code,
       errorDetail: null,
       httpStatus: null,
     },

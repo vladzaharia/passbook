@@ -1,8 +1,8 @@
-import { Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { formatExpiry } from '../../lib/format.ts';
-import { Button, Callout, Card, CardBody } from '../../ui/index.ts';
+import { Callout, WizardReview, type WizardReviewSection } from '../../ui/index.ts';
 import { PassChecks } from '../brand/pass-checks.tsx';
+import type { StepId } from './new-pass-types.ts';
 import { describeSchema, type FieldDef, type FormValues } from './schema-form/index.ts';
 
 const shown = (v: unknown, field?: FieldDef) => {
@@ -14,14 +14,10 @@ const shown = (v: unknown, field?: FieldDef) => {
   return field?.widget === 'datetime' ? formatExpiry(v) || v : v;
 };
 
-interface Row {
-  label: string;
-  value: ReactNode;
-  step?: number;
-}
-
-/** Review: one row per choice with Edit back to its step (the state is kept). */
+/** Review: what the pass will be, a section per step with Edit back to it (the state is kept). */
 export function ReviewStep({
+  orgEditable,
+  onEdit,
   org,
   setup,
   mode,
@@ -31,11 +27,13 @@ export function ReviewStep({
   input,
   email,
   send,
-  steps,
-  onEdit,
   warnings: all,
-  error,
+  preview,
+  notice,
 }: {
+  /** The organization step is in this run's rail: its Edit goes back there. */
+  orgEditable: boolean;
+  onEdit: (step: StepId) => void;
   org: string | undefined;
   /** The org's setup rows; `onFixed` reads the preview's warnings again once an image landed. */
   setup?: { orgId: string | undefined; templateId: string | undefined; onFixed: () => void };
@@ -46,8 +44,6 @@ export function ReviewStep({
   input: FormValues;
   email: string;
   send: boolean;
-  steps: { org?: number; template: number; details: number; holder: number };
-  onEdit: (step: number) => void;
   /** The preview's: missing branding and the org's checks get fix rows, the rest one line each. */
   warnings: readonly {
     code: string;
@@ -56,7 +52,9 @@ export function ReviewStep({
     path?: string | undefined;
     fix?: { action: string } | undefined;
   }[];
-  error: ReactNode;
+  preview?: ReactNode;
+  /** Why Create is off. */
+  notice?: ReactNode;
 }) {
   const warnings = all
     // The org's own Add support row says the same as BACK_CONTACT, so only one of them shows.
@@ -70,17 +68,40 @@ export function ReviewStep({
   const fields = describeSchema(schema)
     .flatMap((g) => g.fields)
     .filter((f) => f.required || shown(input[f.key], f) !== null);
-  const rows: Row[] = [
-    { label: 'Organization', value: org, ...(steps.org !== undefined ? { step: steps.org } : {}) },
-    { label: 'Mode', value: mode === 'test' ? 'Test' : 'Live' },
-    { label: 'Template', value: template, step: steps.template },
-    ...(release ? [{ label: 'Wallet provider', value: 'Apple Wallet' }] : []),
-    ...fields.map((f) => ({ label: f.label, value: shown(input[f.key], f), step: steps.details })),
-    { label: 'Holder', value: email.trim() || 'No holder yet', step: steps.holder },
+  const sections: WizardReviewSection<StepId>[] = [
     {
-      label: 'Email',
-      value: send && email.trim() ? `Requested for ${email.trim()}` : 'Not requested',
-      step: steps.holder,
+      id: 'org',
+      title: 'Organization',
+      // The scope names it: nothing to change here.
+      ...(orgEditable ? {} : { edit: false as const }),
+      items: [
+        { label: 'Organization', value: org },
+        { label: 'Mode', value: mode === 'test' ? 'Test' : 'Live' },
+      ],
+    },
+    {
+      id: 'template',
+      title: 'Template',
+      items: [
+        { label: 'Template', value: template },
+        ...(release ? [{ label: 'Wallet provider', value: 'Apple Wallet' }] : []),
+      ],
+    },
+    {
+      id: 'details',
+      title: 'Details',
+      items: fields.map((f) => ({ id: f.key, label: f.label, value: shown(input[f.key], f) })),
+    },
+    {
+      id: 'holder',
+      title: 'Holder',
+      items: [
+        { label: 'Holder', value: email.trim() || 'No holder yet' },
+        {
+          label: 'Email',
+          value: send && email.trim() ? `Requested for ${email.trim()}` : 'Not requested',
+        },
+      ],
     },
   ];
   return (
@@ -100,38 +121,8 @@ export function ReviewStep({
           items={warnings}
         />
       ) : null}
-      <Card>
-        <CardBody>
-          <dl className="divide-y divide-border">
-            {rows.map((r) => (
-              <div
-                key={r.label}
-                className="flex min-h-11 flex-wrap items-start gap-2 py-2 first:pt-0 last:pb-0 sm:flex-nowrap sm:items-center sm:gap-3"
-              >
-                <dt className="w-full shrink-0 text-sm text-fg-muted sm:w-32">{r.label}</dt>
-                {/* A dl row holds only dt and dd, so Edit sits inside the dd. */}
-                <dd className="flex min-w-0 flex-1 items-center gap-3 text-sm text-fg">
-                  <span className="min-w-0 flex-1 break-words">
-                    {r.value ?? <span className="text-fg-subtle">—</span>}
-                  </span>
-                  {r.step !== undefined ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      iconStart={<Pencil aria-hidden />}
-                      aria-label={`Edit ${r.label.toLowerCase()}`}
-                      onClick={() => onEdit(r.step as number)}
-                    >
-                      <span className="max-sm:sr-only">Edit</span>
-                    </Button>
-                  ) : null}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </CardBody>
-      </Card>
-      {error}
+      <WizardReview sections={sections} onEdit={onEdit} preview={preview} level={3} />
+      {notice}
     </div>
   );
 }

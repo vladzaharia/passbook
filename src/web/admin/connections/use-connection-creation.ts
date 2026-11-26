@@ -1,12 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { RefObject } from 'react';
 import type { z } from 'zod';
-import { ConnectionSchema, type CreateConnectionSchema } from '@/shared/contracts/connections.ts';
+import {
+  ConnectionSchema,
+  type CreateConnectionSchema,
+  SyncNowResponseSchema,
+} from '@/shared/contracts/connections.ts';
 import { api } from '../../lib/api.ts';
+import { toast } from '../../ui/index.ts';
 import type { Mapping } from '../mapping/mapping.ts';
 import { cleanValues } from '../passes/schema-form/index.ts';
 import { connectionKeys } from './api.ts';
 import { nestValues } from './config-schema.ts';
+import { markApplyStarted } from './files/use-apply-watch.ts';
 import { type Lifecycle, lifecycleToPatch } from './lifecycle-fields.tsx';
 import { generateSecret } from './webhook.tsx';
 import type { ConfigDraft } from './wizard-steps.tsx';
@@ -27,6 +33,7 @@ export function useConnectionCreation({
   draft,
   shownSecrets,
   mapping,
+  fileId,
   onCreated,
 }: {
   currentScope: RefObject<WizardScope>;
@@ -35,6 +42,8 @@ export function useConnectionCreation({
   draft: ConfigDraft;
   shownSecrets: Record<string, string>;
   mapping: Mapping;
+  /** File upload: the draft that becomes the first revision. */
+  fileId?: string | undefined;
   onCreated: (created: CreatedConnection) => void;
 }) {
   const qc = useQueryClient();
@@ -52,11 +61,24 @@ export function useConnectionCreation({
         ...(Object.keys(mapping).length > 0 ? { mapping } : {}),
         ...lifecycleToPatch(life),
         ...(webhookSecret ? { webhookSecret } : {}),
+        ...(fileId ? { fileId } : {}),
       };
       const connection = await api.post('/api/v1/connections', ConnectionSchema, body);
-      return { connection, webhookSecret: pasted ? undefined : webhookSecret, scope };
+      let applyError: unknown;
+      if (fileId) {
+        // Review and Create confirmed the first file: apply it now. If the run cannot start, the new
+        // page says Not applied yet and offers Sync now.
+        try {
+          await api.post(`/api/v1/connections/${connection.id}/sync`, SyncNowResponseSchema);
+          markApplyStarted(connection.id);
+        } catch (error) {
+          applyError = error;
+        }
+      }
+      return { connection, webhookSecret: pasted ? undefined : webhookSecret, scope, applyError };
     },
-    onSuccess: async ({ connection, webhookSecret, scope }) => {
+    onSuccess: async ({ connection, webhookSecret, scope, applyError }) => {
+      if (applyError) toast.error(applyError, 'The first file did not start applying');
       await qc.invalidateQueries({ queryKey: connectionKeys.all });
       void qc.invalidateQueries({ queryKey: ['palette'] });
       if (currentScope.current === scope) {

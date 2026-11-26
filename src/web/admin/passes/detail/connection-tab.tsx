@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal, Pencil, Unplug } from 'lucide-react';
 import { useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
-import { errorMessage } from '../../../lib/errors.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import {
@@ -10,10 +9,7 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CheckboxField,
   ConfirmDialog,
-  Dialog,
-  DialogContent,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -21,117 +17,15 @@ import {
   EmptyState,
   EntityChip,
   ErrorState,
-  FormField,
   IconButton,
-  Input,
   KeyValue,
-  Select,
   SkeletonKeyValue,
   toast,
 } from '../../../ui/index.ts';
-import { useConnection, useConnections } from '../../connections/api.ts';
+import { useConnection } from '../../connections/api.ts';
 import { HealthPill } from '../../connections/health.tsx';
 import { canMutatePass, passMutationPrincipal, usePassActions } from '../api.ts';
-
-function BindDialog({
-  pass,
-  open,
-  onOpenChange,
-}: {
-  pass: PassDetailDto;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const actions = usePassActions(pass.id);
-  const client = useQueryClient();
-  const connections = useConnections({ orgId: pass.orgId });
-  const [connectionId, setConnectionId] = useState(pass.connectionId ?? undefined);
-  const [ref, setRef] = useState(pass.externalRef ?? '');
-  const [takeOver, setTakeOver] = useState(false);
-  const [error, setError] = useState<string>();
-
-  async function bind() {
-    const principalId = passMutationPrincipal(client);
-    if (!principalId || !canMutatePass(client, pass, principalId)) return;
-    const externalRef = ref.trim();
-    if (!connectionId) return setError('Choose a connection.');
-    if (!externalRef) return setError('Enter the record id in the source.');
-    setError(undefined);
-    try {
-      await actions.bindConnection.mutateAsync({
-        connectionId,
-        externalRef,
-        resetFieldSources: takeOver,
-      });
-      if (!canMutatePass(client, pass, principalId)) return;
-      toast.success('Pass bound to connection');
-      onOpenChange(false);
-    } catch (cause) {
-      if (canMutatePass(client, pass, principalId)) setError(errorMessage(cause));
-    }
-  }
-
-  return (
-    <Dialog
-      open={open}
-      dirty={
-        connectionId !== (pass.connectionId ?? undefined) ||
-        ref !== (pass.externalRef ?? '') ||
-        takeOver
-      }
-      onOpenChange={(next) => !actions.bindConnection.isPending && onOpenChange(next)}
-    >
-      <DialogContent
-        title={pass.connectionId ? 'Change connection' : 'Bind to a connection'}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              disabled={actions.bindConnection.isPending}
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button loading={actions.bindConnection.isPending} onClick={() => void bind()}>
-              Bind
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-4">
-          <FormField label="Connection" required>
-            {(c) => (
-              <Select
-                {...c}
-                value={connectionId}
-                onValueChange={setConnectionId}
-                options={(connections.data?.items ?? []).map((x) => ({
-                  value: x.id,
-                  label: x.name,
-                }))}
-              />
-            )}
-          </FormField>
-          <FormField label="Record id" required help="The record's id in the source." error={error}>
-            {(c) => (
-              <Input
-                {...c}
-                autoComplete="off"
-                value={ref}
-                onChange={(e) => setRef(e.target.value)}
-              />
-            )}
-          </FormField>
-          <CheckboxField
-            label="Let the connection take over every field"
-            checked={takeOver}
-            onCheckedChange={(c) => setTakeOver(c === true)}
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+import { BindDialog } from './bind-dialog.tsx';
 
 function Bound({
   pass,

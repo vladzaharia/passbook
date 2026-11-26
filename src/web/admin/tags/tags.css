@@ -96,19 +96,6 @@
     transform: translateY(0) scale(0.7);
   }
 }
-.wl-enroll-tile {
-  animation: wl-enroll-pop 280ms cubic-bezier(0.2, 0, 0, 1) 1 both;
-}
-@keyframes wl-enroll-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 /* Refused: the strike draws across the tag. */
 .wl-enroll-strike {
   stroke-dasharray: 30;
@@ -144,8 +131,7 @@
     animation: wl-enroll-fade 240ms ease-out 1 both;
     transform: rotate(45deg) scale(1);
   }
-  .wl-enroll-tag,
-  .wl-enroll-tile {
+  .wl-enroll-tag {
     animation: wl-enroll-face 200ms ease-out 1 both;
   }
   .wl-enroll-strike {
