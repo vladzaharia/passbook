@@ -4,6 +4,6 @@ curl -X POST "https://passbook.mobile/api/v1/orgs/0193a1b2-7c00-7000-8000-000000
   -d '{
   "email": "priya@example.com",
   "roles": [
-    "org_admin"
+    "pass_operator"
   ]
 }'

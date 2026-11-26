@@ -3,6 +3,6 @@ curl -X PATCH "https://passbook.mobile/api/v1/orgs/0193a1b2-7c00-7000-8000-00000
   -H "Content-Type: application/json" \
   -d '{
   "roles": [
-    "org_admin"
+    "read_only"
   ]
 }'

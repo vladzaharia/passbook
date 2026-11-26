@@ -19,7 +19,7 @@ func main() {
 	var body passbook.MembershipsUpdateRolesBody
 	if err := json.Unmarshal([]byte(`{
   "roles": [
-    "org_admin"
+    "read_only"
   ]
 }`), &body); err != nil {
 		panic(err)

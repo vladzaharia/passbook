@@ -20,7 +20,7 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "email": "priya@example.com",
   "roles": [
-    "org_admin"
+    "pass_operator"
   ]
 }`), &body); err != nil {
 		panic(err)

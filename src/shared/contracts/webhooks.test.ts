@@ -169,6 +169,7 @@ describe('API key scopes', () => {
       'members:read',
       'members:write',
       'audit:read',
+      'platform:read',
       'platform:orgs',
       'platform:users',
       'platform:identities',
@@ -178,6 +179,7 @@ describe('API key scopes', () => {
       'platform:templates',
       'platform:audit',
       'platform:claims',
+      'platform:groups',
       'brand:manage',
     ]);
   });

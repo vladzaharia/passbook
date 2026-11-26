@@ -9,7 +9,7 @@ result = pb.invitations.create(
     {
         "email": "priya@example.com",
         "roles": [
-            "org_admin",
+            "pass_operator",
         ],
     },
 )
