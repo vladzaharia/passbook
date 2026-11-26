@@ -386,6 +386,8 @@ describe('a developer org never holds Live', () => {
     // SQLite fires the newest trigger first, so a table whose later migration adds its own insert checks may refuse
     // with that message; its guard trigger must still exist and the row must still be refused.
     const othersFirst = new Set(['wallet_samsung_tombstones']);
+    // The request log refuses a Live row in every org (0237), so it has no developer-only guard.
+    const guardedEverywhere = new Set(['request_log']);
     for (const { name } of tables) {
       const guard = await all<{ name: string }>(
         kit.env.DB,
@@ -393,7 +395,8 @@ describe('a developer org never holds Live', () => {
            AND sql LIKE '%''live''%' AND sql LIKE '%kind = ''developer''%'`,
         [name],
       );
-      expect(guard.length, `${name} guard trigger`).toBeGreaterThan(0);
+      if (!guardedEverywhere.has(name))
+        expect(guard.length, `${name} guard trigger`).toBeGreaterThan(0);
       // 0229 recreated the instance insert guard, which fires before the developer one; it is lifted for this
       // table so the developer org's own Live guard is what refuses the row.
       const attempt = () =>

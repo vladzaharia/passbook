@@ -10,6 +10,7 @@ beforeAll(async () => {
 });
 afterAll(() => vi.unstubAllGlobals());
 
+const ACCOUNT_LEVEL = new Set(['GET /api/v1/workbench/contexts']);
 const DUMMY = '019e0000-0000-7000-8000-000000000000';
 
 describe('L1: the Workbench route inventory', () => {
@@ -34,10 +35,18 @@ describe('L1: the Workbench route inventory', () => {
     expect(marked.sort()).toEqual([...WORKBENCH_ROUTES].sort());
   });
 
+  it('the account-level contexts read answers the signed-in browser without a token', async () => {
+    const m = await t.member();
+    const res = await t.call('GET', '/workbench/contexts', m.browser);
+    expect(res.status, await res.clone().text()).toBe(200);
+  });
+
   it('every allowlisted route takes a member token: no 401 and no route refusal', async () => {
     const m = await t.member();
     const { token } = await t.wbMint(m.browser, m.orgId);
     for (const route of WORKBENCH_ROUTES) {
+      // The account-level read rides the session cookie alone (no bearer): the shell's boundary test holds it so.
+      if (ACCOUNT_LEVEL.has(route)) continue;
       const [method = 'GET', path = ''] = route.split(' ');
       const concrete = path.replace(/:[A-Za-z0-9_]+/g, DUMMY).replace('/api/v1', '');
       const res = await t.call(method, concrete, t.asClient(token), {});

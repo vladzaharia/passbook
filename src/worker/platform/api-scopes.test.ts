@@ -6,7 +6,7 @@ import { rolesGranting } from './org-role-grants.ts';
 
 describe('role presets', () => {
   // A bundle is copied onto a key when it is minted. Changing one is a reviewed diff of this snapshot:
-  // it reaches only keys made afterwards. `api-keys:write` joined with child keys (WP6): a role key made from now holds it. `members:read` joined with the developer lists: org_admin only; `members:write` is a credential scope and is in no role.
+  // it reaches only keys made afterwards. `api-keys:write` joined with child keys (WP6): a role key made from now holds it. `members:read` joined with the developer lists: org_admin only; `members:write` is a credential scope and is in no role. `logs:read` (the Test request log) joined for org_admin, integration_admin and read_only.
   it('are these bundles exactly', () => {
     expect(ROLE_PRESETS).toEqual({
       org_admin: [
@@ -29,6 +29,7 @@ describe('role presets', () => {
         'org:read',
         'org:write',
         'members:read',
+        'logs:read',
         'brand:manage',
       ],
       integration_admin: [
@@ -39,6 +40,7 @@ describe('role presets', () => {
         'wallet:write',
         'api-keys:write',
         'org:read',
+        'logs:read',
       ],
       template_author: ['templates:read', 'templates:write', 'org:read'],
       template_reviewer: ['templates:read', 'templates:review', 'org:read'],
@@ -60,6 +62,7 @@ describe('role presets', () => {
         'scan-setup:read',
         'connections:read',
         'org:read',
+        'logs:read',
       ],
     });
   });

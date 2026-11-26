@@ -9,6 +9,7 @@ import {
   ResolveQuerySchema,
 } from '../../../shared/contracts/index.ts';
 import { apiKeyMissing, bearerOf, keyCaller, requireSession } from '../../platform/auth.ts';
+import { admitTokenSession, resolveBearer } from '../../platform/auth-workbench.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { noteKeyRefused } from '../../platform/denied.ts';
@@ -30,8 +31,13 @@ export const logCaller = declareKeyAccess(
     if (sent === 'empty') throw apiKeyMissing();
     const token = sent?.token;
     if (token?.startsWith(TRY_TOKEN_PREFIX)) {
-      const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
-      if (key?.via !== 'try' || key.orgId === null) {
+      const key = await resolveBearer(c, token, keyCaller(c), undefined);
+      // A member token is its person's Test session in one org (the Workbench shell and Home read this way).
+      if (key?.kind === 'session' && key.workbench) {
+        await admitTokenSession(c, key, { sessionKind: 'tenant', ownOnlyAdmitted: false });
+        return next();
+      }
+      if (key?.kind !== 'api_key' || key.via !== 'try' || key.orgId === null) {
         noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The try token is invalid or expired.', 'INVALID_API_KEY');
       }

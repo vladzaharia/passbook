@@ -6,6 +6,7 @@ import { denyAllStores } from '../../platform/auth.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { makeSandbox } from '../developer/sandbox-test-fixtures.ts';
 import { createFakeQueue } from '../passes/pass-test-fixtures.ts';
 import { blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { runLane } from '../webhooks/deliver.ts';
@@ -67,15 +68,41 @@ export async function workbenchKit() {
     const text = await res.text();
     return [res.status, text ? JSON.parse(text) : {}];
   };
+  /** The app as one person's call: JSON bodies, the idempotency key, a Response back. */
+  const send = (
+    method: string,
+    path: string,
+    headers: Record<string, string>,
+    body?: unknown,
+  ): Promise<Response> | Response =>
+    app.request(
+      `${ORIGIN}/api/v1${path}`,
+      {
+        method,
+        headers: {
+          ...headers,
+          ...(headers.cookie ? { origin: ORIGIN } : {}),
+          ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+          'idempotency-key': kit.f.ids.token(),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      },
+      kit.env,
+      ectx,
+    );
   /** A developer with a sandbox: the session, the sandbox key, and the quickstart template. */
   async function sandbox(roles: string[] = ['user', 'developer']) {
     const user = await makeUser(kit.f);
     const session = await makeSession(kit.f, { userId: user.id, roles: roles as never });
-    const [status, made] = await call('POST', '/developer/sandbox', session.headers, {
-      turnstileToken: 'ok',
-    });
-    if (status !== 201) throw new Error(`sandbox ${status}`);
-    return { ...made, user, session, key: { authorization: `Bearer ${made.key.secret}` } };
+    const made = await makeSandbox(send, session.headers);
+    if (!made.key || !made.templateId) throw new Error('A new sandbox has a key and a template.');
+    return {
+      ...made,
+      templateId: made.templateId,
+      user,
+      session,
+      key: { authorization: `Bearer ${made.key.secret}` },
+    };
   }
   /** Passes made with the given `cf-ray` values, then the capture endpoint's lane run until it is empty. */
   async function eventsFor(s: Awaited<ReturnType<typeof sandbox>>, rays: string[]) {
