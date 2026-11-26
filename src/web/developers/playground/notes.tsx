@@ -1,7 +1,7 @@
 import { CheckCircle2, TriangleAlert } from 'lucide-react';
-import { FidelityNotes } from '../../channel-previews/fidelity-notes.tsx';
 import type { WalletPreviews } from '../../channel-previews/use-wallet-previews.ts';
 import { BuddyArt } from '../../ui/art/buddy-art.tsx';
+import { WalletReport } from '../../wallet-report/wallet-report.tsx';
 
 /** What Google and Samsung leave out or draw differently, from the same report the release pipeline makes. */
 export function WalletNotes({ previews }: { previews: WalletPreviews }) {
@@ -29,10 +29,7 @@ export function WalletNotes({ previews }: { previews: WalletPreviews }) {
       <div className="card-b notes-grid">
         {out ? (
           (['google', 'samsung'] as const).map((t) => (
-            <div key={t}>
-              <h2 className="strong sm">{t === 'google' ? 'Google Wallet' : 'Samsung Wallet'}</h2>
-              <FidelityNotes report={out[t].report} />
-            </div>
+            <WalletReport key={t} report={out[t].report} host="pane" />
           ))
         ) : (
           <p className="muted sm">Reading…</p>

@@ -271,7 +271,12 @@ export const ROLE_RULES: Record<WalletRole, Rule> = {
         ? { scalar: { kind: 'channel', channel: 'both' }, fields: [] }
         : undefined,
   },
-  validFrom: { style: (i) => (i.dates[0]?.start ? dateHit(i.dates[0].start) : undefined) },
+  validFrom: {
+    style: (i) => {
+      const start = i.declared?.start ?? i.dates[0]?.start;
+      return start ? dateHit(start) : undefined;
+    },
+  },
   validUntil: { style: (i) => (i.expirationDate ? dateHit(i.expirationDate) : undefined) },
   appLink: {
     style: (i) =>

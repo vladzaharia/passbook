@@ -14,7 +14,7 @@ import {
   StatusPill,
   toast,
 } from '@/web/ui/index.ts';
-import { COPY, PROVIDER_NAME, safeError } from './copy.ts';
+import { COPY, PROVIDER_NAME, releaseLine, safeError } from './copy.ts';
 import { CredentialRow } from './credential-row.tsx';
 import { blockerOf, gatesOf } from './gates.ts';
 import { useWalletActions } from './queries.ts';
@@ -65,8 +65,8 @@ export function OrgProviderCard({
   const name = PROVIDER_NAME[e.provider];
   const on = e.state === 'on';
   const blocker = blockerOf(e);
-  const notReleased = e.issuance.state === 'disabled' ? COPY.notReleased : undefined;
-  const help = e.state === 'held' ? undefined : on ? notReleased : (blocker ?? notReleased);
+  const notReleased = releaseLine(e.provider, e.issuance) ?? undefined;
+  const help = e.state === 'held' || on ? undefined : blocker;
   const revoked = e.state === 'revoked';
 
   async function run(work: () => Promise<unknown>, done?: string) {
@@ -141,9 +141,13 @@ export function OrgProviderCard({
             credential={own}
             canManage={canManage}
             fresh={e.source === 'org' ? e.prerequisites.check : undefined}
+            issuance={e.issuance}
           />
         </div>
         <div className="flex flex-col gap-3 border-t border-border pt-4">
+          {notReleased && e.state !== 'held' ? (
+            <p className="text-sm text-fg-muted">{notReleased}</p>
+          ) : null}
           {help ? <p className="text-sm text-fg-muted">{help}</p> : null}
           <ul aria-label="Before it can be allowed" className="flex flex-col gap-1 text-sm">
             {gatesOf(e).map((g) => (

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema } from './common.ts';
-import { WalletCredentialSchema, WalletProviderSchema } from './wallet-providers.ts';
+import {
+  WalletCredentialListSchema,
+  WalletCredentialSchema,
+  WalletProviderIssuanceSchema,
+  WalletProviderSchema,
+} from './wallet-providers.ts';
 
 /** The platform release of a provider in a mode. `draining` is the rollback: voids and removals still flow. */
 export const WalletReleaseStateSchema = z.enum(['dark', 'draining', 'released']);
@@ -91,3 +96,20 @@ export const EnableReadyResultSchema = z.strictObject({
   enrolments: z.array(z.strictObject({ orgId: IdSchema, orgName: z.string() })),
 });
 export type EnableReadyResult = z.infer<typeof EnableReadyResultSchema>;
+||||||| 8955c9c48
+
+const ReleaseByModeSchema = z.strictObject({
+  live: WalletProviderIssuanceSchema,
+  test: WalletProviderIssuanceSchema,
+});
+/** Release state per provider and mode: the platform pages say it where credentials are set. */
+export const WalletReleaseSchema = z.strictObject({
+  google: ReleaseByModeSchema,
+  samsung: ReleaseByModeSchema,
+});
+export type WalletRelease = z.infer<typeof WalletReleaseSchema>;
+
+export const PlatformWalletCredentialListSchema = WalletCredentialListSchema.extend({
+  release: WalletReleaseSchema,
+});
+export type PlatformWalletCredentialList = z.infer<typeof PlatformWalletCredentialListSchema>;

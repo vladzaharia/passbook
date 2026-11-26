@@ -12,7 +12,6 @@ import {
   SavePlatformWalletCredentialSchema,
   WalletCredentialCheckQueuedSchema,
   WalletCredentialCheckResultSchema,
-  WalletCredentialListSchema,
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
   WalletMigrationQueuedSchema,
@@ -20,6 +19,7 @@ import {
   WalletMigrationReportSchema,
   WalletMigrationResolvedSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
+import { PlatformWalletCredentialListSchema } from '../../../shared/contracts/wallet-release.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
@@ -64,7 +64,7 @@ register(
     path: '/wallet-credentials',
     summary: 'List the platform wallet credentials',
     query: CursorQuerySchema,
-    response: WalletCredentialListSchema,
+    response: PlatformWalletCredentialListSchema,
   },
   async (c) => c.json(await listPlatformCredentials(serviceContext(c), sessionOf(c))),
 );

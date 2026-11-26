@@ -20,7 +20,7 @@ import {
 import { usePassSetup } from '../../brand/api.ts';
 import { ChainBadge, LockPill } from '../../brand/chain-badge.tsx';
 import { CHANNEL_ICON } from '../../brand/channel-row.tsx';
-import { PROVIDER_NAME, safeError } from '../../wallet-accounts/copy.ts';
+import { PROVIDER_NAME, RELEASE, safeError } from '../../wallet-accounts/copy.ts';
 import { HoldDialog } from '../../wallet-accounts/hold-dialog.tsx';
 import { useWalletActions } from '../../wallet-accounts/queries.ts';
 
@@ -84,7 +84,9 @@ function Row({
                 row.on && row.templates.on > 0 ? 'bg-success' : 'bg-border-strong',
               )}
             />
-            {channelStatusLine({ levels: row.levels, templates: row.templates })}
+            {isWallet(channel) && stop?.level === 'passbook'
+              ? RELEASE.notReleased(PROVIDER_NAME[channel])
+              : channelStatusLine({ levels: row.levels, templates: row.templates })}
           </span>
         </span>
         <span className="flex items-center gap-2">

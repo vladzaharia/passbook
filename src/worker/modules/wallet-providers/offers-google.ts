@@ -5,10 +5,14 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { registerGoogleCallbackBinding } from './google-callback-binding.ts';
 import { googleClassPartition } from './google-compile.ts';
+import type { GoogleSaveOffer } from './google-offer.ts';
 import { getWalletOperation, type WalletInstance, type WalletOperation } from './instance.ts';
 import type { EligibleWalletProvider } from './offers-eligibility.ts';
 import { walletOfferNotFound as notFound } from './offers-instance.ts';
 import { createGoogleRuntimeOffer } from './runtime.ts';
+
+/** The object's operation failed for good: the answer is the same 503, but a bundle leaves the pass out. */
+export class GoogleMemberFailedError extends UnavailableError {}
 
 /** The first tap builds the object itself, inside this budget; a slower provider gets an error page. */
 let firstTapBudgetMs = 15_000;
@@ -63,18 +67,20 @@ export async function googleSaveLocation(
     expiresAt: number;
     assertCurrent: () => Promise<void>;
   },
-): Promise<string> {
+): Promise<GoogleSaveOffer> {
   const { pass, eligible, instance, expiresAt, assertCurrent } = p;
   let { operation } = p;
   const projection = eligible.approved.projection;
   if (operation.state !== 'succeeded') {
     const ready = await provisionFirstTap(ctx, operation, pass);
     if (ready?.state !== 'succeeded' || ready.id !== operation.id) {
+      // A failed operation is final until the pass changes; a bundle leaves such a pass out.
+      const failed = ready?.id === operation.id && ready.state === 'failed';
       ctx.log.warn('wallet.google_first_tap_pending', {
-        code: 'WALLET_GOOGLE_FIRST_TAP',
+        code: failed ? 'WALLET_GOOGLE_FIRST_TAP_FAILED' : 'WALLET_GOOGLE_FIRST_TAP',
         orgId: pass.orgId,
       });
-      throw new UnavailableError(
+      throw new (failed ? GoogleMemberFailedError : UnavailableError)(
         'Google Wallet is not ready. Try again in a minute.',
         'WALLET_PREPARING',
       );
@@ -109,5 +115,5 @@ export async function googleSaveLocation(
     signed.expiresAt * 1000 <= ctx.clock.now()
   )
     throw notFound();
-  return signed.url;
+  return signed;
 }

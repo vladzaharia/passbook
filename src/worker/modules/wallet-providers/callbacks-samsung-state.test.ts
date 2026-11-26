@@ -100,7 +100,10 @@ describe('Samsung Send Card State events', () => {
 
   it('does not promote an ADDED that carries no market, and ignores unknown events', async () => {
     const t = await setupSamsungCallbacks({ promoted: false });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     expect((await post(t, '?event=ADDED')).status).toBe(200);
+    expect(warn.mock.calls.flat().join('\n')).toContain('WALLET_SAMSUNG_NO_MARKET');
+    warn.mockRestore();
     expect((await post(t, '?cc2=GB&event=SOMETHING_ELSE', 'r2')).status).toBe(200);
     expect((await post(t, '?cc2=GB&event=added', 'r3')).status).toBe(200);
     expect((await post(t, '?cc2=GB&event=ADDED&event=DELETED', 'r4')).status).toBe(200);

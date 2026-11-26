@@ -71,7 +71,7 @@ export function noteLosses(run: Run): void {
       'messaging.notify',
       '',
       'difference',
-      'Changes update the card; Samsung shows no change message.',
+      'The change text is written in the notice; Samsung decides what the holder is told.',
     );
   if (
     view.roles.redemptionChannel?.kind === 'channel' &&
