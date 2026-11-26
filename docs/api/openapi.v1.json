@@ -101160,8 +101160,8 @@
                   "id": "0193a1b2-7c00-7000-8000-24146ede9f5a",
                   "kind": "bulk.run",
                   "status": "succeeded",
-                  "title": "MISSING",
-                  "text": "MISSING",
+                  "title": "Delete sandbox",
+                  "text": "Removing Test passes · 4 of 12",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "mode": "live",
                   "target": {
@@ -101172,12 +101172,13 @@
                   "steps": [
                     {
                       "key": "tier",
-                      "label": "MISSING",
+                      "label": "Remove Test passes",
                       "state": "done",
                       "done": 39,
                       "total": 128,
-                      "detail": "MISSING",
+                      "detail": "Waiting for Apple",
                       "until": 1795572600000,
+                      "waitingReason": "due",
                       "group": "Access",
                       "startedAt": 1794362400000,
                       "finishedAt": 1795570500000
@@ -101410,8 +101411,8 @@
                       "id": "0193a1b2-7c00-7000-8000-45bb476bbc45",
                       "kind": "bulk.run",
                       "status": "succeeded",
-                      "title": "MISSING",
-                      "text": "MISSING",
+                      "title": "Sync connection",
+                      "text": "Removing Test passes · 4 of 12",
                       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                       "mode": "live",
                       "target": {
@@ -101422,12 +101423,13 @@
                       "steps": [
                         {
                           "key": "tier",
-                          "label": "MISSING",
+                          "label": "Revoke keys",
                           "state": "done",
                           "done": 39,
                           "total": 128,
-                          "detail": "MISSING",
+                          "detail": "Waiting for Apple",
                           "until": 1795572600000,
+                          "waitingReason": "due",
                           "group": "Access",
                           "startedAt": 1794362400000,
                           "finishedAt": 1795570500000
@@ -101616,8 +101618,8 @@
                   "id": "0193a1b2-7c00-7000-8000-cb8398d01ce2",
                   "kind": "bulk.run",
                   "status": "succeeded",
-                  "title": "MISSING",
-                  "text": "MISSING",
+                  "title": "Delete sandbox",
+                  "text": "Removing Test passes · 4 of 12",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "mode": "live",
                   "target": {
@@ -101628,12 +101630,13 @@
                   "steps": [
                     {
                       "key": "tier",
-                      "label": "MISSING",
+                      "label": "Remove Test passes",
                       "state": "done",
                       "done": 39,
                       "total": 128,
-                      "detail": "MISSING",
+                      "detail": "Waiting for Apple",
                       "until": 1795572600000,
+                      "waitingReason": "due",
                       "group": "Access",
                       "startedAt": 1794362400000,
                       "finishedAt": 1795570500000
@@ -101829,8 +101832,8 @@
                   "id": "0193a1b2-7c00-7000-8000-b0ad56dbc5b4",
                   "kind": "bulk.run",
                   "status": "succeeded",
-                  "title": "MISSING",
-                  "text": "MISSING",
+                  "title": "Delete sandbox",
+                  "text": "Removing Test passes · 4 of 12",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "mode": "live",
                   "target": {
@@ -101841,12 +101844,13 @@
                   "steps": [
                     {
                       "key": "tier",
-                      "label": "MISSING",
+                      "label": "Remove Test passes",
                       "state": "done",
                       "done": 39,
                       "total": 128,
-                      "detail": "MISSING",
+                      "detail": "Waiting for Apple",
                       "until": 1795572600000,
+                      "waitingReason": "due",
                       "group": "Access",
                       "startedAt": 1794362400000,
                       "finishedAt": 1795570500000
