@@ -30288,6 +30288,491 @@
           "passJson"
         ]
       },
+      "TemplatesVersionsRetrieveWalletReportsResponse": {
+        "type": "object",
+        "properties": {
+          "google": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              "target": {
+                "type": "string",
+                "enum": [
+                  "google",
+                  "samsung"
+                ]
+              },
+              "type": {
+                "type": "string"
+              },
+              "compilerRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "off"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "ready"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "omissions"
+                        ]
+                      },
+                      "count": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "count"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "blocked"
+                        ]
+                      },
+                      "reason": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "reason"
+                    ]
+                  }
+                ]
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "capability": {
+                      "type": "string",
+                      "enum": [
+                        "type",
+                        "field.header",
+                        "field.primary",
+                        "field.secondary",
+                        "field.auxiliary",
+                        "field.additionalInfo",
+                        "field.footer",
+                        "field.back",
+                        "field.link",
+                        "barcode.format",
+                        "barcode.format.qr",
+                        "barcode.format.pdf417",
+                        "barcode.format.aztec",
+                        "barcode.format.code128",
+                        "barcode.format.code39",
+                        "barcode.format.codabar",
+                        "barcode.format.ean13",
+                        "barcode.format.i2of5",
+                        "barcode.altText",
+                        "colors.background",
+                        "colors.foreground",
+                        "colors.label",
+                        "image.logo",
+                        "image.icon",
+                        "image.strip",
+                        "image.artwork",
+                        "image.background",
+                        "image.thumbnail",
+                        "image.personal",
+                        "relevance.dates",
+                        "relevance.locations",
+                        "relevance.beacons",
+                        "relevance.maxDistance",
+                        "validity.expiration",
+                        "void.visual",
+                        "messaging.notify",
+                        "updates.push",
+                        "upcoming.multi",
+                        "links.featured",
+                        "localization.strings",
+                        "localization.images",
+                        "sharing",
+                        "nfc",
+                        "personalization",
+                        "text.length",
+                        "role.title",
+                        "role.subtitle",
+                        "role.eventName",
+                        "role.eventStart",
+                        "role.eventEnd",
+                        "role.doorsOpen",
+                        "role.venueName",
+                        "role.venueAddress",
+                        "role.venueLocation",
+                        "role.seat",
+                        "role.row",
+                        "role.section",
+                        "role.gate",
+                        "role.ticketHolder",
+                        "role.ticketNumber",
+                        "role.confirmationCode",
+                        "role.eventId",
+                        "role.memberId",
+                        "role.memberName",
+                        "role.tier",
+                        "role.points",
+                        "role.pointsLabel",
+                        "role.balance",
+                        "role.giftCardNumber",
+                        "role.giftCardPin",
+                        "role.offerTitle",
+                        "role.offerDetails",
+                        "role.finePrint",
+                        "role.redemptionChannel",
+                        "role.validFrom",
+                        "role.validUntil",
+                        "role.appLink",
+                        "role.support"
+                      ]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "support": {
+                      "type": "string",
+                      "enum": [
+                        "native",
+                        "text",
+                        "difference",
+                        "omitted",
+                        "unsupported"
+                      ]
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "difference",
+                        "omission",
+                        "blocked"
+                      ]
+                    },
+                    "group": {
+                      "type": "string",
+                      "enum": [
+                        "holder",
+                        "door",
+                        "look",
+                        "absent"
+                      ]
+                    },
+                    "chosen": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "capability",
+                    "path",
+                    "support",
+                    "severity",
+                    "group",
+                    "chosen",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "schema",
+              "target",
+              "type",
+              "compilerRevision",
+              "status",
+              "items"
+            ]
+          },
+          "samsung": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              "target": {
+                "type": "string",
+                "enum": [
+                  "google",
+                  "samsung"
+                ]
+              },
+              "type": {
+                "type": "string"
+              },
+              "compilerRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "off"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "ready"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "omissions"
+                        ]
+                      },
+                      "count": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "count"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "blocked"
+                        ]
+                      },
+                      "reason": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "reason"
+                    ]
+                  }
+                ]
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "capability": {
+                      "type": "string",
+                      "enum": [
+                        "type",
+                        "field.header",
+                        "field.primary",
+                        "field.secondary",
+                        "field.auxiliary",
+                        "field.additionalInfo",
+                        "field.footer",
+                        "field.back",
+                        "field.link",
+                        "barcode.format",
+                        "barcode.format.qr",
+                        "barcode.format.pdf417",
+                        "barcode.format.aztec",
+                        "barcode.format.code128",
+                        "barcode.format.code39",
+                        "barcode.format.codabar",
+                        "barcode.format.ean13",
+                        "barcode.format.i2of5",
+                        "barcode.altText",
+                        "colors.background",
+                        "colors.foreground",
+                        "colors.label",
+                        "image.logo",
+                        "image.icon",
+                        "image.strip",
+                        "image.artwork",
+                        "image.background",
+                        "image.thumbnail",
+                        "image.personal",
+                        "relevance.dates",
+                        "relevance.locations",
+                        "relevance.beacons",
+                        "relevance.maxDistance",
+                        "validity.expiration",
+                        "void.visual",
+                        "messaging.notify",
+                        "updates.push",
+                        "upcoming.multi",
+                        "links.featured",
+                        "localization.strings",
+                        "localization.images",
+                        "sharing",
+                        "nfc",
+                        "personalization",
+                        "text.length",
+                        "role.title",
+                        "role.subtitle",
+                        "role.eventName",
+                        "role.eventStart",
+                        "role.eventEnd",
+                        "role.doorsOpen",
+                        "role.venueName",
+                        "role.venueAddress",
+                        "role.venueLocation",
+                        "role.seat",
+                        "role.row",
+                        "role.section",
+                        "role.gate",
+                        "role.ticketHolder",
+                        "role.ticketNumber",
+                        "role.confirmationCode",
+                        "role.eventId",
+                        "role.memberId",
+                        "role.memberName",
+                        "role.tier",
+                        "role.points",
+                        "role.pointsLabel",
+                        "role.balance",
+                        "role.giftCardNumber",
+                        "role.giftCardPin",
+                        "role.offerTitle",
+                        "role.offerDetails",
+                        "role.finePrint",
+                        "role.redemptionChannel",
+                        "role.validFrom",
+                        "role.validUntil",
+                        "role.appLink",
+                        "role.support"
+                      ]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "support": {
+                      "type": "string",
+                      "enum": [
+                        "native",
+                        "text",
+                        "difference",
+                        "omitted",
+                        "unsupported"
+                      ]
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "difference",
+                        "omission",
+                        "blocked"
+                      ]
+                    },
+                    "group": {
+                      "type": "string",
+                      "enum": [
+                        "holder",
+                        "door",
+                        "look",
+                        "absent"
+                      ]
+                    },
+                    "chosen": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "capability",
+                    "path",
+                    "support",
+                    "severity",
+                    "group",
+                    "chosen",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "schema",
+              "target",
+              "type",
+              "compilerRevision",
+              "status",
+              "items"
+            ]
+          }
+        },
+        "required": [
+          "google",
+          "samsung"
+        ]
+      },
       "TemplatesChannelsRetrieveResponse": {
         "type": "object",
         "properties": {
@@ -95202,489 +95687,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "google": {
-                      "type": "object",
-                      "properties": {
-                        "schema": {
-                          "type": "number",
-                          "enum": [
-                            1
-                          ]
-                        },
-                        "target": {
-                          "type": "string",
-                          "enum": [
-                            "google",
-                            "samsung"
-                          ]
-                        },
-                        "type": {
-                          "type": "string"
-                        },
-                        "compilerRevision": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "status": {
-                          "oneOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "off"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "kind"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ready"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "kind"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "omissions"
-                                  ]
-                                },
-                                "count": {
-                                  "type": "integer",
-                                  "exclusiveMinimum": 0
-                                }
-                              },
-                              "required": [
-                                "kind",
-                                "count"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "blocked"
-                                  ]
-                                },
-                                "reason": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "kind",
-                                "reason"
-                              ]
-                            }
-                          ]
-                        },
-                        "items": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "capability": {
-                                "type": "string",
-                                "enum": [
-                                  "type",
-                                  "field.header",
-                                  "field.primary",
-                                  "field.secondary",
-                                  "field.auxiliary",
-                                  "field.additionalInfo",
-                                  "field.footer",
-                                  "field.back",
-                                  "field.link",
-                                  "barcode.format",
-                                  "barcode.format.qr",
-                                  "barcode.format.pdf417",
-                                  "barcode.format.aztec",
-                                  "barcode.format.code128",
-                                  "barcode.format.code39",
-                                  "barcode.format.codabar",
-                                  "barcode.format.ean13",
-                                  "barcode.format.i2of5",
-                                  "barcode.altText",
-                                  "colors.background",
-                                  "colors.foreground",
-                                  "colors.label",
-                                  "image.logo",
-                                  "image.icon",
-                                  "image.strip",
-                                  "image.artwork",
-                                  "image.background",
-                                  "image.thumbnail",
-                                  "image.personal",
-                                  "relevance.dates",
-                                  "relevance.locations",
-                                  "relevance.beacons",
-                                  "relevance.maxDistance",
-                                  "validity.expiration",
-                                  "void.visual",
-                                  "messaging.notify",
-                                  "updates.push",
-                                  "upcoming.multi",
-                                  "links.featured",
-                                  "localization.strings",
-                                  "localization.images",
-                                  "sharing",
-                                  "nfc",
-                                  "personalization",
-                                  "text.length",
-                                  "role.title",
-                                  "role.subtitle",
-                                  "role.eventName",
-                                  "role.eventStart",
-                                  "role.eventEnd",
-                                  "role.doorsOpen",
-                                  "role.venueName",
-                                  "role.venueAddress",
-                                  "role.venueLocation",
-                                  "role.seat",
-                                  "role.row",
-                                  "role.section",
-                                  "role.gate",
-                                  "role.ticketHolder",
-                                  "role.ticketNumber",
-                                  "role.confirmationCode",
-                                  "role.eventId",
-                                  "role.memberId",
-                                  "role.memberName",
-                                  "role.tier",
-                                  "role.points",
-                                  "role.pointsLabel",
-                                  "role.balance",
-                                  "role.giftCardNumber",
-                                  "role.giftCardPin",
-                                  "role.offerTitle",
-                                  "role.offerDetails",
-                                  "role.finePrint",
-                                  "role.redemptionChannel",
-                                  "role.validFrom",
-                                  "role.validUntil",
-                                  "role.appLink",
-                                  "role.support"
-                                ]
-                              },
-                              "path": {
-                                "type": "string"
-                              },
-                              "support": {
-                                "type": "string",
-                                "enum": [
-                                  "native",
-                                  "text",
-                                  "difference",
-                                  "omitted",
-                                  "unsupported"
-                                ]
-                              },
-                              "severity": {
-                                "type": "string",
-                                "enum": [
-                                  "difference",
-                                  "omission",
-                                  "blocked"
-                                ]
-                              },
-                              "group": {
-                                "type": "string",
-                                "enum": [
-                                  "holder",
-                                  "door",
-                                  "look",
-                                  "absent"
-                                ]
-                              },
-                              "chosen": {
-                                "type": "boolean"
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "capability",
-                              "path",
-                              "support",
-                              "severity",
-                              "group",
-                              "chosen",
-                              "message"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "schema",
-                        "target",
-                        "type",
-                        "compilerRevision",
-                        "status",
-                        "items"
-                      ]
-                    },
-                    "samsung": {
-                      "type": "object",
-                      "properties": {
-                        "schema": {
-                          "type": "number",
-                          "enum": [
-                            1
-                          ]
-                        },
-                        "target": {
-                          "type": "string",
-                          "enum": [
-                            "google",
-                            "samsung"
-                          ]
-                        },
-                        "type": {
-                          "type": "string"
-                        },
-                        "compilerRevision": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "status": {
-                          "oneOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "off"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "kind"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ready"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "kind"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "omissions"
-                                  ]
-                                },
-                                "count": {
-                                  "type": "integer",
-                                  "exclusiveMinimum": 0
-                                }
-                              },
-                              "required": [
-                                "kind",
-                                "count"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "kind": {
-                                  "type": "string",
-                                  "enum": [
-                                    "blocked"
-                                  ]
-                                },
-                                "reason": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "kind",
-                                "reason"
-                              ]
-                            }
-                          ]
-                        },
-                        "items": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "capability": {
-                                "type": "string",
-                                "enum": [
-                                  "type",
-                                  "field.header",
-                                  "field.primary",
-                                  "field.secondary",
-                                  "field.auxiliary",
-                                  "field.additionalInfo",
-                                  "field.footer",
-                                  "field.back",
-                                  "field.link",
-                                  "barcode.format",
-                                  "barcode.format.qr",
-                                  "barcode.format.pdf417",
-                                  "barcode.format.aztec",
-                                  "barcode.format.code128",
-                                  "barcode.format.code39",
-                                  "barcode.format.codabar",
-                                  "barcode.format.ean13",
-                                  "barcode.format.i2of5",
-                                  "barcode.altText",
-                                  "colors.background",
-                                  "colors.foreground",
-                                  "colors.label",
-                                  "image.logo",
-                                  "image.icon",
-                                  "image.strip",
-                                  "image.artwork",
-                                  "image.background",
-                                  "image.thumbnail",
-                                  "image.personal",
-                                  "relevance.dates",
-                                  "relevance.locations",
-                                  "relevance.beacons",
-                                  "relevance.maxDistance",
-                                  "validity.expiration",
-                                  "void.visual",
-                                  "messaging.notify",
-                                  "updates.push",
-                                  "upcoming.multi",
-                                  "links.featured",
-                                  "localization.strings",
-                                  "localization.images",
-                                  "sharing",
-                                  "nfc",
-                                  "personalization",
-                                  "text.length",
-                                  "role.title",
-                                  "role.subtitle",
-                                  "role.eventName",
-                                  "role.eventStart",
-                                  "role.eventEnd",
-                                  "role.doorsOpen",
-                                  "role.venueName",
-                                  "role.venueAddress",
-                                  "role.venueLocation",
-                                  "role.seat",
-                                  "role.row",
-                                  "role.section",
-                                  "role.gate",
-                                  "role.ticketHolder",
-                                  "role.ticketNumber",
-                                  "role.confirmationCode",
-                                  "role.eventId",
-                                  "role.memberId",
-                                  "role.memberName",
-                                  "role.tier",
-                                  "role.points",
-                                  "role.pointsLabel",
-                                  "role.balance",
-                                  "role.giftCardNumber",
-                                  "role.giftCardPin",
-                                  "role.offerTitle",
-                                  "role.offerDetails",
-                                  "role.finePrint",
-                                  "role.redemptionChannel",
-                                  "role.validFrom",
-                                  "role.validUntil",
-                                  "role.appLink",
-                                  "role.support"
-                                ]
-                              },
-                              "path": {
-                                "type": "string"
-                              },
-                              "support": {
-                                "type": "string",
-                                "enum": [
-                                  "native",
-                                  "text",
-                                  "difference",
-                                  "omitted",
-                                  "unsupported"
-                                ]
-                              },
-                              "severity": {
-                                "type": "string",
-                                "enum": [
-                                  "difference",
-                                  "omission",
-                                  "blocked"
-                                ]
-                              },
-                              "group": {
-                                "type": "string",
-                                "enum": [
-                                  "holder",
-                                  "door",
-                                  "look",
-                                  "absent"
-                                ]
-                              },
-                              "chosen": {
-                                "type": "boolean"
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "capability",
-                              "path",
-                              "support",
-                              "severity",
-                              "group",
-                              "chosen",
-                              "message"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "schema",
-                        "target",
-                        "type",
-                        "compilerRevision",
-                        "status",
-                        "items"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "google",
-                    "samsung"
-                  ]
+                  "$ref": "#/components/schemas/TemplatesVersionsRetrieveWalletReportsResponse"
                 }
               }
             }
@@ -95701,6 +95704,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdVersionsByVersionWalletReports",
+        "x-sdk": {
+          "resource": "templates.versions",
+          "method": "retrieveWalletReports"
+        },
         "security": [
           {
             "apiKey": [
