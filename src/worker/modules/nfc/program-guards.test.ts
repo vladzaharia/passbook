@@ -198,9 +198,10 @@ describe('a start and an auth that are sent twice', () => {
     const two = await authProgram(f.kit.ctx, a, first.id, { responses: [answer] });
     expect(two).toEqual(one);
     expect(one.next).toBe('script');
-    // Another answer for the same hold is not the script's.
+    // Another answer for the same hold is not the script's. The first byte is random per run, so flip it.
+    const other = (Number.parseInt(answer.slice(0, 2), 16) ^ 0xff).toString(16).padStart(2, '0');
     await refused(
-      authProgram(f.kit.ctx, a, first.id, { responses: [`ff${answer.slice(2)}`] }),
+      authProgram(f.kit.ctx, a, first.id, { responses: [`${other}${answer.slice(2)}`] }),
       'TAG_PROGRAM_FAILED',
     );
   });
