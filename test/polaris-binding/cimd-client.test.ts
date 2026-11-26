@@ -55,8 +55,15 @@ describe.each(['v2', 'admin'] as const)('client path (%s layout)', (layout) => {
     expect(allowed('GET', `${base}/oidc/clients/~bWU`)).toBe(false);
     expect(allowed('GET', `${base}/oidc/clients/${ENC}x`)).toBe(false);
     expect(allowed('GET', `${base}/oidc/clients/client-1`)).toBe(false);
-    expect(allowed('PUT', `${base}/oidc/clients/${ENC}`)).toBe(false);
+    // Writes on the same literal: the client itself, its allowed groups and its SCIM connection.
+    expect(allowed('PUT', `${base}/oidc/clients/${ENC}`)).toBe(true);
+    expect(allowed('PUT', `${base}/oidc/clients/${ENC}/allowed-user-groups`)).toBe(true);
+    expect(allowed('GET', `${base}/oidc/clients/${ENC}/scim-service-provider`)).toBe(true);
     expect(allowed('GET', `${base}/oidc/clients/${ENC}/allowed-user-groups`)).toBe(false);
+    expect(allowed('DELETE', `${base}/oidc/clients/${ENC}`)).toBe(false);
+    expect(allowed('POST', `${base}/oidc/clients/${ENC}/refresh`)).toBe(false);
+    expect(allowed('PUT', `${base}/oidc/clients/~bWU`)).toBe(false);
+    expect(allowed('PUT', `${base}/oidc/clients/~bWU/allowed-user-groups`)).toBe(false);
   });
 
   it('allows no client path when the configured id is invalid', () => {
@@ -77,6 +84,10 @@ describe.each(['v2', 'admin'] as const)('client path (%s layout)', (layout) => {
       () => r.setUserGroups('~bWU'),
       () => r.signupToken('~bWU'),
       () => r.client('~bWU'),
+      () => r.clientGroups('~bWU'),
+      () => r.scimOf('~bWU'),
+      () => r.scim('~bWU'),
+      () => r.scimSync('~bWU'),
     ];
     for (const b of builders) expect(b).toThrow(/^IDP_REFUSED|Invalid/);
     const paths: [string, string][] = [
@@ -92,6 +103,9 @@ describe.each(['v2', 'admin'] as const)('client path (%s layout)', (layout) => {
       ['PUT', `${base}/users/~bWU/user-groups`],
       ['DELETE', `${base}/signup-tokens/~bWU`],
       ['GET', `${base}/oidc/clients/${ENC}/../users/~bWU`],
+      ['PUT', `${base}/scim/service-provider/~bWU`],
+      ['POST', `${base}/scim/service-provider/~bWU/sync`],
+      ['GET', `${base}/oidc/clients/~bWU/scim-service-provider`],
     ];
     for (const [m, p] of paths) expect(allowed(m, p), `${m} ${p}`).toBe(false);
   });
