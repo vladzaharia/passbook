@@ -26,6 +26,7 @@ import {
   spent,
 } from './sync-chain.ts';
 import type { StepResult } from './sync-context.ts';
+import { syncReport } from './sync-progress.ts';
 import { add, guardRun, RunSupersededError, type StepLike } from './sync-run-guard.ts';
 import { markGone, recordAbort } from './sync-runner-abort.ts';
 import { assertSyncAuthority, assertSyncStart } from './sync-runner-validation.ts';
@@ -45,6 +46,9 @@ export interface SyncRunParams {
   chain?: SyncChain;
   /** Pass writes per instance before a hand-off; defaults to the production budget. */
   writeBudget?: number;
+  /** The operation that shows this run (a user's Sync now); a continuation carries it on. */
+  operationId?: string;
+  operationAttempt?: number;
 }
 
 const MAX_SAMPLES = 5;
@@ -71,6 +75,7 @@ export async function executeSync(
         connectionId: p.connectionId,
         code: 'SUPERSEDED',
       });
+      await syncReport(sctx, p).ended({ failed: false, stale: true, totals: emptyTotals() });
       return;
     }
     if (
@@ -79,6 +84,7 @@ export async function executeSync(
     )
       throw error;
     sctx.log.error('connection.sync_aborted', { connectionId: p.connectionId, code: 'INTERNAL' });
+    await syncReport(sctx, p).fail(error);
     await recordAbort(sctx, step, p);
     throw error;
   }
@@ -88,7 +94,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
   assertSyncChain(p.chain);
   const seq = p.chain?.seq ?? 0;
   const budget = p.writeBudget ?? WRITE_BUDGET_PER_INSTANCE;
-  const start = await step.do('start', () => startRun(sctx, p));
+  const [report, start] = [syncReport(sctx, p), await step.do('start', () => startRun(sctx, p))];
   assertSyncStart(start, p);
   if (start.ok && start.settle) step.arm?.();
   const startedAt = p.chain?.startedAt ?? start.startedAt;
@@ -104,6 +110,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
   if (!start.ok) {
     if (start.reason === 'GONE') {
       await markGone(sctx, step, p);
+      await report.ended({ failed: true, stale: false, totals });
       return;
     }
     if (start.reason === 'STALE_GENERATION') {
@@ -116,6 +123,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
       failure = { code: start.reason, httpStatus: null, retryAfterMs: null };
     }
   } else {
+    await report.began();
     const limits = await step.do('limits', async () => {
       const row = await getConnection(sctx.env.DB, p.connectionId);
       const def = row ? connectors.get(row.connectorType) : undefined;
@@ -149,6 +157,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
         return false;
       }
       add(totals, r);
+      report.seen(totals);
       for (const sample of r.samples) if (samples.length < MAX_SAMPLES) samples.push(sample);
       failure ??= r.failure;
       releaseBlocked ??= r.releaseBlocked;
@@ -291,6 +300,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
   }
 
   await assertSyncAuthority(sctx, p);
+  const saving = await report.saving();
   await step.do('finish', async () => {
     await assertSyncAuthority(sctx, p);
     return closeRun(
@@ -315,4 +325,6 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
       { countsForBreaker: true },
     );
   });
+  await saving.done();
+  await report.ended({ failed: Boolean(failure), stale, totals });
 }

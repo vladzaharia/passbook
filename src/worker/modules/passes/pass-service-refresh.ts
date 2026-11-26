@@ -37,6 +37,10 @@ export async function requestRefresh(
     ownerUserId?: string;
   },
   authority?: TenantPassWrite,
+  options?: {
+    /** Runs once this request wins the claim, before the job is queued; the id it returns rides the job. */
+    onClaimed?: () => Promise<string | undefined>;
+  },
 ): Promise<{ requestedAt: number; coalesced: boolean; cooldownSeconds: number }> {
   if (
     !expected?.orgId ||
@@ -150,8 +154,10 @@ export async function requestRefresh(
       throw new ConflictError('The pass or connection changed. Retry.', 'PASS_CONFLICT');
     return { requestedAt: pass.refreshRequestedAt ?? now, coalesced: true, cooldownSeconds };
   }
+  const operationId = await options?.onClaimed?.();
   await ctx.env.JOBS.send({
     kind: 'pass.refresh',
+    ...(operationId ? { operationId } : {}),
     passId,
     trigger: actor.type === 'user' ? 'user' : 'admin',
     actorId: actor.id,

@@ -190,6 +190,8 @@ export const BulkPassChannelsResponseSchema = z.object({
   skipped: z.array(z.object({ id: IdSchema, code: z.string() })),
   /** Only on a dry run. */
   preview: BulkChannelsPreviewSchema.optional(),
+  /** The operation that shows the code replacements; null when no code was to be replaced. Absent on a dry run. */
+  operationId: z.string().nullable().optional(),
 });
 
 /** What saving would change, for "Turns off Apple for 412 passes and issues new codes." */
