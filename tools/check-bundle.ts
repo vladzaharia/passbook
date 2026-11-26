@@ -248,7 +248,7 @@ if (import.meta.main) {
     }
   }
   // Google and Samsung stay dark in every deployable Worker (docs/design/wallet-providers/e2e-release.md).
-  const release = e2eReleaseProblems(join(root, 'dist/wallet'));
+  const release = e2eReleaseProblems(join(root, 'dist/passbook'));
   process.stdout.write(`worker e2e release: ${release.length === 0 ? 'absent' : 'present'}\n`);
   if (release.length > 0) {
     process.stderr.write(`${release.join('\n')}\n`);

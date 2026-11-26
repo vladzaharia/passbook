@@ -171,7 +171,7 @@ const buildRefusal = buildProblem({
   git,
   stamp: existsSync(stampPath(root)) ? readFileSync(stampPath(root), 'utf8') : null,
   uploadedSha: existsSync(shaFile) ? readFileSync(shaFile, 'utf8').trim() : null,
-  e2eRelease: e2eReleaseProblems(resolve(root, 'dist/wallet')),
+  e2eRelease: e2eReleaseProblems(resolve(root, 'dist/passbook')),
 });
 if (buildRefusal) {
   console.error(`Not deploying. ${buildRefusal}`);

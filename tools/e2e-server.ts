@@ -105,10 +105,10 @@ if (mode === 'preview') {
   // The developer portal's prerendered pages (the specs that open /developers need them in the manifest).
   execFileSync('node', ['tools/build-developers.ts'], { cwd: root, stdio: 'inherit', env });
   // Vite's emitted vars omit non-secret overrides such as the local OIDC issuer.
-  copyFileSync(varsFile, resolve(root, 'dist/wallet/.dev.vars'));
+  copyFileSync(varsFile, resolve(root, 'dist/passbook/.dev.vars'));
   // The build flattens the config without vite.config.ts's `env.e2e`, so its raised RL_SCAN_PAIR
   // never reaches preview: 30 pairs a minute from one IP refused the 3rd-Nth device of a run.
-  const built = resolve(root, 'dist/wallet/wrangler.json');
+  const built = resolve(root, 'dist/passbook/wrangler.json');
   const config = JSON.parse(readFileSync(built, 'utf8'));
   // Specs sign in more than 10 times a minute (RL_LOGIN), so it is raised the same way.
   for (const r of config.ratelimits ?? [])
@@ -116,7 +116,7 @@ if (mode === 'preview') {
   writeFileSync(built, JSON.stringify(config));
   // This dist/ has raised rate limits: mark it so deploy refuses it (tools/lib/build-stamp.ts).
   writeFileSync(
-    resolve(root, 'dist/wallet/build-info.json'),
+    resolve(root, 'dist/passbook/build-info.json'),
     `${JSON.stringify({ sha: 'e2e', dirty: true, e2e: true })}\n`,
   );
 }

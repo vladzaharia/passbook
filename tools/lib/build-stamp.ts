@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-/** Written next to dist/wallet/wrangler.json, which every wrangler command is redirected to. */
-export const STAMP_FILE = 'dist/wallet/build-info.json';
+/** Written next to dist/passbook/wrangler.json, which every wrangler command is redirected to. */
+export const STAMP_FILE = 'dist/passbook/build-info.json';
 
 export interface BuildStamp {
   sha: string;
@@ -66,7 +66,7 @@ interface GuardInput {
   stamp: string | null;
   /** The commit recorded when `--migrate-only` uploaded the version; null when none. */
   uploadedSha: string | null;
-  /** `e2eReleaseProblems` of dist/wallet (tools/lib/e2e-release.ts); empty for a deployable Worker. */
+  /** `e2eReleaseProblems` of dist/passbook (tools/lib/e2e-release.ts); empty for a deployable Worker. */
   e2eRelease?: string[];
 }
 

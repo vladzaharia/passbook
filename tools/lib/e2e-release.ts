@@ -55,7 +55,7 @@ function* bundleFiles(dir: string): Generator<string> {
 }
 
 /**
- * Problems with a built Worker (dist/wallet): each script or config file that carries an e2e release
+ * Problems with a built Worker (dist/passbook): each script or config file that carries an e2e release
  * marker, or no script at all (a scan of nothing proves nothing).
  */
 export function e2eReleaseProblems(dir: string): string[] {
