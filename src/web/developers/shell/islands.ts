@@ -19,6 +19,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   'hero-start': () => import('../workbench/hero-start.ts'),
   keys: () => import('../keys/index.tsx'),
   run: () => import('../console/run-entry.ts'),
+  console: () => import('../console/console-entry.ts'),
   account: async () => {
     const { mountAccount } = await import('./account.ts');
     return { mount: async (el) => void (await mountAccount(el)) };
@@ -36,7 +37,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
 const HOLD_UNTIL_MOUNTED = (el: HTMLElement) =>
   el.dataset.island === 'quickstart' ||
   el.dataset.island === 'logs' ||
-  (el.dataset.island === 'run' && el.dataset.mode === 'console');
+  el.dataset.island === 'console';
 
 export function mountIslands(root: ParentNode = document): void {
   // Any island may load zod: its parser probe would log a Trusted Types violation (keys, webhooks, logs, console).

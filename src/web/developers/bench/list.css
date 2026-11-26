@@ -75,6 +75,23 @@
   inset-block: 0;
 }
 
+.bench-row-g {
+  grid-column: 1 / -1;
+  padding: 14px 16px 6px 19px;
+  border-top: 1px solid var(--pk-border-subtle);
+  color: var(--pk-text-subtle);
+  font: 600 11px / 1 var(--pk-font-sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.bench-row-g:first-child {
+  border-top: 0;
+  padding-top: 12px;
+}
+.bench-row-g + .bench-row {
+  border-top: 0;
+}
+
 .bench-row-lead {
   grid-area: lead;
   display: inline-flex;

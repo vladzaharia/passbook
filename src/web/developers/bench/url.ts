@@ -4,9 +4,10 @@
  * Forward step through tool switches, not through every row picked or filter set.
  */
 
-/** The selected item's id, or null. */
+/** The selected item's id, or null. A tail after `?` is the tool's own (the console's prefill), not the id. */
 export function selectedId(hash: string = location.hash): string | null {
-  const id = decodeURIComponent(hash.replace(/^#/, ''));
+  const raw = hash.replace(/^#/, '');
+  const id = decodeURIComponent(raw.split('?')[0] ?? '');
   return id === '' ? null : id;
 }
 

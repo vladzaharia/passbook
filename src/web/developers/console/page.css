@@ -1,88 +1,116 @@
-/* The console page's picker and grid, and the sandbox start and key reveal. */
-.console-grid {
-  display: grid;
-  grid-template-columns: 17rem minmax(0, 1fr);
-  gap: 32px;
-  align-items: start;
-}
-.console-main {
-  min-width: 0;
-  max-width: 56rem;
+/* The Console tool's body: the operation index beside the stage (bench/split.tsx), the stage's heading, and the
+   sandbox start and key reveal. */
+.console-stage {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
 }
 .console-op {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 16px;
-}
-.console-op .h1 {
-  font-size: 20px;
-  line-height: 28px;
-}
-.picker {
-  position: sticky;
-  top: calc(var(--wb-sticky) + 8px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: calc(100dvh - var(--wb-sticky) - 16px);
-}
-.picker-list {
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-right: 4px;
-}
-.picker h4 {
-  margin: 0 0 4px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pk-text-subtle);
-}
-.pick {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: 32px;
-  padding: 4px 8px;
-  border: 0;
-  border-radius: var(--pk-radius-md);
-  background: none;
-  color: var(--pk-text-default);
-  font: inherit;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
+  gap: 4px 12px;
 }
-.pick:hover {
-  background: var(--pk-state-hover-tint);
-}
-.pick[aria-current="true"] {
-  background: var(--pk-accent-subtle);
-  color: var(--pk-text-strong);
-}
-.pick-t {
+.console-op-t {
+  margin: 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-@media (max-width: 900px) {
-  .console-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .picker {
-    position: static;
-    max-height: 16rem;
-  }
+.console-path {
+  display: inline-flex;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--pk-text-muted);
+  font-size: 12.5px;
+}
+.console-path b {
+  color: var(--pk-text-strong);
+  font-weight: 600;
+}
+.console-ref {
+  margin-inline-start: auto;
+}
+/* Below 1180 px the heading is the trigger that opens the index. */
+.console-op:has(.console-trigger) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.console-op:has(.console-trigger) .console-op-t {
+  grid-column: 1 / -1;
+}
+.console-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  inline-size: 100%;
+  min-height: 44px;
+  justify-content: flex-start;
+  font-weight: 500;
+}
+.console-trigger-l {
+  color: var(--pk-text-muted);
+  font-size: 12px;
+}
+.console-trigger-t {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.console-trigger > svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--pk-text-muted);
+}
+.console-find {
+  display: contents;
+}
+/* The index: the bench's list in the pane, which brings the border. Names read as words, not paths. */
+.bench-split[data-layout="index"] > .bench-pane {
+  border: 0;
+  background: none;
+}
+.console-idx .bench-lb {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.console-idx .bench-row {
+  grid-template-areas: "lead title trail";
+  padding-block: 0;
+}
+.console-idx .bench-row-title {
+  font-family: var(--pk-font-sans);
+  font-size: 13.5px;
+}
+/* An index has no status: only the selected row carries a tick, in the accent. */
+.console-idx .bench-row:not([aria-selected="true"])::before {
+  display: none;
+}
+.console-idx .bench-row[aria-selected="true"] {
+  --tick: var(--pk-accent);
+}
+.console-idx .bench-row-lead {
+  min-inline-size: 3.4rem;
+}
+.console-caution {
+  width: 15px;
+  height: 15px;
+  color: var(--pk-warning);
+}
+.bench-sheet-b .console-idx .bench-list {
+  border: 0;
+  box-shadow: none;
+}
+.bench-sheet-b .console-idx .bench-state {
+  margin-block-start: 24px;
 }
 
 /* Start and reveal */

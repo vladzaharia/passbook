@@ -158,6 +158,7 @@ describe('islands', () => {
     expect(Object.keys(ISLANDS).sort()).toEqual([
       'account',
       'bench-strip',
+      'console',
       'hero-start',
       'keys',
       'logs',

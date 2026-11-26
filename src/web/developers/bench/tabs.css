@@ -1,0 +1,38 @@
+/* Tabs: an underline on the selected one, the head's own indicator. */
+.bench-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px 0;
+  border-bottom: 1px solid var(--pk-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bench-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  color: var(--pk-text-muted);
+  font: 500 13px / 1 var(--pk-font-sans);
+  white-space: nowrap;
+}
+.bench-tab:hover {
+  color: var(--pk-text-strong);
+}
+.bench-tab[aria-selected="true"] {
+  color: var(--pk-text-strong);
+}
+.bench-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 10px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--pk-accent);
+}
+.bench-tab:focus-visible {
+  outline-offset: -4px;
+  border-radius: var(--pk-radius-md);
+}
