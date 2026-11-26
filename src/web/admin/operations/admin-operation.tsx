@@ -12,6 +12,7 @@ import {
   OperationProgress,
   OperationsProvider,
   seedOperation,
+  trackOperation,
   useOperation,
   useOperationActions,
   useOperations,
@@ -83,14 +84,14 @@ export function AdminOperation({
 
 /**
  * The operation an action shows: the one just started (`show(id)` from the start's answer) or, after a reload, the
- * org's active one of this kind. `clear` leaves a finished panel. Reads through the session client, so an
+ * org's active one of this kind (a platform kind passes no org). `clear` leaves a finished panel. Reads through the session client, so an
  * org's row (not the person's own) is found by org and kind.
  */
 export function useOrgOperation(kind: string, orgId: string | undefined) {
   const [id, setId] = useState<string | null>(null);
   const resumed = useOperations({ active: true, kind, ...(orgId ? { orgId } : {}) });
   useEffect(() => {
-    if (id || !orgId) return;
+    if (id) return;
     const active = resumed.operations[0];
     if (active) setId(active.id);
   }, [id, orgId, resumed.operations]);
@@ -99,4 +100,13 @@ export function useOrgOperation(kind: string, orgId: string | undefined) {
   }, []);
   const clear = useCallback(() => setId(null), []);
   return { id, show, clear, seed: seedOperation };
+}
+
+/**
+ * An action whose dialog closes puts its operation into the tray: the person's own row, read once by id (the start's
+ * answer names it only). The tray polls it and tells the person when it ends.
+ */
+export async function trackStarted(id: string): Promise<void> {
+  const { operation } = await sessionOperationsClient().get(id, {});
+  if (operation) trackOperation(operation);
 }

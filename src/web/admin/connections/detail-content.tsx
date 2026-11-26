@@ -28,6 +28,8 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { confirmWord } from '../../ui/typed-confirm-dialog.tsx';
+import { syncNote } from '../operations/notes.ts';
+import { OperationSlot } from '../operations/operation-slot.tsx';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { useConnectionActions, useConnector, useConnectorNames } from './api.ts';
 import { ConfigTab } from './config-tab.tsx';
@@ -60,6 +62,7 @@ export function ConnectionDetail({
   const orgs = useOrgOptions();
   const [del, setDel] = useState(false);
   const [test, setTest] = useState<TestOutcome>();
+  const [syncing, setSyncing] = useState<string | null>(null);
   const created = useCreated(`connection:${connectionId}`);
   const connector = useConnector(c.connectorType, c.orgId);
   const connectorName = useConnectorNames(c.orgId);
@@ -96,9 +99,11 @@ export function ConnectionDetail({
     if (!canManage) return;
     void actions.sync
       .mutateAsync()
-      .then(() => {
+      .then((started) => {
         markApplyStarted(connectionId);
-        toast.success('Sync started');
+        // The operation shows the run; a sync that joined one already open has none, and says so.
+        if (started.operationId) setSyncing(started.operationId);
+        else toast.success('Already syncing');
       })
       .catch((error: unknown) => toast.error(error, 'Could not sync'));
   };
@@ -167,6 +172,13 @@ export function ConnectionDetail({
             </>
           ) : undefined
         }
+      />
+      <OperationSlot
+        kind="connection.sync"
+        orgId={c.orgId}
+        startedId={syncing}
+        onClear={() => setSyncing(null)}
+        doneNote={syncNote}
       />
       {created.shown && canManage ? (
         <div className="mb-6">

@@ -3,8 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
+import { walletReissue } from '@/shared/operations/kinds/wallet-reissue.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { fixtureOperation } from '@/web/ui/operation/fixtures.test-support.ts';
 import { credential, enrolment, renderOrgAccounts } from './wallet-accounts-test-fixtures.ts';
 
 const MANAGE: OrgCapability[] = [
@@ -34,6 +36,7 @@ const orgHandlers = (items = [on('google'), on('samsung')]) => ({
   '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
   '/api/v1/orgs/o1/wallet-enrolments': () => json({ items, nextCursor: null }),
   '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [], nextCursor: null }),
+  '/api/v1/operations': () => json({ items: [], nextCursor: null }),
 });
 
 describe('wallet reissue', () => {
@@ -46,7 +49,25 @@ describe('wallet reissue', () => {
         ...orgHandlers(),
         '/api/v1/wallet-providers/reissue': (_u, init) => {
           posts.push(JSON.parse(String(init?.body)));
-          return json({ reissueId: 'r1', instances: 3 }, 202);
+          return json({ reissueId: 'r1', instances: 3, operationId: 'op-1' }, 202);
+        },
+        '/api/v1/operations/op-1': () => {
+          return json(
+            fixtureOperation(
+              {
+                kind: walletReissue.kind,
+                title: walletReissue.title,
+                doneTitle: walletReissue.doneTitle,
+                failTitle: walletReissue.failTitle,
+                steps: walletReissue.steps.map((s) => ({
+                  key: s.key,
+                  label: s.label,
+                  active: s.active,
+                })),
+              },
+              { status: 'running', at: 'copies', counts: { done: 1, total: 3 }, id: 'op-1' },
+            ),
+          );
         },
       },
     });
@@ -57,7 +78,8 @@ describe('wallet reissue', () => {
     expect(posts).toEqual([]);
     await user.click(within(dialog).getByRole('button', { name: 'Update' }));
     await waitFor(() => expect(posts).toEqual([{ orgId: 'o1', provider: 'samsung' }]));
-    expect(await screen.findByText('Updating 3 passes')).toBeInTheDocument();
+    // The operation shows the run, with its count, instead of a toast and then silence.
+    expect(await screen.findByText('Updating passes · 1 of 3')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -67,7 +89,8 @@ describe('wallet reissue', () => {
       memberships: [member(MANAGE)],
       handlers: {
         ...orgHandlers(),
-        '/api/v1/wallet-providers/reissue': () => json({ reissueId: 'r1', instances: 0 }, 202),
+        '/api/v1/wallet-providers/reissue': () =>
+          json({ reissueId: 'r1', instances: 0, operationId: null }, 202),
       },
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });

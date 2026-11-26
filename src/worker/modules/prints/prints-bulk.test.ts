@@ -290,7 +290,7 @@ describe('bulk print as an operation', () => {
     expect(done.steps.map((s) => s.state)).toEqual(['done', 'done', 'done']);
     expect(done.result).toEqual({
       href: null,
-      ids: { jobId: started.jobId, count: '2', skipped: '0' },
+      ids: { jobId: started.jobId, count: '2', skipped: '0', lossy: '0' },
     });
   });
 

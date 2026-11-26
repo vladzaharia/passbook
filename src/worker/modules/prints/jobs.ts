@@ -110,7 +110,12 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
   await save.done();
   await progress.succeed({
     href: null,
-    ids: { jobId: job.jobId, count: String(sheets.length), skipped: String(skipped) },
+    ids: {
+      jobId: job.jobId,
+      count: String(sheets.length),
+      skipped: String(skipped),
+      lossy: lossy ? '1' : '0',
+    },
   });
   ctx.log.info('prints.bulk_done', { orgId: job.orgId, count: sheets.length, skipped });
 }
