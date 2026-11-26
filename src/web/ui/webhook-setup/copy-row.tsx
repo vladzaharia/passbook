@@ -1,7 +1,7 @@
 import { Check, Copy } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
-import { cn } from '../../lib/cn.ts';
 import { copyText } from '../../lib/clipboard.ts';
+import { cn } from '../../lib/cn.ts';
 import { Button } from '../button.tsx';
 
 /** "Endpoint URL" reads "endpoint URL" in a sentence; an acronym on its own stays. */

@@ -1,8 +1,8 @@
 // The webhook-setup kit. Space-free like ui/operation: the admin wizard, the connection and endpoint
 // pages and the developer Workbench draw the same parts from the same server data.
 export { CopyRow, type CopyRowProps } from './copy-row.tsx';
-export { LiveCheck, type LiveCheckProps, type ListenProps, type SendProps } from './live-check.tsx';
 export { judge, type ListenPhase, type Verdict } from './listen-state.ts';
+export { type ListenProps, LiveCheck, type LiveCheckProps, type SendProps } from './live-check.tsx';
 export {
   OVERLAP_CHOICES,
   RotateSecretForm,
@@ -11,7 +11,7 @@ export {
 } from './rotate-secret-form.tsx';
 export { SetupSources, SetupSteps, type SetupStepsProps } from './setup-steps.tsx';
 export { TopicChecklist, type TopicChecklistProps, topicProgress } from './topic-checklist.tsx';
-export { Troubleshoot, type TroubleActions } from './troubleshoot.tsx';
+export { type TroubleActions, Troubleshoot } from './troubleshoot.tsx';
 export {
   inboundTrouble,
   outboundTrouble,

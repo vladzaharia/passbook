@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Wizard } from '../wizard.tsx';
 import {
+  CopyRow,
   LiveCheck,
   RotateSecretForm,
   SetupSources,
@@ -9,7 +10,6 @@ import {
   TwoSided,
   useRotateSecret,
   VerifyGuide,
-  CopyRow,
 } from './index.ts';
 import { arrival, STEPS, TOPICS, URL_VALUE } from './test-support.test-support.tsx';
 import type { Arrival, SendResult } from './types.ts';

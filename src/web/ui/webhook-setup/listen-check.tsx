@@ -8,13 +8,13 @@ import { ErrorState } from '../error-state.tsx';
 import { type LocalStepDef, useLocalOperation } from '../operation/index.ts';
 import { stepItems } from '../operation/steps.ts';
 import { StepList, type StepListItem } from '../step-marker.tsx';
-import { LivePanel } from './live-panel.tsx';
 import { judge, type Verdict } from './listen-state.ts';
-import { Troubleshoot, type TroubleActions } from './troubleshoot.tsx';
-import { inboundTrouble, type InboundContext, type Trouble } from './troubleshoot-copy.ts';
-import { type ArrivalLoader, type FeedMarks, useArrivalFeed } from './use-arrival-feed.ts';
-import type { Arrival, SetupTopic } from './types.ts';
+import { LivePanel } from './live-panel.tsx';
 import { topicProgress } from './topic-checklist.tsx';
+import { type TroubleActions, Troubleshoot } from './troubleshoot.tsx';
+import { type InboundContext, inboundTrouble, type Trouble } from './troubleshoot-copy.ts';
+import type { Arrival, SetupTopic } from './types.ts';
+import { type ArrivalLoader, type FeedMarks, useArrivalFeed } from './use-arrival-feed.ts';
 
 export interface ListenProps {
   mode: 'listen';

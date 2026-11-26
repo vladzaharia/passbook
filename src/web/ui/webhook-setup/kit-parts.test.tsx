@@ -17,7 +17,7 @@ import {
   useRotateSecret,
   VerifyGuide,
 } from './index.ts';
-import { setViewport, STEPS, TOPICS, URL_VALUE } from './test-support.test-support.tsx';
+import { STEPS, setViewport, TOPICS, URL_VALUE } from './test-support.test-support.tsx';
 import type { ArrivalReason } from './types.ts';
 
 afterEach(() => {
